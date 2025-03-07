@@ -6,9 +6,9 @@ namespace Business.Factories.Workers
 {
     public class GoToExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
 
-        public GoToExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public GoToExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
         }

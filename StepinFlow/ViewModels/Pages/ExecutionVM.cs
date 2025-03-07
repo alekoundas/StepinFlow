@@ -17,7 +17,7 @@ namespace StepinFlow.ViewModels.Pages
 {
     public partial class ExecutionVM : ObservableObject, INavigationAware
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         private readonly IExecutionFactory _executionFactory;
 
@@ -65,7 +65,7 @@ namespace StepinFlow.ViewModels.Pages
 
 
         public ExecutionVM(
-            IExecutionDataService dataService,
+            IDataService dataService,
             ISystemService systemService,
             IExecutionFactory executionFactory)
         {

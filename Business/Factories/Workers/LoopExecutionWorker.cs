@@ -7,11 +7,11 @@ namespace Business.Factories.Workers
 {
     public class LoopExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
 
         public LoopExecutionWorker(
-              IExecutionDataService dataService
+              IDataService dataService
             , ISystemService systemService
             ) : base(dataService, systemService)
         {

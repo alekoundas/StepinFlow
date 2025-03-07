@@ -7,10 +7,10 @@ namespace Business.Factories.Workers
 {
     public class SubFlowStepExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public SubFlowStepExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public SubFlowStepExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
             _systemService = systemService;

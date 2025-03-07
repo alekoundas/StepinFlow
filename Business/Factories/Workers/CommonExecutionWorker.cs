@@ -10,11 +10,11 @@ namespace Business.Factories.Workers
 {
     public class CommonExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         protected Dictionary<int, List<Execution>> _pendingExecutionLoops = new Dictionary<int, List<Execution>>();
 
-        public CommonExecutionWorker(IExecutionDataService dataService, ISystemService systemService)
+        public CommonExecutionWorker(IDataService dataService, ISystemService systemService)
         {
             _dataService = dataService;
             _systemService = systemService;

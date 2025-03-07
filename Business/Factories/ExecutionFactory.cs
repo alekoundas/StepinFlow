@@ -6,7 +6,7 @@ namespace Business.Factories
 {
     public class ExecutionFactory : IExecutionFactory
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         private readonly ITemplateSearchService _templateSearchService;
         private Dictionary<FlowStepTypesEnum, Lazy<IExecutionWorker>>? _workerCache = null;
@@ -14,7 +14,7 @@ namespace Business.Factories
         private CancellationTokenSource _cancellationToken = new CancellationTokenSource();
 
 
-        public ExecutionFactory(IExecutionDataService dataService, ISystemService systemService, ITemplateSearchService templateSearchService)
+        public ExecutionFactory(IDataService dataService, ISystemService systemService, ITemplateSearchService templateSearchService)
         {
             _dataService = dataService;
             _systemService = systemService;

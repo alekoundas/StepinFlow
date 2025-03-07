@@ -9,7 +9,8 @@ namespace Business.Services
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
         public InMemoryDbContext Query { get => _contextFactory.CreateDbContext(); }
-        private InMemoryDbContext _dbContext { get => _contextFactory.CreateDbContext(); }
+        //public InMemoryDbContext Query { get; set; }
+        private InMemoryDbContext _dbContext { get; set; }
 
         public IFlowRepository Flows { get; set; }
         public IFlowStepRepository FlowSteps { get; set; }
@@ -26,12 +27,27 @@ namespace Business.Services
             IAppSettingRepository appSettingRepository)
         {
             _contextFactory = contextFactory;
+            _dbContext = _contextFactory.CreateDbContext();
+            //Query = _dbContext;
+
 
             Flows = flowRepository;
             FlowSteps = flowStepRepository;
             FlowParameters = flowParameterRepository;
             Executions = executionRepository;
             AppSettings = appSettingRepository;
+        }
+
+        public void SetDbContext(InMemoryDbContext dbContext)
+        {
+            _dbContext = dbContext;
+            Flows.SetDbContext(dbContext);
+            FlowSteps.SetDbContext(dbContext);
+            FlowParameters.SetDbContext(dbContext);
+            Executions.SetDbContext(dbContext);
+            AppSettings.SetDbContext(dbContext);
+
+            //Query = dbContext;
         }
 
 
@@ -50,9 +66,8 @@ namespace Business.Services
             if (model == null)
                 return;
 
-            using var context = _contextFactory.CreateDbContext();
-            context.Entry(model).State = EntityState.Modified;
-            context.SaveChanges();
+            _dbContext.Entry(model).State = EntityState.Modified;
+            _dbContext.SaveChanges();
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
@@ -60,29 +75,28 @@ namespace Business.Services
             if (model == null)
                 return;
 
-            using var context = _contextFactory.CreateDbContext();
-            context.Entry(model).State = EntityState.Modified;
-            await context.SaveChangesAsync();
+            _dbContext.Entry(model).State = EntityState.Modified;
+            await _dbContext.SaveChangesAsync();
         }
 
 
         public void UpdateRange<TEntity>(List<TEntity> models)
         {
-            using var context = _contextFactory.CreateDbContext();
             foreach (var model in models)
                 if (model != null)
-                    context.Entry(model).State = EntityState.Modified;
-            context.SaveChanges();
+                    if (_dbContext.Entry(model).State == EntityState.Detached)
+                        _dbContext.Entry(model).State = EntityState.Modified;
+            _dbContext.SaveChanges();
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
         {
-            using var context = _contextFactory.CreateDbContext();
             foreach (var model in models)
                 if (model != null)
-                    context.Entry(model).State = EntityState.Modified;
+                    if (_dbContext.Entry(model).State == EntityState.Detached)
+                        _dbContext.Entry(model).State = EntityState.Modified;
 
-            await context.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
         }
 
         public void Dispose()

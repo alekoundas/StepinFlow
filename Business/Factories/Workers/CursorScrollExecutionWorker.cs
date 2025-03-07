@@ -5,10 +5,10 @@ namespace Business.Factories.Workers
 {
     public class CursorScrollExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public CursorScrollExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public CursorScrollExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
             _systemService = systemService;

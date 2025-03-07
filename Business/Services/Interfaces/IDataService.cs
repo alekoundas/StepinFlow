@@ -6,6 +6,9 @@ namespace Business.Services.Interfaces
     public interface IDataService : IDisposable
     {
         InMemoryDbContext Query { get; }
+        void SetDbContext(InMemoryDbContext dbContext);
+
+
 
         IFlowRepository Flows { get; set; }
         IFlowStepRepository FlowSteps { get; set; }

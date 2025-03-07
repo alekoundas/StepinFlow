@@ -11,14 +11,14 @@ namespace Business.Factories.Workers
 {
     public class MultipleTemplateSearchExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
 
         private byte[]? _resultImage = null;
 
         public MultipleTemplateSearchExecutionWorker(
-              IExecutionDataService dataService
+              IDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
             ) : base(dataService, systemService)

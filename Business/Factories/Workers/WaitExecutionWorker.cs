@@ -7,12 +7,12 @@ namespace Business.Factories.Workers
 {
     public class WaitExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IExecutionDataService _dataService;
+        private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         private CancellationTokenSource _cancellationToken;
 
 
-        public WaitExecutionWorker(IExecutionDataService dataService, ISystemService systemService, CancellationTokenSource cancellationToken) : base(dataService, systemService)
+        public WaitExecutionWorker(IDataService dataService, ISystemService systemService, CancellationTokenSource cancellationToken) : base(dataService, systemService)
         {
             _dataService = dataService;
             _systemService = systemService;
