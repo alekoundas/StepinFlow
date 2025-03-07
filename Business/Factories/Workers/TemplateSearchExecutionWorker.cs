@@ -1,7 +1,6 @@
 ﻿using Business.Extensions;
 using Business.Helpers;
 using Business.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Model.Business;
 using Model.Enums;
 using Model.Models;
@@ -134,9 +133,9 @@ namespace Business.Factories.Workers
             if (execution.FlowStep == null)
                 return await Task.FromResult<FlowStep?>(null);
 
-            // If execution was successfull and (MaxLoopCount is 0 or CurrentLoopCount < MaxLoopCount), return te same flow step.
+            // If execution was successfull and isloop = true, return te same flow step.
             if (execution.Result == ExecutionResultEnum.SUCCESS)
-                if (execution.FlowStep.IsLoop && execution.FlowStep.LoopMaxCount == 0 || execution.LoopCount < execution.FlowStep.LoopMaxCount)
+                if (execution.FlowStep.IsLoop)
                     return execution.FlowStep;
 
             // If not, get next sibling flow step. 

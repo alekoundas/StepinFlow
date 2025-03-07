@@ -163,11 +163,9 @@ namespace Business.Factories.Workers
 
             if (nextChildTemplateSearchFlowStep != null)
                 return execution.FlowStep.ParentTemplateSearchFlowStep;
-            else
-            {
-                if (execution.FlowStep.ParentTemplateSearchFlowStepId != null)
-                    _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
-            }
+            else if (execution.FlowStep.ParentTemplateSearchFlowStepId != null)
+                _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
+
             // If not, get next sibling flow step. 
             FlowStep? nextFlowStep = await _dataService.FlowSteps.GetNextSibling(execution.FlowStep.ParentTemplateSearchFlowStepId.Value);
             return nextFlowStep;
