@@ -9,10 +9,10 @@ namespace Business.Factories.Workers
 {
     public class FlowExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public FlowExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public FlowExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
             _systemService = systemService;
@@ -51,13 +51,7 @@ namespace Business.Factories.Workers
 
         public async override Task SaveToDisk(Execution execution)
         {
-            string folderName = "Execution - " + DateTime.Now.ToString("yy-MM-dd hh.mm");
-            string folderPath = Path.Combine(PathHelper.GetExecutionHistoryDataPath(), folderName);
-
-            execution.ExecutionFolderDirectory = folderPath;
-
-            await _dataService.UpdateAsync(execution);
-            Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory(execution.ExecutionFolderDirectory);
         }
     }
 }

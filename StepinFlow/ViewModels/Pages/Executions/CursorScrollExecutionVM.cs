@@ -23,9 +23,10 @@ namespace StepinFlow.ViewModels.Pages.Executions
             MouseButtonsEnum = Enum.GetValues(typeof(MouseButtonsEnum)).Cast<MouseButtonsEnum>();
             MouseActionsEnum = Enum.GetValues(typeof(MouseActionsEnum)).Cast<MouseActionsEnum>();
         }
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
+            return Task.CompletedTask;
         }
 
     }

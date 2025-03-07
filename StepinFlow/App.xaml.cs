@@ -76,7 +76,9 @@ namespace StepinFlow
                 services.AddScoped<ISystemService, SystemService>();
                 services.AddScoped<IWindowService, WindowService>();
                 services.AddScoped<ITemplateSearchService, TemplateSearchService>();
+
                 services.AddTransient<IDataService, DataService>();
+                services.AddTransient<IExecutionDataService, ExecutionDataService>();
                 services.AddTransient<ICloneService, CloneService>();
                 services.AddTransient<IKeyboardListenerService, KeyboardListenerService>();
                 services.AddSingleton<IWindowStateService, WindowStateService>();

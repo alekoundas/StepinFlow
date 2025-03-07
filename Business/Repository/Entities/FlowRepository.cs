@@ -10,26 +10,25 @@ namespace Business.Repository.Entities
 {
     public class FlowRepository : BaseRepository<Flow>, IFlowRepository
     {
-        private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
-        private InMemoryDbContext _dbContext { get => _contextFactory.CreateDbContext(); }
-
         public FlowRepository(IDbContextFactory<InMemoryDbContext> contextFactory) : base(contextFactory)
         {
-            _contextFactory = contextFactory;
         }
 
         public async Task<FlowStep> GetIsNewSibling(int id)
         {
-            return await _dbContext.Flows
+            var result = await GetDbContext().Flows
                         .Include(x => x.FlowStep.ChildrenFlowSteps)
                         .Where(x => x.Id == id)
                         .Select(x => x.FlowStep.ChildrenFlowSteps.First(y => y.Type == FlowStepTypesEnum.NEW))
                         .FirstAsync();
+
+            Dispose();
+            return result;
         }
 
         public async Task<List<Flow>> LoadAllExpanded()
         {
-            List<Flow> flows = await _dbContext.Flows
+            List<Flow> flows = await GetDbContext().Flows
                 .Include(x => x.FlowStep.ChildrenFlowSteps)
                 .ToListAsync();
 
@@ -41,12 +40,13 @@ namespace Business.Repository.Entities
                     await LoadAllChildren(flowStep, true);
             }
 
+            Dispose();
             return flows;
         }
 
         public async Task<List<Flow>> LoadAllCollapsed()
         {
-            List<Flow> flows = await _dbContext.Flows
+            List<Flow> flows = await GetDbContext().Flows
                 .Include(x => x.FlowStep.ChildrenFlowSteps)
                 .ToListAsync();
 
@@ -58,6 +58,7 @@ namespace Business.Repository.Entities
                     await LoadAllChildren(flowStep, false);
             }
 
+            Dispose();
             return flows;
         }
 
@@ -66,7 +67,7 @@ namespace Business.Repository.Entities
             List<Flow> flows = new List<Flow>();
 
             if (flowId.HasValue)
-                flows = await _dbContext.Flows
+                flows = await GetDbContext().Flows
                     .Include(x => x.FlowParameter.ChildrenFlowParameters)
                     .Include(x => x.FlowStep.ChildrenFlowSteps).ThenInclude(x => x.FlowParameter)
                     .Include(x => x.FlowStep.ChildrenFlowSteps).ThenInclude(x => x.SubFlow!.FlowStep)
@@ -75,7 +76,7 @@ namespace Business.Repository.Entities
                     .Where(x => x.Id == flowId)
                     .ToListAsync();
             else
-                flows = await _dbContext.Flows
+                flows = await GetDbContext().Flows
                     .Include(x => x.FlowParameter.ChildrenFlowParameters)
                     .Include(x => x.FlowStep.ChildrenFlowSteps).ThenInclude(x => x.FlowParameter)
                     .Include(x => x.FlowStep.ChildrenFlowSteps).ThenInclude(x => x.SubFlow!.FlowStep)
@@ -86,12 +87,14 @@ namespace Business.Repository.Entities
                 foreach (FlowStep flowStep in flow.FlowStep.ChildrenFlowSteps)
                     await LoadAllChildrenExport(flowStep);
 
+            Dispose();
             return flows;
         }
 
         public async Task FixOneToOneRelationIds(int flowId)
         {
-            Flow? flow = await _dbContext.Flows
+            var context = GetDbContext();
+            Flow? flow = await context.Flows
                 .AsNoTracking()
                 .Include(x => x.FlowStep.ChildrenFlowSteps).ThenInclude(x => x.SubFlow!.FlowStep)
                 .Where(x => x.Id == flowId)
@@ -106,7 +109,7 @@ namespace Business.Repository.Entities
                     var currentFlowStep = stack.Pop();
 
                     // Load its children from the database.
-                    var childFlowSteps = await _dbContext.FlowSteps
+                    var childFlowSteps = await context.FlowSteps
                         .AsNoTracking()
                         .Where(x => x.Id == currentFlowStep.Id)
                         .SelectMany(x => x.ChildrenFlowSteps)
@@ -116,9 +119,9 @@ namespace Business.Repository.Entities
                     // Do the actual fix!
                     if (currentFlowStep.SubFlow != null && currentFlowStep.IsSubFlowReferenced == false)
                     {
-                        Flow updateFlow = await _dbContext.Flows.FirstAsync(x => x.Id == currentFlowStep.SubFlowId);
+                        Flow updateFlow = await context.Flows.FirstAsync(x => x.Id == currentFlowStep.SubFlowId);
                         updateFlow.ParentSubFlowStepId = currentFlowStep.Id;
-                        _dbContext.Update(updateFlow);
+                        context.Update(updateFlow);
 
                     }
 
@@ -132,12 +135,14 @@ namespace Business.Repository.Entities
 
                 }
             }
-            await _dbContext.SaveChangesAsync();
+            await context.SaveChangesAsync();
+            Dispose();
         }
 
         private async Task<FlowStep> LoadAllChildren(FlowStep flowStep, bool isExpanded)
         {
             // Initialize a stack to simulate recursion.
+            var context = GetDbContext();
             var stack = new Stack<FlowStep>();
             stack.Push(flowStep);
 
@@ -147,7 +152,7 @@ namespace Business.Repository.Entities
                 var currentFlowStep = stack.Pop();
 
                 // Load its children from the database.
-                var childFlowSteps = await _dbContext.FlowSteps
+                var childFlowSteps = await context.FlowSteps
                     .Where(x => x.Id == currentFlowStep.Id)
                     .SelectMany(x => x.ChildrenFlowSteps)
                     .Include(x => x.ChildrenTemplateSearchFlowSteps)
@@ -164,12 +169,14 @@ namespace Business.Repository.Entities
                     stack.Push(childFlowStep);
             }
 
+            Dispose();
             return flowStep;
         }
 
         private async Task<FlowStep> LoadAllChildrenExport(FlowStep flowStep)
         {
             // Initialize a stack to simulate recursion.
+            var context = GetDbContext();
             var stack = new Stack<FlowStep>();
             stack.Push(flowStep);
 
@@ -179,7 +186,7 @@ namespace Business.Repository.Entities
                 var currentFlowStep = stack.Pop();
 
                 // Load its children from the database.
-                var childFlowSteps = await _dbContext.FlowSteps
+                var childFlowSteps = await context.FlowSteps
                     .Where(x => x.Id == currentFlowStep.Id)
                     .SelectMany(x => x.ChildrenFlowSteps)
                     .Include(x => x.ChildrenTemplateSearchFlowSteps)
@@ -200,6 +207,7 @@ namespace Business.Repository.Entities
                         stack.Push(subFlowtep);
             }
 
+            Dispose();
             return flowStep;
         }
 

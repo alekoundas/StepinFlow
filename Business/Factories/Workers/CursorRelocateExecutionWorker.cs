@@ -7,10 +7,10 @@ namespace Business.Factories.Workers
 {
     public class CursorRelocateExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public CursorRelocateExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public CursorRelocateExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
             _systemService = systemService;

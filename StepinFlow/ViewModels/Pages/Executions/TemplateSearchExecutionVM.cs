@@ -24,12 +24,14 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _execution = new Execution();
         }
 
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
 
             if (execution.ResultImagePath != null)
                 ResultImage = File.ReadAllBytes(execution.ResultImagePath);
+         
+            return Task.CompletedTask;
         }
 
         [RelayCommand]

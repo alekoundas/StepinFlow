@@ -7,10 +7,10 @@ namespace Business.Factories.Workers
 {
     public class WindowResizeExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public WindowResizeExecutionWorker(IDataService dataService, ISystemService systemService)
+        public WindowResizeExecutionWorker(IExecutionDataService dataService, ISystemService systemService)
             : base(dataService, systemService)
         {
             _dataService = dataService;

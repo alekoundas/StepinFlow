@@ -25,7 +25,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
         private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
         [ObservableProperty]
         private byte[]? _resultImage = null;
-        [ObservableProperty] 
+        [ObservableProperty]
         private ObservableCollection<FlowStep>? _childrenTemplateSearchFlowSteps;
 
 
@@ -36,12 +36,8 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _execution = new Execution();
         }
 
-        public async void  SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
-            execution = await _dataService.Executions.Query
-                .Include(x=>x.FlowStep.ParentTemplateSearchFlowStep.ChildrenTemplateSearchFlowSteps)
-                .FirstAsync(x=>x.Id==execution.Id);
-
             List<FlowStep> flowSteps = execution.FlowStep.ParentTemplateSearchFlowStep.ChildrenTemplateSearchFlowSteps
               .Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD)
               .ToList();
@@ -51,6 +47,8 @@ namespace StepinFlow.ViewModels.Pages.Executions
 
             if (execution.ResultImagePath != null)
                 ResultImage = File.ReadAllBytes(execution.ResultImagePath);
+
+            return Task.CompletedTask;
         }
 
         [RelayCommand]

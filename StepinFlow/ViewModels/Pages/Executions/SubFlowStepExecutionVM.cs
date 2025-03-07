@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Model.Enums;
 using System.Collections.ObjectModel;
@@ -21,7 +20,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
         private Flow? _selectedSubFlow = null;
 
         [ObservableProperty]
-        private Execution _execution;
+        private Execution _execution = new Execution();
 
 
         public SubFlowStepExecutionVM(IDataService dataService, ICloneService cloneService)
@@ -30,22 +29,15 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _cloneService = cloneService;
         }
 
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
             SubFlows = new ObservableCollection<Flow>(_dataService.Flows.Query.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToList());
 
             if (execution.FlowStep.SubFlowId.HasValue)
                 SelectedSubFlow = SubFlows.Where(x => x.Id == execution.FlowStep.SubFlowId).FirstOrDefault();
+
+            return Task.CompletedTask;
         }
-
-
-
-        [RelayCommand]
-        private void OnButtonCancelClick()
-        {
-            //TODO
-        }
-
     }
 }

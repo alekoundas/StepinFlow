@@ -6,20 +6,18 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Model.Enums;
 using Model.Models;
-using StepinFlow.ViewModels.UserControls;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Wpf.Ui.Abstractions.Controls;
-using Wpf.Ui.Controls;
 
 namespace StepinFlow.ViewModels.Pages
 {
     public partial class ExecutionVM : ObservableObject, INavigationAware
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ISystemService _systemService;
         private readonly IExecutionFactory _executionFactory;
 
@@ -67,7 +65,7 @@ namespace StepinFlow.ViewModels.Pages
 
 
         public ExecutionVM(
-            IDataService dataService,
+            IExecutionDataService dataService,
             ISystemService systemService,
             IExecutionFactory executionFactory)
         {
@@ -75,12 +73,18 @@ namespace StepinFlow.ViewModels.Pages
             _systemService = systemService;
             _executionFactory = executionFactory;
 
-            ComboBoxFlows = new ObservableCollection<Flow>(_dataService.Query.Flows.ToList());
+            ComboBoxFlows = new ObservableCollection<Flow>(_dataService.Flows.ToList());
 
             _executionFactory.SetCancellationToken(_cancellationToken);
 
             // Update every second
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+
+            //var a = _dataService.FlowSteps
+            //    .Expression()
+            //    .Where(x => x.Type == FlowStepTypesEnum.CURSOR_CLICK)
+            //    .Include(x => x.ParentFlowStep!.ChildrenTemplateSearchFlowSteps);
+
         }
 
 
@@ -132,48 +136,71 @@ namespace StepinFlow.ViewModels.Pages
 
         }
 
-        private async Task ExecuteStepLoop(FlowStep? initialFlowStep, Execution initialParentExecution)
+        private async Task ExecuteStepLoop(FlowStep? initialFlowStep, Execution parentExecution)
         {
-            Execution? latestParentExecution = initialParentExecution;
-            var stack = new Stack<(FlowStep? flowStep, Execution parentExecution)>();
-            stack.Push((initialFlowStep, initialParentExecution));
+            var pendingExecutionLoops = new Dictionary<int, List<Execution>>();
+            var stack = new Stack<FlowStep?>();
 
-            while (stack.Count > 0)
+            stack.Push(initialFlowStep);
+
+            using (var context = _dataService.Query) // Replace with your DbContext
             {
-                var (flowStep, parentExecution) = stack.Pop();
-
-                if (flowStep == null || _stopExecution == true)
-                    return;
-
-                IExecutionWorker factoryWorker = _executionFactory.GetWorker(flowStep.Type);
-                factoryWorker.ClearEntityFrameworkChangeTracker();
-                Execution flowStepExecution = await factoryWorker.CreateExecutionModel(flowStep, parentExecution, latestParentExecution);
-                parentExecution.ResultImage = null;// TODO test if needed.
-
-                // Add execution to history listbox.
-                Application.Current.Dispatcher.Invoke(() =>
+                while (stack.Count > 0)
                 {
-                    CurrentStep = flowStep.Type.ToString();
-                    ListBoxExecutions.Add(flowStepExecution);
-                });
+                    using var tranasaction = context.Database.BeginTransaction();
+                    FlowStep? flowStep = stack.Pop();
 
-                //await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
-                //await factoryWorker.ExpandAndSelectFlowStep(flowStepExecution, _treeViewUserControlViewModel.FlowsList);
-                await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
-                await factoryWorker.ExecuteFlowStepAction(flowStepExecution);
-                await factoryWorker.SetExecutionModelStateComplete(flowStepExecution);
-                await factoryWorker.SaveToDisk(flowStepExecution);
+                    if (flowStep == null || _stopExecution == true)
+                        return;
 
-                // If step has a sibling, push it first in stack.
-                FlowStep? nextFlowStep;
-                nextFlowStep = await factoryWorker.GetNextSiblingFlowStep(flowStepExecution);
-                if (nextFlowStep != null)
-                    stack.Push((nextFlowStep, flowStepExecution));
+                    // Create factory worker.
+                    IExecutionWorker factoryWorker = _executionFactory.GetWorker(flowStep.Type);
+                    factoryWorker.SetDbContext(context);
+                    factoryWorker.Initialize(pendingExecutionLoops);
 
-                // If child is found, push it to stack last so it can be executed firtst.
-                nextFlowStep = await factoryWorker.GetNextChildFlowStep(flowStepExecution);
-                if (nextFlowStep != null)
-                    stack.Push((nextFlowStep, flowStepExecution));
+                    //factoryWorker.ClearEntityFrameworkChangeTracker();
+
+
+
+                    // Create execution model.
+                    Execution flowStepExecution = await factoryWorker.CreateExecutionModel(flowStep, parentExecution);
+                    parentExecution.ResultImage = null;// TODO test if needed.
+
+                    // Add execution to history listbox.
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentStep = flowStep.Type.ToString();
+                        ListBoxExecutions.Add(flowStepExecution);
+                    });
+
+
+                    //await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
+                    //await factoryWorker.ExpandAndSelectFlowStep(flowStepExecution, _treeViewUserControlViewModel.FlowsList);
+                    context.ChangeTracker.Clear();
+                    await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
+                    context.ChangeTracker.Clear();
+                    await factoryWorker.ExecuteFlowStepAction(flowStepExecution);
+                    context.ChangeTracker.Clear();
+                    await factoryWorker.SetExecutionModelStateComplete(flowStepExecution);
+                    context.ChangeTracker.Clear();
+                    await factoryWorker.SaveToDisk(flowStepExecution);
+                    context.ChangeTracker.Clear();
+
+                    // If step has a sibling, push it first in stack.
+                    FlowStep? nextFlowStep;
+                    nextFlowStep = await factoryWorker.GetNextSiblingFlowStep(flowStepExecution);
+                    if (nextFlowStep != null)
+                        stack.Push(nextFlowStep);
+
+                    // If child is found, push it to stack last so it can be executed firtst.
+                    nextFlowStep = await factoryWorker.GetNextChildFlowStep(flowStepExecution);
+                    if (nextFlowStep != null)
+                        stack.Push(nextFlowStep);
+
+                    parentExecution = flowStepExecution;
+                    await tranasaction.CommitAsync();
+                    tranasaction.Dispose();
+                }
             }
         }
 
@@ -270,8 +297,8 @@ namespace StepinFlow.ViewModels.Pages
                 .Include(x => x.ChildExecution)
                 .FirstOrDefaultAsync(x => x.Id == ComboBoxSelectedExecutionHistory.Id);
 
-            if(execution !=null)
-            await LoadExecutionChild(execution);
+            if (execution != null)
+                await LoadExecutionChild(execution);
 
             List<Execution> executions = execution
                 .SelectRecursive(x => x.ChildExecution)

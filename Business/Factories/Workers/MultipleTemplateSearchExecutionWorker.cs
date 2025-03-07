@@ -11,14 +11,14 @@ namespace Business.Factories.Workers
 {
     public class MultipleTemplateSearchExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
 
         private byte[]? _resultImage = null;
 
         public MultipleTemplateSearchExecutionWorker(
-              IDataService dataService
+              IExecutionDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
             ) : base(dataService, systemService)
@@ -28,7 +28,7 @@ namespace Business.Factories.Workers
             _systemService = systemService;
         }
 
-        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution, Execution latestParentExecution)
+        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
         {
             int loopCount = 0;
             if (parentExecution.FlowStepId == flowStep.Id)
@@ -40,7 +40,7 @@ namespace Business.Factories.Workers
             Execution execution = new Execution
             {
                 FlowStepId = childTemplateSearchFlowStep?.Id,
-                ParentExecutionId = latestParentExecution.Id,
+                ParentExecutionId = parentExecution.Id,
                 ParentLoopExecutionId = parentExecution.Id,
                 ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory,
                 LoopCount = loopCount,
@@ -56,9 +56,19 @@ namespace Business.Factories.Workers
             await _dataService.UpdateAsync(execution);
 
             // Return execution with relations.
-            execution = await _dataService.Executions.Query
-              .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep)
-              .FirstAsync(x => x.Id == execution.Id);
+            execution.FlowStep = childTemplateSearchFlowStep;
+            //execution = await _dataService.Executions
+            //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
+            //  .FirstAsync(x => x.Id == execution.Id);
+
+            //execution = await _dataService.Executions.Query.AsNoTracking()
+            //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
+            //  .FirstAsync(x => x.Id == execution.Id);
+
+            if (!_pendingExecutionLoops.ContainsKey(flowStep.ParentTemplateSearchFlowStepId.Value))
+                _pendingExecutionLoops.Add(flowStep.Id, new List<Execution>() { execution });
+            else
+                _pendingExecutionLoops[flowStep.Id].Add(execution);
 
             return execution;
         }
@@ -93,12 +103,9 @@ namespace Business.Factories.Workers
 
 
             byte[]? screenshot = null;
-            Execution? parentLoopExecution = await _dataService.Executions.Query
-                .Include(x => x.FlowStep)
-                .FirstOrDefaultAsync(x => x.Id == execution.ParentLoopExecutionId);
+            Execution? parentLoopExecution = _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].OrderByDescending(x => x.Id).FirstOrDefault();
 
             bool canUseParentResult =
-               parentLoopExecution?.FlowStepId == execution.FlowStepId &&
                parentLoopExecution?.FlowStep?.IsLoop == true &&
                parentLoopExecution?.TempResultImagePath?.Length > 0 &&
                execution.FlowStep.RemoveTemplateFromResult;
@@ -149,7 +156,11 @@ namespace Business.Factories.Workers
 
             if (nextChildTemplateSearchFlowStep != null)
                 return execution.FlowStep.ParentTemplateSearchFlowStep;
-
+            else
+            {
+                if (execution.FlowStep.ParentTemplateSearchFlowStepId != null)
+                    _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
+            }
             // If not, get next sibling flow step. 
             FlowStep? nextFlowStep = await _dataService.FlowSteps.GetNextSibling(execution.FlowStep.ParentTemplateSearchFlowStepId.Value);
             return nextFlowStep;
@@ -179,34 +190,39 @@ namespace Business.Factories.Workers
 
                 execution.ResultImagePath = newFilePath;
 
-            await _dataService.UpdateAsync(execution);
+                await _dataService.UpdateAsync(execution);
             }
         }
 
         private async Task<FlowStep?> GetChildTemplateSearchFlowStep(int flowStepId, int parentExecutionId)
         {
             // Get all parents of loop execution.
-            List<Execution> parentLoopExecutions = await _dataService.Executions.GetAllParentLoopExecutions(parentExecutionId);
+            List<Execution> parentLoopExecutions = new List<Execution>();
+            if (_pendingExecutionLoops.ContainsKey(flowStepId))
+                parentLoopExecutions = _pendingExecutionLoops[flowStepId];
+
 
             // Get all completed children template flow steps.
             List<int> completedChildrenTemplateFlowStepIds = parentLoopExecutions
+                .Where(x => x.Result == ExecutionResultEnum.FAIL)
                 .Select(x => x.FlowStepId ?? 0)
                 .Where(x => x != 0)
                 .ToList();
 
             // Get all child template search flow steps.
-            List<FlowStep> children = await _dataService.Query.FlowSteps
-                .AsNoTracking()
+            List<FlowStep> children = await _dataService.FlowSteps
                 .Where(x => x.ParentTemplateSearchFlowStepId == flowStepId)
                 .Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD)
+                .Include(x => x.ParentTemplateSearchFlowStep!.FlowParameter)
                 .ToListAsync();
 
             // Get first child template search flow step that isnt completed.
             FlowStep? flowStep = children
                 .Where(x => !completedChildrenTemplateFlowStepIds.Any(y => y == x.Id))
                 .ToList()
-                .OrderBy(x => x.OrderingNum)
+                .OrderBy(x => x.OrderingNum).ThenBy(x => x.Id)
                 .FirstOrDefault();
+
 
             return flowStep;
         }

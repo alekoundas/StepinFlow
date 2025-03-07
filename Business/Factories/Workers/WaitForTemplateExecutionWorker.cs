@@ -10,14 +10,14 @@ namespace Business.Factories.Workers
 {
     public class WaitForTemplateExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
 
         private byte[]? _resultImage = null;
 
         public WaitForTemplateExecutionWorker(
-              IDataService dataService
+              IExecutionDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
             ) : base(dataService, systemService)
@@ -27,18 +27,19 @@ namespace Business.Factories.Workers
             _systemService = systemService;
         }
 
-        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution, Execution latestParentExecution)
+        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
         {
             if (parentExecution == null)
                 throw new ArgumentNullException(nameof(parentExecution));
 
-            Execution execution = new Execution();
-            execution.FlowStepId = flowStep.Id;
-            execution.ParentExecutionId = latestParentExecution.Id;
-            execution.ParentLoopExecutionId = parentExecution.Id;
-
-            execution.ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory;
-            execution.LoopCount = parentExecution?.LoopCount == null ? 0 : parentExecution.LoopCount + 1;
+            Execution execution = new Execution
+            {
+                FlowStepId = flowStep.Id,
+                ParentExecutionId = parentExecution.Id,
+                ParentLoopExecutionId = parentExecution.Id,
+                ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory,
+                LoopCount = parentExecution?.LoopCount == null ? 0 : parentExecution.LoopCount + 1
+            };
 
 
             await _dataService.Executions.AddAsync(execution);

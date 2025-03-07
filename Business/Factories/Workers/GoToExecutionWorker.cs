@@ -6,9 +6,9 @@ namespace Business.Factories.Workers
 {
     public class GoToExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
 
-        public GoToExecutionWorker(IDataService dataService, ISystemService systemService) : base(dataService, systemService)
+        public GoToExecutionWorker(IExecutionDataService dataService, ISystemService systemService) : base(dataService, systemService)
         {
             _dataService = dataService;
         }
@@ -25,7 +25,7 @@ namespace Business.Factories.Workers
             if (!execution.FlowStep.ParentTemplateSearchFlowStepId.HasValue)
                 return await Task.FromResult<FlowStep?>(null);
 
-            FlowStep? nextFlowStep = await _dataService.Query.FlowSteps
+            FlowStep? nextFlowStep = await _dataService.FlowSteps.Query
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == execution.FlowStep.ParentTemplateSearchFlowStepId.Value);
 

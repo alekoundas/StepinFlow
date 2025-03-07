@@ -14,9 +14,10 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _execution = new Execution();
         }
 
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
+            return Task.CompletedTask;
         }
     }
 }

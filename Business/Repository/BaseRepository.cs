@@ -1,244 +1,386 @@
-﻿using Business.DatabaseContext; // Replace with your actual namespace
+﻿using Business.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using System;
 using System.Linq.Expressions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Business.Repository
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
+        private InMemoryDbContext? _context;
+        private bool _ownsContext = true;
+        private IQueryable<TEntity>? _query;
 
         public BaseRepository(IDbContextFactory<InMemoryDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }
 
+        //protected DbSet<TEntity> GetDbSet() => _context?.Set<TEntity>() ?? _contextFactory.CreateDbContext().Set<TEntity>();
+        protected InMemoryDbContext GetDbContext()
+        {
+            if (_context == null)
+                _context = _contextFactory.CreateDbContext();
+
+            return _context;
+        }
+
+
+        public BaseRepository<TEntity> SetDbContext(InMemoryDbContext context)
+        {
+            if (_context != null && _ownsContext)
+                _context.Dispose();
+
+            _context = context;
+            _ownsContext = false;
+            return this;
+        }
+
+        public BaseRepository<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
+        {
+            if (_query == null)
+                _query = GetDbContext().Set<TEntity>();
+
+            _query = _query.Where(predicate);
+            return this;
+        }
+
+        public BaseRepository<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> navigationProperty)
+        {
+            if (_query == null)
+                _query = GetDbContext().Set<TEntity>();
+
+            _query = _query.Include(navigationProperty);
+            return this;
+        }
+
+        //        public BaseRepository<TEntity> ThenInclude<TPreviousProperty, TProperty>(
+        //Expression<Func<TPreviousProperty, TProperty>> navigationProperty)
+        //        {
+        //            if (_query is IIncludableQueryable<TEntity, TPreviousProperty> includableQuery)
+        //            {
+        //                _query = includableQuery.ThenInclude(navigationProperty);
+        //            }
+        //            else
+        //            {
+        //                throw new InvalidOperationException("ThenInclude must be called after Include.");
+        //            }
+        //            return this;
+        //        }
+
+
+
         public IQueryable<TEntity> Query { get => _contextFactory.CreateDbContext().Set<TEntity>(); }
 
-        public async Task<List<TEntity>> GetAllAsync()
-        {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().ToListAsync();
-        }
+
+
 
         public List<TEntity> GetAll()
         {
-            using var context = _contextFactory.CreateDbContext();
-            return context.Set<TEntity>().ToList();
+            var result = GetDbContext().Set<TEntity>().ToList();
+            Dispose();
+            return result;
         }
 
-        public async Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<TEntity, TResult>> selector)
+        public async Task<List<TEntity>> GetAllAsync()
         {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().Select(selector).ToListAsync();
+            var result = await GetDbContext().Set<TEntity>().ToListAsync();
+            Dispose();
+            return result;
         }
 
-        public async Task<List<TResult>> SelectAllAsyncFiltered<TResult>(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, TResult>> selector)
+        //public async Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<TEntity, TResult>> selector)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return await context.Set<TEntity>().Select(selector).ToListAsync();
+        //}
+
+        //public async Task<List<TResult>> SelectAllAsyncFiltered<TResult>(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, TResult>> selector)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return await context.Set<TEntity>().Where(predicate).Select(selector).ToListAsync();
+        //}
+
+
+        public int Count()
         {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().Where(predicate).Select(selector).ToListAsync();
+            var result = GetDbContext().Set<TEntity>().Count();
+            Dispose();
+            return result;
         }
-
-        public async Task<int> CountAllAsync()
+        public async Task<int> CountAsync()
         {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().CountAsync();
+            var result = await GetDbContext().Set<TEntity>().CountAsync();
+            Dispose();
+            return result;
         }
 
-        public async Task<int> CountAllAsyncFiltered(Expression<Func<TEntity, bool>> selector)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().Where(selector).CountAsync();
-        }
+        //public async Task<int> CountAllAsyncFiltered(Expression<Func<TEntity, bool>> selector)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return await context.Set<TEntity>().Where(selector).CountAsync();
+        //}
 
-        public async Task<List<TEntity>> GetPaggingWithFilter(
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-            Expression<Func<TEntity, bool>>? filter,
-            List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
-            int pageSize = 10,
-            int pageIndex = 1)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            var qry = context.Set<TEntity>().AsQueryable();
 
-            if (includes != null)
-                foreach (var include in includes)
-                    qry = include(qry);
+        //public async Task<List<TEntity>> GetPaggingWithFilter(
+        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
+        //    Expression<Func<TEntity, bool>>? filter,
+        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
+        //    int pageSize = 10,
+        //    int pageIndex = 1)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    var qry = context.Set<TEntity>().AsQueryable();
 
-            if (filter != null)
-                qry = qry.Where(filter);
+        //    if (includes != null)
+        //        foreach (var include in includes)
+        //            qry = include(qry);
 
-            if (orderingInfo != null)
-                qry = orderingInfo(qry);
+        //    if (filter != null)
+        //        qry = qry.Where(filter);
 
-            if (pageSize != -1 && pageSize != 0)
-                qry = qry.Skip((pageIndex - 1) * pageSize).Take(pageSize);
+        //    if (orderingInfo != null)
+        //        qry = orderingInfo(qry);
 
-            return await qry.ToListAsync();
-        }
+        //    if (pageSize != -1 && pageSize != 0)
+        //        qry = qry.Skip((pageIndex - 1) * pageSize).Take(pageSize);
 
-        public async Task<List<TEntity>> GetWithFilter(
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-            Expression<Func<TEntity, bool>>? filter,
-            List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            var qry = context.Set<TEntity>().AsQueryable();
+        //    return await qry.ToListAsync();
+        //}
 
-            if (includes != null)
-                foreach (var include in includes)
-                    qry = include(qry);
+        //public async Task<List<TEntity>> GetWithFilter(
+        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
+        //    Expression<Func<TEntity, bool>>? filter,
+        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    var qry = context.Set<TEntity>().AsQueryable();
 
-            if (filter != null)
-                qry = qry.Where(filter);
+        //    if (includes != null)
+        //        foreach (var include in includes)
+        //            qry = include(qry);
 
-            if (orderingInfo != null)
-                qry = orderingInfo(qry);
+        //    if (filter != null)
+        //        qry = qry.Where(filter);
 
-            return await qry.ToListAsync();
-        }
+        //    if (orderingInfo != null)
+        //        qry = orderingInfo(qry);
 
-        public IQueryable<TEntity> GetWithFilterQueryable(
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-            Expression<Func<TEntity, bool>>? filter,
-            List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
-            int pageSize = 10,
-            int pageIndex = 1)
-        {
-            var context = _contextFactory.CreateDbContext(); // Note: Caller must dispose
-            var qry = context.Set<TEntity>().AsQueryable();
+        //    return await qry.ToListAsync();
+        //}
 
-            if (includes != null)
-                foreach (var include in includes)
-                    qry = include(qry);
+        //public IQueryable<TEntity> GetWithFilterQueryable(
+        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
+        //    Expression<Func<TEntity, bool>>? filter,
+        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
+        //    int pageSize = 10,
+        //    int pageIndex = 1)
+        //{
+        //    var context = _contextFactory.CreateDbContext(); // Note: Caller must dispose
+        //    var qry = context.Set<TEntity>().AsQueryable();
 
-            if (filter != null)
-                qry = qry.Where(filter);
+        //    if (includes != null)
+        //        foreach (var include in includes)
+        //            qry = include(qry);
 
-            if (orderingInfo != null)
-                qry = orderingInfo(qry);
+        //    if (filter != null)
+        //        qry = qry.Where(filter);
 
-            return qry; // Warning: Caller is responsible for disposal
-        }
+        //    if (orderingInfo != null)
+        //        qry = orderingInfo(qry);
 
-        public int Count(Expression<Func<TEntity, bool>> predicate)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            return context.Set<TEntity>().Count(predicate);
-        }
+        //    return qry; 
+        //}
 
-        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().FirstOrDefaultAsync(predicate);
-        }
 
-        public TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> predicate)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            return context.Set<TEntity>().FirstOrDefault(predicate);
-        }
 
         public bool Any(Expression<Func<TEntity, bool>> predicate)
         {
-            using var context = _contextFactory.CreateDbContext();
-            return context.Set<TEntity>().Any(predicate);
+            var result = GetDbContext().Set<TEntity>().Any(predicate);
+            Dispose();
+            return result;
+        }
+
+        public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            var result = await GetDbContext().Set<TEntity>().AnyAsync(predicate);
+            Dispose();
+            return result;
         }
 
         public void Add(TEntity entity)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().Add(entity);
             context.SaveChanges();
+            Dispose();
         }
+
         public async Task AddAsync(TEntity entity)
         {
-            using var context = _contextFactory.CreateDbContext();
-            await context.Set<TEntity>().AddAsync(entity);
-            await context.SaveChangesAsync();
+            await GetDbContext().AddAsync(entity);
+            await GetDbContext().SaveChangesAsync();
+            Dispose();
         }
 
-        public void Select(Expression<Func<TEntity, bool>> predicate)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
-        }
+        //public void Select(Expression<Func<TEntity, bool>> predicate)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
+        //}
 
-        public void Select(Func<TEntity, TEntity> predicate)
-        {
-            using var context = _contextFactory.CreateDbContext();
-            context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
-        }
+        //public void Select(Func<TEntity, TEntity> predicate)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
+        //}
 
         public void AddRange(IEnumerable<TEntity> entities)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().AddRange(entities);
             context.SaveChanges();
+            Dispose();
         }
         public async Task AddRangeAsync(IEnumerable<TEntity> entities)
         {
-            using var context = _contextFactory.CreateDbContext();
-            context.Set<TEntity>().AddRangeAsync(entities);
-            context.SaveChangesAsync();
+            var context = GetDbContext();
+            await context.Set<TEntity>().AddRangeAsync(entities);
+            await context.SaveChangesAsync();
+            Dispose();
         }
 
         public void Remove(TEntity entity)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().Remove(entity);
             context.SaveChanges();
+            Dispose();
         }
         public async Task RemoveAsync(TEntity entity)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().Remove(entity);
-            context.SaveChangesAsync();
+            await context.SaveChangesAsync();
+            Dispose();
         }
 
         public void RemoveRange(IEnumerable<TEntity> entities)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().RemoveRange(entities);
-            context.SaveChanges();
+            context.SaveChangesAsync();
+            Dispose();
         }
         public async Task RemoveRangeAsync(IEnumerable<TEntity> entities)
         {
-            using var context = _contextFactory.CreateDbContext();
+            var context = GetDbContext();
             context.Set<TEntity>().RemoveRange(entities);
             await context.SaveChangesAsync();
+            Dispose();
         }
 
-        public async Task<TEntity?> FindAsync(int id)
+        //public async Task<TEntity?> FindAsync(int id)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return await context.Set<TEntity>().FindAsync(id);
+        //}
+
+        public async Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> filter)
         {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().FindAsync(id);
+            TEntity? result = null;
+
+            if (_query == null)
+                result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstAsync(filter);
+            else
+                result = await _query.AsNoTracking().FirstAsync(filter);
+
+            Dispose();
+            return result;
         }
 
-        public async Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> filter,
-            List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null)
+
+        public TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> filter)
         {
-            using var context = _contextFactory.CreateDbContext();
-            var qry = context.Set<TEntity>().AsQueryable();
+            TEntity? result = null;
 
-            if (includes != null)
-                foreach (var include in includes)
-                    qry = include(qry);
+            if (_query == null)
+                result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault(filter);
+            else
+                result = _query.AsNoTracking().FirstOrDefault(filter);
 
-            return await qry.FirstAsync(filter);
+            Dispose();
+            return result;
         }
 
-        public async Task<List<TEntity>> GetFiltered(Expression<Func<TEntity, bool>> filter)
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter)
         {
-            using var context = _contextFactory.CreateDbContext();
-            return await context.Set<TEntity>().Where(filter).ToListAsync();
+            TEntity? result = null;
+
+            if (_query == null)
+                result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(filter);
+            else
+                result = await _query.AsNoTracking().FirstOrDefaultAsync(filter);
+            Dispose();
+            return result;
         }
 
-        public IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> expression)
+
+        //public async Task<List<TEntity>> GetFiltered(Expression<Func<TEntity, bool>> filter)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return await context.Set<TEntity>().Where(filter).ToListAsync();
+        //}
+
+        //public IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> expression)
+        //{
+        //    using var context = _contextFactory.CreateDbContext();
+        //    return context.Set<TEntity>().Where(expression).ToList();
+        //}
+
+
+        public List<TEntity> ToList()
         {
-            using var context = _contextFactory.CreateDbContext();
-            return context.Set<TEntity>().Where(expression).ToList();
+            List<TEntity>? result = null;
+
+            if (_query == null)
+                result = GetDbContext().Set<TEntity>().AsNoTracking().ToList();
+            else
+                result = _query.AsNoTracking().ToList();
+
+
+            Dispose();
+            return result;
+        }
+
+        public async Task<List<TEntity>> ToListAsync()
+        {
+            List<TEntity>? result = null;
+
+            if (_query == null)
+                result = await GetDbContext().Set<TEntity>().AsNoTracking().ToListAsync();
+            else
+                result = await _query.AsNoTracking().ToListAsync();
+
+
+            Dispose();
+            return result;
+        }
+
+
+
+
+        public void Dispose()
+        {
+            if (_ownsContext && _context != null)
+                _context.Dispose();
+
+            _query = null;
+            _context = null;
+            _ownsContext = true;
         }
     }
 }

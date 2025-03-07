@@ -11,14 +11,14 @@ namespace Business.Factories.Workers
 {
     public class TemplateSearchExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
 
         private byte[]? _resultImage = null;
 
         public TemplateSearchExecutionWorker(
-              IDataService dataService
+              IExecutionDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
             ) : base(dataService, systemService)
@@ -28,15 +28,12 @@ namespace Business.Factories.Workers
             _systemService = systemService;
         }
 
-        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution, Execution latestParentExecution)
+        public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
         {
-            if (parentExecution == null)
-                throw new ArgumentNullException(nameof(parentExecution));
-
             Execution execution = new Execution
             {
                 FlowStepId = flowStep.Id,
-                ParentExecutionId = latestParentExecution.Id,
+                ParentExecutionId = parentExecution.Id,
                 ParentLoopExecutionId = parentExecution.Id,
                 ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory,
                 LoopCount = parentExecution?.LoopCount == null ? 0 : parentExecution.LoopCount + 1

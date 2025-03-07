@@ -3,7 +3,6 @@ using Model.Models;
 using Business.Interfaces;
 using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
-using Model.Enums;
 using Business.Services.Interfaces;
 
 namespace StepinFlow.ViewModels.Pages.Executions
@@ -24,40 +23,14 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _execution = new Execution() { FlowStep = new FlowStep() };
         }
 
-        public void SetExecution(Execution execution)
+        public async Task SetExecution(Execution execution)
         {
+            Parents.Clear();
+
             Execution = execution;
-            Execution = _dataService.Executions.Query
-                .Where(x => x.Id == Execution.Id)
-                .Include(x => x.FlowStep.ParentTemplateSearchFlowStep)
-                .First();
+            //FlowStep? parentFloStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == execution.FlowStep.ParentTemplateSearchFlowStepId.Value );
+            //Parents.Add(parentFloStep);
 
-            GetParents(execution.FlowStepId);
-        }
-
-        private void GetParents(int? flowStepId)
-        {
-            if (!flowStepId.HasValue)
-                return;
-
-            FlowStep? parent = _dataService.FlowSteps.FirstOrDefault(x => x.Id == flowStepId.Value);
-
-            while (parent != null)
-            {
-                if (parent.Type == FlowStepTypesEnum.TEMPLATE_SEARCH)
-                    Parents.Add(parent);
-
-                if (parent.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH)
-                    Parents.Add(parent);
-
-                if (parent.Type == FlowStepTypesEnum.WAIT_FOR_TEMPLATE)
-                    Parents.Add(parent);
-
-                if (!parent.ParentFlowStepId.HasValue)
-                    return;
-
-                parent = _dataService.FlowSteps.FirstOrDefault(x => x.Id == parent.ParentFlowStepId.Value);
-            }
         }
     }
 }

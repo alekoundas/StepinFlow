@@ -18,6 +18,7 @@ namespace Business.Repository.Entities
 
         public async Task<List<Execution>> GetAllParentLoopExecutions(int executionId)
         {
+            var context = _contextFactory.CreateDbContext();
             List<Execution> parentLoopExecutions = new List<Execution>();
             Execution? currentExecution = await _dbContext.Executions
                 .AsNoTracking()
@@ -28,7 +29,7 @@ namespace Business.Repository.Entities
             {
                 parentLoopExecutions.Add(currentExecution);
 
-                currentExecution = await _dbContext.Executions
+                currentExecution = await context.Executions
                     .AsNoTracking()
                     .Include(x => x.FlowStep)
                     .FirstAsync(x => x.Id == currentExecution.ParentLoopExecutionId.Value);

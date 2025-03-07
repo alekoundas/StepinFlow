@@ -27,7 +27,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         }
 
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
 
@@ -56,6 +56,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
                 _timer.Tick += UpdateTimer;
                 _timer.Start();
             }
+            return Task.CompletedTask;
         }
     }
 }

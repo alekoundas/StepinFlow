@@ -1,4 +1,6 @@
-﻿using Business.Extensions;
+﻿using Business.DatabaseContext;
+using Business.Extensions;
+using Business.Helpers;
 using Business.Services.Interfaces;
 using Model.Enums;
 using Model.Models;
@@ -8,29 +10,47 @@ namespace Business.Factories.Workers
 {
     public class CommonExecutionWorker
     {
-        private readonly IDataService _dataService;
+        private readonly IExecutionDataService _dataService;
         private readonly ISystemService _systemService;
+        protected Dictionary<int, List<Execution>> _pendingExecutionLoops = new Dictionary<int, List<Execution>>();
 
-        public CommonExecutionWorker(IDataService dataService, ISystemService systemService)
+        public CommonExecutionWorker(IExecutionDataService dataService, ISystemService systemService)
         {
             _dataService = dataService;
             _systemService = systemService;
         }
+        public void Initialize(Dictionary<int, List<Execution>> pendingExecutionLoops)
+        {
+            _pendingExecutionLoops = pendingExecutionLoops;
+        }
+
+        public void SetDbContext(InMemoryDbContext dbContext)
+        {
+            _dataService.SetDbContext(dbContext);
+        }
+
 
         public async Task<Execution> CreateExecutionModelFlow(int flowId, Execution? _)
         {
             Execution execution = new Execution();
             execution.FlowId = flowId;
+
+
+            string folderName = "Execution - " + DateTime.Now.ToString("yy-MM-dd hh.mm");
+            string folderPath = Path.Combine(PathHelper.GetExecutionHistoryDataPath(), folderName);
+
+            execution.ExecutionFolderDirectory = folderPath;
             await _dataService.Executions.AddAsync(execution);
 
             return execution;
         }
 
-        public async virtual Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution, Execution _)
+        public async virtual Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
         {
             Execution execution = new Execution();
             execution.FlowStepId = flowStep.Id;
             execution.ParentExecutionId = parentExecution.Id;
+            execution.ParentLoopExecutionId = parentExecution.Id;
             execution.ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory;
             await _dataService.Executions.AddAsync(execution);
 
@@ -67,21 +87,21 @@ namespace Business.Factories.Workers
 
             //Application.Current.Dispatcher.Invoke(() =>
             //{
-                // Code to update ObservableCollection
-                FlowStep? uiFlowStep = treeviewFlows.First()
-                    .Descendants()
-                    .FirstOrDefault(x => x.Id == execution.FlowStepId);
+            // Code to update ObservableCollection
+            FlowStep? uiFlowStep = treeviewFlows.First()
+                .Descendants()
+                .FirstOrDefault(x => x.Id == execution.FlowStepId);
 
-                if (uiFlowStep != null)
-                {
-                    uiFlowStep.IsExpanded = true;
-                    uiFlowStep.IsSelected = true;
-                }
+            if (uiFlowStep != null)
+            {
+                uiFlowStep.IsExpanded = true;
+                uiFlowStep.IsSelected = true;
+            }
 
-                if (uiFlowStep?.ParentFlowStep != null)
-                    uiFlowStep.ParentFlowStep.IsExpanded = true;
-                if (uiFlowStep?.Flow != null)
-                    uiFlowStep.Flow.IsExpanded = true;
+            if (uiFlowStep?.ParentFlowStep != null)
+                uiFlowStep.ParentFlowStep.IsExpanded = true;
+            if (uiFlowStep?.Flow != null)
+                uiFlowStep.Flow.IsExpanded = true;
             //});
 
             return Task.CompletedTask;
@@ -100,7 +120,7 @@ namespace Business.Factories.Workers
 
         public void ClearEntityFrameworkChangeTracker()
         {
-            _dataService.Query.ChangeTracker.Clear();
+            //_dataService.Query.ChangeTracker.Clear();
         }
     }
 }

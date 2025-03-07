@@ -9,44 +9,44 @@ namespace Business.Repository.Entities
 {
     public class FlowStepRepository : BaseRepository<FlowStep>, IFlowStepRepository
     {
-        private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
-        private InMemoryDbContext _dbContext { get => _contextFactory.CreateDbContext(); }
-
         public FlowStepRepository(IDbContextFactory<InMemoryDbContext> contextFactory) : base(contextFactory)
         {
-            _contextFactory = contextFactory;
         }
 
 
 
         public async Task<FlowStep> GetIsNewSibling(int flowStepId)
         {
-            return await _dbContext.FlowSteps
+                var result = await GetDbContext().FlowSteps
                         .Include(x => x.ChildrenFlowSteps)
                         .Where(x => x.Id == flowStepId)
                         .Select(x => x.ChildrenFlowSteps.First(y => y.Type == FlowStepTypesEnum.NEW))
                         .FirstAsync();
+            Dispose();
+            return result;
         }
 
         public async Task<List<FlowStep>> GetSiblings(int flowStepId)
         {
             //TODO remove 1st call to db.
+            var context = GetDbContext();
             List<FlowStep> simplings = new List<FlowStep>();
-            FlowStep flowStep = await _dbContext.FlowSteps.AsNoTracking().FirstAsync(x => x.Id == flowStepId);
+            FlowStep flowStep = await context.FlowSteps.AsNoTracking().FirstAsync(x => x.Id == flowStepId);
 
             if (flowStep.ParentFlowStepId.HasValue)
-                simplings = await _dbContext.FlowSteps
+                simplings = await context.FlowSteps
                     .AsNoTracking()
                     .Where(x => x.Id == flowStep.ParentFlowStepId.Value)
                     .SelectMany(x => x.ChildrenFlowSteps)
                     .ToListAsync();
             else if (flowStep.FlowId.HasValue)
-                simplings = await _dbContext.Flows
+                simplings = await context.Flows
                     .AsNoTracking()
                     .Where(x => x.Id == flowStep.FlowId.Value)
                     .SelectMany(x => x.FlowStep.ChildrenFlowSteps)
                     .ToListAsync();
 
+            Dispose();
             return simplings;
         }
 
@@ -54,16 +54,17 @@ namespace Business.Repository.Entities
         {
             FlowStep? nextSimpling = null;
             IQueryable<FlowStep>? simplings = null;
-            FlowStep flowStep = await _dbContext.FlowSteps.AsNoTracking().FirstAsync(x => x.Id == flowStepId);
+            var context = GetDbContext();
+            FlowStep flowStep = await context.FlowSteps.AsNoTracking().FirstAsync(x => x.Id == flowStepId);
 
             if (flowStep.ParentFlowStepId.HasValue)
-                simplings = _dbContext.FlowSteps
+                simplings = context.FlowSteps
                     .AsNoTracking()
                     .Where(x => x.Id == flowStep.ParentFlowStepId.Value)
                     .SelectMany(x => x.ChildrenFlowSteps);
 
             else if (flowStep.FlowId.HasValue)
-                simplings = _dbContext.Flows
+                simplings = context.Flows
                     .AsNoTracking()
                     .Where(x => x.Id == flowStep.FlowId.Value)
                     .SelectMany(x => x.FlowStep.ChildrenFlowSteps);
@@ -75,12 +76,14 @@ namespace Business.Repository.Entities
                    .OrderBy(x => x.OrderingNum)
                    .FirstOrDefaultAsync();
 
+            Dispose();
             return nextSimpling;
         }
 
         public async Task<FlowStep?> GetNextChild(int flowStepId, ExecutionResultEnum? resultEnum)
         {
-            IQueryable<FlowStep> childrenFlowSteps = _dbContext.FlowSteps
+
+            IQueryable<FlowStep> childrenFlowSteps = GetDbContext().FlowSteps
                 .AsNoTracking()
                 .Where(x => x.Id == flowStepId)
                 .SelectMany(x => x.ChildrenFlowSteps);
@@ -102,13 +105,14 @@ namespace Business.Repository.Entities
                 .OrderBy(x => x.OrderingNum)
                 .FirstOrDefaultAsync();
 
+            Dispose();
             return nextChild;
         }
 
         public async Task<FlowStep> LoadAllExpandedChildren(FlowStep flowStep)
         {
-
-            flowStep = await _dbContext.FlowSteps
+            var context = GetDbContext();
+            flowStep = await context.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.Id == flowStep.Id)
                 .Include(x => x.FlowParameter)
@@ -126,7 +130,7 @@ namespace Business.Repository.Entities
                 FlowStep currentFlowStep = stack.Pop();
 
                 // Load its children from the database.
-                var childFlowSteps = await _dbContext.FlowSteps
+                var childFlowSteps = await context.FlowSteps
                     .AsNoTracking()
                     .Where(x => x.Id == currentFlowStep.Id)
                     .SelectMany(x => x.ChildrenFlowSteps)
@@ -152,7 +156,7 @@ namespace Business.Repository.Entities
                     // Add one more layer to make expander in ui visible.
                     else
                     {
-                        List<FlowStep> notexpandedFlowSteps = await _dbContext.FlowSteps
+                        List<FlowStep> notexpandedFlowSteps = await context.FlowSteps
                             .AsNoTracking()
                             .Where(x => x.Id == childFlowStep.Id)
                             .SelectMany(x => x.ChildrenFlowSteps)
@@ -162,12 +166,13 @@ namespace Business.Repository.Entities
                     }
             }
 
+            Dispose();
             return flowStep;
         }
 
         public async Task<FlowStep?> LoadAllClone(int id)
         {
-            FlowStep? flowStep = await _dbContext.FlowSteps
+            FlowStep? flowStep = await GetDbContext().FlowSteps
                 .Where(x => x.Id == id)
                    .Include(x => x.ChildrenTemplateSearchFlowSteps)
                    .Include(x => x.FlowParameter)
@@ -178,6 +183,7 @@ namespace Business.Repository.Entities
                 return null;
 
             await LoadAllChildrenExport(flowStep);
+            Dispose();
             return flowStep;
         }
 
@@ -195,7 +201,7 @@ namespace Business.Repository.Entities
                 var currentFlowStep = stack.Pop();
 
                 // Load its children from the database.
-                var childFlowSteps = await _dbContext.FlowSteps
+                var childFlowSteps = await GetDbContext().FlowSteps
                     .Where(x => x.Id == currentFlowStep.Id)
                     .SelectMany(x => x.ChildrenFlowSteps)
                     .Include(x => x.ChildrenTemplateSearchFlowSteps)
@@ -215,7 +221,7 @@ namespace Business.Repository.Entities
                     if (subFlowtep != null)
                         stack.Push(subFlowtep);
             }
-
+            Dispose();
             return flowStep;
         }
     }

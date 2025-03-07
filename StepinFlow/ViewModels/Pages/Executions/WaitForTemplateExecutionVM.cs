@@ -17,12 +17,13 @@ namespace StepinFlow.ViewModels.Pages.Executions
             _execution = new Execution() { FlowStep = new FlowStep() };
         }
 
-        public void SetExecution(Execution execution)
+        public Task SetExecution(Execution execution)
         {
             Execution = execution;
 
             if (execution.ResultImagePath != null)
                 ShowResultImage?.Invoke(execution.ResultImagePath);
+            return Task.CompletedTask;
         }
     }
 }
