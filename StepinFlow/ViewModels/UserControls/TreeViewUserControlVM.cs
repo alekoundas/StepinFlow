@@ -140,17 +140,24 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task ExpandAll()
         {
-            //_dataService.Query.ChangeTracker.Clear();
-            //List<Flow> flows = await _dataService.Flows.LoadAllExpanded();
-            //await _dataService.SaveChangesAsync();
+            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 1";
+            using (var dbContext = _dataService.CreateNewDbContext)
+            {
+                int rowsAffected = await dbContext.Database.ExecuteSqlRawAsync(sqlCommand);
+            }
+            _dataService.Dispose();
+
             await LoadFlows();
         }
 
         public async Task CollapseAll()
         {
-            //_dataService.Query.ChangeTracker.Clear();
-            //List<Flow> flows = await _dataService.Flows.LoadAllCollapsed();
-            //await _dataService.SaveChangesAsync();
+            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 0";
+            using (var dbContext = _dataService.CreateNewDbContext)
+            {
+                int rowsAffected = await dbContext.Database.ExecuteSqlRawAsync(sqlCommand);
+            }
+            _dataService.Dispose();
             await LoadFlows();
         }
 
