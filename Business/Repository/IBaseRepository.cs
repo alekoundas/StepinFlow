@@ -24,6 +24,9 @@ namespace Business.Repository
         BaseRepository<Flow> Select<TResult>(Expression<Func<TEntity, Flow>> selector);
         BaseRepository<FlowStep> Select<TResult>(Expression<Func<TEntity, FlowStep>> selector);
         BaseRepository<FlowParameter> Select<TResult>(Expression<Func<TEntity, FlowParameter>> selector);
+        BaseRepository<FlowStep> SelectMany<TResult>(Expression<Func<TEntity, IEnumerable<FlowStep>>> selector);
+        BaseRepository<FlowParameter> SelectMany<TResult>(Expression<Func<TEntity, IEnumerable<FlowParameter>>> selector);
+
 
         BaseRepository<TEntity> OrderBy<TKey>(Expression<Func<TEntity, TKey>> keySelector);
 

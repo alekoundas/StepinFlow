@@ -46,16 +46,23 @@ namespace Business.Services
             AppSettings.SetDbContext(dbContext);
 
         }
+        private InMemoryDbContext GetDbContext()
+        {
+            if (_dbContext == null)
+                _dbContext = _contextFactory.CreateDbContext();
+
+            return _dbContext;
+        }
 
 
         public async Task<int> SaveChangesAsync()
         {
-            return await _dbContext.SaveChangesAsync();
+            return await GetDbContext().SaveChangesAsync();
         }
 
         public int SaveChanges()
         {
-            return _dbContext.SaveChanges();
+            return GetDbContext().SaveChanges();
         }
 
         public void Update<TEntity>(TEntity model)
@@ -63,8 +70,8 @@ namespace Business.Services
             if (model == null)
                 return;
 
-            _dbContext.Entry(model).State = EntityState.Modified;
-            _dbContext.SaveChanges();
+            GetDbContext().Entry(model).State = EntityState.Modified;
+            GetDbContext().SaveChanges();
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
@@ -72,7 +79,7 @@ namespace Business.Services
             if (model == null)
                 return;
 
-            _dbContext.Entry(model).State = EntityState.Modified;
+            GetDbContext().Entry(model).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
         }
 
@@ -81,19 +88,18 @@ namespace Business.Services
         {
             foreach (var model in models)
                 if (model != null)
-                    if (_dbContext.Entry(model).State == EntityState.Detached)
-                        _dbContext.Entry(model).State = EntityState.Modified;
-            _dbContext.SaveChanges();
+                        GetDbContext().Entry(model).State = EntityState.Modified;
+            GetDbContext().SaveChanges();
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
         {
             foreach (var model in models)
                 if (model != null)
-                    if (_dbContext.Entry(model).State == EntityState.Detached)
-                        _dbContext.Entry(model).State = EntityState.Modified;
+                    if (GetDbContext().Entry(model).State == EntityState.Detached)
+                        GetDbContext().Entry(model).State = EntityState.Modified;
 
-            await _dbContext.SaveChangesAsync();
+            await GetDbContext().SaveChangesAsync();
         }
 
         public void Dispose()

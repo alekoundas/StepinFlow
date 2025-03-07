@@ -97,6 +97,38 @@ namespace Business.Repository
         }
 
 
+        public BaseRepository<FlowStep> SelectMany<TResult>(Expression<Func<TEntity, IEnumerable<FlowStep>>> selector)
+        {
+            if (_query == null)
+                _query = _context.Set<TEntity>();
+
+            var newQuery = _query.SelectMany(selector);
+            return new BaseRepository<FlowStep>(_contextFactory)
+            {
+                _context = _context,
+                _ownsContext = _ownsContext,
+                _query = newQuery
+            };
+        }
+
+        public BaseRepository<FlowParameter> SelectMany<TResult>(Expression<Func<TEntity, IEnumerable<FlowParameter>>> selector)
+        {
+            if (_query == null)
+                _query = _context.Set<TEntity>();
+
+            var newQuery = _query.SelectMany(selector);
+            return new BaseRepository<FlowParameter>(_contextFactory)
+            {
+                _context = _context,
+                _ownsContext = _ownsContext,
+                _query = newQuery
+            };
+        }
+
+
+
+
+
         public BaseRepository<TEntity> OrderBy<TKey>(Expression<Func<TEntity, TKey>> keySelector)
         {
             if (_query == null)

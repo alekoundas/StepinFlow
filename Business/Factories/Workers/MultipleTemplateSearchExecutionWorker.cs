@@ -65,7 +65,7 @@ namespace Business.Factories.Workers
             //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
             //  .FirstAsync(x => x.Id == execution.Id);
 
-            if (!_pendingExecutionLoops.ContainsKey(flowStep.ParentTemplateSearchFlowStepId.Value))
+            if (!_pendingExecutionLoops.ContainsKey(flowStep.Id))
                 _pendingExecutionLoops.Add(flowStep.Id, new List<Execution>() { execution });
             else
                 _pendingExecutionLoops[flowStep.Id].Add(execution);
