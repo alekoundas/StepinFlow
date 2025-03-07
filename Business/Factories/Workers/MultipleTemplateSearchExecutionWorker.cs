@@ -65,10 +65,7 @@ namespace Business.Factories.Workers
             //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
             //  .FirstAsync(x => x.Id == execution.Id);
 
-            if (!_pendingExecutionLoops.ContainsKey(flowStep.Id))
-                _pendingExecutionLoops.Add(flowStep.Id, new List<Execution>() { execution });
-            else
-                _pendingExecutionLoops[flowStep.Id].Add(execution);
+
 
             return execution;
         }
@@ -103,7 +100,9 @@ namespace Business.Factories.Workers
 
 
             byte[]? screenshot = null;
-            Execution? parentLoopExecution = _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].OrderByDescending(x => x.Id).FirstOrDefault();
+            Execution? parentLoopExecution = null;
+            if (_pendingExecutionLoops.ContainsKey(execution.FlowStep.ParentTemplateSearchFlowStepId.Value))
+                parentLoopExecution = _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].OrderByDescending(x => x.Id).FirstOrDefault();
 
             bool canUseParentResult =
                parentLoopExecution?.FlowStep?.IsLoop == true &&
@@ -135,6 +134,14 @@ namespace Business.Factories.Workers
 
             await _dataService.UpdateAsync(execution);
             _resultImage = result.ResultImage;
+
+
+
+            // Add execution to pending loop executions.
+            if (!_pendingExecutionLoops.ContainsKey(execution.FlowStep.ParentTemplateSearchFlowStepId.Value))
+                _pendingExecutionLoops.Add(execution.FlowStep.ParentTemplateSearchFlowStepId.Value, new List<Execution>() { execution });
+            else
+                _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Add(execution);
         }
 
         public async override Task<FlowStep?> GetNextChildFlowStep(Execution execution)
@@ -204,7 +211,7 @@ namespace Business.Factories.Workers
 
             // Get all completed children template flow steps.
             List<int> completedChildrenTemplateFlowStepIds = parentLoopExecutions
-                .Where(x => x.Result == ExecutionResultEnum.FAIL)
+                .Where(x => !x.FlowStep.IsLoop || (x.FlowStep.IsLoop && x.Result == ExecutionResultEnum.FAIL))
                 .Select(x => x.FlowStepId ?? 0)
                 .Where(x => x != 0)
                 .ToList();
