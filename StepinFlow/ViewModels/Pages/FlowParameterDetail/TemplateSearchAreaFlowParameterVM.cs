@@ -115,7 +115,6 @@ namespace StepinFlow.ViewModels.Pages.FlowParameterDetail
 
         public override async Task OnSave()
         {
-            _dataService.Query.ChangeTracker.Clear();
             // Edit mode
             if (FlowParameter.Id > 0)
             {

@@ -1,5 +1,4 @@
 ﻿using Business.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Model.Enums;
 using Model.Models;
 using Model.Structs;
@@ -19,7 +18,7 @@ namespace Business.Services
             _dataService = dataService;
 
 
-            _appSettings = _dataService.Query.AppSettings.ToList().ToDictionary(x => x.Key, x => x);
+            _appSettings = _dataService.AppSettings.ToList().ToDictionary(x => x.Key, x => x);
         }
 
 
@@ -71,13 +70,10 @@ namespace Business.Services
 
         private void UpdateSetting(AppSettingsEnum key, string value)
         {
-            _dataService.Query.ChangeTracker.Clear();
-
             AppSetting appSetting = _appSettings[key];
             appSetting.Value = value;
 
             _dataService.Update(appSetting);
-            _dataService.SaveChanges();
         }
     }
 }

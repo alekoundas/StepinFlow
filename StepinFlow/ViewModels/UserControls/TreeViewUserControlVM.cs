@@ -74,13 +74,9 @@ namespace StepinFlow.ViewModels.UserControls
             if (flowId > 0)
                 filters.Add(x => x.Id == flowId);
 
-            IQueryable<Flow> query = _dataService.Query.Flows
-                .AsNoTracking()
-                .Include(x => x.FlowStep)
-                .ThenInclude(x => x.ChildrenFlowSteps)
-                .ThenInclude(x => x.SubFlow)
-                .Include(x => x.FlowParameter)
-                .ThenInclude(x => x.ChildrenFlowParameters);
+            var query = _dataService.Flows
+                .Include(x => x.FlowStep.ChildrenFlowSteps)
+                .Include(x => x.FlowParameter.ChildrenFlowParameters);
 
             if (_loadFilters.Count > 0)
                 foreach (var filter in _loadFilters)
@@ -94,7 +90,6 @@ namespace StepinFlow.ViewModels.UserControls
 
 
             // Clear trackers from dbcontext and execute query.
-            _dataService.Query.ChangeTracker.Clear();
             await Task.Run(async () =>
             {
                 List<Flow> flows = await query.ToListAsync();
@@ -161,8 +156,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task ExpandAndSelectFlow(int id)
         {
-            _dataService.Query.ChangeTracker.Clear();
-            Flow? uiFlowStep = await _dataService.Flows.Query.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            Flow? uiFlowStep = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == id);
 
             if (uiFlowStep != null)
             {
@@ -176,8 +170,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task ExpandAndSelectFlowStep(int id)
         {
-            _dataService.Query.ChangeTracker.Clear();
-            FlowStep? uiFlowStep = await _dataService.FlowSteps.Query.FirstOrDefaultAsync(x => x.Id == id);
+            FlowStep? uiFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == id);
 
             if (uiFlowStep != null)
             {
@@ -197,8 +190,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task ExpandAndSelectFlowParameter(int id)
         {
-            _dataService.Query.ChangeTracker.Clear();
-            FlowParameter? uiFlowStep = await _dataService.FlowParameters.Query.FirstOrDefaultAsync(x => x.Id == id);
+            FlowParameter? uiFlowStep = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == id);
 
             if (uiFlowStep != null)
             {
@@ -249,54 +241,34 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnButtonPasteClick(FlowStep flowStep)
         {
-            _dataService.Query.ChangeTracker.Clear();
             FlowStep? clonedFlowStep = null;
-            int? parentId = flowStep.ParentFlowStepId ?? flowStep.FlowId ?? null;
+
             if (CoppiedFlowStepId.HasValue)
                 clonedFlowStep = await _cloneService.GetFlowStepClone(CoppiedFlowStepId.Value);
-            //clonedFlowStep = await _dataService.FlowSteps.GetFlowStepClone(CoppiedFlowStepId.Value);
 
             if (flowStep.ParentFlowStepId.HasValue && clonedFlowStep != null)
             {
-                //  Load the target parent.
-                FlowStep? targetParent = await _dataService.FlowSteps.Query
-                .Include(fs => fs.ChildrenFlowSteps)
-                .FirstOrDefaultAsync(fs => fs.Id == flowStep.ParentFlowStepId.Value);
+                FlowStep isNewSimpling = await _dataService.FlowSteps.GetIsNewSibling(flowStep.ParentFlowStepId.Value);
+                isNewSimpling.OrderingNum++;
+                await _dataService.UpdateAsync(isNewSimpling);
 
-                if (targetParent == null)
-                    return;
 
-                FlowStep isNewSimpling = await _dataService.FlowSteps.GetIsNewSibling(targetParent.Id);
                 clonedFlowStep.ParentFlowStepId = flowStep.ParentFlowStepId;
                 clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
-                isNewSimpling.OrderingNum++;
 
-                // Attach the cloned root to the target parent.
-                targetParent.ChildrenFlowSteps.Add(clonedFlowStep);
-                await _dataService.UpdateAsync(targetParent);
-
+                await _dataService.FlowSteps.AddAsync(clonedFlowStep);
             }
             else if (flowStep.FlowId.HasValue && clonedFlowStep != null)
             {
-                //  Load the target parent.
-                Flow? targetParent = await _dataService.Flows.Query
-                .Include(fs => fs.FlowStep.ChildrenFlowSteps)
-                .FirstOrDefaultAsync(fs => fs.Id == flowStep.FlowId.Value);
+                FlowStep isNewSimpling = await _dataService.Flows.GetIsNewSibling(flowStep.FlowId.Value);
+                isNewSimpling.OrderingNum++;
+                await _dataService.UpdateAsync(isNewSimpling);
 
-                if (targetParent == null)
-                    return;
-
-                FlowStep isNewSimpling = await _dataService.Flows.GetIsNewSibling(targetParent.Id);
                 clonedFlowStep.ParentFlowStepId = flowStep.ParentFlowStepId;
                 clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
-                isNewSimpling.OrderingNum++;
-
-                // Attach the cloned root to the target parent.
-                targetParent.FlowStep.ChildrenFlowSteps.Add(clonedFlowStep);
-                await _dataService.UpdateAsync(targetParent);
+                await _dataService.FlowSteps.AddAsync(clonedFlowStep);
             }
 
-            // Save changes.
             await LoadFlows();
         }
 
@@ -305,17 +277,16 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnFlowStepButtonDeleteClick(FlowStep flowStep)
         {
-            _dataService.Query.ChangeTracker.Clear();
             FlowStep? deleteFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStep.Id);
             if (deleteFlowStep != null)
                 await _dataService.FlowSteps.RemoveAsync(deleteFlowStep);
 
             await LoadFlows();
         }
+
         [RelayCommand]
         private async Task OnFlowParameterButtonDeleteClick(FlowParameter flowParameter)
         {
-            _dataService.Query.ChangeTracker.Clear();
             FlowParameter? deleteFlowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == flowParameter.Id);
             if (deleteFlowParameter != null)
                 await _dataService.FlowParameters.RemoveAsync(deleteFlowParameter);
@@ -327,7 +298,6 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnFlowButtonDeleteClick(Flow flow)
         {
-            _dataService.Query.ChangeTracker.Clear();
             Flow? deleteFlow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == flow.Id);
             if (deleteFlow != null)
                 await _dataService.Flows.RemoveAsync(deleteFlow);
@@ -339,7 +309,6 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnButtonUpClick(FlowStep flowStep)
         {
-            _dataService.Query.ChangeTracker.Clear();
             List<FlowStep> simplings = await _dataService.FlowSteps.GetSiblings(flowStep.Id);
             List<FlowStep> simplingsAbove = simplings
                 .Where(x => x.OrderingNum < flowStep.OrderingNum)
@@ -363,7 +332,6 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnButtonDownClick(FlowStep flowStep)
         {
-            _dataService.Query.ChangeTracker.Clear();
             List<FlowStep> simplings = await _dataService.FlowSteps.GetSiblings(flowStep.Id);
             List<FlowStep> simplingsBellow = simplings
                 .Where(x => x.OrderingNum > flowStep.OrderingNum)
@@ -430,10 +398,9 @@ namespace StepinFlow.ViewModels.UserControls
         [RelayCommand]
         private async Task OnExpanded(object eventParameter)
         {
-            _dataService.Query.ChangeTracker.Clear();
             if (eventParameter is FlowStep flowStep)
             {
-                FlowStep? updateFlowStep = await _dataService.FlowSteps.Query.AsNoTracking().FirstOrDefaultAsync(x => x.Id == flowStep.Id);
+                FlowStep? updateFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStep.Id);
                 if (updateFlowStep != null)
                 {
                     updateFlowStep.IsExpanded = true;
@@ -443,7 +410,7 @@ namespace StepinFlow.ViewModels.UserControls
             }
             else if (eventParameter is Flow flow)
             {
-                Flow? updateFlow = await _dataService.Flows.Query.AsNoTracking().FirstOrDefaultAsync(x => x.Id == flow.Id);
+                Flow? updateFlow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == flow.Id);
                 if (updateFlow != null)
                 {
                     updateFlow.IsExpanded = true;

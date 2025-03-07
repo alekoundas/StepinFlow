@@ -54,8 +54,7 @@ namespace StepinFlow.ViewModels.Pages
         {
             SelectedFlowParameter = null;
             TestResultImage = null;
-            FlowStep? flowStep = await _dataService.FlowSteps.Query
-                .AsNoTracking()
+            FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.FlowParameter)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
 
@@ -179,7 +178,6 @@ namespace StepinFlow.ViewModels.Pages
         }
         public override async Task OnSave()
         {
-            _dataService.Query.ChangeTracker.Clear();
             // Edit mode.
             if (FlowStep.Id > 0)
             {

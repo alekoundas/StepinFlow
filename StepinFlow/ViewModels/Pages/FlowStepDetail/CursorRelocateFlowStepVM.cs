@@ -104,7 +104,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task OnSave()
         {
-            _dataService.Query.ChangeTracker.Clear();
             // Edit mode
             if (FlowStep.Id > 0)
             {
@@ -156,8 +155,7 @@ namespace StepinFlow.ViewModels.Pages
             if (!flowStepId.HasValue)
                 return;
 
-            FlowStep? parent = _dataService.FlowSteps.Query
-                .AsNoTracking()
+            FlowStep? parent = _dataService.FlowSteps
                 .Include(x => x.ParentFlowStep)
                 .FirstOrDefault(x => x.Id == flowStepId.Value);
 
@@ -177,17 +175,15 @@ namespace StepinFlow.ViewModels.Pages
 
                 //Get parent flowStep
                 if (parent?.ParentFlowStepId != null)
-                    parent = _dataService.FlowSteps.Query
-                        .AsNoTracking()
+                    parent = _dataService.FlowSteps
                         .Include(x => x.ParentFlowStep)
                         .FirstOrDefault(x => x.Id == parent.ParentFlowStepId);
 
                 //Get parent SubflowStep
                 else if (parent?.FlowId != null)
-                    parent = _dataService.Flows.Query
-                        .AsNoTracking()
+                    parent = _dataService.Flows
                         .Where(x => x.Id == parent.FlowId)
-                        .Select(x => x.ParentSubFlowStep)
+                        .Select<FlowStep?>(x => x.ParentSubFlowStep)
                         .FirstOrDefault();
                 else
                     parent = null;

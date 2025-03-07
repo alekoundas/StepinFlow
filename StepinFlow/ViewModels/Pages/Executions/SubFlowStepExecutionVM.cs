@@ -32,7 +32,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
         public Task SetExecution(Execution execution)
         {
             Execution = execution;
-            SubFlows = new ObservableCollection<Flow>(_dataService.Flows.Query.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToList());
+            SubFlows = new ObservableCollection<Flow>(_dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToList());
 
             if (execution.FlowStep.SubFlowId.HasValue)
                 SelectedSubFlow = SubFlows.Where(x => x.Id == execution.FlowStep.SubFlowId).FirstOrDefault();

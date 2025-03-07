@@ -40,7 +40,7 @@ namespace StepinFlow.ViewModels.Pages
             _systemService = systemService;
             _cloneService = cloneService;
 
-            ComboBoxFlows = new ObservableCollection<Flow>(_dataService.Flows.GetAll());
+            ComboBoxFlows = new ObservableCollection<Flow>(_dataService.Flows.ToList());
         }
 
         [RelayCommand]
@@ -112,11 +112,11 @@ namespace StepinFlow.ViewModels.Pages
         [RelayCommand]
         private async Task OnButtonDeleteClick()
         {
-            var executions = _dataService.Executions.GetAll();
+            var executions = _dataService.Executions.ToList();
             await _dataService.Executions.RemoveRangeAsync(executions);
 
             // Reclaim free space in database file.
-            await _dataService.Query.Database.ExecuteSqlRawAsync("VACUUM;");
+            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("VACUUM;");
         }
 
 

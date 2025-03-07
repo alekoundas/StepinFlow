@@ -1,9 +1,11 @@
 ﻿using Business.DatabaseContext;
 using Business.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Model.Enums;
 using Model.Models;
 using System.Collections.ObjectModel;
+using System.Linq.Expressions;
 
 namespace Business.Repository.Entities
 {
@@ -13,6 +15,15 @@ namespace Business.Repository.Entities
         {
         }
 
+        //public FlowStepRepository Select<TEntity>(Expression<Func<TEntity, FlowStep>> selector)
+        //{
+        //    if (_query == null)
+        //        _query = GetDbContext().Set<FlowStep>();
+
+        //    _query = (IQueryable<TEntity>)_query.Select(selector);
+
+        //    return this;
+        //}
 
 
         public async Task<FlowStep> GetIsNewSibling(int flowStepId)

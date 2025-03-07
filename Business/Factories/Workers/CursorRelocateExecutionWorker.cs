@@ -29,7 +29,8 @@ namespace Business.Factories.Workers
             if (execution.FlowStep.ParentTemplateSearchFlowStepId != null)
                 while (currentExecution.ParentExecutionId != null)
                 {
-                    currentExecution = await _dataService.Executions.Query
+                    //TODO check if needed
+                    currentExecution = await _dataService.Executions
                         .Include(x => x.FlowStep)
                         .FirstAsync(x => x.Id == currentExecution.ParentExecutionId.Value);
 

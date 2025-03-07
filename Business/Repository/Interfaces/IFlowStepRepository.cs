@@ -1,5 +1,7 @@
-﻿using Model.Enums;
+﻿using Business.Repository.Entities;
+using Model.Enums;
 using Model.Models;
+using System.Linq.Expressions;
 
 namespace Business.Repository.Interfaces
 {

@@ -143,7 +143,7 @@ namespace StepinFlow.ViewModels.Pages
 
             stack.Push(initialFlowStep);
 
-            using (var context = _dataService.Query) // Replace with your DbContext
+            using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
             {
                 while (stack.Count > 0)
                 {
@@ -218,7 +218,7 @@ namespace StepinFlow.ViewModels.Pages
             if (ComboBoxSelectedFlow == null)
                 return;
 
-            List<Execution> executions = await _dataService.Executions.Query
+            List<Execution> executions = await _dataService.Executions
                 .Where(x => x.FlowId == ComboBoxSelectedFlow.Id)
                 .ToListAsync();
 
@@ -227,19 +227,19 @@ namespace StepinFlow.ViewModels.Pages
         }
 
 
-        private async Task LoadExecutionChild(Execution execution)
-        {
-            Execution? executionChild = await _dataService.Query.Executions
-                        .Where(x => x.Id == execution.Id)
-                        .Select(x => x.ChildExecution)
-                        .FirstOrDefaultAsync();
+        //private async Task LoadExecutionChild(Execution execution)
+        //{
+        //    Execution? executionChild = await _dataService.Executions
+        //                .Where(x => x.Id == execution.Id)
+        //                .Select(x => x.ChildExecution)
+        //                .FirstOrDefaultAsync();
 
-            if (executionChild == null)
-                return;
+        //    if (executionChild == null)
+        //        return;
 
-            execution.ChildExecution = executionChild;
-            await LoadExecutionChild(execution.ChildExecution);
-        }
+        //    execution.ChildExecution = executionChild;
+        //    await LoadExecutionChild(execution.ChildExecution);
+        //}
 
 
         [RelayCommand]
@@ -247,11 +247,11 @@ namespace StepinFlow.ViewModels.Pages
         {
 
             //Delete all.
-            var aa = _dataService.Executions.GetAll();
+            var aa = _dataService.Executions.ToList();
             await _dataService.Executions.RemoveRangeAsync(aa);
 
             // Reclaim free space in database file.
-            await _dataService.Query.Database.ExecuteSqlRawAsync("VACUUM;");
+            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("VACUUM;");
 
             //ComboBoxExecutionHistories.Remove(ComboBoxSelectedExecutionHistory);
             ComboBoxSelectedExecutionHistory = null;
@@ -293,12 +293,12 @@ namespace StepinFlow.ViewModels.Pages
                 return;
             }
 
-            Execution? execution = await _dataService.Executions.Query
+            Execution? execution = await _dataService.Executions
                 .Include(x => x.ChildExecution)
                 .FirstOrDefaultAsync(x => x.Id == ComboBoxSelectedExecutionHistory.Id);
 
-            if (execution != null)
-                await LoadExecutionChild(execution);
+            //if (execution != null)
+            //    await LoadExecutionChild(execution);
 
             List<Execution> executions = execution
                 .SelectRecursive(x => x.ChildExecution)

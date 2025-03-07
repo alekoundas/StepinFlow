@@ -1,18 +1,18 @@
 ﻿using Business.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using System;
+using Model.Models;
+using System.Linq;
 using System.Linq.Expressions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Business.Repository
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
-        private InMemoryDbContext? _context;
-        private bool _ownsContext = true;
-        private IQueryable<TEntity>? _query;
+        protected InMemoryDbContext? _context;
+        protected bool _ownsContext = true;
+        protected IQueryable<TEntity>? _query;
 
         public BaseRepository(IDbContextFactory<InMemoryDbContext> contextFactory)
         {
@@ -57,6 +57,71 @@ namespace Business.Repository
             return this;
         }
 
+        public BaseRepository<FlowStep> Select<TResult>(Expression<Func<TEntity, FlowStep>> selector)
+        {
+            if (_query == null)
+                _query = _context.Set<TEntity>();
+
+            var newQuery = _query.Select(selector);
+            return new BaseRepository<FlowStep>(_contextFactory)
+            {
+                _context = _context,
+                _ownsContext = _ownsContext,
+                _query = newQuery
+            };
+        }
+        public BaseRepository<Flow> Select<TResult>(Expression<Func<TEntity, Flow>> selector)
+        {
+            if (_query == null)
+                _query = _context.Set<TEntity>();
+
+            var newQuery = _query.Select(selector);
+            return new BaseRepository<Flow>(_contextFactory)
+            {
+                _context = _context,
+                _ownsContext = _ownsContext,
+                _query = newQuery
+            };
+        }
+
+        public BaseRepository<FlowParameter> Select<TResult>(Expression<Func<TEntity, FlowParameter>> selector)
+        {
+            if (_query == null)
+                _query = _context.Set<TEntity>();
+
+            var newQuery = _query.Select(selector);
+            return new BaseRepository<FlowParameter>(_contextFactory)
+            {
+                _context = _context,
+                _ownsContext = _ownsContext,
+                _query = newQuery
+            };
+        }
+
+        //public BaseRepository<TResult> Select<TResult>(Expression<Func<TEntity, TResult>> selector)
+        //{
+        //    if (_query == null)
+        //        _query = GetDbContext().Set<TEntity>();
+
+        //    var newQuery = _query.Select(selector);
+        //    return new BaseRepository<TResult>(_contextFactory)
+        //    {
+        //        _context = _context,
+        //        _ownsContext = _ownsContext,
+        //        _query = newQuery
+        //    };
+        //}
+
+        public BaseRepository<TEntity> OrderBy<TKey>(Expression<Func<TEntity, TKey>> keySelector)
+        {
+            if (_query == null)
+                _query = GetDbContext().Set<TEntity>();
+
+            _query = _query.OrderBy(keySelector);
+
+            return this;
+        }
+
         //        public BaseRepository<TEntity> ThenInclude<TPreviousProperty, TProperty>(
         //Expression<Func<TPreviousProperty, TProperty>> navigationProperty)
         //        {
@@ -77,20 +142,6 @@ namespace Business.Repository
 
 
 
-
-        public List<TEntity> GetAll()
-        {
-            var result = GetDbContext().Set<TEntity>().ToList();
-            Dispose();
-            return result;
-        }
-
-        public async Task<List<TEntity>> GetAllAsync()
-        {
-            var result = await GetDbContext().Set<TEntity>().ToListAsync();
-            Dispose();
-            return result;
-        }
 
         //public async Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<TEntity, TResult>> selector)
         //{
@@ -226,17 +277,6 @@ namespace Business.Repository
             Dispose();
         }
 
-        //public void Select(Expression<Func<TEntity, bool>> predicate)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
-        //}
-
-        //public void Select(Func<TEntity, TEntity> predicate)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    context.Set<TEntity>().Select(predicate); // Note: This doesn't persist; likely a mistake
-        //}
 
         public void AddRange(IEnumerable<TEntity> entities)
         {
@@ -303,27 +343,45 @@ namespace Business.Repository
         }
 
 
-        public TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> filter)
+        public TEntity? FirstOrDefault(Expression<Func<TEntity, bool>>? filter = null)
         {
             TEntity? result = null;
-
-            if (_query == null)
-                result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault(filter);
+            if (filter != null)
+            {
+                if (_query == null)
+                    result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault(filter);
+                else
+                    result = _query.AsNoTracking().FirstOrDefault(filter);
+            }
             else
-                result = _query.AsNoTracking().FirstOrDefault(filter);
+            {
+                if (_query == null)
+                    result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault();
+                else
+                    result = _query.AsNoTracking().FirstOrDefault();
+            }
 
             Dispose();
             return result;
         }
 
-        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter)
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>>? filter = null)
         {
             TEntity? result = null;
-
-            if (_query == null)
-                result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(filter);
+            if (filter != null)
+            {
+                if (_query == null)
+                    result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(filter);
+                else
+                    result = await _query.AsNoTracking().FirstOrDefaultAsync(filter);
+            }
             else
-                result = await _query.AsNoTracking().FirstOrDefaultAsync(filter);
+            {
+                if (_query == null)
+                    result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync();
+                else
+                    result = await _query.AsNoTracking().FirstOrDefaultAsync();
+            }
             Dispose();
             return result;
         }

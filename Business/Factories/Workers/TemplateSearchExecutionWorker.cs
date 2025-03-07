@@ -54,7 +54,7 @@ namespace Business.Factories.Workers
             if (execution.FlowStep == null || execution.FlowStep.TemplateMatchMode == null)
                 return;
             
-            FlowParameter? flowParameter = await _dataService.FlowParameters.Query
+            FlowParameter? flowParameter = await _dataService.FlowParameters
                 .Where(x => x.Id == execution.FlowStep.FlowParameterId)
                 .FirstOrDefaultAsync();
 
@@ -85,7 +85,7 @@ namespace Business.Factories.Workers
             // New if previous doenst exists.
             // Get previous one if exists and is loop with RemoveTemplateFromResult = true.
             byte[]? screenshot = null;
-            Execution? parentLoopExecution = await _dataService.Executions.Query
+            Execution? parentLoopExecution = await _dataService.Executions
                 .Include(x => x.FlowStep)
                 .FirstOrDefaultAsync(x => x.Id == execution.ParentLoopExecutionId);
 

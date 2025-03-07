@@ -5,7 +5,7 @@ namespace Business.Services.Interfaces
 {
     public interface IDataService : IDisposable
     {
-        InMemoryDbContext Query { get; }
+        InMemoryDbContext CreateNewDbContext { get; }
         void SetDbContext(InMemoryDbContext dbContext);
 
 

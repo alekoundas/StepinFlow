@@ -1,5 +1,5 @@
 ﻿using Business.DatabaseContext;
-using Microsoft.EntityFrameworkCore.Query;
+using Model.Models;
 using System.Linq.Expressions;
 
 namespace Business.Repository
@@ -15,16 +15,18 @@ namespace Business.Repository
         //BaseRepository<TEntity> ThenInclude<TPreviousProperty, TProperty>(Expression<Func<TPreviousProperty, TProperty>> navigationProperty);
 
 
-        IQueryable<TEntity> Query { get; }
+        //IQueryable<TEntity> Query { get; }
         BaseRepository<TEntity> SetDbContext(InMemoryDbContext context);
         BaseRepository<TEntity> Where(Expression<Func<TEntity, bool>> predicate);
         BaseRepository<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> navigationProperty);
 
+        //BaseRepository<TEntity> Select<TSource, TResult>(Func<TEntity, TResult> selector);
+        BaseRepository<Flow> Select<TResult>(Expression<Func<TEntity, Flow>> selector);
+        BaseRepository<FlowStep> Select<TResult>(Expression<Func<TEntity, FlowStep>> selector);
+        BaseRepository<FlowParameter> Select<TResult>(Expression<Func<TEntity, FlowParameter>> selector);
 
+        BaseRepository<TEntity> OrderBy<TKey>(Expression<Func<TEntity, TKey>> keySelector);
 
-        //Excell reflection call
-        List<TEntity> GetAll();
-        Task<List<TEntity>> GetAllAsync();
 
         int Count();
         Task<int> CountAsync();
@@ -69,11 +71,10 @@ namespace Business.Repository
         void RemoveRange(IEnumerable<TEntity> entities);
         Task RemoveRangeAsync(IEnumerable<TEntity> entities);
 
-        //IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> expression);
 
         Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> filter);
-        TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> predicate);
-        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
+        TEntity? FirstOrDefault(Expression<Func<TEntity, bool>>? predicate);
+        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>>? predicate);
 
         List<TEntity> ToList();
         Task<List<TEntity>> ToListAsync();

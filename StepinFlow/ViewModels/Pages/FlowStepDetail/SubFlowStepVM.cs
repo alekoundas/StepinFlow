@@ -32,7 +32,7 @@ namespace StepinFlow.ViewModels.Pages
         public override async Task LoadFlowStepId(int flowStepId)
         {
             IsEnabled = false;
-            SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Query.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
+            SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
 
             FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStepId);
             if (flowStep != null)
@@ -45,7 +45,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
-            SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Query.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
+            SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
             FlowStep = newFlowStep;
             IsEnabled = true;
         }
@@ -57,8 +57,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task OnSave()
         {
-            _dataService.Query.ChangeTracker.Clear();
-
             // Edit is disabled.
             // Edit mode
             if (FlowStep.Id > 0)

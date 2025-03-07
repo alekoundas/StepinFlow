@@ -8,8 +8,7 @@ namespace Business.Services
     public class DataService : IDataService, IDisposable
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
-        public InMemoryDbContext Query { get => _contextFactory.CreateDbContext(); }
-        //public InMemoryDbContext Query { get; set; }
+        public InMemoryDbContext CreateNewDbContext { get => _contextFactory.CreateDbContext(); }
         private InMemoryDbContext _dbContext { get; set; }
 
         public IFlowRepository Flows { get; set; }
@@ -28,7 +27,6 @@ namespace Business.Services
         {
             _contextFactory = contextFactory;
             _dbContext = _contextFactory.CreateDbContext();
-            //Query = _dbContext;
 
 
             Flows = flowRepository;
@@ -47,7 +45,6 @@ namespace Business.Services
             Executions.SetDbContext(dbContext);
             AppSettings.SetDbContext(dbContext);
 
-            //Query = dbContext;
         }
 
 

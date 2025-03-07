@@ -26,15 +26,12 @@ namespace Business.Factories.Workers
 
         public async override Task<FlowStep?> GetNextChildFlowStep(Execution execution)
         {
-            FlowStep? nextFlowStep = await _dataService.FlowSteps.Query
-                .Where(x=>x.FlowId == execution.FlowId)
-                .SelectMany(x=>x.ChildrenFlowSteps)
+            FlowStep? nextFlowStep = await _dataService.FlowSteps
+                .Where(x => x.ParentFlowStep!.ParentFlowStep!.FlowId == execution.FlowId)
                 .Where(x => x.Type != FlowStepTypesEnum.NEW)
-                .OrderBy(x=>x.OrderingNum)
+                .OrderBy(x => x.OrderingNum)
                 .FirstOrDefaultAsync();
 
-            var nextFlowStep2 = await _dataService.FlowSteps.Query
-              .Where(x => x.FlowId == execution.FlowId).ToListAsync();
 
             //TODO return error message 
             if (nextFlowStep == null)

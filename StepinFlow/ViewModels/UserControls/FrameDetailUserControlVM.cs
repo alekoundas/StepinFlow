@@ -166,16 +166,12 @@ namespace StepinFlow.ViewModels.UserControls
         public async Task NavigateToFlowStep(int id)
         {
             // Navigate to existing flow step.
-            FlowStepTypesEnum? Type = await _dataService.FlowSteps.Query
-                .AsNoTracking()
-                .Where(x => x.Id == id)
-                .Select(x => x.Type)
-                .FirstOrDefaultAsync();
+            FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == id);
 
-            if (Type != null)
+            if (flowStep?.Type != null)
             {
                 IsEnabled = false;
-                SelectedFlowStepType = Type.Value;
+                SelectedFlowStepType = flowStep.Type;
                 FlowStepVisibility = Visibility.Visible;
                 FlowVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Collapsed;
@@ -186,36 +182,27 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task NavigateToFlowParameter(int id)
         {
-            FlowParameterTypesEnum? type = await _dataService.FlowParameters.Query
-                .AsNoTracking()
-                .Where(x => x.Id == id)
-                .Select(x => x.Type)
-                .FirstOrDefaultAsync();
+            FlowParameter? flowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == id);
 
-            if (type != null)
+            if (flowParameter?.Type != null)
             {
                 IsEnabled = false;
-                SelectedFlowParameterType = type.Value;
+                SelectedFlowParameterType = flowParameter.Type;
                 FlowStepVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Visible;
                 FlowVisibility = Visibility.Collapsed;
                 NavigateToFlowParameterDetailPage(id);
             }
-
         }
         public async Task NavigateToFlow(int id)
         {
             // Navigate to existing flow.
-            FlowTypesEnum? flowType = await _dataService.Flows.Query
-                .AsNoTracking()
-                .Where(x => x.Id == id)
-                .Select(x => x.Type)
-                .FirstOrDefaultAsync();
+            Flow? flow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == id);
 
-            if (flowType != null)
+            if (flow?.Type != null)
             {
                 IsEnabled = false;
-                SelectedFlowType = flowType.Value;
+                SelectedFlowType = flow.Type;
                 FlowStepVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Collapsed;
                 FlowVisibility = Visibility.Visible;

@@ -25,8 +25,7 @@ namespace Business.Factories.Workers
             if (!execution.FlowStep.ParentTemplateSearchFlowStepId.HasValue)
                 return await Task.FromResult<FlowStep?>(null);
 
-            FlowStep? nextFlowStep = await _dataService.FlowSteps.Query
-                .AsNoTracking()
+            FlowStep? nextFlowStep = await _dataService.FlowSteps
                 .FirstOrDefaultAsync(x => x.Id == execution.FlowStep.ParentTemplateSearchFlowStepId.Value);
 
             //TODO return error message 

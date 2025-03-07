@@ -59,8 +59,7 @@ namespace StepinFlow.ViewModels.Pages
         {
             SelectedFlowParameter = null;
             TestResultImage = null;
-            FlowStep? flowStep = await _dataService.FlowSteps.Query
-                .AsNoTracking()
+            FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.ChildrenTemplateSearchFlowSteps)
                 .Include(x => x.FlowParameter)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
@@ -260,7 +259,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task OnSave()
         {
-            _dataService.Query.ChangeTracker.Clear();
             // Remove flow steps that dont contain a template image.
             List<FlowStep> templateFlowSteps = ChildrenTemplateSearchFlowSteps
                 .Where(x => x.TemplateImage == null)
@@ -349,8 +347,7 @@ namespace StepinFlow.ViewModels.Pages
 
 
 
-            List<FlowStep> flowSteps = await _dataService.FlowSteps.Query
-                .AsNoTracking()
+            List<FlowStep> flowSteps = await _dataService.FlowSteps
                 .Where(x => x.ParentTemplateSearchFlowStepId == FlowStep.Id)
                 .Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD)
                 .ToListAsync();
