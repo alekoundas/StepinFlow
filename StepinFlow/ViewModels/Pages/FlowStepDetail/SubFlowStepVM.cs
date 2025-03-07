@@ -42,7 +42,7 @@ namespace StepinFlow.ViewModels.Pages
                 SelectedSubFlow = SubFlows.FirstOrDefault(x => x.Id == FlowStep.SubFlowId);
 
         }
-
+         
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
             SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());

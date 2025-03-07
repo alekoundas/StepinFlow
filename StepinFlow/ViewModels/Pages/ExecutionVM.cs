@@ -201,6 +201,7 @@ namespace StepinFlow.ViewModels.Pages
                     await tranasaction.CommitAsync();
                     tranasaction.Dispose();
                 }
+                _dataService.Dispose();
             }
         }
 

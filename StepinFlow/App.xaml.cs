@@ -6,6 +6,7 @@
 using Business.DatabaseContext;
 using Business.Factories;
 using Business.Factories.Workers;
+using Business.Repository;
 using Business.Repository.Entities;
 using Business.Repository.Interfaces;
 using Business.Services;
@@ -83,11 +84,11 @@ namespace StepinFlow
                 services.AddSingleton<IWindowStateService, WindowStateService>();
 
                 // Repository
-                services.AddScoped<IFlowRepository, FlowRepository>();
-                services.AddScoped<IFlowStepRepository, FlowStepRepository>();
-                services.AddScoped<IExecutionRepository, ExecutionRepository>();
-                services.AddScoped<IAppSettingRepository, AppSettingRepository>();
-                services.AddScoped<IFlowParameterRepository, FlowParameterRepository>();
+                services.AddTransient<IFlowRepository, FlowRepository>();
+                services.AddTransient<IFlowStepRepository, FlowStepRepository>();
+                services.AddTransient<IExecutionRepository, ExecutionRepository>();
+                services.AddTransient<IAppSettingRepository, AppSettingRepository>();
+                services.AddTransient<IFlowParameterRepository, FlowParameterRepository>();
 
                 // DB context
                 services.AddDbContextFactory<InMemoryDbContext>();

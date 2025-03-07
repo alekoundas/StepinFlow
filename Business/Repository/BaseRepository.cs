@@ -1,8 +1,6 @@
 ﻿using Business.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using Model.Models;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace Business.Repository
@@ -28,7 +26,7 @@ namespace Business.Repository
             return _context;
         }
 
-
+        //TODO rename this
         public BaseRepository<TEntity> SetDbContext(InMemoryDbContext context)
         {
             if (_context != null && _ownsContext)
@@ -57,6 +55,7 @@ namespace Business.Repository
             return this;
         }
 
+        //TODO: Find a way to combine Select methods.
         public BaseRepository<FlowStep> Select<TResult>(Expression<Func<TEntity, FlowStep>> selector)
         {
             if (_query == null)
@@ -83,7 +82,6 @@ namespace Business.Repository
                 _query = newQuery
             };
         }
-
         public BaseRepository<FlowParameter> Select<TResult>(Expression<Func<TEntity, FlowParameter>> selector)
         {
             if (_query == null)
@@ -98,19 +96,6 @@ namespace Business.Repository
             };
         }
 
-        //public BaseRepository<TResult> Select<TResult>(Expression<Func<TEntity, TResult>> selector)
-        //{
-        //    if (_query == null)
-        //        _query = GetDbContext().Set<TEntity>();
-
-        //    var newQuery = _query.Select(selector);
-        //    return new BaseRepository<TResult>(_contextFactory)
-        //    {
-        //        _context = _context,
-        //        _ownsContext = _ownsContext,
-        //        _query = newQuery
-        //    };
-        //}
 
         public BaseRepository<TEntity> OrderBy<TKey>(Expression<Func<TEntity, TKey>> keySelector)
         {
@@ -122,38 +107,13 @@ namespace Business.Repository
             return this;
         }
 
-        //        public BaseRepository<TEntity> ThenInclude<TPreviousProperty, TProperty>(
-        //Expression<Func<TPreviousProperty, TProperty>> navigationProperty)
-        //        {
-        //            if (_query is IIncludableQueryable<TEntity, TPreviousProperty> includableQuery)
-        //            {
-        //                _query = includableQuery.ThenInclude(navigationProperty);
-        //            }
-        //            else
-        //            {
-        //                throw new InvalidOperationException("ThenInclude must be called after Include.");
-        //            }
-        //            return this;
-        //        }
-
-
-
-        public IQueryable<TEntity> Query { get => _contextFactory.CreateDbContext().Set<TEntity>(); }
 
 
 
 
-        //public async Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<TEntity, TResult>> selector)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    return await context.Set<TEntity>().Select(selector).ToListAsync();
-        //}
 
-        //public async Task<List<TResult>> SelectAllAsyncFiltered<TResult>(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, TResult>> selector)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    return await context.Set<TEntity>().Where(predicate).Select(selector).ToListAsync();
-        //}
+
+
 
 
         public int Count()
@@ -333,7 +293,7 @@ namespace Business.Repository
         {
             TEntity? result = null;
 
-            if (_query == null)
+            if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                 result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstAsync(filter);
             else
                 result = await _query.AsNoTracking().FirstAsync(filter);
@@ -348,14 +308,14 @@ namespace Business.Repository
             TEntity? result = null;
             if (filter != null)
             {
-                if (_query == null)
+                if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                     result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault(filter);
                 else
                     result = _query.AsNoTracking().FirstOrDefault(filter);
             }
             else
             {
-                if (_query == null)
+                if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                     result = GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefault();
                 else
                     result = _query.AsNoTracking().FirstOrDefault();
@@ -370,14 +330,14 @@ namespace Business.Repository
             TEntity? result = null;
             if (filter != null)
             {
-                if (_query == null)
+                if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                     result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(filter);
                 else
                     result = await _query.AsNoTracking().FirstOrDefaultAsync(filter);
             }
             else
             {
-                if (_query == null)
+                if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                     result = await GetDbContext().Set<TEntity>().AsNoTracking().FirstOrDefaultAsync();
                 else
                     result = await _query.AsNoTracking().FirstOrDefaultAsync();
@@ -404,7 +364,7 @@ namespace Business.Repository
         {
             List<TEntity>? result = null;
 
-            if (_query == null)
+            if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                 result = GetDbContext().Set<TEntity>().AsNoTracking().ToList();
             else
                 result = _query.AsNoTracking().ToList();
@@ -418,7 +378,7 @@ namespace Business.Repository
         {
             List<TEntity>? result = null;
 
-            if (_query == null)
+            if (_query == null || _context == null || _context.Database.GetDbConnection() == null)
                 result = await GetDbContext().Set<TEntity>().AsNoTracking().ToListAsync();
             else
                 result = await _query.AsNoTracking().ToListAsync();
@@ -431,14 +391,22 @@ namespace Business.Repository
 
 
 
-        public void Dispose()
+        public void Dispose(bool forceDispose = false)
         {
+            if (forceDispose)
+            {
+                if (_context != null)
+                    _context.Dispose();
+                _context = null;
+            }
+
             if (_ownsContext && _context != null)
+            {
                 _context.Dispose();
+                _context = null;
+            }
 
             _query = null;
-            _context = null;
-            _ownsContext = true;
         }
     }
 }

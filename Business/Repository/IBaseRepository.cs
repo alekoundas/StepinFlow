@@ -81,5 +81,6 @@ namespace Business.Repository
 
         //void Select(Func<TEntity, TEntity> predicate);
         //void Select(Expression<Func<TEntity, bool>> predicate);
+        void Dispose(bool forceDispose = false);
     }
 }

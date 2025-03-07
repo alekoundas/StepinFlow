@@ -151,42 +151,48 @@ namespace StepinFlow.ViewModels.Pages
 
         private void GetParents(int? flowStepId)
         {
-            Parents = new ObservableCollection<FlowStep>();
-            if (!flowStepId.HasValue)
-                return;
 
-            FlowStep? parent = _dataService.FlowSteps
-                .Include(x => x.ParentFlowStep)
-                .FirstOrDefault(x => x.Id == flowStepId.Value);
-
-            while (parent != null)
+            using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
             {
-                switch (parent.Type)
+                _dataService.SetDbContext(context);
+                Parents = new ObservableCollection<FlowStep>();
+                if (!flowStepId.HasValue)
+                    return;
+
+                FlowStep? parent = _dataService.FlowSteps
+                    .Include(x => x.ParentFlowStep)
+                    .FirstOrDefault(x => x.Id == flowStepId.Value);
+
+                while (parent != null)
                 {
-                    case FlowStepTypesEnum.TEMPLATE_SEARCH:
-                    case FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH:
-                    case FlowStepTypesEnum.WAIT_FOR_TEMPLATE:
-                        Parents.Add(parent);
-                        break;
-                    case FlowStepTypesEnum.FAILURE: // Skip Parent if flowStep is of type: Fail.
-                        parent = parent.ParentFlowStep;
-                        break;
+                    switch (parent.Type)
+                    {
+                        case FlowStepTypesEnum.TEMPLATE_SEARCH:
+                        case FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH:
+                        case FlowStepTypesEnum.WAIT_FOR_TEMPLATE:
+                            Parents.Add(parent);
+                            break;
+                        case FlowStepTypesEnum.FAILURE: // Skip Parent if flowStep is of type: Fail.
+                            parent = parent.ParentFlowStep;
+                            break;
+                    }
+
+                    //Get parent flowStep
+                    if (parent?.ParentFlowStepId != null)
+                        parent = _dataService.FlowSteps
+                            .Include(x => x.ParentFlowStep)
+                            .FirstOrDefault(x => x.Id == parent.ParentFlowStepId);
+
+                    //Get parent SubflowStep
+                    else if (parent?.FlowId != null)
+                        parent = _dataService.Flows
+                            .Where(x => x.Id == parent.FlowId)
+                            .Select<FlowStep?>(x => x.ParentSubFlowStep)
+                            .FirstOrDefault();
+                    else
+                        parent = null;
                 }
-
-                //Get parent flowStep
-                if (parent?.ParentFlowStepId != null)
-                    parent = _dataService.FlowSteps
-                        .Include(x => x.ParentFlowStep)
-                        .FirstOrDefault(x => x.Id == parent.ParentFlowStepId);
-
-                //Get parent SubflowStep
-                else if (parent?.FlowId != null)
-                    parent = _dataService.Flows
-                        .Where(x => x.Id == parent.FlowId)
-                        .Select<FlowStep?>(x => x.ParentSubFlowStep)
-                        .FirstOrDefault();
-                else
-                    parent = null;
+                _dataService.Dispose();
             }
         }
     }

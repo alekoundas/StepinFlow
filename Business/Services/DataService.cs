@@ -99,6 +99,11 @@ namespace Business.Services
         public void Dispose()
         {
             _dbContext.Dispose();
+            Flows.Dispose(true);
+            FlowSteps.Dispose(true);
+            FlowParameters.Dispose(true);
+            Executions.Dispose(true);
+            AppSettings.Dispose(true);
         }
     }
 }
