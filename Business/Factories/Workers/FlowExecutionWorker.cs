@@ -33,13 +33,6 @@ namespace Business.Factories.Workers
                 .OrderBy(x => x.OrderingNum)
                 .FirstOrDefaultAsync();
 
-      //      FlowStep? nextFlowStep = await _dataService.FlowSteps
-      //.Where(x => x.ParentFlowStep!.ParentFlowStep!.FlowId == execution.FlowId)
-      //.Where(x => x.Type != FlowStepTypesEnum.NEW)
-      //.OrderBy(x => x.OrderingNum)
-      //.FirstOrDefaultAsync();
-
-
             //TODO return error message 
             if (nextFlowStep == null)
                 return null;

@@ -64,7 +64,6 @@ namespace Business.Services
         public int SaveChanges()
         {
             return GetDbContext().SaveChanges();
-            _dbContext.Dispose();
         }
 
         public void Update<TEntity>(TEntity model)
@@ -74,8 +73,6 @@ namespace Business.Services
 
             GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
-            GetDbContext().Dispose();
-            _dbContext = null;
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
@@ -85,8 +82,6 @@ namespace Business.Services
 
             GetDbContext().Entry(model).State = EntityState.Modified;
             await GetDbContext().SaveChangesAsync();
-            GetDbContext().Dispose();
-            _dbContext = null;
         }
 
 
@@ -96,8 +91,6 @@ namespace Business.Services
                 if (model != null)
                         GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
-            GetDbContext().Dispose();
-            _dbContext = null;
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
@@ -108,8 +101,6 @@ namespace Business.Services
                         GetDbContext().Entry(model).State = EntityState.Modified;
 
             await GetDbContext().SaveChangesAsync();
-            GetDbContext().Dispose();
-            _dbContext = null;
         }
 
         public void Dispose()

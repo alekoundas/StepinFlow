@@ -248,23 +248,21 @@ namespace StepinFlow.ViewModels.UserControls
             if (flowStep.ParentFlowStepId.HasValue && clonedFlowStep != null)
             {
                 FlowStep isNewSimpling = await _dataService.FlowSteps.GetIsNewSibling(flowStep.ParentFlowStepId.Value);
+                clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
 
-
                 clonedFlowStep.ParentFlowStepId = flowStep.ParentFlowStepId;
-                clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
-
                 await _dataService.FlowSteps.AddAsync(clonedFlowStep);
             }
             else if (flowStep.FlowId.HasValue && clonedFlowStep != null)
             {
                 FlowStep isNewSimpling = await _dataService.Flows.GetIsNewSibling(flowStep.FlowId.Value);
+                clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
 
                 clonedFlowStep.ParentFlowStepId = flowStep.ParentFlowStepId;
-                clonedFlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 await _dataService.FlowSteps.AddAsync(clonedFlowStep);
             }
 
@@ -417,6 +415,17 @@ namespace StepinFlow.ViewModels.UserControls
                     await _dataService.UpdateAsync(updateFlow);
                 }
             }
+            else if (eventParameter is FlowParameter flowParameter)
+            {
+                FlowParameter? updateFlowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == flowParameter.Id);
+                if (updateFlowParameter != null)
+                {
+                    updateFlowParameter.IsExpanded = true;
+                    updateFlowParameter.IsSelected = true;
+                    await _dataService.UpdateAsync(updateFlowParameter);
+                }
+            }
+
 
             await LoadFlows();
         }

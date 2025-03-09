@@ -123,7 +123,8 @@ namespace StepinFlow.ViewModels.Pages
 
                     nextFlowStep = await flowWorker.GetNextChildFlowStep(flowExecution);
                     await ExecuteStepLoop(nextFlowStep, flowExecution);
-                    await flowWorker.SetExecutionModelStateComplete(flowExecution);
+                    //TODO: Enable this
+                    //await flowWorker.SetExecutionModelStateComplete(flowExecution);
                     _timer.Stop();
                     Status = ExecutionStatusEnum.COMPLETED.ToString();
 

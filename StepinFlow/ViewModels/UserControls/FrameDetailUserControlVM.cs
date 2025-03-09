@@ -117,7 +117,7 @@ namespace StepinFlow.ViewModels.UserControls
             _executionFlowStepPageFactory = new Dictionary<FlowStepTypesEnum, Lazy<IDetailPage>>
             {
                 { FlowStepTypesEnum.TEMPLATE_SEARCH, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<TemplateSearchExecutionPage>()) },
-                { FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<MultipleTemplateSearchExecutionPage>()) },
+                { FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<MultipleTemplateSearchExecutionPage>()) },
                 { FlowStepTypesEnum.WAIT_FOR_TEMPLATE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WaitForTemplateExecutionPage>()) },
                 { FlowStepTypesEnum.CURSOR_RELOCATE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<CursorRelocateExecutionPage>()) },
                 { FlowStepTypesEnum.CURSOR_CLICK, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<CursorClickExecutionPage>()) },

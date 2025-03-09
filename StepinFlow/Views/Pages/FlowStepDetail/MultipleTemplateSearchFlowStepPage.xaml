@@ -264,13 +264,13 @@
                                         </StackPanel>
 
                                         <!--  Loop Max Count  -->
-                                        <StackPanel
-                                            MinWidth="200"
-                                            Margin="0,0,0,20"
-                                            HorizontalAlignment="Left">
-                                            <Label>Force loop exit after loop count: (0 = Dont exit.)</Label>
-                                            <TextBox Text="{Binding LoopMaxCount, Mode=TwoWay}" />
-                                        </StackPanel>
+                                        <!--<StackPanel
+                                        MinWidth="200"
+                                        Margin="0,0,0,20"
+                                        HorizontalAlignment="Left">
+                                        <Label>Force loop exit after loop count: (0 = Dont exit.)</Label>
+                                        <TextBox Text="{Binding LoopMaxCount, Mode=TwoWay}" />
+                                        </StackPanel>-->
                                     </StackPanel>
                                 </Border>
 
