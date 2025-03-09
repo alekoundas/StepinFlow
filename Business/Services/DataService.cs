@@ -9,7 +9,7 @@ namespace Business.Services
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
         public InMemoryDbContext CreateNewDbContext { get => _contextFactory.CreateDbContext(); }
-        private InMemoryDbContext _dbContext { get; set; }
+        private InMemoryDbContext? _dbContext { get; set; }
 
         public IFlowRepository Flows { get; set; }
         public IFlowStepRepository FlowSteps { get; set; }
@@ -58,11 +58,13 @@ namespace Business.Services
         public async Task<int> SaveChangesAsync()
         {
             return await GetDbContext().SaveChangesAsync();
+           
         }
 
         public int SaveChanges()
         {
             return GetDbContext().SaveChanges();
+            _dbContext.Dispose();
         }
 
         public void Update<TEntity>(TEntity model)
@@ -72,6 +74,8 @@ namespace Business.Services
 
             GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
+            GetDbContext().Dispose();
+            _dbContext = null;
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
@@ -80,7 +84,9 @@ namespace Business.Services
                 return;
 
             GetDbContext().Entry(model).State = EntityState.Modified;
-            await _dbContext.SaveChangesAsync();
+            await GetDbContext().SaveChangesAsync();
+            GetDbContext().Dispose();
+            _dbContext = null;
         }
 
 
@@ -90,6 +96,8 @@ namespace Business.Services
                 if (model != null)
                         GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
+            GetDbContext().Dispose();
+            _dbContext = null;
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
@@ -100,11 +108,14 @@ namespace Business.Services
                         GetDbContext().Entry(model).State = EntityState.Modified;
 
             await GetDbContext().SaveChangesAsync();
+            GetDbContext().Dispose();
+            _dbContext = null;
         }
 
         public void Dispose()
         {
-            _dbContext.Dispose();
+            GetDbContext().Dispose();
+            _dbContext = null;
             Flows.Dispose(true);
             FlowSteps.Dispose(true);
             FlowParameters.Dispose(true);

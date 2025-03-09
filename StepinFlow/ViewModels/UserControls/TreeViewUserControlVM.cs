@@ -140,7 +140,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task ExpandAll()
         {
-            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 1";
+            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 1, IsSelected = 0";
             using (var dbContext = _dataService.CreateNewDbContext)
             {
                 int rowsAffected = await dbContext.Database.ExecuteSqlRawAsync(sqlCommand);
@@ -152,7 +152,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task CollapseAll()
         {
-            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 0";
+            string sqlCommand = "UPDATE FlowSteps SET IsExpanded = 0, IsSelected = 0";
             using (var dbContext = _dataService.CreateNewDbContext)
             {
                 int rowsAffected = await dbContext.Database.ExecuteSqlRawAsync(sqlCommand);
@@ -184,14 +184,6 @@ namespace StepinFlow.ViewModels.UserControls
                 uiFlowStep.IsExpanded = true;
                 uiFlowStep.IsSelected = true;
             }
-
-            //if (uiFlowStep?.ParentFlowStep != null)
-            //    uiFlowStep.ParentFlowStep.IsExpanded = true;
-            //if (uiFlowStep?.ParentFlowStep?.ParentFlowStep != null)
-            //    uiFlowStep.ParentFlowStep.ParentFlowStep.IsExpanded = true;
-            //if (uiFlowStep?.Flow != null)
-            //    uiFlowStep.Flow.IsExpanded = true;
-
             return;
         }
 
