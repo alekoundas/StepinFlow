@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.83</Version>
-    <FileVersion>1.0.83.0</FileVersion>
-    <AssemblyVersion>1.0.83.0</AssemblyVersion>
-    <InformationalVersion>1.0.83+f05bfeb13ab93acea446ed40c3e0c8824902c757</InformationalVersion>
+    <Version>1.0.84</Version>
+    <FileVersion>1.0.84.0</FileVersion>
+    <AssemblyVersion>1.0.84.0</AssemblyVersion>
+    <InformationalVersion>1.0.84+f3137d6e643e9b142f7b3b532dfc8b5e8935bffd</InformationalVersion>
     
     
     <OutputType>WinExe</OutputType>
