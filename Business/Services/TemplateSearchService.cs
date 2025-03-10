@@ -1,5 +1,4 @@
 ﻿using Business.Extensions;
-using Business.Helpers;
 using Business.Services.Interfaces;
 using Model.Business;
 using Model.Enums;
@@ -79,14 +78,14 @@ namespace Business.Services
             DrawResultRectangle(percentage, matScreenshot, resultRectangle, removeTemplateFromResult);
 
             //Save result image to drive for debugging.
-            string resultFilePath = Path.Combine(PathHelper.GetAppDataPath(), "Result.png");
-            matScreenshot.SaveImage(resultFilePath);
+            //string resultFilePath = Path.Combine(PathHelper.GetAppDataPath(), "Result.png");
+            //matScreenshot.SaveImage(resultFilePath);
 
             return new TemplateMatchingResult()
             {
                 ResultRectangle = resultRectangle,
                 Confidence = percentage,
-                ResultImagePath = resultFilePath,
+                //ResultImagePath = resultFilePath,
                 ResultImage = matScreenshot.ToBytes()
             };
         }
