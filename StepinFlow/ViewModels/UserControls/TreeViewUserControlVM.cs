@@ -429,5 +429,41 @@ namespace StepinFlow.ViewModels.UserControls
 
             await LoadFlows();
         }
+
+        [RelayCommand]
+        private async Task OnCollapsed(object eventParameter)
+        {
+            if (eventParameter is FlowStep flowStep)
+            {
+                FlowStep? updateFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStep.Id);
+                if (updateFlowStep != null)
+                {
+                    updateFlowStep.IsExpanded = false;
+                    updateFlowStep.IsSelected = true;
+                    await _dataService.UpdateAsync(updateFlowStep);
+                }
+            }
+            else if (eventParameter is Flow flow)
+            {
+                Flow? updateFlow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == flow.Id);
+                if (updateFlow != null)
+                {
+                    updateFlow.IsExpanded = false;
+                    updateFlow.IsSelected = true;
+                    await _dataService.UpdateAsync(updateFlow);
+                }
+            }
+            else if (eventParameter is FlowParameter flowParameter)
+            {
+                FlowParameter? updateFlowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == flowParameter.Id);
+                if (updateFlowParameter != null)
+                {
+                    updateFlowParameter.IsExpanded = false;
+                    updateFlowParameter.IsSelected = true;
+                    await _dataService.UpdateAsync(updateFlowParameter);
+                }
+            }
+
+        }
     }
 }
