@@ -29,20 +29,8 @@ namespace StepinFlow.ViewModels.Pages
 
             AllowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
             ExecutionImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY).Value);
-        }
-
-        public void OnNavigatedTo()
-        {
-            if (!_isInitialized)
-                InitializeViewModel();
-        }
-
-
-        private void InitializeViewModel()
-        {
+            ExecutionImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY).Value);
             CurrentTheme = ApplicationThemeManager.GetAppTheme();
-
-            _isInitialized = true;
         }
 
 
@@ -64,6 +52,7 @@ namespace StepinFlow.ViewModels.Pages
 
                     ApplicationThemeManager.Apply(ApplicationTheme.Light);
                     CurrentTheme = ApplicationTheme.Light;
+                    _systemSettingsService.UpdateSetting(AppSettingsEnum.IS_THEME_DARK, "false");
 
                     break;
 
@@ -73,6 +62,7 @@ namespace StepinFlow.ViewModels.Pages
 
                     ApplicationThemeManager.Apply(ApplicationTheme.Dark);
                     CurrentTheme = ApplicationTheme.Dark;
+                    _systemSettingsService.UpdateSetting(AppSettingsEnum.IS_THEME_DARK, "true");
 
                     break;
             }

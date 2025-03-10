@@ -121,6 +121,12 @@ namespace Business.DatabaseContext
             if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED, Value = "true" });
 
+            // Theme settings.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_THEME_DARK))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_THEME_DARK, Value = "true" });
+
+
+
             this.SaveChanges();
         }
     }

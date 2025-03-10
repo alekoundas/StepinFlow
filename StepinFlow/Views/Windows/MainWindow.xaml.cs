@@ -1,6 +1,7 @@
 ﻿using Business.Services;
 using Business.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Model.Enums;
 using Model.Structs;
 using StepinFlow.ViewModels.Windows;
 using System.Windows;
@@ -40,6 +41,7 @@ namespace StepinFlow.Views.Windows
             navigationService.SetNavigationControl(RootNavigation);
 
             SetWindowLocation();
+            SetTheme();
         }
 
 
@@ -73,6 +75,16 @@ namespace StepinFlow.Views.Windows
             RootNavigation.SetPageProviderService(navigationViewPageProvider);
         }
 
+
+        private void SetTheme()
+        {
+            bool isThemeDark = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_THEME_DARK).Value);
+            if (isThemeDark)
+                ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+            else
+                ApplicationThemeManager.Apply(ApplicationTheme.Light);
+
+        }
 
         private void SetWindowLocation()
         {
