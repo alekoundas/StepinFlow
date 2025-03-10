@@ -36,7 +36,8 @@ namespace Business.Factories.Workers
             execution.FlowId = flowId;
 
 
-            string folderName = "Execution - " + DateTime.Now.ToString("yy-MM-dd hh.mm");
+            string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
+            string folderName = "Execution - " + DateTime.Now.ToString("dd-MM-yyyy hh.mm");
             string folderPath = Path.Combine(PathHelper.GetExecutionHistoryDataPath(), folderName);
 
             execution.ExecutionFolderDirectory = folderPath;
