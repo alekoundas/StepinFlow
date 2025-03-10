@@ -10,7 +10,7 @@ namespace StepinFlow.ViewModels.Pages
         private bool _isInitialized = false;
 
         [ObservableProperty]
-        private string _appVersion = String.Empty;
+        private string _appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? String.Empty;
         [ObservableProperty]
         private bool _allowExecutionImageSave = true;
         [ObservableProperty]
@@ -29,16 +29,10 @@ namespace StepinFlow.ViewModels.Pages
         private void InitializeViewModel()
         {
             CurrentTheme = ApplicationThemeManager.GetAppTheme();
-            AppVersion = $"UiDesktopApp1 - {GetAssemblyVersion()}";
 
             _isInitialized = true;
         }
 
-        private string GetAssemblyVersion()
-        {
-            return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-                ?? String.Empty;
-        }
 
         [RelayCommand]
         private void OnSaveExecution()
