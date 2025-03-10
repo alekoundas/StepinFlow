@@ -1,6 +1,7 @@
 ﻿using Business.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Model.Models;
+using System.IO;
 
 namespace StepinFlow.ViewModels.Pages.Executions
 {
@@ -22,7 +23,8 @@ namespace StepinFlow.ViewModels.Pages.Executions
             Execution = execution;
 
             if (execution.ResultImagePath != null)
-                ShowResultImage?.Invoke(execution.ResultImagePath);
+                if (File.Exists(execution.ResultImagePath))
+                    ShowResultImage?.Invoke(execution.ResultImagePath);
             return Task.CompletedTask;
         }
     }

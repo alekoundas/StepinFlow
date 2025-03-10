@@ -46,7 +46,8 @@ namespace StepinFlow.ViewModels.Pages.Executions
             Execution = execution;
 
             if (execution.ResultImagePath != null)
-                ResultImage = File.ReadAllBytes(execution.ResultImagePath);
+                if (File.Exists(execution.ResultImagePath))
+                    ResultImage = File.ReadAllBytes(execution.ResultImagePath);
 
             return Task.CompletedTask;
         }

@@ -13,6 +13,7 @@ namespace Business.Factories.Workers
         private readonly IDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
+        private readonly ISystemSettingsService _systemSettingsService;
 
         private byte[]? _resultImage = null;
 
@@ -20,11 +21,13 @@ namespace Business.Factories.Workers
               IDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
+            , ISystemSettingsService systemSettingsService
             ) : base(dataService, systemService)
         {
             _dataService = dataService;
             _templateSearchService = templateSearchService;
             _systemService = systemService;
+            _systemSettingsService = systemSettingsService;
         }
 
         public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
@@ -52,7 +55,7 @@ namespace Business.Factories.Workers
         {
             if (execution.FlowStep == null || execution.FlowStep.TemplateMatchMode == null)
                 return;
-            
+
             FlowParameter? flowParameter = await _dataService.FlowParameters
                 .Where(x => x.Id == execution.FlowStep.FlowParameterId)
                 .FirstOrDefaultAsync();
@@ -80,15 +83,21 @@ namespace Business.Factories.Workers
             if (searchRectangle == null)
                 searchRectangle = _systemService.GetScreenSize();
 
+
             // Get screenshot.
             // New if previous doenst exists.
             // Get previous one if exists and is loop with RemoveTemplateFromResult = true.
             byte[]? screenshot = null;
-            Execution? parentLoopExecution = await _dataService.Executions
-                .Include(x => x.FlowStep)
-                .FirstOrDefaultAsync(x => x.Id == execution.ParentLoopExecutionId);
+            Execution? parentLoopExecution = null;
+            if (_pendingExecutionLoops.ContainsKey(execution.FlowStep.Id))
+                parentLoopExecution = _pendingExecutionLoops[execution.FlowStep.Id].OrderByDescending(x => x.Id).FirstOrDefault();
 
-            if (parentLoopExecution?.FlowStep?.IsLoop == true && execution.FlowStep.RemoveTemplateFromResult && parentLoopExecution.TempResultImagePath?.Length > 0)
+            bool canUseParentResult =
+               parentLoopExecution?.FlowStep?.IsLoop == true &&
+               parentLoopExecution.TempResultImagePath?.Length > 0 &&
+               execution.FlowStep.RemoveTemplateFromResult;
+
+            if (canUseParentResult)
                 screenshot = Image.FromFile(parentLoopExecution.TempResultImagePath).ToByteArray();
             else
                 screenshot = _systemService.TakeScreenShot(searchRectangle.Value);
@@ -116,6 +125,14 @@ namespace Business.Factories.Workers
             await _dataService.UpdateAsync(execution);
 
             _resultImage = result.ResultImage;
+
+
+
+            // Add execution to pending loop executions.
+            if (!_pendingExecutionLoops.ContainsKey(execution.FlowStep.Id))
+                _pendingExecutionLoops.Add(execution.FlowStep.Id, new List<Execution>() { execution });
+            else
+                _pendingExecutionLoops[execution.FlowStep.Id].Add(execution);
         }
 
         public async override Task<FlowStep?> GetNextChildFlowStep(Execution execution)
@@ -138,6 +155,12 @@ namespace Business.Factories.Workers
                 if (execution.FlowStep.IsLoop)
                     return execution.FlowStep;
 
+            foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.Id])
+                if (File.Exists(parentLoopExecution.ResultImagePath))
+                    File.Delete(parentLoopExecution.ResultImagePath);
+
+            _pendingExecutionLoops[execution.FlowStep.Id].Clear();
+
             // If not, get next sibling flow step. 
             FlowStep? nextFlowStep = await _dataService.FlowSteps.GetNextSibling(execution.FlowStep.Id);
             return nextFlowStep;
@@ -145,15 +168,18 @@ namespace Business.Factories.Workers
 
         public async override Task SaveToDisk(Execution execution)
         {
-            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0)
+            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0 || !execution.StartedOn.HasValue)
                 return;
 
-            string fileDate = execution.StartedOn.Value.ToString("yy-MM-dd hh.mm.ss.fff");
+            bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
+            string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
 
-            if (_resultImage != null)
+            // Save image to disk (History).
+            if (_resultImage != null && allowExecutionImageSave)
                 await _systemService.SaveImageToDisk(newFilePath, _resultImage);
 
+            // Save image to disk (Temp).
             if (execution.Result == ExecutionResultEnum.SUCCESS)
             {
                 string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");

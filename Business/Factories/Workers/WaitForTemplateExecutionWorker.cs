@@ -1,10 +1,8 @@
 ﻿using Business.Helpers;
 using Business.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Model.Business;
 using Model.Enums;
 using Model.Models;
-using System.Drawing;
 
 namespace Business.Factories.Workers
 {
@@ -13,6 +11,7 @@ namespace Business.Factories.Workers
         private readonly IDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
+        private readonly ISystemSettingsService _systemSettingsService;
 
         private byte[]? _resultImage = null;
 
@@ -20,11 +19,13 @@ namespace Business.Factories.Workers
               IDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
+            , ISystemSettingsService systemSettingsService
             ) : base(dataService, systemService)
         {
             _dataService = dataService;
             _templateSearchService = templateSearchService;
             _systemService = systemService;
+            _systemSettingsService = systemSettingsService;
         }
 
         public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
@@ -100,7 +101,7 @@ namespace Business.Factories.Workers
                 //execution.ResultImagePath = result.ResultImagePath;
                 execution.ResultAccuracy = result.Confidence;
 
-            await _dataService.UpdateAsync(execution);
+                await _dataService.UpdateAsync(execution);
                 _resultImage = result.ResultImage;
 
 
@@ -138,23 +139,16 @@ namespace Business.Factories.Workers
 
         public async override Task SaveToDisk(Execution execution)
         {
-            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0)
+            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0 || !execution.StartedOn.HasValue)
                 return;
 
-            string fileDate = execution.StartedOn.Value.ToString("yy-MM-dd hh.mm.ss.fff");
+            bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
+            string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
 
-            if (_resultImage != null)
+            // Save image to disk (History).
+            if (_resultImage != null && allowExecutionImageSave)
                 await _systemService.SaveImageToDisk(newFilePath, _resultImage);
-
-            if (execution.Result == ExecutionResultEnum.SUCCESS)
-            {
-                string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");
-                if (_resultImage != null)
-                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage);
-
-                execution.TempResultImagePath = tempFilePath;
-            }
 
             execution.ResultImagePath = newFilePath;
 

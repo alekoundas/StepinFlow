@@ -1,7 +1,6 @@
 ﻿using Business.Extensions;
 using Business.Helpers;
 using Business.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Model.Business;
 using Model.Enums;
 using Model.Models;
@@ -14,6 +13,7 @@ namespace Business.Factories.Workers
         private readonly IDataService _dataService;
         private readonly ITemplateSearchService _templateSearchService;
         private readonly ISystemService _systemService;
+        private readonly ISystemSettingsService _systemSettingsService;
 
         private byte[]? _resultImage = null;
 
@@ -21,11 +21,13 @@ namespace Business.Factories.Workers
               IDataService dataService
             , ISystemService systemService
             , ITemplateSearchService templateSearchService
+            , ISystemSettingsService systemSettingsService
             ) : base(dataService, systemService)
         {
             _dataService = dataService;
             _templateSearchService = templateSearchService;
             _systemService = systemService;
+            _systemSettingsService = systemSettingsService;
         }
 
         public async override Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
@@ -57,15 +59,6 @@ namespace Business.Factories.Workers
 
             // Return execution with relations.
             execution.FlowStep = childTemplateSearchFlowStep;
-            //execution = await _dataService.Executions
-            //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
-            //  .FirstAsync(x => x.Id == execution.Id);
-
-            //execution = await _dataService.Executions.Query.AsNoTracking()
-            //  .Include(x => x.FlowStep!.ParentTemplateSearchFlowStep!.FlowParameter)
-            //  .FirstAsync(x => x.Id == execution.Id);
-
-
 
             return execution;
         }
@@ -74,6 +67,7 @@ namespace Business.Factories.Workers
         {
             if (execution.FlowStep?.ParentTemplateSearchFlowStep == null || execution.FlowStep.ParentTemplateSearchFlowStep.TemplateMatchMode == null)
                 return;
+
             // Find search area.
             Model.Structs.Rectangle? searchRectangle = null;
             switch (execution.FlowStep.ParentTemplateSearchFlowStep.FlowParameter?.TemplateSearchAreaType)
@@ -99,6 +93,9 @@ namespace Business.Factories.Workers
 
 
 
+            // Get screenshot.
+            // New if previous doenst exists.
+            // Get previous one if exists and is loop with RemoveTemplateFromResult = true.
             byte[]? screenshot = null;
             Execution? parentLoopExecution = null;
             if (_pendingExecutionLoops.ContainsKey(execution.FlowStep.ParentTemplateSearchFlowStepId.Value))
@@ -106,7 +103,7 @@ namespace Business.Factories.Workers
 
             bool canUseParentResult =
                parentLoopExecution?.FlowStep?.IsLoop == true &&
-               parentLoopExecution?.TempResultImagePath?.Length > 0 &&
+               parentLoopExecution.TempResultImagePath?.Length > 0 &&
                execution.FlowStep.RemoveTemplateFromResult;
 
             if (canUseParentResult)
@@ -163,8 +160,14 @@ namespace Business.Factories.Workers
 
             if (nextChildTemplateSearchFlowStep != null)
                 return execution.FlowStep.ParentTemplateSearchFlowStep;
-            else if (execution.FlowStep.ParentTemplateSearchFlowStepId != null)
-                _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
+
+
+            // Delete temp images since execution is completed.
+            foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
+                if (File.Exists(parentLoopExecution.ResultImagePath))
+                    File.Delete(parentLoopExecution.ResultImagePath);
+
+            _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
 
             // If not, get next sibling flow step. 
             FlowStep? nextFlowStep = await _dataService.FlowSteps.GetNextSibling(execution.FlowStep.ParentTemplateSearchFlowStepId.Value);
@@ -173,30 +176,30 @@ namespace Business.Factories.Workers
 
         public async override Task SaveToDisk(Execution execution)
         {
-            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0)
+            if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0 || !execution.StartedOn.HasValue)
                 return;
 
-            if (execution.StartedOn.HasValue)
+            bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
+            string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
+            string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
+
+            // Save image to disk (History).
+            if (_resultImage != null && allowExecutionImageSave)
+                await _systemService.SaveImageToDisk(newFilePath, _resultImage);
+
+            // Save image to disk (Temp).
+            if (execution.Result == ExecutionResultEnum.SUCCESS)
             {
-                string fileDate = execution.StartedOn.Value.ToString("yy-MM-dd hh.mm.ss.fff");
-                string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
-
+                string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");
                 if (_resultImage != null)
-                    await _systemService.SaveImageToDisk(newFilePath, _resultImage);
+                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage);
 
-                if (execution.Result == ExecutionResultEnum.SUCCESS)
-                {
-                    string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");
-                    if (_resultImage != null)
-                        await _systemService.SaveImageToDisk(tempFilePath, _resultImage);
-
-                    execution.TempResultImagePath = tempFilePath;
-                }
-
-                execution.ResultImagePath = newFilePath;
-
-                await _dataService.UpdateAsync(execution);
+                execution.TempResultImagePath = tempFilePath;
             }
+
+            execution.ResultImagePath = newFilePath;
+
+            await _dataService.UpdateAsync(execution);
         }
 
         private async Task<FlowStep?> GetChildTemplateSearchFlowStep(int flowStepId, int parentExecutionId)

@@ -47,17 +47,5 @@ namespace Business.Factories.Workers
             FlowStep? nextFlowStep = await _dataService.FlowSteps.GetNextSibling(execution.FlowStep.Id);
             return nextFlowStep;
         }
-
-
-        //public async override Task SaveToDisk(Execution execution)
-        //{
-        //    string folderName = "Execution - " + DateTime.Now.ToString("yy-MM-dd hh.mm");
-        //    string folderPath = Path.Combine(PathHelper.GetExecutionHistoryDataPath(), folderName);
-
-        //    execution.ExecutionFolderDirectory = folderPath;
-
-        //    await _dataService.SaveChangesAsync();
-        //    Directory.CreateDirectory(folderPath);
-        //}
     }
 }

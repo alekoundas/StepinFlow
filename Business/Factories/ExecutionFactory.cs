@@ -9,16 +9,22 @@ namespace Business.Factories
         private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         private readonly ITemplateSearchService _templateSearchService;
+        private readonly ISystemSettingsService _systemSettingsService;
         private Dictionary<FlowStepTypesEnum, Lazy<IExecutionWorker>>? _workerCache = null;
 
         private CancellationTokenSource _cancellationToken = new CancellationTokenSource();
 
 
-        public ExecutionFactory(IDataService dataService, ISystemService systemService, ITemplateSearchService templateSearchService)
+        public ExecutionFactory(
+            IDataService dataService,
+            ISystemService systemService,
+            ITemplateSearchService templateSearchService,
+            ISystemSettingsService systemSettingsService)
         {
             _dataService = dataService;
             _systemService = systemService;
             _templateSearchService = templateSearchService;
+            _systemSettingsService = systemSettingsService;
         }
 
         public IExecutionWorker GetWorker(FlowStepTypesEnum? Type)
@@ -54,9 +60,9 @@ namespace Business.Factories
                 { FlowStepTypesEnum.CURSOR_RELOCATE, new Lazy<IExecutionWorker>(() => new CursorRelocateExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.CURSOR_CLICK, new Lazy<IExecutionWorker>(() => new CursorClickExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.CURSOR_SCROLL, new Lazy<IExecutionWorker>(() => new CursorScrollExecutionWorker(_dataService, _systemService)) },
-                { FlowStepTypesEnum.WAIT_FOR_TEMPLATE, new Lazy<IExecutionWorker>(() => new WaitForTemplateExecutionWorker(_dataService, _systemService, _templateSearchService)) },
-                { FlowStepTypesEnum.TEMPLATE_SEARCH, new Lazy<IExecutionWorker>(() => new TemplateSearchExecutionWorker(_dataService, _systemService, _templateSearchService)) },
-                { FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH, new Lazy<IExecutionWorker>(() => new MultipleTemplateSearchExecutionWorker(_dataService, _systemService, _templateSearchService)) },
+                { FlowStepTypesEnum.WAIT_FOR_TEMPLATE, new Lazy<IExecutionWorker>(() => new WaitForTemplateExecutionWorker(_dataService, _systemService, _templateSearchService,_systemSettingsService)) },
+                { FlowStepTypesEnum.TEMPLATE_SEARCH, new Lazy<IExecutionWorker>(() => new TemplateSearchExecutionWorker(_dataService, _systemService, _templateSearchService, _systemSettingsService)) },
+                { FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH, new Lazy<IExecutionWorker>(() => new MultipleTemplateSearchExecutionWorker(_dataService, _systemService, _templateSearchService, _systemSettingsService)) },
                 { FlowStepTypesEnum.WAIT, new Lazy<IExecutionWorker>(() => new WaitExecutionWorker(_dataService, _systemService,_cancellationToken)) },
                 { FlowStepTypesEnum.GO_TO, new Lazy<IExecutionWorker>(() => new GoToExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.LOOP, new Lazy<IExecutionWorker>(() => new LoopExecutionWorker(_dataService, _systemService)) },
