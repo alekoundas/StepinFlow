@@ -1,5 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Business.Services.Interfaces;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Model.Enums;
 using Wpf.Ui.Abstractions.Controls;
 using Wpf.Ui.Appearance;
 
@@ -7,6 +9,8 @@ namespace StepinFlow.ViewModels.Pages
 {
     public partial class SettingsVM : ObservableObject, INavigationAware
     {
+        private readonly ISystemSettingsService _systemSettingsService;
+
         private bool _isInitialized = false;
 
         [ObservableProperty]
@@ -18,6 +22,14 @@ namespace StepinFlow.ViewModels.Pages
 
         [ObservableProperty]
         private ApplicationTheme _currentTheme = ApplicationTheme.Unknown;
+
+        public SettingsVM(ISystemSettingsService systemSettingsService)
+        {
+            _systemSettingsService = systemSettingsService;
+
+            AllowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
+            ExecutionImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
+        }
 
         public void OnNavigatedTo()
         {
@@ -37,7 +49,8 @@ namespace StepinFlow.ViewModels.Pages
         [RelayCommand]
         private void OnSaveExecution()
         {
-
+            _systemSettingsService.UpdateSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED, AllowExecutionImageSave.ToString());
+            _systemSettingsService.UpdateSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY, ExecutionImageQuality.ToString());
         }
 
         [RelayCommand]

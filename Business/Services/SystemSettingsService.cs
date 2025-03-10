@@ -65,12 +65,18 @@ namespace Business.Services
         }
 
 
-        private void UpdateSetting(AppSettingsEnum key, string value)
+        public void UpdateSetting(AppSettingsEnum key, string value)
         {
             AppSetting appSetting = _appSettings[key];
             appSetting.Value = value;
 
             _dataService.Update(appSetting);
+        }
+
+        public AppSetting GetSetting(AppSettingsEnum key)
+        {
+            AppSetting appSetting = _appSettings[key];
+            return appSetting;
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Model.Structs;
+﻿using Model.Enums;
+using Model.Models;
+using Model.Structs;
 
 namespace Business.Services.Interfaces
 {
@@ -8,5 +10,8 @@ namespace Business.Services.Interfaces
         WindowSize GetSelectorWindowState();
         void SaveMainWindowState(WindowSize windowState);
         void SaveSelectorWindowState(WindowSize windowState);
+
+        void UpdateSetting(AppSettingsEnum key, string value);
+        AppSetting GetSetting(AppSettingsEnum key);
     }
 }
