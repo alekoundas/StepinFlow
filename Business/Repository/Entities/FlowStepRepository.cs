@@ -28,11 +28,11 @@ namespace Business.Repository.Entities
 
         public async Task<FlowStep> GetIsNewSibling(int flowStepId)
         {
-                var result = await GetDbContext().FlowSteps
-                        .Include(x => x.ChildrenFlowSteps)
-                        .Where(x => x.Id == flowStepId)
-                        .Select(x => x.ChildrenFlowSteps.First(y => y.Type == FlowStepTypesEnum.NEW))
-                        .FirstAsync();
+            var result = await GetDbContext().FlowSteps
+                    .Include(x => x.ChildrenFlowSteps)
+                    .Where(x => x.Id == flowStepId)
+                    .Select(x => x.ChildrenFlowSteps.First(y => y.Type == FlowStepTypesEnum.NEW))
+                    .FirstAsync();
             Dispose();
             return result;
         }
@@ -82,10 +82,11 @@ namespace Business.Repository.Entities
 
             if (simplings != null)
                 nextSimpling = await simplings
-                   .Where(x => x.Type != FlowStepTypesEnum.NEW)
-                   .Where(x => x.OrderingNum > flowStep.OrderingNum)
-                   .OrderBy(x => x.OrderingNum)
-                   .FirstOrDefaultAsync();
+                    .Include(x => x.FlowParameter)
+                    .Where(x => x.Type != FlowStepTypesEnum.NEW)
+                    .Where(x => x.OrderingNum > flowStep.OrderingNum)
+                    .OrderBy(x => x.OrderingNum)
+                    .FirstOrDefaultAsync();
 
             Dispose();
             return nextSimpling;
@@ -112,6 +113,7 @@ namespace Business.Repository.Entities
             }
 
             FlowStep? nextChild = await childrenFlowSteps
+                .Include(x => x.FlowParameter)
                 .Where(x => x.Type != FlowStepTypesEnum.NEW)
                 .OrderBy(x => x.OrderingNum)
                 .FirstOrDefaultAsync();
