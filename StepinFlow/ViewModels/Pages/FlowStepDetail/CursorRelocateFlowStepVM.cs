@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using Model.Enums;
 using Model.Structs;
 using Business.BaseViewModels;
-using Microsoft.EntityFrameworkCore;
 using Business.Services;
 using System.Windows.Input;
 using Business.Services.Interfaces;

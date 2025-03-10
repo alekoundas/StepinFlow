@@ -6,8 +6,6 @@ using Model.Business;
 using Model.Enums;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Drawing;
-using Microsoft.EntityFrameworkCore;
 using StepinFlow.Interfaces;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;

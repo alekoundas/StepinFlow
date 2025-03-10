@@ -10,7 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="CursorRelocateFlowStepPage"
     d:DataContext="{d:DesignInstance local:CursorRelocateFlowStepPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -18,7 +18,7 @@
 
     <StackPanel>
 
-        <Label>Select possition from parent result or set custom value</Label>
+        <Label>Select cursor possition from parent result or set custom value.</Label>
 
 
         <Grid Margin="10,10,10,50">
@@ -55,10 +55,8 @@
                     <StackPanel>
 
                         <StackPanel Margin="5" VerticalAlignment="Center">
-                            <Label>Parents successful locations:</Label>
-                            <ComboBox
-                                ItemsSource="{Binding ViewModel.Parents}"
-                                SelectedItem="{Binding ViewModel.SelectedFlowStep, Mode=TwoWay}">
+                            <Label>Parent successful location:</Label>
+                            <ComboBox ItemsSource="{Binding ViewModel.Parents}" SelectedItem="{Binding ViewModel.SelectedFlowStep, Mode=TwoWay}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">

@@ -178,7 +178,7 @@ namespace Business.Factories.Workers
 
             // Save image to disk (History).
             if (_resultImage != null && allowExecutionImageSave)
-                await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
+                execution.ResultImagePath = await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
 
             // Save image to disk (Temp).
             if (execution.Result == ExecutionResultEnum.SUCCESS)
@@ -189,8 +189,6 @@ namespace Business.Factories.Workers
 
                 execution.TempResultImagePath = tempFilePath;
             }
-
-            execution.ResultImagePath = newFilePath;
 
             await _dataService.UpdateAsync(execution);
         }

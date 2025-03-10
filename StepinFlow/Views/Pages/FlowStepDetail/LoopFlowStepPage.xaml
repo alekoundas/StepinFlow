@@ -17,33 +17,6 @@
 
 
     <Grid VerticalAlignment="Top">
-        <Grid.Resources>
-            <ObjectDataProvider
-                x:Key="TypesEnum"
-                MethodName="GetValues"
-                ObjectType="{x:Type System:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="enum:TypesEnum" />
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider
-                x:Key="FlowStepActionsFoundEnum"
-                MethodName="GetValues"
-                ObjectType="{x:Type System:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="enum:FlowStepActionsFoundEnum" />
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider
-                x:Key="FlowStepActionsNotFoundEnum"
-                MethodName="GetValues"
-                ObjectType="{x:Type System:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="enum:FlowStepActionsNotFoundEnum" />
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
-        </Grid.Resources>
-
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
@@ -59,9 +32,6 @@
 
             <Label>Exit after X times.(0 = Dont exit.)</Label>
             <TextBox Text="{Binding ViewModel.FlowStep.LoopMaxCount, Mode=TwoWay}" />
-
-
-
 
         </StackPanel>
 

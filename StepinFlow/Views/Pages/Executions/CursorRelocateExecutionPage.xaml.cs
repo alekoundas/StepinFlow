@@ -15,9 +15,9 @@ namespace StepinFlow.Views.Pages.Executions
 
 
         public IExecutionViewModel ViewModel { get; set; }
-        public CursorRelocateExecutionPage(IDataService dataService)
+        public CursorRelocateExecutionPage(IDataService dataService, ISystemService systemService)
         {
-            ViewModel = new CursorRelocateExecutionVM(dataService);
+            ViewModel = new CursorRelocateExecutionVM(dataService, systemService);
             FlowExecutionViewModel = ViewModel;
             InitializeComponent();
             DataContext = this;

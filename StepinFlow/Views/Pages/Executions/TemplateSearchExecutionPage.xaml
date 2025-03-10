@@ -11,14 +11,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="TemplateSearchExecutionPage"
     d:DataContext="{d:DesignInstance local:TemplateSearchExecutionPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
     <Page.Resources>
         <converters:ImageNullConverter x:Key="ImageNullConverter" />
-
     </Page.Resources>
 
     <Grid VerticalAlignment="Top">
@@ -30,45 +29,62 @@
 
 
 
-        <StackPanel Grid.Column="1">
+        <StackPanel>
 
-            <Label>Name</Label>
-            <TextBox
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
                 Margin="0,0,0,20"
-                IsReadOnly="True"
-                Text="{Binding ViewModel.Execution.FlowStep.Name}" />
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+            </StackPanel>
 
-            <Label>Process</Label>
-            <TextBox
+            <!--  FlowParameter  -->
+            <StackPanel
+                MinWidth="200"
                 Margin="0,0,0,20"
-                IsReadOnly="True"
-                Text="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
-
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <StackPanel>
-                    <Label>Set accuracy</Label>
-                    <TextBox
-                        Margin="0,0,0,20"
-                        IsReadOnly="True"
-                        Text="{Binding ViewModel.Execution.FlowStep.Accuracy}" />
-                </StackPanel>
-                <StackPanel>
-                    <Label>Result accuracy</Label>
-                    <TextBox
-                        Margin="0,0,0,20"
-                        IsReadOnly="True"
-                        Text="{Binding ViewModel.Execution.ResultAccuracy}" />
-                </StackPanel>
+                HorizontalAlignment="Left">
+                <Label>Select search area from parameters(leave empty for all monitor search)</Label>
+                <ComboBox
+                    VerticalAlignment="Center"
+                    ItemsSource="{Binding ViewModel.FlowParameters}"
+                    SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Path=Id}" />
+                                <TextBlock Text=". " />
+                                <TextBlock Text="{Binding Path=Name}" />
+                                <TextBlock Text=" - " />
+                                <TextBlock Text="{Binding Path=TemplateSearchAreaType}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </StackPanel>
 
 
-            <Label>Template image.</Label>
+            <!--  TemplateSearchAreaTypesEnum  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Select match mode:</Label>
+                <ComboBox
+                    VerticalAlignment="Center"
+                    ItemsSource="{Binding ViewModel.MatchModes}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
+            </StackPanel>
+
+
+
+            <!--  Template Image  -->
             <Image
                 MaxWidth="100"
                 MaxHeight="100"
                 Source="{Binding ViewModel.Execution.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}">
                 <i:Interaction.Triggers>
-
                     <i:EventTrigger EventName="MouseDown">
                         <i:InvokeCommandAction Command="{Binding ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
                     </i:EventTrigger>
@@ -76,17 +92,56 @@
             </Image>
 
 
+            <!--  Accuracy  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Select minimum accuracy:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Accuracy, Mode=TwoWay}" />
+            </StackPanel>
 
-            <Label>Result image</Label>
+            <!--  IsLoop  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,0"
+                Orientation="Horizontal">
+                <Label VerticalAlignment="Center">Is loop:</Label>
+                <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.IsLoop, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Border>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ViewModel.Execution.FlowStep.IsLoop}" Value="true">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <!--  Remove Template From Result  -->
+                    <StackPanel MinWidth="200" Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <Label VerticalAlignment="Bottom">Remove template from result image:</Label>
+                            <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.RemoveTemplateFromResult, Mode=TwoWay}" />
+                        </StackPanel>
+                        <TextBlock Text="(Avoid finding the same location multiple times.)" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+
+            <!--  Result image  -->
             <Image Source="{Binding ViewModel.ResultImage, Converter={StaticResource ImageNullConverter}}">
                 <i:Interaction.Triggers>
-
                     <i:EventTrigger EventName="MouseDown">
                         <i:InvokeCommandAction Command="{Binding ViewModel.ResultImageDoubleClickCommand}" PassEventArgsToCommand="True" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </Image>
-
 
 
         </StackPanel>

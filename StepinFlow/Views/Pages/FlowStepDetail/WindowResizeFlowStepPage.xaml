@@ -19,16 +19,6 @@
 
 
         <Grid Margin="10,10,10,50">
-            <Grid.Resources>
-                <ObjectDataProvider
-                    x:Key="MouseButtonEnum"
-                    MethodName="GetValues"
-                    ObjectType="{x:Type System:Enum}">
-                    <ObjectDataProvider.MethodParameters>
-                        <x:Type TypeName="enum:MouseButtonsEnum" />
-                    </ObjectDataProvider.MethodParameters>
-                </ObjectDataProvider>
-            </Grid.Resources>
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />

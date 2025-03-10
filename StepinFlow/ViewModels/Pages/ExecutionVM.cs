@@ -166,6 +166,8 @@ namespace StepinFlow.ViewModels.Pages
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         CurrentStep = flowStep.Type.ToString();
+                        if (flowStepExecution?.FlowStep?.TemplateImage?.Length == 0)
+                            flowStepExecution.FlowStep.TemplateImage = null;
                         ListBoxExecutions.Add(flowStepExecution);
                     });
 

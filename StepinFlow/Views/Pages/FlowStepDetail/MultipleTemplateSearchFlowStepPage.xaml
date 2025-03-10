@@ -81,7 +81,7 @@
             </StackPanel>
 
 
-            <!--  TemplateSearchAreaTypesEnum  -->
+            <!--  Add template  -->
             <StackPanel
                 MinWidth="200"
                 Margin="0,0,0,20"

@@ -99,8 +99,9 @@ namespace Business.Services
                 .ToList();
         }
 
-        public async Task SaveImageToDisk(string filePath, byte[] image, double quality = 100.0)
+        public async Task<string> SaveImageToDisk(string filePath, byte[] image, double quality = 100.0)
         {
+            string outputPath;
             // Validate quality parameter
             if (quality < 0 || quality > 100)
             {
@@ -111,7 +112,7 @@ namespace Business.Services
             if (quality == 100.0)
             {
                 await File.WriteAllBytesAsync(filePath, image);
-                return;
+                return filePath;
             }
 
             // Load the image from byte array
@@ -133,7 +134,7 @@ namespace Business.Services
                 }
 
                 // Ensure file extension matches output format
-                string outputPath = Path.ChangeExtension(filePath, ".jpg");
+                outputPath = Path.ChangeExtension(filePath, ".jpg");
 
                 // Save the image with specified quality
                 using (var outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
@@ -142,6 +143,8 @@ namespace Business.Services
                     await outputStream.FlushAsync();
                 }
             }
+
+            return outputPath;
         }
 
         public void CopyImageToDisk(string sourceFilePath, string destinationFilePath)

@@ -16,73 +16,45 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <Page.Resources>
-        <converters:ImageNullConverter x:Key="ImageNullConverter" />
-    </Page.Resources>
+    <StackPanel>
 
-    <Grid VerticalAlignment="Top">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-        </Grid.ColumnDefinitions>
+        <Label>Wait time.</Label>
+
+        <Grid Margin="10,10,10,50">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="0.3*" />
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="0.1*" />
+            </Grid.ColumnDefinitions>
 
 
-        <StackPanel Grid.Column="1">
+            <StackPanel>
+                <Label>Hours:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForHours, Mode=TwoWay}" />
 
-            <Label>Name</Label>
-            <TextBox
-                Margin="0,0,0,20"
-                IsReadOnly="True"
-                Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <Label>Minutes:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForMinutes, Mode=TwoWay}" />
 
-            <Label>Process</Label>
-            <TextBox
-                Margin="0,0,0,20"
-                IsReadOnly="True"
-                Text="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
+                <Label>Seconds:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForSeconds, Mode=TwoWay}" />
 
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <StackPanel>
-                    <Label>Set accuracy</Label>
-                    <TextBox
-                        Margin="0,0,0,20"
-                        IsReadOnly="True"
-                        Text="{Binding ViewModel.Execution.FlowStep.Accuracy}" />
-                </StackPanel>
-                <StackPanel>
-                    <Label>Result accuracy</Label>
-                    <TextBox
-                        Margin="0,0,0,20"
-                        IsReadOnly="True"
-                        Text="{Binding ViewModel.Execution.ResultAccuracy}" />
-                </StackPanel>
+                <Label>Milliseconds:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForMilliseconds, Mode=TwoWay}" />
+
             </StackPanel>
 
+            <StackPanel
+                Grid.Column="2"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom">
 
-            <Label>Result image.</Label>
-            <Image
-                Grid.Column="0"
-                MaxWidth="100"
-                MaxHeight="100"
-                Margin="0,0,0,20"
-                Source="{Binding ViewModel.Execution.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}" />
-
-
-
-
-            <Label>Result image</Label>
-            <Image Source="{Binding ViewModel.ResultImage, Converter={StaticResource ImageNullConverter}}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="ImageFailed">
-                        <i:InvokeCommandAction Command="{Binding ViewModel.ImageFailedCommand}" />
-                    </i:EventTrigger>
-                    <i:EventTrigger EventName="MouseDown">
-                        <i:InvokeCommandAction Command="{Binding ViewModel.ResultImageDoubleClickCommand}" PassEventArgsToCommand="True" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </Image>
+                <Label Padding="0,20,0,0">Total time.</Label>
+                <Label Content="{Binding ViewModel.TimeTotal}" />
+            </StackPanel>
+        </Grid>
 
 
+    </StackPanel>
 
-        </StackPanel>
-    </Grid>
 </Page>

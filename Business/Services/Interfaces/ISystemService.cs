@@ -24,7 +24,7 @@ namespace Business.Services.Interfaces
 
         // Image.
         ImageSizeResult GetImageSize(byte[] imagePath);
-        Task SaveImageToDisk(string filePath, byte[] image, double quality = 100.0);
+        Task<string> SaveImageToDisk(string filePath, byte[] image, double quality = 100.0);
         void CopyImageToDisk(string sourceFilePath, string destinationFilePath);
         Bitmap? TakeScreenShot(Model.Structs.Rectangle rectangle, string filename = "Screenshot");
         byte[]? TakeScreenShot(Model.Structs.Rectangle rectangle);

@@ -17,7 +17,7 @@
 
     <StackPanel>
 
-        <Label>Configure click action</Label>
+        <Label FontWeight="Medium">Configure cursor scroll action</Label>
 
 
         <Grid Margin="10,10,10,50">
@@ -51,13 +51,5 @@
 
 
         </Grid>
-
-
-
-
-
-
-
     </StackPanel>
-
 </Page>

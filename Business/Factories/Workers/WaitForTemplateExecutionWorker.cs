@@ -149,9 +149,7 @@ namespace Business.Factories.Workers
 
             // Save image to disk (History).
             if (_resultImage != null && allowExecutionImageSave)
-                await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
-
-            execution.ResultImagePath = newFilePath;
+                execution.ResultImagePath = await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
 
             await _dataService.UpdateAsync(execution);
         }

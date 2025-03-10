@@ -186,19 +186,18 @@ namespace Business.Factories.Workers
 
             // Save image to disk (History).
             if (_resultImage != null && allowExecutionImageSave)
-                await _systemService.SaveImageToDisk(newFilePath, _resultImage);
+                execution.ResultImagePath = await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
 
             // Save image to disk (Temp).
             if (execution.Result == ExecutionResultEnum.SUCCESS)
             {
                 string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");
                 if (_resultImage != null)
-                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage, saveImageQuality);
+                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage);
 
                 execution.TempResultImagePath = tempFilePath;
             }
 
-            execution.ResultImagePath = newFilePath;
 
             await _dataService.UpdateAsync(execution);
         }

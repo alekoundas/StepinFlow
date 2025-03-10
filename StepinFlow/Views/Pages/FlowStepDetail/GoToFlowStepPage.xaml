@@ -21,9 +21,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
 
             <StackPanel HorizontalAlignment="Center">
@@ -43,32 +40,6 @@
             </StackPanel>
         </Grid>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
-                <Button Content="Cancel">
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="Click">
-                            <i:InvokeCommandAction Command="{Binding ViewModel.ButtonCancelClickCommand}" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
-                </Button>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" HorizontalAlignment="right">
-                <Button Content="Save">
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="Click">
-                            <i:InvokeCommandAction Command="{Binding ViewModel.ButtonSaveClickCommand}" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
-                </Button>
-            </StackPanel>
-        </Grid>
     </StackPanel>
 
 </Page>

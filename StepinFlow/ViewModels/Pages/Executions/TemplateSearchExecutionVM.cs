@@ -1,8 +1,10 @@
 ﻿using Business.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Model.Enums;
 using Model.Models;
 using StepinFlow.Interfaces;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -18,19 +20,38 @@ namespace StepinFlow.ViewModels.Pages.Executions
         [ObservableProperty]
         private byte[]? _resultImage = null;
 
+        [ObservableProperty]
+        private IEnumerable<TemplateMatchModesEnum> _matchModes;
+
+        [ObservableProperty]
+        private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
+        [ObservableProperty]
+        private FlowParameter? _selectedFlowParameter = null;
+
+
         public TemplateSearchExecutionVM(IWindowService windowService)
         {
             _windowService = windowService;
             _execution = new Execution();
+
+            MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
 
         public Task SetExecution(Execution execution)
         {
+            ResultImage = null;
+            SelectedFlowParameter = null;
             Execution = execution;
 
             if (execution.ResultImagePath != null)
                 if (File.Exists(execution.ResultImagePath))
                     ResultImage = File.ReadAllBytes(execution.ResultImagePath);
+
+            if (execution?.FlowStep?.FlowParameter != null)
+            {
+                FlowParameters.Add(execution.FlowStep.FlowParameter);
+                SelectedFlowParameter = execution.FlowStep.FlowParameter;
+            }
 
             return Task.CompletedTask;
         }

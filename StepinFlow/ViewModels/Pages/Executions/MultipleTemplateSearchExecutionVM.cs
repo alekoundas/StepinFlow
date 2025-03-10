@@ -28,12 +28,21 @@ namespace StepinFlow.ViewModels.Pages.Executions
         [ObservableProperty]
         private ObservableCollection<FlowStep>? _childrenTemplateSearchFlowSteps;
 
+        [ObservableProperty]
+        private IEnumerable<TemplateMatchModesEnum> _matchModes;
+
+        [ObservableProperty]
+        private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
+        [ObservableProperty]
+        private FlowParameter? _selectedFlowParameter = null;
 
         public MultipleTemplateSearchExecutionVM(IDataService dataService, IWindowService windowService)
         {
             _dataService = dataService;
             _windowService = windowService;
             _execution = new Execution();
+
+            MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
 
         public Task SetExecution(Execution execution)
@@ -48,6 +57,12 @@ namespace StepinFlow.ViewModels.Pages.Executions
             if (execution.ResultImagePath != null)
                 if (File.Exists(execution.ResultImagePath))
                     ResultImage = File.ReadAllBytes(execution.ResultImagePath);
+
+            if (execution?.FlowStep?.FlowParameter != null)
+            {
+                FlowParameters.Add(execution.FlowStep.FlowParameter);
+                SelectedFlowParameter = execution.FlowStep.FlowParameter;
+            }
 
             return Task.CompletedTask;
         }
@@ -86,5 +101,6 @@ namespace StepinFlow.ViewModels.Pages.Executions
             if (e.ClickCount == 2)
                 await _windowService.OpenScreenshotSelectionWindow(ResultImage, false);
         }
+
     }
 }

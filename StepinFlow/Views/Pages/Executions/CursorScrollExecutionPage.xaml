@@ -15,28 +15,9 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <Page.Resources>
-        <ObjectDataProvider
-            x:Key="MouseScrollDirectionEnum"
-            MethodName="GetValues"
-            ObjectType="{x:Type System:Enum}">
-            <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="enum:MouseScrollDirectionEnum" />
-            </ObjectDataProvider.MethodParameters>
-        </ObjectDataProvider>
-        <ObjectDataProvider
-            x:Key="MouseButtonEnum"
-            MethodName="GetValues"
-            ObjectType="{x:Type System:Enum}">
-            <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="enum:MouseButtonsEnum" />
-            </ObjectDataProvider.MethodParameters>
-        </ObjectDataProvider>
-    </Page.Resources>
-
     <StackPanel>
 
-        <Label>Configure click action</Label>
+        <Label>Configure cursor scroll action</Label>
 
         <Grid Margin="10,10,10,50">
             <Grid.ColumnDefinitions>

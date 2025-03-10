@@ -24,11 +24,10 @@ namespace StepinFlow.ViewModels.Pages
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
-        [ObservableProperty]
-        private IEnumerable<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
 
         [ObservableProperty]
         private IEnumerable<TemplateMatchModesEnum> _matchModes;
+
         [ObservableProperty]
         private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
         [ObservableProperty]
@@ -65,7 +64,7 @@ namespace StepinFlow.ViewModels.Pages
             flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
             FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
 
-                SelectedFlowParameter = FlowParameters.Where(x=>x.Id==FlowStep.FlowParameterId).FirstOrDefault();
+            SelectedFlowParameter = FlowParameters.Where(x => x.Id == FlowStep.FlowParameterId).FirstOrDefault();
         }
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)

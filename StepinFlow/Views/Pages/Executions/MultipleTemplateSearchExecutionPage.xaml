@@ -29,19 +29,61 @@
 
 
 
-        <StackPanel Grid.Column="1">
+        <StackPanel>
 
-            <Label>1. Set Name</Label>
-            <TextBox Text="{Binding ViewModel.Execution.FlowStep.ParentTemplateSearchFlowStep.Name, Mode=TwoWay}" />
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+            </StackPanel>
 
-            <Label>2. Select Process (leave empty for screen search)</Label>
-            <ComboBox
-                VerticalAlignment="Center"
-                ItemsSource="{Binding ViewModel.ProcessList}"
-                SelectedItem="{Binding ViewModel.Execution.FlowStep.ParentTemplateSearchFlowStep.ProcessName, Mode=TwoWay}" />
+
+            <!--  FlowParameter  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Select search area from parameters(leave empty for all monitor search)</Label>
+                <ComboBox
+                    VerticalAlignment="Center"
+                    ItemsSource="{Binding ViewModel.FlowParameters}"
+                    SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Path=Id}" />
+                                <TextBlock Text=". " />
+                                <TextBlock Text="{Binding Path=Name}" />
+                                <TextBlock Text=" - " />
+                                <TextBlock Text="{Binding Path=TemplateSearchAreaType}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+
+            <!--  TemplateSearchAreaTypesEnum  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Select match mode:</Label>
+                <ComboBox
+                    VerticalAlignment="Center"
+                    ItemsSource="{Binding ViewModel.MatchModes}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
+            </StackPanel>
 
 
 
+
+
+
+            <!--  FlowSttep Items  -->
             <ItemsControl ItemsSource="{Binding ViewModel.ChildrenTemplateSearchFlowSteps}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -58,8 +100,19 @@
                             BorderThickness="1">
                             <StackPanel>
 
-                                <Label>Select template image to search:</Label>
 
+                                <!--  Ordering  -->
+                                <StackPanel
+                                    MinWidth="200"
+                                    Margin="0,0,0,20"
+                                    HorizontalAlignment="Left">
+                                    <Label>Ordering:</Label>
+                                    <Label Content="{Binding OrderingNum}" />
+                                </StackPanel>
+
+
+
+                                <!--  Template Image  -->
                                 <Image
                                     MaxWidth="100"
                                     MaxHeight="100"
@@ -73,11 +126,50 @@
                                 </Image>
 
 
-                                <Label>Select minimum accuracy:</Label>
-                                <TextBox Margin="0,0,0,15" Text="{Binding Accuracy, Mode=TwoWay}" />
+                                <!--  Accuracy  -->
+                                <StackPanel
+                                    MinWidth="200"
+                                    Margin="0,0,0,20"
+                                    HorizontalAlignment="Left">
+                                    <Label>Select minimum accuracy:</Label>
+                                    <TextBox Text="{Binding Accuracy, Mode=TwoWay}" />
+                                </StackPanel>
+
+                                <!--  IsLoop  -->
+                                <StackPanel
+                                    MinWidth="200"
+                                    Margin="0,0,0,0"
+                                    Orientation="Horizontal">
+                                    <Label VerticalAlignment="Center">Is loop:</Label>
+                                    <CheckBox IsChecked="{Binding IsLoop, Mode=TwoWay}" />
+                                </StackPanel>
 
 
-                                <Label>Result</Label>
+                                <Border>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLoop}" Value="true">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <!--  Remove Template From Result  -->
+                                        <StackPanel MinWidth="200" Margin="0,0,0,20">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label VerticalAlignment="Bottom">Remove template from result image:</Label>
+                                                <CheckBox IsChecked="{Binding RemoveTemplateFromResult, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <TextBlock Text="(Avoid finding the same location multiple times.)" />
+                                        </StackPanel>
+
+
+                                    </StackPanel>
+                                </Border>
+
 
                             </StackPanel>
                         </Border>
@@ -85,6 +177,9 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+
+
+            <!--  Result image  -->
             <Image Source="{Binding ViewModel.ResultImage, Converter={StaticResource ImageNullConverter}}">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="MouseDown">
@@ -97,7 +192,8 @@
 
 
 
-
         </StackPanel>
+
+
     </Grid>
 </Page>
