@@ -164,8 +164,8 @@ namespace Business.Factories.Workers
 
             // Delete temp images since execution is completed.
             foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
-                if (File.Exists(parentLoopExecution.ResultImagePath))
-                    File.Delete(parentLoopExecution.ResultImagePath);
+                if (File.Exists(parentLoopExecution.TempResultImagePath))
+                    File.Delete(parentLoopExecution.TempResultImagePath);
 
             _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
 

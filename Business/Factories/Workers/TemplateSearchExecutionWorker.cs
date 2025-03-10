@@ -156,8 +156,8 @@ namespace Business.Factories.Workers
                     return execution.FlowStep;
 
             foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.Id])
-                if (File.Exists(parentLoopExecution.ResultImagePath))
-                    File.Delete(parentLoopExecution.ResultImagePath);
+                if (File.Exists(parentLoopExecution.TempResultImagePath))
+                    File.Delete(parentLoopExecution.TempResultImagePath);
 
             _pendingExecutionLoops[execution.FlowStep.Id].Clear();
 
