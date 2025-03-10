@@ -13,7 +13,7 @@ namespace StepinFlow.Views.Windows
 {
     public partial class MainWindow : INavigationWindow
     {
-        private readonly ISystemSettingsService _windowStateService;
+        private readonly ISystemSettingsService _systemSettingsService;
         public MainWindowVM ViewModel { get; }
 
         public MainWindow(
@@ -21,11 +21,10 @@ namespace StepinFlow.Views.Windows
             INavigationViewPageProvider pageService,
             INavigationService navigationService,
             IServiceProvider serviceProvider,
-            IWindowStateService windowStateService
+            ISystemSettingsService systemSettingsService
         )
         {
-            _windowStateService = windowStateService;
-
+            _systemSettingsService = systemSettingsService;
 
             ViewModel = viewModel;
             DataContext = this;
@@ -38,17 +37,9 @@ namespace StepinFlow.Views.Windows
             // NavigationControl is x:Name of our NavigationView defined in XAML.
             RootNavigation.SetPageProviderService(pageProvider);
             SetPageService(pageService);
-
             navigationService.SetNavigationControl(RootNavigation);
-            WindowSize windowState = _windowStateService.GetMainWindowState();
 
-            this.Left = windowState.Left;
-            this.Top = windowState.Top;
-            this.Width = windowState.Width;
-            this.Height = windowState.Height;
-            this.WindowState = windowState.IsMaximized ? WindowState.Maximized : WindowState.Normal;
-            EnsureWindowInBounds();
-
+            SetWindowLocation();
         }
 
 
@@ -56,33 +47,16 @@ namespace StepinFlow.Views.Windows
 
         public bool Navigate(Type pageType) => RootNavigation.Navigate(pageType);
 
-        //public void SetPageService(IPageService pageService) => RootNavigation.SetPageService(pageService);
-
         public void ShowWindow() => Show();
 
         public void CloseWindow() => Close();
 
 
-        /// <summary>
-        /// Raises the closed event.
-        /// </summary>
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
 
-
-            WindowSize windowState = new WindowSize
-            {
-                Left = this.Left,
-                Top = this.Top,
-                Width = this.Width,
-                Height = this.Height,
-                IsMaximized = this.WindowState == WindowState.Maximized
-            };
-            _windowStateService.SaveMainWindowState(windowState);
-
-
-
+            SaveWindowLocation();
 
             // Make sure that closing this window will begin the process of closing the application.
             Application.Current.Shutdown();
@@ -91,7 +65,6 @@ namespace StepinFlow.Views.Windows
 
         public void SetServiceProvider(IServiceProvider serviceProvider)
         {
-            //RootNavigation.SetPageProviderService(serviceProvider);
             throw new NotImplementedException();
         }
 
@@ -101,9 +74,18 @@ namespace StepinFlow.Views.Windows
         }
 
 
-        private void EnsureWindowInBounds()
+        private void SetWindowLocation()
         {
-            if (this.Left < SystemParameters.VirtualScreenLeft ||
+            WindowSize windowState = _systemSettingsService.GetMainWindowState();
+
+            this.Left = windowState.Left;
+            this.Top = windowState.Top;
+            this.Width = windowState.Width;
+            this.Height = windowState.Height;
+            this.WindowState = windowState.IsMaximized ? WindowState.Maximized : WindowState.Normal;
+
+            if (
+                this.Left < SystemParameters.VirtualScreenLeft ||
                 this.Top < SystemParameters.VirtualScreenTop ||
                 this.Left + this.Width > SystemParameters.VirtualScreenWidth ||
                 this.Top + this.Height > SystemParameters.VirtualScreenHeight)
@@ -113,6 +95,19 @@ namespace StepinFlow.Views.Windows
                 this.Width = 800;
                 this.Height = 450;
             }
+        }
+
+        private void SaveWindowLocation()
+        {
+            WindowSize windowState = new WindowSize
+            {
+                Left = this.Left,
+                Top = this.Top,
+                Width = this.Width,
+                Height = this.Height,
+                IsMaximized = this.WindowState == WindowState.Maximized
+            };
+            _systemSettingsService.SaveMainWindowState(windowState);
         }
     }
 }

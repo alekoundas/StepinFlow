@@ -2,7 +2,7 @@
 
 namespace Business.Services.Interfaces
 {
-    public interface IWindowStateService
+    public interface ISystemSettingsService
     {
         WindowSize GetMainWindowState();
         WindowSize GetSelectorWindowState();

@@ -23,11 +23,11 @@ namespace Business.DatabaseContext
 
             // Create the directory if it doesn’t exist
             if (!Directory.Exists(dataPath))
-                Directory.CreateDirectory(dataPath); 
+                Directory.CreateDirectory(dataPath);
 
             // Create the database file if it doesn’t exist.
             if (!File.Exists(dataSource))
-                File.Create(dataSource).Close(); 
+                File.Create(dataSource).Close();
 
             optionsBuilder.UseSqlite($"Data Source={dataSource};");
 
@@ -80,26 +80,48 @@ namespace Business.DatabaseContext
 
         public void TrySeedInitialData()
         {
-            if (!AppSettings.Any())
-            {
-                // Main window location and size.
+            // Main window location and size.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.MAIN_WINDOW_LEFT))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.MAIN_WINDOW_LEFT, Value = ((SystemParameters.PrimaryScreenWidth - 1000) / 2).ToString() });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.MAIN_WINDOW_TOP))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.MAIN_WINDOW_TOP, Value = ((SystemParameters.PrimaryScreenHeight - 600) / 2).ToString() });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.MAIN_WINDOW_WIDTH))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.MAIN_WINDOW_WIDTH, Value = "1000" });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.MAIN_WINDOW_HEIGHT))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.MAIN_WINDOW_HEIGHT, Value = "600" });
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_MAIN_WINDOW_MAXIMAZED, Value = "false" });
 
-                // Selector window location and size.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_MAIN_WINDOW_MAXIMIZED))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_MAIN_WINDOW_MAXIMIZED, Value = "false" });
+
+
+            // Selector window location and size.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.SELECTOR_WINDOW_LEFT))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_LEFT, Value = ((SystemParameters.PrimaryScreenWidth - 1000) / 2).ToString() });
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_TOP, Value = ((SystemParameters.PrimaryScreenHeight - 600) / 2).ToString() });
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_WIDTH, Value = "1000" });
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_HEIGHT, Value = "600" });
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_SELECTOR_WINDOW_MAXIMAZED, Value = "false" });
 
-                // Execution history log settings.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.SELECTOR_WINDOW_TOP))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_TOP, Value = ((SystemParameters.PrimaryScreenHeight - 600) / 2).ToString() });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.SELECTOR_WINDOW_WIDTH))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_WIDTH, Value = "1000" });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.SELECTOR_WINDOW_HEIGHT))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.SELECTOR_WINDOW_HEIGHT, Value = "600" });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_SELECTOR_WINDOW_MAXIMIZED))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_SELECTOR_WINDOW_MAXIMIZED, Value = "false" });
+
+
+            // Execution history log settings.
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY, Value = "80" });
+
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED, Value = "true" });
-            }
+
+            this.SaveChanges();
         }
     }
 }

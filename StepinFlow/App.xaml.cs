@@ -81,7 +81,7 @@ namespace StepinFlow
                 services.AddTransient<IDataService, DataService>();
                 services.AddTransient<ICloneService, CloneService>();
                 services.AddTransient<IKeyboardListenerService, KeyboardListenerService>();
-                services.AddSingleton<IWindowStateService, WindowStateService>();
+                services.AddSingleton<ISystemSettingsService, SystemSettingsService>();
 
                 // Repository
                 services.AddTransient<IFlowRepository, FlowRepository>();
