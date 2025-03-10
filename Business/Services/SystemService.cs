@@ -99,9 +99,49 @@ namespace Business.Services
                 .ToList();
         }
 
-        public async Task SaveImageToDisk(string filePath, byte[] image)
+        public async Task SaveImageToDisk(string filePath, byte[] image, double quality = 100.0)
         {
-            await File.WriteAllBytesAsync(filePath, image);
+            // Validate quality parameter
+            if (quality < 0 || quality > 100)
+            {
+                throw new ArgumentException("Quality must be between 0 and 100.", nameof(quality));
+            }
+
+            // If quality is 100, save original bytes directly (no processing)
+            if (quality == 100.0)
+            {
+                await File.WriteAllBytesAsync(filePath, image);
+                return;
+            }
+
+            // Load the image from byte array
+            using (var memoryStream = new MemoryStream(image))
+            using (var originalImage = Image.FromStream(memoryStream))
+            {
+                // Prepare to save with reduced quality
+                var encoder = Encoder.Quality;
+                var encoderParameters = new EncoderParameters(1);
+                encoderParameters.Param[0] = new EncoderParameter(encoder, (long)quality);
+
+                // Get the JPEG codec (PNG doesn't support quality directly, so we convert)
+                ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
+                    .FirstOrDefault(c => c.MimeType == "image/jpeg");
+
+                if (jpegCodec == null)
+                {
+                    throw new InvalidOperationException("JPEG codec not found.");
+                }
+
+                // Ensure file extension matches output format
+                string outputPath = Path.ChangeExtension(filePath, ".jpg");
+
+                // Save the image with specified quality
+                using (var outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                {
+                    originalImage.Save(outputStream, jpegCodec, encoderParameters);
+                    await outputStream.FlushAsync();
+                }
+            }
         }
 
         public void CopyImageToDisk(string sourceFilePath, string destinationFilePath)

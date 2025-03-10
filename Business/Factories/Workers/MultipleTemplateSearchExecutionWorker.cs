@@ -180,6 +180,7 @@ namespace Business.Factories.Workers
                 return;
 
             bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
+            double saveImageQuality= double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
             string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
 
@@ -192,7 +193,7 @@ namespace Business.Factories.Workers
             {
                 string tempFilePath = Path.Combine(PathHelper.GetTempDataPath(), fileDate + ".png");
                 if (_resultImage != null)
-                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage);
+                    await _systemService.SaveImageToDisk(tempFilePath, _resultImage, saveImageQuality);
 
                 execution.TempResultImagePath = tempFilePath;
             }

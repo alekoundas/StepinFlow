@@ -171,13 +171,14 @@ namespace Business.Factories.Workers
             if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0 || !execution.StartedOn.HasValue)
                 return;
 
+            double saveImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
             bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
             string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
 
             // Save image to disk (History).
             if (_resultImage != null && allowExecutionImageSave)
-                await _systemService.SaveImageToDisk(newFilePath, _resultImage);
+                await _systemService.SaveImageToDisk(newFilePath, _resultImage, saveImageQuality);
 
             // Save image to disk (Temp).
             if (execution.Result == ExecutionResultEnum.SUCCESS)

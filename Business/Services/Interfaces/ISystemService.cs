@@ -16,15 +16,15 @@ namespace Business.Services.Interfaces
 
 
         List<string> GetProcessWindowTitles();
-        
-        
+
+
         // JSON.
         Task ExportFlowsJSON(List<Flow> flows, string exportFilePath);
         List<Flow>? ImportFlowsJSON(string importFilePath);
 
         // Image.
         ImageSizeResult GetImageSize(byte[] imagePath);
-        Task SaveImageToDisk(string filePath, byte[] image);
+        Task SaveImageToDisk(string filePath, byte[] image, double quality = 100.0);
         void CopyImageToDisk(string sourceFilePath, string destinationFilePath);
         Bitmap? TakeScreenShot(Model.Structs.Rectangle rectangle, string filename = "Screenshot");
         byte[]? TakeScreenShot(Model.Structs.Rectangle rectangle);
