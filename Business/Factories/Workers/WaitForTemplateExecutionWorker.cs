@@ -142,7 +142,7 @@ namespace Business.Factories.Workers
             if (!execution.ParentExecutionId.HasValue || execution.ExecutionFolderDirectory.Length == 0 || !execution.StartedOn.HasValue)
                 return;
 
-            double saveImageQuality= double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
+            double saveImageQuality= double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY).Value);
             bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
             string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");

@@ -180,7 +180,7 @@ namespace Business.Factories.Workers
                 return;
 
             bool allowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
-            double saveImageQuality= double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
+            double saveImageQuality= double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY).Value);
             string fileDate = execution.StartedOn.Value.ToString("dd-MM-yyyy hh.mm.ss.fff");
             string newFilePath = Path.Combine(execution.ExecutionFolderDirectory, fileDate + ".png");
 

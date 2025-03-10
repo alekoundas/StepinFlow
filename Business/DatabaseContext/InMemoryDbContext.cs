@@ -115,8 +115,8 @@ namespace Business.DatabaseContext
 
 
             // Execution history log settings.
-            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY))
-                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY, Value = "80" });
+            if (!AppSettings.Any(x => x.Key == AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY))
+                AppSettings.Add(new AppSetting { Key = AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY, Value = "80" });
 
             if (!AppSettings.Any(x => x.Key == AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED))
                 AppSettings.Add(new AppSetting { Key = AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED, Value = "true" });

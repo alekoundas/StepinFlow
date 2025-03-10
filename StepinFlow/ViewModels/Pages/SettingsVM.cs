@@ -28,7 +28,7 @@ namespace StepinFlow.ViewModels.Pages
             _systemSettingsService = systemSettingsService;
 
             AllowExecutionImageSave = bool.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED).Value);
-            ExecutionImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY).Value);
+            ExecutionImageQuality = double.Parse(_systemSettingsService.GetSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY).Value);
         }
 
         public void OnNavigatedTo()
@@ -50,7 +50,7 @@ namespace StepinFlow.ViewModels.Pages
         private void OnSaveExecution()
         {
             _systemSettingsService.UpdateSetting(AppSettingsEnum.IS_EXECUTION_HISTORY_LOG_ENABLED, AllowExecutionImageSave.ToString());
-            _systemSettingsService.UpdateSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_ACCURACY, ExecutionImageQuality.ToString());
+            _systemSettingsService.UpdateSetting(AppSettingsEnum.EXECUTION_HISTORY_LOG_IMAGE_QUALITY, ExecutionImageQuality.ToString());
         }
 
         [RelayCommand]
