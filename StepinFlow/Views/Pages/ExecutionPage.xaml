@@ -17,7 +17,7 @@
     xmlns:vm="clr-namespace:StepinFlow.ViewModels.Pages"
     Title="ExecutionPage"
     d:DataContext="{d:DesignInstance local:ExecutionPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -112,9 +112,17 @@
         <ComboBox
             Name="ProcessList"
             Margin="0,0,0,20"
-            DisplayMemberPath="Id"
             ItemsSource="{Binding ViewModel.ComboBoxFlows}"
             SelectedItem="{Binding ViewModel.ComboBoxSelectedFlow}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Path=Id}" />
+                        <TextBlock Text=" - " />
+                        <TextBlock Text="{Binding Path=Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
 
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="SelectionChanged">

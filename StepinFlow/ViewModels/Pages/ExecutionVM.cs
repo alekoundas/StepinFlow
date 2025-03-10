@@ -73,18 +73,13 @@ namespace StepinFlow.ViewModels.Pages
             _systemService = systemService;
             _executionFactory = executionFactory;
 
-            ComboBoxFlows = new ObservableCollection<Flow>(_dataService.Flows.ToList());
+            List<Flow> flows = _dataService.Flows.Where(x => x.Type == FlowTypesEnum.FLOW).ToList();
+            ComboBoxFlows = new ObservableCollection<Flow>(flows);
 
             _executionFactory.SetCancellationToken(_cancellationToken);
 
             // Update every second
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-
-            //var a = _dataService.FlowSteps
-            //    .Expression()
-            //    .Where(x => x.Type == FlowStepTypesEnum.CURSOR_CLICK)
-            //    .Include(x => x.ParentFlowStep!.ChildrenTemplateSearchFlowSteps);
-
         }
 
 
