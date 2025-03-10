@@ -13,7 +13,7 @@ namespace StepinFlow.Views.Windows
 {
     public partial class MainWindow : INavigationWindow
     {
-        private readonly IWindowStateService _windowStateService;
+        private readonly ISystemSettingsService _windowStateService;
         public MainWindowVM ViewModel { get; }
 
         public MainWindow(
