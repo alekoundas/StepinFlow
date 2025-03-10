@@ -172,15 +172,15 @@ namespace StepinFlow.ViewModels.Pages
 
                     //await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
                     //await factoryWorker.ExpandAndSelectFlowStep(flowStepExecution, _treeViewUserControlViewModel.FlowsList);
-                    context.ChangeTracker.Clear();
+                    //context.ChangeTracker.Clear();
+                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
-                    context.ChangeTracker.Clear();
+                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.ExecuteFlowStepAction(flowStepExecution);
-                    context.ChangeTracker.Clear();
+                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SetExecutionModelStateComplete(flowStepExecution);
-                    context.ChangeTracker.Clear();
+                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SaveToDisk(flowStepExecution);
-                    context.ChangeTracker.Clear();
 
                     // If step has a sibling, push it first in stack.
                     FlowStep? nextFlowStep;
@@ -197,7 +197,7 @@ namespace StepinFlow.ViewModels.Pages
                     await tranasaction.CommitAsync();
                     tranasaction.Dispose();
                 }
-                _dataService.Dispose();
+                _dataService.Dispose(true);
             }
         }
 

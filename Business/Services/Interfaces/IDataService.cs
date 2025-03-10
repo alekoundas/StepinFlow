@@ -3,7 +3,7 @@ using Business.Repository.Interfaces;
 
 namespace Business.Services.Interfaces
 {
-    public interface IDataService : IDisposable
+    public interface IDataService 
     {
         InMemoryDbContext CreateNewDbContext { get; }
         void SetDbContext(InMemoryDbContext dbContext);
@@ -16,13 +16,16 @@ namespace Business.Services.Interfaces
         IExecutionRepository Executions { get; set; }
         IAppSettingRepository AppSettings { get; set; }
 
-        Task<int> SaveChangesAsync();
-        int SaveChanges();
+        //Task<int> SaveChangesAsync();
+        //int SaveChanges();
         void Update<TEntity>(TEntity model);
         void UpdateRange<TEntity>(List<TEntity> models);
         Task UpdateRangeAsync<TEntity>(List<TEntity> models);
 
 
         Task UpdateAsync<TEntity>(TEntity model);
+        void ClearChangeTracker();
+        void Dispose(bool forceDispose = false);
+
     }
 }

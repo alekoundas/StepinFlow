@@ -115,12 +115,12 @@ namespace Business.Factories.Workers
 
         public async virtual Task SaveToDisk(Execution execution)
         {
-            await _dataService.SaveChangesAsync();
+            //await _dataService.SaveChangesAsync();
         }
 
         public void ClearEntityFrameworkChangeTracker()
         {
-            //_dataService.Query.ChangeTracker.Clear();
+            _dataService.ClearChangeTracker();
         }
     }
 }

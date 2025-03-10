@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Business.Services
 {
-    public class DataService : IDataService, IDisposable
+    public class DataService : IDataService
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
         public InMemoryDbContext CreateNewDbContext { get => _contextFactory.CreateDbContext(); }
         private InMemoryDbContext? _dbContext { get; set; }
+        private bool _ownsContext = true;
 
         public IFlowRepository Flows { get; set; }
         public IFlowStepRepository FlowSteps { get; set; }
@@ -38,6 +39,10 @@ namespace Business.Services
 
         public void SetDbContext(InMemoryDbContext dbContext)
         {
+            if (_dbContext != null && _ownsContext)
+                _dbContext.Dispose();
+
+            _ownsContext = false;
             _dbContext = dbContext;
             Flows.SetDbContext(dbContext);
             FlowSteps.SetDbContext(dbContext);
@@ -55,16 +60,15 @@ namespace Business.Services
         }
 
 
-        public async Task<int> SaveChangesAsync()
-        {
-            return await GetDbContext().SaveChangesAsync();
-           
-        }
+        //public async Task<int> SaveChangesAsync()
+        //{
+        //    return await GetDbContext().SaveChangesAsync();
+        //}
 
-        public int SaveChanges()
-        {
-            return GetDbContext().SaveChanges();
-        }
+        //public int SaveChanges()
+        //{
+        //    return GetDbContext().SaveChanges();
+        //}
 
         public void Update<TEntity>(TEntity model)
         {
@@ -73,6 +77,7 @@ namespace Business.Services
 
             GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
+            Dispose();
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
@@ -82,6 +87,7 @@ namespace Business.Services
 
             GetDbContext().Entry(model).State = EntityState.Modified;
             await GetDbContext().SaveChangesAsync();
+            Dispose();
         }
 
 
@@ -89,8 +95,9 @@ namespace Business.Services
         {
             foreach (var model in models)
                 if (model != null)
-                        GetDbContext().Entry(model).State = EntityState.Modified;
+                    GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
+            Dispose();
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
@@ -101,17 +108,44 @@ namespace Business.Services
                         GetDbContext().Entry(model).State = EntityState.Modified;
 
             await GetDbContext().SaveChangesAsync();
+            Dispose();
         }
 
-        public void Dispose()
+        //public void Dispose(bool forceDispose = false)
+        //{
+        //    GetDbContext().Dispose();
+        //    _dbContext = null;
+        //    Flows.Dispose(true);
+        //    FlowSteps.Dispose(true);
+        //    FlowParameters.Dispose(true);
+        //    Executions.Dispose(true);
+        //    AppSettings.Dispose(true);
+        //}
+        public void ClearChangeTracker()
         {
-            GetDbContext().Dispose();
-            _dbContext = null;
-            Flows.Dispose(true);
-            FlowSteps.Dispose(true);
-            FlowParameters.Dispose(true);
-            Executions.Dispose(true);
-            AppSettings.Dispose(true);
+            GetDbContext().ChangeTracker.Clear();
+        }
+
+        public void Dispose(bool forceDispose = false)
+        {
+            if (forceDispose)
+            {
+                if (_dbContext != null)
+                    _dbContext.Dispose();
+                _dbContext = null;
+            }
+
+            if (_ownsContext && _dbContext != null)
+            {
+                _dbContext.Dispose();
+                _dbContext = null;
+            }
+
+            Flows.Dispose(forceDispose);
+            FlowSteps.Dispose(forceDispose);
+            FlowParameters.Dispose(forceDispose);
+            Executions.Dispose(forceDispose);
+            AppSettings.Dispose(forceDispose);
         }
     }
 }
