@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq.Expressions;
-using Business.Repository;
 using Business.Services.Interfaces;
 
 namespace StepinFlow.ViewModels.UserControls
@@ -356,25 +355,51 @@ namespace StepinFlow.ViewModels.UserControls
             object selectedItem = routedPropertyChangedEventArgs.NewValue;
             if (selectedItem is FlowStep flowStep)
             {
+                if (_selectedFlowStep != null)
+                {
+                    _selectedFlowStep.IsSelected = false;
+                    _dataService.Update(_selectedFlowStep);
+                }
+
                 _selectedFlow = null;
                 _selectedFlowStep = flowStep;
                 _selectedFlowParameter = null;
+
+                _selectedFlowStep.IsSelected = true;
+                _dataService.Update(_selectedFlowStep);
                 OnSelectedFlowStepIdChangedEvent?.Invoke(flowStep.Id);
             }
             else if (selectedItem is Flow flow)
             {
+                if (_selectedFlow != null)
+                {
+                    _selectedFlow.IsSelected = false;
+                    _dataService.Update(_selectedFlow);
+                }
+
                 _selectedFlow = flow;
                 _selectedFlowStep = null;
                 _selectedFlowParameter = null;
+
+                _selectedFlow.IsSelected = true;
+                _dataService.Update(_selectedFlow);
                 OnSelectedFlowIdChangedEvent?.Invoke(flow.Id);
             }
             else if (selectedItem is FlowParameter flowParameter)
             {
+                if (_selectedFlowParameter != null)
+                {
+                    _selectedFlowParameter.IsSelected = false;
+                    _dataService.Update(_selectedFlowParameter);
+                }
+
                 _selectedFlow = null;
                 _selectedFlowStep = null;
                 _selectedFlowParameter = flowParameter;
-                OnSelectedFlowParameterIdChangedEvent?.Invoke(flowParameter.Id);
 
+                _selectedFlowParameter.IsSelected = true;
+                _dataService.Update(_selectedFlowParameter);
+                OnSelectedFlowParameterIdChangedEvent?.Invoke(flowParameter.Id);
             }
         }
 
