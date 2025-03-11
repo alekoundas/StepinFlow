@@ -10,7 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="CursorRelocateExecutionPage"
     d:DataContext="{d:DesignInstance local:CursorRelocateExecutionPage,
-    IsDesignTimeCreatable=False}"
+                                     IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -101,7 +101,7 @@
                             <Label Padding="0,0,5,0">Y:</Label>
                             <TextBox VerticalAlignment="Center" Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
                         </StackPanel>
-                        
+
                         <!--  Test Button  -->
                         <StackPanel Margin="0,10,0,0" HorizontalAlignment="Left">
                             <Button Content="Test">

@@ -10,7 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="SubFlowStepPage"
     d:DataContext="{d:DesignInstance local:SubFlowStepPage,
-    IsDesignTimeCreatable=False}"
+                                     IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -43,9 +43,7 @@
                     Margin="0,0,0,20"
                     HorizontalAlignment="Left">
                     <Label>Sub-Flows:</Label>
-                    <ComboBox
-                        ItemsSource="{Binding ViewModel.SubFlows}"
-                        SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
+                    <ComboBox ItemsSource="{Binding ViewModel.SubFlows}" SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
