@@ -49,6 +49,7 @@ namespace Business.Factories.Workers
             await _dataService.UpdateAsync(parentExecution);
 
             execution.FlowStep = flowStep;
+            execution.ParentExecution = null;
             return execution;
         }
 

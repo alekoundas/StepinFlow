@@ -60,6 +60,7 @@ namespace Business.Factories.Workers
 
 
             execution.FlowStep = flowStep;
+            execution.ParentExecution = null;
             return execution;
         }
 

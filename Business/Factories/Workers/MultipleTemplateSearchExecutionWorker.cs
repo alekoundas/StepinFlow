@@ -59,6 +59,7 @@ namespace Business.Factories.Workers
 
             // Return execution with relations.
             execution.FlowStep = childTemplateSearchFlowStep;
+            execution.ParentExecution = null;
 
             return execution;
         }

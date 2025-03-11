@@ -37,6 +37,7 @@ namespace Business.Factories.Workers
             _dataService.Update(parentExecution);
 
             execution.FlowStep = flowStep;
+            execution.ParentExecution = null;
             return execution;
         }
 

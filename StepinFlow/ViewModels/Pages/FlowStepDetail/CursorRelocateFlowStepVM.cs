@@ -191,7 +191,7 @@ namespace StepinFlow.ViewModels.Pages
                     else
                         parent = null;
                 }
-                _dataService.Dispose();
+                _dataService.Dispose(true);
             }
         }
     }

@@ -24,10 +24,16 @@ namespace StepinFlow.ViewModels.Pages
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
-        [ObservableProperty]
-        private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
+
         [ObservableProperty]
         private IEnumerable<TemplateMatchModesEnum> _matchModes;
+
+        [ObservableProperty]
+        private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
+        [ObservableProperty]
+        private FlowParameter? _selectedFlowParameter = null;
+
+        private byte[]? _previousTestResultImage = null;
 
         public WaitForTemplateFlowStepVM(
             ISystemService systemService, 
@@ -43,6 +49,38 @@ namespace StepinFlow.ViewModels.Pages
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
+
+        public override async Task LoadFlowStepId(int flowStepId)
+        {
+            SelectedFlowParameter = null;
+            TestResultImage = null;
+            FlowStep? flowStep = await _dataService.FlowSteps
+                .Include(x => x.FlowParameter)
+                .FirstOrDefaultAsync(x => x.Id == flowStepId);
+
+            if (flowStep != null)
+                FlowStep = flowStep;
+
+            List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(flowStepId);
+            flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
+            FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+
+            SelectedFlowParameter = FlowParameters.Where(x => x.Id == FlowStep.FlowParameterId).FirstOrDefault();
+        }
+
+        public override async Task LoadNewFlowStep(FlowStep newFlowStep)
+        {
+            SelectedFlowParameter = null;
+            TestResultImage = null;
+            FlowStep = newFlowStep;
+
+            List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(newFlowStep.ParentFlowStepId.Value);
+            flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
+            FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+
+            return;
+        }
+
 
         [RelayCommand]
         private void OnButtonOpenFileClick()
