@@ -9,6 +9,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using Point = System.Windows.Point;
 using Business.Services.Interfaces;
+using OpenCvSharp.WpfExtensions;
+using Business.Extensions;
 
 namespace StepinFlow.ViewModels.Windows
 {
@@ -61,14 +63,14 @@ namespace StepinFlow.ViewModels.Windows
                 using (var ms = new MemoryStream(screenshot))
                     bitmapScreenshot = new Bitmap(ms);
 
-                Screenshot = ConvertBitmapToBitmapSource(bitmapScreenshot);
+                Screenshot = bitmapScreenshot.ToBitmapSource();
             }
             else
             {
                 Model.Structs.Rectangle searchRectangle = _systemService.GetScreenSize();
-                Bitmap? bitmapScreenshot = _systemService.TakeScreenShot(searchRectangle, null);
+                Bitmap? bitmapScreenshot = _systemService.TakeScreenShot(searchRectangle, "");
                 if (bitmapScreenshot != null)
-                    Screenshot = ConvertBitmapToBitmapSource(bitmapScreenshot);
+                    Screenshot = bitmapScreenshot.ToBitmapSource();
             }
         }
 
@@ -150,7 +152,7 @@ namespace StepinFlow.ViewModels.Windows
             using (MemoryStream stream = new MemoryStream())
             {
                 // Convert BitmapSource to Bitmap.
-                Bitmap resultBitmap = BitmapSourceToBitmap(Screenshot);
+                Bitmap resultBitmap = Screenshot.ToBitmap();
                 resultBitmap.Save(stream, ImageFormat.Png);
 
                 // Convert Bitmap to Byte[].
@@ -201,50 +203,6 @@ namespace StepinFlow.ViewModels.Windows
             // Perform cropping
             CroppedBitmap croppedImage = new(Screenshot, new Int32Rect(cropX, cropY, cropWidth, cropHeight));
             return croppedImage;
-        }
-
-
-        // TODO: Get them ouut of here!
-        private BitmapSource ConvertBitmapToBitmapSource(Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
-            {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
-                memory.Position = 0;
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                return bitmapImage;
-            }
-        }
-
-        private Bitmap BitmapSourceToBitmap(BitmapSource source)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-
-            // Create a new Bitmap with the same dimensions.
-            Bitmap bitmap = new Bitmap(source.PixelWidth, source.PixelHeight, PixelFormat.Format32bppPArgb);
-
-            // Lock the bitmap's bits for writing
-            BitmapData data = bitmap.LockBits(
-                new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                ImageLockMode.WriteOnly,
-                bitmap.PixelFormat);
-
-            // Copy the BitmapSource pixels to the Bitmap.
-            source.CopyPixels(
-                Int32Rect.Empty,
-                data.Scan0,
-                data.Height * data.Stride,
-                data.Stride);
-
-            // Unlock the bits
-            bitmap.UnlockBits(data);
-
-            return bitmap;
         }
     }
 }

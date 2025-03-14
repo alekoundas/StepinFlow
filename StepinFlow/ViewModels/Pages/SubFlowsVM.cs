@@ -1,10 +1,8 @@
 ﻿using Model.Models;
 using CommunityToolkit.Mvvm.Input;
-using Wpf.Ui.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using StepinFlow.ViewModels.UserControls;
 using System.Windows;
 using Model.Enums;
 using Wpf.Ui.Abstractions.Controls;

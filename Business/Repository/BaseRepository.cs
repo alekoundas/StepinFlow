@@ -9,7 +9,6 @@ namespace Business.Repository
     {
         private readonly IDbContextFactory<InMemoryDbContext> _contextFactory;
         protected InMemoryDbContext? _context;
-        protected bool _ownsContext = true;
         protected IQueryable<TEntity>? _query;
 
         public BaseRepository(IDbContextFactory<InMemoryDbContext> contextFactory)
@@ -17,24 +16,23 @@ namespace Business.Repository
             _contextFactory = contextFactory;
         }
 
-        //protected DbSet<TEntity> GetDbSet() => _context?.Set<TEntity>() ?? _contextFactory.CreateDbContext().Set<TEntity>();
         protected InMemoryDbContext GetDbContext()
         {
-            //if (_context == null)
                 _context = _contextFactory.CreateDbContext();
             _context.Database.ExecuteSqlRaw("PRAGMA busy_timeout = 10000;");
 
             return _context;
         }
 
-        //TODO rename this
+        //TODO remove this
         public BaseRepository<TEntity> SetDbContext(InMemoryDbContext context)
         {
-            if (_context != null && _ownsContext)
-                _context.Dispose();
+            return this;
+        }
 
-            _context = context;
-            _ownsContext = false;
+        public BaseRepository<TEntity> ClearQuery()
+        {
+            _query = null;
             return this;
         }
 
@@ -66,7 +64,6 @@ namespace Business.Repository
             return new BaseRepository<FlowStep>(_contextFactory)
             {
                 _context = _context,
-                _ownsContext = _ownsContext,
                 _query = newQuery
             };
         }
@@ -79,7 +76,6 @@ namespace Business.Repository
             return new BaseRepository<Flow>(_contextFactory)
             {
                 _context = _context,
-                _ownsContext = _ownsContext,
                 _query = newQuery
             };
         }
@@ -92,7 +88,6 @@ namespace Business.Repository
             return new BaseRepository<FlowParameter>(_contextFactory)
             {
                 _context = _context,
-                _ownsContext = _ownsContext,
                 _query = newQuery
             };
         }
@@ -107,7 +102,6 @@ namespace Business.Repository
             return new BaseRepository<FlowStep>(_contextFactory)
             {
                 _context = _context,
-                _ownsContext = _ownsContext,
                 _query = newQuery
             };
         }
@@ -121,7 +115,6 @@ namespace Business.Repository
             return new BaseRepository<FlowParameter>(_contextFactory)
             {
                 _context = _context,
-                _ownsContext = _ownsContext,
                 _query = newQuery
             };
         }
@@ -162,82 +155,7 @@ namespace Business.Repository
             return result;
         }
 
-        //public async Task<int> CountAllAsyncFiltered(Expression<Func<TEntity, bool>> selector)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    return await context.Set<TEntity>().Where(selector).CountAsync();
-        //}
 
-
-        //public async Task<List<TEntity>> GetPaggingWithFilter(
-        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-        //    Expression<Func<TEntity, bool>>? filter,
-        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
-        //    int pageSize = 10,
-        //    int pageIndex = 1)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    var qry = context.Set<TEntity>().AsQueryable();
-
-        //    if (includes != null)
-        //        foreach (var include in includes)
-        //            qry = include(qry);
-
-        //    if (filter != null)
-        //        qry = qry.Where(filter);
-
-        //    if (orderingInfo != null)
-        //        qry = orderingInfo(qry);
-
-        //    if (pageSize != -1 && pageSize != 0)
-        //        qry = qry.Skip((pageIndex - 1) * pageSize).Take(pageSize);
-
-        //    return await qry.ToListAsync();
-        //}
-
-        //public async Task<List<TEntity>> GetWithFilter(
-        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-        //    Expression<Func<TEntity, bool>>? filter,
-        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null)
-        //{
-        //    using var context = _contextFactory.CreateDbContext();
-        //    var qry = context.Set<TEntity>().AsQueryable();
-
-        //    if (includes != null)
-        //        foreach (var include in includes)
-        //            qry = include(qry);
-
-        //    if (filter != null)
-        //        qry = qry.Where(filter);
-
-        //    if (orderingInfo != null)
-        //        qry = orderingInfo(qry);
-
-        //    return await qry.ToListAsync();
-        //}
-
-        //public IQueryable<TEntity> GetWithFilterQueryable(
-        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderingInfo,
-        //    Expression<Func<TEntity, bool>>? filter,
-        //    List<Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>>? includes = null,
-        //    int pageSize = 10,
-        //    int pageIndex = 1)
-        //{
-        //    var context = _contextFactory.CreateDbContext(); // Note: Caller must dispose
-        //    var qry = context.Set<TEntity>().AsQueryable();
-
-        //    if (includes != null)
-        //        foreach (var include in includes)
-        //            qry = include(qry);
-
-        //    if (filter != null)
-        //        qry = qry.Where(filter);
-
-        //    if (orderingInfo != null)
-        //        qry = orderingInfo(qry);
-
-        //    return qry; 
-        //}
 
 
 
@@ -425,7 +343,7 @@ namespace Business.Repository
       
 
 
-        public void Dispose(bool forceDispose = false)
+        public void Dispose()
         {
             //if (forceDispose)
             //{
