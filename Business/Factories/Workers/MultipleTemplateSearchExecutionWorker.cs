@@ -59,7 +59,11 @@ namespace Business.Factories.Workers
 
             // Return execution with relations.
             execution.FlowStep = childTemplateSearchFlowStep;
-            execution.ParentExecution = null;
+            if (execution.ParentExecution != null)
+            {
+                execution.ParentExecution.ChildExecution = null;
+                execution.ParentExecution = null;
+            }
 
             return execution;
         }
@@ -164,9 +168,9 @@ namespace Business.Factories.Workers
 
 
             // Delete temp images since execution is completed.
-            foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
-                if (File.Exists(parentLoopExecution.TempResultImagePath))
-                    File.Delete(parentLoopExecution.TempResultImagePath);
+            //foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
+            //    if (File.Exists(parentLoopExecution.TempResultImagePath))
+            //        File.Delete(parentLoopExecution.TempResultImagePath);
 
             _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
 

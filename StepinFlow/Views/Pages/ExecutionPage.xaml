@@ -17,7 +17,7 @@
     xmlns:vm="clr-namespace:StepinFlow.ViewModels.Pages"
     Title="ExecutionPage"
     d:DataContext="{d:DesignInstance local:ExecutionPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -323,7 +323,11 @@
 
 
             <StackPanel>
-                <ListBox ItemContainerStyle="{DynamicResource _ListBoxItemStyle}" ItemsSource="{Binding ViewModel.ListBoxExecutions}">
+                <ListBox
+                    ItemContainerStyle="{DynamicResource _ListBoxItemStyle}"
+                    ItemsSource="{Binding ViewModel.ListBoxExecutions}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="SelectionChanged">
                             <i:InvokeCommandAction Command="{Binding ViewModel.ListBoxSelectedItemChangedCommand}" PassEventArgsToCommand="True" />

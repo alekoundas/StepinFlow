@@ -2,6 +2,7 @@
 using Business.Repository.Interfaces;
 using Business.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Model.Models;
 
 namespace Business.Services
 {
@@ -78,6 +79,8 @@ namespace Business.Services
             GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
             Dispose();
+
+            //context.Entry(execution).State = EntityState.Detached;
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)

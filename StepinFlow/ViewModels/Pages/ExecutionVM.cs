@@ -8,6 +8,9 @@ using Model.Enums;
 using Model.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -131,19 +134,38 @@ namespace StepinFlow.ViewModels.Pages
             _executionFactory.DestroyWorkers();
 
         }
+        private long GetObjectSize(object obj)
+        {
+            using (var stream = new MemoryStream())
+            {
+                var serializer = new DataContractSerializer(obj.GetType());
+                serializer.WriteObject(stream, obj);
+                return stream.Length;
+            }
+        }
 
         private async Task ExecuteStepLoop(FlowStep? initialFlowStep, Execution parentExecution)
         {
+
+            int counter = 0;
+            Dictionary<int, FlowStep> flowStepCache = new Dictionary<int, FlowStep>();
+
+
             var pendingExecutionLoops = new Dictionary<int, List<Execution>>();
             var stack = new Stack<FlowStep?>();
 
             stack.Push(initialFlowStep);
-
             using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
             {
+
                 while (stack.Count > 0)
                 {
-                    using var tranasaction = context.Database.BeginTransaction();
+                using var tranasaction = context.Database.BeginTransaction();
+                    counter++;
+                    if (counter == 1000)
+                    {
+
+                    }
                     FlowStep? flowStep = stack.Pop();
 
                     if (flowStep == null || _stopExecution == true)
@@ -162,12 +184,24 @@ namespace StepinFlow.ViewModels.Pages
                     Execution flowStepExecution = await factoryWorker.CreateExecutionModel(flowStep, parentExecution);
                     parentExecution.ResultImage = null;// TODO test if needed.
 
+                    //var size = GetObjectSize(flowStepExecution); // See helper method below
+                    //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");
+
                     // Add execution to history listbox.
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         CurrentStep = flowStep.Type.ToString();
                         if (flowStepExecution?.FlowStep?.TemplateImage?.Length == 0)
                             flowStepExecution.FlowStep.TemplateImage = null;
+
+                        if (flowStepExecution?.FlowStepId != null)
+                        {
+                            if (flowStepCache.ContainsKey(flowStepExecution.FlowStepId.Value))
+                                flowStepExecution.FlowStep = flowStepCache[flowStepExecution.FlowStepId.Value];
+                            else
+                                flowStepCache[flowStepExecution.FlowStepId.Value] = flowStepExecution.FlowStep;
+                        }
+
                         ListBoxExecutions.Add(flowStepExecution);
                     });
 
@@ -197,7 +231,10 @@ namespace StepinFlow.ViewModels.Pages
 
                     parentExecution = flowStepExecution;
                     await tranasaction.CommitAsync();
-                    tranasaction.Dispose();
+
+                    //size = GetObjectSize(flowStepExecution); // See helper method below
+                    //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");
+                tranasaction.Dispose();
                 }
                 _dataService.Dispose(true);
             }
@@ -292,22 +329,22 @@ namespace StepinFlow.ViewModels.Pages
                 return;
             }
 
-            Execution? execution = await _dataService.Executions
-                .Include(x => x.ChildExecution)
-                .FirstOrDefaultAsync(x => x.Id == ComboBoxSelectedExecutionHistory.Id);
+            //Execution? execution = await _dataService.Executions
+            //    .Include(x => x.ChildExecution)
+            //    .FirstOrDefaultAsync(x => x.Id == ComboBoxSelectedExecutionHistory.Id);
 
-            //if (execution != null)
-            //    await LoadExecutionChild(execution);
+            ////if (execution != null)
+            ////    await LoadExecutionChild(execution);
 
-            List<Execution> executions = execution
-                .SelectRecursive(x => x.ChildExecution)
-                .Where(x => x != null)
-                .ToList();
+            //List<Execution> executions = execution
+            //    .SelectRecursive(x => x.ChildExecution)
+            //    .Where(x => x != null)
+            //    .ToList();
 
-            executions.Add(execution);
-            executions.OrderBy(x => x.Id);
+            //executions.Add(execution);
+            //executions.OrderBy(x => x.Id);
 
-            ListBoxExecutions = new ObservableCollection<Execution>(executions);
+            //ListBoxExecutions = new ObservableCollection<Execution>(executions);
         }
         [RelayCommand]
         private void OnImageFailed(ExceptionRoutedEventArgs e)

@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+﻿<Window
     x:Class="StepinFlow.Views.Windows.ScreenshotSelectionWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -102,4 +102,4 @@
             </ui:Button>
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</Window>
