@@ -208,13 +208,9 @@ namespace StepinFlow.ViewModels.Pages
                     //await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
                     //await factoryWorker.ExpandAndSelectFlowStep(flowStepExecution, _treeViewUserControlViewModel.FlowsList);
                     //context.ChangeTracker.Clear();
-                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
-                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.ExecuteFlowStepAction(flowStepExecution);
-                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SetExecutionModelStateComplete(flowStepExecution);
-                    factoryWorker.ClearEntityFrameworkChangeTracker();
                     await factoryWorker.SaveToDisk(flowStepExecution);
 
                     // If step has a sibling, push it first in stack.

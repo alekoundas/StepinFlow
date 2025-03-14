@@ -327,7 +327,7 @@
                     ItemContainerStyle="{DynamicResource _ListBoxItemStyle}"
                     ItemsSource="{Binding ViewModel.ListBoxExecutions}"
                     VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    VirtualizingStackPanel.VirtualizationMode="Standard">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="SelectionChanged">
                             <i:InvokeCommandAction Command="{Binding ViewModel.ListBoxSelectedItemChangedCommand}" PassEventArgsToCommand="True" />

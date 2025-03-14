@@ -61,35 +61,27 @@ namespace Business.Services
         }
 
 
-        //public async Task<int> SaveChangesAsync()
-        //{
-        //    return await GetDbContext().SaveChangesAsync();
-        //}
-
-        //public int SaveChanges()
-        //{
-        //    return GetDbContext().SaveChanges();
-        //}
 
         public void Update<TEntity>(TEntity model)
         {
             if (model == null)
                 return;
 
-            GetDbContext().Entry(model).State = EntityState.Modified;
+            if (GetDbContext().Entry(model).State == EntityState.Detached)
+                GetDbContext().Entry(model).State = EntityState.Modified;
             GetDbContext().SaveChanges();
+            GetDbContext().Entry(model).State = EntityState.Detached;
             Dispose();
-
-            //context.Entry(execution).State = EntityState.Detached;
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
         {
             if (model == null)
                 return;
-
-            GetDbContext().Entry(model).State = EntityState.Modified;
+            if (GetDbContext().Entry(model).State == EntityState.Detached)
+                GetDbContext().Entry(model).State = EntityState.Modified;
             await GetDbContext().SaveChangesAsync();
+            GetDbContext().Entry(model).State = EntityState.Detached;
             Dispose();
         }
 
@@ -98,8 +90,15 @@ namespace Business.Services
         {
             foreach (var model in models)
                 if (model != null)
-                    GetDbContext().Entry(model).State = EntityState.Modified;
+                    if (GetDbContext().Entry(model).State == EntityState.Detached)
+                        GetDbContext().Entry(model).State = EntityState.Modified;
+
             GetDbContext().SaveChanges();
+
+            foreach (var model in models)
+                if (model != null)
+                    GetDbContext().Entry(model).State = EntityState.Detached;
+
             Dispose();
         }
 
@@ -111,19 +110,14 @@ namespace Business.Services
                         GetDbContext().Entry(model).State = EntityState.Modified;
 
             await GetDbContext().SaveChangesAsync();
+
+            foreach (var model in models)
+                if (model != null)
+                    GetDbContext().Entry(model).State = EntityState.Detached;
+
             Dispose();
         }
 
-        //public void Dispose(bool forceDispose = false)
-        //{
-        //    GetDbContext().Dispose();
-        //    _dbContext = null;
-        //    Flows.Dispose(true);
-        //    FlowSteps.Dispose(true);
-        //    FlowParameters.Dispose(true);
-        //    Executions.Dispose(true);
-        //    AppSettings.Dispose(true);
-        //}
         public void ClearChangeTracker()
         {
             GetDbContext().ChangeTracker.Clear();
