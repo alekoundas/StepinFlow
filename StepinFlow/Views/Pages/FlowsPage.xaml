@@ -18,7 +18,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="FlowsPage"
     d:DataContext="{d:DesignInstance local:FlowsPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -186,7 +186,6 @@
             <Border.Effect>
                 <DropShadowEffect Opacity="1" ShadowDepth="5" />
             </Border.Effect>
-            <!--  IsLocked="{Binding ViewModel.IsLocked}"  -->
             <UserControls:TreeViewUserControl
                 x:Name="TreeViewControl"
                 OnAddFlowParameterClick="OnAddFlowParameterClick"

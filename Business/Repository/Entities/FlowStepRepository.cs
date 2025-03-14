@@ -82,7 +82,7 @@ namespace Business.Repository.Entities
 
             if (simplings != null)
                 nextSimpling = await simplings
-                    //.Include(x => x.FlowParameter)
+                    .Include(x => x.FlowParameter)
                     .Where(x => x.Type != FlowStepTypesEnum.NEW)
                     .Where(x => x.OrderingNum > flowStep.OrderingNum)
                     .OrderBy(x => x.OrderingNum)
@@ -113,7 +113,7 @@ namespace Business.Repository.Entities
             }
 
             FlowStep? nextChild = await childrenFlowSteps
-                //.Include(x => x.FlowParameter)
+                .Include(x => x.FlowParameter)
                 .Where(x => x.Type != FlowStepTypesEnum.NEW)
                 .OrderBy(x => x.OrderingNum)
                 .FirstOrDefaultAsync();

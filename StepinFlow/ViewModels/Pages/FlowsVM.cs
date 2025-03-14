@@ -1,6 +1,5 @@
 ﻿using Model.Models;
 using CommunityToolkit.Mvvm.Input;
-using Wpf.Ui.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,55 +7,15 @@ using System.Windows;
 using Model.Enums;
 using Wpf.Ui.Abstractions.Controls;
 using Business.Services.Interfaces;
+using StepinFlow.Views.UserControls;
 
 namespace StepinFlow.ViewModels.Pages
 {
     public partial class FlowsVM : ObservableObject, INavigationAware, INotifyPropertyChanged
     {
         private readonly IDataService _dataService;
-        private readonly ISystemService _systemService;
-
-        public event IsLockedChangedEvent? IsLockedChanged;
-        public delegate void IsLockedChangedEvent(bool isLocked);
-
-        public event LoadFlowsAndSelectFlowEvent? LoadFlowsAndSelectFlow;
-        public delegate Task LoadFlowsAndSelectFlowEvent(int id);
-        public event LoadFlowsAndSelectFlowStepEvent? LoadFlowsAndSelectFlowStep;
-        public delegate Task LoadFlowsAndSelectFlowStepEvent(int id);
-        public event LoadFlowsAndSelectFlowParameterEvent? LoadFlowsAndSelectFlowParameter;
-        public delegate Task LoadFlowsAndSelectFlowParameterEvent(int id);
-
-        public event LoadFlowsEvent? LoadFlows;
-        public delegate Task LoadFlowsEvent(int flowId = 0, bool isSubFlow = false);
-
-        public event ClearCopyEvent? ClearCopy;
-        public delegate void ClearCopyEvent();
-
-        public event AddNewFlowEvent? AddNewFlow;
-        public delegate Task AddNewFlowEvent();
-
-        public event ExpandAllEvent? ExpandAll;
-        public delegate Task ExpandAllEvent();
-
-        public event CollapseAllEvent? CollapseAll;
-        public delegate Task CollapseAllEvent();
-
-        public event NavigateToNewFlowStepEvent? NavigateToNewFlowStep;
-        public delegate void NavigateToNewFlowStepEvent(FlowStep flowStep);
-
-        public event NavigateToNewFlowParameterEvent? NavigateToNewFlowParameter;
-        public delegate void NavigateToNewFlowParameterEvent(FlowParameter flowParameter);
-
-        public event NavigateToFlowStepEvent? NavigateToFlowStep;
-        public delegate Task NavigateToFlowStepEvent(int id);
-
-        public event NavigateToFlowEvent? NavigateToFlow;
-        public delegate Task NavigateToFlowEvent(int id);
-
-        public event NavigateToFlowParameterEvent? NavigateToFlowParameter;
-        public delegate Task NavigateToFlowParameterEvent(int id);
-
-
+        public TreeViewUserControl TreeViewUserControl;
+        public FrameDetailUserControl FrameDetailUserControl;
 
         [ObservableProperty]
         private bool _isLocked = true;
@@ -72,53 +31,54 @@ namespace StepinFlow.ViewModels.Pages
         [ObservableProperty]
         private Visibility _visible = Visibility.Collapsed;
 
-        public FlowsVM(
-            IDataService dataService,
-            ISystemService systemService)
+        public FlowsVM(IDataService dataService)
         {
             _dataService = dataService;
-            _systemService = systemService;
         }
 
-        public void RefreshData()
+        // TreeViewUserControl.
+        public async Task RefreshData()
         {
-            LoadFlows?.Invoke();
+            await TreeViewUserControl.ViewModel.LoadFlows();
         }
-        public void OnSaveFlow(int id)
+        public async Task OnSaveFlow(int id)
         {
-            LoadFlowsAndSelectFlow?.Invoke(id);
+            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlow(id);
         }
-        public void OnSaveFlowStep(int id)
+        public async Task OnSaveFlowStep(int id)
         {
-            LoadFlowsAndSelectFlowStep?.Invoke(id);
+            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlowStep(id);
         }
-        public void OnSaveFlowParameter(int id)
+        public async Task OnSaveFlowParameter(int id)
         {
-            LoadFlowsAndSelectFlowParameter?.Invoke(id);
+            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlowParameter(id);
         }
 
+
+        // FrameDetailUserControl.
         public void OnAddFlowStepClick(FlowStep newFlowStep)
         {
-            NavigateToNewFlowStep?.Invoke(newFlowStep);
+            FrameDetailUserControl.ViewModel.NavigateToNewFlowStep(newFlowStep);
         }
         public void OnAddFlowParameterClick(FlowParameter newFlowParameter)
         {
-            NavigateToNewFlowParameter?.Invoke(newFlowParameter);
+            FrameDetailUserControl.ViewModel.NavigateToNewFlowParameter(newFlowParameter);
         }
 
         public async Task OnTreeViewItemFlowStepSelected(int id)
         {
-            await NavigateToFlowStep?.Invoke(id);
+            await FrameDetailUserControl.ViewModel.NavigateToFlowStep(id);
         }
 
         public async Task OnTreeViewItemFlowSelected(int id)
         {
-            await NavigateToFlow?.Invoke(id);
+            await FrameDetailUserControl.ViewModel.NavigateToFlow(id);
         }
         public async Task OnTreeViewItemFlowParameterSelected(int id)
         {
-            await NavigateToFlowParameter?.Invoke(id);
+            await FrameDetailUserControl.ViewModel.NavigateToFlowParameter(id);
         }
+
 
         public void OnFlowStepCopy(int id)
         {
@@ -134,7 +94,7 @@ namespace StepinFlow.ViewModels.Pages
             CoppiedFlowStepId = null;
             CoppiedFlowId = null;
             Visible = Visibility.Collapsed;
-            ClearCopy?.Invoke();
+            TreeViewUserControl.ViewModel.ClearCopy();
         }
 
         [RelayCommand]
@@ -169,7 +129,7 @@ namespace StepinFlow.ViewModels.Pages
             flow.FlowParameterId = flowRarameter.Id;
             await _dataService.UpdateAsync(flow);
 
-            LoadFlows?.Invoke();
+            await RefreshData();
         }
 
 
@@ -183,36 +143,33 @@ namespace StepinFlow.ViewModels.Pages
             else
                 VisibleAddFlow = Visibility.Visible;
 
-            IsLockedChanged?.Invoke(IsLocked);
+            TreeViewUserControl.ViewModel.IsLocked = IsLocked;
         }
 
         [RelayCommand]
         private async Task OnButtonSyncClick()
         {
-            await LoadFlows?.Invoke();
+            await RefreshData();
         }
 
         [RelayCommand]
         private async Task OnButtonExpandAllClick()
         {
-            await ExpandAll?.Invoke();
+            await TreeViewUserControl.ViewModel.ExpandAll();
         }
 
         [RelayCommand]
         private async Task OnButtonCollapseAllClick()
         {
-            await CollapseAll?.Invoke();
+            await TreeViewUserControl.ViewModel.CollapseAll();
         }
 
 
-        public void OnNavigatedTo() { LoadFlows?.Invoke(); }
 
-        public void OnNavigatedFrom() { }
 
-        public Task OnNavigatedToAsync()
+        public async Task OnNavigatedToAsync()
         {
-            LoadFlows?.Invoke();
-            return Task.CompletedTask;
+            await RefreshData();
         }
 
         public Task OnNavigatedFromAsync()
