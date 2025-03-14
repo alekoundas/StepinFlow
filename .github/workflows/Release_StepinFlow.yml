@@ -63,9 +63,10 @@ jobs:
         
     - name: Extract Version from .csproj
       run: |
-        $version = (Select-String -Path StepinFlow/StepinFlow.csproj -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }) ?? "1.0.0"
-        $env:Artifact_Name = "StepinFlow-Portable-win-x64-v$version.zip"
-        Write-Host "Artifact Name: $env:Artifact_Name"
+         $version = (Select-String -Path StepinFlow/StepinFlow.csproj -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }) ?? "1.0.0"
+         $artifactName = "StepinFlow-Portable-win-x64-v$version.zip"
+         Write-Host "Artifact Name: $artifactName"
+         echo "ARTIFACT_NAME=$artifactName" >> $env:GITHUB_ENV
       shell: pwsh
 
     - name: Restore the application
@@ -78,7 +79,8 @@ jobs:
       run: dotnet publish $env:Solution_Name --configuration Release --runtime win-x64 --self-contained true --output $env:Publish_Directory
 
     - name: Zip the published files
-      run: Compress-Archive -Path $env:Publish_Directory\* -DestinationPath $env:Artifact_Name
+      run: Compress-Archive -Path $env:Publish_Directory\* -DestinationPath $env:ARTIFACT_NAME
+      shell: pwsh
 
    
 
@@ -86,5 +88,5 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.Artifact_Name }}
-        path: ${{ env.Artifact_Name }}
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_NAME }}
