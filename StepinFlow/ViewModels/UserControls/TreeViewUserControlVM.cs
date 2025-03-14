@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq.Expressions;
 using Business.Services.Interfaces;
+using Business.Extensions;
 
 namespace StepinFlow.ViewModels.UserControls
 {
@@ -94,19 +95,23 @@ namespace StepinFlow.ViewModels.UserControls
                 List<Flow> flows = await query.ToListAsync();
 
                 // Load children.
-                foreach (Flow flow in flows)
+                using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
                 {
-                    List<FlowStep> childrenFlowSteps = new List<FlowStep>();
-                    foreach (FlowStep flowStep in flow.FlowStep.ChildrenFlowSteps)
-                        childrenFlowSteps.Add(await _dataService.FlowSteps.LoadAllExpandedChildren(flowStep));
+                    _dataService.SetDbContext(context);
+                    foreach (Flow flow in flows)
+                    {
+                        List<FlowStep> childrenFlowSteps = new List<FlowStep>();
+                        foreach (FlowStep flowStep in flow.FlowStep.ChildrenFlowSteps)
+                            childrenFlowSteps.Add(await _dataService.FlowSteps.LoadAllExpandedChildren(flowStep));
 
-                    flow.FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>(childrenFlowSteps);
+                        flow.FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>(childrenFlowSteps);
+                    }
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        FlowsList = new ObservableCollection<Flow>(flows);
+                    });
                 }
-
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    FlowsList = new ObservableCollection<Flow>(flows);
-                });
             });
         }
 
@@ -174,16 +179,27 @@ namespace StepinFlow.ViewModels.UserControls
             return;
         }
 
-        public async Task ExpandAndSelectFlowStep(int id)
+        public Task ExpandAndSelectFlowStep(int id)
         {
-            FlowStep? uiFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (uiFlowStep != null)
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                uiFlowStep.IsExpanded = true;
-                uiFlowStep.IsSelected = true;
-            }
-            return;
+                FlowStep? uiFlowStep = FlowsList.First()
+                    .Descendants()
+                    .FirstOrDefault(x => x.Id == id);
+
+                if (uiFlowStep != null)
+                {
+                    uiFlowStep.IsExpanded = true;
+                    uiFlowStep.IsSelected = true;
+                }
+
+                if (uiFlowStep?.ParentFlowStep != null)
+                    uiFlowStep.ParentFlowStep.IsExpanded = true;
+                if (uiFlowStep?.Flow != null)
+                    uiFlowStep.Flow.IsExpanded = true;
+
+            });
+            return Task.CompletedTask;
         }
 
         public async Task ExpandAndSelectFlowParameter(int id)
@@ -350,7 +366,7 @@ namespace StepinFlow.ViewModels.UserControls
 
 
         [RelayCommand]
-        private void OnSelected(RoutedPropertyChangedEventArgs<object> routedPropertyChangedEventArgs)
+        private async Task OnSelected(RoutedPropertyChangedEventArgs<object> routedPropertyChangedEventArgs)
         {
             object selectedItem = routedPropertyChangedEventArgs.NewValue;
             if (selectedItem is FlowStep flowStep)
@@ -358,7 +374,7 @@ namespace StepinFlow.ViewModels.UserControls
                 if (_selectedFlowStep != null)
                 {
                     _selectedFlowStep.IsSelected = false;
-                    _dataService.Update(_selectedFlowStep);
+                    await _dataService.UpdateAsync(_selectedFlowStep);
                 }
 
                 _selectedFlow = null;
@@ -374,7 +390,7 @@ namespace StepinFlow.ViewModels.UserControls
                 if (_selectedFlow != null)
                 {
                     _selectedFlow.IsSelected = false;
-                    _dataService.Update(_selectedFlow);
+                    await _dataService.UpdateAsync(_selectedFlow);
                 }
 
                 _selectedFlow = flow;
@@ -382,7 +398,7 @@ namespace StepinFlow.ViewModels.UserControls
                 _selectedFlowParameter = null;
 
                 _selectedFlow.IsSelected = true;
-                _dataService.Update(_selectedFlow);
+                await _dataService.UpdateAsync(_selectedFlow);
                 OnSelectedFlowIdChangedEvent?.Invoke(flow.Id);
             }
             else if (selectedItem is FlowParameter flowParameter)
@@ -390,7 +406,7 @@ namespace StepinFlow.ViewModels.UserControls
                 if (_selectedFlowParameter != null)
                 {
                     _selectedFlowParameter.IsSelected = false;
-                    _dataService.Update(_selectedFlowParameter);
+                    await _dataService.UpdateAsync(_selectedFlowParameter);
                 }
 
                 _selectedFlow = null;
@@ -398,7 +414,7 @@ namespace StepinFlow.ViewModels.UserControls
                 _selectedFlowParameter = flowParameter;
 
                 _selectedFlowParameter.IsSelected = true;
-                _dataService.Update(_selectedFlowParameter);
+                await _dataService.UpdateAsync(_selectedFlowParameter);
                 OnSelectedFlowParameterIdChangedEvent?.Invoke(flowParameter.Id);
             }
         }

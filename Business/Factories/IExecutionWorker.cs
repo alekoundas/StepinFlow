@@ -18,6 +18,5 @@ namespace Business.Factories
         Task SetExecutionModelStateRunning(Execution execution);
         Task SetExecutionModelStateComplete(Execution execution);
         Task SaveToDisk(Execution execution);
-        void ClearEntityFrameworkChangeTracker();
     }
 }

@@ -54,9 +54,9 @@ namespace Business.Services
         }
         private InMemoryDbContext GetDbContext()
         {
-            if (_dbContext == null)
+            //if (_dbContext == null)
                 _dbContext = _contextFactory.CreateDbContext();
-
+            _dbContext.Database.ExecuteSqlRaw("PRAGMA busy_timeout = 10000;");
             return _dbContext;
         }
 
@@ -64,85 +64,76 @@ namespace Business.Services
 
         public void Update<TEntity>(TEntity model)
         {
+            var context = GetDbContext();
             if (model == null)
                 return;
 
-            if (GetDbContext().Entry(model).State == EntityState.Detached)
-                GetDbContext().Entry(model).State = EntityState.Modified;
-            GetDbContext().SaveChanges();
-            GetDbContext().Entry(model).State = EntityState.Detached;
+                context.Entry(model).State = EntityState.Modified;
+            context.SaveChanges();
             Dispose();
         }
 
         public async Task UpdateAsync<TEntity>(TEntity model)
         {
-            if (model == null)
+            var context = GetDbContext();
+            if (model == null) 
                 return;
-            if (GetDbContext().Entry(model).State == EntityState.Detached)
-                GetDbContext().Entry(model).State = EntityState.Modified;
-            await GetDbContext().SaveChangesAsync();
-            GetDbContext().Entry(model).State = EntityState.Detached;
+            context.Entry(model).State = EntityState.Modified;
+            await context.SaveChangesAsync();
             Dispose();
         }
 
 
         public void UpdateRange<TEntity>(List<TEntity> models)
         {
+            var context = GetDbContext();
             foreach (var model in models)
                 if (model != null)
-                    if (GetDbContext().Entry(model).State == EntityState.Detached)
-                        GetDbContext().Entry(model).State = EntityState.Modified;
+                    context.Entry(model).State = EntityState.Modified;
 
-            GetDbContext().SaveChanges();
-
-            foreach (var model in models)
-                if (model != null)
-                    GetDbContext().Entry(model).State = EntityState.Detached;
+            context.SaveChanges();
 
             Dispose();
         }
 
         public async Task UpdateRangeAsync<TEntity>(List<TEntity> models)
         {
+            var context = GetDbContext();
             foreach (var model in models)
                 if (model != null)
-                    if (GetDbContext().Entry(model).State == EntityState.Detached)
-                        GetDbContext().Entry(model).State = EntityState.Modified;
+                        context.Entry(model).State = EntityState.Modified;
 
-            await GetDbContext().SaveChangesAsync();
-
-            foreach (var model in models)
-                if (model != null)
-                    GetDbContext().Entry(model).State = EntityState.Detached;
+            await context   .SaveChangesAsync();
 
             Dispose();
         }
 
-        public void ClearChangeTracker()
-        {
-            GetDbContext().ChangeTracker.Clear();
-        }
+        //public void ClearChangeTracker()
+        //{
+        //    GetDbContext().ChangeTracker.Clear();
+        //}
 
         public void Dispose(bool forceDispose = false)
         {
-            if (forceDispose)
-            {
-                if (_dbContext != null)
-                    _dbContext.Dispose();
-                _dbContext = null;
-            }
+            //if (forceDispose)
+            //{
+            //    if (_dbContext != null)
+            //        _dbContext.Dispose();
+            //    _dbContext = null;
+            //}
 
-            if (_ownsContext && _dbContext != null)
-            {
-                _dbContext.Dispose();
-                _dbContext = null;
-            }
+            //if (_ownsContext && _dbContext != null)
+            //{
+            //    _dbContext.Dispose();
+            //    _dbContext = null;
+            //}
 
-            Flows.Dispose(forceDispose);
-            FlowSteps.Dispose(forceDispose);
-            FlowParameters.Dispose(forceDispose);
-            Executions.Dispose(forceDispose);
-            AppSettings.Dispose(forceDispose);
+            //Flows.Dispose(forceDispose);
+            //FlowSteps.Dispose(forceDispose);
+            //FlowParameters.Dispose(forceDispose);
+            //Executions.Dispose(forceDispose);
+            //AppSettings.Dispose(forceDispose);
+            _dbContext = null;
         }
     }
 }

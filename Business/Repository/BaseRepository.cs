@@ -20,8 +20,9 @@ namespace Business.Repository
         //protected DbSet<TEntity> GetDbSet() => _context?.Set<TEntity>() ?? _contextFactory.CreateDbContext().Set<TEntity>();
         protected InMemoryDbContext GetDbContext()
         {
-            if (_context == null)
+            //if (_context == null)
                 _context = _contextFactory.CreateDbContext();
+            _context.Database.ExecuteSqlRaw("PRAGMA busy_timeout = 10000;");
 
             return _context;
         }
@@ -264,8 +265,9 @@ namespace Business.Repository
 
         public async Task AddAsync(TEntity entity)
         {
-            await GetDbContext().AddAsync(entity);
-            await GetDbContext().SaveChangesAsync();
+            var context = GetDbContext();
+            await context.AddAsync(entity);
+            await context.SaveChangesAsync();
             Dispose();
         }
 
@@ -420,24 +422,25 @@ namespace Business.Repository
             return result;
         }
 
-
+      
 
 
         public void Dispose(bool forceDispose = false)
         {
-            if (forceDispose)
-            {
-                if (_context != null)
-                    _context.Dispose();
-                _context = null;
-            }
+            //if (forceDispose)
+            //{
+            //    if (_context != null)
+            //        _context.Dispose();
+            //    _context = null;
+            //}
 
-            if (_ownsContext && _context != null)
-            {
-                _context.Dispose();
-                _context = null;
-            }
+            //if (_ownsContext && _context != null)
+            //{
+            //    _context.Dispose();
+            //    _context = null;
+            //}
 
+            _context = null;
             _query = null;
         }
     }

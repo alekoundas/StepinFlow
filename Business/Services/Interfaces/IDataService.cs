@@ -24,7 +24,7 @@ namespace Business.Services.Interfaces
 
 
         Task UpdateAsync<TEntity>(TEntity model);
-        void ClearChangeTracker();
+        //void ClearChangeTracker();
         void Dispose(bool forceDispose = false);
 
     }

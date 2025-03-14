@@ -1,10 +1,8 @@
 ﻿using Business.DatabaseContext;
-using Business.Extensions;
 using Business.Helpers;
 using Business.Services.Interfaces;
 using Model.Enums;
 using Model.Models;
-using System.Collections.ObjectModel;
 
 namespace Business.Factories.Workers
 {
@@ -47,10 +45,12 @@ namespace Business.Factories.Workers
 
         public async virtual Task<Execution> CreateExecutionModel(FlowStep flowStep, Execution parentExecution)
         {
-            Execution execution = new Execution();
-            execution.FlowStepId = flowStep.Id;
-            execution.ParentExecutionId = parentExecution.Id;
-            execution.ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory;
+            Execution execution = new Execution
+            {
+                FlowStepId = flowStep.Id,
+                ParentExecutionId = parentExecution.Id,
+                ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory
+            };
             await _dataService.Executions.AddAsync(execution);
 
 
@@ -71,7 +71,6 @@ namespace Business.Factories.Workers
         {
             execution.Status = ExecutionStatusEnum.RUNNING;
             execution.StartedOn = DateTime.Now;
-            execution.LoopCount += 1;
 
             await _dataService.UpdateAsync(execution);
         }
@@ -84,47 +83,14 @@ namespace Business.Factories.Workers
             await _dataService.UpdateAsync(execution);
         }
 
-        public virtual Task ExpandAndSelectFlowStep(Execution execution, ObservableCollection<Flow> treeviewFlows)
+        public virtual Task<FlowStep?> GetNextChildFlowStep(Execution execution)
         {
-            if (execution.FlowStep == null)
-                return Task.CompletedTask;
+            return Task.FromResult<FlowStep?>(null);
+        }
 
-            //Application.Current.Dispatcher.Invoke(() =>
-            //{
-            // Code to update ObservableCollection
-            FlowStep? uiFlowStep = treeviewFlows.First()
-                .Descendants()
-                .FirstOrDefault(x => x.Id == execution.FlowStepId);
-
-            if (uiFlowStep != null)
-            {
-                uiFlowStep.IsExpanded = true;
-                uiFlowStep.IsSelected = true;
-            }
-
-            if (uiFlowStep?.ParentFlowStep != null)
-                uiFlowStep.ParentFlowStep.IsExpanded = true;
-            if (uiFlowStep?.Flow != null)
-                uiFlowStep.Flow.IsExpanded = true;
-            //});
-
+        public virtual Task SaveToDisk(Execution execution)
+        {
             return Task.CompletedTask;
-        }
-
-        public async virtual Task<FlowStep?> GetNextChildFlowStep(Execution execution)
-        {
-            return await Task.FromResult<FlowStep?>(null);
-        }
-
-
-        public async virtual Task SaveToDisk(Execution execution)
-        {
-            //await _dataService.SaveChangesAsync();
-        }
-
-        public void ClearEntityFrameworkChangeTracker()
-        {
-            _dataService.ClearChangeTracker();
         }
     }
 }

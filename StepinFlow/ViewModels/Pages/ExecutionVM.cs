@@ -155,36 +155,38 @@ namespace StepinFlow.ViewModels.Pages
             var stack = new Stack<FlowStep?>();
 
             stack.Push(initialFlowStep);
-            using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
-            {
 
-                while (stack.Count > 0)
+            while (stack.Count > 0)
+            {
+                using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
                 {
-                using var tranasaction = context.Database.BeginTransaction();
+                    //using var tranasaction = context.Database.BeginTransaction();
                     counter++;
                     if (counter == 1000)
                     {
-
                     }
-                    FlowStep? flowStep = stack.Pop();
 
+                    FlowStep? flowStep = stack.Pop();
                     if (flowStep == null || _stopExecution == true)
                         return;
 
                     // Create factory worker.
                     IExecutionWorker factoryWorker = _executionFactory.GetWorker(flowStep.Type);
-                    factoryWorker.SetDbContext(context);
+                    _dataService.SetDbContext(context);
                     factoryWorker.Initialize(pendingExecutionLoops);
-
-                    //factoryWorker.ClearEntityFrameworkChangeTracker();
-
 
 
                     // Create execution model.
                     Execution flowStepExecution = await factoryWorker.CreateExecutionModel(flowStep, parentExecution);
 
-                    //var size = GetObjectSize(flowStepExecution); // See helper method below
-                    //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");
+                    // Replace FlowStep from cache if it exists.
+                    if (flowStepExecution?.FlowStepId != null)
+                    {
+                        if (flowStepCache.ContainsKey(flowStepExecution.FlowStepId.Value))
+                            flowStepExecution.FlowStep = flowStepCache[flowStepExecution.FlowStepId.Value];
+                        else
+                            flowStepCache[flowStepExecution.FlowStepId.Value] = flowStepExecution.FlowStep;
+                    }
 
                     // Add execution to history listbox.
                     Application.Current.Dispatcher.Invoke(() =>
@@ -193,21 +195,12 @@ namespace StepinFlow.ViewModels.Pages
                         if (flowStepExecution?.FlowStep?.TemplateImage?.Length == 0)
                             flowStepExecution.FlowStep.TemplateImage = null;
 
-                        if (flowStepExecution?.FlowStepId != null)
-                        {
-                            if (flowStepCache.ContainsKey(flowStepExecution.FlowStepId.Value))
-                                flowStepExecution.FlowStep = flowStepCache[flowStepExecution.FlowStepId.Value];
-                            else
-                                flowStepCache[flowStepExecution.FlowStepId.Value] = flowStepExecution.FlowStep;
-                        }
-
                         ListBoxExecutions.Add(flowStepExecution);
                     });
 
 
-                    //await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
+                    await ExpandAndSelectFlowStep?.Invoke(flowStepExecution.FlowStepId ?? -1);
                     //await factoryWorker.ExpandAndSelectFlowStep(flowStepExecution, _treeViewUserControlViewModel.FlowsList);
-                    //context.ChangeTracker.Clear();
                     await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
                     await factoryWorker.ExecuteFlowStepAction(flowStepExecution);
                     await factoryWorker.SetExecutionModelStateComplete(flowStepExecution);
@@ -225,13 +218,13 @@ namespace StepinFlow.ViewModels.Pages
                         stack.Push(nextFlowStep);
 
                     parentExecution = flowStepExecution;
-                    await tranasaction.CommitAsync();
 
                     //size = GetObjectSize(flowStepExecution); // See helper method below
                     //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");
-                tranasaction.Dispose();
+                    //await tranasaction.CommitAsync();
+                    //tranasaction.Dispose();
+                    //_dataService.Dispose(true);
                 }
-                _dataService.Dispose(true);
             }
         }
 

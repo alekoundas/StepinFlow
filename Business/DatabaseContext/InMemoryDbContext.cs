@@ -5,6 +5,8 @@ using Model.Models;
 using Model.Enums;
 using System.Windows;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Data.Common;
 
 namespace Business.DatabaseContext
 {
@@ -29,7 +31,18 @@ namespace Business.DatabaseContext
             if (!File.Exists(dataSource))
                 File.Create(dataSource).Close();
 
-            optionsBuilder.UseSqlite($"Data Source={dataSource};");
+            //optionsBuilder.UseSqlite($"Data Source={dataSource};");
+            optionsBuilder.UseSqlite($"Data Source={dataSource};").AddInterceptors(new SQLiteBusyTimeoutInterceptor());
+
+            //optionsBuilder.UseSqlite($"Data Source={dataSource}", sqliteOptions =>
+            //{
+            //    sqliteOptions..ConnectionOpened(dbConnection =>
+            //    {
+            //        using var cmd = dbConnection.CreateCommand();
+            //        cmd.CommandText = "PRAGMA busy_timeout = 10000;"; // 10 seconds
+            //        cmd.ExecuteNonQuery();
+            //    });
+            //});
 
             optionsBuilder.EnableSensitiveDataLogging();
             optionsBuilder.EnableDetailedErrors();
@@ -66,15 +79,15 @@ namespace Business.DatabaseContext
         }
         public void EnableBusyTimeout()
         {
-            string dataPath = PathHelper.GetDatabaseDataPath();
-            string dataSource = Path.Combine(dataPath, "StepinFlowDatabase.db");
-            using (var connection = new SqliteConnection("Data Source={dataSource}"))
-            {
-                connection.Open();
-                var command = connection.CreateCommand();
-                command.CommandText = "PRAGMA busy_timeout = 10000;"; // 10 seconds
-                command.ExecuteNonQuery();
-            }
+            //string dataPath = PathHelper.GetDatabaseDataPath();
+            //string dataSource = Path.Combine(dataPath, "StepinFlowDatabase.db");
+            //using (var connection = new SqliteConnection("Data Source={dataSource}"))
+            //{
+            //    connection.Open();
+            //    var command = connection.CreateCommand();
+            //    command.CommandText = "PRAGMA busy_timeout = 10000;"; // 10 seconds
+            //    command.ExecuteNonQuery();
+            //}
         }
 
 
@@ -129,5 +142,22 @@ namespace Business.DatabaseContext
 
             this.SaveChanges();
         }
+    }
+
+    public class SQLiteBusyTimeoutInterceptor : IDbConnectionInterceptor
+    {
+        void ConnectionOpened(DbConnection connection, ConnectionEndEventData eventData)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "PRAGMA busy_timeout = 10000;"; // 10 seconds
+            cmd.ExecuteNonQuery();
+        }
+
+        public void ConnectionOpening(DbConnection connection, ConnectionEventData eventData, InterceptionResult result)
+        {
+        }
+        public void ConnectionClosed(DbConnection connection, ConnectionEndEventData eventData) { }
+        public void ConnectionClosing(DbConnection connection, ConnectionEventData eventData, InterceptionResult result) { }
+
     }
 }
