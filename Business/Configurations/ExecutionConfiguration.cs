@@ -42,23 +42,6 @@ namespace Business.Configurations
                 .HasForeignKey<Execution>(x => x.ChildExecutionId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
-
-
-
-
-            builder
-             .HasOne(x => x.ParentLoopExecution)
-             .WithOne(x => x.ChildLoopExecution)
-             .HasForeignKey<Execution>(x => x.ParentLoopExecutionId)
-             .IsRequired(false)
-             .OnDelete(DeleteBehavior.SetNull);
-
-            builder
-             .HasOne(x => x.ChildLoopExecution)
-             .WithOne(x => x.ParentLoopExecution)
-             .HasForeignKey<Execution>(x => x.ChildLoopExecutionId)
-             .IsRequired(false)
-             .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

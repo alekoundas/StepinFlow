@@ -37,7 +37,6 @@ namespace Business.Factories.Workers
             {
                 FlowStepId = flowStep.Id,
                 ParentExecutionId = parentExecution.Id,
-                ParentLoopExecutionId = parentExecution.Id,
                 ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory,
                 LoopCount = parentExecution?.LoopCount == null ? 0 : parentExecution.LoopCount + 1
             };

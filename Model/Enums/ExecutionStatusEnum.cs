@@ -4,11 +4,7 @@
     {
         DASH,
         RUNNING,
-        ERROR,
-        ACCURACY_FAIL,
-        PAUSED,
         STOPED,
         COMPLETED,
-
     }
 }

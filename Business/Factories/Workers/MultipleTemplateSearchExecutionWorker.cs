@@ -43,18 +43,15 @@ namespace Business.Factories.Workers
             {
                 FlowStepId = childTemplateSearchFlowStep?.Id,
                 ParentExecutionId = parentExecution.Id,
-                ParentLoopExecutionId = parentExecution.Id,
                 ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory,
                 LoopCount = loopCount,
-                //LoopCount = parentExecution?.LoopCount == null ? 0 : parentExecution.LoopCount + 1,
             };
 
             // Save execution.
             await _dataService.Executions.AddAsync(execution);
 
             // Save relation IDs
-            parentExecution.ChildExecutionId = execution.Id;// TODO propably also this is wrong
-            parentExecution.ChildLoopExecutionId = execution.Id;
+            parentExecution.ChildExecutionId = execution.Id;
             await _dataService.UpdateAsync(execution);
 
             // Return execution with relations.

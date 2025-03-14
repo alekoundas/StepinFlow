@@ -14,28 +14,5 @@ namespace Business.Repository.Entities
         {
             _contextFactory = contextFactory;
         }
-
-
-        public async Task<List<Execution>> GetAllParentLoopExecutions(int executionId)
-        {
-            var context = _contextFactory.CreateDbContext();
-            List<Execution> parentLoopExecutions = new List<Execution>();
-            Execution? currentExecution = await _dbContext.Executions
-                .AsNoTracking()
-                .Include(x => x.FlowStep)
-                .FirstAsync(x => x.Id == executionId);
-
-            while (currentExecution.ParentLoopExecutionId != null)
-            {
-                parentLoopExecutions.Add(currentExecution);
-
-                currentExecution = await context.Executions
-                    .AsNoTracking()
-                    .Include(x => x.FlowStep)
-                    .FirstAsync(x => x.Id == currentExecution.ParentLoopExecutionId.Value);
-            }
-
-            return parentLoopExecutions;
-        }
     }
 }

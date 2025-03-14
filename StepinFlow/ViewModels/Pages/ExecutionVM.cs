@@ -182,7 +182,6 @@ namespace StepinFlow.ViewModels.Pages
 
                     // Create execution model.
                     Execution flowStepExecution = await factoryWorker.CreateExecutionModel(flowStep, parentExecution);
-                    parentExecution.ResultImage = null;// TODO test if needed.
 
                     //var size = GetObjectSize(flowStepExecution); // See helper method below
                     //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");

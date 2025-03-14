@@ -8,16 +8,10 @@ namespace Model.Models
         public int Id { get; set; }
 
         [ObservableProperty]
-        public bool _isExecuted = false;
-
-        [ObservableProperty]
         public ExecutionStatusEnum _status = ExecutionStatusEnum.DASH;
 
         [ObservableProperty]
         public ExecutionResultEnum _result = ExecutionResultEnum.NO_RESULT;
-
-        [ObservableProperty]
-        public string _runFor = "";
 
         [ObservableProperty]
         public DateTime? _startedOn;
@@ -41,9 +35,6 @@ namespace Model.Models
         public int? _resultLocationY;
 
         [ObservableProperty]
-        public byte[]? _resultImage;
-
-        [ObservableProperty]
         public string? _resultImagePath;
 
         [ObservableProperty]
@@ -64,12 +55,5 @@ namespace Model.Models
 
         public int? ChildExecutionId { get; set; }
         public virtual Execution? ChildExecution { get; set; }
-
-        // Loop and Multiple flow step fields
-        public int? ParentLoopExecutionId { get; set; }
-        public virtual Execution? ParentLoopExecution { get; set; }
-
-        public int? ChildLoopExecutionId { get; set; }
-        public virtual Execution? ChildLoopExecution { get; set; }
     }
 }

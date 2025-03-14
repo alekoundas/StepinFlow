@@ -50,7 +50,6 @@ namespace Business.Factories.Workers
             Execution execution = new Execution();
             execution.FlowStepId = flowStep.Id;
             execution.ParentExecutionId = parentExecution.Id;
-            execution.ParentLoopExecutionId = parentExecution.Id;
             execution.ExecutionFolderDirectory = parentExecution.ExecutionFolderDirectory;
             await _dataService.Executions.AddAsync(execution);
 
