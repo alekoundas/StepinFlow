@@ -25,6 +25,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
             if (execution.ResultImagePath != null)
                 if (File.Exists(execution.ResultImagePath))
                     ShowResultImage?.Invoke(execution.ResultImagePath);
+
             return Task.CompletedTask;
         }
     }

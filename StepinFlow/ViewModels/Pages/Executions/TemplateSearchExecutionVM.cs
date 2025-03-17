@@ -39,6 +39,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
 
         public Task SetExecution(Execution execution)
         {
+            FlowParameters.Clear();
             ResultImage = null;
             SelectedFlowParameter = null;
             Execution = execution;

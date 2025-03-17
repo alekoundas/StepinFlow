@@ -47,6 +47,9 @@ namespace StepinFlow.ViewModels.Pages.Executions
 
         public Task SetExecution(Execution execution)
         {
+            FlowParameters.Clear();
+            SelectedFlowParameter = null;
+
             List<FlowStep> flowSteps = execution.FlowStep.ParentTemplateSearchFlowStep.ChildrenTemplateSearchFlowSteps
               .Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD)
               .ToList();

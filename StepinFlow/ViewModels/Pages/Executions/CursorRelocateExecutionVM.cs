@@ -37,6 +37,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
         public async Task SetExecution(Execution execution)
         {
             Parents.Clear();
+            SelectedFlowStep = null;        
             Execution = execution;
 
 

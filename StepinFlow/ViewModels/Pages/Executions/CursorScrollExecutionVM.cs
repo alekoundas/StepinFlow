@@ -28,6 +28,5 @@ namespace StepinFlow.ViewModels.Pages.Executions
             Execution = execution;
             return Task.CompletedTask;
         }
-
     }
 }
