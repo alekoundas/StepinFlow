@@ -89,49 +89,41 @@ namespace StepinFlow.ViewModels.UserControls
             }
 
 
-            // Clear trackers from dbcontext and execute query.
             await Task.Run(async () =>
             {
                 List<Flow> flows = await query.ToListAsync();
 
                 // Load children.
-                using (var context = _dataService.CreateNewDbContext) // Replace with your DbContext
+                foreach (Flow flow in flows)
                 {
-                    _dataService.SetDbContext(context);
-                    foreach (Flow flow in flows)
-                    {
-                        List<FlowStep> childrenFlowSteps = new List<FlowStep>();
-                        foreach (FlowStep flowStep in flow.FlowStep.ChildrenFlowSteps)
-                            childrenFlowSteps.Add(await _dataService.FlowSteps.LoadAllExpandedChildren(flowStep));
+                    List<FlowStep> childrenFlowSteps = new List<FlowStep>();
+                    foreach (FlowStep flowStep in flow.FlowStep.ChildrenFlowSteps)
+                        childrenFlowSteps.Add(await _dataService.FlowSteps.LoadAllExpandedChildren(flowStep));
 
-                        flow.FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>(childrenFlowSteps);
-                    }
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        FlowsList = new ObservableCollection<Flow>(flows);
-                    });
+                    flow.FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>(childrenFlowSteps);
                 }
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    FlowsList = new ObservableCollection<Flow>(flows);
+                });
             });
         }
 
         public async Task LoadFlowsAndSelectFlow(int id)
         {
-            //await _dataService.SaveChangesAsync();
             await LoadFlows();
             await ExpandAndSelectFlow(id);
         }
 
         public async Task LoadFlowsAndSelectFlowStep(int id)
         {
-            //await _dataService.SaveChangesAsync();
             await LoadFlows();
             await ExpandAndSelectFlowStep(id);
         }
 
         public async Task LoadFlowsAndSelectFlowParameter(int id)
         {
-            //await _dataService.SaveChangesAsync();
             await LoadFlows();
             await ExpandAndSelectFlowParameter(id);
         }
@@ -197,6 +189,18 @@ namespace StepinFlow.ViewModels.UserControls
                     uiFlowStep.ParentFlowStep.IsExpanded = true;
                 if (uiFlowStep?.Flow != null)
                     uiFlowStep.Flow.IsExpanded = true;
+
+                foreach (Flow flow in FlowsList)
+                {
+                    List<FlowStep> flowSteps = flow.Descendants().ToList();
+                    if (flowSteps.Any(x => x.Id == id))
+                    {
+                        foreach (FlowStep descendantFlowStep in flowSteps)
+                            descendantFlowStep.IsExpanded = true;
+
+                        break;
+                    }
+                }
 
             });
             return Task.CompletedTask;
@@ -381,7 +385,6 @@ namespace StepinFlow.ViewModels.UserControls
                 _selectedFlowStep = flowStep;
                 _selectedFlowParameter = null;
 
-                _selectedFlowStep.IsSelected = true;
                 _dataService.Update(_selectedFlowStep);
                 OnSelectedFlowStepIdChangedEvent?.Invoke(flowStep.Id);
             }
@@ -397,7 +400,6 @@ namespace StepinFlow.ViewModels.UserControls
                 _selectedFlowStep = null;
                 _selectedFlowParameter = null;
 
-                _selectedFlow.IsSelected = true;
                 await _dataService.UpdateAsync(_selectedFlow);
                 OnSelectedFlowIdChangedEvent?.Invoke(flow.Id);
             }
@@ -405,7 +407,6 @@ namespace StepinFlow.ViewModels.UserControls
             {
                 if (_selectedFlowParameter != null)
                 {
-                    _selectedFlowParameter.IsSelected = false;
                     await _dataService.UpdateAsync(_selectedFlowParameter);
                 }
 
@@ -413,7 +414,6 @@ namespace StepinFlow.ViewModels.UserControls
                 _selectedFlowStep = null;
                 _selectedFlowParameter = flowParameter;
 
-                _selectedFlowParameter.IsSelected = true;
                 await _dataService.UpdateAsync(_selectedFlowParameter);
                 OnSelectedFlowParameterIdChangedEvent?.Invoke(flowParameter.Id);
             }
@@ -426,10 +426,10 @@ namespace StepinFlow.ViewModels.UserControls
             if (_selectedFlowStep != null)
                 _selectedFlowStep.IsExpanded = !_selectedFlowStep.IsExpanded;
 
-            if (_selectedFlow != null)
+            else if (_selectedFlow != null)
                 _selectedFlow.IsExpanded = !_selectedFlow.IsExpanded;
 
-            if (_selectedFlowParameter != null)
+            else if (_selectedFlowParameter != null)
                 _selectedFlowParameter.IsExpanded = !_selectedFlowParameter.IsExpanded;
         }
 
@@ -438,37 +438,47 @@ namespace StepinFlow.ViewModels.UserControls
         {
             if (eventParameter is FlowStep flowStep)
             {
-                FlowStep? updateFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStep.Id);
-                if (updateFlowStep != null)
+                foreach (Flow item in FlowsList)
                 {
-                    updateFlowStep.IsExpanded = true;
-                    updateFlowStep.IsSelected = true;
-                    await _dataService.UpdateAsync(updateFlowStep);
+                    FlowStep? uiFlowStep = item.Descendants().FirstOrDefault(fs => fs.Id == flowStep.Id);
+                    if (uiFlowStep != null)
+                    {
+                        await _dataService.UpdateAsync(uiFlowStep);
+
+                        if (!uiFlowStep.ChildrenFlowSteps.SelectMany(x => x.ChildrenFlowSteps).Any())
+                        {
+                            FlowStep loadedFlowStep = await _dataService.FlowSteps.LoadAllExpandedChildren(uiFlowStep);
+
+                            foreach (FlowStep uiChild in uiFlowStep.ChildrenFlowSteps)
+                            {
+                                List<FlowStep> flowSteps = loadedFlowStep.ChildrenFlowSteps
+                                    .First(x => x.Id == uiChild.Id).ChildrenFlowSteps
+                                    .ToList();
+
+                                uiChild.ChildrenFlowSteps = new ObservableCollection<FlowStep>(flowSteps);
+                            }
+                        }
+                    }
                 }
+
             }
             else if (eventParameter is Flow flow)
             {
-                Flow? updateFlow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == flow.Id);
+                Flow? updateFlow = FlowsList.FirstOrDefault(x => x.Id == flow.Id);
                 if (updateFlow != null)
                 {
-                    updateFlow.IsExpanded = true;
-                    updateFlow.IsSelected = true;
                     await _dataService.UpdateAsync(updateFlow);
                 }
             }
             else if (eventParameter is FlowParameter flowParameter)
             {
-                FlowParameter? updateFlowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == flowParameter.Id);
-                if (updateFlowParameter != null)
+                foreach (Flow uiFlow in FlowsList)
                 {
-                    updateFlowParameter.IsExpanded = true;
-                    updateFlowParameter.IsSelected = true;
-                    await _dataService.UpdateAsync(updateFlowParameter);
+                    FlowParameter? uiFlowParameter = uiFlow.FlowParameter.ChildrenFlowParameters.FirstOrDefault(x => x.Id == flowParameter.Id);
+                    if (uiFlowParameter != null)
+                        await _dataService.UpdateAsync(uiFlowParameter);
                 }
             }
-
-
-            await LoadFlows();
         }
 
         [RelayCommand]
@@ -476,35 +486,34 @@ namespace StepinFlow.ViewModels.UserControls
         {
             if (eventParameter is FlowStep flowStep)
             {
-                FlowStep? updateFlowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStep.Id);
-                if (updateFlowStep != null)
+                foreach (Flow item in FlowsList)
                 {
-                    updateFlowStep.IsExpanded = false;
-                    updateFlowStep.IsSelected = true;
-                    await _dataService.UpdateAsync(updateFlowStep);
+                    FlowStep? uiFlowStep = item.Descendants().FirstOrDefault(fs => fs.Id == flowStep.Id);
+                    if (uiFlowStep != null)
+                    {
+                        await _dataService.UpdateAsync(uiFlowStep);
+                    }
                 }
             }
             else if (eventParameter is Flow flow)
             {
-                Flow? updateFlow = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == flow.Id);
+                Flow? updateFlow = FlowsList.FirstOrDefault(x => x.Id == flow.Id);
                 if (updateFlow != null)
                 {
-                    updateFlow.IsExpanded = false;
-                    updateFlow.IsSelected = true;
                     await _dataService.UpdateAsync(updateFlow);
                 }
             }
             else if (eventParameter is FlowParameter flowParameter)
             {
-                FlowParameter? updateFlowParameter = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == flowParameter.Id);
-                if (updateFlowParameter != null)
+                foreach (Flow uiFlow in FlowsList)
                 {
-                    updateFlowParameter.IsExpanded = false;
-                    updateFlowParameter.IsSelected = true;
-                    await _dataService.UpdateAsync(updateFlowParameter);
+                    FlowParameter? uiFlowParameter = uiFlow.FlowParameter.ChildrenFlowParameters.FirstOrDefault(x => x.Id == flowParameter.Id);
+                    if (uiFlowParameter != null)
+                    {
+                        await _dataService.UpdateAsync(uiFlowParameter);
+                    }
                 }
             }
-
         }
     }
 }

@@ -179,8 +179,8 @@ namespace StepinFlow.ViewModels.Pages
                 });
 
 
-                //if (flowStepExecution.FlowStepId != null)
-                //    await TreeViewUserControl.ViewModel.ExpandAndSelectFlowStep(flowStepExecution.FlowStepId.Value);
+                if (flowStepExecution.FlowStepId != null)
+                    await TreeViewUserControl.ViewModel.ExpandAndSelectFlowStep(flowStepExecution.FlowStepId.Value);
 
                 await factoryWorker.SetExecutionModelStateRunning(flowStepExecution);
                 await factoryWorker.ExecuteFlowStepAction(flowStepExecution);

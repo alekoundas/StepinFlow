@@ -1,5 +1,4 @@
-﻿using Model.Models;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -14,18 +13,13 @@ namespace StepinFlow.Converters
             foreach (var value in values)
             {
                 // If the value is a collection, add all items from the collection to the result
-                if (value is System.Collections.IEnumerable enumerable)
-                {
+                if (value is IEnumerable enumerable)
                     foreach (var item in enumerable)
-                    {
                         result.Add(item);
-                    }
-                }
+
                 // If the value is a single item (and not null), add it to the result
                 else if (value != null)
-                {
                     result.Add(value);
-                }
             }
 
             return result;
