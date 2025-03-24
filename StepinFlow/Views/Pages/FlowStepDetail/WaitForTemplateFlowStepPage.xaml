@@ -30,7 +30,7 @@
 
 
         <StackPanel Grid.Column="1">
-            <!--<ComboBox ItemsSource="{Binding Source={StaticResource TypesEnum}}" />-->
+            <Label>Configure template search:</Label>
 
             <!--  Name  -->
             <StackPanel

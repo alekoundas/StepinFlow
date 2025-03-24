@@ -76,6 +76,7 @@ namespace StepinFlow.ViewModels.Pages
             List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(newFlowStep.ParentFlowStepId.Value);
             flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
             FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+            FlowStep.Name = "Template search.";
 
             return;
         }
@@ -241,9 +242,6 @@ namespace StepinFlow.ViewModels.Pages
                     successFlowStep,
                     failFlowStep
                 };
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Template search";
 
                 FlowStep.IsExpanded = true;
 

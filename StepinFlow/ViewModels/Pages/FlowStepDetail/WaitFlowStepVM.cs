@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
@@ -10,7 +9,6 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly ISystemService _systemService;
         private readonly IDataService _dataService;
-        //public override event Action<int> OnSave;
 
         [ObservableProperty]
         private string _timeTotal;
@@ -29,10 +27,13 @@ namespace StepinFlow.ViewModels.Pages
 
             TimeTotal = TimeSpan.FromMilliseconds(miliseconds).ToString(@"hh\:mm\:ss");
         }
-        public override void OnPageExit()
+
+        public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
-            //TestResultImage = null;
+            FlowStep = newFlowStep;
+            FlowStep.Name = "Wait";
         }
+
         public override async Task OnSave()
         {
             // Edit mode
@@ -64,14 +65,8 @@ namespace StepinFlow.ViewModels.Pages
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
 
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Wait";
-
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }
-
-
-            //OnSave?.Invoke(FlowStep.Id);
         }
     }
 }

@@ -32,6 +32,7 @@
 
 
         <StackPanel>
+            <Label>Configure template search:</Label>
 
             <!--  Name  -->
             <StackPanel
@@ -156,15 +157,6 @@
                         </StackPanel>
                         <TextBlock Text="(Avoid finding the same location multiple times.)" />
                     </StackPanel>
-
-                    <!--  Loop Max Count  -->
-                    <!--<StackPanel
-                    MinWidth="200"
-                    Margin="0,0,0,20"
-                    HorizontalAlignment="Left">
-                    <Label>Force loop exit after loop count: (0 = Dont exit.)</Label>
-                    <TextBox Text="{Binding ViewModel.FlowStep.LoopMaxCount, Mode=TwoWay}" />
-                    </StackPanel>-->
                 </StackPanel>
             </Border>
 
@@ -188,7 +180,5 @@
 
 
         </StackPanel>
-
-
     </Grid>
 </Page>

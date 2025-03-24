@@ -25,6 +25,13 @@ namespace StepinFlow.ViewModels.Pages
             _dataService = dataService;
         }
 
+
+        public override async Task LoadNewFlowStep(FlowStep newFlowStep)
+        {
+            FlowStep = newFlowStep;
+            FlowStep.Name = "Loop.";
+        }
+
         public override async Task OnSave()
         {
             // Edit mode
@@ -57,10 +64,6 @@ namespace StepinFlow.ViewModels.Pages
                 newFlowStep.Type = FlowStepTypesEnum.NEW;
 
                 FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep> { newFlowStep };
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Loop";
-
                 FlowStep.IsExpanded = true;
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);

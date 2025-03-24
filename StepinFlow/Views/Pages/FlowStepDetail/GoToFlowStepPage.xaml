@@ -10,20 +10,37 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="GoToFlowStepPage"
     d:DataContext="{d:DesignInstance local:GoToFlowStepPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <StackPanel>
-        <Grid Margin="10,10,10,50">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
 
 
-            <StackPanel HorizontalAlignment="Center">
+    <Grid VerticalAlignment="Top">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+
+
+        <StackPanel>
+            <Label>Go to a previous flowStep:</Label>
+
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+            </StackPanel>
+
+            <!--  Previous Steps  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Label>Select previous step to run again:</Label>
                 <ComboBox ItemsSource="{Binding ViewModel.PreviousSteps}" SelectedItem="{Binding ViewModel.FlowStep.ParentTemplateSearchFlowStep, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
@@ -36,10 +53,8 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-
             </StackPanel>
-        </Grid>
 
-    </StackPanel>
-
+        </StackPanel>
+    </Grid>
 </Page>

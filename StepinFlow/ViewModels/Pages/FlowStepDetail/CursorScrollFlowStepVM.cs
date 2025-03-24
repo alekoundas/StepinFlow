@@ -24,6 +24,13 @@ namespace StepinFlow.ViewModels.Pages
             MouseScrollDirectionEnum = Enum.GetValues(typeof(MouseScrollDirectionEnum)).Cast<MouseScrollDirectionEnum>();
         }
 
+        public override Task LoadNewFlowStep(FlowStep newFlowStep)
+        {
+            FlowStep = newFlowStep;
+            FlowStep.Name = "Cursor scroll.";
+
+            return Task.CompletedTask;
+        }
 
         public override async Task OnSave()
         {
@@ -53,10 +60,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
-
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Set cursor Action.";
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }

@@ -3,7 +3,6 @@ using Model.Models;
 using Model.Enums;
 using Business.BaseViewModels;
 using System.Collections.ObjectModel;
-using Microsoft.EntityFrameworkCore;
 using Business.Services.Interfaces;
 
 namespace StepinFlow.ViewModels.Pages
@@ -12,7 +11,6 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly IDataService _dataService;
         private readonly ICloneService _cloneService;
-        //public override event Action<int> OnSave;
 
         [ObservableProperty]
         private bool _isEnabled;
@@ -42,12 +40,13 @@ namespace StepinFlow.ViewModels.Pages
                 SelectedSubFlow = SubFlows.FirstOrDefault(x => x.Id == FlowStep.SubFlowId);
 
         }
-         
+
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
             SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
             FlowStep = newFlowStep;
             IsEnabled = true;
+            FlowStep.Name = "Sub-Flow.";
         }
 
         public override void OnPageExit()
@@ -84,9 +83,6 @@ namespace StepinFlow.ViewModels.Pages
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
 
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Sub-Flow selector.";
-
                 FlowStep.IsExpanded = false;
 
                 if (FlowStep.IsSubFlowReferenced)
@@ -108,8 +104,6 @@ namespace StepinFlow.ViewModels.Pages
                     flow.ParentSubFlowStepId = FlowStep.Id;
                     await _dataService.UpdateAsync(flow);
                 }
-
-                //OnSave?.Invoke(FlowStep.Id);
             }
         }
     }

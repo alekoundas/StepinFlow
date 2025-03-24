@@ -12,7 +12,6 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly ISystemService _systemService;
         private readonly IDataService _dataService;
-        //public override event Action<int> OnSave;
 
         [ObservableProperty]
         private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
@@ -21,6 +20,12 @@ namespace StepinFlow.ViewModels.Pages
         {
             _dataService = dataService;
             _systemService = systemService;
+        }
+
+        public override async Task LoadNewFlowStep(FlowStep newFlowStep)
+        {
+            FlowStep = newFlowStep;
+            FlowStep.Name = "Window size.";
         }
 
 
@@ -83,14 +88,8 @@ namespace StepinFlow.ViewModels.Pages
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
 
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Set window size.";
-
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }
-
-
         }
     }
 }

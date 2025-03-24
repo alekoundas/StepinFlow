@@ -31,6 +31,7 @@ namespace Business.BaseViewModels
             FlowStep = newFlowStep;
             return Task.CompletedTask;
         }
+
         public int GetCurrentEntityId()
         {
             return FlowStep.Id;

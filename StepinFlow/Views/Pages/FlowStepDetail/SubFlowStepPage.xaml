@@ -10,71 +10,61 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="SubFlowStepPage"
     d:DataContext="{d:DesignInstance local:SubFlowStepPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <StackPanel>
 
-        <Label>Configure Sub-Flow step</Label>
+    <Grid VerticalAlignment="Top">
 
-
-        <Grid Margin="10,10,10,50">
-
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="0.3*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
 
 
+        <StackPanel>
+            <Label>Configure Sub-Flow:</Label>
 
 
-
-
-            <StackPanel>
-
-                <StackPanel
-                    MinWidth="200"
-                    Margin="0,0,0,20"
-                    HorizontalAlignment="Left">
-                    <Label>Sub-Flows:</Label>
-                    <ComboBox ItemsSource="{Binding ViewModel.SubFlows}" SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Path=Id}" />
-                                    <TextBlock Text=" - " />
-                                    <TextBlock Text="{Binding Path=Name}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </StackPanel>
-
-
-                <StackPanel
-                    MinWidth="200"
-                    Margin="0,0,0,20"
-                    HorizontalAlignment="Left">
-
-                    <Label>Is sub flow a reference to original sub flow?</Label>
-                    <CheckBox IsChecked="{Binding ViewModel.FlowStep.IsSubFlowReferenced, Mode=TwoWay}" IsEnabled="{Binding ViewModel.IsEnabled}" />
-                </StackPanel>
-
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
-        </Grid>
+
+            <!--  SubFlows  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Sub-Flows:</Label>
+                <ComboBox ItemsSource="{Binding ViewModel.SubFlows}" SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Path=Id}" />
+                                <TextBlock Text=" - " />
+                                <TextBlock Text="{Binding Path=Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
 
 
+            <!--  IsSubFlowReferenced  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Is sub flow a reference to original sub flow?</Label>
+                <CheckBox IsChecked="{Binding ViewModel.FlowStep.IsSubFlowReferenced, Mode=TwoWay}" IsEnabled="{Binding ViewModel.IsEnabled}" />
+            </StackPanel>
 
-
-
-
-
-    </StackPanel>
-
+        </StackPanel>
+    </Grid>
 </Page>

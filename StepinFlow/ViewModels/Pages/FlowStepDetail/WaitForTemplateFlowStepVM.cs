@@ -20,7 +20,6 @@ namespace StepinFlow.ViewModels.Pages
         private readonly ITemplateSearchService _templateMatchingService;
         private readonly IWindowService _windowService;
         private readonly IDataService _dataService;
-        //public override event Action<int> OnSave;
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
@@ -77,6 +76,7 @@ namespace StepinFlow.ViewModels.Pages
             List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(newFlowStep.ParentFlowStepId.Value);
             flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
             FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+            FlowStep.Name = "Wait for Template Search.";
 
             return;
         }
@@ -215,8 +215,6 @@ namespace StepinFlow.ViewModels.Pages
                     successFlowStep,
                 };
 
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Wait for Template.";
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
 

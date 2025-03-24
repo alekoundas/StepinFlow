@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Model.Enums;
 using Business.BaseViewModels;
@@ -24,6 +23,14 @@ namespace StepinFlow.ViewModels.Pages
 
             MouseButtonsEnum = Enum.GetValues(typeof(MouseButtonsEnum)).Cast<MouseButtonsEnum>();
             MouseActionsEnum = Enum.GetValues(typeof(MouseActionsEnum)).Cast<MouseActionsEnum>();
+        }
+
+        public override Task LoadNewFlowStep(FlowStep newFlowStep)
+        {
+            FlowStep = newFlowStep;
+            FlowStep.Name = "Cursor click.";
+
+            return Task.CompletedTask;
         }
 
 
@@ -54,10 +61,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
-
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Set cursor Action.";
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }

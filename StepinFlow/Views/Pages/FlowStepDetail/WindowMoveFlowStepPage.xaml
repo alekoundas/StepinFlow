@@ -10,66 +10,68 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="WindowMoveFlowStepPage"
     d:DataContext="{d:DesignInstance local:WindowMoveFlowStepPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <StackPanel>
 
-        <Grid Margin="10,10,10,50">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="0.1*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="1*" />
-                <RowDefinition Height="1*" />
-                <RowDefinition Height="1*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+    <Grid VerticalAlignment="Top">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
 
 
+        <StackPanel>
+            <Label>Configure application window location:</Label>
 
 
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+            </StackPanel>
 
 
-
-            <StackPanel>
-                <Label>Change application window location.</Label>
+            <!--  ProcessName  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Label>Select application window to relocate:</Label>
                 <StackPanel Orientation="Horizontal">
                     <ComboBox ItemsSource="{Binding ViewModel.ProcessList}" SelectedItem="{Binding ViewModel.FlowStep.ProcessName}" />
-                    <Button Grid.Column="2" Content="Refresh">
+                    <Button Margin="20,0,0,0" Content="Record">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Click">
-                                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonRefreshClickCommand}" />
+                                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonRecordClickCommand}" />
                             </i:EventTrigger>
                         </i:Interaction.Triggers>
                     </Button>
                 </StackPanel>
             </StackPanel>
 
-            <Button Grid.Column="2" Content="Record">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="Click">
-                        <i:InvokeCommandAction Command="{Binding ViewModel.ButtonRecordClickCommand}" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </Button>
 
 
             <Label Grid.Row="1" Margin="0,40,0,0">Set window location.</Label>
-
             <!--  X  -->
-            <StackPanel Grid.Row="2">
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Label>X:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.LocationX, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Y  -->
-            <StackPanel Grid.Row="2" Grid.Column="3">
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Label>Y:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.LocationY, Mode=TwoWay}" />
             </StackPanel>
@@ -78,10 +80,9 @@
 
             <!--  Test Button  -->
             <StackPanel
-                Grid.Row="3"
-                Grid.ColumnSpan="3"
-                Margin="0,10,0,0"
-                HorizontalAlignment="Right">
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Button Content="Test">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Click">
@@ -91,13 +92,7 @@
                 </Button>
             </StackPanel>
 
-        </Grid>
 
-
-
-
-
-
-    </StackPanel>
-
+        </StackPanel>
+    </Grid>
 </Page>

@@ -8,7 +8,6 @@ using Business.BaseViewModels;
 using Business.Services;
 using System.Windows.Input;
 using Business.Services.Interfaces;
-using System.Collections.Generic;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -76,6 +75,8 @@ namespace StepinFlow.ViewModels.Pages
             {
                 OnButtonRecordClick();
             });
+
+            FlowStep.Name = "Cursor relocate.";
             return;
         }
 
@@ -135,10 +136,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
-
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Set cursor possition.";
 
                 if (SelectedFlowStep != null)
                     FlowStep.ParentTemplateSearchFlowStepId = SelectedFlowStep.Id;

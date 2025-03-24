@@ -1,10 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Model.Enums;
 using System.Collections.ObjectModel;
 using Business.BaseViewModels;
-using Microsoft.EntityFrameworkCore;
 using Business.Services.Interfaces;
 
 namespace StepinFlow.ViewModels.Pages
@@ -12,7 +10,6 @@ namespace StepinFlow.ViewModels.Pages
     public partial class GoToFlowStepVM : BaseFlowStepDetailVM
     {
         private readonly IDataService _dataService;
-        //public override event Action<int> OnSave;
 
         [ObservableProperty]
         private ObservableCollection<FlowStep> _previousSteps = new ObservableCollection<FlowStep>();
@@ -37,6 +34,8 @@ namespace StepinFlow.ViewModels.Pages
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
             FlowStep = newFlowStep;
+            FlowStep.Name = "Go to step.";
+
             if (newFlowStep.ParentFlowStepId != null)
                 PreviousSteps = await GetParents(newFlowStep.ParentFlowStepId.Value);
         }
@@ -66,9 +65,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
-
-                if (FlowStep.Name.Length == 0)
-                    FlowStep.Name = "Run again an earlier step.";
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }
