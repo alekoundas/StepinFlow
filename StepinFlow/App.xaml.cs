@@ -1,9 +1,4 @@
-﻿// This Source Code Form is subject to the terms of the MIT License.
-// If a copy of the MIT was not distributed with this file, You can obtain one at https://opensource.org/licenses/MIT.
-// Copyright (C) Leszek Pomianowski and WPF UI Contributors.
-// All Rights Reserved.
-
-using Business.DatabaseContext;
+﻿using Business.DatabaseContext;
 using Business.Factories.ExecutionFactory;
 using Business.Factories.ExecutionFactory.Workers;
 using Business.Repository.Entities;
@@ -38,12 +33,6 @@ namespace StepinFlow
 {
     public partial class App
     {
-
-        // The.NET Generic Host provides dependency injection, configuration, logging, and other services.
-        // https://docs.microsoft.com/dotnet/core/extensions/generic-host
-        // https://docs.microsoft.com/dotnet/core/extensions/dependency-injection
-        // https://docs.microsoft.com/dotnet/core/extensions/configuration
-        // https://docs.microsoft.com/dotnet/core/extensions/logging
         private static readonly string? _basePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
         private static readonly IHost _host = Host
             .CreateDefaultBuilder()
