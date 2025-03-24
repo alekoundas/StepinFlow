@@ -103,25 +103,22 @@ namespace Business.Services
 
 
 
-        // Cache codec info as static fields (shared across all instances)
-        private static readonly ImageCodecInfo JpegCodec = ImageCodecInfo.GetImageEncoders()
-            .FirstOrDefault(c => c.MimeType == "image/jpeg");
-        private static readonly ImageCodecInfo PngCodec = ImageCodecInfo.GetImageEncoders()
-            .FirstOrDefault(c => c.MimeType == "image/png");
+        // Cache codec info as static fields (shared across all instances).
+        private static readonly ImageCodecInfo JpegCodec = ImageCodecInfo.GetImageEncoders().FirstOrDefault(c => c.MimeType == "image/jpeg");
+        private static readonly ImageCodecInfo PngCodec = ImageCodecInfo.GetImageEncoders().FirstOrDefault(c => c.MimeType == "image/png");
 
-        // Cache EncoderParameter for common quality values
+        // Cache EncoderParameter for common quality values.
         private static readonly Dictionary<long, EncoderParameters> QualityParamsCache = new();
 
-       
         public async Task<string> SaveImageToDisk(string filePath, byte[] image, double quality = 100.0)
         {
-            // Validate quality parameter
+            // Validate quality parameter.
             if (quality < 0 || quality > 100)
             {
                 throw new ArgumentException("Quality must be between 0 and 100.", nameof(quality));
             }
 
-            // If quality is 100, save original bytes directly
+            // If quality is 100, save original bytes directly.
             if (quality == 100.0)
             {
                 await File.WriteAllBytesAsync(filePath, image);
@@ -129,11 +126,11 @@ namespace Business.Services
             }
 
 
-            // Use Span-based MemoryStream constructor to avoid copying
+            // Use Span-based MemoryStream constructor to avoid copying.
             using (var memoryStream = new MemoryStream(image, writable: false))
             using (var originalImage = Image.FromStream(memoryStream, useEmbeddedColorManagement: false))
             {
-                // Get or create EncoderParameters
+                // Get or create EncoderParameters.
                 long qualityLong = (long)quality;
                 if (!QualityParamsCache.TryGetValue(qualityLong, out var encoderParameters))
                 {
@@ -142,7 +139,7 @@ namespace Business.Services
                         Param = { [0] = new EncoderParameter(Encoder.Quality, qualityLong) }
                     };
 
-                    // Thread-safe cache update
+                    // Thread-safe cache update.
                     lock (QualityParamsCache)
                     {
                         if (!QualityParamsCache.ContainsKey(qualityLong))
@@ -150,7 +147,7 @@ namespace Business.Services
                     }
                 }
 
-                // Use single MemoryStream for conversion
+                // Use single MemoryStream for conversion.
                 using (var conversionStream = new MemoryStream())
                 {
                     originalImage.Save(conversionStream, JpegCodec, encoderParameters);
@@ -376,7 +373,7 @@ namespace Business.Services
 
         public Model.Structs.Point GetCursorPossition()
         {
-             GetCursorPos(out Model.Structs.Point point);
+            GetCursorPos(out Model.Structs.Point point);
             return point;
         }
 
@@ -413,6 +410,6 @@ namespace Business.Services
             return null;
         }
 
-    
+
     }
 }

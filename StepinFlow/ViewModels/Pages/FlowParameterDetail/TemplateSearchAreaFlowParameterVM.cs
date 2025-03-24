@@ -54,7 +54,10 @@ namespace StepinFlow.ViewModels.Pages.FlowParameterDetail
             if (flowParameter != null)
                 FlowParameter = flowParameter;
 
-            SelectedTemplateSearchAreaTypesEnum = flowParameter.TemplateSearchAreaType.Value;
+            SelectedProcess = FlowParameter.ProcessName;
+
+            if (FlowParameter.TemplateSearchAreaType != null)
+                SelectedTemplateSearchAreaTypesEnum = FlowParameter.TemplateSearchAreaType.Value;
         }
 
 
