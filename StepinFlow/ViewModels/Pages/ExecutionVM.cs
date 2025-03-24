@@ -1,14 +1,17 @@
-﻿using Business.Factories;
+﻿using AutoMapper;
+using Business.Factories;
 using Business.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Model.Enums;
 using Model.Models;
+using Newtonsoft.Json;
 using StepinFlow.Views.UserControls;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -52,6 +55,8 @@ namespace StepinFlow.ViewModels.Pages
         [ObservableProperty]
         public bool _isLocked = true;
 
+        [ObservableProperty]
+        public long _executionHistorySize ;
 
         private bool _stopExecution = false;
         private CancellationTokenSource _cancellationToken = new CancellationTokenSource();
@@ -125,14 +130,17 @@ namespace StepinFlow.ViewModels.Pages
             _executionFactory.DestroyWorkers();
 
         }
+
         private long GetObjectSize(object obj)
         {
-            using (var stream = new MemoryStream())
+            JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings
             {
-                var serializer = new DataContractSerializer(obj.GetType());
-                serializer.WriteObject(stream, obj);
-                return stream.Length;
-            }
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
+
+            string json = JsonConvert.SerializeObject(obj, jsonSerializerSettings);
+            return Encoding.UTF8.GetByteCount(json); // Size in bytes
         }
 
         private async Task ExecuteStepLoop(FlowStep? initialFlowStep, Execution parentExecution)
@@ -176,6 +184,8 @@ namespace StepinFlow.ViewModels.Pages
                         flowStepExecution.FlowStep.TemplateImage = null;
 
                     ListBoxExecutions.Add(flowStepExecution);
+                 
+                    ExecutionHistorySize = GetObjectSize(ListBoxExecutions);
                 });
 
 

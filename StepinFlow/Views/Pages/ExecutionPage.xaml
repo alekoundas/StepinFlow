@@ -304,6 +304,7 @@
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                 </ui:Button>
+                <TextBlock Padding="10" Text="{Binding ViewModel.ExecutionHistorySize, StringFormat={}{0:N0} Bytes}" />
             </StackPanel>
         </StackPanel>
 
