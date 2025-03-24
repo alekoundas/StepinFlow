@@ -1,19 +1,21 @@
 ﻿<Page
-    x:Class="StepinFlow.Views.Pages.Executions.WindowMoveExecutionPage"
+    x:Class="StepinFlow.Views.Pages.FlowStepDetail.WindowRelocateFlowStepPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:System="clr-namespace:System;assembly=mscorlib"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enum="clr-namespace:Model.Enums;assembly=Model"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-    xmlns:local="clr-namespace:StepinFlow.Views.Pages.Executions"
+    xmlns:local="clr-namespace:StepinFlow.Views.Pages.FlowStepDetail"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="CursorClickExecutionPage"
-    d:DataContext="{d:DesignInstance local:WindowMoveExecutionPage,
+    Title="WindowRelocateFlowStepPage"
+    d:DataContext="{d:DesignInstance local:WindowRelocateFlowStepPage,
     IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
+
+
     <Grid VerticalAlignment="Top">
 
         <Grid.ColumnDefinitions>
@@ -31,7 +33,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
 
@@ -42,7 +44,14 @@
                 HorizontalAlignment="Left">
                 <Label>Select application window to relocate:</Label>
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox ItemsSource="{Binding ViewModel.ProcessList}" SelectedItem="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
+                    <ComboBox ItemsSource="{Binding ViewModel.ProcessList}" SelectedItem="{Binding ViewModel.FlowStep.ProcessName}" />
+                    <Button Margin="20,0,0,0" Content="Record">
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="Click">
+                                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonRecordClickCommand}" />
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </Button>
                 </StackPanel>
             </StackPanel>
 
@@ -55,7 +64,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>X:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LocationX, Mode=TwoWay}" />
+                <TextBox Text="{Binding ViewModel.FlowStep.LocationX, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Y  -->
@@ -64,7 +73,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Y:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
+                <TextBox Text="{Binding ViewModel.FlowStep.LocationY, Mode=TwoWay}" />
             </StackPanel>
 
 

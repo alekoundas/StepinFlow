@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace StepinFlow.Views.Pages.Executions
 {
-    public partial class WindowMoveExecutionPage : Page, IExecutionPage, IDetailPage
+    public partial class WindowRelocateExecutionPage : Page, IExecutionPage, IDetailPage
     {
         public IFlowDetailVM? FlowViewModel { get; set; }
         public IFlowStepDetailVM? FlowStepViewModel { get; set; }
@@ -13,7 +13,7 @@ namespace StepinFlow.Views.Pages.Executions
 
 
         public IExecutionViewModel ViewModel { get; set; }
-        public WindowMoveExecutionPage(WindowMoveExecutionVM viewModel)
+        public WindowRelocateExecutionPage(WindowRelocateExecutionVM viewModel)
         {
             ViewModel = viewModel;
             FlowExecutionViewModel = ViewModel;

@@ -55,7 +55,7 @@ namespace Business.Factories
         {
             return new Dictionary<FlowStepTypesEnum, Lazy<IExecutionWorker>>()
             {
-                { FlowStepTypesEnum.WINDOW_MOVE, new Lazy<IExecutionWorker>(() => new WindowMoveExecutionWorker(_dataService, _systemService)) },
+                { FlowStepTypesEnum.WINDOW_RELOCATE, new Lazy<IExecutionWorker>(() => new WindowRelocateExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.WINDOW_RESIZE, new Lazy<IExecutionWorker>(() => new WindowResizeExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.CURSOR_RELOCATE, new Lazy<IExecutionWorker>(() => new CursorRelocateExecutionWorker(_dataService, _systemService)) },
                 { FlowStepTypesEnum.CURSOR_CLICK, new Lazy<IExecutionWorker>(() => new CursorClickExecutionWorker(_dataService, _systemService)) },

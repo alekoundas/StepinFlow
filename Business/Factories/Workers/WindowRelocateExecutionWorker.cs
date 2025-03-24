@@ -5,12 +5,12 @@ using Model.Structs;
 
 namespace Business.Factories.Workers
 {
-    public class WindowMoveExecutionWorker : CommonExecutionWorker, IExecutionWorker
+    public class WindowRelocateExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
         private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public WindowMoveExecutionWorker(IDataService dataService, ISystemService systemService)
+        public WindowRelocateExecutionWorker(IDataService dataService, ISystemService systemService)
             : base(dataService, systemService)
         {
             _dataService = dataService;

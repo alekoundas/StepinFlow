@@ -5,7 +5,7 @@ using Business.Helpers;
 
 namespace StepinFlow.ViewModels.Pages.Executions
 {
-    public partial class WindowMoveExecutionVM : ObservableObject, IExecutionViewModel
+    public partial class WindowRelocateExecutionVM : ObservableObject, IExecutionViewModel
     {
         [ObservableProperty]
         private Execution _execution;
@@ -13,7 +13,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
         [ObservableProperty]
         private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
 
-        public WindowMoveExecutionVM()
+        public WindowRelocateExecutionVM()
         {
             _execution = new Execution() { FlowStep = new FlowStep() };
         }

@@ -8,7 +8,7 @@ using Business.Services.Interfaces;
 
 namespace StepinFlow.ViewModels.Pages
 {
-    public partial class WindowMoveFlowStepVM : BaseFlowStepDetailVM
+    public partial class WindowRelocateFlowStepVM : BaseFlowStepDetailVM
     {
         private readonly ISystemService _systemService;
         private readonly IDataService _dataService;
@@ -16,7 +16,7 @@ namespace StepinFlow.ViewModels.Pages
         [ObservableProperty]
         private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
 
-        public WindowMoveFlowStepVM(ISystemService systemService, IDataService dataService) : base(dataService)
+        public WindowRelocateFlowStepVM(ISystemService systemService, IDataService dataService) : base(dataService)
         {
             _dataService = dataService;
             _systemService = systemService;

@@ -106,7 +106,7 @@ namespace StepinFlow.ViewModels.UserControls
                 { FlowStepTypesEnum.WAIT, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WaitFlowStepPage>()) },
                 { FlowStepTypesEnum.GO_TO, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<GoToFlowStepPage>()) },
                 { FlowStepTypesEnum.WINDOW_RESIZE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowResizeFlowStepPage>()) },
-                { FlowStepTypesEnum.WINDOW_MOVE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowMoveFlowStepPage>()) },
+                { FlowStepTypesEnum.WINDOW_RELOCATE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowRelocateFlowStepPage>()) },
                 { FlowStepTypesEnum.LOOP, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<LoopFlowStepPage>()) },
                 { FlowStepTypesEnum.SUB_FLOW_STEP, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<SubFlowStepPage>()) }
             };
@@ -129,7 +129,7 @@ namespace StepinFlow.ViewModels.UserControls
                 { FlowStepTypesEnum.WAIT, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WaitExecutionPage>()) },
                 { FlowStepTypesEnum.GO_TO, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<GoToExecutionPage>()) },
                 { FlowStepTypesEnum.WINDOW_RESIZE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowResizeExecutionPage>()) },
-                { FlowStepTypesEnum.WINDOW_MOVE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowMoveExecutionPage>()) },
+                { FlowStepTypesEnum.WINDOW_RELOCATE, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<WindowRelocateExecutionPage>()) },
                 { FlowStepTypesEnum.LOOP, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<LoopExecutionPage>()) },
                 { FlowStepTypesEnum.SUB_FLOW_STEP, new Lazy<IDetailPage>(() => serviceProvider.GetRequiredService<SubFlowStepExecutionPage>()) }
             };

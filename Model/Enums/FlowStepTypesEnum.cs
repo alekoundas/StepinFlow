@@ -9,7 +9,7 @@ namespace Model.Enums
         LOOP,
         SUB_FLOW_STEP,
 
-        WINDOW_MOVE,
+        WINDOW_RELOCATE,
         WINDOW_RESIZE,
 
         CURSOR_SCROLL,

@@ -98,7 +98,7 @@ namespace StepinFlow
                 services.AddScoped<GoToExecutionWorker>();
                 services.AddScoped<WaitExecutionWorker>();
                 services.AddScoped<CursorRelocateExecutionWorker>();
-                services.AddScoped<WindowMoveExecutionWorker>();
+                services.AddScoped<WindowRelocateExecutionWorker>();
                 services.AddScoped<CursorClickExecutionWorker>();
                 services.AddScoped<CursorScrollExecutionWorker>();
                 services.AddScoped<WindowResizeExecutionWorker>();
@@ -170,8 +170,8 @@ namespace StepinFlow
                 services.AddSingleton<WindowResizeFlowStepPage>();
                 services.AddSingleton<WindowResizeFlowStepVM>();
 
-                services.AddSingleton<WindowMoveFlowStepPage>();
-                services.AddSingleton<WindowMoveFlowStepVM>();
+                services.AddSingleton<WindowRelocateFlowStepPage>();
+                services.AddSingleton<WindowRelocateFlowStepVM>();
 
                 services.AddSingleton<LoopFlowStepPage>();
                 services.AddSingleton<LoopFlowStepVM>();
@@ -207,8 +207,8 @@ namespace StepinFlow
                 services.AddSingleton<WindowResizeExecutionVM>();
                 services.AddSingleton<WindowResizeExecutionPage>();
 
-                services.AddSingleton<WindowMoveExecutionVM>();
-                services.AddSingleton<WindowMoveExecutionPage>();
+                services.AddSingleton<WindowRelocateExecutionVM>();
+                services.AddSingleton<WindowRelocateExecutionPage>();
 
                 services.AddSingleton<LoopExecutionVM>();
                 services.AddSingleton<LoopExecutionPage>();

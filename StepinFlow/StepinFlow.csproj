@@ -75,7 +75,7 @@
     <Compile Update="Views\Pages\Executions\WaitForTemplateExecutionPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\Pages\Executions\WindowMoveExecutionPage.xaml.cs">
+    <Compile Update="Views\Pages\Executions\WindowRelocateExecutionPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\Pages\Executions\WindowResizeExecutionPage.xaml.cs">
@@ -117,7 +117,7 @@
     <Compile Update="Views\Pages\FlowStepDetail\WaitForTemplateFlowStepPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\Pages\FlowStepDetail\WindowMoveFlowStepPage.xaml.cs">
+    <Compile Update="Views\Pages\FlowStepDetail\WindowRelocateFlowStepPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\Pages\FlowStepDetail\WindowResizeFlowStepPage.xaml.cs">
