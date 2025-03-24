@@ -112,9 +112,9 @@ namespace StepinFlow.ViewModels.Pages
         [RelayCommand]
         private async Task OnButtonDeleteClick()
         {
-            var executions = _dataService.Executions.ToList();
-            await _dataService.Executions.RemoveRangeAsync(executions);
-
+            //var executions = _dataService.Executions.ToList();
+            //await _dataService.Executions.RemoveRangeAsync(executions);
+            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("DELETE FROM Executions;");
             // Reclaim free space in database file.
             await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("VACUUM;");
         }
