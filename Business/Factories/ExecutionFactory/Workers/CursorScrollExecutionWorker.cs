@@ -1,7 +1,8 @@
-﻿using Business.Services.Interfaces;
+﻿using Business.Factories.ExecutionFactory;
+using Business.Services.Interfaces;
 using Model.Models;
 
-namespace Business.Factories.Workers
+namespace Business.Factories.ExecutionFactory.Workers
 {
     public class CursorScrollExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {

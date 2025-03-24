@@ -1,16 +1,17 @@
-﻿using Business.Services.Interfaces;
+﻿using Business.Factories.ExecutionFactory;
+using Business.Services.Interfaces;
 using Model.Enums;
 using Model.Models;
 using Model.Structs;
 
-namespace Business.Factories.Workers
+namespace Business.Factories.ExecutionFactory.Workers
 {
-    public class WindowResizeExecutionWorker : CommonExecutionWorker, IExecutionWorker
+    public class WindowRelocateExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
         private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
 
-        public WindowResizeExecutionWorker(IDataService dataService, ISystemService systemService)
+        public WindowRelocateExecutionWorker(IDataService dataService, ISystemService systemService)
             : base(dataService, systemService)
         {
             _dataService = dataService;
@@ -24,13 +25,19 @@ namespace Business.Factories.Workers
 
             Rectangle? windowRect = _systemService.GetWindowSize(execution.FlowStep.ProcessName);
             Rectangle newWindowRect = new Rectangle();
+
             if (windowRect == null)
                 return Task.CompletedTask;
 
-            newWindowRect.Left = windowRect.Value.Left;
-            newWindowRect.Top = windowRect.Value.Top;
-            newWindowRect.Right = windowRect.Value.Left + execution.FlowStep.Width;
-            newWindowRect.Bottom = windowRect.Value.Top + execution.FlowStep.Height;
+            int x = execution.FlowStep.LocationX;
+            int y = execution.FlowStep.LocationY;
+            int height = Math.Abs(windowRect.Value.Bottom - windowRect.Value.Top);
+            int width = Math.Abs(windowRect.Value.Left - windowRect.Value.Right);
+
+            newWindowRect.Left = x;
+            newWindowRect.Top = y;
+            newWindowRect.Right = x + width;
+            newWindowRect.Bottom = y + height;
 
             bool result = _systemService.MoveWindow(execution.FlowStep.ProcessName, newWindowRect);
 

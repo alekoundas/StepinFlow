@@ -1,8 +1,8 @@
-﻿using Business.Factories.Workers;
+﻿using Business.Factories.ExecutionFactory.Workers;
 using Business.Services.Interfaces;
 using Model.Enums;
 
-namespace Business.Factories
+namespace Business.Factories.ExecutionFactory
 {
     public class ExecutionFactory : IExecutionFactory
     {

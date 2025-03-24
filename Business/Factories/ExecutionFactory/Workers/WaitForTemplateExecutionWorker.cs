@@ -1,10 +1,11 @@
-﻿using Business.Helpers;
+﻿using Business.Factories.ExecutionFactory;
+using Business.Helpers;
 using Business.Services.Interfaces;
 using Model.Business;
 using Model.Enums;
 using Model.Models;
 
-namespace Business.Factories.Workers
+namespace Business.Factories.ExecutionFactory.Workers
 {
     public class WaitForTemplateExecutionWorker : CommonExecutionWorker, IExecutionWorker
     {
@@ -95,8 +96,8 @@ namespace Business.Factories.Workers
                 TemplateMatchingResult result = _templateSearchService.SearchForTemplate(execution.FlowStep.TemplateImage, screenshot, execution.FlowStep.TemplateMatchMode, execution.FlowStep.RemoveTemplateFromResult);
                 ImageSizeResult imageSizeResult = _systemService.GetImageSize(execution.FlowStep.TemplateImage);
 
-                int x = searchRectangle.Value.Left + result.ResultRectangle.Left + (imageSizeResult.Width / 2);
-                int y = searchRectangle.Value.Top + result.ResultRectangle.Top + (imageSizeResult.Height / 2);
+                int x = searchRectangle.Value.Left + result.ResultRectangle.Left + imageSizeResult.Width / 2;
+                int y = searchRectangle.Value.Top + result.ResultRectangle.Top + imageSizeResult.Height / 2;
 
                 isSuccessful = execution.FlowStep.Accuracy <= result.Confidence;
                 execution.Result = isSuccessful ? ExecutionResultEnum.SUCCESS : ExecutionResultEnum.FAIL;

@@ -1,6 +1,6 @@
 ﻿using Model.Enums;
 
-namespace Business.Factories
+namespace Business.Factories.ExecutionFactory
 {
     public interface IExecutionFactory
     {

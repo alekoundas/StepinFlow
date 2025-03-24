@@ -1,7 +1,7 @@
 ﻿using Business.DatabaseContext;
 using Model.Models;
 
-namespace Business.Factories
+namespace Business.Factories.ExecutionFactory
 {
     public interface IExecutionWorker
     {
