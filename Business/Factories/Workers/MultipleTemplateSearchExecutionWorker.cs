@@ -165,9 +165,40 @@ namespace Business.Factories.Workers
 
 
             // Delete temp images since execution is completed.
-            //foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
-            //    if (File.Exists(parentLoopExecution.TempResultImagePath))
-            //        File.Delete(parentLoopExecution.TempResultImagePath);
+            foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value])
+            {
+                try
+                {
+                    string filePath = parentLoopExecution.TempResultImagePath;
+                    if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+                    {
+                        int retries = 3;
+                        while (retries > 0)
+                        {
+                            try
+                            {
+                                File.Delete(filePath);
+                                break; 
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                break;
+                            }
+                            catch (IOException)
+                            {
+                                // File might be in use - wait and retry
+                                retries--;
+                                if (retries > 0)
+                                    Thread.Sleep(100); // Wait 100ms before retry
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    continue;
+                }
+            }
 
             _pendingExecutionLoops[execution.FlowStep.ParentTemplateSearchFlowStepId.Value].Clear();
 
