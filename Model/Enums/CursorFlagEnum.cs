@@ -2,7 +2,7 @@
 {
 
     [Flags]
-    public enum MouseFlagEnum : uint // UInt32
+    public enum CursorFlagEnum : uint // UInt32
     {
         /// <summary>
         /// Specifies that movement occurred.

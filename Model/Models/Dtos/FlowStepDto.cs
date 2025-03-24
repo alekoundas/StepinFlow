@@ -23,9 +23,9 @@ namespace Model.Models
         public bool RemoveTemplateFromResult { get; set; }
 
         // Cursor
-        public MouseActionsEnum? CursorAction { get; set; }
-        public MouseButtonsEnum? CursorButton { get; set; }
-        public MouseScrollDirectionEnum? CursorScrollDirection { get; set; }
+        public CursorActionsEnum? CursorAction { get; set; }
+        public CursorButtonsEnum? CursorButton { get; set; }
+        public CursorScrollDirectionEnum? CursorScrollDirection { get; set; }
         public CursorRelocationTypesEnum? CursorRelocationType { get; set; }
 
         // System

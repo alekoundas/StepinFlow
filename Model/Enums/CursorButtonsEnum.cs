@@ -1,7 +1,7 @@
 ﻿namespace Model.Enums
 {
     [Flags]
-    public enum MouseButtonsEnum
+    public enum CursorButtonsEnum
     {
         LEFT_BUTTON ,
         RIGHT_BUTTON ,

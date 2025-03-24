@@ -14,14 +14,14 @@ namespace StepinFlow.ViewModels.Pages
 
 
         [ObservableProperty]
-        private IEnumerable<MouseScrollDirectionEnum> _mouseScrollDirectionEnum;
+        private IEnumerable<CursorScrollDirectionEnum> _mouseScrollDirectionEnum;
 
 
         public CursorScrollFlowStepVM(IDataService dataService) : base(dataService)
         {
             _dataService = dataService;
 
-            MouseScrollDirectionEnum = Enum.GetValues(typeof(MouseScrollDirectionEnum)).Cast<MouseScrollDirectionEnum>();
+            MouseScrollDirectionEnum = Enum.GetValues(typeof(CursorScrollDirectionEnum)).Cast<CursorScrollDirectionEnum>();
         }
 
         public override Task LoadNewFlowStep(FlowStep newFlowStep)

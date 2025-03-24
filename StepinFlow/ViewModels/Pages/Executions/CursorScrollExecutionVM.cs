@@ -11,17 +11,17 @@ namespace StepinFlow.ViewModels.Pages.Executions
         private Execution _execution;
 
         [ObservableProperty]
-        private IEnumerable<MouseButtonsEnum> _mouseButtonsEnum;
+        private IEnumerable<CursorButtonsEnum> _mouseButtonsEnum;
 
         [ObservableProperty]
-        private IEnumerable<MouseActionsEnum> _mouseActionsEnum;
+        private IEnumerable<CursorActionsEnum> _mouseActionsEnum;
 
         public CursorScrollExecutionVM() 
         {
             _execution = new Execution();
 
-            MouseButtonsEnum = Enum.GetValues(typeof(MouseButtonsEnum)).Cast<MouseButtonsEnum>();
-            MouseActionsEnum = Enum.GetValues(typeof(MouseActionsEnum)).Cast<MouseActionsEnum>();
+            MouseButtonsEnum = Enum.GetValues(typeof(CursorButtonsEnum)).Cast<CursorButtonsEnum>();
+            MouseActionsEnum = Enum.GetValues(typeof(CursorActionsEnum)).Cast<CursorActionsEnum>();
         }
         public Task SetExecution(Execution execution)
         {

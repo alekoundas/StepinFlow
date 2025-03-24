@@ -9,7 +9,7 @@ namespace Model.Structs
         public int X;
         public int Y;
         public int MouseData;
-        public MouseFlagEnum Flags;
+        public CursorFlagEnum Flags;
         public uint Time;
         public IntPtr ExtraInfo;
     }

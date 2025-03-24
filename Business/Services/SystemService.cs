@@ -38,23 +38,23 @@ namespace Business.Services
 
 
 
-        public void CursorScroll(MouseScrollDirectionEnum scrollDirection, int steps)
+        public void CursorScroll(CursorScrollDirectionEnum scrollDirection, int steps)
         {
             int wheelOrientation = 0;
             int direction = 120;
             switch (scrollDirection)
             {
-                case MouseScrollDirectionEnum.UP:
+                case CursorScrollDirectionEnum.UP:
                     wheelOrientation = 0x0800;
                     break;
-                case MouseScrollDirectionEnum.DOWN:
+                case CursorScrollDirectionEnum.DOWN:
                     wheelOrientation = 0x0800;
                     direction *= -1;
                     break;
-                case MouseScrollDirectionEnum.LEFT:
+                case CursorScrollDirectionEnum.LEFT:
                     wheelOrientation = 0x01000;
                     break;
-                case MouseScrollDirectionEnum.RIGT:
+                case CursorScrollDirectionEnum.RIGT:
                     wheelOrientation = 0x01000;
                     direction *= -1;
                     break;
@@ -70,19 +70,40 @@ namespace Business.Services
         }
 
 
-        public void CursorClick(MouseButtonsEnum mouseButtonEnum)
+        public void CursorHold(CursorButtonsEnum mouseButtonEnum)
         {
             int x = System.Windows.Forms.Cursor.Position.X;
             int y = System.Windows.Forms.Cursor.Position.Y;
 
-            Thread.Sleep(100);
-            if (mouseButtonEnum == MouseButtonsEnum.RIGHT_BUTTON)
+            if (mouseButtonEnum == CursorButtonsEnum.RIGHT_BUTTON)
+                mouse_event(0x0008, x, y, 0, 0);
+            else if (mouseButtonEnum == CursorButtonsEnum.LEFT_BUTTON)
+                mouse_event(0x0002, x, y, 0, 0);
+        }
+
+        public void CursorRelease(CursorButtonsEnum mouseButtonEnum)
+        {
+            int x = System.Windows.Forms.Cursor.Position.X;
+            int y = System.Windows.Forms.Cursor.Position.Y;
+
+            if (mouseButtonEnum == CursorButtonsEnum.RIGHT_BUTTON)
+                mouse_event(0x0010, x, y, 0, 0);
+            else if (mouseButtonEnum == CursorButtonsEnum.LEFT_BUTTON)
+                mouse_event(0x0004, x, y, 0, 0);
+        }
+
+        public void CursorClick(CursorButtonsEnum mouseButtonEnum)
+        {
+            int x = System.Windows.Forms.Cursor.Position.X;
+            int y = System.Windows.Forms.Cursor.Position.Y;
+
+            if (mouseButtonEnum == CursorButtonsEnum.RIGHT_BUTTON)
             {
                 mouse_event(0x0008, x, y, 0, 0);
                 Thread.Sleep(50);
                 mouse_event(0x0010, x, y, 0, 0);
             }
-            else if (mouseButtonEnum == MouseButtonsEnum.LEFT_BUTTON)
+            else if (mouseButtonEnum == CursorButtonsEnum.LEFT_BUTTON)
             {
                 mouse_event(0x0002, x, y, 0, 0);
                 Thread.Sleep(50);

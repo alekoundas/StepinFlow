@@ -12,17 +12,17 @@ namespace StepinFlow.ViewModels.Pages
         //public override event Action<int> OnSave;
 
         [ObservableProperty]
-        private IEnumerable<MouseButtonsEnum> _mouseButtonsEnum;
+        private IEnumerable<CursorButtonsEnum> _mouseButtonsEnum;
         [ObservableProperty]
-        private IEnumerable<MouseActionsEnum> _mouseActionsEnum;
+        private IEnumerable<CursorActionsEnum> _mouseActionsEnum;
 
 
         public CursorClickFlowStepVM(IDataService dataService) : base(dataService)
         {
             _dataService = dataService;
 
-            MouseButtonsEnum = Enum.GetValues(typeof(MouseButtonsEnum)).Cast<MouseButtonsEnum>();
-            MouseActionsEnum = Enum.GetValues(typeof(MouseActionsEnum)).Cast<MouseActionsEnum>();
+            MouseButtonsEnum = Enum.GetValues(typeof(CursorButtonsEnum)).Cast<CursorButtonsEnum>();
+            MouseActionsEnum = Enum.GetValues(typeof(CursorActionsEnum)).Cast<CursorActionsEnum>();
         }
 
         public override Task LoadNewFlowStep(FlowStep newFlowStep)

@@ -36,8 +36,10 @@ namespace Business.Services.Interfaces
         void SetCursorPossition(Model.Structs.Point point);
         Model.Structs.Point GetCursorPossition();
 
-        void CursorClick(MouseButtonsEnum mouseButtonEnum);
-        void CursorScroll(MouseScrollDirectionEnum scrollDirection, int steps);
+        void CursorHold(CursorButtonsEnum mouseButtonEnum);
+        void CursorRelease(CursorButtonsEnum mouseButtonEnum);
+        void CursorClick(CursorButtonsEnum mouseButtonEnum);
+        void CursorScroll(CursorScrollDirectionEnum scrollDirection, int steps);
 
     }
 }

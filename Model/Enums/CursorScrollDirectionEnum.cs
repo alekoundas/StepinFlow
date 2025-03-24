@@ -1,7 +1,7 @@
 ﻿namespace Model.Enums
 {
     [Flags]
-    public enum MouseScrollDirectionEnum
+    public enum CursorScrollDirectionEnum
     {
         UP,
         DOWN,
