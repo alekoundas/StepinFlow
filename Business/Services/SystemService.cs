@@ -99,52 +99,73 @@ namespace Business.Services
                 .ToList();
         }
 
+
+
+
+
+        // Cache codec info as static fields (shared across all instances)
+        private static readonly ImageCodecInfo JpegCodec = ImageCodecInfo.GetImageEncoders()
+            .FirstOrDefault(c => c.MimeType == "image/jpeg");
+        private static readonly ImageCodecInfo PngCodec = ImageCodecInfo.GetImageEncoders()
+            .FirstOrDefault(c => c.MimeType == "image/png");
+
+        // Cache EncoderParameter for common quality values
+        private static readonly Dictionary<long, EncoderParameters> QualityParamsCache = new();
+
+       
         public async Task<string> SaveImageToDisk(string filePath, byte[] image, double quality = 100.0)
         {
-            string outputPath;
             // Validate quality parameter
             if (quality < 0 || quality > 100)
             {
                 throw new ArgumentException("Quality must be between 0 and 100.", nameof(quality));
             }
 
-            // If quality is 100, save original bytes directly (no processing)
+            // If quality is 100, save original bytes directly
             if (quality == 100.0)
             {
                 await File.WriteAllBytesAsync(filePath, image);
                 return filePath;
             }
 
-            // Load the image from byte array
-            using (var memoryStream = new MemoryStream(image))
-            using (var originalImage = Image.FromStream(memoryStream))
+
+            // Use Span-based MemoryStream constructor to avoid copying
+            using (var memoryStream = new MemoryStream(image, writable: false))
+            using (var originalImage = Image.FromStream(memoryStream, useEmbeddedColorManagement: false))
             {
-                // Prepare to save with reduced quality
-                var encoder = Encoder.Quality;
-                var encoderParameters = new EncoderParameters(1);
-                encoderParameters.Param[0] = new EncoderParameter(encoder, (long)quality);
-
-                // Get the JPEG codec (PNG doesn't support quality directly, so we convert)
-                ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
-                    .FirstOrDefault(c => c.MimeType == "image/jpeg");
-
-                if (jpegCodec == null)
+                // Get or create EncoderParameters
+                long qualityLong = (long)quality;
+                if (!QualityParamsCache.TryGetValue(qualityLong, out var encoderParameters))
                 {
-                    throw new InvalidOperationException("JPEG codec not found.");
+                    encoderParameters = new EncoderParameters(1)
+                    {
+                        Param = { [0] = new EncoderParameter(Encoder.Quality, qualityLong) }
+                    };
+
+                    // Thread-safe cache update
+                    lock (QualityParamsCache)
+                    {
+                        if (!QualityParamsCache.ContainsKey(qualityLong))
+                            QualityParamsCache[qualityLong] = encoderParameters;
+                    }
                 }
 
-                // Ensure file extension matches output format
-                outputPath = Path.ChangeExtension(filePath, ".jpg");
-
-                // Save the image with specified quality
-                using (var outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                // Use single MemoryStream for conversion
+                using (var conversionStream = new MemoryStream())
                 {
-                    originalImage.Save(outputStream, jpegCodec, encoderParameters);
-                    await outputStream.FlushAsync();
+                    originalImage.Save(conversionStream, JpegCodec, encoderParameters);
+                    conversionStream.Position = 0;
+
+                    using (var jpegImage = Image.FromStream(conversionStream, useEmbeddedColorManagement: false))
+                    using (var outputStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 8192, useAsync: true))
+                    {
+                        jpegImage.Save(outputStream, PngCodec, null);
+                        await outputStream.FlushAsync();
+                    }
                 }
             }
 
-            return outputPath;
+            return filePath;
         }
 
         public void CopyImageToDisk(string sourceFilePath, string destinationFilePath)
