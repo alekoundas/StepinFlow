@@ -22,7 +22,7 @@
         <StackPanel>
 
 
-            <!--  Display either this combobox for flow steps.  -->
+            <!--  Display this combobox for flow steps.  -->
             <Label Visibility="{Binding FlowStepVisibility}">Flow step type:</Label>
             <ComboBox
                 IsEnabled="{Binding IsEnabled}"
@@ -38,7 +38,6 @@
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </ComboBox>
-
 
             <!--  Or this combobox for flow parameters.  -->
             <Label Visibility="{Binding FlowParameterVisibility}">Flow parameter</Label>
@@ -57,7 +56,6 @@
                 </i:Interaction.Triggers>
             </ComboBox>
 
-
             <!--  Or this combobox for flows.  -->
             <Label Visibility="{Binding FlowVisibility}">Flow type</Label>
             <ComboBox
@@ -66,22 +64,21 @@
                 SelectedItem="{Binding SelectedFlowType, Mode=TwoWay}"
                 Visibility="{Binding FlowVisibility}" />
 
+
+            <!--  Seperator  -->
             <Rectangle
                 Height="1"
                 Margin="20"
                 HorizontalAlignment="Stretch"
                 Fill="White" />
 
-            <!--<Frame Content="{Binding FrameFlow}" />
-            <Frame Content="{Binding FrameFlowStep}" />
-            <Frame Content="{Binding FrameExecution}" />
-            <Frame Content="{Binding FrameFlowParameter}" />-->
+            <!--  Frame  -->
             <Frame Content="{Binding Frame}" />
 
-            <Grid>
+            <!--  Save/Cancel  -->
+            <Grid Margin="0,50,0,0" Visibility="{Binding SaveVisibility}">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel HorizontalAlignment="Left">
@@ -104,6 +101,7 @@
                     </Button>
                 </StackPanel>
             </Grid>
+
         </StackPanel>
     </Grid>
 </UserControl>

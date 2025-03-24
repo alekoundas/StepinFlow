@@ -54,6 +54,10 @@ namespace StepinFlow.ViewModels.UserControls
         [ObservableProperty]
         private Visibility _flowVisibility = Visibility.Collapsed;
 
+        // Save/Cancel
+        [ObservableProperty]
+        private Visibility _saveVisibility = Visibility.Collapsed;
+
         [ObservableProperty]
         private bool _isEnabled = false;
 
@@ -144,6 +148,8 @@ namespace StepinFlow.ViewModels.UserControls
             FlowStepVisibility = Visibility.Visible;
             FlowVisibility = Visibility.Collapsed;
             FlowParameterVisibility = Visibility.Collapsed;
+            SaveVisibility = Visibility.Visible;
+
             SelectedFlowStepType = FlowStepTypesEnum.NO_SELECTION;
             _newFlowStep = newFlowStep;
             _newFlowParameter = null;
@@ -156,6 +162,7 @@ namespace StepinFlow.ViewModels.UserControls
             FlowStepVisibility = Visibility.Collapsed;
             FlowVisibility = Visibility.Collapsed;
             FlowParameterVisibility = Visibility.Visible;
+            SaveVisibility = Visibility.Visible;
 
             SelectedFlowParameterType = FlowParameterTypesEnum.NO_SELECTION;
             _newFlowStep = null;
@@ -175,6 +182,8 @@ namespace StepinFlow.ViewModels.UserControls
                 FlowStepVisibility = Visibility.Visible;
                 FlowVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Collapsed;
+                SaveVisibility = Visibility.Visible;
+
                 NavigateToFlowStepDetailPage(id);
             }
 
@@ -191,6 +200,8 @@ namespace StepinFlow.ViewModels.UserControls
                 FlowStepVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Visible;
                 FlowVisibility = Visibility.Collapsed;
+                SaveVisibility = Visibility.Visible;
+
                 NavigateToFlowParameterDetailPage(id);
             }
         }
@@ -206,6 +217,8 @@ namespace StepinFlow.ViewModels.UserControls
                 FlowStepVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Collapsed;
                 FlowVisibility = Visibility.Visible;
+                SaveVisibility = Visibility.Visible;
+
                 NavigateToFlowDetailPage(id);
             }
 
@@ -219,6 +232,8 @@ namespace StepinFlow.ViewModels.UserControls
                 FlowStepVisibility = Visibility.Visible;
                 FlowVisibility = Visibility.Collapsed;
                 FlowParameterVisibility = Visibility.Collapsed;
+                SaveVisibility = Visibility.Collapsed;
+
                 IsEnabled = false;
                 NavigateToExecutionDetailPage(execution);
 
@@ -229,6 +244,8 @@ namespace StepinFlow.ViewModels.UserControls
                 FlowStepVisibility = Visibility.Collapsed;
                 FlowVisibility = Visibility.Visible;
                 FlowParameterVisibility = Visibility.Collapsed;
+                SaveVisibility = Visibility.Collapsed;
+
                 IsEnabled = false;
                 //NavigateToExecutionDetailPage(execution);
             }
@@ -334,7 +351,10 @@ namespace StepinFlow.ViewModels.UserControls
                 Frame = page;
             }
             else
+            {
                 Frame = null;
+                SaveVisibility = Visibility.Collapsed;
+            }
         }
 
         private void NavigateToFlowStepDetailPage(int id)
@@ -349,7 +369,10 @@ namespace StepinFlow.ViewModels.UserControls
                 Frame = page;
             }
             else
+            {
                 Frame = null;
+                SaveVisibility = Visibility.Collapsed;
+            }
         }
 
         private void NavigateToFlowDetailPage(int id)
