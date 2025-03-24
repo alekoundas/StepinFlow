@@ -292,18 +292,18 @@
 
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <ui:Button
-                    MaxHeight="37"
-                    Margin="10,0,0,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top">
-                    <icons:BootstrapIcon Icon="Trash" />
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="Click">
-                            <i:InvokeCommandAction Command="{Binding ViewModel.ButtonDeleteClickCommand}" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
-                </ui:Button>
+                <!--<ui:Button
+                MaxHeight="37"
+                Margin="10,0,0,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top">
+                <icons:BootstrapIcon Icon="Trash" />
+                <i:Interaction.Triggers>
+                <i:EventTrigger EventName="Click">
+                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonDeleteClickCommand}" />
+                </i:EventTrigger>
+                </i:Interaction.Triggers>
+                </ui:Button>-->
                 <TextBlock Padding="10" Text="{Binding ViewModel.ExecutionHistorySize, StringFormat={}{0:N0} Bytes}" />
             </StackPanel>
         </StackPanel>

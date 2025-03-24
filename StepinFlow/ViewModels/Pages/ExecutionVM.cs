@@ -248,17 +248,14 @@ namespace StepinFlow.ViewModels.Pages
         private async Task OnButtonDeleteClick()
         {
 
-            //Delete all.
-            var aa = _dataService.Executions.ToList();
-            await _dataService.Executions.RemoveRangeAsync(aa);
+            // Delete ALL rows.
+            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("DELETE FROM Executions;");
 
             // Reclaim free space in database file.
             await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("VACUUM;");
 
-            //ComboBoxExecutionHistories.Remove(ComboBoxSelectedExecutionHistory);
             ComboBoxSelectedExecutionHistory = null;
             ListBoxExecutions.Clear();
-
         }
 
 
