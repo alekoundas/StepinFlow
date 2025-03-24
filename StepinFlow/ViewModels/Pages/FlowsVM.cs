@@ -43,15 +43,18 @@ namespace StepinFlow.ViewModels.Pages
         }
         public async Task OnSaveFlow(int id)
         {
-            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlow(id);
+            await RefreshData();
+            await TreeViewUserControl.ViewModel.ExpandAndSelectFlow(id);
         }
         public async Task OnSaveFlowStep(int id)
         {
-            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlowStep(id);
+            await RefreshData();
+            await TreeViewUserControl.ViewModel.ExpandAndSelectFlowStep(id);
         }
         public async Task OnSaveFlowParameter(int id)
         {
-            await TreeViewUserControl.ViewModel.LoadFlowsAndSelectFlowParameter(id);
+            await RefreshData();
+            await TreeViewUserControl.ViewModel.ExpandAndSelectFlowParameter(id);
         }
 
 

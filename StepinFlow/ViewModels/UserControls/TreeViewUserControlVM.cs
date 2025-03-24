@@ -110,22 +110,48 @@ namespace StepinFlow.ViewModels.UserControls
             });
         }
 
-        public async Task LoadFlowsAndSelectFlow(int id)
+        public async Task ExpandAndSelectFlow(int id)
         {
-            await LoadFlows();
-            await ExpandAndSelectFlow(id);
+            Flow? uiFlow = FlowsList.FirstOrDefault(x => x.Id == id);
+            if (uiFlow != null)
+            {
+                uiFlow.IsSelected = true;
+                uiFlow.IsExpanded = true;
+            }
         }
 
-        public async Task LoadFlowsAndSelectFlowStep(int id)
+        public async Task ExpandAndSelectFlowStep(int id)
         {
-            await LoadFlows();
-            await ExpandAndSelectFlowStep(id);
+            foreach (Flow item in FlowsList)
+            {
+                List<FlowStep> descendants = item.Descendants().ToList();
+
+
+                FlowStep? uiFlowStep = descendants.FirstOrDefault(fs => fs.Id == id);
+                if (uiFlowStep != null)
+                {
+                    FlowStep? uiParentFlowStep = descendants.FirstOrDefault(fs => fs.Id == uiFlowStep.ParentFlowStepId);
+                    if (uiParentFlowStep != null && uiParentFlowStep?.IsExpanded == false)
+                        uiParentFlowStep.IsExpanded = true;
+
+                    uiFlowStep.IsSelected = true;
+                    uiFlowStep.IsExpanded = true;
+                }
+            }
         }
 
-        public async Task LoadFlowsAndSelectFlowParameter(int id)
+        public async Task ExpandAndSelectFlowParameter(int id)
         {
-            await LoadFlows();
-            await ExpandAndSelectFlowParameter(id);
+            foreach (Flow uiFlow in FlowsList)
+            {
+                FlowParameter? uiFlowParameter = uiFlow.FlowParameter.ChildrenFlowParameters.FirstOrDefault(x => x.Id == id);
+                if (uiFlowParameter != null)
+                {
+                    uiFlowParameter.IsSelected = true;
+                    uiFlowParameter.IsExpanded = true;
+                }
+            }
+
         }
 
         public void ClearCopy()
@@ -156,69 +182,6 @@ namespace StepinFlow.ViewModels.UserControls
             _dataService.Dispose();
             await LoadFlows();
         }
-
-        public async Task ExpandAndSelectFlow(int id)
-        {
-            Flow? uiFlowStep = await _dataService.Flows.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (uiFlowStep != null)
-            {
-                uiFlowStep.IsExpanded = true;
-                uiFlowStep.IsSelected = true;
-            }
-            await _dataService.UpdateAsync(uiFlowStep);
-
-            return;
-        }
-
-        public Task ExpandAndSelectFlowStep(int id)
-        {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                FlowStep? uiFlowStep = FlowsList.First()
-                    .Descendants()
-                    .FirstOrDefault(x => x.Id == id);
-
-                if (uiFlowStep != null)
-                {
-                    uiFlowStep.IsExpanded = true;
-                    uiFlowStep.IsSelected = true;
-                }
-
-                if (uiFlowStep?.ParentFlowStep != null)
-                    uiFlowStep.ParentFlowStep.IsExpanded = true;
-                if (uiFlowStep?.Flow != null)
-                    uiFlowStep.Flow.IsExpanded = true;
-
-                foreach (Flow flow in FlowsList)
-                {
-                    List<FlowStep> flowSteps = flow.Descendants().ToList();
-                    if (flowSteps.Any(x => x.Id == id))
-                    {
-                        foreach (FlowStep descendantFlowStep in flowSteps)
-                            descendantFlowStep.IsExpanded = true;
-
-                        break;
-                    }
-                }
-
-            });
-            return Task.CompletedTask;
-        }
-
-        public async Task ExpandAndSelectFlowParameter(int id)
-        {
-            FlowParameter? uiFlowStep = await _dataService.FlowParameters.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (uiFlowStep != null)
-            {
-                uiFlowStep.IsExpanded = true;
-                uiFlowStep.IsSelected = true;
-            }
-
-            return;
-        }
-
 
 
 
