@@ -21,7 +21,7 @@ namespace Business.DatabaseContext
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string dataPath = PathHelper.GetDatabaseDataPath();
-            string dataSource = Path.Combine(dataPath, "StepinFlowDatabase.db");
+            string dataSource = Path.Combine(dataPath, "StepinFlowSQLite.db");
 
             // Create the directory if it doesn’t exist
             if (!Directory.Exists(dataPath))
