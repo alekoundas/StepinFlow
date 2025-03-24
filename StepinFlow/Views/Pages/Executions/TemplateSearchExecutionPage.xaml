@@ -30,6 +30,7 @@
 
 
         <StackPanel>
+            <Label>Configure template search:</Label>
 
             <!--  Name  -->
             <StackPanel

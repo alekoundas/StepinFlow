@@ -10,25 +10,38 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="WaitExecutionPage"
     d:DataContext="{d:DesignInstance local:WaitExecutionPage,
-                                     IsDesignTimeCreatable=False}"
+    IsDesignTimeCreatable=False}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <StackPanel>
 
-        <Label>Wait time.</Label>
+    <Grid VerticalAlignment="Top">
 
-        <Grid Margin="10,10,10,50">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="0.3*" />
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="0.1*" />
-            </Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
 
 
-            <StackPanel>
+        <StackPanel>
+            <Label>Configure execution wait timer:</Label>
+
+
+            <!--  Name  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
+                <Label>Set Name:</Label>
+                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+            </StackPanel>
+
+
+            <!--  WaitFor  -->
+            <StackPanel
+                MinWidth="200"
+                Margin="0,0,0,20"
+                HorizontalAlignment="Left">
                 <Label>Hours:</Label>
                 <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForHours, Mode=TwoWay}" />
 
@@ -41,19 +54,8 @@
                 <Label>Milliseconds:</Label>
                 <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForMilliseconds, Mode=TwoWay}" />
 
-                <Label Padding="0,20,0,0">Time left.</Label>
-                <Label Content="{Binding ViewModel.TimeLeft}" />
             </StackPanel>
 
-            <StackPanel
-                Grid.Column="2"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom">
-
-                <Label Padding="0,20,0,0">Total time.</Label>
-                <Label Content="{Binding ViewModel.TimeTotal}" />
-            </StackPanel>
-        </Grid>
-    </StackPanel>
-
+        </StackPanel>
+    </Grid>
 </Page>
