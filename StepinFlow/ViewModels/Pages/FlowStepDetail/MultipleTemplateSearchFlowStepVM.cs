@@ -256,7 +256,7 @@ namespace StepinFlow.ViewModels.Pages
 
         }
 
-        public override async Task OnSave()
+        public override async Task<int> OnSave()
         {
             // Remove flow steps that dont contain a template image.
             List<FlowStep> templateFlowSteps = ChildrenTemplateSearchFlowSteps
@@ -294,7 +294,7 @@ namespace StepinFlow.ViewModels.Pages
                 else if (FlowStep.FlowId.HasValue)
                     isNewSimpling = await _dataService.Flows.GetIsNewSibling(FlowStep.FlowId.Value);
                 else
-                    return;
+                    return -1;
 
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
@@ -348,6 +348,7 @@ namespace StepinFlow.ViewModels.Pages
                 .Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD)
                 .ToListAsync();
             ChildrenTemplateSearchFlowSteps = new ObservableCollection<FlowStep>(flowSteps);
+            return FlowStep.Id;
         }
     }
 }

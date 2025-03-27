@@ -6,7 +6,9 @@ namespace Business.Interfaces
     {
         public Task LoadFlowId(int flowId);
         public void LoadNewFlow(Flow newFlow);
+
         int GetCurrentEntityId();
+
         void OnPageExit();
         Task OnSave();
         Task OnCancel();

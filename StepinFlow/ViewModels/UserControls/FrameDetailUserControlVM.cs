@@ -281,11 +281,10 @@ namespace StepinFlow.ViewModels.UserControls
 
             if (Frame?.FlowParameterViewModel != null)
                 await Frame.FlowParameterViewModel.OnCancel();
-
-            //if (Frame?.FlowExecutionViewModel != null)
-            //await Frame.FlowExecutionViewModel.OnCancel();
         }
 
+
+        // Actual form save call.
         [RelayCommand]
         private async Task OnButtonSaveClick()
         {
@@ -298,9 +297,12 @@ namespace StepinFlow.ViewModels.UserControls
 
             if (Frame?.FlowStepViewModel != null)
             {
-                await Frame.FlowStepViewModel.OnSave();
-                int id = Frame.FlowStepViewModel.GetCurrentEntityId();
-                OnSaveFlowStepEvent?.Invoke(id);
+                int result = await Frame.FlowStepViewModel.OnSave();
+                if (result != -1)
+                {
+                    //int id = Frame.FlowStepViewModel.GetCurrentEntityId();
+                    OnSaveFlowStepEvent?.Invoke(result);
+                }
             }
 
             if (Frame?.FlowParameterViewModel != null)
@@ -309,9 +311,6 @@ namespace StepinFlow.ViewModels.UserControls
                 int id = Frame.FlowParameterViewModel.GetCurrentEntityId();
                 OnSaveFlowParameterEvent?.Invoke(id);
             }
-
-            //if (Frame?.FlowExecutionViewModel != null)
-            //await Frame.FlowExecutionViewModel.OnSave();
         }
 
 
@@ -322,8 +321,6 @@ namespace StepinFlow.ViewModels.UserControls
             if (page?.FlowStepViewModel != null)
             {
                 page.FlowStepViewModel.LoadNewFlowStep(newFlowStep);
-                //page.FlowStepViewModel.OnSave -= HandleSave;
-                //page.FlowStepViewModel.OnSave += HandleSave;
                 Frame = page;
             }
             else
@@ -364,8 +361,6 @@ namespace StepinFlow.ViewModels.UserControls
             if (page?.FlowStepViewModel != null)
             {
                 page.FlowStepViewModel.LoadFlowStepId(id);
-                //page.FlowStepViewModel.OnSave -= HandleSave;
-                //page.FlowStepViewModel.OnSave += HandleSave;
                 Frame = page;
             }
             else
@@ -409,12 +404,7 @@ namespace StepinFlow.ViewModels.UserControls
                 Frame.FlowViewModel?.OnPageExit();
                 Frame.FlowStepViewModel?.OnPageExit();
                 Frame.FlowParameterViewModel?.OnPageExit();
-                //Frame.FlowExecutionViewModel?.OnPageExit();
             }
         }
-        //private void HandleSave(int id)
-        //{
-        //    OnSaveFlowStepEvent?.Invoke(id);
-        //}
     }
 }

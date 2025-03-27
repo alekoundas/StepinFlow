@@ -46,7 +46,19 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox x:Name="Name">
+                    <TextBox.Text>
+                        <Binding Path="ViewModel.FlowStep.Name" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <rules:FormFieldValidationRule PropertyPath="FlowStep.Name" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ElementName=Name, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
             </StackPanel>
 
             <!--  FlowParameter  -->
@@ -55,6 +67,20 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select search area from parameters(leave empty for all monitor search)</Label>
+                <!--  value (hidden)  -->
+                <TextBox x:Name="FlowParameter" Visibility="Collapsed">
+                    <i:Interaction.Behaviors>
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                    </i:Interaction.Behaviors>
+                    <TextBox.Text>
+                        <Binding Path="ViewModel.SelectedFlowParameter.Id" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <rules:FormFieldValidationRule PropertyPath="FlowStep.FlowParameter" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <!--  ComboBox  -->
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
@@ -71,48 +97,12 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+                <!--  error message  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ElementName=FlowParameter, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
             </StackPanel>
-
-            <!--  FlowParameter  -->
-            <!--<StackPanel
-            MinWidth="200"
-            Margin="0,0,0,20"
-            HorizontalAlignment="Left">
-            <Label>Select search area from parameters (leave empty for all monitor search)</Label>
-            <ComboBox
-            x:Name="FlowParameter"
-            VerticalAlignment="Center"
-            ItemsSource="{Binding ViewModel.FlowParameters}">
-            <i:Interaction.Behaviors>
-            <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
-            </i:Interaction.Behaviors>
-            <ComboBox.SelectedItem>
-            <Binding
-            Mode="TwoWay"
-            Path="ViewModel.SelectedFlowParameter"
-            UpdateSourceTrigger="PropertyChanged">
-            <Binding.ValidationRules>
-            <rules:FormFieldValidationRule PropertyPath="FlowStep.FlowParameter" />
-            </Binding.ValidationRules>
-            </Binding>
-            </ComboBox.SelectedItem>
-            <ComboBox.ItemTemplate>
-            <DataTemplate>
-            <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding Path=Id}" />
-            <TextBlock Text=". " />
-            <TextBlock Text="{Binding Path=Name}" />
-            <TextBlock Text=" - " />
-            <TextBlock Text="{Binding Path=TemplateSearchAreaType}" />
-            </StackPanel>
-            </DataTemplate>
-            </ComboBox.ItemTemplate>
-            </ComboBox>
-            <TextBlock
-            Margin="0,5,0,0"
-            Foreground="Gold"
-            Text="{Binding ElementName=FlowParameter, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
-            </StackPanel>-->
 
 
             <!--  TemplateSearchAreaTypesEnum  -->
@@ -121,10 +111,29 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select match mode:</Label>
+                <!--  value (hidden)  -->
+                <TextBox x:Name="TemplateMatchMode" Visibility="Collapsed">
+                    <i:Interaction.Behaviors>
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                    </i:Interaction.Behaviors>
+                    <TextBox.Text>
+                        <Binding Path="ViewModel.FlowStep.TemplateMatchMode" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <rules:FormFieldValidationRule PropertyPath="FlowStep.TemplateMatchMode" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <!--  ComboBox  -->
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.MatchModes}"
                     SelectedItem="{Binding ViewModel.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
+                <!--  error message  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ElementName=TemplateMatchMode, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
             </StackPanel>
 
             <!--  Image import  -->
@@ -155,7 +164,7 @@
 
             <!--  Template Image  -->
             <StackPanel Margin="10">
-                <!--  value  -->
+                <!--  value (hidden)  -->
                 <TextBox x:Name="TemplateImage" Visibility="Collapsed">
                     <i:Interaction.Behaviors>
                         <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
@@ -179,7 +188,7 @@
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                 </Image>
-                <!--  errormessage  -->
+                <!--  error message  -->
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"

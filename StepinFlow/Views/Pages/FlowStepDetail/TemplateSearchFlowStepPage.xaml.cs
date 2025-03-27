@@ -21,14 +21,6 @@ namespace StepinFlow.Views.Pages.FlowStepDetail
             FlowStepViewModel = ViewModel;
             DataContext = this;
             InitializeComponent();
-
-            this.DataContextChanged += (s, e) =>
-            {
-                if (e.NewValue is TemplateSearchFlowStepVM viewModel)
-                {
-                    this.BindingGroup = new BindingGroup(); // Assign BindingGroup
-                }
-            };
         }
     }
 }

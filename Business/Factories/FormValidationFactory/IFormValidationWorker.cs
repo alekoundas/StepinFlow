@@ -2,6 +2,6 @@
 {
     public interface IFormValidationWorker
     {
-        List<string> Validate(string? rawInputValue);
+        List<string> Validate(object? rawInputValue);
     }
 }

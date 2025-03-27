@@ -16,12 +16,16 @@ namespace Business.Factories.FormValidationFactory
         {
             switch (propertyName)
             {
+                case "FlowStep.Name":
+                    return _serviceProvider.GetRequiredService<NameFormValidationWorker>();
                 case "FlowStep.Accuracy":
                     return _serviceProvider.GetRequiredService<AccuracyFormValidationWorker>();
                 case "FlowStep.TemplateImage":
                     return _serviceProvider.GetRequiredService<ImageFormValidationWorker>();
                 case "FlowStep.FlowParameter":
                     return _serviceProvider.GetRequiredService<FlowParameterFormValidationWorker>();
+                case "FlowStep.TemplateMatchMode":
+                    return _serviceProvider.GetRequiredService<TemplateMatchModeFormValidationWorker>();
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }

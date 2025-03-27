@@ -100,9 +100,11 @@ namespace StepinFlow
                 services.AddScoped<TemplateSearchExecutionWorker>();
                 services.AddScoped<MultipleTemplateSearchExecutionWorker>();
                 // Form validation workers.
+                services.AddSingleton<NameFormValidationWorker>();
                 services.AddSingleton<ImageFormValidationWorker>();
                 services.AddSingleton<AccuracyFormValidationWorker>();
                 services.AddSingleton<FlowParameterFormValidationWorker>();
+                services.AddSingleton<TemplateMatchModeFormValidationWorker>();
 
 
                 // User Controls.

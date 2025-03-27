@@ -103,7 +103,7 @@ namespace StepinFlow.ViewModels.Pages
             FlowStep.LocationX = point.X;
         }
 
-        public override async Task OnSave()
+        public override async Task<int> OnSave()
         {
             // Edit mode
             if (FlowStep.Id > 0)
@@ -131,7 +131,7 @@ namespace StepinFlow.ViewModels.Pages
                 else if (FlowStep.FlowId.HasValue)
                     isNewSimpling = await _dataService.Flows.GetIsNewSibling(FlowStep.FlowId.Value);
                 else
-                    return;
+                    return -1;
 
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
@@ -143,6 +143,7 @@ namespace StepinFlow.ViewModels.Pages
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }
 
+            return FlowStep.Id;
 
         }
 

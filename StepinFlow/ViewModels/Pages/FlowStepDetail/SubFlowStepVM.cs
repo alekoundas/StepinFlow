@@ -54,7 +54,7 @@ namespace StepinFlow.ViewModels.Pages
             SelectedSubFlow = null;
         }
 
-        public override async Task OnSave()
+        public override async Task<int> OnSave()
         {
             // Edit is disabled.
             // Edit mode
@@ -77,7 +77,7 @@ namespace StepinFlow.ViewModels.Pages
                 else if (FlowStep.FlowId.HasValue)
                     isNewSimpling = await _dataService.Flows.GetIsNewSibling(FlowStep.FlowId.Value);
                 else
-                    return;
+                    return -1;
 
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
@@ -95,7 +95,7 @@ namespace StepinFlow.ViewModels.Pages
                 {
                     Flow? flow = await _cloneService.GetFlowClone(SelectedSubFlow.Id);
                     if (flow == null)
-                        return;
+                        return -1;
 
                     FlowStep.SubFlow = flow;
 
@@ -105,6 +105,7 @@ namespace StepinFlow.ViewModels.Pages
                     await _dataService.UpdateAsync(flow);
                 }
             }
+            return FlowStep.Id;
         }
     }
 }

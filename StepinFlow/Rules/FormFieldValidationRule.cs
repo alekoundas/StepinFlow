@@ -11,18 +11,17 @@ namespace StepinFlow.Rules
 
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
-            string? input = value as string;
 
             // Get singleton form validation factory.
             IFormValidationFactory? formValidationFactory = App.GetService<IFormValidationFactory>();
             if (formValidationFactory == null)
-                return new ValidationResult(false, "Cant validate right now :(");
+                return new ValidationResult(false, "FormValidationFactory instance doesnt exist!");
 
             // Clear previous errors.
             ValidationHelper.ClearErrors(PropertyPath); 
 
             // Validate input.
-            List<string> errors = formValidationFactory.CreateValidator(PropertyPath).Validate(input);
+            List<string> errors = formValidationFactory.CreateValidator(PropertyPath).Validate(value);
             foreach (var error in errors)
                 ValidationHelper.AddError(PropertyPath, error);
 

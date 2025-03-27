@@ -48,6 +48,8 @@ namespace StepinFlow.ViewModels.Pages
             _formValidationFactory = formValidationFactory;
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
+
+
         }
 
 
@@ -182,81 +184,106 @@ namespace StepinFlow.ViewModels.Pages
             SelectedFlowParameter = null;
             TestResultImage = null;
         }
-        public override async Task OnSave()
+        public override async Task<int> OnSave()
         {
+            Dictionary<string, List<string>> errors = new Dictionary<string, List<string>>();
+
+            errors["FlowStep.Name"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name));
+            errors["FlowStep.Accuracy"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy));
+            errors["FlowStep.TemplateImage"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage));
+            errors["FlowStep.FlowParameter"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(SelectedFlowParameter));
+            errors["FlowStep.TemplateMatchMode"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode));
+
+            ValidationHelper.ClearErrors();
+            foreach (var error in errors)
+                foreach (var errorMessage in error.Value)
+                    ValidationHelper.AddError(error.Key, errorMessage);
+
+
+            if (errors.Any())
+            {
+                OnPropertyChanged("FlowStep.Name");
+                OnPropertyChanged("FlowStep.Accuracy");
+                OnPropertyChanged("FlowStep.TemplateImage");
+                OnPropertyChanged("FlowStep.FlowParameter");
+                OnPropertyChanged("FlowStep.TemplateMatchMode");
+                return -1;
+            }
+
             // Edit mode.
-            if (FlowStep.Id > 0)
-            {
-                FlowStep updateFlowStep = await _dataService.FlowSteps.FirstAsync(x => x.Id == FlowStep.Id);
-                updateFlowStep.Name = FlowStep.Name;
-                updateFlowStep.TemplateMatchMode = FlowStep.TemplateMatchMode;
-                updateFlowStep.TemplateImage = FlowStep.TemplateImage;
-                updateFlowStep.Accuracy = FlowStep.Accuracy;
-                updateFlowStep.IsLoop = FlowStep.IsLoop;
-                updateFlowStep.RemoveTemplateFromResult = FlowStep.RemoveTemplateFromResult;
-                updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
-                updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
+            //if (FlowStep.Id > 0)
+            //{
+            //    FlowStep updateFlowStep = await _dataService.FlowSteps.FirstAsync(x => x.Id == FlowStep.Id);
+            //    updateFlowStep.Name = FlowStep.Name;
+            //    updateFlowStep.TemplateMatchMode = FlowStep.TemplateMatchMode;
+            //    updateFlowStep.TemplateImage = FlowStep.TemplateImage;
+            //    updateFlowStep.Accuracy = FlowStep.Accuracy;
+            //    updateFlowStep.IsLoop = FlowStep.IsLoop;
+            //    updateFlowStep.RemoveTemplateFromResult = FlowStep.RemoveTemplateFromResult;
+            //    updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
+            //    updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
 
-                if (SelectedFlowParameter != null)
-                    updateFlowStep.FlowParameterId = SelectedFlowParameter.Id;
-                await _dataService.UpdateAsync(updateFlowStep);
-            }
+            //    if (SelectedFlowParameter != null)
+            //        updateFlowStep.FlowParameterId = SelectedFlowParameter.Id;
+            //    await _dataService.UpdateAsync(updateFlowStep);
+            //}
 
-            // Add mode.
-            else
-            {
-                FlowStep isNewSimpling;
+            //// Add mode.
+            //else
+            //{
+            //    FlowStep isNewSimpling;
 
-                if (FlowStep.ParentFlowStepId != null)
-                    isNewSimpling = await _dataService.FlowSteps.GetIsNewSibling(FlowStep.ParentFlowStepId.Value);
-                else if (FlowStep.FlowId.HasValue)
-                    isNewSimpling = await _dataService.Flows.GetIsNewSibling(FlowStep.FlowId.Value);
-                else
-                    return;
+            //    if (FlowStep.ParentFlowStepId != null)
+            //        isNewSimpling = await _dataService.FlowSteps.GetIsNewSibling(FlowStep.ParentFlowStepId.Value);
+            //    else if (FlowStep.FlowId.HasValue)
+            //        isNewSimpling = await _dataService.Flows.GetIsNewSibling(FlowStep.FlowId.Value);
+            //    else
+            //        return;
 
-                FlowStep.OrderingNum = isNewSimpling.OrderingNum;
-                isNewSimpling.OrderingNum++;
-                await _dataService.UpdateAsync(isNewSimpling);
+            //    FlowStep.OrderingNum = isNewSimpling.OrderingNum;
+            //    isNewSimpling.OrderingNum++;
+            //    await _dataService.UpdateAsync(isNewSimpling);
 
 
-                // "Success" Flow step
-                FlowStep successFlowStep = new FlowStep
-                {
-                    Name = "Success",
-                    IsExpanded = false,
-                    Type = FlowStepTypesEnum.SUCCESS,
-                    ChildrenFlowSteps = new ObservableCollection<FlowStep>
-                    {
-                        new FlowStep(){Type = FlowStepTypesEnum.NEW}
-                    }
-                };
+            //    // "Success" Flow step
+            //    FlowStep successFlowStep = new FlowStep
+            //    {
+            //        Name = "Success",
+            //        IsExpanded = false,
+            //        Type = FlowStepTypesEnum.SUCCESS,
+            //        ChildrenFlowSteps = new ObservableCollection<FlowStep>
+            //        {
+            //            new FlowStep(){Type = FlowStepTypesEnum.NEW}
+            //        }
+            //    };
 
-                // "Fail" Flow step
-                FlowStep failFlowStep = new FlowStep
-                {
-                    Name = "Fail",
-                    IsExpanded = false,
-                    Type = FlowStepTypesEnum.FAILURE,
-                    ChildrenFlowSteps = new ObservableCollection<FlowStep>
-                    {
-                        new FlowStep(){Type = FlowStepTypesEnum.NEW}
-                    }
-                };
+            //    // "Fail" Flow step
+            //    FlowStep failFlowStep = new FlowStep
+            //    {
+            //        Name = "Fail",
+            //        IsExpanded = false,
+            //        Type = FlowStepTypesEnum.FAILURE,
+            //        ChildrenFlowSteps = new ObservableCollection<FlowStep>
+            //        {
+            //            new FlowStep(){Type = FlowStepTypesEnum.NEW}
+            //        }
+            //    };
 
-                FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>
-                {
-                    successFlowStep,
-                    failFlowStep
-                };
+            //    FlowStep.ChildrenFlowSteps = new ObservableCollection<FlowStep>
+            //    {
+            //        successFlowStep,
+            //        failFlowStep
+            //    };
 
-                FlowStep.IsExpanded = true;
+            //    FlowStep.IsExpanded = true;
 
-                if (SelectedFlowParameter != null)
-                    FlowStep.FlowParameterId = SelectedFlowParameter.Id;
+            //    if (SelectedFlowParameter != null)
+            //        FlowStep.FlowParameterId = SelectedFlowParameter.Id;
 
-                await _dataService.FlowSteps.AddAsync(FlowStep);
+            //    await _dataService.FlowSteps.AddAsync(FlowStep);
 
-            }
+            //}
+            return FlowStep.Id;
         }
 
 

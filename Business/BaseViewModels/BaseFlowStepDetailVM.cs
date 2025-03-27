@@ -1,4 +1,5 @@
-﻿using Business.Interfaces;
+﻿using Business.Helpers;
+using Business.Interfaces;
 using Business.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Model.Models;
@@ -35,6 +36,13 @@ namespace Business.BaseViewModels
         {
             return FlowStep.Id;
         }
+
+        public bool IsFormValid()
+        {
+            return !ValidationHelper.HasErrors();
+        }
+
+
         public virtual async Task OnCancel()
         {
             if (FlowStep.Id == 0)
@@ -53,7 +61,7 @@ namespace Business.BaseViewModels
             return FlowStep;
         }
 
-        public virtual Task OnSave()
+        public virtual Task<int> OnSave()
         {
             throw new NotImplementedException();
         }

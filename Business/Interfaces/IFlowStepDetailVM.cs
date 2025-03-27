@@ -6,12 +6,13 @@ namespace Business.Interfaces
     {
         //event Action<int> OnSave;
         FlowStep GetFlowStep();
+        bool IsFormValid();
 
         Task LoadFlowStepId(int flowStepId);
         Task LoadNewFlowStep(FlowStep newFlowStep);
         int GetCurrentEntityId();
         void OnPageExit();
-        Task OnSave();
+        Task<int> OnSave();
         Task OnCancel();
 
     }

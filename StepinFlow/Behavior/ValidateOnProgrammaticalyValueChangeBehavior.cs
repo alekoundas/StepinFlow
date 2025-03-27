@@ -78,6 +78,23 @@ namespace StepinFlow.Behavior
                     _flowStep.PropertyChanged += OnFlowStepPropertyChanged;
                 }
             }
+
+
+
+            // Triger on Save validations.
+            if (e.PropertyName == "FlowStep.TemplateImage")
+            {
+                var bindingExpression = AssociatedObject.GetBindingExpression(TextBox.TextProperty);
+                if (bindingExpression != null)
+                {
+                    AssociatedObject.Text = bindingExpression.DataItem switch
+                    {
+                        TemplateSearchFlowStepPage page => Convert.ToBase64String(page.ViewModel?.GetFlowStep()?.TemplateImage ?? Array.Empty<byte>()),
+                        _ => AssociatedObject.Text
+                    };
+                    bindingExpression.UpdateSource();
+                }
+            }
         }
 
         private void OnFlowStepPropertyChanged(object sender, PropertyChangedEventArgs e)
