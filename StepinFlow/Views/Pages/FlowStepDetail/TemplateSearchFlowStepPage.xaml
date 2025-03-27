@@ -24,6 +24,7 @@
     <Page.Resources>
         <converters:ImageNullConverter x:Key="ImageNullConverter" />
         <rules:FormFieldValidationRule x:Key="FormFieldValidationRule" />
+        <behavior:ValidateOnProgrammaticalyValueChangeBehavior x:Key="ValidateOnProgrammaticalyValueChangeBehavior" />
 
     </Page.Resources>
 
@@ -72,6 +73,47 @@
                 </ComboBox>
             </StackPanel>
 
+            <!--  FlowParameter  -->
+            <!--<StackPanel
+            MinWidth="200"
+            Margin="0,0,0,20"
+            HorizontalAlignment="Left">
+            <Label>Select search area from parameters (leave empty for all monitor search)</Label>
+            <ComboBox
+            x:Name="FlowParameter"
+            VerticalAlignment="Center"
+            ItemsSource="{Binding ViewModel.FlowParameters}">
+            <i:Interaction.Behaviors>
+            <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+            </i:Interaction.Behaviors>
+            <ComboBox.SelectedItem>
+            <Binding
+            Mode="TwoWay"
+            Path="ViewModel.SelectedFlowParameter"
+            UpdateSourceTrigger="PropertyChanged">
+            <Binding.ValidationRules>
+            <rules:FormFieldValidationRule PropertyPath="FlowStep.FlowParameter" />
+            </Binding.ValidationRules>
+            </Binding>
+            </ComboBox.SelectedItem>
+            <ComboBox.ItemTemplate>
+            <DataTemplate>
+            <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding Path=Id}" />
+            <TextBlock Text=". " />
+            <TextBlock Text="{Binding Path=Name}" />
+            <TextBlock Text=" - " />
+            <TextBlock Text="{Binding Path=TemplateSearchAreaType}" />
+            </StackPanel>
+            </DataTemplate>
+            </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock
+            Margin="0,5,0,0"
+            Foreground="Gold"
+            Text="{Binding ElementName=FlowParameter, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+            </StackPanel>-->
+
 
             <!--  TemplateSearchAreaTypesEnum  -->
             <StackPanel
@@ -112,34 +154,50 @@
             </StackPanel>
 
             <!--  Template Image  -->
-            <Image
-                MaxWidth="100"
-                MaxHeight="100"
-                Source="{Binding ViewModel.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="MouseDown">
-                        <i:InvokeCommandAction Command="{Binding ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </Image>
+            <StackPanel Margin="10">
+                <!--  value  -->
+                <TextBox x:Name="TemplateImage" Visibility="Collapsed">
+                    <i:Interaction.Behaviors>
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                    </i:Interaction.Behaviors>
+                    <TextBox.Text>
+                        <Binding Path="ViewModel.FlowStep.TemplateImage" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <rules:FormFieldValidationRule PropertyPath="FlowStep.TemplateImage" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <!--  image  -->
+                <Image
+                    MaxWidth="100"
+                    MaxHeight="100"
+                    Source="{Binding ViewModel.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDown">
+                            <i:InvokeCommandAction Command="{Binding ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Image>
+                <!--  errormessage  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ElementName=TemplateImage, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+            </StackPanel>
 
 
             <!--  Accuracy  -->
-            <StackPanel>
-                <StackPanel
-                    MinWidth="200"
-                    Margin="0,0,0,0"
-                    Orientation="Horizontal">
-                    <TextBox x:Name="AccuracyTextBox">
-                        <TextBox.Text>
-                            <Binding Path="ViewModel.FlowStep.Accuracy" UpdateSourceTrigger="PropertyChanged">
-                                <Binding.ValidationRules>
-                                    <rules:FormFieldValidationRule PropertyPath="FlowStep.Accuracy" />
-                                </Binding.ValidationRules>
-                            </Binding>
-                        </TextBox.Text>
-                    </TextBox>
-                </StackPanel>
+            <StackPanel MinWidth="200" Margin="0,0,0,0">
+                <TextBox x:Name="AccuracyTextBox">
+                    <TextBox.Text>
+                        <Binding Path="ViewModel.FlowStep.Accuracy" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <rules:FormFieldValidationRule PropertyPath="FlowStep.Accuracy" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
@@ -160,6 +218,7 @@
                 <CheckBox IsChecked="{Binding ViewModel.FlowStep.IsLoop, Mode=TwoWay}" />
             </StackPanel>
 
+            <!--  Remove Template From Result  -->
             <Border>
                 <Border.Style>
                     <Style TargetType="Border">
@@ -172,7 +231,6 @@
                     </Style>
                 </Border.Style>
                 <StackPanel>
-                    <!--  Remove Template From Result  -->
                     <StackPanel MinWidth="200" Margin="0,0,0,20">
                         <StackPanel Orientation="Horizontal">
                             <Label VerticalAlignment="Bottom">Remove template from result image:</Label>
@@ -192,6 +250,7 @@
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </Button>
+
             <!--  Result image  -->
             <Image Source="{Binding ViewModel.TestResultImage, Converter={StaticResource ImageNullConverter}}">
                 <i:Interaction.Triggers>

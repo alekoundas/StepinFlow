@@ -5,6 +5,7 @@ namespace Business.Interfaces
     public interface IFlowStepDetailVM
     {
         //event Action<int> OnSave;
+        FlowStep GetFlowStep();
 
         Task LoadFlowStepId(int flowStepId);
         Task LoadNewFlowStep(FlowStep newFlowStep);

@@ -48,6 +48,11 @@ namespace Business.BaseViewModels
 
         }
 
+        public FlowStep GetFlowStep()
+        {
+            return FlowStep;
+        }
+
         public virtual Task OnSave()
         {
             throw new NotImplementedException();

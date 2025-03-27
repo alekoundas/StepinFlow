@@ -27,7 +27,7 @@ namespace StepinFlow.Rules
                 ValidationHelper.AddError(PropertyPath, error);
 
 
-            // Check if there are any errors.
+            // Check display errors.
             if (ValidationHelper.HasErrors(PropertyPath))
             {
                 string error = String.Join("\n", ValidationHelper.GetErrors(PropertyPath));

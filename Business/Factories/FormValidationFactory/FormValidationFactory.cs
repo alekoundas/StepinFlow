@@ -1,5 +1,4 @@
 ﻿using Business.Factories.FormValidationFactory.Workers;
-using Model.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Business.Factories.FormValidationFactory
@@ -15,11 +14,17 @@ namespace Business.Factories.FormValidationFactory
 
         public IFormValidationWorker CreateValidator(string propertyName)
         {
-            if (propertyName == "FlowStep.Accuracy")
-                return (IFormValidationWorker)_serviceProvider.GetRequiredService<AccuracyFormValidationWorker>();
-
-
-            throw new ArgumentException($"No validator defined for {propertyName}.");
+            switch (propertyName)
+            {
+                case "FlowStep.Accuracy":
+                    return _serviceProvider.GetRequiredService<AccuracyFormValidationWorker>();
+                case "FlowStep.TemplateImage":
+                    return _serviceProvider.GetRequiredService<ImageFormValidationWorker>();
+                case "FlowStep.FlowParameter":
+                    return _serviceProvider.GetRequiredService<FlowParameterFormValidationWorker>();
+                default:
+                    throw new ArgumentException($"No validator defined for {propertyName}.");
+            }
         }
     }
 }

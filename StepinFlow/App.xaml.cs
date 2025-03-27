@@ -91,16 +91,18 @@ namespace StepinFlow
                 // Execution workers.
                 services.AddScoped<GoToExecutionWorker>();
                 services.AddScoped<WaitExecutionWorker>();
-                services.AddScoped<CursorRelocateExecutionWorker>();
-                services.AddScoped<WindowRelocateExecutionWorker>();
+                services.AddScoped<SubFlowStepExecutionWorker>();
                 services.AddScoped<CursorClickExecutionWorker>();
                 services.AddScoped<CursorScrollExecutionWorker>();
                 services.AddScoped<WindowResizeExecutionWorker>();
+                services.AddScoped<CursorRelocateExecutionWorker>();
+                services.AddScoped<WindowRelocateExecutionWorker>();
                 services.AddScoped<TemplateSearchExecutionWorker>();
                 services.AddScoped<MultipleTemplateSearchExecutionWorker>();
-                services.AddScoped<SubFlowStepExecutionWorker>();
                 // Form validation workers.
+                services.AddSingleton<ImageFormValidationWorker>();
                 services.AddSingleton<AccuracyFormValidationWorker>();
+                services.AddSingleton<FlowParameterFormValidationWorker>();
 
 
                 // User Controls.
