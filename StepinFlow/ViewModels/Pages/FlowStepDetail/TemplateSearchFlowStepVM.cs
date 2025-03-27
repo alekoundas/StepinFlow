@@ -9,8 +9,8 @@ using System.IO;
 using StepinFlow.Interfaces;
 using System.Windows.Input;
 using Business.BaseViewModels;
-using Microsoft.EntityFrameworkCore;
 using Business.Services.Interfaces;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -20,7 +20,8 @@ namespace StepinFlow.ViewModels.Pages
         private readonly ITemplateSearchService _templateMatchingService;
         private readonly IDataService _dataService;
         private readonly IWindowService _windowService;
-        //public override event Action<int> OnSave;
+        private readonly IFormValidationFactory _formValidationFactory;
+
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
@@ -33,24 +34,29 @@ namespace StepinFlow.ViewModels.Pages
         [ObservableProperty]
         private FlowParameter? _selectedFlowParameter = null;
 
-        private byte[]? _previousTestResultImage = null;
-
         public TemplateSearchFlowStepVM(
             ISystemService systemService,
             ITemplateSearchService templateMatchingService,
             IDataService dataService,
-            IWindowService windowService) : base(dataService)
+            IWindowService windowService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
             _systemService = systemService;
             _templateMatchingService = templateMatchingService;
             _windowService = windowService;
+            _formValidationFactory = formValidationFactory;
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
 
+
         public override async Task LoadFlowStepId(int flowStepId)
         {
+            //TODO: SOS
+            // Existing logic to load FlowStep
+            //await base.LoadFlowStepId(flowStepId);
+
             SelectedFlowParameter = null;
             TestResultImage = null;
             FlowStep? flowStep = await _dataService.FlowSteps
@@ -252,6 +258,8 @@ namespace StepinFlow.ViewModels.Pages
 
             }
         }
+
+
     }
 }
 

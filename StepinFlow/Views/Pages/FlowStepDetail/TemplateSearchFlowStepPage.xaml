@@ -3,12 +3,15 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:System="clr-namespace:System;assembly=mscorlib"
+    xmlns:behavior="clr-namespace:StepinFlow.Behavior"
     xmlns:converters="clr-namespace:StepinFlow.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enum="clr-namespace:Model.Enums;assembly=Model"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:StepinFlow.Views.Pages.FlowStepDetail"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:rules="clr-namespace:StepinFlow.Rules"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="TemplateSearchFlowStepPage"
     d:DataContext="{d:DesignInstance local:TemplateSearchFlowStepPage,
     IsDesignTimeCreatable=False}"
@@ -20,6 +23,8 @@
 
     <Page.Resources>
         <converters:ImageNullConverter x:Key="ImageNullConverter" />
+        <rules:FormFieldValidationRule x:Key="FormFieldValidationRule" />
+
     </Page.Resources>
 
 
@@ -120,13 +125,31 @@
 
 
             <!--  Accuracy  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Select minimum accuracy:</Label>
-                <TextBox Text="{Binding ViewModel.FlowStep.Accuracy, Mode=TwoWay}" />
+            <StackPanel>
+                <StackPanel
+                    MinWidth="200"
+                    Margin="0,0,0,0"
+                    Orientation="Horizontal">
+                    <TextBox x:Name="AccuracyTextBox">
+                        <TextBox.Text>
+                            <Binding Path="ViewModel.FlowStep.Accuracy" UpdateSourceTrigger="PropertyChanged">
+                                <Binding.ValidationRules>
+                                    <rules:FormFieldValidationRule PropertyPath="FlowStep.Accuracy" />
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
+                </StackPanel>
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ElementName=AccuracyTextBox, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
             </StackPanel>
+
+
+
+
+
 
             <!--  IsLoop  -->
             <StackPanel

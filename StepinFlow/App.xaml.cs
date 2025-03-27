@@ -1,6 +1,8 @@
 ﻿using Business.DatabaseContext;
 using Business.Factories.ExecutionFactory;
 using Business.Factories.ExecutionFactory.Workers;
+using Business.Factories.FormValidationFactory;
+using Business.Factories.FormValidationFactory.Workers;
 using Business.Repository.Entities;
 using Business.Repository.Interfaces;
 using Business.Services;
@@ -41,13 +43,13 @@ namespace StepinFlow
             {
                 services.AddHostedService<ApplicationHostService>();
 
-                // Page resolver service
+                // Page resolver service.
                 services.AddSingleton<INavigationViewPageProvider, PageService>();
 
-                // Theme manipulation
+                // Theme manipulation.
                 services.AddSingleton<IThemeService, ThemeService>();
 
-                // TaskBar manipulation
+                // TaskBar manipulation.
                 services.AddSingleton<ITaskBarService, TaskBarService>();
 
                 // Windows.
@@ -71,18 +73,22 @@ namespace StepinFlow
                 services.AddTransient<IKeyboardListenerService, KeyboardListenerService>();
                 services.AddSingleton<ISystemSettingsService, SystemSettingsService>();
 
-                // Repository
+                // Repository.
                 services.AddTransient<IFlowRepository, FlowRepository>();
                 services.AddTransient<IFlowStepRepository, FlowStepRepository>();
                 services.AddTransient<IExecutionRepository, ExecutionRepository>();
                 services.AddTransient<IAppSettingRepository, AppSettingRepository>();
                 services.AddTransient<IFlowParameterRepository, FlowParameterRepository>();
 
-                // DB context
+                // DB context.
                 services.AddDbContextFactory<InMemoryDbContext>();
 
-                // Factory.
+                // Factories.
                 services.AddScoped<IExecutionFactory, ExecutionFactory>();
+                services.AddSingleton<IFormValidationFactory, FormValidationFactory>();
+
+                // Workers.
+                // Execution workers.
                 services.AddScoped<GoToExecutionWorker>();
                 services.AddScoped<WaitExecutionWorker>();
                 services.AddScoped<CursorRelocateExecutionWorker>();
@@ -93,8 +99,11 @@ namespace StepinFlow
                 services.AddScoped<TemplateSearchExecutionWorker>();
                 services.AddScoped<MultipleTemplateSearchExecutionWorker>();
                 services.AddScoped<SubFlowStepExecutionWorker>();
+                // Form validation workers.
+                services.AddSingleton<AccuracyFormValidationWorker>();
 
-                // User Controls
+
+                // User Controls.
                 services.AddTransient<TreeViewUserControl>();
                 services.AddTransient<TreeViewUserControlVM>();
 
@@ -102,8 +111,8 @@ namespace StepinFlow
                 services.AddTransient<FrameDetailUserControlVM>();
 
 
-
-                // Pages
+                
+                // Pages.
                 services.AddTransient<DashboardPage>();
                 services.AddTransient<DashboardVM>();
 
@@ -167,7 +176,7 @@ namespace StepinFlow
                 services.AddSingleton<SubFlowStepPage>();
                 services.AddSingleton<SubFlowStepVM>();
 
-                //Flow execution step detail
+                //Flow execution step detail.
                 services.AddSingleton<TemplateSearchExecutionPage>();
                 services.AddSingleton<TemplateSearchExecutionVM>();
 
