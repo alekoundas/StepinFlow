@@ -6,7 +6,7 @@
         {
             List<string> errors = new List<string>();
 
-            if (rawInputValue == null)
+            if (rawInputValue == null || rawInputValue == "")
                 errors.Add("Template match mode is required!");
 
             return errors;

@@ -47,6 +47,9 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox x:Name="Name">
+                    <i:Interaction.Behaviors>
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.Name" />
+                    </i:Interaction.Behaviors>
                     <TextBox.Text>
                         <Binding Path="ViewModel.FlowStep.Name" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -70,10 +73,10 @@
                 <!--  value (hidden)  -->
                 <TextBox x:Name="FlowParameter" Visibility="Collapsed">
                     <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.FlowParameter" />
                     </i:Interaction.Behaviors>
                     <TextBox.Text>
-                        <Binding Path="ViewModel.SelectedFlowParameter.Id" UpdateSourceTrigger="PropertyChanged">
+                        <Binding Path="ViewModel.FlowStep.FlowParameter" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
                                 <rules:FormFieldValidationRule PropertyPath="FlowStep.FlowParameter" />
                             </Binding.ValidationRules>
@@ -84,7 +87,9 @@
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
-                    SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
+                    SelectedItem="{Binding ViewModel.FlowStep.FlowParameter, Mode=TwoWay}"
+                    SelectedValue="{Binding ViewModel.FlowStep.FlowParameterId}"
+                    SelectedValuePath="Id">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -114,7 +119,7 @@
                 <!--  value (hidden)  -->
                 <TextBox x:Name="TemplateMatchMode" Visibility="Collapsed">
                     <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.TemplateMatchMode" />
                     </i:Interaction.Behaviors>
                     <TextBox.Text>
                         <Binding Path="ViewModel.FlowStep.TemplateMatchMode" UpdateSourceTrigger="PropertyChanged">
@@ -167,7 +172,7 @@
                 <!--  value (hidden)  -->
                 <TextBox x:Name="TemplateImage" Visibility="Collapsed">
                     <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior />
+                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.TemplateImage" />
                     </i:Interaction.Behaviors>
                     <TextBox.Text>
                         <Binding Path="ViewModel.FlowStep.TemplateImage" UpdateSourceTrigger="PropertyChanged">

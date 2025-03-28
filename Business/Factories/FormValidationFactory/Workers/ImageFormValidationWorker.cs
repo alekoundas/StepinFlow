@@ -4,7 +4,7 @@
     {
         public List<string> Validate(object? rawInputValue)
         {
-            byte[]? input = rawInputValue as byte[];
+            string? input = rawInputValue as string;
             List<string> errors = new List<string>();
 
             // TODO: set correct length size for png image.
