@@ -185,7 +185,7 @@ namespace StepinFlow.ViewModels.Pages
 
                     ListBoxExecutions.Add(flowStepExecution);
                  
-                    ExecutionHistorySize = GetObjectSize(ListBoxExecutions);
+                    //ExecutionHistorySize = GetObjectSize(ListBoxExecutions);
                 });
 
 

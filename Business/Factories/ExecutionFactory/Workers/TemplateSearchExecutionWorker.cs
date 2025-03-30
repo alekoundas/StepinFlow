@@ -1,5 +1,4 @@
 ﻿using Business.Extensions;
-using Business.Factories.ExecutionFactory;
 using Business.Helpers;
 using Business.Services.Interfaces;
 using Model.Business;
@@ -160,9 +159,10 @@ namespace Business.Factories.ExecutionFactory.Workers
                 if (execution.FlowStep.IsLoop)
                     return execution.FlowStep;
 
-            foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.Id])
-                if (File.Exists(parentLoopExecution.TempResultImagePath))
-                    File.Delete(parentLoopExecution.TempResultImagePath);
+            if (_pendingExecutionLoops.ContainsKey(execution.FlowStep.Id))
+                foreach (Execution parentLoopExecution in _pendingExecutionLoops[execution.FlowStep.Id])
+                    if (File.Exists(parentLoopExecution.TempResultImagePath))
+                        File.Delete(parentLoopExecution.TempResultImagePath);
 
             _pendingExecutionLoops[execution.FlowStep.Id].Clear();
 
