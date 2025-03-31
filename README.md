@@ -6,15 +6,13 @@
 
 ## Features
 
-- **Workflow Management**: Create, edit, and execute multi-step flows with ease.
-- **Customizable Parameters**: Define and tweak flow with reusable parameters to allow for a quick change in every step.
+- **Workflow Management**: Create, edit, and execute multi-step flows.
+- **Customizable Parameters**: Define and tweak flow with reusable parameters to allow for a quick update in every step that uses them.
 - **Execution Tracking**: Monitor progress with detailed execution logs.
 - **Database Integration**: Uses an SQLite database to store workflows, steps, and execution history, ensuring data persistence.
-- **MVVM Architecture**: Built with a clean Model-View-ViewModel structure for maintainability and scalability.
-- **Release Automation**: Automatically builds and packages releases via GitHub Actions for every tagged version.
 - **Export/Import Flows**: Export flows for backup or simply sharing with other users.
 - **Screenshot Importer**: Allow for easy screenshot selection and import as a search template.
-- **Portable Design**: Run StepinFlow on any Windows machine without installation, unzip and go!
+- **Portable Design**: Run StepinFlow without installation, unzip and go!
 
 ## Technologies Used
 
@@ -26,6 +24,7 @@ StepinFlow leverages the following technologies and libraries:
 - [AutoMapper](https://automapper.org/): A convention-based object-to-object mapper for .NET.
 - [OpenCvSharp](https://github.com/shimat/opencvsharp): A .NET wrapper for the OpenCV computer vision library.
 - [Windows Presentation Foundation (WPF)](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/): A UI framework for building Windows desktop applications.
+- [MVVM (Model-View-ViewModel)](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/data/mvvm): An architectural pattern for separating UI logic from business logic in WPF applications.
 
 ## Getting Started
 
@@ -62,21 +61,20 @@ StepinFlow leverages the following technologies and libraries:
 
 ### Steps
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/alekoundas/StepinFlow.git
-   cd StepinFlow
-   ```
+    ```bash
+    git clone https://github.com/alekoundas/StepinFlow.git
+    cd StepinFlow
+    ```
 
+2. Restore dependencies:
+    ```bash
+    dotnet restore StepinFlow.sln
+    ```
 
-2.Restore dependencies:
-   ```bash
-   dotnet restore StepinFlow.sln
-   ```
-
-3.Build the solution:
-   ```bash
-   dotnet build StepinFlow.sln --configuration Release
-   ```
+3. Build the solution:
+    ```bash
+    dotnet build StepinFlow.sln --configuration Release
+    ```
 
 ## Available Flow Step Types
 
@@ -88,7 +86,7 @@ StepinFlow offers a variety of flow step types tailored for automating GUI inter
 
 - **LOOP**
   - **Description**: Repeats all children steps for a set number of times or not.
-  - **Use Case**: Click a button repeatedly until a dialog appears or iterate over a list of items.
+  - **Use Case**: Click a button repeatedly or iterate over a list of items.
 
 - **SUB_FLOW_STEP**
   - **Description**: Executes a nested sub-flow, allowing modular and reusable flow segments within the main workflow.
@@ -114,32 +112,30 @@ StepinFlow offers a variety of flow step types tailored for automating GUI inter
     | `TM_CCOEFF`         | Correlation coefficient; measures similarity with zero-mean adjustment.     | Matching with contrast variance   |
     | `TM_CCOEFF_NORMED (Recomended)`  | Normalized correlation coefficient; robust to lighting and scale changes.   | High accuracy in varied conditions|
     
-  - **Use Case**: Locate a "Save" button icon on the screen to determine where to click.
+  - **Use Case**: Locate a "Reward" button icon on the screen to determine where to click.
 
 - **MULTIPLE_TEMPLATE_SEARCH**
   - **Description**: Same as TEMPLATE_SEARCH but searches for multiple instances of an image template on the screen. "Success" or "Fail" children will be executed on every template image instance.
-  - **Use Case**: Find all occurrences of a "Delete" icon in a list to perform batch actions.
+  - **Use Case**: Find all occurrences of different "Reward" icons in a list to perform actions.
 
 - **WAIT_FOR_TEMPLATE**
   - **Description**: Same as TEMPLATE_SEARCH but executes continius comparisons until the specified image template appears on the screen.
   - **Use Case**: Wait up to 10 seconds for a "Loading" spinner to disappear before proceeding.
 
 - **CURSOR_SCROLL**
-  - **Description**: Scrolls the mouse wheel up or down by a specified amount.
+  - **Description**: Scrolls the mouse wheel up,down,left,right by a specified amount.
   - **Use Case**: Scroll a webpage or listbox to reveal hidden content.
 
 - **CURSOR_CLICK**
-  - **Description**: Simulates a mouse click, click and hold, release (left, right buttons) at the current cursor position.
+  - **Description**: Simulates a mouse click, click and hold, release for left, right buttons at the current cursor position.
   - **Use Case**: Click left button.
 
 - **CURSOR_RELOCATE**
-  - **Description**: Moves the cursor to a new position on the screen. Either manual or by selecting the result location of a template search.
+  - **Description**: Moves the cursor to a new position on the screen. Either manual (x,y coordinates) or by selecting the location of a template search result (step needs to have any TEMPLATE_SEARCH ancestor). 
   - **Use Case**: Position the cursor at the location of a specific template image.
 
-
- 
 - **GO_TO**
-  - **Description**: Redirects the workflow to a previous step or label, enabling non-linear execution paths (Not recomended).
+  - **Description**: Redirects the workflow to a previous step, enabling non-linear execution paths (May lead to unexpected infinite loops depending on your logic).
   - **Use Case**: Jump back to a previous step on failure or skip to a cleanup step.
 
 
