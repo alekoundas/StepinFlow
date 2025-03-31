@@ -18,17 +18,17 @@ jobs:
       - name: Get current version of .csproj.
         id: get_version
         run: |
-          set -e
-          VERSION=$(grep -oP '(?<=<Version>).*?(?=</Version>)' StepinFlow/StepinFlow.csproj || echo "1.0.0")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          set -e                                                                                                    # Configures the Bash shell to exit immediately if any command fails.
+          VERSION=$(grep -oP '(?<=<Version>).*?(?=</Version>)' StepinFlow/StepinFlow.csproj || echo "1.0.0")        # Extract version.  
+          echo "VERSION=$VERSION" >> $GITHUB_ENV                                                                    # Exports the extracted version as an environment variable named VERSION.
 
       - name: Increment build version.
         id: increment_version
         run: |
-          IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
-          PATCH=$((VERSION_ARRAY[2] + 1))
-          NEW_VERSION="${VERSION_ARRAY[0]}.${VERSION_ARRAY[1]}.$PATCH"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"                              # Split the version string (e.g., "1.2.3") into an array using '.' as the delimiter.
+          BUILD_VERSION=$((VERSION_ARRAY[2] + 1))                                      # Increment 'Build' version by 1.    
+          NEW_VERSION="${VERSION_ARRAY[0]}.${VERSION_ARRAY[1]}.$BUILD_VERSION"         # Create NEW_VERSION variable with complete version
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV                               # Writes "NEW_VERSION=1.2.4" to an environment variable named $GITHUB_ENV.
 
       - name: Update .csproj version
         run: |
