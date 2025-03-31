@@ -32,8 +32,11 @@ jobs:
       run: |
          $version = (Select-String -Path StepinFlow/StepinFlow.csproj -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }) ?? "1.0.0"
          $artifactName = "StepinFlow-Portable-win-x64-v$version.zip"
+         $tagName = "v$version"                                      # Create tag name with 'v' prefix
          Write-Host "Artifact Name: $artifactName"
+         Write-Host "Tag Name: $tagName"
          echo "ARTIFACT_NAME=$artifactName" >> $env:GITHUB_ENV
+         echo "TAG_NAME=$tagName" >> $env:GITHUB_ENV                 # Export tag name
       shell: pwsh
 
     - name: Restore the application
@@ -55,8 +58,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
+        tag_name: ${{ env.TAG_NAME }}
+        release_name: Release ${{ env.TAG_NAME }}
         draft: false
         prerelease: false
 
