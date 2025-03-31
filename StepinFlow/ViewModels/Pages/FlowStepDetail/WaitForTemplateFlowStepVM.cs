@@ -29,10 +29,6 @@ namespace StepinFlow.ViewModels.Pages
 
         [ObservableProperty]
         private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
-        [ObservableProperty]
-        private FlowParameter? _selectedFlowParameter = null;
-
-        private byte[]? _previousTestResultImage = null;
 
         public WaitForTemplateFlowStepVM(
             ISystemService systemService, 
@@ -51,7 +47,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
-            SelectedFlowParameter = null;
             TestResultImage = null;
             FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.FlowParameter)
@@ -64,12 +59,10 @@ namespace StepinFlow.ViewModels.Pages
             flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
             FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
 
-            SelectedFlowParameter = FlowParameters.Where(x => x.Id == FlowStep.FlowParameterId).FirstOrDefault();
         }
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
-            SelectedFlowParameter = null;
             TestResultImage = null;
             FlowStep = newFlowStep;
 
@@ -96,6 +89,7 @@ namespace StepinFlow.ViewModels.Pages
             }
 
         }
+
         [RelayCommand]
         private async Task OnButtonTakeScreenshotClick()
         {

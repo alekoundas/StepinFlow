@@ -35,8 +35,6 @@ namespace StepinFlow.ViewModels.Pages
         private IEnumerable<TemplateMatchModesEnum> _matchModes;
         [ObservableProperty]
         private ObservableCollection<FlowParameter> _flowParameters = new ObservableCollection<FlowParameter>();
-        [ObservableProperty]
-        private FlowParameter? _selectedFlowParameter = null;
 
         public MultipleTemplateSearchFlowStepVM(
             ISystemService systemService,
@@ -55,7 +53,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
-            SelectedFlowParameter = null;
             TestResultImage = null;
             FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.ChildrenTemplateSearchFlowSteps)
@@ -72,14 +69,11 @@ namespace StepinFlow.ViewModels.Pages
                 List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(flowStepId);
                 flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
                 FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
-
-                SelectedFlowParameter = FlowParameters.Where(x=>x.Id==FlowStep.FlowParameterId).FirstOrDefault();
             }
         }
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
-            SelectedFlowParameter = null;
             TestResultImage = null;
             FlowStep = newFlowStep;
 
@@ -174,16 +168,16 @@ namespace StepinFlow.ViewModels.Pages
 
             // Find search area.
             Model.Structs.Rectangle? searchRectangle = null;
-            switch (SelectedFlowParameter?.TemplateSearchAreaType)
+            switch (FlowStep.FlowParameter?.TemplateSearchAreaType)
             {
                 case TemplateSearchAreaTypesEnum.SELECT_EVERY_MONITOR:
                     searchRectangle = _systemService.GetScreenSize();
                     break;
                 case TemplateSearchAreaTypesEnum.SELECT_MONITOR:
-                    searchRectangle = _systemService.GetMonitorArea(SelectedFlowParameter.SystemMonitorDeviceName);
+                    searchRectangle = _systemService.GetMonitorArea(FlowStep.FlowParameter.SystemMonitorDeviceName);
                     break;
                 case TemplateSearchAreaTypesEnum.SELECT_APPLICATION_WINDOW:
-                    searchRectangle = _systemService.GetWindowSize(SelectedFlowParameter.ProcessName);
+                    searchRectangle = _systemService.GetWindowSize(FlowStep.FlowParameter.ProcessName);
                     break;
                 case TemplateSearchAreaTypesEnum.SELECT_CUSTOM_AREA:
                     break;
@@ -254,7 +248,6 @@ namespace StepinFlow.ViewModels.Pages
 
             ChildrenTemplateSearchFlowSteps = new ObservableCollection<FlowStep>();
             _childrenTemplateSearchFlowStepsToRemove = new List<FlowStep>();
-            SelectedFlowParameter = null;
 
         }
 
@@ -277,8 +270,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep updateFlowStep = await _dataService.FlowSteps.FirstAsync(x => x.Id == FlowStep.Id);
                 updateFlowStep.Name = FlowStep.Name;
                 updateFlowStep.TemplateMatchMode = FlowStep.TemplateMatchMode;
-                if (SelectedFlowParameter != null)
-                    updateFlowStep.FlowParameterId = SelectedFlowParameter.Id;
 
                 await _dataService.UpdateRangeAsync(ChildrenTemplateSearchFlowSteps.Where(x => x.Id > 0).ToList());
                 await _dataService.FlowSteps.AddRangeAsync(ChildrenTemplateSearchFlowSteps.Where(x => x.Id == 0).ToList());
@@ -336,8 +327,6 @@ namespace StepinFlow.ViewModels.Pages
 
                 FlowStep.IsExpanded = true;
                 FlowStep.ChildrenTemplateSearchFlowSteps = ChildrenTemplateSearchFlowSteps;
-                if (SelectedFlowParameter != null)
-                    FlowStep.FlowParameterId = SelectedFlowParameter.Id;
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
 

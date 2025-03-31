@@ -42,7 +42,11 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Sub-Flows:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.SubFlows}" SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
+                <ComboBox
+                    ItemsSource="{Binding ViewModel.SubFlows}"
+                    SelectedItem="{Binding ViewModel.FlowStep.SubFlow, Mode=TwoWay}"
+                    SelectedValue="{Binding ViewModel.FlowStep.SubFlowId}"
+                    SelectedValuePath="Id">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">

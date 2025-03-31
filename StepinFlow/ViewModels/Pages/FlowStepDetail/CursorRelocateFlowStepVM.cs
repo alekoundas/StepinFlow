@@ -23,8 +23,6 @@ namespace StepinFlow.ViewModels.Pages
         private ObservableCollection<FlowStep> _parents = new ObservableCollection<FlowStep>();
 
         [ObservableProperty]
-        private FlowStep? _selectedFlowStep = null;
-        [ObservableProperty]
         private IEnumerable<CursorRelocationTypesEnum> _cursorRelocationTypesEnum;
 
         public CursorRelocateFlowStepVM(
@@ -43,7 +41,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
-            SelectedFlowStep = null;
             FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStepId);
             if (flowStep != null)
             {
@@ -51,7 +48,6 @@ namespace StepinFlow.ViewModels.Pages
                 if (FlowStep.ParentFlowStepId.HasValue)
                     Parents = new ObservableCollection<FlowStep>(GetParents(FlowStep.ParentFlowStepId.Value));
 
-                SelectedFlowStep = Parents.FirstOrDefault(x => x.Id == flowStep.ParentTemplateSearchFlowStepId);
 
                 KeyCombination _combination = new KeyCombination(ModifierKeys.None, Key.F3);
                 _keyboardListenerService.RegisterListener(_combination, () =>
@@ -63,7 +59,6 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
-            SelectedFlowStep = null;
             FlowStep = newFlowStep;
 
             if (FlowStep.ParentFlowStepId.HasValue)
@@ -115,9 +110,6 @@ namespace StepinFlow.ViewModels.Pages
                 updateFlowStep.LocationY = FlowStep.LocationY;
                 updateFlowStep.CursorRelocationType = FlowStep.CursorRelocationType;
 
-                if (SelectedFlowStep != null)
-                    updateFlowStep.ParentTemplateSearchFlowStepId = SelectedFlowStep.Id;
-
                 await _dataService.UpdateAsync(updateFlowStep);
 
             }
@@ -137,9 +129,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep.OrderingNum = isNewSimpling.OrderingNum;
                 isNewSimpling.OrderingNum++;
                 await _dataService.UpdateAsync(isNewSimpling);
-
-                if (SelectedFlowStep != null)
-                    FlowStep.ParentTemplateSearchFlowStepId = SelectedFlowStep.Id;
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
             }

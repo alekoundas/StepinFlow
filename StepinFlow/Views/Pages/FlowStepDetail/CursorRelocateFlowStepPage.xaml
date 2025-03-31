@@ -67,7 +67,11 @@
 
                     <StackPanel Margin="5" VerticalAlignment="Center">
                         <Label>Parent successful location:</Label>
-                        <ComboBox ItemsSource="{Binding ViewModel.Parents}" SelectedItem="{Binding ViewModel.SelectedFlowStep, Mode=TwoWay}">
+                        <ComboBox
+                            ItemsSource="{Binding ViewModel.Parents}"
+                            SelectedItem="{Binding ViewModel.FlowStep.ParentTemplateSearchFlowStep, Mode=TwoWay}"
+                            SelectedValue="{Binding ViewModel.FlowStep.ParentTemplateSearchFlowStepId}"
+                            SelectedValuePath="Id">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">

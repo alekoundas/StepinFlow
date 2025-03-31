@@ -16,9 +16,6 @@ namespace StepinFlow.ViewModels.Pages
         private bool _isEnabled;
         [ObservableProperty]
         private ObservableCollection<Flow> _subFlows = new ObservableCollection<Flow>();
-        [ObservableProperty]
-        private Flow? _selectedSubFlow = null;
-
 
         public SubFlowStepVM(IDataService dataService, ICloneService cloneService) : base(dataService)
         {
@@ -35,10 +32,6 @@ namespace StepinFlow.ViewModels.Pages
             FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStepId);
             if (flowStep != null)
                 FlowStep = flowStep;
-
-            if (FlowStep.SubFlowId.HasValue)
-                SelectedSubFlow = SubFlows.FirstOrDefault(x => x.Id == FlowStep.SubFlowId);
-
         }
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
@@ -52,8 +45,6 @@ namespace StepinFlow.ViewModels.Pages
         public override void OnPageExit()
         {
             base.OnPageExit();
-
-            SelectedSubFlow = null;
         }
 
         public override async Task<int> OnSave()
@@ -65,7 +56,6 @@ namespace StepinFlow.ViewModels.Pages
                 FlowStep updateFlowStep = await _dataService.FlowSteps.FirstAsync(x => x.Id == FlowStep.Id);
                 updateFlowStep.Name = FlowStep.Name;
                 updateFlowStep.IsSubFlowReferenced = FlowStep.IsSubFlowReferenced;
-                updateFlowStep.SubFlowId = SelectedSubFlow?.Id;
                 await _dataService.UpdateAsync(updateFlowStep);
             }
 
@@ -89,13 +79,11 @@ namespace StepinFlow.ViewModels.Pages
 
                 if (FlowStep.IsSubFlowReferenced)
                 {
-                    FlowStep.SubFlowId = SelectedSubFlow?.Id;
                     _dataService.FlowSteps.Add(FlowStep);
-
                 }
-                else if (SelectedSubFlow?.Id != null)
+                else if (FlowStep.SubFlow?.Id != null)
                 {
-                    Flow? flow = await _cloneService.GetFlowClone(SelectedSubFlow.Id);
+                    Flow? flow = await _cloneService.GetFlowClone(FlowStep.SubFlow.Id);
                     if (flow == null)
                         return -1;
 

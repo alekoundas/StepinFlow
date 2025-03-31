@@ -50,7 +50,9 @@
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
-                    SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
+                    SelectedItem="{Binding ViewModel.FlowStep.FlowParameter, Mode=TwoWay}"
+                    SelectedValue="{Binding ViewModel.FlowStep.FlowParameterId}"
+                    SelectedValuePath="Id">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
