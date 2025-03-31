@@ -42,6 +42,16 @@ namespace Business.Factories.FormValidationFactory
                     worker.SetPropertyName(propertyName);
                     break;
 
+                case "FlowStep.CursorAction":
+                    worker = _serviceProvider.GetRequiredService<CursorActionFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.CursorButton":
+                    worker = _serviceProvider.GetRequiredService<CursorButtonFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }

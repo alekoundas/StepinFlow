@@ -4,12 +4,14 @@ using Model.Enums;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
 using Business.Helpers;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
     public partial class CursorClickFlowStepVM : BaseFlowStepDetailVM
     {
         private readonly IDataService _dataService;
+        private readonly IFormValidationFactory _formValidationFactory;
         //public override event Action<int> OnSave;
 
         [ObservableProperty]
@@ -17,10 +19,10 @@ namespace StepinFlow.ViewModels.Pages
         [ObservableProperty]
         private IEnumerable<CursorActionsEnum> _mouseActionsEnum;
 
-
-        public CursorClickFlowStepVM(IDataService dataService) : base(dataService)
+        public CursorClickFlowStepVM(IDataService dataService, IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
+            _formValidationFactory = formValidationFactory;
 
             MouseButtonsEnum = Enum.GetValues(typeof(CursorButtonsEnum)).Cast<CursorButtonsEnum>();
             MouseActionsEnum = Enum.GetValues(typeof(CursorActionsEnum)).Cast<CursorActionsEnum>();
@@ -38,6 +40,14 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.CursorAction").Validate(FlowStep.CursorAction);
+            _formValidationFactory.CreateValidator("FlowStep.CursorButton").Validate(FlowStep.CursorButton);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
             // Edit mode
             if (FlowStep.Id > 0)
             {

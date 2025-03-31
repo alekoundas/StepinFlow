@@ -42,15 +42,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox>
-                    <TextBox.Text>
-                        <Binding Path="ViewModel.FlowStep.Name" UpdateSourceTrigger="PropertyChanged">
-                            <Binding.ValidationRules>
-                                <rules:FormFieldValidationRule PropertyPath="FlowStep.Name" />
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
+                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
@@ -155,15 +147,7 @@
 
             <!--  Accuracy  -->
             <StackPanel MinWidth="200" Margin="0,0,0,0">
-                <TextBox>
-                    <TextBox.Text>
-                        <Binding Path="ViewModel.FlowStep.Accuracy" UpdateSourceTrigger="PropertyChanged">
-                            <Binding.ValidationRules>
-                                <rules:FormFieldValidationRule PropertyPath="FlowStep.Accuracy" />
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
+                <TextBox Text="{Binding ViewModel.FlowStep.Accuracy, Mode=TwoWay}" />
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
