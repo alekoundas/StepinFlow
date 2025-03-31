@@ -9,6 +9,7 @@ using Business.Services;
 using System.Windows.Input;
 using Business.Services.Interfaces;
 using Business.Helpers;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -17,6 +18,7 @@ namespace StepinFlow.ViewModels.Pages
         private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
         private readonly IKeyboardListenerService _keyboardListenerService;
+        private readonly IFormValidationFactory _formValidationFactory;
         //public override event Action<int> OnSave;
 
 
@@ -24,20 +26,20 @@ namespace StepinFlow.ViewModels.Pages
         private ObservableCollection<FlowStep> _parents = new ObservableCollection<FlowStep>();
 
         [ObservableProperty]
-        private IEnumerable<CursorRelocationTypesEnum> _cursorRelocationTypesEnum;
+        private IEnumerable<CursorRelocationTypesEnum> _cursorRelocationTypes;
 
         public CursorRelocateFlowStepVM(
             IDataService dataService,
             ISystemService systemService,
-            IKeyboardListenerService keyboardListenerService) : base(dataService)
+            IKeyboardListenerService keyboardListenerService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
             _systemService = systemService;
             _keyboardListenerService = keyboardListenerService;
+            _formValidationFactory = formValidationFactory;
 
-            CursorRelocationTypesEnum = Enum.GetValues(typeof(CursorRelocationTypesEnum)).Cast<CursorRelocationTypesEnum>();
-
-
+            CursorRelocationTypes = Enum.GetValues(typeof(CursorRelocationTypesEnum)).Cast<CursorRelocationTypesEnum>();
         }
 
         public override async Task LoadFlowStepId(int flowStepId)
@@ -104,6 +106,25 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.CursorRelocationType").Validate(FlowStep.CursorRelocationType);
+            if (FlowStep.CursorRelocationType == CursorRelocationTypesEnum.CUSTOM)
+            {
+                _formValidationFactory.CreateValidator("FlowStep.LocationX").Validate(FlowStep.LocationX);
+                _formValidationFactory.CreateValidator("FlowStep.LocationY").Validate(FlowStep.LocationY);
+            }
+
+            if (FlowStep.CursorRelocationType == CursorRelocationTypesEnum.USE_PARENT_RESULT)
+            {
+                _formValidationFactory.CreateValidator("FlowStep.ParentTemplateSearchFlowStep").Validate(FlowStep.ParentTemplateSearchFlowStep);
+            }
+
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
             // Edit mode
             if (FlowStep.Id > 0)
             {

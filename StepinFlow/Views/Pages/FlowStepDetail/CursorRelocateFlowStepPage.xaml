@@ -36,6 +36,10 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
             <!--  Relocation type  -->
@@ -45,9 +49,13 @@
                 HorizontalAlignment="Left">
                 <Label>Select relocation type:</Label>
                 <ComboBox
-                    ItemsSource="{Binding ViewModel.CursorRelocationTypesEnum}"
+                    ItemsSource="{Binding ViewModel.CursorRelocationTypes}"
                     SelectedIndex="0"
                     SelectedItem="{Binding ViewModel.FlowStep.CursorRelocationType}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.CursorRelocationType], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -82,6 +90,10 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Foreground="Gold"
+                            Text="{Binding ViewModel.ValidationErrors[FlowStep.ParentTemplateSearchFlowStep], FallbackValue=''}" />
                     </StackPanel>
 
 
@@ -106,16 +118,26 @@
                 </Border.Style>
                 <StackPanel>
 
+                    <!--  X  -->
                     <StackPanel Margin="5">
                         <Label Padding="0,0,5,0">X:</Label>
                         <TextBox VerticalAlignment="Center" Text="{Binding ViewModel.FlowStep.LocationX, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Foreground="Gold"
+                            Text="{Binding ViewModel.ValidationErrors[FlowStep.LocationX], FallbackValue=''}" />
                     </StackPanel>
 
-
+                    <!--  Y  -->
                     <StackPanel Margin="5">
                         <Label Padding="0,0,5,0">Y:</Label>
                         <TextBox VerticalAlignment="Center" Text="{Binding ViewModel.FlowStep.LocationY, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="0,5,0,0"
+                            Foreground="Gold"
+                            Text="{Binding ViewModel.ValidationErrors[FlowStep.LocationY], FallbackValue=''}" />
                     </StackPanel>
+
                     <!--  Record Button  -->
                     <StackPanel Margin="0,10,0,0" HorizontalAlignment="Left">
                         <Button Content="Record (F3)">

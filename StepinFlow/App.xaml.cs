@@ -105,6 +105,11 @@ namespace StepinFlow
                 services.AddSingleton<AccuracyFormValidationWorker>();
                 services.AddSingleton<FlowParameterFormValidationWorker>();
                 services.AddSingleton<TemplateMatchModeFormValidationWorker>();
+                services.AddSingleton<CursorActionFormValidationWorker>();
+                services.AddSingleton<CursorButtonFormValidationWorker>();
+                services.AddSingleton<CursorRelocationTypeFormValidationWorker>();
+                services.AddSingleton<ParentTemplateSearchFlowStepFormValidationWorker>();
+                services.AddSingleton<LocationFormValidationWorker>();
 
 
                 // User Controls.

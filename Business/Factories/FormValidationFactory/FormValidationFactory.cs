@@ -52,6 +52,26 @@ namespace Business.Factories.FormValidationFactory
                     worker.SetPropertyName(propertyName);
                     break;
 
+                case "FlowStep.CursorRelocationType":
+                    worker = _serviceProvider.GetRequiredService<CursorRelocationTypeFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.ParentTemplateSearchFlowStep":
+                    worker = _serviceProvider.GetRequiredService<ParentTemplateSearchFlowStepFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.LocationX":
+                    worker = _serviceProvider.GetRequiredService<LocationFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.LocationY":
+                    worker = _serviceProvider.GetRequiredService<LocationFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }
