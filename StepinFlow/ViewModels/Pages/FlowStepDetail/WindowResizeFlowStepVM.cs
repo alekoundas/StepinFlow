@@ -24,6 +24,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep = newFlowStep;
             FlowStep.Name = "Window size.";
         }

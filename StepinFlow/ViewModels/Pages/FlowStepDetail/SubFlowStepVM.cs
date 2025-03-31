@@ -4,6 +4,7 @@ using Model.Enums;
 using Business.BaseViewModels;
 using System.Collections.ObjectModel;
 using Business.Services.Interfaces;
+using Business.Helpers;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -26,6 +27,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             IsEnabled = false;
             SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
 
@@ -36,6 +38,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
             FlowStep = newFlowStep;
             IsEnabled = true;

@@ -47,6 +47,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             TestResultImage = null;
             FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.FlowParameter)
@@ -63,6 +64,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             TestResultImage = null;
             FlowStep = newFlowStep;
 

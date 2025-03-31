@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Business.Helpers;
 using Model.Enums;
@@ -28,6 +27,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep = newFlowStep;
             FlowStep.Name = "Loop.";
         }

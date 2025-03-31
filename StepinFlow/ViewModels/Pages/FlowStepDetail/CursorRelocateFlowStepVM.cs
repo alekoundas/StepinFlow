@@ -8,6 +8,7 @@ using Business.BaseViewModels;
 using Business.Services;
 using System.Windows.Input;
 using Business.Services.Interfaces;
+using Business.Helpers;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -41,6 +42,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadFlowStepId(int flowStepId)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStepId);
             if (flowStep != null)
             {
@@ -59,6 +61,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep = newFlowStep;
 
             if (FlowStep.ParentFlowStepId.HasValue)

@@ -19,18 +19,11 @@ namespace Business.BaseViewModels
         public BaseFlowStepDetailVM(IDataService dataService)
         {
             _dataService = dataService;
-
-            // Everytime the ValidationHelpers errors change update the observable.
-            ValidationHelper.ErrorsChanged += (object sender, string propertyPath) =>
-            {
-                ValidationErrors = ValidationHelper.GetAllErrors();
-                // Notify the UI that ValidationErrors has changed
-                //OnPropertyChanged(nameof(ValidationErrors));
-            };
         }
 
         public virtual async Task LoadFlowStepId(int flowStepId)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep? flowStep = await _dataService.FlowSteps.FirstOrDefaultAsync(x => x.Id == flowStepId);
             if (flowStep != null)
                 FlowStep = flowStep;
@@ -38,6 +31,7 @@ namespace Business.BaseViewModels
 
         public virtual Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep = newFlowStep;
             return Task.CompletedTask;
         }
@@ -65,6 +59,7 @@ namespace Business.BaseViewModels
 
         public virtual void OnPageExit()
         {
+            ValidationHelper.ErrorsChanged -= OnErrorsChange;
             ValidationHelper.ClearErrors();
         }
 
@@ -76,6 +71,12 @@ namespace Business.BaseViewModels
         public virtual Task<int> OnSave()
         {
             throw new NotImplementedException();
+        }
+
+        //TODO private
+        public void OnErrorsChange(object? sender, string propertyPath)
+        {
+            ValidationErrors = ValidationHelper.GetAllErrors();
         }
     }
 }

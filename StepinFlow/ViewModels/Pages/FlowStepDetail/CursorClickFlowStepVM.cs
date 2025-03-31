@@ -3,6 +3,7 @@ using Model.Models;
 using Model.Enums;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
+using Business.Helpers;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -27,6 +28,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             FlowStep = newFlowStep;
             FlowStep.Name = "Cursor click.";
 

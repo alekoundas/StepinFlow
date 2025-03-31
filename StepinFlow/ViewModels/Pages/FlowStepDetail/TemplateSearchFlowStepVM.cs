@@ -56,6 +56,7 @@ namespace StepinFlow.ViewModels.Pages
             // Existing logic to load FlowStep
             //await base.LoadFlowStepId(flowStepId);
 
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             TestResultImage = null;
 
             // Load lookup.
@@ -75,6 +76,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+            ValidationHelper.ErrorsChanged += OnErrorsChange;
             TestResultImage = null;
             FlowStep = newFlowStep;
 
