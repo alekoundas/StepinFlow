@@ -2,6 +2,7 @@
 {
     public interface IFormValidationWorker
     {
-        List<string> Validate(object? rawInputValue);
+        void Validate(object? rawInputValue);
+        void SetPropertyName(string propertyName);
     }
 }

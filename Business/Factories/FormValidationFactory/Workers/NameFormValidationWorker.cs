@@ -1,15 +1,20 @@
-﻿namespace Business.Factories.FormValidationFactory.Workers
+﻿using Business.Helpers;
+
+namespace Business.Factories.FormValidationFactory.Workers
 {
     public class NameFormValidationWorker : IFormValidationWorker
     {
-        public List<string> Validate(object? rawInputValue)
+        private string _propertyName = "";
+        public void SetPropertyName(string propertyName)
+        {
+            _propertyName = propertyName;
+        }
+
+        public void Validate(object? rawInputValue)
         {
             string? input = rawInputValue as string;
-            List<string> errors = new List<string>();
             if (input?.Length == 0)
-                errors.Add("Name cannot be empty!");
-
-            return errors;
+                ValidationHelper.AddError(_propertyName, "Name cannot be empty!");
         }
     }
 }

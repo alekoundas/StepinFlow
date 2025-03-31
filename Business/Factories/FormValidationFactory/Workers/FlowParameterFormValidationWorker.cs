@@ -1,15 +1,19 @@
-﻿namespace Business.Factories.FormValidationFactory.Workers
+﻿using Business.Helpers;
+
+namespace Business.Factories.FormValidationFactory.Workers
 {
     public class FlowParameterFormValidationWorker : IFormValidationWorker
     {
-        public List<string> Validate(object? rawInputValue)
+        private string _propertyName = "";
+        public void SetPropertyName(string propertyName)
         {
-            List<string> errors = new List<string>();
+            _propertyName = propertyName;
+        }
+
+        public void Validate(object? rawInputValue)
+        {
             if (rawInputValue == null || rawInputValue == "")
-                errors.Add("Flow Parameter is required!");
-
-
-            return errors;
+                ValidationHelper.AddError(_propertyName, "Flow Parameter is required!");
         }
     }
 }

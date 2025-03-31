@@ -176,39 +176,26 @@ namespace StepinFlow.ViewModels.Pages
             if (e.ClickCount == 2)
                 await _windowService.OpenScreenshotSelectionWindow(TestResultImage, false);
         }
+
         public override void OnPageExit()
         {
             base.OnPageExit();
 
-            //SelectedFlowParameter = null;
             TestResultImage = null;
         }
+
         public override async Task<int> OnSave()
         {
-            Dictionary<string, List<string>> errors = new Dictionary<string, List<string>>();
-
-            errors["FlowStep.Name"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name));
-            errors["FlowStep.Accuracy"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy));
-            errors["FlowStep.TemplateImage"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage));
-            errors["FlowStep.FlowParameter"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter));
-            errors["FlowStep.TemplateMatchMode"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode));
 
             ValidationHelper.ClearErrors();
-            foreach (var error in errors)
-                foreach (var errorMessage in error.Value)
-                    ValidationHelper.AddError(error.Key, errorMessage);
-
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy);
+            _formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage);
+            _formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter);
+            _formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode);
 
             if (ValidationHelper.HasErrors())
-            {
-                //OnPropertyChanged("FlowStep");
-                //OnPropertyChanged("FlowStep.Name");
-                //OnPropertyChanged("FlowStep.Accuracy");
-                //OnPropertyChanged("FlowStep.TemplateImage");
-                //OnPropertyChanged("FlowStep.FlowParameter");
-                //OnPropertyChanged("FlowStep.TemplateMatchMode");
                 return -1;
-            }
 
             // Edit mode.
             if (FlowStep.Id > 0)

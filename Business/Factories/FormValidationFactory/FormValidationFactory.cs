@@ -14,21 +14,39 @@ namespace Business.Factories.FormValidationFactory
 
         public IFormValidationWorker CreateValidator(string propertyName)
         {
+            IFormValidationWorker worker;
             switch (propertyName)
             {
                 case "FlowStep.Name":
-                    return _serviceProvider.GetRequiredService<NameFormValidationWorker>();
+                    worker = _serviceProvider.GetRequiredService<NameFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 case "FlowStep.Accuracy":
-                    return _serviceProvider.GetRequiredService<AccuracyFormValidationWorker>();
+                    worker = _serviceProvider.GetRequiredService<AccuracyFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 case "FlowStep.TemplateImage":
-                    return _serviceProvider.GetRequiredService<ImageFormValidationWorker>();
+                    worker = _serviceProvider.GetRequiredService<ImageFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 case "FlowStep.FlowParameter":
-                    return _serviceProvider.GetRequiredService<FlowParameterFormValidationWorker>();
+                    worker = _serviceProvider.GetRequiredService<FlowParameterFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 case "FlowStep.TemplateMatchMode":
-                    return _serviceProvider.GetRequiredService<TemplateMatchModeFormValidationWorker>();
+                    worker = _serviceProvider.GetRequiredService<TemplateMatchModeFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }
+
+            return worker;
         }
     }
 }

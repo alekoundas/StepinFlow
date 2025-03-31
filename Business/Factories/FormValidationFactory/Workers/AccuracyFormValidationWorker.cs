@@ -1,21 +1,26 @@
-﻿using System.Globalization;
+﻿using Business.Helpers;
+using System.Globalization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Business.Factories.FormValidationFactory.Workers
 {
     public class AccuracyFormValidationWorker : IFormValidationWorker
     {
-        public List<string> Validate(object? rawInputValue)
+        private string _propertyName = "";
+        public void SetPropertyName(string propertyName)
         {
-            List<string> errors = new List<string>();
+            _propertyName = propertyName;
+        }
+
+        public void Validate(object? rawInputValue)
+        {
             if (decimal.TryParse(rawInputValue?.ToString(), NumberStyles.Any, CultureInfo.CurrentCulture, out decimal value))
             {
                 if (value < 0m || value > 100m)
-                    errors.Add("Accuracy must be between 0 and 100");
+                    ValidationHelper.AddError(_propertyName, "Accuracy must be between 0 and 100!");
             }
             else
-                errors.Add("Input is not of the expected type Decimal");
-
-            return errors;
+                ValidationHelper.AddError(_propertyName, "Input is not of the expected type Decimal!");
         }
     }
 }
