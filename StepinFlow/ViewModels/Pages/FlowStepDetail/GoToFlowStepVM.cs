@@ -5,20 +5,23 @@ using System.Collections.ObjectModel;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
 using Business.Helpers;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
     public partial class GoToFlowStepVM : BaseFlowStepDetailVM
     {
         private readonly IDataService _dataService;
+        private readonly IFormValidationFactory _formValidationFactory;
 
         [ObservableProperty]
         private ObservableCollection<FlowStep> _previousSteps = new ObservableCollection<FlowStep>();
 
 
-        public GoToFlowStepVM(IDataService dataService) : base(dataService)
+        public GoToFlowStepVM(IDataService dataService, IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
+            _formValidationFactory = formValidationFactory;
         }
 
         public override async Task LoadFlowStepId(int flowStepId)
@@ -47,6 +50,14 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.ParentTemplateSearchFlowStep").Validate(FlowStep.ParentTemplateSearchFlowStep);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
             // Edit mode
             if (FlowStep.Id > 0)
             {
