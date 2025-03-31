@@ -34,6 +34,10 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -44,6 +48,10 @@
                 HorizontalAlignment="Left">
                 <Label>Exit after X times.(0 = Dont exit.)</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.LoopMaxCount, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.LoopMaxCount], FallbackValue=''}" />
             </StackPanel>
 
         </StackPanel>

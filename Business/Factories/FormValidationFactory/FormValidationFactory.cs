@@ -82,6 +82,11 @@ namespace Business.Factories.FormValidationFactory
                     worker.SetPropertyName(propertyName);
                     break;
 
+                case "FlowStep.LoopMaxCount":
+                    worker = _serviceProvider.GetRequiredService<LoopCountFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }
