@@ -250,6 +250,8 @@ namespace StepinFlow.ViewModels.Pages
 
         public override void OnPageExit()
         {
+            base.OnPageExit();
+
             ChildrenTemplateSearchFlowSteps = new ObservableCollection<FlowStep>();
             _childrenTemplateSearchFlowStepsToRemove = new List<FlowStep>();
             SelectedFlowParameter = null;

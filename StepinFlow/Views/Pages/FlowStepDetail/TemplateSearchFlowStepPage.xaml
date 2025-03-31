@@ -3,7 +3,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:System="clr-namespace:System;assembly=mscorlib"
-    xmlns:behavior="clr-namespace:StepinFlow.Behavior"
     xmlns:converters="clr-namespace:StepinFlow.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enum="clr-namespace:Model.Enums;assembly=Model"
@@ -23,9 +22,6 @@
 
     <Page.Resources>
         <converters:ImageNullConverter x:Key="ImageNullConverter" />
-        <rules:FormFieldValidationRule x:Key="FormFieldValidationRule" />
-        <behavior:ValidateOnProgrammaticalyValueChangeBehavior x:Key="ValidateOnProgrammaticalyValueChangeBehavior" />
-
     </Page.Resources>
 
 
@@ -46,10 +42,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox x:Name="Name">
-                    <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.Name" />
-                    </i:Interaction.Behaviors>
+                <TextBox>
                     <TextBox.Text>
                         <Binding Path="ViewModel.FlowStep.Name" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -61,7 +54,7 @@
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
-                    Text="{Binding ElementName=Name, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
             <!--  FlowParameter  -->
@@ -70,20 +63,6 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select search area from parameters(leave empty for all monitor search)</Label>
-                <!--  value (hidden)  -->
-                <TextBox x:Name="FlowParameter" Visibility="Collapsed">
-                    <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.FlowParameter" />
-                    </i:Interaction.Behaviors>
-                    <TextBox.Text>
-                        <Binding Path="ViewModel.FlowStep.FlowParameter" UpdateSourceTrigger="PropertyChanged">
-                            <Binding.ValidationRules>
-                                <rules:FormFieldValidationRule PropertyPath="FlowStep.FlowParameter" />
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
-                <!--  ComboBox  -->
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
@@ -106,7 +85,7 @@
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
-                    Text="{Binding ElementName=FlowParameter, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.FlowParameter], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -116,20 +95,6 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select match mode:</Label>
-                <!--  value (hidden)  -->
-                <TextBox x:Name="TemplateMatchMode" Visibility="Collapsed">
-                    <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.TemplateMatchMode" />
-                    </i:Interaction.Behaviors>
-                    <TextBox.Text>
-                        <Binding Path="ViewModel.FlowStep.TemplateMatchMode" UpdateSourceTrigger="PropertyChanged">
-                            <Binding.ValidationRules>
-                                <rules:FormFieldValidationRule PropertyPath="FlowStep.TemplateMatchMode" />
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
-                <!--  ComboBox  -->
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.MatchModes}"
@@ -138,7 +103,7 @@
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
-                    Text="{Binding ElementName=TemplateMatchMode, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.TemplateMatchMode], FallbackValue=''}" />
             </StackPanel>
 
             <!--  Image import  -->
@@ -148,7 +113,6 @@
                 HorizontalAlignment="Left">
                 <Label>Select image for search:</Label>
                 <StackPanel Orientation="Horizontal">
-
                     <Button Content="Open file">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Click">
@@ -169,19 +133,7 @@
 
             <!--  Template Image  -->
             <StackPanel Margin="10">
-                <!--  value (hidden)  -->
-                <TextBox x:Name="TemplateImage" Visibility="Collapsed">
-                    <i:Interaction.Behaviors>
-                        <behavior:ValidateOnProgrammaticalyValueChangeBehavior PropertyPath="FlowStep.TemplateImage" />
-                    </i:Interaction.Behaviors>
-                    <TextBox.Text>
-                        <Binding Path="ViewModel.FlowStep.TemplateImage" UpdateSourceTrigger="PropertyChanged">
-                            <Binding.ValidationRules>
-                                <rules:FormFieldValidationRule PropertyPath="FlowStep.TemplateImage" />
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
+
                 <!--  image  -->
                 <Image
                     MaxWidth="100"
@@ -197,13 +149,13 @@
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
-                    Text="{Binding ElementName=TemplateImage, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.TemplateImage], FallbackValue=''}" />
             </StackPanel>
 
 
             <!--  Accuracy  -->
             <StackPanel MinWidth="200" Margin="0,0,0,0">
-                <TextBox x:Name="AccuracyTextBox">
+                <TextBox>
                     <TextBox.Text>
                         <Binding Path="ViewModel.FlowStep.Accuracy" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -215,7 +167,7 @@
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"
-                    Text="{Binding ElementName=AccuracyTextBox, Path=(Validation.Errors)[0].ErrorContent, FallbackValue=''}" />
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Accuracy], FallbackValue=''}" />
             </StackPanel>
 
 

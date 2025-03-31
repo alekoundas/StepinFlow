@@ -82,6 +82,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override void OnPageExit()
         {
+            base.OnPageExit();
             _keyboardListenerService.UnregisterAllListeners();
         }
 

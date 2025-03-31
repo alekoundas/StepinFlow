@@ -178,6 +178,8 @@ namespace StepinFlow.ViewModels.Pages
         }
         public override void OnPageExit()
         {
+            base.OnPageExit();
+
             //SelectedFlowParameter = null;
             TestResultImage = null;
         }
@@ -185,21 +187,21 @@ namespace StepinFlow.ViewModels.Pages
         {
             Dictionary<string, List<string>> errors = new Dictionary<string, List<string>>();
 
-            //errors["FlowStep.Name"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name));
-            //errors["FlowStep.Accuracy"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy));
-            //errors["FlowStep.TemplateImage"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage));
-            //errors["FlowStep.FlowParameter"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter?.Id));
-            //errors["FlowStep.TemplateMatchMode"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode));
+            errors["FlowStep.Name"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name));
+            errors["FlowStep.Accuracy"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy));
+            errors["FlowStep.TemplateImage"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage));
+            errors["FlowStep.FlowParameter"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter));
+            errors["FlowStep.TemplateMatchMode"] = new List<string>(_formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode));
 
-            //ValidationHelper.ClearErrors();
-            //foreach (var error in errors)
-            //    foreach (var errorMessage in error.Value)
-            //        ValidationHelper.AddError(error.Key, errorMessage);
+            ValidationHelper.ClearErrors();
+            foreach (var error in errors)
+                foreach (var errorMessage in error.Value)
+                    ValidationHelper.AddError(error.Key, errorMessage);
 
 
             if (ValidationHelper.HasErrors())
             {
-                OnPropertyChanged("FlowStep");
+                //OnPropertyChanged("FlowStep");
                 //OnPropertyChanged("FlowStep.Name");
                 //OnPropertyChanged("FlowStep.Accuracy");
                 //OnPropertyChanged("FlowStep.TemplateImage");

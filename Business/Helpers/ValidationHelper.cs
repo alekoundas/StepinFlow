@@ -1,16 +1,13 @@
-﻿namespace Business.Helpers
+﻿using System.Windows.Controls;
+
+namespace Business.Helpers
 {
     public static class ValidationHelper
     {
         private static readonly Dictionary<string, List<string>> _validationErrors = new Dictionary<string, List<string>>();
 
-        public static void ClearErrors(string? propertyPath = null)
-        {
-            if (propertyPath != null && _validationErrors.Any(x => x.Key == propertyPath))
-                _validationErrors[propertyPath].Clear();
-            else
-                _validationErrors.Clear();
-        }
+        // Event to notify when errors change
+        public static event EventHandler<string> ErrorsChanged;
 
         public static bool HasErrors(string? propertyPath = null)
         {
@@ -20,20 +17,36 @@
                 return _validationErrors.Any();
         }
 
+
+        public static void ClearErrors(string? propertyPath = null)
+        {
+            if (propertyPath != null && _validationErrors.ContainsKey(propertyPath))
+                _validationErrors[propertyPath].Clear();
+            else
+                _validationErrors.Clear();
+
+            ErrorsChanged?.Invoke(null, propertyPath);
+        }
+
         public static void AddError(string propertyPath, string error)
         {
-            if (_validationErrors.Any(x => x.Key == propertyPath))
+            if (_validationErrors.ContainsKey(propertyPath))
                 _validationErrors[propertyPath].Add(error);
             else
                 _validationErrors.Add(propertyPath, new List<string> { error });
+
+            ErrorsChanged?.Invoke(null, propertyPath);
         }
 
-        public static List<string> GetErrors(string propertyPath)
+        public static Dictionary<string, string> GetAllErrors()
         {
-            if (_validationErrors.Any(x => x.Key == propertyPath))
-                return _validationErrors[propertyPath];
+            return _validationErrors.ToDictionary(x=> x.Key,x => string.Join("\n", x.Value));
+        }
 
-            return new List<string>();
+        public static string GetError(string propertyPath)
+        {
+            _validationErrors.TryGetValue(propertyPath, out List<string> errors);
+            return string.Join("\n", errors);
         }
     }
 }

@@ -10,13 +10,23 @@ namespace Business.BaseViewModels
     {
         private readonly IDataService _dataService;
 
-
+        [ObservableProperty]
+        protected Dictionary<string, string> _validationErrors = new Dictionary<string, string>();
 
         [ObservableProperty]
         protected FlowStep _flowStep = new FlowStep();
+
         public BaseFlowStepDetailVM(IDataService dataService)
         {
             _dataService = dataService;
+
+            // Everytime the ValidationHelpers errors change update the observable.
+            ValidationHelper.ErrorsChanged += (object sender, string propertyPath) =>
+            {
+                ValidationErrors = ValidationHelper.GetAllErrors();
+                // Notify the UI that ValidationErrors has changed
+                //OnPropertyChanged(nameof(ValidationErrors));
+            };
         }
 
         public virtual async Task LoadFlowStepId(int flowStepId)
@@ -49,11 +59,13 @@ namespace Business.BaseViewModels
                 FlowStep = new FlowStep();
             else
                 await LoadFlowStepId(FlowStep.Id);
+
+            ValidationHelper.ClearErrors();
         }
 
         public virtual void OnPageExit()
         {
-
+            ValidationHelper.ClearErrors();
         }
 
         public FlowStep GetFlowStep()
