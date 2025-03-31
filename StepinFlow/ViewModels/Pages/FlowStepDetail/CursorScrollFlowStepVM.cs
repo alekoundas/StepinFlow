@@ -1,16 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Model.Models;
 using Model.Enums;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
 using Business.Helpers;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
     public partial class CursorScrollFlowStepVM : BaseFlowStepDetailVM
     {
         private readonly IDataService _dataService;
+        private readonly IFormValidationFactory _formValidationFactory;
         //public override event Action<int> OnSave;
 
 
@@ -18,9 +19,10 @@ namespace StepinFlow.ViewModels.Pages
         private IEnumerable<CursorScrollDirectionEnum> _mouseScrollDirectionEnum;
 
 
-        public CursorScrollFlowStepVM(IDataService dataService) : base(dataService)
+        public CursorScrollFlowStepVM(IDataService dataService, IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
+            _formValidationFactory = formValidationFactory;
 
             MouseScrollDirectionEnum = Enum.GetValues(typeof(CursorScrollDirectionEnum)).Cast<CursorScrollDirectionEnum>();
         }
@@ -36,6 +38,14 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.MouseScrollDirectionEnum").Validate(FlowStep.CursorScrollDirection);
+            _formValidationFactory.CreateValidator("FlowStep.LoopCount").Validate(FlowStep.LoopCount);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
             // Edit mode
             if (FlowStep.Id > 0)
             {

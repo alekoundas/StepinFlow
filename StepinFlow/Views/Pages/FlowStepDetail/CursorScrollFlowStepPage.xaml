@@ -35,6 +35,10 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
             <!--  Scroll direction  -->
@@ -44,6 +48,10 @@
                 HorizontalAlignment="Left">
                 <Label>Scroll direction:</Label>
                 <ComboBox ItemsSource="{Binding ViewModel.MouseScrollDirectionEnum}" SelectedItem="{Binding ViewModel.FlowStep.CursorScrollDirection}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.CursorScrollDirection], FallbackValue=''}" />
             </StackPanel>
 
             <!--  Scroll steps  -->
@@ -53,6 +61,10 @@
                 HorizontalAlignment="Left">
                 <Label>Scroll steps:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.LoopCount}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.LoopCount], FallbackValue=''}" />
             </StackPanel>
         </StackPanel>
 

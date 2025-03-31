@@ -72,6 +72,16 @@ namespace Business.Factories.FormValidationFactory
                     worker.SetPropertyName(propertyName);
                     break;
 
+                case "FlowStep.CursorScrollDirection":
+                    worker = _serviceProvider.GetRequiredService<CursorScrollDirectionFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.LoopCount":
+                    worker = _serviceProvider.GetRequiredService<LoopCountFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }

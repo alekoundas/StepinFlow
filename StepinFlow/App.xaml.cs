@@ -110,6 +110,8 @@ namespace StepinFlow
                 services.AddSingleton<CursorRelocationTypeFormValidationWorker>();
                 services.AddSingleton<ParentTemplateSearchFlowStepFormValidationWorker>();
                 services.AddSingleton<LocationFormValidationWorker>();
+                services.AddSingleton<CursorScrollDirectionFormValidationWorker>();
+                services.AddSingleton<LoopCountFormValidationWorker>();
 
 
                 // User Controls.
