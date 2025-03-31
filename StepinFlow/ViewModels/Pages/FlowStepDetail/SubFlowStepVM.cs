@@ -5,6 +5,7 @@ using Business.BaseViewModels;
 using System.Collections.ObjectModel;
 using Business.Services.Interfaces;
 using Business.Helpers;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -12,16 +13,21 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly IDataService _dataService;
         private readonly ICloneService _cloneService;
+        private readonly IFormValidationFactory _formValidationFactory;
 
         [ObservableProperty]
         private bool _isEnabled;
         [ObservableProperty]
         private ObservableCollection<Flow> _subFlows = new ObservableCollection<Flow>();
 
-        public SubFlowStepVM(IDataService dataService, ICloneService cloneService) : base(dataService)
+        public SubFlowStepVM(
+            IDataService dataService, 
+            ICloneService cloneService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
             _cloneService = cloneService;
+            _formValidationFactory = formValidationFactory;
         }
 
 
@@ -52,6 +58,14 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.SubFlow").Validate(FlowStep.SubFlow);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
             // Edit is disabled.
             // Edit mode
             if (FlowStep.Id > 0)

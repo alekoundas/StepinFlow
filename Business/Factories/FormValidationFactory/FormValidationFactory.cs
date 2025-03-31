@@ -87,6 +87,11 @@ namespace Business.Factories.FormValidationFactory
                     worker.SetPropertyName(propertyName);
                     break;
 
+                case "FlowStep.SubFlow":
+                    worker = _serviceProvider.GetRequiredService<SubFlowFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
                 default:
                     throw new ArgumentException($"No validator defined for {propertyName}.");
             }
