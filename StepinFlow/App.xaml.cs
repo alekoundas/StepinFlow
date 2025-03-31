@@ -113,6 +113,7 @@ namespace StepinFlow
                 services.AddSingleton<CursorScrollDirectionFormValidationWorker>();
                 services.AddSingleton<LoopCountFormValidationWorker>();
                 services.AddSingleton<SubFlowFormValidationWorker>();
+                services.AddSingleton<ProcessNameFormValidationWorker>();
 
 
                 // User Controls.
