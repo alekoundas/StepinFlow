@@ -6,11 +6,11 @@ using Model.Business;
 using Model.Enums;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Drawing;
 using Business.BaseViewModels;
 using System.Windows.Input;
 using StepinFlow.Interfaces;
 using Business.Services.Interfaces;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -20,6 +20,7 @@ namespace StepinFlow.ViewModels.Pages
         private readonly ITemplateSearchService _templateMatchingService;
         private readonly IWindowService _windowService;
         private readonly IDataService _dataService;
+        private readonly IFormValidationFactory _formValidationFactory;
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
@@ -34,13 +35,16 @@ namespace StepinFlow.ViewModels.Pages
             ISystemService systemService, 
             ITemplateSearchService templateMatchingService, 
             IDataService dataService,
-            IWindowService windowService) : base(dataService)
+            IWindowService windowService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
+
         {
 
             _dataService = dataService;
             _systemService = systemService;
             _templateMatchingService = templateMatchingService;
             _windowService = windowService;
+            _formValidationFactory = formValidationFactory;
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
@@ -160,6 +164,18 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy);
+            _formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage);
+            _formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter);
+            _formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
+
             // Edit mode
             if (FlowStep.Id > 0)
             {

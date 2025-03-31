@@ -39,6 +39,10 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
             <!--  FlowParameter  -->
@@ -63,6 +67,10 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.FlowParameter], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -76,6 +84,10 @@
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.MatchModes}"
                     SelectedItem="{Binding ViewModel.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.TemplateMatchMode], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -107,16 +119,25 @@
 
 
             <!--  Template Image  -->
-            <Image
-                MaxWidth="100"
-                MaxHeight="100"
-                Source="{Binding ViewModel.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="MouseDown">
-                        <i:InvokeCommandAction Command="{Binding ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </Image>
+            <StackPanel Margin="10">
+
+                <!--  image  -->
+                <Image
+                    MaxWidth="100"
+                    MaxHeight="100"
+                    Source="{Binding ViewModel.FlowStep.TemplateImage, Converter={StaticResource ImageNullConverter}}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDown">
+                            <i:InvokeCommandAction Command="{Binding ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Image>
+                <!--  error message  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.TemplateImage], FallbackValue=''}" />
+            </StackPanel>
 
             <!--  Accuracy  -->
             <StackPanel
@@ -125,6 +146,10 @@
                 HorizontalAlignment="Left">
                 <Label>Select minimum accuracy:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Accuracy, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Accuracy], FallbackValue=''}" />
             </StackPanel>
 
 
