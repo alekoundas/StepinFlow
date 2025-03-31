@@ -114,6 +114,8 @@ namespace StepinFlow
                 services.AddSingleton<LoopCountFormValidationWorker>();
                 services.AddSingleton<SubFlowFormValidationWorker>();
                 services.AddSingleton<ProcessNameFormValidationWorker>();
+                services.AddSingleton<HeightFormValidationWorker>();
+                services.AddSingleton<WidthFormValidationWorker>();
 
 
                 // User Controls.

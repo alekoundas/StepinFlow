@@ -5,6 +5,7 @@ using Model.Structs;
 using Business.Helpers;
 using Business.BaseViewModels;
 using Business.Services.Interfaces;
+using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -12,14 +13,19 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly ISystemService _systemService;
         private readonly IDataService _dataService;
+        private readonly IFormValidationFactory _formValidationFactory;
 
         [ObservableProperty]
         private List<string> _processList = SystemProcessHelper.GetProcessWindowTitles();
 
-        public WindowResizeFlowStepVM(ISystemService systemService, IDataService dataService) : base(dataService)
+        public WindowResizeFlowStepVM(
+            ISystemService systemService, 
+            IDataService dataService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
         {
             _dataService = dataService;
             _systemService = systemService;
+            _formValidationFactory = formValidationFactory;
         }
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
@@ -61,6 +67,17 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.ProcessName").Validate(FlowStep.ProcessName);
+            _formValidationFactory.CreateValidator("FlowStep.Width").Validate(FlowStep.Width);
+            _formValidationFactory.CreateValidator("FlowStep.Height").Validate(FlowStep.Height);
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
+
             // Edit mode
             if (FlowStep.Id > 0)
             {

@@ -1,5 +1,6 @@
 ﻿using Business.Factories.FormValidationFactory.Workers;
 using Microsoft.Extensions.DependencyInjection;
+using System.Windows.Media.Media3D;
 
 namespace Business.Factories.FormValidationFactory
 {
@@ -94,6 +95,16 @@ namespace Business.Factories.FormValidationFactory
 
                 case "FlowStep.ProcessName":
                     worker = _serviceProvider.GetRequiredService<ProcessNameFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.Height":
+                    worker = _serviceProvider.GetRequiredService<HeightFormValidationWorker>();
+                    worker.SetPropertyName(propertyName);
+                    break;
+
+                case "FlowStep.Width":
+                    worker = _serviceProvider.GetRequiredService<WidthFormValidationWorker>();
                     worker.SetPropertyName(propertyName);
                     break;
 

@@ -33,6 +33,10 @@
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Name], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -53,6 +57,10 @@
                         </i:Interaction.Triggers>
                     </Button>
                 </StackPanel>
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.ProcessName], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -65,6 +73,10 @@
                 HorizontalAlignment="Left">
                 <Label>Width:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Width, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Width], FallbackValue=''}" />
             </StackPanel>
 
             <!--  Height  -->
@@ -74,6 +86,10 @@
                 HorizontalAlignment="Left">
                 <Label>Height:</Label>
                 <TextBox Text="{Binding ViewModel.FlowStep.Height, Mode=TwoWay}" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.Height], FallbackValue=''}" />
             </StackPanel>
 
 
