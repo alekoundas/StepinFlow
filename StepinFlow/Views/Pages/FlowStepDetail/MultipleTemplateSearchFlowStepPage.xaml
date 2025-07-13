@@ -68,6 +68,11 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+                <!--  error message  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.FlowParameter], FallbackValue=''}" />
             </StackPanel>
 
 

@@ -46,7 +46,22 @@ namespace Business.Services
 
             Mat matTemplate = OpenCvSharp.WpfExtensions.BitmapSourceConverter.ToMat(template.ToBitmapSource());
             Mat matScreenshot = OpenCvSharp.WpfExtensions.BitmapSourceConverter.ToMat(screenshot.ToBitmapSource());
-            Mat result = matScreenshot.MatchTemplate(matTemplate, matchMode);
+            Mat result;
+            //Mat result = matScreenshot.MatchTemplate(matTemplate, matchMode);
+            //OpenCvSharp.OpenCVException: '_img.size().height <= _templ.size().height && _img.size().width <= _templ.size().width'
+            if (matScreenshot.Height <= matTemplate.Height || matScreenshot.Width <= matTemplate.Width)
+            {
+                return new TemplateMatchingResult()
+                {
+                    ResultRectangle = new Rectangle(),
+                    Confidence = 0,
+                    ResultImage = Array.Empty<byte>(),
+                    IsFailed = true,
+                    FailiureMessage = "Screenshot is smaller than template image."
+                };
+            }
+            else
+                result = matScreenshot.MatchTemplate(matTemplate, matchMode);
 
             // Execute search.
             result.MinMaxLoc(out double minConfidence,

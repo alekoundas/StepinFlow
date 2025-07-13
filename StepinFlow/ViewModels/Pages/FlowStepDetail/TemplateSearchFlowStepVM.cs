@@ -193,7 +193,7 @@ namespace StepinFlow.ViewModels.Pages
             _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
             _formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(FlowStep.Accuracy);
             _formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(FlowStep.TemplateImage);
-            _formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter);
+            //_formValidationFactory.CreateValidator("FlowStep.FlowParameter").Validate(FlowStep.FlowParameter);
             _formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode);
 
             if (ValidationHelper.HasErrors())
@@ -211,6 +211,7 @@ namespace StepinFlow.ViewModels.Pages
                 updateFlowStep.RemoveTemplateFromResult = FlowStep.RemoveTemplateFromResult;
                 updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
                 updateFlowStep.LoopMaxCount = FlowStep.LoopMaxCount;
+                updateFlowStep.FlowParameterId = FlowStep.FlowParameterId;
 
                 await _dataService.UpdateAsync(updateFlowStep);
             }
@@ -263,6 +264,7 @@ namespace StepinFlow.ViewModels.Pages
                 };
 
                 FlowStep.IsExpanded = true;
+                FlowStep.FlowParameter = null;
                 await _dataService.FlowSteps.AddAsync(FlowStep);
 
             }

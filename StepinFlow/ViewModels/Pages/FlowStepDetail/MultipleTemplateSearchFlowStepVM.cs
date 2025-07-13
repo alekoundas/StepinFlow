@@ -55,21 +55,25 @@ namespace StepinFlow.ViewModels.Pages
         {
             ValidationHelper.ErrorsChanged += OnErrorsChange;
             TestResultImage = null;
+
+            // Load lookup.
+            List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(flowStepId);
+            flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
+            FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+
+
+            // Load form entity.
             FlowStep? flowStep = await _dataService.FlowSteps
                 .Include(x => x.ChildrenTemplateSearchFlowSteps)
                 .Include(x => x.FlowParameter)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
+
 
             if (flowStep != null)
             {
                 FlowStep = flowStep;
                 List<FlowStep> flowSteps = flowStep.ChildrenTemplateSearchFlowSteps.Where(x => x.Type == FlowStepTypesEnum.MULTIPLE_TEMPLATE_SEARCH_CHILD).ToList();
                 ChildrenTemplateSearchFlowSteps = new ObservableCollection<FlowStep>(flowSteps);
-
-
-                List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(flowStepId);
-                flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
-                FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
             }
         }
 
@@ -271,6 +275,7 @@ namespace StepinFlow.ViewModels.Pages
             {
                 FlowStep updateFlowStep = await _dataService.FlowSteps.FirstAsync(x => x.Id == FlowStep.Id);
                 updateFlowStep.Name = FlowStep.Name;
+                updateFlowStep.FlowParameterId = FlowStep.FlowParameterId;
                 updateFlowStep.TemplateMatchMode = FlowStep.TemplateMatchMode;
 
                 await _dataService.UpdateRangeAsync(ChildrenTemplateSearchFlowSteps.Where(x => x.Id > 0).ToList());
@@ -329,6 +334,7 @@ namespace StepinFlow.ViewModels.Pages
 
                 FlowStep.IsExpanded = true;
                 FlowStep.ChildrenTemplateSearchFlowSteps = ChildrenTemplateSearchFlowSteps;
+                FlowStep.FlowParameter = null;
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
 

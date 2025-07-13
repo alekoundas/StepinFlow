@@ -164,6 +164,7 @@ namespace Business.Factories.ExecutionFactory.Workers
                     if (File.Exists(parentLoopExecution.TempResultImagePath))
                         File.Delete(parentLoopExecution.TempResultImagePath);
 
+            if (_pendingExecutionLoops.ContainsKey(execution.FlowStep.Id))
             _pendingExecutionLoops[execution.FlowStep.Id].Clear();
 
             // If not, get next sibling flow step. 
