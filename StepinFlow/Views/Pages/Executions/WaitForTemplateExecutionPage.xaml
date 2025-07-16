@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:System="clr-namespace:System;assembly=mscorlib"
+    xmlns:controls="clr-namespace:StepinFlow.Views.UserControls"
     xmlns:converters="clr-namespace:StepinFlow.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enum="clr-namespace:Model.Enums;assembly=Model"
@@ -129,44 +130,9 @@
             </StackPanel>
 
 
-            <Label>4. Retry search after:</Label>
-
-            <!--  WaitForHours  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Set hours:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForHours, Mode=TwoWay}" />
-            </StackPanel>
-
-
-            <!--  WaitForMinutes  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Set minutes:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForMinutes, Mode=TwoWay}" />
-            </StackPanel>
-
-            <!--  WaitForSeconds  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Set seconds:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForSeconds, Mode=TwoWay}" />
-            </StackPanel>
-
-            <!--  WaitForMilliseconds  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Set milliseconds:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.WaitForMilliseconds, Mode=TwoWay}" />
-            </StackPanel>
+            <!--  WaitFor  -->
+            <Label>Retry search after:</Label>
+            <controls:TimeSpanInputUserControl x:Name="TimeInputControl" />
 
 
 

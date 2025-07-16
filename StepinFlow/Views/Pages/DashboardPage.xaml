@@ -2,6 +2,7 @@
     x:Class="StepinFlow.Views.Pages.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:StepinFlow.Views.UserControls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:StepinFlow.Views.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -16,31 +17,54 @@
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     mc:Ignorable="d">
 
-    <Grid VerticalAlignment="Top">
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height=".2*" />
-            <RowDefinition Height=".2*" />
-            <RowDefinition Height=".2*" />
-            <RowDefinition Height=".2*" />
-            <RowDefinition Height=".2*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="15" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width=".1*" />
-            <ColumnDefinition Width="15" />
-        </Grid.ColumnDefinitions>
 
-        <!--<ui:Button
-        Grid.Column="0"
-        Command="{Binding ViewModel.CounterIncrementCommand, Mode=OneWay}"
-        Content="Click me!"
-        Icon="Fluent24" />-->
 
+        <!--<controls:TimeSpanInputUserControl
+        x:Name="TimeInputControl"
+        Grid.Row="1"
+        HorizontalAlignment="Center"
+        TotalMilliseconds="{Binding TotalMilliseconds, UpdateSourceTrigger=PropertyChanged}" />-->
+        <!--
+        Hours="{Binding Hours, UpdateSourceTrigger=PropertyChanged}"
+        Milliseconds="{Binding Milliseconds, UpdateSourceTrigger=PropertyChanged}"
+        Minutes="{Binding Minutes, UpdateSourceTrigger=PropertyChanged}"
+        Seconds="{Binding Seconds, UpdateSourceTrigger=PropertyChanged}"
+        -->
+
+
+        <!--<StackPanel Orientation="Horizontal">
+        <TextBox
+        x:Name="HoursTextBox"
+        Width="40"
+        MaxLength="2"
+        Text="{Binding Hours, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBlock Margin="2,0" Text=":" />
+        <TextBox
+        x:Name="MinutesTextBox"
+        Width="40"
+        MaxLength="2"
+        Text="{Binding Minutes, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBlock Margin="2,0" Text=":" />
+        <TextBox
+        x:Name="SecondsTextBox"
+        Width="40"
+        MaxLength="2"
+        Text="{Binding Seconds, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBlock Margin="2,0" Text="." />
+        <TextBox
+        x:Name="MillisecondsTextBox"
+        Width="60"
+        MaxLength="3"
+        Text="{Binding Milliseconds, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>-->
     </Grid>
 </Page>

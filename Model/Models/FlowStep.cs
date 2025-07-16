@@ -59,17 +59,21 @@ namespace Model.Models
         public CursorRelocationTypesEnum? _cursorRelocationType;
 
         //System
-        [ObservableProperty]
-        public int _waitForHours;
+        //[ObservableProperty]
+        //public int _waitForHours;
+
+        //[ObservableProperty]
+        //public int _waitForMinutes;
+
+        //[ObservableProperty]
+        //public int _waitForSeconds;
+
+        //[ObservableProperty]
+        //public int _waitForMilliseconds;
 
         [ObservableProperty]
-        public int _waitForMinutes;
+        public int _milliseconds;
 
-        [ObservableProperty]
-        public int _waitForSeconds;
-
-        [ObservableProperty]
-        public int _waitForMilliseconds;
 
         // Window
         [ObservableProperty]

@@ -20,6 +20,9 @@ namespace StepinFlow.Views.Pages.FlowStepDetail
             FlowStepViewModel = ViewModel;
             DataContext = this;
             InitializeComponent();
+
+
+            viewModel.TimeSpanInputUserControl = TimeInputControl;
         }
     }
 }

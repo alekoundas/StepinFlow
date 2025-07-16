@@ -125,8 +125,11 @@ namespace StepinFlow
                 services.AddTransient<FrameDetailUserControl>();
                 services.AddTransient<FrameDetailUserControlVM>();
 
+                services.AddTransient<TimeSpanInputUserControl>();
+                services.AddTransient<TimeSpanInputUserControlVM>();
 
-                
+
+
                 // Pages.
                 services.AddTransient<DashboardPage>();
                 services.AddTransient<DashboardVM>();

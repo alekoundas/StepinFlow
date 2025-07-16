@@ -1,8 +1,6 @@
 ﻿using Business.Factories.ExecutionFactory;
 using Business.Services.Interfaces;
-using Model.Enums;
 using Model.Models;
-using System.Threading;
 
 namespace Business.Factories.ExecutionFactory.Workers
 {
@@ -25,17 +23,9 @@ namespace Business.Factories.ExecutionFactory.Workers
             if (execution.FlowStep == null)
                 return;
 
-            int miliseconds = 0;
-
-            miliseconds += execution.FlowStep.WaitForMilliseconds;
-            miliseconds += execution.FlowStep.WaitForSeconds * 1000;
-            miliseconds += execution.FlowStep.WaitForMinutes * 60 * 1000;
-            miliseconds += execution.FlowStep.WaitForHours * 60 * 60 * 1000;
-
-
             try
             {
-                await Task.Delay(miliseconds, _cancellationToken.Token);
+                await Task.Delay(execution.FlowStep.Milliseconds, _cancellationToken.Token);
             }
             catch (TaskCanceledException) { return; }
         }

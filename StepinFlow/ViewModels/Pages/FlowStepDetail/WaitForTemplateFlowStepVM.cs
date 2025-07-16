@@ -1,16 +1,17 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Model.Models;
+﻿using Business.BaseViewModels;
+using Business.Factories.FormValidationFactory;
 using Business.Helpers;
+using Business.Services.Interfaces;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Model.Business;
 using Model.Enums;
+using Model.Models;
+using StepinFlow.Interfaces;
+using StepinFlow.Views.UserControls;
 using System.Collections.ObjectModel;
 using System.IO;
-using Business.BaseViewModels;
 using System.Windows.Input;
-using StepinFlow.Interfaces;
-using Business.Services.Interfaces;
-using Business.Factories.FormValidationFactory;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -21,6 +22,7 @@ namespace StepinFlow.ViewModels.Pages
         private readonly IWindowService _windowService;
         private readonly IDataService _dataService;
         private readonly IFormValidationFactory _formValidationFactory;
+        public TimeSpanInputUserControl TimeSpanInputUserControl;
 
         [ObservableProperty]
         private byte[]? _testResultImage = null;
@@ -63,6 +65,8 @@ namespace StepinFlow.ViewModels.Pages
             List<FlowParameter> flowParameters = await _dataService.FlowParameters.FindParametersFromFlowStep(flowStepId);
             flowParameters = flowParameters.Where(x => x.Type == FlowParameterTypesEnum.TEMPLATE_SEARCH_AREA).ToList();
             FlowParameters = new ObservableCollection<FlowParameter>(flowParameters);
+
+            TimeSpanInputUserControl.ViewModel.SetFromTotalMilliseconds(FlowStep.Milliseconds);
 
         }
 
@@ -183,10 +187,11 @@ namespace StepinFlow.ViewModels.Pages
                 updateFlowStep.Accuracy = FlowStep.Accuracy;
                 updateFlowStep.Name = FlowStep.Name;
                 updateFlowStep.ProcessName = FlowStep.ProcessName;
-                updateFlowStep.WaitForHours = FlowStep.WaitForHours;
-                updateFlowStep.WaitForMinutes = FlowStep.WaitForMinutes;
-                updateFlowStep.WaitForSeconds = FlowStep.WaitForSeconds;
-                updateFlowStep.WaitForMilliseconds = FlowStep.WaitForMilliseconds;
+                updateFlowStep.Milliseconds = TimeSpanInputUserControl.ViewModel.TotalMilliseconds;
+                //updateFlowStep.WaitForHours = FlowStep.WaitForHours;
+                //updateFlowStep.WaitForMinutes = FlowStep.WaitForMinutes;
+                //updateFlowStep.WaitForSeconds = FlowStep.WaitForSeconds;
+                //updateFlowStep.WaitForMilliseconds = FlowStep.WaitForMilliseconds;
                 await _dataService.UpdateAsync(updateFlowStep);
             }
 
@@ -227,6 +232,7 @@ namespace StepinFlow.ViewModels.Pages
                     successFlowStep,
                 };
 
+                FlowStep.Milliseconds = TimeSpanInputUserControl.ViewModel.TotalMilliseconds;
 
                 await _dataService.FlowSteps.AddAsync(FlowStep);
 

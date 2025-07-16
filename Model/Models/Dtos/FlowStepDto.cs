@@ -29,10 +29,11 @@ namespace Model.Models
         public CursorRelocationTypesEnum? CursorRelocationType { get; set; }
 
         // System
-        public int WaitForHours { get; set; }
-        public int WaitForMinutes { get; set; }
-        public int WaitForSeconds { get; set; }
-        public int WaitForMilliseconds { get; set; }
+        //public int WaitForHours { get; set; }
+        //public int WaitForMinutes { get; set; }
+        //public int WaitForSeconds { get; set; }
+        //public int WaitForMilliseconds { get; set; }
+        public int Milliseconds;
 
         // Window
         public int Height { get; set; }

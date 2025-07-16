@@ -13,12 +13,15 @@ namespace StepinFlow.Views.Pages.Executions
 
 
         public IExecutionViewModel ViewModel { get; set; }
-        public WaitExecutionPage()
+        public WaitExecutionPage(WaitExecutionVM viewModel)
         {
-            ViewModel = new WaitExecutionVM();
+            ViewModel = viewModel;
+            DataContext = this;
             FlowExecutionViewModel = ViewModel;
             InitializeComponent();
-            DataContext = this;
+
+            viewModel.TimeSpanInputUserControl = TimeInputControl;
+
         }
     }
 }

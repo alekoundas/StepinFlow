@@ -1,5 +1,6 @@
 ﻿using Business.Interfaces;
 using StepinFlow.ViewModels.Pages;
+using StepinFlow.Views.UserControls;
 using System.Windows.Controls;
 
 namespace StepinFlow.Views.Pages.FlowStepDetail
@@ -15,10 +16,13 @@ namespace StepinFlow.Views.Pages.FlowStepDetail
         public IFlowStepDetailVM ViewModel { get; set; }
         public WaitFlowStepPage(WaitFlowStepVM viewModel)
         {
+
             ViewModel = viewModel;
+            DataContext = this;
             FlowStepViewModel = ViewModel;
             InitializeComponent();
-            DataContext = this;
+
+            viewModel.TimeSpanInputUserControl = TimeInputControl;
         }
     }
 }

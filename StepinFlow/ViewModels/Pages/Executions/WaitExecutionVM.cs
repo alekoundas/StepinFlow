@@ -1,20 +1,22 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Business.Interfaces;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Model.Models;
-using Business.Interfaces;
+using StepinFlow.Views.UserControls;
 using System.Windows.Threading;
 
 namespace StepinFlow.ViewModels.Pages.Executions
 {
     public partial class WaitExecutionVM : ObservableObject, IExecutionViewModel
     {
+        public TimeSpanInputUserControl TimeSpanInputUserControl;
+
+
         [ObservableProperty]
         private Execution _execution;
 
         [ObservableProperty]
         private string _timeLeft = "";
 
-        [ObservableProperty]
-        private string _timeTotal = "";
 
         private readonly DispatcherTimer _timer;
         private TimeSpan _timeElapsed = new TimeSpan();
@@ -33,19 +35,10 @@ namespace StepinFlow.ViewModels.Pages.Executions
 
             if (Execution.FlowStep != null)
             {
-
-                int miliseconds = 0;
-                miliseconds += Execution.FlowStep.WaitForMilliseconds;
-                miliseconds += Execution.FlowStep.WaitForSeconds * 1000;
-                miliseconds += Execution.FlowStep.WaitForMinutes * 60 * 1000;
-                miliseconds += Execution.FlowStep.WaitForHours * 60 * 60 * 1000;
-
-                TimeTotal = TimeSpan.FromMilliseconds(miliseconds).ToString(@"hh\:mm\:ss");
-
-
+                TimeSpanInputUserControl.ViewModel.SetFromTotalMilliseconds(Execution.FlowStep.Milliseconds);
 
                 // Update every second
-                _timeElapsed = TimeSpan.FromMilliseconds(miliseconds);
+                _timeElapsed = TimeSpan.FromMilliseconds(Execution.FlowStep.Milliseconds);
 
                 void UpdateTimer(object sender, EventArgs e)
                 {

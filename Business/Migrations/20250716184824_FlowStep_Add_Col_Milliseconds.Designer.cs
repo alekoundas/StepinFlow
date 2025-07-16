@@ -3,6 +3,7 @@ using System;
 using Business.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Business.Migrations
 {
     [DbContext(typeof(InMemoryDbContext))]
-    partial class InMemoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250716184824_FlowStep_Add_Col_Milliseconds")]
+    partial class FlowStep_Add_Col_Milliseconds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.12");
@@ -309,6 +312,18 @@ namespace Business.Migrations
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("WaitForHours")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WaitForMilliseconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WaitForMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WaitForSeconds")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Width")
                         .HasColumnType("INTEGER");

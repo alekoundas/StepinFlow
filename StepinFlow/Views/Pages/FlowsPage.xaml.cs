@@ -9,7 +9,7 @@ namespace StepinFlow.Views.Pages
     {
         public FlowsVM ViewModel { get; }
 
-        public FlowsPage(FlowsVM viewModel, TreeViewUserControl treeViewUserControl)
+        public FlowsPage(FlowsVM viewModel)
         {
             ViewModel = viewModel;
             DataContext = this;

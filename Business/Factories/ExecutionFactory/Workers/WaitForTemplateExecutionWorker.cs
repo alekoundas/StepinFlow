@@ -110,15 +110,8 @@ namespace Business.Factories.ExecutionFactory.Workers
                 _resultImage = result.ResultImage;
 
 
-                int miliseconds = 0;
-
-                miliseconds += execution.FlowStep.WaitForMilliseconds;
-                miliseconds += execution.FlowStep.WaitForSeconds * 1000;
-                miliseconds += execution.FlowStep.WaitForMinutes * 60 * 1000;
-                miliseconds += execution.FlowStep.WaitForHours * 60 * 60 * 1000;
-
                 _resultImage = result.ResultImage;
-                Thread.Sleep(miliseconds);
+                Thread.Sleep(execution.FlowStep.Milliseconds);
 
             }
         }
