@@ -70,7 +70,7 @@ namespace StepinFlow.ViewModels.Pages
                 Parents = new ObservableCollection<FlowStep>(GetParents(FlowStep.ParentFlowStepId.Value));
 
 
-            KeyCombination _combination = new KeyCombination(ModifierKeys.None, Key.F4);
+            KeyCombination _combination = new KeyCombination(ModifierKeys.None, Key.F3);
             _keyboardListenerService.RegisterListener(_combination, () =>
             {
                 OnButtonRecordClick();
