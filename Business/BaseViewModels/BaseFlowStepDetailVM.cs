@@ -2,6 +2,7 @@
 using Business.Interfaces;
 using Business.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Model.Enums;
 using Model.Models;
 
 namespace Business.BaseViewModels
@@ -50,7 +51,11 @@ namespace Business.BaseViewModels
         public virtual async Task OnCancel()
         {
             if (FlowStep.Id == 0)
+            {
+                FlowStepTypesEnum flowStepType = FlowStep.Type;
                 FlowStep = new FlowStep();
+                FlowStep.Type = flowStepType;
+            }
             else
                 await LoadFlowStepId(FlowStep.Id);
 
