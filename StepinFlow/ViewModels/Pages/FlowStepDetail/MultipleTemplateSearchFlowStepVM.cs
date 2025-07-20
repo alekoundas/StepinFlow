@@ -1,16 +1,17 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Model.Models;
+﻿using Business.BaseViewModels;
+using Business.Factories.FormValidationFactory;
 using Business.Helpers;
+using Business.Services.Interfaces;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Model.Business;
 using Model.Enums;
+using Model.Models;
+using StepinFlow.Interfaces;
 using System.Collections.ObjectModel;
 using System.IO;
-using StepinFlow.Interfaces;
-using System.Windows.Media.Imaging;
 using System.Windows.Input;
-using Business.BaseViewModels;
-using Business.Services.Interfaces;
+using System.Windows.Media.Imaging;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -20,6 +21,7 @@ namespace StepinFlow.ViewModels.Pages
         private readonly ITemplateSearchService _templateMatchingService;
         private readonly IDataService _dataService;
         private readonly IWindowService _windowService;
+        private readonly IFormValidationFactory _formValidationFactory;
         //public override event Action<int> OnSave;
 
         [ObservableProperty]
@@ -40,13 +42,15 @@ namespace StepinFlow.ViewModels.Pages
             ISystemService systemService,
             ITemplateSearchService templateMatchingService,
             IDataService dataService,
-            IWindowService windowService) : base(dataService)
+            IWindowService windowService,
+            IFormValidationFactory formValidationFactory) : base(dataService)
 
         {
             _dataService = dataService;
             _systemService = systemService;
             _templateMatchingService = templateMatchingService;
             _windowService = windowService;
+            _formValidationFactory = formValidationFactory;
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
@@ -259,6 +263,22 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+
+            ValidationHelper.ClearErrors();
+            _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
+            _formValidationFactory.CreateValidator("FlowStep.TemplateMatchMode").Validate(FlowStep.TemplateMatchMode);
+
+            foreach (FlowStep flowStep in ChildrenTemplateSearchFlowSteps)
+            {
+                _formValidationFactory.CreateValidator("FlowStep.Accuracy").Validate(flowStep.Accuracy);
+                _formValidationFactory.CreateValidator("FlowStep.TemplateImage").Validate(flowStep.TemplateImage);
+            }
+
+            if (ValidationHelper.HasErrors())
+                return -1;
+
+
+
             // Remove flow steps that dont contain a template image.
             List<FlowStep> templateFlowSteps = ChildrenTemplateSearchFlowSteps
                 .Where(x => x.TemplateImage == null)

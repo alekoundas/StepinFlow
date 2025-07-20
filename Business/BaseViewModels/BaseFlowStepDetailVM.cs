@@ -12,7 +12,7 @@ namespace Business.BaseViewModels
         private readonly IDataService _dataService;
 
         [ObservableProperty]
-        protected Dictionary<string, string> _validationErrors = new Dictionary<string, string>();
+        protected Dictionary<string, string> validationErrors = new Dictionary<string, string>();
 
         [ObservableProperty]
         protected FlowStep _flowStep = new FlowStep();

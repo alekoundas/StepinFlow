@@ -86,6 +86,11 @@
                     VerticalAlignment="Center"
                     ItemsSource="{Binding ViewModel.MatchModes}"
                     SelectedItem="{Binding ViewModel.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
+                <!--  error message  -->
+                <TextBlock
+                    Margin="0,5,0,0"
+                    Foreground="Gold"
+                    Text="{Binding ViewModel.ValidationErrors[FlowStep.TemplateMatchMode], FallbackValue=''}" />
             </StackPanel>
 
 
@@ -100,10 +105,6 @@
                     Command="{Binding ViewModel.ButtonAddClickCommand}"
                     Content="Add" />
             </StackPanel>
-
-
-
-
 
 
             <!--  FlowStep Items  -->
@@ -217,18 +218,29 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!--  Template Image  -->
-                                <Image
-                                    MaxWidth="100"
-                                    MaxHeight="100"
-                                    Source="{Binding TemplateImage, Converter={StaticResource ImageNullConverter}}">
-                                    <i:Interaction.Triggers>
 
-                                        <i:EventTrigger EventName="MouseDown">
-                                            <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:MultipleTemplateSearchFlowStepPage}}, Path=ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
-                                        </i:EventTrigger>
-                                    </i:Interaction.Triggers>
-                                </Image>
+
+
+
+                                <!--  Template Image  -->
+                                <StackPanel Margin="10">
+                                    <!--  image  -->
+                                    <Image
+                                        MaxWidth="100"
+                                        MaxHeight="100"
+                                        Source="{Binding TemplateImage, Converter={StaticResource ImageNullConverter}}">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="MouseDown">
+                                                <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:MultipleTemplateSearchFlowStepPage}}, Path=ViewModel.TemplateImageDoubleClickCommand}" PassEventArgsToCommand="True" />
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </Image>
+                                    <!--  error message  -->
+                                    <TextBlock
+                                        Margin="0,5,0,0"
+                                        Foreground="Gold"
+                                        Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:MultipleTemplateSearchFlowStepPage}}, Path=ViewModel.ValidationErrors[FlowStep.TemplateImage], FallbackValue=''}" />
+                                </StackPanel>
 
 
                                 <!--  Accuracy  -->
@@ -238,7 +250,13 @@
                                     HorizontalAlignment="Left">
                                     <Label>Select minimum accuracy:</Label>
                                     <TextBox Text="{Binding Accuracy, Mode=TwoWay}" />
+                                    <!--  error message  -->
+                                    <TextBlock
+                                        Margin="0,5,0,0"
+                                        Foreground="Gold"
+                                        Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:MultipleTemplateSearchFlowStepPage}}, Path=ViewModel.ValidationErrors[FlowStep.Accuracy], FallbackValue=''}" />
                                 </StackPanel>
+
 
                                 <!--  IsLoop  -->
                                 <StackPanel

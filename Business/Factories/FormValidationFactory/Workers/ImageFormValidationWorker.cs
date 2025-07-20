@@ -1,6 +1,4 @@
 ﻿using Business.Helpers;
-using System.Globalization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Business.Factories.FormValidationFactory.Workers
 {
