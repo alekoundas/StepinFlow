@@ -131,17 +131,6 @@ namespace StepinFlow.ViewModels.Pages
 
         }
 
-        private long GetObjectSize(object obj)
-        {
-            JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings
-            {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                Formatting = Formatting.Indented
-            };
-
-            string json = JsonConvert.SerializeObject(obj, jsonSerializerSettings);
-            return Encoding.UTF8.GetByteCount(json); // Size in bytes
-        }
 
         private async Task ExecuteStepLoop(FlowStep? initialFlowStep, Execution parentExecution)
         {
@@ -184,8 +173,6 @@ namespace StepinFlow.ViewModels.Pages
                         flowStepExecution.FlowStep.TemplateImage = null;
 
                     ListBoxExecutions.Add(flowStepExecution);
-                 
-                    //ExecutionHistorySize = GetObjectSize(ListBoxExecutions);
                 });
 
 
@@ -209,12 +196,6 @@ namespace StepinFlow.ViewModels.Pages
                     stack.Push(nextFlowStep);
 
                 parentExecution = flowStepExecution;
-
-                //size = GetObjectSize(flowStepExecution); // See helper method below
-                //Console.WriteLine($"Execution {flowStepExecution.Id} size: {size} bytes");
-                //await tranasaction.CommitAsync();
-                //tranasaction.Dispose();
-                //_dataService.Dispose(true);
             }
         }
 
@@ -238,24 +219,6 @@ namespace StepinFlow.ViewModels.Pages
 
             ComboBoxExecutionHistories = new ObservableCollection<Execution>(executions);
             await TreeViewUserControl.ViewModel.LoadFlows(ComboBoxSelectedFlow.Id);
-        }
-
-
-
-
-
-        [RelayCommand]
-        private async Task OnButtonDeleteClick()
-        {
-
-            // Delete ALL rows.
-            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("DELETE FROM Executions;");
-
-            // Reclaim free space in database file.
-            await _dataService.CreateNewDbContext.Database.ExecuteSqlRawAsync("VACUUM;");
-
-            ComboBoxSelectedExecutionHistory = null;
-            ListBoxExecutions.Clear();
         }
 
 

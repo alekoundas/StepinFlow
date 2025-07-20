@@ -1,14 +1,15 @@
-﻿using Model.Models;
-using System.Windows;
-using CommunityToolkit.Mvvm.Input;
-using Model.Enums;
-using Microsoft.EntityFrameworkCore;
+﻿using Business.Extensions;
+using Business.Services;
+using Business.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
+using Model.Enums;
+using Model.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq.Expressions;
-using Business.Services.Interfaces;
-using Business.Extensions;
+using System.Windows;
 
 namespace StepinFlow.ViewModels.UserControls
 {
@@ -64,6 +65,7 @@ namespace StepinFlow.ViewModels.UserControls
 
         public async Task LoadFlows(int flowId = 0, bool isSubFlow = false)
         {
+            
             List<Expression<Func<Flow, bool>>> filters = new List<Expression<Func<Flow, bool>>>();
 
             if (isSubFlow)
@@ -107,6 +109,8 @@ namespace StepinFlow.ViewModels.UserControls
                 {
                     FlowsList = new ObservableCollection<Flow>(flows);
                 });
+
+                _loadFilters.Clear();
             });
         }
 
