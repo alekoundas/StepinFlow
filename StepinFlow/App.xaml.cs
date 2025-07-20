@@ -143,8 +143,8 @@ namespace StepinFlow
                 services.AddTransient<FlowsPage>();
                 services.AddTransient<FlowsVM>();
 
-                services.AddTransient<ExecutionPage>();
-                services.AddTransient<ExecutionVM>();
+                services.AddSingleton<ExecutionPage>();
+                services.AddSingleton<ExecutionVM>();
 
                 services.AddTransient<SettingsPage>();
                 services.AddTransient<SettingsVM>();
