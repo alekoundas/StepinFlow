@@ -47,7 +47,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Scroll direction:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.MouseScrollDirectionEnum}" SelectedItem="{Binding ViewModel.FlowStep.CursorScrollDirection}" />
+                <ComboBox ItemsSource="{Binding ViewModel.CursorScrollDirectionEnum}" SelectedItem="{Binding ViewModel.FlowStep.CursorScrollDirection}" />
                 <TextBlock
                     Margin="0,5,0,0"
                     Foreground="Gold"

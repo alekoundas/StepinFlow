@@ -16,7 +16,7 @@ namespace StepinFlow.ViewModels.Pages
 
 
         [ObservableProperty]
-        private IEnumerable<CursorScrollDirectionEnum> _mouseScrollDirectionEnum;
+        private IEnumerable<CursorScrollDirectionEnum> cursorScrollDirectionEnum;
 
 
         public CursorScrollFlowStepVM(IDataService dataService, IFormValidationFactory formValidationFactory) : base(dataService)
@@ -24,7 +24,7 @@ namespace StepinFlow.ViewModels.Pages
             _dataService = dataService;
             _formValidationFactory = formValidationFactory;
 
-            MouseScrollDirectionEnum = Enum.GetValues(typeof(CursorScrollDirectionEnum)).Cast<CursorScrollDirectionEnum>();
+            CursorScrollDirectionEnum = Enum.GetValues(typeof(CursorScrollDirectionEnum)).Cast<CursorScrollDirectionEnum>();
         }
 
         public override Task LoadNewFlowStep(FlowStep newFlowStep)
@@ -40,7 +40,7 @@ namespace StepinFlow.ViewModels.Pages
         {
             ValidationHelper.ClearErrors();
             _formValidationFactory.CreateValidator("FlowStep.Name").Validate(FlowStep.Name);
-            _formValidationFactory.CreateValidator("FlowStep.MouseScrollDirectionEnum").Validate(FlowStep.CursorScrollDirection);
+            _formValidationFactory.CreateValidator("FlowStep.CursorScrollDirection").Validate(FlowStep.CursorScrollDirection);
             _formValidationFactory.CreateValidator("FlowStep.LoopCount").Validate(FlowStep.LoopCount);
 
             if (ValidationHelper.HasErrors())

@@ -45,7 +45,7 @@
                 <Label>Scroll direction:</Label>
                 <ComboBox
                     IsEnabled="False"
-                    ItemsSource="{Binding ViewModel.MouseScrollDirectionEnum}"
+                    ItemsSource="{Binding ViewModel.CursorScrollDirectionEnum}"
                     SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorScrollDirection}" />
             </StackPanel>
 
