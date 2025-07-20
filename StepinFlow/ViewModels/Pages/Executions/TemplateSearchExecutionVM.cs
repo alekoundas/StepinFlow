@@ -1,4 +1,6 @@
 ﻿using Business.Interfaces;
+using Business.Services;
+using Business.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Model.Enums;
@@ -14,6 +16,7 @@ namespace StepinFlow.ViewModels.Pages.Executions
     public partial class TemplateSearchExecutionVM : ObservableObject, IExecutionViewModel
     {
         private readonly IWindowService _windowService;
+        private readonly IDataService _dataService;
 
         [ObservableProperty]
         private Execution _execution;
@@ -29,15 +32,16 @@ namespace StepinFlow.ViewModels.Pages.Executions
         private FlowParameter? _selectedFlowParameter = null;
 
 
-        public TemplateSearchExecutionVM(IWindowService windowService)
+        public TemplateSearchExecutionVM(IWindowService windowService, IDataService dataService)
         {
             _windowService = windowService;
+            _dataService = dataService;
             _execution = new Execution();
 
             MatchModes = Enum.GetValues(typeof(TemplateMatchModesEnum)).Cast<TemplateMatchModesEnum>();
         }
 
-        public Task SetExecution(Execution execution)
+        public async Task SetExecution(Execution execution)
         {
             FlowParameters.Clear();
             ResultImage = null;
@@ -53,8 +57,12 @@ namespace StepinFlow.ViewModels.Pages.Executions
                 FlowParameters.Add(execution.FlowStep.FlowParameter);
                 SelectedFlowParameter = execution.FlowStep.FlowParameter;
             }
-
-            return Task.CompletedTask;
+            else if (execution?.FlowStep?.FlowParameterId != null)
+            {
+                FlowParameter selectedFlowParameter = await _dataService.FlowParameters.FirstAsync(x => x.Id == execution.FlowStep.FlowParameterId);
+                FlowParameters.Add(selectedFlowParameter);
+                SelectedFlowParameter = selectedFlowParameter;
+            }
         }
 
         [RelayCommand]
