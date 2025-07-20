@@ -1,11 +1,8 @@
 ﻿using Business.BaseViewModels;
 using Business.Helpers;
 using Business.Services.Interfaces;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Model.Enums;
 using Model.Models;
 using StepinFlow.Views.UserControls;
-using System.Collections.ObjectModel;
 
 namespace StepinFlow.ViewModels.Pages
 {
@@ -13,11 +10,11 @@ namespace StepinFlow.ViewModels.Pages
     {
         private readonly ISystemService _systemService;
         private readonly IDataService _dataService;
+
         public TimeSpanInputUserControl TimeSpanInputUserControl;
 
         public WaitFlowStepVM(ISystemService systemService, IDataService dataService) : base(dataService)
         {
-
             _dataService = dataService;
             _systemService = systemService;
         }
@@ -41,6 +38,7 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task<int> OnSave()
         {
+
             // Edit mode
             if (FlowStep.Id > 0)
             {
@@ -48,7 +46,6 @@ namespace StepinFlow.ViewModels.Pages
                 updateFlowStep.Name = FlowStep.Name;
                 updateFlowStep.Milliseconds = TimeSpanInputUserControl.ViewModel.TotalMilliseconds;
                 await _dataService.UpdateAsync(updateFlowStep);
-
             }
 
             /// Add mode
