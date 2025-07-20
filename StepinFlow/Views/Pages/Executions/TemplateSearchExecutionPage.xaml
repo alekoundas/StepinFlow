@@ -134,10 +134,10 @@
                     <!--  Remove Template From Result  -->
                     <StackPanel MinWidth="200" Margin="0,0,0,20">
                         <StackPanel Orientation="Horizontal">
-                            <Label VerticalAlignment="Bottom">Remove template from result image:</Label>
+                            <Label VerticalAlignment="Bottom">Exclude found image from subsequent searches:</Label>
                             <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.RemoveTemplateFromResult, Mode=TwoWay}" IsEnabled="False" />
                         </StackPanel>
-                        <TextBlock Text="(Avoid finding the same location multiple times.)" />
+                        <TextBlock Text="(enables detection of multiple instances)" />
                     </StackPanel>
                 </StackPanel>
             </Border>
