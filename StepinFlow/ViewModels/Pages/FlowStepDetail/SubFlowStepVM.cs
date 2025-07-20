@@ -44,10 +44,13 @@ namespace StepinFlow.ViewModels.Pages
 
         public override async Task LoadNewFlowStep(FlowStep newFlowStep)
         {
+
             ValidationHelper.ErrorsChanged += OnErrorsChange;
+
+            newFlowStep.IsSubFlowReferenced = true;
             SubFlows = new ObservableCollection<Flow>(await _dataService.Flows.Where(x => x.Type == FlowTypesEnum.SUB_FLOW).ToListAsync());
             FlowStep = newFlowStep;
-            IsEnabled = true;
+            IsEnabled = false;
             FlowStep.Name = "Sub-Flow.";
         }
 

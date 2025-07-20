@@ -7,13 +7,11 @@ namespace StepinFlow.ViewModels.Pages
     public partial class FlowVM : BaseFlowDetailVM
     {
         private readonly IDataService _dataService;
-        private readonly FlowsVM _flowsViewModel;
 
 
-        public FlowVM(FlowsVM flowsViewModel, IDataService dataService) : base(dataService)
+        public FlowVM(IDataService dataService) : base(dataService)
         {
             _dataService = dataService;
-            _flowsViewModel = flowsViewModel;
 
         }
 
@@ -35,9 +33,6 @@ namespace StepinFlow.ViewModels.Pages
 
                 await _dataService.Flows.AddAsync(Flow);
             }
-
-
-            _flowsViewModel.RefreshData();
         }
     }
 }
