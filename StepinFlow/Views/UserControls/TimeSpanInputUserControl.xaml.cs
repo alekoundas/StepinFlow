@@ -9,6 +9,28 @@ namespace StepinFlow.Views.UserControls
 {
     public partial class TimeSpanInputUserControl : UserControl
     {
+
+        public static readonly DependencyProperty IsEnabledProperty =
+            DependencyProperty.Register(
+                nameof(IsEnabled),              // Property name
+                typeof(bool),                    // Property type
+                typeof(TreeViewUserControl),     // Owner type
+                new PropertyMetadata(false, OnIsEnabledChanged)); // Default value and callback
+
+        public bool IsEnabled
+        {
+            get { return (bool)GetValue(IsEnabledProperty); }
+            set { SetValue(IsEnabledProperty, value); }
+        }
+
+        private static void OnIsEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (TreeViewUserControl)d;
+            control.IsEnabled = !(bool)e.NewValue;
+        }
+
+
+
         //public TreeViewUserControlVM ViewModel { get; set; }
 
         //public static readonly DependencyProperty TotalMillisecondsProperty =
@@ -149,7 +171,7 @@ namespace StepinFlow.Views.UserControls
 
 
 
-      
+
         //private void NumericValidation(object sender, TextCompositionEventArgs e)
         //{
         //    // Only allow numeric input
