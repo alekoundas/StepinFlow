@@ -14,7 +14,6 @@ namespace StepinFlow.ViewModels.Pages.FlowParameterDetail
     {
         private readonly IDataService _dataService;
         private readonly ISystemService _systemService;
-        private readonly FlowsVM _flowsViewModel;
 
         [ObservableProperty]
         private SystemMonitor _searchAreaRectangle = new SystemMonitor();
@@ -35,14 +34,10 @@ namespace StepinFlow.ViewModels.Pages.FlowParameterDetail
         [ObservableProperty]
         private TemplateSearchAreaTypesEnum _selectedTemplateSearchAreaTypesEnum = TemplateSearchAreaTypesEnum.SELECT_EVERY_MONITOR;
 
-        public TemplateSearchAreaFlowParameterVM(
-            FlowsVM flowsViewModel,
-            IDataService dataService,
-            ISystemService systemService) : base(dataService)
+        public TemplateSearchAreaFlowParameterVM(IDataService dataService, ISystemService systemService) : base(dataService)
         {
             _dataService = dataService;
             _systemService = systemService;
-            _flowsViewModel = flowsViewModel;
 
             _templateSearchAreaTypesEnumValues = Enum.GetValues(typeof(TemplateSearchAreaTypesEnum)).Cast<TemplateSearchAreaTypesEnum>();
             _systemMonitors = _systemService.GetAllSystemMonitors();
@@ -158,9 +153,6 @@ namespace StepinFlow.ViewModels.Pages.FlowParameterDetail
 
                 await _dataService.FlowParameters.AddAsync(FlowParameter);
             }
-
-
-            _flowsViewModel.RefreshData();
         }
     }
 }
