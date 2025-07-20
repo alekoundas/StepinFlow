@@ -38,7 +38,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  FlowParameter  -->
@@ -49,6 +49,7 @@
                 <Label>Select search area from parameters(leave empty for all monitor search)</Label>
                 <ComboBox
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
                     SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
@@ -74,6 +75,7 @@
                 <Label>Select match mode:</Label>
                 <ComboBox
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     ItemsSource="{Binding ViewModel.MatchModes}"
                     SelectedItem="{Binding ViewModel.Execution.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
             </StackPanel>
@@ -99,10 +101,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select minimum accuracy:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Accuracy, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Accuracy, Mode=TwoWay}" />
 
                 <Label>Result:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.ResultAccuracy, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.ResultAccuracy, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  IsLoop  -->
@@ -111,7 +113,7 @@
                 Margin="0,0,0,0"
                 Orientation="Horizontal">
                 <Label VerticalAlignment="Center">Is loop:</Label>
-                <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.IsLoop, Mode=TwoWay}" />
+                <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.IsLoop, Mode=TwoWay}" IsEnabled="False" />
             </StackPanel>
 
             <Border>
@@ -130,7 +132,7 @@
                     <StackPanel MinWidth="200" Margin="0,0,0,20">
                         <StackPanel Orientation="Horizontal">
                             <Label VerticalAlignment="Bottom">Remove template from result image:</Label>
-                            <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.RemoveTemplateFromResult, Mode=TwoWay}" />
+                            <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.RemoveTemplateFromResult, Mode=TwoWay}" IsEnabled="False" />
                         </StackPanel>
                         <TextBlock Text="(Avoid finding the same location multiple times.)" />
                     </StackPanel>

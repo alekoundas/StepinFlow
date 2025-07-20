@@ -34,7 +34,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
 
@@ -47,6 +47,7 @@
                     HorizontalAlignment="Left">
                     <Label>Select relocation type:</Label>
                     <ComboBox
+                        IsEnabled="False"
                         ItemsSource="{Binding ViewModel.CursorRelocationTypesEnum}"
                         SelectedIndex="0"
                         SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorRelocationType}" />
@@ -69,7 +70,10 @@
 
                         <StackPanel Margin="5" VerticalAlignment="Center">
                             <Label>Parent successful location:</Label>
-                            <ComboBox ItemsSource="{Binding ViewModel.Parents}" SelectedItem="{Binding ViewModel.SelectedFlowStep, Mode=TwoWay}">
+                            <ComboBox
+                                IsEnabled="False"
+                                ItemsSource="{Binding ViewModel.Parents}"
+                                SelectedItem="{Binding ViewModel.SelectedFlowStep, Mode=TwoWay}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -106,13 +110,19 @@
 
                         <StackPanel Margin="5">
                             <Label Padding="0,0,5,0">X:</Label>
-                            <TextBox VerticalAlignment="Center" Text="{Binding ViewModel.Execution.FlowStep.LocationX, Mode=TwoWay}" />
+                            <TextBox
+                                VerticalAlignment="Center"
+                                IsEnabled="False"
+                                Text="{Binding ViewModel.Execution.FlowStep.LocationX, Mode=TwoWay}" />
                         </StackPanel>
 
 
                         <StackPanel Margin="5">
                             <Label Padding="0,0,5,0">Y:</Label>
-                            <TextBox VerticalAlignment="Center" Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
+                            <TextBox
+                                VerticalAlignment="Center"
+                                IsEnabled="False"
+                                Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
                         </StackPanel>
 
                         <!--  Test Button  -->

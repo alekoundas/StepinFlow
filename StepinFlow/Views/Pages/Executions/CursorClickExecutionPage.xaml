@@ -34,7 +34,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Cursor button  -->
@@ -43,7 +43,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Cursor button:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.MouseButtonsEnum}" SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorButton}" />
+                <ComboBox
+                    IsEnabled="False"
+                    ItemsSource="{Binding ViewModel.MouseButtonsEnum}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorButton}" />
             </StackPanel>
 
             <!--  Cursor action  -->
@@ -52,7 +55,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Cursor action:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.MouseActionsEnum}" SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorAction}" />
+                <ComboBox
+                    IsEnabled="False"
+                    ItemsSource="{Binding ViewModel.MouseActionsEnum}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorAction}" />
             </StackPanel>
 
 

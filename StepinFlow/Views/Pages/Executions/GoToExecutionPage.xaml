@@ -31,7 +31,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Previous Steps  -->
@@ -40,7 +40,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select previous step to run again:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.PreviousSteps}" SelectedItem="{Binding ViewModel.Execution.FlowStep.ParentTemplateSearchFlowStep, Mode=TwoWay}">
+                <ComboBox
+                    IsEnabled="False"
+                    ItemsSource="{Binding ViewModel.PreviousSteps}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.ParentTemplateSearchFlowStep, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">

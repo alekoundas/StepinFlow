@@ -35,7 +35,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
 
@@ -45,7 +45,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Exit after X times.(0 = Dont exit.)</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LoopMaxCount, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.LoopMaxCount, Mode=TwoWay}" />
             </StackPanel>
 
         </StackPanel>

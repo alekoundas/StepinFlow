@@ -31,7 +31,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
 
@@ -43,7 +43,10 @@
                 HorizontalAlignment="Left">
                 <Label>Select application window to resize:</Label>
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox ItemsSource="{Binding ViewModel.ProcessList}" SelectedItem="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
+                    <ComboBox
+                        IsEnabled="False"
+                        ItemsSource="{Binding ViewModel.ProcessList}"
+                        SelectedItem="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
                 </StackPanel>
             </StackPanel>
 
@@ -56,7 +59,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Width:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Width, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Width, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Height  -->
@@ -65,7 +68,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Height:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Height, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Height, Mode=TwoWay}" />
             </StackPanel>
 
 

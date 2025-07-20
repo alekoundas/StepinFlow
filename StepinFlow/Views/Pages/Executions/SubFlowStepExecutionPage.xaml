@@ -33,7 +33,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  SubFlows  -->
@@ -42,7 +42,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Sub-Flows:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.SubFlows}" SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
+                <ComboBox
+                    IsEnabled="False"
+                    ItemsSource="{Binding ViewModel.SubFlows}"
+                    SelectedItem="{Binding ViewModel.SelectedSubFlow, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -62,7 +65,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Is sub flow a reference to original sub flow?</Label>
-                <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.IsSubFlowReferenced, Mode=TwoWay}" IsEnabled="{Binding ViewModel.IsEnabled}" />
+                <CheckBox IsChecked="{Binding ViewModel.Execution.FlowStep.IsSubFlowReferenced, Mode=TwoWay}" IsEnabled="False" />
             </StackPanel>
 
         </StackPanel>

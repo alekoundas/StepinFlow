@@ -39,7 +39,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  FlowParameter  -->
@@ -50,6 +50,7 @@
                 <Label>Select search area from parameters(leave empty for all monitor search)</Label>
                 <ComboBox
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     ItemsSource="{Binding ViewModel.FlowParameters}"
                     SelectedItem="{Binding ViewModel.SelectedFlowParameter, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
@@ -73,36 +74,37 @@
                 <Label>Select match mode:</Label>
                 <ComboBox
                     VerticalAlignment="Center"
+                    IsEnabled="False"
                     ItemsSource="{Binding ViewModel.MatchModes}"
                     SelectedItem="{Binding ViewModel.Execution.FlowStep.TemplateMatchMode, Mode=TwoWay}" />
             </StackPanel>
 
 
             <!--  Image import  -->
-            <StackPanel
-                MinWidth="200"
-                Margin="0,0,0,20"
-                HorizontalAlignment="Left">
-                <Label>Select image for search:</Label>
-                <StackPanel Orientation="Horizontal">
+            <!--<StackPanel
+            MinWidth="200"
+            Margin="0,0,0,20"
+            HorizontalAlignment="Left">
+            <Label>Select image for search:</Label>
+            <StackPanel Orientation="Horizontal">
 
-                    <Button Content="Open file">
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="Click">
-                                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonOpenFileClickCommand}" />
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                    </Button>
-                    <Button Content="Take screenshot">
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="Click">
-                                <i:InvokeCommandAction Command="{Binding ViewModel.ButtonTakeScreenshotClickCommand}" />
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                    </Button>
+            <Button Content="Open file">
+            <i:Interaction.Triggers>
+            <i:EventTrigger EventName="Click">
+            <i:InvokeCommandAction Command="{Binding ViewModel.ButtonOpenFileClickCommand}" />
+            </i:EventTrigger>
+            </i:Interaction.Triggers>
+            </Button>
+            <Button Content="Take screenshot">
+            <i:Interaction.Triggers>
+            <i:EventTrigger EventName="Click">
+            <i:InvokeCommandAction Command="{Binding ViewModel.ButtonTakeScreenshotClickCommand}" />
+            </i:EventTrigger>
+            </i:Interaction.Triggers>
+            </Button>
 
-                </StackPanel>
             </StackPanel>
+            </StackPanel>-->
 
 
             <!--  Template Image  -->
@@ -123,16 +125,16 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Select minimum accuracy:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Accuracy, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Accuracy, Mode=TwoWay}" />
 
                 <Label>Result:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.ResultAccuracy, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.ResultAccuracy, Mode=TwoWay}" />
             </StackPanel>
 
 
             <!--  WaitFor  -->
             <Label>Retry search after:</Label>
-            <controls:TimeSpanInputUserControl x:Name="TimeInputControl" />
+            <controls:TimeSpanInputUserControl x:Name="TimeInputControl" IsEnabled="False" />
 
 
 

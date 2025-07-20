@@ -31,7 +31,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
 
@@ -42,7 +42,10 @@
                 HorizontalAlignment="Left">
                 <Label>Select application window to relocate:</Label>
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox ItemsSource="{Binding ViewModel.ProcessList}" SelectedItem="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
+                    <ComboBox
+                        IsEnabled="False"
+                        ItemsSource="{Binding ViewModel.ProcessList}"
+                        SelectedItem="{Binding ViewModel.Execution.FlowStep.ProcessName}" />
                 </StackPanel>
             </StackPanel>
 
@@ -55,7 +58,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>X:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LocationX, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.LocationX, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Y  -->
@@ -64,7 +67,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Y:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.LocationY, Mode=TwoWay}" />
             </StackPanel>
 
 

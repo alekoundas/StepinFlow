@@ -28,43 +28,31 @@
         </Grid.RowDefinitions>
 
 
-        <!--<controls:TimeSpanInputUserControl
-        x:Name="TimeInputControl"
-        Grid.Row="1"
-        HorizontalAlignment="Center"
-        TotalMilliseconds="{Binding TotalMilliseconds, UpdateSourceTrigger=PropertyChanged}" />-->
-        <!--
-        Hours="{Binding Hours, UpdateSourceTrigger=PropertyChanged}"
-        Milliseconds="{Binding Milliseconds, UpdateSourceTrigger=PropertyChanged}"
-        Minutes="{Binding Minutes, UpdateSourceTrigger=PropertyChanged}"
-        Seconds="{Binding Seconds, UpdateSourceTrigger=PropertyChanged}"
-        -->
+        <!--<ui:InfoBar Grid.Row="0">
+        <Label>asdasd</Label>
+
+        </ui:InfoBar>
+
+        <ui:CardControl Grid.Row="1">
+        <Label>asdasd</Label>
+
+        </ui:CardControl>
 
 
-        <!--<StackPanel Orientation="Horizontal">
-        <TextBox
-        x:Name="HoursTextBox"
-        Width="40"
-        MaxLength="2"
-        Text="{Binding Hours, UpdateSourceTrigger=PropertyChanged}" />
-        <TextBlock Margin="2,0" Text=":" />
-        <TextBox
-        x:Name="MinutesTextBox"
-        Width="40"
-        MaxLength="2"
-        Text="{Binding Minutes, UpdateSourceTrigger=PropertyChanged}" />
-        <TextBlock Margin="2,0" Text=":" />
-        <TextBox
-        x:Name="SecondsTextBox"
-        Width="40"
-        MaxLength="2"
-        Text="{Binding Seconds, UpdateSourceTrigger=PropertyChanged}" />
-        <TextBlock Margin="2,0" Text="." />
-        <TextBox
-        x:Name="MillisecondsTextBox"
-        Width="60"
-        MaxLength="3"
-        Text="{Binding Milliseconds, UpdateSourceTrigger=PropertyChanged}" />
-        </StackPanel>-->
+        <ui:CardExpander Grid.Row="2">
+        <Label>asdasd</Label>
+
+        </ui:CardExpander>
+
+        <ui:Card Grid.Row="3">
+        <Label>asdasd</Label>
+
+        </ui:Card>-->
+
+
+        <!--<ui:BreadcrumbBar>
+        <Label>asdasd</Label>
+        </ui:BreadcrumbBar>-->
+
     </Grid>
 </Page>

@@ -34,7 +34,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Set Name:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.Name, Mode=TwoWay}" />
             </StackPanel>
 
             <!--  Scroll direction  -->
@@ -43,7 +43,10 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Scroll direction:</Label>
-                <ComboBox ItemsSource="{Binding ViewModel.MouseScrollDirectionEnum}" SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorScrollDirection}" />
+                <ComboBox
+                    IsEnabled="False"
+                    ItemsSource="{Binding ViewModel.MouseScrollDirectionEnum}"
+                    SelectedItem="{Binding ViewModel.Execution.FlowStep.CursorScrollDirection}" />
             </StackPanel>
 
             <!--  Scroll steps  -->
@@ -52,7 +55,7 @@
                 Margin="0,0,0,20"
                 HorizontalAlignment="Left">
                 <Label>Scroll steps:</Label>
-                <TextBox Text="{Binding ViewModel.Execution.FlowStep.LoopCount}" />
+                <TextBox IsEnabled="False" Text="{Binding ViewModel.Execution.FlowStep.LoopCount}" />
             </StackPanel>
         </StackPanel>
 
