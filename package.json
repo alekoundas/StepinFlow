@@ -1,4 +1,5 @@
 {
+  "name": "stepinflow",
   "version": "0.1.0",
   "type": "module",
   "main": "electron/main.ts",
@@ -7,13 +8,35 @@
     "dev:backend": "cd backend && dotnet run",
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
-    "dev2": "concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
-    "build:frontend": "cd frontend && vite build",
-    "build:backend": "cd backend && dotnet publish -c Release -r win-x64 --self-contained -o ../dist-backend",
-    "build": "npm run build:frontend && npm run build:backend && electron-builder",
+    "dev_no_api": "concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && dotnet publish -c Release -r win-x64 --self-contained true -o ../../dist/backend /p:PublishSingleFile=true",
+    "build:electron": "electron-builder --outDir dist",
+    "build": "rimraf dist && npm run build:frontend && npm run build:backend && npm run build:electron",
     "install": "cd frontend && npm install",
     "lint": "cd frontend && npm run lint",
-    "lint:fix": "cd frontend && npm run lint:fix"
+    "lint:fix": "cd frontend && npm run lint:fix",
+    "clean": "rimraf dist release"
+  },
+  "build": {
+    "appId": "com.yourname.stepinflow",
+    "productName": "StepinFlow",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    }
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
