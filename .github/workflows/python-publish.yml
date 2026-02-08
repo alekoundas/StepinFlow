@@ -18,6 +18,9 @@ on:
         type: choice
         options: [release, draft]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-publish:
     runs-on: windows-latest          # ← only Windows for now
