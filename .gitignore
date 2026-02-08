@@ -1,1 +1,15 @@
-node_modules
+# Backend (.NET)
+backend/bin/
+backend/obj/
+backend/**/bin/
+backend/**/obj/
+backend/**/*.dll
+backend/**/*.exe
+backend/**/*.pdb
+backend/**/*.user
+backend/*.user
+backend/**/*.userprefs
+backend/.vs/
+backend/.vscode/
+backend/appsettings.Development.json
+
