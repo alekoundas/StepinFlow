@@ -83,5 +83,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Override publish behavior based on workflow_dispatch choice
-          ELECTRON_BUILDER_PUBLISH: ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
+          # ELECTRON_BUILDER_PUBLISH: ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
 
