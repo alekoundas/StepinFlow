@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -44,11 +44,14 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-
+          
       - name: Clean previous build artifacts
         run: |
           npm run clean || true
-          rm -rf dist release || true
+          # Fallback if npm clean fails or not defined
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          if (Test-Path release) { Remove-Item -Recurse -Force release }
+        shell: pwsh              # using PowerShell for string handling
 
       - name: Build frontend (Vite + React → dist/)
         run: npm run build:frontend
@@ -58,7 +61,7 @@ jobs:
 
       - name: Auto-increment build number (metadata style)
         id: version
-        shell: pwsh               # using PowerShell for cross-platform string handling
+        shell: pwsh               # using PowerShell for string handling
         run: |
           $base = node -p "require('./package.json').version"
           $buildNum = (git rev-list --count HEAD)
@@ -75,10 +78,3 @@ jobs:
           # Override publish behavior based on workflow_dispatch choice
           ELECTRON_BUILDER_PUBLISH: ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
 
-      - name: Upload installer artifacts (optional fallback)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-installers
-          path: release/*
-          retention-days: 7
