@@ -27,7 +27,7 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173"); // default Vite port — change if yours is different
     mainWindow.webContents.openDevTools(); // optional: auto-open dev tools
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../frontend/dist/index.html")); // adjust path based on your structure
+    mainWindow.loadFile(path.join(__dirname, "../dist/frontend/index.html")); // adjust path based on your structure
   }
 
   mainWindow.on("closed", () => {
