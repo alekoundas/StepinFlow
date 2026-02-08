@@ -59,7 +59,8 @@ jobs:
         shell: pwsh               # using PowerShell for string handling
         run: |
           $base = node -p "require('./package.json').version"
-          $buildNum = (git rev-list --count HEAD)
+          # $buildNum = (git rev-list --count HEAD)
+          $buildNum = $env:GITHUB_RUN_NUMBER
           $newVersion = "$base+$buildNum"
           npm version $newVersion --no-git-tag-version
           Write-Output "Full version set to: $newVersion"
