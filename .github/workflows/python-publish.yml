@@ -62,7 +62,7 @@ jobs:
           # $buildNum = (git rev-list --count HEAD)
           $buildNum = $env:GITHUB_RUN_NUMBER
           $newVersion = "$base+$buildNum"
-          npm version $newVersion --no-git-tag-version
+          npm version $newVersion --no-git-tag-version --allow-same-version
           Write-Output "Full version set to: $newVersion"
           echo "version=$newVersion" >> $env:GITHUB_OUTPUT
 
