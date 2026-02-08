@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../dist",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["main.ts"]
+}

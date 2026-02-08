@@ -11,7 +11,7 @@
     "dev_no_api": "concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
-    "build:electron": "electron-builder --outDir dist",
+    "build:electron": "tsc --project electron/tsconfig.json --outDir dist",
     "build": "npm run clean && npm run build:frontend && npm run build:backend && npm run build:electron",
     "install_full": "npm install &&cd frontend && npm install",
     "lint": "cd frontend && npm run lint",
