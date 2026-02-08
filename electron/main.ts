@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
+import { app, BrowserWindow, dialog } from "electron";
+import { autoUpdater } from "electron-updater";
 
 // __dirname is a special global variable available only in Node.js modules.
 //  It contains the directory name of the current module (i.e., the directory where the current JavaScript file is located).
@@ -34,7 +35,22 @@ function createWindow() {
   });
 }
 
+// show dialog on update
+autoUpdater.on("update-downloaded", () => {
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message: "A new version is ready. Restart now?",
+      buttons: ["Yes", "Later"],
+    })
+    .then((result) => {
+      if (result.response === 0) autoUpdater.quitAndInstall();
+    });
+});
+
 app.whenReady().then(() => {
+  autoUpdater.checkForUpdatesAndNotify();
   createWindow();
 
   app.on("activate", () => {

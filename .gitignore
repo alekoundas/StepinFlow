@@ -13,3 +13,5 @@ backend/.vs/
 backend/.vscode/
 backend/appsettings.Development.json
 
+# Node modules
+node_modules/
