@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Publish as draft or real release?'
+        description: "Publish as draft or real release?"
         required: true
-        default: 'release'
+        default: "release"
         type: choice
         options: [release, draft]
 
@@ -23,18 +23,18 @@ permissions:
 
 jobs:
   build-and-publish:
-    runs-on: windows-latest          # ← only Windows for now
+    runs-on: windows-latest # ← only Windows for now
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0             # needed if you ever want git-based version info
+          fetch-depth: 0 # needed if you ever want git-based version info
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 25.6
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: package-lock.json
 
       - name: Install root dependencies
@@ -46,8 +46,8 @@ jobs:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
-          
+          dotnet-version: "10.0.x"
+
       - name: Clean previous build artifacts
         run: npm run clean
 
@@ -60,24 +60,31 @@ jobs:
       - name: Build electron (electron → dist/)
         run: npm run build:electron
 
-      - name: Auto-increment build number (metadata style)
+      - name: Configure git user
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Auto-increment build number & create release tag
         id: version
-        shell: pwsh               # using PowerShell for string handling
+        shell: pwsh
         run: |
           $base = node -p "require('./package.json').version"
-          # $buildNum = (git rev-list --count HEAD)
           $buildNum = $env:GITHUB_RUN_NUMBER
-          $newVersion = "$base+$buildNum"
-          npm version $newVersion --no-git-tag-version --allow-same-version
-          Write-Output "Full version set to: $newVersion"
-          echo "version=$newVersion" >> $env:GITHUB_OUTPUT
+          $newVersion = "$base-build$buildNum"
+          $tag = "v$newVersion"
 
+          npm version $newVersion --no-git-tag-version --allow-same-version
+          git add package.json
+          git commit -m "chore: release v$newVersion"
+          git tag $tag
+          git push origin $tag
+
+          Write-Output "Release tag created: $tag"
+          echo "version=$newVersion" >> $env:GITHUB_OUTPUT
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
 
       - name: Package & publish with electron-builder
-        run: |
-          npx electron-builder --win --publish always
+        run: npx electron-builder --win --publish ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Override publish behavior based on workflow_dispatch choice
-          # ELECTRON_BUILDER_PUBLISH: ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
-
