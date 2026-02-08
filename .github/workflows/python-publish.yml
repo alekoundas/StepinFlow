@@ -72,10 +72,6 @@ jobs:
           Write-Output "Full version set to: $newVersion"
           echo "version=$newVersion" >> $env:GITHUB_OUTPUT
 
-      - name: Package & publish with electron-builder
-        run: npx electron-builder --win --publish always
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package & publish with electron-builder
         run: |
