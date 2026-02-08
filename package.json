@@ -13,7 +13,7 @@
     "build:backend": "cd backend && dotnet publish -c Release -r win-x64 --self-contained true -o ../../dist/backend /p:PublishSingleFile=true",
     "build:electron": "electron-builder --outDir dist",
     "build": "rimraf dist && npm run build:frontend && npm run build:backend && npm run build:electron",
-    "install": "cd frontend && npm install",
+    "install_full": "npm install &&cd frontend && npm install",
     "lint": "cd frontend && npm run lint",
     "lint:fix": "cd frontend && npm run lint:fix",
     "clean": "rimraf dist release"
