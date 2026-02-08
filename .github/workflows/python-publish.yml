@@ -65,26 +65,31 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      - name: Auto-increment build number & create release tag
+      - name: Update version in package.json
         id: version
         shell: pwsh
         run: |
           $base = node -p "require('./package.json').version"
           $buildNum = $env:GITHUB_RUN_NUMBER
           $newVersion = "$base-build$buildNum"
-          $tag = "v$newVersion"
 
           npm version $newVersion --no-git-tag-version --allow-same-version
           git add package.json
-          git commit -m "chore: release v$newVersion"
-          git tag $tag
-          git push origin $tag
+          git commit -m "chore: bump version to $newVersion"
+          git push origin HEAD:${{ github.ref }}
 
-          Write-Output "Release tag created: $tag"
+          Write-Output "Version updated to: $newVersion"
           echo "version=$newVersion" >> $env:GITHUB_OUTPUT
-          echo "tag=$tag" >> $env:GITHUB_OUTPUT
 
-      - name: Package & publish with electron-builder
-        run: npx electron-builder --win --publish ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
+      - name: Package with electron-builder
+        run: npx electron-builder --win
+
+      - name: Create GitHub Release & upload artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/**/*
+          tag_name: v${{ github.run_number }}
+          draft: ${{ inputs.release_type == 'draft' }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
