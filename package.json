@@ -1,8 +1,10 @@
 {
-  "type": "module",
   "name": "stepinflow",
   "version": "0.1.0",
   "main": "dist/main.js",
+  "type": "module",
+  "description": "StepinFlow - Workflow automation app",
+  "author": "Alex Psihogios todo@mail.com",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && dotnet run",
@@ -19,7 +21,7 @@
     "clean": "rimraf dist release"
   },
   "build": {
-    "appId": "com.yourname.stepinflow",
+    "appId": "com.AlexPs.stepinflow",
     "productName": "StepinFlow",
     "directories": {
       "output": "release"
