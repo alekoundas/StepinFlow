@@ -54,6 +54,9 @@ jobs:
       - name: Build backend (.NET → dist/backend/)
         run: npm run build:backend
 
+      - name: Build electron (electron → dist/)
+        run: npm run build:electron
+
       - name: Auto-increment build number (metadata style)
         id: version
         shell: pwsh               # using PowerShell for string handling
@@ -65,6 +68,11 @@ jobs:
           npm version $newVersion --no-git-tag-version --allow-same-version
           Write-Output "Full version set to: $newVersion"
           echo "version=$newVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Package & publish with electron-builder
+        run: npx electron-builder --win --publish always
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package & publish with electron-builder
         run: |
