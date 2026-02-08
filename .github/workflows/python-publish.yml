@@ -1,0 +1,84 @@
+# This workflow will upload a Python Package to PyPI when a release is created
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Publish as draft or real release?'
+        required: true
+        default: 'release'
+        type: choice
+        options: [release, draft]
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest          # ← only Windows for now
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0             # needed if you ever want git-based version info
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Clean previous build artifacts
+        run: |
+          npm run clean || true
+          rm -rf dist release || true
+
+      - name: Build frontend (Vite + React → dist/)
+        run: npm run build:frontend
+
+      - name: Build backend (.NET → dist/backend/)
+        run: npm run build:backend
+
+      - name: Auto-increment build number (metadata style)
+        id: version
+        shell: pwsh               # using PowerShell for cross-platform string handling
+        run: |
+          $base = node -p "require('./package.json').version"
+          $buildNum = (git rev-list --count HEAD)
+          $newVersion = "$base+$buildNum"
+          npm version $newVersion --no-git-tag-version
+          Write-Output "Full version set to: $newVersion"
+          echo "version=$newVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Package & publish with electron-builder
+        run: |
+          npx electron-builder --win --publish always
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Override publish behavior based on workflow_dispatch choice
+          ELECTRON_BUILDER_PUBLISH: ${{ inputs.release_type == 'draft' && 'onTagOrDraft' || 'always' }}
+
+      - name: Upload installer artifacts (optional fallback)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: release/*
+          retention-days: 7
