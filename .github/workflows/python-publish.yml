@@ -35,10 +35,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm ci                   # clean install the 'orchestrator' package.json
 
       - name: Install frontend dependencies
-        run: cd frontend && npm ci
+        run: cd frontend && npm ci    # clean install the vite package.json
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
@@ -46,14 +46,9 @@ jobs:
           dotnet-version: '10.0.x'
           
       - name: Clean previous build artifacts
-        run: |
-          npm run clean || true
-          # Fallback if npm clean fails or not defined
-          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
-          if (Test-Path release) { Remove-Item -Recurse -Force release }
-        shell: pwsh              # using PowerShell for string handling
+        run: npm run clean
 
-      - name: Build frontend (Vite + React → dist/)
+      - name: Build frontend (Vite + React → dist/frontend/)
         run: npm run build:frontend
 
       - name: Build backend (.NET → dist/backend/)
