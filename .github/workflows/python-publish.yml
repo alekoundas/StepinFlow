@@ -82,14 +82,14 @@ jobs:
           echo "version=$newVersion" >> $env:GITHUB_OUTPUT
 
       - name: Package with electron-builder
-        run: npx electron-builder --win
+        run: npx electron-builder --win --publish never
 
       - name: Create GitHub Release & upload artifacts
         uses: softprops/action-gh-release@v1
         with:
           files: release/**/*
           tag_name: v${{ github.run_number }}
-          draft: ${{ inputs.release_type == 'draft' }}
+          draft: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
