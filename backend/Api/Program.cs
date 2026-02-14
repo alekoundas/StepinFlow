@@ -1,8 +1,10 @@
 
 using Api.AutoMapper;
 using DataAccess;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace Api
@@ -16,7 +18,7 @@ namespace Api
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.AddOpenApi(); 
+            builder.Services.AddOpenApi();
 
             builder.Services.AddSignalR();
 
@@ -74,6 +76,12 @@ namespace Api
             await using ApiDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
+
+            //app.UseRequestLocalization(new RequestLocalizationOptions
+            //{
+            //    DefaultRequestCulture = new RequestCulture("en"),
+            //    SupportedCultures = new List<CultureInfo> { new("el"), new("en") },
+            //});
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

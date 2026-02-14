@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DataAccess
 {
-    public static class ApiDbContextInitialiser
+    public static class ApiDbContextInitialize
     {
         public static IServiceCollection AddCustomDbContextFactory(this IServiceCollection services)
         {
