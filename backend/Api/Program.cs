@@ -1,9 +1,12 @@
 
 using Api.AutoMapper;
+using Api.Translator;
 using Business.DataService.Services;
 using DataAccess;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
 using System.Globalization;
 using System.Text.Json.Serialization;
@@ -69,6 +72,24 @@ namespace Api
             //        .WithTheme(ScalarTheme.DeepSpace)           // Nice dark theme – or Mars, Kepler, etc.
             //        .WithDefaultHttpClient(ScalarHttpClient.Fetch); // or other options
             //});
+
+
+
+            // Override with custom factory (after AddLocalization to take precedence)
+            // Inject cache via factory provider
+            //builder.Services.AddSingleton<IStringLocalizerFactory>(provider =>
+            //    new TranslatorFactory(
+            //        provider.GetRequiredService<IDistributedCache>(),
+            //        provider.GetRequiredService<IWebHostEnvironment>().ContentRootPath
+            //    ));
+
+            //builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+            builder.Services.AddSingleton<IStringLocalizer>(x=> new JsonTranslator(Directory.GetCurrentDirectory()));
+
+
+
+
+
 
             var app = builder.Build();
 
