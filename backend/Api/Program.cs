@@ -1,6 +1,7 @@
 
 using Api.AutoMapper;
 using DataAccess;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 
@@ -8,27 +9,21 @@ namespace Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
 
             builder.Services.AddControllers();
-
-            builder.Services.AddOpenApi(); // Replaces Swasgger.
+            builder.Services.AddOpenApi(); 
 
             builder.Services.AddSignalR();
 
             // DB context and factory.
-            builder.Services.AddDbContext<ApiDbContext>();
-            //builder.Services.AddTransient<IDbContextFactory<ApiDbContext>, ApiDbContextFactory>();
-            builder.Services.AddScoped<ApiDbContextInitialiser>();
+            builder.Services.AddCustomDbContextFactory();
 
-            builder.Services.AddAutoMapper(config =>
-            {
-                config.AddProfile<AutoMapperProfile>();
-            });
+            builder.Services.AddAutoMapper(config => config.AddProfile<AutoMapperProfile>());
 
             builder.Services
             .AddControllers(options =>
@@ -46,9 +41,6 @@ namespace Api
 
                 // Ignore circular references.
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-
-                // Configure DateTime handling to always use UTC with 'Z'
-                //x.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
             }).AddDataAnnotationsLocalization();
 
 
@@ -77,12 +69,11 @@ namespace Api
 
 
             // Run migrations and seed data
-            using (var scope = app.Services.CreateScope())
-            {
-                var initialiser = scope.ServiceProvider.GetRequiredService<ApiDbContextInitialiser>();
-                initialiser.RunMigrations();
-                initialiser.Seed();
-            }
+            using var scope = app.Services.CreateScope();
+            var dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
+            await using ApiDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
+            dbContext.Database.Migrate();
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
