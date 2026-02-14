@@ -1,4 +1,4 @@
-﻿using App.Translator;
+﻿using App.Localization;
 using Business.DataService.Services;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -25,8 +25,13 @@ namespace App
             builder.Services.AddCustomDbContextFactory();
             builder.Services.AddSingleton<IDataService, DataService>();
 
-            // Localization services.
-            builder.Services.AddSingleton<IStringLocalizer>(x => new JsonTranslator(Directory.GetCurrentDirectory()));
+
+            // Localization (JSON)
+            builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
+            builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
+
+            // IPC as Hosted Service (runs the stdin loop in background)
+            //builder.Services.AddHostedService<IpcHostedService>();
 
             IHost app = builder.Build();
 
