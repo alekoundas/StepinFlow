@@ -88,6 +88,7 @@ namespace Api
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                // http://localhost:5220/scalar/v1
                 app.MapScalarApiReference(); // This will add the /scalar-api-reference endpoint to serve the Scalar API reference documentation
             }
 
