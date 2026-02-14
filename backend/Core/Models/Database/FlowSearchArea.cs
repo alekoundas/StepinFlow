@@ -1,4 +1,5 @@
 ﻿using Core.Models.Database;
+using System.Collections.ObjectModel;
 
 namespace Core.Models
 {
@@ -11,7 +12,10 @@ namespace Core.Models
         public int LocationToRight { get; set; }
         public int LocationToBottom { get; set; }
 
+        // Flow
         public int FlowId { get; set; }
-        public virtual Flow Flow { get; set; } = null!;
+        public Flow Flow { get; set; } = null!;
+
+        public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
     }
 }

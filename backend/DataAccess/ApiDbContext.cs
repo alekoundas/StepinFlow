@@ -1,4 +1,7 @@
 ﻿using Core.Helpers;
+using Core.Models;
+using Core.Models.Database;
+using DataAccess.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -14,7 +17,12 @@ namespace DataAccess
             _configuration = configuration;
         }
 
-        //public DbSet<Mail> Mails { get; set; }
+        public DbSet<Flow> Flows { get; set; }
+        public DbSet<SubFlow> SubFlows { get; set; }
+        public DbSet<FlowSearchArea> FlowSearchAreas { get; set; }
+        public DbSet<FlowStep> FlowSteps { get; set; }
+        public DbSet<FlowStepImage> FlowStepImages { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -38,12 +46,11 @@ namespace DataAccess
         {
             base.OnModelCreating(builder);
 
-            //builder.ApplyConfiguration(new MailConfiguration());
+            builder.ApplyConfiguration(new FlowConfiguration());
+            builder.ApplyConfiguration(new SubFlowConfiguration());
+            builder.ApplyConfiguration(new FlowSearchAreaConfiguration());
+            builder.ApplyConfiguration(new FlowStepConfiguration());
+            builder.ApplyConfiguration(new FlowStepImageConfiguration());
         }
-
-        //public void RunMigrations()
-        //{
-        //    this.Database.Migrate();
-        //}
     }
 }

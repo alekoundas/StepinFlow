@@ -6,7 +6,7 @@ namespace Core.Models.Database
     public class FlowStep : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
-        public FlowStepTypeEnum Type { get; set; }
+        public FlowStepTypeEnum FlowStepType { get; set; }
         public int OrderNumber { get; set; }
 
 
