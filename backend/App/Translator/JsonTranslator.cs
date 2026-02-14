@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 
-namespace Api.Translator
+namespace App.Translator
 {
     public class JsonTranslator : IStringLocalizer
     {

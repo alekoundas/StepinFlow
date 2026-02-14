@@ -10,8 +10,4 @@
     <Folder Include="Models\Dtos\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.0.0" />
-  </ItemGroup>
-
 </Project>

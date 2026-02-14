@@ -14,6 +14,10 @@ namespace DataAccess
         public DbSet<FlowStepImage> FlowStepImages { get; set; }
 
 
+        public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

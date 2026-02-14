@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="Api/Api.csproj" />
-  <Project Path="Business/Business.csproj" Id="0816b14e-846e-43d9-a535-735c098f7485" />
-  <Project Path="Core/Core.csproj" Id="a0aa146b-9792-4beb-bef5-978c59ffe4ec" />
-  <Project Path="DataAccess/DataAccess.csproj" Id="a76ace78-115c-4002-996b-63aeb8856c49" />
+  <Project Path="App/App.csproj" />
+  <Project Path="Business/Business.csproj" />
+  <Project Path="Core/Core.csproj" />
+  <Project Path="DataAccess/DataAccess.csproj" />
 </Solution>
