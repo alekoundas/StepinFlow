@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess
 {
-    public class ApiDbContext : DbContext
+    public class AppDbContext : DbContext
     {
         public DbSet<Flow> Flows { get; set; }
         public DbSet<SubFlow> SubFlows { get; set; }
@@ -14,7 +14,7 @@ namespace DataAccess
         public DbSet<FlowStepImage> FlowStepImages { get; set; }
 
 
-        public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 

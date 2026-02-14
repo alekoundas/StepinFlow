@@ -1,0 +1,13 @@
+//								//
+//		Entity Framework		//
+//								//
+
+dotnet ef migrations script --project DataAccess
+
+dotnet ef migrations --project DataAccess --startup-project App add InitialMigration 
+
+dotnet ef database update --project DataAccess --startup-project App
+
+
+// update tool
+dotnet tool update --global dotnet-ef 

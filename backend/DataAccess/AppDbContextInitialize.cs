@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DataAccess
 {
-    public static class ApiDbContextInitialize
+    public static class AppDbContextInitialize
     {
         public static IServiceCollection AddCustomDbContextFactory(this IServiceCollection services)
         {
@@ -16,7 +16,7 @@ namespace DataAccess
             if (!File.Exists(dataSource))
                 File.Create(dataSource).Close();
 
-            services.AddPooledDbContextFactory<ApiDbContext>(options =>
+            services.AddPooledDbContextFactory<AppDbContext>(options =>
             {
                 options.UseSqlite($"Data Source={dataSource};");
             });

@@ -27,8 +27,8 @@ namespace App
 
 
             // Localization (JSON)
-            builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
-            builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
+            //builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
+            //builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
 
             // IPC as Hosted Service (runs the stdin loop in background)
             //builder.Services.AddHostedService<IpcHostedService>();
@@ -38,8 +38,8 @@ namespace App
 
             // Run migrations and seed data
             using var scope = app.Services.CreateScope();
-            var dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
-            await using ApiDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
+            var dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
 
