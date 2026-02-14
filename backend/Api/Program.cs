@@ -1,5 +1,6 @@
 
 using Api.AutoMapper;
+using Business.DataService.Services;
 using DataAccess;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -22,9 +23,11 @@ namespace Api
 
             builder.Services.AddSignalR();
 
-            // DB context and factory.
+            // DB context factory and Data service.
             builder.Services.AddCustomDbContextFactory();
+            builder.Services.AddSingleton<IDataService, DataService>();
 
+            // AutoMapper configuration
             builder.Services.AddAutoMapper(config => config.AddProfile<AutoMapperProfile>());
 
             builder.Services
