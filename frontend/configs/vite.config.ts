@@ -11,7 +11,6 @@ export default defineConfig({
           [
             "babel-plugin-react-compiler",
             {
-              // optional config – start minimal
               target: "19", // or your React version
             },
           ],
@@ -21,7 +20,7 @@ export default defineConfig({
   ],
   base: "./", // crucial for Electron (relative paths)
   build: {
-    outDir: path.resolve(__dirname, "../dist/frontend"), // ← output directly to root/dist
+    outDir: path.resolve(__dirname, "../../dist/frontend"),
     emptyOutDir: true, // clean before build
     rollupOptions: {
       // optional: if needed

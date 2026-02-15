@@ -7,10 +7,11 @@
     "moduleResolution": "node",
     "strict": true,
     "sourceMap": true,
+    "declaration": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["main.ts"],
+  "include": ["main.ts", "preload.ts"],
   "exclude": ["node_modules"]
 }

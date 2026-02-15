@@ -1,18 +1,17 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-// import "./index.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import App from "./App.tsx";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import AppLayout from "./components/layout/app-layout.tsx";
 import HomePage from "./pages/home/home-page.tsx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     element: <AppLayout />,
     children: [
       {
         path: "/",
         element: <HomePage />,
+        // errorElement:
         // loader: rootLoader,
         // children: [
         //   {
@@ -22,7 +21,7 @@ const router = createBrowserRouter([
         //   },
         // ],
       },
-      { path: "app", element: <App /> },
+      // { path: "app", element: <App /> },
     ],
   },
 ]);

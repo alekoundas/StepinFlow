@@ -7,18 +7,19 @@
   "author": "Alex Psihogios todo@mail.com",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && dotnet run",
-    "dev:electron": "wait-on http://localhost:5173 && electron --require ts-node/register ./electron/main.ts",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
+    "dev:backend": "cd backend/App && dotnet run",
+    "dev:electron-build": "tsc -p electron/electron-config.json --outDir electron/build",
+    "dev:electron": "npm run dev:electron-build && wait-on http://localhost:5173 && electron electron/build/main.js",
+    "dev": "npm run clean && concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
     "dev_no_api": "concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
+    "build:backend": "cd backend/App && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
     "build:electron": "tsc --project electron/electron-config.json --outDir ./dist ",
     "build": "npm run clean && npm run build:frontend && npm run build:backend && npm run build:electron && electron-builder",
     "install_full": "npm install &&cd frontend && npm install",
     "lint": "cd frontend && npm run lint",
     "lint:fix": "cd frontend && npm run lint:fix",
-    "clean": "rimraf dist release"
+    "clean": "rimraf dist release electron/build"
   },
   "build": {
     "appId": "com.AlexPs.stepinflow",
@@ -44,7 +45,6 @@
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
     "rimraf": "^6.0.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
     "wait-on": "^9.0.3"
   },
