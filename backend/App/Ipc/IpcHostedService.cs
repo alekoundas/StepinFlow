@@ -1,58 +1,80 @@
-﻿using Business.DataService.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿//using Newtonsoft.Json;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace App.Ipc
 {
-    public class IpcHostedService : BackgroundService
+    public class IpcHandler
     {
-        private readonly ILogger<IpcHostedService> _logger;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IDataService _dataService;
-
-        public IpcHostedService(ILogger<IpcHostedService> logger, IServiceScopeFactory scopeFactory, IDataService dataService)
+        public void StartListening()
         {
-            _logger = logger;
-            _scopeFactory = scopeFactory;
-            _dataService = dataService;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            string? line;
+            while ((line = Console.In.ReadLine()) != null)
             {
-                string? input = await Console.In.ReadLineAsync();
-                if (string.IsNullOrEmpty(input)) continue;
-
                 try
                 {
-                    Dictionary<string, object>? msg = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
-                    string? command = (string)msg["command"];
+                    // Parse incoming JSON
+                    var message = JsonSerializer.Deserialize<Message>(line.Trim());
+                    if (message == null) continue;
 
-                    //using var scope = _scopeFactory.CreateScope();
-                    //var flowService = scope.ServiceProvider.GetRequiredService<IFlowService>();
-
-                    switch (command)
+                    // Process based on action (example)
+                    object responsePayload;
+                    switch (message.Action)
                     {
-                        case "executeFlow":
-                            //var flowId = Convert.ToInt32(msg["flowId"]);
-                            //await flowService.ExecuteFlowAsync(flowId);
+                        case "greet":
+                            responsePayload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
                             break;
-                            // Add more commands
+                        default:
+                            responsePayload = new { Error = "Unknown action" };
+                            break;
                     }
+
+                    // Send JSON response to stdout
+                    var response = new Message { Action = "response", Payload = responsePayload };
+                    Console.WriteLine(JsonSerializer.Serialize(response));
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "IPC error");
-                    //Console.WriteLine(JsonConvert.SerializeObject(new { event = "error", message = ex.Message }));
-                    //Console.Out.Flush();
+                    Console.Error.WriteLine($"Error: {ex.Message}");
                 }
-}
+            }
         }
+
+        public async Task StartListening2()
+        {
+            // Start TCP server
+            var listener = new TcpListener(IPAddress.Loopback, 5000);
+            listener.Start();
+            Console.WriteLine($"Listening on port {5000}...");
+
+            while (true)
+            {
+                using var client = await listener.AcceptTcpClientAsync();
+                using var stream = client.GetStream();
+
+                // Handle bidirectional JSON communication (similar to your stdin/stdout)
+                // Read from stream (incoming from Electron)
+                var buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    // Parse JSON, process (your existing logic), and respond
+                    //var response = ProcessMessage(message); // Your JSON handler function
+                    var responseBytes = Encoding.UTF8.GetBytes("response");
+                    await stream.WriteAsync(responseBytes, 0, responseBytes.Length);
+                }
+            }
+        }
+
+    }
+
+    // Shared message type (mirror in TS)
+    public class Message
+    {
+        public string Action { get; set; } = string.Empty;
+        public object Payload { get; set; } = new object();
     }
 }

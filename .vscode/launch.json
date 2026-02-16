@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "name": "Debug Electron Main",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "runtimeArgs": [
+        "--remote-debugging-port=9222", // Enables Chrome debugging for renderer
+        "electron/build/main.js" // Points to your compiled TS (after tsc)
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build Electron TS", // Runs tsc before launch
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/electron/build/**/*.js"]
+    },
+    {
+      "name": "Attach to Renderer (Chrome)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222, // Matches above
+      "url": "http://localhost:5173", // Your Vite dev server URL
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true
+      // "timeout": 30000 // Give time for Electron to start
+    },
+    {
+      "name": "Debug .NET Backend (Attach)", // Optional: If debugging .NET in VS Code
+      "type": "node",
+      "request": "attach",
+      "processId": "${command:pickProcess}" // Prompts to select the dotnet process
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Full App (Frontend + Backend + Electron)",
+      "configurations": ["Debug Electron Main", "Attach to Renderer (Chrome)"],
+      "preLaunchTask": "Dev: Start Frontend and Backend" // Runs your concurrent dev scripts
+    }
+  ]
+}

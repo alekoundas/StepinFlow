@@ -1,14 +1,19 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import path from "path";
+import {
+  ChildProcess,
+  ChildProcessWithoutNullStreams,
+  execFile,
+} from "child_process";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
-import { ChildProcess, execFile, spawn } from "child_process";
+import path from "path";
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let backend: ChildProcess | null = null;
+let backendProcess: ChildProcess | null = null;
+// let dotnetProcess: ChildProcessWithoutNullStreams | null = null;
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
@@ -31,12 +36,44 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    // mainWindow.loadFile(path.join(__dirname, "frontend/index.html"));
     mainWindow.loadFile(path.join(__dirname, "../dist/frontend/index.html"));
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on("closed", () => {});
+}
+
+// Spawn .NET console app
+function spawnDotNetProcess() {
+  const backendPath = isDev
+    ? "dotnet run"
+    : path.join(process.resourcesPath, "backend/App.exe");
+  const args = isDev
+    ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
+    : [];
+
+  backendProcess = execFile(backendPath, (error, stdout, stderr) => {
+    if (error) {
+      console.error("Failed to run .exe:", error);
+      return;
+    }
+    console.log(" .exe output:", stdout);
+  });
+
+  backendProcess.stdout?.on("data", (data) => {
+    console.log(`.NET stdout: ${data}`);
+    // Parse and handle responses here if needed (e.g., relay back via IPC)
+  });
+
+  backendProcess.stderr?.on("data", (data) => {
+    console.error(`.NET stderr: ${data}`);
+  });
+
+  backendProcess?.on("close", (code) => {
+    console.log(`.NET process exited with code ${code}`);
+  });
+
+  return backendProcess;
 }
 
 // show dialog on update
@@ -56,45 +93,46 @@ autoUpdater.on("update-downloaded", () => {
 app.whenReady().then(() => {
   // autoUpdater.checkForUpdatesAndNotify();
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev to avoid errors
+  spawnDotNetProcess();
+  // registerHandlers(ipcMain, backendProcess!);
   createWindow();
-
   // Backend spawn
-  const backendPath = isDev
-    ? "dotnet"
-    : path.join(process.resourcesPath, "backend/App.exe");
-  const args = isDev
-    ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
-    : [];
+  // const backendPath = isDev
+  //   ? "dotnet"
+  //   : path.join(process.resourcesPath, "backend/App.exe");
+  // const args = isDev
+  //   ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
+  //   : [];
 
-  backend = execFile(backendPath, (error, stdout, stderr) => {
-    if (error) {
-      console.error("Failed to run .exe:", error);
-      return;
-    }
-    console.log(" .exe output:", stdout);
-  });
+  // backendProcess = execFile(backendPath, (error, stdout, stderr) => {
+  //   if (error) {
+  //     console.error("Failed to run .exe:", error);
+  //     return;
+  //   }
+  //   console.log(" .exe output:", stdout);
+  // });
 
-  // IPC from React to backend
-  backend.stdout?.on("data", (data) => {
-    data
-      .toString()
-      .trim()
-      .split("\n")
-      .forEach((line: any) => {
-        try {
-          const msg = JSON.parse(line);
-          mainWindow?.webContents.send("backend-message", msg); // Push to React
-        } catch {}
-      });
-  });
+  // // IPC from React to backend
+  // backendProcess.stdout?.on("data", (data) => {
+  //   data
+  //     .toString()
+  //     .trim()
+  //     .split("\n")
+  //     .forEach((line: any) => {
+  //       try {
+  //         const msg = JSON.parse(line);
+  //         mainWindow?.webContents.send("backend-message", msg); // Push to React
+  //       } catch {}
+  //     });
+  // });
 
-  backend.stderr?.on("data", (data) =>
-    console.error("Backend error:", data.toString()),
-  );
-  backend.on("close", () => console.log("Backend closed"));
+  // backendProcess.stderr?.on("data", (data) =>
+  //   console.error("Backend error:", data.toString()),
+  // );
+  // backendProcess.on("close", () => console.log("Backend closed"));
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
-    backend?.stdin?.write(JSON.stringify(msg) + "\n");
+    backendProcess?.stdin?.write(JSON.stringify(msg) + "\n");
   });
 
   app.on("activate", () => {

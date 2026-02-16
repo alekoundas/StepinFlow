@@ -1,10 +1,9 @@
-﻿using App.Localization;
+﻿using App.Ipc;
 using Business.DataService.Services;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace App
@@ -44,6 +43,9 @@ namespace App
 
 
             await app.RunAsync();
+
+            var handler = new IpcHandler();
+            handler.StartListening();
         }
     }
 }

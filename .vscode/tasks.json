@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Electron TS",
+      "type": "npm",
+      "script": "dev:electron-build", // script: tsc -p electron/electron-config.json
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Dev: Start Frontend and Backend",
+      "type": "shell",
+      "command": "npm run dev:no-api", //; npm run dev:backend", // Mimics concurrently without Electron
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+}

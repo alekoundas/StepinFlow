@@ -11,7 +11,7 @@
     "dev:electron-build": "tsc -p electron/electron-config.json --outDir electron/build",
     "dev:electron": "npm run dev:electron-build && wait-on http://localhost:5173 && electron electron/build/main.js",
     "dev": "npm run clean && concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
-    "dev_no_api": "concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
+    "dev:no-api": "npm run clean && concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend/App && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
     "build:electron": "tsc --project electron/electron-config.json --outDir ./dist ",

@@ -1,7 +1,14 @@
 import { Button } from "primereact/button";
 
 export default function HomePage() {
-  const onSend = () => {
+  const onSend = async () => {
+    // const res = await window..sendMessageToDotNet(message);v
+    (window as any).backendApi?.send((msg: any) => {
+      if (msg.event === "progress") {
+        // setLog(prev => [...prev, msg.details]);
+      }
+    });
+
     (window as any).backendApi.onMessage((msg: any) => {
       if (msg.event === "progress") {
         // setLog(prev => [...prev, msg.details]);
