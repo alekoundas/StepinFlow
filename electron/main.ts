@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, execFile, spawn } from "child_process";
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -12,7 +12,6 @@ let backend: ChildProcess | null = null;
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
-// Now autoUpdater should be defined and usable
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -65,8 +64,15 @@ app.whenReady().then(() => {
     : path.join(process.resourcesPath, "backend/App.exe");
   const args = isDev
     ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
-    : []; // Fix: "../" (matches C:\Repos\StepinFlow\StepinFlow\backend\App\App.csproj)
-  backend = spawn(backendPath, args, { stdio: ["pipe", "pipe", "pipe"] });
+    : [];
+
+  backend = execFile(backendPath, (error, stdout, stderr) => {
+    if (error) {
+      console.error("Failed to run .exe:", error);
+      return;
+    }
+    console.log(" .exe output:", stdout);
+  });
 
   // IPC from React to backend
   backend.stdout?.on("data", (data) => {
