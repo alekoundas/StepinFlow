@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Electron TS",
+      "label": "Build_Electron_TS",
       "type": "npm",
       "script": "dev:electron-build", // script: tsc -p electron/electron-config.json
       "group": "build",

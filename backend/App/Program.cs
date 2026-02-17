@@ -12,7 +12,7 @@ namespace App
     {
         public static async Task Main(string[] args)
         {
-            HostApplicationBuilder builder = Host.CreateApplicationBuilder (args);
+            HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
             Console.WriteLine("Yooooooooo");
 
 
@@ -49,13 +49,15 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
-            Console.WriteLine("Yooooooooo");
+
+            Console.WriteLine("Yooooooooo - DB ready");
 
 
             var handler = new IpcHandler();
             //handler.StartListening();
-            _ = Task.Run(() => new IpcHandler().StartListening());
-            Console.WriteLine("Yooooooooo");
+            //_ = Task.Run(() => new IpcHandler().StartListening());
+            _ = Task.Run(() => new IpcHandler().StartListening2());
+            Console.WriteLine("Yooooooooo - Pipe listener started");
             await app.RunAsync();
         }
     }

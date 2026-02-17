@@ -1,14 +1,19 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { execFile } from "child_process"; // No need for full import of ChildProcess types unless using them elsewhere
+import { execFile } from "child_process";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
+import net from "net";
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let backendProcess: ReturnType<typeof execFile> | null = null; // Type it correctly
+// C# DEBUG
+let backendClient: net.Socket | null = null; // For named pipe connection
+const pipeName = "\\\\.\\pipe\\stepinflow-backend-pipe"; // Windows named pipe path (cross-platform compatible)
+
+let backendProcess: ReturnType<typeof execFile> | null = null;
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
@@ -87,6 +92,43 @@ function spawnDotNetProcess() {
   return backendProcess;
 }
 
+function connectToDotNetPipe() {
+  backendClient = net.connect(pipeName, () => {
+    console.log("Connected to .NET named pipe");
+  });
+
+  // Stream data for real-time JSON parsing and relay to renderer
+  backendClient.on("data", (data) => {
+    const lines = data.toString().trim().split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.startsWith("{")) {
+        try {
+          const msg = JSON.parse(trimmed);
+          mainWindow?.webContents.send("backend-message", msg);
+          console.log("Parsed .NET message:", msg);
+        } catch (e) {
+          console.error("Failed to parse JSON:", e, "Raw:", trimmed);
+        }
+      } else {
+        console.log("[.NET startup] " + trimmed);
+      }
+    }
+  });
+
+  backendClient.on("error", (err) => {
+    console.error("Named pipe connection error:", err);
+  });
+
+  backendClient.on("close", () => {
+    console.log(".NET pipe closed");
+  });
+
+  return backendClient;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -131,12 +173,15 @@ app.whenReady().then(() => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
   // Conditionally spawn backend (skipped in dev:no-api)
   // if (process.env.NO_API !== "1") {
-  spawnDotNetProcess();
+  // spawnDotNetProcess();
+  connectToDotNetPipe();
   // }
   createWindow();
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
-    if (backendProcess && backendProcess.stdin) {
+    if (backendClient) {
+      backendClient.write(JSON.stringify(msg) + "\n");
+    } else if (backendProcess && backendProcess.stdin) {
       backendProcess.stdin.write(JSON.stringify(msg) + "\n");
     } else {
       console.error("Backend process not available for sending message");
