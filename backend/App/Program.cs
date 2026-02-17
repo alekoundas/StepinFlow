@@ -13,11 +13,19 @@ namespace App
         public static async Task Main(string[] args)
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder (args);
+            Console.WriteLine("Yooooooooo");
 
 
             // Logging
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
+            // Logging: Keep console, but filter out noisy EF logs
+            //builder.Logging.ClearProviders();
+            //builder.Logging.AddConsole(options =>
+            //{
+            //    options.IncludeScopes = true;
+            //    options.LogToStandardErrorThreshold = LogLevel.Warning; // Only errors/warnings to stderr
+            //});
 
 
             // DB context factory and Data service.
@@ -41,11 +49,14 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
+            Console.WriteLine("Yooooooooo");
 
-            await app.RunAsync();
 
             var handler = new IpcHandler();
-            handler.StartListening();
+            //handler.StartListening();
+            _ = Task.Run(() => new IpcHandler().StartListening());
+            Console.WriteLine("Yooooooooo");
+            await app.RunAsync();
         }
     }
 }

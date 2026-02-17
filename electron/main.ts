@@ -1,9 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import {
-  ChildProcess,
-  ChildProcessWithoutNullStreams,
-  execFile,
-} from "child_process";
+import { execFile } from "child_process"; // No need for full import of ChildProcess types unless using them elsewhere
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
@@ -12,10 +8,84 @@ const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let backendProcess: ChildProcess | null = null;
-// let dotnetProcess: ChildProcessWithoutNullStreams | null = null;
+let backendProcess: ReturnType<typeof execFile> | null = null; // Type it correctly
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+
+// Spawn .NET console app (conditionally skipped if NO_API=1)
+function spawnDotNetProcess() {
+  const backendPath = isDev
+    ? "dotnet"
+    : path.join(process.resourcesPath, "backend/App.exe");
+  const args = isDev
+    ? ["run", "--project", path.join(__dirname, "../../backend/App/App.csproj")]
+    : [];
+
+  // Use execFile with args and optional callback (fires on exit)
+  backendProcess = execFile(backendPath, args, (error, stdout, stderr) => {
+    if (error) {
+      console.error("Failed to run .NET process:", error);
+      return;
+    }
+    console.log(".NET buffered output (on exit):", stdout);
+    if (stderr) console.error(".NET buffered stderr (on exit):", stderr);
+  });
+
+  // Stream stdout for real-time JSON parsing and relay to renderer
+  // backendProcess.stdout?.on("data", (data) => {
+  //   data
+  //     .toString()
+  //     .trim()
+  //     .split("\n")
+  //     .forEach((line: string) => {
+  //       try {
+  //         const msg = JSON.parse(line);
+  //         mainWindow?.webContents.send("backend-message", msg); // Relay to React
+  //         console.log("Parsed .NET message:", msg); // Debug
+  //       } catch (e) {
+  //         console.error(
+  //           "Failed to parse backend message:",
+  //           e,
+  //           "Raw line:",
+  //           line,
+  //         );
+  //       }
+  //     });
+  // });
+
+  backendProcess.stdout?.on("data", (data) => {
+    const lines = data.toString().trim().split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue; // Skip empty
+
+      // Quick check: only try parse if it starts with { (JSON object)
+      if (trimmed.startsWith("{")) {
+        try {
+          const msg = JSON.parse(trimmed);
+          mainWindow?.webContents.send("backend-message", msg);
+          console.log("Parsed .NET message:", msg);
+        } catch (e) {
+          console.error("Failed to parse JSON:", e, "Raw:", trimmed);
+        }
+      } else {
+        // Optional: log non-JSON startup/debug lines differently
+        console.log("[.NET startup] " + trimmed);
+        // Or ignore completely: // do nothing
+      }
+    }
+  });
+
+  backendProcess.stderr?.on("data", (data) => {
+    console.error(`.NET stderr: ${data}`);
+  });
+
+  backendProcess?.on("close", (code) => {
+    console.log(`.NET process exited with code ${code}`);
+  });
+
+  return backendProcess;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -43,40 +113,7 @@ function createWindow() {
   mainWindow.on("closed", () => {});
 }
 
-// Spawn .NET console app
-function spawnDotNetProcess() {
-  const backendPath = isDev
-    ? "dotnet run"
-    : path.join(process.resourcesPath, "backend/App.exe");
-  const args = isDev
-    ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
-    : [];
-
-  backendProcess = execFile(backendPath, (error, stdout, stderr) => {
-    if (error) {
-      console.error("Failed to run .exe:", error);
-      return;
-    }
-    console.log(" .exe output:", stdout);
-  });
-
-  backendProcess.stdout?.on("data", (data) => {
-    console.log(`.NET stdout: ${data}`);
-    // Parse and handle responses here if needed (e.g., relay back via IPC)
-  });
-
-  backendProcess.stderr?.on("data", (data) => {
-    console.error(`.NET stderr: ${data}`);
-  });
-
-  backendProcess?.on("close", (code) => {
-    console.log(`.NET process exited with code ${code}`);
-  });
-
-  return backendProcess;
-}
-
-// show dialog on update
+// Auto-updater dialog
 autoUpdater.on("update-downloaded", () => {
   dialog
     .showMessageBox({
@@ -91,48 +128,19 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 app.whenReady().then(() => {
-  // autoUpdater.checkForUpdatesAndNotify();
-  if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev to avoid errors
+  if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
+  // Conditionally spawn backend (skipped in dev:no-api)
+  // if (process.env.NO_API !== "1") {
   spawnDotNetProcess();
-  // registerHandlers(ipcMain, backendProcess!);
+  // }
   createWindow();
-  // Backend spawn
-  // const backendPath = isDev
-  //   ? "dotnet"
-  //   : path.join(process.resourcesPath, "backend/App.exe");
-  // const args = isDev
-  //   ? ["run", "--project", path.join(__dirname, "../backend/App/App.csproj")]
-  //   : [];
-
-  // backendProcess = execFile(backendPath, (error, stdout, stderr) => {
-  //   if (error) {
-  //     console.error("Failed to run .exe:", error);
-  //     return;
-  //   }
-  //   console.log(" .exe output:", stdout);
-  // });
-
-  // // IPC from React to backend
-  // backendProcess.stdout?.on("data", (data) => {
-  //   data
-  //     .toString()
-  //     .trim()
-  //     .split("\n")
-  //     .forEach((line: any) => {
-  //       try {
-  //         const msg = JSON.parse(line);
-  //         mainWindow?.webContents.send("backend-message", msg); // Push to React
-  //       } catch {}
-  //     });
-  // });
-
-  // backendProcess.stderr?.on("data", (data) =>
-  //   console.error("Backend error:", data.toString()),
-  // );
-  // backendProcess.on("close", () => console.log("Backend closed"));
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
-    backendProcess?.stdin?.write(JSON.stringify(msg) + "\n");
+    if (backendProcess && backendProcess.stdin) {
+      backendProcess.stdin.write(JSON.stringify(msg) + "\n");
+    } else {
+      console.error("Backend process not available for sending message");
+    }
   });
 
   app.on("activate", () => {
