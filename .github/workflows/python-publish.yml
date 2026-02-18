@@ -37,8 +37,11 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm install_full #ci                   # clean install the React and 'orchestrator' package.json
+      - name: Install root dependencies
+        run: npm install #ci                   # clean install the 'orchestrator' package.json
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm install #ci    # clean install the vite package.json
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
