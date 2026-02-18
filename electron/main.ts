@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
 import net from "net";
+import log from 'electron-log';
 
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +20,7 @@ const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
 // Spawn .NET console app (conditionally skipped if NO_API=1)
 function spawnDotNetProcess() {
+  
   const backendPath = isDev
     ? "dotnet"
     : path.join(process.resourcesPath, "backend/App.exe");
@@ -30,33 +32,12 @@ function spawnDotNetProcess() {
   backendProcess = execFile(backendPath, args, (error, stdout, stderr) => {
     if (error) {
       console.error("Failed to run .NET process:", error);
+      log.error("Failed to run .NET process:", error);
       return;
     }
     console.log(".NET buffered output (on exit):", stdout);
     if (stderr) console.error(".NET buffered stderr (on exit):", stderr);
   });
-
-  // Stream stdout for real-time JSON parsing and relay to renderer
-  // backendProcess.stdout?.on("data", (data) => {
-  //   data
-  //     .toString()
-  //     .trim()
-  //     .split("\n")
-  //     .forEach((line: string) => {
-  //       try {
-  //         const msg = JSON.parse(line);
-  //         mainWindow?.webContents.send("backend-message", msg); // Relay to React
-  //         console.log("Parsed .NET message:", msg); // Debug
-  //       } catch (e) {
-  //         console.error(
-  //           "Failed to parse backend message:",
-  //           e,
-  //           "Raw line:",
-  //           line,
-  //         );
-  //       }
-  //     });
-  // });
 
   backendProcess.stdout?.on("data", (data) => {
     const lines = data.toString().trim().split("\n");
@@ -70,12 +51,15 @@ function spawnDotNetProcess() {
           const msg = JSON.parse(trimmed);
           mainWindow?.webContents.send("backend-message", msg);
           console.log("Parsed .NET message:", msg);
+          log.log("Parsed .NET message:", msg);
         } catch (e) {
           console.error("Failed to parse JSON:", e, "Raw:", trimmed);
+          log.error("Failed to parse JSON:", e, "Raw:", trimmed);
         }
       } else {
         // Optional: log non-JSON startup/debug lines differently
         console.log("[.NET startup] " + trimmed);
+        log.log("[.NET startup] " + trimmed);
         // Or ignore completely: // do nothing
       }
     }
@@ -87,6 +71,10 @@ function spawnDotNetProcess() {
 
   backendProcess?.on("close", (code) => {
     console.log(`.NET process exited with code ${code}`);
+  });
+
+  backendProcess.on("spawn", () => {
+    console.log(".NET process spawned successfully");
   });
 
   return backendProcess;
@@ -149,7 +137,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/frontend/index.html"));
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on("closed", () => {});
@@ -173,12 +161,13 @@ app.whenReady().then(() => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
   // Conditionally spawn backend (skipped in dev:no-api)
   // if (process.env.NO_API !== "1") {
-  // spawnDotNetProcess();
-  connectToDotNetPipe();
+  spawnDotNetProcess();
+  // connectToDotNetPipe();
   // }
   createWindow();
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
+    console.log("Sent to backend:", msg); // Debug
     if (backendClient) {
       backendClient.write(JSON.stringify(msg) + "\n");
     } else if (backendProcess && backendProcess.stdin) {

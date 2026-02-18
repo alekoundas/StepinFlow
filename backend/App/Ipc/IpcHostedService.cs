@@ -27,6 +27,8 @@ namespace App.Ipc
             {
                 try
                 {
+                    Console.WriteLine($"Received raw line: {line}");  // Debug
+
                     // Parse incoming JSON
                     var message = JsonSerializer.Deserialize<Message>(line.Trim(), options);
                     if (message == null) continue;

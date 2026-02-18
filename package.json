@@ -30,6 +30,15 @@
     "files": [
       "dist/**/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "dist/backend/",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "win": {
       "target": [
         "nsis",
@@ -49,6 +58,7 @@
     "wait-on": "^9.0.3"
   },
   "dependencies": {
+    "electron-log": "^5.4.3",
     "electron-updater": "^6.7.3"
   }
 }
