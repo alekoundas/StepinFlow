@@ -23,12 +23,12 @@ permissions:
 
 jobs:
   build-and-publish:
-    runs-on: windows-latest # ← only Windows for now
+    runs-on: windows-latest # ← only Windows
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # needed if you ever want git-based version info
+          fetch-depth: 0 # git-based version info
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,11 +37,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Install root dependencies
-        run: npm install #ci                   # clean install the 'orchestrator' package.json
-
-      - name: Install frontend dependencies
-        run: cd frontend && npm install #ci    # clean install the vite package.json
+      - name: Install dependencies
+        run: npm install_full #ci                   # clean install the React and 'orchestrator' package.json
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
