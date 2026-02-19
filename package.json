@@ -1,6 +1,6 @@
 {
   "name": "stepinflow",
-  "version": "0.1.0-build14",
+  "version": "0.1.0-build16",
   "main": "dist/main.js",
   "type": "module",
   "description": "StepinFlow - Workflow automation app",
