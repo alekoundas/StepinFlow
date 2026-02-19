@@ -10,10 +10,10 @@
       },
       "runtimeArgs": [
         "--remote-debugging-port=9222", // Enables Chrome debugging for renderer
-        "electron/build/main.js" // Points to your compiled TS (after tsc)
+        "electron/build/main.js" // Points to your compiled TS (after task)
       ],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "Build_Electron_TS", // Runs tsc before launch
+      "preLaunchTask": "Build_Electron_TS", // Runs task before launch
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/electron/build/**/*.js"]
     },
@@ -27,17 +27,11 @@
       "sourceMaps": true
       // "timeout": 30000 // Give time for Electron to start
     }
-    // {
-    //   "name": "Debug .NET Backend (Attach)", // Optional: If debugging .NET in VS Code
-    //   "type": "node",
-    //   "request": "attach",
-    //   "processId": "${command:pickProcess}" // Prompts to select the dotnet process
-    // }
   ],
   "compounds": [
     // First run
     // - npm run dev:frontend
-    // Then run debugger (F5)
+    // - Then run debugger (F5)
     // Backend will be started(or not?) by Electons main.ts
     {
       "name": "Debug Full App (Frontend + Backend + Electron)",

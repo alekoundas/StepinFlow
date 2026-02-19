@@ -56,7 +56,8 @@ autoUpdater.on("update-downloaded", () => {
 
 app.whenReady().then(() => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  const ENABLE_DEBUG = false;
+  // const ENABLE_DEBUG = false;
+  const ENABLE_DEBUG = true;
   createWindow();
 
   let backendClient: net.Socket | null = null; // For named pipe connection

@@ -1,8 +1,4 @@
-﻿//using Newtonsoft.Json;
-using System.IO.Pipes;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection.Metadata;
+﻿using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
 
@@ -17,47 +13,14 @@ namespace App.Ipc
         };
 
 
-        public void StartListening()
+        public async Task StartListening()
         {
-
             Console.WriteLine("Yooooooooo");
-
-            string? line;
-            while ((line = Console.In.ReadLine()) != null)
-            {
-                try
-                {
-                    Console.WriteLine($"Received raw line: {line}");  // Debug
-
-                    // Parse incoming JSON
-                    var message = JsonSerializer.Deserialize<Message>(line.Trim(), options);
-                    if (message == null) continue;
-
-                    // Process based on action (example)
-                    object responsePayload;
-                        Console.WriteLine(message.Action);
-                    switch (message.Action)
-                    {
-                        case "greet":
-                            responsePayload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
-                            break; ;
-                        default:
-                            responsePayload = new { Error = "Unknown action" };
-                            break;
-                    }
-
-                    // Send JSON response to stdout
-                    var response = new Message { Action = "response", Payload = responsePayload };
-                    Console.WriteLine(JsonSerializer.Serialize(response));
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Error: {ex.Message}");
-                }
-            }
+            await ProcessStreamAsync(Console.In, Console.Out);
         }
 
-        public async Task StartListening2()
+
+        public async Task StartListeningDebug()
         {
             string PipeName = "stepinflow-backend-pipe";
             while (true) // Loop for reconnections
@@ -66,58 +29,62 @@ namespace App.Ipc
                 {
                     try
                     {
-                        Console.WriteLine("Waiting for Electron connection...");
+                        Console.WriteLine("[.NET] Waiting for Electron connection...");
                         await server.WaitForConnectionAsync();
-                        Console.WriteLine("Electron connected to pipe.");
+                        Console.WriteLine("[.NET] Electron connected to pipe.");
                         using (var reader = new StreamReader(server, Encoding.UTF8, true, 4096, true))
                         using (var writer = new StreamWriter(server, Encoding.UTF8, 4096, true) { AutoFlush = true })
                         {
-                            string? line;
-                            while ((line = await reader.ReadLineAsync()) != null)
-                            {
-                                if (string.IsNullOrWhiteSpace(line)) continue;
-                                try
-                                {
-                                    Console.WriteLine($"Received raw line: {line}"); // Debug raw input
-
-                                    // Parse incoming JSON
-                                    var message = JsonSerializer.Deserialize<Message>(line.Trim(), options);
-                                    if (message == null) continue;
-
-                                    Console.WriteLine($"Parsed action: {message.Action}");
-
-                                    // Process based on action (your logic)
-                                    object responsePayload;
-                                    switch (message.Action)
-                                    {
-                                        case "greet":
-                                            responsePayload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
-                                            break;
-                                        case "test": // For test send
-                                            responsePayload = new { TestResponse = "Test received!" };
-                                            break;
-                                        default:
-                                            responsePayload = new { Error = "Unknown action" };
-                                            break;
-                                    }
-
-                                    // Send JSON response
-                                    var response = new Message { Action = "response", Payload = responsePayload };
-                                    var responseJson = JsonSerializer.Serialize(response);
-                                    await writer.WriteLineAsync(responseJson);
-                                    Console.WriteLine($"Sent response: {responseJson}"); // Debug send
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.Error.WriteLine($"Error processing message: {ex.Message}");
-                                }
-                            }
+                            await ProcessStreamAsync(reader, writer);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine($"Pipe error: {ex.Message}");
+                        Console.Error.WriteLine($"[.NET] Pipe error: {ex.Message}");
                     }
+                }
+            }
+        }
+
+
+        private async Task ProcessStreamAsync(TextReader reader, TextWriter writer)
+        {
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                try
+                {
+                    Console.WriteLine($"[.NET] Received raw line: {line}"); // Debug raw input
+
+                    Message? message = JsonSerializer.Deserialize<Message>(line.Trim(), options); // Parse incoming JSON
+                    if (message == null) continue;
+                    Console.WriteLine($"[.NET] Parsed action: {message.Action}");
+
+                    // Process based on action
+                    object responsePayload;
+                    switch (message.Action)
+                    {
+                        case "greet":
+                            responsePayload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
+                            break;
+                        case "test":
+                            responsePayload = new { TestResponse = "Test received!" };
+                            break;
+                        default:
+                            responsePayload = new { Error = "Unknown action" };
+                            break;
+                    }
+
+                    // Send JSON response
+                    Message response = new Message { Action = "d", Payload = responsePayload };
+                    string responseJson = JsonSerializer.Serialize(response);
+                    await writer.WriteLineAsync(responseJson);
+                    Console.WriteLine($"[.NET]Sent response: {responseJson}"); // Debug send
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[.NET]Error processing message: {ex.Message}");
                 }
             }
         }
