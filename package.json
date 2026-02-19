@@ -22,7 +22,7 @@
     "clean": "rimraf dist release electron/build"
   },
   "build": {
-    "appId": "com.AlexPs.stepinflow",
+    "appId": "com.AlexPs.Stepinflow",
     "productName": "StepinFlow",
     "directories": {
       "output": "release"

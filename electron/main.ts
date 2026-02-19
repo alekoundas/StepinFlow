@@ -4,118 +4,15 @@ import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
 import net from "net";
-import log from 'electron-log';
-
+import log from "electron-log";
+import { IpcHandlerService } from "./IpcHandlerService.js";
 const { autoUpdater } = pkg;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// C# DEBUG
-let backendClient: net.Socket | null = null; // For named pipe connection
-const pipeName = "\\\\.\\pipe\\stepinflow-backend-pipe"; // Windows named pipe path (cross-platform compatible)
-
-let backendProcess: ReturnType<typeof execFile> | null = null;
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
-
-// Spawn .NET console app (conditionally skipped if NO_API=1)
-function spawnDotNetProcess() {
-  
-  const backendPath = isDev
-    ? "dotnet"
-    : path.join(process.resourcesPath, "backend/App.exe");
-  const args = isDev
-    ? ["run", "--project", path.join(__dirname, "../../backend/App/App.csproj")]
-    : [];
-
-  // Use execFile with args and optional callback (fires on exit)
-  backendProcess = execFile(backendPath, args, (error, stdout, stderr) => {
-    if (error) {
-      console.error("Failed to run .NET process:", error);
-      log.error("Failed to run .NET process:", error);
-      return;
-    }
-    console.log(".NET buffered output (on exit):", stdout);
-    if (stderr) console.error(".NET buffered stderr (on exit):", stderr);
-  });
-
-  backendProcess.stdout?.on("data", (data) => {
-    const lines = data.toString().trim().split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue; // Skip empty
-
-      // Quick check: only try parse if it starts with { (JSON object)
-      if (trimmed.startsWith("{")) {
-        try {
-          const msg = JSON.parse(trimmed);
-          mainWindow?.webContents.send("backend-message", msg);
-          console.log("Parsed .NET message:", msg);
-          log.log("Parsed .NET message:", msg);
-        } catch (e) {
-          console.error("Failed to parse JSON:", e, "Raw:", trimmed);
-          log.error("Failed to parse JSON:", e, "Raw:", trimmed);
-        }
-      } else {
-        // Optional: log non-JSON startup/debug lines differently
-        console.log("[.NET startup] " + trimmed);
-        log.log("[.NET startup] " + trimmed);
-        // Or ignore completely: // do nothing
-      }
-    }
-  });
-
-  backendProcess.stderr?.on("data", (data) => {
-    console.error(`.NET stderr: ${data}`);
-  });
-
-  backendProcess?.on("close", (code) => {
-    console.log(`.NET process exited with code ${code}`);
-  });
-
-  backendProcess.on("spawn", () => {
-    console.log(".NET process spawned successfully");
-  });
-
-  return backendProcess;
-}
-
-function connectToDotNetPipe() {
-  backendClient = net.connect(pipeName, () => {
-    console.log("Connected to .NET named pipe");
-  });
-
-  // Stream data for real-time JSON parsing and relay to renderer
-  backendClient.on("data", (data) => {
-    const lines = data.toString().trim().split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      if (trimmed.startsWith("{")) {
-        try {
-          const msg = JSON.parse(trimmed);
-          mainWindow?.webContents.send("backend-message", msg);
-          console.log("Parsed .NET message:", msg);
-        } catch (e) {
-          console.error("Failed to parse JSON:", e, "Raw:", trimmed);
-        }
-      } else {
-        console.log("[.NET startup] " + trimmed);
-      }
-    }
-  });
-
-  backendClient.on("error", (err) => {
-    console.error("Named pipe connection error:", err);
-  });
-
-  backendClient.on("close", () => {
-    console.log(".NET pipe closed");
-  });
-
-  return backendClient;
-}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -159,12 +56,17 @@ autoUpdater.on("update-downloaded", () => {
 
 app.whenReady().then(() => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  // Conditionally spawn backend (skipped in dev:no-api)
-  // if (process.env.NO_API !== "1") {
-  spawnDotNetProcess();
-  // connectToDotNetPipe();
-  // }
+  const ENABLE_DEBUG = false;
   createWindow();
+
+  let backendClient: net.Socket | null = null; // For named pipe connection
+  let backendProcess: ReturnType<typeof execFile> | null = null;
+
+  if (ENABLE_DEBUG) {
+    backendClient = IpcHandlerService().connectToDotNetPipe(mainWindow);
+  } else {
+    backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
+  }
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
     console.log("Sent to backend:", msg); // Debug
@@ -173,6 +75,7 @@ app.whenReady().then(() => {
     } else if (backendProcess && backendProcess.stdin) {
       backendProcess.stdin.write(JSON.stringify(msg) + "\n");
     } else {
+      log.error("Backend process not available for sending message");
       console.error("Backend process not available for sending message");
     }
   });

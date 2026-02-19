@@ -12,6 +12,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["main.ts", "preload.ts"],
+  "include": ["main.ts", "preload.ts", "ipcHandlers.ts"],
   "exclude": ["node_modules"]
 }
