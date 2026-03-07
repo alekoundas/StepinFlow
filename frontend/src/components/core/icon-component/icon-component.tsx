@@ -1,9 +1,16 @@
+import { classNames } from "primereact/utils";
+
 interface IParameters {
   name: string;
   size?: "sm" | "base" | "lg" | "lg2";
+  className?: string;
 }
 
-export default function IconComponent(parameters: IParameters) {
+export default function IconComponent({
+  name,
+  size = "base",
+  className,
+}: IParameters) {
   const fontSizeMap = {
     sm: "1rem",
     base: "1.5rem",
@@ -14,8 +21,8 @@ export default function IconComponent(parameters: IParameters) {
   return (
     <>
       <i
-        className={`pi pi-${parameters.name}`}
-        style={{ fontSize: fontSizeMap[parameters.size ?? "base"] }}
+        className={classNames(`pi pi-${name}`, className)}
+        style={{ fontSize: fontSizeMap[size] }}
       />
     </>
   );

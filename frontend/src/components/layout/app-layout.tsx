@@ -1,93 +1,87 @@
 import { Button } from "primereact/button";
-import { Card } from "primereact/card";
 import { Menu } from "primereact/menu";
 import { MenuItem } from "primereact/menuitem";
-import { PanelMenu } from "primereact/panelmenu";
-import { Sidebar } from "primereact/sidebar";
-import { ReactElement, useState } from "react";
+import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import IconComponent from "../core/icon-component/icon-component";
+import LabelComponent from "../core/icon-component/label-component";
+import { classNames } from "primereact/utils";
 
 export default function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [isCollapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
 
-  // const menuItemTemplate = (title: string, icon: string): MenuItem => ({
-  //   template: () => (
-  //     <div className="flex justify-content-center m-4 gap-3">
-  //       <i className={`pi pi-${icon}`} />
-  //       <label hidden={collapsed}>{title}</label>
-  //     </div>
-  //   ),
-  // });
-
-  const menuItemTemplate = (title: string, icon: string): MenuItem => ({
+  const menuItemTemplate = (
+    title: string,
+    icon: string,
+    navigateTo: string,
+  ): MenuItem => ({
     template: () => (
-      <div className="flex justify-content-center mr-4 ml-4">
+      <div className={"flex justify-content-start"}>
         <Button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-button-text p-button-plain gap-3"
+          onClick={() => navigate(navigateTo)}
+          className="p-button-text p-button-plain  w-full pl-0 pr-0 gap-3"
         >
           <IconComponent
             name={icon}
+            className={classNames("ml-3", isCollapsed && "mr-3")}
           />
-          <p hidden={collapsed}>{title}</p>
+          <LabelComponent
+            text={title}
+            size="lg"
+            weight="semibold"
+            hidden={isCollapsed}
+            className={classNames(!isCollapsed && "mr-3")}
+          />
         </Button>
       </div>
     ),
   });
 
-  const menuItems: MenuItem[] = [
+  const menuItemsTop: MenuItem[] = [
     {
       template: () => (
-        <div className="flex justify-content-center">
+        <div className={" "}>
           <Button
-            icon="pi pi-bars"
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-button-text p-button-plain "
-          />
+            onClick={() => setCollapsed(!isCollapsed)}
+            className="p-button-text p-button-plain  w-full pl-0 pr-0 justify-content-start"
+          >
+            <IconComponent
+              name={"bars"}
+              className={classNames("ml-3", isCollapsed && "mr-3")}
+            />
+          </Button>
         </div>
       ),
     },
-
     {
       separator: true,
     },
-    menuItemTemplate("Home", "home"),
-    {
-      label: collapsed ? "Home" : undefined,
-      icon: "pi pi-home",
-      className: "ml-1",
+    menuItemTemplate("Home", "home", "/"),
+    menuItemTemplate("Flows", "cog", "/settings"),
+    menuItemTemplate("Sub-Flows", "cog", "/settings"),
+  ];
 
-      command: () => navigate("/"),
-    },
-    {
-      label: collapsed ? "Settings" : undefined,
-      icon: "pi pi-cog",
-      className: "pl-1",
-      command: () => navigate("/settings"),
-    },
+  const menuItemsBottom: MenuItem[] = [
+    menuItemTemplate("Settings", "cog", "/settings"),
   ];
 
   return (
-    <div className="flex h-full">
-      <div className="w-auto  h-full">
-        {/* <Sidebar
-          visible={true} 
-          onHide={() => {}} 
-          position="left"
-          className="h-screen" // or style={{ height: '100vh' }}
-          dismissable={false} // important for persistent
-          showCloseIcon={false}
-        > */}
-        {/* your menu content or another Menu/PanelMenu inside */}
+    <div className="flex">
+      <div
+        className="flex flex-column justify-content-between h-screen "
+        // style={{ backgroundColor: "var(--bg)" }}
+      >
         <Menu
-          model={menuItems}
-          className={"border-none h-screen w-full"} // w-full set menu to smaller width??? grok explain
+          model={menuItemsTop}
+          className={"border-noround w-full h-full"}
         />
-        {/* </Sidebar> */}
+        <Menu
+          model={menuItemsBottom}
+          className={"border-noround w-full"}
+        />
       </div>
-      <div className="w-full">
+      <div className="">
         <Outlet />
       </div>
     </div>
