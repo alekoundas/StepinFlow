@@ -56,8 +56,8 @@ autoUpdater.on("update-downloaded", () => {
 
 app.whenReady().then(() => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  // const ENABLE_DEBUG = false;
-  const ENABLE_DEBUG = true;
+  const ENABLE_DEBUG = false;
+  // const ENABLE_DEBUG = true;
   createWindow();
 
   let backendClient: net.Socket | null = null; // For named pipe connection
@@ -70,14 +70,16 @@ app.whenReady().then(() => {
   }
 
   ipcMain.handle("send-to-backend", (_, msg: object) => {
-    console.log("Sent to backend:", msg); // Debug
+    console.log("[Electron]Sent to backend:", msg); // Debug
     if (backendClient) {
       backendClient.write(JSON.stringify(msg) + "\n");
     } else if (backendProcess && backendProcess.stdin) {
       backendProcess.stdin.write(JSON.stringify(msg) + "\n");
     } else {
-      log.error("Backend process not available for sending message");
-      console.error("Backend process not available for sending message");
+      log.error("[Electron]Backend process not available for sending message");
+      console.error(
+        "[Electron] Backend process not available for sending message",
+      );
     }
   });
 

@@ -4,7 +4,7 @@
     {
       "label": "Build_Electron_TS",
       "type": "npm",
-      "script": "dev:electron-build", // script: tsc -p electron/electron-config.json
+      "script": "dev:electron-build",
       "group": "build",
       "problemMatcher": ["$tsc"]
     }
