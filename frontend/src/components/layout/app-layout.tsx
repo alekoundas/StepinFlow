@@ -3,8 +3,8 @@ import { Menu } from "primereact/menu";
 import { MenuItem } from "primereact/menuitem";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import IconComponent from "../core/icon-component/icon-component";
-import LabelComponent from "../core/icon-component/label-component";
+import IconComponent from "../core/icon-component";
+import LabelComponent from "../core/label-component";
 import { classNames } from "primereact/utils";
 
 export default function AppLayout() {
