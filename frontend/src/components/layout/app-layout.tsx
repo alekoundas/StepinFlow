@@ -58,7 +58,7 @@ export default function AppLayout() {
       separator: true,
     },
     menuItemTemplate("Home", "home", "/"),
-    menuItemTemplate("Flows", "cog", "/settings"),
+    menuItemTemplate("Flows", "cog", "/flows"),
     menuItemTemplate("Sub-Flows", "cog", "/settings"),
   ];
 

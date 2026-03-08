@@ -1,16 +1,17 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
-// import { PrimeReactProvider } from "@primereact/core";
 import { PrimeReactProvider } from "primereact/api";
-
-import AppLayout from "./components/layout/app-layout.tsx";
-import HomePage from "./pages/home/home-page.tsx";
 
 // Global CSS PrimeReact
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import "primereact/resources/themes/soho-dark/theme.css";
+
+// Pages
+import AppLayout from "./components/layout/app-layout.tsx";
+import HomePage from "./pages/home/home-page.tsx";
+import FlowsPage from "./pages/flow/flows-page.tsx";
 
 const router = createHashRouter([
   {
@@ -29,6 +30,11 @@ const router = createHashRouter([
         //   },
         // ],
       },
+      {
+        path: "/flows",
+        element: <FlowsPage />,
+      },
+
       // { path: "app", element: <App /> },
     ],
   },
