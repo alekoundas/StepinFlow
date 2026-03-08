@@ -7,9 +7,14 @@ namespace App.Ipc
     public class IpcHandler
     {
 
-        private JsonSerializerOptions options = new JsonSerializerOptions
+        private JsonSerializerOptions deseralizeOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true  // Enable case-insensitive matching
+            PropertyNameCaseInsensitive = true,  // Enable case-insensitive matching
+        };
+
+        private JsonSerializerOptions seralizeOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // Use camelCase for JSON properties
         };
 
 
@@ -57,7 +62,7 @@ namespace App.Ipc
                 {
                     Console.WriteLine($"[.NET] Received raw line: {line}"); // Debug raw input
 
-                    Message? message = JsonSerializer.Deserialize<Message>(line.Trim(), options); // Parse incoming JSON
+                    Message? message = JsonSerializer.Deserialize<Message>(line.Trim(), deseralizeOptions);
                     if (message == null) continue;
                     Console.WriteLine($"[.NET] Parsed action: {message.Action}");
 
@@ -77,8 +82,13 @@ namespace App.Ipc
                     }
 
                     // Send JSON response
-                    Message response = new Message { Action = "d", Payload = responsePayload };
-                    string responseJson = JsonSerializer.Serialize(response);
+                    Message response = new Message
+                    {
+                        Action = "d",
+                        Payload = responsePayload,
+                        CorrelationId = message.CorrelationId
+                    };
+                    string responseJson = JsonSerializer.Serialize(response, seralizeOptions);
                     await writer.WriteLineAsync(responseJson);
                     Console.WriteLine($"[.NET]Sent response: {responseJson}"); // Debug send
                 }
@@ -95,5 +105,6 @@ namespace App.Ipc
     {
         public string Action { get; set; } = string.Empty;
         public object Payload { get; set; } = new object();
+        public string? CorrelationId { get; set; }
     }
 }

@@ -6,6 +6,13 @@ import path from "path";
 import net from "net";
 import log from "electron-log";
 import { IpcHandlerService } from "./IpcHandlerService.js";
+
+interface RequestMessage {
+  action: string;
+  payload: unknown; // TODO use a  type (intersection type?)
+  correlationId?: string; // Optional ID to match requests with responses
+}
+
 const { autoUpdater } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,8 +76,9 @@ app.whenReady().then(() => {
     backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
   }
 
-  ipcMain.handle("send-to-backend", (_, msg: object) => {
-    console.log("[Electron]Sent to backend:", msg); // Debug
+  ipcMain.handle("send-to-backend", (_, msg: RequestMessage) => {
+    console.log("[Electron]Sent to backend:", msg);
+
     if (backendClient) {
       backendClient.write(JSON.stringify(msg) + "\n");
     } else if (backendProcess && backendProcess.stdin) {

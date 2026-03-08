@@ -1,83 +1,44 @@
 import { Button } from "primereact/button";
 import { useEffect, useState } from "react";
+import {
+  backend,
+  setupResponseListener,
+} from "../../services/backend-api-service";
 
 export default function HomePage() {
-  const [logs, setLogs] = useState<string[]>([]);
-  const [status, setStatus] = useState("Ready");
+  // Subscribe once (better in root layout, but ok here for now)
+  // useBackendEvents();
 
-  useEffect(() => {
-    // Register listener ONCE when component mounts
-    const api = (window as any).backendApi;
-
-    if (!api) {
-      console.error("backendApi not exposed");
-      setStatus("IPC not available");
-      return;
-    }
-
-    api.onMessage((msg: any) => {
-      console.log("Received from .NET:", msg);
-      setLogs((prev) => [...prev, JSON.stringify(msg)]);
-
-      // Example: handle progress messages if you later send them
-      if (msg.event === "progress") {
-        setLogs((prev) => [...prev, `Progress: ${msg.details}`]);
-      }
-    });
-  }, []);
-
-  const onSend = async () => {
-    const api = (window as any).backendApi;
-
-    if (!api) {
-      setStatus("Cannot send – IPC not ready");
-      return;
-    }
-
-    setStatus("Sending...");
-
+  // const { status, logs } = useBackendStore();
+  const [reply, setReply] = useState("Ready");
+  // setupResponseListener();
+  const onGreet = async () => {
     try {
-      // Send a real message object
-      await api.send({
-        action: "greet",
-        payload: "Hello from React!",
-      });
-
-      setStatus("Message sent!");
-      console.log("Sent to backend:", {
-        action: "greet",
-        payload: "Hello from React!",
-      });
+      const reply = await backend.greet("Electron User");
+      console.log("Direct reply (if sync):", reply);
+      setReply(reply.greeting ?? "skkatoules");
     } catch (err) {
-      console.error("Send failed:", err);
-      setStatus("Send failed");
+      console.error("Invoke failed:", err);
     }
   };
 
   return (
     <div className="p-4">
-      <h2>StepInFlow Test</h2>
+      <h2>StepInFlow</h2>
       <p>Status: {status}</p>
 
       <Button
-        label="Send Greeting to .NET"
-        icon="pi pi-send"
-        onClick={onSend}
-        className="p-button-success mb-4"
+        label="Greet .NET"
+        onClick={onGreet}
+        className="mb-4 p-button-success"
       />
 
-      <div>
-        <h3>Received messages:</h3>
-        {logs.length === 0 ? (
-          <p className="text-gray-500">Nothing received yet...</p>
-        ) : (
-          <ul className="list-disc pl-5">
-            {logs.map((log, i) => (
-              <li key={i}>{log}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <h3>Received from .NET:</h3>
+      {reply.length === 0 ? (
+        <p>No messages yet...</p>
+      ) : (
+        <ul className="list-disc pl-5">{reply}</ul>
+      )}
     </div>
   );
 }
