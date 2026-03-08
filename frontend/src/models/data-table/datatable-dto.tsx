@@ -1,4 +1,4 @@
-import { DataTableSortMeta } from "primereact/datatable";
+import type { DataTableSortMeta } from "primereact/datatable";
 import { DataTableSortDto } from "./datatable-sort-dto";
 import { DataTableFilterDto } from "./datatable-filter-dto";
 

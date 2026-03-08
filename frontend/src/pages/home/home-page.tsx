@@ -1,9 +1,6 @@
 import { Button } from "primereact/button";
-import { useEffect, useState } from "react";
-import {
-  backend,
-  setupResponseListener,
-} from "../../services/backend-api-service";
+import { useState } from "react";
+import { backend } from "../../services/backend-api-service";
 
 export default function HomePage() {
   // Subscribe once (better in root layout, but ok here for now)

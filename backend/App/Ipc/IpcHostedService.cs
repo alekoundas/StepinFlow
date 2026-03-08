@@ -60,7 +60,7 @@ namespace App.Ipc
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 try
                 {
-                    Console.WriteLine($"[.NET] Received raw line: {line}"); // Debug raw input
+                    Console.WriteLine($"[.NET] Received raw line: {line}"); 
 
                     Message? message = JsonSerializer.Deserialize<Message>(line.Trim(), deseralizeOptions);
                     if (message == null) continue;

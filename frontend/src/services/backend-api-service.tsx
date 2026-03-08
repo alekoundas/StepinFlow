@@ -1,9 +1,18 @@
-import { useEffect } from "react";
+import type {
+  RequestMessage,
+  ResponseMessage,
+} from "../../../electron/shared/types";
 
-type MessageCallback<T = any> = (msg: T) => void;
+// TODO remove this. Buut Build process throws error without it....
+// const backendApi = window.backendApi;
+declare const backendApi: {
+  invoke: <T>(msg: any) => Promise<T>;
+  onMessage: <T>(cb: (msg: T) => void) => () => void;
+};
+///
+//
 
-const backendApi = window.backendApi;
-const pendingRequests = new Map<string, PendingRequest>(); 
+const pendingRequests = new Map<string, PendingRequest>();
 
 if (!backendApi) {
   console.error("backendApi not available — preload missing?");
@@ -13,25 +22,12 @@ export const backend = {
   greet: (name: string) => request<{ greeting: string }>("greet", name),
   test: () => request<{ testResponse: string }>("test"),
 };
-interface RequestMessage {
-  action: string;
-  payload: unknown; // TODO use a  type (intersection type?)
-  correlationId?: string; // Match requests with responses
-}
-
-export interface ResponseMessage {
-  action: string;
-  payload: unknown;
-  correlationId: string;
-  error?: string;
-}
 
 interface PendingRequest {
   resolve: (value: any) => void;
   reject: (error: any) => void;
-  timeoutId?: NodeJS.Timeout;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
-
 
 // Listen **once** for all .NET responses
 export function setupResponseListener() {

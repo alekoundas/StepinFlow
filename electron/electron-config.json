@@ -12,6 +12,12 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["main.ts", "preload.ts", "ipcHandlers.ts"],
+  "include": [
+    "main.ts",
+    "preload.ts",
+    "preload.d.ts",
+    "shared/channels.ts",
+    "shared/types.ts"
+  ],
   "exclude": ["node_modules"]
 }

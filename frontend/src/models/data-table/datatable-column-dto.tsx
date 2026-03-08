@@ -1,21 +1,19 @@
-import {
+import type {
   ColumnBodyOptions,
-  ColumnEditorOptions,
-  ColumnEvent,
   ColumnFilterElementTemplateOptions,
 } from "primereact/column";
-import { JSX } from "react";
+import type { JSX } from "react";
 
 export interface DataTableColumnDto<TEntity> {
   field: string;
   header: string;
   style: React.CSSProperties;
   sortable: boolean;
-  
+
   filter: boolean;
   filterPlaceholder: string;
   filterTemplate?: (
-    options: ColumnFilterElementTemplateOptions
+    options: ColumnFilterElementTemplateOptions,
   ) => JSX.Element | undefined;
 
   body?: ((rowData: TEntity, options: ColumnBodyOptions) => any) | undefined;
@@ -27,7 +25,9 @@ export interface DataTableColumnDto<TEntity> {
   // onCellEditComplete?: (event: ColumnEvent) => void;
 }
 
-export class DataTableColumnDto<TEntity> implements DataTableColumnDto<TEntity> {
+export class DataTableColumnDto<
+  TEntity,
+> implements DataTableColumnDto<TEntity> {
   field: string = "";
   header: string = "";
   style: React.CSSProperties = {};
@@ -36,9 +36,9 @@ export class DataTableColumnDto<TEntity> implements DataTableColumnDto<TEntity> 
   filter: boolean = false;
   filterPlaceholder: string = "";
   filterTemplate?: (
-    options: ColumnFilterElementTemplateOptions
+    options: ColumnFilterElementTemplateOptions,
   ) => JSX.Element | undefined;
-  
+
   body?: ((rowData: TEntity, options: ColumnBodyOptions) => any) | undefined;
   // body?: (rowData: TEntity, options?: ColumnBodyOptions) => JSX.Element;
 

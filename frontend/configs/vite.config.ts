@@ -11,7 +11,7 @@ export default defineConfig({
           [
             "babel-plugin-react-compiler",
             {
-              target: "19", // or your React version
+              target: "19",
             },
           ],
         ],
@@ -23,8 +23,6 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "../../dist/frontend"),
     emptyOutDir: true, // clean before build
     sourcemap: true,
-    rollupOptions: {
-      // optional: if needed
-    },
+    rollupOptions: {},
   },
 });

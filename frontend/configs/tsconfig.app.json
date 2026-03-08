@@ -11,7 +11,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": true, // Forcces you to add "type" keyword on imports
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
@@ -20,9 +20,15 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": true, //bans any TypeScript syntax that generates runtime JavaScript code
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["../src"]
+  "include": [
+    "../src",
+    "../electron/shared/types.ts",
+    "../electron/shared/channels.ts",
+    "../electron/preload.d.ts",
+    "../electron/preload.ts"
+  ]
 }
