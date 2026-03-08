@@ -1,26 +1,26 @@
-﻿using System.IO.Pipes;
+﻿using Core.Models.Ipc;
+using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
 
 namespace App.Ipc
 {
-    public class IpcHandler
+    public class IpcService
     {
+        // PropertyNameCaseInsensitive: Enable case-insensitive matching
+        private JsonSerializerOptions _deseralizeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        private JsonSerializerOptions deseralizeOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,  // Enable case-insensitive matching
-        };
+        // PropertyNamingPolicy: Use camelCase for JSON properties
+        private JsonSerializerOptions _seralizeOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-        private JsonSerializerOptions seralizeOptions = new JsonSerializerOptions
+
+        public IpcService()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // Use camelCase for JSON properties
-        };
+        }
 
 
         public async Task StartListening()
         {
-            Console.WriteLine("Yooooooooo");
             await ProcessStreamAsync(Console.In, Console.Out);
         }
 
@@ -60,35 +60,28 @@ namespace App.Ipc
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 try
                 {
-                    Console.WriteLine($"[.NET] Received raw line: {line}"); 
+                    Console.WriteLine($"[.NET] Received raw line: {line}");
+                    IpcRequest? message = JsonSerializer.Deserialize<IpcRequest>(line.Trim(), _deseralizeOptions);
 
-                    Message? message = JsonSerializer.Deserialize<Message>(line.Trim(), deseralizeOptions);
                     if (message == null) continue;
                     Console.WriteLine($"[.NET] Parsed action: {message.Action}");
 
                     // Process based on action
-                    object responsePayload;
                     switch (message.Action)
                     {
                         case "greet":
-                            responsePayload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
+                            message.Payload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
                             break;
                         case "test":
-                            responsePayload = new { TestResponse = "Test received!" };
+                            message.Payload = new { TestResponse = "Test received!" };
                             break;
                         default:
-                            responsePayload = new { Error = "Unknown action" };
+                            message.Payload = new { Error = "Unknown action" };
                             break;
                     }
 
                     // Send JSON response
-                    Message response = new Message
-                    {
-                        Action = "d",
-                        Payload = responsePayload,
-                        CorrelationId = message.CorrelationId
-                    };
-                    string responseJson = JsonSerializer.Serialize(response, seralizeOptions);
+                    string responseJson = JsonSerializer.Serialize(message, _seralizeOptions);
                     await writer.WriteLineAsync(responseJson);
                     Console.WriteLine($"[.NET]Sent response: {responseJson}"); // Debug send
                 }
@@ -98,13 +91,5 @@ namespace App.Ipc
                 }
             }
         }
-    }
-
-    // Shared message type (mirror in TS)
-    public class Message
-    {
-        public string Action { get; set; } = string.Empty;
-        public object Payload { get; set; } = new object();
-        public string? CorrelationId { get; set; }
     }
 }
