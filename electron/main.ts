@@ -74,6 +74,12 @@ app.whenReady().then(() => {
     backendClient = IpcHandlerService().connectToDotNetPipe(mainWindow);
   } else {
     backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
+    // Give backend time to create the pipe server
+    setTimeout(() => {
+      if (!backendProcess?.killed) {
+        backendClient = IpcHandlerService().connectToDotNetPipe(mainWindow);
+      }
+    }, 1200);
   }
 
   ipcMain.handle("send-to-backend", (_, msg: RequestMessage) => {
@@ -81,14 +87,17 @@ app.whenReady().then(() => {
 
     if (backendClient) {
       backendClient.write(JSON.stringify(msg) + "\n");
-    } else if (backendProcess && backendProcess.stdin) {
-      backendProcess.stdin.write(JSON.stringify(msg) + "\n");
     } else {
       log.error("[Electron]Backend process not available for sending message");
       console.error(
         "[Electron] Backend process not available for sending message",
       );
     }
+  });
+
+  app.on("before-quit", () => {
+    backendClient?.destroy();
+    backendProcess?.kill();
   });
 
   app.on("activate", () => {

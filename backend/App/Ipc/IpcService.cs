@@ -1,95 +1,123 @@
 ﻿using Core.Models.ProtobufIpcMessages;
+using ProtoBuf;
+using System.Buffers;
 using System.IO.Pipes;
-using System.Text;
-using System.Text.Json;
 
 namespace App.Ipc
 {
     public class IpcService
     {
-        // PropertyNameCaseInsensitive: Enable case-insensitive matching
-        private JsonSerializerOptions _deseralizeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private const string PipeName = "stepinflow-backend-pipe";
 
-        // PropertyNamingPolicy: Use camelCase for JSON properties
-        private JsonSerializerOptions _seralizeOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        private readonly IpcDispatcher _dispatcher;
 
-
-        public IpcService()
+        public IpcService(IpcDispatcher dispatcher)
         {
+            _dispatcher = dispatcher;
         }
 
-
-        public async Task StartListening()
+        public async Task StartAsync(CancellationToken stoppingToken = default)
         {
-            await ProcessStreamAsync(Console.In, Console.Out);
-        }
-
-
-        public async Task StartListeningDebug()
-        {
-            string PipeName = "stepinflow-backend-pipe";
-            while (true) // Loop for reconnections
+            while (!stoppingToken.IsCancellationRequested)
             {
-                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1))
-                {
-                    try
-                    {
-                        Console.WriteLine("[.NET] Waiting for Electron connection...");
-                        await server.WaitForConnectionAsync();
-                        Console.WriteLine("[.NET] Electron connected to pipe.");
-                        using (var reader = new StreamReader(server, Encoding.UTF8, true, 4096, true))
-                        using (var writer = new StreamWriter(server, Encoding.UTF8, 4096, true) { AutoFlush = true })
-                        {
-                            await ProcessStreamAsync(reader, writer);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"[.NET] Pipe error: {ex.Message}");
-                    }
-                }
-            }
-        }
+                await using var server = new NamedPipeServerStream(
+                    PipeName,
+                    PipeDirection.InOut,
+                    maxNumberOfServerInstances: 5,           
+                    transmissionMode: PipeTransmissionMode.Byte,
+                    options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
+                    inBufferSize: 64 * 1024,
+                    outBufferSize: 64 * 1024
+                );
 
-
-        private async Task ProcessStreamAsync(TextReader reader, TextWriter writer)
-        {
-            string? line;
-            while ((line = await reader.ReadLineAsync()) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
                 try
                 {
-                    Console.WriteLine($"[.NET] Received raw line: {line}");
-                    IpcRequest? message = JsonSerializer.Deserialize<IpcRequest>(line.Trim(), _deseralizeOptions);
+                    Console.WriteLine("[.NET Pipe] Waiting for connection...");
+                    await server.WaitForConnectionAsync(stoppingToken);
+                    Console.WriteLine("[.NET Pipe] Client connected.");
 
-                    if (message == null) continue;
-                    Console.WriteLine($"[.NET] Parsed action: {message.Action}");
-
-                    // Process based on action
-                    switch (message.Action)
-                    {
-                        case "greet":
-                            message.Payload = new { Greeting = $"Hello, {message.Payload} from .NET!" };
-                            break;
-                        case "test":
-                            message.Payload = new { TestResponse = "Test received!" };
-                            break;
-                        default:
-                            message.Payload = new { Error = "Unknown action" };
-                            break;
-                    }
-
-                    // Send JSON response
-                    string responseJson = JsonSerializer.Serialize(message, _seralizeOptions);
-                    await writer.WriteLineAsync(responseJson);
-                    Console.WriteLine($"[.NET]Sent response: {responseJson}"); // Debug send
+                    await HandleConnectionAsync(server, stoppingToken);
                 }
+                catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"[.NET]Error processing message: {ex.Message}");
+                    Console.Error.WriteLine($"[.NET Pipe] Error: {ex.Message}");
                 }
             }
         }
+
+        private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        {
+            // Use ArrayPool to reduce GC pressure on large images
+            var buffer = ArrayPool<byte>.Shared.Rent(128 * 1024);
+            try
+            {
+                while (!ct.IsCancellationRequested && pipe.IsConnected)
+                {
+                    // Read length prefix (4 bytes big-endian)
+                    int bytesRead = await ReadExactAsync(pipe, buffer, 0, 4, ct);
+                    if (bytesRead == 0) break;
+
+                    int length = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+
+                    if (length < 1 || length > 16 * 1024 * 1024) // safety limit ~16 MB
+                    {
+                        Console.Error.WriteLine($"[Pipe] Invalid length: {length}");
+                        break;
+                    }
+
+                    // Resize buffer if needed
+                    if (length > buffer.Length)
+                    {
+                        ArrayPool<byte>.Shared.Return(buffer);
+                        buffer = ArrayPool<byte>.Shared.Rent(length + 16);
+                    }
+
+                    bytesRead = await ReadExactAsync(pipe, buffer, 0, length, ct);
+                    if (bytesRead != length) break;
+
+                    // Deserialize request
+                    var request = Serializer.Deserialize<IpcRequest>(new ReadOnlyMemory<byte>(buffer, 0, length));
+
+                    // Handle via dispatcher
+                    var response = await _dispatcher.HandleAsync(request, ct);
+
+                    // Serialize response
+                    using var ms = new MemoryStream(32 * 1024);
+                    Serializer.Serialize(ms, response);
+                    var responseBytes = ms.ToArray();
+
+                    // Write length prefix + payload
+                    byte[] lenPrefix = new byte[4]
+                    {
+                        (byte)(responseBytes.Length >> 24),
+                        (byte)(responseBytes.Length >> 16),
+                        (byte)(responseBytes.Length >> 8),
+                        (byte)responseBytes.Length
+                    };
+
+                    await pipe.WriteAsync(lenPrefix, 0, 4, ct);
+                    await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
+                    await pipe.FlushAsync(ct);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        private static async Task<int> ReadExactAsync(Stream stream, byte[] buffer, int offset, int count, CancellationToken ct)
+        {
+            int total = 0;
+            while (total < count)
+            {
+                int read = await stream.ReadAsync(buffer.AsMemory(offset + total, count - total), ct);
+                if (read == 0) return total;
+                total += read;
+            }
+            return total;
+        }
     }
+}
 }

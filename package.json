@@ -10,13 +10,14 @@
     "dev:backend": "cd backend/App && dotnet run",
     "dev:electron-build": "tsc -p electron/electron-config.json --outDir electron/build",
     "dev:electron": "npm run dev:electron-build && wait-on http://localhost:5173 && electron electron/build/main.js",
-    "dev": "npm run clean && concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
+    "dev": "npm run clean && npm run protobuf:generate && concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\"",
     "dev:no-api": "npm run clean && concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend/App && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
     "build:electron": "tsc --project electron/electron-config.json --outDir ./dist ",
-    "build": "npm run clean && npm run build:frontend && npm run build:backend && npm run build:electron && electron-builder",
+    "build": "npm run clean && npm run protobuf:generate && npm run build:frontend && npm run build:backend && npm run build:electron && electron-builder",
     "install:full": "npm install &&cd frontend && npm install",
+    "protobuf:generate": "mkdir electron\\build\\protobuf && npx pbjs -t static-module -w commonjs -o electron/build/protobuf/compiled.js electron/protobuf/protobuf.proto && npx pbts -o electron/build/protobuf/compiled.d.ts electron/build/protobuf/compiled.js",
     "lint": "cd frontend && npm run lint",
     "lint:fix": "cd frontend && npm run lint:fix",
     "clean": "rimraf dist release electron/build"
@@ -55,7 +56,9 @@
     "electron-builder": "^26.7.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.7.0",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "protobufjs": "^7.5.4",
+    "protobufjs-cli": "^2.0.0"
   },
   "dependencies": {
     "electron-log": "^5.4.3",

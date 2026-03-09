@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message IpcRequest {
+  string action = 1;
+  bytes payload = 2;
+  string correlationId = 3;
+}
+
+message IpcResponse {
+  string action = 1;
+  bytes payload = 2;
+  string correlationId = 3;
+  string error = 4;
+}

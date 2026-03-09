@@ -1,49 +1,15 @@
 import { BrowserWindow } from "electron";
-import { execFile } from "child_process";
+import { ChildProcess, execFile } from "child_process";
 import path from "path";
 import log from "electron-log";
 import net from "net";
 import { fileURLToPath } from "url";
-
-// Type for messages 
-// interface Message {
-//   action: string;
-//   payload: any;
-// }
+import Stream from "stream";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function IpcHandlerService() {
-  // Private method to handle incoming data from .NET, parse it, and send to renderer
-  const handleRecivedData = (
-    browserWindow: BrowserWindow | null,
-    data: any,
-  ) => {
-    const lines = data.toString().trim().split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      // If it starts with '{' its data.
-      // Else its Logging...
-      if (trimmed.startsWith("{")) {
-        try {
-          const msg = JSON.parse(trimmed);
-          browserWindow?.webContents.send("recieve-from-backend", msg);
-          log.log("Parsed .NET message:", msg);
-          console.log("Parsed .NET message:", msg);
-        } catch (e) {
-          log.error("Failed to parse JSON:", e, "Raw:", trimmed);
-          console.error("Failed to parse JSON:", e, "Raw:", trimmed);
-        }
-      } else {
-        log.log("[.NET] " + trimmed);
-        console.log("[.NET] " + trimmed);
-      }
-    }
-  };
-
   // Production: Spawns the .NET process and sets up listeners for its output
   const spawnDotNetProcess = (
     browserWindow: BrowserWindow | null,
@@ -83,50 +49,77 @@ export function IpcHandlerService() {
       },
     );
 
-    backendProcess.stdout?.on("data", (data) => {
-      handleRecivedData(browserWindow, data);
-    });
-
-    backendProcess.stderr?.on("data", (data) => {
-      console.error(`[ELECTRON] stderr: ${data}`);
-    });
-
-    backendProcess?.on("close", (code) => {
-      console.log(`[ELECTRON] process exited with code ${code}`);
-    });
+    handleRecivedData(browserWindow, backendProcess.stdout);
 
     backendProcess.on("spawn", () => {
       console.log("[ELECTRON] process spawned successfully");
     });
 
+    backendProcess?.on("close", (code) => {
+      console.log(`[ELECTRON] process exited with code ${code}`);
+      browserWindow?.webContents.send("backend-disconnected");
+    });
     return backendProcess;
   };
 
-  // Debug: Connects to an already running .NET process via named pipe (for development without auto-spawn)
+  // Connects to an already running .NET process via named pipe
   const connectToDotNetPipe = (browserWindow: BrowserWindow | null) => {
     const pipeName = "\\\\.\\pipe\\stepinflow-backend-pipe"; // Windows named pipe path
 
-    let backendClient: net.Socket | null = net.connect(pipeName, () => {
+    const backendPipe: net.Socket = net.connect(pipeName, () => {
       log.log("[ELECTRON] Connected to .NET named pipe");
       console.log("[ELECTRON] Connected to .NET named pipe");
     });
 
     // Stream data for real-time JSON parsing and relay to renderer
-    backendClient.on("data", (data) => {
-      handleRecivedData(browserWindow, data);
-    });
+    handleRecivedData(browserWindow, backendPipe);
 
-    backendClient.on("error", (err) => {
+    backendPipe.on("error", (err) => {
       log.error("[ELECTRON] Named pipe connection error:", err);
       console.error("[ELECTRON]   Named pipe connection error:", err);
     });
 
-    backendClient.on("close", () => {
+    backendPipe.on("close", () => {
       log.log("[ELECTRON] .NET pipe closed");
       console.log("[ELECTRON] .NET pipe closed");
     });
 
-    return backendClient;
+    return backendPipe;
+  };
+
+  // Private method to handle incoming data from .NET, parse it, and send to renderer
+  const handleRecivedData = (
+    browserWindow: BrowserWindow | null,
+    backendPipe: net.Socket | Stream.Readable | null,
+  ) => {
+    let buffer = Buffer.alloc(0);
+
+    backendPipe?.on("data", (chunk: Buffer) => {
+      buffer = Buffer.concat([buffer, chunk]);
+
+      // For now — keep line-based JSON (easy migration)
+      // Later replace with length-prefix + protobuf parsing
+      const lines = buffer.toString("utf-8").split("\n");
+      buffer = Buffer.from(lines.pop() || ""); // leftover incomplete line
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith("{")) {
+          try {
+            const msg = JSON.parse(trimmed);
+            browserWindow?.webContents.send("recieve-from-backend", msg);
+            log.info("[BackendConnector] Parsed message:", msg);
+          } catch (err) {
+            log.error("[BackendConnector] JSON parse failed:", err, trimmed);
+          }
+        } else {
+          // log line from .NET
+          log.info("[.NET]", trimmed);
+        }
+      }
+    });
   };
 
   return { spawnDotNetProcess, connectToDotNetPipe };

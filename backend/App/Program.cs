@@ -31,6 +31,14 @@ namespace App
             builder.Services.AddCustomDbContextFactory();
             builder.Services.AddSingleton<IDataService, DataService>();
 
+            // IPC
+            builder.Services.AddSingleton<IpcDispatcher>();
+            builder.Services.AddSingleton<IpcService>();
+            builder.Services.AddHostedService(sp =>
+            {
+                var svc = sp.GetRequiredService<IpcService>();
+                return new HostedPipeListener(svc);
+            });
 
             // Localization (JSON)
             //builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
@@ -48,15 +56,22 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
-
             Console.WriteLine("[.NET] - DB ready");
 
 
-            var handler = new IpcService();
-            _ = Task.Run(() => new IpcService().StartListening());
-            _ = Task.Run(() => new IpcService().StartListeningDebug());
+            //var handler = new IpcService();
+            //_ = Task.Run(() => new IpcService().StartListening());
+            //_ = Task.Run(() => new IpcService().StartListeningDebug());
             Console.WriteLine("[.NET] - Pipe listener started");
             await app.RunAsync();
         }
+    }
+
+    internal class HostedPipeListener : BackgroundService
+    {
+        private readonly IpcService _ipc;
+        public HostedPipeListener(IpcService ipc) => _ipc = ipc;
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+            => _ipc.StartAsync(stoppingToken);
     }
 }
