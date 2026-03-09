@@ -52,10 +52,9 @@ namespace App
             Console.WriteLine("[.NET] - DB ready");
 
 
-            var handler = new IpcHandler();
-            //handler.StartListening();
-            _ = Task.Run(() => new IpcHandler().StartListening());
-            _ = Task.Run(() => new IpcHandler().StartListeningDebug());
+            var handler = new IpcService();
+            _ = Task.Run(() => new IpcService().StartListening());
+            _ = Task.Run(() => new IpcService().StartListeningDebug());
             Console.WriteLine("[.NET] - Pipe listener started");
             await app.RunAsync();
         }

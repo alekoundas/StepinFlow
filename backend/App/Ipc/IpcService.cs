@@ -1,4 +1,4 @@
-﻿using Core.Models.Ipc;
+﻿using Core.Models.ProtobufIpcMessages;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;

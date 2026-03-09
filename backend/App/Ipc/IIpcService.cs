@@ -1,4 +1,5 @@
-﻿using Core.Models.Ipc;
+﻿
+using Core.Models.ProtobufIpcMessages;
 
 namespace App.Ipc
 {
