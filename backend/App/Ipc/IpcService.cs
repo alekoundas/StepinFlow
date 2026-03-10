@@ -1,4 +1,5 @@
-﻿using Core.Models.ProtobufIpcMessages;
+﻿using Core.Models.Database;
+using Core.Models.ProtobufIpcMessages;
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
@@ -9,12 +10,12 @@ namespace App.Ipc
     {
         private const string PipeName = "stepinflow-backend-pipe";
 
-        private readonly IpcDispatcher _dispatcher;
+        //private readonly IpcDispatcher _dispatcher;
 
-        public IpcService(IpcDispatcher dispatcher)
-        {
-            _dispatcher = dispatcher;
-        }
+        //public IpcService(IpcDispatcher dispatcher)
+        //{
+        //    _dispatcher = dispatcher;
+        //}
 
         public async Task StartAsync(CancellationToken stoppingToken = default)
         {
@@ -80,8 +81,9 @@ namespace App.Ipc
                     var request = Serializer.Deserialize<IpcRequest>(new ReadOnlyMemory<byte>(buffer, 0, length));
 
                     // Handle via dispatcher
-                    var response = await _dispatcher.HandleAsync(request, ct);
+                    //var response = await _dispatcher.HandleAsync(request, ct);
 
+                    var response = new Flow() {Name = "aaaa" };
                     // Serialize response
                     using var ms = new MemoryStream(32 * 1024);
                     Serializer.Serialize(ms, response);
@@ -119,5 +121,4 @@ namespace App.Ipc
             return total;
         }
     }
-}
 }

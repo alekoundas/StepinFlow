@@ -32,7 +32,7 @@ namespace App
             builder.Services.AddSingleton<IDataService, DataService>();
 
             // IPC
-            builder.Services.AddSingleton<IpcDispatcher>();
+            //builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IpcService>();
             builder.Services.AddHostedService(sp =>
             {

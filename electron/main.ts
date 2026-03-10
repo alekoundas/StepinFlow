@@ -6,6 +6,7 @@ import path from "path";
 import net from "net";
 import log from "electron-log";
 import { IpcHandlerService } from "./IpcHandlerService.js";
+import { ProtobufService } from "./protobuf/protobuf.js";
 
 interface RequestMessage {
   action: string;
@@ -61,38 +62,69 @@ autoUpdater.on("update-downloaded", () => {
     });
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  const ENABLE_DEBUG = false;
-  // const ENABLE_DEBUG = true;
+  // const ENABLE_DEBUG = false;
+  const ENABLE_DEBUG = true;
   createWindow();
 
   let backendClient: net.Socket | null = null; // For named pipe connection
   let backendProcess: ReturnType<typeof execFile> | null = null;
 
   if (ENABLE_DEBUG) {
-    backendClient = IpcHandlerService().connectToDotNetPipe(mainWindow);
+    backendClient = await IpcHandlerService().connectToDotNetPipe(mainWindow);
   } else {
     backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
     // Give backend time to create the pipe server
-    setTimeout(() => {
+    setTimeout(async () => {
       if (!backendProcess?.killed) {
-        backendClient = IpcHandlerService().connectToDotNetPipe(mainWindow);
+        backendClient =
+          await IpcHandlerService().connectToDotNetPipe(mainWindow);
       }
     }, 1200);
   }
 
-  ipcMain.handle("send-to-backend", (_, msg: RequestMessage) => {
-    console.log("[Electron]Sent to backend:", msg);
+  // TODO REMOVE FROM HERE
+  const { IpcRequest } = await ProtobufService().getMessageTypes();
+  ipcMain.handle("send-to-backend", async (_, msg: RequestMessage) => {
+    // console.log("[Electron]Sent to backend:", msg);
 
-    if (backendClient) {
-      backendClient.write(JSON.stringify(msg) + "\n");
-    } else {
-      log.error("[Electron]Backend process not available for sending message");
-      console.error(
-        "[Electron] Backend process not available for sending message",
-      );
+    // if (backendClient) {
+    //   backendClient.write(JSON.stringify(msg) + "\n");
+    // } else {
+    //   log.error("[Electron]Backend process not available for sending message");
+    //   console.error(
+    //     "[Electron] Backend process not available for sending message",
+    //   );
+    // }
+
+    const payloadBytes = Buffer.isBuffer(msg.payload)
+      ? msg.payload
+      : Buffer.from(JSON.stringify(msg.payload)); // fallback for small objects
+
+    const reqObj = {
+      action: msg.action,
+      payload: payloadBytes,
+      correlationId: msg.correlationId ?? crypto.randomUUID(),
+    };
+
+    const err = IpcRequest.verify(reqObj);
+    if (err) throw Error(err);
+
+    const message = IpcRequest.create(reqObj);
+    const buffer = IpcRequest.encode(message).finish();
+
+    const prefix = Buffer.alloc(4);
+    prefix.writeUInt32BE(buffer.length, 0);
+
+    // backendClient?.write(Buffer.concat([prefix, buffer]));
+
+    if (!backendClient || !backendClient.writable) {
+      log.log("[Electron]Backend pipe not connected");
+      console.log("[Electron]Backend pipe not connected");
+      throw new Error("[Electron]Backend pipe not connected");
     }
+    backendClient.write(Buffer.concat([prefix, buffer]));
   });
 
   app.on("before-quit", () => {
