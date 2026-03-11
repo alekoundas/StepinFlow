@@ -64,30 +64,55 @@ autoUpdater.on("update-downloaded", () => {
 
 app.whenReady().then(async () => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  // const ENABLE_DEBUG = false;
-  const ENABLE_DEBUG = true;
+  const ENABLE_DEBUG = false;
+  // const ENABLE_DEBUG = true;
   createWindow();
 
   let backendClient: net.Socket | null = null; // For named pipe connection
   let backendProcess: ReturnType<typeof execFile> | null = null;
 
+  const pendingResponses = new Map<string, (plain: any) => void>();
+
+  const setBackendClient = (client: net.Socket | null) => {
+    backendClient = client;
+  };
+
   if (ENABLE_DEBUG) {
-    backendClient = await IpcHandlerService().connectToDotNetPipe(mainWindow);
+    backendClient = await IpcHandlerService().connectToDotNetPipe(
+      mainWindow,
+      setBackendClient,
+      pendingResponses,
+    );
   } else {
     backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
-    // Give backend time to create the pipe server
-    setTimeout(async () => {
-      if (!backendProcess?.killed) {
-        backendClient =
-          await IpcHandlerService().connectToDotNetPipe(mainWindow);
-      }
-    }, 1200);
+    backendClient = await IpcHandlerService().connectToDotNetPipe(
+      mainWindow,
+      setBackendClient,
+      pendingResponses,
+    );
   }
 
   // TODO REMOVE FROM HERE
   const { IpcRequest } = await ProtobufService().getMessageTypes();
   ipcMain.handle("send-to-backend", async (_, msg: RequestMessage) => {
-    // console.log("[Electron]Sent to backend:", msg);
+    console.log("[Electron]Sent to backend:", msg);
+
+    if (!backendClient || !backendClient.writable) {
+      log.log("[Electron] Backend pipe not connected, attempting reconnect...");
+      console.log(
+        "[Electron] Backend pipe not connected, attempting reconnect...",
+      );
+      try {
+        backendClient = await IpcHandlerService().connectToDotNetPipe(
+          mainWindow,
+          setBackendClient,
+          pendingResponses,
+        );
+      } catch (reconnectErr) {
+        log.error("[Electron] Reconnect failed:", reconnectErr);
+        throw new Error("[Electron] Backend pipe not available");
+      }
+    }
 
     // if (backendClient) {
     //   backendClient.write(JSON.stringify(msg) + "\n");
@@ -117,14 +142,40 @@ app.whenReady().then(async () => {
     const prefix = Buffer.alloc(4);
     prefix.writeUInt32BE(buffer.length, 0);
 
-    // backendClient?.write(Buffer.concat([prefix, buffer]));
-
-    if (!backendClient || !backendClient.writable) {
-      log.log("[Electron]Backend pipe not connected");
-      console.log("[Electron]Backend pipe not connected");
-      throw new Error("[Electron]Backend pipe not connected");
-    }
     backendClient.write(Buffer.concat([prefix, buffer]));
+    // ← NEW: proper awaitable response via correlationId
+    return new Promise((resolve, reject) => {
+      const cid = reqObj.correlationId!;
+      const timeoutId = setTimeout(() => {
+        if (pendingResponses.has(cid)) {
+          pendingResponses.delete(cid);
+          reject(
+            new Error(
+              `Timeout waiting for backend response to "${msg.action}"`,
+            ),
+          );
+        }
+      }, 30000);
+
+      pendingResponses.set(cid, (plain: any) => {
+        clearTimeout(timeoutId);
+        if (plain.error) {
+          reject(new Error(plain.error));
+          return;
+        }
+
+        // Auto-parse JSON payload (matches your frontend convention)
+        let payload = plain.payload;
+        if (Buffer.isBuffer(payload)) {
+          try {
+            payload = JSON.parse(payload.toString("utf-8"));
+          } catch {
+            // keep raw Buffer if not JSON
+          }
+        }
+        resolve(payload);
+      });
+    });
   });
 
   app.on("before-quit", () => {

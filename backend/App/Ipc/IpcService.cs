@@ -3,6 +3,7 @@ using Core.Models.ProtobufIpcMessages;
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
+using System.Text.Json;
 
 namespace App.Ipc
 {
@@ -60,7 +61,6 @@ namespace App.Ipc
                     if (bytesRead == 0) break;
 
                     int length = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-
                     if (length < 1 || length > 16 * 1024 * 1024) // safety limit ~16 MB
                     {
                         Console.Error.WriteLine($"[Pipe] Invalid length: {length}");
@@ -83,7 +83,37 @@ namespace App.Ipc
                     // Handle via dispatcher
                     //var response = await _dispatcher.HandleAsync(request, ct);
 
-                    var response = new Flow() {Name = "aaaa" };
+                    // TEMP TEST DUMMY RESPONSE
+                    IpcResponse response;
+                    if (request.Action == "greet")
+                    {
+                        var payloadObj = new { greeting = "Hello from .NET backend via protobuf IPC!" };
+                        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
+
+                        response = new IpcResponse
+                        {
+                            Action = request.Action,
+                            CorrelationId = request.CorrelationId ?? "",
+                            Payload = payloadBytes,
+                            Error = ""
+                        };
+                        Console.WriteLine("[.NET Pipe] Handled 'greet' action");
+                    }
+                    else
+                    {
+                        var payloadObj = new { message = $"Unknown action: {request.Action}" };
+                        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
+
+                        response = new IpcResponse
+                        {
+                            Action = request.Action ?? "unknown",
+                            CorrelationId = request.CorrelationId ?? "",
+                            Payload = payloadBytes,
+                            Error = $"Unknown action: {request.Action}"
+                        };
+                    }
+
+
                     // Serialize response
                     using var ms = new MemoryStream(32 * 1024);
                     Serializer.Serialize(ms, response);
