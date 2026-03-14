@@ -1,9 +1,7 @@
-﻿using Business.Ipc;
-using Core.Models.Ipc.Protobuf;
+﻿using Core.Models.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
-using System.Text.Json;
 
 namespace App.Ipc
 {
