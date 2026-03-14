@@ -30,11 +30,7 @@ export const backendApiService = {
   // load-flow, save-config, etc.
 };
 
-async function invoke<T = any>(
-  action: string,
-  payload: any = {},
-  timeoutMs = 30000,
-): Promise<T> {
+async function invoke<T = any>(action: string, payload: any = {}): Promise<T> {
   const msg: RequestMessage = {
     action,
     payload,

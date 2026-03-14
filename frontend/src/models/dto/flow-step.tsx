@@ -4,10 +4,10 @@ import { CursorButtonTypeEnum } from "../enums/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "../enums/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "../enums/flow-step-types-enum";
 import { KeyboardInputTypeEnum } from "../enums/keyboard-input-type-enum";
-import { Flow } from "./flow";
-import { FlowSearchArea } from "./flow-search-area";
-import { FlowStepImage } from "./flow-step-image";
-import { SubFlow } from "./sub-flow";
+import type { Flow } from "./flow";
+import type { FlowSearchArea } from "./flow-search-area";
+import type { FlowStepImage } from "./flow-step-image";
+import type { SubFlow } from "./sub-flow";
 
 export interface FlowStep {
   id: number;

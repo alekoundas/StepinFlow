@@ -1,5 +1,5 @@
-import { TemplateMatchModeEnum } from "../enums/template-match-mode-enum";
-import { FlowStep } from "./flow-step";
+import type { TemplateMatchModeEnum } from "../enums/template-match-mode-enum";
+import type { FlowStep } from "./flow-step";
 
 export interface FlowStepImage {
   id: number;

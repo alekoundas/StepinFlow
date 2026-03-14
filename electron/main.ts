@@ -64,8 +64,6 @@ autoUpdater.on("update-downloaded", () => {
 
 app.whenReady().then(async () => {
   if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
-  const ENABLE_DEBUG = false;
-  // const ENABLE_DEBUG = true;
   createWindow();
 
   let backendClient: net.Socket | null = null; // For named pipe connection
@@ -77,6 +75,8 @@ app.whenReady().then(async () => {
     backendClient = client;
   };
 
+  const ENABLE_DEBUG = false;
+  // const ENABLE_DEBUG = true;
   if (ENABLE_DEBUG) {
     backendClient = await IpcHandlerService().connectToDotNetPipe(
       mainWindow,

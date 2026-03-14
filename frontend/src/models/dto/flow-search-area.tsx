@@ -1,5 +1,5 @@
-import { Flow } from "./flow";
-import { FlowStep } from "./flow-step";
+import type { Flow } from "./flow";
+import type { FlowStep } from "./flow-step";
 
 export interface FlowSearchArea {
   id: number;
