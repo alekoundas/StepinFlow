@@ -1,4 +1,4 @@
-﻿using Core.Models.Database;
+﻿using Business.Ipc;
 using Core.Models.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
@@ -11,12 +11,12 @@ namespace App.Ipc
     {
         private const string PipeName = "stepinflow-backend-pipe";
 
-        //private readonly IpcDispatcher _dispatcher;
+        private readonly IpcDispatcher _dispatcher;
 
-        //public IpcService(IpcDispatcher dispatcher)
-        //{
-        //    _dispatcher = dispatcher;
-        //}
+        public IpcService(IpcDispatcher dispatcher)
+        {
+            _dispatcher = dispatcher;
+        }
 
         public async Task StartAsync(CancellationToken stoppingToken = default)
         {
@@ -78,40 +78,26 @@ namespace App.Ipc
                     if (bytesRead != length) break;
 
                     // Deserialize request
-                    var request = Serializer.Deserialize<IpcRequest>(new ReadOnlyMemory<byte>(buffer, 0, length));
+                    IpcRequest request = Serializer.Deserialize<IpcRequest>(new ReadOnlyMemory<byte>(buffer, 0, length));
 
                     // Handle via dispatcher
-                    //var response = await _dispatcher.HandleAsync(request, ct);
+                    IpcResponse response = await _dispatcher.HandleAsync(request, ct);
 
                     // TEMP TEST DUMMY RESPONSE
-                    IpcResponse response;
-                    if (request.Action == "greet")
-                    {
-                        var payloadObj = new { greeting = "Hello from .NET backend via protobuf IPC!" };
-                        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
+                    //if (request.Action == "greet")
+                    //{
+                    //    var payloadObj = new { greeting = "Hello from .NET backend via protobuf IPC!" };
+                    //    var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
 
-                        response = new IpcResponse
-                        {
-                            Action = request.Action,
-                            CorrelationId = request.CorrelationId ?? "",
-                            Payload = payloadBytes,
-                            Error = ""
-                        };
-                        Console.WriteLine("[.NET Pipe] Handled 'greet' action");
-                    }
-                    else
-                    {
-                        var payloadObj = new { message = $"Unknown action: {request.Action}" };
-                        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
-
-                        response = new IpcResponse
-                        {
-                            Action = request.Action ?? "unknown",
-                            CorrelationId = request.CorrelationId ?? "",
-                            Payload = payloadBytes,
-                            Error = $"Unknown action: {request.Action}"
-                        };
-                    }
+                    //    response = new IpcResponse
+                    //    {
+                    //        Action = request.Action,
+                    //        CorrelationId = request.CorrelationId ?? "",
+                    //        Payload = payloadBytes,
+                    //        Error = ""
+                    //    };
+                    //    Console.WriteLine("[.NET Pipe] Handled 'greet' action");
+                    //}
 
 
                     // Serialize response

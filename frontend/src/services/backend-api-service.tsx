@@ -12,71 +12,48 @@ declare const backendApi: {
 ///
 //
 
-const pendingRequests = new Map<string, PendingRequest>();
-
-if (!backendApi) {
-  console.error("backendApi not available — preload missing?");
-}
-
 export const backend = {
-  greet: (name: string) => request<{ greeting: string }>("greet", name),
-  test: () => request<{ testResponse: string }>("test"),
+  greet: (name: string) => invoke<{ greeting: string }>("greet", { name }),
+
+  createFlow: (dto: { name: string; orderNumber?: number }) =>
+    invoke<{ newFlowId: number; success: boolean }>("create-flow", dto),
+
+  createFlowStep: (dto: {
+    name: string;
+    flowStepType: string; // or your enum string
+    orderNumber: number;
+    flowId: number;
+    // ... other fields you send
+  }) =>
+    invoke<{ newFlowStepId: number; success: boolean }>(
+      "create-flow-step",
+      dto,
+    ),
+
+  // load-flow, save-config, etc.
 };
 
-interface PendingRequest {
-  resolve: (value: any) => void;
-  reject: (error: any) => void;
-  timeoutId?: ReturnType<typeof setTimeout>;
-}
-
-// Listen **once** for all .NET responses
-export function setupResponseListener() {
-  backendApi.onMessage((rawMsg: any) => {
-    const msg = rawMsg as ResponseMessage;
-    const pending = pendingRequests.get(msg.correlationId);
-
-    if (!pending) {
-      console.warn(
-        "Received response for unknown correlationId:",
-        msg.correlationId,
-      );
-      return;
-    }
-
-    pendingRequests.delete(msg.correlationId);
-    clearTimeout(pending.timeoutId);
-
-    if (msg.error) {
-      pending.reject(new Error(msg.error));
-    } else {
-      pending.resolve(msg.payload);
-    }
-  });
-}
-
-// Request from .NET
-export async function request<T = any>(
+async function invoke<T = any>(
   action: string,
   payload: any = {},
   timeoutMs = 30000,
 ): Promise<T> {
-  const correlationId = crypto.randomUUID();
-
   const msg: RequestMessage = {
     action,
     payload,
-    correlationId,
   };
 
-  return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      pendingRequests.delete(correlationId);
-      reject(new Error(`Request timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
+  try {
+    return await backendApi.invoke<T>(msg);
+  } catch (err: any) {
+    console.error(`Backend invoke failed [${action}]:`, err);
+    throw err;
+  }
+}
 
-    pendingRequests.set(correlationId, { resolve, reject, timeoutId });
-    backendApi.invoke(msg).catch(reject); // just to catch send errors
-  });
+// Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
+export function setupPushListener(callback: (msg: any) => void): () => void {
+  return backendApi.onMessage(callback);
 }
 
 // Optional: zustand integration example
