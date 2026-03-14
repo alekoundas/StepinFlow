@@ -1,4 +1,5 @@
-﻿using App.Ipc;
+﻿using App.AutoMapper;
+using App.Ipc;
 using Business.DataService.Services;
 using Business.Ipc;
 using Business.Ipc.Handlers.Flow;
@@ -15,7 +16,6 @@ namespace App
         public static async Task Main(string[] args)
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
-
 
             // Logging
             builder.Logging.ClearProviders();
@@ -42,6 +42,10 @@ namespace App
             {
                 cfg.RegisterServicesFromAssembly(typeof(CreateFlowHandler).Assembly); // scans all handlers in Business
             });
+
+
+            // AutoMapper
+            builder.Services.AddAutoMapper(config => config.AddProfile<AutoMapperProfile>());
 
 
             // Localization (JSON)

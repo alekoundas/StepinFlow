@@ -31,6 +31,10 @@ namespace Business.Ipc
             {
                 object? responsePayload = request.Action switch
                 {
+                    // Test 
+                    //"Test.greed" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
+
+
                     // Flow
                     "Flow.create" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
                     //"Flow.update" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
