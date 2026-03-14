@@ -36,14 +36,22 @@ namespace Business.DataService.Services
             dbContext.Set<TEntity>().Remove(model);
             await dbContext.SaveChangesAsync();
         }
-
         public async Task DeleteRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             dbContext.Set<TEntity>().RemoveRange(models);
             await dbContext.SaveChangesAsync();
         }
-
+        public async Task DeleteByIdAsync<TEntity>(int id) where TEntity : class
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+            TEntity? entity = await dbContext.Set<TEntity>().FindAsync(id);
+            if (entity != null)
+            {
+                dbContext.Set<TEntity>().Remove(entity);
+                await dbContext.SaveChangesAsync();
+            }
+        }
 
         // Update
         public async Task UpdateAsync<TEntity>(TEntity model) where TEntity : class
@@ -58,16 +66,6 @@ namespace Business.DataService.Services
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             dbContext.Set<TEntity>().UpdateRange(models);
             await dbContext.SaveChangesAsync();
-        }
-        public async Task DeleteByIdAsync<TEntity>(int id) where TEntity : class
-        {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            TEntity? entity = await dbContext.Set<TEntity>().FindAsync(id);
-            if (entity == null)
-            {
-                dbContext.Set<TEntity>().Remove(entity);
-                await dbContext.SaveChangesAsync();
-            }
         }
     }
 }

@@ -1,0 +1,21 @@
+﻿using System.Collections.ObjectModel;
+
+namespace Core.Models.Dtos
+{
+    public class FlowSearchAreaCreateDto
+    {
+
+        public string Name { get; set; } = string.Empty;
+
+        public int LocationLeft { get; set; }
+        public int LocationTop { get; set; }
+        public int LocationToRight { get; set; }
+        public int LocationToBottom { get; set; }
+
+        // Flow
+        public int FlowId { get; set; }
+        public FlowCreateDto Flow { get; set; } = null!;
+
+        public IEnumerable<FlowStepCreateDto> FlowSteps { get; set; } = new Collection<FlowStepCreateDto>();
+    }
+}

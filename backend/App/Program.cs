@@ -1,5 +1,7 @@
 ﻿using App.Ipc;
 using Business.DataService.Services;
+using Business.Ipc;
+using Business.Ipc.Handlers.Flow;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,34 +20,34 @@ namespace App
             // Logging
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
-            // Logging: Keep console, but filter out noisy EF logs
-            //builder.Logging.ClearProviders();
-            //builder.Logging.AddConsole(options =>
-            //{
-            //    options.IncludeScopes = true;
-            //    options.LogToStandardErrorThreshold = LogLevel.Warning; // Only errors/warnings to stderr
-            //});
 
 
             // DB context factory and Data service.
             builder.Services.AddCustomDbContextFactory();
             builder.Services.AddSingleton<IDataService, DataService>();
 
+
             // IPC
-            //builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IpcService>();
+            builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddHostedService(sp =>
             {
                 var svc = sp.GetRequiredService<IpcService>();
                 return new HostedPipeListener(svc);
             });
 
+
+            // MediatR
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(CreateFlowHandler).Assembly); // scans all handlers in Business
+            });
+
+
             // Localization (JSON)
             //builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
             //builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
 
-            // IPC as Hosted Service (runs the stdin loop in background)
-            //builder.Services.AddHostedService<IpcHostedService>();
 
             IHost app = builder.Build();
 
@@ -56,13 +58,7 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
-            Console.WriteLine("[.NET] - DB ready");
 
-
-            //var handler = new IpcService();
-            //_ = Task.Run(() => new IpcService().StartListening());
-            //_ = Task.Run(() => new IpcService().StartListeningDebug());
-            Console.WriteLine("[.NET] - Pipe listener started");
             await app.RunAsync();
         }
     }
@@ -71,7 +67,7 @@ namespace App
     {
         private readonly IpcService _ipc;
         public HostedPipeListener(IpcService ipc) => _ipc = ipc;
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-            => _ipc.StartAsync(stoppingToken);
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+            => _ipc.StartAsync(cancellationToken);
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Core.Models.Database;
-using Core.Models.ProtobufIpcMessages;
+using Core.Models.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;

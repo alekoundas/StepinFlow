@@ -10,4 +10,11 @@
     <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Ipc\Handlers\FlowSearchArea\" />
+    <Folder Include="Ipc\Handlers\FlowStepImage\" />
+    <Folder Include="Ipc\Handlers\FlowStep\" />
+    <Folder Include="Ipc\Handlers\SubFlow\" />
+  </ItemGroup>
+
 </Project>
