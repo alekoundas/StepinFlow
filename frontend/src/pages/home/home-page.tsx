@@ -1,6 +1,6 @@
 import { Button } from "primereact/button";
 import { useState } from "react";
-import { backend } from "../../services/backend-api-service";
+import { backendApiService } from "../../services/backend-api-service";
 
 export default function HomePage() {
   // Subscribe once (better in root layout, but ok here for now)
@@ -11,7 +11,7 @@ export default function HomePage() {
   // setupResponseListener();
   const onGreet = async () => {
     try {
-      const reply = await backend.greet("Electron User");
+      const reply = await backendApiService.greet("Electron User");
       console.log("Direct reply (if sync):", reply);
       setReply(reply.greeting ?? "skkatoules");
     } catch (err) {

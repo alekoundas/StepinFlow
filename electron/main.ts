@@ -114,15 +114,6 @@ app.whenReady().then(async () => {
       }
     }
 
-    // if (backendClient) {
-    //   backendClient.write(JSON.stringify(msg) + "\n");
-    // } else {
-    //   log.error("[Electron]Backend process not available for sending message");
-    //   console.error(
-    //     "[Electron] Backend process not available for sending message",
-    //   );
-    // }
-
     const payloadBytes = Buffer.isBuffer(msg.payload)
       ? msg.payload
       : Buffer.from(JSON.stringify(msg.payload)); // fallback for small objects
@@ -130,7 +121,7 @@ app.whenReady().then(async () => {
     const reqObj = {
       action: msg.action,
       payload: payloadBytes,
-      correlationId: msg.correlationId ?? crypto.randomUUID(),
+      correlationId: crypto.randomUUID(),
     };
 
     const err = IpcRequest.verify(reqObj);
@@ -143,7 +134,6 @@ app.whenReady().then(async () => {
     prefix.writeUInt32BE(buffer.length, 0);
 
     backendClient.write(Buffer.concat([prefix, buffer]));
-    // ← NEW: proper awaitable response via correlationId
     return new Promise((resolve, reject) => {
       const cid = reqObj.correlationId!;
       const timeoutId = setTimeout(() => {

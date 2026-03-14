@@ -5,6 +5,6 @@
         UP,
         DOWN,
         LEFT,
-        RIGT,
+        RIGHT,
     }
 }

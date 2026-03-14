@@ -1,10 +1,7 @@
-import type {
-  RequestMessage,
-  ResponseMessage,
-} from "../../../electron/shared/types";
+import type { RequestMessage } from "../../../electron/shared/types";
 
 // TODO remove this. Buut Build process throws error without it....
-// const backendApi = window.backendApi;
+// const backendApi = window.backendApi; // old way
 declare const backendApi: {
   invoke: <T>(msg: any) => Promise<T>;
   onMessage: <T>(cb: (msg: T) => void) => () => void;
@@ -12,7 +9,7 @@ declare const backendApi: {
 ///
 //
 
-export const backend = {
+export const backendApiService = {
   greet: (name: string) => invoke<{ greeting: string }>("greet", { name }),
 
   createFlow: (dto: { name: string; orderNumber?: number }) =>

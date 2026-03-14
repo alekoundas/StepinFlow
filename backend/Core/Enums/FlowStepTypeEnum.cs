@@ -19,7 +19,7 @@
         WINDOW_FOCUS,
         WINDOW_RESIZE,
         WINDOW_RELOCATE,
-        KYEBOARD_INPUT,
+        KEYBOARD_INPUT,
 
         // Image Search
         IMAGE_LOCATION_EXTRACT,

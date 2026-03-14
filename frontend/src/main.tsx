@@ -12,7 +12,6 @@ import "primereact/resources/themes/soho-dark/theme.css";
 import AppLayout from "./components/layout/app-layout.tsx";
 import HomePage from "./pages/home/home-page.tsx";
 import FlowsPage from "./pages/flow/flows-page.tsx";
-import { setupResponseListener } from "./services/backend-api-service.tsx";
 
 const router = createHashRouter([
   {
@@ -49,9 +48,6 @@ const router = createHashRouter([
 //     cssLayer: false,
 //   },
 // };
-
-// Listen for .NET responses
-setupResponseListener();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
