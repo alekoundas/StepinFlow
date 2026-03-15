@@ -19,6 +19,11 @@ export default defineConfig({
     }),
   ],
   base: "./", // crucial for Electron (relative paths)
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "../src"),
+    },
+  },
   build: {
     outDir: path.resolve(__dirname, "../../dist/frontend"),
     emptyOutDir: true, // clean before build

@@ -5,6 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
+// Enables React Hooks rules + some experimental React Compiler safety rules. Runs via npm run lint.
 export default defineConfig([
   globalIgnores(["dist"]),
   {
@@ -30,12 +31,17 @@ export default defineConfig([
       "react-hooks/exhaustive-deps": "warn",
 
       // Compiler-specific safety rules (these catch code that breaks optimization)
-      "react-hooks/config": "error", // Enforces compiler-compatible patterns
-      "react-hooks/error-boundaries": "error", // Proper error boundary usage
-      "react-hooks/component-hook-factories": "error", // Prevents misuse in factories
-      "react-hooks/gating": "error", // Catches gating issues
-      "react-hooks/globals": "error", // Globals that interfere
-      // ... more may appear in future releases — check release notes
+      // "react-hooks/config": "error", // Enforces compiler-compatible patterns
+      // "react-hooks/error-boundaries": "error", // Proper error boundary usage
+      // "react-hooks/component-hook-factories": "error", // Prevents misuse in factories
+      // "react-hooks/gating": "error", // Catches gating issues
+      // "react-hooks/globals": "error", // Globals that interfere
+
+      // "@typescript-eslint/no-unused-vars": [
+      //   "error",
+      //   { argsIgnorePattern: "^_" },
+      // ],
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
 

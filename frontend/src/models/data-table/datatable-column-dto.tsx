@@ -4,7 +4,7 @@ import type {
 } from "primereact/column";
 import type { JSX } from "react";
 
-export interface DataTableColumnDto<TEntity> {
+export interface IDataTableColumnDto<TEntity> {
   field: string;
   header: string;
   style: React.CSSProperties;
@@ -27,7 +27,7 @@ export interface DataTableColumnDto<TEntity> {
 
 export class DataTableColumnDto<
   TEntity,
-> implements DataTableColumnDto<TEntity> {
+> implements IDataTableColumnDto<TEntity> {
   field: string = "";
   header: string = "";
   style: React.CSSProperties = {};

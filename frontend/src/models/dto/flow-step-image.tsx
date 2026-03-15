@@ -1,7 +1,7 @@
 import type { TemplateMatchModeEnum } from "../enums/template-match-mode-enum";
-import type { FlowStep } from "./flow-step";
+import { FlowStep } from "./flow-step";
 
-export interface FlowStepImage {
+export interface IFlowStepImage {
   id: number;
 
   // IMAGE_LOCATION_EXTRACT
@@ -12,4 +12,16 @@ export interface FlowStepImage {
 
   flowStepId: number;
   flowStep: FlowStep;
+}
+
+export class FlowStepImage implements IFlowStepImage {
+  id = -1;
+
+  templateMatchMode?: TemplateMatchModeEnum;
+  templateImage?: string;
+  accuracy: number = 0.8;
+  loopOnMultipleFindings: boolean = false;
+
+  flowStepId: number = 0;
+  flowStep: FlowStep = new FlowStep();
 }

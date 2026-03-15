@@ -1,4 +1,9 @@
 import type { RequestMessage } from "../../../electron/shared/types";
+import type { IFlow } from "../models/dto/flow";
+import type { IFlowSearchArea } from "../models/dto/flow-search-area";
+import type { IFlowStep } from "../models/dto/flow-step";
+import type { IFlowStepImage } from "../models/dto/flow-step-image";
+import type { ISubFlow } from "../models/dto/sub-flow";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -8,26 +13,39 @@ declare const backendApi: {
 };
 ///
 //
-
+// const x: string = 123; // ← this should instantly show error
 export const backendApiService = {
   greet: (name: string) => invoke<{ greeting: string }>("greet", { name }),
 
-  createFlow: (dto: { name: string; orderNumber?: number }) =>
-    invoke<{ newFlowId: number; success: boolean }>("create-flow", dto),
+  Flow: {
+    create: (dto: IFlow) =>
+      invoke<{ newId: number; success: boolean }>("Flow.create", dto),
+    get: (id: number) => invoke<IFlow>("Flow.get", id),
+  },
 
-  createFlowStep: (dto: {
-    name: string;
-    flowStepType: string; // or your enum string
-    orderNumber: number;
-    flowId: number;
-    // ... other fields you send
-  }) =>
-    invoke<{ newFlowStepId: number; success: boolean }>(
-      "create-flow-step",
-      dto,
-    ),
+  FlowStep: {
+    create: (dto: IFlowStep) =>
+      invoke<{ newId: number; success: boolean }>("FlowStep.create", dto),
+    get: (id: number) => invoke<IFlowStep>("FlowStep.get", id),
+  },
 
-  // load-flow, save-config, etc.
+  FlowStepImage: {
+    create: (dto: IFlowStepImage) =>
+      invoke<{ newId: number; success: boolean }>("FlowStepImage.create", dto),
+    get: (id: number) => invoke<IFlowStepImage>("FlowStepImage.get", id),
+  },
+
+  FlowSearchArea: {
+    create: (dto: IFlowSearchArea) =>
+      invoke<{ newId: number; success: boolean }>("FlowSearchArea.create", dto),
+    get: (id: number) => invoke<IFlowSearchArea>("FlowSearchArea.get", id),
+  },
+
+  SubFlow: {
+    create: (dto: ISubFlow) =>
+      invoke<{ newId: number; success: boolean }>("SubFlow.create", dto),
+    get: (id: number) => invoke<ISubFlow>("SubFlow.get", id),
+  },
 };
 
 async function invoke<T = any>(action: string, payload: any = {}): Promise<T> {

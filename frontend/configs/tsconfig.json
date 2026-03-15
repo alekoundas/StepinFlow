@@ -1,3 +1,6 @@
+// This is the entry point for TypeScript.
+// It uses project references ("references") so tsc can build the app part and the node part separately (faster, cleaner).
+// Never edit this directly.
 {
   "files": [],
   "references": [

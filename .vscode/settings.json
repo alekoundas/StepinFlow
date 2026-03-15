@@ -1,0 +1,50 @@
+// {
+//   "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+//   "typescript.enablePromptUseWorkspaceTS": true,
+
+//   // Makes strict rules appear live
+//   "js/ts.validate.enabled": true,
+
+//   // ← THIS IS THE KEY LINE THAT FIXES verbatimModuleSyntax
+//   "js/ts.tsserver.useSyntaxServer": "never",
+//   "typescript.preferences.preferTypeOnlyImports": true,
+
+//   // ESLint (flat config) working directory
+//   "eslint.workingDirectories": [
+//     {
+//       "directory": "frontend",
+//       "changeProcessCWD": true
+//     }
+//   ],
+
+//   "editor.codeActionsOnSave": {
+//     "source.fixAll.eslint": "explicit"
+//   },
+
+//   "editor.formatOnSave": true
+// }
+
+{
+  "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTS": true,
+
+  "typescript.validate.enable": true,
+
+  // This is the real key for verbatimModuleSyntax + strict compiler rules
+  "typescript.tsserver.useSyntaxServer": "never",
+
+  "typescript.preferences.preferTypeOnlyImports": true,
+
+  "eslint.workingDirectories": [
+    {
+      "directory": "frontend",
+      "changeProcessCWD": true
+    }
+  ],
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  "editor.formatOnSave": true
+}
