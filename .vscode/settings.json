@@ -23,15 +23,25 @@
 
 //   "editor.formatOnSave": true
 // }
-
 {
   "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTS": true,
 
+  //
+  //
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifierEnding": "minimal",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  //
+  //
+
   "typescript.validate.enable": true,
 
-  // This is the real key for verbatimModuleSyntax + strict compiler rules
+  // Forces full semantic checking (this is what finally makes verbatimModuleSyntax appear)
   "typescript.tsserver.useSyntaxServer": "never",
+
+  // THIS IS THE MISSING PIECE FOR PROJECT REFERENCES
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
 
   "typescript.preferences.preferTypeOnlyImports": true,
 

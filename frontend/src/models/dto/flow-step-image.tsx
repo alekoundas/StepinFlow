@@ -1,4 +1,4 @@
-import type { TemplateMatchModeEnum } from "../enums/template-match-mode-enum";
+import { TemplateMatchModeEnum } from "../enums/backend/template-match-mode-enum";
 import { FlowStep } from "./flow-step";
 
 export interface IFlowStepImage {

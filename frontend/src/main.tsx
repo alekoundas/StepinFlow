@@ -11,8 +11,10 @@ import "primereact/resources/themes/soho-dark/theme.css";
 // Pages
 import AppLayout from "./components/layout/app-layout.tsx";
 import HomePage from "./pages/home/home-page.tsx";
-import FlowsPage from "./pages/flow/flows-page.tsx";
-
+// import { FlowPage } from "./features/flow/index.ts";
+// import FlowPage from "./features/flow/FlowPage.tsx";
+// import FlowRoutePage from "./features/flow/page.tsx";
+import { FlowPage } from "@/features/flow";
 const router = createHashRouter([
   {
     element: <AppLayout />,
@@ -32,7 +34,7 @@ const router = createHashRouter([
       },
       {
         path: "/flows",
-        element: <FlowsPage />,
+        element: <FlowPage />,
       },
 
       // { path: "app", element: <App /> },

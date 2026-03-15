@@ -1,9 +1,9 @@
-import { ConditionTypeEnum } from "../enums/condition-type-enum";
-import { CursorActionTypeEnum } from "../enums/cursor-action-type-enum";
-import { CursorButtonTypeEnum } from "../enums/cursor-button-type-enum";
-import { CursorScrollDirectionTypeEnum } from "../enums/cursor-scroll-direction-type-enum";
-import { FlowStepTypeEnum } from "../enums/flow-step-types-enum";
-import { KeyboardInputTypeEnum } from "../enums/keyboard-input-type-enum";
+import { ConditionTypeEnum } from "../enums/backend/condition-type-enum";
+import { CursorActionTypeEnum } from "../enums/backend/cursor-action-type-enum";
+import { CursorButtonTypeEnum } from "../enums/backend/cursor-button-type-enum";
+import { CursorScrollDirectionTypeEnum } from "../enums/backend/cursor-scroll-direction-type-enum";
+import { FlowStepTypeEnum } from "../enums/backend/flow-step-types-enum";
+import { KeyboardInputTypeEnum } from "../enums/backend/keyboard-input-type-enum";
 import type { Flow } from "./flow";
 import type { FlowSearchArea } from "./flow-search-area";
 import type { FlowStepImage } from "./flow-step-image";

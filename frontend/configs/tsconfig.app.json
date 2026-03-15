@@ -17,18 +17,24 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path alias */
+    // "baseUrl": ".",
+    // "paths": {
+    //   "@/*": ["../src/*"]
+    // },
+
+    "baseUrl": "../src",
+    "paths": {
+      "@/*": ["*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true, //bans any TypeScript syntax that generates runtime JavaScript code
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["../src/*"]
-    }
+    "noUncheckedSideEffectImports": true
   },
   "include": [
     "../src",

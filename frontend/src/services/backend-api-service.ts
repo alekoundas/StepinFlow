@@ -1,9 +1,9 @@
 import type { RequestMessage } from "../../../electron/shared/types";
-import type { IFlow } from "../models/dto/flow";
-import type { IFlowSearchArea } from "../models/dto/flow-search-area";
-import type { IFlowStep } from "../models/dto/flow-step";
-import type { IFlowStepImage } from "../models/dto/flow-step-image";
-import type { ISubFlow } from "../models/dto/sub-flow";
+import type { Flow } from "../models/dto/flow";
+import type { FlowSearchArea } from "../models/dto/flow-search-area";
+import type { FlowStep } from "../models/dto/flow-step";
+import type { FlowStepImage } from "../models/dto/flow-step-image";
+import { SubFlow } from "../models/dto/sub-flow";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -18,33 +18,34 @@ export const backendApiService = {
   greet: (name: string) => invoke<{ greeting: string }>("greet", { name }),
 
   Flow: {
-    create: (dto: IFlow) =>
+    create: (dto: Flow) =>
       invoke<{ newId: number; success: boolean }>("Flow.create", dto),
-    get: (id: number) => invoke<IFlow>("Flow.get", id),
+    get: (id: number) => invoke<Flow>("Flow.get", id),
+    getAll: () => invoke<Flow[]>("Flow.getAll"),
   },
 
   FlowStep: {
-    create: (dto: IFlowStep) =>
+    create: (dto: FlowStep) =>
       invoke<{ newId: number; success: boolean }>("FlowStep.create", dto),
-    get: (id: number) => invoke<IFlowStep>("FlowStep.get", id),
+    get: (id: number) => invoke<FlowStep>("FlowStep.get", id),
   },
 
   FlowStepImage: {
-    create: (dto: IFlowStepImage) =>
+    create: (dto: FlowStepImage) =>
       invoke<{ newId: number; success: boolean }>("FlowStepImage.create", dto),
-    get: (id: number) => invoke<IFlowStepImage>("FlowStepImage.get", id),
+    get: (id: number) => invoke<FlowStepImage>("FlowStepImage.get", id),
   },
 
   FlowSearchArea: {
-    create: (dto: IFlowSearchArea) =>
+    create: (dto: FlowSearchArea) =>
       invoke<{ newId: number; success: boolean }>("FlowSearchArea.create", dto),
-    get: (id: number) => invoke<IFlowSearchArea>("FlowSearchArea.get", id),
+    get: (id: number) => invoke<FlowSearchArea>("FlowSearchArea.get", id),
   },
 
   SubFlow: {
-    create: (dto: ISubFlow) =>
+    create: (dto: SubFlow) =>
       invoke<{ newId: number; success: boolean }>("SubFlow.create", dto),
-    get: (id: number) => invoke<ISubFlow>("SubFlow.get", id),
+    get: (id: number) => invoke<SubFlow>("SubFlow.get", id),
   },
 };
 
