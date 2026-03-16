@@ -1,7 +1,7 @@
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { FlowActionsMenuComponent } from "./FlowActionsMenuComponent";
-import { Flow } from "../../../models/dto/flow";
+import type { Flow } from "@/models/dto/flow";
 
 type Props = {
   flows: Flow[];

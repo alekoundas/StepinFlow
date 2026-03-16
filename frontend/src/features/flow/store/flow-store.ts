@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { Flow } from "../../../models/dto/flow";
-import { backendApiService } from "../../../services/backend-api-service";
+import { backendApiService } from "@/services/backend-api-service";
 
 interface IFlowState {
   flows: Flow[];

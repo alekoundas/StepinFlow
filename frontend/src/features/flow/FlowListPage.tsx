@@ -1,38 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { useFlowStore } from "./store/flow-store";
 import { FlowViewToggleComponent } from "./components/FlowViewToggleComponent";
 import { FlowDataTableComponent } from "./components/FlowDataTableComponent";
 import { FlowCardListComponent } from "./components/FlowCardListComponent";
-import { FlowFormComponent } from "./FlowFormComponent";
-import { FormMode } from "../../models/enums/form-mode-enum";
+import { useNavigate } from "react-router-dom";
 
-export default function FlowPage() {
+export function FlowListPage() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState<FormMode>(FormMode.ADD);
-  const [selectedFlowId, setSelectedFlowId] = useState<number | null>(null);
+  const { flows, deleteFlow, fetchFlows } = useFlowStore();
 
-  const { flows, deleteFlow } = useFlowStore();
+  useEffect(() => {
+    fetchFlows();
+  }, []);
 
-  const handleEdit = (id: number) => {
-    setSelectedFlowId(id);
-    setFormMode(FormMode.EDIT);
-    setShowForm(true);
-  };
-
-  const handleClone = (id: number) => {
-    setSelectedFlowId(id);
-    setFormMode(FormMode.CLONE);
-    setShowForm(true);
-  };
-
+  const handleNew = () => navigate("/flows/new");
+  const handleEdit = (id: number) => navigate(`/flows/${id}/edit`);
+  const handleClone = (id: number) => navigate(`/flows/${id}/clone`);
   const handleDelete = (id: number) => {
-    if (confirm("Delete this flow?")) {
-      deleteFlow(id);
-    }
+    if (confirm("Delete?")) deleteFlow(id);
   };
-
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -45,11 +33,7 @@ export default function FlowPage() {
           <Button
             label="New Flow"
             icon="pi pi-plus"
-            onClick={() => {
-              setFormMode(FormMode.ADD);
-              setSelectedFlowId(null);
-              setShowForm(true);
-            }}
+            onClick={handleNew}
           />
         </div>
       </div>
@@ -69,13 +53,6 @@ export default function FlowPage() {
           onDelete={handleDelete}
         />
       )}
-
-      <FlowFormComponent
-        visible={showForm}
-        mode={formMode}
-        flowId={selectedFlowId}
-        onHide={() => setShowForm(false)}
-      />
     </div>
   );
 }
