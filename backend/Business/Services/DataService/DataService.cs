@@ -14,11 +14,11 @@ namespace Business.DataService.Services
 
 
         // Insert
-        public async Task AddAsync<TEntity>(TEntity model) where TEntity : class
+        public async Task<int> AddAsync<TEntity>(TEntity model) where TEntity : class
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             dbContext.Set<TEntity>().Add(model);
-            await dbContext.SaveChangesAsync();
+            return await dbContext.SaveChangesAsync();
         }
 
         public async Task AddRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
@@ -27,45 +27,47 @@ namespace Business.DataService.Services
             dbContext.Set<TEntity>().AddRange(models);
             await dbContext.SaveChangesAsync();
         }
+     
+
+        // Update
+        public async Task<int> UpdateAsync<TEntity>(TEntity model) where TEntity : class
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+            dbContext.Set<TEntity>().Update(model);
+            return await dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> UpdateRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+            dbContext.Set<TEntity>().UpdateRange(models);
+            return await dbContext.SaveChangesAsync();
+        }
 
 
         // Delete
-        public async Task DeleteAsync<TEntity>(TEntity model) where TEntity : class
+        public async Task<int> DeleteAsync<TEntity>(TEntity model) where TEntity : class
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             dbContext.Set<TEntity>().Remove(model);
-            await dbContext.SaveChangesAsync();
+            return await dbContext.SaveChangesAsync();
         }
-        public async Task DeleteRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
+        public async Task<int> DeleteRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             dbContext.Set<TEntity>().RemoveRange(models);
-            await dbContext.SaveChangesAsync();
+            return await dbContext.SaveChangesAsync();
         }
-        public async Task DeleteByIdAsync<TEntity>(int id) where TEntity : class
+        public async Task<int> DeleteByIdAsync<TEntity>(int id) where TEntity : class
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             TEntity? entity = await dbContext.Set<TEntity>().FindAsync(id);
             if (entity != null)
             {
                 dbContext.Set<TEntity>().Remove(entity);
-                await dbContext.SaveChangesAsync();
+                return await dbContext.SaveChangesAsync();
             }
-        }
-
-        // Update
-        public async Task UpdateAsync<TEntity>(TEntity model) where TEntity : class
-        {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            dbContext.Set<TEntity>().Update(model);
-            await dbContext.SaveChangesAsync();
-        }
-
-        public async Task UpdateRangeAsync<TEntity>(List<TEntity> models) where TEntity : class
-        {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            dbContext.Set<TEntity>().UpdateRange(models);
-            await dbContext.SaveChangesAsync();
+            return -1;
         }
     }
 }

@@ -10,7 +10,7 @@ using MediatR;
 using System.Text.Json;
 
 namespace App.Ipc
-{ 
+{
     public class IpcDispatcher
     {
         private readonly IMediator _mediator;
@@ -33,9 +33,10 @@ namespace App.Ipc
                 {
                     // Flow
                     "Flow.create" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
-                    //"Flow.update" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
-                    //"Flow.delete" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct),
+                    "Flow.update" => await _mediator.Send(JsonSerializer.Deserialize<UpdateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowDto()), ct),
+                    "Flow.delete" => await _mediator.Send(JsonSerializer.Deserialize<DeleteFlowCommand>(request.Payload, _jsonOptions) ?? new(-1), ct),
                     "Flow.get" => await _mediator.Send(JsonSerializer.Deserialize<GetFlowQuery>(request.Payload, _jsonOptions) ?? new(-1), ct),
+                    "Flow.getDataTable" => await _mediator.Send(JsonSerializer.Deserialize<GetFlowDataTableQuery>(request.Payload, _jsonOptions) ?? new(-1, -1, null, null, null), ct),
 
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(JsonSerializer.Deserialize<CreateFlowStepCommand>(request.Payload, _jsonOptions) ?? new(new FlowStepCreateDto()), ct),

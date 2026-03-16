@@ -7,14 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+    <Compile Remove="Ipc\Handlers\FlowSearchArea\**" />
+    <EmbeddedResource Remove="Ipc\Handlers\FlowSearchArea\**" />
+    <None Remove="Ipc\Handlers\FlowSearchArea\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Ipc\Handlers\FlowSearchArea\" />
-    <Folder Include="Ipc\Handlers\FlowStepImage\" />
-    <Folder Include="Ipc\Handlers\FlowStep\" />
-    <Folder Include="Ipc\Handlers\SubFlow\" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
   </ItemGroup>
 
 </Project>

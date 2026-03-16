@@ -10,11 +10,12 @@ namespace App.AutoMapper
         public AutoMapperProfile()
         {
             // Flow
-            CreateMap<Flow, FlowDto>(); 
+            CreateMap<Flow, FlowDto>();
             CreateMap<FlowCreateDto, Flow>();
+            CreateMap<FlowDto, Flow>();
 
             // FlowStep
-            CreateMap<FlowStep, FlowStepDto>(); 
+            CreateMap<FlowStep, FlowStepDto>();
             CreateMap<FlowStepCreateDto, FlowStep>();
 
             // FlowSearchArea

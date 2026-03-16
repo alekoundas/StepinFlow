@@ -2,16 +2,16 @@
 {
     public interface IDataService
     {
-        Task AddAsync<TEntity>(TEntity model) where TEntity : class;
+        Task<int> AddAsync<TEntity>(TEntity model) where TEntity : class;
         Task AddRangeAsync<TEntity>(List<TEntity> models) where TEntity : class;
 
 
-        Task UpdateAsync<TEntity>(TEntity model) where TEntity : class;
-        Task UpdateRangeAsync<TEntity>(List<TEntity> models) where TEntity : class;
+        Task<int> UpdateAsync<TEntity>(TEntity model) where TEntity : class;
+        Task<int> UpdateRangeAsync<TEntity>(List<TEntity> models) where TEntity : class;
 
 
-        Task DeleteByIdAsync<TEntity>(int id) where TEntity : class;
-        Task DeleteAsync<TEntity>(TEntity model) where TEntity : class;
-        Task DeleteRangeAsync<TEntity>(List<TEntity> models) where TEntity : class;
+        Task<int> DeleteByIdAsync<TEntity>(int id) where TEntity : class;
+        Task<int> DeleteAsync<TEntity>(TEntity model) where TEntity : class;
+        Task<int> DeleteRangeAsync<TEntity>(List<TEntity> models) where TEntity : class;
     }
 }

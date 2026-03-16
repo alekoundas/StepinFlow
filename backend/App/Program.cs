@@ -1,7 +1,7 @@
 ﻿using App.AutoMapper;
 using App.Ipc;
 using Business.DataService.Services;
-using Business.Ipc.Handlers.Flow;
+using Business.Ipc.Handlers.FlowHandlers;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
