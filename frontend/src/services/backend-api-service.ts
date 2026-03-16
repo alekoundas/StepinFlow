@@ -1,8 +1,8 @@
 import type { RequestMessage } from "../../../electron/shared/types";
-import type { Flow } from "../models/dto/flow";
-import type { FlowSearchArea } from "../models/dto/flow-search-area";
-import type { FlowStep } from "../models/dto/flow-step";
-import type { FlowStepImage } from "../models/dto/flow-step-image";
+import { Flow } from "../models/dto/flow";
+import { FlowSearchArea } from "../models/dto/flow-search-area";
+import { FlowStep } from "../models/dto/flow-step";
+import { FlowStepImage } from "../models/dto/flow-step-image";
 import { SubFlow } from "../models/dto/sub-flow";
 
 // TODO remove this. Buut Build process throws error without it....

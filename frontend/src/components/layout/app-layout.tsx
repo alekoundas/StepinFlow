@@ -1,6 +1,6 @@
+import type { MenuItem } from "primereact/menuitem";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
-import type { MenuItem } from "primereact/menuitem";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import IconComponent from "../core/icon-component";

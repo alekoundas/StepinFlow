@@ -58,3 +58,25 @@
 
   "editor.formatOnSave": true
 }
+
+// {
+//   "typescript.tsdk": "frontend/node_modules/typescript/lib",
+//   "typescript.enablePromptUseWorkspaceTS": true,
+//   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+//   "typescript.tsserver.useSyntaxServer": "never",
+
+//   "typescript.preferences.importModuleSpecifier": "non-relative",
+//   "typescript.preferences.importModuleSpecifierEnding": "minimal",
+
+//   "eslint.workingDirectories": [
+//     {
+//       "directory": "frontend",
+//       "changeProcessCWD": true
+//     }
+//   ],
+
+//   "editor.codeActionsOnSave": {
+//     "source.fixAll.eslint": "explicit"
+//   },
+//   "editor.formatOnSave": true
+// }

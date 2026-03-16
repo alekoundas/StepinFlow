@@ -1,0 +1,23 @@
+// This is the entry point for TypeScript.
+// It uses project references ("references") so tsc can build the app part and the node part separately (faster, cleaner).
+// Never edit this directly.
+// {
+//   "files": [],
+//   "references": [
+//     { "path": "./tsconfig.app.json" },
+//     { "path": "./tsconfig.node.json" }
+//   ]
+// }
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./configs/tsconfig.app.json" },
+    { "path": "./configs/tsconfig.node.json" }
+  ]
+}

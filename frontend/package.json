@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config ./configs/vite.config.ts",
-    "build": "tsc -b ./configs/tsconfig.json && vite build --config ./configs/vite.config.ts",
+    "build": "tsc -b ./tsconfig.json && vite build --config ./configs/vite.config.ts",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "preview": "vite preview --config ./configs/vite.config.ts"
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
