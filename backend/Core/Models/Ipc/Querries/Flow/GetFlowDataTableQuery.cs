@@ -9,9 +9,9 @@ namespace Core.Models.Ipc.Commands.Flow
      string? SortField,
      int? SortOrder,
      Dictionary<string, object>? Filters
- ) : IRequest<GetFlowDataTableResponse>;
+ ) : IRequest<GetFlowDataTableQueryResponse>;
 
-    public record GetFlowDataTableResponse(
+    public record GetFlowDataTableQueryResponse(
         List<FlowDto> Data,
         int TotalRecords
     );

@@ -1,4 +1,6 @@
 import type { RequestMessage } from "../../../electron/shared/types";
+import type { DataTableDto } from "@/models/data-table/datatable-dto";
+import type { DataTableResponseDto } from "@/models/data-table/datatable-response-dto";
 import { Flow } from "../models/dto/flow";
 import { FlowSearchArea } from "../models/dto/flow-search-area";
 import { FlowStep } from "../models/dto/flow-step";
@@ -22,6 +24,8 @@ export const backendApiService = {
       invoke<{ newId: number; success: boolean }>("Flow.create", dto),
     get: (id: number) => invoke<Flow>("Flow.get", id),
     getAll: () => invoke<Flow[]>("Flow.getAll"),
+    getDataTable: (dto: DataTableDto) =>
+      invoke<DataTableResponseDto<Flow[]>>("Flow.getDataTable", dto),
   },
 
   FlowStep: {

@@ -12,13 +12,11 @@ namespace Business.Ipc.Handlers
     public class GetFlowHandler : IRequestHandler<GetFlowQuery, GetFlowQueryResponse>
     {
         private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
-            _dataService = dataService;
             _dbContextFactory = dbContextFactory;
         }
 
