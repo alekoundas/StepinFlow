@@ -1,7 +1,7 @@
 import type { DataTableStateEvent } from "primereact/datatable";
-import type { DataTableDto } from "@/models/data-table/datatable-dto";
-import type { DataTableColumnDto } from "@/models/data-table/datatable-column-dto";
-import type { DataTableResponseDto } from "@/models/data-table/datatable-response-dto";
+import type { DataTableDto } from "@/shared/models/data-table/datatable-dto";
+import type { DataTableColumnDto } from "@/shared/models/data-table/datatable-column-dto";
+import type { DataTableResponseDto } from "@/shared/models/data-table/datatable-response-dto";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";

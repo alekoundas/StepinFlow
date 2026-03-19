@@ -2,28 +2,27 @@ import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { useFlowStore } from "./store/flow-store";
 import { FlowViewToggleComponent } from "./components/FlowViewToggleComponent";
-import { FlowCardListComponent } from "./components/FlowCardListComponent";
 import { useNavigate } from "react-router-dom";
 import { DataTableComponent } from "@/components/datatable/DataTableComponent";
-import type { DataTableColumnDto } from "@/models/data-table/datatable-column-dto";
-import type { Flow } from "@/models/dto/flow";
+import type { DataTableColumnDto } from "@/shared/models/data-table/datatable-column-dto";
 import { backendApiService } from "@/services/backend-api-service";
 import { FlowActionsMenuComponent } from "@/features/flow/components/FlowActionsMenuComponent";
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
 
 export function FlowListPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const { flows, deleteFlow, fetchFlows } = useFlowStore();
+  const { deleteFlow, fetchFlows } = useFlowStore();
 
-  const columns: DataTableColumnDto<Flow>[] = [
+  const columns: DataTableColumnDto<FlowDto>[] = [
     { field: "name", header: "Name", sortable: true, filter: true },
     { field: "orderNumber", header: "Order", sortable: true },
   ];
 
-  const actionsColumn: DataTableColumnDto<Flow> = {
+  const actionsColumn: DataTableColumnDto<FlowDto> = {
     field: "actions",
     header: "Actions",
-    body: (row: Flow) => (
+    body: (row: FlowDto) => (
       <FlowActionsMenuComponent
         flowId={row.id}
         onEdit={(id) => navigate(`/flows/${id}/edit`)}
@@ -69,18 +68,23 @@ export function FlowListPage() {
           actionsColumn={actionsColumn}
         />
       ) : (
+        <DataTableComponent
+          columns={columns}
+          loadData={backendApiService.Flow.getDataTable}
+          actionsColumn={actionsColumn}
+        />
         // <FlowDataTableComponent
         //   flows={flows}
         //   onEdit={handleEdit}
         //   onClone={handleClone}
         //   onDelete={handleDelete}
         // />
-        <FlowCardListComponent
-          flows={flows}
-          onEdit={handleEdit}
-          onClone={handleClone}
-          onDelete={handleDelete}
-        />
+        // <FlowCardListComponent
+        //   flows={flows}
+        //   onEdit={handleEdit}
+        //   onClone={handleClone}
+        //   onDelete={handleDelete}
+        // />
       )}
     </div>
   );

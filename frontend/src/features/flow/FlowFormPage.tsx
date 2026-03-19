@@ -1,6 +1,8 @@
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
+
+import { FormMode } from "@/shared/enums/form-mode-enum";
 import { Button } from "primereact/button";
 import { useFlowStore } from "./store/flow-store";
-import { FormMode } from "@/models/enums/form-mode-enum";
 import { FlowFormComponent } from "@/features/flow/components/FlowFormComponent";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
@@ -14,7 +16,7 @@ export function FlowFormPage() {
   const { flows, loading, createFlow, updateFlow } = useFlowStore();
   const flow = id ? flows.find((f) => f.id === Number(id)) : null;
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: FlowDto) => {
     if (formMode === FormMode.ADD || formMode === FormMode.CLONE) {
       await createFlow(data);
     } else if (id) {

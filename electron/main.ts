@@ -75,8 +75,8 @@ app.whenReady().then(async () => {
     backendClient = client;
   };
 
-  const ENABLE_DEBUG = false;
-  // const ENABLE_DEBUG = true;
+  // const ENABLE_DEBUG = false;
+  const ENABLE_DEBUG = true;
   if (ENABLE_DEBUG) {
     backendClient = await IpcHandlerService().connectToDotNetPipe(
       mainWindow,

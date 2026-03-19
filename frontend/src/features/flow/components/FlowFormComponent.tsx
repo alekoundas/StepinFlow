@@ -1,14 +1,14 @@
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";
-import { FormMode } from "@/models/enums/form-mode-enum";
-import type { Flow } from "@/models/dto/flow";
 import { InputNumber } from "primereact/inputnumber";
+import { FormMode } from "@/shared/enums/form-mode-enum";
 
 type Props = {
   formMode: FormMode;
-  initialData?: Partial<Flow>;
-  onSubmit: (data: Flow) => void;
+  initialData?: Partial<FlowDto>;
+  onSubmit: (data: FlowDto) => void;
   onCancel: () => void;
   loading?: boolean;
 };

@@ -1,7 +1,7 @@
 import { Button } from "primereact/button";
 import { useState } from "react";
 import { backendApiService } from "../../services/backend-api-service";
-import { Flow } from "../../models/dto/flow";
+import { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
 
 export default function HomePage() {
   // Subscribe once (better in root layout, but ok here for now)
@@ -22,7 +22,7 @@ export default function HomePage() {
 
   const onGreet2 = async () => {
     try {
-      const reply = await backendApiService.Flow.create(new Flow());
+      const reply = await backendApiService.Flow.create(new FlowCreateDto());
       console.log("Direct reply (if sync):", reply);
       setReply(reply.newId.toString() ?? "skkatoules");
     } catch (err) {

@@ -1,10 +1,10 @@
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { FlowActionsMenuComponent } from "./FlowActionsMenuComponent";
-import type { Flow } from "@/models/dto/flow";
 
 type Props = {
-  flows: Flow[];
+  flows: FlowDto[];
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onClone: (id: number) => void;
@@ -35,7 +35,7 @@ export function FlowDataTableComponent({
       />
       <Column
         header="Actions"
-        body={(row: Flow) => (
+        body={(row: FlowDto) => (
           <FlowActionsMenuComponent
             flowId={row.id}
             onEdit={onEdit}

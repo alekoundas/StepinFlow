@@ -1,9 +1,9 @@
 import { Card } from "primereact/card";
-import { Flow } from "../../../models/dto/flow";
 import { FlowActionsMenuComponent } from "./FlowActionsMenuComponent";
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
 
 type Props = {
-  flows: Flow[];
+  flows: FlowDto[];
   onEdit: (id: number) => void;
   onClone: (id: number) => void;
   onDelete: (id: number) => void;

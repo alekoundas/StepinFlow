@@ -1,17 +1,18 @@
+import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { Flow } from "../../../models/dto/flow";
 import { backendApiService } from "@/services/backend-api-service";
+import { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
 
 interface IFlowState {
-  flows: Flow[];
+  flows: FlowDto[];
   loading: boolean;
   error: string | null;
 
   // Actions
   fetchFlows: () => Promise<void>;
-  createFlow: (dto: Flow) => Promise<void>;
-  updateFlow: (id: number, dto: Flow) => Promise<void>;
+  createFlow: (dto: FlowCreateDto) => Promise<void>;
+  updateFlow: (id: number, dto: FlowDto) => Promise<void>;
   deleteFlow: (id: number) => Promise<void>;
   cloneFlow: (id: number) => Promise<void>;
 
@@ -27,17 +28,18 @@ export const useFlowStore = create<IFlowState>()(
     fetchFlows: async () => {
       set({ loading: true, error: null });
       try {
-        const flows = await backendApiService.Flow.getAll();
-        set({ flows, loading: false });
+        // const flows = await backendApiService.Flow.getAll();
+        // set({ flows, loading: false });
+        set({ loading: false });
       } catch (err: any) {
         set({ error: err.message, loading: false });
       }
     },
 
-    createFlow: async (dto) => {
+    createFlow: async (dto: Partial<FlowCreateDto>) => {
       set({ loading: true });
       try {
-        await backendApiService.Flow.create(dto);
+        await backendApiService.Flow.create(new FlowCreateDto(dto));
         await get().fetchFlows(); // refresh list
       } catch (err: any) {
         set({ error: err.message });
