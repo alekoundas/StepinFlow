@@ -27,7 +27,11 @@ namespace Business.Ipc.Handlers
 
 
             List<FlowDto>? flowDtos = _mapper.Map<List<FlowDto>>(flows);
-            return new GetFlowDataTableQueryResponse(flowDtos, flowDtos.Count);
+            DataTableResponseDto dataTableResponseDto = new DataTableResponseDto();
+            dataTableResponseDto.Data = flowDtos;
+            dataTableResponseDto.TotalRecords = flowDtos.Count;
+
+            return new GetFlowDataTableQueryResponse(dataTableResponseDto);
         }
     }
 }

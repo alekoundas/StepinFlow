@@ -1,14 +1,15 @@
-﻿using Core.Models.Ipc.Protobuf;
+﻿using Core.Models.Ipc.Commands.Flow;
+using Core.Models.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
+using System.Text.Json;
 
 namespace App.Ipc
 {
     public class IpcService
     {
         private const string PipeName = "stepinflow-backend-pipe";
-
         private readonly IpcDispatcher _dispatcher;
 
         public IpcService(IpcDispatcher dispatcher)
@@ -45,7 +46,10 @@ namespace App.Ipc
                 }
             }
         }
-
+        private JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
         private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             // Use ArrayPool to reduce GC pressure on large images
@@ -81,9 +85,24 @@ namespace App.Ipc
                     // Handle via dispatcher
                     IpcResponse response = await _dispatcher.HandleAsync(request, ct);
 
+
                     // TEMP TEST DUMMY RESPONSE
-                    //if (request.Action == "greet")
+                    //IpcResponse response = new IpcResponse();
+                    //if (request.Action == "Flow.create")
                     //{
+                    //    var aaa = JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions);
+                    //    Console.WriteLine($"[.NET] Received action: {request.Action}");
+                    //    Console.WriteLine($"[.NET] CorrelationId: {request.CorrelationId}");
+                    //    Console.WriteLine($"[.NET] Payload byte length: {request.Payload?.Length ?? 0}");
+
+                    //    if (request.Payload != null && request.Payload.Length > 0)
+                    //    {
+                    //        string preview = System.Text.Encoding.UTF8.GetString(request.Payload.Take(120).ToArray());
+                    //        Console.WriteLine($"[.NET] Payload preview (first ~120 chars): {preview}");
+                    //        Console.WriteLine($"[.NET] Payload hex start: {BitConverter.ToString(request.Payload.Take(40).ToArray())}");
+                    //    }
+
+
                     //    var payloadObj = new { greeting = "Hello from .NET backend via protobuf IPC!" };
                     //    var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
 

@@ -114,11 +114,13 @@ app.whenReady().then(async () => {
       }
     }
 
-    const payloadBytes = Buffer.isBuffer(msg.payload)
-      ? msg.payload
-      : Buffer.from(JSON.stringify(msg.payload)); // fallback for small objects
+    const payloadBytes =
+      // Buffer.isBuffer(msg.payload)
+      //   ? msg.payload
+      //   :
+      Buffer.from(JSON.stringify(msg.payload)); // fallback for small objects
 
-    const reqObj = {
+    const reqObj: RequestMessage = {
       action: msg.action,
       payload: payloadBytes,
       correlationId: crypto.randomUUID(),

@@ -1,5 +1,10 @@
 import type { FlowSearchAreaCreateDto } from "@/shared/models/flow-search-area/flow-search-area-create-dto";
-
+export type IFlowCreateDto = {
+  // ← change to interface
+  name: string;
+  orderNumber: number;
+  flowSearchAreas: FlowSearchAreaCreateDto[];
+};
 export class FlowCreateDto {
   // id: number = -1;
   name: string = "";

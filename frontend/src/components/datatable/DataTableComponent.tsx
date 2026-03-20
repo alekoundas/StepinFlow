@@ -48,7 +48,7 @@ export function DataTableComponent<T>({
   const [loading, setLoading] = useState(false);
 
   const [lazyParams, setLazyParams] = useState<DataTableDto>({
-    first: 0,
+    first: 90,
     rows: 10,
     page: 0,
     sortField: undefined,

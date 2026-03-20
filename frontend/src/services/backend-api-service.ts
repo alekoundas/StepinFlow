@@ -7,7 +7,10 @@ import type { FlowStepImageCreateDto } from "@/shared/models/flow-step-image/flo
 import type { FlowStepImageDto } from "@/shared/models/flow-step-image/flow-step-image-dto";
 import type { FlowStepCreateDto } from "@/shared/models/flow-step/flow-step-create-dto";
 import type { FlowStepDto } from "@/shared/models/flow-step/flow-step-dto";
-import type { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
+import type {
+  FlowCreateDto,
+  IFlowCreateDto,
+} from "@/shared/models/flow/flow-create-dto";
 import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import type { SubFlowCreateDto } from "@/shared/models/sub-flow/sub-flow-create-dto";
 import type { SubFlowDto } from "@/shared/models/sub-flow/sub-flow-dto";
