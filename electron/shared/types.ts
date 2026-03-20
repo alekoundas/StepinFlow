@@ -4,9 +4,9 @@ export interface RequestMessage {
   correlationId?: string;
 }
 
-export interface ResponseMessage {
+export interface ResponseMessage<T> {
   action: string;
-  payload: unknown;
+  payload: T;
   correlationId: string;
   error?: string;
 }
