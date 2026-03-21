@@ -1,6 +1,6 @@
 import { classNames } from "primereact/utils";
 
-interface IParameters {
+interface Props {
   text: string;
   className?: string;
   hidden?: boolean;
@@ -28,7 +28,7 @@ export default function LabelComponent({
   wrap = false,
   weight = "normal",
   size = "base",
-}: IParameters) {
+}: Props) {
   return (
     <>
       <p
