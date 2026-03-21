@@ -5,7 +5,6 @@ import { Button } from "primereact/button";
 import { useFlowStore } from "./store/flow-store";
 import { FlowFormComponent } from "@/features/flow/components/FlowFormComponent";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect } from "react";
 
 export function FlowFormPage() {
   const { id, formMode = FormMode.ADD } = useParams<{
@@ -13,8 +12,9 @@ export function FlowFormPage() {
     formMode: FormMode;
   }>();
   const navigate = useNavigate();
-  const { flows, loading, createFlow, updateFlow } = useFlowStore();
-  const flow = id ? flows.find((f) => f.id === Number(id)) : null;
+  const { loading, createFlow, updateFlow } = useFlowStore();
+  // const flow = id ? flows.find((f) => f.id === Number(id)) : null;
+  const flow = null;
 
   const handleSubmit = async (data: FlowDto) => {
     if (formMode === FormMode.ADD || formMode === FormMode.CLONE) {
@@ -25,11 +25,11 @@ export function FlowFormPage() {
     navigate("/flows");
   };
 
-  useEffect(() => {
-    if (id && !flow) {
-      useFlowStore.getState().fetchFlows();
-    }
-  }, [id]);
+  // useEffect(() => {
+  //   if (id && !flow) {
+  //     useFlowStore.getState().fetchFlows();
+  //   }
+  // }, [id]);
 
   return (
     <div className="p-6">

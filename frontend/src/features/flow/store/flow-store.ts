@@ -5,42 +5,30 @@ import { backendApiService } from "@/services/backend-api-service";
 import { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
 
 interface IFlowState {
-  flows: FlowDto[];
   loading: boolean;
   error: string | null;
+  version: number; // triggers reloads
 
   // Actions
-  fetchFlows: () => Promise<void>;
   createFlow: (dto: FlowCreateDto) => Promise<void>;
   updateFlow: (id: number, dto: FlowDto) => Promise<void>;
   deleteFlow: (id: number) => Promise<void>;
   cloneFlow: (id: number) => Promise<void>;
 
   setError: (error: string | null) => void;
+  incrementVersion: () => void;
 }
 
 export const useFlowStore = create<IFlowState>()(
   devtools((set, get) => ({
-    flows: [],
     loading: false,
     error: null,
 
-    fetchFlows: async () => {
-      set({ loading: true, error: null });
-      try {
-        // const flows = await backendApiService.Flow.getAll();
-        // set({ flows, loading: false });
-        set({ loading: false });
-      } catch (err: any) {
-        set({ error: err.message, loading: false });
-      }
-    },
 
     createFlow: async (dto: Partial<FlowCreateDto>) => {
       set({ loading: true });
       try {
         await backendApiService.Flow.create(new FlowCreateDto(dto));
-        await get().fetchFlows(); // refresh list
       } catch (err: any) {
         set({ error: err.message });
       } finally {
@@ -52,7 +40,6 @@ export const useFlowStore = create<IFlowState>()(
       set({ loading: true });
       try {
         //   await backendApiService.Flow.update(id, dto);
-        await get().fetchFlows();
       } catch (err: any) {
         set({ error: err.message });
       } finally {
@@ -60,11 +47,12 @@ export const useFlowStore = create<IFlowState>()(
       }
     },
 
-    deleteFlow: async (_id) => {
+    deleteFlow: async (id) => {
       set({ loading: true });
       try {
-        // await backendApiService.Flow.delete(id);
-        await get().fetchFlows();
+        await backendApiService.Flow.delete(id);
+        get().incrementVersion();
+        // await get().fetchFlows();
       } catch (err: any) {
         set({ error: err.message });
       } finally {
@@ -76,7 +64,6 @@ export const useFlowStore = create<IFlowState>()(
       set({ loading: true });
       try {
         // await backendApiService.Flow.clone(id);
-        await get().fetchFlows();
       } catch (err: any) {
         set({ error: err.message });
       } finally {
@@ -85,5 +72,6 @@ export const useFlowStore = create<IFlowState>()(
     },
 
     setError: (error) => set({ error }),
+    incrementVersion: () => set((state) => ({ version: state.version + 1 })),
   })),
 );

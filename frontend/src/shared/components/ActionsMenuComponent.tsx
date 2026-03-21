@@ -12,8 +12,7 @@ interface Props {
 }
 
 export function ActionsMenuComponent({ id, onEdit, onClone, onDelete }: Props) {
-  const menuRef = useRef(null);
-
+  const menuRef = useRef<Menu>(null);
   const menuItems: MenuItem[] = [];
 
   if (onEdit)
@@ -43,7 +42,7 @@ export function ActionsMenuComponent({ id, onEdit, onClone, onDelete }: Props) {
       <Button
         icon="pi pi-ellipsis-v"
         text
-        // onClick={(e) => menuRef.current?.toggle(e)}
+        onClick={(e) => menuRef.current?.toggle(e)}
       />
       <Menu
         model={menuItems}

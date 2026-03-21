@@ -1,9 +1,10 @@
 import type { FlowDto } from "@/shared/models/flow/flow-dto";
-import type { DataTableColumnDto } from "@/shared/models/data-table/datatable-column-dto";
+import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
 import { backendApiService } from "@/services/backend-api-service";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { useNavigate } from "react-router-dom";
 import { DataTableComponent } from "@/shared/components/data-table/DataTableComponent";
+import { useFlowStore } from "@/features/flow/store/flow-store";
 
 type Props = {
   className?: string;
@@ -11,6 +12,7 @@ type Props = {
 
 export function FlowDataTableComponent({ className }: Props) {
   const navigate = useNavigate();
+  const { deleteFlow } = useFlowStore();
 
   const columns: DataTableColumnDto<FlowDto>[] = [
     { field: "name", header: "Name", sortable: true, filter: true },
@@ -23,7 +25,8 @@ export function FlowDataTableComponent({ className }: Props) {
           id={row.id}
           onEdit={(id) => navigate(`/flows/${id}/edit`)}
           onClone={(id) => navigate(`/flows/${id}/clone`)}
-          onDelete={(_id) => {
+          onDelete={(id) => {
+            deleteFlow(id);
             // if (confirm("Delete this flow?")) backendApiService.Flow.delete(id); // or use store
           }}
         />

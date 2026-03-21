@@ -10,16 +10,6 @@ import { FlowDataGridComponent } from "@/features/flow/components/FlowDataGridCo
 export function FlowListPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  // const { deleteFlow, fetchFlows } = useFlowStore();
-
-  // const columns: DataTableColumnDto<FlowDto>[] = [
-  //   { field: "name", header: "Name", sortable: true, filter: true },
-  //   { field: "orderNumber", header: "Order", sortable: true },
-  // ];
-
-  // useEffect(() => {
-  //   fetchFlows();
-  // }, []);
 
   const handleNew = () => navigate("/flows/new");
   return (

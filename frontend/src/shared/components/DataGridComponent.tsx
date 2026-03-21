@@ -1,10 +1,13 @@
-import type { DataTableDto } from "@/shared/models/data-table/datatable-dto";
-import type { DataTableResponseDto } from "@/shared/models/data-table/datatable-response-dto";
+import type { DataTableDto } from "@/shared/models/lazy-data/datatable-dto";
+import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
+import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
+
+import { useFlowStore } from "@/features/flow";
 import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 interface Props<T> {
-  loadData: (params: DataTableDto) => Promise<DataTableResponseDto<T>>;
+  loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
   itemTemplate: (item: T) => ReactNode;
   rowsPerPageOptions?: number[];
   // className?: string;
@@ -20,8 +23,9 @@ export function DataGridComponent<T>({
   const [data, setData] = useState<T[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { version } = useFlowStore();
 
-  const [lazyParams, setLazyParams] = useState<DataTableDto>({
+  const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
     rows: 10,
     page: 0,
@@ -45,7 +49,7 @@ export function DataGridComponent<T>({
 
   useEffect(() => {
     loadLazyData();
-  }, [loadLazyData]);
+  }, [loadLazyData, version]);
 
   const onPage = (event: PaginatorPageChangeEvent) => {
     setLazyParams((prev) => ({

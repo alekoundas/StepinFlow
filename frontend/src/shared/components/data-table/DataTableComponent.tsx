@@ -1,16 +1,17 @@
 import type { DataTableStateEvent } from "primereact/datatable";
-import type { DataTableDto } from "@/shared/models/data-table/datatable-dto";
-import type { DataTableColumnDto } from "@/shared/models/data-table/datatable-column-dto";
-import type { DataTableResponseDto } from "@/shared/models/data-table/datatable-response-dto";
+import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
+import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
+import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { useState, useEffect, useCallback } from "react";
 import { ProgressBar } from "primereact/progressbar";
+import { useFlowStore } from "@/features/flow";
 
 interface Props<T> {
   columns: DataTableColumnDto<T>[];
-  loadData: (params: DataTableDto) => Promise<DataTableResponseDto<T>>;
+  loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
   className?: string;
 }
 
@@ -22,8 +23,9 @@ export function DataTableComponent<T>({
   const [data, setData] = useState<T[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { version } = useFlowStore();
 
-  const [lazyParams, setLazyParams] = useState<DataTableDto>({
+  const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
     rows: 10,
     page: 0,
@@ -47,7 +49,7 @@ export function DataTableComponent<T>({
 
   useEffect(() => {
     loadLazyData();
-  }, [loadLazyData]);
+  }, [loadLazyData, version]);
 
   const onPage = (event: DataTableStateEvent) => {
     setLazyParams((prev) => ({
