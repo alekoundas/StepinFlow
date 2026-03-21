@@ -5,8 +5,20 @@ interface IParameters {
   className?: string;
   hidden?: boolean;
   wrap?: boolean;
-  weight?: "light" | "normal" | "medium" | "semibold" | "bold";
-  size?: "xs" | "sm" | "base" | "lg" | "xl";
+  weight?: "normal" | "semibold" | "bold";
+  size?:
+    | "xs"
+    | "sm"
+    | "base"
+    | "lg"
+    | "xl"
+    | "2xl"
+    | "3xl"
+    | "4xl"
+    | "5xl"
+    | "6xl"
+    | "7xl"
+    | "8xl";
 }
 
 export default function LabelComponent({

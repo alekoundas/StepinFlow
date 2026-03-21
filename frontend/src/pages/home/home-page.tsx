@@ -36,7 +36,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="m-4">
       <h2>StepInFlow</h2>
       <p>Status: {status}</p>
 

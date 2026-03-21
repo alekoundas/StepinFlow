@@ -4,8 +4,9 @@ import { Menu } from "primereact/menu";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import IconComponent from "../core/icon-component";
-import LabelComponent from "../core/label-component";
 import { classNames } from "primereact/utils";
+import { ScrollPanel } from "primereact/scrollpanel";
+import LabelComponent from "@/shared/components/LabelComponent";
 
 export default function AppLayout() {
   const [isCollapsed, setCollapsed] = useState(false);
@@ -81,8 +82,10 @@ export default function AppLayout() {
           className={"border-noround w-full"}
         />
       </div>
-      <div className="">
-        <Outlet />
+      <div className="w-full h-screen">
+        <ScrollPanel className="h-full">
+          <Outlet />
+        </ScrollPanel>
       </div>
     </div>
   );
