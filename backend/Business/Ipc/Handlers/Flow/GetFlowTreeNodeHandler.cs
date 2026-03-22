@@ -29,7 +29,6 @@ namespace Business.Ipc.Handlers
                 .OrderBy(s => s.OrderNumber)
                 .Select(s => new TreeNodeDto
                 {
-                    Id = s.Id,
                     Key = s.Id,
                     Droppable = true,
                     Draggable = false,

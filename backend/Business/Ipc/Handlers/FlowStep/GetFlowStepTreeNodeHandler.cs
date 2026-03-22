@@ -29,12 +29,13 @@ namespace Business.Ipc.Handlers
                 .OrderBy(s => s.OrderNumber)
                 .Select(s => new TreeNodeDto
                 {
-                    Id = s.Id,
                     Key = s.Id,
                     Droppable = true,
                     Draggable = false,
                     Selectable = true,
-                    Leaf = dbContext.FlowSteps.Any(c => c.ParentFlowStepId == s.Id),
+                    Leaf = s.FlowStepType == FlowStepTypeEnum.FAILURE 
+                        || s.FlowStepType == FlowStepTypeEnum.SUCCESS 
+                        || s.FlowStepType == FlowStepTypeEnum.LOOP,
 
                     Name = s.Name,
                     flowStepType = FlowStepTypeEnum.SUB_FLOW,

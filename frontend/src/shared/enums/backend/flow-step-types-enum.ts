@@ -24,6 +24,7 @@ export const FlowStepTypeEnum = {
 
   SUCCESS: "SUCCESS",
   FAILURE: "FAILURE",
+  NEW: "NEW",
 } as const;
 
 export type FlowStepTypeEnum =

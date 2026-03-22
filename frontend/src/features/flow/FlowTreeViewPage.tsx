@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";
-import { DataTreeComponent } from "@/shared/components/DataTreeComponent";
+import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 
 export function FlowTreeViewPage() {
   const { id } = useParams<{
@@ -11,7 +11,7 @@ export function FlowTreeViewPage() {
 
   // const handleNew = () => navigate("/flows/new");
   return (
-    <div className="m-4">
+    <div className="m-4 mr-3">
       {/* Title */}
       <div className="flex flex-wrap justify-content-between items-center">
         <LabelComponent
@@ -20,8 +20,8 @@ export function FlowTreeViewPage() {
           weight="bold"
         />
       </div>
-      <div className="flex mt-6">
-        <Card>
+      <div className="flex  gap-3 mt-6">
+        <Card className="w-full">
           <div className="flex flex-wrap justify-content-between items-center">
             <div className="flex flex-column">
               <LabelComponent
@@ -29,6 +29,7 @@ export function FlowTreeViewPage() {
                 size="lg"
                 weight="bold"
               />
+
               <LabelComponent
                 text="Available Flows"
                 size="xs"
@@ -41,7 +42,7 @@ export function FlowTreeViewPage() {
             /> */}
           </div>
         </Card>
-        <div>
+        <div className="w-9">
           <DataTreeComponent flowId={id ? +id : -1} />
         </div>
       </div>

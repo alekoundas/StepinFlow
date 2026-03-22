@@ -8,6 +8,7 @@ using Core.Models.Ipc.Commands.SubFlow;
 using Core.Models.Ipc.Protobuf;
 using MediatR;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace App.Ipc
 {
@@ -16,13 +17,16 @@ namespace App.Ipc
         private readonly IMediator _mediator;
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
-            PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNameCaseInsensitive = true, // JS -> .Net
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // .Net -> JS
         };
 
         public IpcDispatcher(IMediator mediator)
         {
             _mediator = mediator;
+
+            // Add Enum to string converter
+            _jsonOptions.Converters.Add(new JsonStringEnumConverter());
         }
 
         public async Task<IpcResponse> HandleAsync(IpcRequest request, CancellationToken ct = default)
