@@ -1,9 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using Core.Models.Database;
+using System.Collections.ObjectModel;
 
-namespace Core.Models.Database
+namespace Core.Models.Dtos
 {
-    public class Execution : BaseDbModel
+    public class ExecutionDto
     {
+        public int Id { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string Status { get; set; } = "Running"; // Running, Paused, Completed, Failed
 
@@ -14,7 +16,6 @@ namespace Core.Models.Database
         public Flow Flow { get; set; } = null!;
 
 
-        //[NotMapped]
-        public IEnumerable<ExecutionStep> ExecutionSteps { get; set; } =  new Collection<ExecutionStep>(); // only in memory during run
+        public IEnumerable<ExecutionStepDto> ExecutionSteps { get; set; } = new Collection<ExecutionStepDto>();// only in memory during run
     }
 }
