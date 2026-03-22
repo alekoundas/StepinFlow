@@ -36,7 +36,7 @@ namespace App.Ipc
                     "Flow.update" => await _mediator.Send(new UpdateFlowCommand(JsonSerializer.Deserialize<FlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.delete" => await _mediator.Send(new DeleteFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.getDataTable" => (await _mediator.Send(new GetFlowDataTableQuery(JsonSerializer.Deserialize<DataTableRequestDto>(request.Payload, _jsonOptions)!), ct)).dto,
+                    "Flow.getDataTable" => (await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct)).dto,
 
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepCreateDto>(request.Payload, _jsonOptions)!), ct),

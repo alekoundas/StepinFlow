@@ -1,6 +1,6 @@
 ﻿namespace Core.Models.Dtos
 {
-    public class DataTableRequestDto
+    public class LazyRequestDto
     {
         public int Page { get; set; }
         public int Rows { get; set; }

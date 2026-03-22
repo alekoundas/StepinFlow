@@ -9,29 +9,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
-    public class GetFlowDataTableHandler : IRequestHandler<GetFlowDataTableQuery, GetFlowDataTableQueryResponse>
+    public class GetLazyFlowHandler : IRequestHandler<GetLazyFlowQuery, GetLazyFlowQueryResponse>
     {
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetFlowDataTableHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetLazyFlowHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<GetFlowDataTableQueryResponse> Handle(GetFlowDataTableQuery request, CancellationToken ct)
+        public async Task<GetLazyFlowQueryResponse> Handle(GetLazyFlowQuery request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             List<Flow>? flows = await dbContext.Flows.ToListAsync();
 
 
             List<FlowDto>? flowDtos = _mapper.Map<List<FlowDto>>(flows);
-            DataTableResponseDto dataTableResponseDto = new DataTableResponseDto();
+            LazyResponseDto dataTableResponseDto = new LazyResponseDto();
             dataTableResponseDto.Data = flowDtos;
             dataTableResponseDto.TotalRecords = flowDtos.Count;
 
-            return new GetFlowDataTableQueryResponse(dataTableResponseDto);
+            return new GetLazyFlowQueryResponse(dataTableResponseDto);
         }
     }
 }
