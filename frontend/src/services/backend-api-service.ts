@@ -29,8 +29,8 @@ export const backendApiService = {
     delete: (id: number) => call<{ success: boolean }>("Flow.delete", id),
 
     get: (id: number) => call<FlowDto>("Flow.get", id),
-    getDataTable: (dto: LazyDto) =>
-      call<LazyResponseDto<FlowDto>>("Flow.getDataTable", dto),
+    getLazy: (dto: LazyDto) =>
+      call<LazyResponseDto<FlowDto>>("Flow.getLazy", dto),
   },
 
   FlowStep: {
@@ -39,7 +39,7 @@ export const backendApiService = {
     delete: (id: number) => call<{ success: boolean }>("FlowStep.delete", id),
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
     getDataTable: (dto: LazyDto) =>
-      call<LazyResponseDto<FlowStepDto>>("FlowStep.getDataTable", dto),
+      call<LazyResponseDto<FlowStepDto>>("FlowStep.getLazy", dto),
   },
 
   FlowStepImage: {

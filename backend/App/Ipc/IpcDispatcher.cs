@@ -36,11 +36,13 @@ namespace App.Ipc
                     "Flow.update" => await _mediator.Send(new UpdateFlowCommand(JsonSerializer.Deserialize<FlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.delete" => await _mediator.Send(new DeleteFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.getDataTable" => (await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct)).dto,
+                    "Flow.getLazy" => (await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct)).dto,
+                    "Flow.getTreeNode" => (await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct)),
 
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepCreateDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowStep.getTreeNode" => (await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct)),
 
                     // FlowSearchArea
                     "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaCreateDto>(request.Payload, _jsonOptions)!), ct),

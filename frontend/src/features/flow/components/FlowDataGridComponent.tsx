@@ -35,7 +35,7 @@ export function FlowDataGridComponent({ className }: Props) {
   return (
     <div className={className}>
       <DataGridComponent<FlowDto>
-        loadData={backendApiService.Flow.getDataTable}
+        loadData={backendApiService.Flow.getLazy}
         itemTemplate={cardTemplate}
       />
     </div>
