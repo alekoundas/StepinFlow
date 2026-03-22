@@ -9,5 +9,5 @@ namespace Core.Models.Database
 
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowSearchArea> FlowSearchAreas { get; set; } = new Collection<FlowSearchArea>();
-}
+    }
 }

@@ -56,6 +56,8 @@ namespace Core.Models.Database
         // NOTIFICATION_EMAIL
         // TODO
 
+        // Keep the root Flow or SubFlow id for easier and faster queries
+        public int RootId { get; set; }
 
         // Flow 
         public int? FlowId { get; set; }

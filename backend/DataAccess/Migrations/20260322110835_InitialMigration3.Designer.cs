@@ -3,6 +3,7 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260322110835_InitialMigration3")]
+    partial class InitialMigration3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -121,7 +124,10 @@ namespace DataAccess.Migrations
                     b.Property<int?>("ParentFlowStepId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("RootId")
+                    b.Property<int?>("RootFlowId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RootSubFlowId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("RunCommand")

@@ -12,6 +12,8 @@ namespace DataAccess
         public DbSet<FlowSearchArea> FlowSearchAreas { get; set; }
         public DbSet<FlowStep> FlowSteps { get; set; }
         public DbSet<FlowStepImage> FlowStepImages { get; set; }
+        public DbSet<Execution> Executions { get; set; }
+        public DbSet<ExecutionStep> ExecutionSteps { get; set; }
 
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
@@ -26,7 +28,8 @@ namespace DataAccess
             builder.ApplyConfiguration(new SubFlowConfiguration());
             builder.ApplyConfiguration(new FlowSearchAreaConfiguration());
             builder.ApplyConfiguration(new FlowStepConfiguration());
-            builder.ApplyConfiguration(new FlowStepImageConfiguration());
+            builder.ApplyConfiguration(new ExecutionConfiguration());
+            builder.ApplyConfiguration(new ExecutionStepConfiguration());
         }
     }
 }
