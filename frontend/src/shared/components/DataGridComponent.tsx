@@ -1,4 +1,3 @@
-import type { DataTableDto } from "@/shared/models/lazy-data/datatable-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 

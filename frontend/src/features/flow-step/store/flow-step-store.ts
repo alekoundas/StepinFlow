@@ -1,8 +1,9 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+
 import { backendApiService } from "@/services/backend-api-service";
-import { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
+
+import { FlowStepDto } from "@/shared/models/flow-step/flow-step-dto";
 
 interface Props {
   loading: boolean;
@@ -10,24 +11,24 @@ interface Props {
   version: number; // triggers reloads
 
   // Actions
-  createFlow: (dto: FlowCreateDto) => Promise<void>;
-  updateFlow: (id: number, dto: FlowDto) => Promise<void>;
-  deleteFlow: (id: number) => Promise<void>;
-  cloneFlow: (id: number) => Promise<void>;
+  createFlowStep: (dto: FlowStepDto) => Promise<void>;
+  updateFlowStep: (id: number, dto: FlowStepDto) => Promise<void>;
+  deleteFlowStep: (id: number) => Promise<void>;
+  cloneFlowStep: (id: number) => Promise<void>;
 
   setError: (error: string | null) => void;
   incrementVersion: () => void;
 }
 
-export const useFlowStore = create<Props>()(
+export const useFlowStepStore = create<Props>()(
   devtools((set, get) => ({
     loading: false,
     error: null,
 
-    createFlow: async (dto: Partial<FlowCreateDto>) => {
+    createFlowStep: async (dto: Partial<FlowStepDto>) => {
       set({ loading: true });
       try {
-        await backendApiService.Flow.create(new FlowCreateDto(dto));
+        await backendApiService.FlowStep.create(new FlowStepDto(dto));
       } catch (err: any) {
         set({ error: err.message });
       } finally {
@@ -35,7 +36,7 @@ export const useFlowStore = create<Props>()(
       }
     },
 
-    updateFlow: async (_id: number, _dto: FlowDto) => {
+    updateFlow: async (_id: number, _dto: FlowStepDto) => {
       set({ loading: true });
       try {
         //   await backendApiService.Flow.update(id, dto);

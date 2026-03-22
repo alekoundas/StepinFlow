@@ -1,16 +1,15 @@
 import type { RequestMessage } from "../../../electron/shared/types";
-import type { DataTableDto } from "@/shared/models/lazy-data/datatable-dto";
 import type { FlowSearchAreaCreateDto } from "@/shared/models/flow-search-area/flow-search-area-create-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/flow-search-area/flow-search-area-dto";
 import type { FlowStepImageCreateDto } from "@/shared/models/flow-step-image/flow-step-image-create-dto";
 import type { FlowStepImageDto } from "@/shared/models/flow-step-image/flow-step-image-dto";
-import type { FlowStepCreateDto } from "@/shared/models/flow-step/flow-step-create-dto";
 import type { FlowStepDto } from "@/shared/models/flow-step/flow-step-dto";
 import type { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
 import type { FlowDto } from "@/shared/models/flow/flow-dto";
 import type { SubFlowCreateDto } from "@/shared/models/sub-flow/sub-flow-create-dto";
 import type { SubFlowDto } from "@/shared/models/sub-flow/sub-flow-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
+import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -30,15 +29,17 @@ export const backendApiService = {
     delete: (id: number) => call<{ success: boolean }>("Flow.delete", id),
 
     get: (id: number) => call<FlowDto>("Flow.get", id),
-    // getAll: () => call<Flow[]>("Flow.getAll"),
-    getDataTable: (dto: DataTableDto) =>
+    getDataTable: (dto: LazyDto) =>
       call<LazyResponseDto<FlowDto>>("Flow.getDataTable", dto),
   },
 
   FlowStep: {
-    create: (dto: FlowStepCreateDto) =>
+    create: (dto: FlowStepDto) =>
       call<{ newId: number; success: boolean }>("FlowStep.create", dto),
+    delete: (id: number) => call<{ success: boolean }>("FlowStep.delete", id),
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
+    getDataTable: (dto: LazyDto) =>
+      call<LazyResponseDto<FlowStepDto>>("FlowStep.getDataTable", dto),
   },
 
   FlowStepImage: {
