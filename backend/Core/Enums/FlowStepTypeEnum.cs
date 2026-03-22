@@ -21,9 +21,9 @@
         WINDOW_RELOCATE,
         KEYBOARD_INPUT,
 
-        // Image Search
-        IMAGE_LOCATION_EXTRACT,
-        TEXT_EXTRACT,
+        // Screen Search
+        IMAGE_SEARCH,
+        TEXT_SEARCH,
 
 
 

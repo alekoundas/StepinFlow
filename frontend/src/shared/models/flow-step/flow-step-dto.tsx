@@ -51,6 +51,9 @@ export class FlowStepDto {
   cursorButtonType?: CursorButtonTypeEnum;
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;
 
+  // Keep the root Flow or SubFlow id for easier and faster queries
+  rootId: number = -1;
+
   // Flow
   flowId?: number;
   flow?: FlowDto;
