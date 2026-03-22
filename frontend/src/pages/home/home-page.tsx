@@ -1,7 +1,7 @@
 import { Button } from "primereact/button";
 import { useState } from "react";
 import { backendApiService } from "../../services/backend-api-service";
-import { FlowCreateDto } from "@/shared/models/flow/flow-create-dto";
+import { FlowCreateDto } from "@/shared/models/database/flow/flow-create-dto";
 
 export default function HomePage() {
   // Subscribe once (better in root layout, but ok here for now)

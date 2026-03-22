@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
+using Core.Enums;
 using Core.Models.Dtos;
 using Core.Models.Ipc.Commands.Flow;
 using DataAccess;
@@ -29,9 +30,16 @@ namespace Business.Ipc.Handlers
                 .Select(s => new TreeNodeDto
                 {
                     Id = s.Id,
+                    Key = s.Id,
+                    Droppable = true,
+                    Draggable = false,
+                    Selectable = true,
+                    Leaf = dbContext.FlowSteps.Any(c => c.ParentFlowStepId == s.Id),
+
                     Name = s.Name,
+                    flowStepType = FlowStepTypeEnum.SUB_FLOW,
                     OrderNumber = s.OrderNumber,
-                    HasChildren = dbContext.FlowSteps.Any(c => c.ParentFlowStepId == s.Id)
+                    isFlow = true,
                 })
                 .ToListAsync(ct);
 

@@ -1,4 +1,4 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { Button } from "primereact/button";

@@ -2,10 +2,10 @@ import type { CursorActionTypeEnum } from "@/shared/enums/backend/cursor-action-
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
-import type { FlowSearchAreaDto } from "@/shared/models/flow-search-area/flow-search-area-dto";
-import type { FlowStepImageDto } from "@/shared/models/flow-step-image/flow-step-image-dto";
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
-import type { SubFlowDto } from "@/shared/models/sub-flow/sub-flow-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area/flow-search-area-dto";
+import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image/flow-step-image-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
+import type { SubFlowDto } from "@/shared/models/database/sub-flow/sub-flow-dto";
 
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";

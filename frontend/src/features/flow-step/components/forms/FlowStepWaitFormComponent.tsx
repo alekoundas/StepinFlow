@@ -1,5 +1,5 @@
 import { FlowStepWaitSchema } from "@/features/flow-step/schema/base-flow-step-wait.zod";
-import { FlowStepDto } from "@/shared/models/flow-step/flow-step-dto";
+import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "primereact/button";
 import { InputNumber } from "primereact/inputnumber";

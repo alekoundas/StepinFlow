@@ -3,7 +3,7 @@ import { devtools } from "zustand/middleware";
 
 import { backendApiService } from "@/services/backend-api-service";
 
-import { FlowStepDto } from "@/shared/models/flow-step/flow-step-dto";
+import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 
 interface Props {
   loading: boolean;

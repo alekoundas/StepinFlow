@@ -1,5 +1,5 @@
 import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
-import { FlowStepCreateDto } from "@/shared/models/flow-step/flow-step-create-dto";
+import { FlowStepCreateDto } from "@/shared/models/database/flow-step/flow-step-create-dto";
 
 export class FlowStepImageCreateDto {
   id: number = -1;

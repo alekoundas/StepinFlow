@@ -1,18 +1,23 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { DataGridComponent } from "@/shared/components/DataGridComponent";
 import { backendApiService } from "@/services/backend-api-service";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   className?: string;
 };
 
 export function FlowDataGridComponent({ className }: Props) {
+  const navigate = useNavigate();
+
+  const onClick = (id: number) => navigate(`/flows/${id}/tree-view`);
   const cardTemplate = (item: FlowDto) => (
     <Card
       key={item.id}
       className="w-full h-full border-round-2xl shadow-2 transition-all hover:shadow-4 flex flex-column"
+      onClick={() => onClick(item.id)}
     >
       <div className="flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="flex align-items-center gap-2">

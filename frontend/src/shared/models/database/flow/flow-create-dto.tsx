@@ -1,4 +1,4 @@
-import type { FlowSearchAreaCreateDto } from "@/shared/models/flow-search-area/flow-search-area-create-dto";
+import type { FlowSearchAreaCreateDto } from "@/shared/models/database/flow-search-area/flow-search-area-create-dto";
 // export type IFlowCreateDto = {
 //   // ← change to interface
 //   name: string;

@@ -1,4 +1,4 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
 import { backendApiService } from "@/services/backend-api-service";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";

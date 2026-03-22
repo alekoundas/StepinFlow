@@ -1,4 +1,4 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";

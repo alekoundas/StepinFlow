@@ -1,4 +1,4 @@
-import type { FlowDto } from "@/shared/models/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { DataGridComponent } from "@/shared/components/DataGridComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";

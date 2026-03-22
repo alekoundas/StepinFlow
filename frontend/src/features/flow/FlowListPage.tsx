@@ -51,7 +51,7 @@ export function FlowListPage() {
 
         {viewMode === "table" && <FlowDataTableComponent className="mt-4" />}
       </Card>
-      {viewMode === "cards" && <FlowDataGridComponent className="mt-4" />}
+      {viewMode === "cards" && <FlowDataGridComponent  className="mt-4" />}
     </div>
   );
 }
