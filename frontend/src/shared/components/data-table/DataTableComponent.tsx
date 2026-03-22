@@ -1,4 +1,4 @@
-import type { DataTableStateEvent } from "primereact/datatable";
+import type { DataTableStateEvent, DataTableValue } from "primereact/datatable";
 import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
@@ -9,13 +9,13 @@ import { useState, useEffect, useCallback } from "react";
 import { ProgressBar } from "primereact/progressbar";
 import { useFlowStore } from "@/features/flow";
 
-interface Props<T> {
+interface Props<T extends DataTableValue> {
   columns: DataTableColumnDto<T>[];
   loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
   className?: string;
 }
 
-export function DataTableComponent<T>({
+export function DataTableComponent<T extends DataTableValue>({
   columns,
   loadData,
   className = "",

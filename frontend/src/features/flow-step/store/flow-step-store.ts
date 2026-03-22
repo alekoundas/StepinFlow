@@ -25,7 +25,7 @@ export const useFlowStepStore = create<Props>()(
     loading: false,
     error: null,
 
-    createFlowStep: async (dto: Partial<FlowStepDto>) => {
+    create: async (dto: Partial<FlowStepDto>) => {
       set({ loading: true });
       try {
         await backendApiService.FlowStep.create(new FlowStepDto(dto));
@@ -36,7 +36,7 @@ export const useFlowStepStore = create<Props>()(
       }
     },
 
-    updateFlow: async (_id: number, _dto: FlowStepDto) => {
+    update: async (_id: number, _dto: FlowStepDto) => {
       set({ loading: true });
       try {
         //   await backendApiService.Flow.update(id, dto);
@@ -47,7 +47,7 @@ export const useFlowStepStore = create<Props>()(
       }
     },
 
-    deleteFlow: async (id: number) => {
+    delete: async (id: number) => {
       set({ loading: true });
       try {
         await backendApiService.Flow.delete(id);
@@ -60,7 +60,7 @@ export const useFlowStepStore = create<Props>()(
       }
     },
 
-    cloneFlow: async (_id: number) => {
+    clone: async (_id: number) => {
       set({ loading: true });
       try {
         // await backendApiService.Flow.clone(id);
