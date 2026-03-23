@@ -12,7 +12,7 @@ import "primereact/resources/themes/soho-dark/theme.css";
 import AppLayout from "@/components/layout/app-layout";
 import HomePage from "@/pages/home/home-page";
 import { FlowFormPage, FlowListPage } from "@/features/flow";
-import { FlowTreeViewPage } from "@/features/flow/FlowTreeViewPage";
+import { WorkflowPage } from "@/features/workflow/WorkflowPage";
 
 const router = createHashRouter([
   {
@@ -52,8 +52,8 @@ const router = createHashRouter([
         element: <FlowFormPage />,
       },
       {
-        path: "/flows/:id/tree-view",
-        element: <FlowTreeViewPage />,
+        path: "/workflow/:id",
+        element: <WorkflowPage />,
       },
 
       // { path: "app", element: <App /> },

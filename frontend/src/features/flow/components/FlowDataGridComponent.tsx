@@ -12,7 +12,7 @@ type Props = {
 export function FlowDataGridComponent({ className }: Props) {
   const navigate = useNavigate();
 
-  const onClick = (id: number) => navigate(`/flows/${id}/tree-view`);
+  const onClick = (id: number) => navigate(`/workflow/${id}`);
   const cardTemplate = (item: FlowDto) => (
     <Card
       key={item.id}

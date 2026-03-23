@@ -1,7 +1,7 @@
 import { classNames } from "primereact/utils";
 
 interface Props {
-  text: string;
+  text: string | number;
   className?: string;
   hidden?: boolean;
   wrap?: boolean;

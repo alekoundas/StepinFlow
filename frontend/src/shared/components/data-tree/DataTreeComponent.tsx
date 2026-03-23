@@ -1,15 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Tree,
-  type TreeExpandedKeysType,
-  type TreeNodeDoubleClickEvent,
+  type TreeEventNodeEvent,
   type TreeNodeTemplateOptions,
+  type TreeSelectionEvent,
 } from "primereact/tree";
 import { backendApiService } from "@/services/backend-api-service";
-import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
 import { classNames } from "primereact/utils";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
+import IconComponent from "@/components/core/icon-component";
 
 interface Props<T> {
   flowId: number;
@@ -19,7 +21,12 @@ interface Props<T> {
 
 export function DataTreeComponent<T>({ flowId }: Props<T>) {
   const [data, setData] = useState<TreeNodeDto[]>([]);
+  const { selectedTreeNode, setSelectedTreeNode } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
+
+  // useEffect(() => {
+  //   getContentTemplate();
+  // }, [selectedTreeNode]);
 
   const loadTreeChildren = async (id: number, isFlow: boolean) => {
     setLoading(true);
@@ -42,16 +49,21 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
     loadTreeChildren(flowId, true);
   }, []);
 
-  const onExpand = async (e: any) => {
-    if (!e.node.children) await loadTreeChildren(e.node.key, false);
+  const onExpand = async (e: TreeEventNodeEvent) => {
+    if (!e.node.children)
+      await loadTreeChildren(e.node.key ? +e.node.key : -1, false);
+  };
+  const onSelect = (e: TreeEventNodeEvent) => {
+    setSelectedTreeNode(e.node as TreeNodeDto);
   };
 
   const insertNewBubble = (treeNodes: TreeNodeDto[]) => {
     const newChild: TreeNodeDto = new TreeNodeDto({
       key: -1,
       name: "New item",
-      flowStepType: FlowStepTypeEnum.NEW,
+      // flowStepType,
       // icon: "pi pi-file",
+      isNew: true,
       leaf: true,
     });
 
@@ -77,40 +89,23 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
     treeNodeDto: TreeNodeDto,
     _options: TreeNodeTemplateOptions,
   ): ReactNode => {
-    const canAdd =
-      treeNodeDto.flowStepType === FlowStepTypeEnum.LOOP ||
-      treeNodeDto.flowStepType === FlowStepTypeEnum.SUCCESS ||
-      treeNodeDto.flowStepType === FlowStepTypeEnum.FAILURE;
+    let template: ReactNode;
+    const isSelected = selectedTreeNode?.key == treeNodeDto.key;
+
+    if (treeNodeDto.isFlow) {
+      template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
+    } else if (treeNodeDto.isNew) {
+      template = <IconComponent name="plus" />;
+    } else
+      switch (treeNodeDto.flowStepType) {
+        case FlowStepTypeEnum.LOOP:
+          template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
+      }
 
     return (
-      <div className="cursor-pointer flex items-center justify-between w-full gap-0 ">
-        {/* Left side: icon + label (PrimeReact usually handles this) */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          {/* {treeNodeDto.icon && <i className={treeNodeDto.icon} />} */}
-          <span className={classNames({ "font-medium": !treeNodeDto.leaf })}>
-            {treeNodeDto.name}
-          </span>
-        </div>
-
-        {/* Right side: conditional + bubble */}
-        {canAdd && (
-          <button
-            type="button"
-            // onClick={handleAdd}
-            className="
-            inline-flex items-center justify-center
-            w-6 h-6 rounded-full
-            bg-surface-200 hover:bg-primary-500/20
-            text-surface-600 hover:text-primary-600
-            transition-colors duration-150
-            opacity-0 group-hover:opacity-100 focus:opacity-100
-            focus:outline-none focus:ring-2 focus:ring-primary-400
-          "
-            aria-label={`Add child to ${treeNodeDto.name}`}
-          >
-            <i className="pi pi-plus text-xs" />
-          </button>
-        )}
+      <div className=" flex w-full gap-2   cursor-pointer">
+        <div className="flex w-full">{template}</div>
+        {isSelected && !treeNodeDto.isNew && <IconComponent name="check" />}
       </div>
     );
   };
@@ -119,6 +114,9 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
     <Tree
       value={data}
       onExpand={onExpand}
+      selectionMode="single"
+      // onSelect={onSelect}
+      onSelect={onSelect}
       // onNodeDoubleClick={(e: TreeNodeDoubleClickEvent) =>
       //   (e.node.expanded = true)
       // }
