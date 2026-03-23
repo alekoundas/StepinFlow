@@ -42,6 +42,7 @@ export function FlowDataGridComponent({ className }: Props) {
       <DataGridComponent<FlowDto>
         loadData={backendApiService.Flow.getLazy}
         itemTemplate={cardTemplate}
+        enablePaging={true}
       />
     </div>
   );

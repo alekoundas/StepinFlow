@@ -9,6 +9,7 @@ interface Props<T> {
   loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
   itemTemplate: (item: T) => ReactNode;
   rowsPerPageOptions?: number[];
+  enablePaging?: boolean;
   // className?: string;
   // gridClassName?: string;
 }
@@ -17,6 +18,7 @@ export function DataGridComponent<T>({
   loadData,
   itemTemplate,
   rowsPerPageOptions = [6, 9, 12, 18, 24, 36],
+  enablePaging = false,
   // gridClassName = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4",
 }: Props<T>) {
   const [data, setData] = useState<T[]>([]);
@@ -74,7 +76,7 @@ export function DataGridComponent<T>({
       </div>
 
       {/* Paginator */}
-      {totalRecords > 0 && (
+      {totalRecords > 0 && enablePaging && (
         <div className="mt-4 flex justify-content-center">
           <Paginator
             first={lazyParams.first}

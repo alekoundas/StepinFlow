@@ -3,6 +3,7 @@ import IconComponent from "@/components/core/icon-component";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
 
 interface Props {
   // treeNodeDto: TreeNodeDto;
@@ -22,7 +23,7 @@ export function WorkflowContentComponent({}: Props) {
     if (selectedTreeNode?.isFlow) {
       contentTemplate = <IconComponent name="plus" />;
     } else if (selectedTreeNode?.isNew) {
-      contentTemplate = <LabelComponent text="plus" />;
+      contentTemplate = <FlowStepTypesDataGridComponent />;
     } else
       switch (selectedTreeNode?.flowStepType) {
         case FlowStepTypeEnum.LOOP:

@@ -101,6 +101,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       <DataGridComponent<FlowStepType>
         loadData={() => new Promise((resolve) => resolve(loadData))}
         itemTemplate={cardTemplate}
+        
       />
     </div>
   );

@@ -24,7 +24,7 @@ export function WorkflowPage() {
 
       <div
         className="mt-6"
-        style={{ height: "70vh" }}
+        style={{ minHeight: "70vh" }}
       >
         <Splitter
           stateKey="flow-tree-splitter" //  remembers user choice in localStorage

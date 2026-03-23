@@ -6,19 +6,16 @@ interface Props {
   selectedTreeNode: TreeNodeDto | undefined;
 
   // Actions
-  setSelectedTreeNode: (dto: Partial<TreeNodeDto>) => void;
+  setSelectedTreeNode: (dto: TreeNodeDto | undefined) => void;
 }
 
 export const useWorkflowStore = create<Props>()(
   devtools((set, get) => ({
     selectedTreeNode: undefined,
 
-    setSelectedTreeNode: (dto: Partial<TreeNodeDto>): void =>
+    setSelectedTreeNode: (dto: TreeNodeDto | undefined): void =>
       set({
-        selectedTreeNode: {
-          ...new TreeNodeDto(),
-          ...dto,
-        },
+        selectedTreeNode: dto,
       }),
   })),
 );

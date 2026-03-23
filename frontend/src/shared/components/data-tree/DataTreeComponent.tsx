@@ -8,15 +8,13 @@ import {
 import { backendApiService } from "@/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
-import { classNames } from "primereact/utils";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import IconComponent from "@/components/core/icon-component";
+import type { TreeNode } from "primereact/treenode";
 
 interface Props<T> {
   flowId: number;
-  // loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
-  // itemTemplate: (item: T) => ReactNode;
 }
 
 export function DataTreeComponent<T>({ flowId }: Props<T>) {
@@ -24,19 +22,81 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   const { selectedTreeNode, setSelectedTreeNode } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   getContentTemplate();
-  // }, [selectedTreeNode]);
+  // ====================== HELPERS ======================
+
+  /** Adds the "New item" bubble to every SUB_FLOW node (fixed spread + null-safety) */
+  const insertNewBubble = (treeNodes: TreeNodeDto[]): TreeNodeDto[] => {
+    const newChild: TreeNodeDto = new TreeNodeDto({
+      key: -1,
+      name: "New item",
+      isNew: true,
+      leaf: true,
+    });
+
+    return treeNodes.map((item) =>
+      item.flowStepType === FlowStepTypeEnum.SUB_FLOW
+        ? {
+            ...item,
+            children: [...(item.children ?? []), newChild],
+          }
+        : { ...item },
+    );
+  };
+
+  /** Recursive immutable update – finds the node by key and attaches its children */
+  const updateTreeWithChildren = (
+    nodes: TreeNodeDto[],
+    targetKey: number,
+    newChildren: TreeNodeDto[],
+  ): TreeNodeDto[] => {
+    return nodes.map((node) => {
+      if (node.key === targetKey) {
+        return {
+          ...node,
+          children: insertNewBubble(newChildren), // process SUB_FLOW nodes in the loaded children too
+        };
+      }
+      if (node.children?.length) {
+        return {
+          ...node,
+          children: updateTreeWithChildren(
+            node.children,
+            targetKey,
+            newChildren,
+          ),
+        };
+      }
+      return node;
+    });
+  };
+
+  /** Finds a node by key anywhere in the tree (used for controlled selection) */
+  const findNodeByKey = (
+    nodes: TreeNodeDto[],
+    key: number | string,
+  ): TreeNodeDto | undefined => {
+    for (const node of nodes) {
+      if (Number(node.key) === Number(key)) return node;
+      if (node.children?.length) {
+        const found = findNodeByKey(node.children, key);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
+  // ====================== LAZY LOADING ======================
 
   const loadTreeChildren = async (id: number, isFlow: boolean) => {
     setLoading(true);
     try {
-      let response: TreeNodeDto[];
       if (isFlow) {
-        response = await backendApiService.Flow.getTreeNodes(id);
+        const response = await backendApiService.Flow.getTreeNodes(id);
         setData(insertNewBubble(response));
       } else {
-        // response = await backendApiService.FlowStep.getTreeNodes(id);
+        // ← THIS WAS MISSING
+        const response = await backendApiService.FlowStep.getTreeNodes(id);
+        setData((prev) => updateTreeWithChildren(prev, id, response));
       }
     } catch (err) {
       console.error(err);
@@ -47,63 +107,54 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
 
   useEffect(() => {
     loadTreeChildren(flowId, true);
-  }, []);
+  }, [flowId]);
 
   const onExpand = async (e: TreeEventNodeEvent) => {
-    if (!e.node.children)
+    // Only load if the node has no children yet (SUB_FLOW already has the "New item")
+    if (!e.node.children) {
       await loadTreeChildren(e.node.key ? +e.node.key : -1, false);
-  };
-  const onSelect = (e: TreeEventNodeEvent) => {
-    setSelectedTreeNode(e.node as TreeNodeDto);
+    }
   };
 
-  const insertNewBubble = (treeNodes: TreeNodeDto[]) => {
-    const newChild: TreeNodeDto = new TreeNodeDto({
-      key: -1,
-      name: "New item",
-      // flowStepType,
-      // icon: "pi pi-file",
-      isNew: true,
-      leaf: true,
-    });
+  // ====================== CONTROLLED SELECTION ======================
 
-    // Recursive adition
-    // const addChildRecursive = (items: TreeNodeDto[]): TreeNodeDto[] =>
-    const result = treeNodes.map(
-      (item) =>
-        item.flowStepType === FlowStepTypeEnum.SUB_FLOW
-          ? { ...item, children: [...item.children, newChild] }
-          : { ...item },
-      // : {
-      //     ...item,
-      //     children: item.children
-      //       ? addChildRecursive(item.children)
-      //       : undefined,
-      //   },
-    );
-    return result;
-    // setData((prev) => addChildRecursive(prev));
+  const onSelectionChange = (e: TreeSelectionEvent) => {
+    const key = e.value; // this can be string | object | null
+    if (key == null) {
+      setSelectedTreeNode(undefined);
+      return;
+    }
+
+    // For single selection mode, PrimeReact gives us a string key
+    const found = findNodeByKey(data, key as string | number);
+    if (found) {
+      setSelectedTreeNode(found);
+    }
   };
 
   const nodeTemplate = (
-    treeNodeDto: TreeNodeDto,
-    _options: TreeNodeTemplateOptions,
+    treeNode: TreeNode, //TreeNodeDto,
+    _options: TreeNodeTemplateOptions, // TreeNodeTemplateOptions
   ): ReactNode => {
-    let template: ReactNode;
-    const isSelected = selectedTreeNode?.key == treeNodeDto.key;
+    const treeNodeDto = treeNode as TreeNodeDto;
+    const isSelected = selectedTreeNode?.key === treeNodeDto.key;
 
+    let template: ReactNode;
     if (treeNodeDto.isFlow) {
       template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
     } else if (treeNodeDto.isNew) {
       template = <IconComponent name="plus" />;
-    } else
+    } else {
       switch (treeNodeDto.flowStepType) {
         case FlowStepTypeEnum.LOOP:
           template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
+          break;
+        // add other cases here if needed
       }
+    }
 
     return (
-      <div className=" flex w-full gap-2   cursor-pointer">
+      <div className="flex w-full gap-2 cursor-pointer">
         <div className="flex w-full">{template}</div>
         {isSelected && !treeNodeDto.isNew && <IconComponent name="check" />}
       </div>
@@ -115,11 +166,8 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       value={data}
       onExpand={onExpand}
       selectionMode="single"
-      // onSelect={onSelect}
-      onSelect={onSelect}
-      // onNodeDoubleClick={(e: TreeNodeDoubleClickEvent) =>
-      //   (e.node.expanded = true)
-      // }
+      selectionKeys={selectedTreeNode?.key ?? null} // {/* ← controlled */}
+      onSelectionChange={onSelectionChange} //{/* ← required for controlled mode */}
       loading={loading}
       nodeTemplate={nodeTemplate}
     />
