@@ -94,21 +94,19 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   // ====================== LAZY LOADING ======================
 
   const loadTreeChildren = useCallback(
-    async (parentNodeId: number, isFlow: boolean) => {
+    async (parentNodeId: number, isParentNodeFlow: boolean) => {
       setLoading(true);
       try {
-        if (isFlow) {
-          let response =
-            await backendApiService.Flow.getTreeNodes(parentNodeId);
-          setData(response);
+        let response =
+          await backendApiService.FlowStep.getTreeNodes(parentNodeId);
+        if (isParentNodeFlow) {
+          response = [...response, getNewChild(parentNodeId, undefined)]; // add + child at the end
         } else {
-          let response =
-            await backendApiService.FlowStep.getTreeNodes(parentNodeId);
-          response = [...response, getNewChild(undefined, parentNodeId)];
-          setData((prev) =>
-            updateTreeNodeChildren(prev, parentNodeId.toString(), response),
-          );
+          response = [...response, getNewChild(undefined, parentNodeId)]; // add + child at the end
         }
+        setData((prev) =>
+          updateTreeNodeChildren(prev, parentNodeId.toString(), response),
+        );
       } catch (err) {
         console.error(err);
       } finally {
@@ -119,7 +117,9 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   );
 
   useEffect(() => {
-    loadTreeChildren(flowId, true);
+    backendApiService.Flow.getTreeNodes(flowId).then((response) =>
+      setData(response),
+    );
   }, [flowId]);
 
   useEffect(() => {
@@ -133,7 +133,8 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   }, [treeRefreshTrigger, loadTreeChildren]); // loadTreeChildren is stable if you wrap it in useCallback
 
   const onExpand = async (e: TreeEventNodeEvent) => {
-    await loadTreeChildren(e.node.key ? +e.node.key : -1, false);
+    const node = e.node as TreeNodeDto;
+    await loadTreeChildren(+node.key, node.isFlow);
   };
 
   // ====================== CONTROLLED SELECTION ======================
