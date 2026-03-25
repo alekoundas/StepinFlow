@@ -15,7 +15,8 @@ interface Props {
   // itemTemplate: (item: T) => ReactNode;
 }
 export function WorkflowContentComponent({}: Props) {
-  const { selectedTreeNode, selectedFlowStepTypeToAdd } = useWorkflowStore();
+  const { selectedTreeNode, selectedFlowStepTypeToAdd, setTreeRefreshTrigger } =
+    useWorkflowStore();
   const [contentTemplate, seContentTemplate] = useState<ReactNode>(<></>);
 
   useEffect(() => {
@@ -24,7 +25,14 @@ export function WorkflowContentComponent({}: Props) {
 
   const onSave = async (saveDto: FlowStepDto, formMode: FormMode) => {
     if (formMode === "ADD") {
-      const result = await backendApiService.FlowStep.create(saveDto);
+      await backendApiService.FlowStep.create(saveDto);
+
+      if (saveDto.parentFlowStepId) {
+        setTreeRefreshTrigger({ id: saveDto.parentFlowStepId, isFlow: false });
+      }
+      if (saveDto.flowId) {
+        setTreeRefreshTrigger({ id: saveDto.flowId, isFlow: true });
+      }
     }
   };
 
@@ -46,6 +54,8 @@ export function WorkflowContentComponent({}: Props) {
               onSubmit={onSave}
               defaultValues={
                 new FlowStepDto({
+                  flowId: selectedTreeNode?.parentFlowId,
+                  parentFlowStepId: selectedTreeNode?.parentFlowStepId,
                   flowStepType: "WAIT",
                   orderNumber: 22,
                   name: "Wait",

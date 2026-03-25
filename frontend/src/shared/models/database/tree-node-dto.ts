@@ -1,7 +1,6 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 export class TreeNodeDto {
-  //   id: number = -1;
-  key: number = -1;
+  key: string = "-1";
   droppable: boolean = false;
   draggable: boolean = false;
   selectable: boolean = true;
@@ -15,6 +14,8 @@ export class TreeNodeDto {
   isFlow: boolean = false;
   isNew: boolean = true;
 
+  parentFlowId?: number;
+  parentFlowStepId?: number;
   children: TreeNodeDto[] = [];
 
   constructor(data: Partial<TreeNodeDto> = {}) {

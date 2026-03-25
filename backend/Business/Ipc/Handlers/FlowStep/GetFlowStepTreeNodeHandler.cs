@@ -23,24 +23,32 @@ namespace Business.Ipc.Handlers
         public async Task<IEnumerable<TreeNodeDto>> Handle(GetFlowStepTreeNodeQuery request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-            var children = await dbContext.FlowSteps
-                .AsNoTracking()
-                .Where(s => s.ParentFlowStepId == request.id)
-                .OrderBy(s => s.OrderNumber)
-                .Select(s => new TreeNodeDto
-                {
-                    Key = s.Id,
-                    Droppable = true,
-                    Draggable = false,
-                    Selectable = true,
-                    Leaf = s.FlowStepType == FlowStepTypeEnum.FAILURE 
-                        || s.FlowStepType == FlowStepTypeEnum.SUCCESS 
-                        || s.FlowStepType == FlowStepTypeEnum.LOOP,
 
-                    Name = s.Name,
-                    flowStepType = FlowStepTypeEnum.SUB_FLOW,
-                    OrderNumber = s.OrderNumber,
-                    isFlow = true,
+            List<TreeNodeDto> children = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => x.FlowId == request.id || x.ParentFlowStepId == request.id)
+                .OrderBy(x => x.OrderNumber)
+                .Select(x => new TreeNodeDto
+                {
+                    Key = x.Id.ToString(),
+                    Droppable = x.FlowStepType == FlowStepTypeEnum.FAILURE
+                        || x.FlowStepType == FlowStepTypeEnum.SUCCESS
+                        || x.FlowStepType == FlowStepTypeEnum.LOOP,
+                    Draggable = true,
+                    Selectable = true,
+                    Leaf = x.FlowStepType != FlowStepTypeEnum.FAILURE
+                        && x.FlowStepType != FlowStepTypeEnum.SUCCESS
+                        && x.FlowStepType != FlowStepTypeEnum.LOOP,
+
+
+                    Name = x.Name,
+                    flowStepType = x.FlowStepType,
+                    OrderNumber = x.OrderNumber,
+                    IsFlow = false,
+                    IsNew = false,
+
+                    ParentFlowId = x.FlowId,
+                    ParentFlowStepId = x.ParentFlowStepId,
                 })
                 .ToListAsync(ct);
 

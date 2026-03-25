@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
-using Core.Enums;
 using Core.Models.Dtos;
 using Core.Models.Ipc.Commands.Flow;
 using DataAccess;
@@ -25,20 +24,24 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             var children = await dbContext.Flows
                 .AsNoTracking()
-                .Where(s => s.Id == request.id)
-                .OrderBy(s => s.OrderNumber)
-                .Select(s => new TreeNodeDto
+                .Where(x => x.Id == request.id)
+                .OrderBy(x => x.OrderNumber)
+                .Select(x => new TreeNodeDto
                 {
-                    Key = s.Id,
+                    Key = x.Id.ToString(),
                     Droppable = true,
                     Draggable = false,
                     Selectable = true,
-                    Leaf = dbContext.FlowSteps.Any(c => c.ParentFlowStepId == s.Id),
+                    Leaf = false,
+                    
+                    Name = x.Name,
+                    flowStepType = null,
+                    OrderNumber = x.OrderNumber,
+                    IsFlow = true,
+                    IsNew = false,
 
-                    Name = s.Name,
-                    flowStepType = FlowStepTypeEnum.SUB_FLOW,
-                    OrderNumber = s.OrderNumber,
-                    isFlow = true,
+                    ParentFlowId = null,
+                    ParentFlowStepId = null,
                 })
                 .ToListAsync(ct);
 

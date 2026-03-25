@@ -3,7 +3,6 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { useState } from "react";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
 interface FlowStepType {
