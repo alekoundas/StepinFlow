@@ -1,9 +1,10 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { DataGridComponent } from "@/shared/components/DataGridComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { useState } from "react";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
 interface FlowStepType {
   name: string;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function FlowStepTypesDataGridComponent({ className }: Props) {
+  const { setSelectedFlowStepTypeToAdd } = useWorkflowStore();
   const loadData: LazyResponseDto<FlowStepType> = {
     data: [
       {
@@ -70,6 +72,12 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         iconName: "",
         flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
       },
+      {
+        name: "Loop",
+        description: "",
+        iconName: "",
+        flowStepType: FlowStepTypeEnum.LOOP,
+      },
     ],
     totalRecords: 10,
   };
@@ -77,6 +85,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
     <Card
       key={item.name}
       className="w-full h-full border-round-2xl shadow-2 transition-all hover:shadow-4 flex flex-column"
+      onClick={() => setSelectedFlowStepTypeToAdd(item.flowStepType)}
     >
       <div className="flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="flex align-items-center gap-2">
@@ -101,7 +110,6 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       <DataGridComponent<FlowStepType>
         loadData={() => new Promise((resolve) => resolve(loadData))}
         itemTemplate={cardTemplate}
-        
       />
     </div>
   );

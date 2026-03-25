@@ -11,23 +11,23 @@ interface Props {
   // itemTemplate: (item: T) => ReactNode;
 }
 export function WorkflowContentComponent({}: Props) {
-  const { selectedTreeNode } = useWorkflowStore();
+  const { selectedTreeNode, selectedFlowStepTypeToAdd } = useWorkflowStore();
   const [contentTemplate, seContentTemplate] = useState<ReactNode>(<></>);
 
   useEffect(() => {
     getContentTemplate();
-  }, [selectedTreeNode]);
+  }, [selectedTreeNode, selectedFlowStepTypeToAdd]);
 
   const getContentTemplate = (): void => {
     let contentTemplate: ReactNode;
     if (selectedTreeNode?.isFlow) {
       contentTemplate = <IconComponent name="plus" />;
-    } else if (selectedTreeNode?.isNew) {
+    } else if (selectedTreeNode?.isNew && !selectedFlowStepTypeToAdd) {
       contentTemplate = <FlowStepTypesDataGridComponent />;
     } else
-      switch (selectedTreeNode?.flowStepType) {
+      switch (selectedTreeNode?.flowStepType || selectedFlowStepTypeToAdd) {
         case FlowStepTypeEnum.LOOP:
-          contentTemplate = <IconComponent name="plus" />;
+          contentTemplate = <LabelComponent text="LOOOOOOOOOP" />;
       }
     seContentTemplate(contentTemplate);
   };

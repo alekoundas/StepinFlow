@@ -170,6 +170,12 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       onSelectionChange={onSelectionChange} //{/* ← required for controlled mode */}
       loading={loading}
       nodeTemplate={nodeTemplate}
+      pt={{
+        // PassThrough
+        content: () => ({
+          className: "border-none bg-transparent shadow-none",
+        }),
+      }}
     />
   );
 }
