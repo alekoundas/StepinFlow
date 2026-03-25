@@ -78,6 +78,12 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         iconName: "",
         flowStepType: FlowStepTypeEnum.LOOP,
       },
+      {
+        name: "Wait",
+        description: "",
+        iconName: "",
+        flowStepType: FlowStepTypeEnum.WAIT,
+      },
     ],
     totalRecords: 10,
   };

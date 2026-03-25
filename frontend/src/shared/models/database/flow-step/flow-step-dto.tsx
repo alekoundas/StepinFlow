@@ -11,11 +11,13 @@ import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 
 export class FlowStepDto {
+  // Core fields
   id: number = -1;
   name: string = "";
   flowStepType: FlowStepTypeEnum = FlowStepTypeEnum.FAILURE;
   orderNumber: number = -1;
 
+  // Location
   locationX: number = 0;
   locationY: number = 0;
   locationEndX: number = 0;

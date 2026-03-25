@@ -1,4 +1,5 @@
 import { FlowStepWaitSchema } from "@/features/flow-step/schema/base-flow-step-wait.zod";
+import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "primereact/button";
@@ -16,7 +17,7 @@ export default function FlowStepWaitForm({ defaultValues, onSubmit }: Props) {
   const form = useForm<FlowStepDto>({
     resolver: zodResolver(FlowStepWaitSchema),
     mode: "onChange",
-    defaultValues: new FlowStepDto(),
+    defaultValues: new FlowStepDto({ flowStepType: FlowStepTypeEnum.WAIT }),
   });
 
   const {

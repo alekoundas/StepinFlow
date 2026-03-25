@@ -53,7 +53,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       if (node.key === targetKey) {
         return {
           ...node,
-          children: insertNewBubble(newChildren), // process SUB_FLOW nodes in the loaded children too
+          children: insertNewBubble(newChildren), 
         };
       }
       if (node.children?.length) {
