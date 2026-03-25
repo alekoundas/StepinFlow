@@ -4,6 +4,8 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
+import FlowStepWaitForm from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
+import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 
 interface Props {
   // treeNodeDto: TreeNodeDto;
@@ -28,6 +30,17 @@ export function WorkflowContentComponent({}: Props) {
       switch (selectedTreeNode?.flowStepType || selectedFlowStepTypeToAdd) {
         case FlowStepTypeEnum.LOOP:
           contentTemplate = <LabelComponent text="LOOOOOOOOOP" />;
+          break;
+        case FlowStepTypeEnum.WAIT:
+          contentTemplate = (
+            <FlowStepWaitForm
+              onSubmit={() => {}}
+              defaultValues={
+                new FlowStepDto({ flowStepType: "WAIT", orderNumber: 22 })
+              }
+            />
+          );
+          break;
       }
     seContentTemplate(contentTemplate);
   };

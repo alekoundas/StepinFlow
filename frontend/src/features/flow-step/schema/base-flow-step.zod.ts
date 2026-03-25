@@ -12,7 +12,7 @@ export const BaseFlowStepSchema = z.object({
   id: z.number().int().min(-1, "ID must be -1 for new steps or >= 0"),
   name: z.string().min(1, "Name is required").max(120, "Name too long"),
   flowStepType: z.enum(Object.values(FlowStepTypeEnum)),
-  orderNumber: z.number().int().min(0),
+  orderNumber: z.number().int().min(0, "Order number is less than 0"),
 
   // Location
   locationX: z.number().int(),

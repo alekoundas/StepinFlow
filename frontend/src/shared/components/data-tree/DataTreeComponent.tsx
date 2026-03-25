@@ -19,7 +19,11 @@ interface Props<T> {
 
 export function DataTreeComponent<T>({ flowId }: Props<T>) {
   const [data, setData] = useState<TreeNodeDto[]>([]);
-  const { selectedTreeNode, setSelectedTreeNode } = useWorkflowStore();
+  const {
+    selectedTreeNode,
+    setSelectedTreeNode,
+    setSelectedFlowStepTypeToAdd,
+  } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
 
   // ====================== HELPERS ======================
@@ -53,7 +57,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       if (node.key === targetKey) {
         return {
           ...node,
-          children: insertNewBubble(newChildren), 
+          children: insertNewBubble(newChildren),
         };
       }
       if (node.children?.length) {
@@ -119,6 +123,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   // ====================== CONTROLLED SELECTION ======================
 
   const onSelectionChange = (e: TreeSelectionEvent) => {
+    setSelectedFlowStepTypeToAdd(undefined);
     const key = e.value; // this can be string | object | null
     if (key == null) {
       setSelectedTreeNode(undefined);
