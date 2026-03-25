@@ -1,9 +1,12 @@
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { FlowDto } from "@/shared/models/database/flow/flow-dto";
-import { InputNumber } from "primereact/inputnumber";
+import {
+  InputNumber,
+  type InputNumberChangeEvent,
+} from "primereact/inputnumber";
 import { classNames } from "primereact/utils";
-import { useController, useFormContext, type Control } from "react-hook-form";
+import { useController } from "react-hook-form";
 
 interface Props {
   fieldName: keyof FlowStepDto | keyof FlowDto;
@@ -14,6 +17,9 @@ interface Props {
   max?: number;
   isDisabled?: boolean;
   isRequired?: boolean;
+
+  // Actions
+  onChanged?: (value: number | null) => void;
 }
 
 export function FormInputNumberComponent({
@@ -22,14 +28,25 @@ export function FormInputNumberComponent({
   placeholderText,
   hintText,
   min,
-  max = 2147483647, // signed int32 Max
+  max,
   isDisabled = false,
   isRequired = false,
+  onChanged,
 }: Props) {
   const {
     field: { value, onChange, onBlur, ref },
     fieldState: { invalid, error },
   } = useController({ name: fieldName });
+
+  const handleChange = (value: number | null): void => {
+    const cleanedValue = isRequired ? (value ?? 0) : null;
+
+    onChange(cleanedValue); // Call ReacHookForm onChange
+    if (onChanged) {
+      onChanged(cleanedValue); // Call parent onChanged
+    }
+  };
+
   return (
     <>
       <div className="field">
@@ -41,7 +58,7 @@ export function FormInputNumberComponent({
           ref={ref}
           name={fieldName}
           value={value}
-          onChange={(e) => onChange(e.value)}
+          onChange={(e: InputNumberChangeEvent) => handleChange(e.value)}
           onBlur={onBlur}
           placeholder={placeholderText}
           min={min}

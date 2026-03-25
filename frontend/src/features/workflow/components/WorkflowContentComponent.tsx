@@ -6,6 +6,8 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
 import FlowStepWaitForm from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
+import type { FormMode } from "@/shared/enums/form-mode-enum";
+import { backendApiService } from "@/services/backend-api-service";
 
 interface Props {
   // treeNodeDto: TreeNodeDto;
@@ -19,6 +21,12 @@ export function WorkflowContentComponent({}: Props) {
   useEffect(() => {
     getContentTemplate();
   }, [selectedTreeNode, selectedFlowStepTypeToAdd]);
+
+  const onSave = async (saveDto: FlowStepDto, formMode: FormMode) => {
+    if (formMode === "ADD") {
+      const result = await backendApiService.FlowStep.create(saveDto);
+    }
+  };
 
   const getContentTemplate = (): void => {
     let contentTemplate: ReactNode;
@@ -34,9 +42,15 @@ export function WorkflowContentComponent({}: Props) {
         case FlowStepTypeEnum.WAIT:
           contentTemplate = (
             <FlowStepWaitForm
-              onSubmit={() => {}}
+              formMode="ADD"
+              onSubmit={onSave}
               defaultValues={
-                new FlowStepDto({ flowStepType: "WAIT", orderNumber: 22 })
+                new FlowStepDto({
+                  flowStepType: "WAIT",
+                  orderNumber: 22,
+                  name: "Wait",
+                  waitForMilliseconds: 50,
+                })
               }
             />
           );

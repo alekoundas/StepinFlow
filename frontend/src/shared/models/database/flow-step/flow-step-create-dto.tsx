@@ -33,7 +33,7 @@ export class FlowStepCreateDto {
 
   // VARIABLE_CONDITION
   conditionText: string = "";
-  conditionType: ConditionTypeEnum = ConditionTypeEnum.NONE;
+  conditionType?: ConditionTypeEnum;
 
   // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
   windowName: string = "";

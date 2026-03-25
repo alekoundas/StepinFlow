@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
 using Core.Models.Database;
-using Core.Models.Dtos;
-using Core.Models.Ipc.Commands.Flow;
 using Core.Models.Ipc.Commands.FlowStep;
 using MediatR;
 
@@ -19,9 +17,17 @@ namespace Business.Ipc.Handlers
             _mapper = mapper;
         }
 
-        public Task<CreateFlowStepCommandResponse> Handle(CreateFlowStepCommand request, CancellationToken ct)
+        public async Task<CreateFlowStepCommandResponse> Handle(CreateFlowStepCommand request, CancellationToken ct)
         {
-            return Task.FromResult(new CreateFlowStepCommandResponse(1111, true));
+            FlowStep? flowStep = _mapper.Map<FlowStep>(request.dto);
+            if (flowStep == null)
+                return new CreateFlowStepCommandResponse(-1, false);
+
+            var count = await _dataService.AddAsync(flowStep);
+            if (count <= 0)
+                return new CreateFlowStepCommandResponse(-1, false);
+            else
+                return new CreateFlowStepCommandResponse(flowStep.Id, true);
         }
     }
 }

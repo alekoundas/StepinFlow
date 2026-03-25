@@ -34,7 +34,7 @@ namespace Core.Models.Dtos
 
         // VARIABLE_CONDITION
         public string ConditionText { get; set; } = string.Empty;
-        public ConditionTypeEnum ConditionType { get; set; }
+        public ConditionTypeEnum? ConditionType { get; set; }
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
