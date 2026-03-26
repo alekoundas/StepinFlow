@@ -6,14 +6,22 @@ import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-en
 interface Props {
   selectedTreeNode: TreeNodeDto | undefined;
   selectedFlowStepTypeToAdd: FlowStepTypeEnum | undefined;
-  treeRefreshTrigger: { id: number; isFlow: boolean } | null;
+  treeRefreshTrigger: {
+    id: number;
+    isFlow: boolean;
+    selectNodeIdAfterLoad?: number;
+  } | null;
 
   // Actions
   setSelectedTreeNode: (dto: TreeNodeDto | undefined) => void;
   setSelectedFlowStepTypeToAdd: (type: FlowStepTypeEnum | undefined) => void;
 
   setTreeRefreshTrigger: (
-    trigger: { id: number; isFlow: boolean } | null,
+    trigger: {
+      id: number;
+      isFlow: boolean;
+      selectNodeIdAfterLoad?: number;
+    } | null,
   ) => void;
 }
 

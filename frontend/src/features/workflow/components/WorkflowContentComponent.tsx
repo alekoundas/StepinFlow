@@ -25,13 +25,21 @@ export function WorkflowContentComponent({}: Props) {
 
   const onSave = async (saveDto: FlowStepDto, formMode: FormMode) => {
     if (formMode === "ADD") {
-      await backendApiService.FlowStep.create(saveDto);
+      const result = await backendApiService.FlowStep.create(saveDto);
 
       if (saveDto.parentFlowStepId) {
-        setTreeRefreshTrigger({ id: saveDto.parentFlowStepId, isFlow: false });
+        setTreeRefreshTrigger({
+          id: saveDto.parentFlowStepId,
+          isFlow: false,
+          selectNodeIdAfterLoad: result.newId,
+        });
       }
       if (saveDto.flowId) {
-        setTreeRefreshTrigger({ id: saveDto.flowId, isFlow: true });
+        setTreeRefreshTrigger({
+          id: saveDto.flowId,
+          isFlow: true,
+          selectNodeIdAfterLoad: result.newId,
+        });
       }
     }
   };

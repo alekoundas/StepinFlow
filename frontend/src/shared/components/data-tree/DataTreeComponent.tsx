@@ -94,7 +94,10 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   // ====================== LAZY LOADING ======================
 
   const loadTreeChildren = useCallback(
-    async (parentNodeId: number, isParentNodeFlow: boolean) => {
+    async (
+      parentNodeId: number,
+      isParentNodeFlow: boolean,
+    ): Promise<TreeNodeDto[] | undefined> => {
       setLoading(true);
       try {
         let response =
@@ -107,11 +110,13 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
         setData((prev) =>
           updateTreeNodeChildren(prev, parentNodeId.toString(), response),
         );
+        return response;
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
+      return;
     },
     [getNewChild],
   );
@@ -125,9 +130,16 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   useEffect(() => {
     if (!treeRefreshTrigger) return;
 
-    const { id, isFlow } = treeRefreshTrigger;
+    const { id, isFlow, selectNodeIdAfterLoad } = treeRefreshTrigger;
 
-    loadTreeChildren(id, isFlow);
+    loadTreeChildren(id, isFlow).then((response) => {
+      if (selectNodeIdAfterLoad) {
+        const newSelectedNode = response?.find(
+          (x) => x.key === selectNodeIdAfterLoad.toString(),
+        );
+        setSelectedTreeNode(newSelectedNode);
+      }
+    });
 
     setTreeRefreshTrigger(null);
   }, [treeRefreshTrigger, loadTreeChildren]); // loadTreeChildren is stable if you wrap it in useCallback
