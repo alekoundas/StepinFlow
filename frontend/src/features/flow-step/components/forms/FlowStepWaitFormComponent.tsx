@@ -10,7 +10,7 @@ import type z from "zod";
 interface Props {
   formMode: FormMode;
   defaultValues: FlowStepDto;
-  onSubmit: (formValues: FlowStepDto, formMode: FormMode) => void;
+  onSubmit: (formValues: FlowStepDto) => void;
 }
 
 export default function FlowStepWaitForm({
@@ -28,26 +28,21 @@ export default function FlowStepWaitForm({
     formState: { isValid, isDirty },
   } = form;
 
-  // useEffect(() => {
-  //   console.log(errors);
-  //   console.log(isValid);
-  //   console.log(validatingFields);
-  // }, [errors, isValid, validatingFields]);
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(
-          (partialDto: Partial<FlowStepDto>) =>
-            onSubmit({ ...defaultValues, ...partialDto }, formMode), // Merge default values with form values.
+        onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
+          onSubmit({ ...defaultValues, ...partialDto }),
         )}
         className="flex flex-column h-full"
       >
-        <FlowStepWaitFormFieldsComponent disabled={false} />
+        <FlowStepWaitFormFieldsComponent disabled={formMode === "VIEW"} />
 
         <Button
           type="submit"
           label="Save"
           icon="pi pi-check"
+          visible={formMode === "ADD" || formMode === "EDIT"}
           disabled={!isValid && (formMode === "ADD" ? false : !isDirty)}
           className="mt-3"
         />

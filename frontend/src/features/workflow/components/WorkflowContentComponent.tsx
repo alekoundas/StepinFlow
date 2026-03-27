@@ -6,7 +6,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
 import FlowStepWaitForm from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import type { FormMode } from "@/shared/enums/form-mode-enum";
+import { FormMode } from "@/shared/enums/form-mode-enum";
 import { backendApiService } from "@/services/backend-api-service";
 
 interface Props {
@@ -15,15 +15,24 @@ interface Props {
   // itemTemplate: (item: T) => ReactNode;
 }
 export function WorkflowContentComponent({}: Props) {
-  const { selectedTreeNode, selectedFlowStepTypeToAdd, setTreeRefreshTrigger } =
-    useWorkflowStore();
-  const [contentTemplate, seContentTemplate] = useState<ReactNode>(<></>);
+  const {
+    selectedTreeNode,
+    selectedFlowStepTypeToAdd,
+    setTreeRefreshTrigger,
+    setSelectedFlowStepTypeToAdd,
+  } = useWorkflowStore();
+  const [contentTemplate, setContentTemplate] = useState<ReactNode>(<></>);
+
+  // always up-to-date
+  const formMode: FormMode = selectedFlowStepTypeToAdd
+    ? FormMode.ADD
+    : FormMode.VIEW;
 
   useEffect(() => {
     getContentTemplate();
   }, [selectedTreeNode, selectedFlowStepTypeToAdd]);
 
-  const onSave = async (saveDto: FlowStepDto, formMode: FormMode) => {
+  const onSave = async (saveDto: FlowStepDto) => {
     if (formMode === "ADD") {
       const result = await backendApiService.FlowStep.create(saveDto);
 
@@ -41,6 +50,8 @@ export function WorkflowContentComponent({}: Props) {
           selectNodeIdAfterLoad: result.newId,
         });
       }
+
+      setSelectedFlowStepTypeToAdd(undefined);
     }
   };
 
@@ -58,7 +69,7 @@ export function WorkflowContentComponent({}: Props) {
         case FlowStepTypeEnum.WAIT:
           contentTemplate = (
             <FlowStepWaitForm
-              formMode="ADD"
+              formMode={formMode}
               onSubmit={onSave}
               defaultValues={
                 new FlowStepDto({
@@ -74,7 +85,8 @@ export function WorkflowContentComponent({}: Props) {
           );
           break;
       }
-    seContentTemplate(contentTemplate);
+
+    setContentTemplate(contentTemplate);
   };
 
   return <div className="m-4 mr-3">{contentTemplate}</div>;
