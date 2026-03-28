@@ -3,11 +3,11 @@ import { FormInputTextComponent } from "@/shared/components/form/FormInputTextCo
 import { useState } from "react";
 
 interface Props {
-  disabled?: boolean;
+  isDisabled?: boolean;
 }
 
 export default function FlowStepWaitFormFieldsComponent({
-  disabled = false,
+  isDisabled = false,
 }: Props) {
   const [numberHintText, setNumberHintText] = useState<string>("");
   const setHintText = (value: number | null): void => {
@@ -39,7 +39,7 @@ export default function FlowStepWaitFormFieldsComponent({
         fieldName="name"
         label="Name"
         isRequired={true}
-        isDisabled={disabled}
+        isDisabled={isDisabled}
       />
 
       <FormInputNumberComponent
@@ -49,7 +49,7 @@ export default function FlowStepWaitFormFieldsComponent({
         min={50}
         max={2147483647} // signed int32 Max
         isRequired={true}
-        isDisabled={disabled}
+        isDisabled={isDisabled}
         onChanged={setHintText}
       />
     </>

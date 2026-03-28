@@ -7,7 +7,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { useState, useEffect, useCallback } from "react";
 import { ProgressBar } from "primereact/progressbar";
-import { useFlowStore } from "@/features/flow";
+import { useFlowStore } from "@/features/flow/store/flow-store";
 
 interface Props<T extends DataTableValue> {
   columns: DataTableColumnDto<T>[];

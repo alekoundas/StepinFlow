@@ -1,27 +1,28 @@
-import type { FormMode } from "@/shared/enums/form-mode-enum";
-import FlowStepWaitFormFieldsComponent from "@/features/flow-step/components/forms/FlowStepWaitFormFieldsComponent";
-import { FlowStepWaitSchema } from "@/features/flow-step/schema/base-flow-step-wait.zod";
-import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "primereact/button";
-import { FormProvider, useForm } from "react-hook-form";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import type z from "zod";
+
+import { Button } from "primereact/button";
+import { FormMode } from "@/shared/enums/form-mode-enum";
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FlowSchema } from "@/features/flow/schema/flow-schema.zod";
+import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 
 interface Props {
   formMode: FormMode;
-  defaultValues: FlowStepDto;
-  onSubmit: (formValues: FlowStepDto) => void;
+  defaultValues: FlowDto;
+  onSubmit: (formValues: FlowDto) => void;
   onCancel: () => void;
 }
 
-export default function FlowStepWaitFormComponent({
+export function FlowFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepWaitSchema>>({
-    resolver: zodResolver(FlowStepWaitSchema),
+  const form = useForm<z.infer<typeof FlowSchema>>({
+    resolver: zodResolver(FlowSchema),
     mode: "onChange",
     defaultValues: defaultValues,
   });
@@ -33,12 +34,12 @@ export default function FlowStepWaitFormComponent({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
+        onSubmit={form.handleSubmit((partialDto: Partial<FlowDto>) =>
           onSubmit({ ...defaultValues, ...partialDto }),
         )}
         className="flex flex-column h-full"
       >
-        <FlowStepWaitFormFieldsComponent isDisabled={formMode === "VIEW"} />
+        <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
         <div className="flex justify-end gap-3 mt-8">
           <Button

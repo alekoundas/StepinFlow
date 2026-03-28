@@ -1,7 +1,7 @@
+import { useFlowStore } from "@/features/flow/store/flow-store";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 
-import { useFlowStore } from "@/features/flow";
 import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 

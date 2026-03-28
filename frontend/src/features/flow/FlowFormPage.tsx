@@ -1,10 +1,10 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
+import { FlowDto } from "@/shared/models/database/flow/flow-dto";
 
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { Button } from "primereact/button";
 import { useFlowStore } from "./store/flow-store";
-import { FlowFormComponent } from "@/features/flow/components/FlowFormComponent";
 import { useNavigate, useParams } from "react-router-dom";
+import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 
 export function FlowFormPage() {
   const { id, formMode = FormMode.ADD } = useParams<{
@@ -25,12 +25,6 @@ export function FlowFormPage() {
     navigate("/flows");
   };
 
-  // useEffect(() => {
-  //   if (id && !flow) {
-  //     useFlowStore.getState().fetchFlows();
-  //   }
-  // }, [id]);
-
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-6">
@@ -50,10 +44,9 @@ export function FlowFormPage() {
 
       <FlowFormComponent
         formMode={formMode}
-        initialData={flow ?? {}}
+        defaultValues={flow ?? new FlowDto()}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/flows")}
-        loading={loading}
       />
     </div>
   );

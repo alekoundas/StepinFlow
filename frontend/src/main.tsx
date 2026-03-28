@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
 
 // Global CSS PrimeReact
 import "primeicons/primeicons.css";
@@ -11,8 +13,9 @@ import "primereact/resources/themes/soho-dark/theme.css";
 // Pages
 import AppLayout from "@/components/layout/app-layout";
 import HomePage from "@/pages/home/home-page";
-import { FlowFormPage, FlowListPage } from "@/features/flow";
 import { WorkflowPage } from "@/features/workflow/WorkflowPage";
+import { FlowListPage } from "@/features/flow/FlowListPage";
+import { FlowFormPage } from "@/features/flow/FlowFormPage";
 
 const router = createHashRouter([
   {
@@ -70,14 +73,28 @@ const router = createHashRouter([
 //   },
 // };
 
+// TanStack Query(formerly React Query)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+      gcTime: 10 * 60 * 1000, // 10 minutes - how long to keep in memory
+      refetchOnWindowFocus: false, // prevents unnecessary refetches
+    },
+  },
+});
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     {/* <PrimeReactProvider theme={theme}> */}
     {/* <ToastProvider>
         <ThemeProvider> */}
-    <PrimeReactProvider>
-      <RouterProvider router={router} />
-    </PrimeReactProvider>
+    <QueryClientProvider client={queryClient}>
+      <PrimeReactProvider>
+        <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen={false} /> {/* only shows in dev */}
+      </PrimeReactProvider>
+    </QueryClientProvider>
     {/* </ThemeProvider>
       </ToastProvider> */}
     {/* </PrimeReactProvider> */}
