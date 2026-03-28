@@ -23,7 +23,7 @@ export function DataGridComponent<T>({
 }: Props<T>) {
   const [data, setData] = useState<T[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const { version } = useFlowStore();
 
   const [lazyParams, setLazyParams] = useState<LazyDto>({

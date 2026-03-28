@@ -8,6 +8,7 @@ import FlowStepWaitForm from "@/features/flow-step/components/forms/FlowStepWait
 import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { backendApiService } from "@/services/backend-api-service";
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 
 interface Props {
   // treeNodeDto: TreeNodeDto;
@@ -26,10 +27,24 @@ export function WorkflowContentComponent({}: Props) {
   // always up-to-date
   const formMode: FormMode = selectedFlowStepTypeToAdd
     ? FormMode.ADD
-    : FormMode.VIEW;
+    : selectedTreeNode && !selectedTreeNode.isNew && !selectedTreeNode.isFlow
+      ? FormMode.EDIT
+      : FormMode.VIEW;
 
   useEffect(() => {
-    getContentTemplate();
+    if (selectedTreeNode) {
+      if (selectedTreeNode.isNew) {
+        getContentTemplate();
+      } else if (selectedTreeNode.isFlow) {
+        backendApiService.Flow.get(+selectedTreeNode.key).then((dto) =>
+          getContentTemplate(dto),
+        );
+      } else {
+        backendApiService.FlowStep.get(+selectedTreeNode.key).then((dto) =>
+          getContentTemplate(dto),
+        );
+      }
+    }
   }, [selectedTreeNode, selectedFlowStepTypeToAdd]);
 
   const onSave = async (saveDto: FlowStepDto) => {
@@ -55,14 +70,17 @@ export function WorkflowContentComponent({}: Props) {
     }
   };
 
-  const getContentTemplate = (): void => {
+  const getContentTemplate = (dto?: FlowDto | FlowStepDto): void => {
+    if (!selectedTreeNode) return;
+
     let contentTemplate: ReactNode;
-    if (selectedTreeNode?.isFlow) {
+    if (selectedTreeNode.isFlow) {
       contentTemplate = <IconComponent name="plus" />;
-    } else if (selectedTreeNode?.isNew && !selectedFlowStepTypeToAdd) {
+    } else if (selectedTreeNode.isNew && !selectedFlowStepTypeToAdd) {
       contentTemplate = <FlowStepTypesDataGridComponent />;
-    } else
-      switch (selectedTreeNode?.flowStepType || selectedFlowStepTypeToAdd) {
+    } else {
+      const flowStepDto = dto as FlowStepDto;
+      switch (selectedTreeNode.flowStepType || selectedFlowStepTypeToAdd) {
         case FlowStepTypeEnum.LOOP:
           contentTemplate = <LabelComponent text="LOOOOOOOOOP" />;
           break;
@@ -72,19 +90,22 @@ export function WorkflowContentComponent({}: Props) {
               formMode={formMode}
               onSubmit={onSave}
               defaultValues={
-                new FlowStepDto({
-                  flowId: selectedTreeNode?.parentFlowId,
-                  parentFlowStepId: selectedTreeNode?.parentFlowStepId,
-                  flowStepType: "WAIT",
-                  orderNumber: 22,
-                  name: "Wait",
-                  waitForMilliseconds: 50,
-                })
+                flowStepDto
+                  ? flowStepDto
+                  : new FlowStepDto({
+                      flowId: selectedTreeNode.parentFlowId,
+                      parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                      flowStepType: "WAIT",
+                      orderNumber: 22,
+                      name: "Wait",
+                      waitForMilliseconds: 50,
+                    })
               }
             />
           );
           break;
       }
+    }
 
     setContentTemplate(contentTemplate);
   };

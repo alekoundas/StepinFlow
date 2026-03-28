@@ -15,6 +15,7 @@ import type { TreeNode } from "primereact/treenode";
 
 interface Props<T> {
   flowId: number;
+  kek?: T;
 }
 
 export function DataTreeComponent<T>({ flowId }: Props<T>) {

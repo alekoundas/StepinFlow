@@ -26,10 +26,10 @@ namespace Business.Ipc.Handlers
             Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x=>x.Id == request.id);
 
             if (flow == null)
-                return new GetFlowQueryResponse(null, false);
+                return new GetFlowQueryResponse(null);
 
             FlowDto? flowDto = _mapper.Map<FlowDto>(flow);
-            return new GetFlowQueryResponse(flowDto, true);
+            return new GetFlowQueryResponse(flowDto);
         }
     }
 }
