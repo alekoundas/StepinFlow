@@ -4,7 +4,6 @@ import { Card } from "primereact/card";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { backendApiService } from "@/services/backend-api-service";
 
 interface FlowStepType {
   name: string;

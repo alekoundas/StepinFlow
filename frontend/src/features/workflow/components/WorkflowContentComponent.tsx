@@ -14,7 +14,6 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { useFlow } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
-import { FlowDto } from "@/shared/models/database/flow/flow-dto";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;

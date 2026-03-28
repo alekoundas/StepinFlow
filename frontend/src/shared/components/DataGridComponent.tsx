@@ -1,9 +1,8 @@
-import { useFlowStore } from "@/features/flow/store/flow-store";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 interface Props<T> {
   queryKey: readonly unknown[];
@@ -23,11 +22,6 @@ export function DataGridComponent<T>({
   enablePaging = false,
   // gridClassName = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4",
 }: Props<T>) {
-  // const [data, setData] = useState<T[]>([]);
-  // const [totalRecords, setTotalRecords] = useState(0);
-  // const [_loading, setLoading] = useState(false);
-  // const { version } = useFlowStore();
-
   const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
     rows: 10,
@@ -43,22 +37,6 @@ export function DataGridComponent<T>({
     queryFn: () => queryFn(lazyParams),
   });
   const response = data ?? { data: [] as T[], totalRecords: 0 };
-  // const loadLazyData = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await loadData(lazyParams);
-  //     setData(response.data);
-  //     setTotalRecords(response.totalRecords);
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [lazyParams, loadData]);
-
-  // useEffect(() => {
-  //   loadLazyData();
-  // }, [loadLazyData, version]);
 
   const onPage = (event: PaginatorPageChangeEvent) => {
     setLazyParams((prev) => ({

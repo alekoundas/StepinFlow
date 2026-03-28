@@ -1,5 +1,5 @@
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
-import { backendApiService } from "@/services/backend-api-service";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { useQuery } from "@tanstack/react-query";
 
 export const flowKeys = {

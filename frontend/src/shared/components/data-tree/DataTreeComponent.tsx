@@ -5,13 +5,13 @@ import {
   type TreeNodeTemplateOptions,
   type TreeSelectionEvent,
 } from "primereact/tree";
-import { backendApiService } from "@/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import IconComponent from "@/components/core/icon-component";
 import type { TreeNode } from "primereact/treenode";
+import { backendApiService } from "@/shared/services/backend-api-service";
 
 interface Props<T> {
   flowId: number;

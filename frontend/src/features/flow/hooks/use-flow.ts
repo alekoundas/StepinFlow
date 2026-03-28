@@ -1,4 +1,4 @@
-import { backendApiService } from "@/services/backend-api-service";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { useQuery } from "@tanstack/react-query";
 
 export const flowKeys = {

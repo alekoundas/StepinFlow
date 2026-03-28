@@ -1,4 +1,4 @@
-import type { RequestMessage } from "../../../electron/shared/types";
+import type { RequestMessage } from "../../../../electron/shared/types";
 import type { FlowSearchAreaCreateDto } from "@/shared/models/database/flow-search-area/flow-search-area-create-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area/flow-search-area-dto";
 import type { FlowStepImageCreateDto } from "@/shared/models/database/flow-step-image/flow-step-image-create-dto";
@@ -11,11 +11,12 @@ import type { SubFlowDto } from "@/shared/models/database/sub-flow/sub-flow-dto"
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
+import type { ResultDto } from "@/shared/models/result-dto";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
 declare const backendApi: {
-  invoke: <T>(msg: any) => Promise<T>;
+  invoke: <T>(msg: any) => Promise<ResultDto<T>>;
   onMessage: <T>(cb: (msg: T) => void) => () => void;
 };
 ///
@@ -72,7 +73,11 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
   };
 
   try {
-    return await backendApi.invoke<T>(msg);
+    const resultDto = await backendApi.invoke<T>(msg);
+    if (resultDto.data) {
+      return resultDto.data;
+    }
+    throw "Backend call failed [${action}]";
   } catch (err: any) {
     console.error(`Backend call failed [${action}]:`, err);
     throw err;

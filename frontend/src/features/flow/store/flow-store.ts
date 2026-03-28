@@ -1,8 +1,8 @@
 import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { backendApiService } from "@/services/backend-api-service";
 import { FlowCreateDto } from "@/shared/models/database/flow/flow-create-dto";
+import { backendApiService } from "@/shared/services/backend-api-service";
 
 interface Props {
   loading: boolean;

@@ -1,4 +1,4 @@
-import { backendApiService } from "@/services/backend-api-service";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { Button } from "primereact/button";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ export default function HomePage() {
     try {
       const reply = await backendApiService.greet("Electron User");
       console.log("Direct reply (if sync):", reply);
-      setReply(reply.greeting ?? "skkatoules");
+      setReply(reply?.greeting ?? "skkatoules");
     } catch (err) {
       console.error("Invoke failed:", err);
     }
