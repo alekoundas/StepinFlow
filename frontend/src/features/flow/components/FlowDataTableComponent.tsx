@@ -38,7 +38,8 @@ export function FlowDataTableComponent({ className }: Props) {
     <div className={className}>
       <DataTableComponent
         columns={columns}
-        loadData={backendApiService.Flow.getLazy}
+        queryKey={["flows", "list"]}
+        queryFn={backendApiService.Flow.getLazy}
       />
     </div>
   );

@@ -40,7 +40,8 @@ export function FlowDataGridComponent({ className }: Props) {
   return (
     <div className={className}>
       <DataGridComponent<FlowDto>
-        loadData={backendApiService.Flow.getLazy}
+        queryKey={["flows", "list"]}
+        queryFn={backendApiService.Flow.getLazy}
         itemTemplate={cardTemplate}
         enablePaging={true}
       />

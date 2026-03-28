@@ -1,30 +1,26 @@
 import type { DataTableStateEvent, DataTableValue } from "primereact/datatable";
 import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
-import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { ProgressBar } from "primereact/progressbar";
-import { useFlowStore } from "@/features/flow/store/flow-store";
+import { useQuery } from "@tanstack/react-query";
 
 interface Props<T extends DataTableValue> {
   columns: DataTableColumnDto<T>[];
-  loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
+  queryKey: readonly unknown[];
+  queryFn: (params: LazyDto) => Promise<any>;
   className?: string;
 }
 
 export function DataTableComponent<T extends DataTableValue>({
   columns,
-  loadData,
+  queryKey,
+  queryFn,
   className = "",
 }: Props<T>) {
-  const [data, setData] = useState<T[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const { version } = useFlowStore();
-
   const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
     rows: 10,
@@ -34,22 +30,30 @@ export function DataTableComponent<T extends DataTableValue>({
     filters: {},
   });
 
-  const loadLazyData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await loadData(lazyParams);
-      setData(response.data);
-      setTotalRecords(response.totalRecords);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [lazyParams, loadData]);
+  // React Query – automatic caching per page/sort/filter
+  // const { data, isLoading, error } = useFlows(lazyParams);
+  const { data, isLoading, error } = useQuery({
+    queryKey: [...queryKey, lazyParams], // important: include lazyParams in key
+    queryFn: () => queryFn(lazyParams),
+  });
+  const response = data ?? { data: [] as T[], totalRecords: 0 };
 
-  useEffect(() => {
-    loadLazyData();
-  }, [loadLazyData, version]);
+  // const loadLazyData = useCallback(async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await loadData(lazyParams);
+  //     setData(response.data);
+  //     setTotalRecords(response.totalRecords);
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [lazyParams, loadData]);
+
+  // useEffect(() => {
+  //   loadLazyData();
+  // }, [loadLazyData, version]);
 
   const onPage = (event: DataTableStateEvent) => {
     setLazyParams((prev) => ({
@@ -72,9 +76,13 @@ export function DataTableComponent<T extends DataTableValue>({
     setLazyParams((prev) => ({ ...prev, filters: event.filters }));
   };
 
+  if (error) {
+    return <div className="p-4 text-red-500">Failed to load flows</div>;
+  }
+
   return (
     <div className={className}>
-      {loading && (
+      {isLoading && (
         <ProgressBar
           mode="indeterminate"
           style={{ height: "3px" }}
@@ -82,12 +90,12 @@ export function DataTableComponent<T extends DataTableValue>({
       )}
 
       <DataTable
-        value={data}
+        value={response.data}
         lazy
         paginator
         rows={lazyParams.rows}
         first={lazyParams.first}
-        totalRecords={totalRecords}
+        totalRecords={response.totalRecords}
         onPage={onPage}
         onSort={onSort}
         onFilter={onFilter}
@@ -95,7 +103,7 @@ export function DataTableComponent<T extends DataTableValue>({
         sortOrder={lazyParams.sortOrder}
         filters={lazyParams.filters}
         filterDisplay="row"
-        loading={loading}
+        loading={isLoading}
         stripedRows
         showGridlines
         rowsPerPageOptions={[5, 10, 20, 50]}
