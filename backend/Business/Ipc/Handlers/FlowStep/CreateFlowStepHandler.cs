@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
 using Core.Models.Database;
-using Core.Models.Ipc.Commands.FlowStep;
+using Core.Models.Dtos;
+using Core.Models.Ipc;
 using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    public class CreateFlowStepHandler : IRequestHandler<CreateFlowStepCommand, CreateFlowStepCommandResponse>
+    public class CreateFlowStepHandler : IRequestHandler<CreateFlowStepCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
         private readonly IDataService _dataService;
@@ -17,17 +18,15 @@ namespace Business.Ipc.Handlers
             _mapper = mapper;
         }
 
-        public async Task<CreateFlowStepCommandResponse> Handle(CreateFlowStepCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> Handle(CreateFlowStepCommand request, CancellationToken ct)
         {
-            FlowStep? flowStep = _mapper.Map<FlowStep>(request.dto);
-            if (flowStep == null)
-                return new CreateFlowStepCommandResponse(-1, false);
+            FlowStep flowStep = _mapper.Map<FlowStep>(request.dto);
 
-            var count = await _dataService.AddAsync(flowStep);
+            int count = await _dataService.AddAsync(flowStep);
             if (count <= 0)
-                return new CreateFlowStepCommandResponse(-1, false);
+                return ResultDto<int>.Failure("No changes made to the Database!");
             else
-                return new CreateFlowStepCommandResponse(flowStep.Id, true);
+                return ResultDto<int>.Success(flowStep.Id);
         }
     }
 }

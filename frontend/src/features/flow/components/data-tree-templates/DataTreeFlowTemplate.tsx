@@ -9,7 +9,7 @@ interface Props {
 export function DataTreeFlowTemplate({ treeNode }: Props) {
   return (
     <>
-      <LabelComponent text={treeNode.orderNumber} />
+      <LabelComponent text={treeNode.orderNumber} />.
       <LabelComponent text={treeNode.name} />
     </>
   );

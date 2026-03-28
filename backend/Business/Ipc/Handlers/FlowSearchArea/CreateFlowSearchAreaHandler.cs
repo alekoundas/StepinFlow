@@ -7,26 +7,26 @@ using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    public class CreateFlowStepImageHandler : IRequestHandler<CreateFlowStepImageCommand, ResultDto<int>>
+    public class CreateFlowSearchAreaHandler : IRequestHandler<CreateFlowSearchAreaCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
         private readonly IDataService _dataService;
 
-        public CreateFlowStepImageHandler(IMapper mapper, IDataService dataService)
+        public CreateFlowSearchAreaHandler(IMapper mapper, IDataService dataService)
         {
             _dataService = dataService;
             _mapper = mapper;
         }
 
-        public async Task<ResultDto<int>> Handle(CreateFlowStepImageCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> Handle(CreateFlowSearchAreaCommand request, CancellationToken ct)
         {
-            FlowStepImage flowStepImage = _mapper.Map<FlowStepImage>(request.dto);
+            FlowSearchArea flowSearchArea = _mapper.Map<FlowSearchArea>(request.dto);
 
-            int count = await _dataService.AddAsync(flowStepImage);
+            int count = await _dataService.AddAsync(flowSearchArea);
             if (count <= 0)
                 return ResultDto<int>.Failure("No changes made to the Database!");
             else
-                return ResultDto<int>.Success(flowStepImage.Id);
+                return ResultDto<int>.Success(flowSearchArea.Id);
         }
     }
 }

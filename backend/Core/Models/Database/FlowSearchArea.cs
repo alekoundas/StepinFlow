@@ -1,7 +1,6 @@
-﻿using Core.Models.Database;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
-namespace Core.Models
+namespace Core.Models.Database
 {
     public class FlowSearchArea : BaseDbModel
     {

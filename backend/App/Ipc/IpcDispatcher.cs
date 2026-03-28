@@ -1,10 +1,6 @@
 ﻿
 using Core.Models.Dtos;
-using Core.Models.Ipc.Commands.Flow;
-using Core.Models.Ipc.Commands.FlowSearchArea;
-using Core.Models.Ipc.Commands.FlowStep;
-using Core.Models.Ipc.Commands.FlowStepImage;
-using Core.Models.Ipc.Commands.SubFlow;
+using Core.Models.Ipc;
 using Core.Models.Ipc.Protobuf;
 using MediatR;
 using System.Text.Json;
@@ -40,11 +36,13 @@ namespace App.Ipc
                     "Flow.update" => await _mediator.Send(new UpdateFlowCommand(JsonSerializer.Deserialize<FlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.delete" => await _mediator.Send(new DeleteFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.getLazy" => (await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct)).dto,
+                    "Flow.getLazy" => (await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct)),
                     "Flow.getTreeNodes" => (await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct)),
 
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepCreateDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.update" => await _mediator.Send(new UpdateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.getTreeNodes" => (await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct)),
 

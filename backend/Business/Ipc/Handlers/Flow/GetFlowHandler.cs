@@ -2,14 +2,14 @@
 using Business.DataService.Services;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Core.Models.Ipc.Commands.Flow;
+using Core.Models.Ipc;
 using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
-    public class GetFlowHandler : IRequestHandler<GetFlowQuery, GetFlowQueryResponse>
+    public class GetFlowHandler : IRequestHandler<GetFlowQuery, ResultDto<FlowDto>>
     {
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -20,16 +20,16 @@ namespace Business.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<GetFlowQueryResponse> Handle(GetFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowDto>> Handle(GetFlowQuery request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x=>x.Id == request.id);
 
             if (flow == null)
-                return new GetFlowQueryResponse(null);
+            return ResultDto<FlowDto>.Failure("Entity doesnt exist in the Database!");
 
             FlowDto? flowDto = _mapper.Map<FlowDto>(flow);
-            return new GetFlowQueryResponse(flowDto);
+            return ResultDto<FlowDto>.Success(flowDto);
         }
     }
 }

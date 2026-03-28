@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
 using Core.Models.Database;
-using Core.Models.Ipc.Commands.Flow;
+using Core.Models.Dtos;
+using Core.Models.Ipc;
 using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    public class UpdateFlowHandler : IRequestHandler<UpdateFlowCommand, UpdateFlowCommandResponse>
+    public class UpdateFlowHandler : IRequestHandler<UpdateFlowCommand, ResultDto<FlowDto>>
     {
         private readonly IMapper _mapper;
         private readonly IDataService _dataService;
@@ -17,17 +18,16 @@ namespace Business.Ipc.Handlers
             _mapper = mapper;
         }
 
-        public async Task<UpdateFlowCommandResponse> Handle(UpdateFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowDto>> Handle(UpdateFlowCommand request, CancellationToken ct)
         {
-            Flow? flow = _mapper.Map<Flow>(request.dto);
-            if (flow == null)
-                return new UpdateFlowCommandResponse(null, false);
+            Flow flow = _mapper.Map<Flow>(request.dto);
 
-            var count = await _dataService.UpdateAsync(flow);
+            int count = await _dataService.UpdateAsync(flow);
             if (count <= 0)
-                return new UpdateFlowCommandResponse(null, false);
-            else
-                return new UpdateFlowCommandResponse(null, true); // Return null for now. TODO fix later
+                return ResultDto<FlowDto>.Failure("No changes made to the Database!");
+
+            FlowDto flowDto = _mapper.Map<FlowDto>(flow);
+            return ResultDto<FlowDto>.Success(flowDto);
         }
     }
 }

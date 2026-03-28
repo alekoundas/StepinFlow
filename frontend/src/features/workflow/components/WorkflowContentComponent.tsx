@@ -105,8 +105,8 @@ export function WorkflowContentComponent() {
               new FlowStepDto({
                 flowId: selectedTreeNode.parentFlowId,
                 parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                orderNumber: selectedTreeNode.orderNumber,
                 flowStepType: "WAIT",
-                orderNumber: 22,
                 name: "Wait",
                 waitForMilliseconds: 50,
               })
@@ -144,14 +144,15 @@ export function WorkflowContentComponent() {
       );
     }
 
+    console.log(loadedFlow);
+    console.log(new FlowStepDto(loadedFlow));
     return (
       <div className="m-4 mr-3">
         <FlowFormComponent
-          formMode={formMode} // currently always VIEW
-          defaultValues={new FlowDto(loadedFlow)}
+          formMode={formMode}
+          defaultValues={loadedFlow}
           onSubmit={() => {}}
           onCancel={() => {}}
-          // onSubmit will be wired when you add Flow update later
         />
       </div>
     );

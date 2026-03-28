@@ -9,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
-    public class GetLazyFlowHandler : IRequestHandler<GetLazyFlowQuery, ResultDto<LazyResponseDto<FlowDto>>>
+    public class GetLazyFlowStepHandler : IRequestHandler<GetLazyFlowQuery, ResultDto<LazyResponseDto<FlowDto>>>
     {
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetLazyFlowHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetLazyFlowStepHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;

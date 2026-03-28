@@ -1,8 +1,8 @@
 ﻿namespace Core.Models.Dtos
 {
-    public class LazyResponseDto
+    public class LazyResponseDto<T>
     {
         public int TotalRecords { get; set; }
-        public List<FlowDto> Data { get; set; } = new List<FlowDto>();
+        public List<T> Data { get; set; } = new List<T>();
     }
 }

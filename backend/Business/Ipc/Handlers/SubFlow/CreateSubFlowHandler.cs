@@ -2,13 +2,12 @@
 using Business.DataService.Services;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Core.Models.Ipc.Commands.Flow;
-using Core.Models.Ipc.Commands.SubFlow;
+using Core.Models.Ipc;
 using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    public class CreateSubFlowHandler : IRequestHandler<CreateSubFlowCommand, CreateSubFlowCommandResponse>
+    public class CreateSubFlowHandler : IRequestHandler<CreateSubFlowCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
         private readonly IDataService _dataService;
@@ -19,9 +18,15 @@ namespace Business.Ipc.Handlers
             _mapper = mapper;
         }
 
-        public Task<CreateSubFlowCommandResponse> Handle(CreateSubFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> Handle(CreateSubFlowCommand request, CancellationToken ct)
         {
-            return Task.FromResult(new CreateSubFlowCommandResponse(1111, true));
+            SubFlow subFlow = _mapper.Map<SubFlow>(request.dto);
+
+            int count = await _dataService.AddAsync(subFlow);
+            if (count <= 0)
+                return ResultDto<int>.Failure("No changes made to the Database!");
+            else
+                return ResultDto<int>.Success(subFlow.Id);
         }
     }
 }
