@@ -13,7 +13,7 @@
         "electron/build/main.js" // Points to your compiled TS (after task)
       ],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "Build_Electron_TS", // Runs task before launch
+      "preLaunchTask": "preLaunchTasks", // Runs task before launch
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/electron/build/**/*.js"]
     },

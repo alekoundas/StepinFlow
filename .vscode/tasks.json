@@ -2,11 +2,29 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Clean",
+      "type": "npm",
+      "script": "clean",
+      "group": "build"
+    },
+
+    {
+      "label": "Copy_Protobuf",
+      "type": "npm",
+      "script": "protobuf:copy",
+      "group": "build"
+    },
+    {
       "label": "Build_Electron_TS",
       "type": "npm",
       "script": "dev:electron-build",
       "group": "build",
       "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "preLaunchTasks",
+      "dependsOn": ["Copy_Protobuf", "Build_Electron_TS"],
+      "dependsOrder": "sequence" // "sequence" or "parallel" (default = parallel)
     }
   ]
 }
