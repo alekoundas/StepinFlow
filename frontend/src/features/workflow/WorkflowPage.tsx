@@ -3,6 +3,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
+import { ScrollPanel } from "primereact/scrollpanel";
 
 export function WorkflowPage() {
   const { id } = useParams<{
@@ -24,7 +25,7 @@ export function WorkflowPage() {
 
       <div
         className="mt-6"
-        style={{ minHeight: "70vh" }}
+        style={{ height: "70vh" }}
       >
         <Splitter
           stateKey="flow-tree-splitter" //  remembers user choice in localStorage
@@ -39,32 +40,34 @@ export function WorkflowPage() {
             className="flex flex-column"
           >
             {/* <Card className="h-full"> */}
-            <div className="h-full flex flex-column gap-2 ">
-              <LabelComponent
-                text="Available Flows"
-                size="lg"
-                weight="bold"
-              />
-              <LabelComponent
-                text="Available Flows"
-                size="xs"
-              />
-              <WorkflowContentComponent />
-            </div>
+            <ScrollPanel className="h-full">
+              <div className="flex flex-column gap-2 ">
+                <LabelComponent
+                  text="Available Flows"
+                  size="lg"
+                  weight="bold"
+                />
+                <LabelComponent
+                  text="Available Flows"
+                  size="xs"
+                />
+                <WorkflowContentComponent />
+              </div>
 
-            {/* If you have scrollable list/table inside → add flex-1 overflow-auto */}
-            {/* e.g. <DataTable className="flex-1" ... /> */}
-            {/* </Card> */}
+              {/* If you have scrollable list/table inside → add flex-1 overflow-auto */}
+              {/* e.g. <DataTable className="flex-1" ... /> */}
+              {/* </Card> */}
+            </ScrollPanel>
           </SplitterPanel>
 
           <SplitterPanel
             size={70} // the rest
-            minSize={25}
-            className="flex flex-column"
+            minSize={15}
+            className="flex flex-column "
           >
-            <div className="h-full">
+            <ScrollPanel className="h-full">
               <DataTreeComponent flowId={id ? +id : -1} />
-            </div>
+            </ScrollPanel>
           </SplitterPanel>
         </Splitter>
       </div>

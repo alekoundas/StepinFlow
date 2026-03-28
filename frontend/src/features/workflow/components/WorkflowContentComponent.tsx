@@ -13,6 +13,8 @@ import {
 import LabelComponent from "@/shared/components/LabelComponent";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { useFlow } from "@/features/flow/hooks/use-flow";
+import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
+import { FlowDto } from "@/shared/models/database/flow/flow-dto";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -144,11 +146,13 @@ export function WorkflowContentComponent() {
 
     return (
       <div className="m-4 mr-3">
-        {/* <FlowFormComponent
+        <FlowFormComponent
           formMode={formMode} // currently always VIEW
-          defaultValues={loadedFlow as FlowDto}
+          defaultValues={new FlowDto(loadedFlow)}
+          onSubmit={() => {}}
+          onCancel={() => {}}
           // onSubmit will be wired when you add Flow update later
-        /> */}
+        />
       </div>
     );
   }
@@ -182,7 +186,7 @@ export function WorkflowContentComponent() {
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => {}}
-          defaultValues={flowStepDto}
+          defaultValues={new FlowStepDto(flowStepDto)}
         />
       );
       break;
