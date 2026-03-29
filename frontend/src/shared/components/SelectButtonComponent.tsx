@@ -1,9 +1,9 @@
 import type { SelectItem } from "primereact/selectitem";
-import IconComponent from "@/components/core/icon-component";
 import {
   SelectButton,
   type SelectButtonChangeEvent,
 } from "primereact/selectbutton";
+import IconComponent from "@/shared/components/IconComponent";
 
 export interface SelectButtonItem {
   label?: string;

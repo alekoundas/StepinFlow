@@ -3,10 +3,10 @@ import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import IconComponent from "../core/icon-component";
 import { classNames } from "primereact/utils";
 import { ScrollPanel } from "primereact/scrollpanel";
 import LabelComponent from "@/shared/components/LabelComponent";
+import IconComponent from "@/shared/components/IconComponent";
 
 export default function AppLayout() {
   const [isCollapsed, setCollapsed] = useState(false);

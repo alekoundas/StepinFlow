@@ -11,7 +11,7 @@ import "primeflex/primeflex.css";
 import "primereact/resources/themes/soho-dark/theme.css";
 
 // Pages
-import AppLayout from "@/components/layout/app-layout";
+import AppLayout from "@/app-layout";
 import HomePage from "@/pages/home/home-page";
 import { WorkflowPage } from "@/features/workflow/WorkflowPage";
 import { FlowListPage } from "@/features/flow/FlowListPage";

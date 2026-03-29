@@ -9,9 +9,9 @@ import {
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
-import IconComponent from "@/components/core/icon-component";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import IconComponent from "@/shared/components/IconComponent";
 
 interface Props<T> {
   flowId: number;
