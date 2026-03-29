@@ -22,31 +22,21 @@ export function useFlowStepMutations() {
 
   const createMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.create(dto),
-
-    onSuccess: (result, variables) => {
-      // Invalidate all flow-step caches so VIEW mode sees fresh data
-      queryClient.invalidateQueries({ queryKey: ["flowStep"] });
-
-      // The tree refresh trigger you already have still works
-      // (we’ll call it from the component)
-    },
-
-    onError: (err) => {
-      console.error("Failed to create FlowStep", err);
-      // TODO: add toast later
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+    // onError: (err) => {
+    //   console.error("Failed to create FlowStep", err);
+    // },
   });
 
-  // Update is not yet in your backend-api-service, so placeholder
   const updateMutation = useMutation({
-    mutationFn: ({ id, dto }: { id: number; dto: FlowStepDto }) => {
-      // TODO: add this method to backendApiService.FlowStep when you implement the backend endpoint
-      // For now it does nothing
-      console.warn("FlowStep.update not implemented yet in backend");
-      return Promise.resolve({ success: true });
-    },
+    mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.update(dto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
   });
 
-  return { createMutation, updateMutation };
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => backendApiService.FlowStep.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+  });
+
+  return { createMutation, updateMutation, deleteMutation };
 }

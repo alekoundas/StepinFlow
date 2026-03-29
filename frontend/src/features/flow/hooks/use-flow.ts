@@ -1,5 +1,6 @@
+import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const flowKeys = {
   detail: (id: number) => ["flow", "detail", id] as const,
@@ -12,4 +13,26 @@ export function useFlow(id: number | null) {
     enabled: !!id,
     // staleTime: 5 * 60 * 1000,         // override from global if needed
   });
+}
+
+// Mutation CRUD
+export function useFlowMutations() {
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: (dto: FlowDto) => backendApiService.Flow.create(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (dto: FlowDto) => backendApiService.Flow.update(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => backendApiService.Flow.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+  });
+
+  return { createMutation, updateMutation, deleteMutation };
 }

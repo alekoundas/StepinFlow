@@ -9,7 +9,7 @@ export class TreeNodeDto {
 
   // Custom props
   name: string = "";
-  flowStepType?: FlowStepTypeEnum; //= FlowStepTypeEnum.FAILURE;
+  flowStepType?: FlowStepTypeEnum;
   orderNumber: number = -1;
   isFlow: boolean = false;
   isNew: boolean = true;

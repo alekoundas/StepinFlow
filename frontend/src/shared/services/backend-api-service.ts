@@ -1,12 +1,8 @@
 import type { RequestMessage } from "../../../../electron/shared/types";
-import type { FlowSearchAreaCreateDto } from "@/shared/models/database/flow-search-area/flow-search-area-create-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area/flow-search-area-dto";
-import type { FlowStepImageCreateDto } from "@/shared/models/database/flow-step-image/flow-step-image-create-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image/flow-step-image-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import type { FlowCreateDto } from "@/shared/models/database/flow/flow-create-dto";
 import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
-import type { SubFlowCreateDto } from "@/shared/models/database/sub-flow/sub-flow-create-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow/sub-flow-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
@@ -26,8 +22,8 @@ export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
 
   Flow: {
-    create: (dto: FlowCreateDto) =>
-      call<{ newId: number; success: boolean }>("Flow.create", dto),
+    create: (dto: FlowDto) => call<{ newId: number }>("Flow.create", dto),
+    update: (dto: FlowDto) => call<{ newId: number }>("Flow.update", dto),
     delete: (id: number) => call<{ success: boolean }>("Flow.delete", id),
 
     get: (id: number) => call<FlowDto>("Flow.get", id),
@@ -38,8 +34,11 @@ export const backendApiService = {
 
   FlowStep: {
     create: (dto: FlowStepDto) =>
-      call<{ newId: number; success: boolean }>("FlowStep.create", dto),
+      call<{ newId: number }>("FlowStep.create", dto),
+    update: (dto: FlowStepDto) =>
+      call<{ newId: number }>("FlowStep.update", dto),
     delete: (id: number) => call<{ success: boolean }>("FlowStep.delete", id),
+
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
     getDataTable: (dto: LazyDto) =>
       call<LazyResponseDto<FlowStepDto>>("FlowStep.getLazy", dto),
@@ -48,20 +47,25 @@ export const backendApiService = {
   },
 
   FlowStepImage: {
-    create: (dto: FlowStepImageCreateDto) =>
+    create: (dto: FlowStepImageDto) =>
       call<{ newId: number; success: boolean }>("FlowStepImage.create", dto),
+    update: (dto: FlowStepImageDto) =>
+      call<{ newId: number }>("FlowStepImage.update", dto),
     get: (id: number) => call<FlowStepImageDto>("FlowStepImage.get", id),
   },
 
   FlowSearchArea: {
-    create: (dto: FlowSearchAreaCreateDto) =>
+    create: (dto: FlowSearchAreaDto) =>
       call<{ newId: number; success: boolean }>("FlowSearchArea.create", dto),
+    update: (dto: FlowSearchAreaDto) =>
+      call<{ newId: number }>("FlowSearchArea.update", dto),
     get: (id: number) => call<FlowSearchAreaDto>("FlowSearchArea.get", id),
   },
 
   SubFlow: {
-    create: (dto: SubFlowCreateDto) =>
+    create: (dto: SubFlowDto) =>
       call<{ newId: number; success: boolean }>("SubFlow.create", dto),
+    update: (dto: SubFlowDto) => call<{ newId: number }>("SubFlow.update", dto),
     get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
   },
 };

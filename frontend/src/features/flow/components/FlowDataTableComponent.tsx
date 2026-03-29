@@ -3,8 +3,8 @@ import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-col
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { useNavigate } from "react-router-dom";
 import { DataTableComponent } from "@/shared/components/data-table/DataTableComponent";
-import { useFlowStore } from "@/features/flow/store/flow-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import { useFlowMutations } from "@/features/flow/hooks/use-flow";
 
 type Props = {
   className?: string;
@@ -12,7 +12,7 @@ type Props = {
 
 export function FlowDataTableComponent({ className }: Props) {
   const navigate = useNavigate();
-  const { deleteFlow } = useFlowStore();
+  const { deleteMutation } = useFlowMutations();
 
   const columns: DataTableColumnDto<FlowDto>[] = [
     { field: "name", header: "Name", sortable: true, filter: true },
@@ -25,8 +25,9 @@ export function FlowDataTableComponent({ className }: Props) {
           id={row.id}
           onEdit={(id) => navigate(`/flows/${id}/edit`)}
           onClone={(id) => navigate(`/flows/${id}/clone`)}
-          onDelete={(id) => {
-            deleteFlow(id);
+          onDelete={async (id) => {
+            await deleteMutation.mutateAsync(id);
+
             // if (confirm("Delete this flow?")) backendApiService.Flow.delete(id); // or use store
           }}
         />

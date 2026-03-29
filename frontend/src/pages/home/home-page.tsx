@@ -20,18 +20,18 @@ export default function HomePage() {
   };
 
   const onGreet2 = async () => {
-    try {
-      const fakeDto = {
-        name: "Test Flow AAA",
-        orderNumber: 42,
-        flowSearchAreas: [],
-      };
-      const reply = await backendApiService.Flow.create(fakeDto);
-      console.log("Direct reply (if sync):", reply);
-      setReply(reply.newId.toString() ?? "skkatoules");
-    } catch (err) {
-      console.error("Invoke failed:", err);
-    }
+    // try {
+    //   const fakeDto = {
+    //     name: "Test Flow AAA",
+    //     orderNumber: 42,
+    //     flowSearchAreas: [],
+    //   };
+    //   const reply = await backendApiService.Flow.create(fakeDto);
+    //   console.log("Direct reply (if sync):", reply);
+    //   setReply(reply.newId.toString() ?? "skkatoules");
+    // } catch (err) {
+    //   console.error("Invoke failed:", err);
+    // }
   };
 
   return (
