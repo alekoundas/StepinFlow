@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 export const flowStepKeys = {
   detail: (id: number) => ["flowStep", "detail", id] as const,

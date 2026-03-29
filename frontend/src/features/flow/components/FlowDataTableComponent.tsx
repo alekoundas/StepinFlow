@@ -1,10 +1,10 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { useNavigate } from "react-router-dom";
 import { DataTableComponent } from "@/shared/components/data-table/DataTableComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useFlowMutations } from "@/features/flow/hooks/use-flow";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 type Props = {
   className?: string;

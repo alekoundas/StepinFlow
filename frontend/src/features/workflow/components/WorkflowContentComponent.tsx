@@ -3,7 +3,6 @@ import { type ReactNode } from "react";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
-import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import {
   useFlowStep,
@@ -14,6 +13,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { useFlow } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
+import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;

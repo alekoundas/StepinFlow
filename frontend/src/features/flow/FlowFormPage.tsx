@@ -1,10 +1,9 @@
-import { FlowDto } from "@/shared/models/database/flow/flow-dto";
-
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { Button } from "primereact/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
-import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
+import { useFlowMutations } from "@/features/flow/hooks/use-flow";
+import { FlowDto } from "@/shared/models/database/flow-dto";
 
 export function FlowFormPage() {
   const { id, formMode = FormMode.ADD } = useParams<{
@@ -12,7 +11,7 @@ export function FlowFormPage() {
     formMode: FormMode;
   }>();
   const navigate = useNavigate();
-  const { isLoading } = useFlow(id ? +id : -1);
+  // const { isLoading } = useFlow(id ? +id : -1);
   const { createMutation, updateMutation } = useFlowMutations();
 
   // const flow = id ? flows.find((f) => f.id === Number(id)) : null;

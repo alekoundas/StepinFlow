@@ -1,11 +1,11 @@
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import FlowStepWaitFormFieldsComponent from "@/features/flow-step/components/forms/FlowStepWaitFormFieldsComponent";
 import { FlowStepWaitSchema } from "@/features/flow-step/schema/base-flow-step-wait.zod";
-import { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "primereact/button";
 import { FormProvider, useForm } from "react-hook-form";
 import type z from "zod";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 interface Props {
   formMode: FormMode;

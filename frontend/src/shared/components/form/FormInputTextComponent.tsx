@@ -1,11 +1,10 @@
-import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
-
 import LabelComponent from "@/shared/components/LabelComponent";
 
 import { classNames } from "primereact/utils";
 import { useController } from "react-hook-form";
 import { InputText } from "primereact/inputtext";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 interface Props {
   fieldName: keyof FlowStepDto | keyof FlowDto;

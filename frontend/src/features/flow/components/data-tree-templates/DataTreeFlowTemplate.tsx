@@ -1,5 +1,5 @@
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
+import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {
   treeNode: TreeNodeDto;

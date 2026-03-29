@@ -32,7 +32,7 @@ export function DataGridComponent<T>({
   });
   // React Query – automatic caching per page/sort/filter
   // const { data, isLoading, error } = useFlows(lazyParams);
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: [...queryKey, lazyParams], // important: include lazyParams in key
     queryFn: () => queryFn(lazyParams),
   });

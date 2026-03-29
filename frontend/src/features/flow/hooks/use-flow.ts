@@ -1,4 +1,4 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

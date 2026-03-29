@@ -1,13 +1,13 @@
 import type { RequestMessage } from "../../../../electron/shared/types";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area/flow-search-area-dto";
-import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image/flow-step-image-dto";
-import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
-import type { SubFlowDto } from "@/shared/models/database/sub-flow/sub-flow-dto";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
-import type { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
 import type { ResultDto } from "@/shared/models/result-dto";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
+import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way

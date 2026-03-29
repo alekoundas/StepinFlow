@@ -1,5 +1,5 @@
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area/flow-search-area-dto";
-import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 export class FlowDto {
   id: number = -1;

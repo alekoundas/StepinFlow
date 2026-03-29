@@ -1,4 +1,3 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import type z from "zod";
 
 import { Button } from "primereact/button";
@@ -7,6 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowSchema } from "@/features/flow/schema/flow-schema.zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 interface Props {
   formMode: FormMode;

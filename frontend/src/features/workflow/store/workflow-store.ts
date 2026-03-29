@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { TreeNodeDto } from "@/shared/models/database/tree-node-dto";
 import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {
   selectedTreeNode: TreeNodeDto | undefined;

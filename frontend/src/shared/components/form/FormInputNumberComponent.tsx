@@ -1,6 +1,6 @@
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { FlowStepDto } from "@/shared/models/database/flow-step/flow-step-dto";
-import { FlowDto } from "@/shared/models/database/flow/flow-dto";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import {
   InputNumber,
   type InputNumberChangeEvent,

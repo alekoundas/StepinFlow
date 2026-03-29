@@ -1,9 +1,9 @@
-import type { FlowDto } from "@/shared/models/database/flow/flow-dto";
 import { DataGridComponent } from "@/shared/components/DataGridComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { Card } from "primereact/card";
 import { useNavigate } from "react-router-dom";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 type Props = {
   className?: string;
