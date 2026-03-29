@@ -34,7 +34,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   const getNewChild = useCallback(
     (flowId?: number, parentFlowStepId?: number): TreeNodeDto =>
       new TreeNodeDto({
-        key: "-1",
+        key: crypto.randomUUID().toString(),
         name: "New item",
         isNew: true,
         leaf: true,
