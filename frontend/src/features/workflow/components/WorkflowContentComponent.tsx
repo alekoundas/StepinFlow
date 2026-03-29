@@ -10,10 +10,11 @@ import {
 } from "@/features/flow-step/hooks/use-flow-step";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/FlowStepWaitFormComponent";
 import { useFlow } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
+import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -108,6 +109,25 @@ export function WorkflowContentComponent() {
                 flowStepType: "WAIT",
                 name: "Wait",
                 waitForMilliseconds: 50,
+              })
+            }
+          />
+        );
+        break;
+
+      case FlowStepTypeEnum.LOOP:
+        formElement = (
+          <FlowStepLoopFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                orderNumber: selectedTreeNode.orderNumber,
+                flowStepType: "LOOP",
+                name: "Loop",
               })
             }
           />

@@ -1,4 +1,3 @@
-// schemas/base-flow-step.schema.ts
 import { z } from "zod";
 
 export const FlowStepWaitSchema = z.object({

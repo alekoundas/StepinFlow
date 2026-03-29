@@ -1,11 +1,13 @@
 import type { FormMode } from "@/shared/enums/form-mode-enum";
-import FlowStepWaitFormFieldsComponent from "@/features/flow-step/components/forms/FlowStepWaitFormFieldsComponent";
-import { FlowStepWaitSchema } from "@/features/flow-step/schema/base-flow-step-wait.zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "primereact/button";
-import { FormProvider, useForm } from "react-hook-form";
 import type z from "zod";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, useForm } from "react-hook-form";
+
+import FlowStepWaitFormFieldsComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormFieldsComponent";
+import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterActionsComponent";
+import { FlowStepWaitSchema } from "@/features/flow-step/schema/flow-step-wait.zod";
 
 interface Props {
   formMode: FormMode;
@@ -40,21 +42,12 @@ export default function FlowStepWaitFormComponent({
       >
         <FlowStepWaitFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
-        <div className="flex justify-end gap-3 mt-8">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            onClick={onCancel}
-          />
-          <Button
-            type="submit"
-            label="Save"
-            icon="pi pi-check"
-            visible={formMode === "ADD" || formMode === "EDIT"}
-            disabled={!isValid && (formMode === "ADD" ? false : !isDirty)}
-            className="mt-3"
-          />
-        </div>
+        <FormFooterActionsComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onCancel={onCancel}
+        />
       </form>
     </FormProvider>
   );

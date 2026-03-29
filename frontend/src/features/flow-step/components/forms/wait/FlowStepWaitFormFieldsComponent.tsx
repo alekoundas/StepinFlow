@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
-import { useState } from "react";
 
 interface Props {
   isDisabled?: boolean;
