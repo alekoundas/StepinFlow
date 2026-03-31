@@ -64,7 +64,7 @@ export function FormInputNumberComponent({
           min={min}
           max={max}
           disabled={isDisabled}
-          required={isRequired}
+          // required={isRequired}
           className={classNames("w-full", { "p-invalid": invalid })}
         />
         <LabelComponent

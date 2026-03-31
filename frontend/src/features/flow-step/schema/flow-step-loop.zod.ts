@@ -18,7 +18,7 @@ export const FlowStepLoopSchema = z
       ctx.addIssue({
         code: "custom",
         message: "Either enable Infinite Loop or set Loop Count greater than 0",
-        path: ["isLoopInfinite"], // error appears near the checkbox
+        path: ["isLoopInfinite"],
       });
       ctx.addIssue({
         code: "custom",

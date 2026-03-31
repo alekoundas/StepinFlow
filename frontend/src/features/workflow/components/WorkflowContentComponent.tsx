@@ -210,6 +210,16 @@ export function WorkflowContentComponent() {
         />
       );
       break;
+        case FlowStepTypeEnum.LOOP:
+      formElement = (
+        <FlowStepLoopFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => {}}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      );
+      break;
     default:
       formElement = <LabelComponent text="Unsupported flow step type" />;
   }

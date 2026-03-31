@@ -15,12 +15,14 @@ export default function FlowStepLoopFormFieldsComponent({
   const { control, setValue } = useFormContext();
 
   // Watch the two fields that control each other
-  const isLoopInfinite = useWatch({ control, name: "isLoopInfinite" }) as
-    | boolean
-    | undefined;
-  const loopCount = useWatch({ control, name: "loopCount" }) as
-    | number
-    | undefined;
+  const isLoopInfinite: boolean | undefined = useWatch({
+    control,
+    name: "isLoopInfinite",
+  });
+  const loopCount: number | undefined = useWatch({
+    control,
+    name: "loopCount",
+  });
 
   const isInfiniteActive = isLoopInfinite === true;
   const isFiniteActive = (loopCount ?? 0) > 0;
@@ -65,12 +67,9 @@ export default function FlowStepLoopFormFieldsComponent({
         label="Loop Count"
         min={0}
         max={2147483647}
-        isRequired={false} // validation is handled by superRefine
+        isRequired={true}
         isDisabled={isDisabled || disableLoopCountInput}
         hintText={loopCountHint}
-        onChanged={(value) => {
-          // Optional: you can keep your hint logic here if needed
-        }}
       />
 
       <FormInputCheckboxComponent
