@@ -12,6 +12,7 @@ import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templ
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import IconComponent from "@/shared/components/IconComponent";
+import { BaseFlowStepDataTreeTemplate } from "@/features/flow-step/components/templates/data-tree/BaseFlowStepDataTreeTemplate";
 
 interface Props<T> {
   flowId: number;
@@ -188,6 +189,8 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
         case FlowStepTypeEnum.WAIT:
           template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
           break;
+        default:
+          template = <BaseFlowStepDataTreeTemplate treeNode={treeNodeDto} />;
       }
     }
 

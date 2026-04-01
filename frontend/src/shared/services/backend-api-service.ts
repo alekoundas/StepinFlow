@@ -22,7 +22,7 @@ export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
 
   Flow: {
-    create: (dto: FlowDto) => call<{ newId: number }>("Flow.create", dto),
+    create: (dto: FlowDto) => call<number>("Flow.create", dto),
     update: (dto: FlowDto) => call<{ newId: number }>("Flow.update", dto),
     delete: (id: number) => call<{ success: boolean }>("Flow.delete", id),
 
@@ -33,8 +33,7 @@ export const backendApiService = {
   },
 
   FlowStep: {
-    create: (dto: FlowStepDto) =>
-      call<{ newId: number }>("FlowStep.create", dto),
+    create: (dto: FlowStepDto) => call<number>("FlowStep.create", dto),
     update: (dto: FlowStepDto) =>
       call<{ newId: number }>("FlowStep.update", dto),
     delete: (id: number) => call<{ success: boolean }>("FlowStep.delete", id),
@@ -48,7 +47,7 @@ export const backendApiService = {
 
   FlowStepImage: {
     create: (dto: FlowStepImageDto) =>
-      call<{ newId: number; success: boolean }>("FlowStepImage.create", dto),
+      call<number>("FlowStepImage.create", dto),
     update: (dto: FlowStepImageDto) =>
       call<{ newId: number }>("FlowStepImage.update", dto),
     get: (id: number) => call<FlowStepImageDto>("FlowStepImage.get", id),
@@ -56,15 +55,14 @@ export const backendApiService = {
 
   FlowSearchArea: {
     create: (dto: FlowSearchAreaDto) =>
-      call<{ newId: number; success: boolean }>("FlowSearchArea.create", dto),
+      call<number>("FlowSearchArea.create", dto),
     update: (dto: FlowSearchAreaDto) =>
       call<{ newId: number }>("FlowSearchArea.update", dto),
     get: (id: number) => call<FlowSearchAreaDto>("FlowSearchArea.get", id),
   },
 
   SubFlow: {
-    create: (dto: SubFlowDto) =>
-      call<{ newId: number; success: boolean }>("SubFlow.create", dto),
+    create: (dto: SubFlowDto) => call<number>("SubFlow.create", dto),
     update: (dto: SubFlowDto) => call<{ newId: number }>("SubFlow.update", dto),
     get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
   },

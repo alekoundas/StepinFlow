@@ -39,7 +39,7 @@ export function WorkflowContentComponent() {
   const flowId = selectedTreeNode?.isFlow ? +selectedTreeNode.key : null;
   const { data: loadedFlow, isLoading: flowLoading } = useFlow(flowId);
 
-  // ── React Query for FlowStep (already had this) ──
+  // ── React Query for FlowStep ──
   const stepId =
     selectedTreeNode && !selectedTreeNode.isNew && !selectedTreeNode.isFlow
       ? +selectedTreeNode.key
@@ -56,14 +56,14 @@ export function WorkflowContentComponent() {
         setTreeRefreshTrigger({
           id: saveDto.parentFlowStepId,
           isFlow: false,
-          selectNodeIdAfterLoad: result.newId,
+          selectNodeIdAfterLoad: result,
         });
       }
       if (saveDto.flowId) {
         setTreeRefreshTrigger({
           id: saveDto.flowId,
           isFlow: true,
-          selectNodeIdAfterLoad: result.newId,
+          selectNodeIdAfterLoad: result,
         });
       }
 
@@ -83,7 +83,7 @@ export function WorkflowContentComponent() {
     );
   }
 
-  // 1. New step → type picker
+  // 1. New FlowStep → type picker
   if (selectedTreeNode.isNew && !selectedFlowStepTypeToAdd) {
     return (
       <div className="m-4 mr-3">
@@ -92,7 +92,7 @@ export function WorkflowContentComponent() {
     );
   }
 
-  // 2. New step + type chosen → ADD form
+  // 2. New FlowStep → ADD form
   if (selectedTreeNode.isNew && selectedFlowStepTypeToAdd) {
     let formElement: ReactNode;
     switch (selectedFlowStepTypeToAdd) {
@@ -198,7 +198,7 @@ export function WorkflowContentComponent() {
     );
   }
 
-  // 4. Existing FlowStep → step form
+  // 4. Existing FlowStep → VIEW
   if (stepLoading) {
     return (
       <div className="m-4 mr-3">
