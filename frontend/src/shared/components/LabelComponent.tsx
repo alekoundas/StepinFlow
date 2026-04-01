@@ -19,6 +19,7 @@ interface Props {
     | "6xl"
     | "7xl"
     | "8xl";
+  isRequired?: boolean;
 }
 
 export default function LabelComponent({
@@ -28,6 +29,7 @@ export default function LabelComponent({
   wrap = false,
   weight = "normal",
   size = "base",
+  isRequired = false,
 }: Props) {
   return (
     <>

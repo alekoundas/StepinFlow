@@ -15,6 +15,7 @@ import { FlowFormComponent } from "@/features/flow/components/form/FlowFormCompo
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
+import FlowStepCursorClickFormComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormComponent";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -133,6 +134,26 @@ export function WorkflowContentComponent() {
           />
         );
         break;
+
+      case FlowStepTypeEnum.CURSOR_CLICK:
+        formElement = (
+          <FlowStepCursorClickFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                orderNumber: selectedTreeNode.orderNumber,
+                flowStepType: "CURSOR_CLICK",
+                name: "Cursor Click",
+              })
+            }
+          />
+        );
+        break;
+
       default:
         formElement = (
           <LabelComponent
@@ -210,9 +231,20 @@ export function WorkflowContentComponent() {
         />
       );
       break;
-        case FlowStepTypeEnum.LOOP:
+    case FlowStepTypeEnum.LOOP:
       formElement = (
         <FlowStepLoopFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => {}}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      );
+      break;
+
+    case FlowStepTypeEnum.CURSOR_CLICK:
+      formElement = (
+        <FlowStepCursorClickFormComponent
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => {}}

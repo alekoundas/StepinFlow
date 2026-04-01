@@ -42,7 +42,7 @@ export function FormInputTextComponent({
           onBlur={onBlur}
           placeholder={placeholderText}
           disabled={isDisabled}
-          required={isRequired}
+          // required={isRequired}
           className={classNames("w-full", { "p-invalid": invalid })}
         />
         <LabelComponent

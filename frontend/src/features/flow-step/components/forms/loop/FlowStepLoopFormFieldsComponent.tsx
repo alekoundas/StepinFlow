@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
+import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 
 interface Props {
   isDisabled?: boolean;
