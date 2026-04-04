@@ -27,6 +27,7 @@ export function WorkflowContentComponent() {
   const {
     selectedTreeNode,
     selectedFlowStepTypeToAdd,
+    rootFlowId,
     setTreeRefreshTrigger,
     setSelectedFlowStepTypeToAdd,
   } = useWorkflowStore();
@@ -107,6 +108,7 @@ export function WorkflowContentComponent() {
                 flowId: selectedTreeNode.parentFlowId,
                 parentFlowStepId: selectedTreeNode.parentFlowStepId,
                 orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
                 flowStepType: "WAIT",
                 name: "Wait",
                 waitForMilliseconds: 50,
@@ -127,6 +129,7 @@ export function WorkflowContentComponent() {
                 flowId: selectedTreeNode.parentFlowId,
                 parentFlowStepId: selectedTreeNode.parentFlowStepId,
                 orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
                 flowStepType: "LOOP",
                 name: "Loop",
               })
@@ -146,6 +149,7 @@ export function WorkflowContentComponent() {
                 flowId: selectedTreeNode.parentFlowId,
                 parentFlowStepId: selectedTreeNode.parentFlowStepId,
                 orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
                 flowStepType: "CURSOR_CLICK",
                 name: "Cursor Click",
               })

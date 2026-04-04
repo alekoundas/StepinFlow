@@ -11,6 +11,7 @@ interface Props {
     isFlow: boolean;
     selectNodeIdAfterLoad?: number;
   } | null;
+  rootFlowId: number | undefined;
 
   // Actions
   setSelectedTreeNode: (dto: TreeNodeDto | undefined) => void;
@@ -23,6 +24,8 @@ interface Props {
       selectNodeIdAfterLoad?: number;
     } | null,
   ) => void;
+
+  setRootFlowId: (id: number | undefined) => void;
 }
 
 export const useWorkflowStore = create<Props>()(
@@ -30,6 +33,7 @@ export const useWorkflowStore = create<Props>()(
     selectedTreeNode: undefined,
     selectedFlowStepTypeToAdd: undefined,
     treeRefreshTrigger: undefined,
+    rootFlowId: undefined,
 
     setSelectedTreeNode: (dto: TreeNodeDto | undefined): void =>
       set({
@@ -43,5 +47,7 @@ export const useWorkflowStore = create<Props>()(
 
     setTreeRefreshTrigger: (trigger): void =>
       set({ treeRefreshTrigger: trigger }),
+
+    setRootFlowId: (id: number | undefined): void => set({ rootFlowId: id }),
   })),
 );

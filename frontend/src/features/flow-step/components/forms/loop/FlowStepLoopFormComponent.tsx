@@ -25,7 +25,7 @@ export default function FlowStepLoopFormComponent({
   const form = useForm<z.infer<typeof FlowStepLoopSchema>>({
     resolver: zodResolver(FlowStepLoopSchema),
     mode: "onChange",
-    defaultValues: defaultValues,
+    defaultValues: { ...defaultValues },
   });
 
   const {

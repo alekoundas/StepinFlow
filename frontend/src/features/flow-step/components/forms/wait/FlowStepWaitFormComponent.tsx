@@ -25,7 +25,7 @@ export default function FlowStepWaitFormComponent({
   const form = useForm<z.infer<typeof FlowStepWaitSchema>>({
     resolver: zodResolver(FlowStepWaitSchema),
     mode: "onChange",
-    defaultValues: defaultValues,
+    defaultValues: { ...defaultValues },
   });
 
   const {

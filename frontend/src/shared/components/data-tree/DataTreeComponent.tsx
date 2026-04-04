@@ -33,7 +33,11 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
   // ====================== HELPERS ======================
 
   const getNewChild = useCallback(
-    (flowId?: number, parentFlowStepId?: number): TreeNodeDto =>
+    (
+      orderNumber: number,
+      flowId?: number,
+      parentFlowStepId?: number,
+    ): TreeNodeDto =>
       new TreeNodeDto({
         key: crypto.randomUUID().toString(),
         name: "New item",
@@ -42,6 +46,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
 
         parentFlowId: flowId,
         parentFlowStepId: parentFlowStepId,
+        orderNumber: orderNumber,
       }),
     [],
   );
@@ -104,10 +109,21 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       try {
         let response =
           await backendApiService.FlowStep.getTreeNodes(parentNodeId);
+        const maxOrderNumber = response.reduce(
+          (max, node) => (node.orderNumber > max ? node.orderNumber : max),
+          0,
+        );
+        // add step + child at the end
         if (isParentNodeFlow) {
-          response = [...response, getNewChild(parentNodeId, undefined)]; // add + child at the end
+          response = [
+            ...response,
+            getNewChild(maxOrderNumber + 1, parentNodeId, undefined),
+          ];
         } else {
-          response = [...response, getNewChild(undefined, parentNodeId)]; // add + child at the end
+          response = [
+            ...response,
+            getNewChild(maxOrderNumber + 1, undefined, parentNodeId),
+          ];
         }
         setData((prev) =>
           updateTreeNodeChildren(prev, parentNodeId.toString(), response),

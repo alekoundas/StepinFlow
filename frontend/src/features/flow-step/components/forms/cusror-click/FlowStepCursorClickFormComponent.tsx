@@ -25,7 +25,7 @@ export default function FlowStepCursorClickFormComponent({
   const form = useForm<z.infer<typeof FlowStepCursorClickSchema>>({
     resolver: zodResolver(FlowStepCursorClickSchema),
     mode: "onChange",
-    defaultValues: defaultValues,
+    defaultValues: { ...defaultValues },
   });
 
   const {

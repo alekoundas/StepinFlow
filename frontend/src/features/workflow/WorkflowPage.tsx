@@ -4,14 +4,18 @@ import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeCompone
 import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
 export function WorkflowPage() {
   const { id } = useParams<{
-    id?: string;
+    id?: string; // Flow Id
   }>();
   // const navigate = useNavigate();
 
   // const handleNew = () => navigate("/flows/new");
+  const { setRootFlowId } = useWorkflowStore();
+  setRootFlowId(id ? +id : undefined);
+
   return (
     <div className="m-4 mr-3">
       {/* Title */}
