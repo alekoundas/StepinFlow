@@ -7,7 +7,8 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import FlowStepLoopFormFieldsComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormFieldsComponent";
 import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterActionsComponent";
-import { FlowStepLoopSchema } from "@/features/flow-step/schema/flow-step-loop.zod";
+import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
+import LabelComponent from "@/shared/components/LabelComponent";
 
 interface Props {
   formMode: FormMode;
@@ -26,6 +27,9 @@ export default function FlowStepLoopFormComponent({
     resolver: zodResolver(FlowStepLoopSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues },
+    criteriaMode: "all",
+    reValidateMode: "onChange",
+    context: { meta: { skipMutualValidation: true } },
   });
 
   const {
@@ -33,22 +37,33 @@ export default function FlowStepLoopFormComponent({
   } = form;
 
   return (
-    <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
-          onSubmit({ ...defaultValues, ...partialDto }),
-        )}
-        className="flex flex-column h-full"
-      >
-        <FlowStepLoopFormFieldsComponent isDisabled={formMode === "VIEW"} />
+    <div>
+      <LabelComponent
+        text="Loop Step Configuration"
+        size="lg"
+        weight="bold"
+      />
+      <LabelComponent
+        text="Available Flows"
+        size="xs"
+      />
+      <FormProvider {...form}>
+        <form
+          onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
+            onSubmit({ ...defaultValues, ...partialDto }),
+          )}
+          className="flex flex-column h-full"
+        >
+          <FlowStepLoopFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
-        <FormFooterActionsComponent
-          formMode={formMode}
-          isValid={isValid}
-          isDirty={isDirty}
-          onCancel={onCancel}
-        />
-      </form>
-    </FormProvider>
+          <FormFooterActionsComponent
+            formMode={formMode}
+            isValid={isValid}
+            isDirty={isDirty}
+            onCancel={onCancel}
+          />
+        </form>
+      </FormProvider>
+    </div>
   );
 }

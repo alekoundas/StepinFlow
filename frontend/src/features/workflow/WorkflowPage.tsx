@@ -5,6 +5,7 @@ import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { useEffect } from "react";
 
 export function WorkflowPage() {
   const { id } = useParams<{
@@ -14,10 +15,11 @@ export function WorkflowPage() {
 
   // const handleNew = () => navigate("/flows/new");
   const { setRootFlowId } = useWorkflowStore();
-  setRootFlowId(id ? +id : undefined);
-
+  useEffect(() => {
+    setRootFlowId(id ? +id : undefined);
+  }, []);
   return (
-    <div className="m-4 mr-3">
+    <div className="flex flex-column m-4 mr-3">
       {/* Title */}
       <div className="flex flex-wrap justify-content-between items-center">
         <LabelComponent
@@ -41,33 +43,28 @@ export function WorkflowPage() {
           <SplitterPanel
             size={30} // default size
             minSize={15} // can't shrink below 15%
-            className="flex flex-column"
+            style={{ overflow: "hidden" }}
+            className="flex flex-column m-3"
           >
             {/* <Card className="h-full"> */}
-            <ScrollPanel className="h-full">
-              <div className="flex flex-column gap-2 ">
-                <LabelComponent
-                  text="Available Flows"
-                  size="lg"
-                  weight="bold"
-                />
-                <LabelComponent
-                  text="Available Flows"
-                  size="xs"
-                />
-                <WorkflowContentComponent />
-              </div>
-
-              {/* If you have scrollable list/table inside → add flex-1 overflow-auto */}
-              {/* e.g. <DataTable className="flex-1" ... /> */}
-              {/* </Card> */}
+            {/* <ScrollPanel className="h-full"> */}
+            {/* <div className="flex flex-column gap-2 "> */}
+            <ScrollPanel style={{ width: "100%", height: "100%" }}>
+              <WorkflowContentComponent />
             </ScrollPanel>
+            {/* </div> */}
+
+            {/* If you have scrollable list/table inside → add flex-1 overflow-auto */}
+            {/* e.g. <DataTable className="flex-1" ... /> */}
+            {/* </Card> */}
+            {/* </ScrollPanel> */}
           </SplitterPanel>
 
           <SplitterPanel
             size={70} // the rest
             minSize={15}
             className="flex flex-column "
+            style={{ overflow: "hidden" }}
           >
             <ScrollPanel className="h-full">
               <DataTreeComponent flowId={id ? +id : -1} />

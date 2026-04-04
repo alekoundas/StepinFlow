@@ -30,4 +30,9 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {},
   },
+  define: {
+    "process.env": {}, // ← This is the fix
+    // or more specific if you prefer:
+    // 'process.env.REACT_APP_CSS_NONCE': JSON.stringify(''),
+  },
 });

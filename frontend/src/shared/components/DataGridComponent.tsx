@@ -49,11 +49,24 @@ export function DataGridComponent<T>({
 
   return (
     <div className="flex flex-column">
-      <div className="grid">
+      {/* <div className="grid"> */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+          gap: "0.75rem",
+        }}
+      >
         {response.data.map((x: T, index: number) => (
           <div
             key={index}
-            className="col-12 md:col-6 lg:col-4 xl:col-2"
+            // className="col-12 md:col-6 lg:col-4 xl:col-2"
+            className="m-3 border-round-xl surface-card cursor-pointer transition-all transition-duration-150"
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(66, 121, 208, 0.95)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
           >
             {itemTemplate(x)}
           </div>

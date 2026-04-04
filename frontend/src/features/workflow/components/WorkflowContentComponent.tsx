@@ -75,7 +75,7 @@ export function WorkflowContentComponent() {
   // ====================== RENDER ======================
   if (!selectedTreeNode) {
     return (
-      <div className="m-4 mr-3">
+      <div className=" ">
         <LabelComponent
           text="Select a node from the tree"
           size="lg"
@@ -87,7 +87,7 @@ export function WorkflowContentComponent() {
   // 1. New FlowStep → type picker
   if (selectedTreeNode.isNew && !selectedFlowStepTypeToAdd) {
     return (
-      <div className="m-4 mr-3">
+      <div className=" ">
         <FlowStepTypesDataGridComponent />
       </div>
     );
@@ -165,21 +165,21 @@ export function WorkflowContentComponent() {
           />
         );
     }
-    return <div className="m-4 mr-3">{formElement}</div>;
+    return <div className=" ">{formElement}</div>;
   }
 
   // 3. Flow node (root) → Flow form
   if (selectedTreeNode.isFlow) {
     if (flowLoading) {
       return (
-        <div className="m-4 mr-3">
+        <div className=" ">
           <LabelComponent text="Loading flow..." />
         </div>
       );
     }
     if (!loadedFlow) {
       return (
-        <div className="m-4 mr-3">
+        <div className=" ">
           <LabelComponent
             text="Failed to load flow"
             className="p-error"
@@ -191,7 +191,7 @@ export function WorkflowContentComponent() {
     console.log(loadedFlow);
     console.log(new FlowStepDto(loadedFlow));
     return (
-      <div className="m-4 mr-3">
+      <div className=" ">
         <FlowFormComponent
           formMode={formMode}
           defaultValues={loadedFlow}
@@ -205,14 +205,14 @@ export function WorkflowContentComponent() {
   // 4. Existing FlowStep → VIEW
   if (stepLoading) {
     return (
-      <div className="m-4 mr-3">
+      <div className=" ">
         <LabelComponent text="Loading flow step..." />
       </div>
     );
   }
   if (!loadedStep) {
     return (
-      <div className="m-4 mr-3">
+      <div className=" ">
         <LabelComponent
           text="Failed to load step"
           className="p-error"
@@ -260,5 +260,5 @@ export function WorkflowContentComponent() {
       formElement = <LabelComponent text="Unsupported flow step type" />;
   }
 
-  return <div className="m-4 mr-3">{formElement}</div>;
+  return <div className=" ">{formElement}</div>;
 }
