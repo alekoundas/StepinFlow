@@ -32,6 +32,7 @@ export default function AppLayout() {
             size="lg"
             weight="semibold"
             hidden={isCollapsed}
+            wrap={false}
             className={classNames(!isCollapsed && "mr-3")}
           />
         </Button>

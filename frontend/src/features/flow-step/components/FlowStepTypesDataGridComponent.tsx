@@ -183,12 +183,11 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
           size="sm"
         />
       </div>
-      <p
-        className="text-color-secondary m-0"
-        style={{ fontSize: "0.78rem", lineHeight: 1.4 }}
-      >
-        {item.description}
-      </p>
+      <LabelComponent
+        text={item.description}
+        size="sm"
+        color="error"
+      />
     </Card>
   );
 
