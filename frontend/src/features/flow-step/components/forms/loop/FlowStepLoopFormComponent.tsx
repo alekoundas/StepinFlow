@@ -44,8 +44,9 @@ export default function FlowStepLoopFormComponent({
         weight="bold"
       />
       <LabelComponent
-        text="Available Flows"
+        text="Repeat a set of child steps a specified number of times or until a condition is met."
         size="xs"
+        className="mt-1"
       />
       <FormProvider {...form}>
         <form
@@ -54,7 +55,10 @@ export default function FlowStepLoopFormComponent({
           )}
           className="flex flex-column h-full"
         >
-          <FlowStepLoopFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          <FlowStepLoopFormFieldsComponent
+            isDisabled={formMode === "VIEW"}
+            className="mt-5 ml-3 mr-4"
+          />
 
           <FormFooterActionsComponent
             formMode={formMode}

@@ -7,8 +7,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
 
 // Global CSS PrimeReact
 import "primeicons/primeicons.css";
-import "primeflex/primeflex.css";
 import "primereact/resources/themes/soho-dark/theme.css";
+import "primeflex/primeflex.css";
 
 // Pages
 import AppLayout from "@/app-layout";

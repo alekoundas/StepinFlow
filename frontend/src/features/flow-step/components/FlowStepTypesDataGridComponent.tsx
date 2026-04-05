@@ -187,6 +187,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         text={item.description}
         size="sm"
         color="error"
+        className="mt-5"
       />
     </Card>
   );

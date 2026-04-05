@@ -53,6 +53,7 @@ export function FormInputNumberComponent({
         <LabelComponent
           text={label}
           weight="bold"
+          isRequired={isRequired}
         />
         <InputNumber
           ref={ref}
@@ -72,13 +73,15 @@ export function FormInputNumberComponent({
           weight="bold"
           size="xs"
           hidden={hintText === undefined}
+          className="mt-1"
         />
         <LabelComponent
           text={error?.message ?? ""}
           weight="normal"
           size="sm"
           hidden={error?.message === undefined}
-          className="p-error mt-1 block"
+          color="error"
+          className="mt-1"
         />
       </div>
     </>

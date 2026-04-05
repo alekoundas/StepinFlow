@@ -153,7 +153,8 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
           weight="normal"
           size="sm"
           hidden={error?.message === undefined}
-          className="p-error mt-1 block"
+          color="error"
+          className="mt-1"
         />
       </div>
     </>

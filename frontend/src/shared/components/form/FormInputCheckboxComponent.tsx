@@ -46,6 +46,7 @@ export function FormInputCheckboxComponent({
         <LabelComponent
           text={label}
           weight="bold"
+          isRequired={isRequired}
         />
         <Checkbox
           ref={ref}
@@ -55,7 +56,7 @@ export function FormInputCheckboxComponent({
           onBlur={onBlur}
           placeholder={placeholderText}
           disabled={isDisabled}
-          required={isRequired}
+          // required={isRequired}
           className={classNames("w-full", { "p-invalid": invalid })}
         />
         <LabelComponent
@@ -69,7 +70,8 @@ export function FormInputCheckboxComponent({
           weight="normal"
           size="sm"
           hidden={error?.message === undefined}
-          className="p-error mt-1 block"
+          color="error"
+          className="mt-1"
         />
       </div>
     </>

@@ -36,7 +36,7 @@ export default function LabelComponent({
   const colorMap = {
     primary: "text-primary",
     secondary: "text-color-secondary",
-    error: "text-red-900",
+    error: "p-error",
     success: "text-color-success",
     warning: "text-color-warning",
     info: "text-color-info",
@@ -51,11 +51,10 @@ export default function LabelComponent({
             size && `text-${size}`,
             wrap ? "white-space-normal" : "white-space-nowrap",
             "m-0",
-            "text-cyan-500",
           )}
           hidden={hidden}
         >
-          {text} {isRequired && <span className="text-color-error">*</span>}
+          {text} {isRequired && <span className="p-error">*</span>}
         </p>
       </div>
     </>

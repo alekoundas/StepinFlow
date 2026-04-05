@@ -4,13 +4,16 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
+import { classNames } from "primereact/utils";
 
 interface Props {
   isDisabled?: boolean;
+  className?: string;
 }
 
 export default function FlowStepLoopFormFieldsComponent({
   isDisabled = false,
+  className,
 }: Props) {
   const { control, setValue } = useFormContext();
 
@@ -31,11 +34,13 @@ export default function FlowStepLoopFormFieldsComponent({
   useEffect(() => {
     if (isInfiniteActive && loopCount !== 0) {
       setValue("loopCount", 0, { shouldValidate: true });
+      // setValue("isLoopInfinite", isInfiniteActive, { shouldValidate: true });
     }
   }, [isInfiniteActive, loopCount, setValue]);
 
   useEffect(() => {
     if (isFiniteActive && isLoopInfinite) {
+      // setValue("loopCount", loopCount, { shouldValidate: true });
       setValue("isLoopInfinite", false, { shouldValidate: true });
     }
   }, [isFiniteActive, isLoopInfinite, setValue]);
@@ -55,30 +60,32 @@ export default function FlowStepLoopFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
+      <div className={classNames(className, "flex", "flex-column")}>
+        <FormInputTextComponent
+          fieldName="name"
+          label="Name"
+          isRequired={isDisabled ? false : true}
+          isDisabled={isDisabled}
+        />
 
-      <FormInputNumberComponent
-        fieldName="loopCount"
-        label="Loop Count"
-        min={0}
-        max={2147483647}
-        isRequired={true}
-        isDisabled={isDisabled || disableLoopCountInput}
-        hintText={loopCountHint}
-      />
+        <FormInputNumberComponent
+          fieldName="loopCount"
+          label="Loop Count"
+          min={0}
+          max={2147483647}
+          isRequired={isDisabled || disableLoopCountInput ? false : true}
+          isDisabled={isDisabled || disableLoopCountInput}
+          hintText={isDisabled ? undefined : loopCountHint}
+        />
 
-      <FormInputCheckboxComponent
-        fieldName="isLoopInfinite"
-        label="Infinite Loop"
-        isRequired={false}
-        isDisabled={isDisabled || disableInfiniteCheckbox}
-        hintText={infiniteHint}
-      />
+        <FormInputCheckboxComponent
+          fieldName="isLoopInfinite"
+          label="Infinite Loop"
+          isRequired={isDisabled || disableInfiniteCheckbox ? false : true}
+          isDisabled={isDisabled || disableInfiniteCheckbox}
+          hintText={isDisabled ? undefined : infiniteHint}
+        />
+      </div>
     </>
   );
 }
