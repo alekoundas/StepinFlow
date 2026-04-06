@@ -6,11 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import FlowStepLoopFormFieldsComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormFieldsComponent";
-import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterActionsComponent";
-import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
 import { useEffect } from "react";
 import { Button } from "primereact/button";
+import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 
 interface Props {
   formMode: FormMode;
@@ -82,7 +82,7 @@ export default function FlowStepLoopFormComponent({
             className="mt-5 ml-3 mr-4"
           />
 
-          <FormFooterActionsComponent
+          <FormFooterComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}

@@ -8,7 +8,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export function FormFooterActionsComponent({
+export function FormFooterComponent({
   formMode,
   isValid,
   isDirty,

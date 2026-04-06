@@ -5,7 +5,7 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterActionsComponent";
+import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import FlowStepCursorClickFormFieldsComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormFieldsComponent";
 import { FlowStepCursorClickSchema } from "@/features/flow-step/components/forms/cusror-click/flow-step-cursor-click.zod";
 import { Button } from "primereact/button";
@@ -70,7 +70,7 @@ export default function FlowStepCursorClickFormComponent({
             isDisabled={formMode === "VIEW"}
           />
 
-          <FormFooterActionsComponent
+          <FormFooterComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}

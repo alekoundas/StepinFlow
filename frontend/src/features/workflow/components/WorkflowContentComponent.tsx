@@ -17,6 +17,7 @@ import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wai
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
 import FlowStepCursorClickFormComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormComponent";
 import { set } from "zod";
+import FlowStepCursorDragFormComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormComponent";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -178,6 +179,27 @@ export function WorkflowContentComponent() {
         );
         break;
 
+      case FlowStepTypeEnum.CURSOR_DRAG:
+        formElement = (
+          <FlowStepCursorDragFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => {}}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "CURSOR_DRAG",
+                name: "Cursor Drag & Drop",
+              })
+            }
+          />
+        );
+        break;
+
       default:
         formElement = (
           <LabelComponent
@@ -279,6 +301,19 @@ export function WorkflowContentComponent() {
         />
       );
       break;
+
+    case FlowStepTypeEnum.CURSOR_DRAG:
+      formElement = (
+        <FlowStepCursorDragFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => {}}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      );
+      break;
+
     default:
       formElement = <LabelComponent text="Unsupported flow step type" />;
   }
