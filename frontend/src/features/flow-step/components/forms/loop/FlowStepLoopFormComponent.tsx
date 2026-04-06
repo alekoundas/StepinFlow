@@ -9,6 +9,7 @@ import FlowStepLoopFormFieldsComponent from "@/features/flow-step/components/for
 import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterActionsComponent";
 import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { useEffect } from "react";
 
 interface Props {
   formMode: FormMode;
@@ -26,15 +27,30 @@ export default function FlowStepLoopFormComponent({
   const form = useForm<z.infer<typeof FlowStepLoopSchema>>({
     resolver: zodResolver(FlowStepLoopSchema),
     mode: "onChange",
+    // mode: "onTouched", // ← don't validate until user touches a field
     defaultValues: { ...defaultValues },
-    criteriaMode: "all",
-    reValidateMode: "onChange",
-    context: { meta: { skipMutualValidation: true } },
+    // criteriaMode: "all",
+    // reValidateMode: "onChange",
+    // context: { meta: { skipMutualValidation: true } },
+    // Prevent immediate validation error on mount when both are "off"
+    // context: { meta: { skipMutualValidation: true } }, // only on first render
+    // criteriaMode: "all", // helps with multiple issues
+    criteriaMode: "all", // shows all errors, not just first
   });
 
   const {
     formState: { isValid, isDirty },
+    trigger,
   } = form;
+
+  // Force initial validation (both fields)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      trigger(["loopCount", "isLoopInfinite"]);
+    }, 0); // zero delay is enough after form mount
+
+    return () => clearTimeout(timer);
+  }, [trigger]);
 
   return (
     <div>

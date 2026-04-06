@@ -15,35 +15,36 @@ export default function FlowStepLoopFormFieldsComponent({
   isDisabled = false,
   className,
 }: Props) {
-  const { control, setValue } = useFormContext();
-
   // Watch the two fields that control each other
-  const isLoopInfinite: boolean | undefined = useWatch({
-    control,
-    name: "isLoopInfinite",
-  });
-  const loopCount: number | undefined = useWatch({
-    control,
-    name: "loopCount",
-  });
+  const { control, setValue, trigger, clearErrors } = useFormContext();
+
+  const isLoopInfinite = useWatch({ control, name: "isLoopInfinite" });
+  const loopCount = useWatch({ control, name: "loopCount" });
 
   const isInfiniteActive = isLoopInfinite === true;
   const isFiniteActive = (loopCount ?? 0) > 0;
 
-  // When user enables Infinite → clear loopCount and vice versa
+  // Main logic: enforce mutual exclusivity + force revalidation of both
   useEffect(() => {
     if (isInfiniteActive && loopCount !== 0) {
-      setValue("loopCount", 0, { shouldValidate: true });
-      // setValue("isLoopInfinite", isInfiniteActive, { shouldValidate: true });
+      setValue("loopCount", 0, { shouldValidate: false, shouldDirty: true });
     }
-  }, [isInfiniteActive, loopCount, setValue]);
 
-  useEffect(() => {
-    if (isFiniteActive && isLoopInfinite) {
-      // setValue("loopCount", loopCount, { shouldValidate: true });
-      setValue("isLoopInfinite", false, { shouldValidate: true });
+    if (isFiniteActive && isLoopInfinite === true) {
+      setValue("isLoopInfinite", false, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
     }
-  }, [isFiniteActive, isLoopInfinite, setValue]);
+
+    // Always re-validate BOTH fields after any change
+    trigger(["isLoopInfinite", "loopCount"]);
+
+    // Optional: if the state is now valid, aggressively clear old cross errors
+    if (isInfiniteActive || isFiniteActive) {
+      clearErrors(["isLoopInfinite", "loopCount"]);
+    }
+  }, [isLoopInfinite, loopCount, setValue, trigger, clearErrors]);
 
   // Disable logic
   const disableInfiniteCheckbox = isFiniteActive;
