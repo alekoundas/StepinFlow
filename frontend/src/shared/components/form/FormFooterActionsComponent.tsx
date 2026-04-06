@@ -19,6 +19,7 @@ export function FormFooterActionsComponent({
       <Button
         label="Cancel"
         severity="secondary"
+        visible={formMode === "ADD" || formMode === "EDIT"}
         onClick={onCancel}
       />
       <Button

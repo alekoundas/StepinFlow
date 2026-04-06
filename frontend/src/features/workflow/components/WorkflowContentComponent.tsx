@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
@@ -16,6 +16,7 @@ import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
 import FlowStepCursorClickFormComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormComponent";
+import { set } from "zod";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -32,9 +33,9 @@ export function WorkflowContentComponent() {
     setSelectedFlowStepTypeToAdd,
   } = useWorkflowStore();
 
-  const formMode: FormMode = selectedFlowStepTypeToAdd
-    ? FormMode.ADD
-    : FormMode.VIEW;
+  const [formMode, setFormMode] = useState<FormMode>(
+    selectedTreeNode?.isNew ? FormMode.ADD : FormMode.VIEW,
+  );
 
   // ── React Query for Flow (when root node is selected) ──
   const flowId = selectedTreeNode?.isFlow ? +selectedTreeNode.key : null;
@@ -46,8 +47,7 @@ export function WorkflowContentComponent() {
       ? +selectedTreeNode.key
       : null;
   const { data: loadedStep, isLoading: stepLoading } = useFlowStep(stepId);
-
-  const { createMutation } = useFlowStepMutations();
+  const { createMutation, updateMutation } = useFlowStepMutations();
 
   const handleSave = async (saveDto: FlowStepDto) => {
     if (formMode === FormMode.ADD) {
@@ -69,7 +69,24 @@ export function WorkflowContentComponent() {
       }
 
       setSelectedFlowStepTypeToAdd(undefined);
+    } else if (formMode === FormMode.EDIT) {
+      await updateMutation.mutateAsync(saveDto);
+
+      if (saveDto.parentFlowStepId) {
+        setTreeRefreshTrigger({
+          id: saveDto.parentFlowStepId,
+          isFlow: false,
+        });
+      }
+      if (saveDto.flowId) {
+        setTreeRefreshTrigger({
+          id: saveDto.flowId,
+          isFlow: true,
+        });
+      }
     }
+
+    setFormMode(FormMode.VIEW);
   };
 
   // ====================== RENDER ======================
@@ -124,6 +141,7 @@ export function WorkflowContentComponent() {
             formMode={formMode}
             onSubmit={handleSave}
             onCancel={() => {}}
+            onEdit={() => setFormMode(FormMode.EDIT)}
             defaultValues={
               new FlowStepDto({
                 flowId: selectedTreeNode.parentFlowId,
@@ -241,6 +259,7 @@ export function WorkflowContentComponent() {
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => {}}
+          onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
       );

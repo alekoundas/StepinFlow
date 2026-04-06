@@ -15,9 +15,9 @@ export default function FlowStepLoopFormFieldsComponent({
   isDisabled = false,
   className,
 }: Props) {
+  const { control, setValue, trigger } = useFormContext();
+  
   // Watch the two fields that control each other
-  const { control, setValue, trigger, clearErrors } = useFormContext();
-
   const isLoopInfinite = useWatch({ control, name: "isLoopInfinite" });
   const loopCount = useWatch({ control, name: "loopCount" });
 
@@ -41,10 +41,10 @@ export default function FlowStepLoopFormFieldsComponent({
     trigger(["isLoopInfinite", "loopCount"]);
 
     // Optional: if the state is now valid, aggressively clear old cross errors
-    if (isInfiniteActive || isFiniteActive) {
-      clearErrors(["isLoopInfinite", "loopCount"]);
-    }
-  }, [isLoopInfinite, loopCount, setValue, trigger, clearErrors]);
+    // if (isInfiniteActive || isFiniteActive) {
+    //   clearErrors(["isLoopInfinite", "loopCount"]);
+    // }
+  }, [isLoopInfinite, loopCount, setValue, trigger]);
 
   // Disable logic
   const disableInfiniteCheckbox = isFiniteActive;

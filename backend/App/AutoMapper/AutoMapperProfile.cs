@@ -11,24 +11,23 @@ namespace App.AutoMapper
         {
             // Flow
             CreateMap<Flow, FlowDto>();
-            CreateMap<FlowCreateDto, Flow>();
             CreateMap<FlowDto, Flow>();
 
             // FlowStep
             CreateMap<FlowStep, FlowStepDto>();
-            CreateMap<FlowStepCreateDto, FlowStep>();
+            CreateMap<FlowStepDto, FlowStep>();
 
             // FlowSearchArea
             CreateMap<FlowSearchArea, FlowSearchAreaDto>();
-            CreateMap<FlowSearchAreaCreateDto, FlowSearchArea>();
+            CreateMap<FlowSearchAreaDto, FlowSearchArea>();
 
             // FlowStepImage
             CreateMap<FlowStepImage, FlowStepImageDto>();
-            CreateMap<FlowStepImageCreateDto, FlowStepImage>();
+            CreateMap<FlowStepImageDto, FlowStepImage>();
 
             // SubFlow
             CreateMap<SubFlow, SubFlowDto>();
-            CreateMap<SubFlowCreateDto, SubFlow>();
+            CreateMap<SubFlowDto, SubFlow>();
 
         }
     }

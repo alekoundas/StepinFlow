@@ -10,12 +10,14 @@ import { FormFooterActionsComponent } from "@/shared/components/form/FormFooterA
 import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useEffect } from "react";
+import { Button } from "primereact/button";
 
 interface Props {
   formMode: FormMode;
   defaultValues: FlowStepDto;
   onSubmit: (formValues: FlowStepDto) => void;
   onCancel: () => void;
+  onEdit: () => void;
 }
 
 export default function FlowStepLoopFormComponent({
@@ -23,19 +25,13 @@ export default function FlowStepLoopFormComponent({
   defaultValues,
   onSubmit,
   onCancel,
+  onEdit,
 }: Props) {
   const form = useForm<z.infer<typeof FlowStepLoopSchema>>({
     resolver: zodResolver(FlowStepLoopSchema),
     mode: "onChange",
-    // mode: "onTouched", // ← don't validate until user touches a field
     defaultValues: { ...defaultValues },
-    // criteriaMode: "all",
-    // reValidateMode: "onChange",
-    // context: { meta: { skipMutualValidation: true } },
-    // Prevent immediate validation error on mount when both are "off"
-    // context: { meta: { skipMutualValidation: true } }, // only on first render
-    // criteriaMode: "all", // helps with multiple issues
-    criteriaMode: "all", // shows all errors, not just first
+    // criteriaMode: "all", // shows all errors, not just first
   });
 
   const {
@@ -54,16 +50,27 @@ export default function FlowStepLoopFormComponent({
 
   return (
     <div>
-      <LabelComponent
-        text="Loop Step Configuration"
-        size="lg"
-        weight="bold"
-      />
-      <LabelComponent
-        text="Repeat a set of child steps a specified number of times or until a condition is met."
-        size="xs"
-        className="mt-1"
-      />
+      <div className="flex justify-content-between">
+        <div>
+          <LabelComponent
+            text="Loop Step Configuration"
+            size="lg"
+            weight="bold"
+          />
+          <LabelComponent
+            text="Repeat a set of child steps a specified number of times or until a condition is met."
+            size="xs"
+            className="mt-1"
+          />
+        </div>
+        <Button
+          icon="pi pi-pencil"
+          label="Edit"
+          className="p-button-outlined p-button-secondary"
+          visible={formMode === "VIEW"}
+          onClick={onEdit}
+        />
+      </div>
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
