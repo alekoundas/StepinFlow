@@ -31,7 +31,6 @@ export default function FlowStepLoopFormComponent({
     resolver: zodResolver(FlowStepLoopSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues },
-    // criteriaMode: "all", // shows all errors, not just first
   });
 
   const {
@@ -43,7 +42,7 @@ export default function FlowStepLoopFormComponent({
   useEffect(() => {
     const timer = setTimeout(() => {
       trigger(["loopCount", "isLoopInfinite"]);
-    }, 0); // zero delay is enough after form mount
+    }, 0);
 
     return () => clearTimeout(timer);
   }, [trigger]);
@@ -58,7 +57,7 @@ export default function FlowStepLoopFormComponent({
             weight="bold"
           />
           <LabelComponent
-            text="Repeat a set of child steps a specified number of times or until a condition is met."
+            text="Repeat a set of child steps a specified number of times or for ever."
             size="xs"
             className="mt-1"
           />

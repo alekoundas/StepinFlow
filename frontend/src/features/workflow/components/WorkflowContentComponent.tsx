@@ -120,6 +120,7 @@ export function WorkflowContentComponent() {
             formMode={formMode}
             onSubmit={handleSave}
             onCancel={() => {}}
+            onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
                 flowId: selectedTreeNode.parentFlowId,
@@ -141,7 +142,7 @@ export function WorkflowContentComponent() {
             formMode={formMode}
             onSubmit={handleSave}
             onCancel={() => {}}
-            onEdit={() => setFormMode(FormMode.EDIT)}
+            onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
                 flowId: selectedTreeNode.parentFlowId,
@@ -162,6 +163,7 @@ export function WorkflowContentComponent() {
             formMode={formMode}
             onSubmit={handleSave}
             onCancel={() => {}}
+            onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
                 flowId: selectedTreeNode.parentFlowId,
@@ -249,6 +251,7 @@ export function WorkflowContentComponent() {
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => {}}
+          onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
       );
@@ -271,6 +274,7 @@ export function WorkflowContentComponent() {
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => {}}
+          onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
       );

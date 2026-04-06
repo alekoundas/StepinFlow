@@ -33,7 +33,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.LOOP,
       name: "Loop",
       description:
-        "Repeat a set of child steps a specified number of times or until a condition is met.",
+        "Repeat a set of child steps a specified number of times or for ever.",
       iconName: "refresh",
     },
     {
