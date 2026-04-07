@@ -14,7 +14,7 @@ interface Props<T extends DataTableValue> {
   emptyMessage?: string;
 }
 
-export function DataTableComponent<T extends DataTableValue>({
+export function LocalDataTableComponent<T extends DataTableValue>({
   value,
   columns,
   className,

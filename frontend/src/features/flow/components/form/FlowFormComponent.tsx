@@ -2,11 +2,12 @@ import type z from "zod";
 
 import { Button } from "primereact/button";
 import { FormMode } from "@/shared/enums/form-mode-enum";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowSchema } from "@/features/flow/schema/flow-schema.zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
+import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
 
 interface Props {
   formMode: FormMode;
@@ -31,6 +32,17 @@ export function FlowFormComponent({
     formState: { isValid, isDirty },
   } = form;
 
+  const {
+    fields: searchAreaFields,
+    append,
+    remove,
+    update,
+    move,
+  } = useFieldArray({
+    control: form.control,
+    name: "flowSearchAreas", // ← path to the nested array
+  });
+
   return (
     <FormProvider {...form}>
       <form
@@ -40,7 +52,14 @@ export function FlowFormComponent({
         className="flex flex-column h-full"
       >
         <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
+       <FlowSearchAreaDataTableComponent
+          fields={searchAreaFields}
+          append={append}
+          remove={remove}
+          update={update}
+          move={move}
+          isDisabled={formMode === "VIEW"}
+        />
         <div className="flex justify-end gap-3 mt-8">
           <Button
             label="Cancel"

@@ -5,23 +5,22 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { Button } from "primereact/button";
-import { FlowStepCursorDragSchema } from "@/features/flow-step/components/forms/cusror-drag/flow-step-cursor-drag.zod";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import LabelComponent from "@/shared/components/LabelComponent";
 import FlowStepCursorDragFormFieldsComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormFieldsComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { FlowSearchAreaZod } from "@/features/flow-search-area/components/forms/flow-search-area.zod";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import FlowSearchAreaFormFieldsComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormFieldsComponent";
 
 interface Props {
   formMode: FormMode;
-  defaultValues: FlowStepDto;
-  onSubmit: (formValues: FlowStepDto) => void;
+  defaultValues: FlowSearchAreaDto;
+  onSubmit: (formValues: FlowSearchAreaDto) => void;
   onCancel: () => void;
   onEdit: () => void;
 }
 
-export default function FlowSearchAreaForrmComponent({
+export default function FlowSearchAreaFormComponent({
   formMode,
   defaultValues,
   onSubmit,
@@ -54,9 +53,7 @@ export default function FlowSearchAreaForrmComponent({
           )}
           className="flex flex-column h-full"
         >
-          <FlowStepCursorDragFormFieldsComponent
-            isDisabled={formMode === "VIEW"}
-          />
+          <FlowSearchAreaFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
           <FormFooterComponent
             formMode={formMode}
