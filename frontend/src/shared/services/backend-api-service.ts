@@ -8,6 +8,8 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
+import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
+import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -65,6 +67,12 @@ export const backendApiService = {
     create: (dto: SubFlowDto) => call<number>("SubFlow.create", dto),
     update: (dto: SubFlowDto) => call<{ newId: number }>("SubFlow.update", dto),
     get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
+  },
+  Lookup: {
+    window: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.window", dto),
+    monitor: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.monitor", dto),
   },
 };
 

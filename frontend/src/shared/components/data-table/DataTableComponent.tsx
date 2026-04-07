@@ -91,7 +91,7 @@ export function DataTableComponent<T extends DataTableValue>({
 
       <DataTable
         value={response.data}
-        lazy
+        lazy = {true}
         paginator
         rows={lazyParams.rows}
         first={lazyParams.first}

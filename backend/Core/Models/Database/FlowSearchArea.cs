@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using Core.Enums;
+using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {
@@ -6,10 +7,16 @@ namespace Core.Models.Database
     {
         public string Name { get; set; } = string.Empty;
 
-        public int LocationLeft { get; set; }
-        public int LocationTop { get; set; }
-        public int LocationToRight { get; set; }
-        public int LocationToBottom { get; set; }
+        public FlowSearchAreaTypeEnum FlowSearchAreaType{ get; set; }
+
+        public string ApplicationName { get; set; } = string.Empty;
+        public string MonitorIndex { get; set; } = string.Empty;
+
+        // Custom search area
+        public int LocationX { get; set; }
+        public int LocationY { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
 
         // Flow
         public int FlowId { get; set; }
