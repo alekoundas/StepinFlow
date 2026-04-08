@@ -4,14 +4,12 @@ import path from "path";
 import log from "electron-log";
 import net from "net";
 import { fileURLToPath } from "url";
-import Stream from "stream";
-import { ProtobufService } from "./protobuf/protobuf.js";
 import { IPC_CHANNELS } from "./shared/channels.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export function IpcHandlerService() {
+export function BackendService() {
   // Production: Spawns the .NET process and sets up listeners for its output
   const spawnDotNetProcess = (
     browserWindow: BrowserWindow | null,
@@ -57,7 +55,7 @@ export function IpcHandlerService() {
 
     backendProcess?.on("close", (code) => {
       console.log(`[ELECTRON] process exited with code ${code}`);
-      browserWindow?.webContents.send("backend-disconnected");
+      browserWindow?.webContents.send(IPC_CHANNELS.BACKEND_DISCONNECTED);
     });
 
     // backendProcess.on("error", (err) => {
@@ -73,10 +71,10 @@ export function IpcHandlerService() {
   const connectToDotNetPipe = async (
     browserWindow: BrowserWindow | null,
     setClient: (client: net.Socket | null) => void,
-    pendingResponses: Map<string, (plain: any) => void>,
+    onConnected: (socket: net.Socket) => void,
   ): Promise<net.Socket> => {
     const pipeName = "\\\\.\\pipe\\stepinflow-backend-pipe";
-    const MAX_ATTEMPTS = 50; // ~15 seconds max for initial connect
+    const MAX_ATTEMPTS = 100;
     const RETRY_DELAY_MS = 300;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -87,8 +85,10 @@ export function IpcHandlerService() {
         );
         setClient(client);
 
-        await handleRecivedData(browserWindow, client, pendingResponses);
-        setupReconnect(client, browserWindow, setClient, pendingResponses);
+
+        setClient(client);
+        onConnected(client);
+        setupReconnect(client, browserWindow, setClient, onConnected);
 
         return client;
       } catch (err: any) {
@@ -126,7 +126,7 @@ export function IpcHandlerService() {
     client: net.Socket,
     browserWindow: BrowserWindow | null,
     setClient: (client: net.Socket | null) => void,
-    pendingResponses: Map<string, (plain: any) => void>,
+    onConnected: (socket: net.Socket) => void,
   ) => {
     client.on("error", (err) => {
       log.error("[ELECTRON] Named pipe connection error:", err);
@@ -139,59 +139,12 @@ export function IpcHandlerService() {
       setClient(null);
 
       // background reconnect (auto-retry built-in)
-      connectToDotNetPipe(browserWindow, setClient, pendingResponses).catch(
+      connectToDotNetPipe(browserWindow, setClient, onConnected).catch(
         (err) => {
           log.error("[ELECTRON] Reconnect failed:", err);
           console.error("[ELECTRON] Reconnect failed:", err);
         },
       );
-    });
-  };
-
-  // ──────────────────────────────────────────────────────────────
-  // Updated to support pending invoke responses
-  // ──────────────────────────────────────────────────────────────
-  const handleRecivedData = async (
-    browserWindow: BrowserWindow | null,
-    backendPipe: net.Socket | Stream.Readable | null,
-    pendingResponses: Map<string, (plain: any) => void>,
-  ) => {
-    let buffer = Buffer.alloc(0);
-    const { IpcResponse } = await ProtobufService().getMessageTypes();
-
-    backendPipe?.on("data", (chunk: Buffer) => {
-      buffer = Buffer.concat([buffer, chunk]);
-
-      while (buffer.length >= 4) {
-        const len = buffer.readUInt32BE(0);
-        if (buffer.length < 4 + len) break;
-
-        const msgBuf = buffer.subarray(4, 4 + len);
-        buffer = buffer.subarray(4 + len);
-
-        try {
-          const response = IpcResponse.decode(msgBuf);
-          const plain = IpcResponse.toObject(response, {
-            longs: String,
-            enums: String,
-            bytes: Buffer,
-          });
-
-          // Always forward to renderer (onMessage still works)
-          browserWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
-          console.log("[Electron] Received response:", plain);
-
-          // If this is a response to an `invoke`, resolve the promise
-          const cid = plain.correlationId;
-          if (cid && pendingResponses.has(cid)) {
-            const resolver = pendingResponses.get(cid)!;
-            pendingResponses.delete(cid);
-            resolver(plain);
-          }
-        } catch (err) {
-          console.error("[Electron] Decode error:", err);
-        }
-      }
     });
   };
 

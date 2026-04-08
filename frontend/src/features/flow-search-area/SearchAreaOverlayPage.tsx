@@ -13,6 +13,7 @@
  *  6. Sends the result back via electronApi.searchArea.sendResult()
  */
 
+import { ElectronApiService } from "@/shared/services/electron-api-service";
 import React, {
   useCallback,
   useEffect,
@@ -54,7 +55,7 @@ export default function SearchAreaOverlayPage() {
 
   // ── Signal ready + subscribe to screenshot ─────────────────────────────────
   useLayoutEffect(() => {
-    const api = window.electronApi?.searchArea;
+    const api = ElectronApiService.searchArea;
     if (!api) return;
 
     api.signalReady();
@@ -109,7 +110,7 @@ export default function SearchAreaOverlayPage() {
   );
 
   const sendResult = useCallback((rect: AreaRect | null) => {
-    window.electronApi?.searchArea?.sendResult(rect);
+    ElectronApiService.searchArea?.sendResult(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {
@@ -129,9 +130,7 @@ export default function SearchAreaOverlayPage() {
 
   // ── Derived geometry ───────────────────────────────────────────────────────
   const selectionRect =
-    startPoint && currentPoint
-      ? normaliseRect(startPoint, currentPoint)
-      : null;
+    startPoint && currentPoint ? normaliseRect(startPoint, currentPoint) : null;
 
   const isDraggingOrConfirming = phase === "dragging" || phase === "confirming";
 
@@ -186,7 +185,10 @@ export default function SearchAreaOverlayPage() {
 
       {/* ── Selection border + handles ─────────────────────────────────────── */}
       {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
-        <SelectionBox rect={selectionRect} phase={phase} />
+        <SelectionBox
+          rect={selectionRect}
+          phase={phase}
+        />
       )}
 
       {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
@@ -205,9 +207,7 @@ export default function SearchAreaOverlayPage() {
       )}
 
       {/* ── Idle hint ─────────────────────────────────────────────────────── */}
-      {phase === "idle" && (
-        <HintBanner />
-      )}
+      {phase === "idle" && <HintBanner />}
     </div>
   );
 }
@@ -270,13 +270,7 @@ function DimMask({ rect }: { rect: AreaRect }) {
   );
 }
 
-function SelectionBox({
-  rect,
-  phase,
-}: {
-  rect: AreaRect;
-  phase: Phase;
-}) {
+function SelectionBox({ rect, phase }: { rect: AreaRect; phase: Phase }) {
   const handleSize = 8;
   const handleColor = "#60a5fa";
 
@@ -415,15 +409,24 @@ function ConfirmBar({
         {rect.width} × {rect.height}
       </span>
 
-      <button onClick={onRestart} style={btnStyle("ghost")}>
+      <button
+        onClick={onRestart}
+        style={btnStyle("ghost")}
+      >
         Redraw
       </button>
 
-      <button onClick={onConfirm} style={btnStyle("primary")}>
+      <button
+        onClick={onConfirm}
+        style={btnStyle("primary")}
+      >
         Confirm
       </button>
 
-      <button onClick={onCancel} style={btnStyle("ghost")}>
+      <button
+        onClick={onCancel}
+        style={btnStyle("ghost")}
+      >
         Cancel
       </button>
 

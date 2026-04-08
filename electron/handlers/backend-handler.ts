@@ -1,28 +1,39 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, ipcMain, Net } from "electron";
 import net from "net";
 import log from "electron-log";
-import { IpcHandlerService } from "../IpcHandlerService.js";
 import { ProtobufService } from "../protobuf/protobuf.js";
 import { IPC_CHANNELS } from "../shared/channels.js";
 import type { RequestMessage } from "../shared/types.js";
+import { BackendService } from "../backend-service.js";
 
-/**
- * Registers the `send-to-backend` ipcMain handler.
- * Extracted from main.ts so main stays lean.
- *
- * @param getClient  Getter for the current pipe socket (may be null)
- * @param setClient  Setter so reconnect can update the reference
- * @param pendingResponses  Shared correlation map
- * @param mainWindow  For reconnect 
- */
+interface PendingResolver {
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
+  timeoutId: ReturnType<typeof setTimeout>;
+}
+
 export async function registerBackendHandler(
-  getClient: () => net.Socket | null,
-  setClient: (client: net.Socket | null) => void,
-  pendingResponses: Map<string, (plain: any) => void>,
   mainWindow: BrowserWindow | null,
+  isDev: boolean,
 ): Promise<void> {
-  const { IpcRequest } = await ProtobufService().getMessageTypes();
+  const { IpcRequest, IpcResponse } = await ProtobufService().getMessageTypes();
+  let backendClient: net.Socket | null = null;
 
+  const pending = new Map<string, PendingResolver>();
+  const getClient = () => backendClient;
+  const setClient = (socket: net.Socket | null) => (backendClient = socket);
+  const onConnected = (socket: net.Socket) => {
+    handleReceivedData(socket, mainWindow, pending, IpcResponse);
+  };
+
+  // ── Initial connection ────────────────────────────────────────────────────────
+  backendClient = await BackendService().connectToDotNetPipe(
+    mainWindow,
+    setClient,
+    onConnected,
+  );
+
+  // ========= Handle backend Send =============
   ipcMain.handle(IPC_CHANNELS.BACKEND_SEND, async (_, msg: RequestMessage) => {
     console.log("[BackendHandler] Sending to backend:", msg);
 
@@ -31,10 +42,10 @@ export async function registerBackendHandler(
     if (!client || !client.writable) {
       log.log("[BackendHandler] Pipe not connected — reconnecting...");
       try {
-        client = await IpcHandlerService().connectToDotNetPipe(
+        backendClient = await BackendService().connectToDotNetPipe(
           mainWindow,
           setClient,
-          pendingResponses,
+          onConnected,
         );
       } catch (reconnectErr) {
         log.error("[BackendHandler] Reconnect failed:", reconnectErr);
@@ -42,53 +53,91 @@ export async function registerBackendHandler(
       }
     }
 
-    const payloadBytes = Buffer.from(JSON.stringify(msg.payload));
     const correlationId = crypto.randomUUID();
+    const payloadBytes = Buffer.from(JSON.stringify(msg.payload));
+    const reqObj = { action: msg.action, payload: payloadBytes, correlationId };
 
-    const reqObj = {
-      action: msg.action,
-      payload: payloadBytes,
-      correlationId,
-    };
+    const verifyErr = IpcRequest.verify(reqObj);
+    if (verifyErr) throw new Error(verifyErr);
 
-    const err = IpcRequest.verify(reqObj);
-    if (err) throw new Error(err);
-
-    const message = IpcRequest.create(reqObj);
-    const buffer = IpcRequest.encode(message).finish();
-
+    const encoded = IpcRequest.encode(IpcRequest.create(reqObj)).finish();
     const prefix = Buffer.alloc(4);
-    prefix.writeUInt32BE(buffer.length, 0);
-    client.write(Buffer.concat([prefix, buffer]));
+    prefix.writeUInt32BE(encoded.length, 0);
+    getClient()!.write(Buffer.concat([prefix, encoded]));
 
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        if (pendingResponses.has(correlationId)) {
-          pendingResponses.delete(correlationId);
-          reject(
-            new Error(
-              `[BackendHandler] Timeout waiting for response to "${msg.action}"`,
-            ),
-          );
+        if (pending.has(correlationId)) {
+          pending.delete(correlationId);
+          reject(new Error(`[BackendHandler] Timeout for "${msg.action}"`));
         }
       }, 30_000);
 
-      pendingResponses.set(correlationId, (plain: any) => {
-        clearTimeout(timeoutId);
-        if (plain.error) {
-          reject(new Error(plain.error));
-          return;
-        }
-        let payload = plain.payload;
-        if (Buffer.isBuffer(payload)) {
-          try {
-            payload = JSON.parse(payload.toString("utf-8"));
-          } catch {
-            // keep raw Buffer
-          }
-        }
-        resolve(payload);
-      });
+      pending.set(correlationId, { resolve, reject, timeoutId });
     });
+  });
+}
+
+function handleReceivedData(
+  socket: net.Socket,
+  mainWindow: BrowserWindow | null,
+  pending: Map<string, PendingResolver>,
+  IpcResponse: any,
+): void {
+  let buffer = Buffer.alloc(0);
+
+  socket.on("data", (chunk: Buffer) => {
+    buffer = Buffer.concat([buffer, chunk]);
+
+    while (buffer.length >= 4) {
+      const len = buffer.readUInt32BE(0);
+      if (buffer.length < 4 + len) break;
+
+      const msgBuf = buffer.subarray(4, 4 + len);
+      buffer = buffer.subarray(4 + len);
+
+      try {
+        const response = IpcResponse.decode(msgBuf);
+        const plain = IpcResponse.toObject(response, {
+          longs: String,
+          enums: String,
+          bytes: Buffer,
+        });
+
+        console.log(
+          "[BackendHandler] Received:",
+          plain.action,
+          plain.correlationId,
+        );
+
+        // Push to renderer for unsolicited events (execution progress, etc.)
+        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
+
+        // Resolve the matching pending invoke
+        const resolver = pending.get(plain.correlationId);
+        if (resolver) {
+          clearTimeout(resolver.timeoutId);
+          pending.delete(plain.correlationId);
+
+          if (plain.error) {
+            resolver.reject(new Error(plain.error));
+            return;
+          }
+
+          let payload = plain.payload;
+          if (Buffer.isBuffer(payload)) {
+            try {
+              payload = JSON.parse(payload.toString("utf-8"));
+            } catch {
+              // keep raw Buffer if not JSON
+            }
+          }
+
+          resolver.resolve(payload);
+        }
+      } catch (err) {
+        console.error("[BackendHandler] Decode error:", err);
+      }
+    }
   });
 }

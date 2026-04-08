@@ -3,18 +3,10 @@ import { execFile } from "child_process";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
-import net from "net";
-import log from "electron-log";
-import { IpcHandlerService } from "./IpcHandlerService.js";
-import { ProtobufService } from "./protobuf/protobuf.js";
+
 import { registerBackendHandler } from "./handlers/backend-handler.js";
 import { registerSearchAreaHandler } from "./handlers/search-area-handler.js";
-
-// interface RequestMessage {
-//   action: string;
-//   payload: unknown; // TODO use a  type (intersection type?)
-//   correlationId?: string; // Optional ID to match requests with responses
-// }
+import { BackendService } from "./backend-service.js";
 
 const { autoUpdater } = pkg;
 
@@ -71,121 +63,19 @@ app.whenReady().then(async () => {
 
   createWindow();
 
-  let backendClient: net.Socket | null = null;
   let backendProcess: ReturnType<typeof execFile> | null = null;
-  const pendingResponses = new Map<string, (plain: any) => void>();
 
-  const getBackendClient = () => backendClient;
-  const setBackendClient = (client: net.Socket | null) => {
-    backendClient = client;
-  };
-
-  // const ENABLE_DEBUG = false;
-  const ENABLE_DEBUG = true;
-  if (ENABLE_DEBUG) {
-    backendClient = await IpcHandlerService().connectToDotNetPipe(
-      mainWindow,
-      setBackendClient,
-      pendingResponses,
-    );
-  } else {
-    backendProcess = IpcHandlerService().spawnDotNetProcess(mainWindow, isDev);
-    backendClient = await IpcHandlerService().connectToDotNetPipe(
-      mainWindow,
-      setBackendClient,
-      pendingResponses,
-    );
+  const ENABLE_DEBUG = true; // true = attach to already-running backend
+  if (!ENABLE_DEBUG) {
+    backendProcess = BackendService().spawnDotNetProcess(mainWindow, isDev);
   }
 
-  await registerBackendHandler(
-    getBackendClient,
-    setBackendClient,
-    pendingResponses,
-    mainWindow,
-  );
+  // ======== Register IPC handlers ==========
 
+  await registerBackendHandler(mainWindow, isDev);
   registerSearchAreaHandler(mainWindow, isDev);
 
-  // TODO REMOVE FROM HERE
-  // const { IpcRequest } = await ProtobufService().getMessageTypes();
-  // ipcMain.handle(IPC_CHANNELS.BACKEND_SEND, async (_, msg: RequestMessage) => {
-  //   console.log("[Electron]Sent to backend:", msg);
-
-  //   if (!backendClient || !backendClient.writable) {
-  //     log.log("[Electron] Backend pipe not connected, attempting reconnect...");
-  //     console.log(
-  //       "[Electron] Backend pipe not connected, attempting reconnect...",
-  //     );
-  //     try {
-  //       backendClient = await IpcHandlerService().connectToDotNetPipe(
-  //         mainWindow,
-  //         setBackendClient,
-  //         pendingResponses,
-  //       );
-  //     } catch (reconnectErr) {
-  //       log.error("[Electron] Reconnect failed:", reconnectErr);
-  //       throw new Error("[Electron] Backend pipe not available");
-  //     }
-  //   }
-
-  //   const payloadBytes =
-  //     // Buffer.isBuffer(msg.payload)
-  //     //   ? msg.payload
-  //     //   :
-  //     Buffer.from(JSON.stringify(msg.payload)); // fallback for small objects
-
-  //   const reqObj: RequestMessage = {
-  //     action: msg.action,
-  //     payload: payloadBytes,
-  //     correlationId: crypto.randomUUID(),
-  //   };
-
-  //   const err = IpcRequest.verify(reqObj);
-  //   if (err) throw Error(err);
-
-  //   const message = IpcRequest.create(reqObj);
-  //   const buffer = IpcRequest.encode(message).finish();
-
-  //   const prefix = Buffer.alloc(4);
-  //   prefix.writeUInt32BE(buffer.length, 0);
-
-  //   backendClient.write(Buffer.concat([prefix, buffer]));
-  //   return new Promise((resolve, reject) => {
-  //     const cid = reqObj.correlationId!;
-  //     const timeoutId = setTimeout(() => {
-  //       if (pendingResponses.has(cid)) {
-  //         pendingResponses.delete(cid);
-  //         reject(
-  //           new Error(
-  //             `Timeout waiting for backend response to "${msg.action}"`,
-  //           ),
-  //         );
-  //       }
-  //     }, 30000);
-
-  //     pendingResponses.set(cid, (plain: any) => {
-  //       clearTimeout(timeoutId);
-  //       if (plain.error) {
-  //         reject(new Error(plain.error));
-  //         return;
-  //       }
-
-  //       // Auto-parse JSON payload (matches your frontend convention)
-  //       let payload = plain.payload;
-  //       if (Buffer.isBuffer(payload)) {
-  //         try {
-  //           payload = JSON.parse(payload.toString("utf-8"));
-  //         } catch {
-  //           // keep raw Buffer if not JSON
-  //         }
-  //       }
-  //       resolve(payload);
-  //     });
-  //   });
-  // });
-
   app.on("before-quit", () => {
-    backendClient?.destroy();
     backendProcess?.kill();
   });
 
