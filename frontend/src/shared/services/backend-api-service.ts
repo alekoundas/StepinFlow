@@ -1,4 +1,7 @@
-import type { RequestMessage } from "../../../../electron/shared/types";
+import type {
+  AreaRect,
+  RequestMessage,
+} from "../../../../electron/shared/types";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { ResultDto } from "@/shared/models/result-dto";
@@ -13,9 +16,21 @@ import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-respons
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
-declare const backendApi: {
-  invoke: <T>(msg: any) => Promise<ResultDto<T>>;
-  onMessage: <T>(cb: (msg: T) => void) => () => void;
+declare const electronApi: {
+  backendApi: {
+    invoke: <T>(msg: any) => Promise<ResultDto<T>>;
+    onMessage: <T>(cb: (msg: T) => void) => () => void;
+  };
+  //  backendApi: {
+  //   invoke: <T = unknown>(msg: RequestMessage) => Promise<T>;
+  //   onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
+  // };
+  searchArea: {
+    capture: () => Promise<AreaRect | null>;
+    sendResult: (rect: AreaRect | null) => void;
+    onScreenshot: (callback: (dataUrl: string) => void) => () => void;
+    signalReady: () => void;
+  };
 };
 ///
 //
@@ -83,7 +98,7 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
   };
 
   try {
-    const resultDto = await backendApi.invoke<T>(msg);
+    const resultDto = await electronApi.backendApi.invoke<T>(msg);
     if (resultDto.data) {
       return resultDto.data;
     }
@@ -96,39 +111,5 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
 
 // Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
 export function setupPushListener(callback: (msg: any) => void): () => void {
-  return backendApi.onMessage(callback);
+  return electronApi.backendApi.onMessage(callback);
 }
-
-// Optional: zustand integration example
-// import { create } from "zustand";
-
-// type BackendStore = {
-//   logs: string[];
-//   status: string;
-//   addLog: (msg: string) => void;
-//   setStatus: (s: string) => void;
-// };
-
-// export const useBackendStore = create<BackendStore>((set) => ({
-//   logs: [],
-//   status: "Ready",
-//   addLog: (line) => set((s) => ({ logs: [...s.logs, line] })),
-//   setStatus: (s) => set({ status: s }),
-// }));
-
-// export function useBackendEvents() {
-//   const { addLog } = useBackendStore();
-
-//   useBackendListener((msg: any) => {
-//     console.log("Backend message:", msg);
-
-//     if (msg?.action === "d") {
-//       // your .NET response action
-//       addLog(JSON.stringify(msg.payload));
-//     } else if (msg?.event === "progress") {
-//       addLog(`Progress: ${msg.details}`);
-//     } else {
-//       addLog(JSON.stringify(msg));
-//     }
-//   }, []);
-// }

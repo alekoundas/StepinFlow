@@ -1,4 +1,12 @@
 export const IPC_CHANNELS = {
-  REQUEST: "ipc:request",
-  RESPONSE: "ipc:response",
+  // ========== Backend pipe channels =================
+  BACKEND_SEND: "BACKEND_SEND",
+  BACKEND_RECEIVE: "BACKEND_RECEIVE",
+  BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
+
+  // ========== Search-area overlay channels ==========
+  SEARCH_AREA_OPEN: "SEARCH_AREA_OPEN",
+  SEARCH_AREA_RESULT: "SEARCH_AREA_RESULT",
+  SEARCH_AREA_READY: "SEARCH_AREA_READY",
+  SEARCH_AREA_SCREENSHOT: "SEARCH_AREA_SCREENSHOT",
 } as const;

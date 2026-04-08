@@ -16,6 +16,7 @@ import HomePage from "@/pages/home/home-page";
 import { WorkflowPage } from "@/features/workflow/WorkflowPage";
 import { FlowListPage } from "@/features/flow/FlowListPage";
 import { FlowFormPage } from "@/features/flow/FlowFormPage";
+import SearchAreaOverlayPage from "@/features/flow-search-area/SearchAreaOverlayPage";
 
 const router = createHashRouter([
   {
@@ -57,6 +58,10 @@ const router = createHashRouter([
       {
         path: "/workflow/:id",
         element: <WorkflowPage />,
+      },
+      {
+        path: "/search-area-overlay",
+        element: <SearchAreaOverlayPage />,
       },
 
       // { path: "app", element: <App /> },

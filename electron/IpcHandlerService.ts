@@ -6,6 +6,7 @@ import net from "net";
 import { fileURLToPath } from "url";
 import Stream from "stream";
 import { ProtobufService } from "./protobuf/protobuf.js";
+import { IPC_CHANNELS } from "./shared/channels.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,8 +51,6 @@ export function IpcHandlerService() {
       },
     );
 
-    // await handleRecivedData(browserWindow, backendProcess.stdout);
-
     backendProcess.on("spawn", () => {
       console.log("[ELECTRON] process spawned successfully");
     });
@@ -69,7 +68,7 @@ export function IpcHandlerService() {
   };
 
   // ──────────────────────────────────────────────────────────────
-  // NEW: Robust connect with retry + auto-reconnect on close/error
+  // Robust connect with retry + auto-reconnect on close/error
   // ──────────────────────────────────────────────────────────────
   const connectToDotNetPipe = async (
     browserWindow: BrowserWindow | null,
@@ -179,7 +178,7 @@ export function IpcHandlerService() {
           });
 
           // Always forward to renderer (onMessage still works)
-          browserWindow?.webContents.send("recieve-from-backend", plain);
+          browserWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
           console.log("[Electron] Received response:", plain);
 
           // If this is a response to an `invoke`, resolve the promise

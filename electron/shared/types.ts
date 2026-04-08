@@ -11,13 +11,20 @@ export interface ResponseMessage<T> {
   error?: string;
 }
 
-export type KnownActions = "greet" | "test" | "load-flow" | "save-config";
-
-export interface RequestPayloads {
-  greet: { name: string };
-  test: Record<string, never>; // empty object
+export interface AreaRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
-export interface ResponsePayloads {
-  greet: { greeting: string };
-}
+// export type KnownActions = "greet" | "test" | "load-flow" | "save-config";
+
+// export interface RequestPayloads {
+//   greet: { name: string };
+//   test: Record<string, never>; // empty object
+// }
+
+// export interface ResponsePayloads {
+//   greet: { greeting: string };
+// }
