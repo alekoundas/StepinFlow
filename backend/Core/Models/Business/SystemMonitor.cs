@@ -1,4 +1,4 @@
-﻿namespace Core.Models.Dtos
+﻿namespace Core.Models.Business
 {
     public class SystemMonitor
     {

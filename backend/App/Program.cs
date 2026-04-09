@@ -2,6 +2,8 @@
 using App.Ipc;
 using Business.DataService.Services;
 using Business.Ipc.Handlers;
+using Business.Services.InputService;
+using Business.Services.ScreenshotService;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,12 @@ namespace App
             // DB context factory and Data service.
             builder.Services.AddCustomDbContextFactory();
             builder.Services.AddSingleton<IDataService, DataService>();
+
+
+            // Services
+            builder.Services.AddSingleton<IInputService, InputService>();
+            builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
+            builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
 
 
             // IPC

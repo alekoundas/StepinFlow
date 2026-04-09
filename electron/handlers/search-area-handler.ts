@@ -13,19 +13,6 @@ export interface AreaRect {
   height: number;
 }
 
-/**
- * Registers the `search-area:open` ipcMain handler.
- * Must be called once during app startup (from main.ts).
- *
- * Flow:
- *  1. Renderer invokes  `search-area:open`
- *  2. Main captures a screenshot with desktopCapturer
- *  3. Main spawns a fullscreen transparent overlay BrowserWindow
- *  4. Overlay signals `search-area:ready` once its DOM is loaded
- *  5. Main sends screenshot data to overlay via `search-area:screenshot`
- *  6. User drags → overlay sends `search-area:result` with rect or null
- *  7. Handler resolves the original invoke with the rect (or null)
- */
 export function registerSearchAreaHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
