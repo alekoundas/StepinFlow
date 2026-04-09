@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog } from "electron";
 import { execFile } from "child_process";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
@@ -6,6 +6,8 @@ import path from "path";
 
 import { registerBackendHandler } from "./handlers/backend-handler.js";
 import { registerSearchAreaHandler } from "./handlers/search-area-handler.js";
+import { registerImageEditorHandler } from "./handlers/image-editor-handler.js";
+
 import { BackendService } from "./backend-service.js";
 
 const { autoUpdater } = pkg;
@@ -74,6 +76,7 @@ app.whenReady().then(async () => {
 
   await registerBackendHandler(mainWindow, isDev);
   registerSearchAreaHandler(mainWindow, isDev);
+  registerImageEditorHandler(mainWindow, isDev);
 
   app.on("before-quit", () => {
     backendProcess?.kill();

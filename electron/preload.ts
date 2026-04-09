@@ -23,6 +23,10 @@ const IPC_CHANNELS = {
   SEARCH_AREA_RESULT: "SEARCH_AREA_RESULT",
   SEARCH_AREA_READY: "SEARCH_AREA_READY",
   SEARCH_AREA_SCREENSHOT: "SEARCH_AREA_SCREENSHOT",
+
+  IMAGE_EDITOR_OPEN: "IMAGE_EDITOR_OPEN",
+  IMAGE_EDITOR_RESULT: "IMAGE_EDITOR_RESULT",
+  IMAGE_EDITOR_READY: "IMAGE_EDITOR_READY",
 } as const;
 //  ===========================================
 
@@ -60,22 +64,34 @@ const api = {
       ipcRenderer.invoke(
         IPC_CHANNELS.SEARCH_AREA_OPEN,
       ) as Promise<AreaRect | null>,
+
+    sendResult: (rect: AreaRect | null): void => {
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RESULT, rect);
+    },
+
+    onScreenshot: (callback: (dataUrl: string) => void): (() => void) => {
+      const listener = (_: Electron.IpcRendererEvent, dataUrl: string) =>
+        callback(dataUrl);
+      ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_SCREENSHOT, listener);
+      return () =>
+        ipcRenderer.removeListener(
+          IPC_CHANNELS.SEARCH_AREA_SCREENSHOT,
+          listener,
+        );
+    },
+
+    signalReady: (): void => {
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_READY);
+    },
   },
 
-  sendResult: (rect: AreaRect | null): void => {
-    ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RESULT, rect);
-  },
-
-  onScreenshot: (callback: (dataUrl: string) => void): (() => void) => {
-    const listener = (_: Electron.IpcRendererEvent, dataUrl: string) =>
-      callback(dataUrl);
-    ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_SCREENSHOT, listener);
-    return () =>
-      ipcRenderer.removeListener(IPC_CHANNELS.SEARCH_AREA_SCREENSHOT, listener);
-  },
-
-  signalReady: (): void => {
-    ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_READY);
+  imageEditor: {
+    open: (initialDataUrl: string, stepId?: string): Promise<AreaRect> =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.IMAGE_EDITOR_OPEN,
+        initialDataUrl,
+        stepId,
+      ),
   },
 };
 
