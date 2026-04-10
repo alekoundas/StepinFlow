@@ -17,7 +17,7 @@ interface Props {
 export default function FlowSearchAreaFormFieldsComponent({
   isDisabled = false,
 }: Props) {
-  const { control, setValue, trigger } = useFormContext();
+  const { control } = useFormContext();
 
   // Watch the two fields that control each other
   const selectedType = useWatch({ control, name: "flowSearchAreaType" });
@@ -27,7 +27,7 @@ export default function FlowSearchAreaFormFieldsComponent({
   // }));
 
   const typeOptions = [
-    { label: "Custom Rectangle", value: "CUSTOM" as FlowSearchAreaTypeEnum },
+    { label: "Custom", value: "CUSTOM" as FlowSearchAreaTypeEnum },
     {
       label: "By Application/Window",
       value: "APPLICATION" as FlowSearchAreaTypeEnum,
@@ -79,12 +79,10 @@ export default function FlowSearchAreaFormFieldsComponent({
 
       {/* CUSTOM */}
       {selectedType === "CUSTOM" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mt-5">
           <Button
-            type="button"
             label={isCapturing ? "Selecting..." : "Select screen area"}
             icon="pi pi-crop"
-            iconPos="left"
             loading={isCapturing}
             disabled={isCapturing}
             onClick={handleClick}
@@ -93,60 +91,62 @@ export default function FlowSearchAreaFormFieldsComponent({
             tooltipOptions={{ position: "top" }}
           />
 
-          <div className="field col-6">
-            <FormInputNumberComponent
-              fieldName="locationX"
-              label="Location X"
-              // min={0}
-              // max={2147483647}
-              isRequired={isDisabled}
-              isDisabled={isDisabled}
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="field col-6">
+              <FormInputNumberComponent
+                fieldName="locationX"
+                label="Location X"
+                // min={0}
+                // max={2147483647}
+                isRequired={true}
+                isDisabled={isDisabled}
+              />
+            </div>
 
-          <div className="field col-6">
-            <FormInputNumberComponent
-              fieldName="locationY"
-              label="Location Y"
-              // min={0}
-              // max={2147483647}
-              isRequired={isDisabled}
-              isDisabled={isDisabled}
-            />
-          </div>
+            <div className="field col-6">
+              <FormInputNumberComponent
+                fieldName="locationY"
+                label="Location Y"
+                // min={0}
+                // max={2147483647}
+                isRequired={true}
+                isDisabled={isDisabled}
+              />
+            </div>
 
-          <div className="field col-6">
-            <FormInputNumberComponent
-              fieldName="width"
-              label="Width"
-              // min={0}
-              // max={2147483647}
-              isRequired={isDisabled}
-              isDisabled={isDisabled}
-            />
-          </div>
+            <div className="field col-6">
+              <FormInputNumberComponent
+                fieldName="width"
+                label="Width"
+                // min={0}
+                // max={2147483647}
+                isRequired={true}
+                isDisabled={isDisabled}
+              />
+            </div>
 
-          <div className="field col-6">
-            <FormInputNumberComponent
-              fieldName="height"
-              label="Height"
-              // min={0}
-              // max={2147483647}
-              isRequired={isDisabled}
-              isDisabled={isDisabled}
-            />
-          </div>
+            <div className="field col-6">
+              <FormInputNumberComponent
+                fieldName="height"
+                label="Height"
+                // min={0}
+                // max={2147483647}
+                isRequired={true}
+                isDisabled={isDisabled}
+              />
+            </div>
 
-          <div className="col-12">
-            <Button
-              type="button"
-              label="Capture from Screen"
-              icon="pi pi-camera"
-              severity="secondary"
-              onClick={() => {
-                /* Implement overlay capture via IPC */
-              }}
-            />
+            <div className="col-12">
+              <Button
+                type="button"
+                label="Capture from Screen"
+                icon="pi pi-camera"
+                severity="secondary"
+                onClick={() => {
+                  /* Implement overlay capture via IPC */
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

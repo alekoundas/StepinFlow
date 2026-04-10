@@ -87,6 +87,7 @@ export function LocalDataTableComponent<T extends DataTableValue>({
     <div className={className}>
       <DataTable
         value={paginatedData}
+        // dataKey="id"
         totalRecords={processedData.length}
         loading={false}
         lazy={false}

@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import FlowStepCursorDragFormFieldsComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormFieldsComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { FlowSearchAreaZod } from "@/features/flow-search-area/components/forms/flow-search-area.zod";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";

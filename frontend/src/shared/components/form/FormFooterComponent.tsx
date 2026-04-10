@@ -17,6 +17,7 @@ export function FormFooterComponent({
   return (
     <div className="flex justify-end gap-3 mt-8">
       <Button
+        type="button"
         label="Cancel"
         severity="secondary"
         visible={formMode === "ADD" || formMode === "EDIT"}

@@ -10,7 +10,7 @@ namespace Core.Models.Ipc
 
 
     // ============== COMMANDS ==============
-    public record CreateFlowCommand(FlowCreateDto dto) : IRequest<ResultDto<int>>;
+    public record CreateFlowCommand(FlowDto dto) : IRequest<ResultDto<int>>;
     public record UpdateFlowCommand(FlowDto dto) : IRequest<ResultDto<FlowDto>>;
     public record DeleteFlowCommand(int id) : IRequest<ResultDto<bool>>;
 

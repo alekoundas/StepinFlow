@@ -2,12 +2,18 @@ import type z from "zod";
 
 import { Button } from "primereact/button";
 import { FormMode } from "@/shared/enums/form-mode-enum";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import {
+  FormProvider,
+  useFieldArray,
+  useForm,
+  type FieldArrayWithId,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FlowSchema } from "@/features/flow/schema/flow-schema.zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
+import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 
 interface Props {
   formMode: FormMode;
@@ -25,39 +31,34 @@ export function FlowFormComponent({
   const form = useForm<z.infer<typeof FlowSchema>>({
     resolver: zodResolver(FlowSchema),
     mode: "onChange",
-    defaultValues: defaultValues,
+    defaultValues: { ...defaultValues },
   });
 
   const {
+    control,
     formState: { isValid, isDirty },
   } = form;
 
-  const {
-    fields: searchAreaFields,
-    append,
-    remove,
-    update,
-    move,
-  } = useFieldArray({
-    control: form.control,
-    name: "flowSearchAreas", // ← path to the nested array
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "flowSearchAreas",
   });
 
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit((partialDto: Partial<FlowDto>) =>
-          onSubmit({ ...defaultValues, ...partialDto }),
+        onSubmit={form.handleSubmit((data) =>
+          onSubmit({ ...defaultValues, ...data } as FlowDto),
         )}
         className="flex flex-column h-full"
       >
         <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-       <FlowSearchAreaDataTableComponent
-          fields={searchAreaFields}
+        <FlowSearchAreaDataTableComponent
+          fields={fields as FieldArrayWithId<FlowSearchAreaDto>[]}
           append={append}
           remove={remove}
           update={update}
-          move={move}
+          // move={move}
           isDisabled={formMode === "VIEW"}
         />
         <div className="flex justify-end gap-3 mt-8">
