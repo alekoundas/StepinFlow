@@ -14,19 +14,19 @@ export const FlowSearchAreaZod = z
   })
   .superRefine((data, ctx) => {
     if (data.flowSearchAreaType === "CUSTOM") {
-      if (
-        data.locationX === -1 ||
-        data.locationY === -1 ||
-        data.width === -1 ||
-        data.height === -1
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          message:
-            "All location and size parameters are required for custom search areas",
-          path: ["locationX"],
-        });
-      }
+      // if (
+      //   data.locationX === -1 ||
+      //   data.locationY === -1 ||
+      //   data.width === -1 ||
+      //   data.height === -1
+      // ) {
+      //   ctx.addIssue({
+      //     code: "custom",
+      //     message:
+      //       "All location and size parameters are required for custom search areas",
+      //     path: ["locationX"],
+      //   });
+      // }
     }
     if (data.flowSearchAreaType === "APPLICATION") {
       if (data.applicationName.length === 0) {

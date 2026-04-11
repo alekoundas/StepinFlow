@@ -12,16 +12,21 @@ import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-are
 import FlowSearchAreaFormFieldsComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormFieldsComponent";
 
 interface Props {
+  formId: string;
   formMode: FormMode;
   defaultValues: FlowSearchAreaDto;
+  isFormInDialog?: boolean;
+
   onSubmit: (formValues: FlowSearchAreaDto) => void;
   onCancel: () => void;
   onEdit: () => void;
 }
 
 export default function FlowSearchAreaFormComponent({
+  formId,
   formMode,
   defaultValues,
+  isFormInDialog = false,
   onSubmit,
   onCancel,
   onEdit,
@@ -47,6 +52,7 @@ export default function FlowSearchAreaFormComponent({
 
       <FormProvider {...form}>
         <form
+          id={formId}
           onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
             onSubmit({ ...defaultValues, ...partialDto }),
           )}
@@ -54,12 +60,14 @@ export default function FlowSearchAreaFormComponent({
         >
           <FlowSearchAreaFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
+          {isFormInDialog && (
+            <FormFooterComponent
+              formMode={formMode}
+              isValid={isValid}
+              isDirty={isDirty}
+              onCancel={onCancel}
+            />
+          )}
         </form>
       </FormProvider>
     </div>

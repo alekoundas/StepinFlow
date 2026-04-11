@@ -14,6 +14,7 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 
 interface Props {
   formMode: FormMode;
@@ -61,21 +62,13 @@ export function FlowFormComponent({
           // move={move}
           isDisabled={formMode === "VIEW"}
         />
-        <div className="flex justify-end gap-3 mt-8">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            onClick={onCancel}
-          />
-          <Button
-            type="submit"
-            label="Save"
-            icon="pi pi-check"
-            visible={formMode === "ADD" || formMode === "EDIT"}
-            disabled={!isValid && (formMode === "ADD" ? false : !isDirty)}
-            className="mt-3"
-          />
-        </div>
+        
+        <FormFooterComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onCancel={onCancel}
+        />
       </form>
     </FormProvider>
   );

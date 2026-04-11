@@ -16,6 +16,7 @@ import HomePage from "@/pages/home/home-page";
 import { WorkflowPage } from "@/features/workflow/WorkflowPage";
 import { FlowListPage } from "@/features/flow/FlowListPage";
 import { FlowFormPage } from "@/features/flow/FlowFormPage";
+import { DialogRootComponent } from "@/shared/components/modal-component/DialogRootComponent";
 import SearchAreaOverlayPage from "@/features/flow-search-area/SearchAreaOverlayPage";
 
 const router = createHashRouter([
@@ -97,6 +98,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <PrimeReactProvider>
         <RouterProvider router={router} />
+        <DialogRootComponent />
         <ReactQueryDevtools initialIsOpen={false} /> {/* only shows in dev */}
       </PrimeReactProvider>
     </QueryClientProvider>

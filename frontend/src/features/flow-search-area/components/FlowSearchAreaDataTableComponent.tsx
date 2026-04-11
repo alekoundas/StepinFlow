@@ -2,7 +2,6 @@ import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-col
 import { type FieldArrayWithId } from "react-hook-form";
 
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
 import { useState } from "react";
 
 import { LocalDataTableComponent } from "@/shared/components/data/LocalDataTableComponent";
@@ -11,6 +10,7 @@ import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto
 
 import FlowSearchAreaFormComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormComponent";
 import { Tag } from "primereact/tag";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 
 interface Props {
   fields: FieldArrayWithId<FlowSearchAreaDto>[];
@@ -29,25 +29,74 @@ export function FlowSearchAreaDataTableComponent({
   // move,
   isDisabled = false,
 }: Props) {
-  const [dialogVisible, setDialogVisible] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<FlowSearchAreaDto>(
     new FlowSearchAreaDto(),
   );
 
+  const { openForm, closeAll } = useDialogStore();
+
+  // const openAdd = () => {
+  //   setEditingIndex(null);
+  //   setEditingItem(new FlowSearchAreaDto());
+  //   // setDialogVisible(true);
+  //   openForm("Search Area", {
+  //     header: "Add Search Area",
+  //     children: (
+  //       <FlowSearchAreaFormComponent
+  //         defaultValues={editingItem}
+  //         formMode="ADD"
+  //         onCancel={() => closeAll()}
+  //         onEdit={() => closeAll()}
+  //         onSubmit={(data) => {
+  //           handleSave(data);
+  //         }}
+  //       />
+  //     ),
+  //   });
+  // };
+
   const openAdd = () => {
-    setEditingIndex(null);
-    setEditingItem(new FlowSearchAreaDto());
-    setDialogVisible(true);
+    openForm("search-area-form", {
+      headerText: "Add Search Area",
+      formId: "search-area-form",
+      children: (
+        <FlowSearchAreaFormComponent
+          defaultValues={new FlowSearchAreaDto()}
+          formId="search-area-form"
+          isFormInDialog={true}
+          formMode="ADD"
+          onCancel={() => closeAll()}
+          onEdit={() => closeAll()}
+          onSubmit={(data) => handleSave(data)}
+        />
+      ),
+    });
   };
 
-  const openEdit = (index: number, item: FlowSearchAreaDto) => {
-    setEditingIndex(index);
-    setEditingItem(item);
-    setDialogVisible(true);
-  };
+  // const openEdit = (index: number, item: FlowSearchAreaDto) => {
+  //   setEditingIndex(index);
+  //   setEditingItem(item);
+  //   // setDialogVisible(true);
+  //   openForm("search-area-form", {
+  //     headerText: "Add Search Area",
+  //     formId: "search-area-form",
+  //     children: (
+  //       <FlowSearchAreaFormComponent
+  //         defaultValues={new FlowSearchAreaDto()}
+  //         formId="search-area-form"
+  //         isFormInDialog={true}
+  //         formMode="EDIT"
+  //         onCancel={() => closeAll()}
+  //         onEdit={() => closeAll()}
+  //         onSubmit={(data) => handleSave(data)}
+  //       />
+  //     ),
+  //   });
+  // };
 
   const handleSave = (data: FlowSearchAreaDto) => {
+    closeAll();
     if (editingIndex !== null) {
       update(editingIndex, data);
     } else {
@@ -156,7 +205,7 @@ export function FlowSearchAreaDataTableComponent({
         initialData={editingItem}
         isEdit={editingIndex !== null}
       /> */}
-      <Dialog
+      {/* <Dialog
         header={editingIndex !== null ? "Edit Search Area" : "New Search Area"}
         visible={dialogVisible}
         onHide={() => setDialogVisible(false)}
@@ -170,7 +219,7 @@ export function FlowSearchAreaDataTableComponent({
           onEdit={() => setDialogVisible(false)}
           onSubmit={handleSave}
         />
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }

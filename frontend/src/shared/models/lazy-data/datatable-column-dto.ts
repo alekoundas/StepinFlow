@@ -51,6 +51,7 @@ import type { JSX } from "react";
 //   // onCellEditComplete?: (event: ColumnEvent) => void;
 // }
 
+
 export type DataTableColumnDto<T> = {
   field: keyof T | string;
   header: string;
