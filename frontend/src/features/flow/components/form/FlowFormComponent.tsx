@@ -40,9 +40,14 @@ export function FlowFormComponent({
     formState: { isValid, isDirty },
   } = form;
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray<
+    z.infer<typeof FlowSchema>,
+    "flowSearchAreas",
+    "fieldId"
+  >({
     control,
     name: "flowSearchAreas",
+    keyName: "fieldId",
   });
 
   return (
@@ -55,14 +60,13 @@ export function FlowFormComponent({
       >
         <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
         <FlowSearchAreaDataTableComponent
-          fields={fields as FieldArrayWithId<FlowSearchAreaDto>[]}
+          fields={fields}
           append={append}
           remove={remove}
           update={update}
-          // move={move}
           isDisabled={formMode === "VIEW"}
         />
-        
+
         <FormFooterComponent
           formMode={formMode}
           isValid={isValid}

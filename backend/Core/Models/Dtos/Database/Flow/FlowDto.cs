@@ -8,7 +8,7 @@ namespace Core.Models.Dtos
         public string Name { get; set; } = string.Empty;
         public int OrderNumber { get; set; }
 
-        public IEnumerable<FlowStepCreateDto> FlowSteps { get; set; } = new Collection<FlowStepCreateDto>();
-        public IEnumerable<FlowSearchAreaCreateDto> FlowSearchAreas { get; set; } = new Collection<FlowSearchAreaCreateDto>();
+        public IEnumerable<FlowStepDto> FlowSteps { get; set; } = new Collection<FlowStepDto>();
+        public IEnumerable<FlowSearchAreaDto> FlowSearchAreas { get; set; } = new Collection<FlowSearchAreaDto>();
     }
 }

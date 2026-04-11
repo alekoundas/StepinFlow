@@ -51,7 +51,6 @@ import type { JSX } from "react";
 //   // onCellEditComplete?: (event: ColumnEvent) => void;
 // }
 
-
 export type DataTableColumnDto<T> = {
   field: keyof T | string;
   header: string;
@@ -61,5 +60,9 @@ export type DataTableColumnDto<T> = {
   filterTemplate?: (
     options: ColumnFilterElementTemplateOptions,
   ) => JSX.Element | undefined;
-  body?: (row: T) => React.ReactNode;
+  // body?: (row: T) => React.ReactNode;
+  body?: (
+    row: T,
+    options?: { rowIndex: number; [key: string]: any },
+  ) => React.ReactNode;
 };

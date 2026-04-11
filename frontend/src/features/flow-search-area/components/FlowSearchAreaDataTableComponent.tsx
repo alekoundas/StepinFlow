@@ -11,9 +11,17 @@ import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto
 import FlowSearchAreaFormComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormComponent";
 import { Tag } from "primereact/tag";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
+import type { FlowSchema } from "@/features/flow/components/form/flow.zod";
+import type z from "zod";
 
 interface Props {
-  fields: FieldArrayWithId<FlowSearchAreaDto>[];
+  // fields: FieldArrayWithId<FlowSearchAreaDto>[];
+  // fields: FieldArrayWithId<any, "flowSearchAreas", "fieldId">[];
+  fields: FieldArrayWithId<
+    z.infer<typeof FlowSchema>,
+    "flowSearchAreas",
+    "fieldId"
+  >[];
   append: (item: FlowSearchAreaDto) => void;
   remove: (index: number) => void;
   update: (index: number, value: FlowSearchAreaDto) => void;
@@ -36,27 +44,9 @@ export function FlowSearchAreaDataTableComponent({
 
   const { openForm, closeAll } = useDialogStore();
 
-  // const openAdd = () => {
-  //   setEditingIndex(null);
-  //   setEditingItem(new FlowSearchAreaDto());
-  //   // setDialogVisible(true);
-  //   openForm("Search Area", {
-  //     header: "Add Search Area",
-  //     children: (
-  //       <FlowSearchAreaFormComponent
-  //         defaultValues={editingItem}
-  //         formMode="ADD"
-  //         onCancel={() => closeAll()}
-  //         onEdit={() => closeAll()}
-  //         onSubmit={(data) => {
-  //           handleSave(data);
-  //         }}
-  //       />
-  //     ),
-  //   });
-  // };
-
+  //  Add
   const openAdd = () => {
+    setEditingIndex(null);
     openForm("search-area-form", {
       headerText: "Add Search Area",
       formId: "search-area-form",
@@ -66,52 +56,54 @@ export function FlowSearchAreaDataTableComponent({
           formId="search-area-form"
           isFormInDialog={true}
           formMode="ADD"
-          onCancel={() => closeAll()}
           onEdit={() => closeAll()}
+          onCancel={() => closeAll()}
           onSubmit={(data) => handleSave(data)}
         />
       ),
     });
   };
 
-  // const openEdit = (index: number, item: FlowSearchAreaDto) => {
-  //   setEditingIndex(index);
-  //   setEditingItem(item);
-  //   // setDialogVisible(true);
-  //   openForm("search-area-form", {
-  //     headerText: "Add Search Area",
-  //     formId: "search-area-form",
-  //     children: (
-  //       <FlowSearchAreaFormComponent
-  //         defaultValues={new FlowSearchAreaDto()}
-  //         formId="search-area-form"
-  //         isFormInDialog={true}
-  //         formMode="EDIT"
-  //         onCancel={() => closeAll()}
-  //         onEdit={() => closeAll()}
-  //         onSubmit={(data) => handleSave(data)}
-  //       />
-  //     ),
-  //   });
-  // };
+  // Edit
+  const openEdit = (index: number) => {
+    setEditingIndex(index);
+    openForm("search-area-form", {
+      headerText: "Edit Search Area",
+      formId: "search-area-form",
+      children: (
+        <FlowSearchAreaFormComponent
+          defaultValues={fields[index] as unknown as FlowSearchAreaDto} // Fuck this double cast
+          formId="search-area-form"
+          isFormInDialog={true}
+          formMode="EDIT"
+          onEdit={() => closeAll()}
+          onCancel={() => closeAll()}
+          onSubmit={(data) => handleSave(data)}
+        />
+      ),
+    });
+  };
 
+  //  Save (add & edit)
   const handleSave = (data: FlowSearchAreaDto) => {
     closeAll();
     if (editingIndex !== null) {
       update(editingIndex, data);
+      setEditingIndex(null);
     } else {
       append(data);
     }
   };
 
+  // Delete by index
   const handleDelete = (index: number) => {
-    // Optional: confirm dialog
     if (confirm("Delete this search area?")) {
       remove(index);
     }
   };
 
-  const columns: DataTableColumnDto<FieldArrayWithId<FlowSearchAreaDto>>[] = [
+  //  Columns
+  const columns: DataTableColumnDto<FlowSearchAreaDto>[] = [
     { field: "name", header: "Name", sortable: true },
     {
       field: "flowSearchAreaType",
@@ -121,28 +113,28 @@ export function FlowSearchAreaDataTableComponent({
     {
       field: "details",
       header: "Details",
-      body: (row: FieldArrayWithId<FlowSearchAreaDto>) => {
-        // if (row.flowSearchAreaType === "CUSTOM") {
-        //   return `${row.locationX}, ${row.locationY} (${row.width}×${row.height})`;
-        // }
-        // if (row.flowSearchAreaType === "APPLICATION") {
-        //   return row.applicationName || "-";
-        // }
-        // if (row.flowSearchAreaType === "MONITOR") {
-        //   return `Monitor ${row.monitorIndex}`;
-        // }
+      body: (row: FlowSearchAreaDto) => {
+        if (row.flowSearchAreaType === "CUSTOM") {
+          return `${row.locationX}, ${row.locationY} (${row.width}×${row.height})`;
+        }
+        if (row.flowSearchAreaType === "APPLICATION") {
+          return row.applicationName || "-";
+        }
+        if (row.flowSearchAreaType === "MONITOR") {
+          return `Monitor ${row.monitorIndex}`;
+        }
         return "-";
       },
     },
     {
       field: "details2",
       header: "Details22",
-      // body: (row: FieldArrayWithId<FlowSearchAreaDto>) => typeBodyTemplate(row),
+      body: (row: FlowSearchAreaDto) => typeBodyTemplate(row),
     },
     {
       field: "actions",
       header: "Actions",
-      body: (row: FieldArrayWithId<FlowSearchAreaDto>) => (
+      body: (row: FlowSearchAreaDto) => (
         <ActionsMenuComponent
           id={row.id}
           // onEdit={() => openEdit(row.id, row)}
@@ -192,7 +184,7 @@ export function FlowSearchAreaDataTableComponent({
       </div>
 
       <LocalDataTableComponent
-        value={fields}
+        value={fields as unknown as FlowSearchAreaDto[]} // Also Fuck this double cast
         columns={columns}
         emptyMessage="No search areas defined yet."
       />
