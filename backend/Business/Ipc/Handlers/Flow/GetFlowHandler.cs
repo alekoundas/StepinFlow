@@ -23,7 +23,7 @@ namespace Business.Ipc.Handlers
         public async Task<ResultDto<FlowDto>> Handle(GetFlowQuery request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x=>x.Id == request.id);
+            Flow? flow = await dbContext.Flows.Include(x=>x.FlowSearchAreas).FirstOrDefaultAsync(x=>x.Id == request.id);
 
             if (flow == null)
             return ResultDto<FlowDto>.Failure("Entity doesnt exist in the Database!");

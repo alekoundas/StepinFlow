@@ -15,6 +15,8 @@ namespace App.Ipc
         {
             PropertyNameCaseInsensitive = true, // JS -> .Net
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // .Net -> JS
+            ReferenceHandler = ReferenceHandler.IgnoreCycles // Ignore circular objects
+
         };
 
         public IpcDispatcher(IMediator mediator)

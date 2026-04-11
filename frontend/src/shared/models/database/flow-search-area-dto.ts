@@ -3,7 +3,7 @@ import { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
 
 export class FlowSearchAreaDto {
-  id: number = -1;
+  id: number = 0;
   name: string = "";
 
   flowSearchAreaType: FlowSearchAreaTypeEnum = "CUSTOM";
@@ -18,7 +18,7 @@ export class FlowSearchAreaDto {
   height: number = -1;
 
   // Flow
-  flowId: number = -1;
+  flowId: number = 0;
   flow: FlowDto = new FlowDto();
 
   flowSteps: FlowStepDto[] = [];
