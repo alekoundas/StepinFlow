@@ -125,7 +125,7 @@ export function WorkflowContentComponent() {
           <FlowStepWaitFormComponent
             formMode={formMode}
             onSubmit={handleSave}
-            onCancel={() => {}}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
@@ -147,7 +147,7 @@ export function WorkflowContentComponent() {
           <FlowStepLoopFormComponent
             formMode={formMode}
             onSubmit={handleSave}
-            onCancel={() => {}}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
@@ -168,7 +168,7 @@ export function WorkflowContentComponent() {
           <FlowStepCursorClickFormComponent
             formMode={formMode}
             onSubmit={handleSave}
-            onCancel={() => {}}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
@@ -189,7 +189,7 @@ export function WorkflowContentComponent() {
           <FlowStepCursorDragFormComponent
             formMode={formMode}
             onSubmit={handleSave}
-            onCancel={() => {}}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
@@ -277,7 +277,7 @@ export function WorkflowContentComponent() {
         <FlowStepWaitFormComponent
           formMode={formMode}
           onSubmit={handleSave}
-          onCancel={() => {}}
+          onCancel={() => setFormMode(FormMode.VIEW)}
           onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
@@ -288,7 +288,7 @@ export function WorkflowContentComponent() {
         <FlowStepLoopFormComponent
           formMode={formMode}
           onSubmit={handleSave}
-          onCancel={() => {}}
+          onCancel={() => setFormMode(FormMode.VIEW)}
           onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
@@ -300,7 +300,7 @@ export function WorkflowContentComponent() {
         <FlowStepCursorClickFormComponent
           formMode={formMode}
           onSubmit={handleSave}
-          onCancel={() => {}}
+          onCancel={() => setFormMode(FormMode.VIEW)}
           onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
@@ -312,7 +312,7 @@ export function WorkflowContentComponent() {
         <FlowStepCursorDragFormComponent
           formMode={formMode}
           onSubmit={handleSave}
-          onCancel={() => {}}
+          onCancel={() => setFormMode(FormMode.VIEW)}
           onEdit={() => setFormMode(FormMode.EDIT)}
           defaultValues={new FlowStepDto(flowStepDto)}
         />
