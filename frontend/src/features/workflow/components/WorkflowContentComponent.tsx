@@ -10,13 +10,14 @@ import {
 } from "@/features/flow-step/hooks/use-flow-step";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { useFlow } from "@/features/flow/hooks/use-flow";
+import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
 import FlowStepCursorClickFormComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormComponent";
 import FlowStepCursorDragFormComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormComponent";
+import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 // interface Props {
 // treeNodeDto: TreeNodeDto;
@@ -53,11 +54,31 @@ export function WorkflowContentComponent() {
       ? +selectedTreeNode.key
       : null;
   const { data: loadedStep, isLoading: stepLoading } = useFlowStep(stepId);
-  const { createMutation, updateMutation } = useFlowStepMutations();
+  const { createFlowStepMutation, updateFlowStepMutation } =
+    useFlowStepMutations();
+  const { updateFlowMutation } = useFlowMutations();
 
+  const handleFlowSave = async (saveDto: FlowDto) => {
+    await updateFlowMutation.mutateAsync(saveDto);
+
+    // if (saveDto.parentFlowStepId) {
+    //   setTreeRefreshTrigger({
+    //     id: saveDto.parentFlowStepId,
+    //     isFlow: false,
+    //   });
+    // }
+    // if (saveDto.flowId) {
+    //   setTreeRefreshTrigger({
+    //     id: saveDto.flowId,
+    //     isFlow: true,
+    //   });
+    // }
+
+    setFormMode(FormMode.VIEW);
+  };
   const handleSave = async (saveDto: FlowStepDto) => {
     if (formMode === FormMode.ADD) {
-      const result = await createMutation.mutateAsync(saveDto);
+      const result = await createFlowStepMutation.mutateAsync(saveDto);
 
       if (saveDto.parentFlowStepId) {
         setTreeRefreshTrigger({
@@ -76,7 +97,7 @@ export function WorkflowContentComponent() {
 
       setSelectedFlowStepTypeToAdd(undefined);
     } else if (formMode === FormMode.EDIT) {
-      await updateMutation.mutateAsync(saveDto);
+      await updateFlowStepMutation.mutateAsync(saveDto);
 
       if (saveDto.parentFlowStepId) {
         setTreeRefreshTrigger({
@@ -235,14 +256,12 @@ export function WorkflowContentComponent() {
       );
     }
 
-    console.log(loadedFlow);
-    console.log(new FlowStepDto(loadedFlow));
     return (
       <div className=" ">
         <FlowFormComponent
           formMode={formMode}
           defaultValues={loadedFlow}
-          onSubmit={() => {}}
+          onSubmit={handleFlowSave}
           onCancel={() => {}}
           onEdit={() => setFormMode(FormMode.EDIT)}
         />

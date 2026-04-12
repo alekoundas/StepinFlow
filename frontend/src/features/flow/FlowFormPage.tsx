@@ -11,14 +11,14 @@ export function FlowFormPage() {
     formMode: FormMode;
   }>();
   const navigate = useNavigate();
-  const { createMutation, updateMutation } = useFlowMutations();
+  const { createFlowMutation, updateFlowMutation } = useFlowMutations();
   const flow = null;
 
   const handleSubmit = async (data: FlowDto) => {
     if (formMode === FormMode.ADD || formMode === FormMode.CLONE) {
-      await createMutation.mutateAsync(data);
+      await createFlowMutation.mutateAsync(data);
     } else if (id) {
-      await updateMutation.mutateAsync({ ...data, id: +id });
+      await updateFlowMutation.mutateAsync({ ...data, id: +id });
     }
     navigate("/flows");
   };

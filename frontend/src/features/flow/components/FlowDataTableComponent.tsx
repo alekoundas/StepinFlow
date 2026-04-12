@@ -12,7 +12,7 @@ type Props = {
 
 export function FlowDataTableComponent({ className }: Props) {
   const navigate = useNavigate();
-  const { deleteMutation } = useFlowMutations();
+  const { deleteFlowMutation } = useFlowMutations();
 
   const columns: DataTableColumnDto<FlowDto>[] = [
     { field: "name", header: "Name", sortable: true, filter: true },
@@ -26,7 +26,7 @@ export function FlowDataTableComponent({ className }: Props) {
           onEdit={(id) => navigate(`/flows/${id}/edit`)}
           onClone={(id) => navigate(`/flows/${id}/clone`)}
           onDelete={async (id) => {
-            await deleteMutation.mutateAsync(id);
+            await deleteFlowMutation.mutateAsync(id);
 
             // if (confirm("Delete this flow?")) backendApiService.Flow.delete(id); // or use store
           }}

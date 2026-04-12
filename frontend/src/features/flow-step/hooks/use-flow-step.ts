@@ -20,7 +20,7 @@ export function useFlowStep(id: number | null) {
 export function useFlowStepMutations() {
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
+  const createFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.create(dto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
     // onError: (err) => {
@@ -28,15 +28,19 @@ export function useFlowStepMutations() {
     // },
   });
 
-  const updateMutation = useMutation({
+  const updateFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.update(dto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
   });
 
-  const deleteMutation = useMutation({
+  const deleteFlowStepMutation = useMutation({
     mutationFn: (id: number) => backendApiService.FlowStep.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
   });
 
-  return { createMutation, updateMutation, deleteMutation };
+  return {
+    createFlowStepMutation,
+    updateFlowStepMutation,
+    deleteFlowStepMutation,
+  };
 }
