@@ -5,10 +5,8 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { Button } from "primereact/button";
 import { FlowStepCursorDragSchema } from "@/features/flow-step/components/forms/cusror-drag/flow-step-cursor-drag.zod";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import LabelComponent from "@/shared/components/LabelComponent";
 import FlowStepCursorDragFormFieldsComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormFieldsComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 

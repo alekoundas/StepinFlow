@@ -8,8 +8,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import FlowStepCursorClickFormFieldsComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormFieldsComponent";
 import { FlowStepCursorClickSchema } from "@/features/flow-step/components/forms/cusror-click/flow-step-cursor-click.zod";
-import { Button } from "primereact/button";
-import LabelComponent from "@/shared/components/LabelComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 
 interface Props {
@@ -38,7 +36,7 @@ export default function FlowStepCursorClickFormComponent({
   } = form;
 
   return (
-    <div>
+    <>
       <FormHeaderComponent
         title="Cursor Click Step Configuration"
         description="Simulate a left, right, or double mouse click at the specified screen coordinates."
@@ -48,8 +46,8 @@ export default function FlowStepCursorClickFormComponent({
 
       <FormProvider {...form}>
         <form
-          onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
-            onSubmit({ ...defaultValues, ...partialDto }),
+          onSubmit={form.handleSubmit((data) =>
+            onSubmit({ ...defaultValues, ...data }),
           )}
           className="flex flex-column h-full"
         >
@@ -65,6 +63,6 @@ export default function FlowStepCursorClickFormComponent({
           />
         </form>
       </FormProvider>
-    </div>
+    </>
   );
 }

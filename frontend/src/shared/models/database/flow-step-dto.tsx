@@ -12,7 +12,7 @@ import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-
 
 export class FlowStepDto {
   // Core fields
-  id: number = -1;
+  id: number = 0;
   name: string = "";
   flowStepType: FlowStepTypeEnum = FlowStepTypeEnum.FAILURE;
   orderNumber: number = -1;
@@ -54,7 +54,7 @@ export class FlowStepDto {
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;
 
   // Keep the root Flow or SubFlow id for easier and faster queries
-  rootId: number = -1;
+  rootId: number = 0;
 
   // Flow
   flowId?: number;

@@ -150,15 +150,20 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
 
     const { id, isFlow, selectNodeIdAfterLoad } = treeRefreshTrigger;
 
-    loadTreeChildren(id, isFlow).then((response) => {
-      if (selectNodeIdAfterLoad) {
-        const newSelectedNode = response?.find(
-          (x) => x.key === selectNodeIdAfterLoad.toString(),
-        );
-        setSelectedTreeNode(newSelectedNode);
-      }
-    });
-
+    if (id === -1) {
+      backendApiService.Flow.getTreeNodes(flowId).then((response) =>
+        setData(response),
+      );
+    } else {
+      loadTreeChildren(id, isFlow).then((response) => {
+        if (selectNodeIdAfterLoad) {
+          const newSelectedNode = response?.find(
+            (x) => x.key === selectNodeIdAfterLoad.toString(),
+          );
+          setSelectedTreeNode(newSelectedNode);
+        }
+      });
+    }
     setTreeRefreshTrigger(null);
   }, [treeRefreshTrigger, loadTreeChildren]); // loadTreeChildren is stable if you wrap it in useCallback
 

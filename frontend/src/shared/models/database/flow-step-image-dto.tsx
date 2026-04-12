@@ -2,7 +2,7 @@ import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-matc
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 export class FlowStepImageDto {
-  id: number = -1;
+  id: number = 0;
 
   templateMatchMode?: TemplateMatchModeEnum;
   templateImage?: string;

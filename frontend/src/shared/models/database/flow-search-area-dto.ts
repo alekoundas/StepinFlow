@@ -12,10 +12,10 @@ export class FlowSearchAreaDto {
   monitorIndex: string = "";
 
   // Custom search area
-  locationX: number = -1;
-  locationY: number = -1;
-  width: number = -1;
-  height: number = -1;
+  locationX: number = 0;
+  locationY: number = 0;
+  width: number = 0;
+  height: number = 0;
 
   // Flow
   flowId: number = 0;

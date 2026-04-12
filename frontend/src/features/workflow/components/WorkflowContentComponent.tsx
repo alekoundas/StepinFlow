@@ -61,18 +61,10 @@ export function WorkflowContentComponent() {
   const handleFlowSave = async (saveDto: FlowDto) => {
     await updateFlowMutation.mutateAsync(saveDto);
 
-    // if (saveDto.parentFlowStepId) {
-    //   setTreeRefreshTrigger({
-    //     id: saveDto.parentFlowStepId,
-    //     isFlow: false,
-    //   });
-    // }
-    // if (saveDto.flowId) {
-    //   setTreeRefreshTrigger({
-    //     id: saveDto.flowId,
-    //     isFlow: true,
-    //   });
-    // }
+    setTreeRefreshTrigger({
+      id: -1,
+      isFlow: true,
+    });
 
     setFormMode(FormMode.VIEW);
   };
@@ -262,7 +254,7 @@ export function WorkflowContentComponent() {
           formMode={formMode}
           defaultValues={loadedFlow}
           onSubmit={handleFlowSave}
-          onCancel={() => {}}
+          onCancel={() => setFormMode(FormMode.VIEW)}
           onEdit={() => setFormMode(FormMode.EDIT)}
         />
       </div>
