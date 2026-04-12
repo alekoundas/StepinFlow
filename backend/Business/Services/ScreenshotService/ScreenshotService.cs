@@ -41,7 +41,7 @@ namespace Business.Services.ScreenshotService
         {
 
             byte[] capture;
-            switch (area.FlowSearchAreaType)
+            switch (area.Type)
             {
                 case FlowSearchAreaTypeEnum.CUSTOM:
                     capture = Capture(new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height));
@@ -53,7 +53,7 @@ namespace Business.Services.ScreenshotService
                     capture = Capture(new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height));
                     break;
                 default:
-                    capture = new byte[0];
+                    capture = [];
                     break;
             }
             return capture;

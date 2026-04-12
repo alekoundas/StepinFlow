@@ -1,11 +1,11 @@
 import { useParams } from "react-router-dom";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useEffect } from "react";
+import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 
 export function WorkflowPage() {
   const { id } = useParams<{

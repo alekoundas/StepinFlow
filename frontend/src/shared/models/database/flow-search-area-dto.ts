@@ -5,11 +5,10 @@ import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-
 export class FlowSearchAreaDto {
   id: number = 0;
   name: string = "";
-
-  flowSearchAreaType: FlowSearchAreaTypeEnum = "CUSTOM";
+  type: FlowSearchAreaTypeEnum = "CUSTOM";
 
   applicationName: string = "";
-  monitorIndex: string = "";
+  monitorName: string = "";
 
   // Custom search area
   locationX: number = 0;

@@ -40,6 +40,7 @@ export function ActionsMenuComponent({ id, onEdit, onClone, onDelete }: Props) {
   return (
     <>
       <Button
+        type="button"
         icon="pi pi-ellipsis-v"
         text
         onClick={(e) => menuRef.current?.toggle(e)}

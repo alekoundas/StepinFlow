@@ -9,6 +9,7 @@ import { FormFooterComponent } from "@/shared/components/form/FormFooterComponen
 import FlowStepCursorClickFormFieldsComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormFieldsComponent";
 import { FlowStepCursorClickSchema } from "@/features/flow-step/components/forms/cusror-click/flow-step-cursor-click.zod";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { useEffect } from "react";
 
 interface Props {
   formMode: FormMode;
@@ -32,11 +33,21 @@ export default function FlowStepCursorClickFormComponent({
   });
 
   const {
-    formState: { isValid, isDirty },
+    formState: { isValid, isDirty, errors },
+    trigger,
   } = form;
+
+  // Force full validation on mount so that isValid + errors are in sync
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      trigger();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [trigger]);
 
   return (
     <>
+      {errors}
       <FormHeaderComponent
         title="Cursor Click Step Configuration"
         description="Simulate a left, right, or double mouse click at the specified screen coordinates."

@@ -103,16 +103,18 @@ export function LocalDataTableComponent<T extends DataTableValue>({
         className={className}
         emptyMessage={emptyMessage}
       >
-        {columns.map((col) => (
-          <Column
-            key={String(col.field)}
-            field={String(col.field)}
-            header={col.header}
-            sortable={col.sortable}
-            filter={col.filter}
-            body={col.body}
-          />
-        ))}
+        {columns
+          .filter((col) => !col.isHidden)
+          .map((col) => (
+            <Column
+              key={String(col.field)}
+              field={String(col.field)}
+              header={col.header}
+              sortable={col.sortable}
+              filter={col.filter}
+              body={col.body}
+            />
+          ))}
       </DataTable>
     </div>
   );

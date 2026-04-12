@@ -51,9 +51,10 @@ import type { JSX } from "react";
 //   // onCellEditComplete?: (event: ColumnEvent) => void;
 // }
 
-export type DataTableColumnDto<T> = {
+export interface DataTableColumnDto<T> {
   field: keyof T | string;
   header: string;
+  isHidden?: boolean;
   sortable?: boolean;
   filter?: boolean; // enables text filter (matchMode: "contains")
   filterPlaceholder?: string;

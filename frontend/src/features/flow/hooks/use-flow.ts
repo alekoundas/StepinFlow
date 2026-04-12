@@ -21,17 +21,20 @@ export function useFlowMutations() {
 
   const createFlowMutation = useMutation({
     mutationFn: (dto: FlowDto) => backendApiService.Flow.create(dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["flow", "flows"] }),
   });
 
   const updateFlowMutation = useMutation({
     mutationFn: (dto: FlowDto) => backendApiService.Flow.update(dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["flow", "flows"] }),
   });
 
   const deleteFlowMutation = useMutation({
     mutationFn: (id: number) => backendApiService.Flow.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["flow", "flows"] }),
   });
 
   return { createFlowMutation, updateFlowMutation, deleteFlowMutation };

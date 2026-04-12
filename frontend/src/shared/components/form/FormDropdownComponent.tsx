@@ -92,20 +92,20 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   };
 
   // Helper to get display value
-  const getOptionLabel = (item: T): string => {
-    if (!item) return "";
-    if (typeof optionLabel === "function") return optionLabel(item);
-    if (typeof optionLabel === "string" && typeof item === "object")
-      return (item as any)[optionLabel] ?? String(item);
-    return String(item);
-  };
+  // const getOptionLabel = (item: T): string => {
+  //   if (!item) return "";
+  //   if (typeof optionLabel === "function") return optionLabel(item);
+  //   if (typeof optionLabel === "string" && typeof item === "object")
+  //     return (item as any)[optionLabel] ?? String(item);
+  //   return String(item);
+  // };
 
-  const getOptionValue = (item: T) => {
-    if (typeof optionValue === "function") return optionValue(item);
-    if (typeof optionValue === "string" && typeof item === "object")
-      return (item as any)[optionValue];
-    return item;
-  };
+  // const getOptionValue = (item: T) => {
+  //   if (typeof optionValue === "function") return optionValue(item);
+  //   if (typeof optionValue === "string" && typeof item === "object")
+  //     return (item as any)[optionValue];
+  //   return item;
+  // };
 
   return (
     <>

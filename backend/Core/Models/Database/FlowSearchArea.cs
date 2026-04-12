@@ -6,11 +6,11 @@ namespace Core.Models.Database
     public class FlowSearchArea : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
+        public FlowSearchAreaTypeEnum Type{ get; set; }
 
-        public FlowSearchAreaTypeEnum FlowSearchAreaType{ get; set; }
 
         public string ApplicationName { get; set; } = string.Empty;
-        public string MonitorIndex { get; set; } = string.Empty;
+        public string MonitorName { get; set; } = string.Empty;
 
         // Custom search area
         public int LocationX { get; set; }
@@ -22,6 +22,6 @@ namespace Core.Models.Database
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;
 
-        public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
+        public IEnumerable<FlowStep> FlowSteps { get; set; } = [];
     }
 }

@@ -4,16 +4,16 @@ import { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-
 export const FlowSearchAreaZod = z
   .object({
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
-    flowSearchAreaType: z.enum(FlowSearchAreaTypeEnum),
+    type: z.enum(FlowSearchAreaTypeEnum),
     applicationName: z.string(),
-    monitorIndex: z.string(),
+    monitorName: z.string(),
     locationX: z.number(),
     locationY: z.number(),
     width: z.number(),
     height: z.number(),
   })
   .superRefine((data, ctx) => {
-    if (data.flowSearchAreaType === "CUSTOM") {
+    if (data.type === "CUSTOM") {
       // if (
       //   data.locationX === -1 ||
       //   data.locationY === -1 ||
@@ -28,7 +28,7 @@ export const FlowSearchAreaZod = z
       //   });
       // }
     }
-    if (data.flowSearchAreaType === "APPLICATION") {
+    if (data.type === "APPLICATION") {
       if (data.applicationName.length === 0) {
         ctx.addIssue({
           code: "custom",
@@ -37,12 +37,12 @@ export const FlowSearchAreaZod = z
         });
       }
     }
-    if (data.flowSearchAreaType === "MONITOR") {
-      if (data.monitorIndex.length === 0) {
+    if (data.type === "MONITOR") {
+      if (data.monitorName.length === 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Monitor Index is required",
-          path: ["monitorIndex"],
+          message: "Monitor Name is required",
+          path: ["monitorName"],
         });
       }
     }

@@ -9,6 +9,7 @@ import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { useEffect } from "react";
 
 interface Props {
   formMode: FormMode;
@@ -33,19 +34,29 @@ export function FlowFormComponent({
 
   const {
     control,
-    formState: { isValid, isDirty },
+    formState: { isValid, isDirty, errors },
+    trigger,
   } = form;
 
   const { fields, append, remove, update } = useFieldArray<
     z.infer<typeof FlowSchema>,
-    "flowSearchAreas",
-    "fieldId"
+    "flowSearchAreas"
   >({
     control,
     name: "flowSearchAreas",
-    keyName: "fieldId",
   });
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      trigger();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [trigger]);
+  useEffect(() => {
+    console.log("Form Errors:", errors);
+    console.log("Form isValid:", isValid);
+    console.log("Form  isDirty:", isDirty);
+  }, [isValid, isDirty, errors]);
   return (
     <>
       <FormHeaderComponent
@@ -68,6 +79,7 @@ export function FlowFormComponent({
             append={append}
             remove={remove}
             update={update}
+            formMode={formMode}
             isDisabled={formMode === "VIEW"}
           />
 

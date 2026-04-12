@@ -20,7 +20,7 @@ export default function FlowSearchAreaFormFieldsComponent({
   const { control } = useFormContext();
 
   // Watch the two fields that control each other
-  const selectedType = useWatch({ control, name: "flowSearchAreaType" });
+  const selectedType = useWatch({ control, name: "type" });
   // const cursorOptions = Object.values(CursorActionTypeEnum).map((value) => ({
   //   label: value.replace("_", " ").toLowerCase(),
   //   value,
@@ -65,7 +65,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       /> */}
 
       <Controller
-        name="flowSearchAreaType"
+        name="type"
         control={control}
         render={({ field }) => (
           <SelectButton
@@ -170,7 +170,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       {/* MONITOR */}
       {selectedType === "MONITOR" && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
-          fieldName="monitorIndex"
+          fieldName="monitorName"
           labelText="Select Item"
           mode="remote"
           queryKey={["lookup", "monitor"]}

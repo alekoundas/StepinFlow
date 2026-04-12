@@ -28,9 +28,16 @@ export function FormFooterComponent({
         label="Save"
         icon="pi pi-check"
         visible={formMode === "ADD" || formMode === "EDIT"}
-        disabled={
-          formMode === "VIEW" ||
-          (!isValid && (formMode === "ADD" ? false : !isDirty))
+        disabled={formMode === "VIEW" || !isValid || !isDirty}
+        onClick={() =>
+          console.log(
+            "Save clicked – formMode:",
+            formMode,
+            "isValid:",
+            isValid,
+            "isDirty:",
+            isDirty,
+          )
         }
       />
     </div>
