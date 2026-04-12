@@ -2,7 +2,6 @@ import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-col
 import { type FieldArrayWithId } from "react-hook-form";
 
 import { Button } from "primereact/button";
-import { useState } from "react";
 
 import { LocalDataTableComponent } from "@/shared/components/data/LocalDataTableComponent";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
