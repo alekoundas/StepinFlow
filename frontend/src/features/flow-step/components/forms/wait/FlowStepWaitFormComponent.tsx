@@ -10,6 +10,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepWaitSchema } from "@/features/flow-step/components/forms/wait/flow-step-wait.zod";
 import { Button } from "primereact/button";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
+import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 
 interface Props {
   formMode: FormMode;
@@ -38,27 +39,12 @@ export default function FlowStepWaitFormComponent({
 
   return (
     <div>
-      <div className="flex justify-content-between">
-        <div>
-          <LabelComponent
-            text="Wait Step Configuration"
-            size="lg"
-            weight="bold"
-          />
-          <LabelComponent
-            text="Pause execution for a specified duration before continuing to the next step."
-            size="xs"
-            className="mt-1"
-          />
-        </div>
-        <Button
-          icon="pi pi-pencil"
-          label="Edit"
-          className="p-button-outlined p-button-secondary"
-          visible={formMode === "VIEW"}
-          onClick={onEdit}
-        />
-      </div>
+      <FormHeaderComponent
+        title="Wait Step Configuration"
+        description="Pause execution for a specified duration before continuing to the next step."
+        formMode={formMode}
+        onEdit={onEdit}
+      />
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>

@@ -11,6 +11,7 @@ import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/f
 import { useEffect } from "react";
 import { Button } from "primereact/button";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
+import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 
 interface Props {
   formMode: FormMode;
@@ -49,27 +50,12 @@ export default function FlowStepLoopFormComponent({
 
   return (
     <div>
-      <div className="flex justify-content-between">
-        <div>
-          <LabelComponent
-            text="Loop Step Configuration"
-            size="lg"
-            weight="bold"
-          />
-          <LabelComponent
-            text="Repeat a set of child steps a specified number of times or for ever."
-            size="xs"
-            className="mt-1"
-          />
-        </div>
-        <Button
-          icon="pi pi-pencil"
-          label="Edit"
-          className="p-button-outlined p-button-secondary"
-          visible={formMode === "VIEW"}
-          onClick={onEdit}
-        />
-      </div>
+      <FormHeaderComponent
+        title="Loop Step Configuration"
+        description="Repeat a set of child steps a specified number of times or for ever."
+        formMode={formMode}
+        onEdit={onEdit}
+      />
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>

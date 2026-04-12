@@ -244,6 +244,7 @@ export function WorkflowContentComponent() {
           defaultValues={loadedFlow}
           onSubmit={() => {}}
           onCancel={() => {}}
+          onEdit={() => setFormMode(FormMode.EDIT)}
         />
       </div>
     );

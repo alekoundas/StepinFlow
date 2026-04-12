@@ -10,6 +10,7 @@ import FlowStepCursorClickFormFieldsComponent from "@/features/flow-step/compone
 import { FlowStepCursorClickSchema } from "@/features/flow-step/components/forms/cusror-click/flow-step-cursor-click.zod";
 import { Button } from "primereact/button";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 
 interface Props {
   formMode: FormMode;
@@ -38,27 +39,13 @@ export default function FlowStepCursorClickFormComponent({
 
   return (
     <div>
-      <div className="flex justify-content-between">
-        <div>
-          <LabelComponent
-            text="Cursor Click Step Configuration"
-            size="lg"
-            weight="bold"
-          />
-          <LabelComponent
-            text="Simulate a left, right, or double mouse click at the specified screen coordinates."
-            size="xs"
-            className="mt-1"
-          />
-        </div>
-        <Button
-          icon="pi pi-pencil"
-          label="Edit"
-          className="p-button-outlined p-button-secondary"
-          visible={formMode === "VIEW"}
-          onClick={onEdit}
-        />
-      </div>
+      <FormHeaderComponent
+        title="Cursor Click Step Configuration"
+        description="Simulate a left, right, or double mouse click at the specified screen coordinates."
+        formMode={formMode}
+        onEdit={onEdit}
+      />
+
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>

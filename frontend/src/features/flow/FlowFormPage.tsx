@@ -11,10 +11,7 @@ export function FlowFormPage() {
     formMode: FormMode;
   }>();
   const navigate = useNavigate();
-  // const { isLoading } = useFlow(id ? +id : -1);
   const { createMutation, updateMutation } = useFlowMutations();
-
-  // const flow = id ? flows.find((f) => f.id === Number(id)) : null;
   const flow = null;
 
   const handleSubmit = async (data: FlowDto) => {
@@ -48,6 +45,7 @@ export function FlowFormPage() {
         defaultValues={flow ?? new FlowDto()}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/flows")}
+        onEdit={() => {}} // No edit button on add page
       />
     </div>
   );

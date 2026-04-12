@@ -15,12 +15,14 @@ import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
+import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 
 interface Props {
   formMode: FormMode;
   defaultValues: FlowDto;
   onSubmit: (formValues: FlowDto) => void;
   onCancel: () => void;
+  onEdit: () => void;
 }
 
 export function FlowFormComponent({
@@ -28,6 +30,7 @@ export function FlowFormComponent({
   defaultValues,
   onSubmit,
   onCancel,
+  onEdit,
 }: Props) {
   const form = useForm<z.infer<typeof FlowSchema>>({
     resolver: zodResolver(FlowSchema),
@@ -51,29 +54,38 @@ export function FlowFormComponent({
   });
 
   return (
-    <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) =>
-          onSubmit({ ...defaultValues, ...data } as FlowDto),
-        )}
-        className="flex flex-column h-full"
-      >
-        <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-        <FlowSearchAreaDataTableComponent
-          fields={fields}
-          append={append}
-          remove={remove}
-          update={update}
-          isDisabled={formMode === "VIEW"}
-        />
+    <>
+      <FormHeaderComponent
+        title="Flow Configuration"
+        description="General settings for the flow."
+        formMode={formMode}
+        onEdit={onEdit}
+      />
 
-        <FormFooterComponent
-          formMode={formMode}
-          isValid={isValid}
-          isDirty={isDirty}
-          onCancel={onCancel}
-        />
-      </form>
-    </FormProvider>
+      <FormProvider {...form}>
+        <form
+          onSubmit={form.handleSubmit((data) =>
+            onSubmit({ ...defaultValues, ...data } as FlowDto),
+          )}
+          className="flex flex-column h-full"
+        >
+          <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          <FlowSearchAreaDataTableComponent
+            fields={fields}
+            append={append}
+            remove={remove}
+            update={update}
+            isDisabled={formMode === "VIEW"}
+          />
+
+          <FormFooterComponent
+            formMode={formMode}
+            isValid={isValid}
+            isDirty={isDirty}
+            onCancel={onCancel}
+          />
+        </form>
+      </FormProvider>
+    </>
   );
 }
