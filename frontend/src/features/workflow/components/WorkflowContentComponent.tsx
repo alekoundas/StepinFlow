@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
@@ -33,9 +33,15 @@ export function WorkflowContentComponent() {
     setSelectedFlowStepTypeToAdd,
   } = useWorkflowStore();
 
-  const [formMode, setFormMode] = useState<FormMode>(
-    selectedTreeNode?.isNew ? FormMode.ADD : FormMode.VIEW,
-  );
+  const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
+
+  useEffect(() => {
+    if (selectedTreeNode && selectedTreeNode.isNew) {
+      setFormMode(FormMode.ADD);
+    } else {
+      setFormMode(FormMode.VIEW);
+    }
+  }, [selectedTreeNode]);
 
   // ── React Query for Flow (when root node is selected) ──
   const flowId = selectedTreeNode?.isFlow ? +selectedTreeNode.key : null;

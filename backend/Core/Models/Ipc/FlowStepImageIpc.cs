@@ -9,7 +9,7 @@ namespace Core.Models.Ipc
 
 
     // ============== COMMANDS ==============
-    public record CreateFlowStepImageCommand(FlowStepImageCreateDto dto) : IRequest<ResultDto<int>>;
+    public record CreateFlowStepImageCommand(FlowStepImageDto dto) : IRequest<ResultDto<int>>;
     public record UpdateFlowStepImageCommand(FlowStepImageDto dto) : IRequest<ResultDto<FlowStepImageDto>>;
     public record DeleteFlowStepImageCommand(int id) : IRequest<ResultDto<bool>>;
 

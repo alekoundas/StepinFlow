@@ -42,22 +42,22 @@ namespace App.Ipc
                     "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowStep
-                    "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepCreateDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.update" => await _mediator.Send(new UpdateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowSearchArea
-                    "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaCreateDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowSearchArea.get" => await _mediator.Send(new GetFlowSearchAreaQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // FlowStepImage 
-                    "FlowStepImage.create" => await _mediator.Send(new CreateFlowStepImageCommand(JsonSerializer.Deserialize<FlowStepImageCreateDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStepImage.create" => await _mediator.Send(new CreateFlowStepImageCommand(JsonSerializer.Deserialize<FlowStepImageDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStepImage.get" => await _mediator.Send(new GetFlowStepImageQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // SubFlow
-                    "SubFlow.create" => await _mediator.Send(new CreateSubFlowCommand(JsonSerializer.Deserialize<SubFlowCreateDto>(request.Payload, _jsonOptions)!), ct),
+                    "SubFlow.create" => await _mediator.Send(new CreateSubFlowCommand(JsonSerializer.Deserialize<SubFlowDto>(request.Payload, _jsonOptions)!), ct),
                     "SubFlow.get" => await _mediator.Send(new GetSubFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // Lookups

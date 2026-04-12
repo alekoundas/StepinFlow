@@ -9,7 +9,7 @@ namespace Core.Models.Ipc
 
 
     // ============== COMMANDS ==============
-    public record CreateFlowSearchAreaCommand(FlowSearchAreaCreateDto dto) : IRequest<ResultDto<int>>;
+    public record CreateFlowSearchAreaCommand(FlowSearchAreaDto dto) : IRequest<ResultDto<int>>;
     public record UpdateFlowSearchAreaCommand(FlowDto dto) : IRequest<ResultDto<FlowSearchAreaDto>>;
     public record DeleteFlowSearchAreaCommand(int id) : IRequest<ResultDto<bool>>;
 }

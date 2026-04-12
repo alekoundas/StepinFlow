@@ -137,11 +137,9 @@ export function FlowSearchAreaDataTableComponent({
       body: (row: FlowSearchAreaDto) => (
         <ActionsMenuComponent
           id={row.id}
-          // onEdit={() => openEdit(row.id, row)}
+          onEdit={() => openEdit(row.id)}
           onDelete={() => handleDelete(row.id)}
-          onClone={() => {
-            /* optional */
-          }}
+          // onClone={() => {}}
           // disabled={isDisabled}
         />
       ),
@@ -188,30 +186,6 @@ export function FlowSearchAreaDataTableComponent({
         columns={columns}
         emptyMessage="No search areas defined yet."
       />
-
-      {/* Dialog */}
-      {/* <SearchAreaDialog
-        visible={dialogVisible}
-        onHide={() => setDialogVisible(false)}
-        onSave={handleSave}
-        initialData={editingItem}
-        isEdit={editingIndex !== null}
-      /> */}
-      {/* <Dialog
-        header={editingIndex !== null ? "Edit Search Area" : "New Search Area"}
-        visible={dialogVisible}
-        onHide={() => setDialogVisible(false)}
-        style={{ width: "520px" }}
-        maximizable
-      >
-        <FlowSearchAreaFormComponent
-          defaultValues={editingItem}
-          formMode="ADD"
-          onCancel={() => setDialogVisible(false)}
-          onEdit={() => setDialogVisible(false)}
-          onSubmit={handleSave}
-        />
-      </Dialog> */}
     </div>
   );
 }
