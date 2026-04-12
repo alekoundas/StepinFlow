@@ -3,6 +3,10 @@ import { execFile } from "child_process";
 import { fileURLToPath } from "url";
 import pkg from "electron-updater";
 import path from "path";
+// import { app, session } from 'electron';
+// import installExtension, {
+//   REACT_DEVELOPER_TOOLS,
+// } from "electron-devtools-installer";
 
 import { registerBackendHandler } from "./handlers/backend-handler.js";
 import { registerSearchAreaHandler } from "./handlers/search-area-handler.js";
@@ -61,7 +65,18 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 app.whenReady().then(async () => {
-  if (!isDev) autoUpdater.checkForUpdatesAndNotify(); // Skip in dev
+  if (isDev) {
+    // try {
+    //   await installExtension(REACT_DEVELOPER_TOOLS, {
+    //     loadExtensionOptions: { allowFileAccess: true },
+    //   });
+    //   console.log("React DevTools installed");
+    // } catch (err) {
+    //   console.error("Failed to install React DevTools", err);
+    // }
+  } else {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
 
   createWindow();
 
