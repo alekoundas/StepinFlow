@@ -106,10 +106,10 @@ export function FlowSearchAreaDataTableComponent({
           return `${row.locationX}, ${row.locationY} (${row.width}×${row.height})`;
         }
         if (row.type === "APPLICATION") {
-          return row.applicationName || "-";
+          return row.appWindowName || "-";
         }
         if (row.type === "MONITOR") {
-          return `Monitor ${row.monitorName}`;
+          return `Monitor ${row.monitorUniqueId}`;
         }
         return "-";
       },
@@ -139,10 +139,10 @@ export function FlowSearchAreaDataTableComponent({
     let label = "Custom Area";
     let severity: "success" | "info" | "warning" = "info";
 
-    if (rowData.applicationName) {
+    if (rowData.appWindowName) {
       label = "Application";
       severity = "success";
-    } else if (rowData.monitorName) {
+    } else if (rowData.monitorUniqueId) {
       label = "Monitor";
       severity = "warning";
     }

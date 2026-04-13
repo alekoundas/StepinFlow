@@ -5,8 +5,8 @@ export const FlowSearchAreaZod = z
   .object({
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
     type: z.enum(FlowSearchAreaTypeEnum),
-    applicationName: z.string(),
-    monitorName: z.string(),
+    appWindowName: z.string(),
+    monitorUniqueId: z.string(),
     locationX: z.number(),
     locationY: z.number(),
     width: z.number(),
@@ -29,20 +29,20 @@ export const FlowSearchAreaZod = z
       // }
     }
     if (data.type === "APPLICATION") {
-      if (data.applicationName.length === 0) {
+      if (data.appWindowName.length === 0) {
         ctx.addIssue({
           code: "custom",
           message: "Application Name is required",
-          path: ["applicationName"],
+          path: ["appWindowName"],
         });
       }
     }
     if (data.type === "MONITOR") {
-      if (data.monitorName.length === 0) {
+      if (data.monitorUniqueId.length === 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Monitor Name is required",
-          path: ["monitorName"],
+          message: "Monitor Unique ID is required",
+          path: ["monitorUniqueId"],
         });
       }
     }

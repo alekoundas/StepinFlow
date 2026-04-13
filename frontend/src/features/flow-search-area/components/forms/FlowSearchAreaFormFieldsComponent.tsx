@@ -154,7 +154,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       {/* APPLICATION */}
       {selectedType === "APPLICATION" && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
-          fieldName="applicationName"
+          fieldName="appWindowName"
           labelText="Select Item"
           mode="remote"
           queryKey={["lookup", "window"]}
@@ -170,7 +170,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       {/* MONITOR */}
       {selectedType === "MONITOR" && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
-          fieldName="monitorName"
+          fieldName="monitorUniqueId"
           labelText="Select Item"
           mode="remote"
           queryKey={["lookup", "monitor"]}
