@@ -7,8 +7,8 @@ export class FlowSearchAreaDto {
   name: string = "";
   type: FlowSearchAreaTypeEnum = "CUSTOM";
 
-  applicationName: string = "";
-  monitorName: string = "";
+  AppWindowName: string = "";
+  monitorUniqueId: string = "";
 
   // Custom search area
   locationX: number = 0;

@@ -39,7 +39,7 @@ namespace Business.Ipc.Handlers
             public short dmSize;
             public short dmDriverExtra;
             public int dmFields;
-            public int dmPositionX;     // important for multi-monitor position
+            public int dmPositionX;     
             public int dmPositionY;
             public int dmDisplayOrientation;
             public int dmDisplayFixedOutput;

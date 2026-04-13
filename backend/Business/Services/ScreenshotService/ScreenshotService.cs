@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using Core.Enums;
+using Business.Helpers;
+using Core.Models.Business;
 
 namespace Business.Services.ScreenshotService
 {
@@ -25,6 +27,45 @@ namespace Business.Services.ScreenshotService
             return bytes; // BGRA raw bytes 
         }
 
+
+        public byte[] CaptureVirtualScreen()
+        {
+            Rectangle rect = ScreenHelper.GetVirtualScreenBounds();
+            return Capture(rect);
+        }
+
+
+        public byte[] CaptureSearchArea(FlowSearchArea area)
+        {
+            Rectangle rect;
+            switch (area.Type)
+            {
+                case FlowSearchAreaTypeEnum.CUSTOM:
+                    rect = new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height);
+                    break;
+                case FlowSearchAreaTypeEnum.APPLICATION:
+                    rect = AppWindowHelper.GetApplicationWindowBounds(area.AppWindowName);
+                    break;
+                case FlowSearchAreaTypeEnum.MONITOR:
+                    IEnumerable<MonitorInfo> monitors = ScreenHelper.GetAllMonitors();
+                    MonitorInfo? monitor = monitors.FirstOrDefault(x => x.UniqueId == area.MonitorUniqueId);
+
+                    if (monitor == null)
+                        rect = ScreenHelper.GetVirtualScreenBounds();
+                    else
+                        rect = monitor.Bounds;
+
+                    break;
+                default:
+                    rect = ScreenHelper.GetVirtualScreenBounds();
+                    break;
+            }
+
+            return Capture(rect);
+        }
+
+    
+
         //public Mat CaptureAsMat(Rectangle rect)
         //{
         //    byte[] bytes = Capture(rect);
@@ -34,29 +75,5 @@ namespace Business.Services.ScreenshotService
 
         //    return new Mat(rect.Height, rect.Width, MatType.CV_8UC4, bytes);
         //}
-
-        // Overloads for FlowSearchArea, monitor, full screen, etc.
-        //public byte[] CaptureFullScreen() => Capture(Screen.PrimaryScreen.Bounds);
-        public byte[] CaptureSearchArea(FlowSearchArea area)
-        {
-
-            byte[] capture;
-            switch (area.Type)
-            {
-                case FlowSearchAreaTypeEnum.CUSTOM:
-                    capture = Capture(new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height));
-                    break;
-                case FlowSearchAreaTypeEnum.APPLICATION:
-                    capture = Capture(new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height));
-                    break;
-                case FlowSearchAreaTypeEnum.MONITOR:
-                    capture = Capture(new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height));
-                    break;
-                default:
-                    capture = [];
-                    break;
-            }
-            return capture;
-        }
     }
 }

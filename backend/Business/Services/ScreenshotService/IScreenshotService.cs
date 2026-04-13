@@ -7,6 +7,7 @@ namespace Business.Services.ScreenshotService
     public interface IScreenshotService
     {
         public byte[] Capture(Rectangle rect);
+        public byte[] CaptureVirtualScreen();
         public byte[] CaptureSearchArea(FlowSearchArea area);
     }
 }

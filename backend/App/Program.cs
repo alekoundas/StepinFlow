@@ -47,7 +47,7 @@ namespace App
             // MediatR
             builder.Services.AddMediatR(cfg =>
             {
-                cfg.RegisterServicesFromAssembly(typeof(CreateFlowHandler).Assembly); // scans all handlers in Business
+                cfg.RegisterServicesFromAssembly(typeof(SystemTakeScreenshotHandler).Assembly); // scans all handlers in Business
             });
 
 

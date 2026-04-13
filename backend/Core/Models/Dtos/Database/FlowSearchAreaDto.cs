@@ -9,8 +9,8 @@ namespace Core.Models.Dtos
         public FlowSearchAreaTypeEnum Type { get; set; } 
 
 
-        public string ApplicationName { get; set; } = string.Empty;
-        public string MonitorName { get; set; } = string.Empty;
+        public string AppWindowName { get; set; } = string.Empty;
+        public string MonitorUniqueId { get; set; } = string.Empty;
 
 
         // Custom search area
