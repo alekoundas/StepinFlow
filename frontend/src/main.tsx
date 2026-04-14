@@ -60,13 +60,13 @@ const router = createHashRouter([
         path: "/workflow/:id",
         element: <WorkflowPage />,
       },
-      {
-        path: "/search-area-overlay",
-        element: <SearchAreaOverlayPage />,
-      },
 
       // { path: "app", element: <App /> },
     ],
+  },
+  {
+    path: "/search-area-overlay",
+    element: <SearchAreaOverlayPage />,
   },
 ]);
 

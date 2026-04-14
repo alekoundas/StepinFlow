@@ -62,9 +62,22 @@ export default function SearchAreaOverlayPage() {
     api.signalReady();
     ElectronApiService.backendApi.System.takeScreenshot(
       new ScreenshotRequestDto({ isFullScreen: true }),
-    ).then((data) => {
-      setScreenshot(data.toString());
-    });
+    )
+      .then((screenshotBytes: Uint8Array | string) => {
+        let base64: string;
+
+        if (screenshotBytes instanceof Uint8Array) {
+          base64 = Buffer.from(screenshotBytes).toString("base64");
+        } else {
+          base64 = screenshotBytes as string; // in case it's already base64
+        }
+
+        setScreenshot(`data:image/png;base64,${base64}`);
+      })
+      .catch((err) => {
+        console.error("Failed to take screenshot:", err);
+      });
+
     return;
   }, []);
 

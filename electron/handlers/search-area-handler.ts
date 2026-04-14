@@ -21,8 +21,22 @@ export function registerSearchAreaHandler(
     IPC_CHANNELS.SEARCH_AREA_OPEN,
     async (): Promise<AreaRect | null> => {
       // ── 1. Capture screenshot BEFORE the overlay opens ──────────────────────
-      const primaryDisplay = screen.getPrimaryDisplay();
-      const { width, height } = primaryDisplay.size;
+      // const primaryDisplay = screen.getPrimaryDisplay();
+      // const { width, height } = primaryDisplay.size;
+
+      // ── 1. Virtual screen bounds (multi-monitor + negative coords OK) ──
+      const displays = screen.getAllDisplays();
+      const minX = Math.min(...displays.map((d) => d.bounds.x));
+      const minY = Math.min(...displays.map((d) => d.bounds.y));
+      const maxRight = Math.max(
+        ...displays.map((d) => d.bounds.x + d.bounds.width),
+      );
+      const maxBottom = Math.max(
+        ...displays.map((d) => d.bounds.y + d.bounds.height),
+      );
+
+      const virtualWidth = maxRight - minX;
+      const virtualHeight = maxBottom - minY;
 
       // const sources = await desktopCapturer.getSources({
       //   types: ["screen"],
@@ -45,10 +59,10 @@ export function registerSearchAreaHandler(
 
       // ── 2. Create transparent fullscreen overlay window ───────────────────────
       const overlay = new BrowserWindow({
-        width,
-        height,
-        x: primaryDisplay.bounds.x,
-        y: primaryDisplay.bounds.y,
+        x: minX,
+        y: minY,
+        width: virtualWidth,
+        height: virtualHeight,
         fullscreen: false, // We set bounds manually for multi-monitor safety
         frame: true,
         transparent: false,
@@ -63,7 +77,7 @@ export function registerSearchAreaHandler(
         webPreferences: {
           preload: path.join(
             __dirname,
-            isDev ? "preload.js" : "../dist/preload.js",
+            isDev ? "../preload.js" : "../dist/preload.js",
           ),
           nodeIntegration: false,
           contextIsolation: true,
@@ -76,7 +90,7 @@ export function registerSearchAreaHandler(
 
       // ── 3. Load the overlay page ──────────────────────────────────────────────
       if (isDev) {
-        await overlay.loadURL("http://localhost:5173/search-area-overlay");
+        await overlay.loadURL("http://localhost:5173/#/search-area-overlay");
       } else {
         await overlay.loadFile(
           path.join(__dirname, "../dist/frontend/index.html"),
@@ -91,7 +105,7 @@ export function registerSearchAreaHandler(
       await new Promise<void>((resolve) => {
         ipcMain.once(IPC_CHANNELS.SEARCH_AREA_READY, () => resolve());
 
-        // Safety timeout — send anyway after 3s if ready signal is missed
+        // Safety  — send anyway after 3s if ready signal is missed
         setTimeout(resolve, 3000);
       });
 

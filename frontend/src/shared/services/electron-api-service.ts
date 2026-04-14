@@ -4,32 +4,49 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
-declare const electronApi: {
-  backendApi: {
-    invoke: <T>(msg: any) => Promise<ResultDto<T>>;
-    onMessage: <T>(cb: (msg: T) => void) => () => void;
-  };
-  searchArea: {
-    capture: () => Promise<AreaRect | null>;
-    sendResult: (rect: AreaRect | null) => void;
-    onScreenshot: (callback: (dataUrl: string) => void) => () => void;
-    signalReady: () => void;
-  };
-};
+// declare const electronApi: {
+//   backendApi: {
+//     invoke: <T>(msg: any) => Promise<ResultDto<T>>;
+//     onMessage: <T>(cb: (msg: T) => void) => () => void;
+//   };
+//   searchArea: {
+//     capture: () => Promise<AreaRect | null>;
+//     sendResult: (rect: AreaRect | null) => void;
+//     onScreenshot: (callback: (dataUrl: string) => void) => () => void;
+//     signalReady: () => void;
+//   };
+// };
+
+declare global {
+  interface Window {
+    electronApi: {
+      backendApi: {
+        invoke: <T = any>(msg: any) => Promise<ResultDto<T>>;
+        onMessage: <T>(cb: (msg: T) => void) => () => void;
+      };
+      searchArea: {
+        capture: () => Promise<AreaRect | null>;
+        sendResult: (rect: AreaRect | null) => void;
+        onScreenshot: (callback: (dataUrl: string) => void) => () => void;
+        signalReady: () => void;
+      };
+    };
+  }
+}
 
 export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {
-    capture: () => electronApi.searchArea.capture(),
+    capture: () => window.electronApi.searchArea.capture(),
     sendResult: (rect: AreaRect | null) =>
-      electronApi.searchArea.sendResult(rect),
+      window.electronApi.searchArea.sendResult(rect),
     onScreenshot: (callback: (dataUrl: string) => void) =>
-      electronApi.searchArea.onScreenshot(callback),
-    signalReady: () => electronApi.searchArea.signalReady(),
+      window.electronApi.searchArea.onScreenshot(callback),
+    signalReady: () => window.electronApi.searchArea.signalReady(),
   },
 };
 
 // Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
 export function setupPushListener(callback: (msg: any) => void): () => void {
-  return electronApi.backendApi.onMessage(callback);
+  return window.electronApi.backendApi.onMessage(callback);
 }

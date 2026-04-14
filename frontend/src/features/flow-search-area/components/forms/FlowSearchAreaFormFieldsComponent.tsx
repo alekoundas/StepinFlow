@@ -17,7 +17,7 @@ interface Props {
 export default function FlowSearchAreaFormFieldsComponent({
   isDisabled = false,
 }: Props) {
-  const { control } = useFormContext();
+  const { control ,setValue} = useFormContext();
 
   // Watch the two fields that control each other
   const selectedType = useWatch({ control, name: "type" });
@@ -40,6 +40,10 @@ export default function FlowSearchAreaFormFieldsComponent({
   const handleClick = async () => {
     const rect = await capture();
     if (rect) {
+      setValue("locationX", rect.x);
+      setValue("locationY", rect.y);
+      setValue("width", rect.width);
+      setValue("height", rect.height);
       // onSelect(rect);
     }
   };
