@@ -1,6 +1,7 @@
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { Button } from "primereact/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
   // Subscribe once (better in root layout, but ok here for now)
@@ -18,6 +19,7 @@ export default function HomePage() {
       console.error("Invoke failed:", err);
     }
   };
+  const navigate = useNavigate();
 
   const onGreet2 = async () => {
     // try {
@@ -32,6 +34,8 @@ export default function HomePage() {
     // } catch (err) {
     //   console.error("Invoke failed:", err);
     // }
+
+    navigate("/search-area-overlay");
   };
 
   return (
@@ -46,7 +50,7 @@ export default function HomePage() {
       />
 
       <Button
-        label="flow create .NET"
+        label="nav to search-area-overlay"
         onClick={onGreet2}
         className="mb-4 p-button-success"
       />

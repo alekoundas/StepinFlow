@@ -24,24 +24,24 @@ export function registerSearchAreaHandler(
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width, height } = primaryDisplay.size;
 
-      const sources = await desktopCapturer.getSources({
-        types: ["screen"],
-        thumbnailSize: { width, height },
-      });
+      // const sources = await desktopCapturer.getSources({
+      //   types: ["screen"],
+      //   thumbnailSize: { width, height },
+      // });
 
       // Pick the source that matches the primary display (fallback to first)
-      const primarySource =
-        sources.find((s) =>
-          s.display_id
-            ? s.display_id === String(primaryDisplay.id)
-            : s.name.includes("Entire Screen") || s.name.includes("Screen 1"),
-        ) ?? sources[0];
+      // const primarySource =
+      //   sources.find((s) =>
+      //     s.display_id
+      //       ? s.display_id === String(primaryDisplay.id)
+      //       : s.name.includes("Entire Screen") || s.name.includes("Screen 1"),
+      //   ) ?? sources[0];
 
-      if (!primarySource) {
-        throw new Error("[SearchArea] No screen source found for capture");
-      }
+      // if (!primarySource) {
+      //   throw new Error("[SearchArea] No screen source found for capture");
+      // }
 
-      const screenshotDataUrl = primarySource.thumbnail.toDataURL();
+      // const screenshotDataUrl = primarySource.thumbnail.toDataURL();
 
       // ── 2. Create transparent fullscreen overlay window ───────────────────────
       const overlay = new BrowserWindow({
@@ -50,8 +50,10 @@ export function registerSearchAreaHandler(
         x: primaryDisplay.bounds.x,
         y: primaryDisplay.bounds.y,
         fullscreen: false, // We set bounds manually for multi-monitor safety
-        frame: false,
-        transparent: true,
+        frame: true,
+        transparent: false,
+        // frame: false,
+        // transparent: true,
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
@@ -93,10 +95,10 @@ export function registerSearchAreaHandler(
         setTimeout(resolve, 3000);
       });
 
-      overlay.webContents.send(
-        IPC_CHANNELS.SEARCH_AREA_SCREENSHOT,
-        screenshotDataUrl,
-      );
+      // overlay.webContents.send(
+      //   IPC_CHANNELS.SEARCH_AREA_SCREENSHOT,
+      //   screenshotDataUrl,
+      // );
 
       // ── 5. Wait for user selection result ─────────────────────────────────────
       return new Promise<AreaRect | null>((resolve) => {

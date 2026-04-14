@@ -9,10 +9,6 @@ declare const electronApi: {
     invoke: <T>(msg: any) => Promise<ResultDto<T>>;
     onMessage: <T>(cb: (msg: T) => void) => () => void;
   };
-  //  backendApi: {
-  //   invoke: <T = unknown>(msg: RequestMessage) => Promise<T>;
-  //   onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
-  // };
   searchArea: {
     capture: () => Promise<AreaRect | null>;
     sendResult: (rect: AreaRect | null) => void;
@@ -20,9 +16,7 @@ declare const electronApi: {
     signalReady: () => void;
   };
 };
-///
-//
-// const x: string = 123; // ← this should instantly show error
+
 export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {

@@ -37,6 +37,10 @@ namespace Business.Ipc.Handlers
                 else
                     screenshot = _screenshotService.CaptureVirtualScreen();
             }
+            else if (request.dto.IsFullScreen)
+            {
+                screenshot = _screenshotService.CaptureVirtualScreen();
+            }
             else
             {
                 screenshot = _screenshotService.Capture(new Rectangle(request.dto.LocationX, request.dto.LocationY, request.dto.Width, request.dto.Height));

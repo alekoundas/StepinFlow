@@ -13,6 +13,7 @@ import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-are
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
+import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -83,11 +84,17 @@ export const backendApiService = {
     update: (dto: SubFlowDto) => call<{ newId: number }>("SubFlow.update", dto),
     get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
   },
+
   Lookup: {
     window: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.window", dto),
     monitor: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.monitor", dto),
+  },
+
+  System: {
+    takeScreenshot: (dto: ScreenshotRequestDto) =>
+      call<Uint8Array>("System.takeScreenshot", dto),
   },
 };
 

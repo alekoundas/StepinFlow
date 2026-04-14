@@ -13,6 +13,7 @@
  *  6. Sends the result back via electronApi.searchArea.sendResult()
  */
 
+import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import React, {
   useCallback,
@@ -59,10 +60,12 @@ export default function SearchAreaOverlayPage() {
     if (!api) return;
 
     api.signalReady();
-    const unsub = api.onScreenshot((dataUrl) => {
-      setScreenshot(dataUrl);
+    ElectronApiService.backendApi.System.takeScreenshot(
+      new ScreenshotRequestDto({ isFullScreen: true }),
+    ).then((data) => {
+      setScreenshot(data.toString());
     });
-    return unsub;
+    return;
   }, []);
 
   // ── ESC to cancel ──────────────────────────────────────────────────────────
@@ -149,6 +152,7 @@ export default function SearchAreaOverlayPage() {
         overflow: "hidden",
       }}
     >
+      aaaa
       {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
       {screenshot && (
         <img
@@ -165,7 +169,6 @@ export default function SearchAreaOverlayPage() {
           }}
         />
       )}
-
       {/* ── Full dim overlay ───────────────────────────────────────────────── */}
       {!isDraggingOrConfirming && (
         <div
@@ -177,12 +180,10 @@ export default function SearchAreaOverlayPage() {
           }}
         />
       )}
-
       {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
       {isDraggingOrConfirming && selectionRect && (
         <DimMask rect={selectionRect} />
       )}
-
       {/* ── Selection border + handles ─────────────────────────────────────── */}
       {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
         <SelectionBox
@@ -190,12 +191,10 @@ export default function SearchAreaOverlayPage() {
           phase={phase}
         />
       )}
-
       {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
       {phase === "dragging" && selectionRect && (
         <ReadoutLabel rect={selectionRect} />
       )}
-
       {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
       {phase === "confirming" && selectionRect && (
         <ConfirmBar
@@ -205,7 +204,6 @@ export default function SearchAreaOverlayPage() {
           onCancel={handleCancel}
         />
       )}
-
       {/* ── Idle hint ─────────────────────────────────────────────────────── */}
       {phase === "idle" && <HintBanner />}
     </div>
