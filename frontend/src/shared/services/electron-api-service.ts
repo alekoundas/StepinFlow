@@ -25,9 +25,8 @@ declare global {
         onMessage: <T>(cb: (msg: T) => void) => () => void;
       };
       searchArea: {
-        capture: () => Promise<AreaRect | null>;
-        sendResult: (rect: AreaRect | null) => void;
-        onScreenshot: (callback: (dataUrl: string) => void) => () => void;
+        openWindow: () => Promise<AreaRect | null>;
+        sendResultToWindow: (rect: AreaRect | null) => void;
         signalReady: () => void;
       };
     };
@@ -37,11 +36,9 @@ declare global {
 export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {
-    capture: () => window.electronApi.searchArea.capture(),
-    sendResult: (rect: AreaRect | null) =>
-      window.electronApi.searchArea.sendResult(rect),
-    onScreenshot: (callback: (dataUrl: string) => void) =>
-      window.electronApi.searchArea.onScreenshot(callback),
+    openWindow: () => window.electronApi.searchArea.openWindow(),
+    sendResultToWindow: (rect: AreaRect | null) =>
+      window.electronApi.searchArea.sendResultToWindow(rect),
     signalReady: () => window.electronApi.searchArea.signalReady(),
   },
 };

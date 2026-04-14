@@ -126,7 +126,7 @@ export default function SearchAreaOverlayPage() {
   );
 
   const sendResult = useCallback((rect: AreaRect | null) => {
-    ElectronApiService.searchArea?.sendResult(rect);
+    // ElectronApiService.searchArea?.sendResult(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {
@@ -152,74 +152,75 @@ export default function SearchAreaOverlayPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div
-      ref={containerRef}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      style={{
-        position: "fixed",
-        inset: 0,
-        userSelect: "none",
-        cursor: phase === "confirming" ? "default" : "crosshair",
-        overflow: "hidden",
-      }}
-    >
-      aaaa
-      {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
-      {screenshot && (
-        <img
-          src={screenshot}
-          alt=""
-          draggable={false}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "fill",
-            pointerEvents: "none",
-          }}
-        />
-      )}
-      {/* ── Full dim overlay ───────────────────────────────────────────────── */}
-      {!isDraggingOrConfirming && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(0,0,0,0.45)",
-            pointerEvents: "none",
-          }}
-        />
-      )}
-      {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
-      {isDraggingOrConfirming && selectionRect && (
-        <DimMask rect={selectionRect} />
-      )}
-      {/* ── Selection border + handles ─────────────────────────────────────── */}
-      {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
-        <SelectionBox
-          rect={selectionRect}
-          phase={phase}
-        />
-      )}
-      {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
-      {phase === "dragging" && selectionRect && (
-        <ReadoutLabel rect={selectionRect} />
-      )}
-      {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
-      {phase === "confirming" && selectionRect && (
-        <ConfirmBar
-          rect={selectionRect}
-          onConfirm={handleConfirm}
-          onRestart={handleRestart}
-          onCancel={handleCancel}
-        />
-      )}
-      {/* ── Idle hint ─────────────────────────────────────────────────────── */}
-      {phase === "idle" && <HintBanner />}
-    </div>
+    <></>
+    // <div
+    //   ref={containerRef}
+    //   onMouseDown={onMouseDown}
+    //   onMouseMove={onMouseMove}
+    //   onMouseUp={onMouseUp}
+    //   style={{
+    //     position: "fixed",
+    //     inset: 0,
+    //     userSelect: "none",
+    //     cursor: phase === "confirming" ? "default" : "crosshair",
+    //     overflow: "hidden",
+    //   }}
+    // >
+    //   aaaa
+    //   {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
+    //   {screenshot && (
+    //     <img
+    //       src={screenshot}
+    //       alt=""
+    //       draggable={false}
+    //       style={{
+    //         position: "absolute",
+    //         inset: 0,
+    //         width: "100%",
+    //         height: "100%",
+    //         objectFit: "fill",
+    //         pointerEvents: "none",
+    //       }}
+    //     />
+    //   )}
+    //   {/* ── Full dim overlay ───────────────────────────────────────────────── */}
+    //   {!isDraggingOrConfirming && (
+    //     <div
+    //       style={{
+    //         position: "absolute",
+    //         inset: 0,
+    //         background: "rgba(0,0,0,0.45)",
+    //         pointerEvents: "none",
+    //       }}
+    //     />
+    //   )}
+    //   {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
+    //   {isDraggingOrConfirming && selectionRect && (
+    //     <DimMask rect={selectionRect} />
+    //   )}
+    //   {/* ── Selection border + handles ─────────────────────────────────────── */}
+    //   {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
+    //     <SelectionBox
+    //       rect={selectionRect}
+    //       phase={phase}
+    //     />
+    //   )}
+    //   {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
+    //   {phase === "dragging" && selectionRect && (
+    //     <ReadoutLabel rect={selectionRect} />
+    //   )}
+    //   {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
+    //   {phase === "confirming" && selectionRect && (
+    //     <ConfirmBar
+    //       rect={selectionRect}
+    //       onConfirm={handleConfirm}
+    //       onRestart={handleRestart}
+    //       onCancel={handleCancel}
+    //     />
+    //   )}
+    //   {/* ── Idle hint ─────────────────────────────────────────────────────── */}
+    //   {phase === "idle" && <HintBanner />}
+    // </div>
   );
 }
 

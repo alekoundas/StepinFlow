@@ -18,12 +18,8 @@ export function registerSearchAreaHandler(
   isDev: boolean,
 ): void {
   ipcMain.handle(
-    IPC_CHANNELS.SEARCH_AREA_OPEN,
+    IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
     async (): Promise<AreaRect | null> => {
-      // ── 1. Capture screenshot BEFORE the overlay opens ──────────────────────
-      // const primaryDisplay = screen.getPrimaryDisplay();
-      // const { width, height } = primaryDisplay.size;
-
       // ── 1. Virtual screen bounds (multi-monitor + negative coords OK) ──
       const displays = screen.getAllDisplays();
       const minX = Math.min(...displays.map((d) => d.bounds.x));
@@ -38,24 +34,7 @@ export function registerSearchAreaHandler(
       const virtualWidth = maxRight - minX;
       const virtualHeight = maxBottom - minY;
 
-      // const sources = await desktopCapturer.getSources({
-      //   types: ["screen"],
-      //   thumbnailSize: { width, height },
-      // });
-
-      // Pick the source that matches the primary display (fallback to first)
-      // const primarySource =
-      //   sources.find((s) =>
-      //     s.display_id
-      //       ? s.display_id === String(primaryDisplay.id)
-      //       : s.name.includes("Entire Screen") || s.name.includes("Screen 1"),
-      //   ) ?? sources[0];
-
-      // if (!primarySource) {
-      //   throw new Error("[SearchArea] No screen source found for capture");
-      // }
-
-      // const screenshotDataUrl = primarySource.thumbnail.toDataURL();
+     
 
       // ── 2. Create transparent fullscreen overlay window ───────────────────────
       const overlay = new BrowserWindow({
@@ -103,16 +82,11 @@ export function registerSearchAreaHandler(
 
       // ── 4. Wait for overlay renderer to signal it's ready, then send screenshot
       await new Promise<void>((resolve) => {
-        ipcMain.once(IPC_CHANNELS.SEARCH_AREA_READY, () => resolve());
+        ipcMain.once(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY, () => resolve());
 
         // Safety  — send anyway after 3s if ready signal is missed
-        setTimeout(resolve, 3000);
+        // setTimeout(resolve, 3000);
       });
-
-      // overlay.webContents.send(
-      //   IPC_CHANNELS.SEARCH_AREA_SCREENSHOT,
-      //   screenshotDataUrl,
-      // );
 
       // ── 5. Wait for user selection result ─────────────────────────────────────
       return new Promise<AreaRect | null>((resolve) => {
@@ -123,7 +97,7 @@ export function registerSearchAreaHandler(
         };
 
         ipcMain.once(
-          IPC_CHANNELS.SEARCH_AREA_RESULT,
+          IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW,
           (_event, rect: AreaRect | null) => {
             cleanup();
             resolve(rect);

@@ -35,13 +35,17 @@ declare global {
         onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
-        capture: () => Promise<AreaRect | null>;
-        sendResult: (rect: AreaRect | null) => void;
-        onScreenshot: (callback: (dataUrl: string) => void) => () => void;
+        openWindow: () => Promise<AreaRect | null>;
+        sendResultToWindow: (rect: AreaRect | null) => void;
         signalReady: () => void;
       };
       imageEditor: {
-        open: (initialDataUrl: string, stepId?: string) => Promise<AreaRect>;
+        openWindow: (
+          initialDataUrl: string,
+          stepId?: string,
+        ) => Promise<AreaRect>;
+        sendResultToWindow: (rect: AreaRect | null) => void;
+        signalReady: () => void;
       };
     };
   }

@@ -19,7 +19,7 @@ export function useSearchAreaCapture(): UseSearchAreaCaptureReturn {
   const capture = useCallback(async (): Promise<AreaRect | null> => {
     setIsCapturing(true);
     try {
-      const rect = await ElectronApiService.searchArea.capture();
+      const rect = await ElectronApiService.searchArea.openWindow();
       return rect;
     } catch (err) {
       console.error("[useSearchAreaCapture] capture failed:", err);

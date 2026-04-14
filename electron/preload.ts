@@ -15,31 +15,27 @@ interface AreaRect {
 }
 
 const IPC_CHANNELS = {
+  // ========== Backend pipe channels =================
   BACKEND_SEND: "BACKEND_SEND",
   BACKEND_RECEIVE: "BACKEND_RECEIVE",
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
-  SEARCH_AREA_OPEN: "SEARCH_AREA_OPEN",
-  SEARCH_AREA_RESULT: "SEARCH_AREA_RESULT",
-  SEARCH_AREA_READY: "SEARCH_AREA_READY",
-  SEARCH_AREA_SCREENSHOT: "SEARCH_AREA_SCREENSHOT",
+  // ========== Search-area overlay channels ==========
+  SEARCH_AREA_WINDOW_OPEN: "SEARCH_AREA_WINDOW_OPEN",
+  SEARCH_AREA_WINDOW_READY: "SEARCH_AREA_WINDOW_READY",
+  SEARCH_AREA_RETURN_RESULT_TO_WINDOW: "SEARCH_AREA_RETURN_RESULT_TO_WINDOW",
 
-  IMAGE_EDITOR_OPEN: "IMAGE_EDITOR_OPEN",
-  IMAGE_EDITOR_RESULT: "IMAGE_EDITOR_RESULT",
-  IMAGE_EDITOR_READY: "IMAGE_EDITOR_READY",
+  // ========== Image editor channels ==========
+  IMAGE_EDITOR_WINDOW_OPEN: "IMAGE_EDITOR_WINDOW_OPEN",
+  IMAGE_EDITOR_WINDOW_READY: "IMAGE_EDITOR_WINDOW_READY",
+  IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW: "IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW",
 } as const;
-//  ===========================================
 
 const api = {
   backendApi: {
     // Send message to backend → returns Promise with response
     invoke: <T = unknown>(msg: RequestMessage): Promise<T> =>
       ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<T>,
-
-    // Fire-and-forget style (no response expected)
-    // send: (msg: RequestMessage): void => {
-    //   ipcRenderer.send(IPC_CHANNELS.BACKEND_SEND, msg);
-    // },
 
     // Listen for messages coming FROM backend. Returns unsubscribe function
     onMessage: <T = unknown>(callback: (msg: T) => void): (() => void) => {
@@ -53,45 +49,34 @@ const api = {
         ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_RECEIVE, listener);
       };
     },
-    // One-time listener
-    // onceMessage: <T = unknown>(callback: (msg: T) => void): void => {
-    //   ipcRenderer.once(IPC_CHANNELS.BACKEND_RECEIVE, (_, msg) => callback(msg as T));
-    // },
   },
 
   searchArea: {
-    capture: (): Promise<AreaRect | null> =>
+    openWindow: (): Promise<AreaRect | null> =>
       ipcRenderer.invoke(
-        IPC_CHANNELS.SEARCH_AREA_OPEN,
+        IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
       ) as Promise<AreaRect | null>,
-
-    sendResult: (rect: AreaRect | null): void => {
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RESULT, rect);
+    sendResultToWindow: (rect: AreaRect | null): void => {
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect);
     },
-
-    onScreenshot: (callback: (dataUrl: string) => void): (() => void) => {
-      const listener = (_: Electron.IpcRendererEvent, dataUrl: string) =>
-        callback(dataUrl);
-      ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_SCREENSHOT, listener);
-      return () =>
-        ipcRenderer.removeListener(
-          IPC_CHANNELS.SEARCH_AREA_SCREENSHOT,
-          listener,
-        );
-    },
-
     signalReady: (): void => {
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_READY);
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY);
     },
   },
 
   imageEditor: {
-    open: (initialDataUrl: string, stepId?: string): Promise<AreaRect> =>
+    openWindow: (initialDataUrl: string, stepId?: string): Promise<AreaRect> =>
       ipcRenderer.invoke(
-        IPC_CHANNELS.IMAGE_EDITOR_OPEN,
+        IPC_CHANNELS.IMAGE_EDITOR_WINDOW_OPEN,
         initialDataUrl,
         stepId,
       ),
+    sendResultToWindow: (rect: AreaRect | null): void => {
+      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW, rect);
+    },
+    signalReady: (): void => {
+      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_WINDOW_READY);
+    },
   },
 };
 

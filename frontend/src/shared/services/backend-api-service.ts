@@ -15,27 +15,6 @@ import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 
-// TODO remove this. Buut Build process throws error without it....
-// const backendApi = window.backendApi; // old way
-declare const electronApi: {
-  backendApi: {
-    invoke: <T>(msg: any) => Promise<ResultDto<T>>;
-    onMessage: <T>(cb: (msg: T) => void) => () => void;
-  };
-  //  backendApi: {
-  //   invoke: <T = unknown>(msg: RequestMessage) => Promise<T>;
-  //   onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
-  // };
-  searchArea: {
-    capture: () => Promise<AreaRect | null>;
-    sendResult: (rect: AreaRect | null) => void;
-    onScreenshot: (callback: (dataUrl: string) => void) => () => void;
-    signalReady: () => void;
-  };
-};
-///
-//
-// const x: string = 123; // ← this should instantly show error
 export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
 
@@ -105,7 +84,7 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
   };
 
   try {
-    const resultDto = await electronApi.backendApi.invoke<T>(msg);
+    const resultDto = await window.electronApi.backendApi.invoke<T>(msg);
     if (resultDto.data) {
       return resultDto.data;
     }
@@ -118,5 +97,5 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
 
 // Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
 export function setupPushListener(callback: (msg: any) => void): () => void {
-  return electronApi.backendApi.onMessage(callback);
+  return window.electronApi.backendApi.onMessage(callback);
 }
