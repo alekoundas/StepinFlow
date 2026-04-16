@@ -56,27 +56,27 @@ export default function SearchAreaOverlayPage() {
 
   // ── Signal ready + subscribe to screenshot ─────────────────────────────────
   useLayoutEffect(() => {
-    const api = ElectronApiService.searchArea;
-    if (!api) return;
+    // const api = ElectronApiService.searchArea;
+    // if (!api) return;
 
-    api.signalReady();
-    ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({ isFullScreen: true }),
-    )
-      .then((screenshotBytes: Uint8Array | string) => {
-        let base64: string;
+    // api.signalReady();
+    // ElectronApiService.backendApi.System.takeScreenshot(
+    //   new ScreenshotRequestDto({ isFullScreen: true }),
+    // )
+    //   .then((screenshotBytes: Uint8Array | string) => {
+    //     let base64: string;
 
-        if (screenshotBytes instanceof Uint8Array) {
-          base64 = Buffer.from(screenshotBytes).toString("base64");
-        } else {
-          base64 = screenshotBytes as string; // in case it's already base64
-        }
+    //     if (screenshotBytes instanceof Uint8Array) {
+    //       base64 = Buffer.from(screenshotBytes).toString("base64");
+    //     } else {
+    //       base64 = screenshotBytes as string; // in case it's already base64
+    //     }
 
-        setScreenshot(`data:image/png;base64,${base64}`);
-      })
-      .catch((err) => {
-        console.error("Failed to take screenshot:", err);
-      });
+    //     setScreenshot(`data:image/png;base64,${base64}`);
+    //   })
+    //   .catch((err) => {
+    //     console.error("Failed to take screenshot:", err);
+    //   });
 
     return;
   }, []);
@@ -152,75 +152,74 @@ export default function SearchAreaOverlayPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <></>
-    // <div
-    //   ref={containerRef}
-    //   onMouseDown={onMouseDown}
-    //   onMouseMove={onMouseMove}
-    //   onMouseUp={onMouseUp}
-    //   style={{
-    //     position: "fixed",
-    //     inset: 0,
-    //     userSelect: "none",
-    //     cursor: phase === "confirming" ? "default" : "crosshair",
-    //     overflow: "hidden",
-    //   }}
-    // >
-    //   aaaa
-    //   {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
-    //   {screenshot && (
-    //     <img
-    //       src={screenshot}
-    //       alt=""
-    //       draggable={false}
-    //       style={{
-    //         position: "absolute",
-    //         inset: 0,
-    //         width: "100%",
-    //         height: "100%",
-    //         objectFit: "fill",
-    //         pointerEvents: "none",
-    //       }}
-    //     />
-    //   )}
-    //   {/* ── Full dim overlay ───────────────────────────────────────────────── */}
-    //   {!isDraggingOrConfirming && (
-    //     <div
-    //       style={{
-    //         position: "absolute",
-    //         inset: 0,
-    //         background: "rgba(0,0,0,0.45)",
-    //         pointerEvents: "none",
-    //       }}
-    //     />
-    //   )}
-    //   {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
-    //   {isDraggingOrConfirming && selectionRect && (
-    //     <DimMask rect={selectionRect} />
-    //   )}
-    //   {/* ── Selection border + handles ─────────────────────────────────────── */}
-    //   {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
-    //     <SelectionBox
-    //       rect={selectionRect}
-    //       phase={phase}
-    //     />
-    //   )}
-    //   {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
-    //   {phase === "dragging" && selectionRect && (
-    //     <ReadoutLabel rect={selectionRect} />
-    //   )}
-    //   {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
-    //   {phase === "confirming" && selectionRect && (
-    //     <ConfirmBar
-    //       rect={selectionRect}
-    //       onConfirm={handleConfirm}
-    //       onRestart={handleRestart}
-    //       onCancel={handleCancel}
-    //     />
-    //   )}
-    //   {/* ── Idle hint ─────────────────────────────────────────────────────── */}
-    //   {phase === "idle" && <HintBanner />}
-    // </div>
+    <div
+      ref={containerRef}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      style={{
+        position: "fixed",
+        inset: 0,
+        userSelect: "none",
+        cursor: phase === "confirming" ? "default" : "crosshair",
+        overflow: "hidden",
+      }}
+    >
+      aaaa
+      {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
+      {screenshot && (
+        <img
+          src={screenshot}
+          alt=""
+          draggable={false}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      {/* ── Full dim overlay ───────────────────────────────────────────────── */}
+      {!isDraggingOrConfirming && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
+      {isDraggingOrConfirming && selectionRect && (
+        <DimMask rect={selectionRect} />
+      )}
+      {/* ── Selection border + handles ─────────────────────────────────────── */}
+      {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
+        <SelectionBox
+          rect={selectionRect}
+          phase={phase}
+        />
+      )}
+      {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
+      {phase === "dragging" && selectionRect && (
+        <ReadoutLabel rect={selectionRect} />
+      )}
+      {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
+      {phase === "confirming" && selectionRect && (
+        <ConfirmBar
+          rect={selectionRect}
+          onConfirm={handleConfirm}
+          onRestart={handleRestart}
+          onCancel={handleCancel}
+        />
+      )}
+      {/* ── Idle hint ─────────────────────────────────────────────────────── */}
+      {phase === "idle" && <HintBanner />}
+    </div>
   );
 }
 

@@ -2,7 +2,6 @@
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
-using System.Text.Json;
 
 namespace App.Ipc
 {
@@ -45,10 +44,6 @@ namespace App.Ipc
                 }
             }
         }
-        private JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
         private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             // Use ArrayPool to reduce GC pressure on large images

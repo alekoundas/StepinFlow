@@ -1,6 +1,8 @@
 export class ScreenshotRequestDto {
   flowSearchAreaId?: number;
-  isFullScreen: boolean = false;
+  isVirtualScreen: boolean = false;
+  isJPEG: boolean = false;
+  jpegQuality: number = 0;
   locationX: number = 0;
   locationY: number = 0;
   width: number = 0;

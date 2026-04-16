@@ -1,4 +1,6 @@
+import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { Button } from "primereact/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,20 +24,14 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   const onGreet2 = async () => {
-    // try {
-    //   const fakeDto = {
-    //     name: "Test Flow AAA",
-    //     orderNumber: 42,
-    //     flowSearchAreas: [],
-    //   };
-    //   const reply = await backendApiService.Flow.create(fakeDto);
-    //   console.log("Direct reply (if sync):", reply);
-    //   setReply(reply.newId.toString() ?? "skkatoules");
-    // } catch (err) {
-    //   console.error("Invoke failed:", err);
-    // }
-
     navigate("/search-area-overlay");
+  };
+
+  const onGreet3 = async () => {
+    const sss = ElectronApiService.backendApi.System.takeScreenshot(
+      new ScreenshotRequestDto({ isFullScreen: true }),
+    );
+    sss.then((x) => console.log(x));
   };
 
   return (
@@ -52,6 +48,11 @@ export default function HomePage() {
       <Button
         label="nav to search-area-overlay"
         onClick={onGreet2}
+        className="mb-4 p-button-success"
+      />
+      <Button
+        label="take screenshot"
+        onClick={onGreet3}
         className="mb-4 p-button-success"
       />
 

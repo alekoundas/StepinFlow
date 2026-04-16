@@ -78,6 +78,17 @@ namespace Business.Helpers
 
 
 
+
+
+
+
+        //==================================================
+        // Public methods
+        //==================================================
+
+        /// <summary>
+        /// Get Virtual screen bounds
+        /// </summary>
         public static Rectangle GetVirtualScreenBounds()
         {
             int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -90,19 +101,15 @@ namespace Business.Helpers
 
 
 
-
-
-
-
         /// <summary>
         /// Returns all monitors with their bounds (in virtual screen coordinates)
         /// </summary>
         public static IReadOnlyList<MonitorInfo> GetAllMonitors()
         {
-            var result = new List<MonitorInfo>();
+            List<MonitorInfo> result = new List<MonitorInfo>();
 
             uint i = 0;
-            var dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            DISPLAY_DEVICE dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
 
             while (EnumDisplayDevices(null, i++, ref dd, 0))
             {
@@ -115,7 +122,7 @@ namespace Business.Helpers
                 string uniqueId = GetEdidUniqueId(edid);
 
                 // Get current bounds for this device name
-                var bounds = GetBoundsForDeviceName(dd.DeviceName);
+                Rectangle bounds = GetBoundsForDeviceName(dd.DeviceName);
 
                 result.Add(new MonitorInfo
                 {
@@ -130,6 +137,28 @@ namespace Business.Helpers
             return result;
         }
 
+        public static IntPtr GetMonitorHandle(string monitorUniqueId)
+        {
+            uint i = 0;
+            DISPLAY_DEVICE dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+
+            while (EnumDisplayDevices(null, i++, ref dd, 0))
+            {
+                if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) == 0)
+                    continue;
+
+                byte[]? edid = GetEdidBytes(dd.DeviceID);
+                if (edid == null) continue;
+
+                string uniqueId = GetEdidUniqueId(edid);
+                if(uniqueId == monitorUniqueId)
+                {
+                    return GetHandleForDeviceName(uniqueId);
+                }
+            }
+
+            return IntPtr.Zero;
+        }
 
 
 
@@ -183,6 +212,26 @@ namespace Business.Helpers
 
 
             return monitorBounds ;
+        }
+
+        private static IntPtr GetHandleForDeviceName(string deviceName)
+        {
+            IntPtr result = IntPtr.Zero;
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (hMonitor, hdcMonitor, ref lprcMonitor, dwData) =>
+            {
+                MONITORINFOEX mi = new MONITORINFOEX { cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>() };
+                if (GetMonitorInfo(hMonitor, ref mi))
+                    if (mi.szDevice == deviceName)
+                    {
+                        result = hMonitor;
+                        return false; // Stop loop
+                    }
+
+                return true;
+            }, IntPtr.Zero);
+
+
+            return result;
         }
     }
 }

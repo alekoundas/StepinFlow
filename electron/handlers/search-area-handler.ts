@@ -34,8 +34,6 @@ export function registerSearchAreaHandler(
       const virtualWidth = maxRight - minX;
       const virtualHeight = maxBottom - minY;
 
-     
-
       // ── 2. Create transparent fullscreen overlay window ───────────────────────
       const overlay = new BrowserWindow({
         x: minX,
@@ -63,6 +61,15 @@ export function registerSearchAreaHandler(
           sandbox: true,
         },
       });
+
+      // Set bouds again... cant find out why the initial values doesnt stay
+      overlay.setBounds({
+        x: minX,
+        y: minY,
+        width: virtualWidth,
+        height: virtualHeight,
+      });
+      overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
       overlay.setIgnoreMouseEvents(false);
       overlay.setAlwaysOnTop(true, "screen-saver"); // highest possible level
