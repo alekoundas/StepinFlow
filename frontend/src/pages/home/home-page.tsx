@@ -29,7 +29,7 @@ export default function HomePage() {
 
   const onGreet3 = async () => {
     const sss = ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({ isFullScreen: true }),
+      new ScreenshotRequestDto({ isVirtualScreen: true }),
     );
     sss.then((x) => console.log(x));
   };

@@ -1,6 +1,4 @@
 ﻿using Core.Models.Business;
-using Core.Models.Database;
-using Microsoft.Win32;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
@@ -9,7 +7,7 @@ namespace Business.Helpers
     public static class ScreenHelper
     {
         //==================================================
-        // P/Invoke Get system metrics
+        // P/Invoke Get system metrics (used for virtual screen)
         //==================================================
         private const int SM_CXVIRTUALSCREEN = 78;
         private const int SM_CYVIRTUALSCREEN = 79;
@@ -21,15 +19,8 @@ namespace Business.Helpers
 
 
         //==================================================
-        // P/Invoke declarations for monitors
+        // P/Invoke Get all Monitors and get Monitor info 
         //==================================================
-        [DllImport("user32.dll")]
-        private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
-        private delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
-
-        [DllImport("user32.dll")]
-        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
-
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
         {
@@ -39,7 +30,7 @@ namespace Business.Helpers
             public int Bottom;
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct MONITORINFOEX
         {
             public uint cbSize;
@@ -50,14 +41,17 @@ namespace Business.Helpers
             public string szDevice;
         }
 
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+        private delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
 
 
         //==================================================
-        // P/Invoke declarations for devices
+        // P/Invoke Get all Display Devices
         //==================================================
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
-
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct DISPLAY_DEVICE
         {
@@ -73,11 +67,11 @@ namespace Business.Helpers
             public string DeviceKey;
         }
 
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
+
         private const uint DISPLAY_DEVICE_ATTACHED_TO_DESKTOP = 0x00000001;
         private const uint DISPLAY_DEVICE_PRIMARY_DEVICE = 0x00000004;
-
-
-
 
 
 
@@ -106,58 +100,51 @@ namespace Business.Helpers
         /// </summary>
         public static IReadOnlyList<MonitorInfo> GetAllMonitors()
         {
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> everyMonitorInfos = GetEveryMonitorInfo();
             List<MonitorInfo> result = new List<MonitorInfo>();
+            int index = 1; // for fallback display numbering
 
-            uint i = 0;
-            DISPLAY_DEVICE dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
-
-            while (EnumDisplayDevices(null, i++, ref dd, 0))
+            DISPLAY_DEVICE adapter = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            for (uint ai = 0; EnumDisplayDevices(null, ai, ref adapter, 0); ai++)
             {
-                if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) == 0)
+                if ((adapter.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) == 0)
                     continue;
 
-                byte[]? edid = GetEdidBytes(dd.DeviceID);
-                if (edid == null) continue;
-
-                string uniqueId = GetEdidUniqueId(edid);
-
-                // Get current bounds for this device name
-                Rectangle bounds = GetBoundsForDeviceName(dd.DeviceName);
-
-                result.Add(new MonitorInfo
+                DISPLAY_DEVICE monitor = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+                for (uint i = 0; EnumDisplayDevices(adapter.DeviceName, i, ref monitor, 0); i++)
                 {
-                    UniqueId = uniqueId,
-                    DeviceName = dd.DeviceName,           // e.g. \\.\DISPLAY1
-                    FriendlyName = dd.DeviceString,
-                    IsPrimary = (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0,
-                    Bounds = bounds
-                });
+                    bool isVirtual = !monitor.DeviceID.StartsWith("MONITOR\\", StringComparison.OrdinalIgnoreCase);
+
+                    everyMonitorInfos.TryGetValue(adapter.DeviceName, out var monitorInfo);
+
+                    string friendlyName = BuildFriendlyName(monitor, adapter, monitorInfo.Bounds, index, isVirtual);
+
+                    result.Add(new MonitorInfo
+                    {
+                        DeviceId = monitor.DeviceID,
+                        FriendlyName = friendlyName,
+                        AdapterName = adapter.DeviceName,
+                        IsPrimary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0,
+                        IsVirtual = isVirtual,
+                        Bounds = monitorInfo.Bounds,
+                        HMonitor = monitorInfo.HMonitor
+                    });
+
+                    index++;
+                }
             }
 
             return result;
         }
 
-        public static IntPtr FindHMonitorById(string monitorUniqueId)
+        /// <summary>
+        /// Returns pointer handle for a specific Monitor
+        /// </summary>
+        public static IntPtr FindHMonitorById(string deviceId)
         {
-            uint i = 0;
-            DISPLAY_DEVICE dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
-
-            while (EnumDisplayDevices(null, i++, ref dd, 0))
-            {
-                if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) == 0)
-                    continue;
-
-                byte[]? edid = GetEdidBytes(dd.DeviceID);
-                if (edid == null) continue;
-
-                string uniqueId = GetEdidUniqueId(edid);
-                if(uniqueId == monitorUniqueId)
-                {
-                    return GetHandleForDeviceName(uniqueId);
-                }
-            }
-
-            return IntPtr.Zero;
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> everyMonitorInfos = GetEveryMonitorInfo();
+            everyMonitorInfos.TryGetValue(deviceId, out var monitorInfo);
+            return monitorInfo.HMonitor;
         }
 
 
@@ -165,73 +152,61 @@ namespace Business.Helpers
         // ================================================================
         // Private helpers
         // ================================================================
-        private static byte[]? GetEdidBytes(string? pnpDeviceId)
+
+        private static Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> GetEveryMonitorInfo()
         {
-            if (string.IsNullOrEmpty(pnpDeviceId)) return null;
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> map = new Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)>(StringComparer.OrdinalIgnoreCase);
 
-            string keyPath = $@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters";
-            using var key = Registry.LocalMachine.OpenSubKey(keyPath);
-            return key?.GetValue("EDID") as byte[];
-        }
-
-        private static string GetEdidUniqueId(byte[] edid)
-        {
-            if (edid.Length < 20) return "INVALID_EDID";
-
-            // Manufacturer (3 letters)
-            ushort id = (ushort)((edid[8] << 8) | edid[9]);
-            char m1 = (char)('A' + ((id >> 10) & 0x1F) - 1);
-            char m2 = (char)('A' + ((id >> 5) & 0x1F) - 1);
-            char m3 = (char)('A' + (id & 0x1F) - 1);
-            string manufacturer = $"{m1}{m2}{m3}";
-
-            // Product code
-            int product = edid[10] | (edid[11] << 8);
-
-            // Serial number (4 bytes)
-            uint serial = BitConverter.ToUInt32(edid, 12);
-
-            return $"{manufacturer}-{product:X4}-{serial:X8}";
-        }
-
-        private static Rectangle GetBoundsForDeviceName(string deviceName)
-        {
-            Rectangle monitorBounds = Rectangle.Empty;
-            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (hMonitor, hdcMonitor, ref lprcMonitor, dwData) =>
+            MonitorEnumProc callback = (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
             {
-                MONITORINFOEX mi = new MONITORINFOEX { cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>() };
-                if (GetMonitorInfo(hMonitor, ref mi))
-                    if (mi.szDevice == deviceName)
-                    {
-                        monitorBounds = Rectangle.FromLTRB(mi.rcMonitor.Left, mi.rcMonitor.Top, mi.rcMonitor.Right, mi.rcMonitor.Bottom);
-                        return false; // Stop loop
-                    }
+                MONITORINFOEX monitorInfo = new MONITORINFOEX();
+                monitorInfo.cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>();
+                if (GetMonitorInfo(hMonitor, ref monitorInfo))
+                {
+                    map[monitorInfo.szDevice] = (
+                        hMonitor,
+                        Rectangle.FromLTRB(monitorInfo.rcMonitor.Left, monitorInfo.rcMonitor.Top, monitorInfo.rcMonitor.Right, monitorInfo.rcMonitor.Bottom)
+                    );
+                }
 
                 return true;
-            }, IntPtr.Zero);
+            };
 
 
-            return monitorBounds ;
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
+
+            return map;
         }
 
-        private static IntPtr GetHandleForDeviceName(string deviceName)
+        private static string BuildFriendlyName(
+            DISPLAY_DEVICE monitor,
+            DISPLAY_DEVICE adapter,
+            Rectangle bounds,
+            int index,
+            bool isVirtual)
         {
-            IntPtr result = IntPtr.Zero;
-            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (hMonitor, hdcMonitor, ref lprcMonitor, dwData) =>
+
+            // Base name: prefer DeviceString if not generic, then fallback
+            string baseName = "";
+            if (string.IsNullOrWhiteSpace(monitor.DeviceString)
+                || monitor.DeviceString.Contains("Generic", StringComparison.OrdinalIgnoreCase)
+                || monitor.DeviceString.Contains("PnP", StringComparison.OrdinalIgnoreCase))
             {
-                MONITORINFOEX mi = new MONITORINFOEX { cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>() };
-                if (GetMonitorInfo(hMonitor, ref mi))
-                    if (mi.szDevice == deviceName)
-                    {
-                        result = hMonitor;
-                        return false; // Stop loop
-                    }
+                baseName = isVirtual ? "Virtual Monitor" : $"Monitor {index}";
+            }
+            else
+            {
+                baseName = monitor.DeviceString;
+            }
 
-                return true;
-            }, IntPtr.Zero);
+            // Append resolution + primary tag
+            string resolution = $" ({bounds.Width}×{bounds.Height})";
+            string primary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0 ? " [Primary]" : string.Empty;
 
-
-            return result;
+            return $"{baseName}{resolution}{primary}";
+            // → e.g.  "Odyssey G9 (5120×1440) [Primary]"
+            //         "Monitor 2 (1920×1080)"
+            //         "Virtual Monitor (1920×1080)"
         }
     }
 }

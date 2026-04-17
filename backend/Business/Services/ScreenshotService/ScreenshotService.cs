@@ -22,9 +22,9 @@ namespace Business.Services.ScreenshotService
         // ================================================================
         public byte[] Capture(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
+            using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
 
-            byte[] result = Compress(bmp, rect.Width, rect.Height, ScreenshotFormatEnum.JPEG, 100);
+            byte[] result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
             return result;
         }
 
@@ -32,9 +32,9 @@ namespace Business.Services.ScreenshotService
         public byte[] CaptureVirtualScreen()
         {
             Rectangle rect = ScreenHelper.GetVirtualScreenBounds();
-            Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
+            using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
 
-            byte[] result = Compress(bmp, rect.Width, rect.Height, ScreenshotFormatEnum.JPEG, 100);
+            byte[] result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
             return result;
         }
 
@@ -48,7 +48,7 @@ namespace Business.Services.ScreenshotService
                 case FlowSearchAreaTypeEnum.CUSTOM:
                     Rectangle rect = new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height);
                     Bitmap customBmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
-                    result = Compress(customBmp, area.Width, area.Height, ScreenshotFormatEnum.JPEG, 100);
+                    result = Compress(customBmp, ScreenshotFormatEnum.JPEG, 100);
                     break;
                 case FlowSearchAreaTypeEnum.APPLICATION:
                     IntPtr hwnd = AppWindowHelper.FindHwndByTitle(area.AppWindowName);
@@ -72,7 +72,7 @@ namespace Business.Services.ScreenshotService
                 default:
                     Rectangle virtualRect = ScreenHelper.GetVirtualScreenBounds();
                     Bitmap bmp = CaptureGraphics(virtualRect, ScreenshotFormatEnum.JPEG, 100);
-                    result = Compress(bmp, virtualRect.Width, virtualRect.Height, ScreenshotFormatEnum.JPEG, 100);
+                    result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
 
                     break;
             }
@@ -89,7 +89,7 @@ namespace Business.Services.ScreenshotService
 
         private Bitmap CaptureGraphics(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            using Bitmap bmp = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
+            Bitmap bmp = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
             using Graphics graphics = Graphics.FromImage(bmp);
 
             // These flags shave meaningful time off large captures
@@ -101,15 +101,13 @@ namespace Business.Services.ScreenshotService
             return bmp;
         }
 
-        private static byte[] Compress(Bitmap bmp, int width, int height, ScreenshotFormatEnum format, int jpegQuality)
+        private static byte[] Compress(Bitmap bmp, ScreenshotFormatEnum format, int jpegQuality)
         {
-            int pixelCount = width * height;
+            int pixelCount = bmp.Width * bmp.Height;
             int initialCapacity = format == ScreenshotFormatEnum.JPEG
                 ? pixelCount / 4   // JPEG: ~2 bits/pixel → /4 bytes is generous
                 : pixelCount / 2;  // PNG:  harder to predict, raw/2 is a safe over-estimate
-
             using MemoryStream ms = new MemoryStream(initialCapacity);
-
 
 
             if (format == ScreenshotFormatEnum.PNG)
@@ -121,7 +119,7 @@ namespace Business.Services.ScreenshotService
                 ImageCodecInfo codec = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
                 EncoderParameters ep = new EncoderParameters(1)
                 {
-                    Param = { [0] = new EncoderParameter(Encoder.Quality, jpegQuality) }
+                    Param = { [0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality) }
                 };
                 bmp.Save(ms, codec, ep);
             }

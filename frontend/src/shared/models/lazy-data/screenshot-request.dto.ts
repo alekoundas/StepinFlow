@@ -1,7 +1,9 @@
+import type { ScreenshotFormatEnum } from "@/shared/enums/backend/business/screenshot-format-enum";
+
 export class ScreenshotRequestDto {
   flowSearchAreaId?: number;
   isVirtualScreen: boolean = false;
-  isJPEG: boolean = false;
+  formatType: ScreenshotFormatEnum = "JPEG";
   jpegQuality: number = 0;
   locationX: number = 0;
   locationY: number = 0;
