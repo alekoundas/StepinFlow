@@ -137,7 +137,7 @@ namespace Business.Helpers
             return result;
         }
 
-        public static IntPtr GetMonitorHandle(string monitorUniqueId)
+        public static IntPtr FindHMonitorById(string monitorUniqueId)
         {
             uint i = 0;
             DISPLAY_DEVICE dd = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };

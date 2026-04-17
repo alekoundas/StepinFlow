@@ -56,6 +56,23 @@ namespace Business.Services.ScreenshotService
 
 
 
+        public static IntPtr FindHwndByTitle(string windowTitle)
+        {
+            IntPtr foundHwnd = IntPtr.Zero;
+            EnumWindows((hWnd, lParam) =>
+            {
+                string windowText = GetAppWindowText(hWnd);
+                if (windowText.Contains(windowTitle, StringComparison.OrdinalIgnoreCase))
+                {
+                    foundHwnd = hWnd;
+                    return false; // stop enumeration
+                }
+                return true;
+            }, IntPtr.Zero);
+
+
+            return foundHwnd; ;
+        }
 
 
         public static Rectangle GetApplicationWindowBounds(string windowTitle)

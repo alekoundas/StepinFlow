@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Business.Services.ScreenshotService;
+using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -43,7 +44,8 @@ namespace Business.Ipc.Handlers
             }
             else
             {
-                screenshot = _screenshotService.Capture(new Rectangle(request.dto.LocationX, request.dto.LocationY, request.dto.Width, request.dto.Height));
+                Rectangle rect = new Rectangle(request.dto.LocationX, request.dto.LocationY, request.dto.Width, request.dto.Height);
+                screenshot = _screenshotService.Capture(rect,ScreenshotFormatEnum.JPEG,100);
             }
 
             return ResultDto<byte[]>.Success(screenshot);

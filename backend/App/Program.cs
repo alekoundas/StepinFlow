@@ -32,6 +32,7 @@ namespace App
             builder.Services.AddSingleton<IInputService, InputService>();
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
+            builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
 
 
             // IPC
