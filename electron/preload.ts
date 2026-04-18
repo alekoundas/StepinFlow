@@ -52,16 +52,18 @@ const api = {
   },
 
   searchArea: {
-    openWindow: (): Promise<AreaRect | null> =>
+    openWindow: (screenshotRequest: any): Promise<AreaRect | null> =>
       ipcRenderer.invoke(
         IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
-      ) as Promise<AreaRect | null>,
+        screenshotRequest,
+      ),
     sendResultToWindow: (rect: AreaRect | null): void => {
       ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect);
     },
-    signalReady: (): void => {
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY);
-    },
+    signalReady: (): Promise<Uint8Array> =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.SEARCH_AREA_WINDOW_READY,
+      ) as Promise<Uint8Array>,
   },
 
   imageEditor: {
@@ -74,9 +76,8 @@ const api = {
     sendResultToWindow: (rect: AreaRect | null): void => {
       ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW, rect);
     },
-    signalReady: (): void => {
-      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_WINDOW_READY);
-    },
+    signalReady: (): Promise<Uint8Array | null> =>
+      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_WINDOW_READY),
   },
 };
 

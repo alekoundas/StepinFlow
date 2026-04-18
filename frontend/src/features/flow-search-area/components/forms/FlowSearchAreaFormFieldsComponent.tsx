@@ -8,7 +8,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { Button } from "primereact/button";
-import { useSearchAreaCapture } from "@/features/flow-search-area/hooks/use-flow-search-area-overlay";
+import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
 
 interface Props {
   isDisabled?: boolean;
@@ -17,7 +17,7 @@ interface Props {
 export default function FlowSearchAreaFormFieldsComponent({
   isDisabled = false,
 }: Props) {
-  const { control ,setValue} = useFormContext();
+  const { control, setValue } = useFormContext();
 
   // Watch the two fields that control each other
   const selectedType = useWatch({ control, name: "type" });
@@ -35,10 +35,10 @@ export default function FlowSearchAreaFormFieldsComponent({
     { label: "By Monitor", value: "MONITOR" as FlowSearchAreaTypeEnum },
   ];
 
-  const { capture, isCapturing } = useSearchAreaCapture();
+  const { openWindow, isWindowOpen } = useWindowOverlay();
 
   const handleClick = async () => {
-    const rect = await capture();
+    const rect = await openWindow();
     if (rect) {
       setValue("locationX", rect.x);
       setValue("locationY", rect.y);
@@ -85,10 +85,10 @@ export default function FlowSearchAreaFormFieldsComponent({
       {selectedType === "CUSTOM" && (
         <div className="mt-5">
           <Button
-            label={isCapturing ? "Selecting..." : "Select screen area"}
+            label={isWindowOpen ? "Selecting..." : "Select screen area"}
             icon="pi pi-crop"
-            loading={isCapturing}
-            disabled={isCapturing}
+            loading={isWindowOpen}
+            disabled={isWindowOpen}
             onClick={handleClick}
             className="p-button-outlined p-button-secondary"
             tooltip="Click and drag to select a region of your screen"

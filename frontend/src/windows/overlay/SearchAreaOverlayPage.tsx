@@ -1,5 +1,4 @@
 /**
- * SearchAreaOverlayPage
  *
  * Route: /search-area-overlay
  *
@@ -13,7 +12,6 @@
  *  6. Sends the result back via electronApi.searchArea.sendResult()
  */
 
-import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import React, {
   useCallback,
@@ -56,27 +54,13 @@ export default function SearchAreaOverlayPage() {
 
   // ── Signal ready + subscribe to screenshot ─────────────────────────────────
   useLayoutEffect(() => {
-    // const api = ElectronApiService.searchArea;
-    // if (!api) return;
-
-    // api.signalReady();
-    // ElectronApiService.backendApi.System.takeScreenshot(
-    //   new ScreenshotRequestDto({ isFullScreen: true }),
-    // )
-    //   .then((screenshotBytes: Uint8Array | string) => {
-    //     let base64: string;
-
-    //     if (screenshotBytes instanceof Uint8Array) {
-    //       base64 = Buffer.from(screenshotBytes).toString("base64");
-    //     } else {
-    //       base64 = screenshotBytes as string; // in case it's already base64
-    //     }
-
-    //     setScreenshot(`data:image/png;base64,${base64}`);
-    //   })
-    //   .catch((err) => {
-    //     console.error("Failed to take screenshot:", err);
-    //   });
+    ElectronApiService.searchArea
+      .signalReady()
+      .then((screenshotBytes: Uint8Array) => {
+        const base64: string = Buffer.from(screenshotBytes).toString("base64");
+        setScreenshot(`data:image/png;base64,${base64}`);
+      })
+      .catch((err) => console.error("Failed signal ready:", err));
 
     return;
   }, []);
@@ -126,7 +110,7 @@ export default function SearchAreaOverlayPage() {
   );
 
   const sendResult = useCallback((rect: AreaRect | null) => {
-    // ElectronApiService.searchArea?.sendResult(rect);
+    ElectronApiService.searchArea?.sendResultToWindow(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {

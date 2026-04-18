@@ -89,8 +89,8 @@ app.whenReady().then(async () => {
 
   // ======== Register IPC handlers ==========
 
-  await registerBackendHandler(mainWindow, isDev);
-  registerSearchAreaHandler(mainWindow, isDev);
+  const {invokeBackend} = await registerBackendHandler(mainWindow, isDev);
+  registerSearchAreaHandler(mainWindow, isDev,invokeBackend);
   registerImageEditorHandler(mainWindow, isDev);
 
   app.on("before-quit", () => {

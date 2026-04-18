@@ -11,51 +11,67 @@ interface PendingResolver {
   reject: (reason: any) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 }
-
+export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
 export async function registerBackendHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
-): Promise<void> {
+): Promise<{
+  invokeBackend: InvokeBackend;
+}> {
   const { IpcRequest, IpcResponse } = await ProtobufService().getMessageTypes();
-  let backendClient: net.Socket | null = null;
 
   const pending = new Map<string, PendingResolver>();
+  let backendClient: net.Socket | null = null;
+
   const getClient = () => backendClient;
   const setClient = (socket: net.Socket | null) => (backendClient = socket);
-  const onConnected = (socket: net.Socket) => {
+  const onConnected = (socket: net.Socket) =>
     handleReceivedData(socket, mainWindow, pending, IpcResponse);
-  };
 
-  // ── Initial connection ────────────────────────────────────────────────────────
+  //============================================
+  // Initial connection
+  //============================================
   backendClient = await BackendService().connectToDotNetPipe(
     mainWindow,
     setClient,
     onConnected,
   );
 
-  // ========= Handle backend Send =============
+  //============================================
+  // IPC handle: renderer -> invokeBackend -> .Net
+  //============================================
   ipcMain.handle(IPC_CHANNELS.BACKEND_SEND, async (_, msg: RequestMessage) => {
     console.log("[BackendHandler] Sending to backend:", msg);
+    return invokeBackend(msg.action, msg.payload);
+  });
 
+  //============================================
+  // Expose reusable invoke .Net method (also used on other IpcHandlers in electron)
+  //============================================
+  const invokeBackend: InvokeBackend = async (
+    action: string,
+    payload: unknown,
+  ): Promise<any> => {
     let client = getClient();
 
     if (!client || !client.writable) {
-      log.log("[BackendHandler] Pipe not connected — reconnecting...");
+      log.log("[BackendHandler]: Pipe not connected — reconnecting...");
       try {
         backendClient = await BackendService().connectToDotNetPipe(
           mainWindow,
           setClient,
           onConnected,
         );
-      } catch (reconnectErr) {
-        log.error("[BackendHandler] Reconnect failed:", reconnectErr);
-        throw new Error("[BackendHandler] Backend pipe not available");
+        client = backendClient;
+      } catch (err) {
+        log.error("[BackendHandler]: Reconnect failed:", err);
+        throw new Error("[BackendHandler]: Backend pipe not available");
       }
     }
 
     const correlationId = crypto.randomUUID();
-    const payloadBytes = Buffer.from(JSON.stringify(msg.payload));
-    const reqObj = { action: msg.action, payload: payloadBytes, correlationId };
+    const payloadBytes = Buffer.from(JSON.stringify(payload));
+    const reqObj = { action, payload: payloadBytes, correlationId };
 
     const verifyErr = IpcRequest.verify(reqObj);
     if (verifyErr) throw new Error(verifyErr);
@@ -65,17 +81,19 @@ export async function registerBackendHandler(
     prefix.writeUInt32BE(encoded.length, 0);
     getClient()!.write(Buffer.concat([prefix, encoded]));
 
-    return new Promise((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         if (pending.has(correlationId)) {
           pending.delete(correlationId);
-          reject(new Error(`[BackendHandler] Timeout for "${msg.action}"`));
+          reject(new Error(`[BackendHandler] Timeout for "${action}"`));
         }
       }, 30_000);
 
       pending.set(correlationId, { resolve, reject, timeoutId });
     });
-  });
+  };
+
+  return { invokeBackend };
 }
 
 function handleReceivedData(

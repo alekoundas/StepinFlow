@@ -11,22 +11,6 @@ interface RequestMessage {
   correlationId?: string;
 }
 
-// interface ElectronApi {
-//   backendApi: {
-//     invoke: <T = unknown>(msg: RequestMessage) => Promise<T>;
-//     onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
-//   };
-//   searchArea: {
-//     capture: () => Promise<AreaRect | null>;
-//     sendResult: (rect: AreaRect | null) => void;
-//     onScreenshot: (callback: (dataUrl: string) => void) => () => void;
-//     signalReady: () => void;
-//   };
-//   imageEditor: {
-//     open: (initialDataUrl: string, stepId?: string) => Promise<AreaRect>;
-//   };
-// }
-
 declare global {
   interface Window {
     electronApi: {
@@ -35,17 +19,14 @@ declare global {
         onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: () => Promise<AreaRect | null>;
+        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
         sendResultToWindow: (rect: AreaRect | null) => void;
-        signalReady: () => void;
+        signalReady: () => Promise<Uint8Array>;
       };
       imageEditor: {
-        openWindow: (
-          initialDataUrl: string,
-          stepId?: string,
-        ) => Promise<AreaRect>;
+        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
         sendResultToWindow: (rect: AreaRect | null) => void;
-        signalReady: () => void;
+        signalReady: () => Promise<Uint8Array | null>;
       };
     };
   }

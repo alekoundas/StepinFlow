@@ -1,3 +1,4 @@
+import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import type { AreaRect } from "../../../../electron/shared/types";
 import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -25,9 +26,9 @@ declare global {
         onMessage: <T>(cb: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: () => Promise<AreaRect | null>;
+        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
         sendResultToWindow: (rect: AreaRect | null) => void;
-        signalReady: () => void;
+        signalReady: () => Promise<Uint8Array>;
       };
     };
   }
@@ -36,7 +37,8 @@ declare global {
 export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {
-    openWindow: () => window.electronApi.searchArea.openWindow(),
+    openWindow: (screenshotRequest: ScreenshotRequestDto) =>
+      window.electronApi.searchArea.openWindow(screenshotRequest),
     sendResultToWindow: (rect: AreaRect | null) =>
       window.electronApi.searchArea.sendResultToWindow(rect),
     signalReady: () => window.electronApi.searchArea.signalReady(),

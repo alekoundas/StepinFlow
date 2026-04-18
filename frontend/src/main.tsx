@@ -17,7 +17,7 @@ import { WorkflowPage } from "@/features/workflow/WorkflowPage";
 import { FlowListPage } from "@/features/flow/FlowListPage";
 import { FlowFormPage } from "@/features/flow/FlowFormPage";
 import { DialogRootComponent } from "@/shared/components/modal-component/DialogRootComponent";
-import SearchAreaOverlayPage from "@/features/flow-search-area/SearchAreaOverlayPage";
+import SearchAreaOverlayPage from "@/windows/overlay/SearchAreaOverlayPage";
 
 const router = createHashRouter([
   {

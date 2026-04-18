@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using Business.DataService.Services;
+using Business.Services.ScreenshotService;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace Business.Ipc.Handlers
 {
@@ -23,15 +23,14 @@ namespace Business.Ipc.Handlers
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupWindowQuery request, CancellationToken ct)
         {
             LookupRequestDto dto = request.dto;
-            List<LookupItemDto> processes = Process.GetProcesses()
-            .Where(p => !string.IsNullOrWhiteSpace(p.MainWindowTitle))
-            .Where(p => string.IsNullOrEmpty(dto.SearchText) || p.MainWindowTitle.Contains(dto.SearchText, StringComparison.OrdinalIgnoreCase))
-            //.Take(req.MaxResults ?? 100)
-            .Select(p => new LookupItemDto
+
+            List<LookupItemDto> processes = AppWindowHelper.GetApplicationWindowNames()
+            .Where(x => x.Contains(dto.SearchText??"", StringComparison.OrdinalIgnoreCase))
+            .Select(x => new LookupItemDto
             {
-                Value = p.MainWindowTitle,
-                Label = p.MainWindowTitle,
-                Description = p.ProcessName,
+                Value = x,
+                Label = x,
+                Description = x,
                 //ExtraData = new { ProcessId = p.Id, ProcessName = p.ProcessName }
             })
             .ToList();
