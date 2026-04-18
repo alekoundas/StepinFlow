@@ -56,14 +56,50 @@ export default function SearchAreaOverlayPage() {
   useLayoutEffect(() => {
     ElectronApiService.searchArea
       .signalReady()
-      .then((screenshotBytes: Uint8Array) => {
-        const base64: string = Buffer.from(screenshotBytes).toString("base64");
-        setScreenshot(`data:image/png;base64,${base64}`);
+      .then((screenshotBase64: Uint8Array) => {
+        const blob = base64ToBlob(screenshotBase64.toString());
+        const url = URL.createObjectURL(blob);
+        // setImageUrl(url);
+        setScreenshot(url);
       })
       .catch((err) => console.error("Failed signal ready:", err));
 
     return;
+    // return () => {
+    //   URL.revokeObjectURL(url);
+    // };
   }, []);
+
+  const base64ToBlob = (
+    base64: string,
+    contentType = "image/jpeg",
+    sliceSize = 1024 * 512, // 512KB chunks - good balance for huge images
+  ): Blob => {
+    // Remove data URL prefix if present (your backend sends pure base64)
+    const pureBase64 = base64.startsWith("data:")
+      ? base64.split(",")[1]
+      : base64;
+
+    const byteCharacters = atob(pureBase64);
+    const byteArrays: Uint8Array[] = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      // Create Uint8Array explicitly from ArrayBuffer-like
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays as Uint8Array<ArrayBuffer>[], {
+      type: contentType,
+    });
+  };
 
   // ── ESC to cancel ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -149,7 +185,6 @@ export default function SearchAreaOverlayPage() {
         overflow: "hidden",
       }}
     >
-      aaaa
       {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
       {screenshot && (
         <img
