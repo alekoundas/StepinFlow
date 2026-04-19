@@ -1,24 +1,17 @@
 import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
+import type { Rectangle } from "electron";
 import { useState, useCallback } from "react";
-import type { AreaRect } from "../../../../../electron/shared/types";
-
-// interface AreaRect {
-//   x: number;
-//   y: number;
-//   width: number;
-//   height: number;
-// }
 
 interface Props {
-  openWindow: () => Promise<AreaRect | null>;
+  openWindow: () => Promise<Rectangle | null>;
   isWindowOpen: boolean;
 }
 
 export function useWindowOverlay(): Props {
   const [isWindowOpen, setIsWindowOpen] = useState(false);
 
-  const openWindow = useCallback(async (): Promise<AreaRect | null> => {
+  const openWindow = useCallback(async (): Promise<Rectangle | null> => {
     setIsWindowOpen(true);
     try {
       const screenshotRequestDto = new ScreenshotRequestDto({

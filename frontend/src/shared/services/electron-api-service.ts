@@ -1,7 +1,9 @@
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
-import type { AreaRect } from "../../../../electron/shared/types";
+// import type { Rectangle } from "../../../../electron/shared/types";
 import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import type { Rectangle } from "electron";
+import type { SignalReadyResponse } from "../../../../electron/shared/types";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -11,8 +13,8 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 //     onMessage: <T>(cb: (msg: T) => void) => () => void;
 //   };
 //   searchArea: {
-//     capture: () => Promise<AreaRect | null>;
-//     sendResult: (rect: AreaRect | null) => void;
+//     capture: () => Promise<Electron.Rectangle | null>;
+//     sendResult: (rect: Electron.Rectangle | null) => void;
 //     onScreenshot: (callback: (dataUrl: string) => void) => () => void;
 //     signalReady: () => void;
 //   };
@@ -26,9 +28,9 @@ declare global {
         onMessage: <T>(cb: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
-        sendResultToWindow: (rect: AreaRect | null) => void;
-        signalReady: () => Promise<Uint8Array>;
+        openWindow: (screenshotRequest: any) => Promise<Rectangle | null>;
+        sendResultToWindow: (rect: Rectangle | null) => void;
+        signalReady: () => Promise<SignalReadyResponse>;
       };
     };
   }
@@ -39,7 +41,7 @@ export const ElectronApiService = {
   searchArea: {
     openWindow: (screenshotRequest: ScreenshotRequestDto) =>
       window.electronApi.searchArea.openWindow(screenshotRequest),
-    sendResultToWindow: (rect: AreaRect | null) =>
+    sendResultToWindow: (rect: Rectangle | null) =>
       window.electronApi.searchArea.sendResultToWindow(rect),
     signalReady: () => window.electronApi.searchArea.signalReady(),
   },

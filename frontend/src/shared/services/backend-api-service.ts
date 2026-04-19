@@ -1,10 +1,6 @@
-import type {
-  AreaRect,
-  RequestMessage,
-} from "../../../../electron/shared/types";
+import type { RequestMessage } from "../../../../electron/shared/types";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
-import type { ResultDto } from "@/shared/models/result-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";

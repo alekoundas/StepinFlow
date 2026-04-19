@@ -6,13 +6,6 @@ import { IPC_CHANNELS } from "../shared/channels.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export function registerImageEditorHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
@@ -24,7 +17,7 @@ export function registerImageEditorHandler(
         width: 1200,
         height: 800,
         frame: false,
-        transparent: false, // we use canvas for transparency
+        transparent: false,
         alwaysOnTop: true,
         webPreferences: {
           preload: path.join(

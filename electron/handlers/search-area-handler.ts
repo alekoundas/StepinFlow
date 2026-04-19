@@ -1,18 +1,12 @@
-import { BrowserWindow, desktopCapturer, ipcMain, screen } from "electron";
+import { BrowserWindow, ipcMain, Rectangle, screen } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../shared/channels.js";
 import { InvokeBackend } from "./backend-handler";
+import { MonitorService } from "../monitor-service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 // Make sure user cant open second window.
 let isWindowOpen = false;
@@ -20,11 +14,14 @@ let isWindowOpen = false;
 export function registerSearchAreaHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
-  invokeBackend: InvokeBackend, // Q2: main process calls backend directly — no DTO import from frontend
+  invokeBackend: InvokeBackend,
 ): void {
   ipcMain.handle(
     IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
-    async (_event, screenshotRequestPayload: any): Promise<AreaRect | null> => {
+    async (
+      _event,
+      screenshotRequestPayload: any,
+    ): Promise<Rectangle | null> => {
       if (isWindowOpen) {
         console.warn(
           "[SearchAreaHandler] Overlay already open — ignoring second call",
@@ -47,10 +44,11 @@ export function registerSearchAreaHandler(
         }
 
         // 2. Create window.
-        const newWindow = await createWindow(isDev);
+        const virtualMonitor = MonitorService().getMonitorsInfo();
+        const newWindow = await createWindow(isDev, virtualMonitor);
 
         // 3. Listen for 'SignalReady' from react.
-        handleSignalReady(screenshot);
+        handleSignalReady(screenshot, virtualMonitor);
 
         // 4. Redirect window to the window page
         if (isDev) {
@@ -64,6 +62,7 @@ export function registerSearchAreaHandler(
           );
         }
 
+        // 5. Wait for user selection and return value to caller of "open window"
         return await handleUserSelection(newWindow);
       } finally {
         isWindowOpen = false;
@@ -73,7 +72,7 @@ export function registerSearchAreaHandler(
 }
 
 //=====================================================================
-// Call .Net to get the screenshot
+// Call .Net to get the screenshot byte[]
 //=====================================================================
 async function getScreenshot(
   invokeBackend: InvokeBackend,
@@ -93,29 +92,20 @@ async function getScreenshot(
 }
 
 //=====================================================================
-// Create and open window + redirect to react page
+// Create and open window
 //=====================================================================
-async function createWindow(isDev: boolean): Promise<BrowserWindow> {
-  // Virtual screen bounds (multi-monitor)
-  const displays = screen.getAllDisplays();
-  const minX = Math.min(...displays.map((d) => d.bounds.x));
-  const minY = Math.min(...displays.map((d) => d.bounds.y));
-  const maxRight = Math.max(
-    ...displays.map((d) => d.bounds.x + d.bounds.width),
-  );
-  const maxBottom = Math.max(
-    ...displays.map((d) => d.bounds.y + d.bounds.height),
-  );
-
-  const virtualWidth = maxRight - minX;
-  const virtualHeight = maxBottom - minY;
+async function createWindow(
+  isDev: boolean,
+  virtualMonitor: VirtualMonitor,
+): Promise<BrowserWindow> {
+  // const logicalRect = MonitorService().getLogicalVirtualScreen();
 
   // Create window
   const newWindow = new BrowserWindow({
-    x: minX,
-    y: minY,
-    width: virtualWidth,
-    height: virtualHeight,
+    x: virtualMonitor.minVirtualX,
+    y: virtualMonitor.minVirtualY,
+    width: virtualMonitor.logicalVirtualWidth,
+    height: virtualMonitor.logicalVirtualHeight,
     fullscreen: false, // We set bounds manually for multi-monitor safety
     frame: true,
     transparent: false,
@@ -124,7 +114,8 @@ async function createWindow(isDev: boolean): Promise<BrowserWindow> {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
-    movable: false,
+    // movable: false,
+    movable: true,
     focusable: true,
     hasShadow: false,
     webPreferences: {
@@ -139,12 +130,12 @@ async function createWindow(isDev: boolean): Promise<BrowserWindow> {
   });
 
   // Set bounds again... why the fuck initial values doesnt "apply"???
-  newWindow.setBounds({
-    x: minX,
-    y: minY,
-    width: virtualWidth,
-    height: virtualHeight,
-  });
+  // newWindow.setBounds({
+  //   x: virtualMonitor.minVirtualX,
+  //   y: virtualMonitor.minVirtualY,
+  //   width: virtualMonitor.physicalVirtualWidth,
+  //   height: virtualMonitor.physicalVirtualHeight,
+  // });
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   newWindow.setIgnoreMouseEvents(false);
   newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
@@ -158,11 +149,23 @@ async function createWindow(isDev: boolean): Promise<BrowserWindow> {
 //=====================================================================
 // Listen for 'SignalReady' from react, and return image from .Net
 //=====================================================================
-function handleSignalReady(screenshot: Uint8Array): void {
-  ipcMain.handle(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY, async () => {
-    ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY); // Self-remove first — one invocation per window lifecycle
-    return screenshot;
-  });
+function handleSignalReady(
+  screenshot: Uint8Array,
+  virtualMonitor: VirtualMonitor,
+): void {
+  ipcMain.handle(
+    IPC_CHANNELS.SEARCH_AREA_WINDOW_READY,
+    async (): Promise<SignalReadyResponse> => {
+      ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY); // Self-remove first - one invocation per window lifecycle
+
+      return {
+        screenshot: screenshot,
+        monitorsInfo: virtualMonitor.displays,
+        physicalWidth: virtualMonitor.physicalVirtualWidth,
+        physicalHeight: virtualMonitor.physicalVirtualHeight,
+      };
+    },
+  );
 }
 
 //=====================================================================
@@ -171,8 +174,8 @@ function handleSignalReady(screenshot: Uint8Array): void {
 
 function handleUserSelection(
   newWindow: BrowserWindow,
-): Promise<AreaRect | null> {
-  return new Promise<AreaRect | null>((resolve) => {
+): Promise<Rectangle | null> {
+  return new Promise<Rectangle | null>((resolve) => {
     const cleanup = () => {
       ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY); //remove the READY handler if the user cancelled before signalReady fired
       if (!newWindow.isDestroyed()) newWindow.close();
@@ -180,7 +183,7 @@ function handleUserSelection(
 
     ipcMain.once(
       IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW,
-      (_event, rect: AreaRect | null) => {
+      (_event, rect: Rectangle | null) => {
         cleanup();
         resolve(rect);
       },

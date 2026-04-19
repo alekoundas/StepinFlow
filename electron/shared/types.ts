@@ -11,11 +11,25 @@ export interface ResponseMessage<T> {
   error?: string;
 }
 
-export interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+export interface MonitorInfo {
+  logicalBounds: Electron.Rectangle;
+  physicalBounds: Electron.Rectangle;
+  scaleFactor: number;
+}
+export interface SystemMonitor {
+  displays: MonitorInfo[];
+  minVirtualX: number;
+  minVirtualY: number;
+  physicalVirtualWidth: number;
+  physicalVirtualHeight: number;
+  logicalVirtualWidth: number;
+  logicalVirtualHeight: number;
+}
+export interface SignalReadyResponse {
+  screenshot: Uint8Array;
+  monitorsInfo: MonitorInfo[];
+  physicalWidth: number;
+  physicalHeight: number;
 }
 
 // export type KnownActions = "greet" | "test" | "load-flow" | "save-config";

@@ -1,14 +1,28 @@
-interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface RequestMessage {
   action: string;
   payload: unknown;
   correlationId?: string;
+}
+
+interface MonitorInfo {
+  logicalBounds: Electron.Rectangle;
+  physicalBounds: Electron.Rectangle;
+  scaleFactor: number;
+}
+interface VirtualMonitor {
+  displays: MonitorInfo[];
+  minVirtualX: number;
+  minVirtualY: number;
+  physicalVirtualWidth: number;
+  physicalVirtualHeight: number;
+  logicalVirtualWidth: number;
+  logicalVirtualHeight: number;
+}
+interface SignalReadyResponse {
+  screenshot: Uint8Array;
+  monitorsInfo: MonitorInfo[];
+  physicalWidth: number;
+  physicalHeight: number;
 }
 
 declare global {
@@ -19,13 +33,17 @@ declare global {
         onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
-        sendResultToWindow: (rect: AreaRect | null) => void;
-        signalReady: () => Promise<Uint8Array>;
+        openWindow: (
+          screenshotRequest: any,
+        ) => Promise<Electron.Rectangle | null>;
+        sendResultToWindow: (rect: Electron.Rectangle | null) => void;
+        signalReady: () => Promise<SignalReadyResponse>;
       };
       imageEditor: {
-        openWindow: (screenshotRequest: any) => Promise<AreaRect | null>;
-        sendResultToWindow: (rect: AreaRect | null) => void;
+        openWindow: (
+          screenshotRequest: any,
+        ) => Promise<Electron.Rectangle | null>;
+        sendResultToWindow: (rect: Electron.Rectangle | null) => void;
         signalReady: () => Promise<Uint8Array | null>;
       };
     };

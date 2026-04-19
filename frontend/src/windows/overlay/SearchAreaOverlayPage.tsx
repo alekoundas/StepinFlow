@@ -13,6 +13,7 @@
  */
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
+import type { Rectangle } from "electron";
 import React, {
   useCallback,
   useEffect,
@@ -20,23 +21,17 @@ import React, {
   useRef,
   useState,
 } from "react";
+import type { SignalReadyResponse } from "../../../../electron/shared/types";
 
 interface Point {
   x: number;
   y: number;
 }
 
-interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 type Phase = "idle" | "dragging" | "confirming";
 
 // Normalise a rect so width/height are always positive
-function normaliseRect(start: Point, end: Point): AreaRect {
+function normaliseRect(start: Point, end: Point): Rectangle {
   return {
     x: Math.round(Math.min(start.x, end.x)),
     y: Math.round(Math.min(start.y, end.y)),
@@ -56,8 +51,8 @@ export default function SearchAreaOverlayPage() {
   useLayoutEffect(() => {
     ElectronApiService.searchArea
       .signalReady()
-      .then((screenshotBase64: Uint8Array) => {
-        const blob = base64ToBlob(screenshotBase64.toString());
+      .then((signalResponse: SignalReadyResponse) => {
+        const blob = base64ToBlob(signalResponse.screenshot.toString());
         const url = URL.createObjectURL(blob);
         // setImageUrl(url);
         setScreenshot(url);
@@ -75,12 +70,13 @@ export default function SearchAreaOverlayPage() {
     contentType = "image/jpeg",
     sliceSize = 1024 * 512, // 512KB chunks - good balance for huge images
   ): Blob => {
-    // Remove data URL prefix if present (your backend sends pure base64)
-    const pureBase64 = base64.startsWith("data:")
-      ? base64.split(",")[1]
-      : base64;
+    // const pureBase64 = base64.startsWith("data:")
+    //   ? base64.split(",")[1]
+    //   : base64;
 
-    const byteCharacters = atob(pureBase64);
+    // TODO: Use Buffer.from(data, 'base64') instead.
+
+    const byteCharacters = atob(base64);
     const byteArrays: Uint8Array[] = [];
 
     for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
@@ -145,7 +141,7 @@ export default function SearchAreaOverlayPage() {
     [phase, startPoint],
   );
 
-  const sendResult = useCallback((rect: AreaRect | null) => {
+  const sendResult = useCallback((rect: Rectangle | null) => {
     ElectronApiService.searchArea?.sendResultToWindow(rect);
   }, []);
 
@@ -244,7 +240,7 @@ export default function SearchAreaOverlayPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function DimMask({ rect }: { rect: AreaRect }) {
+function DimMask({ rect }: { rect: Rectangle }) {
   const dim = "rgba(0,0,0,0.50)";
   return (
     <>
@@ -300,7 +296,7 @@ function DimMask({ rect }: { rect: AreaRect }) {
   );
 }
 
-function SelectionBox({ rect, phase }: { rect: AreaRect; phase: Phase }) {
+function SelectionBox({ rect, phase }: { rect: Rectangle; phase: Phase }) {
   const handleSize = 8;
   const handleColor = "#60a5fa";
 
@@ -350,7 +346,7 @@ function SelectionBox({ rect, phase }: { rect: AreaRect; phase: Phase }) {
   );
 }
 
-function ReadoutLabel({ rect }: { rect: AreaRect }) {
+function ReadoutLabel({ rect }: { rect: Rectangle }) {
   const OFFSET = 6;
   // Position above the selection; flip below if near top edge
   const above = rect.y - OFFSET - 26;
@@ -383,7 +379,7 @@ function ConfirmBar({
   onRestart,
   onCancel,
 }: {
-  rect: AreaRect;
+  rect: Rectangle;
   onConfirm: () => void;
   onRestart: () => void;
   onCancel: () => void;

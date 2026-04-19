@@ -7,11 +7,25 @@ interface RequestMessage {
   correlationId?: string; // Optional ID to match requests with responses
 }
 
-interface AreaRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+interface MonitorInfo {
+  logicalBounds: Electron.Rectangle;
+  physicalBounds: Electron.Rectangle;
+  scaleFactor: number;
+}
+interface VirtualMonitor {
+  displays: MonitorInfo[];
+  minVirtualX: number;
+  minVirtualY: number;
+  physicalVirtualWidth: number;
+  physicalVirtualHeight: number;
+  logicalVirtualWidth: number;
+  logicalVirtualHeight: number;
+}
+interface SignalReadyResponse {
+  screenshot: Uint8Array;
+  monitorsInfo: MonitorInfo[];
+  physicalWidth: number;
+  physicalHeight: number;
 }
 
 const IPC_CHANNELS = {
@@ -52,28 +66,28 @@ const api = {
   },
 
   searchArea: {
-    openWindow: (screenshotRequest: any): Promise<AreaRect | null> =>
+    openWindow: (screenshotRequest: any): Promise<Electron.Rectangle | null> =>
       ipcRenderer.invoke(
         IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
         screenshotRequest,
       ),
-    sendResultToWindow: (rect: AreaRect | null): void => {
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect);
-    },
-    signalReady: (): Promise<Uint8Array> =>
-      ipcRenderer.invoke(
-        IPC_CHANNELS.SEARCH_AREA_WINDOW_READY,
-      ) as Promise<Uint8Array>,
+    sendResultToWindow: (rect: Electron.Rectangle | null): void =>
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect),
+    signalReady: (): Promise<SignalReadyResponse> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY),
   },
 
   imageEditor: {
-    openWindow: (initialDataUrl: string, stepId?: string): Promise<AreaRect> =>
+    openWindow: (
+      initialDataUrl: string,
+      stepId?: string,
+    ): Promise<Electron.Rectangle> =>
       ipcRenderer.invoke(
         IPC_CHANNELS.IMAGE_EDITOR_WINDOW_OPEN,
         initialDataUrl,
         stepId,
       ),
-    sendResultToWindow: (rect: AreaRect | null): void => {
+    sendResultToWindow: (rect: Electron.Rectangle | null): void => {
       ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW, rect);
     },
     signalReady: (): Promise<Uint8Array | null> =>
