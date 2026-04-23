@@ -12,6 +12,7 @@ export interface ResponseMessage<T> {
 }
 
 export interface MonitorInfo {
+  deviceId: string;
   logicalBounds: Electron.Rectangle;
   physicalBounds: Electron.Rectangle;
   scaleFactor: number;
@@ -30,6 +31,19 @@ export interface SignalReadyResponse {
   monitorsInfo: MonitorInfo[];
   physicalWidth: number;
   physicalHeight: number;
+}
+
+export interface ScreenshotRequestDto {
+  formatType: "JPEG" | "PNG" | "RAW";
+  jpegQuality: number;
+  captureMonitor?: string;
+  captureAppWindow?: string;
+  captureVirtualScreen?: boolean;
+  flowSearchAreaId?: number;
+  locationX?: number;
+  locationY?: number;
+  width?: number;
+  height?: number;
 }
 
 // export type KnownActions = "greet" | "test" | "load-flow" | "save-config";

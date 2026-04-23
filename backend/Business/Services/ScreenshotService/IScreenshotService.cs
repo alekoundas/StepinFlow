@@ -9,5 +9,9 @@ namespace Business.Services.ScreenshotService
         byte[] Capture(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
         byte[] CaptureVirtualScreen();
         byte[] CaptureSearchArea(FlowSearchArea area);
+
+        byte[] CaptureAppWindow(string appWindowName, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
+
+        byte[] CaptureMonitor(string deviceName, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
     }
 }

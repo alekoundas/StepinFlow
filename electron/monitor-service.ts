@@ -1,12 +1,13 @@
 import { Rectangle, screen } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
+import { MonitorInfo, SystemMonitor } from "./shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function MonitorService() {
-  const getMonitorsInfo = (): VirtualMonitor => {
+  const getMonitorsInfo = (): SystemMonitor => {
     // Sort left-to-right so we can accumulate physical X correctly.
     // We CANNOT compute physicalX as (logicalX * scaleFactor) because that only
     // works if all monitors share the same scaleFactor. The correct formula:
@@ -20,6 +21,7 @@ export function MonitorService() {
 
     let accumPhysicalX = 0;
     const displays: MonitorInfo[] = allDisplaysSorted.map((d) => {
+      d.id;
       const physicalW = Math.round(d.bounds.width * d.scaleFactor);
       const physicalH = Math.round(d.bounds.height * d.scaleFactor);
       const physicalY = Math.round(
@@ -27,6 +29,7 @@ export function MonitorService() {
       );
 
       const info: MonitorInfo = {
+        deviceId: d.label,
         logicalBounds: {
           x: d.bounds.x - logicalRect.x,
           y: d.bounds.y - logicalRect.y,

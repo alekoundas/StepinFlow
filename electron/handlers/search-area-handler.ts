@@ -4,6 +4,11 @@ import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../shared/channels.js";
 import { InvokeBackend } from "./backend-handler";
 import { MonitorService } from "../monitor-service.js";
+import {
+  ScreenshotRequestDto,
+  SignalReadyResponse,
+  SystemMonitor,
+} from "../shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,9 +37,11 @@ export function registerSearchAreaHandler(
 
       try {
         // 1. Get screenshot from .Net.
+        const virtualMonitorssadasdasd = MonitorService().getMonitorsInfo();
         const screenshot = await getScreenshot(
           invokeBackend,
           screenshotRequestPayload,
+          virtualMonitorssadasdasd.displays[0].deviceId,
         );
         if (!screenshot) {
           console.error(
@@ -77,12 +84,14 @@ export function registerSearchAreaHandler(
 async function getScreenshot(
   invokeBackend: InvokeBackend,
   screenshotRequestPayload: any,
+  monitorDeviceName: string,
 ): Promise<Uint8Array | null> {
   try {
-    const result = await invokeBackend(
-      "System.takeScreenshot",
-      screenshotRequestPayload,
-    );
+    const result = await invokeBackend("System.takeScreenshot", {
+      formatType: "JPEG",
+      jpegQuality: 100,
+      captureMonitor: monitorDeviceName,
+    } as ScreenshotRequestDto);
 
     return (result as { success: boolean; data: Uint8Array }).data ?? null;
   } catch (err) {
@@ -96,7 +105,7 @@ async function getScreenshot(
 //=====================================================================
 async function createWindow(
   isDev: boolean,
-  virtualMonitor: VirtualMonitor,
+  virtualMonitor: SystemMonitor,
 ): Promise<BrowserWindow> {
   // const logicalRect = MonitorService().getLogicalVirtualScreen();
 
@@ -136,6 +145,12 @@ async function createWindow(
   //   width: virtualMonitor.physicalVirtualWidth,
   //   height: virtualMonitor.physicalVirtualHeight,
   // });
+  newWindow.setBounds({
+    x: virtualMonitor.minVirtualX,
+    y: virtualMonitor.minVirtualY,
+    width: virtualMonitor.logicalVirtualWidth,
+    height: virtualMonitor.logicalVirtualHeight,
+  });
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   newWindow.setIgnoreMouseEvents(false);
   newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
@@ -151,7 +166,7 @@ async function createWindow(
 //=====================================================================
 function handleSignalReady(
   screenshot: Uint8Array,
-  virtualMonitor: VirtualMonitor,
+  virtualMonitor: SystemMonitor,
 ): void {
   ipcMain.handle(
     IPC_CHANNELS.SEARCH_AREA_WINDOW_READY,

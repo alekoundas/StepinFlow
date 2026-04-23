@@ -1,5 +1,4 @@
-﻿// Business/Services/ScreenshotService/WGCHelper.cs
-//
+﻿//
 // Windows.Graphics.Capture helper — pure P/Invoke.
 // Requires: Microsoft.Windows.SDK.Contracts (NuGet)
 //
@@ -17,7 +16,6 @@
 //
 
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;

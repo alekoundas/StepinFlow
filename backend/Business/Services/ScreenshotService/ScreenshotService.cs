@@ -28,6 +28,29 @@ namespace Business.Services.ScreenshotService
             return result;
         }
 
+        public byte[] CaptureMonitor(string deviceName, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
+        {
+            byte[] result = [];
+            IntPtr hMon = ScreenHelper.FindHMonitorById(deviceName);
+            byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);
+
+            if (monitorBytes != null)
+                result = Compress(monitorBytes, monitorWidth, monitorHeight, screenshotFormat, jpegQuality);
+
+            return result;
+        }
+
+        public byte[] CaptureAppWindow(string appWindowName, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
+        {
+            byte[] result = [];
+            IntPtr hwnd = AppWindowHelper.FindHwndByTitle(appWindowName);
+            byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hwnd, out int width, out int height);
+
+            if (monitorBytes != null)
+                result = Compress(monitorBytes, width, height, screenshotFormat, jpegQuality);
+
+            return result;
+        }
 
         public byte[] CaptureVirtualScreen()
         {
@@ -61,7 +84,7 @@ namespace Business.Services.ScreenshotService
                     break;
 
                 case FlowSearchAreaTypeEnum.MONITOR:
-                    IntPtr hMon = ScreenHelper.FindHMonitorById(area.AppWindowName);
+                    IntPtr hMon = ScreenHelper.FindHMonitorById(area.MonitorUniqueId);
                     byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);
 
                     if (monitorBytes != null)

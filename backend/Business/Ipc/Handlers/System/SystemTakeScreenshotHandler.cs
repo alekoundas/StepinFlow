@@ -38,10 +38,19 @@ namespace Business.Ipc.Handlers
                 else
                     screenshot = _screenshotService.CaptureVirtualScreen();
             }
-            else if (request.dto.IsVirtualScreen)
+            else if (request.dto.CaptureVirtualScreen)
             {
                 screenshot = _screenshotService.CaptureVirtualScreen();
             }
+            else if (request.dto.CaptureAppWindow.Length > 0)
+            {
+                screenshot = _screenshotService.CaptureAppWindow(request.dto.CaptureAppWindow, request.dto.FormatType, request.dto.JpegQuality);
+            }
+            else if (request.dto.CaptureMonitor.Length > 0)
+            {
+                screenshot = _screenshotService.CaptureMonitor(request.dto.CaptureMonitor, request.dto.FormatType, request.dto.JpegQuality);
+            }
+
             else
             {
                 Rectangle rect = new Rectangle(request.dto.LocationX, request.dto.LocationY, request.dto.Width, request.dto.Height);
