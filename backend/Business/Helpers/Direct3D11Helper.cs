@@ -25,20 +25,17 @@ namespace Business.Services.ScreenshotService
         private const int SLOT_QueryInterface = 0;
         private const int SLOT_ID3D11Device_CreateTexture2D = 5;
         private const int SLOT_ID3D11DeviceContext_CopyResource = 47;
-        private const int SLOT_ID3D11DeviceContext_Map = 48;
-        private const int SLOT_ID3D11DeviceContext_Unmap = 49;
+        private const int SLOT_ID3D11DeviceContext_Map = 14;
+        private const int SLOT_ID3D11DeviceContext_Unmap = 15;
 
 
         // ================================================================
         // GUIDs  
         // ================================================================
-        //private static readonly Guid IID_GraphicsCaptureItem = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
 
         private static readonly Guid IID_IDXGIDevice3 = new Guid("6007896c-3244-4afd-bf18-a6d3beda5023");
 
-        private static readonly Guid IID_IDXGISurface = new Guid("cafcb56c-6ac3-4889-bf47-9e23bbd260ec");
-
-        //private static readonly Guid IID_IGraphicsCaptureItemInterop = new Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356");
+        private static readonly Guid IID_ID3D11Texture2D = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c");
 
 
         // ================================================================
@@ -167,14 +164,40 @@ namespace Business.Services.ScreenshotService
         {
             // 1. Unwrap WinRT surface to the raw D3D11 texture pointer.
             //    IDirect3DDxgiInterfaceAccess is the bridge between WinRT and COM/D3D.
-            IDirect3DDxgiInterfaceAccess access = (IDirect3DDxgiInterfaceAccess)surface;
-            Guid texGuid = IID_IDXGISurface; // The frame texture implements IDXGISurface
-            int hr = access.GetInterface(ref texGuid, out IntPtr frameSurfacePtr);
-            if (hr < 0 || frameSurfacePtr == IntPtr.Zero)
+            //IDirect3DDxgiInterfaceAccess access = (IDirect3DDxgiInterfaceAccess)surface;
+            IntPtr surfacePtr = WinRT.MarshalInterface<IDirect3DSurface>.FromManaged(surface);
+            IDirect3DDxgiInterfaceAccess access = (IDirect3DDxgiInterfaceAccess)Marshal.GetObjectForIUnknown(surfacePtr);
+
+
+            //Guid texGuid = IID_IDXGISurface; // The frame texture implements IDXGISurface
+            //int hr = access.GetInterface(ref texGuid, out IntPtr frameSurfacePtr);
+            //if (hr < 0 || frameSurfacePtr == IntPtr.Zero)
+            //{
+            //    Console.Error.WriteLine($"[WGC] GetInterface(IDXGISurface) failed: 0x{hr:X8}");
+            //    return null;
+            //}
+
+            //// QI IDXGISurface → ID3D11Resource 
+            //QueryInterfaceDelegate fnQI = GetVtableFunc<QueryInterfaceDelegate>(frameSurfacePtr, SLOT_QueryInterface);
+            //Guid resGuid = IID_ID3D11Resource;
+            //hr = fnQI(frameSurfacePtr, ref resGuid, out IntPtr frameResourcePtr);
+            //Marshal.Release(frameSurfacePtr); // done with the IDXGISurface ptr
+            //if (hr < 0 || frameResourcePtr == IntPtr.Zero)
+            //{
+            //    Console.Error.WriteLine($"[WGC] QI ID3D11Resource failed: 0x{hr:X8}");
+            //    return null;
+            //}
+
+            // Ask for ID3D11Texture2D directly — this IS an ID3D11Resource, no QI needed
+            Guid texGuid = IID_ID3D11Texture2D;
+            int hr = access.GetInterface(ref texGuid, out IntPtr frameResourcePtr);
+            if (hr < 0 || frameResourcePtr == IntPtr.Zero)
             {
-                Console.Error.WriteLine($"[WGC] GetInterface(IDXGISurface) failed: 0x{hr:X8}");
+                Console.Error.WriteLine($"[WGC] GetInterface(ID3D11Texture2D) failed: 0x{hr:X8}");
                 return null;
             }
+
+
 
             // 2. Create a CPU-readable staging texture with identical dimensions/format.
             //    USAGE_STAGING + CPU_ACCESS_READ = the texture lives in CPU-visible memory
@@ -199,7 +222,7 @@ namespace Business.Services.ScreenshotService
             hr = fnCreateTexture2D(devicePtr, ref stagingDesc, IntPtr.Zero, out IntPtr stagingPtr);
             if (hr < 0 || stagingPtr == IntPtr.Zero)
             {
-                Marshal.Release(frameSurfacePtr);
+                Marshal.Release(frameResourcePtr);
                 Console.Error.WriteLine($"[WGC] CreateTexture2D(staging) failed: 0x{hr:X8}");
                 return null;
             }
@@ -210,7 +233,7 @@ namespace Business.Services.ScreenshotService
                 //    This is asynchronous on the GPU but CopyResource() on the immediate
                 //    context synchronizes before Map().
                 var fnCopyResource = GetVtableFunc<CopyResourceDelegate>(contextPtr, SLOT_ID3D11DeviceContext_CopyResource);
-                fnCopyResource(contextPtr, stagingPtr, frameSurfacePtr);
+                fnCopyResource(contextPtr, stagingPtr, frameResourcePtr);
 
                 // 4. Map: get a CPU pointer to the staging texture's memory.
                 //    D3D11_MAP_READ stalls until the GPU copy above is complete.
@@ -248,7 +271,7 @@ namespace Business.Services.ScreenshotService
             finally
             {
                 Marshal.Release(stagingPtr);
-                Marshal.Release(frameSurfacePtr);
+                Marshal.Release(frameResourcePtr);
             }
         }
 
@@ -278,7 +301,8 @@ namespace Business.Services.ScreenshotService
 
                 try
                 {
-                    IDirect3DDevice wrtDevice = (IDirect3DDevice)Marshal.GetObjectForIUnknown(wrtPtr);
+                    //IDirect3DDevice wrtDevice = (IDirect3DDevice)Marshal.GetObjectForIUnknown(wrtPtr);
+                    IDirect3DDevice wrtDevice = WinRT.MarshalInterface<IDirect3DDevice>.FromAbi(wrtPtr);
                     return wrtDevice;
                 }
                 finally

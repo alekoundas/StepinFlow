@@ -5,7 +5,7 @@ import { IPC_CHANNELS } from "../shared/channels.js";
 import { InvokeBackend } from "./backend-handler";
 import { MonitorService } from "../monitor-service.js";
 import {
-  ScreenshotRequestDto,
+  ScreenshotMonitorResponseDto,
   SignalReadyResponse,
   SystemMonitor,
 } from "../shared/types.js";
@@ -37,11 +37,10 @@ export function registerSearchAreaHandler(
 
       try {
         // 1. Get screenshot from .Net.
-        const virtualMonitorssadasdasd = MonitorService().getMonitorsInfo();
+        // const virtualMonitorssadasdasd = MonitorService().getMonitorsInfo();
         const screenshot = await getScreenshot(
           invokeBackend,
           screenshotRequestPayload,
-          virtualMonitorssadasdasd.displays[0].deviceId,
         );
         if (!screenshot) {
           console.error(
@@ -55,7 +54,7 @@ export function registerSearchAreaHandler(
         const newWindow = await createWindow(isDev, virtualMonitor);
 
         // 3. Listen for 'SignalReady' from react.
-        handleSignalReady(screenshot, virtualMonitor);
+        // handleSignalReady(screenshot, virtualMonitor);
 
         // 4. Redirect window to the window page
         if (isDev) {
@@ -84,16 +83,14 @@ export function registerSearchAreaHandler(
 async function getScreenshot(
   invokeBackend: InvokeBackend,
   screenshotRequestPayload: any,
-  monitorDeviceName: string,
-): Promise<Uint8Array | null> {
+): Promise<ScreenshotMonitorResponseDto[] | null> {
   try {
-    const result = await invokeBackend("System.takeScreenshot", {
-      formatType: "JPEG",
-      jpegQuality: 100,
-      captureMonitor: monitorDeviceName,
-    } as ScreenshotRequestDto);
+    const result = await invokeBackend("System.captureForOverlay", null);
 
-    return (result as { success: boolean; data: Uint8Array }).data ?? null;
+    return (
+      (result as { success: boolean; data: ScreenshotMonitorResponseDto[] })
+        .data ?? null
+    );
   } catch (err) {
     console.error("[SearchAreaHandler] Screenshot failed:", err);
     return null;

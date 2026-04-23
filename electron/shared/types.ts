@@ -33,17 +33,25 @@ export interface SignalReadyResponse {
   physicalHeight: number;
 }
 
-export interface ScreenshotRequestDto {
-  formatType: "JPEG" | "PNG" | "RAW";
-  jpegQuality: number;
-  captureMonitor?: string;
-  captureAppWindow?: string;
-  captureVirtualScreen?: boolean;
-  flowSearchAreaId?: number;
-  locationX?: number;
-  locationY?: number;
-  width?: number;
-  height?: number;
+// export interface ScreenshotRequestDto {
+//   formatType: "JPEG" | "PNG" | "RAW";
+//   jpegQuality: number;
+//   captureMonitor?: string;
+//   captureAppWindow?: string;
+//   captureVirtualScreen?: boolean;
+//   flowSearchAreaId?: number;
+//   locationX?: number;
+//   locationY?: number;
+//   width?: number;
+//   height?: number;
+// }
+
+export interface ScreenshotMonitorResponseDto {
+  screenshot: Uint8Array;
+  locationX: number;
+  locationY: number;
+  width: number;
+  height: number;
 }
 
 // export type KnownActions = "greet" | "test" | "load-flow" | "save-config";

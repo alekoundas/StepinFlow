@@ -121,7 +121,8 @@ namespace Business.Helpers
 
                     result.Add(new MonitorInfo
                     {
-                        DeviceId = monitor.DeviceID,
+                        //DeviceId = monitor.DeviceID,
+                        DeviceId = adapter.DeviceName,
                         FriendlyName = friendlyName,
                         AdapterName = adapter.DeviceName,
                         IsPrimary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0,

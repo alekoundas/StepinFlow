@@ -130,9 +130,14 @@ namespace Business.Services.ScreenshotService
                 Guid iid = IID_GraphicsCaptureItem;
                 IntPtr ptr = interop.CreateForMonitor(hMonitor, ref iid);
 
-                var item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
-                Marshal.Release(ptr);
+                //var item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
+                //Marshal.Release(ptr);
+                //return item;
+
+                var item = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
+                Marshal.Release(ptr); // FromAbi AddRef's internally, release your ref
                 return item;
+
             }
 
 
