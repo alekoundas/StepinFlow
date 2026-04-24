@@ -51,11 +51,12 @@ export default function SearchAreaOverlayPage() {
   useLayoutEffect(() => {
     ElectronApiService.searchArea
       .signalReady()
-      .then((signalResponse: SignalReadyResponse) => {
-        const blob = base64ToBlob(signalResponse.screenshot.toString());
-        const url = URL.createObjectURL(blob);
-        // setImageUrl(url);
-        setScreenshot(url);
+      .then((signalResponse: SignalReadyResponse | null) => {
+        if (signalResponse) {
+          const blob = base64ToBlob(signalResponse.screenshot.toString());
+          const url = URL.createObjectURL(blob);
+          setScreenshot(url);
+        }
       })
       .catch((err) => console.error("Failed signal ready:", err));
 
@@ -142,7 +143,7 @@ export default function SearchAreaOverlayPage() {
   );
 
   const sendResult = useCallback((rect: Rectangle | null) => {
-    ElectronApiService.searchArea?.sendResultToWindow(rect);
+    ElectronApiService.searchArea?.signalCloseWindow(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {

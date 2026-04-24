@@ -37,10 +37,10 @@ namespace Business.Ipc.Handlers
                 response.Add(new ScreenshotMonitorResponseDto()
                 {
                     Screenshot = screenshot,
-                    LocationX = monitor.Bounds.Top,
-                    LocationY = monitor.Bounds.Bottom,
-                    Height = monitor.Bounds.Height,
-                    Width = monitor.Bounds.Width
+                    LogicalX = monitor.Bounds.Left,
+                    LogicalY = monitor.Bounds.Top,
+                    PhysicalHeight= monitor.Bounds.Height,
+                    PhysicalWidth= monitor.Bounds.Width
                 }); 
             }
 

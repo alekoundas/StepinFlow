@@ -1,4 +1,3 @@
-import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import type { Rectangle } from "electron";
 import { useState, useCallback } from "react";
@@ -14,11 +13,7 @@ export function useWindowOverlay(): Props {
   const openWindow = useCallback(async (): Promise<Rectangle | null> => {
     setIsWindowOpen(true);
     try {
-      const screenshotRequestDto = new ScreenshotRequestDto({
-        isVirtualScreen: true,
-      });
-      const rect =
-        await ElectronApiService.searchArea.openWindow(screenshotRequestDto);
+      const rect = await ElectronApiService.searchArea.openWindow();
       return rect;
     } catch (err) {
       console.error("[useSearchAreaCapture]: capture failed:", err);

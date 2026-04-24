@@ -7,25 +7,19 @@ interface RequestMessage {
   correlationId?: string; // Optional ID to match requests with responses
 }
 
-interface MonitorInfo {
-  logicalBounds: Electron.Rectangle;
-  physicalBounds: Electron.Rectangle;
-  scaleFactor: number;
-}
-interface VirtualMonitor {
-  displays: MonitorInfo[];
-  minVirtualX: number;
-  minVirtualY: number;
-  physicalVirtualWidth: number;
-  physicalVirtualHeight: number;
-  logicalVirtualWidth: number;
-  logicalVirtualHeight: number;
-}
 interface SignalReadyResponse {
   screenshot: Uint8Array;
-  monitorsInfo: MonitorInfo[];
   physicalWidth: number;
   physicalHeight: number;
+  logicalWidth: number;
+  logicalHeight: number;
+  scaleFactor: number;
+}
+
+interface SignalMouseEvent {
+  type: "down" | "move" | "up";
+  physicalX: number;
+  physicalY: number;
 }
 
 const IPC_CHANNELS = {
@@ -35,9 +29,11 @@ const IPC_CHANNELS = {
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
   // ========== Search-area overlay channels ==========
-  SEARCH_AREA_WINDOW_OPEN: "SEARCH_AREA_WINDOW_OPEN",
-  SEARCH_AREA_WINDOW_READY: "SEARCH_AREA_WINDOW_READY",
-  SEARCH_AREA_RETURN_RESULT_TO_WINDOW: "SEARCH_AREA_RETURN_RESULT_TO_WINDOW",
+  SEARCH_AREA_OPEN_WINDOW: "SEARCH_AREA_OPEN_WINDOW",
+  SEARCH_AREA_BROADCAST_MOUSE_EVENT: "SEARCH_AREA_BROADCAST_MOUSE_EVENT",
+  SEARCH_AREA_SIGNAL_READY: "SEARCH_AREA_SIGNAL_READY",
+  SEARCH_AREA_SIGNAL_MOUSE_EVENT: "SEARCH_AREA_SIGNAL_MOUSE_EVENT",
+  SEARCH_AREA_SIGNAL_CLOSE_WINDOW: "SEARCH_AREA_SIGNAL_CLOSE_WINDOW",
 
   // ========== Image editor channels ==========
   IMAGE_EDITOR_WINDOW_OPEN: "IMAGE_EDITOR_WINDOW_OPEN",
@@ -66,32 +62,32 @@ const api = {
   },
 
   searchArea: {
-    openWindow: (screenshotRequest: any): Promise<Electron.Rectangle | null> =>
-      ipcRenderer.invoke(
-        IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
-        screenshotRequest,
-      ),
-    sendResultToWindow: (rect: Electron.Rectangle | null): void =>
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect),
-    signalReady: (): Promise<SignalReadyResponse> =>
-      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY),
+    openWindow: (): Promise<Electron.Rectangle | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW),
+     broadcastMouseEvent: (callback: (event: any) => void): (() => void) => {
+      const listener = (_: any, event: any) => callback(event);
+      ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
+    },
+    signalReady: (): Promise<SignalReadyResponse | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY),
+    signalMouseEvent: (event: SignalMouseEvent) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT),
+    signalCloseWindow: (rect: Electron.Rectangle | null): void =>
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_CLOSE_WINDOW, rect),
   },
 
   imageEditor: {
-    openWindow: (
-      initialDataUrl: string,
-      stepId?: string,
-    ): Promise<Electron.Rectangle> =>
-      ipcRenderer.invoke(
-        IPC_CHANNELS.IMAGE_EDITOR_WINDOW_OPEN,
-        initialDataUrl,
-        stepId,
-      ),
-    sendResultToWindow: (rect: Electron.Rectangle | null): void => {
-      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW, rect);
-    },
-    signalReady: (): Promise<Uint8Array | null> =>
-      ipcRenderer.send(IPC_CHANNELS.IMAGE_EDITOR_WINDOW_READY),
+    // openWindow: (screenshotRequest: any): Promise<Electron.Rectangle | null> =>
+    //   ipcRenderer.invoke(
+    //     IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
+    //     screenshotRequest,
+    //   ),
+    // signalReady: (): Promise<SignalReadyResponse> =>
+    //   ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY),
+    // signalCloseWindow: (rect: Electron.Rectangle | null): void =>
+    //   ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect),
   },
 };
 

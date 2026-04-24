@@ -28,11 +28,18 @@ export interface SystemMonitor {
 }
 export interface SignalReadyResponse {
   screenshot: Uint8Array;
-  monitorsInfo: MonitorInfo[];
   physicalWidth: number;
   physicalHeight: number;
+  logicalWidth: number;
+  logicalHeight: number;
+  scaleFactor: number;
 }
 
+export interface SignalMouseEvent {
+  type: "down" | "move" | "up";
+  physicalX: number;
+  physicalY: number;
+}
 // export interface ScreenshotRequestDto {
 //   formatType: "JPEG" | "PNG" | "RAW";
 //   jpegQuality: number;
@@ -48,10 +55,10 @@ export interface SignalReadyResponse {
 
 export interface ScreenshotMonitorResponseDto {
   screenshot: Uint8Array;
-  locationX: number;
-  locationY: number;
-  width: number;
-  height: number;
+  logicalX: number;
+  logicalY: number;
+  physicalWidth: number;
+  physicalHeight: number;
 }
 
 // export type KnownActions = "greet" | "test" | "load-flow" | "save-config";

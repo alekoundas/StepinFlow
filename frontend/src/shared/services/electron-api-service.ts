@@ -1,9 +1,10 @@
-import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
-// import type { Rectangle } from "../../../../electron/shared/types";
 import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { Rectangle } from "electron";
-import type { SignalReadyResponse } from "../../../../electron/shared/types";
+import type {
+  SignalMouseEvent,
+  SignalReadyResponse,
+} from "../../../../electron/shared/types";
 
 // TODO remove this. Buut Build process throws error without it....
 // const backendApi = window.backendApi; // old way
@@ -28,9 +29,11 @@ declare global {
         onMessage: <T>(cb: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: (screenshotRequest: any) => Promise<Rectangle | null>;
-        sendResultToWindow: (rect: Rectangle | null) => void;
-        signalReady: () => Promise<SignalReadyResponse>;
+        openWindow: () => Promise<Electron.Rectangle | null>;
+        broadcastMouseEvent: (callback: () => void) => void;
+        signalReady: () => Promise<SignalReadyResponse | null>;
+        signalMouseEvent: (event: SignalMouseEvent) => void;
+        signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
     };
   }
@@ -39,11 +42,14 @@ declare global {
 export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {
-    openWindow: (screenshotRequest: ScreenshotRequestDto) =>
-      window.electronApi.searchArea.openWindow(screenshotRequest),
-    sendResultToWindow: (rect: Rectangle | null) =>
-      window.electronApi.searchArea.sendResultToWindow(rect),
+    openWindow: () => window.electronApi.searchArea.openWindow(),
+    broadcastMouseEvent: (callback: () => void) =>
+      window.electronApi.searchArea.broadcastMouseEvent(callback),
     signalReady: () => window.electronApi.searchArea.signalReady(),
+    signalMouseEvent: (event: SignalMouseEvent) =>
+      window.electronApi.searchArea.signalMouseEvent(event),
+    signalCloseWindow: (rect: Rectangle | null) =>
+      window.electronApi.searchArea.signalCloseWindow(rect),
   },
 };
 

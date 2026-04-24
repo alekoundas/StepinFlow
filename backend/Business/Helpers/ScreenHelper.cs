@@ -96,7 +96,8 @@ namespace Business.Helpers
 
 
         /// <summary>
-        /// Returns all monitors with their bounds (in virtual screen coordinates)
+        /// Returns all monitors with their bounds 
+        /// coordinates are in the Win32 virtual screen coordinate space since process is DPI-unaware
         /// </summary>
         public static IReadOnlyList<MonitorInfo> GetAllMonitors()
         {

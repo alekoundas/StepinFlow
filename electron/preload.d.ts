@@ -4,25 +4,33 @@ interface RequestMessage {
   correlationId?: string;
 }
 
-interface MonitorInfo {
-  logicalBounds: Electron.Rectangle;
-  physicalBounds: Electron.Rectangle;
-  scaleFactor: number;
-}
-interface VirtualMonitor {
-  displays: MonitorInfo[];
-  minVirtualX: number;
-  minVirtualY: number;
-  physicalVirtualWidth: number;
-  physicalVirtualHeight: number;
-  logicalVirtualWidth: number;
-  logicalVirtualHeight: number;
-}
+// interface MonitorInfo {
+//   logicalBounds: Electron.Rectangle;
+//   physicalBounds: Electron.Rectangle;
+//   scaleFactor: number;
+// }
+// interface VirtualMonitor {
+//   displays: MonitorInfo[];
+//   minVirtualX: number;
+//   minVirtualY: number;
+//   physicalVirtualWidth: number;
+//   physicalVirtualHeight: number;
+//   logicalVirtualWidth: number;
+//   logicalVirtualHeight: number;
+// }
 interface SignalReadyResponse {
   screenshot: Uint8Array;
-  monitorsInfo: MonitorInfo[];
   physicalWidth: number;
   physicalHeight: number;
+  logicalWidth: number;
+  logicalHeight: number;
+  scaleFactor: number;
+}
+
+interface SignalMouseEvent {
+  type: "down" | "move" | "up";
+  physicalX: number;
+  physicalY: number;
 }
 
 declare global {
@@ -33,18 +41,18 @@ declare global {
         onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
-        openWindow: (
-          screenshotRequest: any,
-        ) => Promise<Electron.Rectangle | null>;
-        sendResultToWindow: (rect: Electron.Rectangle | null) => void;
-        signalReady: () => Promise<SignalReadyResponse>;
+        openWindow: () => Promise<Electron.Rectangle | null>;
+        broadcastMouseEvent: (callback: () => void) => void;
+        signalReady: () => Promise<SignalReadyResponse | null>;
+        signalMouseEvent: (event: SignalMouseEvent) => void;
+        signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
       imageEditor: {
         openWindow: (
           screenshotRequest: any,
         ) => Promise<Electron.Rectangle | null>;
         sendResultToWindow: (rect: Electron.Rectangle | null) => void;
-        signalReady: () => Promise<Uint8Array | null>;
+        signalReady: () => Promise<SignalReadyResponse>;
       };
     };
   }
