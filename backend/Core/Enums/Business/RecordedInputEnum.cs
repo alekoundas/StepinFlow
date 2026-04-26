@@ -3,6 +3,7 @@
     public enum RecordedInputEnum
     {
         CURSOR_CLICK,
+        CURSOR_CLICK_RELEASE,
         CURSOR_DRAG,
         CURSOR_SCROLL,
         KEYBOARD_KEY_PRESS,

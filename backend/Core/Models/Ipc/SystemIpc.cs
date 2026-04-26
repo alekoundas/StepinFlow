@@ -13,4 +13,9 @@ namespace Core.Models.Ipc
     public record SystemTakeScreenshotCommand(ScreenshotRequestDto dto) : IRequest<ResultDto<byte[]>>;
     public record SystemCaptureForOverlayCommand() : IRequest<ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>>;
 
+
+    public record SystemInputRecordAllStartCommand() : IRequest<ResultDto<bool>>;
+    public record SystemInputRecordOverlayStartCommand() : IRequest<ResultDto<bool>>;
+    public record SystemInputRecordStopCommand() : IRequest<ResultDto<bool>>;
+
 }

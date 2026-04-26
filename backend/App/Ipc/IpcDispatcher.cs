@@ -68,10 +68,10 @@ namespace App.Ipc
                     // System IO
                     "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "System.captureForOverlay" => await _mediator.Send(new SystemCaptureForOverlayCommand(), ct),
-                    //"System.inputRecordingStart" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    //"System.inputRecordingEnd" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    //"System.keyboardType" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
 
+                    "System.inputRecordAllStart" => await _mediator.Send(new SystemInputRecordAllStartCommand(), ct),
+                    "System.inputRecordOverlayStart" => await _mediator.Send(new SystemInputRecordOverlayStartCommand(), ct),
+                    "System.inputRecordStop" => await _mediator.Send(new SystemInputRecordStopCommand(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

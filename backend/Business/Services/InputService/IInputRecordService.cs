@@ -3,7 +3,8 @@ namespace Business.Services.InputService
 {
     public interface IInputRecordService
     {
-        public Task StartRecordingAsync();
+        public Task StartRecordingAllAsync();
+        public Task StartRecordingOverlayAsync();
         public Task StopRecordingAsync();
     }
 }
