@@ -38,12 +38,15 @@ namespace App
             // IPC
             builder.Services.AddSingleton<IpcService>();
             builder.Services.AddSingleton<IpcDispatcher>();
-            builder.Services.AddHostedService(sp =>
-            {
-                var svc = sp.GetRequiredService<IpcService>();
-                return new HostedPipeListener(svc);
-            });
+            //builder.Services.AddHostedService(sp =>
+            //{
+            //    var svc = sp.GetRequiredService<IpcService>();
+            //    return new HostedPipeListener(svc);
+            //});
+            builder.Services.AddHostedService<HostedPipeListener>();// <- Hosted service!
 
+            // SharpHook 
+            builder.Services.AddHostedService<HostedSharpHookService>(); // <- Hosted service!
 
             // MediatR
             builder.Services.AddMediatR(cfg =>
@@ -60,6 +63,10 @@ namespace App
             //builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
             //builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
 
+            // TODO: Hosted services
+            //builder.Services.AddHostedService<HostedPipeListener>();
+            //builder.Services.AddHostedService<HostedGlobalHookService>();
+
 
             IHost app = builder.Build();
 
@@ -71,20 +78,25 @@ namespace App
             dbContext.Database.Migrate();
 
 
-            // Start global input recording hook.
-            IInputRecordService inputRecordService = app.Services.GetRequiredService<IInputRecordService>();
-            await inputRecordService.StartGlobalHookAsync();
-
-
             await app.RunAsync();
         }
     }
 
+
+    // TODO: move them from here
     internal class HostedPipeListener : BackgroundService
     {
-        private readonly IpcService _ipc;
-        public HostedPipeListener(IpcService ipc) => _ipc = ipc;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken)
-            => _ipc.StartAsync(cancellationToken);
+        private readonly IpcService _ipcService;
+        public HostedPipeListener(IpcService ipcService) => _ipcService = ipcService;
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcService.StartAsync(cancellationToken);
+    }
+
+
+            // Start global input recording hook.
+    internal class HostedSharpHookService: BackgroundService
+    {
+        private readonly IInputRecordService _inputRecordService;
+        public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _inputRecordService.StartGlobalHookAsync();
     }
 }

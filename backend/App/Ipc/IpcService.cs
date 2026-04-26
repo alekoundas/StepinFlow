@@ -11,7 +11,7 @@ namespace App.Ipc
         private const string PipeName = "stepinflow-backend-pipe";
         private readonly IpcDispatcher _dispatcher;
 
-        //private readonly Channel<PushMessage> _pushChannel = Channel.CreateUnbounded<PushMessage>();
+        private readonly Channel<IpcBroadcast> _pushChannel = Channel.CreateUnbounded<IpcBroadcast>();
 
         public IpcService(IpcDispatcher dispatcher)
         {
@@ -22,10 +22,10 @@ namespace App.Ipc
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await using var server = new NamedPipeServerStream(
+                await using NamedPipeServerStream pipe = new NamedPipeServerStream(
                     PipeName,
                     PipeDirection.InOut,
-                    maxNumberOfServerInstances: 5,           
+                    maxNumberOfServerInstances: 5,
                     transmissionMode: PipeTransmissionMode.Byte,
                     options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
                     inBufferSize: 64 * 1024,
@@ -34,16 +34,34 @@ namespace App.Ipc
 
                 try
                 {
+                    // Wait for Electron to conect to the pipe.
                     Console.WriteLine("[.NET Pipe] Waiting for connection...");
-                    await server.WaitForConnectionAsync(stoppingToken);
+                    await pipe.WaitForConnectionAsync(stoppingToken);
                     Console.WriteLine("[.NET Pipe] Client connected.");
 
-                    await HandleConnectionAsync(server, stoppingToken);
+
+                    // Start BOTH loops concurrently for this connection
+                    Task requestTask = HandleConnectionAsync(pipe, stoppingToken);
+                    Task pushTask = ForwardPushMessagesAsync(pipe, stoppingToken);
+
+                    // Wait until EITHER task finishes (client disconnected, error, cancellation)
+                    await Task.WhenAny(requestTask, pushTask);
+
+                    //_ = ForwardPushMessagesAsync(pipe, stoppingToken);
+                    //await HandleConnectionAsync(pipe, stoppingToken);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine($"[.NET Pipe] Error: {ex.Message}");
+                }
+                finally
+                {
+                    // Ensure pipe is properly closed
+                    if (pipe.IsConnected)
+                    {
+                        try { pipe.Disconnect(); } catch { }
+                    }
                 }
             }
         }
@@ -115,7 +133,7 @@ namespace App.Ipc
 
 
                     // Serialize response
-                    using var ms = new MemoryStream(32 * 1024);
+                    using MemoryStream ms = new MemoryStream(32 * 1024);
                     Serializer.Serialize(ms, response);
                     var responseBytes = ms.ToArray();
 
@@ -151,36 +169,38 @@ namespace App.Ipc
             return total;
         }
 
-        //private async Task ForwardPushMessagesAsync(NamedPipeServerStream pipe, CancellationToken ct)
-        //{
-        //    await foreach (var push in _pushChannel.Reader.ReadAllAsync(ct))
-        //    {
-        //        try
-        //        {
-        //            if (!pipe.IsConnected) break;
+        private async Task ForwardPushMessagesAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        {
+            await foreach (IpcBroadcast ipcBroadcast in _pushChannel.Reader.ReadAllAsync(ct))
+            {
+                try
+                {
+                    if (!pipe.IsConnected) break;
 
-        //            var wrapper = new PushMessageWrapper
-        //            {
-        //                Topic = push.Topic,
-        //                PayloadJson = JsonSerializer.Serialize(push.Payload, _jsonOptions) // or use Protobuf if you prefer
-        //            };
+                // Serialize response
+                using MemoryStream ms = new MemoryStream();
+                Serializer.Serialize(ms, ipcBroadcast);
+                byte[] responseBytes = ms.ToArray();
 
-        //            using var ms = new MemoryStream();
-        //            Serializer.Serialize(ms, wrapper);
-        //            var bytes = ms.ToArray();
+                // Write length prefix + payload
+                byte[] lenPrefix = new byte[4]
+                {
+                        (byte)(responseBytes.Length >> 24),
+                        (byte)(responseBytes.Length >> 16),
+                        (byte)(responseBytes.Length >> 8),
+                        (byte)responseBytes.Length
+                };
 
-        //            // Length prefix
-        //            byte[] lenPrefix = BitConverter.GetBytes(bytes.Length); // or your big-endian logic
-        //            await pipe.WriteAsync(lenPrefix, ct);
-        //            await pipe.WriteAsync(bytes, ct);
-        //            await pipe.FlushAsync(ct);
-        //        }
-        //        catch (Exception ex) when (!ct.IsCancellationRequested)
-        //        {
-        //            Console.Error.WriteLine($"[Push Forward] Error: {ex.Message}");
-        //            break;
-        //        }
-        //    }
-        //}
+                await pipe.WriteAsync(lenPrefix, 0, 4, ct);
+                await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
+                await pipe.FlushAsync(ct);
+                }
+                catch (Exception ex)// when (!ct.IsCancellationRequested)
+                {
+                    Console.Error.WriteLine($"[Push Forward] Error: {ex.Message}");
+                    break;
+                }
+            }
+        }
     }
 }
