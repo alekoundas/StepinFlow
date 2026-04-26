@@ -1,13 +1,12 @@
 ﻿using Core.Enums;
 using Core.Models.Business;
-using OpenCvSharp;
 using SharpHook;
 using SharpHook.Data;
 using System.Threading.Channels;
 
 namespace Business.Services.InputService
 {
-    public sealed class InputRecordService : IInputRecordService
+    public sealed class InputRecordService : IInputRecordService, IDisposable
     {
         // SharpHook
         private readonly IGlobalHook _hook = new TaskPoolGlobalHook();
@@ -16,11 +15,39 @@ namespace Business.Services.InputService
         // Make sure only 1 recording is running.
         private bool _isRecording = false;
 
-        public IAsyncEnumerable<RecordedInput> GetActions() => _actionChannel.Reader.ReadAllAsync();
+
+
+        // ================================================================
+        // Global methods
+        // ================================================================
+
+        /// <summary>
+        /// Starts the global hook asynchronously and runs it until stopped or disposed.
+        /// </summary>
+        /// <remarks>This method initiates a long-running operation that continues until explicitly stopped.
+        /// Can be called only once, preferably during app startup.</remarks>
+        public async Task StartGlobalHookAsync()
+        {
+            await _hook.RunAsync();
+        }
+
+        public async Task StopGlobalHookAsync()
+        {
+            _hook.Stop();
+        }
+
+
+        // ================================================================
+        // Public methods
+        // ================================================================
+        public IAsyncEnumerable<RecordedInput> GetActions()
+        {
+            return _actionChannel.Reader.ReadAllAsync();
+        }
 
         public async Task StartRecordingAllAsync()
         {
-            if (_isRecording == true)
+            if (_isRecording)
                 throw new Exception("You cant run more than 1 recondings at the same time Broski");
 
             _isRecording = true;
@@ -32,13 +59,27 @@ namespace Business.Services.InputService
             _hook.MouseWheel += OnMouseWheel;
             _hook.KeyPressed += OnKeyPressed;
             _hook.KeyReleased += OnKeyReleased;
+        }
 
-            //await _hook.RunAsync(); // non-blocking
+        public async Task StopRecordingAllAsync()
+        {
+            if (!_isRecording)
+                throw new Exception("Recording should be started first dummy");
+
+            _isRecording = true;
+
+            // Unsubscribe to the events 
+            _hook.MouseReleased -= OnMouseReleased;
+            _hook.MouseClicked -= OnMouseClicked;
+            _hook.MouseDragged -= OnMouseDragged;
+            _hook.MouseWheel -= OnMouseWheel;
+            _hook.KeyPressed -= OnKeyPressed;
+            _hook.KeyReleased -= OnKeyReleased;
         }
 
         public async Task StartRecordingOverlayAsync()
         {
-            if (_isRecording == true)
+            if (_isRecording)
                 throw new Exception("You cant run more than 1 recondings at the same time Broski");
 
             _isRecording = true;
@@ -50,12 +91,24 @@ namespace Business.Services.InputService
 
         }
 
-        public async Task StopRecordingAsync()
+        public async Task StopRecordingOverlayAsync()
         {
-            _isRecording = false;
-            _hook.Stop();
+            if (!_isRecording)
+                throw new Exception("Recording should be started first dummy");
+
+            _isRecording = true;
+
+            // Subscribe to the events 
+            _hook.MouseReleased += OnMouseReleased;
+            _hook.MouseClicked += OnMouseClicked;
+            _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
+
         }
 
+
+        // ================================================================
+        // Private methods
+        // ================================================================
         private void OnMouseClicked(object? sender, MouseHookEventArgs e)
         {
             CursorButtonTypeEnum? buttonType;
@@ -141,6 +194,15 @@ namespace Business.Services.InputService
         }
 
         private void OnKeyReleased(object? sender, KeyboardHookEventArgs e) { }
-        public void Dispose() => _hook.Dispose();
+
+
+        // ================================================================
+        // Dispose
+        // ================================================================
+        public void Dispose()
+        {
+            _actionChannel.Writer.Complete();
+            _hook.Dispose();
+        }
     }
 }

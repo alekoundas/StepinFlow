@@ -70,8 +70,9 @@ namespace App.Ipc
                     "System.captureForOverlay" => await _mediator.Send(new SystemCaptureForOverlayCommand(), ct),
 
                     "System.inputRecordAllStart" => await _mediator.Send(new SystemInputRecordAllStartCommand(), ct),
+                    "System.inputRecordAllStop" => await _mediator.Send(new SystemInputRecordAllStopCommand(), ct),
                     "System.inputRecordOverlayStart" => await _mediator.Send(new SystemInputRecordOverlayStartCommand(), ct),
-                    "System.inputRecordStop" => await _mediator.Send(new SystemInputRecordStopCommand(), ct),
+                    "System.inputRecordOverlayStop" => await _mediator.Send(new SystemInputRecordOverlayStopCommand(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

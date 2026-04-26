@@ -6,20 +6,20 @@ using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    public class SystemInputRecordStopHandler : IRequestHandler<SystemInputRecordStopCommand, ResultDto<bool>>
+    public class SystemInputRecordOverlayStopHandler : IRequestHandler<SystemInputRecordOverlayStopCommand, ResultDto<bool>>
     {
         private readonly IMapper _mapper;
         private readonly IInputRecordService _inputRecordService;
 
-        public SystemInputRecordStopHandler(IMapper mapper, IInputRecordService inputRecordService)
+        public SystemInputRecordOverlayStopHandler(IMapper mapper, IInputRecordService inputRecordService)
         {
             _mapper = mapper;
             _inputRecordService= inputRecordService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemInputRecordStopCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> Handle(SystemInputRecordOverlayStopCommand request, CancellationToken ct)
         {
-            await _inputRecordService.StopRecordingAsync();
+            await _inputRecordService.StopRecordingOverlayAsync();
 
             return ResultDto<bool>.Success(true);
         }

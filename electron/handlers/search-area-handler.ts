@@ -75,8 +75,7 @@ export function registerSearchAreaHandler(
               x.electronWindow.loadURL(
                 "http://localhost:5173/#/search-area-overlay",
               );
-    x.electronWindow.webContents.openDevTools();
-
+              x.electronWindow.webContents.openDevTools();
             } else {
               x.electronWindow.loadFile(
                 path.join(__dirname, "../dist/frontend/index.html"),
@@ -135,8 +134,9 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     skipTaskbar: true,
     resizable: false,
     movable: false,
-    focusable: true,
+    focusable: false,
     hasShadow: false,
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: path.join(
         __dirname,
@@ -157,7 +157,7 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
   // });
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
-  // newWindow.setIgnoreMouseEvents(false);
+  newWindow.setIgnoreMouseEvents(false);
 
   return newWindow;
 }

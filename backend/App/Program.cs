@@ -64,11 +64,16 @@ namespace App
             IHost app = builder.Build();
 
 
-            // Run migrations and seed data
-            using var scope = app.Services.CreateScope();
-            var dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            // Run migrations and seed data.
+            using IServiceScope scope = app.Services.CreateScope();
+            IDbContextFactory<AppDbContext> dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
+
+
+            // Start global input recording hook.
+            IInputRecordService inputRecordService = app.Services.GetRequiredService<IInputRecordService>();
+            await inputRecordService.StartGlobalHookAsync();
 
 
             await app.RunAsync();

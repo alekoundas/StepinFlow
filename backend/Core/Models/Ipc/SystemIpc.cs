@@ -15,7 +15,9 @@ namespace Core.Models.Ipc
 
 
     public record SystemInputRecordAllStartCommand() : IRequest<ResultDto<bool>>;
+    public record SystemInputRecordAllStopCommand() : IRequest<ResultDto<bool>>;
+
     public record SystemInputRecordOverlayStartCommand() : IRequest<ResultDto<bool>>;
-    public record SystemInputRecordStopCommand() : IRequest<ResultDto<bool>>;
+    public record SystemInputRecordOverlayStopCommand() : IRequest<ResultDto<bool>>;
 
 }

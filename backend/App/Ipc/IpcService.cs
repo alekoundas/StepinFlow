@@ -2,6 +2,7 @@
 using ProtoBuf;
 using System.Buffers;
 using System.IO.Pipes;
+using System.Threading.Channels;
 
 namespace App.Ipc
 {
@@ -9,6 +10,8 @@ namespace App.Ipc
     {
         private const string PipeName = "stepinflow-backend-pipe";
         private readonly IpcDispatcher _dispatcher;
+
+        //private readonly Channel<PushMessage> _pushChannel = Channel.CreateUnbounded<PushMessage>();
 
         public IpcService(IpcDispatcher dispatcher)
         {
@@ -147,5 +150,37 @@ namespace App.Ipc
             }
             return total;
         }
+
+        //private async Task ForwardPushMessagesAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        //{
+        //    await foreach (var push in _pushChannel.Reader.ReadAllAsync(ct))
+        //    {
+        //        try
+        //        {
+        //            if (!pipe.IsConnected) break;
+
+        //            var wrapper = new PushMessageWrapper
+        //            {
+        //                Topic = push.Topic,
+        //                PayloadJson = JsonSerializer.Serialize(push.Payload, _jsonOptions) // or use Protobuf if you prefer
+        //            };
+
+        //            using var ms = new MemoryStream();
+        //            Serializer.Serialize(ms, wrapper);
+        //            var bytes = ms.ToArray();
+
+        //            // Length prefix
+        //            byte[] lenPrefix = BitConverter.GetBytes(bytes.Length); // or your big-endian logic
+        //            await pipe.WriteAsync(lenPrefix, ct);
+        //            await pipe.WriteAsync(bytes, ct);
+        //            await pipe.FlushAsync(ct);
+        //        }
+        //        catch (Exception ex) when (!ct.IsCancellationRequested)
+        //        {
+        //            Console.Error.WriteLine($"[Push Forward] Error: {ex.Message}");
+        //            break;
+        //        }
+        //    }
+        //}
     }
 }
