@@ -14,12 +14,15 @@ interface SignalReadyResponse {
   logicalWidth: number;
   logicalHeight: number;
   scaleFactor: number;
+  monitorLogicalOrigin: { x: number; y: number };
 }
 
 interface SignalMouseEvent {
   type: "down" | "move" | "up";
-  physicalX: number;
-  physicalY: number;
+  startPhysicalX: number;
+  startPhysicalY: number;
+  currentPhysicalX: number;
+  currentPhysicalY: number;
 }
 
 const IPC_CHANNELS = {
@@ -64,16 +67,22 @@ const api = {
   searchArea: {
     openWindow: (): Promise<Electron.Rectangle | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW),
-     broadcastMouseEvent: (callback: (event: any) => void): (() => void) => {
-      const listener = (_: any, event: any) => callback(event);
+    broadcastMouseEvent: (
+      callback: (signalEvent: SignalMouseEvent) => void,
+    ): (() => void) => {
+      const listener = (_: any, signalEvent: SignalMouseEvent) =>
+        callback(signalEvent);
       ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
       return () =>
-        ipcRenderer.removeListener(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
+        ipcRenderer.removeListener(
+          IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
+          listener,
+        );
     },
     signalReady: (): Promise<SignalReadyResponse | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY),
     signalMouseEvent: (event: SignalMouseEvent) =>
-      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT),
+      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT, event),
     signalCloseWindow: (rect: Electron.Rectangle | null): void =>
       ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_CLOSE_WINDOW, rect),
   },

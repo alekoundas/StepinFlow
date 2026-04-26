@@ -25,12 +25,15 @@ interface SignalReadyResponse {
   logicalWidth: number;
   logicalHeight: number;
   scaleFactor: number;
+  monitorLogicalOrigin: { x: number; y: number };
 }
 
 interface SignalMouseEvent {
   type: "down" | "move" | "up";
-  physicalX: number;
-  physicalY: number;
+  startPhysicalX: number;
+  startPhysicalY: number;
+  currentPhysicalX: number;
+  currentPhysicalY: number;
 }
 
 declare global {
@@ -42,7 +45,7 @@ declare global {
       };
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
-        broadcastMouseEvent: (callback: () => void) => void;
+        broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalMouseEvent: (event: SignalMouseEvent) => void;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;

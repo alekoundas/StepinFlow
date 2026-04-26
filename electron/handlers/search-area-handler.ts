@@ -3,11 +3,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../shared/channels.js";
 import { InvokeBackend } from "./backend-handler";
-import { MonitorService } from "../monitor-service.js";
 import {
   ScreenshotMonitorResponseDto,
+  SignalMouseEvent,
   SignalReadyResponse,
-  SystemMonitor,
 } from "../shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,7 +47,7 @@ export function registerSearchAreaHandler(
           return null;
         }
 
-        // 2. Electron displays (for scaleFactor — backend can't tell us this)
+        // 2. Get Electron displays (for scaleFactor — backend can't tell us this)
         const electronDisplays = screen.getAllDisplays();
 
         // 3. Match backend responses → Electron displays
@@ -124,10 +123,10 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     width: display.bounds.width,
     height: display.bounds.height,
     fullscreen: true,
-    frame: true,
-    transparent: false,
-    // frame: false,
-    // transparent: true,
+    // frame: true,
+    // transparent: false,
+    frame: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
@@ -153,8 +152,8 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
   //   height: display.bounds.height,
   // });
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
-  newWindow.setIgnoreMouseEvents(false);
+  // newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
+  // newWindow.setIgnoreMouseEvents(false);
 
   return newWindow;
 }
@@ -183,6 +182,10 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
           logicalWidth: monitorEntry.display.bounds.width,
           logicalHeight: monitorEntry.display.bounds.height,
           scaleFactor: monitorEntry.display.scaleFactor,
+          monitorLogicalOrigin: {
+            x: monitorEntry.display.bounds.x,
+            y: monitorEntry.display.bounds.y,
+          },
         };
       } else {
         // Close all windows if mo
@@ -206,6 +209,7 @@ function registerSignalMouseEventHandlers(
     _e: Electron.IpcMainEvent,
     signalEvent: SignalMouseEvent,
   ) => {
+    console.info("[SignalMouseEventHandler]: signalEvent:   ", signalEvent);
     monitorEntries
       .map((x) => x.electronWindow)
       .filter((x) => x !== null)
@@ -294,7 +298,7 @@ function matchMonitorsToDisplays(
         return dist < bestDist ? d : best;
       });
       console.warn(
-        `[SearchAreaHandler] No exact match for monitor (${x},${y}), using closest display id=${display.id}`,
+        `[SearchAreaHandler] No exact match for monitor (${x},${y}), using closest display x=${display.bounds.x} y=${display.bounds.y}`,
       );
     }
 

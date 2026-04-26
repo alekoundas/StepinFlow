@@ -1,15 +1,20 @@
 /**
- *
  * Route: /search-area-overlay
  *
- * This page is loaded inside the transparent fullscreen Electron overlay window.
- * It:
- *  1. Signals to main that it's ready (so main sends the screenshot)
- *  2. Renders the screenshot as a frozen desktop background
- *  3. Lets the user drag to select a rectangular region
- *  4. Shows a live W×H readout during drag
- *  5. After mouse-release shows a confirm/cancel bar
- *  6. Sends the result back via electronApi.searchArea.sendResult()
+ * Cross-monitor selection overlay.
+ *
+ * Coordinate contract:
+ *  - All selection state (startPhys, endPhys) is in PHYSICAL ABSOLUTE coords
+ *    (i.e. virtual desktop physical pixels, top-left of primary = 0,0)
+ *  - Local CSS/logical coords are used ONLY at the edges (mouse input → broadcast,
+ *    broadcast → render clip)
+ *
+ * Flow:
+ *  1. signalReady()      → get screenshot + monitor metadata
+ *  2. local mouse event  → convert to physical absolute → signalMouseEvent()
+ *  3. broadcastMouseEvent → update shared state (all windows, including sender)
+ *  4. render             → clip physical rect to this monitor → CSS coords
+ *  5. confirm            → send physical absolute rect via signalCloseWindow()
  */
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
@@ -23,82 +28,168 @@ import React, {
 } from "react";
 import type { SignalReadyResponse } from "../../../../electron/shared/types";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface Point {
   x: number;
   y: number;
 }
 
+interface PhysRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 type Phase = "idle" | "dragging" | "confirming";
 
-// Normalise a rect so width/height are always positive
-function normaliseRect(start: Point, end: Point): Rectangle {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function normalisePoints(a: Point, b: Point): PhysRect {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
   return {
-    x: Math.round(Math.min(start.x, end.x)),
-    y: Math.round(Math.min(start.y, end.y)),
-    width: Math.round(Math.abs(end.x - start.x)),
-    height: Math.round(Math.abs(end.y - start.y)),
+    x,
+    y,
+    width: Math.abs(b.x - a.x),
+    height: Math.abs(b.y - a.y),
   };
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SearchAreaOverlayPage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
-  const [startPoint, setStartPoint] = useState<Point | null>(null);
-  const [currentPoint, setCurrentPoint] = useState<Point | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // ── Signal ready + subscribe to screenshot ─────────────────────────────────
+  // Selection stored in physical absolute coords
+  const [startPhys, setStartPhys] = useState<Point | null>(null);
+  const [endPhys, setEndPhys] = useState<Point | null>(null);
+
+  // Monitor metadata — stable refs (set once on ready, never change)
+  const scaleFactor = useRef(1);
+  const monitorLogicalOrigin = useRef<Point>({ x: 0, y: 0 });
+  const logicalSize = useRef({ width: 0, height: 0 });
+
+  // ── Coordinate converters ──────────────────────────────────────────────────
+
+  // CSS local (this window) → physical absolute (virtual desktop)
+  const toPhysAbs = useCallback(
+    (cssX: number, cssY: number): Point => ({
+      x: Math.round(
+        (monitorLogicalOrigin.current.x + cssX) * scaleFactor.current,
+      ),
+      y: Math.round(
+        (monitorLogicalOrigin.current.y + cssY) * scaleFactor.current,
+      ),
+    }),
+    [],
+  );
+
+  // Physical absolute → CSS local for THIS monitor's window
+  // Returns null if the point is outside this monitor
+  const physAbsToLocalCss = useCallback(
+    (physX: number, physY: number): Point => ({
+      x: physX / scaleFactor.current - monitorLogicalOrigin.current.x,
+      y: physY / scaleFactor.current - monitorLogicalOrigin.current.y,
+    }),
+    [],
+  );
+
+  // Clip a physical absolute rect to this monitor and return local CSS rect.
+  // Returns null if the selection doesn't overlap this monitor at all.
+  const clipToLocalCss = useCallback((physRect: PhysRect): Rectangle | null => {
+    const sf = scaleFactor.current;
+    const origin = monitorLogicalOrigin.current;
+    const size = logicalSize.current;
+
+    // This monitor's physical bounds
+    const monPhysX = origin.x * sf;
+    const monPhysY = origin.y * sf;
+    const monPhysRight = (origin.x + size.width) * sf;
+    const monPhysBottom = (origin.y + size.height) * sf;
+
+    // Clip
+    const clipX = Math.max(physRect.x, monPhysX);
+    const clipY = Math.max(physRect.y, monPhysY);
+    const clipRight = Math.min(physRect.x + physRect.width, monPhysRight);
+    const clipBottom = Math.min(physRect.y + physRect.height, monPhysBottom);
+
+    if (clipRight <= clipX || clipBottom <= clipY) return null;
+
+    // Convert clipped physical → local CSS
+    return {
+      x: Math.round(clipX / sf - origin.x),
+      y: Math.round(clipY / sf - origin.y),
+      width: Math.round((clipRight - clipX) / sf),
+      height: Math.round((clipBottom - clipY) / sf),
+    };
+  }, []);
+
+  // ── Signal ready ───────────────────────────────────────────────────────────
+
   useLayoutEffect(() => {
     ElectronApiService.searchArea
       .signalReady()
-      .then((signalResponse: SignalReadyResponse | null) => {
-        if (signalResponse) {
-          const blob = base64ToBlob(signalResponse.screenshot.toString());
-          const url = URL.createObjectURL(blob);
-          setScreenshot(url);
-        }
-      })
-      .catch((err) => console.error("Failed signal ready:", err));
+      .then((res: SignalReadyResponse | null) => {
+        if (!res) return;
 
-    return;
-    // return () => {
-    //   URL.revokeObjectURL(url);
-    // };
+        scaleFactor.current = res.scaleFactor;
+        monitorLogicalOrigin.current = res.monitorLogicalOrigin;
+        logicalSize.current = {
+          width: res.logicalWidth,
+          height: res.logicalHeight,
+        };
+
+        const blob = base64ToBlob(res.screenshot.toString());
+        setScreenshot(URL.createObjectURL(blob));
+      })
+      .catch((err) => console.error("[Overlay] signalReady failed:", err));
   }, []);
 
-  const base64ToBlob = (
-    base64: string,
-    contentType = "image/jpeg",
-    sliceSize = 1024 * 512, // 512KB chunks - good balance for huge images
-  ): Blob => {
-    // const pureBase64 = base64.startsWith("data:")
-    //   ? base64.split(",")[1]
-    //   : base64;
+  // ── Broadcast listener — single source of truth for all state ─────────────
+  //
+  // Local mouse handlers only call signalMouseEvent().
+  // This listener updates everyone (including the sender) so state is always
+  // in sync across all monitor windows.
 
-    // TODO: Use Buffer.from(data, 'base64') instead.
+  useEffect(() => {
+    const unsub = ElectronApiService.searchArea.broadcastMouseEvent(
+      (event: {
+        type: "down" | "move" | "up";
+        physicalX: number;
+        physicalY: number;
+      }) => {
+        const pt: Point = { x: event.physicalX, y: event.physicalY };
 
-    const byteCharacters = atob(base64);
-    const byteArrays: Uint8Array[] = [];
-
-    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-      const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-
-      // Create Uint8Array explicitly from ArrayBuffer-like
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
-    }
-
-    return new Blob(byteArrays as Uint8Array<ArrayBuffer>[], {
-      type: contentType,
-    });
-  };
+        if (event.type === "down") {
+          setStartPhys(pt);
+          setEndPhys(pt);
+          setPhase("dragging");
+        } else if (event.type === "move") {
+          setEndPhys(pt);
+        } else if (event.type === "up") {
+          setEndPhys(pt);
+          // Too small = accidental click → back to idle
+          if (startPhys) {
+            const r = normalisePoints(startPhys, pt);
+            if (r.width < 4 || r.height < 4) {
+              setPhase("idle");
+              setStartPhys(null);
+              setEndPhys(null);
+              return;
+            }
+          }
+          setPhase("confirming");
+        }
+      },
+    );
+    return unsub;
+  }, [startPhys]);
 
   // ── ESC to cancel ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") sendResult(null);
@@ -107,70 +198,80 @@ export default function SearchAreaOverlayPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // ── Mouse handlers ─────────────────────────────────────────────────────────
-  const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    const pt = { x: e.clientX, y: e.clientY };
-    setStartPoint(pt);
-    setCurrentPoint(pt);
-    setPhase("dragging");
-  }, []);
+  // ── Local mouse → broadcast (no state update here) ────────────────────────
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      const phys = toPhysAbs(e.clientX, e.clientY);
+      ElectronApiService.searchArea.signalMouseEvent({
+        type: "down",
+        physicalX: phys.x,
+        physicalY: phys.y,
+      });
+    },
+    [toPhysAbs],
+  );
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (phase !== "dragging") return;
-      setCurrentPoint({ x: e.clientX, y: e.clientY });
+      const phys = toPhysAbs(e.clientX, e.clientY);
+      ElectronApiService.searchArea.signalMouseEvent({
+        type: "move",
+        physicalX: phys.x,
+        physicalY: phys.y,
+      });
     },
-    [phase],
+    [phase, toPhysAbs],
   );
 
   const onMouseUp = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (phase !== "dragging" || !startPoint) return;
-      const end = { x: e.clientX, y: e.clientY };
-      setCurrentPoint(end);
-      const rect = normaliseRect(startPoint, end);
-      // If selection is too small (accidental click), restart
-      if (rect.width < 4 || rect.height < 4) {
-        setPhase("idle");
-        setStartPoint(null);
-        setCurrentPoint(null);
-        return;
-      }
-      setPhase("confirming");
+      if (phase !== "dragging") return;
+      const phys = toPhysAbs(e.clientX, e.clientY);
+      ElectronApiService.searchArea.signalMouseEvent({
+        type: "up",
+        physicalX: phys.x,
+        physicalY: phys.y,
+      });
     },
-    [phase, startPoint],
+    [phase, toPhysAbs],
   );
 
+  // ── Result ─────────────────────────────────────────────────────────────────
+
   const sendResult = useCallback((rect: Rectangle | null) => {
-    ElectronApiService.searchArea?.signalCloseWindow(rect);
+    ElectronApiService.searchArea.signalCloseWindow(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {
-    if (!startPoint || !currentPoint) return;
-    sendResult(normaliseRect(startPoint, currentPoint));
-  }, [startPoint, currentPoint, sendResult]);
+    if (!startPhys || !endPhys) return;
+    // Send physical absolute rect — backend speaks physical
+    sendResult(normalisePoints(startPhys, endPhys));
+  }, [startPhys, endPhys, sendResult]);
 
-  const handleCancel = useCallback(() => {
-    sendResult(null);
-  }, [sendResult]);
+  const handleCancel = useCallback(() => sendResult(null), [sendResult]);
 
   const handleRestart = useCallback(() => {
     setPhase("idle");
-    setStartPoint(null);
-    setCurrentPoint(null);
+    setStartPhys(null);
+    setEndPhys(null);
   }, []);
 
-  // ── Derived geometry ───────────────────────────────────────────────────────
-  const selectionRect =
-    startPoint && currentPoint ? normaliseRect(startPoint, currentPoint) : null;
+  // ── Derived geometry (local CSS, clipped to this monitor) ─────────────────
+
+  const physRect =
+    startPhys && endPhys ? normalisePoints(startPhys, endPhys) : null;
+
+  const localCssRect = physRect ? clipToLocalCss(physRect) : null;
 
   const isDraggingOrConfirming = phase === "dragging" || phase === "confirming";
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <div
-      ref={containerRef}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -182,7 +283,7 @@ export default function SearchAreaOverlayPage() {
         overflow: "hidden",
       }}
     >
-      {/* ── Frozen desktop screenshot ──────────────────────────────────────── */}
+      {/* Frozen desktop screenshot */}
       {screenshot && (
         <img
           src={screenshot}
@@ -198,7 +299,8 @@ export default function SearchAreaOverlayPage() {
           }}
         />
       )}
-      {/* ── Full dim overlay ───────────────────────────────────────────────── */}
+
+      {/* Full dim — idle only */}
       {!isDraggingOrConfirming && (
         <div
           style={{
@@ -209,31 +311,51 @@ export default function SearchAreaOverlayPage() {
           }}
         />
       )}
-      {/* ── Dim areas around selection (4 rects) ──────────────────────────── */}
-      {isDraggingOrConfirming && selectionRect && (
-        <DimMask rect={selectionRect} />
+
+      {/* Dim mask + selection box — only if selection overlaps this monitor */}
+      {isDraggingOrConfirming && localCssRect && (
+        <>
+          <DimMask rect={localCssRect} />
+          {localCssRect.width > 0 && (
+            <SelectionBox
+              rect={localCssRect}
+              phase={phase}
+            />
+          )}
+        </>
       )}
-      {/* ── Selection border + handles ─────────────────────────────────────── */}
-      {isDraggingOrConfirming && selectionRect && selectionRect.width > 0 && (
-        <SelectionBox
-          rect={selectionRect}
-          phase={phase}
+
+      {/* Dim full monitor if dragging but selection is entirely on another monitor */}
+      {isDraggingOrConfirming && !localCssRect && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            pointerEvents: "none",
+          }}
         />
       )}
-      {/* ── Live W×H readout (during drag) ────────────────────────────────── */}
-      {phase === "dragging" && selectionRect && (
-        <ReadoutLabel rect={selectionRect} />
+
+      {/* Live readout — only on the monitor where drag is happening */}
+      {phase === "dragging" && localCssRect && physRect && (
+        <ReadoutLabel
+          cssRect={localCssRect}
+          physRect={physRect}
+        />
       )}
-      {/* ── Confirm / Cancel bar (after release) ──────────────────────────── */}
-      {phase === "confirming" && selectionRect && (
+
+      {/* Confirm bar — show on every monitor that has part of the selection */}
+      {phase === "confirming" && localCssRect && physRect && (
         <ConfirmBar
-          rect={selectionRect}
+          cssRect={localCssRect}
+          physRect={physRect}
           onConfirm={handleConfirm}
           onRestart={handleRestart}
           onCancel={handleCancel}
         />
       )}
-      {/* ── Idle hint ─────────────────────────────────────────────────────── */}
+
       {phase === "idle" && <HintBanner />}
     </div>
   );
@@ -245,7 +367,6 @@ function DimMask({ rect }: { rect: Rectangle }) {
   const dim = "rgba(0,0,0,0.50)";
   return (
     <>
-      {/* Top */}
       <div
         style={{
           position: "absolute",
@@ -257,7 +378,6 @@ function DimMask({ rect }: { rect: Rectangle }) {
           pointerEvents: "none",
         }}
       />
-      {/* Bottom */}
       <div
         style={{
           position: "absolute",
@@ -269,7 +389,6 @@ function DimMask({ rect }: { rect: Rectangle }) {
           pointerEvents: "none",
         }}
       />
-      {/* Left */}
       <div
         style={{
           position: "absolute",
@@ -281,7 +400,6 @@ function DimMask({ rect }: { rect: Rectangle }) {
           pointerEvents: "none",
         }}
       />
-      {/* Right */}
       <div
         style={{
           position: "absolute",
@@ -299,17 +417,13 @@ function DimMask({ rect }: { rect: Rectangle }) {
 
 function SelectionBox({ rect, phase }: { rect: Rectangle; phase: Phase }) {
   const handleSize = 8;
-  const handleColor = "#60a5fa";
-
   const handles =
     phase === "confirming"
       ? [
-          // corners
           { top: -handleSize / 2, left: -handleSize / 2 },
           { top: -handleSize / 2, right: -handleSize / 2 },
           { bottom: -handleSize / 2, left: -handleSize / 2 },
           { bottom: -handleSize / 2, right: -handleSize / 2 },
-          // mid-edges
           { top: -handleSize / 2, left: "calc(50% - 4px)" },
           { bottom: -handleSize / 2, left: "calc(50% - 4px)" },
           { top: "calc(50% - 4px)", left: -handleSize / 2 },
@@ -337,7 +451,7 @@ function SelectionBox({ rect, phase }: { rect: Rectangle; phase: Phase }) {
             position: "absolute",
             width: handleSize,
             height: handleSize,
-            background: handleColor,
+            background: "#60a5fa",
             borderRadius: 2,
             ...style,
           }}
@@ -347,18 +461,24 @@ function SelectionBox({ rect, phase }: { rect: Rectangle; phase: Phase }) {
   );
 }
 
-function ReadoutLabel({ rect }: { rect: Rectangle }) {
+// Shows local CSS position but physical pixel dimensions
+function ReadoutLabel({
+  cssRect,
+  physRect,
+}: {
+  cssRect: Rectangle;
+  physRect: PhysRect;
+}) {
   const OFFSET = 6;
-  // Position above the selection; flip below if near top edge
-  const above = rect.y - OFFSET - 26;
-  const top = above > 0 ? above : rect.y + rect.height + OFFSET;
+  const above = cssRect.y - OFFSET - 26;
+  const top = above > 0 ? above : cssRect.y + cssRect.height + OFFSET;
 
   return (
     <div
       style={{
         position: "absolute",
         top,
-        left: rect.x,
+        left: cssRect.x,
         background: "rgba(15,23,42,0.88)",
         color: "#93c5fd",
         fontFamily: "monospace",
@@ -369,18 +489,21 @@ function ReadoutLabel({ rect }: { rect: Rectangle }) {
         whiteSpace: "nowrap",
       }}
     >
-      {rect.x}, {rect.y} &nbsp;·&nbsp; {rect.width} × {rect.height}
+      {/* Physical dimensions — what backend will use */}
+      {physRect.width} × {physRect.height} px
     </div>
   );
 }
 
 function ConfirmBar({
-  rect,
+  cssRect,
+  physRect,
   onConfirm,
   onRestart,
   onCancel,
 }: {
-  rect: Rectangle;
+  cssRect: Rectangle;
+  physRect: PhysRect;
   onConfirm: () => void;
   onRestart: () => void;
   onCancel: () => void;
@@ -389,15 +512,13 @@ function ConfirmBar({
   const barWidth = 320;
   const MARGIN = 12;
 
-  // Try to position below the selection; flip above if near bottom
   const viewportHeight = window.innerHeight;
-  const belowY = rect.y + rect.height + MARGIN;
-  const aboveY = rect.y - barHeight - MARGIN;
+  const belowY = cssRect.y + cssRect.height + MARGIN;
+  const aboveY = cssRect.y - barHeight - MARGIN;
   const top =
     belowY + barHeight < viewportHeight ? belowY : Math.max(aboveY, MARGIN);
 
-  // Centre horizontally on the selection, clamped to viewport
-  const centreX = rect.x + rect.width / 2 - barWidth / 2;
+  const centreX = cssRect.x + cssRect.width / 2 - barWidth / 2;
   const left = Math.max(
     MARGIN,
     Math.min(centreX, window.innerWidth - barWidth - MARGIN),
@@ -419,10 +540,8 @@ function ConfirmBar({
         gap: 8,
         padding: "0 14px",
         boxSizing: "border-box",
-        // allow clicks on the bar itself, block drag
         pointerEvents: "all",
       }}
-      // Stop mousedown propagating so bar clicks don't restart the drag
       onMouseDown={(e) => e.stopPropagation()}
     >
       <span
@@ -433,30 +552,26 @@ function ConfirmBar({
           flex: 1,
         }}
       >
-        {rect.width} × {rect.height}
+        {physRect.width} × {physRect.height} px
       </span>
-
       <button
         onClick={onRestart}
         style={btnStyle("ghost")}
       >
         Redraw
       </button>
-
       <button
         onClick={onConfirm}
         style={btnStyle("primary")}
       >
         Confirm
       </button>
-
       <button
         onClick={onCancel}
         style={btnStyle("ghost")}
       >
         Cancel
       </button>
-
       <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>ESC</span>
     </div>
   );
@@ -490,22 +605,40 @@ function btnStyle(variant: "primary" | "ghost"): React.CSSProperties {
     padding: "4px 12px",
     borderRadius: 6,
     fontSize: 12,
-    fontFamily: "sans-serif",
     cursor: "pointer",
     border: "0.5px solid",
     background: "transparent",
   };
-  if (variant === "primary") {
-    return {
-      ...base,
-      borderColor: "#60a5fa",
-      color: "#93c5fd",
-      background: "rgba(96,165,250,0.15)",
-    };
+  return variant === "primary"
+    ? {
+        ...base,
+        borderColor: "#60a5fa",
+        color: "#93c5fd",
+        background: "rgba(96,165,250,0.15)",
+      }
+    : {
+        ...base,
+        borderColor: "rgba(255,255,255,0.2)",
+        color: "rgba(255,255,255,0.5)",
+      };
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+
+function base64ToBlob(
+  base64: string,
+  contentType = "image/jpeg",
+  sliceSize = 512 * 1024,
+): Blob {
+  const byteCharacters = atob(base64);
+  const byteArrays: Uint8Array[] = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Uint8Array(slice.length);
+    for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i);
+    byteArrays.push(byteNumbers);
   }
-  return {
-    ...base,
-    borderColor: "rgba(255,255,255,0.2)",
-    color: "rgba(255,255,255,0.5)",
-  };
+  return new Blob(byteArrays as Uint8Array<ArrayBuffer>[], {
+    type: contentType,
+  });
 }

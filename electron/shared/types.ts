@@ -33,6 +33,7 @@ export interface SignalReadyResponse {
   logicalWidth: number;
   logicalHeight: number;
   scaleFactor: number;
+  monitorLogicalOrigin: { x: number; y: number };
 }
 
 export interface SignalMouseEvent {
