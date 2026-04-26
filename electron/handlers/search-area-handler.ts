@@ -75,6 +75,8 @@ export function registerSearchAreaHandler(
               x.electronWindow.loadURL(
                 "http://localhost:5173/#/search-area-overlay",
               );
+    x.electronWindow.webContents.openDevTools();
+
             } else {
               x.electronWindow.loadFile(
                 path.join(__dirname, "../dist/frontend/index.html"),
@@ -122,12 +124,14 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     y: display.bounds.y,
     width: display.bounds.width,
     height: display.bounds.height,
-    fullscreen: true,
-    // frame: true,
-    // transparent: false,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
+    fullscreen: false,
+    frame: true,
+    transparent: false,
+    alwaysOnTop: false,
+    // fullscreen: true,
+    // frame: false,
+    // transparent: true,
+    // alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     movable: false,

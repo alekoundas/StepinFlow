@@ -26,7 +26,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { SignalReadyResponse } from "../../../../electron/shared/types";
+import type {
+  SignalMouseEvent,
+  SignalReadyResponse,
+} from "../../../../electron/shared/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,12 +159,9 @@ export default function SearchAreaOverlayPage() {
 
   useEffect(() => {
     const unsub = ElectronApiService.searchArea.broadcastMouseEvent(
-      (event: {
-        type: "down" | "move" | "up";
-        physicalX: number;
-        physicalY: number;
-      }) => {
+      (event: SignalMouseEvent) => {
         const pt: Point = { x: event.physicalX, y: event.physicalY };
+        console.log("yek: ", event);
 
         if (event.type === "down") {
           setStartPhys(pt);
@@ -186,7 +186,7 @@ export default function SearchAreaOverlayPage() {
       },
     );
     return unsub;
-  }, [startPhys]);
+  }, []);
 
   // ── ESC to cancel ──────────────────────────────────────────────────────────
 
