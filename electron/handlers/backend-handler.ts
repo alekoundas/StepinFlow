@@ -3,7 +3,7 @@ import net from "net";
 import log from "electron-log";
 import { ProtobufService } from "../protobuf/protobuf.js";
 import { IPC_CHANNELS } from "../shared/channels.js";
-import type { RequestMessage } from "../shared/types.js";
+import type { IpcRequestMessage, IpcResponseMessage } from "../shared/types.js";
 import { BackendService } from "../backend-service.js";
 
 interface PendingResolver {
@@ -11,6 +11,8 @@ interface PendingResolver {
   reject: (reason: any) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 }
+const { IpcRequest, IpcResponse, IpcBroadcast } =
+  await ProtobufService().getMessageTypes();
 export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
 export async function registerBackendHandler(
   mainWindow: BrowserWindow | null,
@@ -18,15 +20,13 @@ export async function registerBackendHandler(
 ): Promise<{
   invokeBackend: InvokeBackend;
 }> {
-  const { IpcRequest, IpcResponse } = await ProtobufService().getMessageTypes();
-
   const pending = new Map<string, PendingResolver>();
   let backendClient: net.Socket | null = null;
 
   const getClient = () => backendClient;
   const setClient = (socket: net.Socket | null) => (backendClient = socket);
   const onConnected = (socket: net.Socket) =>
-    handleReceivedData(socket, mainWindow, pending, IpcResponse);
+    handleReceivedData(socket, mainWindow, pending);
 
   //============================================
   // Initial connection
@@ -40,10 +40,13 @@ export async function registerBackendHandler(
   //============================================
   // IPC handle: renderer -> invokeBackend -> .Net
   //============================================
-  ipcMain.handle(IPC_CHANNELS.BACKEND_SEND, async (_, msg: RequestMessage) => {
-    console.log("[BackendHandler] Sending to backend:", msg);
-    return invokeBackend(msg.action, msg.payload);
-  });
+  ipcMain.handle(
+    IPC_CHANNELS.BACKEND_SEND,
+    async (_, msg: IpcRequestMessage) => {
+      console.log("[BackendHandler] Sending to backend:", msg);
+      return invokeBackend(msg.action, msg.payload);
+    },
+  );
 
   //============================================
   // Expose reusable invoke .Net method (also used on other IpcHandlers in electron)
@@ -96,11 +99,11 @@ export async function registerBackendHandler(
   return { invokeBackend };
 }
 
+// Handles IpcResponse or IpcBroadcast messages from .Net
 function handleReceivedData(
   socket: net.Socket,
   mainWindow: BrowserWindow | null,
   pending: Map<string, PendingResolver>,
-  IpcResponse: any,
 ): void {
   let buffer = Buffer.alloc(0);
 
@@ -120,7 +123,7 @@ function handleReceivedData(
           longs: String,
           enums: String,
           bytes: Buffer,
-        });
+        }) as IpcResponseMessage<any>;
 
         console.log(
           "[BackendHandler] Received:",
@@ -156,6 +159,18 @@ function handleReceivedData(
       } catch (err) {
         console.error("[BackendHandler] Decode error:", err);
       }
+
+      try {
+        const ipcBroadcast = IpcBroadcast.decode(msgBuf);
+        const plain = IpcBroadcast.toObject(ipcBroadcast);
+        // const payload = JSON.parse(plain.payload.toString("utf-8"));
+
+        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
+          action: plain.action,
+          payload: JSON.parse(Buffer.from(plain.payload).toString()),
+        });
+        return; // important: don't treat as normal response
+      } catch {}
     }
   });
 }

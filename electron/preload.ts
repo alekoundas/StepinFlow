@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 // ========== Types & Interfaces ==========
-interface RequestMessage {
+interface IpcRequestMessage {
   action: string;
   payload: unknown; // TODO use a  type (intersection type?)
   correlationId?: string; // Optional ID to match requests with responses
@@ -47,7 +47,7 @@ const IPC_CHANNELS = {
 const api = {
   backendApi: {
     // Send message to backend → returns Promise with response
-    invoke: <T = unknown>(msg: RequestMessage): Promise<T> =>
+    invoke: <T = unknown>(msg: IpcRequestMessage): Promise<T> =>
       ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<T>,
 
     // Listen for messages coming FROM backend. Returns unsubscribe function

@@ -42,7 +42,7 @@ namespace App.Ipc
 
                     // Start BOTH loops concurrently for this connection
                     Task requestTask = HandleConnectionAsync(pipe, stoppingToken);
-                    Task pushTask = ForwardPushMessagesAsync(pipe, stoppingToken);
+                    Task pushTask = BroadcastAsync(pipe, stoppingToken);
 
                     // Wait until EITHER task finishes (client disconnected, error, cancellation)
                     await Task.WhenAny(requestTask, pushTask);
@@ -169,7 +169,7 @@ namespace App.Ipc
             return total;
         }
 
-        private async Task ForwardPushMessagesAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        private async Task BroadcastAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             await foreach (IpcBroadcast ipcBroadcast in _pushChannel.Reader.ReadAllAsync(ct))
             {

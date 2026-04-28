@@ -2,6 +2,7 @@ export const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
   BACKEND_SEND: "BACKEND_SEND",
   BACKEND_RECEIVE: "BACKEND_RECEIVE",
+  BACKEND_BROADCAST: "BACKEND_BROADCAST",
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
   // ========== Search-area overlay channels ==========

@@ -12,3 +12,9 @@ message IpcResponse {
   string correlationId = 3;
   string error = 4;
 }
+
+message IpcBroadcast {
+  string action = 1;
+  string message = 2;
+  bytes payload = 3;
+}

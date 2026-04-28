@@ -23,6 +23,7 @@ export function ProtobufService() {
     return {
       IpcRequest: root.lookupType("IpcRequest"),
       IpcResponse: root.lookupType("IpcResponse"),
+      IpcBroadcast: root.lookupType("IpcBroadcast"),
     };
   };
 

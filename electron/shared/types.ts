@@ -1,10 +1,17 @@
-export interface RequestMessage {
+export interface IpcRequestMessage {
   action: string;
   payload: unknown;
   correlationId?: string;
 }
 
-export interface ResponseMessage<T> {
+export interface IpcResponseMessage<T> {
+  action: string;
+  payload: T;
+  correlationId: string;
+  error?: string;
+}
+
+export interface IpcBroadcastMessage<T> {
   action: string;
   payload: T;
   correlationId: string;

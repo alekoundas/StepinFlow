@@ -1,4 +1,4 @@
-interface RequestMessage {
+interface IpcRequestMessage {
   action: string;
   payload: unknown;
   correlationId?: string;
@@ -40,7 +40,7 @@ declare global {
   interface Window {
     electronApi: {
       backendApi: {
-        invoke: <T = unknown>(msg: RequestMessage) => Promise<T>;
+        invoke: <T = unknown>(msg: IpcRequestMessage) => Promise<T>;
         onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {

@@ -1,4 +1,4 @@
-import type { RequestMessage } from "../../../../electron/shared/types";
+import type { IpcRequestMessage } from "../../../../electron/shared/types";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
@@ -74,7 +74,7 @@ export const backendApiService = {
 };
 
 async function call<T = any>(action: string, payload: any = {}): Promise<T> {
-  const msg: RequestMessage = {
+  const msg: IpcRequestMessage = {
     action,
     payload,
   };

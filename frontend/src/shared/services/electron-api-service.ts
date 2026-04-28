@@ -52,8 +52,3 @@ export const ElectronApiService = {
       window.electronApi.searchArea.signalCloseWindow(rect),
   },
 };
-
-// Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
-export function setupPushListener(callback: (msg: any) => void): () => void {
-  return window.electronApi.backendApi.onMessage(callback);
-}

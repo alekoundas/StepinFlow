@@ -241,6 +241,33 @@ function registerSignalMouseEventHandlers(
   };
 }
 
+function registerGlobalMousePushListener(monitorEntries: MonitorEntry[]) {
+  const handler = (_: any, msg: any) => {
+    if (msg.topic !== "OverlayMouseEvent") return;
+
+    const event: SignalMouseEvent = {
+      type: msg.payload.type === 0 ? "down" :
+            msg.payload.type === 1 ? "move" : "up",
+      physicalX: msg.payload.physicalX,
+      physicalY: msg.payload.physicalY,
+    };
+
+    // Broadcast to every overlay window
+    monitorEntries.forEach(entry => {
+      if (entry.electronWindow && !entry.electronWindow.isDestroyed()) {
+        entry.electronWindow.webContents.send(
+          IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
+          event
+        );
+      }
+    });
+  };
+
+  ipcMain.on(IPC_CHANNELS.BACKEND_BROADCAST, handler);
+
+  return () => ipcMain.removeListener(IPC_CHANNELS.BACKEND_BROADCAST, handler);
+}
+
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],
   broadcastCleanupCallback: () => void,
