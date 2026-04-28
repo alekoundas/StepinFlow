@@ -31,7 +31,7 @@ export function registerSearchAreaHandler(
     async (_event): Promise<Rectangle | null> => {
       if (isWindowOpen) {
         console.warn(
-          "[SearchAreaHandler] Overlay already open — ignoring second call",
+          "[SearchAreaHandler]: Overlay already open — ignoring second call",
         );
         return null;
       }
@@ -47,7 +47,7 @@ export function registerSearchAreaHandler(
           return null;
         }
 
-        // 2. Get Electron displays (for scaleFactor — backend can't tell us this)
+        // 2. Get Electron displays (for scaleFactor — backend cant tell us this)
         const electronDisplays = screen.getAllDisplays();
 
         // 3. Match backend responses → Electron displays
@@ -62,9 +62,12 @@ export function registerSearchAreaHandler(
           monitorEntry.electronWindow = newWindow;
         }
 
-        // 5. Register per-window signal handlers BEFORE loading pages
+        // 5. Ask .Net to start broadcasting mouse click and drag
+        await invokeBackend("System.inputRecordOverlayStart", null);
+
+        // 6. Register per-window signal handlers BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
-        const cleanupFn = registerSignalMouseEventHandlers(monitorEntries);
+        const cleanupFn = registerMouseEventBroadcastHandler(monitorEntries);
 
         // 6. Navigate to overlay page on every window.
         await Promise.all(
@@ -206,7 +209,7 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
   );
 }
 
-function registerSignalMouseEventHandlers(
+function registerMouseEventBroadcastHandler(
   monitorEntries: MonitorEntry[],
 ): () => void {
   const broadcastHandler = (
@@ -228,45 +231,19 @@ function registerSignalMouseEventHandlers(
   };
 
   ipcMain.on(
-    IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT,
+    IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
     (e: Electron.IpcMainEvent, signalEvent: SignalMouseEvent) =>
       broadcastHandler(e, signalEvent),
   );
 
   return () => {
     ipcMain.removeListener(
-      IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT,
+      IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
       broadcastHandler,
     );
   };
 }
 
-function registerGlobalMousePushListener(monitorEntries: MonitorEntry[]) {
-  const handler = (_: any, msg: any) => {
-    if (msg.topic !== "OverlayMouseEvent") return;
-
-    const event: SignalMouseEvent = {
-      type: msg.payload.type === 0 ? "down" :
-            msg.payload.type === 1 ? "move" : "up",
-      physicalX: msg.payload.physicalX,
-      physicalY: msg.payload.physicalY,
-    };
-
-    // Broadcast to every overlay window
-    monitorEntries.forEach(entry => {
-      if (entry.electronWindow && !entry.electronWindow.isDestroyed()) {
-        entry.electronWindow.webContents.send(
-          IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-          event
-        );
-      }
-    });
-  };
-
-  ipcMain.on(IPC_CHANNELS.BACKEND_BROADCAST, handler);
-
-  return () => ipcMain.removeListener(IPC_CHANNELS.BACKEND_BROADCAST, handler);
-}
 
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],

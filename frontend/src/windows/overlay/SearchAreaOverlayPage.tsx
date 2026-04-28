@@ -272,15 +272,16 @@ export default function SearchAreaOverlayPage() {
 
   return (
     <div
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
+      // onMouseDown={onMouseDown}
+      // onMouseMove={onMouseMove}
+      // onMouseUp={onMouseUp}
       style={{
         position: "fixed",
         inset: 0,
         userSelect: "none",
         cursor: phase === "confirming" ? "default" : "crosshair",
         overflow: "hidden",
+        pointerEvents: phase === "confirming" ? "auto" : "none", // TODO test
       }}
     >
       {/* Frozen desktop screenshot */}
