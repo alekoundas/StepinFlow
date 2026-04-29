@@ -60,6 +60,7 @@ namespace Business.Services.InputService
                 throw new Exception("You cant run more than 1 recondings at the same time Broski");
 
             _isRecording = true;
+            _broadcastType = null;
 
             // Subscribe to the events 
             _hook.MouseReleased += OnMouseReleased;
@@ -75,8 +76,8 @@ namespace Business.Services.InputService
             if (!_isRecording)
                 throw new Exception("Recording should be started first dummy");
 
-            _isRecording = true;
-            _broadcastType = BroadcastTypeEnum.OVERLAY_MOUSE_EVENT;
+            _isRecording = false;
+            _broadcastType = null;
 
             // Unsubscribe to the events 
             _hook.MouseReleased -= OnMouseReleased;
@@ -93,6 +94,7 @@ namespace Business.Services.InputService
                 throw new Exception("You cant run more than 1 recondings at the same time Broski");
 
             _isRecording = true;
+            _broadcastType = BroadcastTypeEnum.OVERLAY_MOUSE_EVENT;
 
             // Subscribe to the events 
             _hook.MouseReleased += OnMouseReleased;
@@ -107,6 +109,7 @@ namespace Business.Services.InputService
                 throw new Exception("Recording should be started first dummy");
 
             _isRecording = true;
+            _broadcastType = null;
 
             // Subscribe to the events 
             _hook.MouseReleased += OnMouseReleased;

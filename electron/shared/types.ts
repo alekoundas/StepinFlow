@@ -12,10 +12,8 @@ export interface IpcResponseMessage<T> {
 }
 
 export interface IpcBroadcastMessage<T> {
-  action: string;
+  type: string;
   payload: T;
-  correlationId: string;
-  error?: string;
 }
 
 export interface MonitorInfo {

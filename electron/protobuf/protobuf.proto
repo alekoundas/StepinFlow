@@ -14,7 +14,6 @@ message IpcResponse {
 }
 
 message IpcBroadcast {
-  string action = 1;
-  string message = 2;
-  bytes payload = 3;
+  string type = 1;
+  bytes payload = 2;
 }

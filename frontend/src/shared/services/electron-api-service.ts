@@ -26,13 +26,14 @@ declare global {
     electronApi: {
       backendApi: {
         invoke: <T = any>(msg: any) => Promise<ResultDto<T>>;
-        onMessage: <T>(cb: (msg: T) => void) => () => void;
+        onBroadcast: <T>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
-        broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) => void;
+        broadcastMouseEvent: (
+          callback: (e: SignalMouseEvent) => void,
+        ) => () => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
-        signalMouseEvent: (event: SignalMouseEvent) => void;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
     };
@@ -46,8 +47,6 @@ export const ElectronApiService = {
     broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) =>
       window.electronApi.searchArea.broadcastMouseEvent(callback),
     signalReady: () => window.electronApi.searchArea.signalReady(),
-    signalMouseEvent: (event: SignalMouseEvent) =>
-      window.electronApi.searchArea.signalMouseEvent(event),
     signalCloseWindow: (rect: Rectangle | null) =>
       window.electronApi.searchArea.signalCloseWindow(rect),
   },

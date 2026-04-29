@@ -57,19 +57,19 @@ export function registerSearchAreaHandler(
         );
 
         // 4. Create new window per monitor.
-        for (const monitorEntry of monitorEntries) {
-          const newWindow = createElectronWindow(isDev, monitorEntry.display);
-          monitorEntry.electronWindow = newWindow;
-        }
+        // for (const monitorEntry of monitorEntries) {
+        //   const newWindow = createElectronWindow(isDev, monitorEntry.display);
+        //   monitorEntry.electronWindow = newWindow;
+        // }
 
         // 5. Ask .Net to start broadcasting mouse click and drag
-        await invokeBackend("System.inputRecordOverlayStart", null);
+        await invokeBackend("System.inputRecordOverlayStart", null); // TODO also stop at the end
 
         // 6. Register per-window signal handlers BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
         const cleanupFn = registerMouseEventBroadcastHandler(monitorEntries);
 
-        // 6. Navigate to overlay page on every window.
+        // // 6. Navigate to overlay page on every window.
         await Promise.all(
           monitorEntries.map((x) => {
             if (!x.electronWindow) return; // will never happen
@@ -244,7 +244,6 @@ function registerMouseEventBroadcastHandler(
   };
 }
 
-
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],
   broadcastCleanupCallback: () => void,
@@ -256,6 +255,8 @@ function registerSignalCloseHandler(
 
     const cleanup = () => {
       broadcastCleanupCallback();
+      // await invokeBackend("System.inputRecordOverlayStart", null);
+
       ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       electronWindows.forEach((window) => {
         if (!window.isDestroyed()) window.close();

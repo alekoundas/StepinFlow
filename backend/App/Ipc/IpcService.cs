@@ -210,7 +210,7 @@ namespace App.Ipc
                     await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
                     await pipe.FlushAsync(ct);
                 }
-                catch (Exception ex)// when (!ct.IsCancellationRequested)
+                catch (Exception ex) when (!ct.IsCancellationRequested)
                 {
                     Console.Error.WriteLine($"[Push Forward] Error: {ex.Message}");
                     break;

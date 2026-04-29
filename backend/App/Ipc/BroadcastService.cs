@@ -35,7 +35,7 @@ namespace App.Ipc
 
             IpcBroadcast message = new IpcBroadcast
             {
-                Type = type,
+                Type = type.ToString(), // TODO change to typed
                 Payload = payloadBytes
             };
             return _ipcService.BroadcastAsync(message);

@@ -29,13 +29,13 @@ const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
   BACKEND_SEND: "BACKEND_SEND",
   BACKEND_RECEIVE: "BACKEND_RECEIVE",
+  BACKEND_BROADCAST: "BACKEND_BROADCAST",
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
   // ========== Search-area overlay channels ==========
   SEARCH_AREA_OPEN_WINDOW: "SEARCH_AREA_OPEN_WINDOW",
   SEARCH_AREA_BROADCAST_MOUSE_EVENT: "SEARCH_AREA_BROADCAST_MOUSE_EVENT",
   SEARCH_AREA_SIGNAL_READY: "SEARCH_AREA_SIGNAL_READY",
-  SEARCH_AREA_SIGNAL_MOUSE_EVENT: "SEARCH_AREA_SIGNAL_MOUSE_EVENT",
   SEARCH_AREA_SIGNAL_CLOSE_WINDOW: "SEARCH_AREA_SIGNAL_CLOSE_WINDOW",
 
   // ========== Image editor channels ==========
@@ -51,7 +51,7 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<T>,
 
     // Listen for messages coming FROM backend. Returns unsubscribe function
-    onMessage: <T = unknown>(callback: (msg: T) => void): (() => void) => {
+    onBroadcast: <T = unknown>(callback: (msg: T) => void): (() => void) => {
       const listener = (_: any, msg: any) => {
         callback(msg as T);
       };
@@ -81,8 +81,6 @@ const api = {
     },
     signalReady: (): Promise<SignalReadyResponse | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY),
-    signalMouseEvent: (event: SignalMouseEvent) =>
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_MOUSE_EVENT, event),
     signalCloseWindow: (rect: Electron.Rectangle | null): void =>
       ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_CLOSE_WINDOW, rect),
   },

@@ -117,6 +117,8 @@ function handleReceivedData(
       const msgBuf = buffer.subarray(4, 4 + len);
       buffer = buffer.subarray(4 + len);
 
+
+      // Try decoding as IpcResponse first
       try {
         const response = IpcResponse.decode(msgBuf);
         const plain = IpcResponse.toObject(response, {
@@ -160,6 +162,7 @@ function handleReceivedData(
         console.error("[BackendHandler] Decode error:", err);
       }
 
+      // If not an IpcResponse, try decoding as IpcBroadcast
       try {
         const ipcBroadcast = IpcBroadcast.decode(msgBuf);
         const plain = IpcBroadcast.toObject(ipcBroadcast);

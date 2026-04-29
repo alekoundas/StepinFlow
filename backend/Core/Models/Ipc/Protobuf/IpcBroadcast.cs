@@ -6,7 +6,7 @@ namespace Core.Models.Ipc.Protobuf
     [ProtoContract]
     public class IpcBroadcast
     {
-        [ProtoMember(1)] public BroadcastTypeEnum Type { get; set; } = BroadcastTypeEnum.LOG;
-        [ProtoMember(3)] public byte[]? Payload { get; set; } = Array.Empty<byte>();
+        [ProtoMember(1)] public string Type { get; set; } = "";
+        [ProtoMember(2)] public byte[]? Payload { get; set; } = Array.Empty<byte>();
     }
 }

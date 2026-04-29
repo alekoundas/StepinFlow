@@ -78,27 +78,27 @@ export default function SearchAreaOverlayPage() {
   // ── Coordinate converters ──────────────────────────────────────────────────
 
   // CSS local (this window) → physical absolute (virtual desktop)
-  const toPhysAbs = useCallback(
-    (cssX: number, cssY: number): Point => ({
-      x: Math.round(
-        (monitorLogicalOrigin.current.x + cssX) * scaleFactor.current,
-      ),
-      y: Math.round(
-        (monitorLogicalOrigin.current.y + cssY) * scaleFactor.current,
-      ),
-    }),
-    [],
-  );
+  // const toPhysAbs = useCallback(
+  //   (cssX: number, cssY: number): Point => ({
+  //     x: Math.round(
+  //       (monitorLogicalOrigin.current.x + cssX) * scaleFactor.current,
+  //     ),
+  //     y: Math.round(
+  //       (monitorLogicalOrigin.current.y + cssY) * scaleFactor.current,
+  //     ),
+  //   }),
+  //   [],
+  // );
 
   // Physical absolute → CSS local for THIS monitor's window
   // Returns null if the point is outside this monitor
-  const physAbsToLocalCss = useCallback(
-    (physX: number, physY: number): Point => ({
-      x: physX / scaleFactor.current - monitorLogicalOrigin.current.x,
-      y: physY / scaleFactor.current - monitorLogicalOrigin.current.y,
-    }),
-    [],
-  );
+  // const physAbsToLocalCss = useCallback(
+  //   (physX: number, physY: number): Point => ({
+  //     x: physX / scaleFactor.current - monitorLogicalOrigin.current.x,
+  //     y: physY / scaleFactor.current - monitorLogicalOrigin.current.y,
+  //   }),
+  //   [],
+  // );
 
   // Clip a physical absolute rect to this monitor and return local CSS rect.
   // Returns null if the selection doesn't overlap this monitor at all.
@@ -200,44 +200,44 @@ export default function SearchAreaOverlayPage() {
 
   // ── Local mouse → broadcast (no state update here) ────────────────────────
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      const phys = toPhysAbs(e.clientX, e.clientY);
-      ElectronApiService.searchArea.signalMouseEvent({
-        type: "down",
-        physicalX: phys.x,
-        physicalY: phys.y,
-      });
-    },
-    [toPhysAbs],
-  );
+  // const onMouseDown = useCallback(
+  //   (e: React.MouseEvent<HTMLDivElement>) => {
+  //     if (e.button !== 0) return;
+  //     const phys = toPhysAbs(e.clientX, e.clientY);
+  //     ElectronApiService.searchArea.signalMouseEvent({
+  //       type: "down",
+  //       physicalX: phys.x,
+  //       physicalY: phys.y,
+  //     });
+  //   },
+  //   [toPhysAbs],
+  // );
 
-  const onMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (phase !== "dragging") return;
-      const phys = toPhysAbs(e.clientX, e.clientY);
-      ElectronApiService.searchArea.signalMouseEvent({
-        type: "move",
-        physicalX: phys.x,
-        physicalY: phys.y,
-      });
-    },
-    [phase, toPhysAbs],
-  );
+  // const onMouseMove = useCallback(
+  //   (e: React.MouseEvent<HTMLDivElement>) => {
+  //     if (phase !== "dragging") return;
+  //     const phys = toPhysAbs(e.clientX, e.clientY);
+  //     ElectronApiService.searchArea.signalMouseEvent({
+  //       type: "move",
+  //       physicalX: phys.x,
+  //       physicalY: phys.y,
+  //     });
+  //   },
+  //   [phase, toPhysAbs],
+  // );
 
-  const onMouseUp = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (phase !== "dragging") return;
-      const phys = toPhysAbs(e.clientX, e.clientY);
-      ElectronApiService.searchArea.signalMouseEvent({
-        type: "up",
-        physicalX: phys.x,
-        physicalY: phys.y,
-      });
-    },
-    [phase, toPhysAbs],
-  );
+  // const onMouseUp = useCallback(
+  //   (e: React.MouseEvent<HTMLDivElement>) => {
+  //     if (phase !== "dragging") return;
+  //     const phys = toPhysAbs(e.clientX, e.clientY);
+  //     ElectronApiService.searchArea.signalMouseEvent({
+  //       type: "up",
+  //       physicalX: phys.x,
+  //       physicalY: phys.y,
+  //     });
+  //   },
+  //   [phase, toPhysAbs],
+  // );
 
   // ── Result ─────────────────────────────────────────────────────────────────
 

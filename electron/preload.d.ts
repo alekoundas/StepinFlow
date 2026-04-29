@@ -41,13 +41,12 @@ declare global {
     electronApi: {
       backendApi: {
         invoke: <T = unknown>(msg: IpcRequestMessage) => Promise<T>;
-        onMessage: <T = unknown>(callback: (msg: T) => void) => () => void;
+        onBroadcast: <T = unknown>(callback: (msg: T) => void) => () => void;
       };
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
         broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
-        signalMouseEvent: (event: SignalMouseEvent) => void;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
       imageEditor: {

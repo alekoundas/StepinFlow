@@ -70,6 +70,11 @@ export const backendApiService = {
   System: {
     takeScreenshot: (dto: ScreenshotRequestDto) =>
       call<Uint8Array>("System.takeScreenshot", dto),
+    inputRecordOverlayStart: () => call("System.inputRecordOverlayStart"),
+  },
+
+  OnBroadcast: (callback: (msg: any) => void): (() => void) => {
+    return window.electronApi.backendApi.onBroadcast(callback);
   },
 };
 
@@ -93,5 +98,5 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
 
 // Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
 export function setupPushListener(callback: (msg: any) => void): () => void {
-  return window.electronApi.backendApi.onMessage(callback);
+  return window.electronApi.backendApi.onBroadcast(callback);
 }
