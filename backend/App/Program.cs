@@ -4,6 +4,7 @@ using Business.DataService.Services;
 using Business.Ipc.Handlers;
 using Business.Services.InputService;
 using Business.Services.ScreenshotService;
+using Core.Interfaces;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,7 @@ namespace App
             // IPC
             builder.Services.AddSingleton<IpcService>();
             builder.Services.AddSingleton<IpcDispatcher>();
+            builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
             //builder.Services.AddHostedService(sp =>
             //{
             //    var svc = sp.GetRequiredService<IpcService>();
@@ -88,15 +90,16 @@ namespace App
     {
         private readonly IpcService _ipcService;
         public HostedPipeListener(IpcService ipcService) => _ipcService = ipcService;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcService.StartAsync(cancellationToken);
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcService.StartBackgroundService(cancellationToken);
     }
 
 
-            // Start global input recording hook.
-    internal class HostedSharpHookService: BackgroundService
+    // Start global input recording hook.
+    internal class HostedSharpHookService : BackgroundService
     {
         private readonly IInputRecordService _inputRecordService;
         public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
         protected override Task ExecuteAsync(CancellationToken cancellationToken) => _inputRecordService.StartGlobalHookAsync();
     }
+
 }

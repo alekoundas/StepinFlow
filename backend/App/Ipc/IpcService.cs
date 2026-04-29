@@ -18,7 +18,11 @@ namespace App.Ipc
             _dispatcher = dispatcher;
         }
 
-        public async Task StartAsync(CancellationToken stoppingToken = default)
+
+        // ================================================================
+        // Background service
+        // ================================================================
+        public async Task StartBackgroundService(CancellationToken stoppingToken = default)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -42,13 +46,10 @@ namespace App.Ipc
 
                     // Start BOTH loops concurrently for this connection
                     Task requestTask = HandleConnectionAsync(pipe, stoppingToken);
-                    Task pushTask = BroadcastAsync(pipe, stoppingToken);
+                    Task pushTask = BackgroundBroadcastAsync(pipe, stoppingToken);
 
                     // Wait until EITHER task finishes (client disconnected, error, cancellation)
                     await Task.WhenAny(requestTask, pushTask);
-
-                    //_ = ForwardPushMessagesAsync(pipe, stoppingToken);
-                    //await HandleConnectionAsync(pipe, stoppingToken);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
@@ -65,6 +66,19 @@ namespace App.Ipc
                 }
             }
         }
+
+        // ================================================================
+        // Public methods
+        // ================================================================
+        public async ValueTask BroadcastAsync(IpcBroadcast ipcBroadcast)
+        {
+            await _pushChannel.Writer.WriteAsync(ipcBroadcast);
+        }
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
         private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             // Use ArrayPool to reduce GC pressure on large images
@@ -169,31 +183,32 @@ namespace App.Ipc
             return total;
         }
 
-        private async Task BroadcastAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        private async Task BackgroundBroadcastAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             await foreach (IpcBroadcast ipcBroadcast in _pushChannel.Reader.ReadAllAsync(ct))
             {
                 try
                 {
-                    if (!pipe.IsConnected) break;
+                    if (!pipe.IsConnected || ct.IsCancellationRequested)
+                        break;
 
-                // Serialize response
-                using MemoryStream ms = new MemoryStream();
-                Serializer.Serialize(ms, ipcBroadcast);
-                byte[] responseBytes = ms.ToArray();
+                    // Serialize response
+                    using MemoryStream ms = new MemoryStream(32 * 1024);
+                    Serializer.Serialize(ms, ipcBroadcast);
+                    byte[] responseBytes = ms.ToArray();
 
-                // Write length prefix + payload
-                byte[] lenPrefix = new byte[4]
-                {
+                    // Write length prefix + payload
+                    byte[] lenPrefix = new byte[4]
+                    {
                         (byte)(responseBytes.Length >> 24),
                         (byte)(responseBytes.Length >> 16),
                         (byte)(responseBytes.Length >> 8),
                         (byte)responseBytes.Length
-                };
+                    };
 
-                await pipe.WriteAsync(lenPrefix, 0, 4, ct);
-                await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
-                await pipe.FlushAsync(ct);
+                    await pipe.WriteAsync(lenPrefix, 0, 4, ct);
+                    await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
+                    await pipe.FlushAsync(ct);
                 }
                 catch (Exception ex)// when (!ct.IsCancellationRequested)
                 {

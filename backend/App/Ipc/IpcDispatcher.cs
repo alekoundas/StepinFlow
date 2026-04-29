@@ -93,7 +93,7 @@ namespace App.Ipc
                 //}
 
 
-                var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(responsePayload, _jsonOptions);
+                byte[] payloadBytes = JsonSerializer.SerializeToUtf8Bytes(responsePayload, _jsonOptions);
 
                 return new IpcResponse
                 {

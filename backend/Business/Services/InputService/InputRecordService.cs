@@ -1,4 +1,5 @@
 ﻿using Core.Enums;
+using Core.Interfaces;
 using Core.Models.Business;
 using SharpHook;
 using SharpHook.Data;
@@ -15,7 +16,15 @@ namespace Business.Services.InputService
         // Make sure only 1 recording is running.
         private bool _isRecording = false;
 
+        // Broadcast events to specific type or no broadcast at all.
+        private BroadcastTypeEnum? _broadcastType = null;
 
+
+        private readonly IIpcBroadcastService _broadcastService;
+        public InputRecordService(IIpcBroadcastService broadcastService)
+        {
+            _broadcastService = broadcastService;
+        }
 
         // ================================================================
         // Global methods
@@ -67,6 +76,7 @@ namespace Business.Services.InputService
                 throw new Exception("Recording should be started first dummy");
 
             _isRecording = true;
+            _broadcastType = BroadcastTypeEnum.OVERLAY_MOUSE_EVENT;
 
             // Unsubscribe to the events 
             _hook.MouseReleased -= OnMouseReleased;
@@ -131,15 +141,23 @@ namespace Business.Services.InputService
                     break;
             }
 
+            RecordedInput recordedInput = new RecordedInput
+            {
+                Type = RecordedInputEnum.CURSOR_CLICK,
+                X = e.Data.X,
+                Y = e.Data.Y,
+                CursorButtonType = buttonType,
+            };
+
             if (buttonType != null)
-                _actionChannel.Writer.TryWrite(new RecordedInput
-                {
-                    Type = RecordedInputEnum.CURSOR_CLICK,
-                    X = e.Data.X,
-                    Y = e.Data.Y,
-                    CursorButtonType = buttonType,
-                });
+            {
+                _actionChannel.Writer.TryWrite(recordedInput);
+
+                if (_broadcastType != null)
+                    _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            }
         }
+
         private void OnMouseReleased(object? sender, MouseHookEventArgs e)
         {
             CursorButtonTypeEnum? buttonType;
@@ -162,25 +180,38 @@ namespace Business.Services.InputService
                     break;
             }
 
+            RecordedInput recordedInput = new RecordedInput
+            {
+                Type = RecordedInputEnum.CURSOR_CLICK_RELEASE,
+                X = e.Data.X,
+                Y = e.Data.Y,
+                CursorButtonType = buttonType,
+            };
+
             if (buttonType != null)
-                _actionChannel.Writer.TryWrite(new RecordedInput
-                {
-                    Type = RecordedInputEnum.CURSOR_CLICK_RELEASE,
-                    X = e.Data.X,
-                    Y = e.Data.Y,
-                    CursorButtonType = buttonType,
-                });
+            {
+                _actionChannel.Writer.TryWrite(recordedInput);
+
+                if (_broadcastType != null)
+                    _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            }
         }
 
         private void OnMouseDragged(object? sender, MouseHookEventArgs e)
         {
-            _actionChannel.Writer.TryWrite(new RecordedInput
+            RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputEnum.CURSOR_DRAG,
                 X = e.Data.X,
                 Y = e.Data.Y,
                 CursorButtonType = null,
-            });
+            };
+
+
+            _actionChannel.Writer.TryWrite(recordedInput);
+
+            if (_broadcastType != null)
+                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
         }
 
         private void OnMouseWheel(object? sender, MouseWheelHookEventArgs e)
