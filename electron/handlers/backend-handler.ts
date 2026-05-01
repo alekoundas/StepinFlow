@@ -14,6 +14,7 @@ interface PendingResolver {
 const { IpcRequest, IpcResponse, IpcBroadcast } =
   await ProtobufService().getMessageTypes();
 export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
+
 export async function registerBackendHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
@@ -21,25 +22,25 @@ export async function registerBackendHandler(
   invokeBackend: InvokeBackend;
 }> {
   const pending = new Map<string, PendingResolver>();
-  let backendClient: net.Socket | null = null;
+  const backendService = BackendService(); // Reuse same instance.
 
-  const getClient = () => backendClient;
-  const setClient = (socket: net.Socket | null) => (backendClient = socket);
-  const onConnected = (socket: net.Socket) =>
-    handleReceivedData(socket, mainWindow, pending);
-
-  //============================================
-  // Initial connection
-  //============================================
-  backendClient = await BackendService().connectToDotNetPipe(
-    mainWindow,
-    setClient,
-    onConnected,
+  // ===================================================================
+  // Connect Request Pipe (for invoke + responses)
+  // ===================================================================
+  const requestBackendClient = await backendService.connectToRequestPipe(
+    (socket) => setupRequestPipeListener(socket, mainWindow, pending),
   );
 
-  //============================================
-  // IPC handle: renderer -> invokeBackend -> .Net
-  //============================================
+  // ===================================================================
+  //  Connect Broadcast Pipe (for mouse events, execution updates, etc.)
+  // ===================================================================
+  await backendService.connectToBroadcastPipe((msgBuf: Buffer) =>
+    setupBroadcastPipeListener(msgBuf, mainWindow),
+  );
+
+  // ===================================================================
+  // IPC handle: Renderer -> Electron -> . (Request Pipe)
+  // ===================================================================
   ipcMain.handle(
     IPC_CHANNELS.BACKEND_SEND,
     async (_, msg: IpcRequestMessage) => {
@@ -48,49 +49,42 @@ export async function registerBackendHandler(
     },
   );
 
-  //============================================
+  // ===================================================================
   // Expose reusable invoke .Net method (also used on other IpcHandlers in electron)
-  //============================================
+  // ===================================================================
   const invokeBackend: InvokeBackend = async (
     action: string,
     payload: unknown,
   ): Promise<any> => {
-    let client = getClient();
+    let client = backendService.getRequestClient();
 
-    if (!client || !client.writable) {
+    // If client is not writable, try reconnecting.
+    if (!client?.writable) {
       log.log("[BackendHandler]: Pipe not connected — reconnecting...");
-      try {
-        backendClient = await BackendService().connectToDotNetPipe(
-          mainWindow,
-          setClient,
-          onConnected,
-        );
-        client = backendClient;
-      } catch (err) {
-        log.error("[BackendHandler]: Reconnect failed:", err);
-        throw new Error("[BackendHandler]: Backend pipe not available");
-      }
+      client = await BackendService().connectToRequestPipe((socket) =>
+        setupRequestPipeListener(socket, mainWindow, pending),
+      );
+      client = requestBackendClient;
     }
 
     const correlationId = crypto.randomUUID();
     const payloadBytes = Buffer.from(JSON.stringify(payload));
     const reqObj = { action, payload: payloadBytes, correlationId };
 
+    // Verify protobuf
     const verifyErr = IpcRequest.verify(reqObj);
     if (verifyErr) throw new Error(verifyErr);
 
     const encoded = IpcRequest.encode(IpcRequest.create(reqObj)).finish();
     const prefix = Buffer.alloc(4);
     prefix.writeUInt32BE(encoded.length, 0);
-    getClient()!.write(Buffer.concat([prefix, encoded]));
+    client.write(Buffer.concat([prefix, encoded]));
 
     return new Promise<any>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        if (pending.has(correlationId)) {
-          pending.delete(correlationId);
-          reject(new Error(`[BackendHandler] Timeout for "${action}"`));
-        }
-      }, 30_000);
+        pending.delete(correlationId);
+        reject(new Error(`[BackendHandler] Timeout for "${action}"`));
+      }, 10_000); // 10 second timeout
 
       pending.set(correlationId, { resolve, reject, timeoutId });
     });
@@ -99,8 +93,12 @@ export async function registerBackendHandler(
   return { invokeBackend };
 }
 
-// Handles IpcResponse or IpcBroadcast messages from .Net
-function handleReceivedData(
+// ===================================================================
+// Listeners for .Net responses and broadcasts
+// ===================================================================
+
+// Listens and handles IpcResponse messages from .Net
+function setupRequestPipeListener(
   socket: net.Socket,
   mainWindow: BrowserWindow | null,
   pending: Map<string, PendingResolver>,
@@ -132,9 +130,6 @@ function handleReceivedData(
           plain.correlationId,
         );
 
-        // Push to renderer for unsolicited events (execution progress, etc.)
-        // mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
-
         // Resolve the matching pending invoke
         const resolver = pending.get(plain.correlationId);
         if (resolver) {
@@ -150,9 +145,7 @@ function handleReceivedData(
           if (Buffer.isBuffer(payload)) {
             try {
               payload = JSON.parse(payload.toString("utf-8"));
-            } catch {
-              // keep raw Buffer if not JSON
-            }
+            } catch {}
           }
 
           resolver.resolve(payload);
@@ -160,19 +153,24 @@ function handleReceivedData(
       } catch (err) {
         console.error("[BackendHandler] Decode error:", err);
       }
-
-      // If not an IpcResponse, try decoding as IpcBroadcast
-      try {
-        const ipcBroadcast = IpcBroadcast.decode(msgBuf);
-        const plain = IpcBroadcast.toObject(ipcBroadcast);
-        // const payload = JSON.parse(plain.payload.toString("utf-8"));
-
-        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
-          action: plain.action,
-          payload: JSON.parse(Buffer.from(plain.payload).toString()),
-        });
-        return; // important: don't treat as normal response
-      } catch {}
     }
   });
+}
+
+// Listens and handles IpcBroadcast messages from .Net
+function setupBroadcastPipeListener(
+  msgBuf: Buffer,
+  mainWindow: BrowserWindow | null,
+) {
+  try {
+    const broadcast = IpcBroadcast.decode(msgBuf);
+    const plain = IpcBroadcast.toObject(broadcast);
+
+    mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
+      type: plain.type,
+      payload: JSON.parse(Buffer.from(plain.payload as Uint8Array).toString()),
+    });
+  } catch (err) {
+    console.error("[Broadcast Pipe] Decode error:", err);
+  }
 }

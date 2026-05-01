@@ -1,18 +1,23 @@
 ﻿using Core.Models.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.IO.Pipes;
 using System.Threading.Channels;
 
 namespace App.Ipc
 {
-    public class IpcService
+    public sealed class IpcService
     {
-        private const string PipeName = "stepinflow-backend-pipe";
+        // IPC pipe names
+        private const string RequestPipeName = "stepinflow-request";
+        private const string BroadcastPipeName = "stepinflow-broadcast";
+
+        // Breadcast queue 
+        private readonly Channel<IpcBroadcast> _broadcastChannel = Channel.CreateUnbounded<IpcBroadcast>();
+
+
         private readonly IpcDispatcher _dispatcher;
-
-        private readonly Channel<IpcBroadcast> _pushChannel = Channel.CreateUnbounded<IpcBroadcast>();
-
         public IpcService(IpcDispatcher dispatcher)
         {
             _dispatcher = dispatcher;
@@ -22,64 +27,80 @@ namespace App.Ipc
         // ================================================================
         // Background service
         // ================================================================
-        public async Task StartBackgroundService(CancellationToken stoppingToken = default)
+        public async Task StartBackgroundService(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await using NamedPipeServerStream pipe = new NamedPipeServerStream(
-                    PipeName,
-                    PipeDirection.InOut,
-                    maxNumberOfServerInstances: 5,
-                    transmissionMode: PipeTransmissionMode.Byte,
-                    options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
-                    inBufferSize: 64 * 1024,
-                    outBufferSize: 64 * 1024
-                );
+            Task requestTask = StartRequestPipeAsync(stoppingToken);
+            Task broadcastTask = StartBroadcastPipeAsync(stoppingToken);
 
-                try
-                {
-                    // Wait for Electron to conect to the pipe.
-                    Console.WriteLine("[.NET Pipe] Waiting for connection...");
-                    await pipe.WaitForConnectionAsync(stoppingToken);
-                    Console.WriteLine("[.NET Pipe] Client connected.");
-
-
-                    // Start BOTH loops concurrently for this connection
-                    Task requestTask = HandleConnectionAsync(pipe, stoppingToken);
-                    Task pushTask = BackgroundBroadcastAsync(pipe, stoppingToken);
-
-                    // Wait until EITHER task finishes (client disconnected, error, cancellation)
-                    await Task.WhenAny(requestTask, pushTask);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"[.NET Pipe] Error: {ex.Message}");
-                }
-                finally
-                {
-                    // Ensure pipe is properly closed
-                    if (pipe.IsConnected)
-                    {
-                        try { pipe.Disconnect(); } catch { }
-                    }
-                }
-            }
+            // If one pipe disconnects dont kill the other.
+            await Task.WhenAll(requestTask, broadcastTask);
         }
+      
 
         // ================================================================
         // Public methods
         // ================================================================
         public async ValueTask BroadcastAsync(IpcBroadcast ipcBroadcast)
         {
-            await _pushChannel.Writer.WriteAsync(ipcBroadcast);
+            await _broadcastChannel.Writer.WriteAsync(ipcBroadcast);
         }
 
         // ================================================================
         // Private methods
         // ================================================================
 
-        private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        private async Task StartRequestPipeAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await using NamedPipeServerStream pipe = new NamedPipeServerStream(
+                  RequestPipeName,
+                  PipeDirection.InOut,
+                  maxNumberOfServerInstances: 5,
+                  transmissionMode: PipeTransmissionMode.Byte,
+                  options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
+                  inBufferSize: 64 * 1024,
+                  outBufferSize: 64 * 1024
+              );
+
+                try
+                {
+                    await pipe.WaitForConnectionAsync(ct);
+                    await HandleRequestAsync(pipe, ct);
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    Console.Error.WriteLine($"[.NET Pipe execption]: {ex}");
+                }
+            }
+        }
+
+        private async Task StartBroadcastPipeAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await using NamedPipeServerStream pipe = new NamedPipeServerStream(
+                  BroadcastPipeName,
+                  PipeDirection.Out,
+                  maxNumberOfServerInstances: 5,
+                  transmissionMode: PipeTransmissionMode.Byte,
+                  options: PipeOptions.Asynchronous | PipeOptions.WriteThrough
+              );
+
+                try
+                {
+                    await pipe.WaitForConnectionAsync(ct);
+                    await HandleBroadcastAsync(pipe, ct);
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    Console.Error.WriteLine($"[.NET Pipe execption]: {ex}");
+                }
+            }
+        }
+
+
+        private async Task HandleRequestAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             // Use ArrayPool to reduce GC pressure on large images
             byte[] buffer = ArrayPool<byte>.Shared.Rent(128 * 1024);
@@ -91,19 +112,15 @@ namespace App.Ipc
                     int bytesRead = await ReadExactAsync(pipe, buffer, 0, 4, ct);
                     if (bytesRead == 0) break;
 
-                    int length = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-                    if (length < 1 || length > 16 * 1024 * 1024) // safety limit ~16 MB
-                    {
-                        Console.Error.WriteLine($"[Pipe] Invalid length: {length}");
-                        break;
-                    }
+                    int length = BinaryPrimitives.ReadInt32BigEndian(buffer);
 
                     // Resize buffer if needed
-                    if (length > buffer.Length)
+                    if (length > buffer.Length - 4)
                     {
                         ArrayPool<byte>.Shared.Return(buffer);
-                        buffer = ArrayPool<byte>.Shared.Rent(length + 16);
+                        buffer = ArrayPool<byte>.Shared.Rent(length + 64);
                     }
+
 
                     bytesRead = await ReadExactAsync(pipe, buffer, 0, length, ct);
                     if (bytesRead != length) break;
@@ -115,54 +132,12 @@ namespace App.Ipc
                     IpcResponse response = await _dispatcher.HandleAsync(request, ct);
 
 
-                    // TEMP TEST DUMMY RESPONSE
-                    //IpcResponse response = new IpcResponse();
-                    //if (request.Action == "Flow.create")
-                    //{
-                    //    var aaa = JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions);
-                    //    Console.WriteLine($"[.NET] Received action: {request.Action}");
-                    //    Console.WriteLine($"[.NET] CorrelationId: {request.CorrelationId}");
-                    //    Console.WriteLine($"[.NET] Payload byte length: {request.Payload?.Length ?? 0}");
-
-                    //    if (request.Payload != null && request.Payload.Length > 0)
-                    //    {
-                    //        string preview = System.Text.Encoding.UTF8.GetString(request.Payload.Take(120).ToArray());
-                    //        Console.WriteLine($"[.NET] Payload preview (first ~120 chars): {preview}");
-                    //        Console.WriteLine($"[.NET] Payload hex start: {BitConverter.ToString(request.Payload.Take(40).ToArray())}");
-                    //    }
-
-
-                    //    var payloadObj = new { greeting = "Hello from .NET backend via protobuf IPC!" };
-                    //    var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payloadObj);
-
-                    //    response = new IpcResponse
-                    //    {
-                    //        Action = request.Action,
-                    //        CorrelationId = request.CorrelationId ?? "",
-                    //        Payload = payloadBytes,
-                    //        Error = ""
-                    //    };
-                    //    Console.WriteLine("[.NET Pipe] Handled 'greet' action");
-                    //}
-
-
                     // Serialize response
                     using MemoryStream ms = new MemoryStream(32 * 1024);
                     Serializer.Serialize(ms, response);
-                    var responseBytes = ms.ToArray();
+                    byte[] responseBytes = ms.ToArray();
 
-                    // Write length prefix + payload
-                    byte[] lenPrefix = new byte[4]
-                    {
-                        (byte)(responseBytes.Length >> 24),
-                        (byte)(responseBytes.Length >> 16),
-                        (byte)(responseBytes.Length >> 8),
-                        (byte)responseBytes.Length
-                    };
-
-                    await pipe.WriteAsync(lenPrefix, 0, 4, ct);
-                    await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
-                    await pipe.FlushAsync(ct);
+                    await WriteWithLengthPrefixAsync(pipe, responseBytes, ct);
                 }
             }
             finally
@@ -170,6 +145,28 @@ namespace App.Ipc
                 ArrayPool<byte>.Shared.Return(buffer);
             }
         }
+
+
+        private async Task HandleBroadcastAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        {
+            await foreach (IpcBroadcast ipcBroadcast in _broadcastChannel.Reader.ReadAllAsync(ct))
+            {
+                    Console.WriteLine($"[.NET Broadcast]: {ipcBroadcast.Type.ToString()}");
+                try
+                {
+                    using MemoryStream ms = new MemoryStream(32 * 1024);
+                    Serializer.Serialize(ms, ipcBroadcast);
+                    byte[] data = ms.ToArray();
+
+                    await WriteWithLengthPrefixAsync(pipe, data, ct);
+                }
+                catch when (!ct.IsCancellationRequested)
+                {
+                    break; // Client disconnected
+                }
+            }
+        }
+
 
         private static async Task<int> ReadExactAsync(Stream stream, byte[] buffer, int offset, int count, CancellationToken ct)
         {
@@ -182,42 +179,14 @@ namespace App.Ipc
             }
             return total;
         }
-
-        private async Task BackgroundBroadcastAsync(NamedPipeServerStream pipe, CancellationToken ct)
+        private static async Task WriteWithLengthPrefixAsync(Stream stream, byte[] data, CancellationToken ct)
         {
-            await foreach (IpcBroadcast ipcBroadcast in _pushChannel.Reader.ReadAllAsync(ct))
-            {
-                Console.WriteLine("[.NET Broadcast]: " + ipcBroadcast.Type);
+            var prefix = new byte[4];
+            BinaryPrimitives.WriteInt32BigEndian(prefix, data.Length);
 
-                try
-                {
-                    if (!pipe.IsConnected || ct.IsCancellationRequested)
-                        break;
-
-                    // Serialize response
-                    using MemoryStream ms = new MemoryStream(32 * 1024);
-                    Serializer.Serialize(ms, ipcBroadcast);
-                    byte[] responseBytes = ms.ToArray();
-
-                    // Write length prefix + payload
-                    byte[] lenPrefix = new byte[4]
-                    {
-                        (byte)(responseBytes.Length >> 24),
-                        (byte)(responseBytes.Length >> 16),
-                        (byte)(responseBytes.Length >> 8),
-                        (byte)responseBytes.Length
-                    };
-
-                    await pipe.WriteAsync(lenPrefix, 0, 4, ct);
-                    await pipe.WriteAsync(responseBytes, 0, responseBytes.Length, ct);
-                    await pipe.FlushAsync(ct);
-                }
-                catch (Exception ex) when (!ct.IsCancellationRequested)
-                {
-                    Console.Error.WriteLine($"[Push Forward] Error: {ex.Message}");
-                    break;
-                }
-            }
+            await stream.WriteAsync(prefix, ct);
+            await stream.WriteAsync(data, ct);
+            await stream.FlushAsync(ct);
         }
     }
 }
