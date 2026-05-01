@@ -29,6 +29,7 @@ namespace App.Ipc
 
         public async Task<IpcResponse> HandleAsync(IpcRequest request, CancellationToken ct = default)
         {
+            Console.WriteLine("[.NET Dispatcher]: Recieved " + request.Action.ToString());
             try
             {
                 object? responsePayload = request.Action switch

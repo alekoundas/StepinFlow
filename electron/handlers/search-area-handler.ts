@@ -63,13 +63,13 @@ export function registerSearchAreaHandler(
         // }
 
         // 5. Ask .Net to start broadcasting mouse click and drag
-        await invokeBackend("System.inputRecordOverlayStart", null); // TODO also stop at the end
+        await invokeBackend("System.inputRecordOverlayStart", null);
 
         // 6. Register per-window signal handlers BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
         const cleanupFn = registerMouseEventBroadcastHandler(monitorEntries);
 
-        // // 6. Navigate to overlay page on every window.
+        // 6. Navigate to overlay page on every window.
         await Promise.all(
           monitorEntries.map((x) => {
             if (!x.electronWindow) return; // will never happen
@@ -89,7 +89,11 @@ export function registerSearchAreaHandler(
         );
 
         // 7. Wait for result (any window can send it — first one wins)
-        return await registerSignalCloseHandler(monitorEntries, cleanupFn);
+        return await registerSignalCloseHandler(
+          monitorEntries,
+          cleanupFn,
+          invokeBackend,
+        );
       } finally {
         isWindowOpen = false;
       }
@@ -158,7 +162,7 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
   //   width: display.bounds.width,
   //   height: display.bounds.height,
   // });
-  newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
   newWindow.setIgnoreMouseEvents(false);
 
@@ -247,6 +251,7 @@ function registerMouseEventBroadcastHandler(
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],
   broadcastCleanupCallback: () => void,
+  invokeBackend: InvokeBackend,
 ): Promise<Rectangle | null> {
   return new Promise<Rectangle | null>((resolve) => {
     const electronWindows = monitorEntries
@@ -256,6 +261,7 @@ function registerSignalCloseHandler(
     const cleanup = () => {
       broadcastCleanupCallback();
       // await invokeBackend("System.inputRecordOverlayStart", null);
+      invokeBackend("System.inputRecordOverlayStart", null); // TODO also stop at the end
 
       ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       electronWindows.forEach((window) => {

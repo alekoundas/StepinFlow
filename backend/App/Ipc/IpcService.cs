@@ -82,7 +82,7 @@ namespace App.Ipc
         private async Task HandleConnectionAsync(NamedPipeServerStream pipe, CancellationToken ct)
         {
             // Use ArrayPool to reduce GC pressure on large images
-            var buffer = ArrayPool<byte>.Shared.Rent(128 * 1024);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(128 * 1024);
             try
             {
                 while (!ct.IsCancellationRequested && pipe.IsConnected)
@@ -187,6 +187,8 @@ namespace App.Ipc
         {
             await foreach (IpcBroadcast ipcBroadcast in _pushChannel.Reader.ReadAllAsync(ct))
             {
+                Console.WriteLine("[.NET Broadcast]: " + ipcBroadcast.Type);
+
                 try
                 {
                     if (!pipe.IsConnected || ct.IsCancellationRequested)

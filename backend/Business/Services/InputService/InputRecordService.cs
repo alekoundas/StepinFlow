@@ -108,13 +108,13 @@ namespace Business.Services.InputService
             if (!_isRecording)
                 throw new Exception("Recording should be started first dummy");
 
-            _isRecording = true;
+            _isRecording = false;
             _broadcastType = null;
 
             // Subscribe to the events 
-            _hook.MouseReleased += OnMouseReleased;
-            _hook.MouseClicked += OnMouseClicked;
-            _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
+            _hook.MouseReleased -= OnMouseReleased;
+            _hook.MouseClicked -= OnMouseClicked;
+            _hook.MouseDragged -= OnMouseDragged; // Only captures new cursor location when btn is pressed
 
         }
 

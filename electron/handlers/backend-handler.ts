@@ -117,7 +117,6 @@ function handleReceivedData(
       const msgBuf = buffer.subarray(4, 4 + len);
       buffer = buffer.subarray(4 + len);
 
-
       // Try decoding as IpcResponse first
       try {
         const response = IpcResponse.decode(msgBuf);
@@ -134,7 +133,7 @@ function handleReceivedData(
         );
 
         // Push to renderer for unsolicited events (execution progress, etc.)
-        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
+        // mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
 
         // Resolve the matching pending invoke
         const resolver = pending.get(plain.correlationId);
