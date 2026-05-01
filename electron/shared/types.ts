@@ -41,24 +41,6 @@ export interface SignalReadyResponse {
   monitorLogicalOrigin: { x: number; y: number };
 }
 
-export interface SignalMouseEvent {
-  type: "down" | "move" | "up";
-  physicalX: number;
-  physicalY: number;
-}
-// export interface ScreenshotRequestDto {
-//   formatType: "JPEG" | "PNG" | "RAW";
-//   jpegQuality: number;
-//   captureMonitor?: string;
-//   captureAppWindow?: string;
-//   captureVirtualScreen?: boolean;
-//   flowSearchAreaId?: number;
-//   locationX?: number;
-//   locationY?: number;
-//   width?: number;
-//   height?: number;
-// }
-
 export interface ScreenshotMonitorResponseDto {
   screenshot: Uint8Array;
   logicalX: number;
@@ -67,13 +49,30 @@ export interface ScreenshotMonitorResponseDto {
   physicalHeight: number;
 }
 
-// export type KnownActions = "greet" | "test" | "load-flow" | "save-config";
+export interface RecordedInput {
+  type: RecordedInputTypeEnum;
+  physicalX: number;
+  physicalY: number;
+  cursorButtonType: CursorButtonTypeEnum;
+  createdOn: Date;
+}
 
-// export interface RequestPayloads {
-//   greet: { name: string };
-//   test: Record<string, never>; // empty object
-// }
+// Enums
 
-// export interface ResponsePayloads {
-//   greet: { greeting: string };
-// }
+export const RecordedInputTypeEnum = {
+  BUTTON_UP: "BUTTON_UP",
+  BUTTON_DOWN: "BUTTON_DOWN",
+  CURSOR_DRAG: "CURSOR_DRAG",
+  CURSOR_MOVE: "CURSOR_MOVE",
+  CURSOR_SCROLL: "CURSOR_SCROLL",
+} as const;
+export type RecordedInputTypeEnum =
+  (typeof RecordedInputTypeEnum)[keyof typeof RecordedInputTypeEnum];
+
+export const CursorButtonTypeEnum = {
+  LEFT_BUTTON: "LEFT_BUTTON",
+  RIGHT_BUTTON: "RIGHT_BUTTON",
+  MIDDLE_BUTTON: "MIDDLE_BUTTON",
+} as const;
+export type CursorButtonTypeEnum =
+  (typeof CursorButtonTypeEnum)[keyof typeof CursorButtonTypeEnum];

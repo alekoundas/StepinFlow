@@ -146,9 +146,9 @@ namespace Business.Services.InputService
 
             RecordedInput recordedInput = new RecordedInput
             {
-                Type = RecordedInputEnum.CURSOR_CLICK,
-                X = e.Data.X,
-                Y = e.Data.Y,
+                Type = RecordedInputTypeEnum.BUTTON_DOWN,
+                PsysicalX = e.Data.X,
+                PsysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
             };
 
@@ -185,9 +185,9 @@ namespace Business.Services.InputService
 
             RecordedInput recordedInput = new RecordedInput
             {
-                Type = RecordedInputEnum.CURSOR_CLICK_RELEASE,
-                X = e.Data.X,
-                Y = e.Data.Y,
+                Type = RecordedInputTypeEnum.BUTTON_UP,
+                PsysicalX = e.Data.X,
+                PsysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
             };
 
@@ -204,9 +204,9 @@ namespace Business.Services.InputService
         {
             RecordedInput recordedInput = new RecordedInput
             {
-                Type = RecordedInputEnum.CURSOR_DRAG,
-                X = e.Data.X,
-                Y = e.Data.Y,
+                Type = RecordedInputTypeEnum.CURSOR_DRAG,
+                PsysicalX = e.Data.X,
+                PsysicalY = e.Data.Y,
                 CursorButtonType = null,
             };
 

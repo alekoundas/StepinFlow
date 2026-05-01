@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
@@ -18,7 +18,6 @@ import { FlowListPage } from "@/features/flow/FlowListPage";
 import { FlowFormPage } from "@/features/flow/FlowFormPage";
 import { DialogRootComponent } from "@/shared/components/modal-component/DialogRootComponent";
 import SearchAreaOverlayPage from "@/windows/overlay/SearchAreaOverlayPage";
-import { ElectronApiService } from "@/shared/services/electron-api-service";
 
 const router = createHashRouter([
   {
@@ -91,10 +90,10 @@ const queryClient = new QueryClient({
   },
 });
 
-ElectronApiService.backendApi.System.inputRecordOverlayStart(); // Start listening for input events in the overlay
-ElectronApiService.backendApi.OnBroadcast((msg) => {
-  console.log("Received backend broadcast:", msg);
-});
+// ElectronApiService.backendApi.System.inputRecordOverlayStart(); // Start listening for input events in the overlay
+// ElectronApiService.backendApi.OnBroadcast((msg) => {
+//   console.log("Received backend broadcast:", msg);
+// });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

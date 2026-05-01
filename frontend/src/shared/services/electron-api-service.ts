@@ -2,7 +2,7 @@ import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { Rectangle } from "electron";
 import type {
-  SignalMouseEvent,
+  RecordedInput,
   SignalReadyResponse,
 } from "../../../../electron/shared/types";
 
@@ -31,7 +31,7 @@ declare global {
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
         broadcastMouseEvent: (
-          callback: (e: SignalMouseEvent) => void,
+          callback: (e: RecordedInput) => void,
         ) => () => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
@@ -44,7 +44,7 @@ export const ElectronApiService = {
   backendApi: backendApiService,
   searchArea: {
     openWindow: () => window.electronApi.searchArea.openWindow(),
-    broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) =>
+    broadcastMouseEvent: (callback: (e: RecordedInput) => void) =>
       window.electronApi.searchArea.broadcastMouseEvent(callback),
     signalReady: () => window.electronApi.searchArea.signalReady(),
     signalCloseWindow: (rect: Rectangle | null) =>

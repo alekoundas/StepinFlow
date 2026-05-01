@@ -1,40 +1,8 @@
-interface IpcRequestMessage {
-  action: string;
-  payload: unknown;
-  correlationId?: string;
-}
-
-// interface MonitorInfo {
-//   logicalBounds: Electron.Rectangle;
-//   physicalBounds: Electron.Rectangle;
-//   scaleFactor: number;
-// }
-// interface VirtualMonitor {
-//   displays: MonitorInfo[];
-//   minVirtualX: number;
-//   minVirtualY: number;
-//   physicalVirtualWidth: number;
-//   physicalVirtualHeight: number;
-//   logicalVirtualWidth: number;
-//   logicalVirtualHeight: number;
-// }
-interface SignalReadyResponse {
-  screenshot: Uint8Array;
-  physicalWidth: number;
-  physicalHeight: number;
-  logicalWidth: number;
-  logicalHeight: number;
-  scaleFactor: number;
-  monitorLogicalOrigin: { x: number; y: number };
-}
-
-interface SignalMouseEvent {
-  type: "down" | "move" | "up";
-  startPhysicalX: number;
-  startPhysicalY: number;
-  currentPhysicalX: number;
-  currentPhysicalY: number;
-}
+import {
+  RecordedInput,
+  SignalReadyResponse,
+  IpcRequestMessage,
+} from "./shared/types.js";
 
 declare global {
   interface Window {
@@ -45,7 +13,9 @@ declare global {
       };
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
-        broadcastMouseEvent: (callback: (e: SignalMouseEvent) => void) => void;
+        broadcastMouseEvent: (
+          callback: (data: RecordedInput) => void,
+        ) => () => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };

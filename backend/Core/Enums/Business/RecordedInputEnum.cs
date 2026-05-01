@@ -1,12 +1,11 @@
 ﻿namespace Core.Enums
 {
-    public enum RecordedInputEnum
+    public enum RecordedInputTypeEnum
     {
-        CURSOR_CLICK,
-        CURSOR_CLICK_RELEASE,
+        BUTTON_UP,
+        BUTTON_DOWN,
         CURSOR_DRAG,
+        CURSOR_MOVE,
         CURSOR_SCROLL,
-        KEYBOARD_KEY_PRESS,
-        KEYBOARD_KEY_RELEASE
     }
 }

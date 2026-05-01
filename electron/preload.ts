@@ -1,5 +1,10 @@
 const { contextBridge, ipcRenderer } = require("electron");
-
+// import { IPC_CHANNELS } from "./shared/channels";
+// import {
+//   RecordedInput,
+//   SignalReadyResponse,
+//   IpcRequestMessage,
+// } from "./shared/types";
 // ========== Types & Interfaces ==========
 interface IpcRequestMessage {
   action: string;
@@ -17,13 +22,33 @@ interface SignalReadyResponse {
   monitorLogicalOrigin: { x: number; y: number };
 }
 
-interface SignalMouseEvent {
-  type: "down" | "move" | "up";
-  startPhysicalX: number;
-  startPhysicalY: number;
-  currentPhysicalX: number;
-  currentPhysicalY: number;
+interface RecordedInput {
+  type: RecordedInputTypeEnum;
+  physicalX: number;
+  physicalY: number;
+  cursorButtonType: CursorButtonTypeEnum;
+  createdOn: Date;
 }
+
+// Enums
+
+const RecordedInputTypeEnum = {
+  BUTTON_UP: "BUTTON_UP",
+  BUTTON_DOWN: "BUTTON_DOWN",
+  CURSOR_DRAG: "CURSOR_DRAG",
+  CURSOR_MOVE: "CURSOR_MOVE",
+  CURSOR_SCROLL: "CURSOR_SCROLL",
+} as const;
+type RecordedInputTypeEnum =
+  (typeof RecordedInputTypeEnum)[keyof typeof RecordedInputTypeEnum];
+
+const CursorButtonTypeEnum = {
+  LEFT_BUTTON: "LEFT_BUTTON",
+  RIGHT_BUTTON: "RIGHT_BUTTON",
+  MIDDLE_BUTTON: "MIDDLE_BUTTON",
+} as const;
+type CursorButtonTypeEnum =
+  (typeof CursorButtonTypeEnum)[keyof typeof CursorButtonTypeEnum];
 
 const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
@@ -68,10 +93,9 @@ const api = {
     openWindow: (): Promise<Electron.Rectangle | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW),
     broadcastMouseEvent: (
-      callback: (signalEvent: SignalMouseEvent) => void,
+      callback: (data: RecordedInput) => void,
     ): (() => void) => {
-      const listener = (_: any, signalEvent: SignalMouseEvent) =>
-        callback(signalEvent);
+      const listener = (_: any, data: RecordedInput) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
       return () =>
         ipcRenderer.removeListener(

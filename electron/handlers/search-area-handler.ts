@@ -4,8 +4,8 @@ import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../shared/channels.js";
 import { InvokeBackend } from "./backend-handler";
 import {
+  RecordedInput,
   ScreenshotMonitorResponseDto,
-  SignalMouseEvent,
   SignalReadyResponse,
 } from "../shared/types.js";
 
@@ -214,9 +214,9 @@ function registerMouseEventBroadcastHandler(
 ): () => void {
   const broadcastHandler = (
     _e: Electron.IpcMainEvent,
-    signalEvent: SignalMouseEvent,
+    recordedInput: RecordedInput,
   ) => {
-    console.info("[SignalMouseEventHandler]: signalEvent:   ", signalEvent);
+    console.info("[SignalMouseEventHandler]: recordedInput:   ", recordedInput);
     monitorEntries
       .map((x) => x.electronWindow)
       .filter((x) => x !== null)
@@ -224,7 +224,7 @@ function registerMouseEventBroadcastHandler(
         if (!window.isDestroyed()) {
           window.webContents.send(
             IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-            signalEvent,
+            recordedInput,
           );
         }
       });
@@ -232,8 +232,8 @@ function registerMouseEventBroadcastHandler(
 
   ipcMain.on(
     IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-    (e: Electron.IpcMainEvent, signalEvent: SignalMouseEvent) =>
-      broadcastHandler(e, signalEvent),
+    (e: Electron.IpcMainEvent, recordedInput: RecordedInput) =>
+      broadcastHandler(e, recordedInput),
   );
 
   return () => {

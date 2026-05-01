@@ -27,7 +27,7 @@ import React, {
   useState,
 } from "react";
 import type {
-  SignalMouseEvent,
+  RecordedInput,
   SignalReadyResponse,
 } from "../../../../electron/shared/types";
 
@@ -159,17 +159,17 @@ export default function SearchAreaOverlayPage() {
 
   useEffect(() => {
     const unsub = ElectronApiService.searchArea.broadcastMouseEvent(
-      (event: SignalMouseEvent) => {
+      (event: RecordedInput) => {
         const pt: Point = { x: event.physicalX, y: event.physicalY };
         console.log("yek: ", event);
 
-        if (event.type === "down") {
+        if (event.type === "BUTTON_DOWN") {
           setStartPhys(pt);
           setEndPhys(pt);
           setPhase("dragging");
-        } else if (event.type === "move") {
+        } else if (event.type === "CURSOR_DRAG") {
           setEndPhys(pt);
-        } else if (event.type === "up") {
+        } else if (event.type === "BUTTON_UP") {
           setEndPhys(pt);
           // Too small = accidental click → back to idle
           if (startPhys) {
