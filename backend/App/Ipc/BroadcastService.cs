@@ -8,7 +8,7 @@ namespace App.Ipc
 {
     public sealed class IpcBroadcastService : IIpcBroadcastService
     {
-        private readonly IpcService _ipcService;
+        private readonly IpcBroadcastPipe _ipcBroadcastPipe;
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             //PropertyNameCaseInsensitive = true, // JS -> .Net
@@ -17,9 +17,9 @@ namespace App.Ipc
 
         };
 
-        public IpcBroadcastService(IpcService ipcService)
+        public IpcBroadcastService(IpcBroadcastPipe ipcBroadcastPipe)
         {
-            _ipcService = ipcService;
+            _ipcBroadcastPipe = ipcBroadcastPipe;
 
             // Add Enum to string converter
             _jsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -38,7 +38,7 @@ namespace App.Ipc
                 Type = type.ToString(), // TODO change to typed
                 Payload = payloadBytes
             };
-            return _ipcService.BroadcastAsync(message);
+            return _ipcBroadcastPipe.BroadcastAsync(message);
         }
     }
 }

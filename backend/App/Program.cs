@@ -37,7 +37,8 @@ namespace App
 
 
             // IPC
-            builder.Services.AddSingleton<IpcService>();
+            builder.Services.AddSingleton<IpcRequestPipe>();
+            builder.Services.AddSingleton<IpcBroadcastPipe>();
             builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
             //builder.Services.AddHostedService(sp =>
@@ -45,10 +46,11 @@ namespace App
             //    var svc = sp.GetRequiredService<IpcService>();
             //    return new HostedPipeListener(svc);
             //});
-            builder.Services.AddHostedService<HostedPipeListener>();// <- Hosted service!
+            builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
+            builder.Services.AddHostedService<HostedBroadcaststPipeListener>();// <- Background service!
 
             // SharpHook 
-            builder.Services.AddHostedService<HostedSharpHookService>(); // <- Hosted service!
+            builder.Services.AddHostedService<HostedSharpHookService>(); // <- Background service!
 
             // MediatR
             builder.Services.AddMediatR(cfg =>
@@ -86,13 +88,18 @@ namespace App
 
 
     // TODO: move them from here
-    internal class HostedPipeListener : BackgroundService
+    internal class HostedRequestPipeListener : BackgroundService
     {
-        private readonly IpcService _ipcService;
-        public HostedPipeListener(IpcService ipcService) => _ipcService = ipcService;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcService.StartBackgroundService(cancellationToken);
+        private readonly IpcRequestPipe _ipcRequestPipe;
+        public HostedRequestPipeListener(IpcRequestPipe ipcRequestPipe) => _ipcRequestPipe = ipcRequestPipe;
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcRequestPipe.StartBackgroundService(cancellationToken);
     }
-
+    internal class HostedBroadcaststPipeListener : BackgroundService
+    {
+        private readonly IpcBroadcastPipe _ipcBroadcastPipe;
+        public HostedBroadcaststPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+    }
 
     // Start global input recording hook.
     internal class HostedSharpHookService : BackgroundService
