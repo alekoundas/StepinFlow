@@ -66,6 +66,13 @@ export interface RecordedInput {
 
 // Enums
 
+export const BroadcastTypeEnum = {
+  OVERLAY_MOUSE_EVENT: "OVERLAY_MOUSE_EVENT",
+  LOG: "LOG",
+} as const;
+export type BroadcastTypeEnum =
+  (typeof BroadcastTypeEnum)[keyof typeof BroadcastTypeEnum];
+
 export const RecordedInputTypeEnum = {
   // Cursor
   BUTTON_UP: "BUTTON_UP",

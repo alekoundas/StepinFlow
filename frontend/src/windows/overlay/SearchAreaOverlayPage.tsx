@@ -174,15 +174,6 @@ export default function SearchAreaOverlayPage() {
     startPhysRef.current = startPhys;
   }, [startPhys]);
 
-  // ── ESC to cancel ──────────────────────────────────────────────────────────
-
-  // useEffect(() => {
-  //   const onKey = (e: KeyboardEvent) => {
-  //     if (e.key === "Escape") sendResult(null);
-  //   };
-  //   window.addEventListener("keydown", onKey);
-  //   return () => window.removeEventListener("keydown", onKey);
-  // }, []);
 
   // ── Result ─────────────────────────────────────────────────────────────────
 

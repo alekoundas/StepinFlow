@@ -9,8 +9,8 @@ namespace Core.Models.Business
         
         
         // Cursor
-        public int PsysicalX { get; set; }
-        public int PsysicalY { get; set; }
+        public int PhysicalX { get; set; }
+        public int PhysicalY { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
 
         // Keyboard

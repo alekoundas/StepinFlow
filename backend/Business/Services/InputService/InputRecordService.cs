@@ -106,6 +106,8 @@ namespace Business.Services.InputService
             _hook.MouseClicked += OnMouseClicked;
             _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
             _hook.KeyPressed += OnKeyPressed;
+            _hook.KeyReleased += OnKeyReleased;
+            _hook.MouseMoved += OnMouseMoved; // TODO remove
 
             return true;
         }
@@ -123,6 +125,9 @@ namespace Business.Services.InputService
             _hook.MouseClicked -= OnMouseClicked;
             _hook.MouseDragged -= OnMouseDragged; // Only captures new cursor location when btn is pressed
             _hook.KeyPressed -= OnKeyPressed;
+            _hook.KeyReleased -= OnKeyReleased;
+            _hook.MouseMoved -= OnMouseMoved; // TODO remove
+
 
             return true;
         }
@@ -156,8 +161,8 @@ namespace Business.Services.InputService
             RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputTypeEnum.BUTTON_DOWN,
-                PsysicalX = e.Data.X,
-                PsysicalY = e.Data.Y,
+                PhysicalX = e.Data.X,
+                PhysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
             };
 
@@ -195,8 +200,8 @@ namespace Business.Services.InputService
             RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputTypeEnum.BUTTON_UP,
-                PsysicalX = e.Data.X,
-                PsysicalY = e.Data.Y,
+                PhysicalX = e.Data.X,
+                PhysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
             };
 
@@ -214,8 +219,25 @@ namespace Business.Services.InputService
             RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputTypeEnum.CURSOR_DRAG,
-                PsysicalX = e.Data.X,
-                PsysicalY = e.Data.Y,
+                PhysicalX = e.Data.X,
+                PhysicalY = e.Data.Y,
+                CursorButtonType = null,
+            };
+
+
+            _actionChannel.Writer.TryWrite(recordedInput);
+
+            if (_broadcastType != null)
+                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+        }
+
+        private void OnMouseMoved(object? sender, MouseHookEventArgs e)
+        {
+            RecordedInput recordedInput = new RecordedInput
+            {
+                Type = RecordedInputTypeEnum.CURSOR_DRAG,
+                PhysicalX = e.Data.X,
+                PhysicalY = e.Data.Y,
                 CursorButtonType = null,
             };
 
