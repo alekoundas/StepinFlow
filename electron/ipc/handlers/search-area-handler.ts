@@ -57,19 +57,18 @@ export async function registerSearchAreaHandler(
         );
 
         // 4. Create new window per monitor.
-        // for (const monitorEntry of monitorEntries) {
-        //   const newWindow = createElectronWindow(isDev, monitorEntry.display);
-        //   monitorEntry.electronWindow = newWindow;
-        // }
+        for (const monitorEntry of monitorEntries) {
+          const newWindow = createElectronWindow(isDev, monitorEntry.display);
+          monitorEntry.electronWindow = newWindow;
+        }
 
         // 5. Ask .Net to start broadcasting mouse click and drag
         await invokeBackend("System.inputRecordOverlayStart", null);
 
-        // 6. Register per-window signal handlers BEFORE loading pages
+        // 6. Register per-window ready signal handler BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
-        const cleanupFn = registerMouseEventBroadcastHandler(monitorEntries);
 
-        // 6. Navigate to overlay page on every window.
+        // 7. Navigate to overlay page on every window.
         await Promise.all(
           monitorEntries.map((x) => {
             if (!x.electronWindow) return; // will never happen
@@ -88,12 +87,8 @@ export async function registerSearchAreaHandler(
           }),
         );
 
-        // 7. Wait for result (any window can send it — first one wins)
-        return await registerSignalCloseHandler(
-          monitorEntries,
-          cleanupFn,
-          invokeBackend,
-        );
+        // 8. Wait for result (any window can send it — first one wins)
+        return await registerSignalCloseHandler(monitorEntries, invokeBackend);
       } finally {
         isWindowOpen = false;
       }
@@ -130,14 +125,10 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     y: display.bounds.y,
     width: display.bounds.width,
     height: display.bounds.height,
-    fullscreen: false,
-    frame: true,
+    fullscreen: true,
+    frame: false,
     transparent: false,
-    alwaysOnTop: false,
-    // fullscreen: true,
-    // frame: false,
-    // transparent: true,
-    // alwaysOnTop: true,
+    alwaysOnTop: false, //
     skipTaskbar: true,
     resizable: false,
     movable: false,
@@ -147,7 +138,7 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     webPreferences: {
       preload: path.join(
         __dirname,
-        isDev ? "../preload.js" : "../dist/preload.js",
+        isDev ? "../../preload.js" : "../../dist/preload.js",
       ),
       nodeIntegration: false,
       contextIsolation: true,
@@ -162,9 +153,10 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
   //   width: display.bounds.width,
   //   height: display.bounds.height,
   // });
-  // newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
   newWindow.setIgnoreMouseEvents(false);
+  // newWindow.focus(); 
 
   return newWindow;
 }
@@ -213,44 +205,8 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
   );
 }
 
-function registerMouseEventBroadcastHandler(
-  monitorEntries: MonitorEntry[],
-): () => void {
-  const broadcastHandler = (
-    _e: Electron.IpcMainEvent,
-    recordedInput: RecordedInput,
-  ) => {
-    console.info("[SignalMouseEventHandler]: recordedInput:   ", recordedInput);
-    monitorEntries
-      .map((x) => x.electronWindow)
-      .filter((x) => x !== null)
-      .forEach((window) => {
-        if (!window.isDestroyed()) {
-          window.webContents.send(
-            IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-            recordedInput,
-          );
-        }
-      });
-  };
-
-  ipcMain.on(
-    IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-    (e: Electron.IpcMainEvent, recordedInput: RecordedInput) =>
-      broadcastHandler(e, recordedInput),
-  );
-
-  return () => {
-    ipcMain.removeListener(
-      IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-      broadcastHandler,
-    );
-  };
-}
-
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],
-  broadcastCleanupCallback: () => void,
   invokeBackend: InvokeBackend,
 ): Promise<Rectangle | null> {
   return new Promise<Rectangle | null>((resolve) => {
@@ -259,9 +215,7 @@ function registerSignalCloseHandler(
       .filter((x) => x !== null);
 
     const cleanup = () => {
-      broadcastCleanupCallback();
-      // await invokeBackend("System.inputRecordOverlayStart", null);
-      invokeBackend("System.inputRecordOverlayStart", null); // TODO also stop at the end
+      invokeBackend("System.inputRecordOverlayStop", null);
 
       ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       electronWindows.forEach((window) => {

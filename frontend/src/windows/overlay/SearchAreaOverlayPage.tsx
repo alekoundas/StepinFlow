@@ -27,6 +27,7 @@ import React, {
   useState,
 } from "react";
 import type {
+  IpcBroadcastMessage,
   RecordedInput,
   SignalReadyResponse,
 } from "../../../../electron/shared/types";
@@ -65,6 +66,7 @@ function normalisePoints(a: Point, b: Point): PhysRect {
 export default function SearchAreaOverlayPage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
+  const startPhysRef = useRef<Point | null>(null);
 
   // Selection stored in physical absolute coords
   const [startPhys, setStartPhys] = useState<Point | null>(null);
@@ -74,31 +76,6 @@ export default function SearchAreaOverlayPage() {
   const scaleFactor = useRef(1);
   const monitorLogicalOrigin = useRef<Point>({ x: 0, y: 0 });
   const logicalSize = useRef({ width: 0, height: 0 });
-
-  // ── Coordinate converters ──────────────────────────────────────────────────
-
-  // CSS local (this window) → physical absolute (virtual desktop)
-  // const toPhysAbs = useCallback(
-  //   (cssX: number, cssY: number): Point => ({
-  //     x: Math.round(
-  //       (monitorLogicalOrigin.current.x + cssX) * scaleFactor.current,
-  //     ),
-  //     y: Math.round(
-  //       (monitorLogicalOrigin.current.y + cssY) * scaleFactor.current,
-  //     ),
-  //   }),
-  //   [],
-  // );
-
-  // Physical absolute → CSS local for THIS monitor's window
-  // Returns null if the point is outside this monitor
-  // const physAbsToLocalCss = useCallback(
-  //   (physX: number, physY: number): Point => ({
-  //     x: physX / scaleFactor.current - monitorLogicalOrigin.current.x,
-  //     y: physY / scaleFactor.current - monitorLogicalOrigin.current.y,
-  //   }),
-  //   [],
-  // );
 
   // Clip a physical absolute rect to this monitor and return local CSS rect.
   // Returns null if the selection doesn't overlap this monitor at all.
@@ -152,28 +129,28 @@ export default function SearchAreaOverlayPage() {
   }, []);
 
   // ── Broadcast listener — single source of truth for all state ─────────────
-  //
-  // Local mouse handlers only call signalMouseEvent().
-  // This listener updates everyone (including the sender) so state is always
-  // in sync across all monitor windows.
-
   useEffect(() => {
-    const unsub = ElectronApiService.searchArea.broadcastMouseEvent(
-      (event: RecordedInput) => {
-        const pt: Point = { x: event.physicalX, y: event.physicalY };
+    const unsub = ElectronApiService.backendApi.OnBroadcast(
+      (event: IpcBroadcastMessage<RecordedInput>) => {
+        console.log("Received broadcast mouse event:", event);
+        const pt: Point = {
+          x: event.payload.physicalX,
+          y: event.payload.physicalY,
+        };
         console.log("yek: ", event);
 
-        if (event.type === "BUTTON_DOWN") {
+        if (event.payload.type === "BUTTON_DOWN") {
           setStartPhys(pt);
           setEndPhys(pt);
           setPhase("dragging");
-        } else if (event.type === "CURSOR_DRAG") {
+        } else if (event.payload.type === "CURSOR_DRAG") {
           setEndPhys(pt);
-        } else if (event.type === "BUTTON_UP") {
+        } else if (event.payload.type === "BUTTON_UP") {
           setEndPhys(pt);
           // Too small = accidental click → back to idle
-          if (startPhys) {
-            const r = normalisePoints(startPhys, pt);
+          if (startPhysRef.current) // ← ref, not state
+          {
+            const r = normalisePoints(startPhysRef.current, pt); // ← ref, not state
             if (r.width < 4 || r.height < 4) {
               setPhase("idle");
               setStartPhys(null);
@@ -182,62 +159,30 @@ export default function SearchAreaOverlayPage() {
             }
           }
           setPhase("confirming");
+        } else if (event.payload.type === "KEY_UP") {
+          // ESC cancels selection
+          if (event.payload.keyCode === "Escape") {
+            sendResult(null);
+          }
         }
       },
     );
     return unsub;
   }, []);
 
+  useEffect(() => {
+    startPhysRef.current = startPhys;
+  }, [startPhys]);
+
   // ── ESC to cancel ──────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") sendResult(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  // ── Local mouse → broadcast (no state update here) ────────────────────────
-
-  // const onMouseDown = useCallback(
-  //   (e: React.MouseEvent<HTMLDivElement>) => {
-  //     if (e.button !== 0) return;
-  //     const phys = toPhysAbs(e.clientX, e.clientY);
-  //     ElectronApiService.searchArea.signalMouseEvent({
-  //       type: "down",
-  //       physicalX: phys.x,
-  //       physicalY: phys.y,
-  //     });
-  //   },
-  //   [toPhysAbs],
-  // );
-
-  // const onMouseMove = useCallback(
-  //   (e: React.MouseEvent<HTMLDivElement>) => {
-  //     if (phase !== "dragging") return;
-  //     const phys = toPhysAbs(e.clientX, e.clientY);
-  //     ElectronApiService.searchArea.signalMouseEvent({
-  //       type: "move",
-  //       physicalX: phys.x,
-  //       physicalY: phys.y,
-  //     });
-  //   },
-  //   [phase, toPhysAbs],
-  // );
-
-  // const onMouseUp = useCallback(
-  //   (e: React.MouseEvent<HTMLDivElement>) => {
-  //     if (phase !== "dragging") return;
-  //     const phys = toPhysAbs(e.clientX, e.clientY);
-  //     ElectronApiService.searchArea.signalMouseEvent({
-  //       type: "up",
-  //       physicalX: phys.x,
-  //       physicalY: phys.y,
-  //     });
-  //   },
-  //   [phase, toPhysAbs],
-  // );
+  // useEffect(() => {
+  //   const onKey = (e: KeyboardEvent) => {
+  //     if (e.key === "Escape") sendResult(null);
+  //   };
+  //   window.addEventListener("keydown", onKey);
+  //   return () => window.removeEventListener("keydown", onKey);
+  // }, []);
 
   // ── Result ─────────────────────────────────────────────────────────────────
 
@@ -272,9 +217,6 @@ export default function SearchAreaOverlayPage() {
 
   return (
     <div
-      // onMouseDown={onMouseDown}
-      // onMouseMove={onMouseMove}
-      // onMouseUp={onMouseUp}
       style={{
         position: "fixed",
         inset: 0,

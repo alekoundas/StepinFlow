@@ -1,7 +1,7 @@
 import {
-  RecordedInput,
   SignalReadyResponse,
   IpcRequestMessage,
+  IpcBroadcastMessage,
 } from "./shared/types.js";
 
 declare global {
@@ -9,13 +9,12 @@ declare global {
     electronApi: {
       backendApi: {
         invoke: <T = unknown>(msg: IpcRequestMessage) => Promise<T>;
-        onBroadcast: <T = unknown>(callback: (msg: T) => void) => () => void;
+        onBroadcast: <T = unknown>(
+          callback: (msg: IpcBroadcastMessage<T>) => void,
+        ) => () => void;
       };
       searchArea: {
         openWindow: () => Promise<Electron.Rectangle | null>;
-        broadcastMouseEvent: (
-          callback: (data: RecordedInput) => void,
-        ) => () => void;
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };

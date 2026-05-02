@@ -47,10 +47,19 @@ function handleBroadcastPipeData(
 
         console.log("[BroadcastHandler] Received:", plain.type ?? plain.action);
 
-        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
-          type: plain.type ?? plain.action,
-          payload: JSON.parse(Buffer.from(plain.payload).toString("utf-8")),
+        // Broadcast on all windows
+        BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
+              type: plain.type ?? plain.action,
+              payload: JSON.parse(Buffer.from(plain.payload).toString("utf-8")),
+            });
+          }
         });
+        // mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
+        //   type: plain.type ?? plain.action,
+        //   payload: JSON.parse(Buffer.from(plain.payload).toString("utf-8")),
+        // });
       } catch (err) {
         log.error("[BroadcastHandler] Decode error:", err);
       }

@@ -1,4 +1,4 @@
-import type { IpcRequestMessage } from "../../../../electron/shared/types";
+import type { IpcBroadcastMessage, IpcRequestMessage } from "../../../../electron/shared/types";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
@@ -76,7 +76,7 @@ export const backendApiService = {
       call<boolean>("System.inputRecordOverlayStop"),
   },
 
-  OnBroadcast: (callback: (msg: any) => void): (() => void) => {
+  OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {
     return window.electronApi.backendApi.onBroadcast(callback);
   },
 };
@@ -99,9 +99,4 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
   } catch (err: any) {
     throw err;
   }
-}
-
-// Optional: Keep this ONLY for unsolicited messages (progress, events, etc.)
-export function setupPushListener(callback: (msg: any) => void): () => void {
-  return window.electronApi.backendApi.onBroadcast(callback);
 }

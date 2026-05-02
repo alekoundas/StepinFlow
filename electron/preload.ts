@@ -1,15 +1,14 @@
 const { contextBridge, ipcRenderer } = require("electron");
-// import { IPC_CHANNELS } from "./shared/channels";
-// import {
-//   RecordedInput,
-//   SignalReadyResponse,
-//   IpcRequestMessage,
-// } from "./shared/types";
 // ========== Types & Interfaces ==========
 interface IpcRequestMessage {
   action: string;
   payload: unknown; // TODO use a  type (intersection type?)
   correlationId?: string; // Optional ID to match requests with responses
+}
+
+interface IpcBroadcastMessage<T> {
+  type: string;
+  payload: T;
 }
 
 interface SignalReadyResponse {
@@ -21,34 +20,6 @@ interface SignalReadyResponse {
   scaleFactor: number;
   monitorLogicalOrigin: { x: number; y: number };
 }
-
-interface RecordedInput {
-  type: RecordedInputTypeEnum;
-  physicalX: number;
-  physicalY: number;
-  cursorButtonType: CursorButtonTypeEnum;
-  createdOn: Date;
-}
-
-// Enums
-
-const RecordedInputTypeEnum = {
-  BUTTON_UP: "BUTTON_UP",
-  BUTTON_DOWN: "BUTTON_DOWN",
-  CURSOR_DRAG: "CURSOR_DRAG",
-  CURSOR_MOVE: "CURSOR_MOVE",
-  CURSOR_SCROLL: "CURSOR_SCROLL",
-} as const;
-type RecordedInputTypeEnum =
-  (typeof RecordedInputTypeEnum)[keyof typeof RecordedInputTypeEnum];
-
-const CursorButtonTypeEnum = {
-  LEFT_BUTTON: "LEFT_BUTTON",
-  RIGHT_BUTTON: "RIGHT_BUTTON",
-  MIDDLE_BUTTON: "MIDDLE_BUTTON",
-} as const;
-type CursorButtonTypeEnum =
-  (typeof CursorButtonTypeEnum)[keyof typeof CursorButtonTypeEnum];
 
 const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
@@ -76,15 +47,17 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<T>,
 
     // Listen for messages coming FROM backend. Returns unsubscribe function
-    onBroadcast: <T = unknown>(callback: (msg: T) => void): (() => void) => {
+    onBroadcast: <T = unknown>(
+      callback: (msg: IpcBroadcastMessage<T>) => void,
+    ): (() => void) => {
       const listener = (_: any, msg: any) => {
-        callback(msg as T);
+        callback(msg);
       };
 
-      ipcRenderer.on(IPC_CHANNELS.BACKEND_RECEIVE, listener);
+      ipcRenderer.on(IPC_CHANNELS.BACKEND_BROADCAST, listener);
 
       return () => {
-        ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_RECEIVE, listener);
+        ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_BROADCAST, listener);
       };
     },
   },
@@ -92,17 +65,6 @@ const api = {
   searchArea: {
     openWindow: (): Promise<Electron.Rectangle | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW),
-    broadcastMouseEvent: (
-      callback: (data: RecordedInput) => void,
-    ): (() => void) => {
-      const listener = (_: any, data: RecordedInput) => callback(data);
-      ipcRenderer.on(IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT, listener);
-      return () =>
-        ipcRenderer.removeListener(
-          IPC_CHANNELS.SEARCH_AREA_BROADCAST_MOUSE_EVENT,
-          listener,
-        );
-    },
     signalReady: (): Promise<SignalReadyResponse | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY),
     signalCloseWindow: (rect: Electron.Rectangle | null): void =>
