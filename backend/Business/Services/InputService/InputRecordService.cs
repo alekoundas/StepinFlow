@@ -20,6 +20,11 @@ namespace Business.Services.InputService
         // Broadcast events to specific type or no broadcast at all.
         private BroadcastTypeEnum? _broadcastType = null;
 
+        // Throttling events
+        private DateTime _lastDragBroadcast = DateTime.MinValue;
+        private DateTime _lastMovedBroadcast = DateTime.MinValue;
+        private static readonly TimeSpan DragThrottle = TimeSpan.FromMilliseconds(16);
+        private static readonly TimeSpan MoveThrottle = TimeSpan.FromMilliseconds(16);
 
         private readonly IIpcBroadcastService _broadcastService;
         public InputRecordService(IIpcBroadcastService broadcastService)
@@ -65,7 +70,7 @@ namespace Business.Services.InputService
 
             // Subscribe to the events 
             _hook.MouseReleased += OnMouseReleased;
-            _hook.MouseClicked += OnMouseClicked;
+            _hook.MousePressed += OnMousePressed;
             _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
             _hook.MouseWheel += OnMouseWheel;
             _hook.KeyPressed += OnKeyPressed;
@@ -84,7 +89,7 @@ namespace Business.Services.InputService
 
             // Unsubscribe to the events 
             _hook.MouseReleased -= OnMouseReleased;
-            _hook.MouseClicked -= OnMouseClicked;
+            _hook.MousePressed -= OnMousePressed;
             _hook.MouseDragged -= OnMouseDragged;
             _hook.MouseWheel -= OnMouseWheel;
             _hook.KeyPressed -= OnKeyPressed;
@@ -103,11 +108,10 @@ namespace Business.Services.InputService
 
             // Subscribe to the events 
             _hook.MouseReleased += OnMouseReleased;
-            _hook.MouseClicked += OnMouseClicked;
+            _hook.MousePressed += OnMousePressed;
             _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
             _hook.KeyPressed += OnKeyPressed;
             _hook.KeyReleased += OnKeyReleased;
-            _hook.MouseMoved += OnMouseMoved; // TODO remove
 
             return true;
         }
@@ -122,11 +126,10 @@ namespace Business.Services.InputService
 
             // Subscribe to the events 
             _hook.MouseReleased -= OnMouseReleased;
-            _hook.MouseClicked -= OnMouseClicked;
+            _hook.MousePressed -= OnMousePressed;
             _hook.MouseDragged -= OnMouseDragged; // Only captures new cursor location when btn is pressed
             _hook.KeyPressed -= OnKeyPressed;
             _hook.KeyReleased -= OnKeyReleased;
-            _hook.MouseMoved -= OnMouseMoved; // TODO remove
 
 
             return true;
@@ -136,7 +139,7 @@ namespace Business.Services.InputService
         // ================================================================
         // Private methods
         // ================================================================
-        private void OnMouseClicked(object? sender, MouseHookEventArgs e)
+        private void OnMousePressed(object? sender, MouseHookEventArgs e)
         {
             CursorButtonTypeEnum? buttonType;
             switch (e.Data.Button)
@@ -216,6 +219,11 @@ namespace Business.Services.InputService
 
         private void OnMouseDragged(object? sender, MouseHookEventArgs e)
         {
+            // Throttle
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastDragBroadcast < DragThrottle) return; 
+            _lastDragBroadcast = now;
+
             RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputTypeEnum.CURSOR_DRAG,
@@ -233,6 +241,11 @@ namespace Business.Services.InputService
 
         private void OnMouseMoved(object? sender, MouseHookEventArgs e)
         {
+            // Throttle
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastMovedBroadcast < MoveThrottle) return;
+            _lastMovedBroadcast = now;
+
             RecordedInput recordedInput = new RecordedInput
             {
                 Type = RecordedInputTypeEnum.CURSOR_DRAG,

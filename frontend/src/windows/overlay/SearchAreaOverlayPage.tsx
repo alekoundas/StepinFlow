@@ -67,6 +67,7 @@ export default function SearchAreaOverlayPage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const startPhysRef = useRef<Point | null>(null);
+  const phaseRef = useRef<Phase>("idle");
 
   // Selection stored in physical absolute coords
   const [startPhys, setStartPhys] = useState<Point | null>(null);
@@ -132,7 +133,6 @@ export default function SearchAreaOverlayPage() {
   useEffect(() => {
     const unsub = ElectronApiService.backendApi.OnBroadcast(
       (event: IpcBroadcastMessage<RecordedInput>) => {
-        console.log("Received broadcast mouse event:", event);
         const pt: Point = {
           x: event.payload.physicalX,
           y: event.payload.physicalY,
@@ -140,12 +140,15 @@ export default function SearchAreaOverlayPage() {
         console.log("yek: ", event);
 
         if (event.payload.type === "BUTTON_DOWN") {
+          if (phaseRef.current === "confirming") return;
           setStartPhys(pt);
           setEndPhys(pt);
           setPhase("dragging");
         } else if (event.payload.type === "CURSOR_DRAG") {
+          if (phaseRef.current === "confirming") return;
           setEndPhys(pt);
         } else if (event.payload.type === "BUTTON_UP") {
+          if (phaseRef.current === "confirming") return;
           setEndPhys(pt);
           // Too small = accidental click → back to idle
           if (startPhysRef.current) // ← ref, not state
@@ -174,6 +177,9 @@ export default function SearchAreaOverlayPage() {
     startPhysRef.current = startPhys;
   }, [startPhys]);
 
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   // ── Result ─────────────────────────────────────────────────────────────────
 
