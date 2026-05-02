@@ -93,7 +93,8 @@ namespace App.Ipc
             {
                 try
                 {
-                    using var ms = new MemoryStream(32 * 1024);
+                    Console.WriteLine("[.Net broadcast]: " + msg);
+                    using MemoryStream ms = new MemoryStream(32 * 1024);
                     Serializer.Serialize(ms, msg);
                     await WriteWithLengthPrefixAsync(pipe, ms.ToArray(), pipeCts.Token);
                 }

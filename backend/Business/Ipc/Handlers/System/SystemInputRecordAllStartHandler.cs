@@ -19,9 +19,14 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<bool>> Handle(SystemInputRecordAllStartCommand request, CancellationToken ct)
         {
-            await _inputRecordService.StartRecordingAllAsync();
+           bool result =  await _inputRecordService.StartRecordingAllAsync();
 
-            return ResultDto<bool>.Success(true);
+            if (result)
+            {
+                return ResultDto<bool>.Success(true);
+            }
+
+            return ResultDto<bool>.Failure("You cant run more than 1 recondings at the same time Broski");
         }
     }
 }

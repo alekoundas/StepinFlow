@@ -1,33 +1,29 @@
 import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { Button } from "primereact/button";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
-  // Subscribe once (better in root layout, but ok here for now)
-  // useBackendEvents();
-
-  // const { status, logs } = useBackendStore();
-  const [reply, setReply] = useState("Ready");
-  // setupResponseListener();
-  const onGreet = async () => {
-    try {
-      const reply = await backendApiService.greet("Electron User");
-      console.log("Direct reply (if sync):", reply);
-      setReply(reply?.greeting ?? "skkatoules");
-    } catch (err) {
-      console.error("Invoke failed:", err);
-    }
+  const onGreet1 = async () => {
+    const isok =
+      await ElectronApiService.backendApi.System.inputRecordOverlayStart();
+    console.log("Overlay start result:", isok);
   };
-  const navigate = useNavigate();
-
   const onGreet2 = async () => {
+    const isok =
+      await ElectronApiService.backendApi.System.inputRecordOverlayStop();
+    console.log("Overlay stop result:", isok);
+  };
+
+  const navigate = useNavigate();
+  const onGreet3 = async () => {
+    const isok =
+      await ElectronApiService.backendApi.System.inputRecordOverlayStart();
+    console.log("Overlay start result:", isok);
     navigate("/search-area-overlay");
   };
 
-  const onGreet3 = async () => {
+  const onGreet4 = async () => {
     const sss = ElectronApiService.backendApi.System.takeScreenshot(
       new ScreenshotRequestDto({ isVirtualScreen: true }),
     );
@@ -40,28 +36,28 @@ export default function HomePage() {
       <p>Status: {status}</p>
 
       <Button
-        label="Greet .NET"
-        onClick={onGreet}
+        label="start record input overlay"
+        onClick={onGreet1}
         className="mb-4 p-button-success"
       />
 
       <Button
-        label="nav to search-area-overlay"
+        label="stop record input overlay"
         onClick={onGreet2}
         className="mb-4 p-button-success"
       />
       <Button
-        label="take screenshot"
+        label="stop record input overlay"
         onClick={onGreet3}
+        className="mb-4 p-button-success"
+      />
+      <Button
+        label="take screenshot"
+        onClick={onGreet4}
         className="mb-4 p-button-success"
       />
 
       <h3>Received from .NET:</h3>
-      {reply.length === 0 ? (
-        <p>No messages yet...</p>
-      ) : (
-        <ul className="list-disc pl-5">{reply}</ul>
-      )}
     </div>
   );
 }

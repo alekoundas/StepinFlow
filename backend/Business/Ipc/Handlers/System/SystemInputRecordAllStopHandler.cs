@@ -19,9 +19,14 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<bool>> Handle(SystemInputRecordAllStopCommand request, CancellationToken ct)
         {
-            await _inputRecordService.StopRecordingAllAsync();
+            bool result = await _inputRecordService.StopRecordingAllAsync();
 
-            return ResultDto<bool>.Success(true);
+            if (result)
+            {
+                return ResultDto<bool>.Success(true);
+            }
+
+            return ResultDto<bool>.Failure("Recording should be started first dummy");
         }
     }
 }

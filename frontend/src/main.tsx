@@ -71,15 +71,6 @@ const router = createHashRouter([
   },
 ]);
 
-// const theme = {
-//   preset: Aura,
-//   options: {
-//     prefix: "p",
-//     darkModeSelector: "system",
-//     cssLayer: false,
-//   },
-// };
-
 // TanStack Query(formerly React Query)
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,13 +1,13 @@
 import { BrowserWindow, Display, ipcMain, Rectangle, screen } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
-import { IPC_CHANNELS } from "../shared/channels.js";
-import { InvokeBackend } from "./backend-handler";
+import { IPC_CHANNELS } from "../../shared/channels.js";
+import { InvokeBackend } from "./backend-request-handler.js";
 import {
   RecordedInput,
   ScreenshotMonitorResponseDto,
   SignalReadyResponse,
-} from "../shared/types.js";
+} from "../../shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,11 +21,11 @@ interface MonitorEntry {
   electronWindow: BrowserWindow | null; // Electron ovelay window
 }
 
-export function registerSearchAreaHandler(
+export async function registerSearchAreaHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
   invokeBackend: InvokeBackend,
-): void {
+): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW,
     async (_event): Promise<Rectangle | null> => {

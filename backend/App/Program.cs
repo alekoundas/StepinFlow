@@ -41,11 +41,6 @@ namespace App
             builder.Services.AddSingleton<IpcBroadcastPipe>();
             builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
-            //builder.Services.AddHostedService(sp =>
-            //{
-            //    var svc = sp.GetRequiredService<IpcService>();
-            //    return new HostedPipeListener(svc);
-            //});
             builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
             builder.Services.AddHostedService<HostedBroadcaststPipeListener>();// <- Background service!
 
@@ -66,10 +61,6 @@ namespace App
             // Localization (JSON)
             //builder.Services.AddSingleton<IStringLocalizerFactory, JsonLocalizerFactory>();
             //builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
-
-            // TODO: Hosted services
-            //builder.Services.AddHostedService<HostedPipeListener>();
-            //builder.Services.AddHostedService<HostedGlobalHookService>();
 
 
             IHost app = builder.Build();

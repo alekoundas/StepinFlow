@@ -1,15 +1,15 @@
 import { BrowserWindow, desktopCapturer, ipcMain, screen } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
-import { IPC_CHANNELS } from "../shared/channels.js";
+import { IPC_CHANNELS } from "../../shared/channels.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export function registerImageEditorHandler(
+export async function registerImageEditorHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
-): void {
+): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.IMAGE_EDITOR_WINDOW_OPEN,
     async (_, initialDataUrl: string, stepId?: string) => {

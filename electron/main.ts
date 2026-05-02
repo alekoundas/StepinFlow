@@ -8,11 +8,12 @@ import path from "path";
 //   REACT_DEVELOPER_TOOLS,
 // } from "electron-devtools-installer";
 
-import { registerBackendHandler } from "./handlers/backend-handler.js";
-import { registerSearchAreaHandler } from "./handlers/search-area-handler.js";
-import { registerImageEditorHandler } from "./handlers/image-editor-handler.js";
+import { registerSearchAreaHandler } from "./ipc/handlers/search-area-handler.js";
+import { registerImageEditorHandler } from "./ipc/handlers/image-editor-handler.js";
+import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-handler.js";
+import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
 
-import { BackendService } from "./backend-service.js";
+import { BackendService } from "./ipc/services/backend-service.js";
 
 const { autoUpdater } = pkg;
 
@@ -88,10 +89,10 @@ app.whenReady().then(async () => {
   }
 
   // ======== Register IPC handlers ==========
-
-  const {invokeBackend} = await registerBackendHandler(mainWindow, isDev);
-  registerSearchAreaHandler(mainWindow, isDev,invokeBackend);
-  registerImageEditorHandler(mainWindow, isDev);
+  const request = await registerBackendRequestHandler(mainWindow);
+  await registerBroadcastHandler(mainWindow);
+  await registerSearchAreaHandler(mainWindow, isDev, request.invokeBackend);
+  await registerImageEditorHandler(mainWindow, isDev);
 
   app.on("before-quit", () => {
     backendProcess?.kill();

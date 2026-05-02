@@ -70,7 +70,10 @@ export const backendApiService = {
   System: {
     takeScreenshot: (dto: ScreenshotRequestDto) =>
       call<Uint8Array>("System.takeScreenshot", dto),
-    inputRecordOverlayStart: () => call("System.inputRecordOverlayStart"),
+    inputRecordOverlayStart: () =>
+      call<boolean>("System.inputRecordOverlayStart"),
+    inputRecordOverlayStop: () =>
+      call<boolean>("System.inputRecordOverlayStop"),
   },
 
   OnBroadcast: (callback: (msg: any) => void): (() => void) => {
@@ -86,12 +89,14 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
 
   try {
     const resultDto = await window.electronApi.backendApi.invoke<T>(msg);
-    if (resultDto.data) {
+    if (resultDto.isSuccess && resultDto.data) {
       return resultDto.data;
     }
+
+    console.error(`Backend call failed [${action}]`);
+    console.error(resultDto?.errorMessage);
     throw "Backend call failed [${action}]";
   } catch (err: any) {
-    console.error(`Backend call failed [${action}]:`, err);
     throw err;
   }
 }

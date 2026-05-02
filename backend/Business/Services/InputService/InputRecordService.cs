@@ -54,10 +54,10 @@ namespace Business.Services.InputService
             return _actionChannel.Reader.ReadAllAsync();
         }
 
-        public async Task StartRecordingAllAsync()
+        public async Task<bool> StartRecordingAllAsync()
         {
             if (_isRecording)
-                throw new Exception("You cant run more than 1 recondings at the same time Broski");
+                return false;
 
             _isRecording = true;
             _broadcastType = null;
@@ -69,12 +69,14 @@ namespace Business.Services.InputService
             _hook.MouseWheel += OnMouseWheel;
             _hook.KeyPressed += OnKeyPressed;
             _hook.KeyReleased += OnKeyReleased;
+
+            return true;
         }
 
-        public async Task StopRecordingAllAsync()
+        public async Task<bool> StopRecordingAllAsync()
         {
             if (!_isRecording)
-                throw new Exception("Recording should be started first dummy");
+                return false;
 
             _isRecording = false;
             _broadcastType = null;
@@ -86,12 +88,14 @@ namespace Business.Services.InputService
             _hook.MouseWheel -= OnMouseWheel;
             _hook.KeyPressed -= OnKeyPressed;
             _hook.KeyReleased -= OnKeyReleased;
+
+            return true;
         }
 
-        public async Task StartRecordingOverlayAsync()
+        public async Task<bool> StartRecordingOverlayAsync()
         {
             if (_isRecording)
-                throw new Exception("You cant run more than 1 recondings at the same time Broski");
+                return false;
 
             _isRecording = true;
             _broadcastType = BroadcastTypeEnum.OVERLAY_MOUSE_EVENT;
@@ -101,12 +105,13 @@ namespace Business.Services.InputService
             _hook.MouseClicked += OnMouseClicked;
             _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
 
+            return true;
         }
 
-        public async Task StopRecordingOverlayAsync()
+        public async Task<bool> StopRecordingOverlayAsync()
         {
             if (!_isRecording)
-                throw new Exception("Recording should be started first dummy");
+                return false;
 
             _isRecording = false;
             _broadcastType = null;
@@ -116,6 +121,7 @@ namespace Business.Services.InputService
             _hook.MouseClicked -= OnMouseClicked;
             _hook.MouseDragged -= OnMouseDragged; // Only captures new cursor location when btn is pressed
 
+            return true;
         }
 
 

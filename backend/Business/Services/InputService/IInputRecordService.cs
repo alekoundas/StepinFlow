@@ -6,10 +6,10 @@ namespace Business.Services.InputService
         public Task StartGlobalHookAsync();
         public Task StopGlobalHookAsync();
 
-        public Task StartRecordingAllAsync();
-        public Task StopRecordingAllAsync();
+        public Task<bool> StartRecordingAllAsync();
+        public Task<bool> StopRecordingAllAsync();
 
-        public Task StartRecordingOverlayAsync();
-        public Task StopRecordingOverlayAsync();
+        public Task<bool> StartRecordingOverlayAsync();
+        public Task<bool> StopRecordingOverlayAsync();
     }
 }
