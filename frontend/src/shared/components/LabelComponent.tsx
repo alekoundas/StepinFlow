@@ -5,6 +5,7 @@ interface Props {
   className?: string;
   isRequired?: boolean;
   hidden?: boolean;
+  alignContent?: "start" | "center" | "end";
   wrap?: boolean;
   weight?: "normal" | "semibold" | "bold";
   size?:
@@ -32,6 +33,7 @@ export default function LabelComponent({
   size = "base",
   isRequired = false,
   color = "primary",
+  alignContent = "start",
 }: Props) {
   const colorMap = {
     primary: "text-primary",
@@ -43,19 +45,18 @@ export default function LabelComponent({
   };
   return (
     <>
-      <div className={colorMap[color]}>
-        <p
-          className={classNames(
-            className,
-            weight && `font-${weight}`,
-            size && `text-${size}`,
-            wrap ? "white-space-normal" : "white-space-nowrap",
-            "m-0",
-          )}
-          hidden={hidden}
-        >
-          {text} {isRequired && <span className="p-error">*</span>}
-        </p>
+      <div
+        className={classNames(
+          className,
+          colorMap[color],
+          weight && `font-${weight}`,
+          size && `text-${size}`,
+          alignContent && `align-content-${alignContent}`,
+          wrap ? "white-space-normal" : "white-space-nowrap",
+        )}
+        hidden={hidden}
+      >
+        {text} {isRequired && <span className="p-error">*</span>}
       </div>
     </>
   );

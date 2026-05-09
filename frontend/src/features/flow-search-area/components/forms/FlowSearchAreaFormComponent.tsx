@@ -60,7 +60,7 @@ export default function FlowSearchAreaFormComponent({
         >
           <FlowSearchAreaFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
-          {isFormInDialog && (
+          {!isFormInDialog && (
             <FormFooterComponent
               formMode={formMode}
               isValid={isValid}

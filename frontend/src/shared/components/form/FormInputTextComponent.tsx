@@ -13,6 +13,7 @@ interface Props {
   hintText?: string;
   isDisabled?: boolean;
   isRequired?: boolean;
+  className?: string;
 }
 
 export function FormInputTextComponent({
@@ -22,6 +23,7 @@ export function FormInputTextComponent({
   hintText,
   isDisabled = false,
   isRequired = false,
+  className,
 }: Props) {
   const {
     field: { value, onChange, onBlur, ref },
@@ -29,7 +31,7 @@ export function FormInputTextComponent({
   } = useController({ name: fieldName });
   return (
     <>
-      <div className="field">
+      <div className={classNames("field", className)}>
         <LabelComponent
           text={label}
           weight="bold"

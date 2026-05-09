@@ -9,6 +9,7 @@ import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { Button } from "primereact/button";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
+import LabelComponent from "@/shared/components/LabelComponent";
 
 interface Props {
   isDisabled?: boolean;
@@ -55,70 +56,72 @@ export default function FlowSearchAreaFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-      />
-      {/* 
-      <FormDropdownComponent
-        fieldName="cursorActionType"
-        labelText="Cursor Action Type"
-        mode="local"
-        options={cursorOptions}
-        optionLabel="label"
-        optionValue="value"
-        isRequired={true}
-        isDisabled={isDisabled}
-      /> */}
-
-      <Controller
-        name="type"
-        control={control}
-        render={({ field }) => (
-          <SelectButton
-            value={field.value}
-            options={typeOptions}
-            onChange={(e) => field.onChange(e.value)}
-            className="w-full"
-          />
-        )}
+        className="mt-5"
       />
 
-      {/* CUSTOM */}
+      {/* Type */}
+      <div className="mt-5">
+        <Controller
+          name="type"
+          control={control}
+          render={({ field }) => (
+            <div className="flex justify-content-center ">
+              <div className=" w-50">
+                {/* <LabelComponent
+                text="Choose Type"
+                wrap={false}
+                className="mr-3"
+                alignContent="center"
+                /> */}
+                <SelectButton
+                  value={field.value}
+                  options={typeOptions}
+                  onChange={(e) => (e.value ? field.onChange(e.value) : null)}
+                  className=""
+                />
+              </div>
+            </div>
+          )}
+        />
+      </div>
+
+      {/* Type = CUSTOM */}
       {selectedType === "CUSTOM" && (
-        <div className="mt-5">
-          <Button
-            label={isWindowOpen ? "Selecting..." : "Select screen area"}
-            icon="pi pi-crop"
-            loading={isWindowOpen}
-            disabled={isWindowOpen}
-            onClick={handleClick}
-            className="p-button-outlined p-button-secondary"
-            tooltip="Click and drag to select a region of your screen"
-            tooltipOptions={{ position: "top" }}
-          />
+        <div className="flex gap-3 mt-5">
+          <div className="flex w-10 align-items-center justify-content-center">
+            <Button
+              label={isWindowOpen ? "Selecting..." : "Capture Area"}
+              icon="pi pi-crop"
+              loading={isWindowOpen}
+              disabled={isWindowOpen}
+              onClick={handleClick}
+              className="p-button-outlined p-button-secondary"
+              tooltip="Click and drag to select a region of your screen"
+              tooltipOptions={{ position: "top" }}
+            />
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="field col-6">
+          <div className="w-10 ">
+            <div className="flex gap-3">
               <FormInputNumberComponent
                 fieldName="locationX"
-                label="Location X"
+                label="X"
                 // min={0}
                 // max={2147483647}
                 isRequired={true}
                 isDisabled={isDisabled}
               />
-            </div>
 
-            <div className="field col-6">
               <FormInputNumberComponent
                 fieldName="locationY"
-                label="Location Y"
+                label="Y"
                 // min={0}
                 // max={2147483647}
                 isRequired={true}
                 isDisabled={isDisabled}
               />
             </div>
-
-            <div className="field col-6">
+            <div className="flex gap-3">
               <FormInputNumberComponent
                 fieldName="width"
                 label="Width"
@@ -127,9 +130,7 @@ export default function FlowSearchAreaFormFieldsComponent({
                 isRequired={true}
                 isDisabled={isDisabled}
               />
-            </div>
 
-            <div className="field col-6">
               <FormInputNumberComponent
                 fieldName="height"
                 label="Height"
@@ -137,18 +138,6 @@ export default function FlowSearchAreaFormFieldsComponent({
                 // max={2147483647}
                 isRequired={true}
                 isDisabled={isDisabled}
-              />
-            </div>
-
-            <div className="col-12">
-              <Button
-                type="button"
-                label="Capture from Screen"
-                icon="pi pi-camera"
-                severity="secondary"
-                onClick={() => {
-                  /* Implement overlay capture via IPC */
-                }}
               />
             </div>
           </div>
@@ -159,7 +148,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       {selectedType === "APPLICATION" && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
           fieldName="appWindowName"
-          labelText="Select Item"
+          labelText="Select Application/Window"
           mode="remote"
           queryKey={["lookup", "window"]}
           queryFn={(_filter) =>
@@ -167,7 +156,10 @@ export default function FlowSearchAreaFormFieldsComponent({
           }
           optionLabel="label"
           optionValue="value"
-          placeholderText="Search items..."
+          placeholderText="Search item..."
+          classNameContainer="mt-5"
+          isRequired={true}
+          defaultValue={" "}
         />
       )}
 
@@ -175,7 +167,7 @@ export default function FlowSearchAreaFormFieldsComponent({
       {selectedType === "MONITOR" && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
           fieldName="monitorUniqueId"
-          labelText="Select Item"
+          labelText="Select Monitor"
           mode="remote"
           queryKey={["lookup", "monitor"]}
           queryFn={(_filter) =>
@@ -183,7 +175,9 @@ export default function FlowSearchAreaFormFieldsComponent({
           }
           optionLabel="label"
           optionValue="value"
-          placeholderText="Search items..."
+          placeholderText="Search item..."
+          isRequired={true}
+          classNameContainer="mt-5"
         />
       )}
     </>

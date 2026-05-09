@@ -18,7 +18,7 @@ interface Props {
   max?: number;
   isDisabled?: boolean;
   isRequired?: boolean;
-
+  className?: string;
   // Actions
   onChanged?: (value: number | null) => void;
 }
@@ -32,6 +32,7 @@ export function FormInputNumberComponent({
   max,
   isDisabled = false,
   isRequired = false,
+  className,
   onChanged,
 }: Props) {
   const {
@@ -50,7 +51,7 @@ export function FormInputNumberComponent({
 
   return (
     <>
-      <div className="field">
+      <div className={classNames("field", className)}>
         <LabelComponent
           text={label}
           weight="bold"

@@ -18,6 +18,8 @@ interface BaseProps<TForm extends FieldValues, T> {
   isDisabled?: boolean;
   isRequired?: boolean;
   className?: string;
+  classNameContainer?: string;
+  defaultValue?: any;
 
   // Display & value extraction
   optionLabel?: keyof T | ((item: T) => string);
@@ -58,6 +60,9 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   showClear = true,
   optionLabel,
   optionValue,
+  classNameContainer,
+  defaultValue,
+
   // Actionns
   itemTemplate,
   valueTemplate,
@@ -91,6 +96,17 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
     setFilterValue(e.filter ?? "");
   };
 
+  const handleChange = (value: number | string | null): void => {
+    if (isRequired && !value) {
+      onChange(""); // Call ReacHookForm onChange
+    }
+    onChange(value); // Call ReacHookForm onChange
+
+    // if (onChanged) {
+    //   onChanged(cleanedValue); // Call parent onChanged
+    // }
+  };
+
   // Helper to get display value
   // const getOptionLabel = (item: T): string => {
   //   if (!item) return "";
@@ -109,7 +125,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
 
   return (
     <>
-      <div className="field">
+      <div className={classNames("field", classNameContainer)}>
         <LabelComponent
           text={labelText}
           weight="bold"
@@ -119,7 +135,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
         <Dropdown
           ref={ref}
           value={value}
-          onChange={(e) => onChange(e.value)}
+          onChange={(e) => handleChange(e.value)}
           onBlur={onBlur}
           options={options}
           optionLabel={
@@ -138,7 +154,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
           filterDelay={300}
           onFilter={onFilter}
           filterBy={filterBy}
-          showClear={showClear}
+          showClear={showClear && value}
           // PrimeReact RHF recommendation
           focusInputRef={ref as any}
         />
