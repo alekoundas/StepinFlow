@@ -8,12 +8,12 @@ import path from "path";
 //   REACT_DEVELOPER_TOOLS,
 // } from "electron-devtools-installer";
 
-import { registerSearchAreaHandler } from "./ipc/handlers/search-area-handler.js";
 import { registerImageEditorHandler } from "./ipc/handlers/image-editor-handler.js";
 import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-handler.js";
 import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
 
 import { BackendService } from "./ipc/services/backend-service.js";
+import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 
 const { autoUpdater } = pkg;
 
@@ -91,7 +91,7 @@ app.whenReady().then(async () => {
   // ======== Register IPC handlers ==========
   const request = await registerBackendRequestHandler(mainWindow);
   await registerBroadcastHandler(mainWindow);
-  await registerSearchAreaHandler(mainWindow, isDev, request.invokeBackend);
+  await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);
   await registerImageEditorHandler(mainWindow, isDev);
 
   app.on("before-quit", () => {

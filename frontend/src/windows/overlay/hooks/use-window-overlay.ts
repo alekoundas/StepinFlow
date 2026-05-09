@@ -13,10 +13,10 @@ export function useWindowOverlay(): Props {
   const openWindow = useCallback(async (): Promise<Rectangle | null> => {
     setIsWindowOpen(true);
     try {
-      const rect = await ElectronApiService.searchArea.openWindow();
+      const rect = await ElectronApiService.overlay.openCaptureWindow();
       return rect;
     } catch (err) {
-      console.error("[useSearchAreaCapture]: capture failed:", err);
+      console.error("[useWindowOverlay]: capture failed:", err);
       return null;
     } finally {
       setIsWindowOpen(false);

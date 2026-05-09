@@ -76,7 +76,7 @@ export function BackendService() {
     return backendProcess;
   };
   // ========================================================================
-  // Request pipe  (Electron → .NET → Electron, correlated)
+  // Request pipe  (Electron -> .NET -> Electron, correlated)
   // ========================================================================
   const connectToRequestPipe = (
     browserWindow: BrowserWindow | null,
@@ -92,7 +92,7 @@ export function BackendService() {
     );
 
   // ========================================================================
-  // Broadcast pipe  (.NET → Electron only, no replies)
+  // Broadcast pipe  (.NET -> Electron only, no replies)
   // ========================================================================
   const connectToBroadcastPipe = (
     browserWindow: BrowserWindow | null,
@@ -191,86 +191,3 @@ function setupReconnect(
     ).catch((err) => log.error(`[ELECTRON][${label}] Reconnect failed:`, err));
   });
 }
-
-// ========================================================================
-// Robust connect with retry + auto-reconnect on close/error
-// ========================================================================
-
-// const connectToDotNetPipe = async (
-//   browserWindow: BrowserWindow | null,
-//   setClient: (client: net.Socket | null) => void,
-//   onConnected: (socket: net.Socket) => void,
-// ): Promise<net.Socket> => {
-//   const pipeName = "\\\\.\\pipe\\stepinflow-request";
-//   const MAX_ATTEMPTS = 100;
-//   const RETRY_DELAY_MS = 300;
-
-//   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-//     try {
-//       const client = await attemptConnect(pipeName);
-//       console.log(
-//         `[ELECTRON] Connected to .NET named pipe on attempt ${attempt}`,
-//       );
-//       setClient(client);
-
-//       setClient(client);
-//       onConnected(client);
-//       setupReconnect(client, browserWindow, setClient, onConnected);
-
-//       return client;
-//     } catch (err: any) {
-//       console.log(
-//         `[ELECTRON] Connect attempt ${attempt} failed: ${err.message}. Retrying in ${RETRY_DELAY_MS}ms...`,
-//       );
-//       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-//     }
-//   }
-//   throw new Error(
-//     `[ELECTRON] Failed to connect to .NET pipe after ${MAX_ATTEMPTS} attempts`,
-//   );
-// };
-
-// const attemptConnect = (pipeName: string): Promise<net.Socket> =>
-//   new Promise((resolve, reject) => {
-//     const socket = net.connect(pipeName);
-//     const timeout = setTimeout(() => {
-//       socket.destroy();
-//       reject(new Error("Connection timeout"));
-//     }, 2000);
-
-//     socket.on("connect", () => {
-//       clearTimeout(timeout);
-//       resolve(socket);
-//     });
-
-//     socket.once("error", (err) => {
-//       clearTimeout(timeout);
-//       reject(err);
-//     });
-//   });
-
-// const setupReconnect = (
-//   client: net.Socket,
-//   browserWindow: BrowserWindow | null,
-//   setClient: (client: net.Socket | null) => void,
-//   onConnected: (socket: net.Socket) => void,
-// ) => {
-//   client.on("error", (err) => {
-//     log.error("[ELECTRON] Named pipe connection error:", err);
-//     console.error("[ELECTRON] Named pipe connection error:", err);
-//   });
-
-//   client.on("close", () => {
-//     log.log("[ELECTRON] .NET pipe closed, starting reconnect...");
-//     console.log("[ELECTRON] .NET pipe closed, starting reconnect...");
-//     setClient(null);
-
-//     // background reconnect (auto-retry built-in)
-//     connectToDotNetPipe(browserWindow, setClient, onConnected).catch(
-//       (err) => {
-//         log.error("[ELECTRON] Reconnect failed:", err);
-//         console.error("[ELECTRON] Reconnect failed:", err);
-//       },
-//     );
-//   });
-// };

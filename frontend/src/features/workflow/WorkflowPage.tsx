@@ -7,7 +7,7 @@ import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useEffect } from "react";
 import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 
-export function WorkflowPage() {
+export default function WorkflowPage() {
   const { id } = useParams<{
     id?: string; // Flow Id
   }>();

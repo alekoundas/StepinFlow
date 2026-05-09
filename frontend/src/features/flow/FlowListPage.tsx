@@ -7,7 +7,7 @@ import { FlowViewToggleComponent } from "@/features/flow/components/FlowViewTogg
 import { FlowDataTableComponent } from "@/features/flow/components/FlowDataTableComponent";
 import { FlowDataGridComponent } from "@/features/flow/components/FlowDataGridComponent";
 
-export function FlowListPage() {
+export default function FlowListPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
@@ -51,7 +51,7 @@ export function FlowListPage() {
 
         {viewMode === "table" && <FlowDataTableComponent className="mt-4" />}
       </Card>
-      {viewMode === "cards" && <FlowDataGridComponent  className="mt-4" />}
+      {viewMode === "cards" && <FlowDataGridComponent className="mt-4" />}
     </div>
   );
 }

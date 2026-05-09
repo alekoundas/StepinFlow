@@ -10,20 +10,23 @@ import "primeicons/primeicons.css";
 import "primereact/resources/themes/soho-dark/theme.css";
 import "primeflex/primeflex.css";
 
-// Pages
-import AppLayout from "@/app-layout";
-import HomePage from "@/pages/home/home-page";
-import { WorkflowPage } from "@/features/workflow/WorkflowPage";
-import { FlowListPage } from "@/features/flow/FlowListPage";
-import { FlowFormPage } from "@/features/flow/FlowFormPage";
-import { DialogRootComponent } from "@/shared/components/modal-component/DialogRootComponent";
-import SearchAreaOverlayPage from "@/windows/overlay/SearchAreaOverlayPage";
-import { ElectronApiService } from "@/shared/services/electron-api-service";
+// Global shared types
 import {
   BroadcastTypeEnum,
   type RecordedInput,
 } from "../../electron/shared/types";
-import { ca } from "zod/locales";
+
+// Services
+import { ElectronApiService } from "@/shared/services/electron-api-service";
+
+// Pages
+import AppLayout from "@/app-layout";
+import HomePage from "@/pages/home/home-page";
+import WorkflowPage from "@/features/workflow/WorkflowPage";
+import FlowListPage from "@/features/flow/FlowListPage";
+import FlowFormPage from "@/features/flow/FlowFormPage";
+import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
+import OverlayCapturePage from "@/windows/overlay/SearchAreaOverlayPage";
 
 const router = createHashRouter([
   {
@@ -71,8 +74,12 @@ const router = createHashRouter([
     ],
   },
   {
-    path: "/search-area-overlay",
-    element: <SearchAreaOverlayPage />,
+    path: "/overlay-capture",
+    element: <OverlayCapturePage />,
+  },
+  {
+    path: "/overlay-preview",
+    element: <OverlayCapturePage />,
   },
 ]);
 
@@ -87,7 +94,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// ElectronApiService.backendApi.System.inputRecordOverlayStart(); // Start listening for input events in the overlay
 console.log("============LISTENING BACKEND BROADCASTS: ============");
 ElectronApiService.backendApi.OnBroadcast((msg) => {
   if (msg.type === BroadcastTypeEnum.OVERLAY_MOUSE_EVENT) {

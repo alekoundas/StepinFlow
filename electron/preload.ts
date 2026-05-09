@@ -28,11 +28,11 @@ const IPC_CHANNELS = {
   BACKEND_BROADCAST: "BACKEND_BROADCAST",
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
-  // ========== Search-area overlay channels ==========
-  SEARCH_AREA_OPEN_WINDOW: "SEARCH_AREA_OPEN_WINDOW",
-  SEARCH_AREA_BROADCAST_MOUSE_EVENT: "SEARCH_AREA_BROADCAST_MOUSE_EVENT",
-  SEARCH_AREA_SIGNAL_READY: "SEARCH_AREA_SIGNAL_READY",
-  SEARCH_AREA_SIGNAL_CLOSE_WINDOW: "SEARCH_AREA_SIGNAL_CLOSE_WINDOW",
+  // ========== Overlay (Search-area)  channels ==========
+  OVERLAY_OPEN_CAPTURE_WINDOW: "OVERLAY_OPEN_CAPTURE_WINDOW",
+  OVERLAY_OPEN_PREVIEW_WINDOW: "OVERLAY_OPEN_PREVIEW_WINDOW",
+  OVERLAY_SIGNAL_READY: "OVERLAY_SIGNAL_READY",
+  OVERLAY_SIGNAL_CLOSE_WINDOW: "OVERLAY_SIGNAL_CLOSE_WINDOW",
 
   // ========== Image editor channels ==========
   IMAGE_EDITOR_WINDOW_OPEN: "IMAGE_EDITOR_WINDOW_OPEN",
@@ -62,13 +62,15 @@ const api = {
     },
   },
 
-  searchArea: {
-    openWindow: (): Promise<Electron.Rectangle | null> =>
-      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW),
+  overlay: {
+    openCaptureWindow: (): Promise<Electron.Rectangle | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW),
+    openPreviewWindow: (): Promise<null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_OPEN_PREVIEW_WINDOW),
     signalReady: (): Promise<SignalReadyResponse | null> =>
-      ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY),
+      ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_SIGNAL_READY),
     signalCloseWindow: (rect: Electron.Rectangle | null): void =>
-      ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_SIGNAL_CLOSE_WINDOW, rect),
+      ipcRenderer.send(IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW, rect),
   },
 
   imageEditor: {

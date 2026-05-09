@@ -13,8 +13,9 @@ declare global {
           callback: (msg: IpcBroadcastMessage<T>) => void,
         ) => () => void;
       };
-      searchArea: {
-        openWindow: () => Promise<Electron.Rectangle | null>;
+      overlay: {
+        openCaptureWindow: () => Promise<Electron.Rectangle | null>;
+        openPreviewWindow: () => Promise<null>;
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };

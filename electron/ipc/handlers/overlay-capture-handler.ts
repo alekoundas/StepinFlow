@@ -21,18 +21,16 @@ interface MonitorEntry {
   electronWindow: BrowserWindow | null; // Electron ovelay window
 }
 
-export async function registerSearchAreaHandler(
+export async function registerOverlayCaptureHandler(
   mainWindow: BrowserWindow | null,
   isDev: boolean,
   invokeBackend: InvokeBackend,
 ): Promise<void> {
   ipcMain.handle(
-    IPC_CHANNELS.SEARCH_AREA_OPEN_WINDOW,
+    IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW,
     async (_event): Promise<Rectangle | null> => {
       if (isWindowOpen) {
-        console.warn(
-          "[SearchAreaHandler]: Overlay already open — ignoring second call",
-        );
+        console.warn("[OverlayHandler]: Overlay already open");
         return null;
       }
       isWindowOpen = true;
@@ -41,9 +39,7 @@ export async function registerSearchAreaHandler(
         // 1. Get screenshots from .Net (logical coords, physical px screenshots)
         const responses = await getScreenshot(invokeBackend);
         if (!responses || responses.length === 0) {
-          console.error(
-            "[SearchAreaHandler]: Cant get the screenshot from backend!",
-          );
+          console.error("[OverlayHandler]: Cant get the screenshot!");
           return null;
         }
 
@@ -51,7 +47,7 @@ export async function registerSearchAreaHandler(
         const electronDisplays = screen.getAllDisplays();
 
         // 3. Match backend responses → Electron displays
-        const monitorEntries = matchMonitorsToDisplays(
+        const monitorEntries: MonitorEntry[] = matchMonitorsToDisplays(
           responses,
           electronDisplays,
         );
@@ -75,13 +71,13 @@ export async function registerSearchAreaHandler(
 
             if (isDev) {
               x.electronWindow.loadURL(
-                "http://localhost:5173/#/search-area-overlay",
+                "http://localhost:5173/#/overlay-capture",
               );
               x.electronWindow.webContents.openDevTools();
             } else {
               x.electronWindow.loadFile(
                 path.join(__dirname, "../dist/frontend/index.html"),
-                { hash: "/search-area-overlay" },
+                { hash: "/overlay-capture" },
               );
             }
           }),
@@ -101,17 +97,17 @@ export async function registerSearchAreaHandler(
 //=====================================================================
 async function getScreenshot(
   invokeBackend: InvokeBackend,
-): Promise<ScreenshotMonitorResponseDto[] | null> {
+): Promise<ScreenshotMonitorResponseDto[]> {
   try {
     const result = await invokeBackend("System.captureForOverlay", null);
 
     return (
       (result as { success: boolean; data: ScreenshotMonitorResponseDto[] })
-        .data ?? null
+        .data ?? []
     );
   } catch (err) {
-    console.error("[SearchAreaHandler] Screenshot failed:", err);
-    return null;
+    console.error("[OverlayHandler] Screenshot failed:", err);
+    return [];
   }
 }
 
@@ -127,8 +123,8 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     height: display.bounds.height,
     fullscreen: true,
     frame: false,
-    transparent: false,
-    alwaysOnTop: false, //
+    transparent: true,
+    alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     movable: false,
@@ -146,17 +142,22 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     },
   });
 
-  // Set bounds again... why the fuck initial values doesnt "apply"???
+  // Cover the full display including taskbar area
   // newWindow.setBounds({
   //   x: display.bounds.x,
   //   y: display.bounds.y,
   //   width: display.bounds.width,
   //   height: display.bounds.height,
   // });
+
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  // newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
+  newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
   newWindow.setIgnoreMouseEvents(false);
-  // newWindow.focus(); 
+
+  //   newWindow.on("show", () => {
+  //   newWindow.setAlwaysOnTop(true, "screen-saver", 1);
+  //   newWindow.moveTop();
+  // });
 
   return newWindow;
 }
@@ -164,12 +165,11 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
 //=====================================================================
 // Listen for signals from react.
 // 'SignalReady' => page loaded and return image from .Net
-// 'SignalMouseEvent' => onMouse click,release,move - broadcast event to listeners
 // 'SignalCloseWindow' => operation completed - return user selection to main electron window
 //=====================================================================
 function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
   ipcMain.handle(
-    IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY,
+    IPC_CHANNELS.OVERLAY_SIGNAL_READY,
     async (event): Promise<SignalReadyResponse | null> => {
       // Find which window sent this
       const senderId = event.sender.id;
@@ -190,17 +190,8 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
             y: monitorEntry.display.bounds.y,
           },
         };
-      } else {
-        // Close all windows if mo
-        // monitorEntries
-        //   .map((x) => x.electronWindow)
-        //   .filter((x) => x !== null)
-        //   .forEach((window) => {
-        //     if (!window?.isDestroyed()) window?.close();
-        //   });
-
-        return null;
       }
+      return null;
     },
   );
 }
@@ -217,14 +208,14 @@ function registerSignalCloseHandler(
     const cleanup = () => {
       invokeBackend("System.inputRecordOverlayStop", null);
 
-      ipcMain.removeHandler(IPC_CHANNELS.SEARCH_AREA_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
+      ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       electronWindows.forEach((window) => {
         if (!window.isDestroyed()) window.close();
       });
     };
 
     ipcMain.once(
-      IPC_CHANNELS.SEARCH_AREA_SIGNAL_CLOSE_WINDOW,
+      IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW,
       (_event, rect: Rectangle | null) => {
         cleanup();
         resolve(rect);
@@ -243,10 +234,9 @@ function registerSignalCloseHandler(
 
 //=====================================================================
 // Monitor Matching
-//=====================================================================
-//
 // Backend is DPI-unaware → sees logical coords (same as Electron display.bounds).
 // Match by logical origin (x, y). Size may have rounding diff, so don't be strict on w/h.
+//=====================================================================
 
 function matchMonitorsToDisplays(
   responses: ScreenshotMonitorResponseDto[],
@@ -267,7 +257,7 @@ function matchMonitorsToDisplays(
         return dist < bestDist ? d : best;
       });
       console.warn(
-        `[SearchAreaHandler] No exact match for monitor (${x},${y}), using closest display x=${display.bounds.x} y=${display.bounds.y}`,
+        `[OverlayHandler] No exact match for monitor (${x},${y}), using closest display x=${display.bounds.x} y=${display.bounds.y}`,
       );
     }
 

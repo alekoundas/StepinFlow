@@ -5,7 +5,7 @@ import { FlowFormComponent } from "@/features/flow/components/form/FlowFormCompo
 import { useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowDto } from "@/shared/models/database/flow-dto";
 
-export function FlowFormPage() {
+export default function FlowFormPage() {
   const { id, formMode = FormMode.ADD } = useParams<{
     id?: string;
     formMode: FormMode;

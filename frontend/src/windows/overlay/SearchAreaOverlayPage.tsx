@@ -63,7 +63,7 @@ function normalisePoints(a: Point, b: Point): PhysRect {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SearchAreaOverlayPage() {
+export default function OverlayCapturePage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const startPhysRef = useRef<Point | null>(null);
@@ -111,7 +111,7 @@ export default function SearchAreaOverlayPage() {
   // ── Signal ready ───────────────────────────────────────────────────────────
 
   useLayoutEffect(() => {
-    ElectronApiService.searchArea
+    ElectronApiService.overlay
       .signalReady()
       .then((res: SignalReadyResponse | null) => {
         if (!res) return;
@@ -126,7 +126,7 @@ export default function SearchAreaOverlayPage() {
         const blob = base64ToBlob(res.screenshot.toString());
         setScreenshot(URL.createObjectURL(blob));
       })
-      .catch((err) => console.error("[Overlay] signalReady failed:", err));
+      .catch((err: any) => console.error("[Overlay] signalReady failed:", err));
   }, []);
 
   // ── Broadcast listener — single source of truth for all state ─────────────
@@ -137,7 +137,6 @@ export default function SearchAreaOverlayPage() {
           x: event.payload.physicalX,
           y: event.payload.physicalY,
         };
-        console.log("yek: ", event);
 
         if (event.payload.type === "BUTTON_DOWN") {
           if (phaseRef.current === "confirming") return;
@@ -184,7 +183,7 @@ export default function SearchAreaOverlayPage() {
   // ── Result ─────────────────────────────────────────────────────────────────
 
   const sendResult = useCallback((rect: Rectangle | null) => {
-    ElectronApiService.searchArea.signalCloseWindow(rect);
+    ElectronApiService.overlay.signalCloseWindow(rect);
   }, []);
 
   const handleConfirm = useCallback(() => {
