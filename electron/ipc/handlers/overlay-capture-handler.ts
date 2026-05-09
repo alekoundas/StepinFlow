@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
 import { InvokeBackend } from "./backend-request-handler.js";
 import {
-  RecordedInput,
   ScreenshotMonitorResponseDto,
   SignalReadyResponse,
 } from "../../shared/types.js";
@@ -142,22 +141,9 @@ function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
     },
   });
 
-  // Cover the full display including taskbar area
-  // newWindow.setBounds({
-  //   x: display.bounds.x,
-  //   y: display.bounds.y,
-  //   width: display.bounds.width,
-  //   height: display.bounds.height,
-  // });
-
   newWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   newWindow.setAlwaysOnTop(true, "screen-saver"); // highest possible level
   newWindow.setIgnoreMouseEvents(false);
-
-  //   newWindow.on("show", () => {
-  //   newWindow.setAlwaysOnTop(true, "screen-saver", 1);
-  //   newWindow.moveTop();
-  // });
 
   return newWindow;
 }
