@@ -159,7 +159,7 @@ export default function FlowSearchAreaFormFieldsComponent({
           placeholderText="Search item..."
           classNameContainer="mt-5"
           isRequired={true}
-          defaultValue={" "}
+          defaultValue={""}
         />
       )}
 
@@ -177,6 +177,7 @@ export default function FlowSearchAreaFormFieldsComponent({
           optionValue="value"
           placeholderText="Search item..."
           isRequired={true}
+          defaultValue={""}
           classNameContainer="mt-5"
         />
       )}

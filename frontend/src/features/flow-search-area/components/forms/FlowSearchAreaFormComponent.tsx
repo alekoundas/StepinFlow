@@ -38,7 +38,7 @@ export default function FlowSearchAreaFormComponent({
   });
 
   const {
-    formState: { isValid, isDirty },
+    formState: { isValid, isDirty, errors },
   } = form;
 
   return (
@@ -49,6 +49,17 @@ export default function FlowSearchAreaFormComponent({
         description="Click and hold at a source position, drag to a target position, then release. Coordinates can be the result of an Image Search result."
         onEdit={onEdit}
       />
+      {/* 
+      {Object.keys(errors).length > 0 && (
+        <div className="alert alert-danger">
+          <strong>Validation Errors:</strong>
+          <ul>
+            {Object.entries(errors).map(([key, error]) => (
+              <li key={key}>{error.message}</li>
+            ))}
+          </ul>
+        </div>
+      )} */}
 
       <FormProvider {...form}>
         <form
