@@ -33,7 +33,7 @@ export default function FlowStepCursorClickFormComponent({
   });
 
   const {
-    formState: { isValid, isDirty, errors },
+    formState: { isValid, isDirty },
     trigger,
   } = form;
 
@@ -47,7 +47,6 @@ export default function FlowStepCursorClickFormComponent({
 
   return (
     <>
-      {errors}
       <FormHeaderComponent
         title="Cursor Click Step Configuration"
         description="Simulate a left, right, or double mouse click at the specified screen coordinates."
