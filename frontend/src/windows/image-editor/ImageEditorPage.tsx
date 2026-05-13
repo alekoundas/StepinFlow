@@ -16,7 +16,13 @@
  *  - Communication: Electron IPC (data URL in, PNG bytes out)
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useImageCanvas } from "./hooks/useImageCanvas";
 import { useUndoRedo } from "./hooks/useUndoRedo";
 import Canvas from "./components/Canvas";
@@ -38,8 +44,8 @@ export default function ImageEditorPage() {
   // Image & canvas state
   const [imageLoaded, setImageLoaded] = useState(false);
   const [stepId, setStepId] = useState<string | undefined>();
-  const canvasRef = useRef<HTMLCanvasElement>(new HTMLCanvasElement());
-  const containerRef = useRef<HTMLDivElement>(new HTMLDivElement());
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Editor tool selection
   const [activeTool, setActiveTool] = useState<EditorTool>("select");
@@ -60,10 +66,13 @@ export default function ImageEditorPage() {
   // Initialization - Load image from Electron
   // ========================================================================
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Signal that React page is ready to receive image
-    ElectronApiService.imageEditor.signalReady().then((imageData) => {
-      if (imageData && canvasRef.current) {
+    ElectronApiService.imageEditor
+      .signalReady()
+      .then((imageData: Uint8Array | null) => {
+        if (!imageData || !canvasRef.current) return;
+
         const img = new Image();
         img.onload = () => {
           const canvas = canvasRef.current!;
@@ -76,13 +85,15 @@ export default function ImageEditorPage() {
             imageCanvas.resetZoomPan();
             history.reset();
             setImageLoaded(true);
-            // setStepId(data.stepId);
           }
         };
         img.src = uint8ArrayToDataURL(imageData);
-      }
-    }) || (() => {});
-  }, [imageCanvas, history]);
+      })
+      .catch((err: any) =>
+        console.error("[ImageEditor] signalReady failed:", err),
+      );
+    // }, [imageCanvas, history]);
+  }, []);
 
   // ========================================================================
   // Tool-specific callbacks
@@ -142,25 +153,25 @@ export default function ImageEditorPage() {
       };
       reader.readAsArrayBuffer(blob);
     }, "image/png");
-  }, [stepId]);
+  }, []);
 
   const handleCancel = useCallback(() => {
     ElectronApiService.imageEditor.signalCloseWindow(null);
     window.close();
-  }, [stepId]);
+  }, []);
 
   // ========================================================================
   // Render
   // ========================================================================
 
-  if (!imageLoaded) {
-    return (
-      <div className="editor-loading">
-        <div className="spinner"></div>
-        <p>Loading image...</p>
-      </div>
-    );
-  }
+  // if (!imageLoaded) {
+  //   return (
+  //     <div className="editor-loading">
+  //       <div className="spinner"></div>
+  //       <p>Loading image...</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="editor-container">

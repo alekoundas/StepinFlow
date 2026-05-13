@@ -67,7 +67,7 @@ export async function registerImageEditorHandler(
         // 2. Register signal handler BEFORE loading pages
         registerSignalReadyHandler(imageData);
 
-        // 3. Navigate to overlay page on every window.
+        // 3. Navigate to image editor page on new window.
         if (isDev) {
           await editorWin.loadURL("http://localhost:5173/#/image-editor");
           editorWin.webContents.openDevTools();
@@ -127,20 +127,9 @@ export async function registerImageEditorHandler(
   //=====================================================================
   function registerSignalReadyHandler(imageData: Uint8Array): void {
     ipcMain.handle(
-      IPC_CHANNELS.OVERLAY_SIGNAL_READY,
-      async (event): Promise<SignalReadyResponse | null> => {
-        return {
-          screenshot: imageData,
-          physicalWidth: 0,
-          physicalHeight: 0,
-          logicalWidth: 0,
-          logicalHeight: 0,
-          scaleFactor: 0,
-          monitorLogicalOrigin: {
-            x: 0,
-            y: 0,
-          },
-        };
+      IPC_CHANNELS.EDITOR_SIGNAL_READY,
+      async (event): Promise<Uint8Array | null> => {
+        return imageData;
       },
     );
   }
@@ -150,18 +139,18 @@ export async function registerImageEditorHandler(
   ): Promise<Uint8Array | null> {
     return new Promise<Uint8Array | null>((resolve) => {
       const cleanup = () => {
-        ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
+        ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       };
 
       ipcMain.once(
-        IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW,
+        IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW,
         (_event, imageData: Uint8Array | null) => {
           cleanup();
           resolve(imageData);
         },
       );
 
-      // If user force-closes the overlay window (e.g. Alt+F4)
+      // If user force-closes the editor window (e.g. Alt+F4)
       electronWindow.once("closed", () => {
         cleanup();
         resolve(null);
