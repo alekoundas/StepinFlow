@@ -27,6 +27,7 @@ import FlowListPage from "@/features/flow/FlowListPage";
 import FlowFormPage from "@/features/flow/FlowFormPage";
 import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
+import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
 
 const router = createHashRouter([
   {
@@ -80,6 +81,10 @@ const router = createHashRouter([
   {
     path: "/overlay-preview",
     element: <OverlayCapturePage />,
+  },
+  {
+    path: "/image-editor",
+    element: <ImageEditorPage />,
   },
 ]);
 

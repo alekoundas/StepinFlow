@@ -20,11 +20,9 @@ declare global {
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
       imageEditor: {
-        openWindow: (
-          screenshotRequest: any,
-        ) => Promise<Electron.Rectangle | null>;
-        sendResultToWindow: (rect: Electron.Rectangle | null) => void;
-        signalReady: () => Promise<SignalReadyResponse>;
+        openWindow: (imageData: Uint8Array) => Promise<Uint8Array | null>;
+        signalReady: () => Promise<Uint8Array>;
+        signalCloseWindow: (imageData: Uint8Array | null) => void;
       };
     };
   }

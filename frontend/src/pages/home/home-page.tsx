@@ -4,6 +4,21 @@ import { Button } from "primereact/button";
 import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
+  function uint8ArrayToDataURL(
+    uint8arr: Uint8Array,
+    mimeType = "image/png",
+  ): string {
+    let binary = "";
+    const bytes = new Uint8Array(uint8arr);
+    const len = bytes.byteLength;
+
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+
+    return `data:${mimeType};base64,${btoa(binary)}`;
+  }
+
   const onGreet1 = async () => {
     const isok =
       await ElectronApiService.backendApi.System.inputRecordOverlayStart();
@@ -15,17 +30,41 @@ export default function HomePage() {
     console.log("Overlay stop result:", isok);
   };
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const onGreet3 = async () => {
-    const isok =
-      await ElectronApiService.backendApi.System.inputRecordOverlayStart();
-    console.log("Overlay start result:", isok);
-    navigate("/search-area-overlay");
+    const sss = await ElectronApiService.backendApi.System.takeScreenshot(
+      new ScreenshotRequestDto({ captureVirtualScreen: true }),
+    );
+    if (sss) {
+      // Step 2: Open image editor window
+      // This returns when user clicks Export or closes window
+      const result = await ElectronApiService.imageEditor.openWindow(sss);
+
+      // Step 3: Handle result
+      // if (result.pngBytes && result.pngBytes.length > 0) {
+      //   // User clicked Export - use edited image
+      //   console.log(
+      //     `[IMAGE_SEARCH] Template edited, new size: ${result.pngBytes.length} bytes`,
+      //   );
+      //   return {
+      //     success: true,
+      //     editedImageBytes: result.pngBytes,
+      //   };
+      // } else {
+      //   // User canceled - return original
+      //   console.log("[IMAGE_SEARCH] Template edit canceled");
+      //   return {
+      //     success: false,
+      //     editedImageBytes: currentImageBytes,
+      //   };
+      // }
+      // }
+    }
   };
 
   const onGreet4 = async () => {
     const sss = ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({ isVirtualScreen: true }),
+      new ScreenshotRequestDto({ captureVirtualScreen: true }),
     );
     sss.then((x) => console.log(x));
   };
@@ -47,7 +86,7 @@ export default function HomePage() {
         className="mb-4 p-button-success"
       />
       <Button
-        label="stop record input overlay"
+        label="open editor window"
         onClick={onGreet3}
         className="mb-4 p-button-success"
       />

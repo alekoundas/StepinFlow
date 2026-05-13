@@ -35,9 +35,9 @@ const IPC_CHANNELS = {
   OVERLAY_SIGNAL_CLOSE_WINDOW: "OVERLAY_SIGNAL_CLOSE_WINDOW",
 
   // ========== Image editor channels ==========
-  IMAGE_EDITOR_WINDOW_OPEN: "IMAGE_EDITOR_WINDOW_OPEN",
-  IMAGE_EDITOR_WINDOW_READY: "IMAGE_EDITOR_WINDOW_READY",
-  IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW: "IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW",
+  EDITOR_OPEN_WINDOW: "EDITOR_OPEN_WINDOW",
+  EDITOR_SIGNAL_READY: "EDITOR_SIGNAL_READY",
+  EDITOR_SIGNAL_CLOSE_WINDOW: "EDITOR_SIGNAL_CLOSE_WINDOW",
 } as const;
 
 const api = {
@@ -74,15 +74,12 @@ const api = {
   },
 
   imageEditor: {
-    // openWindow: (screenshotRequest: any): Promise<Electron.Rectangle | null> =>
-    //   ipcRenderer.invoke(
-    //     IPC_CHANNELS.SEARCH_AREA_WINDOW_OPEN,
-    //     screenshotRequest,
-    //   ),
-    // signalReady: (): Promise<SignalReadyResponse> =>
-    //   ipcRenderer.invoke(IPC_CHANNELS.SEARCH_AREA_WINDOW_READY),
-    // signalCloseWindow: (rect: Electron.Rectangle | null): void =>
-    //   ipcRenderer.send(IPC_CHANNELS.SEARCH_AREA_RETURN_RESULT_TO_WINDOW, rect),
+    openWindow: (imageData: Uint8Array): Promise<Uint8Array | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_OPEN_WINDOW, imageData),
+    signalReady: (): Promise<Uint8Array> =>
+      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_SIGNAL_READY),
+    signalCloseWindow: (imageData: Uint8Array | null): void =>
+      ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, imageData),
   },
 };
 

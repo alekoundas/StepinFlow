@@ -27,6 +27,11 @@ declare global {
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
+      imageEditor: {
+        openWindow: (imageData: Uint8Array) => Promise<Uint8Array | null>;
+        signalReady: () => Promise<Uint8Array>;
+        signalCloseWindow: (imageData: Uint8Array | null) => void;
+      };
     };
   }
 }
@@ -40,5 +45,12 @@ export const ElectronApiService = {
     signalReady: () => window.electronApi.overlay.signalReady(),
     signalCloseWindow: (rect: Rectangle | null) =>
       window.electronApi.overlay.signalCloseWindow(rect),
+  },
+  imageEditor: {
+    openWindow: (imageData: Uint8Array) =>
+      window.electronApi.imageEditor.openWindow(imageData),
+    signalReady: () => window.electronApi.imageEditor.signalReady(),
+    signalCloseWindow: (imageData: Uint8Array | null) =>
+      window.electronApi.imageEditor.signalCloseWindow(imageData),
   },
 };
