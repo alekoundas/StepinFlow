@@ -11,9 +11,9 @@ import { useEffect, useRef } from "react";
 import { useImageCanvas } from "../hooks/useImageCanvas";
 
 interface MinimapProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   imageCanvas: ReturnType<typeof useImageCanvas>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function Minimap({
@@ -122,13 +122,24 @@ export default function Minimap({
   // ========================================================================
 
   return (
-    <div className="editor-minimap">
+    <div
+      style={{
+        position: "absolute",
+        bottom: "12px",
+        right: "12px",
+        backgroundColor: "#0a0a0a",
+        padding: "4px",
+        borderRadius: "4px",
+        border: "1px solid #444",
+        zIndex: 10,
+      }}
+    >
       <canvas
         ref={minimapCanvasRef}
         width={minimapSize}
         height={minimapSize}
         onClick={handleMinimapClick}
-        style={{ cursor: "pointer", border: "1px solid #444" }}
+        style={{ cursor: "pointer", display: "block" }}
         title="Click to pan to that area"
       />
     </div>

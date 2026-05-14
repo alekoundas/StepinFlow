@@ -14,8 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import { useImageCanvas } from "../hooks/useImageCanvas";
 
 interface CanvasProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   activeTool: "crop-rect" | "crop-lasso" | "eraser" | "select";
   cropMode: "rect" | "lasso";
   showGrid: boolean;
@@ -168,6 +168,23 @@ export default function Canvas({
     cropMode,
   ]);
 
+  // Size display canvas to match container
+  useEffect(() => {
+    const resizeDisplayCanvas = () => {
+      if (!displayCanvasRef.current || !containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      displayCanvasRef.current.width = rect.width;
+      displayCanvasRef.current.height = rect.height;
+    };
+
+    resizeDisplayCanvas();
+
+    // Resize on window resize
+    window.addEventListener("resize", resizeDisplayCanvas);
+    return () => window.removeEventListener("resize", resizeDisplayCanvas);
+  }, []);
+
   // ======================================================================
   // Mouse/Touch events
   // ======================================================================
@@ -318,7 +335,6 @@ export default function Canvas({
 
   return (
     <div
-      className="canvas-wrapper"
       style={{
         flex: 1,
         position: "relative",
@@ -336,6 +352,13 @@ export default function Canvas({
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
     >
+      {/* Hidden source canvas - stores actual pixel data (attached to canvasRef) */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: "none" }}
+      />
+
+      {/* Visible display canvas - renders transformed view */}
       <canvas
         ref={displayCanvasRef}
         style={{ display: "block", width: "100%", height: "100%" }}

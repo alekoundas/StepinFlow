@@ -16,13 +16,7 @@
  *  - Communication: Electron IPC (data URL in, PNG bytes out)
  */
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useImageCanvas } from "./hooks/useImageCanvas";
 import { useUndoRedo } from "./hooks/useUndoRedo";
 import Canvas from "./components/Canvas";
@@ -30,8 +24,10 @@ import Toolbar from "./components/Toolbar";
 import HistoryPanel from "./components/HistoryPanel";
 import Minimap from "./components/Minimap";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import "./ImageEditorPage.css";
-import { uint8ArrayToDataURL } from "@/windows/image-editor/utils/canvas-utils";
+import {
+  base64ToUint8Array,
+  uint8ArrayToDataURL,
+} from "@/windows/image-editor/utils/canvas-utils";
 
 type EditorTool = "crop-rect" | "crop-lasso" | "eraser" | "select";
 type CropMode = "rect" | "lasso";
@@ -43,9 +39,10 @@ export default function ImageEditorPage() {
 
   // Image & canvas state
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [image, setImage] = useState<string | null>("");
   const [stepId, setStepId] = useState<string | undefined>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null!); // Guaranteed to be attached via ref
 
   // Editor tool selection
   const [activeTool, setActiveTool] = useState<EditorTool>("select");
@@ -65,15 +62,33 @@ export default function ImageEditorPage() {
   // ========================================================================
   // Initialization - Load image from Electron
   // ========================================================================
+  // Runs ONCE on mount to request image from Electron main process.
+  // useEffect (not useLayoutEffect) runs AFTER DOM paint, which is perfect
+  // for IPC calls. Empty deps [] ensures it fires only on mount.
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Signal that React page is ready to receive image
     ElectronApiService.imageEditor
       .signalReady()
-      .then((imageData: Uint8Array | null) => {
-        if (!imageData || !canvasRef.current) return;
+      .then((receivedData: any) => {
+        if (!receivedData || !canvasRef.current) return;
+        let imageData: Uint8Array;
+        // TODO use this afte data are correct
+        if (typeof receivedData === "string") {
+          // It's base64 string → convert to Uint8Array
+          console.log(
+            "Received as base64 string, length:",
+            receivedData.length,
+          );
 
+          imageData = base64ToUint8Array(receivedData);
+        } else {
+          imageData = receivedData;
+        }
+        const dataUrl = uint8ArrayToDataURL(imageData);
         const img = new Image();
+
+        // Attach handlers BEFORE setting src
         img.onload = () => {
           const canvas = canvasRef.current!;
           canvas.width = img.width;
@@ -87,13 +102,20 @@ export default function ImageEditorPage() {
             setImageLoaded(true);
           }
         };
-        img.src = uint8ArrayToDataURL(imageData);
+
+        img.onerror = (event: Event | string) => {
+          console.error("[ImageEditor] Failed to load image. Event:", event);
+          console.log("ImageData length:", imageData.length);
+          console.log("First 20 bytes:", Array.from(imageData.slice(0, 20)));
+        };
+
+        // Set src AFTER handlers are attached
+        img.src = dataUrl;
       })
       .catch((err: any) =>
         console.error("[ImageEditor] signalReady failed:", err),
       );
-    // }, [imageCanvas, history]);
-  }, []);
+  }, []); // Empty deps: runs only once on mount
 
   // ========================================================================
   // Tool-specific callbacks
@@ -164,17 +186,18 @@ export default function ImageEditorPage() {
   // Render
   // ========================================================================
 
-  // if (!imageLoaded) {
-  //   return (
-  //     <div className="editor-loading">
-  //       <div className="spinner"></div>
-  //       <p>Loading image...</p>
-  //     </div>
-  //   );
-  // }
-
   return (
-    <div className="editor-container">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100vh",
+        backgroundColor: "#1a1a1a",
+        color: "#ffffff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
       {/* ================ Toolbar - Top ================ */}
       <Toolbar
         activeTool={activeTool}
@@ -205,8 +228,14 @@ export default function ImageEditorPage() {
 
       {/* ================ Main Editor Area ================ */}
       <div
-        className="editor-main"
         ref={containerRef}
+        style={{
+          flex: 1,
+          display: "flex",
+          position: "relative",
+          overflow: "hidden",
+          backgroundColor: "#0a0a0a",
+        }}
       >
         {/* Canvas - Core image editing surface */}
         <Canvas

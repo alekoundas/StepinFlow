@@ -28,18 +28,28 @@ export function dataURLtoUint8Array(dataUrl: string): Uint8Array {
  * Used for displaying binary image data
  */
 export function uint8ArrayToDataURL(
-  uint8arr: Uint8Array,
+  imageData: Uint8Array,
   mimeType = "image/png",
 ): string {
-  let binary = "";
-  const bytes = new Uint8Array(uint8arr);
-  const len = bytes.byteLength;
+  // Convert Uint8Array → binary string efficiently
+  const binaryString = Array.from(imageData)
+    .map((byte) => String.fromCharCode(byte))
+    .join("");
 
+  const base64 = btoa(binaryString);
+  const result = `data:${mimeType};base64,${base64}`;
+  return result;
+}
+
+export function base64ToUint8Array(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  
   for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
+    bytes[i] = binaryString.charCodeAt(i);
   }
-
-  return `data:${mimeType};base64,${btoa(binary)}`;
+  return bytes;
 }
 
 /**

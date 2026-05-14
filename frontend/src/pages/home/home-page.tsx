@@ -33,7 +33,10 @@ export default function HomePage() {
   // const navigate = useNavigate();
   const onGreet3 = async () => {
     const sss = await ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({ captureVirtualScreen: true }),
+      new ScreenshotRequestDto({
+        captureVirtualScreen: true,
+        formatType: "PNG",
+      }),
     );
     if (sss) {
       // Step 2: Open image editor window

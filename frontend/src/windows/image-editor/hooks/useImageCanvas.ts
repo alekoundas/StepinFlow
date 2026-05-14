@@ -18,7 +18,9 @@ interface CanvasState {
   timestamp: number;
 }
 
-export function useImageCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
+export function useImageCanvas(
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+) {
   // ======================================================================
   // Zoom & Pan state
   // ======================================================================

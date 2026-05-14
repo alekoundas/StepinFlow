@@ -3,6 +3,8 @@
  * TypeScript interfaces for type safety across the image editor
  */
 
+import type { Point, Rectangle } from "electron";
+
 /**
  * Canvas state snapshot for undo/redo
  */
@@ -35,24 +37,6 @@ export interface ImageEditorResult {
 export interface ImageEditorInitData {
   dataUrl: string; // PNG as data URL
   stepId?: string; // Optional tracking
-}
-
-/**
- * Rectangle/Bounds type
- */
-export interface Rectangle {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
- * Point type
- */
-export interface Point {
-  x: number;
-  y: number;
 }
 
 /**

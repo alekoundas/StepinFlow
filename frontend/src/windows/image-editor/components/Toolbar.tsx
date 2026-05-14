@@ -53,17 +53,47 @@ export default function Toolbar({
   showMinimap,
   onShowMinimapChange,
 }: ToolbarProps) {
-  const toolButtonClass = (tool: string) =>
-    `toolbar-btn ${activeTool === tool ? "active" : ""}`;
-  const cropModeButtonClass = (mode: string) =>
-    `crop-mode-btn ${cropMode === mode ? "active" : ""}`;
+  const toolButtonStyle = (isActive: boolean) => ({
+    padding: "6px 12px",
+    margin: "0 2px",
+    backgroundColor: isActive ? "#669bff" : "#2a2a2a",
+    color: "#ffffff",
+    border: "1px solid #444",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: isActive ? "600" : "500",
+    transition: "all 0.2s ease",
+  });
+
+  const cropModeButtonStyle = (isActive: boolean) => ({
+    padding: "4px 8px",
+    margin: "0 1px",
+    backgroundColor: isActive ? "#669bff" : "#1a1a1a",
+    color: "#ffffff",
+    border: "1px solid #444",
+    borderRadius: "3px",
+    cursor: "pointer",
+    fontSize: "11px",
+    transition: "all 0.2s ease",
+  });
 
   return (
-    <div className="editor-toolbar">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 12px",
+        backgroundColor: "#2a2a2a",
+        borderBottom: "1px solid #444",
+        minHeight: "40px",
+      }}
+    >
       {/* ========== Tool Selection ========== */}
-      <div className="toolbar-group">
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
         <button
-          className={toolButtonClass("select")}
+          style={toolButtonStyle(activeTool === "select")}
           onClick={() => onToolChange("select")}
           title="Pan & Select (Spacebar)"
         >
@@ -71,7 +101,7 @@ export default function Toolbar({
         </button>
 
         <button
-          className={toolButtonClass("crop-rect")}
+          style={toolButtonStyle(activeTool === "crop-rect" || activeTool === "crop-lasso")}
           onClick={() => onToolChange("crop-rect")}
           title="Rectangular Crop"
         >
@@ -80,16 +110,16 @@ export default function Toolbar({
 
         {/* Crop Mode Selector (only show when crop is active) */}
         {(activeTool === "crop-rect" || activeTool === "crop-lasso") && (
-          <div className="crop-mode-selector">
+          <div style={{ display: "flex", gap: "2px", marginLeft: "4px" }}>
             <button
-              className={cropModeButtonClass("rect")}
+              style={cropModeButtonStyle(cropMode === "rect")}
               onClick={() => onCropModeChange("rect")}
               title="Rectangular Crop"
             >
               Rect
             </button>
             <button
-              className={cropModeButtonClass("lasso")}
+              style={cropModeButtonStyle(cropMode === "lasso")}
               onClick={() => onCropModeChange("lasso")}
               title="Freehand Lasso Crop"
             >
@@ -99,7 +129,7 @@ export default function Toolbar({
         )}
 
         <button
-          className={toolButtonClass("eraser")}
+          style={toolButtonStyle(activeTool === "eraser")}
           onClick={() => onToolChange("eraser")}
           title="Eraser - Make pixels transparent"
         >
@@ -107,13 +137,17 @@ export default function Toolbar({
         </button>
       </div>
 
-      {/* ========== Separtor ========== */}
-      <div className="toolbar-divider"></div>
+      {/* ========== Separator ========== */}
+      <div style={{ width: "1px", height: "24px", backgroundColor: "#444", margin: "0 4px" }}></div>
 
       {/* ========== Undo/Redo ========== */}
-      <div className="toolbar-group">
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
         <button
-          className="toolbar-btn"
+          style={{
+            ...toolButtonStyle(false),
+            opacity: canUndo ? 1 : 0.5,
+            cursor: canUndo ? "pointer" : "not-allowed",
+          }}
           onClick={onUndo}
           disabled={!canUndo}
           title="Undo (Ctrl+Z)"
@@ -121,7 +155,11 @@ export default function Toolbar({
           ↶ Undo
         </button>
         <button
-          className="toolbar-btn"
+          style={{
+            ...toolButtonStyle(false),
+            opacity: canRedo ? 1 : 0.5,
+            cursor: canRedo ? "pointer" : "not-allowed",
+          }}
           onClick={onRedo}
           disabled={!canRedo}
           title="Redo (Ctrl+Y)"
@@ -131,17 +169,26 @@ export default function Toolbar({
       </div>
 
       {/* ========== Zoom Controls ========== */}
-      <div className="toolbar-group">
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
         <button
-          className="toolbar-btn"
+          style={toolButtonStyle(false)}
           onClick={() => onZoomChange(zoomLevel - 0.2)}
           title="Zoom Out"
         >
           🔍−
         </button>
-        <span className="zoom-display">{Math.round(zoomLevel * 100)}%</span>
+        <span
+          style={{
+            minWidth: "50px",
+            textAlign: "center",
+            fontSize: "12px",
+            color: "#aaa",
+          }}
+        >
+          {Math.round(zoomLevel * 100)}%
+        </span>
         <button
-          className="toolbar-btn"
+          style={toolButtonStyle(false)}
           onClick={() => onZoomChange(zoomLevel + 0.2)}
           title="Zoom In"
         >
@@ -149,42 +196,61 @@ export default function Toolbar({
         </button>
       </div>
 
-      {/* ========== Separtor ========== */}
-      <div className="toolbar-divider"></div>
+      {/* ========== Separator ========== */}
+      <div style={{ width: "1px", height: "24px", backgroundColor: "#444", margin: "0 4px" }}></div>
 
       {/* ========== Grid Controls ========== */}
-      <div className="toolbar-group">
-        <label className="toolbar-checkbox">
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            cursor: "pointer",
+            fontSize: "12px",
+            color: "#aaa",
+          }}
+        >
           <input
             type="checkbox"
             checked={showGrid}
             onChange={(e) => onShowGridChange(e.target.checked)}
+            style={{ cursor: "pointer" }}
           />
           <span title="Show pixel grid (visible when zoomed in)">Grid</span>
         </label>
 
         {showGrid && (
-          <div className="opacity-slider">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={gridOpacity}
-              onChange={(e) => onGridOpacityChange(parseFloat(e.target.value))}
-              title="Grid opacity"
-            />
-          </div>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={gridOpacity}
+            onChange={(e) => onGridOpacityChange(parseFloat(e.target.value))}
+            title="Grid opacity"
+            style={{ width: "80px" }}
+          />
         )}
       </div>
 
       {/* ========== Minimap Toggle ========== */}
-      <div className="toolbar-group">
-        <label className="toolbar-checkbox">
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            cursor: "pointer",
+            fontSize: "12px",
+            color: "#aaa",
+          }}
+        >
           <input
             type="checkbox"
             checked={showMinimap}
             onChange={(e) => onShowMinimapChange(e.target.checked)}
+            style={{ cursor: "pointer" }}
           />
           <span title="Show minimap for navigation">Minimap</span>
         </label>
@@ -194,16 +260,24 @@ export default function Toolbar({
       <div style={{ flex: 1 }}></div>
 
       {/* ========== Export/Cancel ========== */}
-      <div className="toolbar-group">
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
         <button
-          className="toolbar-btn toolbar-cancel"
+          style={{
+            ...toolButtonStyle(false),
+            backgroundColor: "#dc3545",
+          }}
           onClick={onCancel}
+          title="Cancel editing"
         >
           ✕ Cancel
         </button>
         <button
-          className="toolbar-btn toolbar-export"
+          style={{
+            ...toolButtonStyle(false),
+            backgroundColor: "#28a745",
+          }}
           onClick={onExport}
+          title="Export image"
         >
           ✓ Export
         </button>
