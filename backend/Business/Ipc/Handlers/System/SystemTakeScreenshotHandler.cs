@@ -36,11 +36,11 @@ namespace Business.Ipc.Handlers
                 if (flowSearchArea != null)
                     screenshot = _screenshotService.CaptureSearchArea(flowSearchArea);
                 else
-                    screenshot = _screenshotService.CaptureVirtualScreen();
+                    screenshot = _screenshotService.CaptureVirtualScreen(request.dto.FormatType, request.dto.JpegQuality);
             }
             else if (request.dto.CaptureVirtualScreen)
             {
-                screenshot = _screenshotService.CaptureVirtualScreen();
+                screenshot = _screenshotService.CaptureVirtualScreen(request.dto.FormatType, request.dto.JpegQuality);
             }
             else if (request.dto.CaptureAppWindow.Length > 0)
             {

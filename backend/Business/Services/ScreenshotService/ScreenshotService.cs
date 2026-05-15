@@ -52,12 +52,12 @@ namespace Business.Services.ScreenshotService
             return result;
         }
 
-        public byte[] CaptureVirtualScreen()
+        public byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
             Rectangle rect = ScreenHelper.GetVirtualScreenBounds();
-            using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
+            using Bitmap bmp = CaptureGraphics(rect, screenshotFormat, jpegQuality);
 
-            byte[] result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
+            byte[] result = Compress(bmp, screenshotFormat, jpegQuality);
             return result;
         }
 

@@ -83,15 +83,39 @@ namespace Business.Helpers
         /// <summary>
         /// Get Virtual screen bounds
         /// </summary>
+        //public static Rectangle GetVirtualScreenBounds()
+        //{
+        //    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        //    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        //    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        //    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+        //    return new Rectangle(x, y, width, height);
+        //}
         public static Rectangle GetVirtualScreenBounds()
         {
-            int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-            int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-            int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> allMonitors = GetEveryMonitorInfo();
 
-            return new Rectangle(x, y, width, height);
+            if (allMonitors.Count == 0)
+                return new Rectangle(0, 0, 0, 0);
+
+            int minX = int.MaxValue;
+            int minY = int.MaxValue;
+            int maxX = int.MinValue;
+            int maxY = int.MinValue;
+
+            foreach (var monitor in allMonitors.Values)
+            {
+                Rectangle bounds = monitor.Bounds;
+                minX = Math.Min(minX, bounds.X);
+                minY = Math.Min(minY, bounds.Y);
+                maxX = Math.Max(maxX, bounds.Right);
+                maxY = Math.Max(maxY, bounds.Bottom);
+            }
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
         }
+
 
 
 
