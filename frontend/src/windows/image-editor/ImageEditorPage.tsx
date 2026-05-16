@@ -23,19 +23,20 @@ interface HistoryState {
 export default function ImageEditorPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
   const [imageData, setImageData] = useState<ImageData | null>(null);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
-
+  const [showMinimap, setShowMinimap] = useState(true);
   const [tool, setTool] = useState<Tool>("hand");
   const [showGrid, setShowGrid] = useState(true);
   const [gridOpacity, setGridOpacity] = useState(0.25);
 
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-
+  const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
   const [selection, setSelection] = useState<{
     x: number;
     y: number;
@@ -134,7 +135,7 @@ export default function ImageEditorPage() {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const pos = getCanvasMousePos(e);
-
+    setMouseCoords(pos);
     if (isDragging && tool === "hand") {
       const dx = e.clientX - lastMouse.x;
       const dy = e.clientY - lastMouse.y;
@@ -164,6 +165,52 @@ export default function ImageEditorPage() {
       applyCrop();
     }
     setIsSelecting(false);
+  };
+
+  // ============== MINIMAP ==============
+  const updateMinimap = useCallback(() => {
+    const mainCanvas = canvasRef.current;
+    const miniCanvas = minimapRef.current;
+    if (!mainCanvas || !miniCanvas || !imageData) return;
+
+    const miniCtx = miniCanvas.getContext("2d")!;
+    const ratio = Math.min(180 / mainCanvas.width, 120 / mainCanvas.height);
+
+    miniCanvas.width = mainCanvas.width * ratio;
+    miniCanvas.height = mainCanvas.height * ratio;
+
+    miniCtx.imageSmoothingEnabled = false;
+    miniCtx.drawImage(mainCanvas, 0, 0, miniCanvas.width, miniCanvas.height);
+
+    // Draw viewport rectangle
+    const viewX = (-offset.x / scale) * ratio;
+    const viewY = (-offset.y / scale) * ratio;
+    const viewW = (mainCanvas.clientWidth / scale) * ratio; // Approximate visible area
+    const viewH = (mainCanvas.clientHeight / scale) * ratio;
+
+    miniCtx.strokeStyle = "#3b82f6";
+    miniCtx.lineWidth = 2;
+    miniCtx.strokeRect(viewX, viewY, viewW, viewH);
+  }, [imageData, scale, offset]);
+
+  useEffect(() => {
+    updateMinimap();
+  }, [updateMinimap, historyIndex]);
+  const handleMinimapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const mini = minimapRef.current!;
+    const rect = mini.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    const ratio = mini.width / canvasRef.current!.width;
+    const targetX = clickX / ratio;
+    const targetY = clickY / ratio;
+
+    // Center view on clicked point
+    setOffset({
+      x: -targetX * scale + (window.innerWidth * 0.4) / 2, // rough center
+      y: -targetY * scale + 300,
+    });
   };
 
   // ============== CROP ==============
@@ -214,6 +261,16 @@ export default function ImageEditorPage() {
     canvas.style.transform = `translate(${offset.x}px, ${offset.y}px) scale(${scale})`;
   }, [scale, offset]);
 
+  // Minimap update
+  useEffect(() => {
+    if (!showMinimap || !minimapRef.current || !canvasRef.current) return;
+    const mini = minimapRef.current;
+    const miniCtx = mini.getContext("2d")!;
+    mini.width = 180;
+    mini.height = 120;
+    miniCtx.drawImage(canvasRef.current, 0, 0, mini.width, mini.height);
+  }, [showMinimap, historyIndex]);
+
   return (
     <div className="flex flex-column h-screen bg-gray-950">
       <Toolbar
@@ -240,13 +297,16 @@ export default function ImageEditorPage() {
         end={
           <div className="flex items-center gap-4 text-sm">
             <span>Zoom: {Math.round(scale * 100)}%</span>
+            <span>
+              X: {mouseCoords.x} Y: {mouseCoords.y}
+            </span>
           </div>
         }
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-full overflow-hidden">
         {/* Tools */}
-        <div className="w-16 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-4 gap-3">
+        <div className="flex flex-column w-16 bg-gray-900 border-r border-gray-700  items-center py-4 gap-3">
           {[
             { tool: "hand", icon: "pi pi-hand", label: "Pan" },
             { tool: "crop-rect", icon: "pi pi-crop", label: "Rect Crop" },
@@ -257,7 +317,7 @@ export default function ImageEditorPage() {
               icon={t.icon}
               tooltip={t.label}
               tooltipOptions={{ position: "right" }}
-              className={`w-12 h-12 ${tool === t.tool ? "bg-blue-600" : "bg-gray-800"}`}
+              className={`w-full h-12 ${tool === t.tool ? "bg-blue-600" : "bg-gray-800"}`}
               onClick={() => setTool(t.tool as Tool)}
             />
           ))}
@@ -303,7 +363,7 @@ export default function ImageEditorPage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 bg-gray-900 border-l border-gray-700 p-4 flex flex-col gap-4">
+        <div className="flex flex-column w-80 bg-gray-900 border-l border-gray-700 p-4  gap-4">
           <div>
             <label>Zoom</label>
             <Slider
@@ -326,6 +386,13 @@ export default function ImageEditorPage() {
             />
           </div>
 
+          <ToggleButton
+            checked={showMinimap}
+            onChange={(e) => setShowMinimap(e.value)}
+            onLabel="Hide Minimap"
+            offLabel="Show Minimap"
+          />
+
           <Button
             label="Reset View"
             icon="pi pi-refresh"
@@ -335,6 +402,55 @@ export default function ImageEditorPage() {
             }}
           />
         </div>
+        {/* History */}
+        <div className=" flex flex-columnn">
+          <div className="p-4 border-b border-gray-700">
+            <h4 className="font-medium">History</h4>
+          </div>
+          <ScrollPanel className="flex-1">
+            <div className="p-2 space-y-1">
+              {history
+                .slice()
+                .reverse()
+                .map((entry, idx) => (
+                  <div
+                    key={entry.id}
+                    onClick={() => restoreFromHistory(history.length - 1 - idx)}
+                    className={`p-2 rounded hover:bg-gray-800 cursor-pointer flex gap-3 items-center ${history.length - 1 - idx === historyIndex ? "bg-blue-900" : ""}`}
+                  >
+                    <canvas
+                      width={48}
+                      height={32}
+                      ref={(el) => {
+                        if (el) {
+                          const ctx = el.getContext("2d")!;
+                          ctx.putImageData(entry.imageData, 0, 0, 0, 0, 48, 32);
+                        }
+                      }}
+                      className="border border-gray-700"
+                    />
+                    <div className="text-sm">
+                      <div>{entry.name}</div>
+                      <div className="text-gray-500 text-xs">
+                        {entry.timestamp.toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </ScrollPanel>
+        </div>
+        {/* Minimap */}
+        {showMinimap && (
+          <div className="absolute bottom-6 right-6 border border-gray-700 bg-gray-900/95 p-2 rounded-lg shadow-2xl">
+            <div className="text-xs text-gray-400 mb-1 px-1">Minimap</div>
+            <canvas
+              ref={minimapRef}
+              onClick={handleMinimapClick}
+              className="cursor-pointer border border-gray-600 rounded"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
