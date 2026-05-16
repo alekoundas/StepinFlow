@@ -14,8 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { useImageCanvas } from "../hooks/useImageCanvas";
 
 interface CanvasProps {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  imageDataUrl: string | null;
   activeTool: "crop-rect" | "crop-lasso" | "eraser" | "select";
   cropMode: "rect" | "lasso";
   showGrid: boolean;
@@ -35,8 +34,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  canvasRef,
-  containerRef,
+  imageDataUrl,
   activeTool,
   cropMode,
   showGrid,
@@ -65,7 +63,32 @@ export default function Canvas({
     Array<{ x: number; y: number }>
   >([]);
   const brushSizeRef = useRef(10);
-  const displayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!imageDataUrl || !canvasRef.current) return;
+    const img = new Image();
+
+    // Attach handlers BEFORE setting src
+    img.onload = () => {
+      const canvas = canvasRef.current!;
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 500, 500);
+        imageCanvas.resetZoomPan();
+      }
+    };
+
+    img.onerror = (event: Event | string) => {
+      console.error("[ImageEditor] Failed to load image. Event:", event);
+    };
+
+    // Set src AFTER handlers are attached
+    img.src = imageDataUrl;
+  }, [imageDataUrl]); // Empty deps: runs only once on mount
 
   // ======================================================================
   // Rendering - Display canvas with zoom/pan + grid
@@ -80,16 +103,14 @@ export default function Canvas({
    *  - Erase preview
    */
   const render = useRef(() => {
-    const displayCanvas = displayCanvasRef.current;
-    const sourceCanvas = canvasRef.current;
-    if (!displayCanvas || !sourceCanvas) return;
+    if (!canvasRef.current) return;
 
-    const ctx = displayCanvas.getContext("2d");
+    const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
 
     // Clear
     ctx.fillStyle = "#2a2a2a"; // Dark background
-    ctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
+    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     // Save state for transformations
     ctx.save();
@@ -97,11 +118,16 @@ export default function Canvas({
     ctx.scale(imageCanvas.zoom, imageCanvas.zoom);
 
     // Draw source image
-    ctx.drawImage(sourceCanvas, 0, 0);
+    ctx.drawImage(canvasRef.current, 0, 0);
 
     // Draw pixel grid if enabled
     if (showGrid && imageCanvas.zoom > 3) {
-      drawPixelGrid(ctx, sourceCanvas.width, sourceCanvas.height, gridOpacity);
+      drawPixelGrid(
+        ctx,
+        canvasRef.current.width,
+        canvasRef.current.height,
+        gridOpacity,
+      );
     }
 
     // Draw crop preview (rect or lasso)
@@ -121,19 +147,19 @@ export default function Canvas({
         // Dim everything outside selection
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
-        ctx.fillRect(0, 0, sourceCanvas.width, rect.y);
+        ctx.fillRect(0, 0, canvasRef.current.width, rect.y);
         ctx.fillRect(0, rect.y, rect.x, rect.height);
         ctx.fillRect(
           rect.x + rect.width,
           rect.y,
-          sourceCanvas.width - (rect.x + rect.width),
+          canvasRef.current.width - (rect.x + rect.width),
           rect.height,
         );
         ctx.fillRect(
           0,
           rect.y + rect.height,
-          sourceCanvas.width,
-          sourceCanvas.height - (rect.y + rect.height),
+          canvasRef.current.width,
+          canvasRef.current.height - (rect.y + rect.height),
         );
       } else if (cropMode === "lasso" && lassoPoints.length > 0) {
         // Draw lasso path
@@ -169,34 +195,34 @@ export default function Canvas({
   ]);
 
   // Size display canvas to match container
-  useEffect(() => {
-    const resizeDisplayCanvas = () => {
-      if (!displayCanvasRef.current || !containerRef.current) return;
+  // useEffect(() => {
+  //   const resizeDisplayCanvas = () => {
+  //     if (!displayCanvasRef.current || !containerRef.current) return;
 
-      const rect = containerRef.current.getBoundingClientRect();
-      displayCanvasRef.current.width = rect.width;
-      displayCanvasRef.current.height = rect.height;
-    };
+  //     const rect = containerRef.current.getBoundingClientRect();
+  //     displayCanvasRef.current.width = rect.width;
+  //     displayCanvasRef.current.height = rect.height;
+  //   };
 
-    resizeDisplayCanvas();
+  //   resizeDisplayCanvas();
 
-    // Resize on window resize
-    window.addEventListener("resize", resizeDisplayCanvas);
-    return () => window.removeEventListener("resize", resizeDisplayCanvas);
-  }, []);
+  //   // Resize on window resize
+  //   window.addEventListener("resize", resizeDisplayCanvas);
+  //   return () => window.removeEventListener("resize", resizeDisplayCanvas);
+  // }, []);
 
   // ======================================================================
   // Mouse/Touch events
   // ======================================================================
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current || !canvasRef.current) return;
+    if (!canvasRef.current) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const canvasRect = canvasRef.current.getBoundingClientRect();
     const canvasCoords = imageCanvas.screenToCanvas(
       e.clientX,
       e.clientY,
-      containerRect,
+      canvasRect,
     );
 
     if (activeTool === "select") {
@@ -225,13 +251,13 @@ export default function Canvas({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
+    if (!canvasRef.current) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const canvasRect = canvasRef.current.getBoundingClientRect();
     const canvasCoords = imageCanvas.screenToCanvas(
       e.clientX,
       e.clientY,
-      containerRect,
+      canvasRect,
     );
 
     if (activeTool === "select") {
@@ -252,25 +278,25 @@ export default function Canvas({
     }
 
     // Update cursor
-    if (activeTool === "select") {
-      containerRef.current.style.cursor = imageCanvas.isDragging
-        ? "grabbing"
-        : "grab";
-    } else if (activeTool === "crop-rect" || activeTool === "crop-lasso") {
-      containerRef.current.style.cursor = "crosshair";
-    } else if (activeTool === "eraser") {
-      containerRef.current.style.cursor = `radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent ${brushSizeRef.current}px)`;
-    }
+    // if (activeTool === "select") {
+    //   containerRef.current.style.cursor = imageCanvas.isDragging
+    //     ? "grabbing"
+    //     : "grab";
+    // } else if (activeTool === "crop-rect" || activeTool === "crop-lasso") {
+    //   containerRef.current.style.cursor = "crosshair";
+    // } else if (activeTool === "eraser") {
+    //   containerRef.current.style.cursor = `radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent ${brushSizeRef.current}px)`;
+    // }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
+    if (!canvasRef.current) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const canvasRect = canvasRef.current.getBoundingClientRect();
     const canvasCoords = imageCanvas.screenToCanvas(
       e.clientX,
       e.clientY,
-      containerRect,
+      canvasRect,
     );
 
     if (activeTool === "select") {
@@ -335,32 +361,44 @@ export default function Canvas({
 
   return (
     <div
-      style={{
-        flex: 1,
-        position: "relative",
-        overflow: "hidden",
-        background: "#1a1a1a",
-      }}
-      ref={containerRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => {
-        imageCanvas.endPan();
-        setIsInteracting(false);
-      }}
-      onDoubleClick={handleDoubleClick}
-      onContextMenu={handleContextMenu}
+    // style={{
+    //   flex: 1,
+    //   position: "relative",
+    //   overflow: "hidden",
+    //   background: "#1a1a1a",
+    // }}
+    // ref={containerRef}
+    // onMouseDown={handleMouseDown}
+    // onMouseMove={handleMouseMove}
+    // onMouseUp={handleMouseUp}
+    // onMouseLeave={() => {
+    //   imageCanvas.endPan();
+    //   setIsInteracting(false);
+    // }}
+    // onDoubleClick={handleDoubleClick}
+    // onContextMenu={handleContextMenu}
     >
       {/* Hidden source canvas - stores actual pixel data (attached to canvasRef) */}
-      <canvas
+      {/* <canvas
         ref={canvasRef}
         style={{ display: "none" }}
-      />
+        // style={{ display: "block", width: "100%", height: "100%" }}
+      /> */}
 
       {/* Visible display canvas - renders transformed view */}
       <canvas
-        ref={displayCanvasRef}
+        ref={canvasRef}
+        width={canvasRef.current?.width}
+        height={canvasRef.current?.height}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          imageCanvas.endPan();
+          setIsInteracting(false);
+        }}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
         style={{ display: "block", width: "100%", height: "100%" }}
       />
 
