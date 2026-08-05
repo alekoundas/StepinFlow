@@ -1,456 +1,359 @@
+/**
+ * Image editor window.
+ *
+ * Opened by Electron with a PNG screenshot; the user crops / erases it and the
+ * result is returned to the caller as PNG base64 (this is the template image an
+ * IMAGE_SEARCH flow step will search for).
+ *
+ * Flow:
+ *  1. signalReady()        -> base64 PNG of the image to edit
+ *  2. user edits           -> every edit is a new undo/redo snapshot
+ *  3. signalCloseWindow(b64 | null) -> Electron closes the window and resolves
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "primereact/button";
-import { Divider } from "primereact/divider";
-import { ToggleButton } from "primereact/togglebutton";
-import { Slider } from "primereact/slider";
-import { ScrollPanel } from "primereact/scrollpanel";
-import { Toolbar } from "primereact/toolbar";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { Message } from "primereact/message";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
+import Canvas from "@/windows/image-editor/components/Canvas";
+import HistoryPanel from "@/windows/image-editor/components/HistoryPanel";
+import Minimap from "@/windows/image-editor/components/Minimap";
+import OptionsPanel from "@/windows/image-editor/components/OptionsPanel";
+import Toolbar from "@/windows/image-editor/components/Toolbar";
+import ToolRail from "@/windows/image-editor/components/ToolRail";
+import { useImageCanvas } from "@/windows/image-editor/hooks/useImageCanvas";
+import { useViewTransform } from "@/windows/image-editor/hooks/useViewTransform";
+import type {
+  EditorTool,
+  GridOptions,
+  PendingSelection,
+  Point,
+  Size,
+} from "@/windows/image-editor/types";
 import {
-  base64ToUint8Array,
-  uint8ArrayToDataURL,
+  canvasToPngBase64,
+  loadImage,
 } from "@/windows/image-editor/utils/canvas-utils";
+import "@/windows/image-editor/ImageEditorPage.css";
 
-type Tool = "hand" | "crop-rect" | "lasso" | "eraser";
-
-interface HistoryState {
-  id: string;
-  imageData: ImageData;
-  name: string;
-  timestamp: Date;
-}
+const DEFAULT_GRID: GridOptions = { enabled: true, opacity: 0.25, minScale: 8 };
+const ZOOM_STEP = 1.25;
 
 export default function ImageEditorPage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const minimapRef = useRef<HTMLCanvasElement>(null);
-  const [imageData, setImageData] = useState<ImageData | null>(null);
-  const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
+  const image = useImageCanvas();
+  const view = useViewTransform();
+
+  const [tool, setTool] = useState<EditorTool>("crop-rect");
+  const [grid, setGrid] = useState<GridOptions>(DEFAULT_GRID);
   const [showMinimap, setShowMinimap] = useState(true);
-  const [tool, setTool] = useState<Tool>("hand");
-  const [showGrid, setShowGrid] = useState(true);
-  const [gridOpacity, setGridOpacity] = useState(0.25);
+  const [brushSize, setBrushSize] = useState(16);
+  const [selection, setSelection] = useState<PendingSelection | null>(null);
+  const [cursor, setCursor] = useState<Point | null>(null);
+  const [viewportSize, setViewportSize] = useState<Size>({
+    width: 0,
+    height: 0,
+  });
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const [history, setHistory] = useState<HistoryState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
-  const [selection, setSelection] = useState<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  } | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
+  const fittedRef = useRef(false);
 
-  // Load image from Electron
+  const { size: imageSize } = image;
+
+  // ==========================================================================
+  // Load the image handed over by Electron
+  // ==========================================================================
+
   useEffect(() => {
-    ElectronApiService.imageEditor.signalReady().then((receivedData: any) => {
-      if (!receivedData) return;
+    let cancelled = false;
 
-      const data =
-        typeof receivedData === "string"
-          ? base64ToUint8Array(receivedData)
-          : receivedData;
+    const load = async () => {
+      try {
+        const base64 = await ElectronApiService.imageEditor.signalReady();
+        if (cancelled) return;
+        if (!base64) throw new Error("No image was passed to the editor");
 
-      const dataUrl = uint8ArrayToDataURL(data);
-      const img = new Image();
-      img.onload = () => initializeCanvas(img);
-      img.src = dataUrl;
-    });
+        const bitmap = await loadImage(base64);
+        if (cancelled) return;
+
+        image.loadImage(bitmap);
+        setStatus("ready");
+      } catch (error: unknown) {
+        if (cancelled) return;
+        console.error("[ImageEditor] Failed to load image:", error);
+        setErrorMessage(
+          error instanceof Error ? error.message : "Failed to load image",
+        );
+        setStatus("error");
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+    // Runs once: the image is handed over exactly once per window.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const initializeCanvas = (img: HTMLImageElement) => {
-    const canvas = canvasRef.current!;
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, 0, 0);
-
-    const initialData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    setImageData(initialData);
-    saveToHistory("Original", initialData);
-  };
-
-  const getContext = () =>
-    canvasRef.current!.getContext("2d", { willReadFrequently: true })!;
-
-  const saveToHistory = (name: string, data: ImageData) => {
-    const newState: HistoryState = {
-      id: crypto.randomUUID(),
-      imageData: data,
-      name,
-      timestamp: new Date(),
-    };
-
-    setHistory((prev) => {
-      const trimmed = prev.slice(0, historyIndex + 1);
-      return [...trimmed, newState];
-    });
-    setHistoryIndex((prev) => Math.min(prev + 1, history.length));
-  };
-
-  const restoreFromHistory = (index: number) => {
-    if (index < 0 || index >= history.length) return;
-    const state = history[index];
-    const ctx = getContext();
-    ctx.putImageData(state.imageData, 0, 0);
-    setImageData(state.imageData);
-    setHistoryIndex(index);
-  };
-
-  // ============== COORDINATE TRANSFORMATION ==============
-  const getCanvasMousePos = (e: React.MouseEvent) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    // Convert screen → canvas logical coordinates
-    const canvasX = Math.floor((mouseX - offset.x) / scale);
-    const canvasY = Math.floor((mouseY - offset.y) / scale);
-
-    return {
-      x: Math.max(0, Math.min(canvasX, canvasRef.current!.width - 1)),
-      y: Math.max(0, Math.min(canvasY, canvasRef.current!.height - 1)),
-    };
-  };
-
-  // ============== MOUSE HANDLERS ==============
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    const pos = getCanvasMousePos(e);
-
-    if (tool === "hand") {
-      setIsDragging(true);
-      setLastMouse({ x: e.clientX, y: e.clientY });
-    } else if (tool === "crop-rect") {
-      setIsSelecting(true);
-      setSelection({ x: pos.x, y: pos.y, w: 0, h: 0 });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const pos = getCanvasMousePos(e);
-    setMouseCoords(pos);
-    if (isDragging && tool === "hand") {
-      const dx = e.clientX - lastMouse.x;
-      const dy = e.clientY - lastMouse.y;
-
-      setOffset((prev) => ({
-        x: prev.x + dx,
-        y: prev.y + dy,
-      }));
-
-      setLastMouse({ x: e.clientX, y: e.clientY });
-    }
-
-    if (isSelecting && selection) {
-      const currentPos = getCanvasMousePos(e);
-      setSelection({
-        x: Math.min(selection.x, currentPos.x),
-        y: Math.min(selection.y, currentPos.y),
-        w: Math.abs(currentPos.x - selection.x),
-        h: Math.abs(currentPos.y - selection.y),
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    if (isSelecting && selection && selection.w > 5 && selection.h > 5) {
-      applyCrop();
-    }
-    setIsSelecting(false);
-  };
-
-  // ============== MINIMAP ==============
-  const updateMinimap = useCallback(() => {
-    const mainCanvas = canvasRef.current;
-    const miniCanvas = minimapRef.current;
-    if (!mainCanvas || !miniCanvas || !imageData) return;
-
-    const miniCtx = miniCanvas.getContext("2d")!;
-    const ratio = Math.min(180 / mainCanvas.width, 120 / mainCanvas.height);
-
-    miniCanvas.width = mainCanvas.width * ratio;
-    miniCanvas.height = mainCanvas.height * ratio;
-
-    miniCtx.imageSmoothingEnabled = false;
-    miniCtx.drawImage(mainCanvas, 0, 0, miniCanvas.width, miniCanvas.height);
-
-    // Draw viewport rectangle
-    const viewX = (-offset.x / scale) * ratio;
-    const viewY = (-offset.y / scale) * ratio;
-    const viewW = (mainCanvas.clientWidth / scale) * ratio; // Approximate visible area
-    const viewH = (mainCanvas.clientHeight / scale) * ratio;
-
-    miniCtx.strokeStyle = "#3b82f6";
-    miniCtx.lineWidth = 2;
-    miniCtx.strokeRect(viewX, viewY, viewW, viewH);
-  }, [imageData, scale, offset]);
-
+  // Fit the image into the viewport as soon as both sizes are known.
   useEffect(() => {
-    updateMinimap();
-  }, [updateMinimap, historyIndex]);
-  const handleMinimapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const mini = minimapRef.current!;
-    const rect = mini.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    if (fittedRef.current) return;
+    if (!imageSize || !viewportSize.width || !viewportSize.height) return;
 
-    const ratio = mini.width / canvasRef.current!.width;
-    const targetX = clickX / ratio;
-    const targetY = clickY / ratio;
+    view.fit(imageSize, viewportSize);
+    fittedRef.current = true;
+  }, [imageSize, view, viewportSize]);
 
-    // Center view on clicked point
-    setOffset({
-      x: -targetX * scale + (window.innerWidth * 0.4) / 2, // rough center
-      y: -targetY * scale + 300,
-    });
-  };
+  // ==========================================================================
+  // Actions
+  // ==========================================================================
 
-  // ============== CROP ==============
-  const applyCrop = () => {
-    if (!selection) return;
+  const applySelection = useCallback(() => {
+    if (!selection?.committed) return;
 
-    const { x, y, w, h } = selection;
-    const ctx = getContext();
-    const cropped = ctx.getImageData(x, y, w, h);
-
-    const canvas = canvasRef.current!;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.putImageData(cropped, 0, 0);
-
-    const newImageData = ctx.getImageData(0, 0, w, h);
-    setImageData(newImageData);
-    saveToHistory("Cropped", newImageData);
+    if (selection.kind === "rect") {
+      image.cropRect(selection.rect);
+    } else {
+      image.cropPolygon(selection.points);
+    }
 
     setSelection(null);
-    setOffset({ x: 0, y: 0 }); // Reset view
-    setScale(1);
-  };
+    fittedRef.current = false; // re-fit the cropped result
+  }, [image, selection]);
 
-  // ============== RENDERING ==============
-  const redraw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imageData) return;
+  const clearSelection = useCallback(() => setSelection(null), []);
 
-    const ctx = getContext();
-    ctx.imageSmoothingEnabled = false;
+  const zoomAtCenter = useCallback(
+    (factor: number) => {
+      view.zoomBy(factor, {
+        x: viewportSize.width / 2,
+        y: viewportSize.height / 2,
+      });
+    },
+    [view, viewportSize.height, viewportSize.width],
+  );
 
-    // Clear and redraw with current transform
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.putImageData(imageData, 0, 0);
-  }, [imageData]);
+  const zoomFit = useCallback(() => {
+    if (imageSize) view.fit(imageSize, viewportSize);
+  }, [imageSize, view, viewportSize]);
+
+  const zoomActual = useCallback(() => {
+    if (imageSize) view.actualSize(imageSize, viewportSize);
+  }, [imageSize, view, viewportSize]);
+
+  const setScale = useCallback(
+    (scale: number) => view.zoomToCenter(scale, viewportSize),
+    [view, viewportSize],
+  );
+
+  const handleSave = useCallback(async () => {
+    const canvas = image.getDocument();
+    if (!canvas || saving) return;
+
+    setSaving(true);
+    try {
+      const base64 = await canvasToPngBase64(canvas);
+      ElectronApiService.imageEditor.signalCloseWindow(base64);
+    } catch (error) {
+      console.error("[ImageEditor] Failed to export PNG:", error);
+      setErrorMessage("Failed to export the image");
+      setSaving(false);
+    }
+  }, [image, saving]);
+
+  const handleCancel = useCallback(() => {
+    ElectronApiService.imageEditor.signalCloseWindow(null);
+  }, []);
+
+  // ==========================================================================
+  // Keyboard shortcuts
+  // ==========================================================================
 
   useEffect(() => {
-    redraw();
-  }, [redraw]);
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
 
-  // Apply CSS transform to canvas (this is the key!)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+          case "z":
+            event.preventDefault();
+            if (event.shiftKey) image.redo();
+            else image.undo();
+            return;
+          case "y":
+            event.preventDefault();
+            image.redo();
+            return;
+          case "s":
+            event.preventDefault();
+            void handleSave();
+            return;
+          default:
+            return;
+        }
+      }
 
-    canvas.style.transformOrigin = "0 0";
-    canvas.style.transform = `translate(${offset.x}px, ${offset.y}px) scale(${scale})`;
-  }, [scale, offset]);
+      switch (event.key) {
+        case "Enter":
+          applySelection();
+          break;
+        case "Escape":
+          clearSelection();
+          break;
+        case "+":
+        case "=":
+          zoomAtCenter(ZOOM_STEP);
+          break;
+        case "-":
+        case "_":
+          zoomAtCenter(1 / ZOOM_STEP);
+          break;
+        case "0":
+          zoomFit();
+          break;
+        case "1":
+          zoomActual();
+          break;
+        case "h":
+        case "H":
+          setTool("hand");
+          break;
+        case "r":
+        case "R":
+          setTool("crop-rect");
+          break;
+        case "l":
+        case "L":
+          setTool("crop-lasso");
+          break;
+        case "p":
+        case "P":
+          setTool("crop-polygon");
+          break;
+        case "e":
+        case "E":
+          setTool("eraser");
+          break;
+        default:
+          break;
+      }
+    };
 
-  // Minimap update
-  useEffect(() => {
-    if (!showMinimap || !minimapRef.current || !canvasRef.current) return;
-    const mini = minimapRef.current;
-    const miniCtx = mini.getContext("2d")!;
-    mini.width = 180;
-    mini.height = 120;
-    miniCtx.drawImage(canvasRef.current, 0, 0, mini.width, mini.height);
-  }, [showMinimap, historyIndex]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    applySelection,
+    clearSelection,
+    handleSave,
+    image,
+    zoomActual,
+    zoomAtCenter,
+    zoomFit,
+  ]);
+
+  // Switching tools drops a half-drawn selection.
+  const handleToolChange = useCallback((next: EditorTool) => {
+    setTool(next);
+    setSelection(null);
+  }, []);
+
+  const handleViewportResize = useCallback((size: Size) => {
+    setViewportSize(size);
+  }, []);
+
+  // ==========================================================================
+  // Render
+  // ==========================================================================
 
   return (
-    <div className="flex flex-column h-screen bg-gray-950">
+    <div className="image-editor">
       <Toolbar
-        className="bg-gray-900 border-b border-gray-700"
-        start={
-          <div className="flex gap-2">
-            <Button
-              icon="pi pi-save"
-              label="Save Template"
-              severity="success"
-            />
-            <Button
-              icon="pi pi-undo"
-              onClick={() => restoreFromHistory(historyIndex - 1)}
-              disabled={historyIndex <= 0}
-            />
-            <Button
-              icon="pi pi-redo"
-              onClick={() => restoreFromHistory(historyIndex + 1)}
-              disabled={historyIndex >= history.length - 1}
-            />
-          </div>
-        }
-        end={
-          <div className="flex items-center gap-4 text-sm">
-            <span>Zoom: {Math.round(scale * 100)}%</span>
-            <span>
-              X: {mouseCoords.x} Y: {mouseCoords.y}
-            </span>
-          </div>
-        }
+        imageSize={imageSize}
+        cursor={cursor}
+        scale={view.scale}
+        canUndo={image.history.canUndo}
+        canRedo={image.history.canRedo}
+        saving={saving}
+        onUndo={image.undo}
+        onRedo={image.redo}
+        onZoomIn={() => zoomAtCenter(ZOOM_STEP)}
+        onZoomOut={() => zoomAtCenter(1 / ZOOM_STEP)}
+        onZoomFit={zoomFit}
+        onZoomActual={zoomActual}
+        onSave={handleSave}
+        onCancel={handleCancel}
       />
 
-      <div className="flex h-full overflow-hidden">
-        {/* Tools */}
-        <div className="flex flex-column w-16 bg-gray-900 border-r border-gray-700  items-center py-4 gap-3">
-          {[
-            { tool: "hand", icon: "pi pi-hand", label: "Pan" },
-            { tool: "crop-rect", icon: "pi pi-crop", label: "Rect Crop" },
-            { tool: "eraser", icon: "pi pi-eraser", label: "Eraser" },
-          ].map((t) => (
-            <Button
-              key={t.tool}
-              icon={t.icon}
-              tooltip={t.label}
-              tooltipOptions={{ position: "right" }}
-              className={`w-full h-12 ${tool === t.tool ? "bg-blue-600" : "bg-gray-800"}`}
-              onClick={() => setTool(t.tool as Tool)}
-            />
-          ))}
-          <Divider className="my-2" />
-          <ToggleButton
-            checked={showGrid}
-            onChange={(e) => setShowGrid(e.value)}
-            onIcon="pi pi-table"
-            offIcon="pi pi-table"
-          />
-        </div>
+      <div className="image-editor__body">
+        <ToolRail tool={tool} onToolChange={handleToolChange} />
 
-        {/* Canvas Area */}
-        <div
-          ref={containerRef}
-          className="flex-1 overflow-auto bg-[radial-gradient(#333_1px,transparent_1px)] bg-[length:20px_20px] flex items-center justify-center relative"
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <canvas
-            ref={canvasRef}
-            className="shadow-2xl"
-            onMouseDown={handleMouseDown}
-            style={{
-              imageRendering: "pixelated",
-              cursor: tool === "hand" ? "grab" : "crosshair",
-            }}
+        <div className="image-editor__stage">
+          <Canvas
+            getDocument={image.getDocument}
+            imageSize={imageSize}
+            revision={image.revision}
+            view={view}
+            tool={tool}
+            grid={grid}
+            brushSize={brushSize}
+            selection={selection}
+            onSelectionChange={setSelection}
+            onEraseSegment={image.eraseSegment}
+            onEraseEnd={image.endErase}
+            onCursorMove={setCursor}
+            onViewportResize={handleViewportResize}
           />
 
-          {/* Selection Overlay */}
-          {selection && (
-            <div
-              className="absolute border-2 border-blue-500 pointer-events-none"
-              style={{
-                left: selection.x * scale + offset.x,
-                top: selection.y * scale + offset.y,
-                width: selection.w * scale,
-                height: selection.h * scale,
-              }}
+          {status === "loading" && (
+            <div className="image-editor__overlay-message">
+              <ProgressSpinner style={{ width: 48, height: 48 }} />
+              <span>Loading screenshot...</span>
+            </div>
+          )}
+
+          {status === "error" && (
+            <div className="image-editor__overlay-message">
+              <Message severity="error" text={errorMessage} />
+            </div>
+          )}
+
+          {showMinimap && status === "ready" && (
+            <Minimap
+              getDocument={image.getDocument}
+              imageSize={imageSize}
+              revision={image.revision}
+              view={view}
+              viewportSize={viewportSize}
             />
           )}
         </div>
 
-        {/* Right Sidebar */}
-        <div className="flex flex-column w-80 bg-gray-900 border-l border-gray-700 p-4  gap-4">
-          <div>
-            <label>Zoom</label>
-            <Slider
-              value={scale}
-              onChange={(e) => setScale(e.value as number)}
-              min={0.1}
-              max={8}
-              step={0.05}
-            />
-          </div>
-
-          <div>
-            <label>Grid Opacity</label>
-            <Slider
-              value={gridOpacity}
-              onChange={(e) => setGridOpacity(e.value as number)}
-              min={0}
-              max={1}
-              step={0.05}
-            />
-          </div>
-
-          <ToggleButton
-            checked={showMinimap}
-            onChange={(e) => setShowMinimap(e.value)}
-            onLabel="Hide Minimap"
-            offLabel="Show Minimap"
+        <aside className="image-editor__sidebar">
+          <OptionsPanel
+            tool={tool}
+            scale={view.scale}
+            onScaleChange={setScale}
+            grid={grid}
+            onGridChange={setGrid}
+            showMinimap={showMinimap}
+            onShowMinimapChange={setShowMinimap}
+            brushSize={brushSize}
+            onBrushSizeChange={setBrushSize}
+            selection={selection}
+            onApplySelection={applySelection}
+            onClearSelection={clearSelection}
           />
 
-          <Button
-            label="Reset View"
-            icon="pi pi-refresh"
-            onClick={() => {
-              setScale(1);
-              setOffset({ x: 0, y: 0 });
-            }}
+          <HistoryPanel
+            entries={image.history.entries}
+            currentIndex={image.history.index}
+            onSelect={image.jumpToHistory}
           />
-        </div>
-        {/* History */}
-        <div className=" flex flex-columnn">
-          <div className="p-4 border-b border-gray-700">
-            <h4 className="font-medium">History</h4>
-          </div>
-          <ScrollPanel className="flex-1">
-            <div className="p-2 space-y-1">
-              {history
-                .slice()
-                .reverse()
-                .map((entry, idx) => (
-                  <div
-                    key={entry.id}
-                    onClick={() => restoreFromHistory(history.length - 1 - idx)}
-                    className={`p-2 rounded hover:bg-gray-800 cursor-pointer flex gap-3 items-center ${history.length - 1 - idx === historyIndex ? "bg-blue-900" : ""}`}
-                  >
-                    <canvas
-                      width={48}
-                      height={32}
-                      ref={(el) => {
-                        if (el) {
-                          const ctx = el.getContext("2d")!;
-                          ctx.putImageData(entry.imageData, 0, 0, 0, 0, 48, 32);
-                        }
-                      }}
-                      className="border border-gray-700"
-                    />
-                    <div className="text-sm">
-                      <div>{entry.name}</div>
-                      <div className="text-gray-500 text-xs">
-                        {entry.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </ScrollPanel>
-        </div>
-        {/* Minimap */}
-        {showMinimap && (
-          <div className="absolute bottom-6 right-6 border border-gray-700 bg-gray-900/95 p-2 rounded-lg shadow-2xl">
-            <div className="text-xs text-gray-400 mb-1 px-1">Minimap</div>
-            <canvas
-              ref={minimapRef}
-              onClick={handleMinimapClick}
-              className="cursor-pointer border border-gray-600 rounded"
-            />
-          </div>
-        )}
+        </aside>
       </div>
     </div>
   );

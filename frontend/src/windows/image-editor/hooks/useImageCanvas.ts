@@ -1,334 +1,200 @@
 /**
- * useImageCanvas - Image manipulation hook
+ * useImageCanvas — owns the image being edited.
  *
- * Manages:
- *  - Canvas rendering and state
- *  - Zoom & Pan transformations
- *  - Image operations (crop, erase)
- *  - Canvas save/restore for undo/redo
+ * The image lives in a single detached "document" canvas that is never
+ * attached to the DOM; the visible canvas only ever *draws* it through the
+ * view transform. That keeps zoom/pan purely a rendering concern and makes
+ * every edit operate on real image pixels.
  *
- * Uses Canvas 2D API for all image operations.
- * State stored as ImageData for fast undo/redo.
+ * Every mutation pushes a snapshot onto the undo/redo stack.
  */
 
 import { useCallback, useRef, useState } from "react";
+import type { Point, Rect, Size } from "@/windows/image-editor/types";
+import {
+  clampRectToImage,
+  createCanvas,
+  get2dContext,
+  polygonBounds,
+} from "@/windows/image-editor/utils/canvas-utils";
+import { useUndoRedo } from "@/windows/image-editor/hooks/useUndoRedo";
 
-interface CanvasState {
-  imageData: ImageData;
-  timestamp: number;
-}
+export function useImageCanvas() {
+  const documentRef = useRef<HTMLCanvasElement | null>(null);
+  const [size, setSize] = useState<Size | null>(null);
+  // Bumped on every pixel change so the renderer knows to repaint.
+  const [revision, setRevision] = useState(0);
+  const history = useUndoRedo();
 
-export function useImageCanvas(
-  canvasRef: React.RefObject<HTMLCanvasElement | null>,
-) {
-  // ======================================================================
-  // Zoom & Pan state
-  // ======================================================================
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const getDocument = useCallback(() => documentRef.current, []);
+  const bumpRevision = useCallback(() => setRevision((value) => value + 1), []);
 
-  // ======================================================================
-  // Canvas state for operations
-  // ======================================================================
-  const canvasStateRef = useRef<CanvasState | null>(null);
+  /** Swap in a new document canvas (crop results, history restores). */
+  const setDocument = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      documentRef.current = canvas;
+      setSize({ width: canvas.width, height: canvas.height });
+      bumpRevision();
+    },
+    [bumpRevision],
+  );
+
+  // ==========================================================================
+  // Loading
+  // ==========================================================================
+
+  const loadImage = useCallback(
+    (image: HTMLImageElement) => {
+      const canvas = createCanvas(image.naturalWidth, image.naturalHeight);
+      get2dContext(canvas).drawImage(image, 0, 0);
+
+      setDocument(canvas);
+      history.reset(canvas, "Original");
+    },
+    [history, setDocument],
+  );
+
+  // ==========================================================================
+  // Edit operations
+  // ==========================================================================
+
+  /** Crop to a rectangle. The cropped result becomes the new image. */
+  const cropRect = useCallback(
+    (rect: Rect) => {
+      const source = documentRef.current;
+      if (!source) return;
+
+      const bounds = clampRectToImage(rect, {
+        width: source.width,
+        height: source.height,
+      });
+      if (bounds.width < 1 || bounds.height < 1) return;
+
+      const cropped = createCanvas(bounds.width, bounds.height);
+      get2dContext(cropped).drawImage(source, -bounds.x, -bounds.y);
+
+      setDocument(cropped);
+      history.push(cropped, `Crop ${bounds.width}x${bounds.height}`);
+    },
+    [history, setDocument],
+  );
 
   /**
-   * Save current canvas state for undo/redo
+   * Crop to a freehand / polygon selection: the result is the bounding box of
+   * the polygon, with everything outside the polygon made transparent.
    */
-  const saveCanvasState = useCallback((): CanvasState | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
+  const cropPolygon = useCallback(
+    (points: Point[]) => {
+      const source = documentRef.current;
+      if (!source || points.length < 3) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+      const bounds = clampRectToImage(polygonBounds(points), {
+        width: source.width,
+        height: source.height,
+      });
+      if (bounds.width < 1 || bounds.height < 1) return;
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    canvasStateRef.current = {
-      imageData,
-      timestamp: Date.now(),
-    };
+      const cropped = createCanvas(bounds.width, bounds.height);
+      const ctx = get2dContext(cropped);
 
-    return canvasStateRef.current;
-  }, []);
+      ctx.beginPath();
+      ctx.moveTo(points[0].x - bounds.x, points[0].y - bounds.y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x - bounds.x, points[i].y - bounds.y);
+      }
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(source, -bounds.x, -bounds.y);
+
+      setDocument(cropped);
+      history.push(cropped, `Lasso crop ${bounds.width}x${bounds.height}`);
+    },
+    [history, setDocument],
+  );
 
   /**
-   * Restore canvas from saved state (used by undo/redo)
+   * Erase (make transparent) along a stroke segment.
+   * Called repeatedly while dragging — no history entry until `endErase`.
    */
-  const restoreCanvasState = useCallback((state: CanvasState) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.putImageData(state.imageData, 0, 0);
-  }, []);
-
-  /**
-   * Reset zoom and pan to default
-   */
-  const resetZoomPan = useCallback(() => {
-    setZoom(1);
-    setPanX(0);
-    setPanY(0);
-  }, []);
-
-  // ======================================================================
-  // Image Operations
-  // ======================================================================
-
-  /**
-   * Crop to rectangle - canvas in local coordinates
-   */
-  const cropRectangle = useCallback(
-    (rect: { x: number; y: number; width: number; height: number }) => {
-      const canvas = canvasRef.current;
+  const eraseSegment = useCallback(
+    (from: Point, to: Point, brushSize: number) => {
+      const canvas = documentRef.current;
       if (!canvas) return;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      const ctx = get2dContext(canvas);
+      ctx.save();
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.lineWidth = Math.max(1, brushSize);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(0,0,0,1)";
 
-      // Clamp to canvas bounds
-      const x = Math.max(0, Math.floor(rect.x));
-      const y = Math.max(0, Math.floor(rect.y));
-      const w = Math.min(canvas.width - x, Math.ceil(rect.width));
-      const h = Math.min(canvas.height - y, Math.ceil(rect.height));
+      ctx.beginPath();
+      ctx.moveTo(from.x + 0.5, from.y + 0.5);
+      ctx.lineTo(to.x + 0.5, to.y + 0.5);
+      ctx.stroke();
+      ctx.restore();
 
-      if (w <= 0 || h <= 0) return;
-
-      // Get cropped image data
-      const imageData = ctx.getImageData(x, y, w, h);
-
-      // Resize canvas and draw cropped region
-      canvas.width = w;
-      canvas.height = h;
-      ctx.putImageData(imageData, 0, 0);
-
-      // Reset view after crop
-      resetZoomPan();
+      bumpRevision();
     },
-    [resetZoomPan],
+    [bumpRevision],
   );
 
-  /**
-   * Crop using lasso (polygon) - points in canvas coords
-   */
-  const cropLasso = useCallback((points: Array<{ x: number; y: number }>) => {
-    const canvas = canvasRef.current;
-    if (!canvas || points.length < 3) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Find bounding box of polygon
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-    for (const p of points) {
-      minX = Math.min(minX, p.x);
-      minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x);
-      maxY = Math.max(maxY, p.y);
-    }
-
-    const bbX = Math.floor(minX);
-    const bbY = Math.floor(minY);
-    const bbW = Math.ceil(maxX - minX) + 1;
-    const bbH = Math.ceil(maxY - minY) + 1;
-
-    // Create mask canvas for lasso selection
-    const maskCanvas = document.createElement("canvas");
-    maskCanvas.width = canvas.width;
-    maskCanvas.height = canvas.height;
-    const maskCtx = maskCanvas.getContext("2d");
-    if (!maskCtx) return;
-
-    maskCtx.fillStyle = "black";
-    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-
-    // Draw white polygon on mask (will be the selected area)
-    maskCtx.fillStyle = "white";
-    maskCtx.beginPath();
-    maskCtx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      maskCtx.lineTo(points[i].x, points[i].y);
-    }
-    maskCtx.closePath();
-    maskCtx.fill();
-
-    // Get mask data
-    const maskData = maskCtx.getImageData(
-      0,
-      0,
-      maskCanvas.width,
-      maskCanvas.height,
-    );
-    const originalData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    // Apply mask - set alpha to 0 where mask is black
-    const origBytes = originalData.data;
-    const maskBytes = maskData.data;
-    for (let i = 0; i < origBytes.length; i += 4) {
-      const maskIdx = i;
-      if (maskBytes[maskIdx] === 0) {
-        origBytes[i + 3] = 0; // Set alpha to 0 (transparent)
-      }
-    }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.putImageData(originalData, 0, 0);
-  }, []);
-
-  /**
-   * Erase pixels (make transparent) along a path with brush
-   */
-  const erasePixels = useCallback(
-    (points: Array<{ x: number; y: number }>, brushSize: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas || points.length === 0) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      // For each point in the stroke, erase in a circle
-      for (const point of points) {
-        const radius = brushSize / 2;
-        const x = Math.floor(point.x);
-        const y = Math.floor(point.y);
-
-        // Erase circular area
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const px = x + dx;
-            const py = y + dy;
-
-            // Check if within canvas and within circular brush
-            if (
-              px >= 0 &&
-              px < canvas.width &&
-              py >= 0 &&
-              py < canvas.height &&
-              dx * dx + dy * dy <= radius * radius
-            ) {
-              const idx = (py * canvas.width + px) * 4;
-              data[idx + 3] = 0; // Set alpha to 0
-            }
-          }
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-    },
-    [],
-  );
-
-  // ======================================================================
-  // Zoom & Pan
-  // ======================================================================
-
-  /**
-   * Calculate world coordinates from screen coordinates
-   * Used to convert mouse events to canvas-local coordinates
-   */
-  const screenToCanvas = useCallback(
-    (
-      screenX: number,
-      screenY: number,
-      containerRect: DOMRect,
-    ): { x: number; y: number } => {
-      const x = (screenX - containerRect.left - panX) / zoom;
-      const y = (screenY - containerRect.top - panY) / zoom;
-      return { x, y };
-    },
-    [zoom, panX, panY],
-  );
-
-  /**
-   * Start pan drag
-   */
-  const startPan = useCallback(
-    (screenX: number, screenY: number) => {
-      setIsDragging(true);
-      dragStartRef.current = { x: screenX, y: screenY, panX, panY };
-    },
-    [panX, panY],
-  );
-
-  /**
-   * Update pan during drag
-   */
-  const updatePan = useCallback(
-    (screenX: number, screenY: number) => {
-      if (!isDragging) return;
-
-      const dx = screenX - dragStartRef.current.x;
-      const dy = screenY - dragStartRef.current.y;
-
-      setPanX(dragStartRef.current.panX + dx);
-      setPanY(dragStartRef.current.panY + dy);
-    },
-    [isDragging],
-  );
-
-  /**
-   * End pan drag
-   */
-  const endPan = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  /**
-   * Change zoom level (e.g., 0.5 = 50%, 2 = 200%)
-   */
-  const updateZoom = useCallback((newZoom: number) => {
-    setZoom(Math.max(0.1, Math.min(newZoom, 10)));
-  }, []);
-
-  /**
-   * Fit canvas to container
-   */
-  const fitToContainer = useCallback((containerRect: DOMRect) => {
-    const canvas = canvasRef.current;
+  const endErase = useCallback(() => {
+    const canvas = documentRef.current;
     if (!canvas) return;
+    history.push(canvas, "Erase");
+  }, [history]);
 
-    const maxZoom = Math.min(
-      containerRect.width / canvas.width,
-      containerRect.height / canvas.height,
-    );
+  // ==========================================================================
+  // History
+  // ==========================================================================
 
-    setZoom(Math.max(0.1, Math.min(maxZoom, 1)));
-    setPanX(0);
-    setPanY(0);
-  }, []);
+  /** Restore a snapshot without recording a new history entry. */
+  const restoreSnapshot = useCallback(
+    (snapshot: HTMLCanvasElement) => {
+      const restored = createCanvas(snapshot.width, snapshot.height);
+      get2dContext(restored).drawImage(snapshot, 0, 0);
+      setDocument(restored);
+    },
+    [setDocument],
+  );
+
+  const jumpToHistory = useCallback(
+    (index: number) => {
+      const entry = history.jumpTo(index);
+      if (entry) restoreSnapshot(entry.canvas);
+    },
+    [history, restoreSnapshot],
+  );
+
+  const undo = useCallback(() => {
+    const entry = history.undo();
+    if (entry) restoreSnapshot(entry.canvas);
+  }, [history, restoreSnapshot]);
+
+  const redo = useCallback(() => {
+    const entry = history.redo();
+    if (entry) restoreSnapshot(entry.canvas);
+  }, [history, restoreSnapshot]);
 
   return {
-    // Zoom & Pan
-    zoom,
-    setZoom: updateZoom,
-    panX,
-    panY,
-    isDragging,
-    screenToCanvas,
-    startPan,
-    updatePan,
-    endPan,
-    resetZoomPan,
-    fitToContainer,
+    // document
+    getDocument,
+    size,
+    revision,
+    loadImage,
 
-    // Canvas state
-    saveCanvasState,
-    restoreCanvasState,
+    // operations
+    cropRect,
+    cropPolygon,
+    eraseSegment,
+    endErase,
 
-    // Image operations
-    cropRectangle,
-    cropLasso,
-    erasePixels,
+    // history
+    history,
+    undo,
+    redo,
+    jumpToHistory,
   };
 }

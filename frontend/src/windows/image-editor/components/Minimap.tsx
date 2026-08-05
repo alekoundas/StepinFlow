@@ -1,146 +1,128 @@
 /**
- * Minimap Component - Navigation preview
- *
- * Shows:
- *  - Miniature version of the full image
- *  - Viewport rectangle showing what's visible in the main canvas
- *  - Click to pan to that area
+ * Minimap — whole image at a glance plus the current viewport rectangle.
+ * Click or drag inside it to move the view.
  */
 
-import { useEffect, useRef } from "react";
-import { useImageCanvas } from "../hooks/useImageCanvas";
+import { useCallback, useEffect, useRef } from "react";
+import type { Point, Size } from "@/windows/image-editor/types";
+import type { useViewTransform } from "@/windows/image-editor/hooks/useViewTransform";
+
+const MAX_WIDTH = 200;
+const MAX_HEIGHT = 140;
 
 interface MinimapProps {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  imageCanvas: ReturnType<typeof useImageCanvas>;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  getDocument: () => HTMLCanvasElement | null;
+  imageSize: Size | null;
+  revision: number;
+  view: ReturnType<typeof useViewTransform>;
+  viewportSize: Size;
 }
 
 export default function Minimap({
-  canvasRef,
-  imageCanvas,
-  containerRef,
+  getDocument,
+  imageSize,
+  revision,
+  view,
+  viewportSize,
 }: MinimapProps) {
-  const minimapCanvasRef = useRef<HTMLCanvasElement>(null);
-  const minimapSize = 150; // Fixed size
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const draggingRef = useRef(false);
 
-  // ========================================================================
-  // Rendering
-  // ========================================================================
+  const ratio = imageSize
+    ? Math.min(MAX_WIDTH / imageSize.width, MAX_HEIGHT / imageSize.height, 1)
+    : 1;
+
+  const { scale, offset } = view;
 
   useEffect(() => {
-    const minimapCanvas = minimapCanvasRef.current;
-    const sourceCanvas = canvasRef.current;
-    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    const source = getDocument();
+    if (!canvas || !source || !imageSize) return;
 
-    if (!minimapCanvas || !sourceCanvas || !container) return;
+    const width = Math.max(1, Math.round(imageSize.width * ratio));
+    const height = Math.max(1, Math.round(imageSize.height * ratio));
+    const dpr = window.devicePixelRatio || 1;
 
-    const ctx = minimapCanvas.getContext("2d");
-    if (!ctx) return;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
 
-    // Calculate scale to fit source image into minimap
-    const scale = Math.min(
-      minimapSize / sourceCanvas.width,
-      minimapSize / sourceCanvas.height,
-    );
+    const ctx = canvas.getContext("2d")!;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(source, 0, 0, width, height);
 
-    const scaledW = sourceCanvas.width * scale;
-    const scaledH = sourceCanvas.height * scale;
+    // Viewport rectangle, in image space then scaled to the minimap.
+    const left = (-offset.x / scale) * ratio;
+    const top = (-offset.y / scale) * ratio;
+    const boxWidth = (viewportSize.width / scale) * ratio;
+    const boxHeight = (viewportSize.height / scale) * ratio;
 
-    // Center in minimap canvas
-    const offsetX = (minimapSize - scaledW) / 2;
-    const offsetY = (minimapSize - scaledH) / 2;
-
-    // Clear
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, minimapSize, minimapSize);
-
-    // Draw scaled image
-    ctx.drawImage(sourceCanvas, offsetX, offsetY, scaledW, scaledH);
-
-    // Draw viewport indicator (red rectangle showing what's visible)
-    const containerRect = container.getBoundingClientRect();
-    const viewportX = (-imageCanvas.panX / imageCanvas.zoom) * scale + offsetX;
-    const viewportY = (-imageCanvas.panY / imageCanvas.zoom) * scale + offsetY;
-    const viewportW = (containerRect.width / imageCanvas.zoom) * scale;
-    const viewportH = (containerRect.height / imageCanvas.zoom) * scale;
-
-    ctx.strokeStyle = "rgba(100, 150, 255, 0.8)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(viewportX, viewportY, viewportW, viewportH);
-
-    // Update every frame for smooth sync with zoom/pan
-    requestAnimationFrame(() => {});
+    ctx.save();
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(left, top, boxWidth, boxHeight);
+    ctx.fillStyle = "rgba(56, 189, 248, 0.15)";
+    ctx.fillRect(left, top, boxWidth, boxHeight);
+    ctx.restore();
   }, [
-    canvasRef,
-    imageCanvas.zoom,
-    imageCanvas.panX,
-    imageCanvas.panY,
-    containerRef,
+    getDocument,
+    imageSize,
+    offset.x,
+    offset.y,
+    ratio,
+    revision,
+    scale,
+    viewportSize.height,
+    viewportSize.width,
   ]);
 
-  // ========================================================================
-  // Click to pan
-  // ========================================================================
+  const moveViewTo = useCallback(
+    (event: React.PointerEvent<HTMLCanvasElement>) => {
+      if (!imageSize) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const imagePoint: Point = {
+        x: (event.clientX - bounds.left) / ratio,
+        y: (event.clientY - bounds.top) / ratio,
+      };
+      view.centerOn(imagePoint, viewportSize);
+    },
+    [imageSize, ratio, view, viewportSize],
+  );
 
-  const handleMinimapClick = (e: React.MouseEvent) => {
-    const minimapCanvas = minimapCanvasRef.current;
-    const sourceCanvas = canvasRef.current;
-    if (!minimapCanvas || !sourceCanvas) return;
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLCanvasElement>) => {
+      draggingRef.current = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      moveViewTo(event);
+    },
+    [moveViewTo],
+  );
 
-    const rect = minimapCanvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLCanvasElement>) => {
+      if (draggingRef.current) moveViewTo(event);
+    },
+    [moveViewTo],
+  );
 
-    // Convert minimap coords to source canvas coords
-    const scale = Math.min(
-      minimapSize / sourceCanvas.width,
-      minimapSize / sourceCanvas.height,
-    );
+  const handlePointerUp = useCallback(() => {
+    draggingRef.current = false;
+  }, []);
 
-    const offsetX = (minimapSize - sourceCanvas.width * scale) / 2;
-    const offsetY = (minimapSize - sourceCanvas.height * scale) / 2;
-
-    const sourceX = (clickX - offsetX) / scale;
-    const sourceY = (clickY - offsetY) / scale;
-
-    // Calculate pan to center on that point
-    const containerRect = containerRef.current?.getBoundingClientRect();
-    if (!containerRect) return;
-
-    const targetPanX = containerRect.width / 2 - sourceX * imageCanvas.zoom;
-    const targetPanY = containerRect.height / 2 - sourceY * imageCanvas.zoom;
-
-    // Smoothly animate to the target (optional - for now, just set directly)
-    // For instant pan:
-    // imageCanvas.setPan(targetPanX, targetPanY);
-    // For now we'll trigger a quick pan - this would need exposing setPan method
-  };
-
-  // ========================================================================
-  // Render
-  // ========================================================================
+  if (!imageSize) return null;
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: "12px",
-        right: "12px",
-        backgroundColor: "#0a0a0a",
-        padding: "4px",
-        borderRadius: "4px",
-        border: "1px solid #444",
-        zIndex: 10,
-      }}
-    >
+    <div className="image-editor__minimap">
+      <div className="image-editor__minimap-title">Minimap</div>
       <canvas
-        ref={minimapCanvasRef}
-        width={minimapSize}
-        height={minimapSize}
-        onClick={handleMinimapClick}
-        style={{ cursor: "pointer", display: "block" }}
-        title="Click to pan to that area"
+        ref={canvasRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       />
     </div>
   );

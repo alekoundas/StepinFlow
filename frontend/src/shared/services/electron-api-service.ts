@@ -27,10 +27,11 @@ declare global {
         signalReady: () => Promise<SignalReadyResponse | null>;
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
+      // Images travel as base64 PNG strings (what .Net returns for byte[])
       imageEditor: {
-        openWindow: (imageData: Uint8Array) => Promise<Uint8Array | null>;
-        signalReady: () => Promise<Uint8Array>;
-        signalCloseWindow: (imageData: Uint8Array | null) => void;
+        openWindow: (imageBase64: string) => Promise<string | null>;
+        signalReady: () => Promise<string | null>;
+        signalCloseWindow: (imageBase64: string | null) => void;
       };
     };
   }
@@ -47,10 +48,10 @@ export const ElectronApiService = {
       window.electronApi.overlay.signalCloseWindow(rect),
   },
   imageEditor: {
-    openWindow: (imageData: Uint8Array) =>
-      window.electronApi.imageEditor.openWindow(imageData),
+    openWindow: (imageBase64: string) =>
+      window.electronApi.imageEditor.openWindow(imageBase64),
     signalReady: () => window.electronApi.imageEditor.signalReady(),
-    signalCloseWindow: (imageData: Uint8Array | null) =>
-      window.electronApi.imageEditor.signalCloseWindow(imageData),
+    signalCloseWindow: (imageBase64: string | null) =>
+      window.electronApi.imageEditor.signalCloseWindow(imageBase64),
   },
 };

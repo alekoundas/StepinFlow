@@ -68,8 +68,9 @@ export const backendApiService = {
   },
 
   System: {
+    // .Net returns byte[], which arrives here as a base64 string
     takeScreenshot: (dto: ScreenshotRequestDto) =>
-      call<Uint8Array>("System.takeScreenshot", dto),
+      call<string>("System.takeScreenshot", dto),
     inputRecordOverlayStart: () =>
       call<boolean>("System.inputRecordOverlayStart"),
     inputRecordOverlayStop: () =>

@@ -1,177 +1,124 @@
 /**
- * useUndoRedo - Undo/Redo management hook
+ * useUndoRedo — history stack for the image editor.
  *
- * Maintains a stack of:
- *  - Canvas state (ImageData)
- *  - Action description
- *  - Thumbnail for UI
- *
- * Enables jumping to any point in history,
- * with thumbnails for quick preview.
+ * Every entry keeps a full pixel snapshot (a detached canvas) plus a small
+ * thumbnail for the history list. Snapshots of a full virtual-desktop
+ * screenshot are large (width * height * 4 bytes), so the stack evicts the
+ * oldest entries once it goes over `memoryBudgetBytes`.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { HistoryEntry } from "@/windows/image-editor/types";
+import {
+  canvasByteSize,
+  canvasToThumbnail,
+  cloneCanvas,
+} from "@/windows/image-editor/utils/canvas-utils";
 
-interface HistoryEntry {
-  state: any; // Canvas state from saveCanvasState()
-  action: string; // Description like "Crop (Rectangle)"
-  thumbnail: string; // Base64 data URL for thumbnail
-  timestamp: number;
+const DEFAULT_BUDGET_BYTES = 256 * 1024 * 1024;
+const MAX_ENTRIES = 40;
+
+interface HistoryState {
+  entries: HistoryEntry[];
+  index: number;
 }
 
-export function useUndoRedo(saveCanvasState: () => any) {
-  // ======================================================================
-  // State
-  // ======================================================================
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
+export function useUndoRedo(memoryBudgetBytes = DEFAULT_BUDGET_BYTES) {
+  const [state, setState] = useState<HistoryState>({ entries: [], index: -1 });
 
-  // ======================================================================
-  // Public API
-  // ======================================================================
-
-  /**
-   * Record an action with current canvas state
-   * Called after user performs an edit (crop, erase, etc.)
-   */
-  const recordAction = useCallback(
-    (action: string) => {
-      const state = saveCanvasState();
-      if (!state) return;
-
-      // Generate thumbnail from canvas
-      const thumbnail = generateThumbnail(state);
-
-      const entry: HistoryEntry = {
-        state,
-        action,
-        thumbnail,
-        timestamp: Date.now(),
-      };
-
-      // Remove all entries after current index (discard "future" if user undid then did something new)
-      const newHistory = history.slice(0, currentIndex + 1);
-      newHistory.push(entry);
-
-      setHistory(newHistory);
-      setCurrentIndex(newHistory.length - 1);
-    },
-    [history, currentIndex, saveCanvasState],
+  const createEntry = useCallback(
+    (source: HTMLCanvasElement, label: string): HistoryEntry => ({
+      id: crypto.randomUUID(),
+      label,
+      canvas: cloneCanvas(source),
+      thumbnail: canvasToThumbnail(source),
+      timestamp: Date.now(),
+    }),
+    [],
   );
 
-  /**
-   * Check if undo is possible
-   */
-  const canUndo = useCallback(() => currentIndex > 0, [currentIndex]);
+  /** Trim from the front until the stack fits the budget. */
+  const evict = useCallback(
+    (entries: HistoryEntry[]): HistoryEntry[] => {
+      let kept = entries;
+      let bytes = kept.reduce((sum, e) => sum + canvasByteSize(e.canvas), 0);
 
-  /**
-   * Check if redo is possible
-   */
-  const canRedo = useCallback(
-    () => currentIndex < history.length - 1,
-    [currentIndex, history.length],
-  );
-
-  /**
-   * Undo to previous state
-   */
-  const undo = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  }, [currentIndex]);
-
-  /**
-   * Redo to next state
-   */
-  const redo = useCallback(() => {
-    if (currentIndex < history.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  }, [currentIndex, history.length]);
-
-  /**
-   * Jump to specific history index
-   */
-  const jumpToIndex = useCallback(
-    (index: number) => {
-      if (index >= 0 && index < history.length) {
-        setCurrentIndex(index);
+      let dropCount = 0;
+      while (
+        kept.length - dropCount > 1 &&
+        (bytes > memoryBudgetBytes || kept.length - dropCount > MAX_ENTRIES)
+      ) {
+        bytes -= canvasByteSize(kept[dropCount].canvas);
+        dropCount++;
       }
+
+      if (dropCount > 0) kept = kept.slice(dropCount);
+      return kept;
     },
-    [history.length],
+    [memoryBudgetBytes],
+  );
+
+  /** Drop everything and start a new stack from `source`. */
+  const reset = useCallback(
+    (source: HTMLCanvasElement, label = "Original") => {
+      setState({ entries: [createEntry(source, label)], index: 0 });
+    },
+    [createEntry],
+  );
+
+  /** Record a new state. Anything after the current index is discarded. */
+  const push = useCallback(
+    (source: HTMLCanvasElement, label: string) => {
+      const entry = createEntry(source, label);
+
+      setState((prev) => {
+        const kept = evict([...prev.entries.slice(0, prev.index + 1), entry]);
+        return { entries: kept, index: kept.length - 1 };
+      });
+    },
+    [createEntry, evict],
   );
 
   /**
-   * Reset history (for new image)
+   * Move to `index` and hand the caller the snapshot to restore.
+   * Returns null when the index is out of range.
    */
-  const reset = useCallback(() => {
-    setHistory([]);
-    setCurrentIndex(-1);
-  }, []);
+  const jumpTo = useCallback(
+    (index: number): HistoryEntry | null => {
+      const entry = state.entries[index];
+      if (!entry) return null;
 
-  /**
-   * Get all history entries for display
-   */
-  const getHistory = useCallback(() => history, [history]);
+      setState((prev) => ({ ...prev, index }));
+      return entry;
+    },
+    [state.entries],
+  );
 
-  /**
-   * Get current state (for restore)
-   */
-  const currentState = currentIndex >= 0 ? history[currentIndex]?.state : null;
+  const canUndo = state.index > 0;
+  const canRedo = state.index >= 0 && state.index < state.entries.length - 1;
 
-  return {
-    recordAction,
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    jumpToIndex,
-    reset,
-    getHistory,
-    currentIndex,
-    currentState,
-  };
-}
+  const undo = useCallback(
+    () => (canUndo ? jumpTo(state.index - 1) : null),
+    [canUndo, jumpTo, state.index],
+  );
 
-/**
- * Generate a thumbnail from canvas state
- * Creates a small (100x100) preview for the history panel
- */
-function generateThumbnail(canvasState: any): string {
-  if (!canvasState?.imageData) return "";
+  const redo = useCallback(
+    () => (canRedo ? jumpTo(state.index + 1) : null),
+    [canRedo, jumpTo, state.index],
+  );
 
-  const thumbSize = 100;
-  const thumbCanvas = document.createElement("canvas");
-  thumbCanvas.width = thumbSize;
-  thumbCanvas.height = thumbSize;
-  const ctx = thumbCanvas.getContext("2d");
-  if (!ctx) return "";
-
-  // Get source dimensions from ImageData
-  const srcWidth = canvasState.imageData.width;
-  const srcHeight = canvasState.imageData.height;
-
-  // Calculate scale to fit in thumbnail
-  const scale = Math.min(thumbSize / srcWidth, thumbSize / srcHeight);
-  const scaledW = srcWidth * scale;
-  const scaledH = srcHeight * scale;
-
-  // Center in thumbnail
-  const offsetX = (thumbSize - scaledW) / 2;
-  const offsetY = (thumbSize - scaledH) / 2;
-
-  // Create temporary canvas to hold source image
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = srcWidth;
-  tempCanvas.height = srcHeight;
-  const tempCtx = tempCanvas.getContext("2d");
-  if (!tempCtx) return "";
-
-  tempCtx.putImageData(canvasState.imageData, 0, 0);
-
-  // Draw scaled source onto thumbnail
-  ctx.drawImage(tempCanvas, offsetX, offsetY, scaledW, scaledH);
-
-  return thumbCanvas.toDataURL("image/png");
+  return useMemo(
+    () => ({
+      entries: state.entries,
+      index: state.index,
+      canUndo,
+      canRedo,
+      reset,
+      push,
+      jumpTo,
+      undo,
+      redo,
+    }),
+    [state.entries, state.index, canUndo, canRedo, reset, push, jumpTo, undo, redo],
+  );
 }

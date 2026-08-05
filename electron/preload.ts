@@ -73,13 +73,14 @@ const api = {
       ipcRenderer.send(IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW, rect),
   },
 
+  // Images are passed as base64 PNG strings (same shape .Net returns for byte[])
   imageEditor: {
-    openWindow: (imageData: Uint8Array): Promise<Uint8Array | null> =>
-      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_OPEN_WINDOW, imageData),
-    signalReady: (): Promise<Uint8Array> =>
+    openWindow: (imageBase64: string): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_OPEN_WINDOW, imageBase64),
+    signalReady: (): Promise<string | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.EDITOR_SIGNAL_READY),
-    signalCloseWindow: (imageData: Uint8Array | null): void =>
-      ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, imageData),
+    signalCloseWindow: (imageBase64: string | null): void =>
+      ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, imageBase64),
   },
 };
 

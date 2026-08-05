@@ -1,75 +1,53 @@
 import { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { Button } from "primereact/button";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function HomePage() {
-  function uint8ArrayToDataURL(
-    uint8arr: Uint8Array,
-    mimeType = "image/png",
-  ): string {
-    let binary = "";
-    const bytes = new Uint8Array(uint8arr);
-    const len = bytes.byteLength;
+  // Temporary playground until the IMAGE_SEARCH flow step exists.
+  const [status, setStatus] = useState("idle");
+  const [templatePreview, setTemplatePreview] = useState<string | null>(null);
 
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-
-    return `data:${mimeType};base64,${btoa(binary)}`;
-  }
-
-  const onGreet1 = async () => {
-    const isok =
+  const onStartRecording = async () => {
+    const isOk =
       await ElectronApiService.backendApi.System.inputRecordOverlayStart();
-    console.log("Overlay start result:", isok);
+    setStatus(`overlay recording started: ${isOk}`);
   };
-  const onGreet2 = async () => {
-    const isok =
+
+  const onStopRecording = async () => {
+    const isOk =
       await ElectronApiService.backendApi.System.inputRecordOverlayStop();
-    console.log("Overlay stop result:", isok);
+    setStatus(`overlay recording stopped: ${isOk}`);
   };
 
-  // const navigate = useNavigate();
-  const onGreet3 = async () => {
-    const sss = await ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({
-        captureVirtualScreen: true,
-        formatType: "PNG",
-      }),
-    );
-    if (sss) {
-      // Step 2: Open image editor window
-      // This returns when user clicks Export or closes window
-      const result = await ElectronApiService.imageEditor.openWindow(sss);
+  const onOpenImageEditor = async () => {
+    setStatus("capturing virtual screen...");
 
-      // Step 3: Handle result
-      // if (result.pngBytes && result.pngBytes.length > 0) {
-      //   // User clicked Export - use edited image
-      //   console.log(
-      //     `[IMAGE_SEARCH] Template edited, new size: ${result.pngBytes.length} bytes`,
-      //   );
-      //   return {
-      //     success: true,
-      //     editedImageBytes: result.pngBytes,
-      //   };
-      // } else {
-      //   // User canceled - return original
-      //   console.log("[IMAGE_SEARCH] Template edit canceled");
-      //   return {
-      //     success: false,
-      //     editedImageBytes: currentImageBytes,
-      //   };
-      // }
-      // }
+    // base64 PNG of the whole virtual desktop (all monitors)
+    const screenshotBase64 =
+      await ElectronApiService.backendApi.System.takeScreenshot(
+        new ScreenshotRequestDto({
+          captureVirtualScreen: true,
+          formatType: "PNG",
+        }),
+      );
+
+    if (!screenshotBase64) {
+      setStatus("screenshot failed");
+      return;
     }
-  };
 
-  const onGreet4 = async () => {
-    const sss = ElectronApiService.backendApi.System.takeScreenshot(
-      new ScreenshotRequestDto({ captureVirtualScreen: true }),
-    );
-    sss.then((x) => console.log(x));
+    setStatus("editing...");
+    const editedBase64 =
+      await ElectronApiService.imageEditor.openWindow(screenshotBase64);
+
+    if (editedBase64) {
+      setTemplatePreview(`data:image/png;base64,${editedBase64}`);
+      setStatus(`template saved (${editedBase64.length} base64 chars)`);
+    } else {
+      setTemplatePreview(null);
+      setStatus("editing cancelled");
+    }
   };
 
   return (
@@ -77,29 +55,34 @@ export default function HomePage() {
       <h2>StepInFlow</h2>
       <p>Status: {status}</p>
 
-      <Button
-        label="start record input overlay"
-        onClick={onGreet1}
-        className="mb-4 p-button-success"
-      />
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button
+          label="start record input overlay"
+          onClick={onStartRecording}
+          className="p-button-success"
+        />
+        <Button
+          label="stop record input overlay"
+          onClick={onStopRecording}
+          className="p-button-success"
+        />
+        <Button
+          label="open editor window"
+          onClick={onOpenImageEditor}
+          className="p-button-success"
+        />
+      </div>
 
-      <Button
-        label="stop record input overlay"
-        onClick={onGreet2}
-        className="mb-4 p-button-success"
-      />
-      <Button
-        label="open editor window"
-        onClick={onGreet3}
-        className="mb-4 p-button-success"
-      />
-      <Button
-        label="take screenshot"
-        onClick={onGreet4}
-        className="mb-4 p-button-success"
-      />
-
-      <h3>Received from .NET:</h3>
+      {templatePreview && (
+        <>
+          <h3>Template returned from the editor:</h3>
+          <img
+            src={templatePreview}
+            alt="edited template"
+            style={{ maxWidth: "100%", border: "1px solid #444" }}
+          />
+        </>
+      )}
     </div>
   );
 }

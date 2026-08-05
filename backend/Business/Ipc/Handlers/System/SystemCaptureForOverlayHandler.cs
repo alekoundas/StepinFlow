@@ -39,9 +39,9 @@ namespace Business.Ipc.Handlers
                     Screenshot = screenshot,
                     LogicalX = monitor.Bounds.Left,
                     LogicalY = monitor.Bounds.Top,
-                    PhysicalHeight= monitor.Bounds.Height,
-                    PhysicalWidth= monitor.Bounds.Width
-                }); 
+                    PhysicalHeight = monitor.PhysicalBounds.Height,
+                    PhysicalWidth = monitor.PhysicalBounds.Width
+                });
             }
 
             return ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>.Success(response);

@@ -74,6 +74,66 @@ namespace Business.Helpers
         private const uint DISPLAY_DEVICE_PRIMARY_DEVICE = 0x00000004;
 
 
+        //==================================================
+        // P/Invoke Get the current display mode (real device pixels)
+        //
+        // GetMonitorInfo returns coordinates that Windows virtualizes for a
+        // DPI-unaware process. DEVMODE is not virtualized: dmPosition and
+        // dmPelsWidth/Height describe the desktop in real device pixels, which
+        // is the only space where multi monitor screenshots line up.
+        //==================================================
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINTL
+        {
+            public int x;
+            public int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct DEVMODE
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmDeviceName;
+            public ushort dmSpecVersion;
+            public ushort dmDriverVersion;
+            public ushort dmSize;
+            public ushort dmDriverExtra;
+            public uint dmFields;
+
+            // Display devices use the POINTL branch of the DEVMODE union.
+            public POINTL dmPosition;
+            public uint dmDisplayOrientation;
+            public uint dmDisplayFixedOutput;
+
+            public short dmColor;
+            public short dmDuplex;
+            public short dmYResolution;
+            public short dmTTOption;
+            public short dmCollate;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmFormName;
+            public ushort dmLogPixels;
+            public uint dmBitsPerPel;
+            public uint dmPelsWidth;
+            public uint dmPelsHeight;
+            public uint dmDisplayFlags;
+            public uint dmDisplayFrequency;
+            public uint dmICMMethod;
+            public uint dmICMIntent;
+            public uint dmMediaType;
+            public uint dmDitherType;
+            public uint dmReserved1;
+            public uint dmReserved2;
+            public uint dmPanningWidth;
+            public uint dmPanningHeight;
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
+
+        private const int ENUM_CURRENT_SETTINGS = -1;
+
+
 
 
         //==================================================
@@ -94,26 +154,17 @@ namespace Business.Helpers
         //}
         public static Rectangle GetVirtualScreenBounds()
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> allMonitors = GetEveryMonitorInfo();
+            return UnionBounds(GetEveryMonitorInfo().Values.Select(x => x.Bounds));
+        }
 
-            if (allMonitors.Count == 0)
-                return new Rectangle(0, 0, 0, 0);
-
-            int minX = int.MaxValue;
-            int minY = int.MaxValue;
-            int maxX = int.MinValue;
-            int maxY = int.MinValue;
-
-            foreach (var monitor in allMonitors.Values)
-            {
-                Rectangle bounds = monitor.Bounds;
-                minX = Math.Min(minX, bounds.X);
-                minY = Math.Min(minY, bounds.Y);
-                maxX = Math.Max(maxX, bounds.Right);
-                maxY = Math.Max(maxY, bounds.Bottom);
-            }
-
-            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        /// <summary>
+        /// Virtual screen bounds in real device pixels (union of every monitor's
+        /// DEVMODE rect). This is the canvas size a stitched all-monitor
+        /// screenshot has to be.
+        /// </summary>
+        public static Rectangle GetVirtualScreenBoundsPhysical()
+        {
+            return UnionBounds(GetEveryMonitorInfo().Values.Select(x => x.PhysicalBounds));
         }
 
 
@@ -125,7 +176,7 @@ namespace Business.Helpers
         /// </summary>
         public static IReadOnlyList<MonitorInfo> GetAllMonitors()
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> everyMonitorInfos = GetEveryMonitorInfo();
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> everyMonitorInfos = GetEveryMonitorInfo();
             List<MonitorInfo> result = new List<MonitorInfo>();
             int index = 1; // for fallback display numbering
 
@@ -153,6 +204,7 @@ namespace Business.Helpers
                         IsPrimary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0,
                         IsVirtual = isVirtual,
                         Bounds = monitorInfo.Bounds,
+                        PhysicalBounds = monitorInfo.PhysicalBounds,
                         HMonitor = monitorInfo.HMonitor
                     });
 
@@ -168,7 +220,7 @@ namespace Business.Helpers
         /// </summary>
         public static IntPtr FindHMonitorById(string deviceId)
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> everyMonitorInfos = GetEveryMonitorInfo();
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> everyMonitorInfos = GetEveryMonitorInfo();
             everyMonitorInfos.TryGetValue(deviceId, out var monitorInfo);
             return monitorInfo.HMonitor;
         }
@@ -179,9 +231,9 @@ namespace Business.Helpers
         // Private helpers
         // ================================================================
 
-        private static Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> GetEveryMonitorInfo()
+        private static Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> GetEveryMonitorInfo()
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)> map = new Dictionary<string, (IntPtr HMonitor, Rectangle Bounds)>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> map = new Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)>(StringComparer.OrdinalIgnoreCase);
 
             MonitorEnumProc callback = (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
             {
@@ -189,9 +241,12 @@ namespace Business.Helpers
                 monitorInfo.cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>();
                 if (GetMonitorInfo(hMonitor, ref monitorInfo))
                 {
+                    Rectangle logicalBounds = Rectangle.FromLTRB(monitorInfo.rcMonitor.Left, monitorInfo.rcMonitor.Top, monitorInfo.rcMonitor.Right, monitorInfo.rcMonitor.Bottom);
+
                     map[monitorInfo.szDevice] = (
                         hMonitor,
-                        Rectangle.FromLTRB(monitorInfo.rcMonitor.Left, monitorInfo.rcMonitor.Top, monitorInfo.rcMonitor.Right, monitorInfo.rcMonitor.Bottom)
+                        logicalBounds,
+                        GetPhysicalBounds(monitorInfo.szDevice, logicalBounds)
                     );
                 }
 
@@ -202,6 +257,52 @@ namespace Business.Helpers
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
 
             return map;
+        }
+
+        /// <summary>
+        /// Real device pixel bounds of a display, from its current display mode.
+        /// Falls back to the (possibly DPI virtualized) logical bounds when the
+        /// display mode cant be read.
+        /// </summary>
+        private static Rectangle GetPhysicalBounds(string deviceName, Rectangle fallback)
+        {
+            DEVMODE devMode = new DEVMODE();
+            devMode.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
+
+            if (!EnumDisplaySettings(deviceName, ENUM_CURRENT_SETTINGS, ref devMode))
+                return fallback;
+
+            if (devMode.dmPelsWidth == 0 || devMode.dmPelsHeight == 0)
+                return fallback;
+
+            return new Rectangle(
+                devMode.dmPosition.x,
+                devMode.dmPosition.y,
+                (int)devMode.dmPelsWidth,
+                (int)devMode.dmPelsHeight);
+        }
+
+        private static Rectangle UnionBounds(IEnumerable<Rectangle> rectangles)
+        {
+            int minX = int.MaxValue;
+            int minY = int.MaxValue;
+            int maxX = int.MinValue;
+            int maxY = int.MinValue;
+            bool any = false;
+
+            foreach (Rectangle bounds in rectangles)
+            {
+                if (bounds.Width <= 0 || bounds.Height <= 0)
+                    continue;
+
+                any = true;
+                minX = Math.Min(minX, bounds.X);
+                minY = Math.Min(minY, bounds.Y);
+                maxX = Math.Max(maxX, bounds.Right);
+                maxY = Math.Max(maxY, bounds.Bottom);
+            }
+
+            return any ? new Rectangle(minX, minY, maxX - minX, maxY - minY) : Rectangle.Empty;
         }
 
         private static string BuildFriendlyName(

@@ -3,16 +3,19 @@
  *
  * Manages:
  *  - Opening the image editor window
- *  - Passing image data to React component
- *  - Receiving edited PNG bytes back and returning to caller
+ *  - Handing the source image to the React page
+ *  - Receiving the edited PNG back and returning it to the caller
  *
  * Communication flow:
- *  1. Main window calls openImageEditor(imageData)
- *  2. Handler creates new window and loads ImageEditorPage
- *  3. React page signals ready, handler sends image data
- *  4. User edits and clicks Export
- *  5. React sends PNG bytes back via IPC
- *  6. Window closes and result returned to caller
+ *  1. Renderer calls openWindow(pngBase64)
+ *  2. Handler creates the editor window and loads the image editor page
+ *  3. React page calls signalReady() and gets the image back
+ *  4. User edits, then saves or cancels
+ *  5. React calls signalCloseWindow(pngBase64 | null)
+ *  6. Handler closes the window and resolves the original openWindow() call
+ *
+ * Images travel as base64 PNG strings: that is what .Net already produces for
+ * byte[] over the JSON payload, so no conversion is needed on either end.
  */
 
 import { BrowserWindow, ipcMain } from "electron";
@@ -23,7 +26,8 @@ import { IPC_CHANNELS } from "../../shared/channels.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let editorWindowOpen = false; // Prevent multiple windows
+// Make sure the user cant open a second editor window.
+let isWindowOpen = false;
 
 export async function registerImageEditorHandler(
   mainWindow: BrowserWindow | null,
@@ -31,130 +35,143 @@ export async function registerImageEditorHandler(
 ): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.EDITOR_OPEN_WINDOW,
-    async (_, imageData: Uint8Array): Promise<Uint8Array | null> => {
-      // Prevent opening multiple editor windows simultaneously
-      if (editorWindowOpen) {
+    async (_event, imageBase64: string): Promise<string | null> => {
+      if (isWindowOpen) {
         console.warn("[ImageEditorHandler]: Editor already open");
         return null;
       }
 
-      editorWindowOpen = true;
+      if (!imageBase64) {
+        console.error("[ImageEditorHandler]: No image passed to the editor");
+        return null;
+      }
+
+      isWindowOpen = true;
 
       try {
-        // 1. Create Electron window for image editor
-        const editorWin = new BrowserWindow({
-          width: 1400,
-          height: 900,
-          minWidth: 800,
-          minHeight: 600,
-          frame: true, // Allow system frame for title bar & resize
-          transparent: false,
-          alwaysOnTop: true,
-          icon: undefined, // Use app icon
-          webPreferences: {
-            preload: path.join(
-              __dirname,
-              isDev ? "../../preload.js" : "../../dist/preload.js",
-            ),
-            nodeIntegration: false,
-            contextIsolation: true,
-            sandbox: true,
-            // Enable WebGL for potential future canvas optimizations
-            webgl: true,
-          },
-        });
+        // 1. Create the editor window.
+        const editorWindow = createElectronWindow(isDev, mainWindow);
 
-        // 2. Register signal handler BEFORE loading pages
-        registerSignalReadyHandler(imageData);
+        // 2. Register the ready signal BEFORE loading the page, otherwise the
+        //    page can call it before the handler exists.
+        registerSignalReadyHandler(editorWindow, imageBase64);
 
-        // 3. Navigate to image editor page on new window.
+        // 3. Navigate to the image editor page.
         if (isDev) {
-          await editorWin.loadURL("http://localhost:5173/#/image-editor");
-          editorWin.webContents.openDevTools();
+          await editorWindow.loadURL("http://localhost:5173/#/image-editor");
+          editorWindow.webContents.openDevTools({ mode: "detach" });
         } else {
-          await editorWin.loadFile(
+          await editorWindow.loadFile(
             path.join(__dirname, "../dist/frontend/index.html"),
             { hash: "/image-editor" },
           );
         }
 
-        // 8. Wait for result (any window can send it — first one wins)
-        return await registerSignalCloseHandler(editorWin);
-
-        // // 2. Send image data to React once page is loaded
-        // return new Promise<Uint8Array | null>((resolve) => {
-        //   // Wait for React to signal it's ready to receive image
-        //   ipcMain.once(IPC_CHANNELS.IMAGE_EDITOR_WINDOW_READ, () => {
-        //     // Send the image data to React
-        //     editorWin.webContents.send(IPC_CHANNELS.IMAGE_EDITOR_LOAD_IMAGE, {
-        //       dataUrl: initialDataUrl,
-        //       stepId,
-        //     });
-        //   });
-
-        //   // ================================================================
-        //   // 3. Listen for export result from React
-        //   // ================================================================
-        //   ipcMain.once(
-        //     IPC_CHANNELS.IMAGE_EDITOR_RETURN_RESULT_TO_WINDOW,
-        //     (_, result: { pngBytes: Uint8Array; stepId?: string }) => {
-        //       console.log(
-        //         "[ImageEditorHandler]: Received edited image, closing window",
-        //       );
-        //       editorWin.close();
-        //       resolve(result);
-        //     },
-        //   );
-
-        //   // Handle window close without export
-        //   editorWin.once("closed", () => {
-        //     console.log(
-        //       "[ImageEditorHandler]: Editor window closed without export",
-        //     );
-        //     resolve({ pngBytes: new Uint8Array(0), stepId });
-        //   });
-        // });
+        // 4. Wait for the user to save or cancel.
+        return await registerSignalCloseHandler(editorWindow);
+      } catch (error) {
+        console.error("[ImageEditorHandler]: Failed to open editor:", error);
+        ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY);
+        return null;
       } finally {
-        editorWindowOpen = false;
+        isWindowOpen = false;
       }
     },
   );
+}
 
-  //=====================================================================
-  // Listen for signals from react.
-  // 'SignalReady' => page loaded and return image from React
-  // 'SignalCloseWindow' => operation completed - return user selection to main electron window
-  //=====================================================================
-  function registerSignalReadyHandler(imageData: Uint8Array): void {
-    ipcMain.handle(
-      IPC_CHANNELS.EDITOR_SIGNAL_READY,
-      async (event): Promise<Uint8Array | null> => {
-        return imageData;
-      },
-    );
-  }
+//=====================================================================
+// Create and open window
+//=====================================================================
+function createElectronWindow(
+  isDev: boolean,
+  parent: BrowserWindow | null,
+): BrowserWindow {
+  const editorWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 900,
+    minHeight: 600,
+    show: false, // avoid a white flash while the page loads
+    frame: true,
+    title: "Edit template image",
+    backgroundColor: "#14161c",
+    parent: parent ?? undefined,
+    modal: false,
+    webPreferences: {
+      preload: path.join(
+        __dirname,
+        isDev ? "../../preload.js" : "../../dist/preload.js",
+      ),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
 
-  function registerSignalCloseHandler(
-    electronWindow: BrowserWindow,
-  ): Promise<Uint8Array | null> {
-    return new Promise<Uint8Array | null>((resolve) => {
-      const cleanup = () => {
-        ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
-      };
+  editorWindow.once("ready-to-show", () => {
+    editorWindow.maximize();
+    editorWindow.show();
+    editorWindow.focus();
+  });
 
-      ipcMain.once(
+  return editorWindow;
+}
+
+//=====================================================================
+// Listen for signals from react.
+// 'SignalReady'       => page loaded, hand it the image to edit
+// 'SignalCloseWindow' => user saved (base64 PNG) or cancelled (null)
+//=====================================================================
+function registerSignalReadyHandler(
+  electronWindow: BrowserWindow,
+  imageBase64: string,
+): void {
+  // Clear any handler left behind by a previous (crashed) session.
+  ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY);
+
+  ipcMain.handle(
+    IPC_CHANNELS.EDITOR_SIGNAL_READY,
+    async (event): Promise<string | null> => {
+      if (event.sender.id !== electronWindow.webContents.id) return null;
+      return imageBase64;
+    },
+  );
+}
+
+function registerSignalCloseHandler(
+  electronWindow: BrowserWindow,
+): Promise<string | null> {
+  return new Promise<string | null>((resolve) => {
+    const onCloseSignal = (
+      event: Electron.IpcMainEvent,
+      imageBase64: string | null,
+    ) => {
+      if (event.sender.id !== electronWindow.webContents.id) return;
+      cleanup();
+      resolve(imageBase64);
+    };
+
+    const onClosed = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    const cleanup = () => {
+      // Remove the READY handler so the next open can register a fresh one.
+      ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY);
+      ipcMain.removeListener(
         IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW,
-        (_event, imageData: Uint8Array | null) => {
-          cleanup();
-          resolve(imageData);
-        },
+        onCloseSignal,
       );
+      electronWindow.removeListener("closed", onClosed);
 
-      // If user force-closes the editor window (e.g. Alt+F4)
-      electronWindow.once("closed", () => {
-        cleanup();
-        resolve(null);
-      });
-    });
-  }
+      if (!electronWindow.isDestroyed()) electronWindow.close();
+    };
+
+    ipcMain.on(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, onCloseSignal);
+
+    // If the user force-closes the editor window (e.g. Alt+F4)
+    electronWindow.once("closed", onClosed);
+  });
 }

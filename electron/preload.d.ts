@@ -20,9 +20,9 @@ declare global {
         signalCloseWindow: (rect: Electron.Rectangle | null) => void;
       };
       imageEditor: {
-        openWindow: (imageData: Uint8Array) => Promise<Uint8Array | null>;
-        signalReady: () => Promise<Uint8Array>;
-        signalCloseWindow: (imageData: Uint8Array | null) => void;
+        openWindow: (imageBase64: string) => Promise<string | null>;
+        signalReady: () => Promise<string | null>;
+        signalCloseWindow: (imageBase64: string | null) => void;
       };
     };
   }

@@ -1,287 +1,141 @@
 /**
- * Toolbar Component - Top toolbar with controls
- *
- * Features:
- *  - Tool selection buttons
- *  - Zoom controls
- *  - Undo/Redo buttons
- *  - Grid toggle & opacity
- *  - Minimap toggle
- *  - Export/Cancel buttons
+ * Toolbar — top bar: save/cancel, undo/redo, zoom controls and the readouts
+ * (image size, cursor position, zoom level).
  */
 
+import { Button } from "primereact/button";
+import type { Point, Size } from "@/windows/image-editor/types";
+
 interface ToolbarProps {
-  activeTool: "crop-rect" | "crop-lasso" | "eraser" | "select";
-  onToolChange: (
-    tool: "crop-rect" | "crop-lasso" | "eraser" | "select",
-  ) => void;
-  cropMode: "rect" | "lasso";
-  onCropModeChange: (mode: "rect" | "lasso") => void;
-  onExport: () => void;
-  onCancel: () => void;
+  imageSize: Size | null;
+  cursor: Point | null;
+  scale: number;
   canUndo: boolean;
   canRedo: boolean;
+  saving: boolean;
   onUndo: () => void;
   onRedo: () => void;
-  zoomLevel: number;
-  onZoomChange: (zoom: number) => void;
-  showGrid: boolean;
-  onShowGridChange: (show: boolean) => void;
-  gridOpacity: number;
-  onGridOpacityChange: (opacity: number) => void;
-  showMinimap: boolean;
-  onShowMinimapChange: (show: boolean) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onZoomFit: () => void;
+  onZoomActual: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 export default function Toolbar({
-  activeTool,
-  onToolChange,
-  cropMode,
-  onCropModeChange,
-  onExport,
-  onCancel,
+  imageSize,
+  cursor,
+  scale,
   canUndo,
   canRedo,
+  saving,
   onUndo,
   onRedo,
-  zoomLevel,
-  onZoomChange,
-  showGrid,
-  onShowGridChange,
-  gridOpacity,
-  onGridOpacityChange,
-  showMinimap,
-  onShowMinimapChange,
+  onZoomIn,
+  onZoomOut,
+  onZoomFit,
+  onZoomActual,
+  onSave,
+  onCancel,
 }: ToolbarProps) {
-  const toolButtonStyle = (isActive: boolean) => ({
-    padding: "6px 12px",
-    margin: "0 2px",
-    backgroundColor: isActive ? "#669bff" : "#2a2a2a",
-    color: "#ffffff",
-    border: "1px solid #444",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "12px",
-    fontWeight: isActive ? "600" : "500",
-    transition: "all 0.2s ease",
-  });
-
-  const cropModeButtonStyle = (isActive: boolean) => ({
-    padding: "4px 8px",
-    margin: "0 1px",
-    backgroundColor: isActive ? "#669bff" : "#1a1a1a",
-    color: "#ffffff",
-    border: "1px solid #444",
-    borderRadius: "3px",
-    cursor: "pointer",
-    fontSize: "11px",
-    transition: "all 0.2s ease",
-  });
-
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "8px 12px",
-        backgroundColor: "#2a2a2a",
-        borderBottom: "1px solid #444",
-        minHeight: "40px",
-      }}
-    >
-      {/* ========== Tool Selection ========== */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-        <button
-          style={toolButtonStyle(activeTool === "select")}
-          onClick={() => onToolChange("select")}
-          title="Pan & Select (Spacebar)"
-        >
-          👆 Select
-        </button>
-
-        <button
-          style={toolButtonStyle(activeTool === "crop-rect" || activeTool === "crop-lasso")}
-          onClick={() => onToolChange("crop-rect")}
-          title="Rectangular Crop"
-        >
-          📐 Crop
-        </button>
-
-        {/* Crop Mode Selector (only show when crop is active) */}
-        {(activeTool === "crop-rect" || activeTool === "crop-lasso") && (
-          <div style={{ display: "flex", gap: "2px", marginLeft: "4px" }}>
-            <button
-              style={cropModeButtonStyle(cropMode === "rect")}
-              onClick={() => onCropModeChange("rect")}
-              title="Rectangular Crop"
-            >
-              Rect
-            </button>
-            <button
-              style={cropModeButtonStyle(cropMode === "lasso")}
-              onClick={() => onCropModeChange("lasso")}
-              title="Freehand Lasso Crop"
-            >
-              Lasso
-            </button>
-          </div>
-        )}
-
-        <button
-          style={toolButtonStyle(activeTool === "eraser")}
-          onClick={() => onToolChange("eraser")}
-          title="Eraser - Make pixels transparent"
-        >
-          🧹 Erase
-        </button>
-      </div>
-
-      {/* ========== Separator ========== */}
-      <div style={{ width: "1px", height: "24px", backgroundColor: "#444", margin: "0 4px" }}></div>
-
-      {/* ========== Undo/Redo ========== */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-        <button
-          style={{
-            ...toolButtonStyle(false),
-            opacity: canUndo ? 1 : 0.5,
-            cursor: canUndo ? "pointer" : "not-allowed",
-          }}
-          onClick={onUndo}
-          disabled={!canUndo}
-          title="Undo (Ctrl+Z)"
-        >
-          ↶ Undo
-        </button>
-        <button
-          style={{
-            ...toolButtonStyle(false),
-            opacity: canRedo ? 1 : 0.5,
-            cursor: canRedo ? "pointer" : "not-allowed",
-          }}
-          onClick={onRedo}
-          disabled={!canRedo}
-          title="Redo (Ctrl+Y)"
-        >
-          ↷ Redo
-        </button>
-      </div>
-
-      {/* ========== Zoom Controls ========== */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-        <button
-          style={toolButtonStyle(false)}
-          onClick={() => onZoomChange(zoomLevel - 0.2)}
-          title="Zoom Out"
-        >
-          🔍−
-        </button>
-        <span
-          style={{
-            minWidth: "50px",
-            textAlign: "center",
-            fontSize: "12px",
-            color: "#aaa",
-          }}
-        >
-          {Math.round(zoomLevel * 100)}%
-        </span>
-        <button
-          style={toolButtonStyle(false)}
-          onClick={() => onZoomChange(zoomLevel + 0.2)}
-          title="Zoom In"
-        >
-          🔍+
-        </button>
-      </div>
-
-      {/* ========== Separator ========== */}
-      <div style={{ width: "1px", height: "24px", backgroundColor: "#444", margin: "0 4px" }}></div>
-
-      {/* ========== Grid Controls ========== */}
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            cursor: "pointer",
-            fontSize: "12px",
-            color: "#aaa",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={showGrid}
-            onChange={(e) => onShowGridChange(e.target.checked)}
-            style={{ cursor: "pointer" }}
-          />
-          <span title="Show pixel grid (visible when zoomed in)">Grid</span>
-        </label>
-
-        {showGrid && (
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={gridOpacity}
-            onChange={(e) => onGridOpacityChange(parseFloat(e.target.value))}
-            title="Grid opacity"
-            style={{ width: "80px" }}
-          />
-        )}
-      </div>
-
-      {/* ========== Minimap Toggle ========== */}
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            cursor: "pointer",
-            fontSize: "12px",
-            color: "#aaa",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={showMinimap}
-            onChange={(e) => onShowMinimapChange(e.target.checked)}
-            style={{ cursor: "pointer" }}
-          />
-          <span title="Show minimap for navigation">Minimap</span>
-        </label>
-      </div>
-
-      {/* ========== Spacer ========== */}
-      <div style={{ flex: 1 }}></div>
-
-      {/* ========== Export/Cancel ========== */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-        <button
-          style={{
-            ...toolButtonStyle(false),
-            backgroundColor: "#dc3545",
-          }}
+    <div className="image-editor__toolbar">
+      <div className="flex align-items-center gap-2">
+        <Button
+          icon="pi pi-check"
+          label="Use image"
+          severity="success"
+          size="small"
+          loading={saving}
+          onClick={onSave}
+          tooltip="Save and return this image (Ctrl+S)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+        <Button
+          icon="pi pi-times"
+          label="Cancel"
+          severity="secondary"
+          outlined
+          size="small"
           onClick={onCancel}
-          title="Cancel editing"
-        >
-          ✕ Cancel
-        </button>
-        <button
-          style={{
-            ...toolButtonStyle(false),
-            backgroundColor: "#28a745",
-          }}
-          onClick={onExport}
-          title="Export image"
-        >
-          ✓ Export
-        </button>
+        />
+
+        <span className="image-editor__divider" />
+
+        <Button
+          icon="pi pi-undo"
+          size="small"
+          text
+          disabled={!canUndo}
+          onClick={onUndo}
+          tooltip="Undo (Ctrl+Z)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+        <Button
+          icon="pi pi-refresh"
+          size="small"
+          text
+          disabled={!canRedo}
+          onClick={onRedo}
+          tooltip="Redo (Ctrl+Y)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+      </div>
+
+      <div className="flex align-items-center gap-2">
+        <Button
+          icon="pi pi-search-minus"
+          size="small"
+          text
+          onClick={onZoomOut}
+          tooltip="Zoom out (-)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+        <span className="image-editor__zoom-value">
+          {formatZoom(scale)}
+        </span>
+        <Button
+          icon="pi pi-search-plus"
+          size="small"
+          text
+          onClick={onZoomIn}
+          tooltip="Zoom in (+)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+        <Button
+          label="Fit"
+          size="small"
+          text
+          onClick={onZoomFit}
+          tooltip="Fit to window (0)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+        <Button
+          label="1:1"
+          size="small"
+          text
+          onClick={onZoomActual}
+          tooltip="Actual size (1)"
+          tooltipOptions={{ position: "bottom" }}
+        />
+
+        <span className="image-editor__divider" />
+
+        <span className="image-editor__readout">
+          {imageSize
+            ? `${imageSize.width} x ${imageSize.height} px`
+            : "loading..."}
+        </span>
+        <span className="image-editor__readout image-editor__readout--mono">
+          {cursor ? `X ${cursor.x}  Y ${cursor.y}` : "X -  Y -"}
+        </span>
       </div>
     </div>
   );
+}
+
+function formatZoom(scale: number): string {
+  if (scale >= 1) return `${Math.round(scale * 100)}%`;
+  return `${(scale * 100).toFixed(scale < 0.1 ? 1 : 0)}%`;
 }

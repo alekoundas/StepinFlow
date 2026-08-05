@@ -1,249 +1,189 @@
 /**
- * Canvas Utilities - Helper functions for canvas operations
+ * Canvas Utilities
  *
- * Provides reusable functions for:
- *  - Image data conversions (DataURL ↔ Uint8Array)
- *  - Canvas state management
- *  - Image processing helpers
+ * Small, dependency free helpers shared by the image editor:
+ *  - base64 <-> Blob/Image conversions (the screenshot arrives as base64 from .Net)
+ *  - canvas creation / cloning / thumbnails
+ *  - rectangle + polygon math
  */
+
+import type { Point, Rect, Size } from "@/windows/image-editor/types";
+
+// ============================================================================
+// Encoding helpers
+// ============================================================================
 
 /**
- * Convert data URL to Uint8Array (PNG bytes)
- * Used for exporting edited image
+ * Decode base64 into a Blob without building one giant JS string.
+ * A full desktop screenshot can be several MB, so decode in slices.
  */
-export function dataURLtoUint8Array(dataUrl: string): Uint8Array {
-  const bstr = atob(dataUrl.split(",")[1]);
-  const n = bstr.length;
-  const u8arr = new Uint8Array(n);
+export function base64ToBlob(base64: string, mimeType = "image/png"): Blob {
+  const sliceSize = 512 * 1024;
+  const binary = atob(base64);
+  const parts: Uint8Array[] = [];
 
-  for (let i = 0; i < n; i++) {
-    u8arr[i] = bstr.charCodeAt(i);
+  for (let offset = 0; offset < binary.length; offset += sliceSize) {
+    const slice = binary.slice(offset, offset + sliceSize);
+    const bytes = new Uint8Array(slice.length);
+    for (let i = 0; i < slice.length; i++) bytes[i] = slice.charCodeAt(i);
+    parts.push(bytes);
   }
 
-  return u8arr;
+  return new Blob(parts as BlobPart[], { type: mimeType });
 }
 
-/**
- * Convert Uint8Array to data URL
- * Used for displaying binary image data
- */
-export function uint8ArrayToDataURL(
-  imageData: Uint8Array,
-  mimeType = "image/png",
-): string {
-  // Convert Uint8Array → binary string efficiently
-  const binaryString = Array.from(imageData)
-    .map((byte) => String.fromCharCode(byte))
-    .join("");
+/** Encode a Blob as raw base64 (no `data:` prefix) — this is what .Net expects. */
+export async function blobToBase64(blob: Blob): Promise<string> {
+  const buffer = new Uint8Array(await blob.arrayBuffer());
+  const chunkSize = 32 * 1024;
+  let binary = "";
 
-  const base64 = btoa(binaryString);
-  const result = `data:${mimeType};base64,${base64}`;
-  return result;
-}
-
-export function base64ToUint8Array(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-/**
- * Get canvas as PNG data URL (for quick preview)
- */
-export function canvasToDataURL(canvas: HTMLCanvasElement): string {
-  return canvas.toDataURL("image/png");
-}
-
-/**
- * Create a copy of ImageData for safe manipulation
- */
-export function copyImageData(imageData: ImageData): ImageData {
-  const newImageData = new ImageData(imageData.width, imageData.height);
-  newImageData.data.set(imageData.data);
-  return newImageData;
-}
-
-/**
- * Get pixel color from ImageData (RGBA)
- */
-export function getPixel(
-  imageData: ImageData,
-  x: number,
-  y: number,
-): [r: number, g: number, b: number, a: number] {
-  const idx = (y * imageData.width + x) * 4;
-  const data = imageData.data;
-  return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
-}
-
-/**
- * Set pixel color in ImageData (RGBA)
- */
-export function setPixel(
-  imageData: ImageData,
-  x: number,
-  y: number,
-  r: number,
-  g: number,
-  b: number,
-  a: number,
-): void {
-  const idx = (y * imageData.width + x) * 4;
-  const data = imageData.data;
-  data[idx] = r;
-  data[idx + 1] = g;
-  data[idx + 2] = b;
-  data[idx + 3] = a;
-}
-
-/**
- * Flood fill algorithm (used for fill-based crop operations)
- * Returns set of pixel indices that match the start color
- */
-export function floodFill(
-  imageData: ImageData,
-  startX: number,
-  startY: number,
-  tolerance = 0,
-): Set<number> {
-  const width = imageData.width;
-  const height = imageData.height;
-  const visited = new Set<number>();
-  const queue: Array<{ x: number; y: number }> = [];
-
-  const startColor = getPixel(imageData, startX, startY);
-  queue.push({ x: startX, y: startY });
-
-  while (queue.length > 0) {
-    const { x, y } = queue.shift()!;
-    const idx = y * width + x;
-
-    if (visited.has(idx) || x < 0 || x >= width || y < 0 || y >= height) {
-      continue;
-    }
-
-    const pixelColor = getPixel(imageData, x, y);
-    const diff =
-      Math.abs(pixelColor[0] - startColor[0]) +
-      Math.abs(pixelColor[1] - startColor[1]) +
-      Math.abs(pixelColor[2] - startColor[2]);
-
-    if (diff <= tolerance) {
-      visited.add(idx);
-      queue.push({ x: x + 1, y });
-      queue.push({ x: x - 1, y });
-      queue.push({ x, y: y + 1 });
-      queue.push({ x, y: y - 1 });
-    }
+  for (let offset = 0; offset < buffer.length; offset += chunkSize) {
+    binary += String.fromCharCode(
+      ...buffer.subarray(offset, offset + chunkSize),
+    );
   }
 
-  return visited;
+  return btoa(binary);
 }
 
-/**
- * Blur effect (simple box blur)
- * radius: blur radius in pixels
- */
-export function blurImageData(imageData: ImageData, radius: number): ImageData {
-  const result = copyImageData(imageData);
-  const width = imageData.width;
-  const height = imageData.height;
-  const data = result.data;
-  const origData = imageData.data;
+/** Accepts raw base64 or a `data:` URL and resolves a decoded bitmap. */
+export function loadImage(source: string): Promise<HTMLImageElement> {
+  const url = source.startsWith("data:")
+    ? source
+    : URL.createObjectURL(base64ToBlob(source));
 
-  for (let y = radius; y < height - radius; y++) {
-    for (let x = radius; x < width - radius; x++) {
-      let r = 0,
-        g = 0,
-        b = 0,
-        a = 0,
-        count = 0;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      reject(new Error("[ImageEditor] Failed to decode image"));
+    };
+    img.src = url;
+  });
+}
 
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const idx = ((y + dy) * width + (x + dx)) * 4;
-          r += origData[idx];
-          g += origData[idx + 1];
-          b += origData[idx + 2];
-          a += origData[idx + 3];
-          count++;
-        }
+/** PNG encode a canvas and return raw base64 (transparency preserved). */
+export function canvasToPngBase64(canvas: HTMLCanvasElement): Promise<string> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("[ImageEditor] PNG encode failed"));
+        return;
       }
-
-      const idx = (y * width + x) * 4;
-      data[idx] = Math.round(r / count);
-      data[idx + 1] = Math.round(g / count);
-      data[idx + 2] = Math.round(b / count);
-      data[idx + 3] = Math.round(a / count);
-    }
-  }
-
-  return result;
+      blobToBase64(blob).then(resolve).catch(reject);
+    }, "image/png");
+  });
 }
 
-/**
- * Invert colors (RGB only, preserve alpha)
- */
-export function invertImageData(imageData: ImageData): ImageData {
-  const result = copyImageData(imageData);
-  const data = result.data;
+// ============================================================================
+// Canvas helpers
+// ============================================================================
 
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = 255 - data[i]; // R
-    data[i + 1] = 255 - data[i + 1]; // G
-    data[i + 2] = 255 - data[i + 2]; // B
-    // data[i + 3] = alpha unchanged
-  }
-
-  return result;
+export function createCanvas(width: number, height: number): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width));
+  canvas.height = Math.max(1, Math.round(height));
+  return canvas;
 }
 
-/**
- * Adjust brightness
- * factor: 0-2 (0.5 = darker, 1 = normal, 2 = brighter)
- */
-export function adjustBrightness(
-  imageData: ImageData,
-  factor: number,
-): ImageData {
-  const result = copyImageData(imageData);
-  const data = result.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = Math.min(255, Math.round(data[i] * factor));
-    data[i + 1] = Math.min(255, Math.round(data[i + 1] * factor));
-    data[i + 2] = Math.min(255, Math.round(data[i + 2] * factor));
-  }
-
-  return result;
+/** 2D context with the settings the editor always wants (no smoothing, readable). */
+export function get2dContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  const ctx = canvas.getContext("2d", {
+    willReadFrequently: true,
+  }) as CanvasRenderingContext2D;
+  ctx.imageSmoothingEnabled = false;
+  return ctx;
 }
 
-/**
- * Check if a point is inside a polygon (ray casting algorithm)
- */
-export function isPointInPolygon(
-  point: { x: number; y: number },
-  polygon: Array<{ x: number; y: number }>,
-): boolean {
-  const x = point.x;
-  const y = point.y;
-  let inside = false;
+export function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+  const copy = createCanvas(source.width, source.height);
+  const ctx = get2dContext(copy);
+  ctx.drawImage(source, 0, 0);
+  return copy;
+}
 
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x,
-      yi = polygon[i].y;
-    const xj = polygon[j].x,
-      yj = polygon[j].y;
+/** Downscaled PNG data URL used by the history list. */
+export function canvasToThumbnail(
+  source: HTMLCanvasElement,
+  maxWidth = 72,
+  maxHeight = 48,
+): string {
+  const scale = Math.min(
+    maxWidth / source.width,
+    maxHeight / source.height,
+    1,
+  );
+  const width = Math.max(1, Math.round(source.width * scale));
+  const height = Math.max(1, Math.round(source.height * scale));
 
-    const intersect =
-      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-    if (intersect) inside = !inside;
+  const thumb = createCanvas(width, height);
+  const ctx = thumb.getContext("2d")!;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "low";
+  ctx.drawImage(source, 0, 0, width, height);
+
+  return thumb.toDataURL("image/png");
+}
+
+/** Approximate memory cost of a snapshot (RGBA). */
+export function canvasByteSize(canvas: HTMLCanvasElement): number {
+  return canvas.width * canvas.height * 4;
+}
+
+// ============================================================================
+// Geometry helpers
+// ============================================================================
+
+/** Build a positive-size rect from two arbitrary corners. */
+export function rectFromPoints(a: Point, b: Point): Rect {
+  return {
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    width: Math.abs(b.x - a.x),
+    height: Math.abs(b.y - a.y),
+  };
+}
+
+/** Snap to whole pixels and clip against the image bounds. */
+export function clampRectToImage(rect: Rect, size: Size): Rect {
+  const left = Math.max(0, Math.floor(rect.x));
+  const top = Math.max(0, Math.floor(rect.y));
+  const right = Math.min(size.width, Math.ceil(rect.x + rect.width));
+  const bottom = Math.min(size.height, Math.ceil(rect.y + rect.height));
+
+  return {
+    x: left,
+    y: top,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+}
+
+export function polygonBounds(points: Point[]): Rect {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    minY = Math.min(minY, point.y);
+    maxX = Math.max(maxX, point.x);
+    maxY = Math.max(maxY, point.y);
   }
 
-  return inside;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+export function distance(a: Point, b: Point): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
