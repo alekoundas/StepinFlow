@@ -94,9 +94,19 @@
 
 .image-editor__layer {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   display: block;
   pointer-events: none;
+  /*
+   * A canvas is a replaced element: `inset: 0` does NOT stretch it, the used
+   * width falls back to the intrinsic size (the width/height attributes, which
+   * are in device pixels). That would display the canvas devicePixelRatio times
+   * too large and put every drawn pixel out of step with the pointer maths.
+   * The size is pinned in CSS px here and again in Canvas.tsx.
+   */
+  width: 100%;
+  height: 100%;
 }
 
 .image-editor__overlay-message {

@@ -74,6 +74,7 @@ export default function Canvas({
   const [cursor, setCursor] = useState<Point | null>(null);
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [panning, setPanning] = useState(false);
+  const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
 
   const interaction = useRef<{ mode: InteractionMode; origin: Point; last: Point }>(
     { mode: "none", origin: { x: 0, y: 0 }, last: { x: 0, y: 0 } },
@@ -100,11 +101,31 @@ export default function Canvas({
     return () => observer.disconnect();
   }, [onViewportResize]);
 
+  // Dragging the window to a monitor with different scaling changes the device
+  // pixel ratio without changing the CSS size, so watch it separately.
+  useEffect(() => {
+    const query = window.matchMedia(
+      `(resolution: ${window.devicePixelRatio}dppx)`,
+    );
+    const onChange = () => setDpr(window.devicePixelRatio || 1);
+
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, [dpr]);
+
+  /**
+   * Size the backing store in device pixels, pin the displayed size in CSS
+   * pixels, and hand back a context whose units are CSS pixels.
+   *
+   * The CSS size has to be set explicitly: a canvas is a replaced element, so
+   * the stylesheet cannot stretch it with `inset: 0` alone — it would fall back
+   * to the intrinsic (device pixel) size and everything drawn would sit
+   * devicePixelRatio times too far from the top-left corner.
+   */
   const prepare = useCallback(
     (canvas: HTMLCanvasElement | null): CanvasRenderingContext2D | null => {
       if (!canvas || !viewportSize.width || !viewportSize.height) return null;
 
-      const dpr = window.devicePixelRatio || 1;
       const width = Math.round(viewportSize.width * dpr);
       const height = Math.round(viewportSize.height * dpr);
 
@@ -113,12 +134,15 @@ export default function Canvas({
         canvas.height = height;
       }
 
+      canvas.style.width = `${viewportSize.width}px`;
+      canvas.style.height = `${viewportSize.height}px`;
+
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, viewportSize.width, viewportSize.height);
       return ctx;
     },
-    [viewportSize.height, viewportSize.width],
+    [dpr, viewportSize.height, viewportSize.width],
   );
 
   // ==========================================================================
