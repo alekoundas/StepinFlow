@@ -6,6 +6,23 @@
 import { Button } from "primereact/button";
 import type { Point, Size } from "@/windows/image-editor/types";
 
+const SEPARATOR_STYLE: React.CSSProperties = {
+  width: 1,
+  height: "1.5rem",
+  margin: "0 0.25rem",
+  background: "var(--surface-border)",
+};
+
+const ZOOM_VALUE_STYLE: React.CSSProperties = {
+  minWidth: "4rem",
+  fontVariantNumeric: "tabular-nums",
+};
+
+const CURSOR_READOUT_STYLE: React.CSSProperties = {
+  minWidth: "9rem",
+  fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, monospace',
+};
+
 interface ToolbarProps {
   imageSize: Size | null;
   cursor: Point | null;
@@ -40,7 +57,7 @@ export default function Toolbar({
   onCancel,
 }: ToolbarProps) {
   return (
-    <div className="image-editor__toolbar">
+    <div className="flex align-items-center justify-content-between flex-wrap gap-3 px-3 py-2 surface-card border-bottom-1 surface-border">
       <div className="flex align-items-center gap-2">
         <Button
           icon="pi pi-check"
@@ -61,7 +78,7 @@ export default function Toolbar({
           onClick={onCancel}
         />
 
-        <span className="image-editor__divider" />
+        <span style={SEPARATOR_STYLE} />
 
         <Button
           icon="pi pi-undo"
@@ -92,7 +109,7 @@ export default function Toolbar({
           tooltip="Zoom out (-)"
           tooltipOptions={{ position: "bottom" }}
         />
-        <span className="image-editor__zoom-value">
+        <span className="text-center" style={ZOOM_VALUE_STYLE}>
           {formatZoom(scale)}
         </span>
         <Button
@@ -120,14 +137,17 @@ export default function Toolbar({
           tooltipOptions={{ position: "bottom" }}
         />
 
-        <span className="image-editor__divider" />
+        <span style={SEPARATOR_STYLE} />
 
-        <span className="image-editor__readout">
+        <span className="text-sm text-color-secondary white-space-nowrap">
           {imageSize
             ? `${imageSize.width} x ${imageSize.height} px`
             : "loading..."}
         </span>
-        <span className="image-editor__readout image-editor__readout--mono">
+        <span
+          className="text-sm text-color-secondary white-space-nowrap"
+          style={CURSOR_READOUT_STYLE}
+        >
           {cursor ? `X ${cursor.x}  Y ${cursor.y}` : "X -  Y -"}
         </span>
       </div>

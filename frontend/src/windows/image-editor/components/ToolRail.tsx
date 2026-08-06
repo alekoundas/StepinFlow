@@ -20,6 +20,13 @@ const TOOLS: ToolDefinition[] = [
   { tool: "eraser", icon: "pi pi-eraser", label: "Eraser (make transparent)", shortcut: "E" },
 ];
 
+// Inline so it beats the theme's own button padding.
+const BUTTON_STYLE: React.CSSProperties = {
+  width: "2.75rem",
+  height: "2.75rem",
+  padding: 0,
+};
+
 interface ToolRailProps {
   tool: EditorTool;
   onToolChange: (tool: EditorTool) => void;
@@ -27,14 +34,14 @@ interface ToolRailProps {
 
 export default function ToolRail({ tool, onToolChange }: ToolRailProps) {
   return (
-    <div className="image-editor__rail">
+    <div className="flex flex-column gap-1 p-2 surface-card border-right-1 surface-border">
       {TOOLS.map((definition) => (
         <Button
           key={definition.tool}
           icon={definition.icon}
           text={tool !== definition.tool}
           severity={tool === definition.tool ? "info" : "secondary"}
-          className="image-editor__rail-button"
+          style={BUTTON_STYLE}
           onClick={() => onToolChange(definition.tool)}
           tooltip={`${definition.label} (${definition.shortcut})`}
           tooltipOptions={{ position: "right" }}

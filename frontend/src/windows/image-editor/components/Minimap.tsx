@@ -115,10 +115,16 @@ export default function Minimap({
   if (!imageSize) return null;
 
   return (
-    <div className="image-editor__minimap">
-      <div className="image-editor__minimap-title">Minimap</div>
+    <div className="absolute right-0 bottom-0 m-3 p-2 surface-overlay border-1 surface-border border-round shadow-4">
+      <div
+        className="mb-1 text-xs uppercase text-color-secondary"
+        style={{ letterSpacing: "0.04em" }}
+      >
+        Minimap
+      </div>
       <canvas
         ref={canvasRef}
+        className="block cursor-pointer border-round-xs"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

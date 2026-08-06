@@ -34,10 +34,17 @@ import {
   canvasToPngBase64,
   loadImage,
 } from "@/windows/image-editor/utils/canvas-utils";
-import "@/windows/image-editor/ImageEditorPage.css";
 
 const DEFAULT_GRID: GridOptions = { enabled: true, opacity: 0.25, minScale: 8 };
 const ZOOM_STEP = 1.25;
+
+const SIDEBAR_STYLE: React.CSSProperties = { width: "19rem", minWidth: "19rem" };
+
+const OVERLAY_MESSAGE_CLASS =
+  "absolute top-0 left-0 w-full h-full flex flex-column align-items-center justify-content-center gap-2 text-color-secondary";
+const OVERLAY_MESSAGE_STYLE: React.CSSProperties = {
+  background: "rgba(20, 22, 28, 0.75)",
+};
 
 export default function ImageEditorPage() {
   const image = useImageCanvas();
@@ -270,7 +277,7 @@ export default function ImageEditorPage() {
   // ==========================================================================
 
   return (
-    <div className="image-editor">
+    <div className="fixed top-0 left-0 w-full h-full flex flex-column overflow-hidden select-none surface-ground text-color">
       <Toolbar
         imageSize={imageSize}
         cursor={cursor}
@@ -288,10 +295,10 @@ export default function ImageEditorPage() {
         onCancel={handleCancel}
       />
 
-      <div className="image-editor__body">
+      <div className="flex flex-1 min-h-0">
         <ToolRail tool={tool} onToolChange={handleToolChange} />
 
-        <div className="image-editor__stage">
+        <div className="relative flex-1 min-w-0 overflow-hidden">
           <Canvas
             getDocument={image.getDocument}
             imageSize={imageSize}
@@ -309,14 +316,14 @@ export default function ImageEditorPage() {
           />
 
           {status === "loading" && (
-            <div className="image-editor__overlay-message">
+            <div className={OVERLAY_MESSAGE_CLASS} style={OVERLAY_MESSAGE_STYLE}>
               <ProgressSpinner style={{ width: 48, height: 48 }} />
               <span>Loading screenshot...</span>
             </div>
           )}
 
           {status === "error" && (
-            <div className="image-editor__overlay-message">
+            <div className={OVERLAY_MESSAGE_CLASS} style={OVERLAY_MESSAGE_STYLE}>
               <Message severity="error" text={errorMessage} />
             </div>
           )}
@@ -332,7 +339,10 @@ export default function ImageEditorPage() {
           )}
         </div>
 
-        <aside className="image-editor__sidebar">
+        <aside
+          className="flex flex-column surface-card border-left-1 surface-border"
+          style={SIDEBAR_STYLE}
+        >
           <OptionsPanel
             tool={tool}
             scale={view.scale}

@@ -29,6 +29,23 @@ import type { useViewTransform } from "@/windows/image-editor/hooks/useViewTrans
 const CHECKER_SIZE = 8;
 const POLYGON_CLOSE_DISTANCE = 10; // viewport px
 
+/**
+ * A canvas is a replaced element, so it will NOT stretch to its container from
+ * `top/left/right/bottom` alone — width/height have to be stated, otherwise the
+ * used size falls back to the intrinsic one (the width/height attributes, which
+ * hold device pixels) and everything drawn ends up devicePixelRatio times too
+ * far from the top-left corner. prepare() restates the exact px size per frame.
+ */
+const LAYER_STYLE: React.CSSProperties = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  display: "block",
+  pointerEvents: "none",
+};
+
 type InteractionMode = "none" | "pan" | "rect" | "lasso" | "erase";
 
 interface CanvasProps {
@@ -71,10 +88,18 @@ export default function Canvas({
     width: 0,
     height: 0,
   });
-  const [cursor, setCursor] = useState<Point | null>(null);
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [panning, setPanning] = useState(false);
   const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
+
+  // The hovered pixel is a ref, not state: a high polling rate mouse reports
+  // far more often than the screen refreshes, and re-rendering per report is
+  // what made the eraser feel heavy. Painting is coalesced into one animation
+  // frame instead (see scheduleOverlay / scheduleScene).
+  const cursorRef = useRef<Point | null>(null);
+  const reportedCursorRef = useRef<Point | null>(null);
+  const overlayFrameRef = useRef(0);
+  const sceneFrameRef = useRef(0);
 
   const interaction = useRef<{ mode: InteractionMode; origin: Point; last: Point }>(
     { mode: "none", origin: { x: 0, y: 0 }, last: { x: 0, y: 0 } },
@@ -285,9 +310,25 @@ export default function Canvas({
     scale,
   ]);
 
+  /** Same one-paint-per-frame rule for the image layer. */
+  const scheduleScene = useCallback(() => {
+    if (sceneFrameRef.current) return;
+
+    sceneFrameRef.current = requestAnimationFrame(() => {
+      sceneFrameRef.current = 0;
+      drawScene();
+    });
+  }, [drawScene]);
+
   useEffect(() => {
-    drawScene();
-  }, [drawScene, revision]);
+    // Replace a queued paint rather than skipping: the pending one closes over
+    // the previous state and would paint one step behind.
+    if (sceneFrameRef.current) {
+      cancelAnimationFrame(sceneFrameRef.current);
+      sceneFrameRef.current = 0;
+    }
+    scheduleScene();
+  }, [scheduleScene, revision]);
 
   // ==========================================================================
   // Overlay rendering (selection / lasso / brush)
@@ -296,6 +337,8 @@ export default function Canvas({
   const drawOverlay = useCallback(() => {
     const ctx = prepare(overlayRef.current);
     if (!ctx) return;
+
+    const cursor = cursorRef.current;
 
     const toScreen = (point: Point): Point => ({
       x: point.x * scale + offset.x,
@@ -386,7 +429,6 @@ export default function Canvas({
     }
   }, [
     brushSize,
-    cursor,
     offset.x,
     offset.y,
     prepare,
@@ -398,9 +440,41 @@ export default function Canvas({
     viewportSize.width,
   ]);
 
+  /**
+   * Repaint the overlay at most once per animation frame, and push the hovered
+   * pixel up to the toolbar in the same beat (only when it actually changed).
+   */
+  const scheduleOverlay = useCallback(() => {
+    if (overlayFrameRef.current) return;
+
+    overlayFrameRef.current = requestAnimationFrame(() => {
+      overlayFrameRef.current = 0;
+      drawOverlay();
+
+      const current = cursorRef.current;
+      const reported = reportedCursorRef.current;
+      if (current?.x !== reported?.x || current?.y !== reported?.y) {
+        reportedCursorRef.current = current;
+        onCursorMove(current);
+      }
+    });
+  }, [drawOverlay, onCursorMove]);
+
   useEffect(() => {
-    drawOverlay();
-  }, [drawOverlay]);
+    if (overlayFrameRef.current) {
+      cancelAnimationFrame(overlayFrameRef.current);
+      overlayFrameRef.current = 0;
+    }
+    scheduleOverlay();
+  }, [scheduleOverlay]);
+
+  useEffect(
+    () => () => {
+      if (overlayFrameRef.current) cancelAnimationFrame(overlayFrameRef.current);
+      if (sceneFrameRef.current) cancelAnimationFrame(sceneFrameRef.current);
+    },
+    [],
+  );
 
   // ==========================================================================
   // Input
@@ -497,6 +571,7 @@ export default function Canvas({
           interaction.current.mode = "erase";
           interaction.current.last = imagePoint;
           onEraseSegment(imagePoint, imagePoint, brushSize);
+          scheduleScene();
           break;
 
         default:
@@ -511,6 +586,7 @@ export default function Canvas({
       onEraseSegment,
       onSelectionChange,
       scale,
+      scheduleScene,
       selection,
       spaceHeld,
       toImagePoint,
@@ -526,8 +602,8 @@ export default function Canvas({
       const viewportPoint = toViewportPoint(event);
       const imagePoint = toImagePoint(viewportPoint);
 
-      setCursor(imagePoint);
-      onCursorMove(imagePoint);
+      cursorRef.current = imagePoint;
+      scheduleOverlay();
 
       switch (interaction.current.mode) {
         case "pan": {
@@ -562,8 +638,11 @@ export default function Canvas({
         }
 
         case "erase": {
+          // The stroke mutates the document canvas directly and repaints here,
+          // so a live stroke costs no React renders at all.
           onEraseSegment(interaction.current.last, imagePoint, brushSize);
           interaction.current.last = imagePoint;
+          scheduleScene();
           break;
         }
 
@@ -574,10 +653,11 @@ export default function Canvas({
     [
       brushSize,
       imageSize,
-      onCursorMove,
       onEraseSegment,
       onSelectionChange,
       panBy,
+      scheduleOverlay,
+      scheduleScene,
       selection,
       toImagePoint,
       toViewportPoint,
@@ -609,9 +689,9 @@ export default function Canvas({
   }, [onEraseEnd, onSelectionChange, selection]);
 
   const handlePointerLeave = useCallback(() => {
-    setCursor(null);
-    onCursorMove(null);
-  }, [onCursorMove]);
+    cursorRef.current = null;
+    scheduleOverlay();
+  }, [scheduleOverlay]);
 
   /** Double click closes an in-progress polygon. */
   const handleDoubleClick = useCallback(() => {
@@ -669,20 +749,21 @@ export default function Canvas({
     };
   }, []);
 
+  // The eraser keeps a real cursor on top of the brush ring: the ring is
+  // painted on an animation frame and so always trails the hardware pointer
+  // slightly, which reads as lag when there is nothing else to look at.
   const cursorStyle =
-    spaceHeld || tool === "hand"
-      ? panning
-        ? "grabbing"
-        : "grab"
-      : tool === "eraser"
-        ? "none"
-        : "crosshair";
+    spaceHeld || tool === "hand" ? (panning ? "grabbing" : "grab") : "crosshair";
 
   return (
     <div
       ref={viewportRef}
-      className="image-editor__viewport"
-      style={{ cursor: cursorStyle }}
+      className="absolute top-0 left-0 w-full h-full overflow-hidden"
+      style={{
+        cursor: cursorStyle,
+        background: "#14161c",
+        touchAction: "none", // pointer events drive pan/zoom, not the browser
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -691,8 +772,8 @@ export default function Canvas({
       onDoubleClick={handleDoubleClick}
       onContextMenu={(event) => event.preventDefault()}
     >
-      <canvas ref={sceneRef} className="image-editor__layer" />
-      <canvas ref={overlayRef} className="image-editor__layer" />
+      <canvas ref={sceneRef} style={LAYER_STYLE} />
+      <canvas ref={overlayRef} style={LAYER_STYLE} />
     </div>
   );
 }

@@ -32,6 +32,22 @@ interface OptionsPanelProps {
 const MIN_EXPONENT = Math.log2(MIN_SCALE);
 const MAX_EXPONENT = Math.log2(MAX_SCALE);
 
+const TITLE_CLASS =
+  "flex align-items-center justify-content-between mb-2 text-xs font-semibold uppercase text-color-secondary";
+const TITLE_STYLE: React.CSSProperties = { letterSpacing: "0.06em" };
+
+const LABEL_CLASS =
+  "flex align-items-center justify-content-between mt-3 mb-2 text-sm";
+const SWITCH_ROW_CLASS =
+  "flex align-items-center justify-content-between mt-3 text-sm";
+const HINT_CLASS = "my-2 text-xs line-height-3 text-color-secondary";
+const VALUE_STYLE: React.CSSProperties = { fontVariantNumeric: "tabular-nums" };
+
+/** Sections are separated by a rule, except whichever one comes first. */
+function sectionClass(withDivider: boolean): string {
+  return withDivider ? "mt-4 pt-3 border-top-1 surface-border" : "";
+}
+
 export default function OptionsPanel({
   tool,
   scale,
@@ -47,16 +63,19 @@ export default function OptionsPanel({
   onClearSelection,
 }: OptionsPanelProps) {
   const isCropTool = tool.startsWith("crop-");
+  const isEraser = tool === "eraser";
   const selectionReady = selection?.committed === true;
 
   return (
-    <div className="image-editor__options">
+    <div className="flex-none p-3 overflow-y-auto">
       {isCropTool && (
-        <section className="image-editor__section">
-          <div className="image-editor__panel-title">Selection</div>
+        <section className={sectionClass(false)}>
+          <div className={TITLE_CLASS} style={TITLE_STYLE}>
+            Selection
+          </div>
 
           {!selection && (
-            <p className="image-editor__hint">
+            <p className={HINT_CLASS}>
               {tool === "crop-rect" && "Drag on the image to select an area."}
               {tool === "crop-lasso" && "Drag to draw a freehand shape."}
               {tool === "crop-polygon" &&
@@ -65,14 +84,14 @@ export default function OptionsPanel({
           )}
 
           {selection?.kind === "rect" && (
-            <p className="image-editor__hint">
+            <p className={HINT_CLASS}>
               {selection.rect.width} x {selection.rect.height} px at{" "}
               {selection.rect.x}, {selection.rect.y}
             </p>
           )}
 
           {selection?.kind === "polygon" && (
-            <p className="image-editor__hint">
+            <p className={HINT_CLASS}>
               {selection.points.length} points
               {selection.committed ? "" : " (still drawing)"}
             </p>
@@ -103,11 +122,16 @@ export default function OptionsPanel({
         </section>
       )}
 
-      {tool === "eraser" && (
-        <section className="image-editor__section">
-          <div className="image-editor__panel-title">Eraser</div>
-          <label className="image-editor__label">
-            Brush size <span>{brushSize} px</span>
+      {isEraser && (
+        <section className={sectionClass(false)}>
+          <div className={TITLE_CLASS} style={TITLE_STYLE}>
+            Eraser
+          </div>
+          <label className={LABEL_CLASS}>
+            Brush size
+            <span className="text-color-secondary" style={VALUE_STYLE}>
+              {brushSize} px
+            </span>
           </label>
           <Slider
             value={brushSize}
@@ -116,17 +140,22 @@ export default function OptionsPanel({
             step={1}
             onChange={(event) => onBrushSizeChange(event.value as number)}
           />
-          <p className="image-editor__hint">
+          <p className={HINT_CLASS}>
             Erased pixels become fully transparent in the exported PNG.
           </p>
         </section>
       )}
 
-      <section className="image-editor__section">
-        <div className="image-editor__panel-title">View</div>
+      <section className={sectionClass(isCropTool || isEraser)}>
+        <div className={TITLE_CLASS} style={TITLE_STYLE}>
+          View
+        </div>
 
-        <label className="image-editor__label">
-          Zoom <span>{Math.round(scale * 100)}%</span>
+        <label className={LABEL_CLASS}>
+          Zoom
+          <span className="text-color-secondary" style={VALUE_STYLE}>
+            {Math.round(scale * 100)}%
+          </span>
         </label>
         <Slider
           value={Math.log2(scale)}
@@ -136,7 +165,7 @@ export default function OptionsPanel({
           onChange={(event) => onScaleChange(2 ** (event.value as number))}
         />
 
-        <div className="image-editor__switch-row">
+        <div className={SWITCH_ROW_CLASS}>
           <span>Pixel grid</span>
           <InputSwitch
             checked={grid.enabled}
@@ -146,8 +175,11 @@ export default function OptionsPanel({
           />
         </div>
 
-        <label className="image-editor__label">
-          Grid opacity <span>{Math.round(grid.opacity * 100)}%</span>
+        <label className={LABEL_CLASS}>
+          Grid opacity
+          <span className="text-color-secondary" style={VALUE_STYLE}>
+            {Math.round(grid.opacity * 100)}%
+          </span>
         </label>
         <Slider
           value={grid.opacity}
@@ -159,11 +191,11 @@ export default function OptionsPanel({
             onGridChange({ ...grid, opacity: event.value as number })
           }
         />
-        <p className="image-editor__hint">
+        <p className={HINT_CLASS}>
           The grid appears once one pixel is at least {grid.minScale}x zoom.
         </p>
 
-        <div className="image-editor__switch-row">
+        <div className={SWITCH_ROW_CLASS}>
           <span>Minimap</span>
           <InputSwitch
             checked={showMinimap}
@@ -172,9 +204,11 @@ export default function OptionsPanel({
         </div>
       </section>
 
-      <section className="image-editor__section">
-        <div className="image-editor__panel-title">Shortcuts</div>
-        <ul className="image-editor__shortcuts">
+      <section className={sectionClass(true)}>
+        <div className={TITLE_CLASS} style={TITLE_STYLE}>
+          Shortcuts
+        </div>
+        <ul className="m-0 pl-3 text-xs line-height-3 text-color-secondary">
           <li>
             <b>Wheel</b> zoom at cursor
           </li>

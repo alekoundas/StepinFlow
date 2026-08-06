@@ -114,7 +114,11 @@ export function useImageCanvas() {
 
   /**
    * Erase (make transparent) along a stroke segment.
-   * Called repeatedly while dragging — no history entry until `endErase`.
+   *
+   * Called for every pointer sample while dragging, so it deliberately does not
+   * touch React state: it mutates the document canvas in place and leaves the
+   * repaint to the viewport (which coalesces to one paint per frame). `endErase`
+   * records the history entry and bumps the revision once the stroke is done.
    */
   const eraseSegment = useCallback(
     (from: Point, to: Point, brushSize: number) => {
@@ -134,17 +138,17 @@ export function useImageCanvas() {
       ctx.lineTo(to.x + 0.5, to.y + 0.5);
       ctx.stroke();
       ctx.restore();
-
-      bumpRevision();
     },
-    [bumpRevision],
+    [],
   );
 
   const endErase = useCallback(() => {
     const canvas = documentRef.current;
     if (!canvas) return;
+
     history.push(canvas, "Erase");
-  }, [history]);
+    bumpRevision(); // refreshes the minimap and anything else reading the image
+  }, [bumpRevision, history]);
 
   // ==========================================================================
   // History
