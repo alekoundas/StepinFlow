@@ -2,7 +2,7 @@ export const CursorScrollDirectionTypeEnum = {
   UP: "UP",
   DOWN: "DOWN",
   LEFT: "LEFT",
-  RIGT: "RIGHT",
+  RIGHT: "RIGHT",
 } as const;
 
 export type CursorScrollDirectionTypeEnum =

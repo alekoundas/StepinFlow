@@ -21,20 +21,32 @@ export function useFlowMutations() {
 
   const createFlowMutation = useMutation({
     mutationFn: (dto: FlowDto) => backendApiService.Flow.create(dto),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
+      // Search area / location usage counts are computed server side.
+      queryClient.invalidateQueries({ queryKey: ["flow"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
+    },
   });
 
   const updateFlowMutation = useMutation({
     mutationFn: (dto: FlowDto) => backendApiService.Flow.update(dto),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
+      // Search area / location usage counts are computed server side.
+      queryClient.invalidateQueries({ queryKey: ["flow"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
+    },
   });
 
   const deleteFlowMutation = useMutation({
     mutationFn: (id: number) => backendApiService.Flow.delete(id),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
+      // Search area / location usage counts are computed server side.
+      queryClient.invalidateQueries({ queryKey: ["flow"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
+    },
   });
 
   return { createFlowMutation, updateFlowMutation, deleteFlowMutation };

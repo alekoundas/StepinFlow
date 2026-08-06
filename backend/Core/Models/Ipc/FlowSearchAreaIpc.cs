@@ -1,4 +1,4 @@
-﻿using Core.Models.Dtos;
+using Core.Models.Dtos;
 using MediatR;
 
 namespace Core.Models.Ipc
@@ -10,6 +10,6 @@ namespace Core.Models.Ipc
 
     // ============== COMMANDS ==============
     public record CreateFlowSearchAreaCommand(FlowSearchAreaDto dto) : IRequest<ResultDto<int>>;
-    public record UpdateFlowSearchAreaCommand(FlowDto dto) : IRequest<ResultDto<FlowSearchAreaDto>>;
+    public record UpdateFlowSearchAreaCommand(FlowSearchAreaDto dto) : IRequest<ResultDto<FlowSearchAreaDto>>;
     public record DeleteFlowSearchAreaCommand(int id) : IRequest<ResultDto<bool>>;
 }

@@ -114,6 +114,35 @@ namespace DataAccess.Migrations
                     b.ToTable("Flows");
                 });
 
+            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FlowId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationX")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationY")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowId");
+
+                    b.ToTable("FlowLocations");
+                });
+
             modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
                 {
                     b.Property<int>("Id")
@@ -147,9 +176,6 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("SubFlowId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
 
@@ -162,8 +188,6 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("Id")
                         .IsUnique();
-
-                    b.HasIndex("SubFlowId");
 
                     b.ToTable("FlowSearchAreas");
                 });
@@ -199,7 +223,16 @@ namespace DataAccess.Migrations
                     b.Property<int?>("FlowId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("FlowLocationEndId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FlowLocationId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("FlowSearchAreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FlowStepReferenceEndId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("FlowStepReferenceId")
@@ -275,18 +308,23 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowId");
+                    b.HasIndex("FlowLocationEndId");
+
+                    b.HasIndex("FlowLocationId");
 
                     b.HasIndex("FlowSearchAreaId");
 
+                    b.HasIndex("FlowStepReferenceEndId");
+
                     b.HasIndex("FlowStepReferenceId");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("ParentFlowStepId");
+                    b.HasIndex("RootId");
 
                     b.HasIndex("SubFlowId");
+
+                    b.HasIndex("FlowId", "OrderNumber");
+
+                    b.HasIndex("ParentFlowStepId", "OrderNumber");
 
                     b.ToTable("FlowSteps");
                 });
@@ -318,6 +356,9 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FlowStepId");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.ToTable("FlowStepImages");
                 });
@@ -368,6 +409,17 @@ namespace DataAccess.Migrations
                     b.Navigation("Execution");
                 });
 
+            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
+                {
+                    b.HasOne("Core.Models.Database.Flow", "Flow")
+                        .WithMany("FlowLocations")
+                        .HasForeignKey("FlowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Flow");
+                });
+
             modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
                 {
                     b.HasOne("Core.Models.Database.Flow", "Flow")
@@ -375,10 +427,6 @@ namespace DataAccess.Migrations
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Core.Models.Database.SubFlow", null)
-                        .WithMany("FlowSearchAreas")
-                        .HasForeignKey("SubFlowId");
 
                     b.Navigation("Flow");
                 });
@@ -390,19 +438,35 @@ namespace DataAccess.Migrations
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Core.Models.Database.FlowLocation", "FlowLocationEnd")
+                        .WithMany("EndFlowSteps")
+                        .HasForeignKey("FlowLocationEndId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Core.Models.Database.FlowLocation", "FlowLocation")
+                        .WithMany("FlowSteps")
+                        .HasForeignKey("FlowLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Core.Models.Database.FlowSearchArea", "FlowSearchArea")
                         .WithMany("FlowSteps")
                         .HasForeignKey("FlowSearchAreaId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Core.Models.Database.FlowStep", "FlowStepReferenceEnd")
+                        .WithMany("FlowStepReferencesEnd")
+                        .HasForeignKey("FlowStepReferenceEndId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Core.Models.Database.FlowStep", "FlowStepReference")
                         .WithMany("FlowStepReferences")
                         .HasForeignKey("FlowStepReferenceId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Core.Models.Database.FlowStep", "ParentFlowStep")
                         .WithMany("ChildrenFlowSteps")
-                        .HasForeignKey("ParentFlowStepId");
+                        .HasForeignKey("ParentFlowStepId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Core.Models.Database.SubFlow", "SubFlow")
                         .WithMany("FlowSteps")
@@ -411,9 +475,15 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Flow");
 
+                    b.Navigation("FlowLocation");
+
+                    b.Navigation("FlowLocationEnd");
+
                     b.Navigation("FlowSearchArea");
 
                     b.Navigation("FlowStepReference");
+
+                    b.Navigation("FlowStepReferenceEnd");
 
                     b.Navigation("ParentFlowStep");
 
@@ -438,7 +508,16 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("Core.Models.Database.Flow", b =>
                 {
+                    b.Navigation("FlowLocations");
+
                     b.Navigation("FlowSearchAreas");
+
+                    b.Navigation("FlowSteps");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
+                {
+                    b.Navigation("EndFlowSteps");
 
                     b.Navigation("FlowSteps");
                 });
@@ -455,12 +534,12 @@ namespace DataAccess.Migrations
                     b.Navigation("FlowStepImages");
 
                     b.Navigation("FlowStepReferences");
+
+                    b.Navigation("FlowStepReferencesEnd");
                 });
 
             modelBuilder.Entity("Core.Models.Database.SubFlow", b =>
                 {
-                    b.Navigation("FlowSearchAreas");
-
                     b.Navigation("FlowSteps");
                 });
 #pragma warning restore 612, 618

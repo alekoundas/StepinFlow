@@ -1,5 +1,3 @@
-import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
 
 export class FlowSearchAreaDto {
@@ -18,9 +16,9 @@ export class FlowSearchAreaDto {
 
   // Flow
   flowId: number = 0;
-  flow: FlowDto = new FlowDto();
 
-  flowSteps: FlowStepDto[] = [];
+  // How many FlowSteps use this search area. Read only, set by the backend.
+  flowStepsCount: number = 0;
 
   constructor(data: Partial<FlowSearchAreaDto> = {}) {
     Object.assign(this, {

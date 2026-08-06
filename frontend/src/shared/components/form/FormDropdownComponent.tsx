@@ -142,12 +142,12 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
           onChange={(e) => handleChange(e.value)}
           onBlur={onBlur}
           options={options}
-          // optionLabel={
-          //   typeof optionLabel === "string" ? optionLabel : undefined
-          // }
-          // optionValue={
-          //   typeof optionValue === "string" ? optionValue : undefined
-          // }
+          optionLabel={
+            typeof optionLabel === "string" ? optionLabel : undefined
+          }
+          optionValue={
+            typeof optionValue === "string" ? optionValue : undefined
+          }
           disabled={isDisabled}
           placeholder={placeholderText}
           className={classNames("w-full", { "p-invalid": invalid })}

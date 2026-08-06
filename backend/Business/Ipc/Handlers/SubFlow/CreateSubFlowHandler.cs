@@ -1,32 +1,35 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
+using DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class CreateSubFlowHandler : IRequestHandler<CreateSubFlowCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
+        private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public CreateSubFlowHandler(IMapper mapper, IDataService dataService)
+        public CreateSubFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _dataService = dataService;
             _mapper = mapper;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<ResultDto<int>> Handle(CreateSubFlowCommand request, CancellationToken ct)
         {
-            SubFlow subFlow = _mapper.Map<SubFlow>(request.dto);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            int count = await _dataService.AddAsync(subFlow);
-            if (count <= 0)
-                return ResultDto<int>.Failure("No changes made to the Database!");
-            else
-                return ResultDto<int>.Success(subFlow.Id);
+            SubFlow subFlow = _mapper.Map<SubFlow>(request.dto);
+            subFlow.Id = 0;
+
+            dbContext.SubFlows.Add(subFlow);
+            await dbContext.SaveChangesAsync(ct);
+
+            return ResultDto<int>.Success(subFlow.Id);
         }
     }
 }

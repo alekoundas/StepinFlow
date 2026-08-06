@@ -1,32 +1,39 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
+using DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class UpdateSubFlowHandler : IRequestHandler<UpdateSubFlowCommand, ResultDto<SubFlowDto>>
     {
         private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
+        private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public UpdateSubFlowHandler(IMapper mapper, IDataService dataService)
+        public UpdateSubFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _dataService = dataService;
             _mapper = mapper;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<ResultDto<SubFlowDto>> Handle(UpdateSubFlowCommand request, CancellationToken ct)
         {
-            SubFlow subFlow = _mapper.Map<SubFlow>(request.dto);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            int count = await _dataService.UpdateAsync(subFlow);
-            if (count <= 0)
-                return ResultDto<SubFlowDto>.Failure("No changes made to the Database!");
+            SubFlow? existingSubFlow = await dbContext.SubFlows
+                .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
-            SubFlowDto subFlowDto = _mapper.Map<SubFlowDto>(subFlow);
+            if (existingSubFlow == null)
+                return ResultDto<SubFlowDto>.Failure("Entity doesnt exist in the Database!");
+
+            dbContext.Entry(existingSubFlow).CurrentValues.SetValues(request.dto);
+
+            await dbContext.SaveChangesAsync(ct);
+
+            SubFlowDto subFlowDto = _mapper.Map<SubFlowDto>(existingSubFlow);
             return ResultDto<SubFlowDto>.Success(subFlowDto);
         }
     }

@@ -15,8 +15,9 @@ import { FlowFormComponent } from "@/features/flow/components/form/FlowFormCompo
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
-import FlowStepCursorClickFormComponent from "@/features/flow-step/components/forms/cusror-click/FlowStepCursorClickFormComponent";
-import FlowStepCursorDragFormComponent from "@/features/flow-step/components/forms/cusror-drag/FlowStepCursorDragFormComponent";
+import FlowStepCursorFormComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormComponent";
+import { CURSOR_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import { isCursorFlowStepType } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 // interface Props {
@@ -132,6 +133,33 @@ export function WorkflowContentComponent() {
   // 2. New FlowStep → ADD form
   if (selectedTreeNode.isNew && selectedFlowStepTypeToAdd) {
     let formElement: ReactNode;
+
+    // All four cursor types share one form, the mode buttons switch flowStepType.
+    if (isCursorFlowStepType(selectedFlowStepTypeToAdd)) {
+      return (
+        <div className=" ">
+          <FlowStepCursorFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: selectedFlowStepTypeToAdd,
+                name: CURSOR_STEP_DEFAULT_NAMES[selectedFlowStepTypeToAdd],
+                isLocationCustom: true,
+                isLocationEndCustom: true,
+              })
+            }
+          />
+        </div>
+      );
+    }
+
     switch (selectedFlowStepTypeToAdd) {
       case FlowStepTypeEnum.WAIT:
         formElement = (
@@ -170,48 +198,6 @@ export function WorkflowContentComponent() {
                 rootId: rootFlowId,
                 flowStepType: "LOOP",
                 name: "Loop",
-              })
-            }
-          />
-        );
-        break;
-
-      case FlowStepTypeEnum.CURSOR_CLICK:
-        formElement = (
-          <FlowStepCursorClickFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "CURSOR_CLICK",
-                name: "Cursor Click",
-              })
-            }
-          />
-        );
-        break;
-
-      case FlowStepTypeEnum.CURSOR_DRAG:
-        formElement = (
-          <FlowStepCursorDragFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "CURSOR_DRAG",
-                name: "Cursor Drag & Drop",
               })
             }
           />
@@ -283,6 +269,20 @@ export function WorkflowContentComponent() {
   const flowStepDto = loadedStep as FlowStepDto;
   let formElement: ReactNode;
 
+  if (isCursorFlowStepType(selectedTreeNode.flowStepType)) {
+    return (
+      <div className=" ">
+        <FlowStepCursorFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
   switch (selectedTreeNode.flowStepType) {
     case FlowStepTypeEnum.WAIT:
       formElement = (
@@ -298,30 +298,6 @@ export function WorkflowContentComponent() {
     case FlowStepTypeEnum.LOOP:
       formElement = (
         <FlowStepLoopFormComponent
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      );
-      break;
-
-    case FlowStepTypeEnum.CURSOR_CLICK:
-      formElement = (
-        <FlowStepCursorClickFormComponent
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      );
-      break;
-
-    case FlowStepTypeEnum.CURSOR_DRAG:
-      formElement = (
-        <FlowStepCursorDragFormComponent
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}

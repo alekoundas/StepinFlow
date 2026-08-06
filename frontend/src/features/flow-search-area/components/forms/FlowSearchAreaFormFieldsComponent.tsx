@@ -9,7 +9,6 @@ import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { Button } from "primereact/button";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
-import LabelComponent from "@/shared/components/LabelComponent";
 
 interface Props {
   isDisabled?: boolean;

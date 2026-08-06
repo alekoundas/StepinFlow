@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -14,7 +13,7 @@ namespace Business.Ipc.Handlers
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetLazySubFlowHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetLazySubFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
@@ -22,8 +21,8 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<LazyResponseDto<SubFlowDto>>> Handle(GetLazySubFlowQuery request, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            List<SubFlow> subFlows = await dbContext.SubFlows.ToListAsync();
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            List<SubFlow> subFlows = await dbContext.SubFlows.AsNoTracking().ToListAsync(ct);
 
             List<SubFlowDto> subFlowDtos = _mapper.Map<List<SubFlowDto>>(subFlows);
             LazyResponseDto<SubFlowDto> dataTableResponseDto = new LazyResponseDto<SubFlowDto>();

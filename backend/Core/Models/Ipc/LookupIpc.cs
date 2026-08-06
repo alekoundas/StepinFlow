@@ -1,4 +1,4 @@
-﻿using Core.Models.Dtos;
+using Core.Models.Dtos;
 using MediatR;
 
 namespace Core.Models.Ipc
@@ -7,6 +7,7 @@ namespace Core.Models.Ipc
     public record GetLookupWindowQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupMonitorQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupFlowStepQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
+    public record GetLookupFlowLocationQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
 
 
     // ============== COMMANDS ==============

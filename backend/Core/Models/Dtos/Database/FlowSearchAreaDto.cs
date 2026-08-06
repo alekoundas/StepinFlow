@@ -1,4 +1,4 @@
-﻿using Core.Enums;
+using Core.Enums;
 
 namespace Core.Models.Dtos
 {
@@ -6,7 +6,7 @@ namespace Core.Models.Dtos
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public FlowSearchAreaTypeEnum Type { get; set; } 
+        public FlowSearchAreaTypeEnum Type { get; set; }
 
 
         public string AppWindowName { get; set; } = string.Empty;
@@ -21,8 +21,8 @@ namespace Core.Models.Dtos
 
         // Flow
         public int FlowId { get; set; }
-        public FlowDto Flow { get; set; } = null!;
 
-        public IEnumerable<FlowStepDto> FlowSteps { get; set; } = [];
+        // How many FlowSteps use this search area. Read only, projected by the query.
+        public int FlowStepsCount { get; set; }
     }
 }

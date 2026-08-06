@@ -38,15 +38,15 @@ export default function FlowSearchAreaFormComponent({
   });
 
   const {
-    formState: { isValid, isDirty, errors },
+    formState: { isValid, isDirty },
   } = form;
 
   return (
     <div>
       <FormHeaderComponent
         formMode={formMode}
-        title="Cursor Drag & Drop Step Configuration"
-        description="Click and hold at a source position, drag to a target position, then release. Coordinates can be the result of an Image Search result."
+        title="Search Area"
+        description="A reusable region of the screen this flow can search in. Pick a captured area, an application window, or a whole monitor."
         onEdit={onEdit}
       />
       {/* 

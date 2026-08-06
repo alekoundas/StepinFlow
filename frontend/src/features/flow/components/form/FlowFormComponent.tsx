@@ -7,6 +7,7 @@ import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFor
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
+import { FlowLocationDataTableComponent } from "@/features/flow-location/components/FlowLocationDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { useEffect } from "react";
@@ -38,12 +39,24 @@ export function FlowFormComponent({
     trigger,
   } = form;
 
-  const { fields, append, remove, update } = useFieldArray<
-    z.infer<typeof FlowSchema>,
-    "flowSearchAreas"
-  >({
+  const {
+    fields: searchAreaFields,
+    append: appendSearchArea,
+    remove: removeSearchArea,
+    update: updateSearchArea,
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowSearchAreas">({
     control,
     name: "flowSearchAreas",
+  });
+
+  const {
+    fields: locationFields,
+    append: appendLocation,
+    remove: removeLocation,
+    update: updateLocation,
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowLocations">({
+    control,
+    name: "flowLocations",
   });
 
   useEffect(() => {
@@ -74,14 +87,30 @@ export function FlowFormComponent({
           className="flex flex-column h-full"
         >
           <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-          <FlowSearchAreaDataTableComponent
-            fields={fields}
-            append={append}
-            remove={remove}
-            update={update}
-            formMode={formMode}
-            isDisabled={formMode === "VIEW"}
-          />
+
+          <div className="grid">
+            <div className="col-12 lg:col-6">
+              <FlowSearchAreaDataTableComponent
+                fields={searchAreaFields}
+                append={appendSearchArea}
+                remove={removeSearchArea}
+                update={updateSearchArea}
+                formMode={formMode}
+                isDisabled={formMode === "VIEW"}
+              />
+            </div>
+
+            <div className="col-12 lg:col-6">
+              <FlowLocationDataTableComponent
+                fields={locationFields}
+                append={appendLocation}
+                remove={removeLocation}
+                update={updateLocation}
+                formMode={formMode}
+                isDisabled={formMode === "VIEW"}
+              />
+            </div>
+          </div>
 
           <FormFooterComponent
             formMode={formMode}

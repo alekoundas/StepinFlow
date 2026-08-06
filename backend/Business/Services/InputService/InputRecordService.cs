@@ -12,25 +12,51 @@ namespace Business.Services.InputService
     {
         // SharpHook
         private readonly IGlobalHook _hook = new TaskPoolGlobalHook();
-        private readonly Channel<RecordedInput> _actionChannel = Channel.CreateUnbounded<RecordedInput>();
 
-        // Make sure only 1 recording is running.
-        private bool _isRecording = false;
+        // Bounded so a recording session with no consumer attached (the overlay only listens to
+        // the broadcast) cannot grow for the lifetime of the process. The newest events are the
+        // only ones that matter, so the oldest are dropped instead of blocking the hook callback.
+        private readonly Channel<RecordedInput> _actionChannel = Channel.CreateBounded<RecordedInput>(
+            new BoundedChannelOptions(4096)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+            });
 
-        // Broadcast events to specific type or no broadcast at all.
-        private BroadcastTypeEnum? _broadcastType = null;
+        // Recording mode. Handlers stay subscribed for the whole process lifetime and gate on this
+        // instead: subscribing and unsubscribing per session drifted out of balance and left
+        // duplicate handlers attached. 0 = not recording.
+        private const int ModeNone = 0;
+        private const int ModeAll = 1;
+        private const int ModeOverlay = 2;
+        private int _recordingMode = ModeNone;
 
-        // Throttling events
-        private DateTime _lastDragBroadcast = DateTime.MinValue;
-        private DateTime _lastMovedBroadcast = DateTime.MinValue;
-        private static readonly TimeSpan DragThrottle = TimeSpan.FromMilliseconds(16);
-        private static readonly TimeSpan MoveThrottle = TimeSpan.FromMilliseconds(16);
+        // Throttling events. Interlocked because TaskPoolGlobalHook dispatches on the thread pool.
+        private long _lastDragBroadcastTicks;
+        private long _lastMovedBroadcastTicks;
+        private static readonly long DragThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
+        private static readonly long MoveThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
 
         private readonly IIpcBroadcastService _broadcastService;
         public InputRecordService(IIpcBroadcastService broadcastService)
         {
             _broadcastService = broadcastService;
+
+            _hook.MouseReleased += OnMouseReleased;
+            _hook.MousePressed += OnMousePressed;
+            _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
+            _hook.MouseMoved += OnMouseMoved;
+            _hook.MouseWheel += OnMouseWheel;
+            _hook.KeyPressed += OnKeyPressed;
+            _hook.KeyReleased += OnKeyReleased;
         }
+
+        // Broadcast events to specific type or no broadcast at all.
+        private BroadcastTypeEnum? BroadcastType =>
+            Volatile.Read(ref _recordingMode) == ModeOverlay ? BroadcastTypeEnum.OVERLAY_MOUSE_EVENT : null;
+
+        private bool IsRecording => Volatile.Read(ref _recordingMode) != ModeNone;
+
 
         // ================================================================
         // Global methods
@@ -60,87 +86,53 @@ namespace Business.Services.InputService
             return _actionChannel.Reader.ReadAllAsync();
         }
 
-        public async Task<bool> StartRecordingAllAsync()
-        {
-            if (_isRecording)
-                return false;
+        public Task<bool> StartRecordingAllAsync() => Task.FromResult(StartRecording(ModeAll));
 
-            _isRecording = true;
-            _broadcastType = null;
+        public Task<bool> StopRecordingAllAsync() => Task.FromResult(StopRecording(ModeAll));
 
-            // Subscribe to the events 
-            _hook.MouseReleased += OnMouseReleased;
-            _hook.MousePressed += OnMousePressed;
-            _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
-            _hook.MouseWheel += OnMouseWheel;
-            _hook.KeyPressed += OnKeyPressed;
-            _hook.KeyReleased += OnKeyReleased;
+        public Task<bool> StartRecordingOverlayAsync() => Task.FromResult(StartRecording(ModeOverlay));
 
-            return true;
-        }
-
-        public async Task<bool> StopRecordingAllAsync()
-        {
-            if (!_isRecording)
-                return false;
-
-            _isRecording = false;
-            _broadcastType = null;
-
-            // Unsubscribe to the events 
-            _hook.MouseReleased -= OnMouseReleased;
-            _hook.MousePressed -= OnMousePressed;
-            _hook.MouseDragged -= OnMouseDragged;
-            _hook.MouseWheel -= OnMouseWheel;
-            _hook.KeyPressed -= OnKeyPressed;
-            _hook.KeyReleased -= OnKeyReleased;
-
-            return true;
-        }
-
-        public async Task<bool> StartRecordingOverlayAsync()
-        {
-            if (_isRecording)
-                return false;
-
-            _isRecording = true;
-            _broadcastType = BroadcastTypeEnum.OVERLAY_MOUSE_EVENT;
-
-            // Subscribe to the events 
-            _hook.MouseReleased += OnMouseReleased;
-            _hook.MousePressed += OnMousePressed;
-            _hook.MouseDragged += OnMouseDragged; // Only captures new cursor location when btn is pressed
-            _hook.KeyPressed += OnKeyPressed;
-            _hook.KeyReleased += OnKeyReleased;
-
-            return true;
-        }
-
-        public async Task<bool> StopRecordingOverlayAsync()
-        {
-            if (!_isRecording)
-                return false;
-
-            _isRecording = false;
-            _broadcastType = null;
-
-            // Subscribe to the events 
-            _hook.MouseReleased -= OnMouseReleased;
-            _hook.MousePressed -= OnMousePressed;
-            _hook.MouseDragged -= OnMouseDragged; // Only captures new cursor location when btn is pressed
-            _hook.KeyPressed -= OnKeyPressed;
-            _hook.KeyReleased -= OnKeyReleased;
-
-
-            return true;
-        }
+        public Task<bool> StopRecordingOverlayAsync() => Task.FromResult(StopRecording(ModeOverlay));
 
 
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Only the mode that started a recording may stop it, so an overlay stop can never leave
+        // an "all" recording half torn down.
+        private bool StartRecording(int mode) =>
+            Interlocked.CompareExchange(ref _recordingMode, mode, ModeNone) == ModeNone;
+
+        private bool StopRecording(int mode) =>
+            Interlocked.CompareExchange(ref _recordingMode, ModeNone, mode) == mode;
+
+        private void Publish(RecordedInput recordedInput)
+        {
+            _actionChannel.Writer.TryWrite(recordedInput);
+
+            BroadcastTypeEnum? broadcastType = BroadcastType;
+            if (broadcastType != null)
+                _broadcastService.SendAsync(broadcastType.Value, recordedInput);
+        }
+
+        // Returns true at most once per throttle window.
+        private static bool TryPassThrottle(ref long lastTicks, long throttleTicks)
+        {
+            long now = DateTime.UtcNow.Ticks;
+            long last = Interlocked.Read(ref lastTicks);
+
+            if (now - last < throttleTicks)
+                return false;
+
+            return Interlocked.CompareExchange(ref lastTicks, now, last) == last;
+        }
+
         private void OnMousePressed(object? sender, MouseHookEventArgs e)
         {
+            if (!IsRecording)
+                return;
+
             CursorButtonTypeEnum? buttonType;
             switch (e.Data.Button)
             {
@@ -170,16 +162,14 @@ namespace Business.Services.InputService
             };
 
             if (buttonType != null)
-            {
-                _actionChannel.Writer.TryWrite(recordedInput);
-
-                if (_broadcastType != null)
-                    _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
-            }
+                Publish(recordedInput);
         }
 
         private void OnMouseReleased(object? sender, MouseHookEventArgs e)
         {
+            if (!IsRecording)
+                return;
+
             CursorButtonTypeEnum? buttonType;
             switch (e.Data.Button)
             {
@@ -209,56 +199,42 @@ namespace Business.Services.InputService
             };
 
             if (buttonType != null)
-            {
-                _actionChannel.Writer.TryWrite(recordedInput);
-
-                if (_broadcastType != null)
-                    _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
-            }
+                Publish(recordedInput);
         }
 
         private void OnMouseDragged(object? sender, MouseHookEventArgs e)
         {
-            // Throttle
-            DateTime now = DateTime.UtcNow;
-            if (now - _lastDragBroadcast < DragThrottle) return; 
-            _lastDragBroadcast = now;
+            if (!IsRecording)
+                return;
 
-            RecordedInput recordedInput = new RecordedInput
+            if (!TryPassThrottle(ref _lastDragBroadcastTicks, DragThrottleTicks))
+                return;
+
+            Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.CURSOR_DRAG,
                 PhysicalX = e.Data.X,
                 PhysicalY = e.Data.Y,
                 CursorButtonType = null,
-            };
-
-
-            _actionChannel.Writer.TryWrite(recordedInput);
-
-            if (_broadcastType != null)
-                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            });
         }
 
         private void OnMouseMoved(object? sender, MouseHookEventArgs e)
         {
-            // Throttle
-            DateTime now = DateTime.UtcNow;
-            if (now - _lastMovedBroadcast < MoveThrottle) return;
-            _lastMovedBroadcast = now;
+            // The overlay only cares about drags, and a free moving cursor fires constantly.
+            if (Volatile.Read(ref _recordingMode) != ModeAll)
+                return;
 
-            RecordedInput recordedInput = new RecordedInput
+            if (!TryPassThrottle(ref _lastMovedBroadcastTicks, MoveThrottleTicks))
+                return;
+
+            Publish(new RecordedInput
             {
-                Type = RecordedInputTypeEnum.CURSOR_DRAG,
+                Type = RecordedInputTypeEnum.CURSOR_MOVE,
                 PhysicalX = e.Data.X,
                 PhysicalY = e.Data.Y,
                 CursorButtonType = null,
-            };
-
-
-            _actionChannel.Writer.TryWrite(recordedInput);
-
-            if (_broadcastType != null)
-                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            });
         }
 
         private void OnMouseWheel(object? sender, MouseWheelHookEventArgs e)
@@ -268,34 +244,30 @@ namespace Business.Services.InputService
 
         private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)
         {
-            RecordedInput recordedInput = new RecordedInput
+            if (!IsRecording)
+                return;
+
+            Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.KEY_DOWN,
                 KeyCode = MapKeyCode(e.Data.KeyCode),
                 KeyChar = e.Data.KeyCode.ToString(),   // SharpHook enum name is already readable
                 //Modifiers = MapModifiers(e.Data.RawModifiers),
-            };
-
-            _actionChannel.Writer.TryWrite(recordedInput);
-
-            if (_broadcastType != null)
-                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            });
         }
 
         private void OnKeyReleased(object? sender, KeyboardHookEventArgs e)
         {
-            RecordedInput recordedInput = new RecordedInput
+            if (!IsRecording)
+                return;
+
+            Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.KEY_UP,
                 KeyCode = MapKeyCode(e.Data.KeyCode),
                 KeyChar = e.Data.KeyCode.ToString(),
                 //Modifiers = MapModifiers(e.Data.RawModifiers),
-            };
-
-            _actionChannel.Writer.TryWrite(recordedInput);
-
-            if (_broadcastType != null)
-                _broadcastService.SendAsync(_broadcastType.Value, recordedInput);
+            });
         }
 
 

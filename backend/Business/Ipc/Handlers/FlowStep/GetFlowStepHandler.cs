@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -14,7 +13,7 @@ namespace Business.Ipc.Handlers
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetFlowStepHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetFlowStepHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
@@ -22,8 +21,10 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<FlowStepDto>> Handle(GetFlowStepQuery request, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            FlowStep? flowStep = await dbContext.FlowSteps.FirstOrDefaultAsync(x => x.Id == request.id);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            FlowStep? flowStep = await dbContext.FlowSteps
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
 
             if (flowStep == null)
                 return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");

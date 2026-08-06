@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -14,7 +13,7 @@ namespace Business.Ipc.Handlers
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetFlowSearchAreaHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetFlowSearchAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
@@ -22,11 +21,14 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<FlowSearchAreaDto>> Handle(GetFlowSearchAreaQuery request, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            FlowSearchArea? flowSearchArea = await dbContext.FlowSearchAreas.FirstOrDefaultAsync(x=>x.Id == request.id);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            FlowSearchArea? flowSearchArea = await dbContext.FlowSearchAreas
+                .AsNoTracking()
+                .Include(x => x.FlowSteps)
+                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
 
             if (flowSearchArea == null)
-            return ResultDto<FlowSearchAreaDto>.Failure("Entity doesnt exist in the Database!");
+                return ResultDto<FlowSearchAreaDto>.Failure("Entity doesnt exist in the Database!");
 
             FlowSearchAreaDto? flowSearchAreaDto = _mapper.Map<FlowSearchAreaDto>(flowSearchArea);
             return ResultDto<FlowSearchAreaDto>.Success(flowSearchAreaDto);
