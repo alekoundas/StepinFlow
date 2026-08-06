@@ -1,30 +1,32 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
-using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
+using DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class DeleteSubFlowHandler : IRequestHandler<DeleteSubFlowCommand, ResultDto<bool>>
     {
-        private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
+        private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public DeleteSubFlowHandler(IMapper mapper, IDataService dataService)
+        public DeleteSubFlowHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _dataService = dataService;
-            _mapper = mapper;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<ResultDto<bool>> Handle(DeleteSubFlowCommand request, CancellationToken ct)
         {
-            int count = await _dataService.DeleteByIdAsync<SubFlow>(request.id);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            int count = await dbContext.SubFlows
+                .Where(x => x.Id == request.id)
+                .ExecuteDeleteAsync(ct);
+
             if (count <= 0)
-                return ResultDto<bool>.Failure("No changes made to the Database!");
-            else
-                return ResultDto<bool>.Success(true);
+                return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
+
+            return ResultDto<bool>.Success(true);
         }
     }
 }

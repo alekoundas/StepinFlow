@@ -8,6 +8,7 @@ import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 
 import FlowSearchAreaFormComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormComponent";
+import { UsageCountTagComponent } from "@/shared/components/UsageCountTagComponent";
 import { Tag } from "primereact/tag";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import type { FlowSchema } from "@/features/flow/components/form/flow.zod";
@@ -85,18 +86,28 @@ export function FlowSearchAreaDataTableComponent({
 
   // Delete by index
   const handleDelete = (index: number) => {
-    if (confirm("Delete this search area?")) {
-      remove(index);
+    const flowSearchArea = fields[index] as unknown as FlowSearchAreaDto;
+
+    if (flowSearchArea.flowStepsCount > 0) {
+      const message =
+        `"${flowSearchArea.name}" is used by ${flowSearchArea.flowStepsCount} step(s). ` +
+        `Deleting it clears their search area. Continue?`;
+      if (!confirm(message)) return;
+    } else if (!confirm("Delete this search area?")) {
+      return;
     }
+
+    remove(index);
   };
 
   //  Columns
   const columns: DataTableColumnDto<FlowSearchAreaDto>[] = [
     { field: "name", header: "Name", sortable: true },
     {
-      field: "flowSearchAreaType",
+      field: "type",
       header: "Type",
-      // body: (row: FlowSearchAreaDto) => row.flowSearchAreaType,
+      sortable: true,
+      body: (row: FlowSearchAreaDto) => typeBodyTemplate(row),
     },
     {
       field: "details",
@@ -115,9 +126,12 @@ export function FlowSearchAreaDataTableComponent({
       },
     },
     {
-      field: "details2",
-      header: "Details22",
-      body: (row: FlowSearchAreaDto) => typeBodyTemplate(row),
+      field: "flowStepsCount",
+      header: "Used By",
+      sortable: true,
+      body: (row: FlowSearchAreaDto) => (
+        <UsageCountTagComponent count={row.flowStepsCount} />
+      ),
     },
     {
       field: "actions",
@@ -135,14 +149,15 @@ export function FlowSearchAreaDataTableComponent({
     },
   ];
 
+  // Read the stored type instead of guessing from which field happens to be filled in.
   const typeBodyTemplate = (rowData: FlowSearchAreaDto) => {
     let label = "Custom Area";
     let severity: "success" | "info" | "warning" = "info";
 
-    if (rowData.appWindowName) {
+    if (rowData.type === "APPLICATION") {
       label = "Application";
       severity = "success";
-    } else if (rowData.monitorUniqueId) {
+    } else if (rowData.type === "MONITOR") {
       label = "Monitor";
       severity = "warning";
     }

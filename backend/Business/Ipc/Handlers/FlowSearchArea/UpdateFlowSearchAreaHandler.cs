@@ -1,32 +1,39 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
+using DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class UpdateFlowSearchAreaHandler : IRequestHandler<UpdateFlowSearchAreaCommand, ResultDto<FlowSearchAreaDto>>
     {
         private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
+        private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public UpdateFlowSearchAreaHandler(IMapper mapper, IDataService dataService)
+        public UpdateFlowSearchAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _dataService = dataService;
             _mapper = mapper;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<ResultDto<FlowSearchAreaDto>> Handle(UpdateFlowSearchAreaCommand request, CancellationToken ct)
         {
-            FlowSearchArea flowSearchArea = _mapper.Map<FlowSearchArea>(request.dto);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            int count = await _dataService.UpdateAsync(flowSearchArea);
-            if (count <= 0)
-                return ResultDto<FlowSearchAreaDto>.Failure("No changes made to the Database!");
+            FlowSearchArea? existingFlowSearchArea = await dbContext.FlowSearchAreas
+                .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
-            FlowSearchAreaDto flowSearchAreaDto = _mapper.Map<FlowSearchAreaDto>(flowSearchArea);
+            if (existingFlowSearchArea == null)
+                return ResultDto<FlowSearchAreaDto>.Failure("Entity doesnt exist in the Database!");
+
+            dbContext.Entry(existingFlowSearchArea).CurrentValues.SetValues(request.dto);
+
+            await dbContext.SaveChangesAsync(ct);
+
+            FlowSearchAreaDto flowSearchAreaDto = _mapper.Map<FlowSearchAreaDto>(existingFlowSearchArea);
             return ResultDto<FlowSearchAreaDto>.Success(flowSearchAreaDto);
         }
     }

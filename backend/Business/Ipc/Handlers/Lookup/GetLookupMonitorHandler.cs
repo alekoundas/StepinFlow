@@ -1,25 +1,12 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
 using Business.Helpers;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
-using DataAccess;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class GetLookupMonitorHandler : IRequestHandler<GetLookupMonitorQuery, ResultDto<LookupResponseDto>>
     {
-        private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
-
-        public GetLookupMonitorHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
-        {
-            _mapper = mapper;
-            _dbContextFactory = dbContextFactory;
-        }
-
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupMonitorQuery request, CancellationToken ct)
         {
             List<LookupItemDto> items = ScreenHelper.GetAllMonitors().Select(monitor =>
@@ -39,7 +26,7 @@ namespace Business.Ipc.Handlers
                     }
                 }).ToList();
 
-            LookupResponseDto response = new LookupResponseDto { Data = items };
+            LookupResponseDto response = new LookupResponseDto { Data = items, TotalRecords = items.Count };
             return ResultDto<LookupResponseDto>.Success(response);
         }
     }

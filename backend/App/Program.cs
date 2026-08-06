@@ -1,6 +1,5 @@
 ﻿using App.AutoMapper;
 using App.Ipc;
-using Business.DataService.Services;
 using Business.Ipc.Handlers;
 using Business.Services.InputService;
 using Business.Services.ScreenshotService;
@@ -24,9 +23,8 @@ namespace App
             builder.Logging.AddConsole();
 
 
-            // DB context factory and Data service.
+            // DB context factory. Handlers own their DbContext and their own write statements.
             builder.Services.AddCustomDbContextFactory();
-            builder.Services.AddSingleton<IDataService, DataService>();
 
 
             // Services

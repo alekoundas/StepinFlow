@@ -29,9 +29,16 @@ namespace Business.Services.ScreenshotService
         //==================================================
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern int GetWindowText(IntPtr hWnd, [Out] char[] lpString, int nMaxCount);
-        private static readonly char[] _titleBuffer = new char[512]; // reuse buffer to reduce allocations
+
+        // Reuse buffer to reduce allocations. ThreadStatic because MediatR runs handlers on the
+        // thread pool: a shared buffer lets two concurrent lookups read each other's titles.
+        [ThreadStatic]
+        private static char[]? _titleBuffer;
+
         private static string GetAppWindowText(IntPtr hWnd)
         {
+            _titleBuffer ??= new char[512];
+
             int length = GetWindowText(hWnd, _titleBuffer, _titleBuffer.Length);
             return new string(_titleBuffer, 0, length);
         }
@@ -93,8 +100,15 @@ namespace Business.Services.ScreenshotService
             }, IntPtr.Zero);
 
 
+            // No match: GetWindowRect on a null handle fails and leaves rect uninitialised, which
+            // would otherwise be handed back as a perfectly plausible looking search area.
+            if (foundHwnd == IntPtr.Zero)
+                return Rectangle.Empty;
+
             RECT rect = new RECT();
-            GetWindowRect(foundHwnd, ref rect);
+            if (!GetWindowRect(foundHwnd, ref rect))
+                return Rectangle.Empty;
+
             return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
 

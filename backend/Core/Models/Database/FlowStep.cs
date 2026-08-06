@@ -1,4 +1,4 @@
-﻿using Core.Enums;
+using Core.Enums;
 using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
@@ -10,6 +10,8 @@ namespace Core.Models.Database
         public int OrderNumber { get; set; }
 
 
+        // WINDOW_RELOCATE, WINDOW_RESIZE
+        // Cursor steps never store raw coordinates, they go through FlowLocation or a step result.
         public int LocationX { get; set; }
         public int LocationY { get; set; }
         public int LocationEndX { get; set; }
@@ -20,7 +22,7 @@ namespace Core.Models.Database
         public int WaitForMilliseconds { get; set; }
 
 
-        // LOOP
+        // LOOP, CURSOR_SCROLL (scroll notch count)
         public int LoopCount { get; set; }
         public bool IsLoopInfinite { get; set; }
 
@@ -46,6 +48,11 @@ namespace Core.Models.Database
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
+        //
+        // Point source per point:
+        //   IsLocationCustom = true  -> FlowLocationId          (reusable named point on the Flow)
+        //   IsLocationCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
+        // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
         public bool IsLocationCustom { get; set; }
         public bool IsLocationEndCustom { get; set; }
         public CursorActionTypeEnum? CursorActionType { get; set; }
@@ -59,7 +66,7 @@ namespace Core.Models.Database
         // Keep the root Flow or SubFlow id for easier and faster queries
         public int RootId { get; set; }
 
-        // Flow 
+        // Flow
         public int? FlowId { get; set; }
         public Flow? Flow { get; set; }
 
@@ -74,17 +81,29 @@ namespace Core.Models.Database
         public FlowSearchArea? FlowSearchArea { get; set; }
 
 
+        // FlowLocation (start / end point)
+        public int? FlowLocationId { get; set; }
+        public FlowLocation? FlowLocation { get; set; }
+
+        public int? FlowLocationEndId { get; set; }
+        public FlowLocation? FlowLocationEnd { get; set; }
+
+
         // Parent FlowStep
         public int? ParentFlowStepId { get; set; }
         public FlowStep? ParentFlowStep { get; set; }
 
 
-        // General FlowStep reference for multiple types
+        // General FlowStep reference for multiple types (start / end point)
         public int? FlowStepReferenceId { get; set; }
         public FlowStep? FlowStepReference { get; set; }
 
+        public int? FlowStepReferenceEndId { get; set; }
+        public FlowStep? FlowStepReferenceEnd { get; set; }
+
         public IEnumerable<FlowStep> ChildrenFlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStep> FlowStepReferences { get; set; } = new Collection<FlowStep>();
+        public IEnumerable<FlowStep> FlowStepReferencesEnd { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStepImage> FlowStepImages { get; set; } = new Collection<FlowStepImage>();
     }
 }

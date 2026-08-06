@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {
@@ -8,6 +8,5 @@ namespace Core.Models.Database
         public int OrderNumber { get; set; }
 
         public virtual IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
-        public virtual IEnumerable<FlowSearchArea> FlowSearchAreas { get; set; } = new Collection<FlowSearchArea>();
     }
 }

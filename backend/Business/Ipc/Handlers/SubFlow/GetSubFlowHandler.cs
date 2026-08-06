@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -14,7 +13,7 @@ namespace Business.Ipc.Handlers
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetSubFlowHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetSubFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
@@ -22,11 +21,13 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<SubFlowDto>> Handle(GetSubFlowQuery request, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
-            SubFlow? subFlow = await dbContext.SubFlows.FirstOrDefaultAsync(x=>x.Id == request.id);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            SubFlow? subFlow = await dbContext.SubFlows
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
 
             if (subFlow == null)
-            return ResultDto<SubFlowDto>.Failure("Entity doesnt exist in the Database!");
+                return ResultDto<SubFlowDto>.Failure("Entity doesnt exist in the Database!");
 
             SubFlowDto? subFlowDto = _mapper.Map<SubFlowDto>(subFlow);
             return ResultDto<SubFlowDto>.Success(subFlowDto);

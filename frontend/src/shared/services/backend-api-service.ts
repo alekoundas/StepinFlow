@@ -6,18 +6,20 @@ import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
+import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 
 export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
 
   Flow: {
     create: (dto: FlowDto) => call<number>("Flow.create", dto),
-    update: (dto: FlowDto) => call<{ newId: number }>("Flow.update", dto),
-    delete: (id: number) => call<{ success: boolean }>("Flow.delete", id),
+    update: (dto: FlowDto) => call<FlowDto>("Flow.update", dto),
+    delete: (id: number) => call<boolean>("Flow.delete", id),
 
     get: (id: number) => call<FlowDto>("Flow.get", id),
     getLazy: (dto: LazyDto) =>
@@ -27,9 +29,8 @@ export const backendApiService = {
 
   FlowStep: {
     create: (dto: FlowStepDto) => call<number>("FlowStep.create", dto),
-    update: (dto: FlowStepDto) =>
-      call<{ newId: number }>("FlowStep.update", dto),
-    delete: (id: number) => call<{ success: boolean }>("FlowStep.delete", id),
+    update: (dto: FlowStepDto) => call<FlowStepDto>("FlowStep.update", dto),
+    delete: (id: number) => call<boolean>("FlowStep.delete", id),
 
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
     getDataTable: (dto: LazyDto) =>
@@ -41,8 +42,6 @@ export const backendApiService = {
   FlowStepImage: {
     create: (dto: FlowStepImageDto) =>
       call<number>("FlowStepImage.create", dto),
-    update: (dto: FlowStepImageDto) =>
-      call<{ newId: number }>("FlowStepImage.update", dto),
     get: (id: number) => call<FlowStepImageDto>("FlowStepImage.get", id),
   },
 
@@ -50,13 +49,25 @@ export const backendApiService = {
     create: (dto: FlowSearchAreaDto) =>
       call<number>("FlowSearchArea.create", dto),
     update: (dto: FlowSearchAreaDto) =>
-      call<{ newId: number }>("FlowSearchArea.update", dto),
+      call<FlowSearchAreaDto>("FlowSearchArea.update", dto),
+    delete: (id: number) => call<boolean>("FlowSearchArea.delete", id),
     get: (id: number) => call<FlowSearchAreaDto>("FlowSearchArea.get", id),
+    getLazy: (dto: LazyDto) =>
+      call<LazyResponseDto<FlowSearchAreaDto>>("FlowSearchArea.getLazy", dto),
+  },
+
+  FlowLocation: {
+    create: (dto: FlowLocationDto) => call<number>("FlowLocation.create", dto),
+    update: (dto: FlowLocationDto) =>
+      call<FlowLocationDto>("FlowLocation.update", dto),
+    delete: (id: number) => call<boolean>("FlowLocation.delete", id),
+    get: (id: number) => call<FlowLocationDto>("FlowLocation.get", id),
   },
 
   SubFlow: {
     create: (dto: SubFlowDto) => call<number>("SubFlow.create", dto),
-    update: (dto: SubFlowDto) => call<{ newId: number }>("SubFlow.update", dto),
+    update: (dto: SubFlowDto) => call<SubFlowDto>("SubFlow.update", dto),
+    delete: (id: number) => call<boolean>("SubFlow.delete", id),
     get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
   },
 
@@ -65,12 +76,18 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.window", dto),
     monitor: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.monitor", dto),
+    flowStep: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.flowStep", dto),
+    flowLocation: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.flowLocation", dto),
   },
 
   System: {
     // .Net returns byte[], which arrives here as a base64 string
     takeScreenshot: (dto: ScreenshotRequestDto) =>
       call<string>("System.takeScreenshot", dto),
+    moveCursor: (dto: ScreenPointDto) =>
+      call<boolean>("System.moveCursor", dto),
     inputRecordOverlayStart: () =>
       call<boolean>("System.inputRecordOverlayStart"),
     inputRecordOverlayStop: () =>
@@ -88,16 +105,13 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
     payload,
   };
 
-  try {
-    const resultDto = await window.electronApi.backendApi.invoke<T>(msg);
-    if (resultDto.isSuccess && resultDto.data) {
-      return resultDto.data;
-    }
+  const resultDto = await window.electronApi.backendApi.invoke<T>(msg);
 
-    console.error(`Backend call failed [${action}]`);
-    console.error(resultDto?.errorMessage);
-    throw "Backend call failed [${action}]";
-  } catch (err: any) {
-    throw err;
+  // Only null/undefined mean "no payload". A legitimate 0, false or "" is a value.
+  if (!resultDto.isSuccess || resultDto.data === undefined || resultDto.data === null) {
+    console.error(`Backend call failed [${action}]`, resultDto?.errorMessage);
+    throw new Error(resultDto?.errorMessage ?? `Backend call failed [${action}]`);
   }
+
+  return resultDto.data;
 }

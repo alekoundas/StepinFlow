@@ -1,32 +1,35 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
+using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
+using DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
     public class CreateFlowSearchAreaHandler : IRequestHandler<CreateFlowSearchAreaCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
-        private readonly IDataService _dataService;
+        private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public CreateFlowSearchAreaHandler(IMapper mapper, IDataService dataService)
+        public CreateFlowSearchAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _dataService = dataService;
             _mapper = mapper;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<ResultDto<int>> Handle(CreateFlowSearchAreaCommand request, CancellationToken ct)
         {
-            FlowSearchArea flowSearchArea = _mapper.Map<FlowSearchArea>(request.dto);
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            int count = await _dataService.AddAsync(flowSearchArea);
-            if (count <= 0)
-                return ResultDto<int>.Failure("No changes made to the Database!");
-            else
-                return ResultDto<int>.Success(flowSearchArea.Id);
+            FlowSearchArea flowSearchArea = _mapper.Map<FlowSearchArea>(request.dto);
+            flowSearchArea.Id = 0;
+
+            dbContext.FlowSearchAreas.Add(flowSearchArea);
+            await dbContext.SaveChangesAsync(ct);
+
+            return ResultDto<int>.Success(flowSearchArea.Id);
         }
     }
 }

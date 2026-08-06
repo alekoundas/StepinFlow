@@ -47,28 +47,42 @@ namespace App.Ipc
                     "FlowStep.update" => await _mediator.Send(new UpdateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowStep.getLazy" => await _mediator.Send(new GetLazyStepFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowSearchArea
                     "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowSearchArea.update" => await _mediator.Send(new UpdateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowSearchArea.delete" => await _mediator.Send(new DeleteFlowSearchAreaCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowSearchArea.get" => await _mediator.Send(new GetFlowSearchAreaQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowSearchArea.getLazy" => await _mediator.Send(new GetLazyFlowSearchAreaQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
 
-                    // FlowStepImage 
+                    // FlowLocation
+                    "FlowLocation.create" => await _mediator.Send(new CreateFlowLocationCommand(JsonSerializer.Deserialize<FlowLocationDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowLocation.update" => await _mediator.Send(new UpdateFlowLocationCommand(JsonSerializer.Deserialize<FlowLocationDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowLocation.delete" => await _mediator.Send(new DeleteFlowLocationCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowLocation.get" => await _mediator.Send(new GetFlowLocationQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+
+                    // FlowStepImage
                     "FlowStepImage.create" => await _mediator.Send(new CreateFlowStepImageCommand(JsonSerializer.Deserialize<FlowStepImageDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStepImage.get" => await _mediator.Send(new GetFlowStepImageQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // SubFlow
                     "SubFlow.create" => await _mediator.Send(new CreateSubFlowCommand(JsonSerializer.Deserialize<SubFlowDto>(request.Payload, _jsonOptions)!), ct),
+                    "SubFlow.update" => await _mediator.Send(new UpdateSubFlowCommand(JsonSerializer.Deserialize<SubFlowDto>(request.Payload, _jsonOptions)!), ct),
+                    "SubFlow.delete" => await _mediator.Send(new DeleteSubFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "SubFlow.get" => await _mediator.Send(new GetSubFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // Lookups
                     "Lookup.window" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.monitor" => await _mediator.Send(new GetLookupMonitorQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowStep" => await _mediator.Send(new GetLookupFlowStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.flowLocation" => await _mediator.Send(new GetLookupFlowLocationQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
 
                     // System IO
                     "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "System.captureForOverlay" => await _mediator.Send(new SystemCaptureForOverlayCommand(), ct),
+                    "System.moveCursor" => await _mediator.Send(new SystemMoveCursorCommand(JsonSerializer.Deserialize<ScreenPointDto>(request.Payload, _jsonOptions)!), ct),
 
                     "System.inputRecordAllStart" => await _mediator.Send(new SystemInputRecordAllStartCommand(), ct),
                     "System.inputRecordAllStop" => await _mediator.Send(new SystemInputRecordAllStopCommand(), ct),

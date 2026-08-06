@@ -1,5 +1,3 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using DataAccess;
@@ -10,12 +8,10 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowTreeNodeHandler : IRequestHandler<GetFlowTreeNodeQuery, ResultDto<IEnumerable<TreeNodeDto>>>
     {
-        private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetFlowTreeNodeHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetFlowTreeNodeHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _mapper = mapper;
             _dbContextFactory = dbContextFactory;
         }
 
@@ -33,7 +29,7 @@ namespace Business.Ipc.Handlers
                     Draggable = false,
                     Selectable = true,
                     Leaf = false,
-                    
+
                     Name = x.Name,
                     flowStepType = null,
                     OrderNumber = x.OrderNumber,

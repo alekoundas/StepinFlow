@@ -8,6 +8,7 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 
 export class FlowStepDto {
@@ -17,7 +18,7 @@ export class FlowStepDto {
   flowStepType: FlowStepTypeEnum = FlowStepTypeEnum.FAILURE;
   orderNumber: number = -1;
 
-  // Location
+  // WINDOW_RELOCATE, WINDOW_RESIZE
   locationX: number = 0;
   locationY: number = 0;
   locationEndX: number = 0;
@@ -26,7 +27,7 @@ export class FlowStepDto {
   // WAIT
   waitForMilliseconds: number = 0;
 
-  // LOOP
+  // LOOP, CURSOR_SCROLL (scroll notch count)
   loopCount: number = 0;
   isLoopInfinite: boolean = false;
 
@@ -47,6 +48,10 @@ export class FlowStepDto {
   keyboardInputType?: KeyboardInputTypeEnum;
 
   // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
+  //
+  // Point source per point:
+  //   isLocationCustom = true  -> flowLocationId       (reusable named point on the Flow)
+  //   isLocationCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
   isLocationCustom: boolean = false;
   isLocationEndCustom: boolean = false;
   cursorActionType?: CursorActionTypeEnum;
@@ -68,17 +73,28 @@ export class FlowStepDto {
   flowSearchAreaId?: number;
   flowSearchArea?: FlowSearchAreaDto;
 
+  // FlowLocation (start / end point)
+  flowLocationId?: number;
+  flowLocation?: FlowLocationDto;
+
+  flowLocationEndId?: number;
+  flowLocationEnd?: FlowLocationDto;
+
   // Parent FlowStep
   parentFlowStepId?: number;
   parentFlowStep?: FlowStepDto;
 
-  // General FlowStep reference for multiple types
+  // General FlowStep reference for multiple types (start / end point)
   flowStepReferenceId?: number;
   flowStepReference?: FlowStepDto;
+
+  flowStepReferenceEndId?: number;
+  flowStepReferenceEnd?: FlowStepDto;
 
   // Navigation collections
   childrenFlowSteps: FlowStepDto[] = [];
   flowStepReferences: FlowStepDto[] = [];
+  flowStepReferencesEnd: FlowStepDto[] = [];
   flowStepImages: FlowStepImageDto[] = [];
 
   constructor(data: Partial<FlowStepDto> = {}) {

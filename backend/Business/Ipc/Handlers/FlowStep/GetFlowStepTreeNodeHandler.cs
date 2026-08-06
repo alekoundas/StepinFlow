@@ -1,5 +1,3 @@
-﻿using AutoMapper;
-using Business.DataService.Services;
 using Core.Enums;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -11,12 +9,10 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowStepTreeNodeHandler : IRequestHandler<GetFlowStepTreeNodeQuery, ResultDto<IEnumerable<TreeNodeDto>>>
     {
-        private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetFlowStepTreeNodeHandler(IMapper mapper, IDataService dataService, IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetFlowStepTreeNodeHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _mapper = mapper;
             _dbContextFactory = dbContextFactory;
         }
 
@@ -24,9 +20,11 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
+            // request.id is a FlowStep id, so only ParentFlowStepId may be matched against it.
+            // Matching FlowId too would adopt the root steps of the Flow that happens to share the id.
             List<TreeNodeDto> children = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.FlowId == request.id || x.ParentFlowStepId == request.id)
+                .Where(x => x.ParentFlowStepId == request.id)
                 .OrderBy(x => x.OrderNumber)
                 .Select(x => new TreeNodeDto
                 {

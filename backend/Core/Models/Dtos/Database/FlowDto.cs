@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 
 namespace Core.Models.Dtos
 {
@@ -10,5 +10,6 @@ namespace Core.Models.Dtos
 
         public IEnumerable<FlowStepDto> FlowSteps { get; set; } = new Collection<FlowStepDto>();
         public IEnumerable<FlowSearchAreaDto> FlowSearchAreas { get; set; } = new Collection<FlowSearchAreaDto>();
+        public IEnumerable<FlowLocationDto> FlowLocations { get; set; } = new Collection<FlowLocationDto>();
     }
 }
