@@ -1,8 +1,8 @@
 export const CursorActionTypeEnum = {
-  SINGLE_CLICK: "SINGLE_CLICK",
-  DOUBLE_CLICK: "DOUBLE_CLICK",
-  HOLD_CLICK: "HOLD_CLICK",
-  RELEASE_CLICK: "RELEASE_CLICK",
+  CLICK: "CLICK",
+  MOVE: "MOVE",
+  SCROLL: "SCROLL",
+  DRAG: "DRAG",
 } as const;
 
 export type CursorActionTypeEnum =

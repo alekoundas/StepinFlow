@@ -50,6 +50,7 @@ export class FlowStepDto {
   isLocationCustom: boolean = false;
   isLocationEndCustom: boolean = false;
   cursorActionType?: CursorActionTypeEnum;
+  cursorButtonActionType?: CursorActionTypeEnum;
   cursorButtonType?: CursorButtonTypeEnum;
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;
 

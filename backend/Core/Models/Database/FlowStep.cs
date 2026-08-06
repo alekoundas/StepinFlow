@@ -21,7 +21,7 @@ namespace Core.Models.Database
 
 
         // LOOP
-        public int LoopCount { get; set; }
+        public int LoopCount { get; set; } //CURSOR_SCROLL
         public bool IsLoopInfinite { get; set; }
 
 
@@ -48,7 +48,8 @@ namespace Core.Models.Database
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
         public bool IsLocationCustom { get; set; }
         public bool IsLocationEndCustom { get; set; }
-        public CursorActionTypeEnum? CursorActionType { get; set; }
+        public CursorTypeEnum? CursorType { get; set; }
+        public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
 

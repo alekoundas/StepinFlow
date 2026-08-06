@@ -1,10 +1,10 @@
 ﻿namespace Core.Enums
 {
-    public enum CursorActionTypeEnum
+    public enum CursorTypeEnum
     {
-        SINGLE_CLICK,
-        DOUBLE_CLICK,
-        HOLD_CLICK,
-        RELEASE_CLICK,
+        CLICK,
+        MOVE,
+        SCROLL,
+        DRAG,
     }
 }
