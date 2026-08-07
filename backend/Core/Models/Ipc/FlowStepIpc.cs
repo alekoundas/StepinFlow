@@ -9,10 +9,12 @@ namespace Core.Models.Ipc
     public record GetFlowStepQuery(int id) : IRequest<ResultDto<FlowStepDto>>;
     public record GetFlowStepTreeNodeQuery(TreeNodeRequestDto dto) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
+    public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
 
 
     // ============== COMMANDS ==============
     public record CreateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<int>>;
     public record UpdateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<FlowStepDto>>;
     public record DeleteFlowStepCommand(int id) : IRequest<ResultDto<bool>>;
+    public record MoveFlowStepCommand(FlowStepMoveDto dto) : IRequest<ResultDto<bool>>;
 }

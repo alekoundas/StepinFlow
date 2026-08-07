@@ -4,6 +4,10 @@ import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
+import type {
+  FlowStepMoveDto,
+  FlowStepMovePreviewDto,
+} from "@/shared/models/flow-step-move.dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
@@ -38,6 +42,9 @@ export const backendApiService = {
       call<LazyResponseDto<FlowStepDto>>("FlowStep.getLazy", dto),
     getTreeNodes: (dto: TreeNodeRequestDto) =>
       call<TreeNodeDto[]>("FlowStep.getTreeNodes", dto),
+    getMovePreview: (dto: FlowStepMoveDto) =>
+      call<FlowStepMovePreviewDto>("FlowStep.getMovePreview", dto),
+    move: (dto: FlowStepMoveDto) => call<boolean>("FlowStep.move", dto),
   },
 
   FlowStepImage: {
