@@ -5,5 +5,6 @@
         LOG,
         HEALTH,
         OVERLAY_MOUSE_EVENT,
+        POINT_CAPTURE_EVENT,
     }
 }

@@ -24,7 +24,7 @@ namespace Business.Ipc.Handlers
                 .OrderBy(x => x.OrderNumber)
                 .Select(x => new TreeNodeDto
                 {
-                    Key = x.Id.ToString(),
+                    EntityId = x.Id,
                     Droppable = true,
                     Draggable = false,
                     Selectable = true,
@@ -40,6 +40,9 @@ namespace Business.Ipc.Handlers
                     ParentFlowStepId = null,
                 })
                 .ToListAsync(ct);
+
+            foreach (TreeNodeDto child in children)
+                child.Key = TreeNodeDto.BuildKey(child.EntityId, isFlow: true);
 
             return ResultDto<IEnumerable<TreeNodeDto>>.Success(children);
         }

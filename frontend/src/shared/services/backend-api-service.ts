@@ -3,6 +3,7 @@ import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dt
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
@@ -35,8 +36,8 @@ export const backendApiService = {
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
     getDataTable: (dto: LazyDto) =>
       call<LazyResponseDto<FlowStepDto>>("FlowStep.getLazy", dto),
-    getTreeNodes: (id: number) =>
-      call<TreeNodeDto[]>("FlowStep.getTreeNodes", id),
+    getTreeNodes: (dto: TreeNodeRequestDto) =>
+      call<TreeNodeDto[]>("FlowStep.getTreeNodes", dto),
   },
 
   FlowStepImage: {
@@ -92,6 +93,10 @@ export const backendApiService = {
       call<boolean>("System.inputRecordOverlayStart"),
     inputRecordOverlayStop: () =>
       call<boolean>("System.inputRecordOverlayStop"),
+    inputRecordPointCaptureStart: () =>
+      call<boolean>("System.inputRecordPointCaptureStart"),
+    inputRecordPointCaptureStop: () =>
+      call<boolean>("System.inputRecordPointCaptureStop"),
   },
 
   OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {

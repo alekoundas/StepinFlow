@@ -68,6 +68,7 @@ export interface RecordedInput {
 
 export const BroadcastTypeEnum = {
   OVERLAY_MOUSE_EVENT: "OVERLAY_MOUSE_EVENT",
+  POINT_CAPTURE_EVENT: "POINT_CAPTURE_EVENT",
   LOG: "LOG",
 } as const;
 export type BroadcastTypeEnum =

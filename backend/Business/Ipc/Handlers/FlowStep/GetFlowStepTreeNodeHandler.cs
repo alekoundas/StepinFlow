@@ -20,15 +20,20 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            // request.id is a FlowStep id, so only ParentFlowStepId may be matched against it.
-            // Matching FlowId too would adopt the root steps of the Flow that happens to share the id.
-            List<TreeNodeDto> children = await dbContext.FlowSteps
+            // Expanding the Flow node asks for its root steps, expanding a FlowStep asks for its
+            // children. Both arrive here, so the caller says which one it is: matching the id
+            // against both columns would let a FlowStep adopt the root steps of the Flow that
+            // happens to share its id.
+            IQueryable<Core.Models.Database.FlowStep> query = request.dto.IsFlow
+                ? dbContext.FlowSteps.Where(x => x.FlowId == request.dto.Id && x.ParentFlowStepId == null)
+                : dbContext.FlowSteps.Where(x => x.ParentFlowStepId == request.dto.Id);
+
+            List<TreeNodeDto> children = await query
                 .AsNoTracking()
-                .Where(x => x.ParentFlowStepId == request.id)
                 .OrderBy(x => x.OrderNumber)
                 .Select(x => new TreeNodeDto
                 {
-                    Key = x.Id.ToString(),
+                    EntityId = x.Id,
                     Droppable = x.FlowStepType == FlowStepTypeEnum.FAILURE
                         || x.FlowStepType == FlowStepTypeEnum.SUCCESS
                         || x.FlowStepType == FlowStepTypeEnum.LOOP,
@@ -49,6 +54,9 @@ namespace Business.Ipc.Handlers
                     ParentFlowStepId = x.ParentFlowStepId,
                 })
                 .ToListAsync(ct);
+
+            foreach (TreeNodeDto child in children)
+                child.Key = TreeNodeDto.BuildKey(child.EntityId, isFlow: false);
 
             return ResultDto<IEnumerable<TreeNodeDto>>.Success(children);
         }

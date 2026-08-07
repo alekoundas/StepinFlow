@@ -1,7 +1,7 @@
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
+import { useCapturePoint } from "@/features/flow-location/hooks/use-capture-point";
 import { Button } from "primereact/button";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -17,19 +17,19 @@ export default function FlowLocationFormFieldsComponent({
   const locationX = useWatch({ control, name: "locationX" });
   const locationY = useWatch({ control, name: "locationY" });
 
-  const { openWindow, isWindowOpen } = useWindowOverlay();
+  const { capturePoint, cancelCapture, isCapturing } = useCapturePoint();
 
-  // The overlay hands back a rectangle, so the point is its centre. Dragging a small box is
-  // easier to aim than trying to land a single pixel.
+  // Arms capture and waits for the next click anywhere on screen. No window is opened, so the
+  // point can be picked inside a live application rather than off a frozen screenshot.
   const handleCapture = async () => {
-    const rect = await openWindow();
-    if (!rect) return;
+    const point = await capturePoint();
+    if (!point) return;
 
-    setValue("locationX", Math.round(rect.x + rect.width / 2), {
+    setValue("locationX", point.x, {
       shouldValidate: true,
       shouldDirty: true,
     });
-    setValue("locationY", Math.round(rect.y + rect.height / 2), {
+    setValue("locationY", point.y, {
       shouldValidate: true,
       shouldDirty: true,
     });
@@ -53,13 +53,20 @@ export default function FlowLocationFormFieldsComponent({
         <div className="flex flex-column gap-2 w-10 align-items-center justify-content-center">
           <Button
             type="button"
-            label={isWindowOpen ? "Selecting..." : "Capture Location"}
-            icon="pi pi-crop"
-            loading={isWindowOpen}
-            disabled={isWindowOpen || isDisabled}
-            onClick={handleCapture}
-            className="p-button-outlined p-button-secondary"
-            tooltip="Drag a small box on screen, the centre becomes the location"
+            label={isCapturing ? "Click anywhere..." : "Capture Location"}
+            icon={isCapturing ? "pi pi-times" : "pi pi-map-marker"}
+            disabled={isDisabled}
+            onClick={isCapturing ? cancelCapture : handleCapture}
+            className={
+              isCapturing
+                ? "p-button-outlined p-button-warning"
+                : "p-button-outlined p-button-secondary"
+            }
+            tooltip={
+              isCapturing
+                ? "Click anywhere on screen to set the point, or press Escape to cancel"
+                : "Then click anywhere on screen to set the point"
+            }
             tooltipOptions={{ position: "top" }}
           />
 
@@ -67,6 +74,7 @@ export default function FlowLocationFormFieldsComponent({
             type="button"
             label="Test"
             icon="pi pi-play"
+            disabled={isCapturing}
             onClick={handleTest}
             className="p-button-outlined"
             tooltip="Move the real cursor here so you can confirm the point"

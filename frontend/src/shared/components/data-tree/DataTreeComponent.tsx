@@ -10,7 +10,7 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import { TreeNodeDto, buildTreeNodeKey } from "@/shared/models/tree-node-dto";
 import IconComponent from "@/shared/components/IconComponent";
 import { BaseFlowStepDataTreeTemplate } from "@/features/flow-step/components/templates/data-tree/BaseFlowStepDataTreeTemplate";
 
@@ -107,8 +107,12 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
     ): Promise<TreeNodeDto[] | undefined> => {
       setLoading(true);
       try {
-        let response =
-          await backendApiService.FlowStep.getTreeNodes(parentNodeId);
+        // isFlow decides which column the backend matches the id against: the Flow node wants
+        // its root steps, a FlowStep node wants its children.
+        let response = await backendApiService.FlowStep.getTreeNodes({
+          id: parentNodeId,
+          isFlow: isParentNodeFlow,
+        });
         const maxOrderNumber = response.reduce(
           (max, node) => (node.orderNumber > max ? node.orderNumber : max),
           0,
@@ -126,7 +130,11 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
           ];
         }
         setData((prev) =>
-          updateTreeNodeChildren(prev, parentNodeId.toString(), response),
+          updateTreeNodeChildren(
+            prev,
+            buildTreeNodeKey(parentNodeId, isParentNodeFlow),
+            response,
+          ),
         );
         return response;
       } catch (err) {
@@ -158,7 +166,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
       loadTreeChildren(id, isFlow).then((response) => {
         if (selectNodeIdAfterLoad) {
           const newSelectedNode = response?.find(
-            (x) => x.key === selectNodeIdAfterLoad.toString(),
+            (x) => x.entityId === selectNodeIdAfterLoad,
           );
           setSelectedTreeNode(newSelectedNode);
         }
@@ -169,7 +177,7 @@ export function DataTreeComponent<T>({ flowId }: Props<T>) {
 
   const onExpand = async (e: TreeEventNodeEvent) => {
     const node = e.node as TreeNodeDto;
-    await loadTreeChildren(+node.key, node.isFlow);
+    await loadTreeChildren(node.entityId, node.isFlow);
   };
 
   // ====================== CONTROLLED SELECTION ======================

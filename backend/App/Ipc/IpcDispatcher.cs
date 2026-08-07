@@ -48,7 +48,7 @@ namespace App.Ipc
                     "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.getLazy" => await _mediator.Send(new GetLazyStepFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<TreeNodeRequestDto>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowSearchArea
                     "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaDto>(request.Payload, _jsonOptions)!), ct),
@@ -88,6 +88,8 @@ namespace App.Ipc
                     "System.inputRecordAllStop" => await _mediator.Send(new SystemInputRecordAllStopCommand(), ct),
                     "System.inputRecordOverlayStart" => await _mediator.Send(new SystemInputRecordOverlayStartCommand(), ct),
                     "System.inputRecordOverlayStop" => await _mediator.Send(new SystemInputRecordOverlayStopCommand(), ct),
+                    "System.inputRecordPointCaptureStart" => await _mediator.Send(new SystemInputRecordPointCaptureStartCommand(), ct),
+                    "System.inputRecordPointCaptureStop" => await _mediator.Send(new SystemInputRecordPointCaptureStopCommand(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

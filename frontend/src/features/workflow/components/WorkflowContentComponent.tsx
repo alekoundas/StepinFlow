@@ -46,13 +46,13 @@ export function WorkflowContentComponent() {
   }, [selectedTreeNode]);
 
   // ── React Query for Flow (when root node is selected) ──
-  const flowId = selectedTreeNode?.isFlow ? +selectedTreeNode.key : null;
+  const flowId = selectedTreeNode?.isFlow ? selectedTreeNode.entityId : null;
   const { data: loadedFlow, isLoading: flowLoading } = useFlow(flowId);
 
   // ── React Query for FlowStep ──
   const stepId =
     selectedTreeNode && !selectedTreeNode.isNew && !selectedTreeNode.isFlow
-      ? +selectedTreeNode.key
+      ? selectedTreeNode.entityId
       : null;
   const { data: loadedStep, isLoading: stepLoading } = useFlowStep(stepId);
   const { createFlowStepMutation, updateFlowStepMutation } =

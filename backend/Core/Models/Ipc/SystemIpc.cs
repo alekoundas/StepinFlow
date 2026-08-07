@@ -20,6 +20,9 @@ namespace Core.Models.Ipc
     public record SystemInputRecordOverlayStartCommand() : IRequest<ResultDto<bool>>;
     public record SystemInputRecordOverlayStopCommand() : IRequest<ResultDto<bool>>;
 
+    public record SystemInputRecordPointCaptureStartCommand() : IRequest<ResultDto<bool>>;
+    public record SystemInputRecordPointCaptureStopCommand() : IRequest<ResultDto<bool>>;
+
     // Used by the "Test" button next to a location, so the user can confirm a point
     // lands where they expect before saving it.
     public record SystemMoveCursorCommand(ScreenPointDto dto) : IRequest<ResultDto<bool>>;

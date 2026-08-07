@@ -29,6 +29,7 @@ namespace Business.Services.InputService
         private const int ModeNone = 0;
         private const int ModeAll = 1;
         private const int ModeOverlay = 2;
+        private const int ModePointCapture = 3;
         private int _recordingMode = ModeNone;
 
         // Throttling events. Interlocked because TaskPoolGlobalHook dispatches on the thread pool.
@@ -52,8 +53,12 @@ namespace Business.Services.InputService
         }
 
         // Broadcast events to specific type or no broadcast at all.
-        private BroadcastTypeEnum? BroadcastType =>
-            Volatile.Read(ref _recordingMode) == ModeOverlay ? BroadcastTypeEnum.OVERLAY_MOUSE_EVENT : null;
+        private BroadcastTypeEnum? BroadcastType => Volatile.Read(ref _recordingMode) switch
+        {
+            ModeOverlay => BroadcastTypeEnum.OVERLAY_MOUSE_EVENT,
+            ModePointCapture => BroadcastTypeEnum.POINT_CAPTURE_EVENT,
+            _ => null,
+        };
 
         private bool IsRecording => Volatile.Read(ref _recordingMode) != ModeNone;
 
@@ -93,6 +98,10 @@ namespace Business.Services.InputService
         public Task<bool> StartRecordingOverlayAsync() => Task.FromResult(StartRecording(ModeOverlay));
 
         public Task<bool> StopRecordingOverlayAsync() => Task.FromResult(StopRecording(ModeOverlay));
+
+        public Task<bool> StartRecordingPointCaptureAsync() => Task.FromResult(StartRecording(ModePointCapture));
+
+        public Task<bool> StopRecordingPointCaptureAsync() => Task.FromResult(StopRecording(ModePointCapture));
 
 
         // ================================================================
