@@ -50,7 +50,8 @@ export default function FlowStepCursorFormComponent({
 
   const flowStepType = useWatch({ control, name: "flowStepType" });
   const activeMode =
-    CURSOR_MODES.find((x) => x.flowStepType === flowStepType) ?? CURSOR_MODES[0];
+    CURSOR_MODES.find((x) => x.flowStepType === flowStepType) ??
+    CURSOR_MODES[0];
 
   // Force full validation on mount so that isValid + errors are in sync
   useEffect(() => {
@@ -112,7 +113,9 @@ export default function FlowStepCursorFormComponent({
           ? (data.flowStepReferenceEndId ?? undefined)
           : undefined,
 
-      cursorActionType: isClick ? (data.cursorActionType ?? undefined) : undefined,
+      cursorButtonActionType: isClick
+        ? (data.cursorButtonActionType ?? undefined)
+        : undefined,
       cursorButtonType:
         isClick || isDrag ? (data.cursorButtonType ?? undefined) : undefined,
 

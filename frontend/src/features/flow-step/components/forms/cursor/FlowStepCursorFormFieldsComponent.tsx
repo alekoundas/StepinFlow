@@ -4,12 +4,12 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import { CursorActionTypeEnum } from "@/shared/enums/backend/cursor-action-type-enum";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 import FlowStepCursorLocationFieldsComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorLocationFieldsComponent";
+import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 
 type CursorForm = z.infer<typeof FlowStepCursorSchema>;
 
@@ -58,10 +58,10 @@ export default function FlowStepCursorFormFieldsComponent({
         <div className="flex gap-3">
           <div className="flex-1">
             <FormDropdownComponent<CursorForm, EnumOption>
-              fieldName="cursorActionType"
+              fieldName="cursorButtonActionType"
               labelText="Click Action"
               mode="local"
-              options={toOptions(CursorActionTypeEnum)}
+              options={toOptions(cursorButtonActionTypeEnum)}
               optionLabel="label"
               optionValue="value"
               isRequired={true}

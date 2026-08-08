@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { CursorActionTypeEnum } from "@/shared/enums/backend/cursor-action-type-enum";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 
 // The four cursor modes are separate FlowStepTypes so the tree, the icons and the executor keep a
 // flat dispatch. Only the form merges them, and the mode buttons rewrite flowStepType.
@@ -36,7 +36,7 @@ export const FlowStepCursorSchema = z
     flowStepReferenceEndId: z.number().int().nullish(),
 
     // CURSOR_CLICK / CURSOR_DRAG
-    cursorActionType: z.enum(CursorActionTypeEnum).nullish(),
+    cursorButtonActionType: z.enum(cursorButtonActionTypeEnum).nullish(),
     cursorButtonType: z.enum(CursorButtonTypeEnum).nullish(),
 
     // CURSOR_SCROLL
@@ -84,7 +84,7 @@ export const FlowStepCursorSchema = z
     }
 
     if (data.flowStepType === FlowStepTypeEnum.CURSOR_CLICK) {
-      if (!data.cursorActionType) {
+      if (!data.cursorButtonActionType) {
         ctx.addIssue({
           code: "custom",
           message: "Please select a click action",

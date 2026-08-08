@@ -5,5 +5,5 @@ export const cursorButtonActionTypeEnum = {
   RELEASE_CLICK: "RELEASE_CLICK",
 } as const;
 
-export type cursorButtonActionTypeEnum =
+export type CursorButtonActionTypeEnum =
   (typeof cursorButtonActionTypeEnum)[keyof typeof cursorButtonActionTypeEnum];

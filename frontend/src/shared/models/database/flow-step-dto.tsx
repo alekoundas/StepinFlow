@@ -1,15 +1,15 @@
-import type { CursorActionTypeEnum } from "@/shared/enums/backend/cursor-action-type-enum";
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
-
-import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
+
+import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
+import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 
 export class FlowStepDto {
   // Core fields
@@ -54,9 +54,8 @@ export class FlowStepDto {
   //   isLocationCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
   isLocationCustom: boolean = false;
   isLocationEndCustom: boolean = false;
-  cursorActionType?: CursorActionTypeEnum;
-  cursorButtonActionType?: CursorActionTypeEnum;
   cursorButtonType?: CursorButtonTypeEnum;
+  cursorButtonActionType?: CursorButtonActionTypeEnum;
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;
 
   // Keep the root Flow or SubFlow id for easier and faster queries

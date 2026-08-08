@@ -20,7 +20,6 @@ namespace DataAccess.Configurations
 
             builder.Property(x => x.FlowStepType).HasConversion<string>();
             builder.Property(x => x.ConditionType).HasConversion<string>();
-            builder.Property(x => x.CursorType).HasConversion<string>();
             builder.Property(x => x.CursorButtonType).HasConversion<string>();
             builder.Property(x => x.CursorButtonActionType).HasConversion<string>();
             builder.Property(x => x.CursorScrollDirectionType).HasConversion<string>();

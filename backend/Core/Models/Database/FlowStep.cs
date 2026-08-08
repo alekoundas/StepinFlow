@@ -55,9 +55,8 @@ namespace Core.Models.Database
         // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
         public bool IsLocationCustom { get; set; }
         public bool IsLocationEndCustom { get; set; }
-        public CursorTypeEnum? CursorType { get; set; }
-        public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
+        public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
 
 
