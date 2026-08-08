@@ -17,15 +17,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Path alias */
-    // "baseUrl": ".",
-    // "paths": {
-    //   "@/*": ["../src/*"]
-    // },
-
-    "baseUrl": "../src",
+    /* Path alias — no "baseUrl" (deprecated in TS 6, removed in TS 7).
+       Without it, "paths" targets resolve relative to this file's folder. */
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["../src/*"]
     },
 
     /* Linting */
