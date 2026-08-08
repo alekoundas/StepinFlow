@@ -1,10 +1,15 @@
 import type { TreeNode } from "primereact/treenode";
 import type { TreeExpandedKeysType } from "primereact/tree";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Tree,
   type TreeEventNodeEvent,
-  type TreeNodeTemplateOptions,
   type TreeSelectionEvent,
 } from "primereact/tree";
 import { classNames } from "primereact/utils";
@@ -13,11 +18,14 @@ import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TreeNodeDto, buildTreeNodeKey } from "@/shared/models/tree-node-dto";
-import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
+import type {
+  FlowStepMoveDto,
+  FlowStepMovePreviewDto,
+} from "@/shared/models/flow-step-move.dto";
 import IconComponent from "@/shared/components/IconComponent";
 import { BaseFlowStepDataTreeTemplate } from "@/features/flow-step/components/templates/data-tree/BaseFlowStepDataTreeTemplate";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { TreeMoveConfirmDialogComponent } from "@/shared/components/data-tree/TreeMoveConfirmDialogComponent";
+import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
 
 interface Props {
@@ -35,7 +43,7 @@ export function DataTreeComponent({ flowId }: Props) {
     setTreeRefreshTrigger,
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
-  const { openCustom, close } = useDialogStore();
+  const { openConfirm } = useDialogStore();
 
   // ====================== HELPERS ======================
 
@@ -59,7 +67,7 @@ export function DataTreeComponent({ flowId }: Props) {
     [],
   );
 
-  /** Recursive immutable update – finds the node by key and replaces its children */
+  //Recursive immutable update – finds the node by key and replaces its children
   const updateTreeNodeChildren = (
     nodes: TreeNodeDto[],
     targetKey: string,
@@ -86,7 +94,7 @@ export function DataTreeComponent({ flowId }: Props) {
     });
   };
 
-  /** Flat key -> node lookup, rebuilt whenever the tree changes. */
+  // Flat key -> node lookup, rebuilt whenever the tree changes.
   const nodesByKey = useMemo(() => {
     const map = new Map<string, TreeNodeDto>();
 
@@ -102,7 +110,6 @@ export function DataTreeComponent({ flowId }: Props) {
   }, [data]);
 
   // ====================== LAZY LOADING ======================
-
   const loadTreeChildren = useCallback(
     async (
       parentNodeId: number,
@@ -185,7 +192,7 @@ export function DataTreeComponent({ flowId }: Props) {
 
   // ====================== DRAG & DROP ======================
 
-  // Held over a collapsed branch, it opens so the step can be dropped inside it.
+  // It opens so the step can be dropped inside it.
   const handleSpringLoad = useCallback(
     (node: TreeNodeDto) => {
       setExpandedKeys((prev) => ({ ...prev, [node.key]: true }));
@@ -195,21 +202,26 @@ export function DataTreeComponent({ flowId }: Props) {
   );
 
   // Both ends of a move need reloading: the branch the step left and the one it joined.
+  //
+  // A root level step has no parent step, and the backend sends that as JSON null rather than
+  // leaving the property out, so every check here has to treat null and undefined alike.
   const reloadAfterMove = useCallback(
     async (move: FlowStepMoveDto, dragged: TreeNodeDto) => {
       const parents: { id: number; isFlow: boolean }[] = [];
 
-      const add = (id: number | undefined, isFlow: boolean) => {
-        if (id === undefined) return;
+      const add = (id: number | null | undefined, isFlow: boolean) => {
+        if (id == null) return;
         if (parents.some((x) => x.id === id && x.isFlow === isFlow)) return;
         parents.push({ id, isFlow });
       };
 
-      add(dragged.parentFlowStepId, false);
-      if (dragged.parentFlowStepId === undefined) add(flowId, true);
+      // Where it came from.
+      if (dragged.parentFlowStepId == null) add(flowId, true);
+      else add(dragged.parentFlowStepId, false);
 
-      add(move.targetParentFlowStepId, false);
-      if (move.targetParentFlowStepId === undefined) add(move.targetFlowId, true);
+      // Where it landed.
+      if (move.targetParentFlowStepId == null) add(move.targetFlowId ?? flowId, true);
+      else add(move.targetParentFlowStepId, false);
 
       for (const parent of parents) {
         await loadTreeChildren(parent.id, parent.isFlow);
@@ -222,9 +234,7 @@ export function DataTreeComponent({ flowId }: Props) {
   // the dialog worth showing: it names the steps that would lose their search-result reference.
   const handleDrop = useCallback(
     async (move: FlowStepMoveDto, dragged: TreeNodeDto) => {
-      const dialogId = "tree-move-confirm";
-
-      let preview;
+      let preview: FlowStepMovePreviewDto;
       try {
         preview = await backendApiService.FlowStep.getMovePreview(move);
       } catch (err) {
@@ -232,27 +242,21 @@ export function DataTreeComponent({ flowId }: Props) {
         return;
       }
 
-      const commit = async () => {
-        try {
+      openConfirm("tree-move-confirm", {
+        headerText: preview.isValid ? "Move step" : "Cannot move step",
+        confirmLabel: "Move",
+        confirmSeverity:
+          preview.brokenReferences.length > 0 ? "warning" : undefined,
+        cancelLabel: preview.isValid ? "Cancel" : "Close",
+        hideConfirm: !preview.isValid,
+        children: <TreeMoveConfirmContentComponent preview={preview} />,
+        onConfirm: async () => {
           await backendApiService.FlowStep.move(move);
           await reloadAfterMove(move, dragged);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          close(dialogId);
-        }
-      };
-
-      openCustom(
-        dialogId,
-        <TreeMoveConfirmDialogComponent
-          preview={preview}
-          onConfirm={commit}
-          onCancel={() => close(dialogId)}
-        />,
-      );
+        },
+      });
     },
-    [close, openCustom, reloadAfterMove],
+    [openConfirm, reloadAfterMove],
   );
 
   const { draggedKey, dropTarget, isDragging, getRowDragProps } =
@@ -279,10 +283,7 @@ export function DataTreeComponent({ flowId }: Props) {
     }
   };
 
-  const nodeTemplate = (
-    treeNode: TreeNode,
-    _options: TreeNodeTemplateOptions,
-  ): ReactNode => {
+  const nodeTemplate = (treeNode: TreeNode): ReactNode => {
     const treeNodeDto = treeNode as TreeNodeDto;
     const isSelected = selectedTreeNode?.key === treeNodeDto.key;
 
@@ -328,7 +329,9 @@ export function DataTreeComponent({ flowId }: Props) {
               ? "var(--highlight-bg)"
               : undefined,
         }}
-        title={!dropTarget?.isValid && isDropTarget ? dropTarget?.reason : undefined}
+        title={
+          !dropTarget?.isValid && isDropTarget ? dropTarget?.reason : undefined
+        }
       >
         {/* A line on the edge the step would slot into. */}
         {showEdge && (

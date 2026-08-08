@@ -1,3 +1,7 @@
+import {
+  DialogConfirmComponent,
+  type IDialogConfirmComponentProps,
+} from "@/shared/components/modal-component/dialogs/DialogConfirmComponent";
 import { DialogDeleteComponent } from "@/shared/components/modal-component/dialogs/DialogDeleteComponent";
 import {
   DialogFormComponent,
@@ -8,7 +12,7 @@ import type { ReactNode } from "react";
 import React from "react";
 import { create } from "zustand/react";
 
-type DialogType = "form" | "warning" | "delete" | "custom";
+type DialogType = "form" | "confirm" | "warning" | "delete" | "custom";
 
 interface Dialog {
   id: string;
@@ -22,6 +26,7 @@ interface DialogStore {
 
   // Typed openers
   openForm: (id: string, props: IDialogFormComponentProps) => void;
+  openConfirm: (id: string, props: IDialogConfirmComponentProps) => void;
   openWarning: (id: string, props: any) => void;
   openDelete: (id: string, props: any) => void;
   openCustom: (id: string, component: ReactNode) => void;
@@ -41,6 +46,18 @@ export const useDialogStore = create<DialogStore>((set) => ({
           id,
           type: "form",
           component: React.createElement(DialogFormComponent, props),
+        },
+      ],
+    })),
+
+  openConfirm: (id, props) =>
+    set((state) => ({
+      dialogs: [
+        ...state.dialogs.filter((d) => d.id !== id),
+        {
+          id,
+          type: "confirm",
+          component: React.createElement(DialogConfirmComponent, props),
         },
       ],
     })),

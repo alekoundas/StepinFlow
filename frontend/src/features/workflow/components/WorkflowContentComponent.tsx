@@ -145,8 +145,8 @@ export function WorkflowContentComponent() {
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
                 orderNumber: selectedTreeNode.orderNumber,
                 rootId: rootFlowId,
                 flowStepType: selectedFlowStepTypeToAdd,
@@ -170,8 +170,8 @@ export function WorkflowContentComponent() {
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
                 orderNumber: selectedTreeNode.orderNumber,
                 rootId: rootFlowId,
                 flowStepType: "WAIT",
@@ -192,8 +192,8 @@ export function WorkflowContentComponent() {
             onEdit={() => {}}
             defaultValues={
               new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId,
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
                 orderNumber: selectedTreeNode.orderNumber,
                 rootId: rootFlowId,
                 flowStepType: "LOOP",

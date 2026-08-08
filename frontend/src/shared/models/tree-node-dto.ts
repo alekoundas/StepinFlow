@@ -25,8 +25,8 @@ export class TreeNodeDto {
   isFlow: boolean = false;
   isNew: boolean = true;
 
-  parentFlowId?: number;
-  parentFlowStepId?: number;
+  parentFlowId?: number | null;
+  parentFlowStepId?: number | null;
   children: TreeNodeDto[] = [];
 
   constructor(data: Partial<TreeNodeDto> = {}) {
