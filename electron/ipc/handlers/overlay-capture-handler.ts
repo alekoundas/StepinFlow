@@ -34,9 +34,10 @@ export async function registerOverlayCaptureHandler(
         return null;
       }
       isWindowOpen = true;
+      let monitorEntries: MonitorEntry[] = [];
 
       try {
-        // 1. Get screenshots from .Net (logical coords, physical px screenshots)
+        // 1. Get screenshots from .Net (physical bounds + physical px screenshots)
         const responses = await getScreenshot(invokeBackend);
         if (!responses || responses.length === 0) {
           console.error("[OverlayHandler]: Cant get the screenshot!");
@@ -44,7 +45,7 @@ export async function registerOverlayCaptureHandler(
         }
 
         // 2. Physical bounds -> DIPs, then find the display that DIP rect sits on
-        const monitorEntries: MonitorEntry[] = toMonitorEntries(responses);
+        monitorEntries = toMonitorEntries(responses);
 
         // 3. Create new window per monitor.
         for (const monitorEntry of monitorEntries) {
@@ -52,8 +53,18 @@ export async function registerOverlayCaptureHandler(
           monitorEntry.electronWindow = newWindow;
         }
 
-        // 4. Ask .Net to start broadcasting mouse click and drag
-        await invokeBackend("System.inputRecordOverlayStart", null);
+        // 4. Ask .Net to start broadcasting mouse click and drag.
+        //    Every event the overlay reacts to arrives this way, Escape included, so failing
+        //    here and carrying on leaves a fullscreen window the user cannot get out of.
+        const started = await invokeBackend("System.inputRecordOverlayStart", null);
+        if (!started?.isSuccess) {
+          console.error(
+            "[OverlayHandler]: Could not start input recording:",
+            started?.errorMessage,
+          );
+          closeWindows(monitorEntries);
+          return null;
+        }
 
         // 5. Register per-window ready signal handler BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
@@ -79,6 +90,14 @@ export async function registerOverlayCaptureHandler(
 
         // 7. Wait for result (any window can send it — first one wins)
         return await registerSignalCloseHandler(monitorEntries, invokeBackend);
+      } catch (err) {
+        // Without this an exception after step 3 leaves fullscreen always-on-top windows with
+        // no close handler attached, which is unrecoverable for the user.
+        console.error("[OverlayHandler]: Failed to open overlay:", err);
+        ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY);
+        await invokeBackend("System.inputRecordOverlayStop", null);
+        closeWindows(monitorEntries);
+        return null;
       } finally {
         isWindowOpen = false;
       }
@@ -148,7 +167,18 @@ function createElectronWindow(isDev: boolean, dipBounds: Rectangle): BrowserWind
 // 'SignalReady' => page loaded and return image from .Net
 // 'SignalCloseWindow' => operation completed - return user selection to main electron window
 //=====================================================================
+function closeWindows(monitorEntries: MonitorEntry[]): void {
+  for (const entry of monitorEntries) {
+    if (entry.electronWindow && !entry.electronWindow.isDestroyed())
+      entry.electronWindow.destroy();
+  }
+}
+
 function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
+  // Clear any handler left behind by a session that ended abnormally: ipcMain.handle throws on
+  // a duplicate, and that throw would happen after the windows are already on screen.
+  ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY);
+
   ipcMain.handle(
     IPC_CHANNELS.OVERLAY_SIGNAL_READY,
     async (event): Promise<SignalReadyResponse | null> => {
@@ -186,28 +216,38 @@ function registerSignalCloseHandler(
       .map((x) => x.electronWindow)
       .filter((x) => x !== null);
 
-    const cleanup = () => {
-      invokeBackend("System.inputRecordOverlayStop", null);
+    // Runs once. Closing the windows fires their own "closed" listeners, which call back in here.
+    let isCleanedUp = false;
+
+    // Resolves only after the recorder has actually stopped, so reopening the overlay cannot
+    // race the stop and find the recorder still busy.
+    const cleanup = async () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
 
       ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY); //remove the READY handler if the user cancelled before signalReady fired
       electronWindows.forEach((window) => {
         if (!window.isDestroyed()) window.close();
       });
+
+      try {
+        await invokeBackend("System.inputRecordOverlayStop", null);
+      } catch (err) {
+        console.error("[OverlayHandler]: Could not stop input recording:", err);
+      }
     };
 
     ipcMain.once(
       IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW,
       (_event, rect: Rectangle | null) => {
-        cleanup();
-        resolve(rect);
+        void cleanup().then(() => resolve(rect));
       },
     );
 
     // If user force-closes the overlay window (e.g. Alt+F4)
     electronWindows.forEach((win) => {
       win.once("closed", () => {
-        cleanup();
-        resolve(null);
+        void cleanup().then(() => resolve(null));
       });
     });
   });

@@ -108,10 +108,17 @@ namespace Business.Services.InputService
         // Private methods
         // ================================================================
 
+        // Idempotent for the same mode. Stopping is fire and forget from the caller's side, so a
+        // reopen can reach us before the previous stop did; refusing that would leave the new
+        // session with no events at all.
+        private bool StartRecording(int mode)
+        {
+            int previousMode = Interlocked.CompareExchange(ref _recordingMode, mode, ModeNone);
+            return previousMode == ModeNone || previousMode == mode;
+        }
+
         // Only the mode that started a recording may stop it, so an overlay stop can never leave
         // an "all" recording half torn down.
-        private bool StartRecording(int mode) =>
-            Interlocked.CompareExchange(ref _recordingMode, mode, ModeNone) == ModeNone;
 
         private bool StopRecording(int mode) =>
             Interlocked.CompareExchange(ref _recordingMode, ModeNone, mode) == mode;
