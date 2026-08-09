@@ -1,25 +1,29 @@
-﻿using Core.Models.Business;
+using Core.Models.Business;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace Business.Helpers
 {
+    /// <summary>
+    /// Monitor geometry in real device pixels.
+    ///
+    /// <see cref="EnablePerMonitorDpiAwareness"/> must run before anything else touches a
+    /// coordinate API. Without it Windows virtualizes every rect to 96 DPI and nothing lines up
+    /// with the capture buffers or the low level input hook, both of which are always physical.
+    /// </summary>
     public static class ScreenHelper
     {
         //==================================================
-        // P/Invoke Get system metrics (used for virtual screen)
+        // P/Invoke Process DPI awareness
         //==================================================
-        private const int SM_CXVIRTUALSCREEN = 78;
-        private const int SM_CYVIRTUALSCREEN = 79;
-        private const int SM_XVIRTUALSCREEN = 76;
-        private const int SM_YVIRTUALSCREEN = 77;
+        private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
-        [DllImport("user32.dll")]
-        private static extern int GetSystemMetrics(int nIndex);
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetProcessDpiAwarenessContext(IntPtr value);
 
 
         //==================================================
-        // P/Invoke Get all Monitors and get Monitor info 
+        // P/Invoke Get all Monitors and get Monitor info
         //==================================================
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
@@ -50,6 +54,15 @@ namespace Business.Helpers
 
 
         //==================================================
+        // P/Invoke Monitor DPI
+        //==================================================
+        private const int MDT_EFFECTIVE_DPI = 0;
+
+        [DllImport("shcore.dll")]
+        private static extern int GetDpiForMonitor(IntPtr hMonitor, int dpiType, out uint dpiX, out uint dpiY);
+
+
+        //==================================================
         // P/Invoke Get all Display Devices
         //==================================================
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -74,66 +87,6 @@ namespace Business.Helpers
         private const uint DISPLAY_DEVICE_PRIMARY_DEVICE = 0x00000004;
 
 
-        //==================================================
-        // P/Invoke Get the current display mode (real device pixels)
-        //
-        // GetMonitorInfo returns coordinates that Windows virtualizes for a
-        // DPI-unaware process. DEVMODE is not virtualized: dmPosition and
-        // dmPelsWidth/Height describe the desktop in real device pixels, which
-        // is the only space where multi monitor screenshots line up.
-        //==================================================
-        [StructLayout(LayoutKind.Sequential)]
-        private struct POINTL
-        {
-            public int x;
-            public int y;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct DEVMODE
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string dmDeviceName;
-            public ushort dmSpecVersion;
-            public ushort dmDriverVersion;
-            public ushort dmSize;
-            public ushort dmDriverExtra;
-            public uint dmFields;
-
-            // Display devices use the POINTL branch of the DEVMODE union.
-            public POINTL dmPosition;
-            public uint dmDisplayOrientation;
-            public uint dmDisplayFixedOutput;
-
-            public short dmColor;
-            public short dmDuplex;
-            public short dmYResolution;
-            public short dmTTOption;
-            public short dmCollate;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string dmFormName;
-            public ushort dmLogPixels;
-            public uint dmBitsPerPel;
-            public uint dmPelsWidth;
-            public uint dmPelsHeight;
-            public uint dmDisplayFlags;
-            public uint dmDisplayFrequency;
-            public uint dmICMMethod;
-            public uint dmICMIntent;
-            public uint dmMediaType;
-            public uint dmDitherType;
-            public uint dmReserved1;
-            public uint dmReserved2;
-            public uint dmPanningWidth;
-            public uint dmPanningHeight;
-        }
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
-
-        private const int ENUM_CURRENT_SETTINGS = -1;
-
-
 
 
         //==================================================
@@ -141,42 +94,25 @@ namespace Business.Helpers
         //==================================================
 
         /// <summary>
-        /// Get Virtual screen bounds
+        /// Call once, first thing at startup, before any coordinate API.
         /// </summary>
-        //public static Rectangle GetVirtualScreenBounds()
-        //{
-        //    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-        //    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-        //    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        //    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+        public static bool EnablePerMonitorDpiAwareness()
+        {
+            return SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
 
-        //    return new Rectangle(x, y, width, height);
-        //}
+        /// <summary>
+        /// Bounding box of every monitor, in real device pixels. This is the canvas size a
+        /// stitched all-monitor screenshot has to be.
+        /// </summary>
         public static Rectangle GetVirtualScreenBounds()
         {
             return UnionBounds(GetEveryMonitorInfo().Values.Select(x => x.Bounds));
         }
 
-        /// <summary>
-        /// Virtual screen bounds in real device pixels (union of every monitor's
-        /// DEVMODE rect). This is the canvas size a stitched all-monitor
-        /// screenshot has to be.
-        /// </summary>
-        public static Rectangle GetVirtualScreenBoundsPhysical()
-        {
-            return UnionBounds(GetEveryMonitorInfo().Values.Select(x => x.PhysicalBounds));
-        }
-
-
-
-
-        /// <summary>
-        /// Returns all monitors with their bounds 
-        /// coordinates are in the Win32 virtual screen coordinate space since process is DPI-unaware
-        /// </summary>
         public static IReadOnlyList<MonitorInfo> GetAllMonitors()
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> everyMonitorInfos = GetEveryMonitorInfo();
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, int Dpi)> everyMonitorInfos = GetEveryMonitorInfo();
             List<MonitorInfo> result = new List<MonitorInfo>();
             int index = 1; // for fallback display numbering
 
@@ -197,14 +133,13 @@ namespace Business.Helpers
 
                     result.Add(new MonitorInfo
                     {
-                        //DeviceId = monitor.DeviceID,
                         DeviceId = adapter.DeviceName,
                         FriendlyName = friendlyName,
                         AdapterName = adapter.DeviceName,
                         IsPrimary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0,
                         IsVirtual = isVirtual,
                         Bounds = monitorInfo.Bounds,
-                        PhysicalBounds = monitorInfo.PhysicalBounds,
+                        Dpi = monitorInfo.Dpi == 0 ? 96 : monitorInfo.Dpi,
                         HMonitor = monitorInfo.HMonitor
                     });
 
@@ -215,14 +150,21 @@ namespace Business.Helpers
             return result;
         }
 
-        /// <summary>
-        /// Returns pointer handle for a specific Monitor
-        /// </summary>
         public static IntPtr FindHMonitorById(string deviceId)
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> everyMonitorInfos = GetEveryMonitorInfo();
-            everyMonitorInfos.TryGetValue(deviceId, out var monitorInfo);
+            GetEveryMonitorInfo().TryGetValue(deviceId, out var monitorInfo);
             return monitorInfo.HMonitor;
+        }
+
+        /// <summary>
+        /// The monitor a rectangle sits on, or null when it spans several.
+        /// </summary>
+        public static MonitorInfo? FindMonitorContaining(Rectangle rect)
+        {
+            IReadOnlyList<MonitorInfo> monitors = GetAllMonitors();
+            List<MonitorInfo> touched = monitors.Where(x => x.Bounds.IntersectsWith(rect)).ToList();
+
+            return touched.Count == 1 ? touched[0] : null;
         }
 
 
@@ -231,9 +173,10 @@ namespace Business.Helpers
         // Private helpers
         // ================================================================
 
-        private static Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> GetEveryMonitorInfo()
+        private static Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, int Dpi)> GetEveryMonitorInfo()
         {
-            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)> map = new Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, Rectangle PhysicalBounds)>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, (IntPtr HMonitor, Rectangle Bounds, int Dpi)> map =
+                new Dictionary<string, (IntPtr, Rectangle, int)>(StringComparer.OrdinalIgnoreCase);
 
             MonitorEnumProc callback = (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData) =>
             {
@@ -241,45 +184,29 @@ namespace Business.Helpers
                 monitorInfo.cbSize = (uint)Marshal.SizeOf<MONITORINFOEX>();
                 if (GetMonitorInfo(hMonitor, ref monitorInfo))
                 {
-                    Rectangle logicalBounds = Rectangle.FromLTRB(monitorInfo.rcMonitor.Left, monitorInfo.rcMonitor.Top, monitorInfo.rcMonitor.Right, monitorInfo.rcMonitor.Bottom);
+                    Rectangle bounds = Rectangle.FromLTRB(
+                        monitorInfo.rcMonitor.Left,
+                        monitorInfo.rcMonitor.Top,
+                        monitorInfo.rcMonitor.Right,
+                        monitorInfo.rcMonitor.Bottom);
 
-                    map[monitorInfo.szDevice] = (
-                        hMonitor,
-                        logicalBounds,
-                        GetPhysicalBounds(monitorInfo.szDevice, logicalBounds)
-                    );
+                    map[monitorInfo.szDevice] = (hMonitor, bounds, GetDpi(hMonitor));
                 }
 
                 return true;
             };
-
 
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
 
             return map;
         }
 
-        /// <summary>
-        /// Real device pixel bounds of a display, from its current display mode.
-        /// Falls back to the (possibly DPI virtualized) logical bounds when the
-        /// display mode cant be read.
-        /// </summary>
-        private static Rectangle GetPhysicalBounds(string deviceName, Rectangle fallback)
+        private static int GetDpi(IntPtr hMonitor)
         {
-            DEVMODE devMode = new DEVMODE();
-            devMode.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
+            if (GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, out uint dpiX, out _) != 0)
+                return 96;
 
-            if (!EnumDisplaySettings(deviceName, ENUM_CURRENT_SETTINGS, ref devMode))
-                return fallback;
-
-            if (devMode.dmPelsWidth == 0 || devMode.dmPelsHeight == 0)
-                return fallback;
-
-            return new Rectangle(
-                devMode.dmPosition.x,
-                devMode.dmPosition.y,
-                (int)devMode.dmPelsWidth,
-                (int)devMode.dmPelsHeight);
+            return (int)dpiX;
         }
 
         private static Rectangle UnionBounds(IEnumerable<Rectangle> rectangles)
@@ -312,8 +239,6 @@ namespace Business.Helpers
             int index,
             bool isVirtual)
         {
-
-            // Base name: prefer DeviceString if not generic, then fallback
             string baseName = "";
             if (string.IsNullOrWhiteSpace(monitor.DeviceString)
                 || monitor.DeviceString.Contains("Generic", StringComparison.OrdinalIgnoreCase)
@@ -326,14 +251,12 @@ namespace Business.Helpers
                 baseName = monitor.DeviceString;
             }
 
-            // Append resolution + primary tag
             string resolution = $" ({bounds.Width}×{bounds.Height})";
             string primary = (adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) != 0 ? " [Primary]" : string.Empty;
 
             return $"{baseName}{resolution}{primary}";
             // → e.g.  "Odyssey G9 (5120×1440) [Primary]"
             //         "Monitor 2 (1920×1080)"
-            //         "Virtual Monitor (1920×1080)"
         }
     }
 }

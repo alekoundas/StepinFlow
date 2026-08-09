@@ -8,8 +8,10 @@ namespace DataAccess.Configurations
     {
         public void Configure(EntityTypeBuilder<FlowStepImage> builder)
         {
-            builder.HasIndex(x => x.Id).IsUnique();
             builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
+            builder.Property(x => x.ClickAnchor).HasConversion<string>();
 
 
             // Relationship with FlowStep (one-to-many)

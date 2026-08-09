@@ -18,6 +18,10 @@ import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loo
 import FlowStepCursorFormComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormComponent";
 import { CURSOR_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
 import { isCursorFlowStepType } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
+import FlowStepWindowFormComponent from "@/features/flow-step/components/forms/window/FlowStepWindowFormComponent";
+import { WINDOW_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/window/window-modes";
+import { isWindowFlowStepType } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import FlowStepImageSearchFormComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 // interface Props {
@@ -160,6 +164,53 @@ export function WorkflowContentComponent() {
       );
     }
 
+    // The three window types share one form too.
+    if (isWindowFlowStepType(selectedFlowStepTypeToAdd)) {
+      return (
+        <div className=" ">
+          <FlowStepWindowFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: selectedFlowStepTypeToAdd,
+                name: WINDOW_STEP_DEFAULT_NAMES[selectedFlowStepTypeToAdd],
+              })
+            }
+          />
+        </div>
+      );
+    }
+
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.IMAGE_SEARCH) {
+      return (
+        <div className=" ">
+          <FlowStepImageSearchFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "IMAGE_SEARCH",
+                name: "Image Search",
+              })
+            }
+          />
+        </div>
+      );
+    }
+
     switch (selectedFlowStepTypeToAdd) {
       case FlowStepTypeEnum.WAIT:
         formElement = (
@@ -273,6 +324,34 @@ export function WorkflowContentComponent() {
     return (
       <div className=" ">
         <FlowStepCursorFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH) {
+    return (
+      <div className=" ">
+        <FlowStepImageSearchFormComponent
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (isWindowFlowStepType(selectedTreeNode.flowStepType)) {
+    return (
+      <div className=" ">
+        <FlowStepWindowFormComponent
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}

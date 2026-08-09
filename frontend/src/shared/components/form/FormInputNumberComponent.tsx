@@ -1,7 +1,5 @@
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { FlowDto } from "@/shared/models/database/flow-dto";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import type { FormFieldName } from "@/shared/models/form-field-name";
 import {
   InputNumber,
   type InputNumberChangeEvent,
@@ -10,7 +8,7 @@ import { classNames } from "primereact/utils";
 import { useController } from "react-hook-form";
 
 interface Props {
-  fieldName: keyof FlowStepDto | keyof FlowDto | keyof FlowSearchAreaDto;
+  fieldName: FormFieldName;
   label: string;
   placeholderText?: string;
   hintText?: string;

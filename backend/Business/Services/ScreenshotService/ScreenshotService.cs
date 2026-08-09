@@ -44,7 +44,13 @@ namespace Business.Services.ScreenshotService
         public byte[] CaptureAppWindow(string appWindowName, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
             byte[] result = [];
-            IntPtr hwnd = AppWindowHelper.FindHwndByTitle(appWindowName);
+
+            IntPtr hwnd = AppWindowHelper.FindWindow(new WindowQuery
+            {
+                TitlePattern = appWindowName,
+                TitleMatchMode = TitleMatchModeEnum.CONTAINS,
+            });
+
             byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hwnd, out int width, out int height);
 
             if (monitorBytes != null)
@@ -78,46 +84,25 @@ namespace Business.Services.ScreenshotService
         }
 
 
-        public byte[] CaptureSearchArea(FlowSearchArea area)
+        /// <summary>
+        /// A MONITOR area still goes through per monitor capture, which reads the real
+        /// framebuffer. Everything else is a plain rect grab of the already resolved bounds.
+        /// TODO: capture APPLICATION areas through CaptureWindowRaw so an occluded window
+        /// still yields its own pixels.
+        /// </summary>
+        public byte[] CaptureResolvedArea(FlowSearchArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            byte[] result = [];
-
-            switch (area.Type)
+            if (area.Type == FlowSearchAreaTypeEnum.MONITOR)
             {
-                case FlowSearchAreaTypeEnum.CUSTOM:
-                    Rectangle rect = new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height);
-                    Bitmap customBmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
-                    result = Compress(customBmp, ScreenshotFormatEnum.JPEG, 100);
-                    break;
-                case FlowSearchAreaTypeEnum.APPLICATION:
-                    IntPtr hwnd = AppWindowHelper.FindHwndByTitle(area.AppWindowName);
-                    byte[]? windowBytes = _windowsGraphicsCaptureService.CaptureWindowRaw(hwnd, out int windowWidth, out int windowHeight);
+                IntPtr hMon = ScreenHelper.FindHMonitorById(area.MonitorUniqueId);
+                byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);
 
-
-                    if (windowBytes != null)
-                        result = Compress(windowBytes, windowWidth, windowHeight, ScreenshotFormatEnum.JPEG, 100);
-
-                    break;
-
-                case FlowSearchAreaTypeEnum.MONITOR:
-                    IntPtr hMon = ScreenHelper.FindHMonitorById(area.MonitorUniqueId);
-                    byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);
-
-                    if (monitorBytes != null)
-                        result = Compress(monitorBytes, monitorWidth, monitorHeight, ScreenshotFormatEnum.JPEG, 100);
-
-                    break;
-
-                default:
-                    Rectangle virtualRect = ScreenHelper.GetVirtualScreenBounds();
-                    Bitmap bmp = CaptureGraphics(virtualRect, ScreenshotFormatEnum.JPEG, 100);
-                    result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
-
-                    break;
+                if (monitorBytes != null)
+                    return Compress(monitorBytes, monitorWidth, monitorHeight, screenshotFormat, jpegQuality);
             }
 
-
-            return result;
+            using Bitmap bmp = CaptureGraphics(bounds, screenshotFormat, jpegQuality);
+            return Compress(bmp, screenshotFormat, jpegQuality);
         }
 
 
@@ -134,7 +119,7 @@ namespace Business.Services.ScreenshotService
         private byte[] CaptureVirtualScreenStitched(ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
             List<MonitorInfo> monitors = ScreenHelper.GetAllMonitors()
-                .Where(x => x.HMonitor != IntPtr.Zero && x.PhysicalBounds.Width > 0 && x.PhysicalBounds.Height > 0)
+                .Where(x => x.HMonitor != IntPtr.Zero && x.Bounds.Width > 0 && x.Bounds.Height > 0)
                 .GroupBy(x => x.DeviceId, StringComparer.OrdinalIgnoreCase)
                 .Select(x => x.First())
                 .ToList();
@@ -142,7 +127,7 @@ namespace Business.Services.ScreenshotService
             if (monitors.Count == 0)
                 return [];
 
-            Rectangle virtualBounds = ScreenHelper.GetVirtualScreenBoundsPhysical();
+            Rectangle virtualBounds = ScreenHelper.GetVirtualScreenBounds();
             if (virtualBounds.Width <= 0 || virtualBounds.Height <= 0)
                 return [];
 
@@ -173,10 +158,10 @@ namespace Business.Services.ScreenshotService
                     using Bitmap monitorBitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppRgb, pin.AddrOfPinnedObject());
 
                     Rectangle destination = new Rectangle(
-                        monitor.PhysicalBounds.X - virtualBounds.X,
-                        monitor.PhysicalBounds.Y - virtualBounds.Y,
-                        monitor.PhysicalBounds.Width,
-                        monitor.PhysicalBounds.Height);
+                        monitor.Bounds.X - virtualBounds.X,
+                        monitor.Bounds.Y - virtualBounds.Y,
+                        monitor.Bounds.Width,
+                        monitor.Bounds.Height);
 
                     graphics.DrawImage(monitorBitmap, destination, 0, 0, width, height, GraphicsUnit.Pixel);
                     capturedCount++;
@@ -191,6 +176,41 @@ namespace Business.Services.ScreenshotService
                 return [];
 
             return Compress(composite, screenshotFormat, jpegQuality);
+        }
+
+        /// <summary>
+        /// Pixels with no encode step, for the matcher. LockBits hands back the buffer the bitmap
+        /// already owns, so this is one screen copy and one memcpy.
+        /// </summary>
+        public RawImage CaptureRaw(Rectangle rect)
+        {
+            if (rect.Width <= 0 || rect.Height <= 0)
+                return new RawImage();
+
+            using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.RAW, 100);
+
+            BitmapData data = bmp.LockBits(
+                new Rectangle(0, 0, bmp.Width, bmp.Height),
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb);
+
+            try
+            {
+                byte[] pixels = new byte[data.Stride * data.Height];
+                Marshal.Copy(data.Scan0, pixels, 0, pixels.Length);
+
+                return new RawImage
+                {
+                    Pixels = pixels,
+                    Width = bmp.Width,
+                    Height = bmp.Height,
+                    Stride = data.Stride,
+                };
+            }
+            finally
+            {
+                bmp.UnlockBits(data);
+            }
         }
 
         private Bitmap CaptureGraphics(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)

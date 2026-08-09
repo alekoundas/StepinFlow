@@ -22,6 +22,12 @@ import { BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
+import {
+  ImageEditorModeEnum,
+  type ImageEditorOpenRequest,
+  type ImageEditorReadyResponse,
+  type ImageEditorResult,
+} from "../../shared/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,26 +41,28 @@ export async function registerImageEditorHandler(
 ): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.EDITOR_OPEN_WINDOW,
-    async (_event, imageBase64: string): Promise<string | null> => {
+    async (_event, request: ImageEditorOpenRequest): Promise<ImageEditorResult> => {
       if (isWindowOpen) {
         console.warn("[ImageEditorHandler]: Editor already open");
         return null;
       }
 
-      if (!imageBase64) {
+      if (!request?.imageBase64) {
         console.error("[ImageEditorHandler]: No image passed to the editor");
         return null;
       }
+
+      const mode = request.mode ?? ImageEditorModeEnum.EDIT;
 
       isWindowOpen = true;
 
       try {
         // 1. Create the editor window.
-        const editorWindow = createElectronWindow(isDev, mainWindow);
+        const editorWindow = createElectronWindow(isDev, mainWindow, mode);
 
         // 2. Register the ready signal BEFORE loading the page, otherwise the
         //    page can call it before the handler exists.
-        registerSignalReadyHandler(editorWindow, imageBase64);
+        registerSignalReadyHandler(editorWindow, request.imageBase64, mode);
 
         // 3. Navigate to the image editor page.
         if (isDev) {
@@ -86,6 +94,7 @@ export async function registerImageEditorHandler(
 function createElectronWindow(
   isDev: boolean,
   parent: BrowserWindow | null,
+  mode: ImageEditorModeEnum,
 ): BrowserWindow {
   const editorWindow = new BrowserWindow({
     width: 1400,
@@ -94,7 +103,10 @@ function createElectronWindow(
     minHeight: 600,
     show: false, // avoid a white flash while the page loads
     frame: true,
-    title: "Edit template image",
+    title:
+      mode === ImageEditorModeEnum.PICK_POINT
+        ? "Pick the click point"
+        : "Edit template image",
     backgroundColor: "#14161c",
     parent: parent ?? undefined,
     modal: false,
@@ -126,30 +138,31 @@ function createElectronWindow(
 function registerSignalReadyHandler(
   electronWindow: BrowserWindow,
   imageBase64: string,
+  mode: ImageEditorModeEnum,
 ): void {
   // Clear any handler left behind by a previous (crashed) session.
   ipcMain.removeHandler(IPC_CHANNELS.EDITOR_SIGNAL_READY);
 
   ipcMain.handle(
     IPC_CHANNELS.EDITOR_SIGNAL_READY,
-    async (event): Promise<string | null> => {
+    async (event): Promise<ImageEditorReadyResponse | null> => {
       if (event.sender.id !== electronWindow.webContents.id) return null;
-      return imageBase64;
+      return { imageBase64, mode };
     },
   );
 }
 
 function registerSignalCloseHandler(
   electronWindow: BrowserWindow,
-): Promise<string | null> {
-  return new Promise<string | null>((resolve) => {
+): Promise<ImageEditorResult> {
+  return new Promise<ImageEditorResult>((resolve) => {
     const onCloseSignal = (
       event: Electron.IpcMainEvent,
-      imageBase64: string | null,
+      result: ImageEditorResult,
     ) => {
       if (event.sender.id !== electronWindow.webContents.id) return;
       cleanup();
-      resolve(imageBase64);
+      resolve(result);
     };
 
     const onClosed = () => {

@@ -1,51 +1,84 @@
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
-import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { SelectButton } from "primereact/selectbutton";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
-import type { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
-import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { Button } from "primereact/button";
+import { useFormContext, useWatch } from "react-hook-form";
+
+import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
+import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
+import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
+import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
+import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
+import LabelComponent from "@/shared/components/LabelComponent";
+import { backendApiService } from "@/shared/services/backend-api-service";
+import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
+import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
+import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
+import { BrowserTypeEnum } from "@/shared/enums/backend/area/browser-type-enum";
+import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
 
+interface EnumOption {
+  label: string;
+  value: string;
+}
+
 interface Props {
+  // Areas this one may sit inside. Only frames, and never itself.
+  parentOptions: FlowSearchAreaDto[];
   isDisabled?: boolean;
 }
 
+const toOptions = (values: Record<string, string>): EnumOption[] =>
+  Object.values(values).map((value) => ({
+    label: value.replaceAll("_", " ").toLowerCase(),
+    value,
+  }));
+
 export default function FlowSearchAreaFormFieldsComponent({
+  parentOptions,
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
 
-  // Watch the two fields that control each other
-  const selectedType = useWatch({ control, name: "type" });
-  // const cursorOptions = Object.values(CursorActionTypeEnum).map((value) => ({
-  //   label: value.replace("_", " ").toLowerCase(),
-  //   value,
-  // }));
-
-  const typeOptions = [
-    { label: "Custom", value: "CUSTOM" as FlowSearchAreaTypeEnum },
-    {
-      label: "By Application/Window",
-      value: "APPLICATION" as FlowSearchAreaTypeEnum,
-    },
-    { label: "By Monitor", value: "MONITOR" as FlowSearchAreaTypeEnum },
-  ];
+  const type = useWatch({ control, name: "type" });
+  const sizingMode = useWatch({ control, name: "sizingMode" });
+  const parentId = useWatch({ control, name: "parentFlowSearchAreaId" });
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
 
-  const handleClick = async () => {
+  const typeOptions = [
+    { label: "Region", value: FlowSearchAreaTypeEnum.CUSTOM },
+    { label: "Application", value: FlowSearchAreaTypeEnum.APPLICATION },
+    { label: "Browser tab", value: FlowSearchAreaTypeEnum.BROWSER_TAB },
+    { label: "Monitor", value: FlowSearchAreaTypeEnum.MONITOR },
+  ];
+
+  const parentDropdownOptions = [
+    { label: "The whole screen (needs rebinding elsewhere)", value: 0 },
+    ...parentOptions.map((x) => ({ label: x.name, value: x.id })),
+  ];
+
+  // The capture window hands back an absolute rect. With a frame chosen it is stored as an
+  // offset inside that frame, so the user drags a box and never sees a coordinate.
+  const handleCapture = async () => {
     const rect = await openWindow();
-    if (rect) {
-      setValue("locationX", rect.x);
-      setValue("locationY", rect.y);
-      setValue("width", rect.width);
-      setValue("height", rect.height);
-      // onSelect(rect);
+    if (!rect) return;
+
+    let originX = 0;
+    let originY = 0;
+
+    if (parentId) {
+      const preview = await backendApiService.FlowSearchArea.getPreview(parentId);
+      if (preview.isResolved) {
+        originX = preview.locationX;
+        originY = preview.locationY;
+      }
     }
+
+    setValue("locationX", rect.x - originX, { shouldValidate: true, shouldDirty: true });
+    setValue("locationY", rect.y - originY, { shouldValidate: true, shouldDirty: true });
+    setValue("width", rect.width, { shouldValidate: true, shouldDirty: true });
+    setValue("height", rect.height, { shouldValidate: true, shouldDirty: true });
   };
 
   return (
@@ -58,126 +91,193 @@ export default function FlowSearchAreaFormFieldsComponent({
         className="mt-5"
       />
 
-      {/* Type */}
-      <div className="mt-5">
-        <Controller
-          name="type"
-          control={control}
-          render={({ field }) => (
-            <div className="flex justify-content-center ">
-              <div className=" w-50">
-                {/* <LabelComponent
-                text="Choose Type"
-                wrap={false}
-                className="mr-3"
-                alignContent="center"
-                /> */}
-                <SelectButton
-                  value={field.value}
-                  options={typeOptions}
-                  onChange={(e) => (e.value ? field.onChange(e.value) : null)}
-                  className=""
-                />
-              </div>
-            </div>
-          )}
-        />
-      </div>
+      <FormSelectButtonComponent
+        fieldName="type"
+        labelText="Type"
+        options={typeOptions}
+        isDisabled={isDisabled}
+        isRequired={true}
+      />
 
-      {/* Type = CUSTOM */}
-      {selectedType === "CUSTOM" && (
-        <div className="flex gap-3 mt-5">
-          <div className="flex w-10 align-items-center justify-content-center">
+      {/* CUSTOM */}
+      {type === FlowSearchAreaTypeEnum.CUSTOM && (
+        <>
+          <FormDropdownComponent<FlowSearchAreaDto, { label: string; value: number }>
+            fieldName="parentFlowSearchAreaId"
+            labelText="Inside"
+            mode="local"
+            options={parentDropdownOptions}
+            optionLabel="label"
+            optionValue="value"
+            isDisabled={isDisabled}
+            hintText="Put it inside a window and the flow keeps working on another machine."
+          />
+
+          <FormSelectButtonComponent
+            fieldName="sizingMode"
+            labelText="Measured in"
+            options={[
+              { label: "Pixels", value: AreaSizingModeEnum.ABSOLUTE_PX },
+              { label: "Percent", value: AreaSizingModeEnum.RATIO },
+            ]}
+            isDisabled={isDisabled || !parentId}
+            hintText={
+              !parentId
+                ? "Percent needs a frame to be a percentage of."
+                : undefined
+            }
+          />
+
+          <div className="flex gap-3">
             <Button
+              type="button"
               label={isWindowOpen ? "Selecting..." : "Capture Area"}
               icon="pi pi-crop"
               loading={isWindowOpen}
-              disabled={isWindowOpen}
-              onClick={handleClick}
-              className="p-button-outlined p-button-secondary"
+              disabled={isWindowOpen || isDisabled}
+              onClick={handleCapture}
+              className="p-button-outlined p-button-secondary mb-3"
               tooltip="Click and drag to select a region of your screen"
               tooltipOptions={{ position: "top" }}
             />
           </div>
 
-          <div className="w-10 ">
+          {sizingMode === AreaSizingModeEnum.RATIO ? (
             <div className="flex gap-3">
-              <FormInputNumberComponent
-                fieldName="locationX"
-                label="X"
-                // min={0}
-                // max={2147483647}
-                isRequired={true}
-                isDisabled={isDisabled}
-              />
+              <FormInputNumberComponent fieldName="ratioX" label="X %" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="ratioY" label="Y %" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="ratioWidth" label="Width %" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="ratioHeight" label="Height %" isDisabled={isDisabled} />
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <FormInputNumberComponent fieldName="locationX" label="X" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="locationY" label="Y" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="width" label="Width" isDisabled={isDisabled} />
+              <FormInputNumberComponent fieldName="height" label="Height" isDisabled={isDisabled} />
+            </div>
+          )}
+        </>
+      )}
 
-              <FormInputNumberComponent
-                fieldName="locationY"
-                label="Y"
-                // min={0}
-                // max={2147483647}
-                isRequired={true}
+      {/* APPLICATION and BROWSER_TAB share how the window is found */}
+      {(type === FlowSearchAreaTypeEnum.APPLICATION ||
+        type === FlowSearchAreaTypeEnum.BROWSER_TAB) && (
+        <>
+          <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
+            fieldName="processName"
+            labelText="Application"
+            mode="remote"
+            queryKey={["lookup", "window"]}
+            queryFn={(filter) =>
+              backendApiService.Lookup.window({ searchText: filter }).then(
+                (res) => res.data,
+              )
+            }
+            optionLabel="label"
+            optionValue="value"
+            placeholderText="Search open windows..."
+            isDisabled={isDisabled}
+            defaultValue={""}
+            hintText="Matched on the process name, which does not change while the app runs."
+          />
+
+          <FormInputTextComponent
+            fieldName="titlePattern"
+            label="Window title"
+            isDisabled={isDisabled}
+          />
+
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <FormDropdownComponent<FlowSearchAreaDto, EnumOption>
+                fieldName="titleMatchMode"
+                labelText="Title match"
+                mode="local"
+                options={toOptions(TitleMatchModeEnum)}
+                optionLabel="label"
+                optionValue="value"
                 isDisabled={isDisabled}
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex-1">
               <FormInputNumberComponent
-                fieldName="width"
-                label="Width"
-                // min={0}
-                // max={2147483647}
-                isRequired={true}
-                isDisabled={isDisabled}
-              />
-
-              <FormInputNumberComponent
-                fieldName="height"
-                label="Height"
-                // min={0}
-                // max={2147483647}
-                isRequired={true}
+                fieldName="instanceIndex"
+                label="If several match, use #"
+                min={0}
                 isDisabled={isDisabled}
               />
             </div>
           </div>
-        </div>
+
+          <FormInputCheckboxComponent
+            fieldName="useClientArea"
+            label="Ignore title bar and borders"
+            isDisabled={isDisabled}
+            hintText="Keeps offsets correct whatever chrome the window has."
+          />
+        </>
       )}
 
-      {/* APPLICATION */}
-      {selectedType === "APPLICATION" && (
-        <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
-          fieldName="appWindowName"
-          labelText="Select Application/Window"
-          mode="remote"
-          queryKey={["lookup", "window"]}
-          queryFn={(_filter) =>
-            backendApiService.Lookup.window({}).then((res) => res.data)
-          }
-          optionLabel="label"
-          optionValue="value"
-          placeholderText="Search item..."
-          classNameContainer="mt-5"
-          isRequired={true}
-          defaultValue={""}
-        />
+      {/* BROWSER_TAB */}
+      {type === FlowSearchAreaTypeEnum.BROWSER_TAB && (
+        <>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <FormDropdownComponent<FlowSearchAreaDto, EnumOption>
+                fieldName="browserType"
+                labelText="Browser"
+                mode="local"
+                options={toOptions(BrowserTypeEnum)}
+                optionLabel="label"
+                optionValue="value"
+                isDisabled={isDisabled}
+              />
+            </div>
+            <div className="flex-1">
+              <FormDropdownComponent<FlowSearchAreaDto, EnumOption>
+                fieldName="tabMatchOn"
+                labelText="Find tab by"
+                mode="local"
+                options={toOptions(TabMatchOnEnum)}
+                optionLabel="label"
+                optionValue="value"
+                isDisabled={isDisabled}
+              />
+            </div>
+          </div>
+
+          <FormInputTextComponent
+            fieldName="tabMatchValue"
+            label="Tab title or URL contains"
+            isRequired={true}
+            isDisabled={isDisabled}
+          />
+
+          <LabelComponent
+            size="sm"
+            color="warning"
+            text="Browser tabs are not resolved yet. The area saves, but it will not run until tab support lands."
+          />
+        </>
       )}
 
       {/* MONITOR */}
-      {selectedType === "MONITOR" && (
+      {type === FlowSearchAreaTypeEnum.MONITOR && (
         <FormDropdownComponent<FlowSearchAreaDto, LookupItemDto>
           fieldName="monitorUniqueId"
-          labelText="Select Monitor"
+          labelText="Monitor"
           mode="remote"
           queryKey={["lookup", "monitor"]}
-          queryFn={(_filter) =>
+          queryFn={() =>
             backendApiService.Lookup.monitor({}).then((res) => res.data)
           }
           optionLabel="label"
           optionValue="value"
-          placeholderText="Search item..."
+          placeholderText="Select a monitor..."
           isRequired={true}
+          isDisabled={isDisabled}
           defaultValue={""}
-          classNameContainer="mt-5"
         />
       )}
     </>

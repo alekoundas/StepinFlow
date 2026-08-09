@@ -1,6 +1,7 @@
 import type z from "zod";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
@@ -15,6 +16,8 @@ interface Props {
   formMode: FormMode;
   defaultValues: FlowLocationDto;
   isFormInDialog?: boolean;
+  // Frames this point can be measured from.
+  areaOptions: FlowSearchAreaDto[];
 
   onSubmit: (formValues: FlowLocationDto) => void;
   onCancel: () => void;
@@ -26,6 +29,7 @@ export default function FlowLocationFormComponent({
   formMode,
   defaultValues,
   isFormInDialog = false,
+  areaOptions,
   onSubmit,
   onCancel,
   onEdit,
@@ -53,11 +57,14 @@ export default function FlowLocationFormComponent({
         <form
           id={formId}
           onSubmit={form.handleSubmit((partialDto) =>
-            onSubmit({ ...defaultValues, ...partialDto }),
+            onSubmit({ ...defaultValues, ...partialDto } as FlowLocationDto),
           )}
           className="flex flex-column h-full"
         >
-          <FlowLocationFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          <FlowLocationFormFieldsComponent
+            areaOptions={areaOptions}
+            isDisabled={formMode === "VIEW"}
+          />
 
           {!isFormInDialog && (
             <FormFooterComponent

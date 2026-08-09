@@ -1,4 +1,5 @@
 using AutoMapper;
+using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -24,6 +25,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowStep? existingFlowStep = await dbContext.FlowSteps
+                .Include(x => x.FlowStepImages)
                 .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
             if (existingFlowStep == null)
@@ -33,6 +35,8 @@ namespace Business.Ipc.Handlers
             // round-tripped back to us cannot re-insert or overwrite anything, and CreatedOn
             // (absent from the dto) keeps its original value.
             dbContext.Entry(existingFlowStep).CurrentValues.SetValues(request.dto);
+
+            FlowStepImageSyncHelper.Sync(dbContext, existingFlowStep, request.dto.FlowStepImages);
 
             await dbContext.SaveChangesAsync(ct);
 

@@ -24,6 +24,8 @@ namespace DataAccess.Configurations
             builder.Property(x => x.CursorButtonActionType).HasConversion<string>();
             builder.Property(x => x.CursorScrollDirectionType).HasConversion<string>();
             builder.Property(x => x.KeyboardInputType).HasConversion<string>();
+            builder.Property(x => x.ImageSearchMode).HasConversion<string>();
+            builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
 
 
             // Relationship with Flow (one-to-many)

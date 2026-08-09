@@ -5,6 +5,7 @@ namespace Core.Models.Ipc
 {
     // ============== QUERIES ==============
     public record GetFlowLocationQuery(int id) : IRequest<ResultDto<FlowLocationDto>>;
+    public record GetFlowLocationPreviewQuery(int id) : IRequest<ResultDto<ScreenPointDto>>;
 
 
     // ============== COMMANDS ==============

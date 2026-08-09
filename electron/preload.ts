@@ -11,6 +11,21 @@ interface IpcBroadcastMessage<T> {
   payload: T;
 }
 
+// Kept in sync with shared/types.ts. This file cannot import it.
+type ImageEditorModeEnum = "EDIT" | "PICK_POINT";
+
+interface ImageEditorOpenRequest {
+  imageBase64: string;
+  mode: ImageEditorModeEnum;
+}
+
+interface ImageEditorReadyResponse {
+  imageBase64: string;
+  mode: ImageEditorModeEnum;
+}
+
+type ImageEditorResult = string | { x: number; y: number } | null;
+
 interface SignalReadyResponse {
   screenshot: Uint8Array;
   physicalWidth: number;
@@ -75,12 +90,12 @@ const api = {
 
   // Images are passed as base64 PNG strings (same shape .Net returns for byte[])
   imageEditor: {
-    openWindow: (imageBase64: string): Promise<string | null> =>
-      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_OPEN_WINDOW, imageBase64),
-    signalReady: (): Promise<string | null> =>
+    openWindow: (request: ImageEditorOpenRequest): Promise<ImageEditorResult> =>
+      ipcRenderer.invoke(IPC_CHANNELS.EDITOR_OPEN_WINDOW, request),
+    signalReady: (): Promise<ImageEditorReadyResponse | null> =>
       ipcRenderer.invoke(IPC_CHANNELS.EDITOR_SIGNAL_READY),
-    signalCloseWindow: (imageBase64: string | null): void =>
-      ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, imageBase64),
+    signalCloseWindow: (result: ImageEditorResult): void =>
+      ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, result),
   },
 };
 

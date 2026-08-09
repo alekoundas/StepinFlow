@@ -1,6 +1,5 @@
 import type z from "zod";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
-import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
@@ -16,6 +15,8 @@ interface Props {
   formMode: FormMode;
   defaultValues: FlowSearchAreaDto;
   isFormInDialog?: boolean;
+  // Areas this one may sit inside.
+  parentOptions: FlowSearchAreaDto[];
 
   onSubmit: (formValues: FlowSearchAreaDto) => void;
   onCancel: () => void;
@@ -27,6 +28,7 @@ export default function FlowSearchAreaFormComponent({
   formMode,
   defaultValues,
   isFormInDialog = false,
+  parentOptions,
   onSubmit,
   onCancel,
   onEdit,
@@ -64,12 +66,15 @@ export default function FlowSearchAreaFormComponent({
       <FormProvider {...form}>
         <form
           id={formId}
-          onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
-            onSubmit({ ...defaultValues, ...partialDto }),
+          onSubmit={form.handleSubmit((partialDto) =>
+            onSubmit({ ...defaultValues, ...partialDto } as FlowSearchAreaDto),
           )}
           className="flex flex-column h-full"
         >
-          <FlowSearchAreaFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          <FlowSearchAreaFormFieldsComponent
+            parentOptions={parentOptions}
+            isDisabled={formMode === "VIEW"}
+          />
 
           {!isFormInDialog && (
             <FormFooterComponent

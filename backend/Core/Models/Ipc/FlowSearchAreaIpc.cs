@@ -6,6 +6,7 @@ namespace Core.Models.Ipc
     // ============== QUERIES ==============
     public record GetFlowSearchAreaQuery(int id) : IRequest<ResultDto<FlowSearchAreaDto>>;
     public record GetLazyFlowSearchAreaQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowSearchAreaDto>>>;
+    public record GetFlowSearchAreaPreviewQuery(int id) : IRequest<ResultDto<FlowSearchAreaPreviewDto>>;
 
 
     // ============== COMMANDS ==============

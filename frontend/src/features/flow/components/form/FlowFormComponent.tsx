@@ -5,6 +5,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
 import { FlowLocationDataTableComponent } from "@/features/flow-location/components/FlowLocationDataTableComponent";
@@ -106,6 +107,7 @@ export function FlowFormComponent({
                 append={appendLocation}
                 remove={removeLocation}
                 update={updateLocation}
+                areaOptions={searchAreaFields as unknown as FlowSearchAreaDto[]}
                 formMode={formMode}
                 isDisabled={formMode === "VIEW"}
               />

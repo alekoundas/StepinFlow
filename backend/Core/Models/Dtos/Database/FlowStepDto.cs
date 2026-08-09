@@ -29,6 +29,16 @@ namespace Core.Models.Dtos
         public bool IsLoopInfinite { get; set; }
 
 
+        // IMAGE_SEARCH, TEXT_SEARCH
+        public ImageSearchModeEnum ImageSearchMode { get; set; }
+        public bool LoopOnMultipleFindings { get; set; }
+        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
+        public float Accuracy { get; set; } = 0.8f;
+        public int MaxMatches { get; set; } = 20;
+        public int PollIntervalMilliseconds { get; set; } = 500;
+        public int TimeoutMilliseconds { get; set; }
+
+
         // RUN_CMD
         public string RunCommand { get; set; } = string.Empty;
 
@@ -39,9 +49,8 @@ namespace Core.Models.Dtos
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-        public string WindowName { get; set; } = string.Empty;
-        public int WindowHeight { get; set; } // will see if i need them
-        public int WindowWidth { get; set; } // will see if i need them
+        public int WindowHeight { get; set; }
+        public int WindowWidth { get; set; }
 
 
         // KYEBOARD_INPUT

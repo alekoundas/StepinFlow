@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace Core.Models.Business
 {
@@ -12,15 +12,14 @@ namespace Core.Models.Business
         public IntPtr HMonitor { get; set; }
 
         /// <summary>
-        /// Bounds in the Win32 virtual screen space this (DPI-unaware) process sees.
+        /// Bounds in real device pixels. The process is Per-Monitor-V2 aware, so Win32 reports
+        /// physical pixels everywhere and this is the only screen space the app uses.
         /// </summary>
         public Rectangle Bounds { get; set; }
 
-        /// <summary>
-        /// Bounds in real device pixels, taken from the display mode (DEVMODE).
-        /// Unaffected by DPI virtualization, so this is the space screenshots
-        /// of several monitors can be stitched in.
-        /// </summary>
-        public Rectangle PhysicalBounds { get; set; }
+        /// <summary>Effective DPI. 96 = 100% scale.</summary>
+        public int Dpi { get; set; } = 96;
+
+        public double ScaleFactor => Dpi / 96d;
     }
 }

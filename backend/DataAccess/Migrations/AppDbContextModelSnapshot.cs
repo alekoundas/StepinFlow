@@ -120,10 +120,17 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Anchor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FlowId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FlowSearchAreaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("LocationX")
@@ -136,9 +143,21 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OffsetMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<float>("RatioX")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RatioY")
+                        .HasColumnType("REAL");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FlowId");
+
+                    b.HasIndex("FlowSearchAreaId");
 
                     b.ToTable("FlowLocations");
                 });
@@ -149,7 +168,7 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AppWindowName")
+                    b.Property<string>("BrowserType")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -160,6 +179,9 @@ namespace DataAccess.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Height")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InstanceIndex")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("LocationX")
@@ -176,7 +198,50 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
+                    b.Property<int?>("ParentFlowSearchAreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<float>("RatioHeight")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RatioWidth")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RatioX")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RatioY")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("SizingMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TabMatchOn")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TabMatchValue")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TitleMatchMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TitlePattern")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("UseClientArea")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Width")
@@ -186,8 +251,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("FlowId");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
+                    b.HasIndex("ParentFlowSearchAreaId");
 
                     b.ToTable("FlowSearchAreas");
                 });
@@ -197,6 +261,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<float>("Accuracy")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("ConditionText")
                         .IsRequired()
@@ -239,6 +306,10 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ImageSearchMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsLocationCustom")
                         .HasColumnType("INTEGER");
 
@@ -270,6 +341,12 @@ namespace DataAccess.Migrations
                     b.Property<int>("LoopCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("LoopOnMultipleFindings")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxMatches")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -278,6 +355,9 @@ namespace DataAccess.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("ParentFlowStepId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PollIntervalMilliseconds")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("RootId")
@@ -290,15 +370,18 @@ namespace DataAccess.Migrations
                     b.Property<int?>("SubFlowId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("TemplateMatchMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TimeoutMilliseconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("WaitForMilliseconds")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("WindowHeight")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("WindowName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("WindowWidth")
                         .HasColumnType("INTEGER");
@@ -332,8 +415,34 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<float>("Accuracy")
+                    b.Property<float?>("Accuracy")
                         .HasColumnType("REAL");
+
+                    b.Property<bool>("AllowMultiScale")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AuthoredFrameHeight")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AuthoredFrameWidth")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AuthoredMonitorDpi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AuthoredMonitorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClickAnchor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ClickOffsetX")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClickOffsetY")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
@@ -341,21 +450,28 @@ namespace DataAccess.Migrations
                     b.Property<int>("FlowStepId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("LoopOnMultipleFindings")
+                    b.Property<bool>("IsRequired")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float>("ScaleTolerance")
+                        .HasColumnType("REAL");
 
                     b.Property<byte[]>("TemplateImage")
                         .HasColumnType("BLOB");
 
-                    b.Property<int?>("TemplateMatchMode")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("TemplateMatchMode")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FlowStepId");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
 
                     b.ToTable("FlowStepImages");
                 });
@@ -414,7 +530,14 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Core.Models.Database.FlowSearchArea", "FlowSearchArea")
+                        .WithMany("FlowLocations")
+                        .HasForeignKey("FlowSearchAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Flow");
+
+                    b.Navigation("FlowSearchArea");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
@@ -425,7 +548,14 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Core.Models.Database.FlowSearchArea", "ParentFlowSearchArea")
+                        .WithMany("ChildFlowSearchAreas")
+                        .HasForeignKey("ParentFlowSearchAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Flow");
+
+                    b.Navigation("ParentFlowSearchArea");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowStep", b =>
@@ -521,6 +651,10 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
                 {
+                    b.Navigation("ChildFlowSearchAreas");
+
+                    b.Navigation("FlowLocations");
+
                     b.Navigation("FlowSteps");
                 });
 

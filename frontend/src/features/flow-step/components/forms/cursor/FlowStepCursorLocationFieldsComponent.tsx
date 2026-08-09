@@ -1,4 +1,5 @@
 import type z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { SelectButton } from "primereact/selectbutton";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
@@ -8,6 +9,7 @@ import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComp
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import FlowLocationFormComponent from "@/features/flow-location/components/forms/FlowLocationFormComponent";
 import { useFlowLocationMutations } from "@/features/flow-location/hooks/use-flow-location";
 import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
@@ -49,6 +51,20 @@ export default function FlowStepCursorLocationFieldsComponent({
   const { control, setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
   const { createFlowLocationMutation } = useFlowLocationMutations();
+
+  // A location created from here should still be anchorable to a frame, so the flow's areas
+  // are fetched rather than passed down from the flow form.
+  const { data: areaOptions = [] } = useQuery({
+    queryKey: ["lookup", "flowSearchArea", flowId],
+    queryFn: () =>
+      backendApiService.Lookup.flowSearchArea({ flowId }).then((res) =>
+        res.data.map(
+          (item) =>
+            new FlowSearchAreaDto({ id: Number(item.value), name: item.label }),
+        ),
+      ),
+    enabled: !!flowId,
+  });
 
   const isCustomFieldName = isEndPoint
     ? "isLocationEndCustom"
@@ -103,6 +119,7 @@ export default function FlowStepCursorLocationFieldsComponent({
           formId="flow-location-form"
           isFormInDialog={true}
           formMode="ADD"
+          areaOptions={areaOptions}
           onEdit={() => closeAll()}
           onCancel={() => closeAll()}
           onSubmit={async (data) => {

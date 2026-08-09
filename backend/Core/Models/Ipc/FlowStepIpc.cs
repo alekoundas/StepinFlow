@@ -10,6 +10,7 @@ namespace Core.Models.Ipc
     public record GetFlowStepTreeNodeQuery(TreeNodeRequestDto dto) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
     public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
+    public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
 
 
     // ============== COMMANDS ==============

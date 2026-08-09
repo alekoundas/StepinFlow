@@ -15,8 +15,9 @@ namespace Business.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        // Projected instead of Include + Map so the usage counts are computed by SQLite in the
-        // same round trip, and no FlowStep rows are dragged along for a form that never shows them.
+        // One query. The child projections are inlined rather than shared with the lazy grid
+        // handler: EF only accepts a stored Expression at the top level of a query, so reusing one
+        // would force a round trip per collection.
         public async Task<ResultDto<FlowDto>> Handle(GetFlowQuery request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
@@ -37,14 +38,33 @@ namespace Business.Ipc.Handlers
                             Id = a.Id,
                             Name = a.Name,
                             Type = a.Type,
-                            AppWindowName = a.AppWindowName,
-                            MonitorUniqueId = a.MonitorUniqueId,
+
+                            ParentFlowSearchAreaId = a.ParentFlowSearchAreaId,
+                            SizingMode = a.SizingMode,
                             LocationX = a.LocationX,
                             LocationY = a.LocationY,
                             Width = a.Width,
                             Height = a.Height,
+                            RatioX = a.RatioX,
+                            RatioY = a.RatioY,
+                            RatioWidth = a.RatioWidth,
+                            RatioHeight = a.RatioHeight,
+
+                            ProcessName = a.ProcessName,
+                            TitlePattern = a.TitlePattern,
+                            TitleMatchMode = a.TitleMatchMode,
+                            InstanceIndex = a.InstanceIndex,
+                            UseClientArea = a.UseClientArea,
+
+                            BrowserType = a.BrowserType,
+                            TabMatchValue = a.TabMatchValue,
+                            TabMatchOn = a.TabMatchOn,
+
+                            MonitorUniqueId = a.MonitorUniqueId,
+
                             FlowId = a.FlowId,
                             FlowStepsCount = a.FlowSteps.Count(),
+                            ParentName = a.ParentFlowSearchArea != null ? a.ParentFlowSearchArea.Name : string.Empty,
                         })
                         .ToList(),
 
@@ -54,10 +74,18 @@ namespace Business.Ipc.Handlers
                         {
                             Id = l.Id,
                             Name = l.Name,
+
+                            FlowSearchAreaId = l.FlowSearchAreaId,
+                            Anchor = l.Anchor,
+                            OffsetMode = l.OffsetMode,
                             LocationX = l.LocationX,
                             LocationY = l.LocationY,
+                            RatioX = l.RatioX,
+                            RatioY = l.RatioY,
+
                             FlowId = l.FlowId,
                             FlowStepsCount = l.FlowSteps.Count() + l.EndFlowSteps.Count(),
+                            FlowSearchAreaName = l.FlowSearchArea != null ? l.FlowSearchArea.Name : string.Empty,
                         })
                         .ToList(),
                 })

@@ -1,4 +1,5 @@
 using AutoMapper;
+using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -27,6 +28,8 @@ namespace Business.Ipc.Handlers
             flowStep.Id = 0;
 
             dbContext.FlowSteps.Add(flowStep);
+            FlowStepImageSyncHelper.Sync(dbContext, flowStep, request.dto.FlowStepImages);
+
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<int>.Success(flowStep.Id);

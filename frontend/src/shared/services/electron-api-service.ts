@@ -2,6 +2,9 @@ import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { Rectangle } from "electron";
 import type {
+  ImageEditorOpenRequest,
+  ImageEditorReadyResponse,
+  ImageEditorResult,
   IpcBroadcastMessage,
   IpcRequestMessage,
   RecordedInput,
@@ -29,9 +32,11 @@ declare global {
       };
       // Images travel as base64 PNG strings (what .Net returns for byte[])
       imageEditor: {
-        openWindow: (imageBase64: string) => Promise<string | null>;
-        signalReady: () => Promise<string | null>;
-        signalCloseWindow: (imageBase64: string | null) => void;
+        openWindow: (
+          request: ImageEditorOpenRequest,
+        ) => Promise<ImageEditorResult>;
+        signalReady: () => Promise<ImageEditorReadyResponse | null>;
+        signalCloseWindow: (result: ImageEditorResult) => void;
       };
     };
   }
@@ -48,10 +53,10 @@ export const ElectronApiService = {
       window.electronApi.overlay.signalCloseWindow(rect),
   },
   imageEditor: {
-    openWindow: (imageBase64: string) =>
-      window.electronApi.imageEditor.openWindow(imageBase64),
+    openWindow: (request: ImageEditorOpenRequest) =>
+      window.electronApi.imageEditor.openWindow(request),
     signalReady: () => window.electronApi.imageEditor.signalReady(),
-    signalCloseWindow: (imageBase64: string | null) =>
-      window.electronApi.imageEditor.signalCloseWindow(imageBase64),
+    signalCloseWindow: (result: ImageEditorResult) =>
+      window.electronApi.imageEditor.signalCloseWindow(result),
   },
 };

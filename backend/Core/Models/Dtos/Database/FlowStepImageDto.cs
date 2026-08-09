@@ -1,4 +1,4 @@
-﻿using Core.Enums;
+using Core.Enums;
 
 namespace Core.Models.Dtos
 {
@@ -6,14 +6,29 @@ namespace Core.Models.Dtos
     {
         public int Id { get; set; }
 
+        public string Name { get; set; } = string.Empty;
+        public int OrderNumber { get; set; }
 
-        public TemplateMatchModeEnum? TemplateMatchMode { get; set; }
         public byte[]? TemplateImage { get; set; }
-        public float Accuracy { get; set; }
-        public bool LoopOnMultipleFindings { get; set; }
 
+        public bool IsRequired { get; set; }
+
+        // Null means "use the step's setting".
+        public TemplateMatchModeEnum? TemplateMatchMode { get; set; }
+        public float? Accuracy { get; set; }
+
+        public int ClickOffsetX { get; set; }
+        public int ClickOffsetY { get; set; }
+        public AnchorTypeEnum ClickAnchor { get; set; } = AnchorTypeEnum.CENTER;
+
+        public int AuthoredFrameWidth { get; set; }
+        public int AuthoredFrameHeight { get; set; }
+        public string AuthoredMonitorId { get; set; } = string.Empty;
+        public int AuthoredMonitorDpi { get; set; }
+
+        public bool AllowMultiScale { get; set; }
+        public float ScaleTolerance { get; set; } = 0.15f;
 
         public int FlowStepId { get; set; }
-        public FlowStepDto FlowStep { get; set; } = null!;
     }
 }

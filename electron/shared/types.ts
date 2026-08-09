@@ -41,13 +41,43 @@ export interface SignalReadyResponse {
   monitorLogicalOrigin: { x: number; y: number };
 }
 
+// Bounds are physical pixels. Convert with screen.screenToDipRect before placing a window.
 export interface ScreenshotMonitorResponseDto {
   screenshot: Uint8Array;
-  logicalX: number;
-  logicalY: number;
-  physicalWidth: number;
-  physicalHeight: number;
+  deviceId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  dpi: number;
 }
+
+// Image editor. The window is reused for both jobs so picking a click point gets the same
+// zoom and pixel grid as editing does.
+export const ImageEditorModeEnum = {
+  EDIT: "EDIT",
+  PICK_POINT: "PICK_POINT",
+} as const;
+export type ImageEditorModeEnum =
+  (typeof ImageEditorModeEnum)[keyof typeof ImageEditorModeEnum];
+
+export interface ImageEditorOpenRequest {
+  imageBase64: string;
+  mode: ImageEditorModeEnum;
+}
+
+export interface ImageEditorReadyResponse {
+  imageBase64: string;
+  mode: ImageEditorModeEnum;
+}
+
+export interface ImageEditorPoint {
+  x: number;
+  y: number;
+}
+
+// EDIT returns the edited PNG, PICK_POINT returns a point in template pixels.
+export type ImageEditorResult = string | ImageEditorPoint | null;
 
 export interface RecordedInput {
   type: RecordedInputTypeEnum;

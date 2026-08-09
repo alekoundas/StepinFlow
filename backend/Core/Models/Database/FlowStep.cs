@@ -27,6 +27,24 @@ namespace Core.Models.Database
         public bool IsLoopInfinite { get; set; }
 
 
+        // IMAGE_SEARCH, TEXT_SEARCH
+        public ImageSearchModeEnum ImageSearchMode { get; set; }
+
+        /// <summary>Run the Success children once per match instead of once for the best match.</summary>
+        public bool LoopOnMultipleFindings { get; set; }
+
+        // Defaults for the step's templates, each of which may override them.
+        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
+        public float Accuracy { get; set; } = 0.8f;
+
+        /// <summary>Safety cap so a low threshold cannot return thousands of hits.</summary>
+        public int MaxMatches { get; set; } = 20;
+
+        // Waiting modes only. 0 timeout waits forever.
+        public int PollIntervalMilliseconds { get; set; } = 500;
+        public int TimeoutMilliseconds { get; set; }
+
+
         // RUN_CMD
         public string RunCommand { get; set; } = string.Empty;
 
@@ -37,9 +55,11 @@ namespace Core.Models.Database
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-        public string WindowName { get; set; } = string.Empty;
-        public int WindowHeight { get; set; } // will see if i need them
-        public int WindowWidth { get; set; } // will see if i need them
+        //
+        // The window itself is a FlowSearchArea of type APPLICATION, and RELOCATE moves it to a
+        // FlowLocation, so both survive being run on another machine.
+        public int WindowHeight { get; set; }
+        public int WindowWidth { get; set; }
 
 
         // KYEBOARD_INPUT

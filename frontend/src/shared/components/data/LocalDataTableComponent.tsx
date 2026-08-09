@@ -12,6 +12,11 @@ interface Props<T extends DataTableValue> {
   className?: string;
   initialRows?: number;
   emptyMessage?: string;
+
+  // Row expansion. dataKey is required by PrimeReact to track which rows are open.
+  dataKey?: string;
+  rowExpansionTemplate?: (row: T) => React.ReactNode;
+  isRowExpandable?: (row: T) => boolean;
 }
 
 export function LocalDataTableComponent<T extends DataTableValue>({
@@ -20,7 +25,11 @@ export function LocalDataTableComponent<T extends DataTableValue>({
   className,
   initialRows = 10,
   emptyMessage,
+  dataKey,
+  rowExpansionTemplate,
+  isRowExpandable,
 }: Props<T>) {
+  const [expandedRows, setExpandedRows] = useState<DataTableValue[]>([]);
   const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
     rows: initialRows,
@@ -88,7 +97,14 @@ export function LocalDataTableComponent<T extends DataTableValue>({
       <DataTable
         value={paginatedData}
         size="small"
-        // dataKey="id"
+        dataKey={dataKey}
+        expandedRows={rowExpansionTemplate ? expandedRows : undefined}
+        onRowToggle={(e) => setExpandedRows(e.data as DataTableValue[])}
+        rowExpansionTemplate={
+          rowExpansionTemplate
+            ? (row) => rowExpansionTemplate(row as T)
+            : undefined
+        }
         totalRecords={processedData.length}
         loading={false}
         lazy={false}
@@ -103,6 +119,12 @@ export function LocalDataTableComponent<T extends DataTableValue>({
         className={className}
         emptyMessage={emptyMessage}
       >
+        {rowExpansionTemplate && (
+          <Column
+            expander={(row) => (isRowExpandable ? isRowExpandable(row as T) : true)}
+            style={{ width: "3rem" }}
+          />
+        )}
         {columns
           .filter((col) => !col.isHidden)
           .map((col) => (

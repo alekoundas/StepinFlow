@@ -34,8 +34,9 @@ namespace Business.Ipc.Handlers
             existingFlow.Name = request.dto.Name;
             existingFlow.OrderNumber = request.dto.OrderNumber;
 
-            SyncFlowSearchAreas(dbContext, existingFlow, request.dto.FlowSearchAreas);
-            SyncFlowLocations(dbContext, existingFlow, request.dto.FlowLocations);
+            // Areas first: a location can point at an area created in this same payload.
+            Dictionary<int, FlowSearchArea> areasByDtoId = SyncFlowSearchAreas(dbContext, existingFlow, request.dto.FlowSearchAreas);
+            SyncFlowLocations(dbContext, existingFlow, request.dto.FlowLocations, areasByDtoId);
 
             await dbContext.SaveChangesAsync(ct);
 
@@ -47,11 +48,7 @@ namespace Business.Ipc.Handlers
         // ================================================================
         // Private methods
         // ================================================================
-
-        // Children are matched by Id and updated in place. Letting AutoMapper assign the whole
-        // collection would delete and re-insert every row on each save, and any FlowStep pointing
-        // at a search area or location would lose its reference.
-        private static void SyncFlowSearchAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowSearchAreaDto> dtos)
+        private static Dictionary<int, FlowSearchArea> SyncFlowSearchAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowSearchAreaDto> dtos)
         {
             List<FlowSearchArea> existing = flow.FlowSearchAreas.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
@@ -59,28 +56,64 @@ namespace Business.Ipc.Handlers
             foreach (FlowSearchArea removed in existing.Where(x => !keptIds.Contains(x.Id)))
                 dbContext.FlowSearchAreas.Remove(removed);
 
+            Dictionary<int, FlowSearchArea> byDtoId = new Dictionary<int, FlowSearchArea>();
+
             foreach (FlowSearchAreaDto dto in dtos)
             {
-                FlowSearchArea? flowSearchArea = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+                FlowSearchArea? area = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
 
-                if (flowSearchArea == null)
+                if (area == null)
                 {
-                    flowSearchArea = new FlowSearchArea { FlowId = flow.Id };
-                    dbContext.FlowSearchAreas.Add(flowSearchArea);
+                    area = new FlowSearchArea { FlowId = flow.Id };
+                    dbContext.FlowSearchAreas.Add(area);
                 }
 
-                flowSearchArea.Name = dto.Name;
-                flowSearchArea.Type = dto.Type;
-                flowSearchArea.AppWindowName = dto.AppWindowName;
-                flowSearchArea.MonitorUniqueId = dto.MonitorUniqueId;
-                flowSearchArea.LocationX = dto.LocationX;
-                flowSearchArea.LocationY = dto.LocationY;
-                flowSearchArea.Width = dto.Width;
-                flowSearchArea.Height = dto.Height;
+                area.Name = dto.Name;
+                area.Type = dto.Type;
+
+                area.SizingMode = dto.SizingMode;
+                area.LocationX = dto.LocationX;
+                area.LocationY = dto.LocationY;
+                area.Width = dto.Width;
+                area.Height = dto.Height;
+                area.RatioX = dto.RatioX;
+                area.RatioY = dto.RatioY;
+                area.RatioWidth = dto.RatioWidth;
+                area.RatioHeight = dto.RatioHeight;
+
+                area.ProcessName = dto.ProcessName;
+                area.TitlePattern = dto.TitlePattern;
+                area.TitleMatchMode = dto.TitleMatchMode;
+                area.InstanceIndex = dto.InstanceIndex;
+                area.UseClientArea = dto.UseClientArea;
+
+                area.BrowserType = dto.BrowserType;
+                area.TabMatchValue = dto.TabMatchValue;
+                area.TabMatchOn = dto.TabMatchOn;
+
+                area.MonitorUniqueId = dto.MonitorUniqueId;
+
+                byDtoId[dto.Id] = area;
             }
+
+            foreach (FlowSearchAreaDto dto in dtos)
+            {
+                FlowSearchArea area = byDtoId[dto.Id];
+
+                area.ParentFlowSearchArea = dto.ParentFlowSearchAreaId != null
+                    && byDtoId.TryGetValue(dto.ParentFlowSearchAreaId.Value, out FlowSearchArea? parent)
+                    && parent != area
+                        ? parent
+                        : null;
+
+                if (area.ParentFlowSearchArea == null)
+                    area.ParentFlowSearchAreaId = null;
+            }
+
+            return byDtoId;
         }
 
-        private static void SyncFlowLocations(AppDbContext dbContext, Flow flow, IEnumerable<FlowLocationDto> dtos)
+        private static void SyncFlowLocations(AppDbContext dbContext, Flow flow, IEnumerable<FlowLocationDto> dtos, Dictionary<int, FlowSearchArea> areasByDtoId)
         {
             List<FlowLocation> existing = flow.FlowLocations.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
@@ -90,17 +123,29 @@ namespace Business.Ipc.Handlers
 
             foreach (FlowLocationDto dto in dtos)
             {
-                FlowLocation? flowLocation = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+                FlowLocation? location = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
 
-                if (flowLocation == null)
+                if (location == null)
                 {
-                    flowLocation = new FlowLocation { FlowId = flow.Id };
-                    dbContext.FlowLocations.Add(flowLocation);
+                    location = new FlowLocation { FlowId = flow.Id };
+                    dbContext.FlowLocations.Add(location);
                 }
 
-                flowLocation.Name = dto.Name;
-                flowLocation.LocationX = dto.LocationX;
-                flowLocation.LocationY = dto.LocationY;
+                location.Name = dto.Name;
+                location.Anchor = dto.Anchor;
+                location.OffsetMode = dto.OffsetMode;
+                location.LocationX = dto.LocationX;
+                location.LocationY = dto.LocationY;
+                location.RatioX = dto.RatioX;
+                location.RatioY = dto.RatioY;
+
+                location.FlowSearchArea = dto.FlowSearchAreaId != null
+                    && areasByDtoId.TryGetValue(dto.FlowSearchAreaId.Value, out FlowSearchArea? area)
+                        ? area
+                        : null;
+
+                if (location.FlowSearchArea == null)
+                    location.FlowSearchAreaId = null;
             }
         }
     }

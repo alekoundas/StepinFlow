@@ -12,6 +12,8 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import type { FlowSearchAreaPreviewDto } from "@/shared/models/database/flow-search-area-preview-dto";
+import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -45,6 +47,8 @@ export const backendApiService = {
     getMovePreview: (dto: FlowStepMoveDto) =>
       call<FlowStepMovePreviewDto>("FlowStep.getMovePreview", dto),
     move: (dto: FlowStepMoveDto) => call<boolean>("FlowStep.move", dto),
+    testImageSearch: (dto: FlowStepDto) =>
+      call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
   },
 
   FlowStepImage: {
@@ -62,6 +66,8 @@ export const backendApiService = {
     get: (id: number) => call<FlowSearchAreaDto>("FlowSearchArea.get", id),
     getLazy: (dto: LazyDto) =>
       call<LazyResponseDto<FlowSearchAreaDto>>("FlowSearchArea.getLazy", dto),
+    getPreview: (id: number) =>
+      call<FlowSearchAreaPreviewDto>("FlowSearchArea.getPreview", id),
   },
 
   FlowLocation: {
@@ -70,6 +76,8 @@ export const backendApiService = {
       call<FlowLocationDto>("FlowLocation.update", dto),
     delete: (id: number) => call<boolean>("FlowLocation.delete", id),
     get: (id: number) => call<FlowLocationDto>("FlowLocation.get", id),
+    getPreview: (id: number) =>
+      call<ScreenPointDto>("FlowLocation.getPreview", id),
   },
 
   SubFlow: {
@@ -88,6 +96,8 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.flowStep", dto),
     flowLocation: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.flowLocation", dto),
+    flowSearchArea: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.flowSearchArea", dto),
   },
 
   System: {

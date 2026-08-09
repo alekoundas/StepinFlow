@@ -1,8 +1,10 @@
-﻿using Core.Models.Database;
+using Core.Enums;
+using Core.Models.Business;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Business.Services.ScreenshotService
 {
@@ -45,7 +47,7 @@ namespace Business.Services.ScreenshotService
 
 
         //==================================================
-        // P/Invoke Get app window size (RECT) 
+        // P/Invoke Get window size (RECT)
         //==================================================
 
         [StructLayout(LayoutKind.Sequential)]
@@ -57,80 +59,186 @@ namespace Business.Services.ScreenshotService
             public int Bottom;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetClientRect(IntPtr hWnd, ref RECT lpRect);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
 
-        public static IntPtr FindHwndByTitle(string windowTitle)
+
+
+        //==================================================
+        // Public methods
+        //==================================================
+
+        /// <summary>
+        /// Windows matching the query, in z-order. Empty when nothing matches.
+        /// </summary>
+        public static IReadOnlyList<IntPtr> FindWindows(WindowQuery query)
         {
-            IntPtr foundHwnd = IntPtr.Zero;
+            List<IntPtr> matches = new List<IntPtr>();
+
             EnumWindows((hWnd, lParam) =>
             {
-                string windowText = GetAppWindowText(hWnd);
-                if (windowText.Contains(windowTitle, StringComparison.OrdinalIgnoreCase))
-                {
-                    foundHwnd = hWnd;
-                    return false; // stop enumeration
-                }
+                if (!IsWindowVisible(hWnd))
+                    return true;
+
+                string title = GetAppWindowText(hWnd);
+                if (string.IsNullOrWhiteSpace(title))
+                    return true;
+
+                if (!string.IsNullOrWhiteSpace(query.ProcessName)
+                    && !string.Equals(GetProcessName(hWnd), query.ProcessName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (!string.IsNullOrWhiteSpace(query.TitlePattern)
+                    && !IsTitleMatch(title, query.TitlePattern, query.TitleMatchMode))
+                    return true;
+
+                matches.Add(hWnd);
                 return true;
+
             }, IntPtr.Zero);
 
-
-            return foundHwnd; ;
+            return matches;
         }
 
-
-        public static Rectangle GetApplicationWindowBounds(string windowTitle)
+        public static IntPtr FindWindow(WindowQuery query)
         {
-            IntPtr foundHwnd = IntPtr.Zero;
-            EnumWindows((hWnd, lParam) =>
-            {
-                string windowText = GetAppWindowText(hWnd);
-                if (windowText.Contains(windowTitle, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!IsWindowVisible(hWnd))
-                        return true; // skip invisible windows
+            IReadOnlyList<IntPtr> matches = FindWindows(query);
+            if (matches.Count == 0)
+                return IntPtr.Zero;
 
-                    foundHwnd = hWnd;
-                    return false; // stop enumeration
-                }
-                return true;
-            }, IntPtr.Zero);
+            int index = Math.Clamp(query.InstanceIndex, 0, matches.Count - 1);
+            return matches[index];
+        }
 
-
-            // No match: GetWindowRect on a null handle fails and leaves rect uninitialised, which
-            // would otherwise be handed back as a perfectly plausible looking search area.
-            if (foundHwnd == IntPtr.Zero)
+        /// <summary>
+        /// Bounds in physical pixels. The client area excludes the title bar and borders, so a
+        /// stored offset means the same thing whatever chrome the window happens to have.
+        /// Returns empty when the handle is not a live window.
+        /// </summary>
+        public static Rectangle GetWindowBounds(IntPtr hWnd, bool useClientArea)
+        {
+            if (hWnd == IntPtr.Zero)
                 return Rectangle.Empty;
 
-            RECT rect = new RECT();
-            if (!GetWindowRect(foundHwnd, ref rect))
+            if (!useClientArea)
+            {
+                RECT windowRect = new RECT();
+                if (!GetWindowRect(hWnd, ref windowRect))
+                    return Rectangle.Empty;
+
+                return Rectangle.FromLTRB(windowRect.Left, windowRect.Top, windowRect.Right, windowRect.Bottom);
+            }
+
+            RECT clientRect = new RECT();
+            if (!GetClientRect(hWnd, ref clientRect))
                 return Rectangle.Empty;
 
-            return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+            POINT origin = new POINT { X = clientRect.Left, Y = clientRect.Top };
+            if (!ClientToScreen(hWnd, ref origin))
+                return Rectangle.Empty;
+
+            return new Rectangle(origin.X, origin.Y, clientRect.Right - clientRect.Left, clientRect.Bottom - clientRect.Top);
         }
 
-
-        public static IReadOnlyList<string> GetApplicationWindowNames()
+        public static IReadOnlyList<SystemWindow> GetApplicationWindows()
         {
-            Collection<string> windowNames = new Collection<string>();
+            Collection<SystemWindow> windows = new Collection<SystemWindow>();
+
             EnumWindows((hWnd, lParam) =>
             {
-                if (IsWindowVisible(hWnd))
+                if (!IsWindowVisible(hWnd))
+                    return true;
+
+                string title = GetAppWindowText(hWnd);
+                if (string.IsNullOrWhiteSpace(title))
+                    return true;
+
+                GetWindowThreadProcessId(hWnd, out uint processId);
+
+                windows.Add(new SystemWindow
                 {
-                    string title = GetAppWindowText(hWnd);
-                    if (!string.IsNullOrWhiteSpace(title))
-                        windowNames.Add(title);
-                }
+                    Title = title,
+                    ProcessName = GetProcessName(hWnd),
+                    ProcessId = (int)processId,
+                });
+
                 return true;
 
             }, IntPtr.Zero);
 
-
-            return windowNames;
+            return windows;
         }
 
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private static string GetProcessName(IntPtr hWnd)
+        {
+            GetWindowThreadProcessId(hWnd, out uint processId);
+
+            try
+            {
+                using Process process = Process.GetProcessById((int)processId);
+                return process.ProcessName;
+            }
+            catch
+            {
+                // Process exited between the enumeration and the lookup.
+                return string.Empty;
+            }
+        }
+
+        private static bool IsTitleMatch(string title, string pattern, TitleMatchModeEnum mode)
+        {
+            switch (mode)
+            {
+                case TitleMatchModeEnum.EQUALS:
+                    return string.Equals(title, pattern, StringComparison.OrdinalIgnoreCase);
+
+                case TitleMatchModeEnum.STARTS_WITH:
+                    return title.StartsWith(pattern, StringComparison.OrdinalIgnoreCase);
+
+                case TitleMatchModeEnum.REGEX:
+                    try
+                    {
+                        return Regex.IsMatch(title, pattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
+                    }
+                    catch (ArgumentException)
+                    {
+                        return false; // User typed an invalid pattern.
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        return false;
+                    }
+
+                case TitleMatchModeEnum.CONTAINS:
+                default:
+                    return title.Contains(pattern, StringComparison.OrdinalIgnoreCase);
+            }
+        }
     }
 }

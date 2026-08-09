@@ -38,8 +38,11 @@ export default function HomePage() {
     }
 
     setStatus("editing...");
-    const editedBase64 =
-      await ElectronApiService.imageEditor.openWindow(screenshotBase64);
+    const result = await ElectronApiService.imageEditor.openWindow({
+      imageBase64: screenshotBase64,
+      mode: "EDIT",
+    });
+    const editedBase64 = typeof result === "string" ? result : null;
 
     if (editedBase64) {
       setTemplatePreview(`data:image/png;base64,${editedBase64}`);

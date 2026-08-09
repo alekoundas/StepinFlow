@@ -15,7 +15,8 @@ const __dirname = path.dirname(__filename);
 let isWindowOpen = false;
 
 interface MonitorEntry {
-  screenshotMonitorResponse: ScreenshotMonitorResponseDto; // has logicalX/Y/W/H + screenshotBytes + physicalW/H
+  screenshotMonitorResponse: ScreenshotMonitorResponseDto; // physical bounds + screenshot bytes
+  dipBounds: Rectangle; // same monitor in DIPs, which is what BrowserWindow wants
   display: Display; // Electron display, gives us scaleFactor
   electronWindow: BrowserWindow | null; // Electron ovelay window
 }
@@ -42,28 +43,22 @@ export async function registerOverlayCaptureHandler(
           return null;
         }
 
-        // 2. Get Electron displays (for scaleFactor — backend cant tell us this)
-        const electronDisplays = screen.getAllDisplays();
+        // 2. Physical bounds -> DIPs, then find the display that DIP rect sits on
+        const monitorEntries: MonitorEntry[] = toMonitorEntries(responses);
 
-        // 3. Match backend responses → Electron displays
-        const monitorEntries: MonitorEntry[] = matchMonitorsToDisplays(
-          responses,
-          electronDisplays,
-        );
-
-        // 4. Create new window per monitor.
+        // 3. Create new window per monitor.
         for (const monitorEntry of monitorEntries) {
-          const newWindow = createElectronWindow(isDev, monitorEntry.display);
+          const newWindow = createElectronWindow(isDev, monitorEntry.dipBounds);
           monitorEntry.electronWindow = newWindow;
         }
 
-        // 5. Ask .Net to start broadcasting mouse click and drag
+        // 4. Ask .Net to start broadcasting mouse click and drag
         await invokeBackend("System.inputRecordOverlayStart", null);
 
-        // 6. Register per-window ready signal handler BEFORE loading pages
+        // 5. Register per-window ready signal handler BEFORE loading pages
         registerSignalReadyHandlers(monitorEntries);
 
-        // 7. Navigate to overlay page on every window.
+        // 6. Navigate to overlay page on every window.
         await Promise.all(
           monitorEntries.map((x) => {
             if (!x.electronWindow) return; // will never happen
@@ -82,7 +77,7 @@ export async function registerOverlayCaptureHandler(
           }),
         );
 
-        // 8. Wait for result (any window can send it — first one wins)
+        // 7. Wait for result (any window can send it — first one wins)
         return await registerSignalCloseHandler(monitorEntries, invokeBackend);
       } finally {
         isWindowOpen = false;
@@ -113,13 +108,13 @@ async function getScreenshot(
 //=====================================================================
 // Create and open window
 //=====================================================================
-function createElectronWindow(isDev: boolean, display: Display): BrowserWindow {
+function createElectronWindow(isDev: boolean, dipBounds: Rectangle): BrowserWindow {
   // Create window
   const newWindow = new BrowserWindow({
-    x: display.bounds.x,
-    y: display.bounds.y,
-    width: display.bounds.width,
-    height: display.bounds.height,
+    x: dipBounds.x,
+    y: dipBounds.y,
+    width: dipBounds.width,
+    height: dipBounds.height,
     fullscreen: true,
     frame: false,
     transparent: true,
@@ -166,14 +161,14 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
       if (monitorEntry) {
         return {
           screenshot: monitorEntry.screenshotMonitorResponse.screenshot,
-          physicalWidth: monitorEntry.screenshotMonitorResponse.physicalWidth,
-          physicalHeight: monitorEntry.screenshotMonitorResponse.physicalHeight,
-          logicalWidth: monitorEntry.display.bounds.width,
-          logicalHeight: monitorEntry.display.bounds.height,
+          physicalWidth: monitorEntry.screenshotMonitorResponse.width,
+          physicalHeight: monitorEntry.screenshotMonitorResponse.height,
+          logicalWidth: monitorEntry.dipBounds.width,
+          logicalHeight: monitorEntry.dipBounds.height,
           scaleFactor: monitorEntry.display.scaleFactor,
           monitorLogicalOrigin: {
-            x: monitorEntry.display.bounds.x,
-            y: monitorEntry.display.bounds.y,
+            x: monitorEntry.dipBounds.x,
+            y: monitorEntry.dipBounds.y,
           },
         };
       }
@@ -220,39 +215,31 @@ function registerSignalCloseHandler(
 
 //=====================================================================
 // Monitor Matching
-// Backend is DPI-unaware → sees logical coords (same as Electron display.bounds).
-// Match by logical origin (x, y). Size may have rounding diff, so don't be strict on w/h.
+// The backend is Per-Monitor-V2 aware, so its bounds are physical pixels. screenToDipRect is
+// the supported conversion into the DIP space BrowserWindow positions live in.
 //=====================================================================
 
-function matchMonitorsToDisplays(
+function toMonitorEntries(
   responses: ScreenshotMonitorResponseDto[],
-  displays: Display[],
 ): MonitorEntry[] {
-  const entries: MonitorEntry[] = [];
-
-  for (const response of responses) {
-    const x = response.logicalX;
-    const y = response.logicalY;
-    let display = displays.find((d) => d.bounds.x === x && d.bounds.y === y);
-
-    if (!display) {
-      // Fallback: closest by distance (handles 1px rounding drift)
-      display = displays.reduce((best, d) => {
-        const dist = Math.hypot(d.bounds.x - x, d.bounds.y - y);
-        const bestDist = Math.hypot(best.bounds.x - x, best.bounds.y - y);
-        return dist < bestDist ? d : best;
-      });
-      console.warn(
-        `[OverlayHandler] No exact match for monitor (${x},${y}), using closest display x=${display.bounds.x} y=${display.bounds.y}`,
-      );
-    }
-
-    entries.push({
-      screenshotMonitorResponse: response,
-      display: display,
-      electronWindow: null,
+  return responses.map((response) => {
+    const dipBounds = screen.screenToDipRect(null, {
+      x: response.x,
+      y: response.y,
+      width: response.width,
+      height: response.height,
     });
-  }
 
-  return entries;
+    const display: Display = screen.getDisplayNearestPoint({
+      x: dipBounds.x,
+      y: dipBounds.y,
+    });
+
+    return {
+      screenshotMonitorResponse: response,
+      dipBounds,
+      display,
+      electronWindow: null,
+    };
+  });
 }

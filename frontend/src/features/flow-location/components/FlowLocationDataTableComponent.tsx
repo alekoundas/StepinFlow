@@ -2,11 +2,14 @@ import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-col
 import { type FieldArrayWithId } from "react-hook-form";
 
 import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
 
 import { LocalDataTableComponent } from "@/shared/components/data/LocalDataTableComponent";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { UsageCountTagComponent } from "@/shared/components/UsageCountTagComponent";
 import { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
 import FlowLocationFormComponent from "@/features/flow-location/components/forms/FlowLocationFormComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
@@ -19,50 +22,41 @@ interface Props {
   append: (item: FlowLocationDto) => void;
   remove: (index: number) => void;
   update: (index: number, value: FlowLocationDto) => void;
+  areaOptions: FlowSearchAreaDto[];
   formMode: FormMode;
   isDisabled?: boolean;
 }
+
+const FORM_ID = "flow-location-form";
 
 export function FlowLocationDataTableComponent({
   fields,
   append,
   remove,
   update,
+  areaOptions,
   formMode,
   isDisabled = false,
 }: Props) {
   const { openForm, closeAll } = useDialogStore();
 
-  //  Add
-  const openAdd = () => {
-    openForm("flow-location-form", {
-      headerText: "Add Location",
-      formId: "flow-location-form",
-      children: (
-        <FlowLocationFormComponent
-          defaultValues={new FlowLocationDto()}
-          formId="flow-location-form"
-          isFormInDialog={true}
-          formMode="ADD"
-          onEdit={() => closeAll()}
-          onCancel={() => closeAll()}
-          onSubmit={(data) => handleSave(data)}
-        />
-      ),
-    });
-  };
+  const locations = fields as unknown as FlowLocationDto[];
 
-  // Edit
-  const openEdit = (index: number) => {
-    openForm("flow-location-form", {
-      headerText: "Edit Location",
-      formId: "flow-location-form",
+  const openEditor = (
+    mode: FormMode,
+    defaults: FlowLocationDto,
+    index?: number,
+  ) => {
+    openForm(FORM_ID, {
+      headerText: mode === "ADD" ? "Add Location" : "Edit Location",
+      formId: FORM_ID,
       children: (
         <FlowLocationFormComponent
-          defaultValues={fields[index] as unknown as FlowLocationDto}
-          formId="flow-location-form"
+          defaultValues={defaults}
+          formId={FORM_ID}
           isFormInDialog={true}
-          formMode="EDIT"
+          formMode={mode}
+          areaOptions={areaOptions}
           onEdit={() => closeAll()}
           onCancel={() => closeAll()}
           onSubmit={(data) => handleSave(data, index)}
@@ -71,7 +65,6 @@ export function FlowLocationDataTableComponent({
     });
   };
 
-  //  Save (add & edit)
   const handleSave = (data: FlowLocationDto, index?: number) => {
     closeAll();
     if (index !== undefined) {
@@ -81,13 +74,12 @@ export function FlowLocationDataTableComponent({
     }
   };
 
-  // Delete by index
   const handleDelete = (index: number) => {
-    const flowLocation = fields[index] as unknown as FlowLocationDto;
+    const location = locations[index];
 
-    if (flowLocation.flowStepsCount > 0) {
+    if (location.flowStepsCount > 0) {
       const message =
-        `"${flowLocation.name}" is used by ${flowLocation.flowStepsCount} step(s). ` +
+        `"${location.name}" is used by ${location.flowStepsCount} step(s). ` +
         `Deleting it clears their location. Continue?`;
       if (!confirm(message)) return;
     } else if (!confirm("Delete this location?")) {
@@ -97,31 +89,51 @@ export function FlowLocationDataTableComponent({
     remove(index);
   };
 
-  //  Columns
+  // Absolute points are the ones an import has to ask about, so they are called out here.
+  const frameBodyTemplate = (row: FlowLocationDto) => {
+    const areaName =
+      row.flowSearchAreaName ||
+      areaOptions.find((x) => x.id === row.flowSearchAreaId)?.name;
+
+    return areaName ? (
+      <Tag
+        value={areaName}
+        severity="info"
+      />
+    ) : (
+      <Tag
+        value="Whole screen"
+        severity="warning"
+      />
+    );
+  };
+
   const columns: DataTableColumnDto<FlowLocationDto>[] = [
     { field: "name", header: "Name", sortable: true },
+    { field: "frame", header: "Measured from", body: frameBodyTemplate },
     {
       field: "point",
       header: "Point",
-      body: (row: FlowLocationDto) => `${row.locationX}, ${row.locationY}`,
+      body: (row) =>
+        row.offsetMode === AreaSizingModeEnum.RATIO && row.flowSearchAreaId
+          ? `${Math.round(row.ratioX * 100)}%, ${Math.round(row.ratioY * 100)}%`
+          : `${row.locationX}, ${row.locationY}`,
     },
     {
       field: "flowStepsCount",
       header: "Used By",
       sortable: true,
-      body: (row: FlowLocationDto) => (
-        <UsageCountTagComponent count={row.flowStepsCount} />
-      ),
+      body: (row) => <UsageCountTagComponent count={row.flowStepsCount} />,
     },
     {
       field: "actions",
       header: "Actions",
       isHidden: formMode === "VIEW",
-      body: (row: FlowLocationDto, options: any) => (
+      body: (row, options) => (
         <ActionsMenuComponent
           id={row.id}
-          onEdit={() => openEdit(options.rowIndex)}
-          onDelete={() => handleDelete(options.rowIndex)}
+          onEdit={() => openEditor("EDIT", row, options?.rowIndex)}
+          onDelete={() => handleDelete(options!.rowIndex)}
         />
       ),
     },
@@ -136,14 +148,21 @@ export function FlowLocationDataTableComponent({
             type="button"
             label="Add Location"
             icon="pi pi-plus"
-            onClick={openAdd}
+            onClick={() =>
+              openEditor(
+                "ADD",
+                new FlowLocationDto({
+                  id: Math.min(0, ...locations.map((x) => x.id)) - 1,
+                }),
+              )
+            }
             size="small"
           />
         )}
       </div>
 
       <LocalDataTableComponent
-        value={fields as unknown as FlowLocationDto[]}
+        value={locations}
         columns={columns}
         emptyMessage="No locations defined yet."
       />

@@ -27,14 +27,33 @@ namespace Business.Ipc.Handlers
                     Id = x.Id,
                     Name = x.Name,
                     Type = x.Type,
-                    AppWindowName = x.AppWindowName,
-                    MonitorUniqueId = x.MonitorUniqueId,
+
+                    ParentFlowSearchAreaId = x.ParentFlowSearchAreaId,
+                    SizingMode = x.SizingMode,
                     LocationX = x.LocationX,
                     LocationY = x.LocationY,
                     Width = x.Width,
                     Height = x.Height,
+                    RatioX = x.RatioX,
+                    RatioY = x.RatioY,
+                    RatioWidth = x.RatioWidth,
+                    RatioHeight = x.RatioHeight,
+
+                    ProcessName = x.ProcessName,
+                    TitlePattern = x.TitlePattern,
+                    TitleMatchMode = x.TitleMatchMode,
+                    InstanceIndex = x.InstanceIndex,
+                    UseClientArea = x.UseClientArea,
+
+                    BrowserType = x.BrowserType,
+                    TabMatchValue = x.TabMatchValue,
+                    TabMatchOn = x.TabMatchOn,
+
+                    MonitorUniqueId = x.MonitorUniqueId,
+
                     FlowId = x.FlowId,
                     FlowStepsCount = x.FlowSteps.Count(),
+                    ParentName = x.ParentFlowSearchArea != null ? x.ParentFlowSearchArea.Name : string.Empty,
                 })
                 .ToListAsync(ct);
 

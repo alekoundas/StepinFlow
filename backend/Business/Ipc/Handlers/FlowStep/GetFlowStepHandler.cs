@@ -24,6 +24,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             FlowStep? flowStep = await dbContext.FlowSteps
                 .AsNoTracking()
+                .Include(x => x.FlowStepImages.OrderBy(image => image.OrderNumber))
                 .FirstOrDefaultAsync(x => x.Id == request.id, ct);
 
             if (flowStep == null)

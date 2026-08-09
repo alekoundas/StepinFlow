@@ -3,30 +3,11 @@ using System.Runtime.InteropServices;
 namespace Business.Helpers
 {
     /// <summary>
-    /// Cursor movement in physical (real device) pixels.
-    ///
-    /// The process is DPI unaware on purpose so screenshots line up, but that also means every
-    /// Win32 call it makes gets its coordinates virtualized by Windows. SendInput is no exception:
-    /// its absolute coordinates are normalised against the virtual desktop *as the calling thread
-    /// sees it*, so a DPI unaware caller asking for a physical pixel lands somewhere else as soon
-    /// as any monitor is not at 100% scale.
-    ///
-    /// The fix is per thread, not per process: the move runs inside a
-    /// PER_MONITOR_AWARE_V2 context, where the virtual screen metrics come back in real pixels and
-    /// match the space FlowLocation / FlowSearchArea store. Everything else keeps its DPI unaware
-    /// view because the context is restored before returning.
+    /// Cursor movement in physical (real device) pixels, which is the space the process runs in
+    /// now that it is Per-Monitor-V2 aware.
     /// </summary>
     public static class CursorHelper
     {
-        //==================================================
-        // P/Invoke Per thread DPI awareness
-        //==================================================
-        private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr dpiContext);
-
-
         //==================================================
         // P/Invoke Virtual screen metrics
         //==================================================
@@ -81,44 +62,35 @@ namespace Business.Helpers
         /// </summary>
         public static bool MoveCursor(int x, int y)
         {
-            IntPtr previousContext = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-            try
-            {
-                int virtualLeft = GetSystemMetrics(SM_XVIRTUALSCREEN);
-                int virtualTop = GetSystemMetrics(SM_YVIRTUALSCREEN);
-                int virtualWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-                int virtualHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            int virtualLeft = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            int virtualTop = GetSystemMetrics(SM_YVIRTUALSCREEN);
+            int virtualWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            int virtualHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-                if (virtualWidth <= 1 || virtualHeight <= 1)
-                    return false;
+            if (virtualWidth <= 1 || virtualHeight <= 1)
+                return false;
 
-                // Clamp first: a stale FlowLocation from a machine with a bigger desktop would
-                // otherwise wrap to the opposite edge instead of stopping at the border.
-                x = Math.Clamp(x, virtualLeft, virtualLeft + virtualWidth - 1);
-                y = Math.Clamp(y, virtualTop, virtualTop + virtualHeight - 1);
+            // Clamp first: a stale FlowLocation from a machine with a bigger desktop would
+            // otherwise wrap to the opposite edge instead of stopping at the border.
+            x = Math.Clamp(x, virtualLeft, virtualLeft + virtualWidth - 1);
+            y = Math.Clamp(y, virtualTop, virtualTop + virtualHeight - 1);
 
-                // SendInput absolute coordinates are 0..65535 across the whole virtual desktop.
-                INPUT[] inputs =
-                [
-                    new INPUT
+            // SendInput absolute coordinates are 0..65535 across the whole virtual desktop.
+            INPUT[] inputs =
+            [
+                new INPUT
+                {
+                    type = INPUT_MOUSE,
+                    mi = new MOUSEINPUT
                     {
-                        type = INPUT_MOUSE,
-                        mi = new MOUSEINPUT
-                        {
-                            dx = (int)((long)(x - virtualLeft) * 65535 / (virtualWidth - 1)),
-                            dy = (int)((long)(y - virtualTop) * 65535 / (virtualHeight - 1)),
-                            dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
-                        },
+                        dx = (int)((long)(x - virtualLeft) * 65535 / (virtualWidth - 1)),
+                        dy = (int)((long)(y - virtualTop) * 65535 / (virtualHeight - 1)),
+                        dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
                     },
-                ];
+                },
+            ];
 
-                return SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>()) == inputs.Length;
-            }
-            finally
-            {
-                if (previousContext != IntPtr.Zero)
-                    SetThreadDpiAwarenessContext(previousContext);
-            }
+            return SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>()) == inputs.Length;
         }
     }
 }

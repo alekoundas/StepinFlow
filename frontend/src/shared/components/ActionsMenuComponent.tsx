@@ -4,14 +4,28 @@ import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
 import { useRef } from "react";
 
+interface ExtraAction {
+  label: string;
+  icon: string;
+  command: (id: number) => void;
+}
+
 interface Props {
   id: number;
   onEdit?: (id: number) => void;
   onClone?: (id: number) => void;
   onDelete?: (id: number) => void;
+  // Anything that is not edit/clone/delete, rather than overloading one of those.
+  extraActions?: ExtraAction[];
 }
 
-export function ActionsMenuComponent({ id, onEdit, onClone, onDelete }: Props) {
+export function ActionsMenuComponent({
+  id,
+  onEdit,
+  onClone,
+  onDelete,
+  extraActions,
+}: Props) {
   const menuRef = useRef<Menu>(null);
   const menuItems: MenuItem[] = [];
 
@@ -28,6 +42,14 @@ export function ActionsMenuComponent({ id, onEdit, onClone, onDelete }: Props) {
       icon: "pi pi-copy",
       command: () => onClone(id),
     });
+
+  extraActions?.forEach((action) =>
+    menuItems.push({
+      label: action.label,
+      icon: action.icon,
+      command: () => action.command(id),
+    }),
+  );
 
   if (onDelete)
     menuItems.push({

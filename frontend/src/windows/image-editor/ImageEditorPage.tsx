@@ -16,6 +16,8 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import Canvas from "@/windows/image-editor/components/Canvas";
+import { ImagePointPickerComponent } from "@/windows/image-editor/components/ImagePointPickerComponent";
+import type { ImageEditorModeEnum } from "../../../../electron/shared/types";
 import HistoryPanel from "@/windows/image-editor/components/HistoryPanel";
 import Minimap from "@/windows/image-editor/components/Minimap";
 import OptionsPanel from "@/windows/image-editor/components/OptionsPanel";
@@ -64,6 +66,11 @@ export default function ImageEditorPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // The same window does both jobs. PICK_POINT swaps the canvas for a simple picker rather
+  // than bolting a mode onto every editor tool.
+  const [mode, setMode] = useState<ImageEditorModeEnum>("EDIT");
+  const [sourceBase64, setSourceBase64] = useState("");
+
   const fittedRef = useRef(false);
 
   const { size: imageSize } = image;
@@ -77,13 +84,16 @@ export default function ImageEditorPage() {
 
     const load = async () => {
       try {
-        const base64 = await ElectronApiService.imageEditor.signalReady();
+        const ready = await ElectronApiService.imageEditor.signalReady();
         if (cancelled) return;
-        if (!base64) throw new Error("No image was passed to the editor");
+        if (!ready?.imageBase64)
+          throw new Error("No image was passed to the editor");
 
-        const bitmap = await loadImage(base64);
+        const bitmap = await loadImage(ready.imageBase64);
         if (cancelled) return;
 
+        setMode(ready.mode);
+        setSourceBase64(ready.imageBase64);
         image.loadImage(bitmap);
         setStatus("ready");
       } catch (error: unknown) {
@@ -275,6 +285,22 @@ export default function ImageEditorPage() {
   // ==========================================================================
   // Render
   // ==========================================================================
+
+  if (mode === "PICK_POINT" && status === "ready" && imageSize) {
+    return (
+      <div className="fixed top-0 left-0 w-full h-full flex flex-column overflow-hidden select-none surface-ground text-color">
+        <ImagePointPickerComponent
+          imageBase64={sourceBase64}
+          width={imageSize.width}
+          height={imageSize.height}
+          onConfirm={(x, y) =>
+            ElectronApiService.imageEditor.signalCloseWindow({ x, y })
+          }
+          onCancel={() => ElectronApiService.imageEditor.signalCloseWindow(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed top-0 left-0 w-full h-full flex flex-column overflow-hidden select-none surface-ground text-color">

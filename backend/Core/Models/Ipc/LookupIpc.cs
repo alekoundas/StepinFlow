@@ -8,6 +8,7 @@ namespace Core.Models.Ipc
     public record GetLookupMonitorQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupFlowStepQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupFlowLocationQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
+    public record GetLookupFlowSearchAreaQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
 
 
     // ============== COMMANDS ==============

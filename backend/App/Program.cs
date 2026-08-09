@@ -1,7 +1,10 @@
 ﻿using App.AutoMapper;
 using App.Ipc;
+using Business.Helpers;
 using Business.Ipc.Handlers;
+using Business.Services.FrameService;
 using Business.Services.InputService;
+using Business.Services.MatchService;
 using Business.Services.ScreenshotService;
 using Core.Interfaces;
 using DataAccess;
@@ -16,6 +19,10 @@ namespace App
     {
         public static async Task Main(string[] args)
         {
+            // First thing, before any coordinate API: without it Windows virtualizes every rect
+            // to 96 DPI and nothing matches the capture buffers or the input hook.
+            ScreenHelper.EnablePerMonitorDpiAwareness();
+
             HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
             // Logging
@@ -28,6 +35,8 @@ namespace App
 
 
             // Services
+            builder.Services.AddSingleton<IFrameResolver, FrameResolver>();
+            builder.Services.AddSingleton<ITemplateMatcher, TemplateMatcher>();
             builder.Services.AddSingleton<IInputService, InputService>();
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
