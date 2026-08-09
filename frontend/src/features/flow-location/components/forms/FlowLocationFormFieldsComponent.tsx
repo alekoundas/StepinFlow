@@ -9,7 +9,6 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 import { useCapturePoint } from "@/features/flow-location/hooks/use-capture-point";
 import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import { AnchorTypeEnum } from "@/shared/enums/backend/area/anchor-type-enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
 interface EnumOption {
@@ -65,8 +64,14 @@ export default function FlowLocationFormFieldsComponent({
       }
     }
 
-    setValue("locationX", point.x - originX, { shouldValidate: true, shouldDirty: true });
-    setValue("locationY", point.y - originY, { shouldValidate: true, shouldDirty: true });
+    setValue("locationX", point.x - originX, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue("locationY", point.y - originY, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const handleTest = async () => {
@@ -96,17 +101,6 @@ export default function FlowLocationFormFieldsComponent({
 
       {flowSearchAreaId ? (
         <div className="flex gap-3">
-          <div className="flex-1">
-            <FormDropdownComponent<FlowLocationDto, EnumOption>
-              fieldName="anchor"
-              labelText="Corner"
-              mode="local"
-              options={toOptions(AnchorTypeEnum)}
-              optionLabel="label"
-              optionValue="value"
-              isDisabled={isDisabled || offsetMode === AreaSizingModeEnum.RATIO}
-            />
-          </div>
           <div className="flex-1">
             <FormSelectButtonComponent
               fieldName="offsetMode"
@@ -161,8 +155,16 @@ export default function FlowLocationFormFieldsComponent({
         <div className="w-10">
           {offsetMode === AreaSizingModeEnum.RATIO && flowSearchAreaId ? (
             <div className="flex gap-3">
-              <FormInputNumberComponent fieldName="ratioX" label="X %" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="ratioY" label="Y %" isDisabled={isDisabled} />
+              <FormInputNumberComponent
+                fieldName="ratioX"
+                label="X %"
+                isDisabled={isDisabled}
+              />
+              <FormInputNumberComponent
+                fieldName="ratioY"
+                label="Y %"
+                isDisabled={isDisabled}
+              />
             </div>
           ) : (
             <div className="flex gap-3">

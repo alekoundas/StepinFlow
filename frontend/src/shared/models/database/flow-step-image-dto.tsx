@@ -1,4 +1,3 @@
-import type { AnchorTypeEnum } from "@/shared/enums/backend/area/anchor-type-enum";
 import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 
 export class FlowStepImageDto {
@@ -18,7 +17,6 @@ export class FlowStepImageDto {
   // Where to click inside the template, in template pixels from its top left.
   clickOffsetX: number = 0;
   clickOffsetY: number = 0;
-  clickAnchor: AnchorTypeEnum = "CENTER";
 
   // Frame size the template was captured in. The scaling key.
   authoredFrameWidth: number = 0;

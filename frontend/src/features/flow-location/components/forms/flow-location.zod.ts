@@ -1,12 +1,10 @@
 import { z } from "zod";
-import { AnchorTypeEnum } from "@/shared/enums/backend/area/anchor-type-enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
 export const FlowLocationZod = z.object({
   name: z.string().min(1, "Name is required").max(120, "Name too long"),
 
   flowSearchAreaId: z.number().int().nullish(),
-  anchor: z.enum(AnchorTypeEnum),
   offsetMode: z.enum(AreaSizingModeEnum),
 
   locationX: z.number().int("X must be a whole pixel"),
