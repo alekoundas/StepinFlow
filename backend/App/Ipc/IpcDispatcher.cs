@@ -128,6 +128,15 @@ namespace App.Ipc
             }
             catch (Exception ex)
             {
+                // Without the action and the payload a deserialization failure is just a stack
+                // trace in System.Text.Json, with no way to tell which call sent what.
+                string payloadPreview = request.Payload == null || request.Payload.Length == 0
+                    ? "<empty>"
+                    : System.Text.Encoding.UTF8.GetString(request.Payload, 0, Math.Min(request.Payload.Length, 512));
+
+                Console.Error.WriteLine(
+                    $"[.NET Dispatcher] '{request.Action}' failed: {ex.Message}{Environment.NewLine}  payload: {payloadPreview}");
+
                 return new IpcResponse
                 {
                     Action = request.Action,

@@ -19,7 +19,7 @@ import type z from "zod";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 
 interface Props {
-  fields: FieldArrayWithId<z.infer<typeof FlowSchema>, "flowSearchAreas">[];
+  fields: FieldArrayWithId<z.infer<typeof FlowSchema>, "flowSearchAreas", "fieldId">[];
   append: (item: FlowSearchAreaDto) => void;
   remove: (index: number) => void;
   update: (index: number, value: FlowSearchAreaDto) => void;

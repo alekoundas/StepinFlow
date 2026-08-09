@@ -45,9 +45,10 @@ export function FlowFormComponent({
     append: appendSearchArea,
     remove: removeSearchArea,
     update: updateSearchArea,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowSearchAreas">({
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowSearchAreas", "fieldId">({
     control,
     name: "flowSearchAreas",
+    keyName: "fieldId",
   });
 
   const {
@@ -55,9 +56,10 @@ export function FlowFormComponent({
     append: appendLocation,
     remove: removeLocation,
     update: updateLocation,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowLocations">({
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowLocations", "fieldId">({
     control,
     name: "flowLocations",
+    keyName: "fieldId",
   });
 
   useEffect(() => {
