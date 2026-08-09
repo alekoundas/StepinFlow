@@ -35,7 +35,6 @@
     "../src",
     "../electron/shared/types.ts",
     "../electron/shared/channels.ts",
-    "../electron/preload.d.ts",
-    "../electron/preload.ts"
+    "../electron/shared/electron-api.ts"
   ]
 }

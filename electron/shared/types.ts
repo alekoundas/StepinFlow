@@ -16,6 +16,15 @@ export interface IpcBroadcastMessage<T> {
   payload: T;
 }
 
+// What every backend action resolves to. Part of the IPC contract, not a frontend model:
+// keeping it here is what stops the preload and the renderer disagreeing about it.
+export interface ResultDto<T = unknown> {
+  isSuccess: boolean;
+  data?: T | null;
+  errorMessage?: string;
+  errors?: string[];
+}
+
 export interface MonitorInfo {
   deviceId: string;
   logicalBounds: Electron.Rectangle;

@@ -15,7 +15,7 @@
   "include": [
     "main.ts",
     "preload.ts",
-    "preload.d.ts",
+    "shared/electron-api.ts",
     "shared/channels.ts",
     "shared/types.ts"
   ],

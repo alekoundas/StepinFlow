@@ -1,40 +1,22 @@
+// Types come from the shared contract via import() type expressions rather than import
+// statements. An import statement would make this a module, and tsc would then emit "export {}"
+// into the output, which a sandboxed CommonJS preload cannot load.
+//
+// IPC_CHANNELS below is still inlined because it is a runtime value, and a sandboxed preload
+// cannot require its own modules. Bundling the preload is what removes that last duplication.
+type ElectronApi = import("./shared/electron-api.js").ElectronApi;
+type IpcRequestMessage = import("./shared/types.js").IpcRequestMessage;
+type IpcBroadcastMessage<T> =
+  import("./shared/types.js").IpcBroadcastMessage<T>;
+type ResultDto<T> = import("./shared/types.js").ResultDto<T>;
+type SignalReadyResponse = import("./shared/types.js").SignalReadyResponse;
+type ImageEditorOpenRequest =
+  import("./shared/types.js").ImageEditorOpenRequest;
+type ImageEditorReadyResponse =
+  import("./shared/types.js").ImageEditorReadyResponse;
+type ImageEditorResult = import("./shared/types.js").ImageEditorResult;
+
 const { contextBridge, ipcRenderer } = require("electron");
-// ========== Types & Interfaces ==========
-interface IpcRequestMessage {
-  action: string;
-  payload: unknown; // TODO use a  type (intersection type?)
-  correlationId?: string; // Optional ID to match requests with responses
-}
-
-interface IpcBroadcastMessage<T> {
-  type: string;
-  payload: T;
-}
-
-// Kept in sync with shared/types.ts. This file cannot import it.
-type ImageEditorModeEnum = "EDIT" | "PICK_POINT";
-
-interface ImageEditorOpenRequest {
-  imageBase64: string;
-  mode: ImageEditorModeEnum;
-}
-
-interface ImageEditorReadyResponse {
-  imageBase64: string;
-  mode: ImageEditorModeEnum;
-}
-
-type ImageEditorResult = string | { x: number; y: number } | null;
-
-interface SignalReadyResponse {
-  screenshot: Uint8Array;
-  physicalWidth: number;
-  physicalHeight: number;
-  logicalWidth: number;
-  logicalHeight: number;
-  scaleFactor: number;
-  monitorLogicalOrigin: { x: number; y: number };
-}
 
 const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
@@ -55,11 +37,14 @@ const IPC_CHANNELS = {
   EDITOR_SIGNAL_CLOSE_WINDOW: "EDITOR_SIGNAL_CLOSE_WINDOW",
 } as const;
 
-const api = {
+// Typed against the contract so the renderer and this file cannot drift.
+const api: ElectronApi = {
   backendApi: {
     // Send message to backend → returns Promise with response
-    invoke: <T = unknown>(msg: IpcRequestMessage): Promise<T> =>
-      ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<T>,
+    invoke: <T = unknown>(msg: IpcRequestMessage): Promise<ResultDto<T>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.BACKEND_SEND, msg) as Promise<
+        ResultDto<T>
+      >,
 
     // Listen for messages coming FROM backend. Returns unsubscribe function
     onBroadcast: <T = unknown>(
@@ -99,14 +84,6 @@ const api = {
   },
 };
 
-// Expose only what we want
+// Expose only what we want. The renderer's Window augmentation lives in
+// frontend/src/shared/services/electron-api.service.ts and points at the same ElectronApi.
 contextBridge.exposeInMainWorld("electronApi", api);
-
-// Type declaration so TS knows about it in renderer
-// actually it makes this "window.electronApi;" not error.
-// export {};
-// declare global {
-//   interface Window {
-//     electronApi: typeof api;
-//   }
-// }

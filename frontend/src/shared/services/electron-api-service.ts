@@ -1,59 +1,24 @@
-import type { ResultDto } from "@/shared/models/result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { Rectangle } from "electron";
 import type {
   ImageEditorOpenRequest,
-  ImageEditorReadyResponse,
   ImageEditorResult,
-  IpcBroadcastMessage,
-  IpcRequestMessage,
-  RecordedInput,
-  SignalReadyResponse,
 } from "../../../../electron/shared/types";
 
-// TODO remove this.
-declare global {
-  interface Window {
-    electronApi: {
-      backendApi: {
-        invoke: <T = any>(msg: IpcRequestMessage) => Promise<ResultDto<T>>;
-        onBroadcast: <T>(
-          callback: (msg: IpcBroadcastMessage<T>) => void,
-        ) => () => void;
-      };
-      overlay: {
-        openCaptureWindow: () => Promise<Electron.Rectangle | null>;
-        openPreviewWindow: () => Promise<null>;
-        broadcastMouseEvent: (
-          callback: (e: RecordedInput) => void,
-        ) => () => void;
-        signalReady: () => Promise<SignalReadyResponse | null>;
-        signalCloseWindow: (rect: Electron.Rectangle | null) => void;
-      };
-      // Images travel as base64 PNG strings (what .Net returns for byte[])
-      imageEditor: {
-        openWindow: (
-          request: ImageEditorOpenRequest,
-        ) => Promise<ImageEditorResult>;
-        signalReady: () => Promise<ImageEditorReadyResponse | null>;
-        signalCloseWindow: (result: ImageEditorResult) => void;
-      };
-    };
-  }
-}
-
+// window.electronApi is declared once in shared/services/electron-api.service.ts, against the same
+// ElectronApi interface the preload implements. This stays a thin pass-through.
 export const ElectronApiService = {
   backendApi: backendApiService,
+
   overlay: {
     openCaptureWindow: () => window.electronApi.overlay.openCaptureWindow(),
-    broadcastMouseEvent: (callback: (e: RecordedInput) => void) =>
-      window.electronApi.overlay.broadcastMouseEvent(callback),
     signalReady: () => window.electronApi.overlay.signalReady(),
     signalCloseWindow: (rect: Rectangle | null) =>
       window.electronApi.overlay.signalCloseWindow(rect),
   },
+
   imageEditor: {
-    openWindow: (request: ImageEditorOpenRequest) =>
+    openWindow: (request: ImageEditorOpenRequest): Promise<ImageEditorResult> =>
       window.electronApi.imageEditor.openWindow(request),
     signalReady: () => window.electronApi.imageEditor.signalReady(),
     signalCloseWindow: (result: ImageEditorResult) =>
