@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -109,6 +110,13 @@ export function DataTreeComponent({ flowId }: Props) {
     return map;
   }, [data]);
 
+  // Read inside loadTreeChildren without making it a dependency, which would rebuild the
+  // callback on every data change and retrigger the refresh effect.
+  const nodesByKeyRef = useRef(nodesByKey);
+  useEffect(() => {
+    nodesByKeyRef.current = nodesByKey;
+  }, [nodesByKey]);
+
   // ====================== LAZY LOADING ======================
   const loadTreeChildren = useCallback(
     async (
@@ -127,17 +135,17 @@ export function DataTreeComponent({ flowId }: Props) {
           (max, node) => (node.orderNumber > max ? node.orderNumber : max),
           0,
         );
-        // add step + child at the end
-        if (isParentNodeFlow) {
-          response = [
-            ...response,
-            getNewChild(maxOrderNumber + 1, parentNodeId, undefined),
-          ];
-        } else {
-          response = [
-            ...response,
-            getNewChild(maxOrderNumber + 1, undefined, parentNodeId),
-          ];
+
+        // Steps go under Success / Failure / Loop, never directly under the branching step that
+        // owns them, so the add placeholder only belongs where a drop would be allowed.
+        const parentKey = buildTreeNodeKey(parentNodeId, isParentNodeFlow);
+        const canAddChildren =
+          isParentNodeFlow || nodesByKeyRef.current.get(parentKey)?.droppable !== false;
+
+        if (canAddChildren) {
+          response = isParentNodeFlow
+            ? [...response, getNewChild(maxOrderNumber + 1, parentNodeId, undefined)]
+            : [...response, getNewChild(maxOrderNumber + 1, undefined, parentNodeId)];
         }
         setData((prev) =>
           updateTreeNodeChildren(

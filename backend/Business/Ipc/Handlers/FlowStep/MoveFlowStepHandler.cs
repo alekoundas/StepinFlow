@@ -34,7 +34,7 @@ namespace Business.Ipc.Handlers
 
             // Re-validated here and not trusted from the preview: the tree may have changed
             // between the drop and the confirmation.
-            string? error = FlowStepMoveHelper.Validate(steps, dto);
+            string? error = TreeStepMoveHelper.Validate(steps, dto);
             if (error != null)
                 return ResultDto<bool>.Failure(error);
 
@@ -47,12 +47,12 @@ namespace Business.Ipc.Handlers
             moved.FlowId = dto.TargetParentFlowStepId == null ? dto.TargetFlowId : null;
 
             List<FlowStep> destinationSiblings = GetSiblings(steps, dto.TargetParentFlowStepId, dto.TargetFlowId);
-            FlowStepMoveHelper.ApplyOrder(destinationSiblings, moved, dto.TargetIndex);
+            TreeStepMoveHelper.ApplyOrder(destinationSiblings, moved, dto.TargetIndex);
 
             if (parentChanged)
             {
                 List<FlowStep> sourceSiblings = GetSiblings(steps, sourceParentFlowStepId, sourceFlowId);
-                FlowStepMoveHelper.ApplyOrder(sourceSiblings, moved: null, targetIndex: 0);
+                TreeStepMoveHelper.ApplyOrder(sourceSiblings, moved: null, targetIndex: 0);
             }
 
             await dbContext.SaveChangesAsync(ct);

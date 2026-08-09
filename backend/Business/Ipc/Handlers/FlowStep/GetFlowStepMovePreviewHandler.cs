@@ -36,7 +36,7 @@ namespace Business.Ipc.Handlers
                 .Where(x => x.RootId == moved.RootId)
                 .ToListAsync(ct);
 
-            string? error = FlowStepMoveHelper.Validate(steps, dto);
+            string? error = TreeStepMoveHelper.Validate(steps, dto);
             if (error != null)
             {
                 return ResultDto<FlowStepMovePreviewDto>.Success(new FlowStepMovePreviewDto
@@ -58,9 +58,9 @@ namespace Business.Ipc.Handlers
                 IsValid = true,
                 MovedStepName = movedInTree.Name,
                 TargetParentName = targetParentName,
-                MovedDescendantCount = FlowStepMoveHelper.GetDescendantIds(steps, dto.FlowStepId).Count,
+                MovedDescendantCount = TreeStepMoveHelper.GetDescendantIds(steps, dto.FlowStepId).Count,
                 IsReorderOnly = movedInTree.ParentFlowStepId == dto.TargetParentFlowStepId,
-                BrokenReferences = FlowStepMoveHelper.FindBrokenReferences(steps, dto),
+                BrokenReferences = TreeStepMoveHelper.FindBrokenReferences(steps, dto),
             };
 
             return ResultDto<FlowStepMovePreviewDto>.Success(preview);

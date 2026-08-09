@@ -8,7 +8,7 @@ namespace Business.Helpers
     /// answer identically. Works on the full step list of one root, which is one query thanks to
     /// FlowStep.RootId.
     /// </summary>
-    public static class FlowStepMoveHelper
+    public static class TreeStepMoveHelper
     {
         /// <summary>
         /// Rejects moves that would corrupt the tree. Returns null when the move is allowed.
@@ -77,9 +77,7 @@ namespace Business.Helpers
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.
         /// </summary>
-        public static List<FlowStepBrokenReferenceDto> FindBrokenReferences(
-            IReadOnlyList<FlowStep> steps,
-            FlowStepMoveDto dto)
+        public static List<FlowStepBrokenReferenceDto> FindBrokenReferences(IReadOnlyList<FlowStep> steps, FlowStepMoveDto dto)
         {
             Dictionary<int, int?> parentBefore = steps.ToDictionary(x => x.Id, x => x.ParentFlowStepId);
 

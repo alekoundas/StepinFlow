@@ -1,4 +1,5 @@
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using DataAccess;
@@ -34,15 +35,7 @@ namespace Business.Ipc.Handlers
                 .Select(x => new TreeNodeDto
                 {
                     EntityId = x.Id,
-                    Droppable = x.FlowStepType == FlowStepTypeEnum.FAILURE
-                        || x.FlowStepType == FlowStepTypeEnum.SUCCESS
-                        || x.FlowStepType == FlowStepTypeEnum.LOOP,
-                    Draggable = true,
                     Selectable = true,
-                    Leaf = x.FlowStepType != FlowStepTypeEnum.FAILURE
-                        && x.FlowStepType != FlowStepTypeEnum.SUCCESS
-                        && x.FlowStepType != FlowStepTypeEnum.LOOP,
-
 
                     Name = x.Name,
                     flowStepType = x.FlowStepType,
@@ -55,8 +48,20 @@ namespace Business.Ipc.Handlers
                 })
                 .ToListAsync(ct);
 
+            // Set outside the projection so the rules live in one helper rather than as inline
+            // expressions EF has to translate.
             foreach (TreeNodeDto child in children)
+            {
+                FlowStepTypeEnum type = child.flowStepType!.Value;
+
                 child.Key = TreeNodeDto.BuildKey(child.EntityId, isFlow: false);
+                child.Droppable = TreeStepHelper.CanContainChildren(type);
+                child.Leaf = TreeStepHelper.IsLeaf(type);
+
+                // Success and Failure are structural: the user did not add them and moving one
+                // would detach a branch from the step that owns it.
+                child.Draggable = !TreeStepHelper.IsBranchChild(type);
+            }
 
             return ResultDto<IEnumerable<TreeNodeDto>>.Success(children);
         }
