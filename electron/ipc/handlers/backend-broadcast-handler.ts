@@ -16,12 +16,13 @@ export async function registerBroadcastHandler(
   const onConnected = (socket: net.Socket) =>
     handleBroadcastPipeData(socket, mainWindow);
 
-  // Connect to the dedicated BROADCAST pipe
-  await BackendService().connectToBroadcastPipe(
-    mainWindow,
-    setClient,
-    onConnected,
-  );
+  // Connect to the dedicated BROADCAST pipe. Not awaited, for the same reason as the request
+  // pipe: nothing registered after this in main.ts should wait on the backend being up.
+  void BackendService()
+    .connectToBroadcastPipe(mainWindow, setClient, onConnected)
+    .catch((err) =>
+      log.error("[BroadcastHandler]: Initial connect failed:", err),
+    );
 }
 
 // ── Reads IpcBroadcast messages and forwards them to the renderer ──

@@ -123,21 +123,26 @@ export default function OverlayCapturePage() {
   useEffect(() => {
     const unsub = ElectronApiService.backendApi.OnBroadcast(
       (event: IpcBroadcastMessage<RecordedInput>) => {
+        // Point capture broadcasts on the same channel, so only react to our own events.
+        if (event.type !== "OVERLAY_MOUSE_EVENT") return;
+
         const pt: Point = {
           x: event.payload.physicalX,
           y: event.payload.physicalY,
         };
 
+        // Each event is only meaningful from one phase. Testing "not confirming" instead let
+        // the release of a Redraw click land as the end of a drag that never started.
         if (event.payload.type === "BUTTON_DOWN") {
-          if (phaseRef.current === "confirming") return;
+          if (phaseRef.current !== "idle") return;
           setStartPhys(pt);
           setEndPhys(pt);
           setPhase("dragging");
         } else if (event.payload.type === "CURSOR_DRAG") {
-          if (phaseRef.current === "confirming") return;
+          if (phaseRef.current !== "dragging") return;
           setEndPhys(pt);
         } else if (event.payload.type === "BUTTON_UP") {
-          if (phaseRef.current === "confirming") return;
+          if (phaseRef.current !== "dragging") return;
           setEndPhys(pt);
           // Too small = accidental click → back to idle
           if (startPhysRef.current) // ← ref, not state

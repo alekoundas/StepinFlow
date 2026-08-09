@@ -33,12 +33,17 @@ export async function registerBackendRequestHandler(
 
   //============================================
   // Initial connection
+  //
+  // Deliberately not awaited. Handler registration must not depend on the backend being up:
+  // main.ts awaits this function before registering the overlay and editor handlers, so
+  // blocking here brings the app up with a clickable UI and no handlers behind it.
+  // invokeBackend reconnects on demand anyway, so this is only a warm-up.
   //============================================
-  backendClient = await BackendService().connectToRequestPipe(
-    mainWindow,
-    setClient,
-    onConnected,
-  );
+  void BackendService()
+    .connectToRequestPipe(mainWindow, setClient, onConnected)
+    .catch((err) =>
+      log.error("[BackendHandler]: Initial connect failed, will retry on demand:", err),
+    );
 
   //============================================
   // IPC handle: renderer -> invokeBackend -> .Net

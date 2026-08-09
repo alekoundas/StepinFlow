@@ -89,10 +89,16 @@ app.whenReady().then(async () => {
   }
 
   // ======== Register IPC handlers ==========
-  const request = await registerBackendRequestHandler(mainWindow);
-  await registerBroadcastHandler(mainWindow);
-  await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);
-  await registerImageEditorHandler(mainWindow, isDev);
+  // One failure here used to leave every later handler unregistered while the window was
+  // already open, which surfaces as "No handler registered for ..." on the first click.
+  try {
+    const request = await registerBackendRequestHandler(mainWindow);
+    await registerBroadcastHandler(mainWindow);
+    await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);
+    await registerImageEditorHandler(mainWindow, isDev);
+  } catch (err) {
+    console.error("[Main]: Failed to register IPC handlers:", err);
+  }
 
   app.on("before-quit", () => {
     backendProcess?.kill();
