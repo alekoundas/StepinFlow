@@ -29,7 +29,6 @@ namespace Core.Models.Database
         // Scaled by the same ratio as the template at match time.
         public int ClickOffsetX { get; set; }
         public int ClickOffsetY { get; set; }
-        public AnchorTypeEnum ClickAnchor { get; set; } = AnchorTypeEnum.CENTER;
 
         // Size of the frame this template was captured in, which is the scaling key. The monitor
         // fields are diagnostics for the "your setup differs" warning, not maths.

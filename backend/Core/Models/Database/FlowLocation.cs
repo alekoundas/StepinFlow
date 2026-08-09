@@ -2,13 +2,6 @@ using Core.Enums;
 
 namespace Core.Models.Database
 {
-    /// <summary>
-    /// A named point, resolved at runtime in physical pixels.
-    ///
-    /// With a FlowSearchArea set the offset is measured from that frame's anchor, which survives
-    /// being run on another machine. Without one it is an absolute screen point and will need
-    /// rebinding after an import.
-    /// </summary>
     public class FlowLocation : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
@@ -17,7 +10,6 @@ namespace Core.Models.Database
         public int? FlowSearchAreaId { get; set; }
         public FlowSearchArea? FlowSearchArea { get; set; }
 
-        public AnchorTypeEnum Anchor { get; set; }
         public AreaSizingModeEnum OffsetMode { get; set; }
 
         // ABSOLUTE_PX: pixels from the anchor.

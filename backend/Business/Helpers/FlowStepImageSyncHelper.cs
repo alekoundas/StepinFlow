@@ -42,7 +42,6 @@ namespace Business.Helpers
 
                 image.ClickOffsetX = dto.ClickOffsetX;
                 image.ClickOffsetY = dto.ClickOffsetY;
-                image.ClickAnchor = dto.ClickAnchor;
 
                 image.AuthoredFrameWidth = dto.AuthoredFrameWidth;
                 image.AuthoredFrameHeight = dto.AuthoredFrameHeight;

@@ -19,7 +19,6 @@ namespace Core.Models.Dtos
 
         public int ClickOffsetX { get; set; }
         public int ClickOffsetY { get; set; }
-        public AnchorTypeEnum ClickAnchor { get; set; } = AnchorTypeEnum.CENTER;
 
         public int AuthoredFrameWidth { get; set; }
         public int AuthoredFrameHeight { get; set; }

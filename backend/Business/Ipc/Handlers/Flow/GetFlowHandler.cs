@@ -76,7 +76,6 @@ namespace Business.Ipc.Handlers
                             Name = l.Name,
 
                             FlowSearchAreaId = l.FlowSearchAreaId,
-                            Anchor = l.Anchor,
                             OffsetMode = l.OffsetMode,
                             LocationX = l.LocationX,
                             LocationY = l.LocationY,

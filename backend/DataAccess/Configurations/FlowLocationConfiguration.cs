@@ -10,7 +10,6 @@ namespace DataAccess.Configurations
         {
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.Anchor).HasConversion<string>();
             builder.Property(x => x.OffsetMode).HasConversion<string>();
 
 

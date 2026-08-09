@@ -11,7 +11,6 @@ namespace DataAccess.Configurations
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
-            builder.Property(x => x.ClickAnchor).HasConversion<string>();
 
 
             // Relationship with FlowStep (one-to-many)

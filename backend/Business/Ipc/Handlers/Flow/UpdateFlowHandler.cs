@@ -132,7 +132,6 @@ namespace Business.Ipc.Handlers
                 }
 
                 location.Name = dto.Name;
-                location.Anchor = dto.Anchor;
                 location.OffsetMode = dto.OffsetMode;
                 location.LocationX = dto.LocationX;
                 location.LocationY = dto.LocationY;

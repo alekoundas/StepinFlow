@@ -10,7 +10,6 @@ namespace Core.Models.Dtos
         public string Name { get; set; } = string.Empty;
 
         public int? FlowSearchAreaId { get; set; }
-        public AnchorTypeEnum Anchor { get; set; }
         public AreaSizingModeEnum OffsetMode { get; set; }
 
         public int LocationX { get; set; }

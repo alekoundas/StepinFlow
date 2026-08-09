@@ -90,7 +90,7 @@ namespace Business.Services.FrameService
                 ? new Point(
                     bounds.X + (int)MathF.Floor(location.RatioX * bounds.Width),
                     bounds.Y + (int)MathF.Floor(location.RatioY * bounds.Height))
-                : Offset(AnchorOf(bounds, location.Anchor), location.LocationX, location.LocationY);
+                : Offset(new Point(bounds.X,bounds.Y), location.LocationX, location.LocationY);
 
             return LocationResolution.Ok(Clamp(point, bounds));
         }
@@ -168,14 +168,6 @@ namespace Business.Services.FrameService
             return AreaResolution.Ok(bounds);
         }
 
-        private static Point AnchorOf(Rectangle bounds, AnchorTypeEnum anchor) => anchor switch
-        {
-            AnchorTypeEnum.TOP_RIGHT => new Point(bounds.Right, bounds.Top),
-            AnchorTypeEnum.BOTTOM_LEFT => new Point(bounds.Left, bounds.Bottom),
-            AnchorTypeEnum.BOTTOM_RIGHT => new Point(bounds.Right, bounds.Bottom),
-            AnchorTypeEnum.CENTER => new Point(bounds.Left + bounds.Width / 2, bounds.Top + bounds.Height / 2),
-            _ => new Point(bounds.Left, bounds.Top),
-        };
 
         private static Point Offset(Point origin, int dx, int dy) => new Point(origin.X + dx, origin.Y + dy);
 
