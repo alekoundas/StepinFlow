@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Button } from "primereact/button";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
+import { FormInputFloatComponent } from "@/shared/components/form/FormInputFloatComponent";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
@@ -34,11 +36,17 @@ const toOptions = (values: Record<string, string>): EnumOption[] =>
     value,
   }));
 
+// Left unclamped on purpose: a drag that leaves the frame shows up as an out of range percent
+// rather than being silently snapped to an edge.
+const toRatio = (size: number, frameSize: number): number =>
+  frameSize > 0 ? Math.round((size / frameSize) * 10000) / 10000 : 0;
+
 export default function FlowSearchAreaFormFieldsComponent({
   parentOptions,
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
+  const [captureError, setCaptureError] = useState<string | null>(null);
 
   const type = useWatch({ control, name: "type" });
   const sizingMode = useWatch({ control, name: "sizingMode" });
@@ -64,21 +72,45 @@ export default function FlowSearchAreaFormFieldsComponent({
     const rect = await openWindow();
     if (!rect) return;
 
-    let originX = 0;
-    let originY = 0;
+    const write = (field: string, value: number) =>
+      setValue(field, value, { shouldValidate: true, shouldDirty: true });
 
-    if (parentId) {
-      const preview = await backendApiService.FlowSearchArea.getPreview(parentId);
-      if (preview.isResolved) {
-        originX = preview.locationX;
-        originY = preview.locationY;
-      }
+    // No parent: the rect is in absolute screen coordinates.
+    if (!parentId) {
+      setCaptureError(null);
+      write("locationX", rect.x);
+      write("locationY", rect.y);
+      write("width", rect.width);
+      write("height", rect.height);
+      return;
     }
 
-    setValue("locationX", rect.x - originX, { shouldValidate: true, shouldDirty: true });
-    setValue("locationY", rect.y - originY, { shouldValidate: true, shouldDirty: true });
-    setValue("width", rect.width, { shouldValidate: true, shouldDirty: true });
-    setValue("height", rect.height, { shouldValidate: true, shouldDirty: true });
+    const preview = await backendApiService.FlowSearchArea.getPreview(parentId);
+
+    // Writing the raw screen rect as if it were an offset would look like it worked and put the
+    // region somewhere else entirely, so refuse instead.
+    if (!preview.isResolved) {
+      setCaptureError(
+        preview.errorMessage ??
+          "That frame is not on screen right now, so the region cannot be measured inside it.",
+      );
+      return;
+    }
+    setCaptureError(null);
+
+    // Percent shows different fields, so writing pixels here is a silent no-op.
+    if (sizingMode === AreaSizingModeEnum.RATIO) {
+      write("ratioX", toRatio(rect.x - preview.locationX, preview.width));
+      write("ratioY", toRatio(rect.y - preview.locationY, preview.height));
+      write("ratioWidth", toRatio(rect.width, preview.width));
+      write("ratioHeight", toRatio(rect.height, preview.height));
+      return;
+    }
+
+    write("locationX", rect.x - preview.locationX);
+    write("locationY", rect.y - preview.locationY);
+    write("width", rect.width);
+    write("height", rect.height);
   };
 
   return (
@@ -140,14 +172,24 @@ export default function FlowSearchAreaFormFieldsComponent({
               tooltip="Click and drag to select a region of your screen"
               tooltipOptions={{ position: "top" }}
             />
+
+            <LabelComponent
+              text={captureError ?? ""}
+              hidden={captureError === null}
+              size="sm"
+              color="error"
+              className="align-self-center mb-3"
+            />
           </div>
 
           {sizingMode === AreaSizingModeEnum.RATIO ? (
             <div className="flex gap-3">
-              <FormInputNumberComponent fieldName="ratioX" label="X %" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="ratioY" label="Y %" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="ratioWidth" label="Width %" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="ratioHeight" label="Height %" isDisabled={isDisabled} />
+              {/* No min/max: InputNumber clamps out of range values back into the form, which
+                  would quietly resize a drag that left the frame. Let the schema say it. */}
+              <FormInputFloatComponent fieldName="ratioX" label="X" isPercent={true} isDisabled={isDisabled} />
+              <FormInputFloatComponent fieldName="ratioY" label="Y" isPercent={true} isDisabled={isDisabled} />
+              <FormInputFloatComponent fieldName="ratioWidth" label="Width" isPercent={true} isDisabled={isDisabled} />
+              <FormInputFloatComponent fieldName="ratioHeight" label="Height" isPercent={true} isDisabled={isDisabled} />
             </div>
           ) : (
             <div className="flex gap-3">

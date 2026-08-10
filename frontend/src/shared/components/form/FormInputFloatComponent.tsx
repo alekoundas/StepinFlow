@@ -16,17 +16,27 @@ interface Props {
   max?: number;
   isDisabled?: boolean;
   isRequired?: boolean;
+  // Ratios are stored 0..1 but nobody reads them that way, so the field shows 0..100 with a
+  // % suffix and converts on the way in and out. Storage stays normalized.
+  isPercent?: boolean;
+  // Digits kept after the point, counted in the unit on screen.
+  decimals?: number;
   className?: string;
   // Actions
   onChanged?: (value: number | null) => void;
 }
 
+const roundTo = (value: number, decimals: number): number => {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+};
+
 /**
- * Whole numbers only: pixels, counts, milliseconds. The decimal point is not accepted, so a
- * value the int schemas would reject can never be typed. Floats belong in
- * FormInputFloatComponent.
+ * Decimal counterpart to FormInputNumberComponent, for fields the backend holds as float:
+ * ratios, tolerances, thresholds. Whole numbers belong in the integer input, which refuses a
+ * decimal point outright rather than letting one through to a schema that rejects it.
  */
-export function FormInputNumberComponent({
+export function FormInputFloatComponent({
   fieldName,
   label,
   placeholderText,
@@ -35,6 +45,8 @@ export function FormInputNumberComponent({
   max,
   isDisabled = false,
   isRequired = false,
+  isPercent = false,
+  decimals = 2,
   className,
   onChanged,
 }: Props) {
@@ -43,14 +55,21 @@ export function FormInputNumberComponent({
     fieldState: { invalid, error },
   } = useController({ name: fieldName });
 
+  // Percent is a display unit only. Storing to the same precision the field shows keeps the
+  // round trip stable instead of accumulating float noise on every edit.
+  const scale = isPercent ? 100 : 1;
+  const storedDecimals = isPercent ? decimals + 2 : decimals;
+
+  const displayValue =
+    typeof value === "number" ? roundTo(value * scale, decimals) : value;
+
   const handleChange = (nextValue: number | null): void => {
-    // The input cannot produce a fraction, but a rounded value still beats passing whatever
-    // arrived straight to a schema that demands an integer.
-    const whole = nextValue == null ? null : Math.round(nextValue);
+    const stored =
+      nextValue == null ? null : roundTo(nextValue / scale, storedDecimals);
 
     // Clearing a required field means 0, so the schema still sees a number. An optional one is
-    // allowed to be empty -- but a typed value has to survive, which is what used to be dropped.
-    const cleanedValue = whole ?? (isRequired ? 0 : null);
+    // allowed to be empty.
+    const cleanedValue = stored ?? (isRequired ? 0 : null);
 
     onChange(cleanedValue); // Call ReacHookForm onChange
     if (onChanged) {
@@ -69,15 +88,15 @@ export function FormInputNumberComponent({
         <InputNumber
           ref={ref}
           name={fieldName}
-          value={value}
+          value={displayValue}
           onChange={(e: InputNumberChangeEvent) => handleChange(e.value)}
           onBlur={onBlur}
           placeholder={placeholderText}
           min={min}
           max={max}
-          maxFractionDigits={0}
+          suffix={isPercent ? " %" : undefined}
+          maxFractionDigits={decimals}
           disabled={isDisabled}
-          // required={isRequired}
           className={classNames("w-full", { "p-invalid": invalid })}
         />
         <LabelComponent

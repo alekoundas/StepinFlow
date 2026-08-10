@@ -18,10 +18,17 @@ export const FlowSearchAreaZod = z
     width: z.number().int(),
     height: z.number().int(),
 
-    ratioX: z.number().min(0).max(1),
-    ratioY: z.number().min(0).max(1),
-    ratioWidth: z.number().min(0).max(1),
-    ratioHeight: z.number().min(0).max(1),
+    // Stored 0..1, shown as 0..100 %, so the messages talk in percent.
+    ratioX: z.number().min(0, "X must be 0% to 100%").max(1, "X must be 0% to 100%"),
+    ratioY: z.number().min(0, "Y must be 0% to 100%").max(1, "Y must be 0% to 100%"),
+    ratioWidth: z
+      .number()
+      .min(0, "Width must be 0% to 100%")
+      .max(1, "Width must be 0% to 100%"),
+    ratioHeight: z
+      .number()
+      .min(0, "Height must be 0% to 100%")
+      .max(1, "Height must be 0% to 100%"),
 
     processName: z.string(),
     titlePattern: z.string(),

@@ -288,6 +288,7 @@ export function WorkflowContentComponent() {
     return (
       <div className=" ">
         <FlowFormComponent
+          key={flowId}
           formMode={formMode}
           defaultValues={loadedFlow}
           onSubmit={handleFlowSave}
@@ -320,10 +321,14 @@ export function WorkflowContentComponent() {
   const flowStepDto = loadedStep as FlowStepDto;
   let formElement: ReactNode;
 
+  // react-hook-form reads defaultValues once, on mount. Two steps of the same type render the
+  // same component, so without a key React reuses the instance and the form keeps the first
+  // step's values. The key also drops any unsaved edits with the step they belonged to.
   if (isCursorFlowStepType(selectedTreeNode.flowStepType)) {
     return (
       <div className=" ">
         <FlowStepCursorFormComponent
+          key={stepId}
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}
@@ -338,6 +343,7 @@ export function WorkflowContentComponent() {
     return (
       <div className=" ">
         <FlowStepImageSearchFormComponent
+          key={stepId}
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}
@@ -352,6 +358,7 @@ export function WorkflowContentComponent() {
     return (
       <div className=" ">
         <FlowStepWindowFormComponent
+          key={stepId}
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}
@@ -366,6 +373,7 @@ export function WorkflowContentComponent() {
     case FlowStepTypeEnum.WAIT:
       formElement = (
         <FlowStepWaitFormComponent
+          key={stepId}
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}
@@ -377,6 +385,7 @@ export function WorkflowContentComponent() {
     case FlowStepTypeEnum.LOOP:
       formElement = (
         <FlowStepLoopFormComponent
+          key={stepId}
           formMode={formMode}
           onSubmit={handleSave}
           onCancel={() => setFormMode(FormMode.VIEW)}

@@ -10,6 +10,13 @@ export const FlowLocationZod = z.object({
   locationX: z.number().int("X must be a whole pixel"),
   locationY: z.number().int("Y must be a whole pixel"),
 
-  ratioX: z.number().min(0).max(1),
-  ratioY: z.number().min(0).max(1),
+  // Stored 0..1, shown as 0..100 %, so the messages talk in percent.
+  ratioX: z
+    .number()
+    .min(0, "X must be between 0% and 100% of the frame")
+    .max(1, "X must be between 0% and 100% of the frame"),
+  ratioY: z
+    .number()
+    .min(0, "Y must be between 0% and 100% of the frame")
+    .max(1, "Y must be between 0% and 100% of the frame"),
 });

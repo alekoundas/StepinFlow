@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Button } from "primereact/button";
 import { useFormContext, useWatch } from "react-hook-form";
 
+import LabelComponent from "@/shared/components/LabelComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
+import { FormInputFloatComponent } from "@/shared/components/form/FormInputFloatComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -11,28 +14,23 @@ import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto
 import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
-interface EnumOption {
-  label: string;
-  value: string;
-}
-
 interface Props {
   // Frames this point can be measured from.
   areaOptions: FlowSearchAreaDto[];
   isDisabled?: boolean;
 }
 
-const toOptions = (values: Record<string, string>): EnumOption[] =>
-  Object.values(values).map((value) => ({
-    label: value.replaceAll("_", " ").toLowerCase(),
-    value,
-  }));
+// Left unclamped on purpose: a click outside the frame shows up as an out of range percent and
+// the schema says so, which beats silently snapping the point to an edge.
+const toRatio = (offset: number, size: number): number =>
+  size > 0 ? Math.round((offset / size) * 10000) / 10000 : 0;
 
 export default function FlowLocationFormFieldsComponent({
   areaOptions,
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
+  const [captureError, setCaptureError] = useState<string | null>(null);
 
   const flowSearchAreaId = useWatch({ control, name: "flowSearchAreaId" });
   const offsetMode = useWatch({ control, name: "offsetMode" });
@@ -52,26 +50,43 @@ export default function FlowLocationFormFieldsComponent({
     const point = await capturePoint();
     if (!point) return;
 
-    let originX = 0;
-    let originY = 0;
+    const write = (field: string, value: number) =>
+      setValue(field, value, { shouldValidate: true, shouldDirty: true });
 
-    if (flowSearchAreaId) {
-      const preview =
-        await backendApiService.FlowSearchArea.getPreview(flowSearchAreaId);
-      if (preview.isResolved) {
-        originX = preview.locationX;
-        originY = preview.locationY;
-      }
+    // No frame: the point is an absolute screen coordinate.
+    if (!flowSearchAreaId) {
+      setCaptureError(null);
+      write("locationX", point.x);
+      write("locationY", point.y);
+      return;
     }
 
-    setValue("locationX", point.x - originX, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setValue("locationY", point.y - originY, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    const preview =
+      await backendApiService.FlowSearchArea.getPreview(flowSearchAreaId);
+
+    // Writing the raw screen point as if it were an offset would look like it worked and place
+    // the click somewhere else entirely, so refuse instead.
+    if (!preview.isResolved) {
+      setCaptureError(
+        preview.errorMessage ??
+          "That frame is not on screen right now, so the point cannot be measured from it.",
+      );
+      return;
+    }
+    setCaptureError(null);
+
+    const offsetX = point.x - preview.locationX;
+    const offsetY = point.y - preview.locationY;
+
+    // Percent shows different fields, so writing pixels here is a silent no-op.
+    if (offsetMode === AreaSizingModeEnum.RATIO) {
+      write("ratioX", toRatio(offsetX, preview.width));
+      write("ratioY", toRatio(offsetY, preview.height));
+      return;
+    }
+
+    write("locationX", offsetX);
+    write("locationY", offsetY);
   };
 
   const handleTest = async () => {
@@ -150,19 +165,30 @@ export default function FlowLocationFormFieldsComponent({
             }
             tooltipOptions={{ position: "top" }}
           />
+
+          <LabelComponent
+            text={captureError ?? ""}
+            hidden={captureError === null}
+            size="sm"
+            color="error"
+          />
         </div>
 
         <div className="w-10">
           {offsetMode === AreaSizingModeEnum.RATIO && flowSearchAreaId ? (
             <div className="flex gap-3">
-              <FormInputNumberComponent
+              {/* No min/max: InputNumber clamps out of range values back into the form, which
+                  would quietly move a stray capture to the frame edge. Let the schema say it. */}
+              <FormInputFloatComponent
                 fieldName="ratioX"
-                label="X %"
+                label="X"
+                isPercent={true}
                 isDisabled={isDisabled}
               />
-              <FormInputNumberComponent
+              <FormInputFloatComponent
                 fieldName="ratioY"
-                label="Y %"
+                label="Y"
+                isPercent={true}
                 isDisabled={isDisabled}
               />
             </div>
