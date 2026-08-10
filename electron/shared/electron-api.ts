@@ -23,7 +23,11 @@ export interface ElectronApi {
   };
 
   overlay: {
-    openCaptureWindow: () => Promise<Electron.Rectangle | null>;
+    // Physical-pixel bounds the selection must stay inside, and the name to show for them.
+    openCaptureWindow: (
+      parentSearchAreaBounds?: Electron.Rectangle | null,
+      parentSearchAreaName?: string | null,
+    ) => Promise<Electron.Rectangle | null>;
     openPreviewWindow: () => Promise<null>;
     signalReady: () => Promise<SignalReadyResponse | null>;
     signalCloseWindow: (rect: Electron.Rectangle | null) => void;

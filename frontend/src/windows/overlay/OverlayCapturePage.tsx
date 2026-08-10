@@ -30,6 +30,7 @@ import type {
 import OverlaySelectionDimmer from "@/windows/overlay/components/OverlaySelectionDimmer";
 import OverlaySelection from "@/windows/overlay/components/OverlaySelection";
 import OverlayConfirmBar from "@/windows/overlay/components/OverlayConfirmBar";
+import OverlayParentAreaFrame from "@/windows/overlay/components/OverlayParentAreaFrame";
 
 export type Phase = "idle" | "dragging" | "confirming";
 
@@ -47,6 +48,18 @@ function createRectangle(a: Point, b: Point): Rectangle {
   };
 }
 
+function clampToParentSearchArea(
+  point: Point,
+  bounds: Rectangle | null,
+): Point {
+  if (!bounds) return point;
+
+  return {
+    x: Math.min(Math.max(point.x, bounds.x), bounds.x + bounds.width),
+    y: Math.min(Math.max(point.y, bounds.y), bounds.y + bounds.height),
+  };
+}
+
 export default function OverlayCapturePage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -61,6 +74,15 @@ export default function OverlayCapturePage() {
   const scaleFactor = useRef(1);
   const monitorLogicalOrigin = useRef<Point>({ x: 0, y: 0 });
   const logicalSize = useRef({ width: 0, height: 0 });
+
+  // Parent search area the selection has to stay inside, when there is one. Kept in a ref as
+  // well because the broadcast listener is registered once and never sees later state.
+  const [parentSearchAreaBounds, setParentSearchAreaBounds] =
+    useState<Rectangle | null>(null);
+  const [parentSearchAreaName, setParentSearchAreaName] = useState<
+    string | null
+  >(null);
+  const parentSearchAreaBoundsRef = useRef<Rectangle | null>(null);
 
   // Clip a physical absolute rect to this monitor and return local CSS rect.
   // Returns null if the selection doesn't overlap this monitor at all.
@@ -110,6 +132,9 @@ export default function OverlayCapturePage() {
           width: res.logicalWidth,
           height: res.logicalHeight,
         };
+        parentSearchAreaBoundsRef.current = res.parentSearchAreaBounds;
+        setParentSearchAreaBounds(res.parentSearchAreaBounds);
+        setParentSearchAreaName(res.parentSearchAreaName);
 
         const blob = base64ToBlob(res.screenshot.toString());
         setScreenshot(URL.createObjectURL(blob));
@@ -126,10 +151,13 @@ export default function OverlayCapturePage() {
         // Point capture broadcasts on the same channel, so only react to our own events.
         if (event.type !== "OVERLAY_MOUSE_EVENT") return;
 
-        const pt: Point = {
-          x: event.payload.physicalX,
-          y: event.payload.physicalY,
-        };
+        const pt: Point = clampToParentSearchArea(
+          {
+            x: event.payload.physicalX,
+            y: event.payload.physicalY,
+          },
+          parentSearchAreaBoundsRef.current,
+        );
 
         // Each event is only meaningful from one phase. Testing "not confirming" instead let
         // the release of a Redraw click land as the end of a drag that never started.
@@ -200,6 +228,10 @@ export default function OverlayCapturePage() {
   const logicalRect = physRect ? physicalToLogicalRect(physRect) : null;
   const isDraggingOrConfirming = phase === "dragging" || phase === "confirming";
 
+  const parentSearchAreaLogicalRect = parentSearchAreaBounds
+    ? physicalToLogicalRect(parentSearchAreaBounds)
+    : null;
+
   function base64ToBlob(
     base64: string,
     contentType = "image/jpeg",
@@ -249,6 +281,14 @@ export default function OverlayCapturePage() {
         />
       )}
 
+      {/*========   Display the area the selection is confined to   ========*/}
+      {parentSearchAreaBounds && (
+        <OverlayParentAreaFrame
+          logicalRect={parentSearchAreaLogicalRect}
+          name={parentSearchAreaName ?? ""}
+        />
+      )}
+
       {/*========   Display Dimmer    ========*/}
       <OverlaySelectionDimmer selectionRect={logicalRect} />
 
@@ -293,7 +333,10 @@ export default function OverlayCapturePage() {
             whiteSpace: "nowrap",
           }}
         >
-          Click and drag to select a screen area &nbsp;·&nbsp; ESC to cancel
+          {parentSearchAreaBounds && parentSearchAreaName
+            ? `Click and drag inside "${parentSearchAreaName}"`
+            : "Click and drag to select a screen area"}
+          &nbsp;·&nbsp; ESC to cancel
         </div>
       )}
     </div>

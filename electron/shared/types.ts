@@ -48,6 +48,9 @@ export interface SignalReadyResponse {
   logicalHeight: number;
   scaleFactor: number;
   monitorLogicalOrigin: { x: number; y: number };
+
+  parentSearchAreaBounds: Electron.Rectangle | null;
+  parentSearchAreaName: string | null;
 }
 
 // Bounds are physical pixels. Convert with screen.screenToDipRect before placing a window.

@@ -28,7 +28,11 @@ export async function registerOverlayCaptureHandler(
 ): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW,
-    async (_event): Promise<Rectangle | null> => {
+    async (
+      _event,
+      parentSearchAreaBounds: Rectangle | null,
+      parentSearchAreaName: string | null,
+    ): Promise<Rectangle | null> => {
       if (isWindowOpen) {
         console.warn("[OverlayHandler]: Overlay already open");
         return null;
@@ -67,7 +71,11 @@ export async function registerOverlayCaptureHandler(
         }
 
         // 5. Register per-window ready signal handler BEFORE loading pages
-        registerSignalReadyHandlers(monitorEntries);
+        registerSignalReadyHandlers(
+          monitorEntries,
+          parentSearchAreaBounds ?? null,
+          parentSearchAreaName ?? null,
+        );
 
         // 6. Navigate to overlay page on every window.
         await Promise.all(
@@ -174,7 +182,11 @@ function closeWindows(monitorEntries: MonitorEntry[]): void {
   }
 }
 
-function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
+function registerSignalReadyHandlers(
+  monitorEntries: MonitorEntry[],
+  parentSearchAreaBounds: Rectangle | null,
+  parentSearchAreaName: string | null,
+): void {
   // Clear any handler left behind by a session that ended abnormally: ipcMain.handle throws on
   // a duplicate, and that throw would happen after the windows are already on screen.
   ipcMain.removeHandler(IPC_CHANNELS.OVERLAY_SIGNAL_READY);
@@ -200,6 +212,9 @@ function registerSignalReadyHandlers(monitorEntries: MonitorEntry[]): void {
             x: monitorEntry.dipBounds.x,
             y: monitorEntry.dipBounds.y,
           },
+          // Physical absolute, so every monitor's overlay gets the same rect and clips it itself.
+          parentSearchAreaBounds,
+          parentSearchAreaName,
         };
       }
       return null;

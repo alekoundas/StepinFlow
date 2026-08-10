@@ -63,8 +63,15 @@ const api: ElectronApi = {
   },
 
   overlay: {
-    openCaptureWindow: (): Promise<Electron.Rectangle | null> =>
-      ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW),
+    openCaptureWindow: (
+      parentSearchAreaBounds?: Electron.Rectangle | null,
+      parentSearchAreaName?: string | null,
+    ): Promise<Electron.Rectangle | null> =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW,
+        parentSearchAreaBounds ?? null,
+        parentSearchAreaName ?? null,
+      ),
     openPreviewWindow: (): Promise<null> =>
       ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_OPEN_PREVIEW_WINDOW),
     signalReady: (): Promise<SignalReadyResponse | null> =>

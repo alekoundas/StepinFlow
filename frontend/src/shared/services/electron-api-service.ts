@@ -11,7 +11,14 @@ export const ElectronApiService = {
   backendApi: backendApiService,
 
   overlay: {
-    openCaptureWindow: () => window.electronApi.overlay.openCaptureWindow(),
+    openCaptureWindow: (
+      parentSearchAreaBounds?: Rectangle | null,
+      parentSearchAreaName?: string | null,
+    ) =>
+      window.electronApi.overlay.openCaptureWindow(
+        parentSearchAreaBounds,
+        parentSearchAreaName,
+      ),
     signalReady: () => window.electronApi.overlay.signalReady(),
     signalCloseWindow: (rect: Rectangle | null) =>
       window.electronApi.overlay.signalCloseWindow(rect),

@@ -66,18 +66,21 @@ export default function FlowSearchAreaFormFieldsComponent({
     ...parentOptions.map((x) => ({ label: x.name, value: x.id })),
   ];
 
+  const parentName =
+    parentOptions.find((x) => x.id === parentId)?.name ?? "the parent frame";
+
   // The capture window hands back an absolute rect. With a frame chosen it is stored as an
   // offset inside that frame, so the user drags a box and never sees a coordinate.
   const handleCapture = async () => {
-    const rect = await openWindow();
-    if (!rect) return;
-
     const write = (field: string, value: number) =>
       setValue(field, value, { shouldValidate: true, shouldDirty: true });
 
-    // No parent: the rect is in absolute screen coordinates.
+    // No parent: the rect is absolute screen coordinates and the whole desktop is fair game.
     if (!parentId) {
       setCaptureError(null);
+      const rect = await openWindow();
+      if (!rect) return;
+
       write("locationX", rect.x);
       write("locationY", rect.y);
       write("width", rect.width);
@@ -85,18 +88,40 @@ export default function FlowSearchAreaFormFieldsComponent({
       return;
     }
 
-    const preview = await backendApiService.FlowSearchArea.getPreview(parentId);
+    // A parent added in this same editing session only has a temporary negative id, so there is
+    // nothing for the backend to resolve yet.
+    if (parentId < 0) {
+      setCaptureError(
+        `Save the flow before capturing inside "${parentName}", which has not been created yet.`,
+      );
+      return;
+    }
 
-    // Writing the raw screen rect as if it were an offset would look like it worked and put the
-    // region somewhere else entirely, so refuse instead.
+    // Resolved before the overlay opens, not after: the overlay needs these bounds to confine
+    // the drag, and a frame that cannot be found is a reason not to open it at all. Writing the
+    // raw screen rect as an offset would look like it worked and put the region elsewhere.
+    const preview = await backendApiService.FlowSearchArea.getPreview(parentId);
     if (!preview.isResolved) {
       setCaptureError(
         preview.errorMessage ??
-          "That frame is not on screen right now, so the region cannot be measured inside it.",
+          `"${parentName}" is not on screen right now, so the region cannot be measured inside it.`,
       );
       return;
     }
     setCaptureError(null);
+
+    // A child can never legally leave its parent, so the selection is clamped to it rather than
+    // cropped away later by the resolver.
+    const rect = await openWindow(
+      {
+        x: preview.locationX,
+        y: preview.locationY,
+        width: preview.width,
+        height: preview.height,
+      },
+      parentName,
+    );
+    if (!rect) return;
 
     // Percent shows different fields, so writing pixels here is a silent no-op.
     if (sizingMode === AreaSizingModeEnum.RATIO) {
