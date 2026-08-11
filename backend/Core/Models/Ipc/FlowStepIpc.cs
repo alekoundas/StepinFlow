@@ -11,6 +11,7 @@ namespace Core.Models.Ipc
     public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
     public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
     public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
+    public record TestRunCommandQuery(FlowStepDto dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
 
 
     // ============== COMMANDS ==============

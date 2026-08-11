@@ -13,6 +13,11 @@ import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-b
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 
+import type { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
+import type { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
+import type { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
+import type { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
+
 export class FlowStepDto {
   // Core fields
   id: number = 0;
@@ -42,10 +47,26 @@ export class FlowStepDto {
   pollIntervalMilliseconds: number = 500;
   timeoutMilliseconds: number = 0;
 
-  // RUN_CMD
+  // SYSTEM_COMMAND
+  runCommandShell: RunCommandShellEnum = "CMD";
+  runCommandPreset: RunCommandPresetEnum = "CUSTOM";
+  runCommandPresetValue: string = "";
   runCommand: string = "";
+  runCommandWorkingDirectory: string = "";
+  successExitCodes: string = "0";
+  resultSource: ResultSourceEnum = "STDOUT";
 
-  // VARIABLE_CONDITION
+  // SYSTEM_ACTION
+  systemActionType: SystemActionTypeEnum = "LOCK_WORKSTATION";
+
+  // SYSTEM_COMMAND, TEXT_SEARCH
+  resultVariableName: string = "";
+  resultExtractPattern: string = "";
+
+  // TEXT_SEARCH
+  ocrLanguage: string = "";
+
+  // VARIABLE_CONDITION, TEXT_SEARCH (the text being looked for)
   conditionText: string = "";
   conditionType?: ConditionTypeEnum;
 

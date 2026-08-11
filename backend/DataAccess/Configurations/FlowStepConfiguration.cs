@@ -26,6 +26,10 @@ namespace DataAccess.Configurations
             builder.Property(x => x.KeyboardInputType).HasConversion<string>();
             builder.Property(x => x.ImageSearchMode).HasConversion<string>();
             builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
+            builder.Property(x => x.RunCommandShell).HasConversion<string>();
+            builder.Property(x => x.RunCommandPreset).HasConversion<string>();
+            builder.Property(x => x.ResultSource).HasConversion<string>();
+            builder.Property(x => x.SystemActionType).HasConversion<string>();
 
 
             // Relationship with Flow (one-to-many)

@@ -43,11 +43,18 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "arrow-right-arrow-left",
     },
     {
-      flowStepType: FlowStepTypeEnum.RUN_CMD,
-      name: "Run Command",
+      flowStepType: FlowStepTypeEnum.SYSTEM_COMMAND,
+      name: "System Command",
       description:
-        "Execute a shell command or script on the host machine and optionally capture its output.",
+        "Run a command on this machine, branch on whether it worked, and use what it printed in later steps.",
       iconName: "terminal",
+    },
+    {
+      flowStepType: FlowStepTypeEnum.SYSTEM_ACTION,
+      name: "System Action",
+      description:
+        "Ask Windows to lock, sleep, or turn the screens off. No command, no output.",
+      iconName: "power-off",
     },
     {
       flowStepType: FlowStepTypeEnum.SUB_FLOW,

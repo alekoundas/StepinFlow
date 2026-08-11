@@ -22,6 +22,10 @@ import FlowStepWindowFormComponent from "@/features/flow-step/components/forms/w
 import { WINDOW_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/window/window-modes";
 import { isWindowFlowStepType } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
 import FlowStepImageSearchFormComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormComponent";
+import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
+import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
+import FlowStepTextSearchFormComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchFormComponent";
+import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 // interface Props {
@@ -211,6 +215,77 @@ export function WorkflowContentComponent() {
       );
     }
 
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.TEXT_SEARCH) {
+      return (
+        <div className=" ">
+          <FlowStepTextSearchFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "TEXT_SEARCH",
+                name: "Text Search",
+                conditionType: "CONTAINS",
+                ocrLanguage: "en-US",
+              })
+            }
+          />
+        </div>
+      );
+    }
+
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.SYSTEM_COMMAND) {
+      return (
+        <div className=" ">
+          <FlowStepSystemCommandFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "SYSTEM_COMMAND",
+                name: "System Command",
+              })
+            }
+          />
+        </div>
+      );
+    }
+
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.SYSTEM_ACTION) {
+      return (
+        <div className=" ">
+          <FlowStepSystemActionFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "SYSTEM_ACTION",
+                name: SYSTEM_ACTIONS[0].defaultName,
+              })
+            }
+          />
+        </div>
+      );
+    }
+
     switch (selectedFlowStepTypeToAdd) {
       case FlowStepTypeEnum.WAIT:
         formElement = (
@@ -343,6 +418,51 @@ export function WorkflowContentComponent() {
     return (
       <div className=" ">
         <FlowStepImageSearchFormComponent
+          key={stepId}
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.TEXT_SEARCH) {
+    return (
+      <div className=" ">
+        <FlowStepTextSearchFormComponent
+          key={stepId}
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.SYSTEM_COMMAND) {
+    return (
+      <div className=" ">
+        <FlowStepSystemCommandFormComponent
+          key={stepId}
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.SYSTEM_ACTION) {
+    return (
+      <div className=" ">
+        <FlowStepSystemActionFormComponent
           key={stepId}
           formMode={formMode}
           onSubmit={handleSave}

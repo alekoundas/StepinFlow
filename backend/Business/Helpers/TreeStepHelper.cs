@@ -12,6 +12,7 @@ namespace Core.Helpers
         [
             FlowStepTypeEnum.IMAGE_SEARCH,
             FlowStepTypeEnum.TEXT_SEARCH,
+            FlowStepTypeEnum.SYSTEM_COMMAND,
         ];
 
         /// <summary>Types the user can drop steps into.</summary>

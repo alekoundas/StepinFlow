@@ -45,11 +45,37 @@ namespace Core.Models.Database
         public int TimeoutMilliseconds { get; set; }
 
 
-        // RUN_CMD
+        // SYSTEM_COMMAND
+        public RunCommandShellEnum RunCommandShell { get; set; }
+        public RunCommandPresetEnum RunCommandPreset { get; set; }
+
+        /// <summary>The preset's single parameter. Ignored by CUSTOM, which uses RunCommand.</summary>
+        public string RunCommandPresetValue { get; set; } = string.Empty;
         public string RunCommand { get; set; } = string.Empty;
+        public string RunCommandWorkingDirectory { get; set; } = string.Empty;
+
+        /// <summary>Comma separated. Anything else runs the Failure children.</summary>
+        public string SuccessExitCodes { get; set; } = "0";
+        public ResultSourceEnum ResultSource { get; set; }
 
 
-        // VARIABLE_CONDITION
+        // SYSTEM_ACTION
+        public SystemActionTypeEnum SystemActionType { get; set; }
+
+
+        // SYSTEM_COMMAND, TEXT_SEARCH
+        // Named here, referenced as {{name}} by later steps. Empty means the result is dropped.
+        public string ResultVariableName { get; set; } = string.Empty;
+
+        /// <summary>Regex, first capture group. Empty keeps the whole text.</summary>
+        public string ResultExtractPattern { get; set; } = string.Empty;
+
+
+        // TEXT_SEARCH
+        public string OcrLanguage { get; set; } = string.Empty;
+
+
+        // VARIABLE_CONDITION, TEXT_SEARCH (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
         public ConditionTypeEnum? ConditionType { get; set; }
 

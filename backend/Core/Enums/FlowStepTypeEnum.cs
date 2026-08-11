@@ -6,7 +6,8 @@
         WAIT,
         LOOP,
         GO_TO,
-        RUN_CMD,
+        SYSTEM_COMMAND,
+        SYSTEM_ACTION,
         SUB_FLOW,
         VARIABLE_CONDITION,
         NOTIFICATION_EMAIL,
@@ -31,9 +32,5 @@
         FAILURE, // Hidden. Not available for user selection.
         
         
-        //MULTIPLE_TEMPLATE_SEARCH,
-        //WAIT_FOR_TEMPLATE,
-        //NEW,     // Hidden. Not available for user selection.
-        //MULTIPLE_TEMPLATE_SEARCH_CHILD,      // Hidden. Not available for user selection.
     }
 }

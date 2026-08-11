@@ -2,10 +2,12 @@
 using App.Ipc;
 using Business.Helpers;
 using Business.Ipc.Handlers;
+using Business.Services.CommandService;
 using Business.Services.FrameService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
 using Business.Services.ScreenshotService;
+using Business.Services.SystemActionService;
 using Core.Interfaces;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +43,8 @@ namespace App
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
+            builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
+            builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
 
 
             // IPC

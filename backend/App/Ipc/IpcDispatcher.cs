@@ -52,6 +52,7 @@ namespace App.Ipc
                     "FlowStep.getMovePreview" => await _mediator.Send(new GetFlowStepMovePreviewQuery(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.move" => await _mediator.Send(new MoveFlowStepCommand(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testImageSearch" => await _mediator.Send(new TestImageSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.testRunCommand" => await _mediator.Send(new TestRunCommandQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowSearchArea
                     "FlowSearchArea.create" => await _mediator.Send(new CreateFlowSearchAreaCommand(JsonSerializer.Deserialize<FlowSearchAreaDto>(request.Payload, _jsonOptions)!), ct),
@@ -84,6 +85,7 @@ namespace App.Ipc
                     "Lookup.flowStep" => await _mediator.Send(new GetLookupFlowStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowLocation" => await _mediator.Send(new GetLookupFlowLocationQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowSearchArea" => await _mediator.Send(new GetLookupFlowSearchAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
 
                     // System IO
                     "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),
