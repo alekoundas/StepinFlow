@@ -23,9 +23,9 @@ namespace Business.Services.ScreenshotService
         // ================================================================
         public byte[] Capture(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.JPEG, 100);
+            using Bitmap bmp = CaptureGraphics(rect, screenshotFormat, jpegQuality);
 
-            byte[] result = Compress(bmp, ScreenshotFormatEnum.JPEG, 100);
+            byte[] result = Compress(bmp, screenshotFormat, jpegQuality);
             return result;
         }
 
@@ -229,6 +229,10 @@ namespace Business.Services.ScreenshotService
 
         private static byte[] Compress(Bitmap bmp, ScreenshotFormatEnum format, int jpegQuality)
         {
+            if (format == ScreenshotFormatEnum.RAW)
+                throw new NotSupportedException(
+                    "RAW is not an encoded format. Use CaptureRaw to get pixels, or ask for PNG or JPEG.");
+
             int pixelCount = bmp.Width * bmp.Height;
             int initialCapacity = format == ScreenshotFormatEnum.JPEG
                 ? pixelCount / 4   // JPEG: ~2 bits/pixel → /4 bytes is generous
@@ -255,6 +259,10 @@ namespace Business.Services.ScreenshotService
 
         private static byte[] Compress(byte[] bgra, int width, int height, ScreenshotFormatEnum format, int jpegQuality)
         {
+            if (format == ScreenshotFormatEnum.RAW)
+                throw new NotSupportedException(
+                    "RAW is not an encoded format. Use CaptureRaw to get pixels, or ask for PNG or JPEG.");
+
             var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
             try
             {
