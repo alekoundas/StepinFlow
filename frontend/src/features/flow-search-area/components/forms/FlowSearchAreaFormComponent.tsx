@@ -17,6 +17,8 @@ interface Props {
   isFormInDialog?: boolean;
   // Areas this one may sit inside.
   parentOptions: FlowSearchAreaDto[];
+  // Regions already inside this one.
+  childAreas?: FlowSearchAreaDto[];
 
   onSubmit: (formValues: FlowSearchAreaDto) => void;
   onCancel: () => void;
@@ -29,6 +31,7 @@ export default function FlowSearchAreaFormComponent({
   defaultValues,
   isFormInDialog = false,
   parentOptions,
+  childAreas,
   onSubmit,
   onCancel,
   onEdit,
@@ -73,6 +76,7 @@ export default function FlowSearchAreaFormComponent({
         >
           <FlowSearchAreaFormFieldsComponent
             parentOptions={parentOptions}
+            childAreas={childAreas}
             isDisabled={formMode === "VIEW"}
           />
 

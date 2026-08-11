@@ -8,6 +8,7 @@ interface Option<TValue> {
   label: string;
   value: TValue;
   icon?: string;
+  disabled?: boolean;
 }
 
 interface Props<TForm extends FieldValues, TValue> {
@@ -50,6 +51,7 @@ export function FormSelectButtonComponent<TForm extends FieldValues, TValue>({
         options={options}
         optionLabel="label"
         optionValue="value"
+        optionDisabled="disabled"
         disabled={isDisabled}
         onBlur={onBlur}
         // SelectButton clears to null when the active item is clicked again; a required

@@ -260,6 +260,7 @@ export default function FlowStepImageSearchFormFieldsComponent({
           }))}
           optionLabel="label"
           optionValue="value"
+          isRequired={true}
           isDisabled={isDisabled}
           hintText="The normalized modes are the ones where the accuracy number means something."
         />

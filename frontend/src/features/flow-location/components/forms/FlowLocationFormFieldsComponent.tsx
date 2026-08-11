@@ -39,10 +39,10 @@ export default function FlowLocationFormFieldsComponent({
 
   const { capturePoint, cancelCapture, isCapturing } = useCapturePoint();
 
-  const areaDropdownOptions = [
-    { label: "The whole screen (needs rebinding elsewhere)", value: 0 },
-    ...areaOptions.map((x) => ({ label: x.name, value: x.id })),
-  ];
+  const areaDropdownOptions = areaOptions.map((x) => ({
+    label: x.name,
+    value: x.id,
+  }));
 
   // Clicking anywhere gives an absolute point. With a frame chosen it is stored as an offset
   // inside it, so the user just clicks the thing and never sees a screen coordinate.
@@ -110,6 +110,7 @@ export default function FlowLocationFormFieldsComponent({
         options={areaDropdownOptions}
         optionLabel="label"
         optionValue="value"
+        placeholderText="Nothing — a point on screen"
         isDisabled={isDisabled}
         hintText="Anchor it to a window and the click survives being run elsewhere."
       />

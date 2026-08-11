@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
@@ -27,6 +28,8 @@ interface EnumOption {
 interface Props {
   // Areas this one may sit inside. Only frames, and never itself.
   parentOptions: FlowSearchAreaDto[];
+  // Regions already living inside this one, so the form can say what an edit costs them.
+  childAreas?: FlowSearchAreaDto[];
   isDisabled?: boolean;
 }
 
@@ -43,6 +46,7 @@ const toRatio = (size: number, frameSize: number): number =>
 
 export default function FlowSearchAreaFormFieldsComponent({
   parentOptions,
+  childAreas = [],
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
@@ -56,18 +60,43 @@ export default function FlowSearchAreaFormFieldsComponent({
 
   const typeOptions = [
     { label: "Region", value: FlowSearchAreaTypeEnum.CUSTOM },
-    { label: "Application", value: FlowSearchAreaTypeEnum.APPLICATION },
-    { label: "Browser tab", value: FlowSearchAreaTypeEnum.BROWSER_TAB },
-    { label: "Monitor", value: FlowSearchAreaTypeEnum.MONITOR },
+    {
+      label: "Application",
+      value: FlowSearchAreaTypeEnum.APPLICATION,
+        disabled: !!parentId,
+    },
+    {
+      label: "Browser tab",
+      value: FlowSearchAreaTypeEnum.BROWSER_TAB,
+        disabled: !!parentId,
+    },
+    {
+      label: "Monitor",
+      value: FlowSearchAreaTypeEnum.MONITOR,
+        disabled: !!parentId,
+    },
   ];
 
-  const parentDropdownOptions = [
-    { label: "The whole screen (needs rebinding elsewhere)", value: 0 },
-    ...parentOptions.map((x) => ({ label: x.name, value: x.id })),
-  ];
+  const parentDropdownOptions = parentOptions.map((x) => ({
+    label: x.name,
+    value: x.id,
+  }));
 
   const parentName =
     parentOptions.find((x) => x.id === parentId)?.name ?? "the parent frame";
+
+  const pixelChildren = childAreas.filter(
+    (x) => x.sizingMode === AreaSizingModeEnum.ABSOLUTE_PX,
+  );
+
+  useEffect(() => {
+    if (!parentId && sizingMode === AreaSizingModeEnum.RATIO) {
+      setValue("sizingMode", AreaSizingModeEnum.ABSOLUTE_PX, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [parentId, sizingMode, setValue]);
 
   // The capture window hands back an absolute rect. With a frame chosen it is stored as an
   // offset inside that frame, so the user drags a box and never sees a coordinate.
@@ -140,6 +169,29 @@ export default function FlowSearchAreaFormFieldsComponent({
 
   return (
     <>
+      {/*========   What an edit here costs the regions inside   ========*/}
+      {pixelChildren.length > 0 && !isDisabled && (
+        <Message
+          severity="warn"
+          className="w-full justify-content-start mt-4"
+          content={
+            <div className="text-sm">
+              <div className="font-bold">
+                {pixelChildren.length} region
+                {pixelChildren.length === 1 ? "" : "s"} inside this area{" "}
+                {pixelChildren.length === 1 ? "is" : "are"} measured in pixels:{" "}
+                {pixelChildren.map((x) => x.name || "(unnamed)").join(", ")}
+              </div>
+              <div className="mt-1">
+                Their position is fixed against this area's own size. Any that
+                no longer fit after your changes are detached on save: they keep
+                where they are on screen, but stop being inside this area.
+              </div>
+            </div>
+          }
+        />
+      )}
+
       <FormInputTextComponent
         fieldName="name"
         label="Name"
@@ -154,6 +206,11 @@ export default function FlowSearchAreaFormFieldsComponent({
         options={typeOptions}
         isDisabled={isDisabled}
         isRequired={true}
+        hintText={
+          !!parentId
+            ? "Only a Region can sit inside another area. Clear Inside to change the type."
+            : undefined
+        }
       />
 
       {/* CUSTOM */}
@@ -166,6 +223,7 @@ export default function FlowSearchAreaFormFieldsComponent({
             options={parentDropdownOptions}
             optionLabel="label"
             optionValue="value"
+            placeholderText="Nothing — positioned on screen"
             isDisabled={isDisabled}
             hintText="Put it inside a window and the flow keeps working on another machine."
           />
@@ -264,6 +322,7 @@ export default function FlowSearchAreaFormFieldsComponent({
                 options={toOptions(TitleMatchModeEnum)}
                 optionLabel="label"
                 optionValue="value"
+                isRequired={true}
                 isDisabled={isDisabled}
               />
             </div>
@@ -298,6 +357,7 @@ export default function FlowSearchAreaFormFieldsComponent({
                 options={toOptions(BrowserTypeEnum)}
                 optionLabel="label"
                 optionValue="value"
+                isRequired={true}
                 isDisabled={isDisabled}
               />
             </div>
@@ -309,6 +369,7 @@ export default function FlowSearchAreaFormFieldsComponent({
                 options={toOptions(TabMatchOnEnum)}
                 optionLabel="label"
                 optionValue="value"
+                isRequired={true}
                 isDisabled={isDisabled}
               />
             </div>

@@ -31,7 +31,6 @@ interface BaseProps<TForm extends FieldValues, T> {
   // Filtering
   filter?: boolean;
   filterBy?: string;
-  // showClear?: boolean;
 }
 
 type LocalProps<TForm extends FieldValues, T> = BaseProps<TForm, T> & {
@@ -57,7 +56,6 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   isRequired = false,
   filter = true,
   filterBy,
-  // showClear = true,
   optionLabel,
   optionValue,
   classNameContainer,
@@ -70,12 +68,14 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   ...props // Rest of props includes either local or remote specific props
 }: LocalProps<TForm, T> | RemoteProps<TForm, T>) {
   const [filterValue, setFilterValue] = useState("");
-  const [showClear, setShowClear] = useState(false);
 
   const {
     field: { value, onChange, onBlur, ref },
     fieldState: { invalid, error },
   } = useController<TForm>({ name: fieldName });
+
+  const showClear =
+    !isRequired && value !== null && value !== undefined && value !== "";
 
   // Local or Remote data
   const isRemote = "mode" in props && props.mode === "remote";
@@ -98,17 +98,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   };
 
   const handleChange = (value: number | string | null): void => {
-    if (isRequired && !value) {
-      onChange(defaultValue); // Call ReacHookForm onChange
-      setShowClear(false);
-    } else {
-      onChange(value); // Call ReacHookForm onChange
-      setShowClear(true);
-    }
-
-    // if (onChanged) {
-    //   onChanged(cleanedValue); // Call parent onChanged
-    // }
+    onChange(value ?? defaultValue ?? null);
   };
 
   // Helper to get display value

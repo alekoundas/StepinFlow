@@ -68,6 +68,7 @@ export function FlowSearchAreaDataTableComponent({
           isFormInDialog={true}
           formMode={mode}
           parentOptions={frames.filter((x) => x.id !== defaults.id)}
+          childAreas={childrenOf(defaults)}
           onEdit={() => closeAll()}
           onCancel={() => closeAll()}
           onSubmit={(data) => handleSave(data, index)}
@@ -76,10 +77,42 @@ export function FlowSearchAreaDataTableComponent({
     });
   };
 
+  // if parent is saved and a child of pixel type doesnt fit, remove parentId
+  const detachRegionsLeftOutside = (parent: FlowSearchAreaDto) => {
+    if (parent.type !== FlowSearchAreaTypeEnum.CUSTOM) return;
+
+    const isOutside = (child: FlowSearchAreaDto) =>
+      child.locationX < 0 ||
+      child.locationY < 0 ||
+      child.locationX + child.width > parent.width ||
+      child.locationY + child.height > parent.height;
+
+    childrenOf(parent)
+      .filter((x) => x.sizingMode === AreaSizingModeEnum.ABSOLUTE_PX)
+      .filter(isOutside)
+      .forEach((child) => {
+        const childIndex = areas.findIndex((x) => x.id === child.id);
+        if (childIndex === -1) return;
+
+        update(
+          childIndex,
+          new FlowSearchAreaDto({
+            ...child,
+            parentFlowSearchAreaId: null,
+            // Nesting is one level deep, so a parent is always top level and its own location is
+            // already absolute. Adding it keeps the region over the same pixels.
+            locationX: child.locationX + parent.locationX,
+            locationY: child.locationY + parent.locationY,
+          }),
+        );
+      });
+  };
+
   const handleSave = (data: FlowSearchAreaDto, index?: number) => {
     closeAll();
     if (index !== undefined) {
       update(index, data);
+      detachRegionsLeftOutside(data);
     } else {
       append(data);
     }
