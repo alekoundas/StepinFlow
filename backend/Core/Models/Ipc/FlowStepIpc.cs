@@ -12,6 +12,7 @@ namespace Core.Models.Ipc
     public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
     public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
     public record TestRunCommandQuery(FlowStepDto dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
+    public record TestTextSearchQuery(FlowStepDto dto) : IRequest<ResultDto<TextSearchTestResultDto>>;
 
 
     // ============== COMMANDS ==============

@@ -4,12 +4,16 @@ import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "primereact/button";
 
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { backendApiService } from "@/shared/services/backend-api-service";
+import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
 import { FlowStepTextSearchSchema } from "@/features/flow-step/components/forms/text-search/flow-step-text-search.zod";
 import FlowStepTextSearchFormFieldsComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchFormFieldsComponent";
+import FlowStepTextSearchTestPanelComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchTestPanelComponent";
 
 interface Props {
   formMode: FormMode;
@@ -37,6 +41,9 @@ export default function FlowStepTextSearchFormComponent({
     trigger,
   } = form;
 
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<TextSearchTestResultDto | null>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       trigger();
@@ -44,14 +51,28 @@ export default function FlowStepTextSearchFormComponent({
     return () => clearTimeout(timer);
   }, [trigger]);
 
+  const handleTest = async () => {
+    setIsTesting(true);
+    try {
+      setTestResult(
+        await backendApiService.FlowStep.testTextSearch(buildDto(form.getValues())),
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const buildDto = (data: z.infer<typeof FlowStepTextSearchSchema>) =>
+    new FlowStepDto({
+      ...defaultValues,
+      ...data,
+      flowSearchAreaId: data.flowSearchAreaId ?? undefined,
+    });
+
   const handleSubmit = (data: z.infer<typeof FlowStepTextSearchSchema>) =>
-    onSubmit(
-      new FlowStepDto({
-        ...defaultValues,
-        ...data,
-        flowSearchAreaId: data.flowSearchAreaId ?? undefined,
-      }),
-    );
+    onSubmit(buildDto(data));
 
   return (
     <>
@@ -71,6 +92,22 @@ export default function FlowStepTextSearchFormComponent({
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />
+
+          <div>
+            <Button
+              type="button"
+              label={isTesting ? "Reading..." : "Test"}
+              icon="pi pi-play"
+              loading={isTesting}
+              disabled={!isValid || isTesting}
+              onClick={handleTest}
+              className="p-button-outlined"
+              tooltip="Reads the area now so you can see what Windows makes of it"
+              tooltipOptions={{ position: "top" }}
+            />
+          </div>
+
+          {testResult && <FlowStepTextSearchTestPanelComponent result={testResult} />}
 
           <FormFooterComponent
             formMode={formMode}

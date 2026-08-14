@@ -6,6 +6,7 @@ using Business.Services.CommandService;
 using Business.Services.FrameService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
+using Business.Services.OcrService;
 using Business.Services.ScreenshotService;
 using Business.Services.SystemActionService;
 using Core.Interfaces;
@@ -45,6 +46,7 @@ namespace App
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
+            builder.Services.AddSingleton<IOcrService, OcrService>();
 
 
             // IPC

@@ -6,23 +6,17 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
 import { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { IMAGE_SEARCH_MODES } from "@/features/flow-step/components/forms/image-search/image-search-modes";
 import FlowStepResultFieldsComponent from "@/features/flow-step/components/forms/shared/FlowStepResultFieldsComponent";
+import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
 import {
   FlowStepTextSearchSchema,
   TEXT_SEARCH_CONDITION_TYPES,
 } from "@/features/flow-step/components/forms/text-search/flow-step-text-search.zod";
 
 type TextSearchForm = z.infer<typeof FlowStepTextSearchSchema>;
-
-interface IdOption {
-  label: string;
-  value: number;
-  description?: string;
-}
 
 interface EnumOption {
   label: string;
@@ -48,16 +42,6 @@ export default function FlowStepTextSearchFormFieldsComponent({
   const mode = useWatch({ control, name: "imageSearchMode" });
 
   const isWaiting = mode !== ImageSearchModeEnum.FIND_ONCE;
-
-  const loadAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowSearchArea({ searchText: filter, flowId }).then(
-      (res) =>
-        res.data.map((item) => ({
-          label: item.label,
-          value: Number(item.value),
-          description: item.description,
-        })),
-    );
 
   const matchOptions: EnumOption[] = TEXT_SEARCH_CONDITION_TYPES.map((value) => ({
     label: MATCH_OPTIONS[value],
@@ -86,18 +70,11 @@ export default function FlowStepTextSearchFormFieldsComponent({
         hintText={IMAGE_SEARCH_MODES.find((x) => x.value === mode)?.description}
       />
 
-      <FormDropdownComponent<TextSearchForm, IdOption>
-        fieldName="flowSearchAreaId"
+      <FlowStepSearchAreaFieldComponent
+        flowId={flowId}
         labelText="Where to read"
-        mode="remote"
-        queryKey={["lookup", "flowSearchArea", flowId]}
-        queryFn={loadAreas}
-        optionLabel="label"
-        optionValue="value"
-        placeholderText="Select an area..."
-        isRequired={true}
-        isDisabled={isDisabled}
         hintText="Reading a small area is both faster and far more accurate than reading a screen."
+        isDisabled={isDisabled}
       />
 
       <div className="flex gap-3">

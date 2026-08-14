@@ -15,6 +15,7 @@ import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto
 import type { FlowSearchAreaPreviewDto } from "@/shared/models/database/flow-search-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
+import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
@@ -53,6 +54,8 @@ export const backendApiService = {
       call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
     testRunCommand: (dto: FlowStepDto) =>
       call<RunCommandTestResultDto>("FlowStep.testRunCommand", dto),
+    testTextSearch: (dto: FlowStepDto) =>
+      call<TextSearchTestResultDto>("FlowStep.testTextSearch", dto),
   },
 
   FlowStepImage: {
