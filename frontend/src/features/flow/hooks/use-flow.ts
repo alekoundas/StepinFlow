@@ -25,8 +25,8 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
       // Search area / location usage counts are computed server side.
       queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowSearchArea"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
     },
   });
 
@@ -36,8 +36,8 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
       // Search area / location usage counts are computed server side.
       queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowSearchArea"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
     },
   });
 
@@ -47,8 +47,8 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
       // Search area / location usage counts are computed server side.
       queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowLocation"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowSearchArea"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
     },
   });
 

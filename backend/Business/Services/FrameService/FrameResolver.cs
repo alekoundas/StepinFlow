@@ -23,14 +23,14 @@ namespace Business.Services.FrameService
         // Public methods
         // ================================================================
 
-        public async Task<AreaResolution> ResolveAreaAsync(int flowSearchAreaId, CancellationToken ct = default)
+        public async Task<AreaResolution> ResolveAreaAsync(int flowAreaId, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowSearchArea? area = await dbContext.FlowSearchAreas
+            FlowArea? area = await dbContext.FlowAreas
                 .AsNoTracking()
-                .Include(x => x.ParentFlowSearchArea)
-                .FirstOrDefaultAsync(x => x.Id == flowSearchAreaId, ct);
+                .Include(x => x.ParentFlowArea)
+                .FirstOrDefaultAsync(x => x.Id == flowAreaId, ct);
 
             if (area == null)
                 return AreaResolution.Fail("The area no longer exists.");
@@ -38,15 +38,15 @@ namespace Business.Services.FrameService
             return ResolveArea(area);
         }
 
-        public async Task<LocationResolution> ResolveLocationAsync(int flowLocationId, CancellationToken ct = default)
+        public async Task<LocationResolution> ResolveLocationAsync(int flowPointId, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowLocation? location = await dbContext.FlowLocations
+            FlowPoint? location = await dbContext.FlowPoints
                 .AsNoTracking()
-                .Include(x => x.FlowSearchArea)
-                .ThenInclude(x => x!.ParentFlowSearchArea)
-                .FirstOrDefaultAsync(x => x.Id == flowLocationId, ct);
+                .Include(x => x.FlowArea)
+                .ThenInclude(x => x!.ParentFlowArea)
+                .FirstOrDefaultAsync(x => x.Id == flowPointId, ct);
 
             if (location == null)
                 return LocationResolution.Fail("The location no longer exists.");
@@ -54,31 +54,31 @@ namespace Business.Services.FrameService
             return ResolveLocation(location);
         }
 
-        public AreaResolution ResolveArea(FlowSearchArea area)
+        public AreaResolution ResolveArea(FlowArea area)
         {
             switch (area.Type)
             {
-                case FlowSearchAreaTypeEnum.MONITOR:
+                case FlowAreaTypeEnum.MONITOR:
                     return ResolveMonitor(area);
 
-                case FlowSearchAreaTypeEnum.APPLICATION:
+                case FlowAreaTypeEnum.APPLICATION:
                     return ResolveApplication(area);
 
-                case FlowSearchAreaTypeEnum.BROWSER_TAB:
+                case FlowAreaTypeEnum.BROWSER_TAB:
                     return AreaResolution.Fail("Browser tab areas are not supported yet.");
 
-                case FlowSearchAreaTypeEnum.CUSTOM:
+                case FlowAreaTypeEnum.CUSTOM:
                 default:
                     return ResolveCustom(area);
             }
         }
 
-        public LocationResolution ResolveLocation(FlowLocation location)
+        public LocationResolution ResolveLocation(FlowPoint location)
         {
-            if (location.FlowSearchArea == null)
+            if (location.FlowArea == null)
                 return LocationResolution.Ok(new Point(location.LocationX, location.LocationY));
 
-            AreaResolution frame = ResolveArea(location.FlowSearchArea);
+            AreaResolution frame = ResolveArea(location.FlowArea);
             if (!frame.IsResolved)
                 return LocationResolution.Fail(frame.Error!);
 
@@ -101,7 +101,7 @@ namespace Business.Services.FrameService
         // Private methods
         // ================================================================
 
-        private static AreaResolution ResolveMonitor(FlowSearchArea area)
+        private static AreaResolution ResolveMonitor(FlowArea area)
         {
             MonitorInfo? monitor = ScreenHelper.GetAllMonitors()
                 .FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorUniqueId, StringComparison.OrdinalIgnoreCase));
@@ -112,7 +112,7 @@ namespace Business.Services.FrameService
             return AreaResolution.Ok(monitor.Bounds);
         }
 
-        private static AreaResolution ResolveApplication(FlowSearchArea area)
+        private static AreaResolution ResolveApplication(FlowArea area)
         {
             WindowQuery query = new WindowQuery
             {
@@ -134,9 +134,9 @@ namespace Business.Services.FrameService
             return AreaResolution.Ok(bounds);
         }
 
-        private AreaResolution ResolveCustom(FlowSearchArea area)
+        private AreaResolution ResolveCustom(FlowArea area)
         {
-            if (area.ParentFlowSearchAreaId == null || area.ParentFlowSearchArea == null)
+            if (area.ParentFlowAreaId == null || area.ParentFlowArea == null)
             {
                 Rectangle absolute = new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height);
 
@@ -146,7 +146,7 @@ namespace Business.Services.FrameService
                 return AreaResolution.Ok(absolute);
             }
 
-            AreaResolution parent = ResolveArea(area.ParentFlowSearchArea);
+            AreaResolution parent = ResolveArea(area.ParentFlowArea);
             if (!parent.IsResolved)
                 return AreaResolution.Fail(parent.Error!);
 

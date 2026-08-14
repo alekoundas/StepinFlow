@@ -68,7 +68,7 @@ export default function FlowStepTextSearchFormComponent({
     new FlowStepDto({
       ...defaultValues,
       ...data,
-      flowSearchAreaId: data.flowSearchAreaId ?? undefined,
+      flowAreaId: data.flowAreaId ?? undefined,
     });
 
   const handleSubmit = (data: z.infer<typeof FlowStepTextSearchSchema>) =>

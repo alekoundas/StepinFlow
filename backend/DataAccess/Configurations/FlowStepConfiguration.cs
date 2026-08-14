@@ -53,25 +53,25 @@ namespace DataAccess.Configurations
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
 
 
-            // Relationship with FlowSearchArea (one-to-many)
+            // Relationship with FlowArea (one-to-many)
             // A search area is reusable, so removing it must not take the steps using it down with it.
-            builder.HasOne(x => x.FlowSearchArea)
+            builder.HasOne(x => x.FlowArea)
                 .WithMany(x => x.FlowSteps)
-                .HasForeignKey(x => x.FlowSearchAreaId)
+                .HasForeignKey(x => x.FlowAreaId)
                 .OnDelete(DeleteBehavior.SetNull); // Only clear the reference
 
 
-            // Relationship with FlowLocation, start point (one-to-many)
-            builder.HasOne(x => x.FlowLocation)
+            // Relationship with FlowPoint, start point (one-to-many)
+            builder.HasOne(x => x.FlowPoint)
                 .WithMany(x => x.FlowSteps)
-                .HasForeignKey(x => x.FlowLocationId)
+                .HasForeignKey(x => x.FlowPointId)
                 .OnDelete(DeleteBehavior.SetNull); // Only clear the reference
 
 
-            // Relationship with FlowLocation, end point (one-to-many)
-            builder.HasOne(x => x.FlowLocationEnd)
+            // Relationship with FlowPoint, end point (one-to-many)
+            builder.HasOne(x => x.FlowPointEnd)
                 .WithMany(x => x.EndFlowSteps)
-                .HasForeignKey(x => x.FlowLocationEndId)
+                .HasForeignKey(x => x.FlowPointEndId)
                 .OnDelete(DeleteBehavior.SetNull); // Only clear the reference
 
 

@@ -85,12 +85,12 @@ export default function FlowStepWindowFormComponent({
       ...defaultValues,
       name: data.name,
       flowStepType: data.flowStepType,
-      flowSearchAreaId: data.flowSearchAreaId ?? undefined,
+      flowAreaId: data.flowAreaId ?? undefined,
 
       windowWidth: isResize ? data.windowWidth : 0,
       windowHeight: isResize ? data.windowHeight : 0,
 
-      flowLocationId: isRelocate ? (data.flowLocationId ?? undefined) : undefined,
+      flowPointId: isRelocate ? (data.flowPointId ?? undefined) : undefined,
     });
   };
 

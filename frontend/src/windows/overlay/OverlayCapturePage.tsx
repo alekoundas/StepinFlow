@@ -79,7 +79,7 @@ export default function OverlayCapturePage() {
   // well because the broadcast listener is registered once and never sees later state.
   const [parentSearchAreaBounds, setParentSearchAreaBounds] =
     useState<Rectangle | null>(null);
-  const [parentSearchAreaName, setParentSearchAreaName] = useState<
+  const [parentAreaName, setParentAreaName] = useState<
     string | null
   >(null);
   const parentSearchAreaBoundsRef = useRef<Rectangle | null>(null);
@@ -134,7 +134,7 @@ export default function OverlayCapturePage() {
         };
         parentSearchAreaBoundsRef.current = res.parentSearchAreaBounds;
         setParentSearchAreaBounds(res.parentSearchAreaBounds);
-        setParentSearchAreaName(res.parentSearchAreaName);
+        setParentAreaName(res.parentAreaName);
 
         const blob = base64ToBlob(res.screenshot.toString());
         setScreenshot(URL.createObjectURL(blob));
@@ -285,7 +285,7 @@ export default function OverlayCapturePage() {
       {parentSearchAreaBounds && (
         <OverlayParentAreaFrame
           logicalRect={parentSearchAreaLogicalRect}
-          name={parentSearchAreaName ?? ""}
+          name={parentAreaName ?? ""}
         />
       )}
 
@@ -333,8 +333,8 @@ export default function OverlayCapturePage() {
             whiteSpace: "nowrap",
           }}
         >
-          {parentSearchAreaBounds && parentSearchAreaName
-            ? `Click and drag inside "${parentSearchAreaName}"`
+          {parentSearchAreaBounds && parentAreaName
+            ? `Click and drag inside "${parentAreaName}"`
             : "Click and drag to select a screen area"}
           &nbsp;·&nbsp; ESC to cancel
         </div>

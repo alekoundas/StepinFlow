@@ -73,7 +73,7 @@ export default function FlowStepImageSearchFormComponent({
     new FlowStepDto({
       ...defaultValues,
       ...(data ?? (form.getValues() as never)),
-      flowSearchAreaId: (data ?? form.getValues()).flowSearchAreaId ?? undefined,
+      flowAreaId: (data ?? form.getValues()).flowAreaId ?? undefined,
       flowStepImages: images,
     });
 
@@ -83,12 +83,12 @@ export default function FlowStepImageSearchFormComponent({
     const rect = await openWindow();
     if (!rect) return;
 
-    const areaId = form.getValues().flowSearchAreaId;
+    const areaId = form.getValues().flowAreaId;
     let frameWidth = rect.width;
     let frameHeight = rect.height;
 
     if (areaId) {
-      const preview = await backendApiService.FlowSearchArea.getPreview(areaId);
+      const preview = await backendApiService.FlowArea.getPreview(areaId);
       if (preview.isResolved) {
         frameWidth = preview.width;
         frameHeight = preview.height;

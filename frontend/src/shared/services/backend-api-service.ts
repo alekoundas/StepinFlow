@@ -10,9 +10,9 @@ import type {
 } from "@/shared/models/flow-step-move.dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
-import type { FlowSearchAreaPreviewDto } from "@/shared/models/database/flow-search-area-preview-dto";
+import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
+import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
+import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
 import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
@@ -64,27 +64,27 @@ export const backendApiService = {
     get: (id: number) => call<FlowStepImageDto>("FlowStepImage.get", id),
   },
 
-  FlowSearchArea: {
-    create: (dto: FlowSearchAreaDto) =>
-      call<number>("FlowSearchArea.create", dto),
-    update: (dto: FlowSearchAreaDto) =>
-      call<FlowSearchAreaDto>("FlowSearchArea.update", dto),
-    delete: (id: number) => call<boolean>("FlowSearchArea.delete", id),
-    get: (id: number) => call<FlowSearchAreaDto>("FlowSearchArea.get", id),
+  FlowArea: {
+    create: (dto: FlowAreaDto) =>
+      call<number>("FlowArea.create", dto),
+    update: (dto: FlowAreaDto) =>
+      call<FlowAreaDto>("FlowArea.update", dto),
+    delete: (id: number) => call<boolean>("FlowArea.delete", id),
+    get: (id: number) => call<FlowAreaDto>("FlowArea.get", id),
     getLazy: (dto: LazyDto) =>
-      call<LazyResponseDto<FlowSearchAreaDto>>("FlowSearchArea.getLazy", dto),
+      call<LazyResponseDto<FlowAreaDto>>("FlowArea.getLazy", dto),
     getPreview: (id: number) =>
-      call<FlowSearchAreaPreviewDto>("FlowSearchArea.getPreview", id),
+      call<FlowAreaPreviewDto>("FlowArea.getPreview", id),
   },
 
-  FlowLocation: {
-    create: (dto: FlowLocationDto) => call<number>("FlowLocation.create", dto),
-    update: (dto: FlowLocationDto) =>
-      call<FlowLocationDto>("FlowLocation.update", dto),
-    delete: (id: number) => call<boolean>("FlowLocation.delete", id),
-    get: (id: number) => call<FlowLocationDto>("FlowLocation.get", id),
+  FlowPoint: {
+    create: (dto: FlowPointDto) => call<number>("FlowPoint.create", dto),
+    update: (dto: FlowPointDto) =>
+      call<FlowPointDto>("FlowPoint.update", dto),
+    delete: (id: number) => call<boolean>("FlowPoint.delete", id),
+    get: (id: number) => call<FlowPointDto>("FlowPoint.get", id),
     getPreview: (id: number) =>
-      call<ScreenPointDto>("FlowLocation.getPreview", id),
+      call<ScreenPointDto>("FlowPoint.getPreview", id),
   },
 
   SubFlow: {
@@ -101,10 +101,10 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.monitor", dto),
     flowStep: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.flowStep", dto),
-    flowLocation: (dto: LookupRequestDto) =>
-      call<LookupResponseDto>("Lookup.flowLocation", dto),
-    flowSearchArea: (dto: LookupRequestDto) =>
-      call<LookupResponseDto>("Lookup.flowSearchArea", dto),
+    flowPoint: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.flowPoint", dto),
+    flowArea: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.flowArea", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
   },
 

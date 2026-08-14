@@ -93,23 +93,23 @@ export default function FlowStepCursorFormComponent({
       name: data.name,
       flowStepType: data.flowStepType,
 
-      isLocationCustom: hasStartPoint ? data.isLocationCustom : false,
-      flowLocationId:
-        hasStartPoint && data.isLocationCustom
-          ? (data.flowLocationId ?? undefined)
+      isPointCustom: hasStartPoint ? data.isPointCustom : false,
+      flowPointId:
+        hasStartPoint && data.isPointCustom
+          ? (data.flowPointId ?? undefined)
           : undefined,
       flowStepReferenceId:
-        hasStartPoint && !data.isLocationCustom
+        hasStartPoint && !data.isPointCustom
           ? (data.flowStepReferenceId ?? undefined)
           : undefined,
 
-      isLocationEndCustom: isDrag ? data.isLocationEndCustom : false,
-      flowLocationEndId:
-        isDrag && data.isLocationEndCustom
-          ? (data.flowLocationEndId ?? undefined)
+      isPointEndCustom: isDrag ? data.isPointEndCustom : false,
+      flowPointEndId:
+        isDrag && data.isPointEndCustom
+          ? (data.flowPointEndId ?? undefined)
           : undefined,
       flowStepReferenceEndId:
-        isDrag && !data.isLocationEndCustom
+        isDrag && !data.isPointEndCustom
           ? (data.flowStepReferenceEndId ?? undefined)
           : undefined,
 

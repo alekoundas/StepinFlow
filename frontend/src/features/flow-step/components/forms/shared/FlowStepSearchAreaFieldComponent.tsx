@@ -5,10 +5,10 @@ import { Button } from "primereact/button";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { useFlowSearchAreaMutations } from "@/features/flow-search-area/hooks/use-flow-search-area";
-import FlowSearchAreaFormComponent from "@/features/flow-search-area/components/forms/FlowSearchAreaFormComponent";
+import { useFlowAreaMutations } from "@/features/flow-area/hooks/use-flow-area";
+import FlowAreaFormComponent from "@/features/flow-area/components/forms/FlowAreaFormComponent";
 
 const FORM_ID = "search-area-form";
 
@@ -36,10 +36,10 @@ export default function FlowStepSearchAreaFieldComponent({
 }: Props) {
   const { setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
-  const { createFlowSearchAreaMutation } = useFlowSearchAreaMutations();
+  const { createFlowAreaMutation } = useFlowAreaMutations();
 
   const loadAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowSearchArea({ searchText: filter, flowId }).then(
+    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then(
       (res) =>
         res.data.map((item) => ({
           label: item.label,
@@ -49,12 +49,12 @@ export default function FlowStepSearchAreaFieldComponent({
 
   // Frames a new region could sit inside. Only id and name are used by the picker.
   const { data: parentOptions = [] } = useQuery({
-    queryKey: ["lookup", "flowSearchArea", "parents", flowId],
+    queryKey: ["lookup", "flowArea", "parents", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowSearchArea({ flowId }).then((res) =>
+      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
         res.data.map(
           (item) =>
-            new FlowSearchAreaDto({
+            new FlowAreaDto({
               id: Number(item.value),
               name: item.label,
               flowId: flowId ?? 0,
@@ -71,8 +71,8 @@ export default function FlowStepSearchAreaFieldComponent({
       headerText: "Add Area",
       formId: FORM_ID,
       children: (
-        <FlowSearchAreaFormComponent
-          defaultValues={new FlowSearchAreaDto({ flowId: flowId ?? 0 })}
+        <FlowAreaFormComponent
+          defaultValues={new FlowAreaDto({ flowId: flowId ?? 0 })}
           formId={FORM_ID}
           isFormInDialog={true}
           formMode="ADD"
@@ -81,12 +81,12 @@ export default function FlowStepSearchAreaFieldComponent({
           onCancel={() => closeAll()}
           onSubmit={async (data) => {
             closeAll();
-            const newId = await createFlowSearchAreaMutation.mutateAsync({
+            const newId = await createFlowAreaMutation.mutateAsync({
               ...data,
               id: 0,
               flowId: flowId ?? 0,
             });
-            setValue("flowSearchAreaId", newId, {
+            setValue("flowAreaId", newId, {
               shouldValidate: true,
               shouldDirty: true,
             });
@@ -100,10 +100,10 @@ export default function FlowStepSearchAreaFieldComponent({
     <div className="flex gap-3 align-items-end">
       <div className="flex-1">
         <FormDropdownComponent<FlowStepDto, IdOption>
-          fieldName="flowSearchAreaId"
+          fieldName="flowAreaId"
           labelText={labelText}
           mode="remote"
-          queryKey={["lookup", "flowSearchArea", flowId]}
+          queryKey={["lookup", "flowArea", flowId]}
           queryFn={loadAreas}
           optionLabel="label"
           optionValue="value"

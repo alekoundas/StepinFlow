@@ -15,15 +15,15 @@ export interface TreeNodeDetailDto {
   loopCount: number;
   isLoopInfinite: boolean;
 
-  searchAreaName?: string | null;
-  locationName?: string | null;
-  locationEndName?: string | null;
+  areaName?: string | null;
+  pointName?: string | null;
+  pointEndName?: string | null;
   referenceStepName?: string | null;
   referenceStepEndName?: string | null;
   subFlowName?: string | null;
 
-  isLocationCustom: boolean;
-  isLocationEndCustom: boolean;
+  isPointCustom: boolean;
+  isPointEndCustom: boolean;
 
   cursorButtonType?: CursorButtonTypeEnum | null;
   cursorButtonActionType?: CursorButtonActionTypeEnum | null;

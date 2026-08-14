@@ -3,8 +3,8 @@ import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/curso
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
+import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import type { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
 import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
@@ -82,10 +82,10 @@ export class FlowStepDto {
   // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
   //
   // Point source per point:
-  //   isLocationCustom = true  -> flowLocationId       (reusable named point on the Flow)
-  //   isLocationCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
-  isLocationCustom: boolean = false;
-  isLocationEndCustom: boolean = false;
+  //   isPointCustom = true  -> flowPointId       (reusable named point on the Flow)
+  //   isPointCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
+  isPointCustom: boolean = false;
+  isPointEndCustom: boolean = false;
   cursorButtonType?: CursorButtonTypeEnum;
   cursorButtonActionType?: CursorButtonActionTypeEnum;
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;
@@ -101,16 +101,16 @@ export class FlowStepDto {
   subFlowId?: number;
   subFlow?: SubFlowDto;
 
-  // FlowSearchArea
-  flowSearchAreaId?: number;
-  flowSearchArea?: FlowSearchAreaDto;
+  // FlowArea
+  flowAreaId?: number;
+  flowArea?: FlowAreaDto;
 
-  // FlowLocation (start / end point)
-  flowLocationId?: number;
-  flowLocation?: FlowLocationDto;
+  // FlowPoint (start / end point)
+  flowPointId?: number;
+  flowPoint?: FlowPointDto;
 
-  flowLocationEndId?: number;
-  flowLocationEnd?: FlowLocationDto;
+  flowPointEndId?: number;
+  flowPointEnd?: FlowPointDto;
 
   // Parent FlowStep
   parentFlowStepId?: number;

@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
 interface Props {
   openWindow: (
     parentSearchAreaBounds?: Rectangle | null,
-    parentSearchAreaName?: string | null,
+    parentAreaName?: string | null,
   ) => Promise<Rectangle | null>;
   isWindowOpen: boolean;
 }
@@ -16,13 +16,13 @@ export function useWindowOverlay(): Props {
   const openWindow = useCallback(
     async (
       parentSearchAreaBounds?: Rectangle | null,
-      parentSearchAreaName?: string | null,
+      parentAreaName?: string | null,
     ): Promise<Rectangle | null> => {
       setIsWindowOpen(true);
       try {
         const rect = await ElectronApiService.overlay.openCaptureWindow(
           parentSearchAreaBounds,
-          parentSearchAreaName,
+          parentAreaName,
         );
         return rect;
       } catch (err) {

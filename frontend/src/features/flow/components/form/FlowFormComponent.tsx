@@ -5,10 +5,10 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
-import { FlowSearchAreaDataTableComponent } from "@/features/flow-search-area/components/FlowSearchAreaDataTableComponent";
-import { FlowLocationDataTableComponent } from "@/features/flow-location/components/FlowLocationDataTableComponent";
+import { FlowAreaDataTableComponent } from "@/features/flow-area/components/FlowAreaDataTableComponent";
+import { FlowPointDataTableComponent } from "@/features/flow-point/components/FlowPointDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { useEffect } from "react";
@@ -45,9 +45,9 @@ export function FlowFormComponent({
     append: appendSearchArea,
     remove: removeSearchArea,
     update: updateSearchArea,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowSearchAreas", "fieldId">({
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowAreas", "fieldId">({
     control,
-    name: "flowSearchAreas",
+    name: "flowAreas",
     keyName: "fieldId",
   });
 
@@ -56,9 +56,9 @@ export function FlowFormComponent({
     append: appendLocation,
     remove: removeLocation,
     update: updateLocation,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowLocations", "fieldId">({
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowPoints", "fieldId">({
     control,
-    name: "flowLocations",
+    name: "flowPoints",
     keyName: "fieldId",
   });
 
@@ -93,7 +93,7 @@ export function FlowFormComponent({
 
           <div className="grid">
             <div className="col-12 lg:col-6">
-              <FlowSearchAreaDataTableComponent
+              <FlowAreaDataTableComponent
                 fields={searchAreaFields}
                 append={appendSearchArea}
                 remove={removeSearchArea}
@@ -104,12 +104,12 @@ export function FlowFormComponent({
             </div>
 
             <div className="col-12 lg:col-6">
-              <FlowLocationDataTableComponent
+              <FlowPointDataTableComponent
                 fields={locationFields}
                 append={appendLocation}
                 remove={removeLocation}
                 update={updateLocation}
-                areaOptions={searchAreaFields as unknown as FlowSearchAreaDto[]}
+                areaOptions={searchAreaFields as unknown as FlowAreaDto[]}
                 formMode={formMode}
                 isDisabled={formMode === "VIEW"}
               />

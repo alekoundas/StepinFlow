@@ -54,15 +54,15 @@ namespace Business.Ipc.Handlers
                         LoopCount = x.LoopCount,
                         IsLoopInfinite = x.IsLoopInfinite,
 
-                        SearchAreaName = x.FlowSearchArea != null ? x.FlowSearchArea.Name : null,
-                        LocationName = x.FlowLocation != null ? x.FlowLocation.Name : null,
-                        LocationEndName = x.FlowLocationEnd != null ? x.FlowLocationEnd.Name : null,
+                        AreaName = x.FlowArea != null ? x.FlowArea.Name : null,
+                        PointName = x.FlowPoint != null ? x.FlowPoint.Name : null,
+                        PointEndName = x.FlowPointEnd != null ? x.FlowPointEnd.Name : null,
                         ReferenceStepName = x.FlowStepReference != null ? x.FlowStepReference.Name : null,
                         ReferenceStepEndName = x.FlowStepReferenceEnd != null ? x.FlowStepReferenceEnd.Name : null,
                         SubFlowName = x.SubFlow != null ? x.SubFlow.Name : null,
 
-                        IsLocationCustom = x.IsLocationCustom,
-                        IsLocationEndCustom = x.IsLocationEndCustom,
+                        IsPointCustom = x.IsPointCustom,
+                        IsPointEndCustom = x.IsPointEndCustom,
 
                         CursorButtonType = x.CursorButtonType,
                         CursorButtonActionType = x.CursorButtonActionType,

@@ -159,8 +159,8 @@ export function WorkflowContentComponent() {
                 rootId: rootFlowId,
                 flowStepType: selectedFlowStepTypeToAdd,
                 name: CURSOR_STEP_DEFAULT_NAMES[selectedFlowStepTypeToAdd],
-                isLocationCustom: true,
-                isLocationEndCustom: true,
+                isPointCustom: true,
+                isPointEndCustom: true,
               })
             }
           />

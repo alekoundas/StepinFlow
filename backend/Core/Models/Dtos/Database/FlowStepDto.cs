@@ -78,8 +78,8 @@ namespace Core.Models.Dtos
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
-        public bool IsLocationCustom { get; set; }
-        public bool IsLocationEndCustom { get; set; }
+        public bool IsPointCustom { get; set; }
+        public bool IsPointEndCustom { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
@@ -103,17 +103,17 @@ namespace Core.Models.Dtos
         public SubFlowDto? SubFlow { get; set; }
 
 
-        // FlowSearchArea
-        public int? FlowSearchAreaId { get; set; }
-        public FlowSearchAreaDto? FlowSearchArea { get; set; }
+        // FlowArea
+        public int? FlowAreaId { get; set; }
+        public FlowAreaDto? FlowArea { get; set; }
 
 
-        // FlowLocation (start / end point)
-        public int? FlowLocationId { get; set; }
-        public FlowLocationDto? FlowLocation { get; set; }
+        // FlowPoint (start / end point)
+        public int? FlowPointId { get; set; }
+        public FlowPointDto? FlowPoint { get; set; }
 
-        public int? FlowLocationEndId { get; set; }
-        public FlowLocationDto? FlowLocationEnd { get; set; }
+        public int? FlowPointEndId { get; set; }
+        public FlowPointDto? FlowPointEnd { get; set; }
 
 
         // Parent FlowStep

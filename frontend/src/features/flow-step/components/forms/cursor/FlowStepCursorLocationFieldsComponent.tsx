@@ -8,10 +8,10 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
-import { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import FlowLocationFormComponent from "@/features/flow-location/components/forms/FlowLocationFormComponent";
-import { useFlowLocationMutations } from "@/features/flow-location/hooks/use-flow-location";
+import { FlowPointDto } from "@/shared/models/database/flow-point-dto";
+import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
+import FlowPointFormComponent from "@/features/flow-point/components/forms/FlowPointFormComponent";
+import { useFlowPointMutations } from "@/features/flow-point/hooks/use-flow-point";
 import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 
 type CursorForm = z.infer<typeof FlowStepCursorSchema>;
@@ -50,32 +50,32 @@ export default function FlowStepCursorLocationFieldsComponent({
 }: Props) {
   const { control, setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
-  const { createFlowLocationMutation } = useFlowLocationMutations();
+  const { createFlowPointMutation } = useFlowPointMutations();
 
   // A location created from here should still be anchorable to a frame, so the flow's areas
   // are fetched rather than passed down from the flow form.
   const { data: areaOptions = [] } = useQuery({
-    queryKey: ["lookup", "flowSearchArea", flowId],
+    queryKey: ["lookup", "flowArea", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowSearchArea({ flowId }).then((res) =>
+      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
         res.data.map(
           (item) =>
-            new FlowSearchAreaDto({ id: Number(item.value), name: item.label }),
+            new FlowAreaDto({ id: Number(item.value), name: item.label }),
         ),
       ),
     enabled: !!flowId,
   });
 
   const isCustomFieldName = isEndPoint
-    ? "isLocationEndCustom"
-    : "isLocationCustom";
-  const locationFieldName = isEndPoint ? "flowLocationEndId" : "flowLocationId";
+    ? "isPointEndCustom"
+    : "isPointCustom";
+  const locationFieldName = isEndPoint ? "flowPointEndId" : "flowPointId";
   const referenceFieldName = isEndPoint
     ? "flowStepReferenceEndId"
     : "flowStepReferenceId";
 
   const isCustom = useWatch({ control, name: isCustomFieldName });
-  const flowLocationId = useWatch({ control, name: locationFieldName });
+  const flowPointId = useWatch({ control, name: locationFieldName });
 
   const sourceOptions = [
     { label: "Saved Location", value: true },
@@ -83,7 +83,7 @@ export default function FlowStepCursorLocationFieldsComponent({
   ];
 
   const loadLocations = (filter?: string): Promise<LocationOption[]> =>
-    backendApiService.Lookup.flowLocation({
+    backendApiService.Lookup.flowPoint({
       searchText: filter,
       flowId,
     }).then((res) =>
@@ -110,13 +110,13 @@ export default function FlowStepCursorLocationFieldsComponent({
 
   // Created straight away so the dropdown has a real id to bind to.
   const openAddLocation = () => {
-    openForm("flow-location-form", {
+    openForm("flow-point-form", {
       headerText: "Add Location",
-      formId: "flow-location-form",
+      formId: "flow-point-form",
       children: (
-        <FlowLocationFormComponent
-          defaultValues={new FlowLocationDto({ flowId: flowId ?? 0 })}
-          formId="flow-location-form"
+        <FlowPointFormComponent
+          defaultValues={new FlowPointDto({ flowId: flowId ?? 0 })}
+          formId="flow-point-form"
           isFormInDialog={true}
           formMode="ADD"
           areaOptions={areaOptions}
@@ -124,7 +124,7 @@ export default function FlowStepCursorLocationFieldsComponent({
           onCancel={() => closeAll()}
           onSubmit={async (data) => {
             closeAll();
-            const newId = await createFlowLocationMutation.mutateAsync({
+            const newId = await createFlowPointMutation.mutateAsync({
               ...data,
               flowId: flowId ?? 0,
             });
@@ -140,7 +140,7 @@ export default function FlowStepCursorLocationFieldsComponent({
 
   const handleTest = async () => {
     const locations = await loadLocations();
-    const selected = locations.find((x) => x.value === flowLocationId);
+    const selected = locations.find((x) => x.value === flowPointId);
     if (!selected) return;
 
     await backendApiService.System.moveCursor({ x: selected.x, y: selected.y });
@@ -174,7 +174,7 @@ export default function FlowStepCursorLocationFieldsComponent({
               fieldName={locationFieldName}
               labelText="Location"
               mode="remote"
-              queryKey={["lookup", "flowLocation", flowId]}
+              queryKey={["lookup", "flowPoint", flowId]}
               queryFn={loadLocations}
               optionLabel="label"
               optionValue="value"
@@ -200,7 +200,7 @@ export default function FlowStepCursorLocationFieldsComponent({
             icon="pi pi-play"
             label="Test"
             onClick={handleTest}
-            disabled={!flowLocationId}
+            disabled={!flowPointId}
             className="p-button-outlined mb-3"
             tooltip="Move the real cursor to the selected location"
             tooltipOptions={{ position: "top" }}

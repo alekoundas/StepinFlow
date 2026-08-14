@@ -114,51 +114,7 @@ namespace DataAccess.Migrations
                     b.ToTable("Flows");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("FlowId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("FlowSearchAreaId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LocationX")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LocationY")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OffsetMode")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("RatioX")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("RatioY")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FlowId");
-
-                    b.HasIndex("FlowSearchAreaId");
-
-                    b.ToTable("FlowLocations");
-                });
-
-            modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowArea", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -194,7 +150,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ParentFlowSearchAreaId")
+                    b.Property<int?>("ParentFlowAreaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ProcessName")
@@ -247,9 +203,53 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("FlowId");
 
-                    b.HasIndex("ParentFlowSearchAreaId");
+                    b.HasIndex("ParentFlowAreaId");
 
-                    b.ToTable("FlowSearchAreas");
+                    b.ToTable("FlowAreas");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("FlowAreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FlowId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationX")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LocationY")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OffsetMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<float>("RatioX")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RatioY")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowAreaId");
+
+                    b.HasIndex("FlowId");
+
+                    b.ToTable("FlowPoints");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowStep", b =>
@@ -280,16 +280,16 @@ namespace DataAccess.Migrations
                     b.Property<string>("CursorScrollDirectionType")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("FlowAreaId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("FlowId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("FlowLocationEndId")
+                    b.Property<int?>("FlowPointEndId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("FlowLocationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("FlowSearchAreaId")
+                    b.Property<int?>("FlowPointId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("FlowStepReferenceEndId")
@@ -306,13 +306,13 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsLocationCustom")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsLocationEndCustom")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("IsLoopInfinite")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPointCustom")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPointEndCustom")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("KeyboardInputText")
@@ -321,18 +321,6 @@ namespace DataAccess.Migrations
 
                     b.Property<string>("KeyboardInputType")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("LocationEndX")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LocationEndY")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LocationX")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("LocationY")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("LoopCount")
                         .HasColumnType("INTEGER");
@@ -424,11 +412,11 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowLocationEndId");
+                    b.HasIndex("FlowAreaId");
 
-                    b.HasIndex("FlowLocationId");
+                    b.HasIndex("FlowPointEndId");
 
-                    b.HasIndex("FlowSearchAreaId");
+                    b.HasIndex("FlowPointId");
 
                     b.HasIndex("FlowStepReferenceEndId");
 
@@ -557,62 +545,62 @@ namespace DataAccess.Migrations
                     b.Navigation("Execution");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowArea", b =>
                 {
                     b.HasOne("Core.Models.Database.Flow", "Flow")
-                        .WithMany("FlowLocations")
+                        .WithMany("FlowAreas")
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Core.Models.Database.FlowSearchArea", "FlowSearchArea")
-                        .WithMany("FlowLocations")
-                        .HasForeignKey("FlowSearchAreaId")
+                    b.HasOne("Core.Models.Database.FlowArea", "ParentFlowArea")
+                        .WithMany("ChildFlowAreas")
+                        .HasForeignKey("ParentFlowAreaId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Flow");
 
-                    b.Navigation("FlowSearchArea");
+                    b.Navigation("ParentFlowArea");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowPoint", b =>
                 {
+                    b.HasOne("Core.Models.Database.FlowArea", "FlowArea")
+                        .WithMany("FlowPoints")
+                        .HasForeignKey("FlowAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Core.Models.Database.Flow", "Flow")
-                        .WithMany("FlowSearchAreas")
+                        .WithMany("FlowPoints")
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Core.Models.Database.FlowSearchArea", "ParentFlowSearchArea")
-                        .WithMany("ChildFlowSearchAreas")
-                        .HasForeignKey("ParentFlowSearchAreaId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Flow");
 
-                    b.Navigation("ParentFlowSearchArea");
+                    b.Navigation("FlowArea");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowStep", b =>
                 {
+                    b.HasOne("Core.Models.Database.FlowArea", "FlowArea")
+                        .WithMany("FlowSteps")
+                        .HasForeignKey("FlowAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Core.Models.Database.Flow", "Flow")
                         .WithMany("FlowSteps")
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Core.Models.Database.FlowLocation", "FlowLocationEnd")
+                    b.HasOne("Core.Models.Database.FlowPoint", "FlowPointEnd")
                         .WithMany("EndFlowSteps")
-                        .HasForeignKey("FlowLocationEndId")
+                        .HasForeignKey("FlowPointEndId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Core.Models.Database.FlowLocation", "FlowLocation")
+                    b.HasOne("Core.Models.Database.FlowPoint", "FlowPoint")
                         .WithMany("FlowSteps")
-                        .HasForeignKey("FlowLocationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Core.Models.Database.FlowSearchArea", "FlowSearchArea")
-                        .WithMany("FlowSteps")
-                        .HasForeignKey("FlowSearchAreaId")
+                        .HasForeignKey("FlowPointId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Core.Models.Database.FlowStep", "FlowStepReferenceEnd")
@@ -637,11 +625,11 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Flow");
 
-                    b.Navigation("FlowLocation");
+                    b.Navigation("FlowArea");
 
-                    b.Navigation("FlowLocationEnd");
+                    b.Navigation("FlowPoint");
 
-                    b.Navigation("FlowSearchArea");
+                    b.Navigation("FlowPointEnd");
 
                     b.Navigation("FlowStepReference");
 
@@ -670,25 +658,25 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("Core.Models.Database.Flow", b =>
                 {
-                    b.Navigation("FlowLocations");
+                    b.Navigation("FlowAreas");
 
-                    b.Navigation("FlowSearchAreas");
+                    b.Navigation("FlowPoints");
 
                     b.Navigation("FlowSteps");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowLocation", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowArea", b =>
+                {
+                    b.Navigation("ChildFlowAreas");
+
+                    b.Navigation("FlowPoints");
+
+                    b.Navigation("FlowSteps");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowPoint", b =>
                 {
                     b.Navigation("EndFlowSteps");
-
-                    b.Navigation("FlowSteps");
-                });
-
-            modelBuilder.Entity("Core.Models.Database.FlowSearchArea", b =>
-                {
-                    b.Navigation("ChildFlowSearchAreas");
-
-                    b.Navigation("FlowLocations");
 
                     b.Navigation("FlowSteps");
                 });

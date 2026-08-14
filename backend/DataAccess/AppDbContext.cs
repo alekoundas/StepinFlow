@@ -9,8 +9,8 @@ namespace DataAccess
     {
         public DbSet<Flow> Flows { get; set; }
         public DbSet<SubFlow> SubFlows { get; set; }
-        public DbSet<FlowSearchArea> FlowSearchAreas { get; set; }
-        public DbSet<FlowLocation> FlowLocations { get; set; }
+        public DbSet<FlowArea> FlowAreas { get; set; }
+        public DbSet<FlowPoint> FlowPoints { get; set; }
         public DbSet<FlowStep> FlowSteps { get; set; }
         public DbSet<FlowStepImage> FlowStepImages { get; set; }
         public DbSet<Execution> Executions { get; set; }
@@ -27,8 +27,8 @@ namespace DataAccess
 
             builder.ApplyConfiguration(new FlowConfiguration());
             builder.ApplyConfiguration(new SubFlowConfiguration());
-            builder.ApplyConfiguration(new FlowSearchAreaConfiguration());
-            builder.ApplyConfiguration(new FlowLocationConfiguration());
+            builder.ApplyConfiguration(new FlowAreaConfiguration());
+            builder.ApplyConfiguration(new FlowPointConfiguration());
             builder.ApplyConfiguration(new FlowStepConfiguration());
             builder.ApplyConfiguration(new FlowStepImageConfiguration());
             builder.ApplyConfiguration(new ExecutionConfiguration());

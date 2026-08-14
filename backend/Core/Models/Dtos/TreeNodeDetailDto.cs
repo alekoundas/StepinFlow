@@ -16,16 +16,16 @@ namespace Core.Models.Dtos
         public bool IsLoopInfinite { get; set; }
 
         // Resolved names, so a row never shows a bare id.
-        public string? SearchAreaName { get; set; }
-        public string? LocationName { get; set; }
-        public string? LocationEndName { get; set; }
+        public string? AreaName { get; set; }
+        public string? PointName { get; set; }
+        public string? PointEndName { get; set; }
         public string? ReferenceStepName { get; set; }
         public string? ReferenceStepEndName { get; set; }
         public string? SubFlowName { get; set; }
 
         // Point source per point, so the row can say "the click lands here".
-        public bool IsLocationCustom { get; set; }
-        public bool IsLocationEndCustom { get; set; }
+        public bool IsPointCustom { get; set; }
+        public bool IsPointEndCustom { get; set; }
 
         // CURSOR
         public CursorButtonTypeEnum? CursorButtonType { get; set; }

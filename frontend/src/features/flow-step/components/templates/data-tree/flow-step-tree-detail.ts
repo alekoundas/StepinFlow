@@ -30,11 +30,11 @@ const readable = (value?: string | null): string =>
 /** Where a cursor step's point comes from, in the words the form uses. */
 const pointName = (
   isCustom: boolean,
-  locationName?: string | null,
+  pointName?: string | null,
   referenceStepName?: string | null,
 ): string =>
   isCustom
-    ? (locationName ?? "no point")
+    ? (pointName ?? "no point")
     : referenceStepName
       ? `result of ${referenceStepName}`
       : "no source";
@@ -71,8 +71,8 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
     case FlowStepTypeEnum.CURSOR_RELOCATE:
       return {
         text: pointName(
-          detail.isLocationCustom,
-          detail.locationName,
+          detail.isPointCustom,
+          detail.pointName,
           detail.referenceStepName,
         ),
         chips: detail.cursorButtonActionType
@@ -82,7 +82,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
     case FlowStepTypeEnum.CURSOR_DRAG:
       return {
-        text: `${pointName(detail.isLocationCustom, detail.locationName, detail.referenceStepName)} -> ${pointName(detail.isLocationEndCustom, detail.locationEndName, detail.referenceStepEndName)}`,
+        text: `${pointName(detail.isPointCustom, detail.pointName, detail.referenceStepName)} -> ${pointName(detail.isPointEndCustom, detail.pointEndName, detail.referenceStepEndName)}`,
         chips: [],
       };
 
@@ -102,23 +102,23 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
       };
 
     case FlowStepTypeEnum.WINDOW_FOCUS:
-      return { text: detail.searchAreaName ?? "no window picked", chips: [] };
+      return { text: detail.areaName ?? "no window picked", chips: [] };
 
     case FlowStepTypeEnum.WINDOW_RESIZE:
       return {
-        text: detail.searchAreaName ?? "no window picked",
+        text: detail.areaName ?? "no window picked",
         chips: [{ text: `${detail.windowWidth}x${detail.windowHeight}` }],
       };
 
     case FlowStepTypeEnum.WINDOW_RELOCATE:
       return {
-        text: `${detail.searchAreaName ?? "no window picked"} -> ${detail.locationName ?? "no point"}`,
+        text: `${detail.areaName ?? "no window picked"} -> ${detail.pointName ?? "no point"}`,
         chips: [],
       };
 
     case FlowStepTypeEnum.IMAGE_SEARCH:
       return {
-        text: detail.searchAreaName ?? "no area picked",
+        text: detail.areaName ?? "no area picked",
         chips: [
           {
             text:
@@ -133,7 +133,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
     case FlowStepTypeEnum.TEXT_SEARCH:
       return {
-        text: `${detail.searchAreaName ?? "no area picked"} · "${truncate(detail.conditionText ?? "", 24)}"`,
+        text: `${detail.areaName ?? "no area picked"} · "${truncate(detail.conditionText ?? "", 24)}"`,
         chips: searchChips(detail),
       };
 

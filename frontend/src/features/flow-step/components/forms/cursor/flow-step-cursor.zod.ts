@@ -26,13 +26,13 @@ export const FlowStepCursorSchema = z
     flowStepType: z.enum(CURSOR_FLOW_STEP_TYPES),
 
     // Start point
-    isLocationCustom: z.boolean(),
-    flowLocationId: z.number().int().nullish(),
+    isPointCustom: z.boolean(),
+    flowPointId: z.number().int().nullish(),
     flowStepReferenceId: z.number().int().nullish(),
 
     // End point (CURSOR_DRAG)
-    isLocationEndCustom: z.boolean(),
-    flowLocationEndId: z.number().int().nullish(),
+    isPointEndCustom: z.boolean(),
+    flowPointEndId: z.number().int().nullish(),
     flowStepReferenceEndId: z.number().int().nullish(),
 
     // CURSOR_CLICK / CURSOR_DRAG
@@ -50,14 +50,14 @@ export const FlowStepCursorSchema = z
       data.flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
 
     if (needsStartPoint) {
-      if (data.isLocationCustom && !data.flowLocationId) {
+      if (data.isPointCustom && !data.flowPointId) {
         ctx.addIssue({
           code: "custom",
           message: "Pick a location",
-          path: ["flowLocationId"],
+          path: ["flowPointId"],
         });
       }
-      if (!data.isLocationCustom && !data.flowStepReferenceId) {
+      if (!data.isPointCustom && !data.flowStepReferenceId) {
         ctx.addIssue({
           code: "custom",
           message: "Pick the step whose result to use",
@@ -67,14 +67,14 @@ export const FlowStepCursorSchema = z
     }
 
     if (data.flowStepType === FlowStepTypeEnum.CURSOR_DRAG) {
-      if (data.isLocationEndCustom && !data.flowLocationEndId) {
+      if (data.isPointEndCustom && !data.flowPointEndId) {
         ctx.addIssue({
           code: "custom",
           message: "Pick a drop location",
-          path: ["flowLocationEndId"],
+          path: ["flowPointEndId"],
         });
       }
-      if (!data.isLocationEndCustom && !data.flowStepReferenceEndId) {
+      if (!data.isPointEndCustom && !data.flowStepReferenceEndId) {
         ctx.addIssue({
           code: "custom",
           message: "Pick the step whose result to use",

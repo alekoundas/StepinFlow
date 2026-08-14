@@ -1,4 +1,4 @@
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
+import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 export class SubFlowDto {
@@ -7,5 +7,5 @@ export class SubFlowDto {
   orderNumber: number = -1;
 
   flowSteps: FlowStepDto[] = [];
-  flowSearchAreas: FlowSearchAreaDto[] = [];
+  flowAreas: FlowAreaDto[] = [];
 }

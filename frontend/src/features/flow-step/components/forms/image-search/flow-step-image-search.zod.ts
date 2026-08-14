@@ -7,7 +7,7 @@ export const FlowStepImageSearchSchema = z
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
 
     imageSearchMode: z.enum(ImageSearchModeEnum),
-    flowSearchAreaId: z.number().int().nullish(),
+    flowAreaId: z.number().int().nullish(),
 
     templateMatchMode: z.enum(TemplateMatchModeEnum),
     accuracy: z.number().min(0.1).max(1),
@@ -18,11 +18,11 @@ export const FlowStepImageSearchSchema = z
     timeoutMilliseconds: z.number().int().min(0).max(2147483647),
   })
   .superRefine((data, ctx) => {
-    if (!data.flowSearchAreaId) {
+    if (!data.flowAreaId) {
       ctx.addIssue({
         code: "custom",
         message: "Pick where to look",
-        path: ["flowSearchAreaId"],
+        path: ["flowAreaId"],
       });
     }
 

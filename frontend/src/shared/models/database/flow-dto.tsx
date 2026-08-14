@@ -1,5 +1,5 @@
-import type { FlowSearchAreaDto } from "@/shared/models/database/flow-search-area-dto";
-import type { FlowLocationDto } from "@/shared/models/database/flow-location-dto";
+import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
+import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 export class FlowDto {
@@ -8,8 +8,8 @@ export class FlowDto {
   orderNumber: number = -1;
 
   flowSteps: FlowStepDto[] = [];
-  flowSearchAreas: FlowSearchAreaDto[] = [];
-  flowLocations: FlowLocationDto[] = [];
+  flowAreas: FlowAreaDto[] = [];
+  flowPoints: FlowPointDto[] = [];
 
   constructor(data: Partial<FlowDto> = {}) {
     Object.assign(this, {

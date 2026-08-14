@@ -13,7 +13,7 @@ export const FlowStepTextSearchSchema = z
   .object({
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
 
-    flowSearchAreaId: z.number().int().nullish(),
+    flowAreaId: z.number().int().nullish(),
     ocrLanguage: z.string().min(1, "Pick the language the text is written in"),
 
     conditionText: z.string(),
@@ -31,11 +31,11 @@ export const FlowStepTextSearchSchema = z
     resultExtractPattern: z.string(),
   })
   .superRefine((data, ctx) => {
-    if (!data.flowSearchAreaId) {
+    if (!data.flowAreaId) {
       ctx.addIssue({
         code: "custom",
         message: "Pick where on screen to read",
-        path: ["flowSearchAreaId"],
+        path: ["flowAreaId"],
       });
     }
 

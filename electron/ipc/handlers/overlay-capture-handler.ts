@@ -31,7 +31,7 @@ export async function registerOverlayCaptureHandler(
     async (
       _event,
       parentSearchAreaBounds: Rectangle | null,
-      parentSearchAreaName: string | null,
+      parentAreaName: string | null,
     ): Promise<Rectangle | null> => {
       if (isWindowOpen) {
         console.warn("[OverlayHandler]: Overlay already open");
@@ -74,7 +74,7 @@ export async function registerOverlayCaptureHandler(
         registerSignalReadyHandlers(
           monitorEntries,
           parentSearchAreaBounds ?? null,
-          parentSearchAreaName ?? null,
+          parentAreaName ?? null,
         );
 
         // 6. Navigate to overlay page on every window.
@@ -185,7 +185,7 @@ function closeWindows(monitorEntries: MonitorEntry[]): void {
 function registerSignalReadyHandlers(
   monitorEntries: MonitorEntry[],
   parentSearchAreaBounds: Rectangle | null,
-  parentSearchAreaName: string | null,
+  parentAreaName: string | null,
 ): void {
   // Clear any handler left behind by a session that ended abnormally: ipcMain.handle throws on
   // a duplicate, and that throw would happen after the windows are already on screen.
@@ -214,7 +214,7 @@ function registerSignalReadyHandlers(
           },
           // Physical absolute, so every monitor's overlay gets the same rect and clips it itself.
           parentSearchAreaBounds,
-          parentSearchAreaName,
+          parentAreaName,
         };
       }
       return null;

@@ -20,21 +20,21 @@ export const FlowStepWindowSchema = z
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
 
     // The window itself, an APPLICATION area.
-    flowSearchAreaId: z.number().int().nullish(),
+    flowAreaId: z.number().int().nullish(),
 
     // WINDOW_RESIZE
     windowWidth: z.number().int().min(0).max(2147483647),
     windowHeight: z.number().int().min(0).max(2147483647),
 
     // WINDOW_RELOCATE
-    flowLocationId: z.number().int().nullish(),
+    flowPointId: z.number().int().nullish(),
   })
   .superRefine((data, ctx) => {
-    if (!data.flowSearchAreaId) {
+    if (!data.flowAreaId) {
       ctx.addIssue({
         code: "custom",
         message: "Pick the window this step acts on",
-        path: ["flowSearchAreaId"],
+        path: ["flowAreaId"],
       });
     }
 
@@ -49,11 +49,11 @@ export const FlowStepWindowSchema = z
     }
 
     if (data.flowStepType === FlowStepTypeEnum.WINDOW_RELOCATE) {
-      if (!data.flowLocationId) {
+      if (!data.flowPointId) {
         ctx.addIssue({
           code: "custom",
           message: "Pick where to move the window",
-          path: ["flowLocationId"],
+          path: ["flowPointId"],
         });
       }
     }

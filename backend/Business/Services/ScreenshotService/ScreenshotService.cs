@@ -90,9 +90,9 @@ namespace Business.Services.ScreenshotService
         /// TODO: capture APPLICATION areas through CaptureWindowRaw so an occluded window
         /// still yields its own pixels.
         /// </summary>
-        public byte[] CaptureResolvedArea(FlowSearchArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
+        public byte[] CaptureResolvedArea(FlowArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            if (area.Type == FlowSearchAreaTypeEnum.MONITOR)
+            if (area.Type == FlowAreaTypeEnum.MONITOR)
             {
                 IntPtr hMon = ScreenHelper.FindHMonitorById(area.MonitorUniqueId);
                 byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);

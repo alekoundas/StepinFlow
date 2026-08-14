@@ -10,14 +10,6 @@ namespace Core.Models.Database
         public int OrderNumber { get; set; }
 
 
-        // WINDOW_RELOCATE, WINDOW_RESIZE
-        // Cursor steps never store raw coordinates, they go through FlowLocation or a step result.
-        public int LocationX { get; set; }
-        public int LocationY { get; set; }
-        public int LocationEndX { get; set; }
-        public int LocationEndY { get; set; }
-
-
         // WAIT
         public int WaitForMilliseconds { get; set; }
 
@@ -82,8 +74,8 @@ namespace Core.Models.Database
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
         //
-        // The window itself is a FlowSearchArea of type APPLICATION, and RELOCATE moves it to a
-        // FlowLocation, so both survive being run on another machine.
+        // The window itself is a FlowArea of type APPLICATION, and RELOCATE moves it to a
+        // FlowPoint, so both survive being run on another machine.
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
 
@@ -96,11 +88,11 @@ namespace Core.Models.Database
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
         //
         // Point source per point:
-        //   IsLocationCustom = true  -> FlowLocationId          (reusable named point on the Flow)
-        //   IsLocationCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
+        //   IsPointCustom = true  -> FlowPointId          (reusable named point on the Flow)
+        //   IsPointCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
         // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
-        public bool IsLocationCustom { get; set; }
-        public bool IsLocationEndCustom { get; set; }
+        public bool IsPointCustom { get; set; }
+        public bool IsPointEndCustom { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
@@ -122,17 +114,17 @@ namespace Core.Models.Database
         public SubFlow? SubFlow { get; set; }
 
 
-        // FlowSearchArea
-        public int? FlowSearchAreaId { get; set; }
-        public FlowSearchArea? FlowSearchArea { get; set; }
+        // FlowArea
+        public int? FlowAreaId { get; set; }
+        public FlowArea? FlowArea { get; set; }
 
 
-        // FlowLocation (start / end point)
-        public int? FlowLocationId { get; set; }
-        public FlowLocation? FlowLocation { get; set; }
+        // FlowPoint (start / end point)
+        public int? FlowPointId { get; set; }
+        public FlowPoint? FlowPoint { get; set; }
 
-        public int? FlowLocationEndId { get; set; }
-        public FlowLocation? FlowLocationEnd { get; set; }
+        public int? FlowPointEndId { get; set; }
+        public FlowPoint? FlowPointEnd { get; set; }
 
 
         // Parent FlowStep

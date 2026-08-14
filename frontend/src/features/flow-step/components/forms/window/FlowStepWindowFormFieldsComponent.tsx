@@ -7,7 +7,7 @@ import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComp
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { FlowSearchAreaTypeEnum } from "@/shared/enums/backend/flow-search-area-type.enum";
+import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
 
 type WindowForm = z.infer<typeof FlowStepWindowSchema>;
@@ -31,10 +31,10 @@ export default function FlowStepWindowFormFieldsComponent({
   const flowStepType = useWatch({ control, name: "flowStepType" });
 
   const loadWindows = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowSearchArea({
+    backendApiService.Lookup.flowArea({
       searchText: filter,
       flowId,
-      flowSearchAreaType: FlowSearchAreaTypeEnum.APPLICATION,
+      flowAreaType: FlowAreaTypeEnum.APPLICATION,
     }).then((res) =>
       res.data.map((item) => ({
         label: item.label,
@@ -44,7 +44,7 @@ export default function FlowStepWindowFormFieldsComponent({
     );
 
   const loadLocations = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowLocation({ searchText: filter, flowId }).then(
+    backendApiService.Lookup.flowPoint({ searchText: filter, flowId }).then(
       (res) =>
         res.data.map((item) => ({
           label: item.label,
@@ -64,10 +64,10 @@ export default function FlowStepWindowFormFieldsComponent({
       />
 
       <FormDropdownComponent<WindowForm, IdOption>
-        fieldName="flowSearchAreaId"
+        fieldName="flowAreaId"
         labelText="Window"
         mode="remote"
-        queryKey={["lookup", "flowSearchArea", "application", flowId]}
+        queryKey={["lookup", "flowArea", "application", flowId]}
         queryFn={loadWindows}
         optionLabel="label"
         optionValue="value"
@@ -108,10 +108,10 @@ export default function FlowStepWindowFormFieldsComponent({
 
       {flowStepType === FlowStepTypeEnum.WINDOW_RELOCATE && (
         <FormDropdownComponent<WindowForm, IdOption>
-          fieldName="flowLocationId"
+          fieldName="flowPointId"
           labelText="Move to"
           mode="remote"
-          queryKey={["lookup", "flowLocation", flowId]}
+          queryKey={["lookup", "flowPoint", flowId]}
           queryFn={loadLocations}
           optionLabel="label"
           optionValue="value"

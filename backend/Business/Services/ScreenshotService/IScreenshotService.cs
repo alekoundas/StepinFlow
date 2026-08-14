@@ -14,7 +14,7 @@ namespace Business.Services.ScreenshotService
         byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
         /// <summary>Bounds come from IFrameResolver, so nesting is already applied.</summary>
-        byte[] CaptureResolvedArea(FlowSearchArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
+        byte[] CaptureResolvedArea(FlowArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
         byte[] CaptureAppWindow(string appWindowName, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
         byte[] CaptureMonitor(string deviceName, ScreenshotFormatEnum screenshotFormat, int jpegQuality);

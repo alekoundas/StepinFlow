@@ -24,8 +24,8 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             Flow? existingFlow = await dbContext.Flows
-                .Include(x => x.FlowSearchAreas)
-                .Include(x => x.FlowLocations)
+                .Include(x => x.FlowAreas)
+                .Include(x => x.FlowPoints)
                 .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
             if (existingFlow == null)
@@ -35,8 +35,8 @@ namespace Business.Ipc.Handlers
             existingFlow.OrderNumber = request.dto.OrderNumber;
 
             // Areas first: a location can point at an area created in this same payload.
-            Dictionary<int, FlowSearchArea> areasByDtoId = SyncFlowSearchAreas(dbContext, existingFlow, request.dto.FlowSearchAreas);
-            SyncFlowLocations(dbContext, existingFlow, request.dto.FlowLocations, areasByDtoId);
+            Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.dto.FlowAreas);
+            SyncFlowPoints(dbContext, existingFlow, request.dto.FlowPoints, areasByDtoId);
 
             await dbContext.SaveChangesAsync(ct);
 
@@ -48,24 +48,24 @@ namespace Business.Ipc.Handlers
         // ================================================================
         // Private methods
         // ================================================================
-        private static Dictionary<int, FlowSearchArea> SyncFlowSearchAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowSearchAreaDto> dtos)
+        private static Dictionary<int, FlowArea> SyncFlowAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowAreaDto> dtos)
         {
-            List<FlowSearchArea> existing = flow.FlowSearchAreas.ToList();
+            List<FlowArea> existing = flow.FlowAreas.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
 
-            foreach (FlowSearchArea removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowSearchAreas.Remove(removed);
+            foreach (FlowArea removed in existing.Where(x => !keptIds.Contains(x.Id)))
+                dbContext.FlowAreas.Remove(removed);
 
-            Dictionary<int, FlowSearchArea> byDtoId = new Dictionary<int, FlowSearchArea>();
+            Dictionary<int, FlowArea> byDtoId = new Dictionary<int, FlowArea>();
 
-            foreach (FlowSearchAreaDto dto in dtos)
+            foreach (FlowAreaDto dto in dtos)
             {
-                FlowSearchArea? area = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+                FlowArea? area = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
 
                 if (area == null)
                 {
-                    area = new FlowSearchArea { FlowId = flow.Id };
-                    dbContext.FlowSearchAreas.Add(area);
+                    area = new FlowArea { FlowId = flow.Id };
+                    dbContext.FlowAreas.Add(area);
                 }
 
                 area.Name = dto.Name;
@@ -96,39 +96,39 @@ namespace Business.Ipc.Handlers
                 byDtoId[dto.Id] = area;
             }
 
-            foreach (FlowSearchAreaDto dto in dtos)
+            foreach (FlowAreaDto dto in dtos)
             {
-                FlowSearchArea area = byDtoId[dto.Id];
+                FlowArea area = byDtoId[dto.Id];
 
-                area.ParentFlowSearchArea = dto.ParentFlowSearchAreaId != null
-                    && byDtoId.TryGetValue(dto.ParentFlowSearchAreaId.Value, out FlowSearchArea? parent)
+                area.ParentFlowArea = dto.ParentFlowAreaId != null
+                    && byDtoId.TryGetValue(dto.ParentFlowAreaId.Value, out FlowArea? parent)
                     && parent != area
                         ? parent
                         : null;
 
-                if (area.ParentFlowSearchArea == null)
-                    area.ParentFlowSearchAreaId = null;
+                if (area.ParentFlowArea == null)
+                    area.ParentFlowAreaId = null;
             }
 
             return byDtoId;
         }
 
-        private static void SyncFlowLocations(AppDbContext dbContext, Flow flow, IEnumerable<FlowLocationDto> dtos, Dictionary<int, FlowSearchArea> areasByDtoId)
+        private static void SyncFlowPoints(AppDbContext dbContext, Flow flow, IEnumerable<FlowPointDto> dtos, Dictionary<int, FlowArea> areasByDtoId)
         {
-            List<FlowLocation> existing = flow.FlowLocations.ToList();
+            List<FlowPoint> existing = flow.FlowPoints.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
 
-            foreach (FlowLocation removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowLocations.Remove(removed);
+            foreach (FlowPoint removed in existing.Where(x => !keptIds.Contains(x.Id)))
+                dbContext.FlowPoints.Remove(removed);
 
-            foreach (FlowLocationDto dto in dtos)
+            foreach (FlowPointDto dto in dtos)
             {
-                FlowLocation? location = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+                FlowPoint? location = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
 
                 if (location == null)
                 {
-                    location = new FlowLocation { FlowId = flow.Id };
-                    dbContext.FlowLocations.Add(location);
+                    location = new FlowPoint { FlowId = flow.Id };
+                    dbContext.FlowPoints.Add(location);
                 }
 
                 location.Name = dto.Name;
@@ -138,13 +138,13 @@ namespace Business.Ipc.Handlers
                 location.RatioX = dto.RatioX;
                 location.RatioY = dto.RatioY;
 
-                location.FlowSearchArea = dto.FlowSearchAreaId != null
-                    && areasByDtoId.TryGetValue(dto.FlowSearchAreaId.Value, out FlowSearchArea? area)
+                location.FlowArea = dto.FlowAreaId != null
+                    && areasByDtoId.TryGetValue(dto.FlowAreaId.Value, out FlowArea? area)
                         ? area
                         : null;
 
-                if (location.FlowSearchArea == null)
-                    location.FlowSearchAreaId = null;
+                if (location.FlowArea == null)
+                    location.FlowAreaId = null;
             }
         }
     }

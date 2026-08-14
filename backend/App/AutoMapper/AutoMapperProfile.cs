@@ -18,8 +18,8 @@ namespace App.AutoMapper
             CreateMap<FlowDto, Flow>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
-                .ForMember(x => x.FlowSearchAreas, o => o.Ignore())
-                .ForMember(x => x.FlowLocations, o => o.Ignore());
+                .ForMember(x => x.FlowAreas, o => o.Ignore())
+                .ForMember(x => x.FlowPoints, o => o.Ignore());
 
             // FlowStep
             CreateMap<FlowStep, FlowStepDto>();
@@ -27,9 +27,9 @@ namespace App.AutoMapper
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
                 .ForMember(x => x.SubFlow, o => o.Ignore())
-                .ForMember(x => x.FlowSearchArea, o => o.Ignore())
-                .ForMember(x => x.FlowLocation, o => o.Ignore())
-                .ForMember(x => x.FlowLocationEnd, o => o.Ignore())
+                .ForMember(x => x.FlowArea, o => o.Ignore())
+                .ForMember(x => x.FlowPoint, o => o.Ignore())
+                .ForMember(x => x.FlowPointEnd, o => o.Ignore())
                 .ForMember(x => x.ParentFlowStep, o => o.Ignore())
                 .ForMember(x => x.FlowStepReference, o => o.Ignore())
                 .ForMember(x => x.FlowStepReferenceEnd, o => o.Ignore())
@@ -38,18 +38,18 @@ namespace App.AutoMapper
                 .ForMember(x => x.FlowStepReferencesEnd, o => o.Ignore())
                 .ForMember(x => x.FlowStepImages, o => o.Ignore());
 
-            // FlowSearchArea
-            CreateMap<FlowSearchArea, FlowSearchAreaDto>()
+            // FlowArea
+            CreateMap<FlowArea, FlowAreaDto>()
                 .ForMember(x => x.FlowStepsCount, o => o.MapFrom(x => x.FlowSteps.Count()));
-            CreateMap<FlowSearchAreaDto, FlowSearchArea>()
+            CreateMap<FlowAreaDto, FlowArea>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
                 .ForMember(x => x.FlowSteps, o => o.Ignore());
 
-            // FlowLocation
-            CreateMap<FlowLocation, FlowLocationDto>()
+            // FlowPoint
+            CreateMap<FlowPoint, FlowPointDto>()
                 .ForMember(x => x.FlowStepsCount, o => o.MapFrom(x => x.FlowSteps.Count() + x.EndFlowSteps.Count()));
-            CreateMap<FlowLocationDto, FlowLocation>()
+            CreateMap<FlowPointDto, FlowPoint>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
                 .ForMember(x => x.FlowSteps, o => o.Ignore())

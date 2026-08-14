@@ -35,10 +35,10 @@ namespace Business.Ipc.Handlers
         {
             FlowStepDto step = request.dto;
 
-            if (step.FlowSearchAreaId == null)
+            if (step.FlowAreaId == null)
                 return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = "Pick a search area first." });
 
-            AreaResolution area = await _frameResolver.ResolveAreaAsync(step.FlowSearchAreaId.Value, ct);
+            AreaResolution area = await _frameResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
                 return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = area.Error });
 

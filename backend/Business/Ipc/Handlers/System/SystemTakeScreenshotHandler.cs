@@ -32,7 +32,7 @@ namespace Business.Ipc.Handlers
         {
             ScreenshotRequestDto dto = request.dto;
 
-            if (dto.FlowSearchAreaId != null)
+            if (dto.FlowAreaId != null)
                 return await CaptureArea(dto, ct);
 
             if (dto.CaptureVirtualScreen)
@@ -57,10 +57,10 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowSearchArea? area = await dbContext.FlowSearchAreas
+            FlowArea? area = await dbContext.FlowAreas
                 .AsNoTracking()
-                .Include(x => x.ParentFlowSearchArea)
-                .FirstOrDefaultAsync(x => x.Id == dto.FlowSearchAreaId, ct);
+                .Include(x => x.ParentFlowArea)
+                .FirstOrDefaultAsync(x => x.Id == dto.FlowAreaId, ct);
 
             if (area == null)
                 return ResultDto<byte[]>.Failure("Entity doesnt exist in the Database!");

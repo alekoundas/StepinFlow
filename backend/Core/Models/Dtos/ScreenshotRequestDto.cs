@@ -8,8 +8,8 @@ namespace Core.Models.Dtos
         public int JpegQuality { get; set; } = 100;
 
 
-        // Capture by FlowSearchArea value
-        public int? FlowSearchAreaId { get; set; }
+        // Capture by FlowArea value
+        public int? FlowAreaId { get; set; }
 
         // Capture everything
         public bool CaptureVirtualScreen { get; set; }

@@ -4,7 +4,7 @@ export class ScreenshotRequestDto {
   formatType: ScreenshotFormatEnum = "JPEG";
   jpegQuality: number = 0;
 
-  flowSearchAreaId?: number;
+  flowAreaId?: number;
   captureVirtualScreen: boolean = false;
   captureMonitor: string = "";
   captureAppWindow: string = "";

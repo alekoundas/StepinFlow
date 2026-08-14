@@ -31,15 +31,15 @@ namespace Business.Ipc.Handlers
                     Name = x.Name,
                     OrderNumber = x.OrderNumber,
 
-                    FlowSearchAreas = x.FlowSearchAreas
+                    FlowAreas = x.FlowAreas
                         .OrderBy(a => a.Name)
-                        .Select(a => new FlowSearchAreaDto
+                        .Select(a => new FlowAreaDto
                         {
                             Id = a.Id,
                             Name = a.Name,
                             Type = a.Type,
 
-                            ParentFlowSearchAreaId = a.ParentFlowSearchAreaId,
+                            ParentFlowAreaId = a.ParentFlowAreaId,
                             SizingMode = a.SizingMode,
                             LocationX = a.LocationX,
                             LocationY = a.LocationY,
@@ -64,18 +64,18 @@ namespace Business.Ipc.Handlers
 
                             FlowId = a.FlowId,
                             FlowStepsCount = a.FlowSteps.Count(),
-                            ParentName = a.ParentFlowSearchArea != null ? a.ParentFlowSearchArea.Name : string.Empty,
+                            ParentName = a.ParentFlowArea != null ? a.ParentFlowArea.Name : string.Empty,
                         })
                         .ToList(),
 
-                    FlowLocations = x.FlowLocations
+                    FlowPoints = x.FlowPoints
                         .OrderBy(l => l.Name)
-                        .Select(l => new FlowLocationDto
+                        .Select(l => new FlowPointDto
                         {
                             Id = l.Id,
                             Name = l.Name,
 
-                            FlowSearchAreaId = l.FlowSearchAreaId,
+                            FlowAreaId = l.FlowAreaId,
                             OffsetMode = l.OffsetMode,
                             LocationX = l.LocationX,
                             LocationY = l.LocationY,
@@ -84,7 +84,7 @@ namespace Business.Ipc.Handlers
 
                             FlowId = l.FlowId,
                             FlowStepsCount = l.FlowSteps.Count() + l.EndFlowSteps.Count(),
-                            FlowSearchAreaName = l.FlowSearchArea != null ? l.FlowSearchArea.Name : string.Empty,
+                            FlowAreaName = l.FlowArea != null ? l.FlowArea.Name : string.Empty,
                         })
                         .ToList(),
                 })

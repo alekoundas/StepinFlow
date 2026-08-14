@@ -10,11 +10,11 @@ namespace Business.Services.FrameService
     /// </summary>
     public interface IFrameResolver
     {
-        Task<AreaResolution> ResolveAreaAsync(int flowSearchAreaId, CancellationToken ct = default);
-        Task<LocationResolution> ResolveLocationAsync(int flowLocationId, CancellationToken ct = default);
+        Task<AreaResolution> ResolveAreaAsync(int flowAreaId, CancellationToken ct = default);
+        Task<LocationResolution> ResolveLocationAsync(int flowPointId, CancellationToken ct = default);
 
         /// <summary>Parent chain must already be loaded.</summary>
-        AreaResolution ResolveArea(FlowSearchArea area);
-        LocationResolution ResolveLocation(FlowLocation location);
+        AreaResolution ResolveArea(FlowArea area);
+        LocationResolution ResolveLocation(FlowPoint location);
     }
 }

@@ -70,7 +70,7 @@ namespace Business.Helpers
             if (virtualWidth <= 1 || virtualHeight <= 1)
                 return false;
 
-            // Clamp first: a stale FlowLocation from a machine with a bigger desktop would
+            // Clamp first: a stale FlowPoint from a machine with a bigger desktop would
             // otherwise wrap to the opposite edge instead of stopping at the border.
             x = Math.Clamp(x, virtualLeft, virtualLeft + virtualWidth - 1);
             y = Math.Clamp(y, virtualTop, virtualTop + virtualHeight - 1);

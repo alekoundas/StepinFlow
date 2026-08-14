@@ -89,8 +89,8 @@ startup (`dbContext.Database.Migrate()`). 13 migrations so far (`InitialMigratio
 | `Flow` | The workflow. Name, OrderNumber. |
 | `SubFlow` | Reusable sub-workflow. Modelled, **no UI yet**. |
 | `FlowStep` | One node of the flow tree. Wide table, one column set per step type. |
-| `FlowSearchArea` | Named reusable **rectangle** owned by a Flow. |
-| `FlowLocation` | Named reusable **point** owned by a Flow. |
+| `FlowArea` | Named reusable **rectangle** owned by a Flow. |
+| `FlowPoint` | Named reusable **point** owned by a Flow. |
 | `FlowStepImage` | Template image + match settings for IMAGE_SEARCH. Blob lives here, off `FlowStep`. |
 | `Execution` | One run of a Flow. **Modelled, not implemented.** |
 | `ExecutionStep` | Per-step result of a run. **Modelled, not implemented.** |
@@ -116,9 +116,9 @@ The form shows only the fields its `flowStepType` uses.
 | `FlowId` | Flow | Cascade |
 | `SubFlowId` | SubFlow | Cascade |
 | `ParentFlowStepId` | FlowStep (`ChildrenFlowSteps`) | Cascade |
-| `FlowSearchAreaId` | FlowSearchArea | **SetNull** |
-| `FlowLocationId` | FlowLocation (`FlowSteps`) | **SetNull** |
-| `FlowLocationEndId` | FlowLocation (`EndFlowSteps`) | **SetNull** |
+| `FlowAreaId` | FlowArea | **SetNull** |
+| `FlowPointId` | FlowPoint (`FlowSteps`) | **SetNull** |
+| `FlowPointEndId` | FlowPoint (`EndFlowSteps`) | **SetNull** |
 | `FlowStepReferenceId` | FlowStep (`FlowStepReferences`) | **SetNull** |
 | `FlowStepReferenceEndId` | FlowStep (`FlowStepReferencesEnd`) | **SetNull** |
 
@@ -144,7 +144,7 @@ This is the single most error-prone area of the app.
   `EnumDisplaySettings`/DEVMODE returns **real device pixels** ("physical").
 - `MonitorInfo` carries both: `Bounds` (logical) and `PhysicalBounds` (physical).
 
-**Everything persisted is in PHYSICAL pixels** — `FlowSearchArea`, `FlowLocation`, and the
+**Everything persisted is in PHYSICAL pixels** — `FlowArea`, `FlowPoint`, and the
 coordinates SharpHook's global hook reports.
 
 **Cursor movement does not go through SharpHook.** `Business/Helpers/CursorHelper.cs` calls
@@ -157,7 +157,7 @@ context is what lets the rest of the process stay DPI-unaware while the move spe
 absolute; logical is used only at the edges (mouse input → broadcast, broadcast → render clip).
 
 > ⚠ **Unverified:** the SendInput normalisation has not been tested on a machine with a monitor at
-> non-100% scale. Test: set a display to 150%, capture a FlowLocation, press **Test**, confirm the
+> non-100% scale. Test: set a display to 150%, capture a FlowPoint, press **Test**, confirm the
 > cursor lands on the same pixel.
 
 ---
@@ -170,9 +170,9 @@ The answer is to never let a step store raw coordinates. Steps point at a **name
 owned by the Flow**, resolved at runtime. Moving a flow to a new machine means re-capturing a handful
 of named entities; every step keeps working.
 
-### FlowSearchArea — a rectangle
+### FlowArea — a rectangle
 
-Selected in a dropdown by IMAGE_SEARCH / TEXT_SEARCH. `FlowSearchAreaTypeEnum`:
+Selected in a dropdown by IMAGE_SEARCH / TEXT_SEARCH. `FlowAreaTypeEnum`:
 
 | Type | Stores | Resolved at runtime by |
 |---|---|---|
@@ -182,7 +182,7 @@ Selected in a dropdown by IMAGE_SEARCH / TEXT_SEARCH. `FlowSearchAreaTypeEnum`:
 
 Authored with the **overlay capture window** (drag a rectangle).
 
-### FlowLocation — a point
+### FlowPoint — a point
 
 Same idea one dimension down: `Name`, `LocationX`, `LocationY`, `FlowId`. Used by cursor steps.
 
@@ -254,12 +254,12 @@ Files: `frontend/src/features/flow-step/components/forms/cursor/`
 
 Each cursor point has two possible sources, chosen by a boolean:
 
-| `isLocationCustom` | Source | Field |
+| `isPointCustom` | Source | Field |
 |---|---|---|
-| `true` | a saved **FlowLocation** on the Flow | `flowLocationId` |
+| `true` | a saved **FlowPoint** on the Flow | `flowPointId` |
 | `false` | the **result of an ancestor step** | `flowStepReferenceId` |
 
-`CURSOR_DRAG` has the whole set twice: `isLocationEndCustom`, `flowLocationEndId`,
+`CURSOR_DRAG` has the whole set twice: `isPointEndCustom`, `flowPointEndId`,
 `flowStepReferenceEndId`.
 
 `flowStepReferenceId` holds the id of an **ancestor** `IMAGE_SEARCH` / `TEXT_SEARCH` step. At
@@ -272,7 +272,7 @@ the parent chain in memory, nearest first.
 
 ## 9. Custom Electron windows and capture flows
 
-### Overlay capture (used by FlowSearchArea)
+### Overlay capture (used by FlowArea)
 
 1. Caller invokes `OVERLAY_OPEN_CAPTURE_WINDOW`.
 2. Electron opens a **fullscreen transparent window per monitor**, all loading `/overlay-capture`.
@@ -283,7 +283,7 @@ the parent chain in memory, nearest first.
 5. Confirm → renderer sends the **physical absolute rect** back; Electron closes all overlay windows
    and resolves the caller's promise. Escape cancels.
 
-### Point capture (used by FlowLocation) — no window
+### Point capture (used by FlowPoint) — no window
 
 Deliberately **not** a window. Click **Capture Location**, then click anywhere on screen:
 
@@ -388,11 +388,11 @@ plus the window routes `/overlay-capture`, `/overlay-preview`, `/image-editor`.
 ```
 Flow            create update delete get getLazy getTreeNodes
 FlowStep        create update delete get getLazy getTreeNodes
-FlowSearchArea  create update delete get getLazy
-FlowLocation    create update delete get
+FlowArea  create update delete get getLazy
+FlowPoint    create update delete get
 FlowStepImage   create get
 SubFlow         create update delete get
-Lookup          window monitor flowStep flowLocation
+Lookup          window monitor flowStep flowPoint
 System          takeScreenshot captureForOverlay moveCursor
                 inputRecordAllStart/Stop
                 inputRecordOverlayStart/Stop
@@ -445,8 +445,8 @@ filename and type disagree.
   down. The executor must force-release held buttons and modifiers on completion, failure and abort.
 - Overlay capture uses JPEG. Fine for display; **must not** feed an IMAGE_SEARCH template — JPEG
   artifacts wreck template matching.
-- Dead copy-paste files: `features/flow-search-area/hooks/use-flow-step.ts` and
-  `features/flow-search-area/store/flow-step-store.ts` are duplicates of the flow-step versions.
+- Dead copy-paste files: `features/flow-area/hooks/use-flow-step.ts` and
+  `features/flow-area/store/flow-step-store.ts` are duplicates of the flow-step versions.
 - `WorkflowContentComponent` still switches per step type twice (ADD branch and VIEW/EDIT branch).
   At 17 step types this becomes ~700 lines. A single registry
   (`Record<FlowStepTypeEnum, {label, icon, form: lazy(...), defaults}>`) would collapse it and
@@ -470,7 +470,7 @@ Not implemented. The design intent:
 - **Budget + panic key.** `GO_TO` plus infinite `LOOP` can never terminate. Wire a step budget and a
   global panic key (Esc/F12) to cancel — the global hook is already running, so it is nearly free.
 - **Dry-run mode** that logs resolved coordinates instead of clicking. Makes the whole
-  FlowLocation/FlowSearchArea portability model debuggable.
+  FlowPoint/FlowArea portability model debuggable.
 - One executor class per step type resolved from DI
   (`Dictionary<FlowStepTypeEnum, IFlowStepExecutor>`), sharing an injected point resolver.
   Never a giant switch.
@@ -484,7 +484,7 @@ Not implemented. The design intent:
 - Priorities, in order: **correctness → execution/load speed → memory → clean structure.**
 - Prefer one round trip and a projection over `Include` + AutoMapper for read paths.
 - Prefer adding a nullable column on `FlowStep` over a new child table, unless the thing needs to be
-  **named and shared** across steps (that is what `FlowSearchArea` and `FlowLocation` are for).
+  **named and shared** across steps (that is what `FlowArea` and `FlowPoint` are for).
 - Naming: `XComponent.tsx`, `XFormComponent` / `XFormFieldsComponent` / `x.zod.ts`,
   `XHandler.cs`, `XDto`, `XEnum`. Handlers are one class per file under `Handlers/<Entity>/`.
 - C# style in this repo: explicit types over `var`, `//` section banners, comments explaining *why*.
