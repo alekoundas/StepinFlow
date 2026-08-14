@@ -81,55 +81,69 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
     // ── Cursor ──
     {
       flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
-      name: "Cursor Click",
+      name: "Cursor",
       description:
-        "Simulate a left, right, or double mouse click at the specified screen coordinates.",
+        "Simulate a cursor action. Click, drag, scroll, or relocate the cursor to specific coordinates.",
       iconName: "mouse",
     },
-    {
-      flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
-      name: "Cursor Drag & Drop",
-      description:
-        "Click and hold at a source position, drag to a target position, then release. Coordinates can be the result of an Image Search result.",
-      iconName: "arrows-alt",
-    },
-    {
-      flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
-      name: "Cursor Scroll",
-      description:
-        "Simulate a mouse wheel scroll (up or down) by a specified amount at the current cursor position.",
-      iconName: "sort-alt",
-    },
-    {
-      flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
-      name: "Cursor Relocate",
-      description:
-        "Move the cursor to specific coordinates without clicking. Coordinates can come from an Image Search result.",
-      iconName: "map-marker",
-    },
+    // {
+    //   flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
+    //   name: "Cursor Click",
+    //   description:
+    //     "Simulate a left, right, or double mouse click at the specified screen coordinates.",
+    //   iconName: "mouse",
+    // },
+    // {
+    //   flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
+    //   name: "Cursor Drag & Drop",
+    //   description:
+    //     "Click and hold at a source position, drag to a target position, then release. Coordinates can be the result of an Image Search result.",
+    //   iconName: "arrows-alt",
+    // },
+    // {
+    //   flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
+    //   name: "Cursor Scroll",
+    //   description:
+    //     "Simulate a mouse wheel scroll (up or down) by a specified amount at the current cursor position.",
+    //   iconName: "sort-alt",
+    // },
+    // {
+    //   flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
+    //   name: "Cursor Relocate",
+    //   description:
+    //     "Move the cursor to specific coordinates without clicking. Coordinates can come from an Image Search result.",
+    //   iconName: "map-marker",
+    // },
 
     // ── Window ──
     {
       flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
-      name: "Window Focus",
+      name: "Window",
       description:
-        "Bring a named application window to the foreground. Runs Failure children if the window is not found.",
-      iconName: "window-maximize",
-    },
-    {
-      flowStepType: FlowStepTypeEnum.WINDOW_RESIZE,
-      name: "Window Resize",
-      description:
-        "Resize a named application window to the specified dimensions. Runs Failure children if the window is not found.",
+        "Select a named application window to bring it to the foreground, resize it, or move it to a specific position on the screen.",
       iconName: "expand",
     },
-    {
-      flowStepType: FlowStepTypeEnum.WINDOW_RELOCATE,
-      name: "Window Relocate",
-      description:
-        "Move a named application window to the specified screen position. Runs Failure children if the window is not found.",
-      iconName: "directions",
-    },
+    // {
+    //   flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
+    //   name: "Window Focus",
+    //   description:
+    //     "Bring a named application window to the foreground. Runs Failure children if the window is not found.",
+    //   iconName: "window-maximize",
+    // },
+    // {
+    //   flowStepType: FlowStepTypeEnum.WINDOW_RESIZE,
+    //   name: "Window Resize",
+    //   description:
+    //     "Resize a named application window to the specified dimensions. Runs Failure children if the window is not found.",
+    //   iconName: "expand",
+    // },
+    // {
+    //   flowStepType: FlowStepTypeEnum.WINDOW_RELOCATE,
+    //   name: "Window Relocate",
+    //   description:
+    //     "Move a named application window to the specified screen position. Runs Failure children if the window is not found.",
+    //   iconName: "directions",
+    // },
 
     // ── Keyboard ──
     {
@@ -153,7 +167,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       name: "Text Search",
       description:
         "Search the screen for a text string using OCR and return its bounding-box coordinates.",
-      iconName: "file-find",
+      iconName: "search",
     },
 
     // ── Control-flow children ──
@@ -201,7 +215,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
   return (
     <div className={className}>
       <DataGridComponent<FlowStepType>
-        queryKey={["flowSteps", "list"]}
+        queryKey={["flowStepTypes", "list"]}
         queryFn={() => new Promise((resolve) => resolve(loadData))}
         itemTemplate={cardTemplate}
       />

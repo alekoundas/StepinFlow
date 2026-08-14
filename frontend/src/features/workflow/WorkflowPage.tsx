@@ -46,18 +46,9 @@ export default function WorkflowPage() {
             style={{ overflow: "hidden" }}
             className="flex flex-column m-3"
           >
-            {/* <Card className="h-full"> */}
-            {/* <ScrollPanel className="h-full"> */}
-            {/* <div className="flex flex-column gap-2 "> */}
             <ScrollPanel style={{ width: "100%", height: "100%" }}>
               <WorkflowContentComponent />
             </ScrollPanel>
-            {/* </div> */}
-
-            {/* If you have scrollable list/table inside → add flex-1 overflow-auto */}
-            {/* e.g. <DataTable className="flex-1" ... /> */}
-            {/* </Card> */}
-            {/* </ScrollPanel> */}
           </SplitterPanel>
 
           <SplitterPanel
