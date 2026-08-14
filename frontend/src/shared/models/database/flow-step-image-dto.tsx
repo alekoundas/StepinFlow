@@ -18,7 +18,7 @@ export class FlowStepImageDto {
   clickOffsetX: number = 0;
   clickOffsetY: number = 0;
 
-  // Frame size the template was captured in. The scaling key.
+  // Area size the template was captured in. The scaling key.
   authoredFrameWidth: number = 0;
   authoredFrameHeight: number = 0;
   authoredMonitorId: string = "";

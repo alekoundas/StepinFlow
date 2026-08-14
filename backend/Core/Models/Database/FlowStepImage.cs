@@ -36,7 +36,7 @@ namespace Core.Models.Database
         public int ClickOffsetX { get; set; }
         public int ClickOffsetY { get; set; }
 
-        // Size of the frame this template was captured in, which is the scaling key. The monitor
+        // Size of the area this template was captured in, which is the scaling key. The monitor
         // fields are diagnostics for the "your setup differs" warning, not maths.
         public int AuthoredFrameWidth { get; set; }
         public int AuthoredFrameHeight { get; set; }

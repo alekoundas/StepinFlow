@@ -8,9 +8,9 @@ namespace Core.Models.Business
         public static AreaResolution Fail(string error) => new AreaResolution(false, Rectangle.Empty, error);
     }
 
-    public sealed record LocationResolution(bool IsResolved, Point Point, string? Error)
+    public sealed record PointResolution(bool IsResolved, Point Point, string? Error)
     {
-        public static LocationResolution Ok(Point point) => new LocationResolution(true, point, null);
-        public static LocationResolution Fail(string error) => new LocationResolution(false, Point.Empty, error);
+        public static PointResolution Ok(Point point) => new PointResolution(true, point, null);
+        public static PointResolution Fail(string error) => new PointResolution(false, Point.Empty, error);
     }
 }

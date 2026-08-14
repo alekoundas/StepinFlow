@@ -90,7 +90,7 @@ export function FlowPointDataTableComponent({
   };
 
   // Absolute points are the ones an import has to ask about, so they are called out here.
-  const frameBodyTemplate = (row: FlowPointDto) => {
+  const areaBodyTemplate = (row: FlowPointDto) => {
     const areaName =
       row.flowAreaName ||
       areaOptions.find((x) => x.id === row.flowAreaId)?.name;
@@ -110,7 +110,7 @@ export function FlowPointDataTableComponent({
 
   const columns: DataTableColumnDto<FlowPointDto>[] = [
     { field: "name", header: "Name", sortable: true },
-    { field: "frame", header: "Measured from", body: frameBodyTemplate },
+    { field: "area", header: "Measured from", body: areaBodyTemplate },
     {
       field: "point",
       header: "Point",

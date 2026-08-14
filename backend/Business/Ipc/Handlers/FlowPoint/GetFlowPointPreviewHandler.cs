@@ -1,4 +1,4 @@
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Core.Models.Business;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -8,16 +8,16 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowPointPreviewHandler : IRequestHandler<GetFlowPointPreviewQuery, ResultDto<ScreenPointDto>>
     {
-        private readonly IFrameResolver _frameResolver;
+        private readonly IAreaPointResolver _areaPointResolver;
 
-        public GetFlowPointPreviewHandler(IFrameResolver frameResolver)
+        public GetFlowPointPreviewHandler(IAreaPointResolver areaPointResolver)
         {
-            _frameResolver = frameResolver;
+            _areaPointResolver = areaPointResolver;
         }
 
         public async Task<ResultDto<ScreenPointDto>> Handle(GetFlowPointPreviewQuery request, CancellationToken ct)
         {
-            LocationResolution resolution = await _frameResolver.ResolveLocationAsync(request.id, ct);
+            PointResolution resolution = await _areaPointResolver.ResolvePointAsync(request.id, ct);
 
             if (!resolution.IsResolved)
                 return ResultDto<ScreenPointDto>.Failure(resolution.Error!);

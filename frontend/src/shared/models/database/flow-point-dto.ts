@@ -4,7 +4,7 @@ export class FlowPointDto {
   id: number = 0;
   name: string = "";
 
-  // Frame this point lives in. Null = absolute screen, which needs rebinding after an import.
+  // Area this point lives in. Null = absolute screen, which needs rebinding after an import.
   flowAreaId?: number | null;
   offsetMode: AreaSizingModeEnum = AreaSizingModeEnum.ABSOLUTE_PX;
 

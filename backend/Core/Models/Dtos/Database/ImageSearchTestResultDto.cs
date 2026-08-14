@@ -35,7 +35,7 @@ namespace Core.Models.Dtos
         public int BestX { get; set; }
         public int BestY { get; set; }
 
-        /// <summary>Scale the template had to be resized by. 1 = the frame matches how it was captured.</summary>
+        /// <summary>Scale the template had to be resized by. 1 = the area matches how it was captured.</summary>
         public float Scale { get; set; }
     }
 }

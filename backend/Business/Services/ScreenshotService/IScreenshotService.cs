@@ -13,7 +13,7 @@ namespace Business.Services.ScreenshotService
         RawImage CaptureRaw(Rectangle rect);
         byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
-        /// <summary>Bounds come from IFrameResolver, so nesting is already applied.</summary>
+        /// <summary>Bounds come from IAreaPointResolver, so nesting is already applied.</summary>
         byte[] CaptureResolvedArea(FlowArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
         byte[] CaptureAppWindow(string appWindowName, ScreenshotFormatEnum screenshotFormat, int jpegQuality);

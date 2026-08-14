@@ -12,7 +12,7 @@ namespace Core.Models.Business
         public TemplateMatchModeEnum Mode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
         public float Threshold { get; set; } = 0.8f;
 
-        /// <summary>Current frame size over the size the template was captured at. 1 = same.</summary>
+        /// <summary>Current area size over the size the template was captured at. 1 = same.</summary>
         public float ScaleRatio { get; set; } = 1f;
 
         public bool AllowMultiScale { get; set; }

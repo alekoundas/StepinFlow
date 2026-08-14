@@ -1,4 +1,4 @@
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Business.Services.MatchService;
 using Business.Services.ScreenshotService;
 using Core.Enums;
@@ -15,16 +15,16 @@ namespace Business.Ipc.Handlers
     /// </summary>
     public class TestImageSearchHandler : IRequestHandler<TestImageSearchQuery, ResultDto<ImageSearchTestResultDto>>
     {
-        private readonly IFrameResolver _frameResolver;
+        private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
-        private readonly ITemplateMatcher _templateMatcher;
+        private readonly IOpenCvService _templateMatcher;
 
         public TestImageSearchHandler(
-            IFrameResolver frameResolver,
+            IAreaPointResolver areaPointResolver,
             IScreenshotService screenshotService,
-            ITemplateMatcher templateMatcher)
+            IOpenCvService templateMatcher)
         {
-            _frameResolver = frameResolver;
+            _areaPointResolver = areaPointResolver;
             _screenshotService = screenshotService;
             _templateMatcher = templateMatcher;
         }
@@ -36,7 +36,7 @@ namespace Business.Ipc.Handlers
             if (step.FlowAreaId == null)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed("Pick a search area first."));
 
-            AreaResolution area = await _frameResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
+            AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed(area.Error!));
 

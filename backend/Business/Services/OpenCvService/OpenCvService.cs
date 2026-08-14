@@ -10,9 +10,9 @@ namespace Business.Services.MatchService
     /// Cost is roughly haystack area times template area, so the search area doing the narrowing
     /// matters far more than anything in here. What this does control: match in grayscale (one
     /// channel instead of four), never decode or encode more than once, and pre-scale the template
-    /// by the ratio between the frame now and the frame it was captured in.
+    /// by the ratio between the area now and the area it was captured in.
     /// </summary>
-    public sealed class TemplateMatcher : ITemplateMatcher
+    public sealed class OpenCvService : IOpenCvService
     {
         // How many steps either side of the expected scale when the first pass finds nothing.
         private const int MultiScaleSteps = 4;

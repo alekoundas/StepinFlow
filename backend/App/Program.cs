@@ -1,9 +1,9 @@
-﻿using App.AutoMapper;
+using App.AutoMapper;
 using App.Ipc;
 using Business.Helpers;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
 using Business.Services.OcrService;
@@ -38,8 +38,8 @@ namespace App
 
 
             // Services
-            builder.Services.AddSingleton<IFrameResolver, FrameResolver>();
-            builder.Services.AddSingleton<ITemplateMatcher, TemplateMatcher>();
+            builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
+            builder.Services.AddSingleton<IOpenCvService, OpenCvService>();
             builder.Services.AddSingleton<IInputService, InputService>();
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();

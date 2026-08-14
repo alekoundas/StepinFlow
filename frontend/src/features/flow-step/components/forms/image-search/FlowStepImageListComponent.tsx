@@ -106,7 +106,7 @@ export function FlowStepImageListComponent({
                   text={
                     image.authoredFrameWidth > 0
                       ? `captured in a ${image.authoredFrameWidth}×${image.authoredFrameHeight} frame`
-                      : "no frame size recorded, scaling will be skipped"
+                      : "no area size recorded, scaling will be skipped"
                   }
                 />
               </div>

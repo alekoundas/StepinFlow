@@ -7,13 +7,13 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
-namespace Business.Services.FrameService
+namespace Business.Services.AreaPointService
 {
-    public sealed class FrameResolver : IFrameResolver
+    public sealed class AreaPointResolver : IAreaPointResolver
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public FrameResolver(IDbContextFactory<AppDbContext> dbContextFactory)
+        public AreaPointResolver(IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }
@@ -38,20 +38,20 @@ namespace Business.Services.FrameService
             return ResolveArea(area);
         }
 
-        public async Task<LocationResolution> ResolveLocationAsync(int flowPointId, CancellationToken ct = default)
+        public async Task<PointResolution> ResolvePointAsync(int flowPointId, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowPoint? location = await dbContext.FlowPoints
+            FlowPoint? point = await dbContext.FlowPoints
                 .AsNoTracking()
                 .Include(x => x.FlowArea)
                 .ThenInclude(x => x!.ParentFlowArea)
                 .FirstOrDefaultAsync(x => x.Id == flowPointId, ct);
 
-            if (location == null)
-                return LocationResolution.Fail("The location no longer exists.");
+            if (point == null)
+                return PointResolution.Fail("The point no longer exists.");
 
-            return ResolveLocation(location);
+            return ResolvePoint(point);
         }
 
         public AreaResolution ResolveArea(FlowArea area)
@@ -73,26 +73,26 @@ namespace Business.Services.FrameService
             }
         }
 
-        public LocationResolution ResolveLocation(FlowPoint location)
+        public PointResolution ResolvePoint(FlowPoint point)
         {
-            if (location.FlowArea == null)
-                return LocationResolution.Ok(new Point(location.LocationX, location.LocationY));
+            if (point.FlowArea == null)
+                return PointResolution.Ok(new Point(point.LocationX, point.LocationY));
 
-            AreaResolution frame = ResolveArea(location.FlowArea);
-            if (!frame.IsResolved)
-                return LocationResolution.Fail(frame.Error!);
+            AreaResolution area = ResolveArea(point.FlowArea);
+            if (!area.IsResolved)
+                return PointResolution.Fail(area.Error!);
 
-            Rectangle bounds = frame.Bounds;
+            Rectangle bounds = area.Bounds;
 
-            // RATIO is always measured from the frame's top left, so the anchor only applies to
-            // pixel offsets. Two ways to say the same thing would just be a trap.
-            Point point = location.OffsetMode == AreaSizingModeEnum.RATIO
+            // Both modes measure from the area's top left. Two ways to say the same thing would
+            // just be a trap.
+            Point resolved = point.OffsetMode == AreaSizingModeEnum.RATIO
                 ? new Point(
-                    bounds.X + (int)MathF.Floor(location.RatioX * bounds.Width),
-                    bounds.Y + (int)MathF.Floor(location.RatioY * bounds.Height))
-                : Offset(new Point(bounds.X,bounds.Y), location.LocationX, location.LocationY);
+                    bounds.X + (int)MathF.Floor(point.RatioX * bounds.Width),
+                    bounds.Y + (int)MathF.Floor(point.RatioY * bounds.Height))
+                : Offset(new Point(bounds.X, bounds.Y), point.LocationX, point.LocationY);
 
-            return LocationResolution.Ok(Clamp(point, bounds));
+            return PointResolution.Ok(Clamp(resolved, bounds));
         }
 
 
@@ -150,20 +150,20 @@ namespace Business.Services.FrameService
             if (!parent.IsResolved)
                 return AreaResolution.Fail(parent.Error!);
 
-            Rectangle frame = parent.Bounds;
+            Rectangle parentBounds = parent.Bounds;
 
             Rectangle bounds = area.SizingMode == AreaSizingModeEnum.RATIO
                 ? new Rectangle(
-                    frame.X + (int)MathF.Floor(area.RatioX * frame.Width),
-                    frame.Y + (int)MathF.Floor(area.RatioY * frame.Height),
-                    (int)MathF.Floor(area.RatioWidth * frame.Width),
-                    (int)MathF.Floor(area.RatioHeight * frame.Height))
-                : new Rectangle(frame.X + area.LocationX, frame.Y + area.LocationY, area.Width, area.Height);
+                    parentBounds.X + (int)MathF.Floor(area.RatioX * parentBounds.Width),
+                    parentBounds.Y + (int)MathF.Floor(area.RatioY * parentBounds.Height),
+                    (int)MathF.Floor(area.RatioWidth * parentBounds.Width),
+                    (int)MathF.Floor(area.RatioHeight * parentBounds.Height))
+                : new Rectangle(parentBounds.X + area.LocationX, parentBounds.Y + area.LocationY, area.Width, area.Height);
 
-            bounds = Rectangle.Intersect(bounds, frame);
+            bounds = Rectangle.Intersect(bounds, parentBounds);
 
             if (bounds.Width <= 0 || bounds.Height <= 0)
-                return AreaResolution.Fail($"\"{area.Name}\" falls outside its frame.");
+                return AreaResolution.Fail($"\"{area.Name}\" falls outside the area it sits in.");
 
             return AreaResolution.Ok(bounds);
         }

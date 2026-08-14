@@ -1,4 +1,4 @@
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Business.Services.ScreenshotService;
 using Core.Enums;
 using Core.Models.Business;
@@ -13,16 +13,16 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowAreaPreviewHandler : IRequestHandler<GetFlowAreaPreviewQuery, ResultDto<FlowAreaPreviewDto>>
     {
-        private readonly IFrameResolver _frameResolver;
+        private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowAreaPreviewHandler(
-            IFrameResolver frameResolver,
+            IAreaPointResolver areaPointResolver,
             IScreenshotService screenshotService,
             IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _frameResolver = frameResolver;
+            _areaPointResolver = areaPointResolver;
             _screenshotService = screenshotService;
             _dbContextFactory = dbContextFactory;
         }
@@ -39,7 +39,7 @@ namespace Business.Ipc.Handlers
             if (area == null)
                 return ResultDto<FlowAreaPreviewDto>.Failure("Entity doesnt exist in the Database!");
 
-            AreaResolution resolution = _frameResolver.ResolveArea(area);
+            AreaResolution resolution = _areaPointResolver.ResolveArea(area);
 
             if (!resolution.IsResolved)
             {

@@ -15,12 +15,12 @@ import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
 interface Props {
-  // Frames this point can be measured from.
+  // Areas this point can be measured from.
   areaOptions: FlowAreaDto[];
   isDisabled?: boolean;
 }
 
-// Left unclamped on purpose: a click outside the frame shows up as an out of range percent and
+// Left unclamped on purpose: a click outside the area shows up as an out of range percent and
 // the schema says so, which beats silently snapping the point to an edge.
 const toRatio = (offset: number, size: number): number =>
   size > 0 ? Math.round((offset / size) * 10000) / 10000 : 0;
@@ -44,7 +44,7 @@ export default function FlowPointFormFieldsComponent({
     value: x.id,
   }));
 
-  // Clicking anywhere gives an absolute point. With a frame chosen it is stored as an offset
+  // Clicking anywhere gives an absolute point. With an area chosen it is stored as an offset
   // inside it, so the user just clicks the thing and never sees a screen coordinate.
   const handleCapture = async () => {
     const point = await capturePoint();
@@ -53,7 +53,7 @@ export default function FlowPointFormFieldsComponent({
     const write = (field: string, value: number) =>
       setValue(field, value, { shouldValidate: true, shouldDirty: true });
 
-    // No frame: the point is an absolute screen coordinate.
+    // No area: the point is an absolute screen coordinate.
     if (!flowAreaId) {
       setCaptureError(null);
       write("locationX", point.x);
@@ -69,7 +69,7 @@ export default function FlowPointFormFieldsComponent({
     if (!preview.isResolved) {
       setCaptureError(
         preview.errorMessage ??
-          "That frame is not on screen right now, so the point cannot be measured from it.",
+          "That area is not on screen right now, so the point cannot be measured from it.",
       );
       return;
     }
@@ -161,7 +161,7 @@ export default function FlowPointFormFieldsComponent({
             className="p-button-outlined"
             tooltip={
               flowAreaId
-                ? "Save first, then test from the grid so the frame can be resolved"
+                ? "Save first, then test from the grid so the area can be resolved"
                 : "Move the real cursor here so you can confirm the point"
             }
             tooltipOptions={{ position: "top" }}
@@ -179,7 +179,7 @@ export default function FlowPointFormFieldsComponent({
           {offsetMode === AreaSizingModeEnum.RATIO && flowAreaId ? (
             <div className="flex gap-3">
               {/* No min/max: InputNumber clamps out of range values back into the form, which
-                  would quietly move a stray capture to the frame edge. Let the schema say it. */}
+                  would quietly move a stray capture to the area edge. Let the schema say it. */}
               <FormInputFloatComponent
                 fieldName="ratioX"
                 label="X"

@@ -1,4 +1,4 @@
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Business.Services.ScreenshotService;
 using Core.Enums;
 using Core.Models.Business;
@@ -15,16 +15,16 @@ namespace Business.Ipc.Handlers
     public class SystemTakeScreenshotHandler : IRequestHandler<SystemTakeScreenshotCommand, ResultDto<byte[]>>
     {
         private readonly IScreenshotService _screenshotService;
-        private readonly IFrameResolver _frameResolver;
+        private readonly IAreaPointResolver _areaPointResolver;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public SystemTakeScreenshotHandler(
             IScreenshotService screenshotService,
-            IFrameResolver frameResolver,
+            IAreaPointResolver areaPointResolver,
             IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _screenshotService = screenshotService;
-            _frameResolver = frameResolver;
+            _areaPointResolver = areaPointResolver;
             _dbContextFactory = dbContextFactory;
         }
 
@@ -65,7 +65,7 @@ namespace Business.Ipc.Handlers
             if (area == null)
                 return ResultDto<byte[]>.Failure("Entity doesnt exist in the Database!");
 
-            AreaResolution resolution = _frameResolver.ResolveArea(area);
+            AreaResolution resolution = _areaPointResolver.ResolveArea(area);
             if (!resolution.IsResolved)
                 return ResultDto<byte[]>.Failure(resolution.Error!);
 

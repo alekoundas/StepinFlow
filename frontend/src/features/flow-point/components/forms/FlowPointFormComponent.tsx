@@ -16,7 +16,7 @@ interface Props {
   formMode: FormMode;
   defaultValues: FlowPointDto;
   isFormInDialog?: boolean;
-  // Frames this point can be measured from.
+  // Areas this point can be measured from.
   areaOptions: FlowAreaDto[];
 
   onSubmit: (formValues: FlowPointDto) => void;

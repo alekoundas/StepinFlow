@@ -1,4 +1,4 @@
-using Business.Services.FrameService;
+using Business.Services.AreaPointService;
 using Business.Services.OcrService;
 using Business.Services.ScreenshotService;
 using Core.Enums;
@@ -17,16 +17,16 @@ namespace Business.Ipc.Handlers
     /// </summary>
     public class TestTextSearchHandler : IRequestHandler<TestTextSearchQuery, ResultDto<TextSearchTestResultDto>>
     {
-        private readonly IFrameResolver _frameResolver;
+        private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
         private readonly IOcrService _ocrService;
 
         public TestTextSearchHandler(
-            IFrameResolver frameResolver,
+            IAreaPointResolver areaPointResolver,
             IScreenshotService screenshotService,
             IOcrService ocrService)
         {
-            _frameResolver = frameResolver;
+            _areaPointResolver = areaPointResolver;
             _screenshotService = screenshotService;
             _ocrService = ocrService;
         }
@@ -38,7 +38,7 @@ namespace Business.Ipc.Handlers
             if (step.FlowAreaId == null)
                 return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = "Pick a search area first." });
 
-            AreaResolution area = await _frameResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
+            AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
                 return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = area.Error });
 

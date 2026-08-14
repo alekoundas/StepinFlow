@@ -6,7 +6,7 @@ namespace Core.Models.Database
     {
         public string Name { get; set; } = string.Empty;
 
-        // Frame this point lives in. Null = absolute screen coordinates.
+        // Area this point lives in. Null = absolute screen coordinates.
         public int? FlowAreaId { get; set; }
         public FlowArea? FlowArea { get; set; }
 
@@ -16,7 +16,7 @@ namespace Core.Models.Database
         public int LocationX { get; set; }
         public int LocationY { get; set; }
 
-        // RATIO: 0..1 of the frame.
+        // RATIO: 0..1 of the area.
         public float RatioX { get; set; }
         public float RatioY { get; set; }
 

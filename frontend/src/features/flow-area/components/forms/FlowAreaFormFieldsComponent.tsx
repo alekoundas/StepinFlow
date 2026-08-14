@@ -26,7 +26,7 @@ interface EnumOption {
 }
 
 interface Props {
-  // Areas this one may sit inside. Only frames, and never itself.
+  // Areas this one may sit inside. Only top level ones, and never itself.
   parentOptions: FlowAreaDto[];
   // Regions already living inside this one, so the form can say what an edit costs them.
   childAreas?: FlowAreaDto[];
@@ -39,7 +39,7 @@ const toOptions = (values: Record<string, string>): EnumOption[] =>
     value,
   }));
 
-// Left unclamped on purpose: a drag that leaves the frame shows up as an out of range percent
+// Left unclamped on purpose: a drag that leaves the area shows up as an out of range percent
 // rather than being silently snapped to an edge.
 const toRatio = (size: number, frameSize: number): number =>
   frameSize > 0 ? Math.round((size / frameSize) * 10000) / 10000 : 0;
@@ -83,7 +83,7 @@ export default function FlowAreaFormFieldsComponent({
   }));
 
   const parentName =
-    parentOptions.find((x) => x.id === parentId)?.name ?? "the parent frame";
+    parentOptions.find((x) => x.id === parentId)?.name ?? "the parent area";
 
   const pixelChildren = childAreas.filter(
     (x) => x.sizingMode === AreaSizingModeEnum.ABSOLUTE_PX,
@@ -98,8 +98,8 @@ export default function FlowAreaFormFieldsComponent({
     }
   }, [parentId, sizingMode, setValue]);
 
-  // The capture window hands back an absolute rect. With a frame chosen it is stored as an
-  // offset inside that frame, so the user drags a box and never sees a coordinate.
+  // The capture window hands back an absolute rect. With a parent chosen it is stored as an
+  // offset inside it, so the user drags a box and never sees a coordinate.
   const handleCapture = async () => {
     const write = (field: string, value: number) =>
       setValue(field, value, { shouldValidate: true, shouldDirty: true });
@@ -127,7 +127,7 @@ export default function FlowAreaFormFieldsComponent({
     }
 
     // Resolved before the overlay opens, not after: the overlay needs these bounds to confine
-    // the drag, and a frame that cannot be found is a reason not to open it at all. Writing the
+    // the drag, and a parent that cannot be found is a reason not to open it at all. Writing the
     // raw screen rect as an offset would look like it worked and put the region elsewhere.
     const preview = await backendApiService.FlowArea.getPreview(parentId);
     if (!preview.isResolved) {
@@ -238,7 +238,7 @@ export default function FlowAreaFormFieldsComponent({
             isDisabled={isDisabled || !parentId}
             hintText={
               !parentId
-                ? "Percent needs a frame to be a percentage of."
+                ? "Percent needs a parent area to be a percentage of."
                 : undefined
             }
           />
@@ -268,7 +268,7 @@ export default function FlowAreaFormFieldsComponent({
           {sizingMode === AreaSizingModeEnum.RATIO ? (
             <div className="flex gap-3">
               {/* No min/max: InputNumber clamps out of range values back into the form, which
-                  would quietly resize a drag that left the frame. Let the schema say it. */}
+                  would quietly resize a drag that left the area. Let the schema say it. */}
               <FormInputFloatComponent fieldName="ratioX" label="X" isPercent={true} isDisabled={isDisabled} />
               <FormInputFloatComponent fieldName="ratioY" label="Y" isPercent={true} isDisabled={isDisabled} />
               <FormInputFloatComponent fieldName="ratioWidth" label="Width" isPercent={true} isDisabled={isDisabled} />

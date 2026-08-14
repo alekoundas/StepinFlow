@@ -42,8 +42,7 @@ export function FlowAreaDataTableComponent({
   const areas = fields as unknown as FlowAreaDto[];
 
   // Depth is capped at one level, so only areas without a parent may become one.
-  const frames = areas.filter((x) => !x.parentFlowAreaId);
-  const roots = frames;
+  const roots = areas.filter((x) => !x.parentFlowAreaId);
 
   const childrenOf = (parent: FlowAreaDto) =>
     areas.filter((x) => x.parentFlowAreaId === parent.id);
@@ -67,7 +66,7 @@ export function FlowAreaDataTableComponent({
           formId={FORM_ID}
           isFormInDialog={true}
           formMode={mode}
-          parentOptions={frames.filter((x) => x.id !== defaults.id)}
+          parentOptions={roots.filter((x) => x.id !== defaults.id)}
           childAreas={childrenOf(defaults)}
           onEdit={() => closeAll()}
           onCancel={() => closeAll()}
@@ -191,8 +190,8 @@ export function FlowAreaDataTableComponent({
     },
   ];
 
-  // Regions inside a frame. Adding one from here pre-fills the parent, so the user picks a
-  // frame by where they clicked rather than from a dropdown.
+  // Regions inside an area. Adding one from here pre-fills the parent, so the user picks it
+  // by where they clicked rather than from a dropdown.
   const rowExpansionTemplate = (parent: FlowAreaDto) => (
     <div className="p-3">
       <div className="flex justify-content-between align-items-center mb-2">

@@ -13,10 +13,10 @@ export const FlowPointZod = z.object({
   // Stored 0..1, shown as 0..100 %, so the messages talk in percent.
   ratioX: z
     .number()
-    .min(0, "X must be between 0% and 100% of the frame")
-    .max(1, "X must be between 0% and 100% of the frame"),
+    .min(0, "X must be between 0% and 100% of the area")
+    .max(1, "X must be between 0% and 100% of the area"),
   ratioY: z
     .number()
-    .min(0, "Y must be between 0% and 100% of the frame")
-    .max(1, "Y must be between 0% and 100% of the frame"),
+    .min(0, "Y must be between 0% and 100% of the area")
+    .max(1, "Y must be between 0% and 100% of the area"),
 });

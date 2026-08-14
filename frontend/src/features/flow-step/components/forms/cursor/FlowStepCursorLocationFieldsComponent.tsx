@@ -52,7 +52,7 @@ export default function FlowStepCursorLocationFieldsComponent({
   const { openForm, closeAll } = useDialogStore();
   const { createFlowPointMutation } = useFlowPointMutations();
 
-  // A location created from here should still be anchorable to a frame, so the flow's areas
+  // A location created from here should still be anchorable to an area, so the flow's areas
   // are fetched rather than passed down from the flow form.
   const { data: areaOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", flowId],

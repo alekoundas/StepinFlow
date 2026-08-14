@@ -47,7 +47,7 @@ export default function FlowStepSearchAreaFieldComponent({
         })),
     );
 
-  // Frames a new region could sit inside. Only id and name are used by the picker.
+  // Areas a new region could sit inside. Only id and name are used by the picker.
   const { data: parentOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", "parents", flowId],
     queryFn: () =>

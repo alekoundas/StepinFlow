@@ -77,7 +77,7 @@ export default function FlowStepImageSearchFormComponent({
       flowStepImages: images,
     });
 
-  // Captured region becomes the template, and the frame it was captured in becomes the
+  // Captured region becomes the template, and the area it was captured in becomes the
   // scaling key so it still matches on a different resolution.
   const handleAddTemplate = async () => {
     const rect = await openWindow();
