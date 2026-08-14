@@ -27,7 +27,10 @@ namespace Core.Models.Dtos
 
         public int? ParentFlowId { get; set; }
         public int? ParentFlowStepId { get; set; }
-        
+
+        /// <summary>What the row shows besides the name. Null for a Flow node.</summary>
+        public TreeNodeDetailDto? Detail { get; set; }
+
         public IEnumerable<TreeNodeDto> Children { get; set; } = new Collection<TreeNodeDto>();
 
         /// <summary>

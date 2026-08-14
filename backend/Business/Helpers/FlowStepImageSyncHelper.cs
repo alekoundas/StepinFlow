@@ -35,7 +35,10 @@ namespace Business.Helpers
                 // Only overwrite the blob when the client actually sent one: the list view sends
                 // templates back without their bytes so a save does not push megabytes per step.
                 if (dto.TemplateImage != null && dto.TemplateImage.Length > 0)
+                {
                     image.TemplateImage = dto.TemplateImage;
+                    //image.Thumbnail = ThumbnailHelper.Create(dto.TemplateImage);
+                }
 
                 image.TemplateMatchMode = dto.TemplateMatchMode;
                 image.Accuracy = dto.Accuracy;

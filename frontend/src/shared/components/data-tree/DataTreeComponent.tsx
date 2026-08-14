@@ -14,7 +14,6 @@ import {
   type TreeSelectionEvent,
 } from "primereact/tree";
 import { classNames } from "primereact/utils";
-import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -24,7 +23,7 @@ import type {
   FlowStepMovePreviewDto,
 } from "@/shared/models/flow-step-move.dto";
 import IconComponent from "@/shared/components/IconComponent";
-import { BaseFlowStepDataTreeTemplate } from "@/features/flow-step/components/templates/data-tree/BaseFlowStepDataTreeTemplate";
+import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templates/data-tree/FlowStepTreeNodeComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
@@ -301,17 +300,7 @@ export function DataTreeComponent({ flowId }: Props) {
     } else if (treeNodeDto.isNew) {
       template = <IconComponent name="plus" />;
     } else {
-      switch (treeNodeDto.flowStepType) {
-        case FlowStepTypeEnum.LOOP:
-          template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
-          break;
-
-        case FlowStepTypeEnum.WAIT:
-          template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
-          break;
-        default:
-          template = <BaseFlowStepDataTreeTemplate treeNode={treeNodeDto} />;
-      }
+      template = <FlowStepTreeNodeComponent treeNode={treeNodeDto} />;
     }
 
     const isDropTarget = dropTarget?.key === treeNodeDto.key;

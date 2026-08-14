@@ -15,6 +15,12 @@ namespace Core.Models.Database
         public byte[]? TemplateImage { get; set; }
 
         /// <summary>
+        /// Small PNG of the template, so the tree can show what a step looks for without loading
+        /// the full blob. Also PNG: the eraser leaves transparent pixels and JPEG has no alpha.
+        /// </summary>
+        public byte[]? Thumbnail { get; set; }
+
+        /// <summary>
         /// With no image marked required the step succeeds on any match, which is what you want
         /// for several variants of the same icon. Mark one required and it must be found.
         /// </summary>

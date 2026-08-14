@@ -45,6 +45,53 @@ namespace Business.Ipc.Handlers
 
                     ParentFlowId = x.FlowId,
                     ParentFlowStepId = x.ParentFlowStepId,
+
+                    // Projected, not Included: the row needs names and counts, never the entities
+                    // behind them, and the template blob must not come along.
+                    Detail = new TreeNodeDetailDto
+                    {
+                        WaitForMilliseconds = x.WaitForMilliseconds,
+                        LoopCount = x.LoopCount,
+                        IsLoopInfinite = x.IsLoopInfinite,
+
+                        SearchAreaName = x.FlowSearchArea != null ? x.FlowSearchArea.Name : null,
+                        LocationName = x.FlowLocation != null ? x.FlowLocation.Name : null,
+                        LocationEndName = x.FlowLocationEnd != null ? x.FlowLocationEnd.Name : null,
+                        ReferenceStepName = x.FlowStepReference != null ? x.FlowStepReference.Name : null,
+                        ReferenceStepEndName = x.FlowStepReferenceEnd != null ? x.FlowStepReferenceEnd.Name : null,
+                        SubFlowName = x.SubFlow != null ? x.SubFlow.Name : null,
+
+                        IsLocationCustom = x.IsLocationCustom,
+                        IsLocationEndCustom = x.IsLocationEndCustom,
+
+                        CursorButtonType = x.CursorButtonType,
+                        CursorButtonActionType = x.CursorButtonActionType,
+                        CursorScrollDirectionType = x.CursorScrollDirectionType,
+
+                        KeyboardInputText = x.KeyboardInputText,
+                        KeyboardInputType = x.KeyboardInputType,
+
+                        WindowWidth = x.WindowWidth,
+                        WindowHeight = x.WindowHeight,
+
+                        ImageSearchMode = x.ImageSearchMode,
+                        TemplateCount = x.FlowStepImages.Count(),
+                        Thumbnail = x.FlowStepImages
+                            .OrderBy(image => image.OrderNumber)
+                            .Select(image => image.Thumbnail)
+                            .FirstOrDefault(),
+
+                        ConditionText = x.ConditionText,
+                        ConditionType = x.ConditionType,
+
+                        RunCommandShell = x.RunCommandShell,
+                        RunCommandPreset = x.RunCommandPreset,
+                        RunCommand = x.RunCommand,
+
+                        SystemActionType = x.SystemActionType,
+
+                        ChildCount = x.ChildrenFlowSteps.Count(),
+                    },
                 })
                 .ToListAsync(ct);
 
