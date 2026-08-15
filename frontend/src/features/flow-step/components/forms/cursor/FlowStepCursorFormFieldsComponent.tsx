@@ -38,11 +38,6 @@ export default function FlowStepCursorFormFieldsComponent({
   const { control } = useFormContext();
   const flowStepType = useWatch({ control, name: "flowStepType" });
 
-  const showStartPoint =
-    flowStepType === FlowStepTypeEnum.CURSOR_CLICK ||
-    flowStepType === FlowStepTypeEnum.CURSOR_RELOCATE ||
-    flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
-
   return (
     <>
       <FormInputTextComponent
@@ -129,7 +124,8 @@ export default function FlowStepCursorFormFieldsComponent({
       )}
 
       {/* Point pickers */}
-      {showStartPoint && (
+      {(flowStepType === FlowStepTypeEnum.CURSOR_RELOCATE ||
+        flowStepType === FlowStepTypeEnum.CURSOR_DRAG) && (
         <FlowStepCursorLocationFieldsComponent
           title={
             flowStepType === FlowStepTypeEnum.CURSOR_DRAG

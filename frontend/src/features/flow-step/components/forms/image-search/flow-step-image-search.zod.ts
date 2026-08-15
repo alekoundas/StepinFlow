@@ -16,6 +16,8 @@ export const FlowStepImageSearchSchema = z
 
     pollIntervalMilliseconds: z.number().int().min(0).max(2147483647),
     timeoutMilliseconds: z.number().int().min(0).max(2147483647),
+
+    flowStepImages: z.array(z.any()).optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.flowAreaId) {

@@ -45,7 +45,6 @@ export const FlowStepCursorSchema = z
   })
   .superRefine((data, ctx) => {
     const needsStartPoint =
-      data.flowStepType === FlowStepTypeEnum.CURSOR_CLICK ||
       data.flowStepType === FlowStepTypeEnum.CURSOR_RELOCATE ||
       data.flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
 

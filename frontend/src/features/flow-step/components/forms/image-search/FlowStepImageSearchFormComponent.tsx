@@ -60,6 +60,11 @@ export default function FlowStepImageSearchFormComponent({
   const [images, setImages] = useState<FlowStepImageDto[]>(
     defaultValues.flowStepImages ?? [],
   );
+
+  const applyImages = (next: FlowStepImageDto[]) => {
+    setImages(next);
+    form.setValue("flowStepImages", next, { shouldDirty: true });
+  };
   const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
     null,
   );
@@ -129,10 +134,10 @@ export default function FlowStepImageSearchFormComponent({
       captureAppWindow: "",
     });
 
-    setImages((prev) => [
-      ...prev,
+    applyImages([
+      ...images,
       new FlowStepImageDto({
-        name: `Template ${prev.length + 1}`,
+        name: `Template ${images.length + 1}`,
         templateImage: screenshot,
         authoredFrameWidth: frameWidth,
         authoredFrameHeight: frameHeight,
@@ -171,7 +176,7 @@ export default function FlowStepImageSearchFormComponent({
   };
 
   const updateImage = (index: number, image: FlowStepImageDto) =>
-    setImages((prev) => prev.map((x, i) => (i === index ? image : x)));
+    applyImages(images.map((x, i) => (i === index ? image : x)));
 
   const handleTest = async () => {
     setIsTesting(true);
@@ -219,7 +224,7 @@ export default function FlowStepImageSearchFormComponent({
             onSetClickPoint={handleSetClickPoint}
             onChange={updateImage}
             onRemove={(index) =>
-              setImages((prev) => prev.filter((_, i) => i !== index))
+              applyImages(images.filter((_, i) => i !== index))
             }
           />
 
