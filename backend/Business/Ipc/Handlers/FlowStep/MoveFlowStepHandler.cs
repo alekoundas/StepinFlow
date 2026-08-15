@@ -38,6 +38,10 @@ namespace Business.Ipc.Handlers
             if (error != null)
                 return ResultDto<bool>.Failure(error);
 
+            // Computed before anything moves, because it compares the chain before against after.
+            // The preview only warned about these; clearing them is what makes the warning true.
+            List<FlowStepBrokenReferenceDto> brokenReferences = TreeStepMoveHelper.FindBrokenReferences(steps, dto);
+
             int? sourceParentFlowStepId = moved.ParentFlowStepId;
             int? sourceFlowId = moved.FlowId;
             bool parentChanged = sourceParentFlowStepId != dto.TargetParentFlowStepId;
@@ -55,6 +59,8 @@ namespace Business.Ipc.Handlers
                 TreeStepMoveHelper.ApplyOrder(sourceSiblings, moved: null, targetIndex: 0);
             }
 
+            ClearBrokenReferences(steps, brokenReferences);
+
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<bool>.Success(true);
@@ -64,6 +70,29 @@ namespace Business.Ipc.Handlers
         // ================================================================
         // Private methods
         // ================================================================
+
+        /// <summary>
+        /// A cursor step that no longer runs under the search it reads would otherwise keep the
+        /// reference and click wherever that search last matched. Cleared rather than repointed:
+        /// the step now needs a source the user has to choose, and an empty required dropdown says
+        /// so where a silently wrong coordinate would not.
+        /// </summary>
+        private static void ClearBrokenReferences(
+            List<FlowStep> steps,
+            List<FlowStepBrokenReferenceDto> brokenReferences)
+        {
+            foreach (FlowStepBrokenReferenceDto reference in brokenReferences)
+            {
+                FlowStep? step = steps.FirstOrDefault(x => x.Id == reference.FlowStepId);
+                if (step == null)
+                    continue;
+
+                if (reference.IsEndReference)
+                    step.FlowStepReferenceEndId = null;
+                else
+                    step.FlowStepReferenceId = null;
+            }
+        }
 
         private static List<FlowStep> GetSiblings(List<FlowStep> steps, int? parentFlowStepId, int? flowId)
         {

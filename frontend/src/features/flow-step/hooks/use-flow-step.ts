@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
 
 export const flowStepKeys = {
   detail: (id: number) => ["flowStep", "detail", id] as const,
@@ -38,9 +39,17 @@ export function useFlowStepMutations() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
   });
 
+  // A move rewrites more than the step it moved: reparenting clears the search results that
+  // steps below it can no longer reach, so the cached details of the whole flow are suspect.
+  const moveFlowStepMutation = useMutation({
+    mutationFn: (dto: FlowStepMoveDto) => backendApiService.FlowStep.move(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+  });
+
   return {
     createFlowStepMutation,
     updateFlowStepMutation,
     deleteFlowStepMutation,
+    moveFlowStepMutation,
   };
 }

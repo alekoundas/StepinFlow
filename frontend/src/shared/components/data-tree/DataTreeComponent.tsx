@@ -27,6 +27,7 @@ import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templ
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
+import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
 
 interface Props {
   flowId: number;
@@ -44,6 +45,7 @@ export function DataTreeComponent({ flowId }: Props) {
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
   const { openConfirm } = useDialogStore();
+  const { moveFlowStepMutation } = useFlowStepMutations();
 
   // ====================== HELPERS ======================
 
@@ -116,6 +118,17 @@ export function DataTreeComponent({ flowId }: Props) {
     nodesByKeyRef.current = nodesByKey;
   }, [nodesByKey]);
 
+  // Same reason: which rows are open decides which ones have to be reloaded after a branch is
+  // replaced, and reading it from state would put loadTreeChildren back in the dependency churn.
+  const expandedKeysRef = useRef(expandedKeys);
+  useEffect(() => {
+    expandedKeysRef.current = expandedKeys;
+  }, [expandedKeys]);
+
+  // Set below, so loadTreeChildren can recurse into its own expanded children.
+  const loadTreeChildrenRef =
+    useRef<(id: number, isFlow: boolean) => Promise<TreeNodeDto[] | undefined>>(null);
+
   // ====================== LAZY LOADING ======================
   const loadTreeChildren = useCallback(
     async (
@@ -153,6 +166,17 @@ export function DataTreeComponent({ flowId }: Props) {
             response,
           ),
         );
+
+        // Every child here is a fresh node with no children of its own, but expandedKeys still
+        // says the ones that were open are open. PrimeReact would draw them expanded and empty,
+        // and never fire onExpand again because it thinks they already are. Reloading them keeps
+        // what the user had on screen instead of silently emptying it.
+        await Promise.all(
+          response
+            .filter((x) => !x.isNew && !x.leaf && expandedKeysRef.current[x.key])
+            .map((x) => loadTreeChildrenRef.current?.(x.entityId, x.isFlow)),
+        );
+
         return response;
       } catch (err) {
         console.error(err);
@@ -163,6 +187,10 @@ export function DataTreeComponent({ flowId }: Props) {
     },
     [getNewChild],
   );
+
+  useEffect(() => {
+    loadTreeChildrenRef.current = loadTreeChildren;
+  }, [loadTreeChildren]);
 
   useEffect(() => {
     backendApiService.Flow.getTreeNodes(flowId).then((response) =>
@@ -258,12 +286,15 @@ export function DataTreeComponent({ flowId }: Props) {
         hideConfirm: !preview.isValid,
         children: <TreeMoveConfirmContentComponent preview={preview} />,
         onConfirm: async () => {
-          await backendApiService.FlowStep.move(move);
+          // Through the mutation, not the api service: a move clears the search results that
+          // steps below it can no longer reach, so every cached step detail is now suspect and
+          // the form would otherwise keep showing the reference the backend just removed.
+          await moveFlowStepMutation.mutateAsync(move);
           await reloadAfterMove(move, dragged);
         },
       });
     },
-    [openConfirm, reloadAfterMove],
+    [openConfirm, reloadAfterMove, moveFlowStepMutation],
   );
 
   const { draggedKey, dropTarget, isDragging, getRowDragProps } =

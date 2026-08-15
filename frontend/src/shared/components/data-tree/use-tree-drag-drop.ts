@@ -111,6 +111,16 @@ export function useTreeDragDrop({ data, flowId, onSpringLoad, onDrop }: Props) {
       if (position !== "inside" && target.isFlow)
         return refuse("Steps go inside the flow");
 
+      // Before / after lands the step in the target's parent, so that parent has to be able to
+      // hold steps. Without this, dropping beside Success or Failure would make the branching
+      // step itself the parent, which it can never be.
+      if (position !== "inside") {
+        const parent = index.get(target.key)?.parent ?? null;
+
+        if (parent && !parent.isFlow && !parent.droppable)
+          return refuse(`${parent.name} holds steps in its branches, not directly`);
+      }
+
       // Walk up from the target: dropping into your own subtree detaches it.
       let cursor: TreeNodeDto | null = target;
       while (cursor) {

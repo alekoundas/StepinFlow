@@ -1,3 +1,4 @@
+using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -33,6 +34,12 @@ namespace Business.Helpers
                 FlowStep? targetParent = steps.FirstOrDefault(x => x.Id == dto.TargetParentFlowStepId);
                 if (targetParent == null)
                     return "The destination step no longer exists.";
+
+                // A branching step owns Success and Failure and nothing else, so a drop beside one
+                // of those branches has to be refused here too: the tree is only one of the ways a
+                // move can arrive.
+                if (!TreeStepHelper.CanContainChildren(targetParent.FlowStepType))
+                    return $"\"{targetParent.Name}\" holds steps in its branches, not directly.";
 
                 // The cycle case: dropping a step inside its own subtree would detach that subtree
                 // from the tree entirely.
