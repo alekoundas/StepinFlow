@@ -23,19 +23,32 @@ namespace Business.Services.MatchService
                 return [];
 
             using Mat haystack = ToGrayMat(request.Haystack);
-            using Mat template = Cv2.ImDecode(request.TemplateImage, ImreadModes.Grayscale);
 
-            if (haystack.Empty() || template.Empty())
+            // Unchanged, not Grayscale: the editor's eraser leaves transparent pixels, and
+            // decoding without alpha turns every erased pixel into a solid black block the screen
+            // can never match. Erasing would make a template harder to find, not easier.
+            using Mat decoded = Cv2.ImDecode(request.TemplateImage, ImreadModes.Unchanged);
+
+            if (haystack.Empty() || decoded.Empty())
                 return [];
 
-            List<TemplateMatch> matches = MatchAtScale(haystack, template, request, request.ScaleRatio);
+            using Mat template = ToGrayTemplate(decoded);
+            using Mat? mask = ToMask(decoded);
+
+            // OpenCV only accepts a mask for the SqDiff and CCorrNormed families, so an erased
+            // template is matched with the closest mode that supports one.
+            TemplateMatchModes mode = mask == null
+                ? ToTemplateMatchModes(request.Mode)
+                : ToMaskableMatchModes(request.Mode);
+
+            List<TemplateMatch> matches = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
             if (matches.Count > 0 || !request.AllowMultiScale)
                 return matches;
 
             // Nothing at the expected size. Sweep around it before giving up.
             foreach (float scale in ScaleSweep(request))
             {
-                matches = MatchAtScale(haystack, template, request, scale);
+                matches = MatchAtScale(haystack, template, mask, request, mode, scale);
                 if (matches.Count > 0)
                     return matches;
             }
@@ -51,7 +64,9 @@ namespace Business.Services.MatchService
         private static List<TemplateMatch> MatchAtScale(
             Mat haystack,
             Mat template,
+            Mat? mask,
             TemplateMatchRequest request,
+            TemplateMatchModes mode,
             float scale)
         {
             int width = (int)MathF.Round(template.Width * scale);
@@ -61,9 +76,11 @@ namespace Business.Services.MatchService
                 return [];
 
             Mat? scaled = null;
+            Mat? scaledMask = null;
             try
             {
                 Mat needle = template;
+                Mat? needleMask = mask;
 
                 if (width != template.Width || height != template.Height)
                 {
@@ -75,16 +92,30 @@ namespace Business.Services.MatchService
                         new Size(width, height),
                         interpolation: scale < 1f ? InterpolationFlags.Area : InterpolationFlags.Linear);
                     needle = scaled;
+
+                    if (mask != null)
+                    {
+                        // Nearest, not Area: OpenCV treats any non zero as fully included, so
+                        // blending the edges would only widen the kept region.
+                        scaledMask = new Mat();
+                        Cv2.Resize(mask, scaledMask, new Size(width, height), interpolation: InterpolationFlags.Nearest);
+                        needleMask = scaledMask;
+                    }
                 }
 
                 using Mat result = new Mat();
-                Cv2.MatchTemplate(haystack, needle, result, ToTemplateMatchModes(request.Mode));
 
-                return Collect(result, request, width, height, scale);
+                if (needleMask == null)
+                    Cv2.MatchTemplate(haystack, needle, result, mode);
+                else
+                    Cv2.MatchTemplate(haystack, needle, result, mode, needleMask);
+
+                return Collect(result, request, mode, width, height, scale);
             }
             finally
             {
                 scaled?.Dispose();
+                scaledMask?.Dispose();
             }
         }
 
@@ -95,11 +126,14 @@ namespace Business.Services.MatchService
         private static List<TemplateMatch> Collect(
             Mat result,
             TemplateMatchRequest request,
+            TemplateMatchModes mode,
             int width,
             int height,
             float scale)
         {
-            bool lowerIsBetter = IsLowerBetter(request.Mode);
+            // The mode actually used, which is not always the one asked for: a masked template
+            // may have been moved onto a mask capable mode.
+            bool lowerIsBetter = mode == TemplateMatchModes.SqDiff || mode == TemplateMatchModes.SqDiffNormed;
             List<TemplateMatch> matches = new List<TemplateMatch>();
 
             using Mat working = result.Clone();
@@ -154,8 +188,34 @@ namespace Business.Services.MatchService
             return gray;
         }
 
-        private static bool IsLowerBetter(TemplateMatchModeEnum mode) =>
-            mode == TemplateMatchModeEnum.SqDiff || mode == TemplateMatchModeEnum.SqDiffNormed;
+        /// <summary>Grayscale for matching, whatever the source had.</summary>
+        private static Mat ToGrayTemplate(Mat decoded) => decoded.Channels() switch
+        {
+            4 => decoded.CvtColor(ColorConversionCodes.BGRA2GRAY),
+            3 => decoded.CvtColor(ColorConversionCodes.BGR2GRAY),
+            _ => decoded.Clone(),
+        };
+
+        /// <summary>
+        /// The alpha channel, which is what the eraser writes. Null when the template is fully
+        /// opaque, so an untouched template takes the plain unmasked path it always did.
+        /// </summary>
+        private static Mat? ToMask(Mat decoded)
+        {
+            if (decoded.Channels() != 4)
+                return null;
+
+            Mat alpha = decoded.ExtractChannel(3);
+            alpha.MinMaxLoc(out double minValue, out _);
+
+            if (minValue >= 255d)
+            {
+                alpha.Dispose();
+                return null;
+            }
+
+            return alpha;
+        }
 
         private static TemplateMatchModes ToTemplateMatchModes(TemplateMatchModeEnum mode) => mode switch
         {
@@ -165,6 +225,18 @@ namespace Business.Services.MatchService
             TemplateMatchModeEnum.CCorrNormed => TemplateMatchModes.CCorrNormed,
             TemplateMatchModeEnum.CCoeff => TemplateMatchModes.CCoeff,
             _ => TemplateMatchModes.CCoeffNormed,
+        };
+
+        /// <summary>
+        /// The nearest mode that accepts a mask. The CCoeff family does not, so a template with
+        /// erased areas is matched with CCorrNormed instead: keeping CCoeff would mean ignoring
+        /// the mask and comparing the screen against a block of black.
+        /// </summary>
+        private static TemplateMatchModes ToMaskableMatchModes(TemplateMatchModeEnum mode) => mode switch
+        {
+            TemplateMatchModeEnum.SqDiff => TemplateMatchModes.SqDiff,
+            TemplateMatchModeEnum.SqDiffNormed => TemplateMatchModes.SqDiffNormed,
+            _ => TemplateMatchModes.CCorrNormed,
         };
     }
 }

@@ -51,6 +51,10 @@ namespace Business.Ipc.Handlers
                 SearchAreaY = area.Bounds.Y,
                 SearchAreaWidth = area.Bounds.Width,
                 SearchAreaHeight = area.Bounds.Height,
+
+                // The haystack itself, not a second capture: anything that moved in between would
+                // put the boxes over the wrong pixels, and the picture would be believed.
+                Screenshot = _screenshotService.Encode(haystack, ScreenshotFormatEnum.JPEG, 80),
             };
 
             foreach (FlowStepImageDto image in step.FlowStepImages)
@@ -76,6 +80,19 @@ namespace Business.Ipc.Handlers
 
                 imageResult.MatchCount = matches.Count;
                 imageResult.IsFound = matches.Count > 0;
+
+                // Every hit, in area relative coordinates, so the details view can draw them.
+                imageResult.Matches = matches.Select(match => new ImageSearchTestMatchDto
+                {
+                    X = match.X,
+                    Y = match.Y,
+                    Width = match.Width,
+                    Height = match.Height,
+                    Score = match.Score,
+                    Scale = match.Scale,
+                    ClickX = match.X + (int)MathF.Round(image.ClickOffsetX * match.Scale),
+                    ClickY = match.Y + (int)MathF.Round(image.ClickOffsetY * match.Scale),
+                }).ToList();
 
                 if (matches.Count > 0)
                 {

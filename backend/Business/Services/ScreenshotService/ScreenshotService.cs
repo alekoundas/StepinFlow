@@ -182,6 +182,14 @@ namespace Business.Services.ScreenshotService
         /// Pixels with no encode step, for the matcher. LockBits hands back the buffer the bitmap
         /// already owns, so this is one screen copy and one memcpy.
         /// </summary>
+        public byte[] Encode(RawImage image, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
+        {
+            if (image.IsEmpty)
+                return [];
+
+            return Compress(Pack(image), image.Width, image.Height, screenshotFormat, jpegQuality);
+        }
+
         public RawImage CaptureRaw(Rectangle rect)
         {
             if (rect.Width <= 0 || rect.Height <= 0)
@@ -255,6 +263,20 @@ namespace Business.Services.ScreenshotService
             }
 
             return ms.ToArray();
+        }
+
+        /// <summary>A capture row can be padded, and the bitmap wrapper below expects rows back to back.</summary>
+        private static byte[] Pack(RawImage image)
+        {
+            int rowBytes = image.Width * 4;
+            if (image.Stride == rowBytes)
+                return image.Pixels;
+
+            byte[] packed = new byte[rowBytes * image.Height];
+            for (int row = 0; row < image.Height; row++)
+                Buffer.BlockCopy(image.Pixels, row * image.Stride, packed, row * rowBytes, rowBytes);
+
+            return packed;
         }
 
         private static byte[] Compress(byte[] bgra, int width, int height, ScreenshotFormatEnum format, int jpegQuality)

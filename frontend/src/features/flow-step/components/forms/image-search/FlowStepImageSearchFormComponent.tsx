@@ -21,9 +21,13 @@ import {
   isImageEditorPoint,
   useWindowImageEditor,
 } from "@/windows/image-editor/hooks/use-window-image-editor";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
 import FlowStepImageSearchFormFieldsComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormFieldsComponent";
 import { FlowStepImageListComponent } from "@/features/flow-step/components/forms/image-search/FlowStepImageListComponent";
+import FlowStepImageSearchTestDialogComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchTestDialogComponent";
+
+const TEST_DETAILS_ID = "image-search-test-details";
 
 interface Props {
   formMode: FormMode;
@@ -56,11 +60,29 @@ export default function FlowStepImageSearchFormComponent({
   const [images, setImages] = useState<FlowStepImageDto[]>(
     defaultValues.flowStepImages ?? [],
   );
-  const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(null);
+  const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
+    null,
+  );
   const [isTesting, setIsTesting] = useState(false);
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
   const { openImageEditor } = useWindowImageEditor();
+  const { openConfirm, close } = useDialogStore();
+
+  // Passed by value: the dialog store keeps elements, so a result read from the closure later
+  // would be whatever it was at open time anyway.
+  const openTestDetails = () => {
+    if (!testResult) return;
+
+    openConfirm(TEST_DETAILS_ID, {
+      headerText: "What the search found",
+      hideConfirm: true,
+      cancelLabel: "Close",
+      width: "min(60rem, 90vw)",
+      children: <FlowStepImageSearchTestDialogComponent result={testResult} />,
+      onConfirm: () => close(TEST_DETAILS_ID),
+    });
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,7 +147,10 @@ export default function FlowStepImageSearchFormComponent({
     const edited = await openImageEditor(image.templateImage);
     if (typeof edited !== "string") return;
 
-    updateImage(index, new FlowStepImageDto({ ...image, templateImage: edited }));
+    updateImage(
+      index,
+      new FlowStepImageDto({ ...image, templateImage: edited }),
+    );
   };
 
   const handleSetClickPoint = async (index: number) => {
@@ -151,7 +176,9 @@ export default function FlowStepImageSearchFormComponent({
   const handleTest = async () => {
     setIsTesting(true);
     try {
-      setTestResult(await backendApiService.FlowStep.testImageSearch(buildDto()));
+      setTestResult(
+        await backendApiService.FlowStep.testImageSearch(buildDto()),
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -209,11 +236,25 @@ export default function FlowStepImageSearchFormComponent({
               tooltipOptions={{ position: "top" }}
             />
 
+            <Button
+              type="button"
+              label="Details"
+              icon="pi pi-image"
+              disabled={!testResult?.isResolved}
+              onClick={openTestDetails}
+              className="p-button-outlined p-button-secondary"
+              tooltip="See what matched, and where it would click"
+              tooltipOptions={{ position: "top" }}
+            />
+
             {testResult && !testResult.isResolved && (
               <Message
                 severity="error"
                 className="flex-1 justify-content-start"
-                text={testResult.errorMessage ?? "Could not resolve the search area."}
+                text={
+                  testResult.errorMessage ??
+                  "Could not resolve the search area."
+                }
               />
             )}
 

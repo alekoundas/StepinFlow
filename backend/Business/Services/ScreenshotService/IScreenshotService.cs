@@ -11,6 +11,13 @@ namespace Business.Services.ScreenshotService
 
         /// <summary>Uncompressed BGRA for the matcher. No JPEG in the hot path.</summary>
         RawImage CaptureRaw(Rectangle rect);
+
+        /// <summary>
+        /// Encodes pixels that were already captured. Lets a caller show the very frame it
+        /// matched against: capturing a second time for display would put the boxes over
+        /// whatever moved in between.
+        /// </summary>
+        byte[] Encode(RawImage image, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
         byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
         /// <summary>Bounds come from IAreaPointResolver, so nesting is already applied.</summary>

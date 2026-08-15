@@ -14,6 +14,9 @@ export interface IDialogConfirmComponentProps {
   /** Leaves only the dismiss button, for when the answer is "you cannot do this". */
   hideConfirm?: boolean;
 
+  /** Wider than a question needs, for bodies that show something rather than ask something. */
+  width?: string;
+
   onConfirm?: () => void | Promise<void>;
   onClose?: () => void; // injected by DialogRootComponent
 }
@@ -32,6 +35,7 @@ export function DialogConfirmComponent({
   confirmSeverity,
   cancelLabel = "Cancel",
   hideConfirm = false,
+  width = "34rem",
   onConfirm,
   onClose,
 }: IDialogConfirmComponentProps) {
@@ -53,7 +57,7 @@ export function DialogConfirmComponent({
       visible={true}
       modal
       onHide={() => (isBusy ? undefined : onClose?.())}
-      style={{ width: "34rem" }}
+      style={{ width }}
       footer={
         <div className="flex justify-content-end gap-3">
           <Button
