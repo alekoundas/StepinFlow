@@ -3,12 +3,14 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
-import { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { IMAGE_SEARCH_MODES } from "@/features/flow-step/components/forms/image-search/image-search-modes";
+import {
+  isWaitingMode,
+  SEARCH_MODES,
+} from "@/features/flow-step/components/forms/image-search/search-modes";
 import FlowStepResultFieldsComponent from "@/features/flow-step/components/forms/shared/FlowStepResultFieldsComponent";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
 import {
@@ -39,9 +41,10 @@ export default function FlowStepTextSearchFormFieldsComponent({
   isDisabled = false,
 }: Props) {
   const { control } = useFormContext();
-  const mode = useWatch({ control, name: "imageSearchMode" });
+  const mode = useWatch({ control, name: "searchMode" });
 
-  const isWaiting = mode !== ImageSearchModeEnum.FIND_ONCE;
+  const isWaiting = isWaitingMode(mode);
+  const isFindAll = mode === SearchModeEnum.FIND_ALL;
 
   const matchOptions: EnumOption[] = TEXT_SEARCH_CONDITION_TYPES.map((value) => ({
     label: MATCH_OPTIONS[value],
@@ -59,15 +62,15 @@ export default function FlowStepTextSearchFormFieldsComponent({
       />
 
       <FormSelectButtonComponent
-        fieldName="imageSearchMode"
+        fieldName="searchMode"
         labelText="Mode"
-        options={IMAGE_SEARCH_MODES.map((x) => ({
+        options={SEARCH_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={IMAGE_SEARCH_MODES.find((x) => x.value === mode)?.description}
+        hintText={SEARCH_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent
@@ -131,11 +134,17 @@ export default function FlowStepTextSearchFormFieldsComponent({
         </div>
       )}
 
-      <FormInputCheckboxComponent
-        fieldName="loopOnMultipleFindings"
-        label="Run the Success children once per match"
-        isDisabled={isDisabled}
-      />
+      {isFindAll && (
+        <FormInputNumberComponent
+          fieldName="maxMatches"
+          label="Stop after"
+          min={1}
+          max={2147483647}
+          isRequired={true}
+          isDisabled={isDisabled}
+          hintText="Safety cap, so a loose threshold cannot fire hundreds of times."
+        />
+      )}
 
       <FlowStepResultFieldsComponent
         resultDescription="Holds the text that was read."

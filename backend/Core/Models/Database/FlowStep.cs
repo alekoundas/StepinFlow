@@ -20,10 +20,7 @@ namespace Core.Models.Database
 
 
         // IMAGE_SEARCH, TEXT_SEARCH
-        public ImageSearchModeEnum ImageSearchMode { get; set; }
-
-        /// <summary>Run the Success children once per match instead of once for the best match.</summary>
-        public bool LoopOnMultipleFindings { get; set; }
+        public SearchModeEnum SearchMode { get; set; }
 
         // Defaults for the step's templates, each of which may override them.
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;

@@ -1,5 +1,5 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import type { TreeNodeDetailDto, TreeNodeDto } from "@/shared/models/tree-node-dto";
 
@@ -40,8 +40,8 @@ const pointName = (
       : "no source";
 
 const searchChips = (detail: TreeNodeDetailDto): TreeNodeChip[] =>
-  detail.imageSearchMode && detail.imageSearchMode !== ImageSearchModeEnum.FIND_ONCE
-    ? [{ text: readable(detail.imageSearchMode), isMuted: true }]
+  detail.searchMode && detail.searchMode !== SearchModeEnum.FIND_BEST
+    ? [{ text: readable(detail.searchMode), isMuted: true }]
     : [];
 
 /**

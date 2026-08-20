@@ -24,7 +24,7 @@ namespace DataAccess.Configurations
             builder.Property(x => x.CursorButtonActionType).HasConversion<string>();
             builder.Property(x => x.CursorScrollDirectionType).HasConversion<string>();
             builder.Property(x => x.KeyboardInputType).HasConversion<string>();
-            builder.Property(x => x.ImageSearchMode).HasConversion<string>();
+            builder.Property(x => x.SearchMode).HasConversion<string>();
             builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
             builder.Property(x => x.RunCommandShell).HasConversion<string>();
             builder.Property(x => x.RunCommandPreset).HasConversion<string>();

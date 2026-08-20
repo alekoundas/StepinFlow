@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 
 // Matching a whole block of read text against nothing is not a search, so only these make sense.
 export const TEXT_SEARCH_CONDITION_TYPES = [
@@ -19,10 +19,10 @@ export const FlowStepTextSearchSchema = z
     conditionText: z.string(),
     conditionType: z.enum(TEXT_SEARCH_CONDITION_TYPES),
 
-    imageSearchMode: z.enum(ImageSearchModeEnum),
+    searchMode: z.enum(SearchModeEnum),
+    maxMatches: z.number().int().min(1).max(2147483647),
     pollIntervalMilliseconds: z.number().int().min(50),
     timeoutMilliseconds: z.number().int().min(0),
-    loopOnMultipleFindings: z.boolean(),
 
     resultVariableName: z
       .string()

@@ -6,7 +6,7 @@ import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
-import type { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import type { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 
@@ -39,8 +39,7 @@ export class FlowStepDto {
   isLoopInfinite: boolean = false;
 
   // IMAGE_SEARCH, TEXT_SEARCH
-  imageSearchMode: ImageSearchModeEnum = "FIND_ONCE";
-  loopOnMultipleFindings: boolean = false;
+  searchMode: SearchModeEnum = "FIND_BEST";
   templateMatchMode: TemplateMatchModeEnum = "CCoeffNormed";
   accuracy: number = 0.8;
   maxMatches: number = 20;

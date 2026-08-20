@@ -30,8 +30,8 @@ namespace Core.Models.Dtos
 
 
         // IMAGE_SEARCH, TEXT_SEARCH
-        public ImageSearchModeEnum ImageSearchMode { get; set; }
-        public bool LoopOnMultipleFindings { get; set; }
+        public SearchModeEnum SearchMode { get; set; }
+
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
         public float Accuracy { get; set; } = 0.8f;
         public int MaxMatches { get; set; } = 20;

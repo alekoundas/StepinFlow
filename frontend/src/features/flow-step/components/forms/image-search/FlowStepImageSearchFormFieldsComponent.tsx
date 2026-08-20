@@ -6,14 +6,16 @@ import { Message } from "primereact/message";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
-import { IMAGE_SEARCH_MODES } from "@/features/flow-step/components/forms/image-search/image-search-modes";
+import {
+  isWaitingMode,
+  SEARCH_MODES,
+} from "@/features/flow-step/components/forms/image-search/search-modes";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
 
 type ImageSearchForm = z.infer<typeof FlowStepImageSearchSchema>;
@@ -36,16 +38,14 @@ export default function FlowStepImageSearchFormFieldsComponent({
 }: Props) {
   const { control, setValue } = useFormContext();
 
-  const mode = useWatch({ control, name: "imageSearchMode" });
+  const mode = useWatch({ control, name: "searchMode" });
   const accuracy = useWatch({ control, name: "accuracy" });
-  const loopOnMultipleFindings = useWatch({
-    control,
-    name: "loopOnMultipleFindings",
-  });
   const timeout = useWatch({ control, name: "timeoutMilliseconds" });
   const pollInterval = useWatch({ control, name: "pollIntervalMilliseconds" });
+  const maxMatches = useWatch({ control, name: "maxMatches" });
 
-  const isWaiting = mode !== ImageSearchModeEnum.FIND_ONCE;
+  const isWaiting = isWaitingMode(mode);
+  const isFindAll = mode === SearchModeEnum.FIND_ALL;
 
   // The semantics are fiddly enough that spelling them out beats another tooltip.
   const summary = () => {
@@ -56,20 +56,20 @@ export default function FlowStepImageSearchFormFieldsComponent({
           ? "1 template"
           : `${templateCount} templates`;
 
-    if (mode === ImageSearchModeEnum.WAIT_UNTIL_GONE) {
+    if (mode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND) {
       return `Waits until ${what} is no longer on screen, checking every ${pollInterval}ms${
         timeout > 0 ? ` for up to ${timeout}ms` : " for as long as it takes"
       }. Then runs the Success steps once. If it is still there when time runs out, runs the Failure steps.`;
     }
 
-    if (mode === ImageSearchModeEnum.WAIT_UNTIL_FOUND) {
+    if (mode === SearchModeEnum.WAIT_UNTIL_FOUND) {
       return `Waits for ${what} to appear, checking every ${pollInterval}ms${
         timeout > 0 ? ` for up to ${timeout}ms` : " for as long as it takes"
       }. On the first match, runs the Success steps once. If nothing appears in time, runs the Failure steps.`;
     }
 
-    return loopOnMultipleFindings
-      ? `Looks for ${what} once and runs the Success steps for every match found. If nothing matches, runs the Failure steps.`
+    return isFindAll
+      ? `Looks for ${what} once and runs the Success steps for every match found, up to ${maxMatches}. If nothing matches, runs the Failure steps.`
       : `Looks for ${what} once and runs the Success steps for the best match. If nothing matches, runs the Failure steps.`;
   };
 
@@ -84,15 +84,15 @@ export default function FlowStepImageSearchFormFieldsComponent({
       />
 
       <FormSelectButtonComponent
-        fieldName="imageSearchMode"
+        fieldName="searchMode"
         labelText="Mode"
-        options={IMAGE_SEARCH_MODES.map((x) => ({
+        options={SEARCH_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isDisabled={isDisabled}
         isRequired={true}
-        hintText={IMAGE_SEARCH_MODES.find((x) => x.value === mode)?.description}
+        hintText={SEARCH_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent
@@ -101,6 +101,18 @@ export default function FlowStepImageSearchFormFieldsComponent({
         hintText="A smaller area is the single biggest thing that makes the search fast."
         isDisabled={isDisabled}
       />
+
+      {isFindAll && (
+        <FormInputNumberComponent
+          fieldName="maxMatches"
+          label="Stop after"
+          min={1}
+          max={2147483647}
+          isRequired={true}
+          isDisabled={isDisabled}
+          hintText="Safety cap, so a loose threshold cannot fire hundreds of times."
+        />
+      )}
 
       {isWaiting && (
         <div className="flex gap-3">
@@ -171,26 +183,6 @@ export default function FlowStepImageSearchFormFieldsComponent({
           hintText="The normalized modes are the ones where the accuracy number means something."
         />
 
-        {!isWaiting && (
-          <>
-            <FormInputCheckboxComponent
-              fieldName="loopOnMultipleFindings"
-              label="Run the Success steps once per match"
-              isDisabled={isDisabled}
-            />
-
-            {loopOnMultipleFindings && (
-              <FormInputNumberComponent
-                fieldName="maxMatches"
-                label="Stop after"
-                min={1}
-                max={2147483647}
-                isDisabled={isDisabled}
-                hintText="Safety cap, so a loose threshold cannot fire hundreds of times."
-              />
-            )}
-          </>
-        )}
       </Panel>
 
       <Message

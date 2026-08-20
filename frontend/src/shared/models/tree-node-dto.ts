@@ -1,6 +1,6 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import type { ImageSearchModeEnum } from "@/shared/enums/backend/image-search-mode-enum";
+import type { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
@@ -35,7 +35,7 @@ export interface TreeNodeDetailDto {
   windowWidth: number;
   windowHeight: number;
 
-  imageSearchMode?: ImageSearchModeEnum | null;
+  searchMode?: SearchModeEnum | null;
   templateCount: number;
   // Small PNG, arrives as base64.
   thumbnail?: string | null;

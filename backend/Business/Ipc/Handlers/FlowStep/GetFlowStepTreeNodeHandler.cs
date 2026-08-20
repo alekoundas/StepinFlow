@@ -74,7 +74,7 @@ namespace Business.Ipc.Handlers
                         WindowWidth = x.WindowWidth,
                         WindowHeight = x.WindowHeight,
 
-                        ImageSearchMode = x.ImageSearchMode,
+                        SearchMode = x.SearchMode,
                         TemplateCount = x.FlowStepImages.Count(),
                         Thumbnail = x.FlowStepImages
                             .OrderBy(image => image.OrderNumber)

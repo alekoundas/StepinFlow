@@ -41,7 +41,7 @@ namespace Core.Models.Dtos
         public int WindowHeight { get; set; }
 
         // IMAGE_SEARCH, TEXT_SEARCH
-        public ImageSearchModeEnum? ImageSearchMode { get; set; }
+        public SearchModeEnum? SearchMode { get; set; }
         public int TemplateCount { get; set; }
 
         /// <summary>First template only. A row shows one image and a count, never a gallery.</summary>
