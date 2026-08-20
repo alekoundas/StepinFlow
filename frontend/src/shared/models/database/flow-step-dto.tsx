@@ -38,7 +38,7 @@ export class FlowStepDto {
   loopCount: number = 0;
   isLoopInfinite: boolean = false;
 
-  // IMAGE_SEARCH, TEXT_SEARCH
+  // IMAGE_SEARCH, READ_TEXT
   searchMode: SearchModeEnum = "FIND_BEST";
   templateMatchMode: TemplateMatchModeEnum = "CCoeffNormed";
   accuracy: number = 0.8;
@@ -58,15 +58,15 @@ export class FlowStepDto {
   // SYSTEM_ACTION
   systemActionType: SystemActionTypeEnum = "LOCK_WORKSTATION";
 
-  // SYSTEM_COMMAND, TEXT_SEARCH
-  resultVariableName: string = "";
+  // SYSTEM_COMMAND, READ_TEXT
   resultExtractPattern: string = "";
 
-  // TEXT_SEARCH
+  // READ_TEXT
   ocrLanguage: string = "";
 
-  // VARIABLE_CONDITION, TEXT_SEARCH (the text being looked for)
+  // CHECK_VALUE, READ_TEXT (the text being looked for)
   conditionText: string = "";
+  conditionTextEnd: string = "";
   conditionType?: ConditionTypeEnum;
 
   // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
@@ -82,7 +82,7 @@ export class FlowStepDto {
   //
   // Point source per point:
   //   isPointCustom = true  -> flowPointId       (reusable named point on the Flow)
-  //   isPointCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
+  //   isPointCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / READ_TEXT)
   isPointCustom: boolean = false;
   isPointEndCustom: boolean = false;
   cursorButtonType?: CursorButtonTypeEnum;

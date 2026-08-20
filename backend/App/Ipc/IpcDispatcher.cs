@@ -54,7 +54,7 @@ namespace App.Ipc
                     "FlowStep.move" => await _mediator.Send(new MoveFlowStepCommand(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testImageSearch" => await _mediator.Send(new TestImageSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testRunCommand" => await _mediator.Send(new TestRunCommandQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.testTextSearch" => await _mediator.Send(new TestTextSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.testReadText" => await _mediator.Send(new TestReadTextQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowArea
                     "FlowArea.create" => await _mediator.Send(new CreateFlowAreaCommand(JsonSerializer.Deserialize<FlowAreaDto>(request.Payload, _jsonOptions)!), ct),
@@ -88,11 +88,14 @@ namespace App.Ipc
                     "Lookup.flowPoint" => await _mediator.Send(new GetLookupFlowPointQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
+                    "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),
 
                     // System IO
                     "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "System.captureForOverlay" => await _mediator.Send(new SystemCaptureForOverlayCommand(), ct),
                     "System.moveCursor" => await _mediator.Send(new SystemMoveCursorCommand(JsonSerializer.Deserialize<ScreenPointDto>(request.Payload, _jsonOptions)!), ct),
+                    "System.installOcrLanguage" => await _mediator.Send(new SystemInstallOcrLanguageCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
+                    "System.openWindowsLanguageSettings" => await _mediator.Send(new SystemOpenWindowsLanguageSettingsCommand(), ct),
 
                     "System.inputRecordAllStart" => await _mediator.Send(new SystemInputRecordAllStartCommand(), ct),
                     "System.inputRecordAllStop" => await _mediator.Send(new SystemInputRecordAllStopCommand(), ct),

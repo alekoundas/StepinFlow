@@ -2,13 +2,13 @@ import { Tag } from "primereact/tag";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
+import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
 
 interface Props {
-  result: TextSearchTestResultDto;
+  result: ReadTextTestResultDto;
 }
 
-export default function FlowStepTextSearchTestPanelComponent({ result }: Props) {
+export default function FlowStepReadTextTestPanelComponent({ result }: Props) {
   if (!result.isResolved) {
     return (
       <Panel

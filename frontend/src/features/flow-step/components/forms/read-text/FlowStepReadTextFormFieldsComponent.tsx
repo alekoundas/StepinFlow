@@ -5,22 +5,22 @@ import { FormInputTextComponent } from "@/shared/components/form/FormInputTextCo
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
-import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
-import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
+import {
+  conditionOptions,
+  READ_TEXT_CONDITION_TYPES,
+} from "@/features/flow-step/components/forms/shared/condition-types";
 import {
   isWaitingMode,
-  SEARCH_MODES,
-} from "@/features/flow-step/components/forms/image-search/search-modes";
-import FlowStepResultFieldsComponent from "@/features/flow-step/components/forms/shared/FlowStepResultFieldsComponent";
+  READ_TEXT_MODES,
+} from "@/features/flow-step/components/forms/shared/search-modes";
+import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
-import {
-  FlowStepTextSearchSchema,
-  TEXT_SEARCH_CONDITION_TYPES,
-} from "@/features/flow-step/components/forms/text-search/flow-step-text-search.zod";
+import { FlowStepReadTextSchema } from "@/features/flow-step/components/forms/read-text/flow-step-read-text.zod";
+import { useOcrLanguages } from "@/features/settings/hooks/use-ocr-languages";
 
-type TextSearchForm = z.infer<typeof FlowStepTextSearchSchema>;
+type ReadTextForm = z.infer<typeof FlowStepReadTextSchema>;
 
-interface EnumOption {
+interface Option {
   label: string;
   value: string;
 }
@@ -30,26 +30,21 @@ interface Props {
   isDisabled?: boolean;
 }
 
-const MATCH_OPTIONS: Record<(typeof TEXT_SEARCH_CONDITION_TYPES)[number], string> = {
-  [ConditionTypeEnum.CONTAINS]: "Contains",
-  [ConditionTypeEnum.EQUALS]: "Is exactly",
-  [ConditionTypeEnum.MATCHES_REGEX]: "Matches pattern",
-};
-
-export default function FlowStepTextSearchFormFieldsComponent({
+export default function FlowStepReadTextFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
   const { control } = useFormContext();
   const mode = useWatch({ control, name: "searchMode" });
+  const { data: languages = [] } = useOcrLanguages();
 
   const isWaiting = isWaitingMode(mode);
-  const isFindAll = mode === SearchModeEnum.FIND_ALL;
 
-  const matchOptions: EnumOption[] = TEXT_SEARCH_CONDITION_TYPES.map((value) => ({
-    label: MATCH_OPTIONS[value],
-    value,
-  }));
+  // Only an installed pack can be read, so an uninstalled one is not offered here. Settings is
+  // where that gets fixed.
+  const languageOptions: Option[] = languages
+    .filter((x) => x.isInstalled)
+    .map((x) => ({ label: x.displayName, value: x.tag }));
 
   return (
     <>
@@ -64,13 +59,13 @@ export default function FlowStepTextSearchFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={SEARCH_MODES.map((x) => ({
+        options={READ_TEXT_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={SEARCH_MODES.find((x) => x.value === mode)?.description}
+        hintText={READ_TEXT_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent
@@ -81,11 +76,11 @@ export default function FlowStepTextSearchFormFieldsComponent({
       />
 
       <div className="flex gap-3">
-        <FormDropdownComponent<TextSearchForm, EnumOption>
+        <FormDropdownComponent<ReadTextForm, Option>
           fieldName="conditionType"
           labelText="Match"
           mode="local"
-          options={matchOptions}
+          options={conditionOptions(READ_TEXT_CONDITION_TYPES)}
           optionLabel="label"
           optionValue="value"
           isRequired={true}
@@ -102,13 +97,17 @@ export default function FlowStepTextSearchFormFieldsComponent({
         />
       </div>
 
-      <FormInputTextComponent
+      <FormDropdownComponent<ReadTextForm, Option>
         fieldName="ocrLanguage"
-        label="Language"
-        placeholderText="en-US"
+        labelText="Language"
+        mode="local"
+        options={languageOptions}
+        optionLabel="label"
+        optionValue="value"
+        placeholderText="Select a language..."
         isRequired={true}
         isDisabled={isDisabled}
-        hintText="Windows reads text with the language packs it has installed."
+        hintText="Windows reads text with the language packs it has installed. Add more in Settings."
       />
 
       {isWaiting && (
@@ -134,20 +133,8 @@ export default function FlowStepTextSearchFormFieldsComponent({
         </div>
       )}
 
-      {isFindAll && (
-        <FormInputNumberComponent
-          fieldName="maxMatches"
-          label="Stop after"
-          min={1}
-          max={2147483647}
-          isRequired={true}
-          isDisabled={isDisabled}
-          hintText="Safety cap, so a loose threshold cannot fire hundreds of times."
-        />
-      )}
-
-      <FlowStepResultFieldsComponent
-        resultDescription="Holds the text that was read."
+      <FlowStepResultExtractFieldComponent
+        resultDescription="Narrows the text this step hands to a Check Value step."
         isDisabled={isDisabled}
       />
     </>

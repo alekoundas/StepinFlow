@@ -41,6 +41,7 @@ export interface TreeNodeDetailDto {
   thumbnail?: string | null;
 
   conditionText?: string | null;
+  conditionTextEnd?: string | null;
   conditionType?: ConditionTypeEnum | null;
 
   runCommandShell?: RunCommandShellEnum | null;

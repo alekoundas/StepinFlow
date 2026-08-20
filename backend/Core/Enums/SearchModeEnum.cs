@@ -1,7 +1,7 @@
 namespace Core.Enums
 {
     /// <summary>
-    /// What a screen search does, for both IMAGE_SEARCH and TEXT_SEARCH.
+    /// What a screen search does, for both IMAGE_SEARCH and READ_TEXT.
     ///
     /// One axis, not two: acting on every match only ever made sense while looking once, so it is
     /// a mode rather than a flag that would be dead in three of four of them.
@@ -14,7 +14,7 @@ namespace Core.Enums
         /// <summary>Look once, act on the strongest match.</summary>
         FIND_BEST,
 
-        /// <summary>Look once, act on every match, capped by MaxMatches.</summary>
+        /// <summary>Look once, act on every match, capped by MaxMatches. IMAGE_SEARCH only.</summary>
         FIND_ALL,
 
         WAIT_UNTIL_FOUND,

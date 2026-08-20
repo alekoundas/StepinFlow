@@ -29,7 +29,7 @@ namespace Core.Models.Dtos
         public bool IsLoopInfinite { get; set; }
 
 
-        // IMAGE_SEARCH, TEXT_SEARCH
+        // IMAGE_SEARCH, READ_TEXT
         public SearchModeEnum SearchMode { get; set; }
 
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
@@ -53,17 +53,17 @@ namespace Core.Models.Dtos
         public SystemActionTypeEnum SystemActionType { get; set; }
 
 
-        // SYSTEM_COMMAND, TEXT_SEARCH
-        public string ResultVariableName { get; set; } = string.Empty;
+        // SYSTEM_COMMAND, READ_TEXT
         public string ResultExtractPattern { get; set; } = string.Empty;
 
 
-        // TEXT_SEARCH
+        // READ_TEXT
         public string OcrLanguage { get; set; } = string.Empty;
 
 
-        // VARIABLE_CONDITION, TEXT_SEARCH (the text being looked for)
+        // CHECK_VALUE, READ_TEXT (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
+        public string ConditionTextEnd { get; set; } = string.Empty;
         public ConditionTypeEnum? ConditionType { get; set; }
 
 

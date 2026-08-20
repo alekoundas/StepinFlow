@@ -63,13 +63,13 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Invoke another saved flow as a reusable subroutine within this flow.",
       iconName: "sitemap",
     },
-    // {
-    //   flowStepType: FlowStepTypeEnum.VARIABLE_CONDITION,
-    //   name: "Variable Condition",
-    //   description:
-    //     "Branch execution based on whether a variable satisfies a defined condition (equals, contains, greater than, etc.).",
-    //   iconName: "pi-code",
-    // },
+    {
+      flowStepType: FlowStepTypeEnum.CHECK_VALUE,
+      name: "Check Value",
+      description:
+        "Test what an earlier step read or printed, and branch on the answer.",
+      iconName: "filter",
+    },
     // {
     //   flowStepType: FlowStepTypeEnum.NOTIFICATION_EMAIL,
     //   name: "Email Notification",
@@ -163,11 +163,11 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "search",
     },
     {
-      flowStepType: FlowStepTypeEnum.TEXT_SEARCH,
-      name: "Text Search",
+      flowStepType: FlowStepTypeEnum.READ_TEXT,
+      name: "Read Text",
       description:
-        "Search the screen for a text string using OCR and return its bounding-box coordinates.",
-      iconName: "search",
+        "Read the text inside an area, branch on whether it matches, and hand it to later steps.",
+      iconName: "file-edit",
     },
 
     // ── Control-flow children ──

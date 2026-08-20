@@ -1,4 +1,4 @@
-﻿namespace Core.Enums
+namespace Core.Enums
 {
     public enum FlowStepTypeEnum
     {
@@ -9,7 +9,7 @@
         SYSTEM_COMMAND,
         SYSTEM_ACTION,
         SUB_FLOW,
-        VARIABLE_CONDITION,
+        CHECK_VALUE,
         NOTIFICATION_EMAIL,
 
         // Input Steps
@@ -24,7 +24,7 @@
 
         // Screen Search
         IMAGE_SEARCH,
-        TEXT_SEARCH,
+        READ_TEXT,
 
 
 

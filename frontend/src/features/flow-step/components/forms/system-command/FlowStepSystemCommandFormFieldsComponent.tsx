@@ -13,7 +13,7 @@ import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
-import FlowStepResultFieldsComponent from "@/features/flow-step/components/forms/shared/FlowStepResultFieldsComponent";
+import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
 
 type SystemCommandForm = z.infer<typeof FlowStepSystemCommandSchema>;
@@ -208,8 +208,8 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         isDisabled={isDisabled}
       />
 
-      <FlowStepResultFieldsComponent
-        resultDescription="Leave empty to throw the output away."
+      <FlowStepResultExtractFieldComponent
+        resultDescription="Narrows the output this step hands to a Check Value step."
         isDisabled={isDisabled}
       />
     </>

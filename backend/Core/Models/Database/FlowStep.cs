@@ -19,7 +19,7 @@ namespace Core.Models.Database
         public bool IsLoopInfinite { get; set; }
 
 
-        // IMAGE_SEARCH, TEXT_SEARCH
+        // IMAGE_SEARCH, READ_TEXT
         public SearchModeEnum SearchMode { get; set; }
 
         // Defaults for the step's templates, each of which may override them.
@@ -52,21 +52,21 @@ namespace Core.Models.Database
         public SystemActionTypeEnum SystemActionType { get; set; }
 
 
-        // SYSTEM_COMMAND, TEXT_SEARCH
-        // Named here, referenced as {{name}} by later steps. Empty means the result is dropped.
-        public string ResultVariableName { get; set; } = string.Empty;
-
+        // SYSTEM_COMMAND, READ_TEXT
         /// <summary>Regex, first capture group. Empty keeps the whole text.</summary>
         public string ResultExtractPattern { get; set; } = string.Empty;
 
 
-        // TEXT_SEARCH
+        // READ_TEXT
         public string OcrLanguage { get; set; } = string.Empty;
 
 
-        // VARIABLE_CONDITION, TEXT_SEARCH (the text being looked for)
+        // CHECK_VALUE, READ_TEXT (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
         public ConditionTypeEnum? ConditionType { get; set; }
+
+        /// <summary>Upper bound of BETWEEN, unused by every other condition.</summary>
+        public string ConditionTextEnd { get; set; } = string.Empty;
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
@@ -86,7 +86,7 @@ namespace Core.Models.Database
         //
         // Point source per point:
         //   IsPointCustom = true  -> FlowPointId          (reusable named point on the Flow)
-        //   IsPointCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / TEXT_SEARCH)
+        //   IsPointCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / READ_TEXT)
         // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
         public bool IsPointCustom { get; set; }
         public bool IsPointEndCustom { get; set; }

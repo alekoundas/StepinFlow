@@ -72,10 +72,10 @@ namespace Business.Ipc.Handlers
         // ================================================================
 
         /// <summary>
-        /// A cursor step that no longer runs under the search it reads would otherwise keep the
-        /// reference and click wherever that search last matched. Cleared rather than repointed:
-        /// the step now needs a source the user has to choose, and an empty required dropdown says
-        /// so where a silently wrong coordinate would not.
+        /// A step that no longer runs under the one it reads would otherwise keep the reference
+        /// and act on whatever that step last produced. Cleared rather than repointed: the step now
+        /// needs a source the user has to choose, and an empty required dropdown says so where a
+        /// silently wrong value would not.
         /// </summary>
         private static void ClearBrokenReferences(
             List<FlowStep> steps,

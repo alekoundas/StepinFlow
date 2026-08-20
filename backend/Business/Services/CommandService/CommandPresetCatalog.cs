@@ -63,7 +63,7 @@ namespace Business.Services.CommandService
                 CommandTemplate = "Set-Clipboard -Value '{0}'",
                 HasParameter = true,
                 ParameterLabel = "Text",
-                ParameterPlaceholder = "Anything, including {{variables}}",
+                ParameterPlaceholder = "The text to put on the clipboard",
             },
             new CommandPresetDto
             {

@@ -54,9 +54,9 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     iconName: "sitemap",
   },
   {
-    flowStepType: FlowStepTypeEnum.VARIABLE_CONDITION,
+    flowStepType: FlowStepTypeEnum.CHECK_VALUE,
     group: FlowStepGroupEnum.CONTROL,
-    label: "Validate",
+    label: "Check Value",
     iconName: "filter",
   },
 
@@ -120,9 +120,9 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     iconName: "search",
   },
   {
-    flowStepType: FlowStepTypeEnum.TEXT_SEARCH,
+    flowStepType: FlowStepTypeEnum.READ_TEXT,
     group: FlowStepGroupEnum.PERCEPTION,
-    label: "Text Search",
+    label: "Read Text",
     iconName: "file-edit",
   },
 

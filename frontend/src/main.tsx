@@ -25,6 +25,7 @@ import HomePage from "@/pages/home/home-page";
 import WorkflowPage from "@/features/workflow/WorkflowPage";
 import FlowListPage from "@/features/flow/FlowListPage";
 import FlowFormPage from "@/features/flow/FlowFormPage";
+import SettingsPage from "@/features/settings/SettingsPage";
 import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
 import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
@@ -69,6 +70,10 @@ const router = createHashRouter([
       {
         path: "/workflow/:id",
         element: <WorkflowPage />,
+      },
+      {
+        path: "/settings",
+        element: <SettingsPage />,
       },
 
       // { path: "app", element: <App /> },

@@ -26,4 +26,7 @@ namespace Core.Models.Ipc
     // Used by the "Test" button next to a location, so the user can confirm a point
     // lands where they expect before saving it.
     public record SystemMoveCursorCommand(ScreenPointDto dto) : IRequest<ResultDto<bool>>;
+
+    public record SystemInstallOcrLanguageCommand(string languageTag) : IRequest<ResultDto<OcrLanguageInstallResultDto>>;
+    public record SystemOpenWindowsLanguageSettingsCommand() : IRequest<ResultDto<bool>>;
 }

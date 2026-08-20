@@ -40,15 +40,16 @@ namespace Core.Models.Dtos
         public int WindowWidth { get; set; }
         public int WindowHeight { get; set; }
 
-        // IMAGE_SEARCH, TEXT_SEARCH
+        // IMAGE_SEARCH, READ_TEXT
         public SearchModeEnum? SearchMode { get; set; }
         public int TemplateCount { get; set; }
 
         /// <summary>First template only. A row shows one image and a count, never a gallery.</summary>
         public byte[]? Thumbnail { get; set; }
 
-        // TEXT_SEARCH, VARIABLE_CONDITION
+        // READ_TEXT, CHECK_VALUE
         public string? ConditionText { get; set; }
+        public string? ConditionTextEnd { get; set; }
         public ConditionTypeEnum? ConditionType { get; set; }
 
         // SYSTEM_COMMAND

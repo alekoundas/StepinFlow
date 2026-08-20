@@ -27,10 +27,6 @@ export const FlowStepSystemCommandSchema = z
     resultSource: z.enum(ResultSourceEnum),
     timeoutMilliseconds: z.number().int().min(0),
 
-    resultVariableName: z
-      .string()
-      .max(60, "Name too long")
-      .regex(/^[A-Za-z0-9_]*$/, "Letters, numbers and underscores only"),
     resultExtractPattern: z.string(),
   })
   .superRefine((data, ctx) => {

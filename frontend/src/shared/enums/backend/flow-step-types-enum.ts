@@ -6,7 +6,7 @@ export const FlowStepTypeEnum = {
   SYSTEM_COMMAND: "SYSTEM_COMMAND",
   SYSTEM_ACTION: "SYSTEM_ACTION",
   SUB_FLOW: "SUB_FLOW",
-  VARIABLE_CONDITION: "VARIABLE_CONDITION",
+  CHECK_VALUE: "CHECK_VALUE",
   NOTIFICATION_EMAIL: "NOTIFICATION_EMAIL",
 
   // Input Steps
@@ -21,11 +21,10 @@ export const FlowStepTypeEnum = {
 
   //Screen Search
   IMAGE_SEARCH: "IMAGE_SEARCH",
-  TEXT_SEARCH: "TEXT_SEARCH",
+  READ_TEXT: "READ_TEXT",
 
   SUCCESS: "SUCCESS",
   FAILURE: "FAILURE",
-  // NEW: "NEW",
 } as const;
 
 export type FlowStepTypeEnum =

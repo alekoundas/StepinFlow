@@ -24,7 +24,8 @@ import { isWindowFlowStepType } from "@/features/flow-step/components/forms/wind
 import FlowStepImageSearchFormComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormComponent";
 import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
 import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
-import FlowStepTextSearchFormComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchFormComponent";
+import FlowStepReadTextFormComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormComponent";
+import FlowStepCheckValueFormComponent from "@/features/flow-step/components/forms/check-value/FlowStepCheckValueFormComponent";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
@@ -215,10 +216,10 @@ export function WorkflowContentComponent() {
       );
     }
 
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.TEXT_SEARCH) {
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.READ_TEXT) {
       return (
         <div className=" ">
-          <FlowStepTextSearchFormComponent
+          <FlowStepReadTextFormComponent
             formMode={formMode}
             onSubmit={handleSave}
             onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
@@ -229,10 +230,33 @@ export function WorkflowContentComponent() {
                 parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
                 orderNumber: selectedTreeNode.orderNumber,
                 rootId: rootFlowId,
-                flowStepType: "TEXT_SEARCH",
-                name: "Text Search",
+                flowStepType: "READ_TEXT",
+                name: "Read Text",
                 conditionType: "CONTAINS",
-                ocrLanguage: "en-US",
+              })
+            }
+          />
+        </div>
+      );
+    }
+
+    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.CHECK_VALUE) {
+      return (
+        <div className=" ">
+          <FlowStepCheckValueFormComponent
+            formMode={formMode}
+            onSubmit={handleSave}
+            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+            onEdit={() => {}}
+            defaultValues={
+              new FlowStepDto({
+                flowId: selectedTreeNode.parentFlowId ?? undefined,
+                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+                orderNumber: selectedTreeNode.orderNumber,
+                rootId: rootFlowId,
+                flowStepType: "CHECK_VALUE",
+                name: "Check Value",
+                conditionType: "CONTAINS",
               })
             }
           />
@@ -429,10 +453,25 @@ export function WorkflowContentComponent() {
     );
   }
 
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.TEXT_SEARCH) {
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.READ_TEXT) {
     return (
       <div className=" ">
-        <FlowStepTextSearchFormComponent
+        <FlowStepReadTextFormComponent
+          key={stepId}
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+          defaultValues={new FlowStepDto(flowStepDto)}
+        />
+      </div>
+    );
+  }
+
+  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.CHECK_VALUE) {
+    return (
+      <div className=" ">
+        <FlowStepCheckValueFormComponent
           key={stepId}
           formMode={formMode}
           onSubmit={handleSave}

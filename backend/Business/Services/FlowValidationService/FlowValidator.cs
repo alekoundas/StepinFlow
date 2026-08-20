@@ -46,8 +46,7 @@ namespace Business.Services.FlowValidationService
 
             if (authored.Count == 0)
             {
-                Add(result, null, string.Empty, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.FLOW_HAS_NO_STEPS, "This flow has no steps yet.");
+                Add(result, null, string.Empty, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FLOW_HAS_NO_STEPS, "This flow has no steps yet.");
                 return Finish(result);
             }
 
@@ -57,8 +56,7 @@ namespace Business.Services.FlowValidationService
             foreach (FlowStep step in authored)
             {
                 if (string.IsNullOrWhiteSpace(step.Name))
-                    Add(result, step, ValidationSeverityEnum.WARNING,
-                        FlowValidationCodeEnum.NAME_MISSING, "This step has no name.");
+                    Add(result, step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.NAME_MISSING, "This step has no name.");
 
                 if (CursorTypes.Contains(step.FlowStepType))
                     ValidateCursor(result, step, byId);
@@ -72,44 +70,42 @@ namespace Business.Services.FlowValidationService
                         ValidateArea(result, step);
 
                         if (!templateCountByStepId.TryGetValue(step.Id, out int templates) || templates == 0)
-                            Add(result, step, ValidationSeverityEnum.ERROR,
-                                FlowValidationCodeEnum.NO_TEMPLATES, "There is nothing to look for: add a template.");
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NO_TEMPLATES, "There is nothing to look for: add a template.");
                         break;
 
-                    case FlowStepTypeEnum.TEXT_SEARCH:
+                    case FlowStepTypeEnum.READ_TEXT:
                         ValidateArea(result, step);
 
                         if (string.IsNullOrWhiteSpace(step.ConditionText))
-                            Add(result, step, ValidationSeverityEnum.ERROR,
-                                FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
 
                         if (string.IsNullOrWhiteSpace(step.OcrLanguage))
-                            Add(result, step, ValidationSeverityEnum.ERROR,
-                                FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
                         break;
 
                     case FlowStepTypeEnum.SYSTEM_COMMAND:
                         ValidateCommand(result, step);
                         break;
 
+                    case FlowStepTypeEnum.CHECK_VALUE:
+                        ValidateCheckValue(result, step, byId);
+                        break;
+
                     case FlowStepTypeEnum.LOOP:
                         if (!step.IsLoopInfinite && step.LoopCount < 1)
-                            Add(result, step, ValidationSeverityEnum.ERROR,
-                                FlowValidationCodeEnum.LOOP_COUNT_MISSING, "A loop runs at least once, or for ever.");
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LOOP_COUNT_MISSING, "A loop runs at least once, or for ever.");
                         break;
 
                     case FlowStepTypeEnum.SUB_FLOW:
                         if (step.SubFlowId == null)
-                            Add(result, step, ValidationSeverityEnum.ERROR,
-                                FlowValidationCodeEnum.SUB_FLOW_MISSING, "Pick the flow to run.");
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SUB_FLOW_MISSING, "Pick the flow to run.");
                         break;
                 }
 
                 // A step that branches and has nothing in either branch does its work and then
                 // stops, which is almost never what was meant.
                 if (TreeStepHelper.HasBranchChildren(step.FlowStepType) && IsEveryBranchEmpty(step, childrenByParent))
-                    Add(result, step, ValidationSeverityEnum.WARNING,
-                        FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
+                    Add(result, step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
             }
 
             return Finish(result);
@@ -140,24 +136,20 @@ namespace Business.Services.FlowValidationService
             if (isCustom)
             {
                 if (flowPointId == null)
-                    Add(result, step, ValidationSeverityEnum.ERROR,
-                        FlowValidationCodeEnum.POINT_MISSING, $"There is no {label}point to act on.");
+                    Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, $"There is no {label}point to act on.");
                 return;
             }
 
             if (referenceId == null)
             {
-                Add(result, step, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.STEP_RESULT_MISSING, $"Pick the search whose result gives the {label}point.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_MISSING, $"Pick the search whose result gives the {label}point.");
                 return;
             }
 
             if (!CanReadResultOf(byId, step, referenceId.Value))
             {
                 string name = byId.TryGetValue(referenceId.Value, out FlowStep? reference) ? reference.Name : "that step";
-
-                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
-                    $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.");
             }
         }
 
@@ -180,8 +172,7 @@ namespace Business.Services.FlowValidationService
                     return false;
 
                 if (current.Id == referenceId)
-                    return byId.TryGetValue(childId, out FlowStep? branch)
-                        && branch.FlowStepType == FlowStepTypeEnum.SUCCESS;
+                    return byId.TryGetValue(childId, out FlowStep? branch) && branch.FlowStepType == FlowStepTypeEnum.SUCCESS;
 
                 childId = current.Id;
                 currentId = current.ParentFlowStepId;
@@ -190,24 +181,47 @@ namespace Business.Services.FlowValidationService
             return false;
         }
 
+        private static void ValidateCheckValue(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowStep> byId)
+        {
+            if (step.FlowStepReferenceId == null)
+            {
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_MISSING, "Pick the step whose result is checked.");
+            }
+            else if (!CanReadResultOf(byId, step, step.FlowStepReferenceId.Value))
+            {
+                string name = byId.TryGetValue(step.FlowStepReferenceId.Value, out FlowStep? reference) ? reference.Name : "that step";
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"This checks \"{name}\", which no longer runs above this step on the Success side.");
+            }
+
+            if (step.ConditionType == null)
+            {
+                Add(result, step, ValidationSeverityEnum.ERROR,
+                    FlowValidationCodeEnum.CONDITION_TYPE_MISSING, "Pick what to check for.");
+                return;
+            }
+
+            if (ConditionHelper.NeedsValue(step.ConditionType.Value) && string.IsNullOrWhiteSpace(step.ConditionText))
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_VALUE_MISSING, "There is nothing to check the result against.");
+
+            if (ConditionHelper.NeedsSecondValue(step.ConditionType.Value) && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
+        }
+
         private static void ValidateWindow(FlowValidationResultDto result, FlowStep step)
         {
             ValidateArea(result, step);
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && (step.WindowWidth < 1 || step.WindowHeight < 1))
-                Add(result, step, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RELOCATE && step.FlowPointId == null)
-                Add(result, step, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.POINT_MISSING, "There is no point to move the window to.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, "There is no point to move the window to.");
         }
 
         private static void ValidateArea(FlowValidationResultDto result, FlowStep step)
         {
             if (step.FlowAreaId == null)
-                Add(result, step, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.AREA_MISSING, "There is no area to work in.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_MISSING, "There is no area to work in.");
         }
 
         private static void ValidateCommand(FlowValidationResultDto result, FlowStep step)
@@ -215,8 +229,7 @@ namespace Business.Services.FlowValidationService
             if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
             {
                 if (string.IsNullOrWhiteSpace(step.RunCommand))
-                    Add(result, step, ValidationSeverityEnum.ERROR,
-                        FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");
+                    Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");
                 return;
             }
 
@@ -225,8 +238,7 @@ namespace Business.Services.FlowValidationService
             CommandPresetDto preset = CommandPresetCatalog.Get(step.RunCommandPreset);
 
             if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandPresetValue))
-                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING,
-                    $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
         }
 
         private static bool IsEveryBranchEmpty(FlowStep step, ILookup<int?, FlowStep> childrenByParent) =>

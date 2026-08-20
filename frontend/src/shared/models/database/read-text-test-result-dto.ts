@@ -1,4 +1,4 @@
-export interface TextSearchTestResultDto {
+export interface ReadTextTestResultDto {
   isResolved: boolean;
   errorMessage?: string;
 

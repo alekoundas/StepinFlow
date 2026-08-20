@@ -7,7 +7,6 @@ using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Business.Ipc.Handlers
 {
@@ -15,13 +14,13 @@ namespace Business.Ipc.Handlers
     /// Reads the step's area off the live screen. Takes the whole dto rather than an id so it
     /// works on unsaved form state, same as the image search test.
     /// </summary>
-    public class TestTextSearchHandler : IRequestHandler<TestTextSearchQuery, ResultDto<TextSearchTestResultDto>>
+    public class TestReadTextHandler : IRequestHandler<TestReadTextQuery, ResultDto<ReadTextTestResultDto>>
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
         private readonly IOcrService _ocrService;
 
-        public TestTextSearchHandler(
+        public TestReadTextHandler(
             IAreaPointResolver areaPointResolver,
             IScreenshotService screenshotService,
             IOcrService ocrService)
@@ -31,20 +30,20 @@ namespace Business.Ipc.Handlers
             _ocrService = ocrService;
         }
 
-        public async Task<ResultDto<TextSearchTestResultDto>> Handle(TestTextSearchQuery request, CancellationToken ct)
+        public async Task<ResultDto<ReadTextTestResultDto>> Handle(TestReadTextQuery request, CancellationToken ct)
         {
             FlowStepDto step = request.dto;
 
             if (step.FlowAreaId == null)
-                return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = "Pick a search area first." });
+                return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto { IsResolved = false, ErrorMessage = "Pick an area to read first." });
 
             AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
-                return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = area.Error });
+                return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto { IsResolved = false, ErrorMessage = area.Error });
 
             RawImage image = _screenshotService.CaptureRaw(area.Bounds);
             if (image.IsEmpty)
-                return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = "The search area produced no pixels." });
+                return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto { IsResolved = false, ErrorMessage = "The area produced no pixels." });
 
             string text;
             try
@@ -53,10 +52,10 @@ namespace Business.Ipc.Handlers
             }
             catch (Exception ex)
             {
-                return ResultDto<TextSearchTestResultDto>.Success(new TextSearchTestResultDto { IsResolved = false, ErrorMessage = ex.Message });
+                return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto { IsResolved = false, ErrorMessage = ex.Message });
             }
 
-            TextSearchTestResultDto result = new TextSearchTestResultDto
+            ReadTextTestResultDto result = new ReadTextTestResultDto
             {
                 IsResolved = true,
                 Text = text,
@@ -65,7 +64,7 @@ namespace Business.Ipc.Handlers
 
             result.ResultValue = Extract(text, step.ResultExtractPattern);
 
-            return ResultDto<TextSearchTestResultDto>.Success(result);
+            return ResultDto<ReadTextTestResultDto>.Success(result);
         }
 
 

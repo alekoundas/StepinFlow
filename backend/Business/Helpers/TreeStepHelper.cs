@@ -11,8 +11,9 @@ namespace Core.Helpers
         private static readonly FlowStepTypeEnum[] BranchTypes =
         [
             FlowStepTypeEnum.IMAGE_SEARCH,
-            FlowStepTypeEnum.TEXT_SEARCH,
+            FlowStepTypeEnum.READ_TEXT,
             FlowStepTypeEnum.SYSTEM_COMMAND,
+            FlowStepTypeEnum.CHECK_VALUE,
         ];
 
         /// <summary>Types the user can drop steps into.</summary>

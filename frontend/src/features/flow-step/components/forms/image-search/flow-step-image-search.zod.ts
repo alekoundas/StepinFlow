@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
+import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
 
 export const FlowStepImageSearchSchema = z
   .object({
@@ -27,7 +28,7 @@ export const FlowStepImageSearchSchema = z
       });
     }
 
-    if (data.searchMode !== SearchModeEnum.FIND_BEST) {
+    if (isWaitingMode(data.searchMode)) {
       if (data.pollIntervalMilliseconds < 50) {
         ctx.addIssue({
           code: "custom",

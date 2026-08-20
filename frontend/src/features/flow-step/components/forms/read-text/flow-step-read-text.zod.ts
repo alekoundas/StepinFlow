@@ -1,15 +1,8 @@
 import { z } from "zod";
-import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
+import { READ_TEXT_CONDITION_TYPES } from "@/features/flow-step/components/forms/shared/condition-types";
+import { READ_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
 
-// Matching a whole block of read text against nothing is not a search, so only these make sense.
-export const TEXT_SEARCH_CONDITION_TYPES = [
-  ConditionTypeEnum.CONTAINS,
-  ConditionTypeEnum.EQUALS,
-  ConditionTypeEnum.MATCHES_REGEX,
-] as const;
-
-export const FlowStepTextSearchSchema = z
+export const FlowStepReadTextSchema = z
   .object({
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
 
@@ -17,17 +10,12 @@ export const FlowStepTextSearchSchema = z
     ocrLanguage: z.string().min(1, "Pick the language the text is written in"),
 
     conditionText: z.string(),
-    conditionType: z.enum(TEXT_SEARCH_CONDITION_TYPES),
+    conditionType: z.enum(READ_TEXT_CONDITION_TYPES),
 
-    searchMode: z.enum(SearchModeEnum),
-    maxMatches: z.number().int().min(1).max(2147483647),
+    searchMode: z.enum(READ_TEXT_MODE_VALUES),
     pollIntervalMilliseconds: z.number().int().min(50),
     timeoutMilliseconds: z.number().int().min(0),
 
-    resultVariableName: z
-      .string()
-      .max(60, "Name too long")
-      .regex(/^[A-Za-z0-9_]*$/, "Letters, numbers and underscores only"),
     resultExtractPattern: z.string(),
   })
   .superRefine((data, ctx) => {

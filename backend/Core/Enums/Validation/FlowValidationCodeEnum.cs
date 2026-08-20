@@ -23,6 +23,11 @@ namespace Core.Enums
         SEARCH_TEXT_MISSING,
         OCR_LANGUAGE_MISSING,
 
+        // Conditions
+        CONDITION_TYPE_MISSING,
+        CONDITION_VALUE_MISSING,
+        CONDITION_RANGE_INCOMPLETE,
+
         // Commands
         COMMAND_MISSING,
         COMMAND_PARAMETER_MISSING,

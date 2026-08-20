@@ -76,10 +76,10 @@ namespace Business.Helpers
         }
 
         /// <summary>
-        /// A cursor step reads the result of an IMAGE_SEARCH / TEXT_SEARCH that must be one of its
-        /// ancestors, otherwise the referenced step may not have run yet. Re-parenting can quietly
-        /// break that, which at runtime means clicking the wrong place rather than failing, so the
-        /// user is told before the move commits.
+        /// A step that reads another step's result needs that step to be one of its ancestors,
+        /// otherwise the referenced step may not have run yet. Re-parenting can quietly break that,
+        /// which at runtime means acting on a stale result rather than failing, so the user is told
+        /// before the move commits.
         ///
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.

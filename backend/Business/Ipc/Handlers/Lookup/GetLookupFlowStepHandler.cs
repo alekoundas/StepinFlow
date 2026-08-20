@@ -9,12 +9,19 @@ namespace Business.Ipc.Handlers
 {
     public class GetLookupFlowStepHandler : IRequestHandler<GetLookupFlowStepQuery, ResultDto<LookupResponseDto>>
     {
-        // Step types that produce a screen location the cursor steps can consume.
-        private static readonly FlowStepTypeEnum[] LocationProducingTypes =
-        [
-            FlowStepTypeEnum.IMAGE_SEARCH,
-            FlowStepTypeEnum.TEXT_SEARCH,
-        ];
+        private static readonly Dictionary<StepResultKindEnum, FlowStepTypeEnum[]> ProducingTypesByKind = new()
+        {
+            [StepResultKindEnum.LOCATION] =
+            [
+                FlowStepTypeEnum.IMAGE_SEARCH,
+                FlowStepTypeEnum.READ_TEXT,
+            ],
+            [StepResultKindEnum.VALUE] =
+            [
+                FlowStepTypeEnum.READ_TEXT,
+                FlowStepTypeEnum.SYSTEM_COMMAND,
+            ],
+        };
 
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -24,11 +31,11 @@ namespace Business.Ipc.Handlers
         }
 
         /// <summary>
-        /// Returns the ancestors of <c>dto.FlowStepId</c> that produce a location, nearest first.
+        /// Returns the ancestors of <c>dto.FlowStepId</c> that produce the requested kind of
+        /// result, nearest first.
         ///
-        /// A cursor step reuses the result of the IMAGE_SEARCH / TEXT_SEARCH it lives under, so only
-        /// steps on its own parent chain are valid: anything else may not have run yet when the
-        /// cursor step executes.
+        /// A step reuses the result of the step it lives under, so only steps on its own parent
+        /// chain are valid: anything else may not have run yet when this step executes.
         ///
         /// In ADD mode there is no step row yet, so the caller passes the parent step id.
         /// </summary>
@@ -38,6 +45,8 @@ namespace Business.Ipc.Handlers
 
             if (dto.FlowStepId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());
+
+            FlowStepTypeEnum[] producingTypes = ProducingTypesByKind[dto.ResultKind ?? StepResultKindEnum.LOCATION];
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
@@ -69,7 +78,7 @@ namespace Business.Ipc.Handlers
 
             while (currentId != null && stepsById.TryGetValue(currentId.Value, out var step))
             {
-                if (LocationProducingTypes.Contains(step.FlowStepType) && !dto.ExcludedIds.Contains(step.Id))
+                if (producingTypes.Contains(step.FlowStepType) && !dto.ExcludedIds.Contains(step.Id))
                 {
                     items.Add(new LookupItemDto
                     {

@@ -82,6 +82,7 @@ namespace Business.Ipc.Handlers
                             .FirstOrDefault(),
 
                         ConditionText = x.ConditionText,
+                        ConditionTextEnd = x.ConditionTextEnd,
                         ConditionType = x.ConditionType,
 
                         RunCommandShell = x.RunCommandShell,

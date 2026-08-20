@@ -39,6 +39,15 @@ const pointName = (
       ? `result of ${referenceStepName}`
       : "no source";
 
+/** What a Check Value row compares against, which is nothing at all for IS_EMPTY. */
+const conditionValue = (detail: TreeNodeDetailDto): string => {
+  if (!detail.conditionText) return "";
+
+  return detail.conditionTextEnd
+    ? `"${truncate(detail.conditionText, 12)}" and "${truncate(detail.conditionTextEnd, 12)}"`
+    : `"${truncate(detail.conditionText, 24)}"`;
+};
+
 const searchChips = (detail: TreeNodeDetailDto): TreeNodeChip[] =>
   detail.searchMode && detail.searchMode !== SearchModeEnum.FIND_BEST
     ? [{ text: readable(detail.searchMode), isMuted: true }]
@@ -131,7 +140,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         ],
       };
 
-    case FlowStepTypeEnum.TEXT_SEARCH:
+    case FlowStepTypeEnum.READ_TEXT:
       return {
         text: `${detail.areaName ?? "no area picked"} · "${truncate(detail.conditionText ?? "", 24)}"`,
         chips: searchChips(detail),
@@ -153,9 +162,9 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
     case FlowStepTypeEnum.SYSTEM_ACTION:
       return { text: readable(detail.systemActionType), chips: [] };
 
-    case FlowStepTypeEnum.VARIABLE_CONDITION:
+    case FlowStepTypeEnum.CHECK_VALUE:
       return {
-        text: `${readable(detail.conditionType)} "${truncate(detail.conditionText ?? "", 24)}"`,
+        text: `${detail.referenceStepName ?? "no step picked"} ${readable(detail.conditionType)} ${conditionValue(detail)}`,
         chips: [],
       };
 

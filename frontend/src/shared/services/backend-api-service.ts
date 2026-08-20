@@ -16,7 +16,9 @@ import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
-import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
+import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
+import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
+import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
@@ -57,8 +59,8 @@ export const backendApiService = {
       call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
     testRunCommand: (dto: FlowStepDto) =>
       call<RunCommandTestResultDto>("FlowStep.testRunCommand", dto),
-    testTextSearch: (dto: FlowStepDto) =>
-      call<TextSearchTestResultDto>("FlowStep.testTextSearch", dto),
+    testReadText: (dto: FlowStepDto) =>
+      call<ReadTextTestResultDto>("FlowStep.testReadText", dto),
   },
 
   FlowStepImage: {
@@ -109,6 +111,7 @@ export const backendApiService = {
     flowArea: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.flowArea", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
+    ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
   },
 
   System: {
@@ -117,6 +120,10 @@ export const backendApiService = {
       call<string>("System.takeScreenshot", dto),
     moveCursor: (dto: ScreenPointDto) =>
       call<boolean>("System.moveCursor", dto),
+    installOcrLanguage: (languageTag: string) =>
+      call<OcrLanguageInstallResultDto>("System.installOcrLanguage", languageTag),
+    openWindowsLanguageSettings: () =>
+      call<boolean>("System.openWindowsLanguageSettings"),
     inputRecordOverlayStart: () =>
       call<boolean>("System.inputRecordOverlayStart"),
     inputRecordOverlayStop: () =>

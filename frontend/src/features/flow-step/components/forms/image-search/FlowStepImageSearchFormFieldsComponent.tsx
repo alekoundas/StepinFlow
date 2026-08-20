@@ -13,9 +13,9 @@ import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
 import {
+  IMAGE_SEARCH_MODES,
   isWaitingMode,
-  SEARCH_MODES,
-} from "@/features/flow-step/components/forms/image-search/search-modes";
+} from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
 
 type ImageSearchForm = z.infer<typeof FlowStepImageSearchSchema>;
@@ -86,13 +86,13 @@ export default function FlowStepImageSearchFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={SEARCH_MODES.map((x) => ({
+        options={IMAGE_SEARCH_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isDisabled={isDisabled}
         isRequired={true}
-        hintText={SEARCH_MODES.find((x) => x.value === mode)?.description}
+        hintText={IMAGE_SEARCH_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent

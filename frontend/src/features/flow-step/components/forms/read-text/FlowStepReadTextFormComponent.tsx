@@ -10,10 +10,10 @@ import { Button } from "primereact/button";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import type { TextSearchTestResultDto } from "@/shared/models/database/text-search-test-result-dto";
-import { FlowStepTextSearchSchema } from "@/features/flow-step/components/forms/text-search/flow-step-text-search.zod";
-import FlowStepTextSearchFormFieldsComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchFormFieldsComponent";
-import FlowStepTextSearchTestPanelComponent from "@/features/flow-step/components/forms/text-search/FlowStepTextSearchTestPanelComponent";
+import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
+import { FlowStepReadTextSchema } from "@/features/flow-step/components/forms/read-text/flow-step-read-text.zod";
+import FlowStepReadTextFormFieldsComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormFieldsComponent";
+import FlowStepReadTextTestPanelComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextTestPanelComponent";
 
 interface Props {
   formMode: FormMode;
@@ -23,15 +23,15 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function FlowStepTextSearchFormComponent({
+export default function FlowStepReadTextFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepTextSearchSchema>>({
-    resolver: zodResolver(FlowStepTextSearchSchema),
+  const form = useForm<z.infer<typeof FlowStepReadTextSchema>>({
+    resolver: zodResolver(FlowStepReadTextSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -42,7 +42,7 @@ export default function FlowStepTextSearchFormComponent({
   } = form;
 
   const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<TextSearchTestResultDto | null>(null);
+  const [testResult, setTestResult] = useState<ReadTextTestResultDto | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -55,7 +55,7 @@ export default function FlowStepTextSearchFormComponent({
     setIsTesting(true);
     try {
       setTestResult(
-        await backendApiService.FlowStep.testTextSearch(buildDto(form.getValues())),
+        await backendApiService.FlowStep.testReadText(buildDto(form.getValues())),
       );
     } catch (err) {
       console.error(err);
@@ -64,21 +64,21 @@ export default function FlowStepTextSearchFormComponent({
     }
   };
 
-  const buildDto = (data: z.infer<typeof FlowStepTextSearchSchema>) =>
+  const buildDto = (data: z.infer<typeof FlowStepReadTextSchema>) =>
     new FlowStepDto({
       ...defaultValues,
       ...data,
       flowAreaId: data.flowAreaId ?? undefined,
     });
 
-  const handleSubmit = (data: z.infer<typeof FlowStepTextSearchSchema>) =>
+  const handleSubmit = (data: z.infer<typeof FlowStepReadTextSchema>) =>
     onSubmit(buildDto(data));
 
   return (
     <>
       <FormHeaderComponent
-        title="Text Search Step Configuration"
-        description="Read the text inside a search area, branch on whether it matches, and hand it to later steps."
+        title="Read Text Step Configuration"
+        description="Read the text inside an area, branch on whether it matches, and hand it to later steps."
         formMode={formMode}
         onEdit={onEdit}
       />
@@ -88,7 +88,7 @@ export default function FlowStepTextSearchFormComponent({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepTextSearchFormFieldsComponent
+          <FlowStepReadTextFormFieldsComponent
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />
@@ -107,7 +107,7 @@ export default function FlowStepTextSearchFormComponent({
             />
           </div>
 
-          {testResult && <FlowStepTextSearchTestPanelComponent result={testResult} />}
+          {testResult && <FlowStepReadTextTestPanelComponent result={testResult} />}
 
           <FormFooterComponent
             formMode={formMode}

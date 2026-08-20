@@ -15,5 +15,8 @@ namespace Core.Models.Dtos
 
         // Lookup.flowArea only: window steps want APPLICATION areas, not monitors.
         public FlowAreaTypeEnum? FlowAreaType { get; set; }
+
+        // Lookup.flowStep only: a cursor step wants a location, a condition wants a value.
+        public StepResultKindEnum? ResultKind { get; set; }
     }
 }
