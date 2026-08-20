@@ -25,12 +25,6 @@ export class FlowStepDto {
   flowStepType: FlowStepTypeEnum = FlowStepTypeEnum.FAILURE;
   orderNumber: number = -1;
 
-  // WINDOW_RELOCATE, WINDOW_RESIZE
-  locationX: number = 0;
-  locationY: number = 0;
-  locationEndX: number = 0;
-  locationEndY: number = 0;
-
   // WAIT
   waitForMilliseconds: number = 0;
 
@@ -70,7 +64,6 @@ export class FlowStepDto {
   conditionType?: ConditionTypeEnum;
 
   // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-  windowName: string = "";
   windowHeight: number = 0;
   windowWidth: number = 0;
 

@@ -320,14 +320,20 @@ export function DataTreeComponent({ flowId }: Props) {
   // ====================== CONTROLLED SELECTION ======================
 
   const onSelectionChange = (e: TreeSelectionEvent) => {
+    const key = (e.value ?? null) as string | null; // this can be string | object | null
+
+    // Reselecting the row that is already selected is not a change. Clearing the picker there
+    // would unmount a half filled ADD form, which is how a captured template goes missing.
+    if (key === (selectedTreeNode?.key ?? null)) return;
+
     setSelectedFlowStepTypeToAdd(undefined);
-    const key = e.value; // this can be string | object | null
+
     if (key == null) {
       setSelectedTreeNode(undefined);
       return;
     }
 
-    const found = nodesByKey.get(key as string);
+    const found = nodesByKey.get(key);
     if (found) {
       setSelectedTreeNode(found);
     }

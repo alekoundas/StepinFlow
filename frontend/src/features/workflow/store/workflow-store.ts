@@ -29,7 +29,7 @@ interface Props {
 }
 
 export const useWorkflowStore = create<Props>()(
-  devtools((set, _get) => ({
+  devtools((set) => ({
     selectedTreeNode: undefined,
     selectedFlowStepTypeToAdd: undefined,
     treeRefreshTrigger: undefined,

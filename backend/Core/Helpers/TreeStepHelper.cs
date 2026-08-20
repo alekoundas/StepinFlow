@@ -51,9 +51,7 @@ namespace Core.Helpers
         /// The starting node is never returned, which is what lets the "add a step" case pass the
         /// branch the new step will live under and get the same answer as the saved step would.
         /// </summary>
-        public static IEnumerable<(StepChainNode Step, int Depth)> ReadableAncestors(
-            IReadOnlyDictionary<int, StepChainNode> byId,
-            int fromStepId)
+        public static IEnumerable<(StepChainNode Step, int Depth)> ReadableAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
             if (!byId.TryGetValue(fromStepId, out StepChainNode from))
                 yield break;

@@ -1,4 +1,5 @@
 using Core.Helpers;
+using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -76,24 +77,25 @@ namespace Business.Helpers
         }
 
         /// <summary>
-        /// A step that reads another step's result needs that step to be one of its ancestors,
-        /// otherwise the referenced step may not have run yet. Re-parenting can quietly break that,
-        /// which at runtime means acting on a stale result rather than failing, so the user is told
-        /// before the move commits.
+        /// A step that reads another step's result needs that step to be readable from where it
+        /// lands, which TreeStepHelper defines and the validator enforces. Re-parenting can quietly
+        /// break that, which at runtime means acting on a stale result rather than failing, so the
+        /// user is told before the move commits.
+        ///
+        /// The same rule on purpose: a weaker one here would let a step be dropped into a Failure
+        /// branch without warning and only fail validation afterwards.
         ///
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.
         /// </summary>
         public static List<FlowStepBrokenReferenceDto> FindBrokenReferences(IReadOnlyList<FlowStep> steps, FlowStepMoveDto dto)
         {
-            Dictionary<int, int?> parentBefore = steps.ToDictionary(x => x.Id, x => x.ParentFlowStepId);
+            Dictionary<int, StepChainNode> before = steps.ToDictionary(
+                x => x.Id,
+                x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name));
 
-            Dictionary<int, int?> parentAfter = new Dictionary<int, int?>(parentBefore)
-            {
-                [dto.FlowStepId] = dto.TargetParentFlowStepId,
-            };
-
-            Dictionary<int, string> nameById = steps.ToDictionary(x => x.Id, x => x.Name);
+            Dictionary<int, StepChainNode> after = new Dictionary<int, StepChainNode>(before);
+            after[dto.FlowStepId] = after[dto.FlowStepId] with { ParentFlowStepId = dto.TargetParentFlowStepId };
 
             List<FlowStepBrokenReferenceDto> broken = new List<FlowStepBrokenReferenceDto>();
 
@@ -110,8 +112,8 @@ namespace Business.Helpers
                 if (referenceId == null)
                     return;
 
-                bool wasValid = IsAncestorOf(parentBefore, referenceId.Value, stepId);
-                bool isValid = IsAncestorOf(parentAfter, referenceId.Value, stepId);
+                bool wasValid = TreeStepHelper.CanReadResultOf(before, stepId, referenceId.Value);
+                bool isValid = TreeStepHelper.CanReadResultOf(after, stepId, referenceId.Value);
 
                 if (!wasValid || isValid)
                     return;
@@ -119,8 +121,8 @@ namespace Business.Helpers
                 broken.Add(new FlowStepBrokenReferenceDto
                 {
                     FlowStepId = stepId,
-                    FlowStepName = nameById.TryGetValue(stepId, out string? stepName) ? stepName : string.Empty,
-                    ReferencedStepName = nameById.TryGetValue(referenceId.Value, out string? refName) ? refName : string.Empty,
+                    FlowStepName = before.TryGetValue(stepId, out StepChainNode s) ? s.Name : string.Empty,
+                    ReferencedStepName = before.TryGetValue(referenceId.Value, out StepChainNode r) ? r.Name : string.Empty,
                     IsEndReference = isEndReference,
                 });
             }
@@ -144,27 +146,5 @@ namespace Business.Helpers
                 ordered[index].OrderNumber = index;
         }
 
-
-        // ================================================================
-        // Private methods
-        // ================================================================
-
-        private static bool IsAncestorOf(Dictionary<int, int?> parentById, int ancestorId, int stepId)
-        {
-            int? currentId = parentById.TryGetValue(stepId, out int? parentId) ? parentId : null;
-
-            // Bounded by the number of steps, so a corrupt parent chain cannot spin forever.
-            int guard = parentById.Count + 1;
-
-            while (currentId != null && guard-- > 0)
-            {
-                if (currentId.Value == ancestorId)
-                    return true;
-
-                currentId = parentById.TryGetValue(currentId.Value, out int? nextId) ? nextId : null;
-            }
-
-            return false;
-        }
     }
 }

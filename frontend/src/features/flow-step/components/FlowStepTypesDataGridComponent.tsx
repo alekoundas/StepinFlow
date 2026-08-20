@@ -70,13 +70,6 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Test what an earlier step read or printed, and branch on the answer.",
       iconName: "filter",
     },
-    // {
-    //   flowStepType: FlowStepTypeEnum.NOTIFICATION_EMAIL,
-    //   name: "Email Notification",
-    //   description:
-    //     "Send an email notification with a configurable recipient, subject, and body.",
-    //   iconName: "pi-envelope",
-    // },
 
     // ── Cursor ──
     {
@@ -86,34 +79,6 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Simulate a cursor action. Click, drag, scroll, or relocate the cursor to specific coordinates.",
       iconName: "mouse",
     },
-    // {
-    //   flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
-    //   name: "Cursor Click",
-    //   description:
-    //     "Simulate a left, right, or double mouse click at the specified screen coordinates.",
-    //   iconName: "mouse",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
-    //   name: "Cursor Drag & Drop",
-    //   description:
-    //     "Click and hold at a source position, drag to a target position, then release. Coordinates can be the result of an Image Search result.",
-    //   iconName: "arrows-alt",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
-    //   name: "Cursor Scroll",
-    //   description:
-    //     "Simulate a mouse wheel scroll (up or down) by a specified amount at the current cursor position.",
-    //   iconName: "sort-alt",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
-    //   name: "Cursor Relocate",
-    //   description:
-    //     "Move the cursor to specific coordinates without clicking. Coordinates can come from an Image Search result.",
-    //   iconName: "map-marker",
-    // },
 
     // ── Window ──
     {
@@ -123,27 +88,6 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Select a named application window to bring it to the foreground, resize it, or move it to a specific position on the screen.",
       iconName: "expand",
     },
-    // {
-    //   flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
-    //   name: "Window Focus",
-    //   description:
-    //     "Bring a named application window to the foreground. Runs Failure children if the window is not found.",
-    //   iconName: "window-maximize",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.WINDOW_RESIZE,
-    //   name: "Window Resize",
-    //   description:
-    //     "Resize a named application window to the specified dimensions. Runs Failure children if the window is not found.",
-    //   iconName: "expand",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.WINDOW_RELOCATE,
-    //   name: "Window Relocate",
-    //   description:
-    //     "Move a named application window to the specified screen position. Runs Failure children if the window is not found.",
-    //   iconName: "directions",
-    // },
 
     // ── Keyboard ──
     {
@@ -169,23 +113,8 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Read the text inside an area, branch on whether it matches, and hand it to later steps.",
       iconName: "file-edit",
     },
-
-    // ── Control-flow children ──
-    // {
-    //   flowStepType: FlowStepTypeEnum.SUCCESS,
-    //   name: "Success",
-    //   description:
-    //     "Child steps executed when the parent step completes successfully.",
-    //   iconName: "pi-check-circle",
-    // },
-    // {
-    //   flowStepType: FlowStepTypeEnum.FAILURE,
-    //   name: "Failure",
-    //   description:
-    //     "Child steps executed when the parent step fails or its condition is not met.",
-    //   iconName: "pi-times-circle",
-    // },
   ];
+
   const loadData: LazyResponseDto<FlowStepType> = {
     data: flowStepTypes,
     totalRecords: flowStepTypes.length,

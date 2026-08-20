@@ -1,6 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState } from "react";
 
-import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
 import { FormMode } from "@/shared/enums/form-mode-enum";
@@ -13,27 +12,8 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
-import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
-import FlowStepCursorFormComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormComponent";
-import { CURSOR_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
-import { isCursorFlowStepType } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
-import FlowStepWindowFormComponent from "@/features/flow-step/components/forms/window/FlowStepWindowFormComponent";
-import { WINDOW_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/window/window-modes";
-import { isWindowFlowStepType } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import FlowStepImageSearchFormComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormComponent";
-import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
-import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
-import FlowStepReadTextFormComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormComponent";
-import FlowStepCheckValueFormComponent from "@/features/flow-step/components/forms/check-value/FlowStepCheckValueFormComponent";
-import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
+import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-
-// interface Props {
-// treeNodeDto: TreeNodeDto;
-// loadData: (params: LazyDto) => Promise<LazyResponseDto<T>>;
-// itemTemplate: (item: T) => ReactNode;
-// }
 
 export function WorkflowContentComponent() {
   const {
@@ -45,14 +25,15 @@ export function WorkflowContentComponent() {
   } = useWorkflowStore();
 
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
+  const [modeNodeKey, setModeNodeKey] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (selectedTreeNode && selectedTreeNode.isNew) {
-      setFormMode(FormMode.ADD);
-    } else {
-      setFormMode(FormMode.VIEW);
-    }
-  }, [selectedTreeNode]);
+  // Selecting a different row resets the mode: a placeholder row opens in ADD, a saved one in
+  // VIEW. Adjusted during render rather than in an effect, so the form never paints one frame
+  // with the mode of the row that was selected before it.
+  if (modeNodeKey !== selectedTreeNode?.key) {
+    setModeNodeKey(selectedTreeNode?.key);
+    setFormMode(selectedTreeNode?.isNew ? FormMode.ADD : FormMode.VIEW);
+  }
 
   // ── React Query for Flow (when root node is selected) ──
   const flowId = selectedTreeNode?.isFlow ? selectedTreeNode.entityId : null;
@@ -78,6 +59,7 @@ export function WorkflowContentComponent() {
 
     setFormMode(FormMode.VIEW);
   };
+
   const handleSave = async (saveDto: FlowStepDto) => {
     if (formMode === FormMode.ADD) {
       const result = await createFlowStepMutation.mutateAsync(saveDto);
@@ -119,444 +101,110 @@ export function WorkflowContentComponent() {
   };
 
   // ====================== RENDER ======================
+
+  const panel = (children: React.ReactNode) => <div className=" ">{children}</div>;
+
   if (!selectedTreeNode) {
-    return (
-      <div className=" ">
-        <LabelComponent
-          text="Select a node from the tree"
-          size="lg"
-        />
-      </div>
+    return panel(
+      <LabelComponent
+        text="Select a node from the tree"
+        size="lg"
+      />,
     );
   }
 
   // 1. New FlowStep → type picker
   if (selectedTreeNode.isNew && !selectedFlowStepTypeToAdd) {
-    return (
-      <div className=" ">
-        <FlowStepTypesDataGridComponent />
-      </div>
-    );
+    return panel(<FlowStepTypesDataGridComponent />);
   }
 
   // 2. New FlowStep → ADD form
   if (selectedTreeNode.isNew && selectedFlowStepTypeToAdd) {
-    let formElement: ReactNode;
+    const form = getFlowStepForm(selectedFlowStepTypeToAdd);
 
-    // All four cursor types share one form, the mode buttons switch flowStepType.
-    if (isCursorFlowStepType(selectedFlowStepTypeToAdd)) {
-      return (
-        <div className=" ">
-          <FlowStepCursorFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: selectedFlowStepTypeToAdd,
-                name: CURSOR_STEP_DEFAULT_NAMES[selectedFlowStepTypeToAdd],
-                isPointCustom: true,
-                isPointEndCustom: true,
-              })
-            }
-          />
-        </div>
+    if (!form) {
+      return panel(
+        <LabelComponent
+          text={`Form for type ${selectedFlowStepTypeToAdd} not implemented yet`}
+        />,
       );
     }
 
-    // The three window types share one form too.
-    if (isWindowFlowStepType(selectedFlowStepTypeToAdd)) {
-      return (
-        <div className=" ">
-          <FlowStepWindowFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: selectedFlowStepTypeToAdd,
-                name: WINDOW_STEP_DEFAULT_NAMES[selectedFlowStepTypeToAdd],
-              })
-            }
-          />
-        </div>
-      );
-    }
+    const StepForm = form.component;
 
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.IMAGE_SEARCH) {
-      return (
-        <div className=" ">
-          <FlowStepImageSearchFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "IMAGE_SEARCH",
-                name: "Image Search",
-              })
-            }
-          />
-        </div>
-      );
-    }
-
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.READ_TEXT) {
-      return (
-        <div className=" ">
-          <FlowStepReadTextFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "READ_TEXT",
-                name: "Read Text",
-                conditionType: "CONTAINS",
-              })
-            }
-          />
-        </div>
-      );
-    }
-
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.CHECK_VALUE) {
-      return (
-        <div className=" ">
-          <FlowStepCheckValueFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "CHECK_VALUE",
-                name: "Check Value",
-                conditionType: "CONTAINS",
-              })
-            }
-          />
-        </div>
-      );
-    }
-
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.SYSTEM_COMMAND) {
-      return (
-        <div className=" ">
-          <FlowStepSystemCommandFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "SYSTEM_COMMAND",
-                name: "System Command",
-              })
-            }
-          />
-        </div>
-      );
-    }
-
-    if (selectedFlowStepTypeToAdd === FlowStepTypeEnum.SYSTEM_ACTION) {
-      return (
-        <div className=" ">
-          <FlowStepSystemActionFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "SYSTEM_ACTION",
-                name: SYSTEM_ACTIONS[0].defaultName,
-              })
-            }
-          />
-        </div>
-      );
-    }
-
-    switch (selectedFlowStepTypeToAdd) {
-      case FlowStepTypeEnum.WAIT:
-        formElement = (
-          <FlowStepWaitFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "WAIT",
-                name: "Wait",
-                waitForMilliseconds: 50,
-              })
-            }
-          />
-        );
-        break;
-
-      case FlowStepTypeEnum.LOOP:
-        formElement = (
-          <FlowStepLoopFormComponent
-            formMode={formMode}
-            onSubmit={handleSave}
-            onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-            onEdit={() => {}}
-            defaultValues={
-              new FlowStepDto({
-                flowId: selectedTreeNode.parentFlowId ?? undefined,
-                parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-                orderNumber: selectedTreeNode.orderNumber,
-                rootId: rootFlowId,
-                flowStepType: "LOOP",
-                name: "Loop",
-              })
-            }
-          />
-        );
-        break;
-
-      default:
-        formElement = (
-          <LabelComponent
-            text={`Form for type ${selectedFlowStepTypeToAdd} not implemented yet`}
-          />
-        );
-    }
-    return <div className=" ">{formElement}</div>;
+    return panel(
+      <StepForm
+        formMode={formMode}
+        onSubmit={handleSave}
+        onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+        onEdit={() => {}}
+        defaultValues={
+          new FlowStepDto({
+            flowId: selectedTreeNode.parentFlowId ?? undefined,
+            parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+            orderNumber: selectedTreeNode.orderNumber,
+            rootId: rootFlowId,
+            flowStepType: selectedFlowStepTypeToAdd,
+            ...form.newStepValues(selectedFlowStepTypeToAdd),
+          })
+        }
+      />,
+    );
   }
 
   // 3. Flow node (root) → Flow form
   if (selectedTreeNode.isFlow) {
-    if (flowLoading) {
-      return (
-        <div className=" ">
-          <LabelComponent text="Loading flow..." />
-        </div>
-      );
-    }
+    if (flowLoading) return panel(<LabelComponent text="Loading flow..." />);
+
     if (!loadedFlow) {
-      return (
-        <div className=" ">
-          <LabelComponent
-            text="Failed to load flow"
-            className="p-error"
-          />
-        </div>
+      return panel(
+        <LabelComponent
+          text="Failed to load flow"
+          className="p-error"
+        />,
       );
     }
 
-    return (
-      <div className=" ">
-        <FlowFormComponent
-          key={flowId}
-          formMode={formMode}
-          defaultValues={loadedFlow}
-          onSubmit={handleFlowSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-        />
-      </div>
+    return panel(
+      <FlowFormComponent
+        key={flowId}
+        formMode={formMode}
+        defaultValues={loadedFlow}
+        onSubmit={handleFlowSave}
+        onCancel={() => setFormMode(FormMode.VIEW)}
+        onEdit={() => setFormMode(FormMode.EDIT)}
+      />,
     );
   }
 
-  // 4. Existing FlowStep → VIEW
-  if (stepLoading) {
-    return (
-      <div className=" ">
-        <LabelComponent text="Loading flow step..." />
-      </div>
-    );
-  }
+  // 4. Existing FlowStep → VIEW / EDIT
+  if (stepLoading) return panel(<LabelComponent text="Loading flow step..." />);
+
   if (!loadedStep) {
-    return (
-      <div className=" ">
-        <LabelComponent
-          text="Failed to load step"
-          className="p-error"
-        />
-      </div>
+    return panel(
+      <LabelComponent
+        text="Failed to load step"
+        className="p-error"
+      />,
     );
   }
 
-  const flowStepDto = loadedStep as FlowStepDto;
-  let formElement: ReactNode;
+  const form = getFlowStepForm(selectedTreeNode.flowStepType);
+  if (!form) return panel(<LabelComponent text="Unsupported flow step type" />);
+
+  const StepForm = form.component;
 
   // react-hook-form reads defaultValues once, on mount. Two steps of the same type render the
   // same component, so without a key React reuses the instance and the form keeps the first
   // step's values. The key also drops any unsaved edits with the step they belonged to.
-  if (isCursorFlowStepType(selectedTreeNode.flowStepType)) {
-    return (
-      <div className=" ">
-        <FlowStepCursorFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH) {
-    return (
-      <div className=" ">
-        <FlowStepImageSearchFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.READ_TEXT) {
-    return (
-      <div className=" ">
-        <FlowStepReadTextFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.CHECK_VALUE) {
-    return (
-      <div className=" ">
-        <FlowStepCheckValueFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.SYSTEM_COMMAND) {
-    return (
-      <div className=" ">
-        <FlowStepSystemCommandFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (selectedTreeNode.flowStepType === FlowStepTypeEnum.SYSTEM_ACTION) {
-    return (
-      <div className=" ">
-        <FlowStepSystemActionFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  if (isWindowFlowStepType(selectedTreeNode.flowStepType)) {
-    return (
-      <div className=" ">
-        <FlowStepWindowFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      </div>
-    );
-  }
-
-  switch (selectedTreeNode.flowStepType) {
-    case FlowStepTypeEnum.WAIT:
-      formElement = (
-        <FlowStepWaitFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      );
-      break;
-    case FlowStepTypeEnum.LOOP:
-      formElement = (
-        <FlowStepLoopFormComponent
-          key={stepId}
-          formMode={formMode}
-          onSubmit={handleSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
-          onEdit={() => setFormMode(FormMode.EDIT)}
-          defaultValues={new FlowStepDto(flowStepDto)}
-        />
-      );
-      break;
-
-    default:
-      formElement = <LabelComponent text="Unsupported flow step type" />;
-  }
-
-  return <div className=" ">{formElement}</div>;
+  return panel(
+    <StepForm
+      key={stepId}
+      formMode={formMode}
+      onSubmit={handleSave}
+      onCancel={() => setFormMode(FormMode.VIEW)}
+      onEdit={() => setFormMode(FormMode.EDIT)}
+      defaultValues={new FlowStepDto(loadedStep as FlowStepDto)}
+    />,
+  );
 }

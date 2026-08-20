@@ -13,13 +13,6 @@ namespace Core.Models.Dtos
         public int OrderNumber { get; set; }
 
 
-        // WINDOW_RELOCATE, WINDOW_RESIZE
-        public int LocationX { get; set; }
-        public int LocationY { get; set; }
-        public int LocationEndX { get; set; }
-        public int LocationEndY { get; set; }
-
-
         // WAIT
         public int WaitForMilliseconds { get; set; }
 
