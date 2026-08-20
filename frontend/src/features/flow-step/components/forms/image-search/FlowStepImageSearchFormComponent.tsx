@@ -3,7 +3,8 @@ import type z from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Rectangle } from "electron";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
@@ -61,7 +62,20 @@ export default function FlowStepImageSearchFormComponent({
     defaultValues.flowStepImages ?? [],
   );
 
-  const applyImages = (next: FlowStepImageDto[]) => {
+  // Capturing a template opens a window and waits, so by the time it resolves this component has
+  // re-rendered and anything read from the closure is from before. Updates are computed against
+  // the ref instead, so a slow capture cannot drop what came before it.
+  const imagesRef = useRef(images);
+
+  // Every template edit goes through here so it lands in the form too. Without that the list is
+  // invisible to react-hook-form, isDirty never flips, and Save stays disabled. Setting the real
+  // value rather than a flag also means undoing a change goes back to clean.
+  const applyImages = (
+    update: (previous: FlowStepImageDto[]) => FlowStepImageDto[],
+  ) => {
+    const next = update(imagesRef.current);
+
+    imagesRef.current = next;
     setImages(next);
     form.setValue("flowStepImages", next, { shouldDirty: true });
   };
@@ -69,6 +83,7 @@ export default function FlowStepImageSearchFormComponent({
     null,
   );
   const [isTesting, setIsTesting] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
   const { openImageEditor } = useWindowImageEditor();
@@ -101,7 +116,7 @@ export default function FlowStepImageSearchFormComponent({
       ...defaultValues,
       ...(data ?? (form.getValues() as never)),
       flowAreaId: (data ?? form.getValues()).flowAreaId ?? undefined,
-      flowStepImages: images,
+      flowStepImages: imagesRef.current,
     });
 
   // Captured region becomes the template, and the area it was captured in becomes the
@@ -110,6 +125,20 @@ export default function FlowStepImageSearchFormComponent({
     const rect = await openWindow();
     if (!rect) return;
 
+    setTemplateError(null);
+    try {
+      await captureTemplate(rect);
+    } catch (err) {
+      // Without this the capture fails and the list simply stays empty, which reads as the
+      // button doing nothing.
+      console.error(err);
+      setTemplateError(
+        err instanceof Error ? err.message : "The template could not be captured.",
+      );
+    }
+  };
+
+  const captureTemplate = async (rect: Rectangle) => {
     const areaId = form.getValues().flowAreaId;
     let frameWidth = rect.width;
     let frameHeight = rect.height;
@@ -134,10 +163,10 @@ export default function FlowStepImageSearchFormComponent({
       captureAppWindow: "",
     });
 
-    applyImages([
-      ...images,
+    applyImages((previous) => [
+      ...previous,
       new FlowStepImageDto({
-        name: `Template ${images.length + 1}`,
+        name: `Template ${previous.length + 1}`,
         templateImage: screenshot,
         authoredFrameWidth: frameWidth,
         authoredFrameHeight: frameHeight,
@@ -176,7 +205,7 @@ export default function FlowStepImageSearchFormComponent({
   };
 
   const updateImage = (index: number, image: FlowStepImageDto) =>
-    applyImages(images.map((x, i) => (i === index ? image : x)));
+    applyImages((previous) => previous.map((x, i) => (i === index ? image : x)));
 
   const handleTest = async () => {
     setIsTesting(true);
@@ -224,9 +253,17 @@ export default function FlowStepImageSearchFormComponent({
             onSetClickPoint={handleSetClickPoint}
             onChange={updateImage}
             onRemove={(index) =>
-              applyImages(images.filter((_, i) => i !== index))
+              applyImages((previous) => previous.filter((_, i) => i !== index))
             }
           />
+
+          {templateError && (
+            <Message
+              severity="error"
+              className="w-full justify-content-start mt-2"
+              text={templateError}
+            />
+          )}
 
           <div className="flex gap-3 align-items-center mt-3">
             <Button
