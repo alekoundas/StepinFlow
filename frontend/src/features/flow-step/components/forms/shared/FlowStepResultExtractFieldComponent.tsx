@@ -18,7 +18,7 @@ export default function FlowStepResultExtractFieldComponent({
     <FormInputTextComponent
       fieldName="resultExtractPattern"
       label="Keep only"
-      placeholderText="(\d+)"
+      placeholderText="([0-9]+)"
       isDisabled={isDisabled}
       hintText={`Regex, first capture group. Empty keeps everything. ${resultDescription}`}
     />

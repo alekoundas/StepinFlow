@@ -1,6 +1,7 @@
 using Business.Services.CommandService;
 using Core.Enums;
 using Core.Helpers;
+using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -34,9 +35,7 @@ namespace Business.Services.FlowValidationService
             FlowStepTypeEnum.WINDOW_RELOCATE,
         ];
 
-        public FlowValidationResultDto Validate(
-            IReadOnlyList<FlowStep> steps,
-            IReadOnlyDictionary<int, int> templateCountByStepId)
+        public FlowValidationResultDto Validate(IReadOnlyList<FlowStep> steps, IReadOnlyDictionary<int, int> templateCountByStepId)
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
 
@@ -50,7 +49,7 @@ namespace Business.Services.FlowValidationService
                 return Finish(result);
             }
 
-            Dictionary<int, FlowStep> byId = steps.ToDictionary(x => x.Id);
+            Dictionary<int, StepChainNode> byId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name));
             ILookup<int?, FlowStep> childrenByParent = steps.ToLookup(x => x.ParentFlowStepId);
 
             foreach (FlowStep step in authored)
@@ -76,8 +75,11 @@ namespace Business.Services.FlowValidationService
                     case FlowStepTypeEnum.READ_TEXT:
                         ValidateArea(result, step);
 
-                        if (string.IsNullOrWhiteSpace(step.ConditionText))
-                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
+                        // Reading once succeeds on having read anything, so only the waiting modes
+                        // need something to wait for.
+                        if (step.SearchMode is SearchModeEnum.WAIT_UNTIL_FOUND or SearchModeEnum.WAIT_UNTIL_NOT_FOUND
+                            && string.IsNullOrWhiteSpace(step.ConditionText))
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to wait for.");
 
                         if (string.IsNullOrWhiteSpace(step.OcrLanguage))
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
@@ -116,7 +118,7 @@ namespace Business.Services.FlowValidationService
         // Private methods
         // ================================================================
 
-        private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowStep> byId)
+        private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
             ValidatePoint(result, step, byId, step.IsPointCustom, step.FlowPointId, step.FlowStepReferenceId, "");
 
@@ -127,7 +129,7 @@ namespace Business.Services.FlowValidationService
         private static void ValidatePoint(
             FlowValidationResultDto result,
             FlowStep step,
-            Dictionary<int, FlowStep> byId,
+            IReadOnlyDictionary<int, StepChainNode> byId,
             bool isCustom,
             int? flowPointId,
             int? referenceId,
@@ -146,57 +148,28 @@ namespace Business.Services.FlowValidationService
                 return;
             }
 
-            if (!CanReadResultOf(byId, step, referenceId.Value))
+            if (!TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId.Value))
             {
-                string name = byId.TryGetValue(referenceId.Value, out FlowStep? reference) ? reference.Name : "that step";
+                string name = byId.TryGetValue(referenceId.Value, out StepChainNode reference) ? reference.Name : "that step";
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.");
             }
         }
 
-        /// <summary>
-        /// A result only exists once the search that produced it has run and succeeded, so the
-        /// referenced step has to be an ancestor and the way down to here has to be its Success
-        /// branch. Anywhere else it is either the failure path or a step that may not have run.
-        /// </summary>
-        private static bool CanReadResultOf(Dictionary<int, FlowStep> byId, FlowStep step, int referenceId)
-        {
-            int childId = step.Id;
-            int? currentId = step.ParentFlowStepId;
-
-            // Bounded by the step count, so a corrupt parent chain cannot spin forever.
-            int guard = byId.Count + 1;
-
-            while (currentId != null && guard-- > 0)
-            {
-                if (!byId.TryGetValue(currentId.Value, out FlowStep? current))
-                    return false;
-
-                if (current.Id == referenceId)
-                    return byId.TryGetValue(childId, out FlowStep? branch) && branch.FlowStepType == FlowStepTypeEnum.SUCCESS;
-
-                childId = current.Id;
-                currentId = current.ParentFlowStepId;
-            }
-
-            return false;
-        }
-
-        private static void ValidateCheckValue(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowStep> byId)
+        private static void ValidateCheckValue(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
             if (step.FlowStepReferenceId == null)
             {
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_MISSING, "Pick the step whose result is checked.");
             }
-            else if (!CanReadResultOf(byId, step, step.FlowStepReferenceId.Value))
+            else if (!TreeStepHelper.CanReadResultOf(byId, step.Id, step.FlowStepReferenceId.Value))
             {
-                string name = byId.TryGetValue(step.FlowStepReferenceId.Value, out FlowStep? reference) ? reference.Name : "that step";
+                string name = byId.TryGetValue(step.FlowStepReferenceId.Value, out StepChainNode reference) ? reference.Name : "that step";
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"This checks \"{name}\", which no longer runs above this step on the Success side.");
             }
 
             if (step.ConditionType == null)
             {
-                Add(result, step, ValidationSeverityEnum.ERROR,
-                    FlowValidationCodeEnum.CONDITION_TYPE_MISSING, "Pick what to check for.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_TYPE_MISSING, "Pick what to check for.");
                 return;
             }
 

@@ -217,7 +217,7 @@ export default function FlowStepCursorLocationFieldsComponent({
             optionLabel="label"
             optionValue="value"
             placeholderText="Select a step..."
-            hintText="Only Image Search / Text Search steps this step runs under can be used."
+            hintText="Only Image Search / Read Text steps this step runs under on the Success side can be used."
             isRequired={true}
             isDisabled={isDisabled}
           />

@@ -6,9 +6,11 @@ import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-t
 
 interface Props {
   result: ReadTextTestResultDto;
+  // The two kinds of step ask different questions, so the same flag means different things.
+  isWaiting: boolean;
 }
 
-export default function FlowStepReadTextTestPanelComponent({ result }: Props) {
+export default function FlowStepReadTextTestPanelComponent({ result, isWaiting }: Props) {
   if (!result.isResolved) {
     return (
       <Panel
@@ -31,7 +33,15 @@ export default function FlowStepReadTextTestPanelComponent({ result }: Props) {
     >
       <Tag
         severity={result.isMatch ? "success" : "danger"}
-        value={result.isMatch ? "Matched" : "No match"}
+        value={
+          isWaiting
+            ? result.isMatch
+              ? "Condition holds"
+              : "Condition does not hold"
+            : result.isMatch
+              ? "Read"
+              : "Nothing read"
+        }
       />
 
       {/* The whole read, so a near miss shows itself instead of just failing. */}
@@ -49,7 +59,7 @@ export default function FlowStepReadTextTestPanelComponent({ result }: Props) {
       {result.resultValue !== result.text && (
         <div className="mt-3">
           <LabelComponent
-            text="After extraction"
+            text="Kept"
             weight="bold"
             size="sm"
           />

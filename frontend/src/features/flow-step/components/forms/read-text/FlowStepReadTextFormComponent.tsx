@@ -12,6 +12,7 @@ import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponen
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
 import { FlowStepReadTextSchema } from "@/features/flow-step/components/forms/read-text/flow-step-read-text.zod";
+import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepReadTextFormFieldsComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormFieldsComponent";
 import FlowStepReadTextTestPanelComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextTestPanelComponent";
 
@@ -107,7 +108,12 @@ export default function FlowStepReadTextFormComponent({
             />
           </div>
 
-          {testResult && <FlowStepReadTextTestPanelComponent result={testResult} />}
+          {testResult && (
+            <FlowStepReadTextTestPanelComponent
+              result={testResult}
+              isWaiting={isWaitingMode(form.getValues("searchMode"))}
+            />
+          )}
 
           <FormFooterComponent
             formMode={formMode}

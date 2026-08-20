@@ -40,18 +40,18 @@ export const READ_TEXT_MODES: SearchMode[] = [
   {
     value: SearchModeEnum.FIND_BEST,
     label: "Read once",
-    description: "Read the area once and branch on whether it matches.",
+    description: "Read the area once. Succeeds when there is something to read.",
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_FOUND,
     label: "Until it matches",
     description:
-      "Keep reading until the text matches. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.",
+      "Keep reading until the condition holds. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.",
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_NOT_FOUND,
     label: "Until it stops matching",
-    description: "Keep reading until the text is no longer there. For spinners and status messages.",
+    description: "Keep reading until the condition stops holding. For spinners and status messages.",
   },
 ];
 

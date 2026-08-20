@@ -55,22 +55,32 @@ namespace Business.Ipc.Handlers
                 return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto { IsResolved = false, ErrorMessage = ex.Message });
             }
 
-            ReadTextTestResultDto result = new ReadTextTestResultDto
+            // Narrowed first, then tested, so the two fields compose: keep only the part that
+            // matters, then say what has to be true of it.
+            string value = Extract(text, step.ResultExtractPattern);
+
+            return ResultDto<ReadTextTestResultDto>.Success(new ReadTextTestResultDto
             {
                 IsResolved = true,
                 Text = text,
-                IsMatch = Matches(text, step.ConditionText, step.ConditionType),
-            };
-
-            result.ResultValue = Extract(text, step.ResultExtractPattern);
-
-            return ResultDto<ReadTextTestResultDto>.Success(result);
+                ResultValue = value,
+                IsMatch = IsMatch(step, value),
+            });
         }
 
 
         // ================================================================
         // Private methods
         // ================================================================
+
+        /// <summary>
+        /// Reading once asks only whether anything was read: whitespace is what a blank area gives
+        /// back, so it counts as nothing. The waiting modes poll on the condition instead.
+        /// </summary>
+        private static bool IsMatch(FlowStepDto step, string value) =>
+            step.SearchMode is SearchModeEnum.WAIT_UNTIL_FOUND or SearchModeEnum.WAIT_UNTIL_NOT_FOUND
+                ? Matches(value, step.ConditionText, step.ConditionType)
+                : !string.IsNullOrWhiteSpace(value);
 
         private static bool Matches(string text, string expected, ConditionTypeEnum? condition) => condition switch
         {

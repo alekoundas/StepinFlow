@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { READ_TEXT_CONDITION_TYPES } from "@/features/flow-step/components/forms/shared/condition-types";
-import { READ_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
+import {
+  isWaitingMode,
+  READ_TEXT_MODE_VALUES,
+} from "@/features/flow-step/components/forms/shared/search-modes";
 
 export const FlowStepReadTextSchema = z
   .object({
@@ -27,10 +30,11 @@ export const FlowStepReadTextSchema = z
       });
     }
 
-    if (data.conditionText.trim().length === 0) {
+    // Reading once succeeds on having read anything, so only the waiting modes need a condition.
+    if (isWaitingMode(data.searchMode) && data.conditionText.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Type the text to look for",
+        message: "Type the text to wait for",
         path: ["conditionText"],
       });
     }

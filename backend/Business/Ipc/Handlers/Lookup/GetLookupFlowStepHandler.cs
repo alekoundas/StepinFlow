@@ -1,4 +1,6 @@
 using Core.Enums;
+using Core.Helpers;
+using Core.Models.Business;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using DataAccess;
@@ -31,11 +33,12 @@ namespace Business.Ipc.Handlers
         }
 
         /// <summary>
-        /// Returns the ancestors of <c>dto.FlowStepId</c> that produce the requested kind of
-        /// result, nearest first.
+        /// Returns the steps whose result can be read at <c>dto.FlowStepId</c> and that produce the
+        /// requested kind of it, nearest first.
         ///
-        /// A step reuses the result of the step it lives under, so only steps on its own parent
-        /// chain are valid: anything else may not have run yet when this step executes.
+        /// Reachability is TreeStepHelper's rule rather than a plain ancestor walk, so this offers
+        /// exactly what the validator accepts: a step under a Failure branch is not offered the
+        /// search above it, because that search did not produce anything on the way down.
         ///
         /// In ADD mode there is no step row yet, so the caller passes the parent step id.
         /// </summary>
@@ -58,39 +61,22 @@ namespace Business.Ipc.Handlers
                 .Select(x => x.RootId)
                 .FirstOrDefaultAsync(ct);
 
-            var steps = await dbContext.FlowSteps
+            Dictionary<int, StepChainNode> byId = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.RootId == rootId)
-                .Select(x => new
+                .Select(x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name))
+                .ToDictionaryAsync(x => x.Id, ct);
+
+            List<LookupItemDto> items = TreeStepHelper
+                .ReadableAncestors(byId, dto.FlowStepId.Value)
+                .Where(x => producingTypes.Contains(x.Step.FlowStepType) && !dto.ExcludedIds.Contains(x.Step.Id))
+                .Select(x => new LookupItemDto
                 {
-                    x.Id,
-                    x.Name,
-                    x.FlowStepType,
-                    x.ParentFlowStepId,
+                    Value = x.Step.Id.ToString(),
+                    Label = x.Step.Name,
+                    Description = $"{x.Step.FlowStepType} · {x.Depth} level(s) up",
                 })
-                .ToListAsync(ct);
-
-            var stepsById = steps.ToDictionary(x => x.Id);
-
-            List<LookupItemDto> items = new List<LookupItemDto>();
-            int? currentId = dto.FlowStepId;
-            int depth = 0;
-
-            while (currentId != null && stepsById.TryGetValue(currentId.Value, out var step))
-            {
-                if (producingTypes.Contains(step.FlowStepType) && !dto.ExcludedIds.Contains(step.Id))
-                {
-                    items.Add(new LookupItemDto
-                    {
-                        Value = step.Id.ToString(),
-                        Label = step.Name,
-                        Description = $"{step.FlowStepType} · {depth} level(s) up",
-                    });
-                }
-
-                currentId = step.ParentFlowStepId;
-                depth++;
-            }
+                .ToList();
 
             if (!string.IsNullOrWhiteSpace(dto.SearchText))
                 items = items.Where(x => x.Label.Contains(dto.SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
