@@ -1,10 +1,11 @@
-﻿using Core.Models.Dtos;
+using Core.Models.Dtos;
 using MediatR;
 
 namespace Core.Models.Ipc
 {
     // ============== QUERIES ==============
     public record GetFlowQuery(int id) : IRequest<ResultDto<FlowDto>>;
+    public record ValidateFlowQuery(int id) : IRequest<ResultDto<FlowValidationResultDto>>;
     public record GetFlowTreeNodeQuery(int id) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowDto>>>;
 

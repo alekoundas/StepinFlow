@@ -4,6 +4,7 @@ using Business.Helpers;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
+using Business.Services.FlowValidationService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
 using Business.Services.OcrService;
@@ -47,6 +48,7 @@ namespace App
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
+            builder.Services.AddSingleton<IFlowValidator, FlowValidator>();
 
 
             // IPC

@@ -15,6 +15,7 @@ export function useFlowPointMutations() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
     queryClient.invalidateQueries({ queryKey: ["flow"] });
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
   };
 
   const createFlowPointMutation = useMutation({

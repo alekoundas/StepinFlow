@@ -1,4 +1,4 @@
-﻿
+
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using Core.Models.Ipc.Protobuf;
@@ -40,6 +40,7 @@ namespace App.Ipc
                     "Flow.delete" => await _mediator.Send(new DeleteFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.getLazy" => await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Flow.validate" => await _mediator.Send(new ValidateFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowStep

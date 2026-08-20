@@ -27,6 +27,7 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flow"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
     },
   });
 
@@ -38,6 +39,7 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flow"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
     },
   });
 
@@ -49,6 +51,7 @@ export function useFlowMutations() {
       queryClient.invalidateQueries({ queryKey: ["flow"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
     },
   });
 

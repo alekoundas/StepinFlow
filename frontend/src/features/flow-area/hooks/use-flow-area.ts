@@ -15,6 +15,7 @@ export function useFlowAreaMutations() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
     queryClient.invalidateQueries({ queryKey: ["flow"] });
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
   };
 
   const createFlowAreaMutation = useMutation({

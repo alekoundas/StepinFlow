@@ -28,6 +28,10 @@ import { useDialogStore } from "@/shared/components/modal-component/store/dialog
 import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
 import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
+import {
+  groupIssuesByStep,
+  useFlowValidation,
+} from "@/features/flow/hooks/use-flow-validation";
 
 interface Props {
   flowId: number;
@@ -46,6 +50,14 @@ export function DataTreeComponent({ flowId }: Props) {
   const [loading, setLoading] = useState(false);
   const { openConfirm } = useDialogStore();
   const { moveFlowStepMutation } = useFlowStepMutations();
+
+  // Fetched once for the flow rather than per branch: whether a step can read another step's
+  // result depends on the whole parent chain, not on the branch being expanded.
+  const { data: validation } = useFlowValidation(flowId);
+  const issuesByStepId = useMemo(
+    () => groupIssuesByStep(validation?.issues ?? []),
+    [validation],
+  );
 
   // ====================== HELPERS ======================
 
@@ -331,7 +343,12 @@ export function DataTreeComponent({ flowId }: Props) {
     } else if (treeNodeDto.isNew) {
       template = <IconComponent name="plus" />;
     } else {
-      template = <FlowStepTreeNodeComponent treeNode={treeNodeDto} />;
+      template = (
+        <FlowStepTreeNodeComponent
+          treeNode={treeNodeDto}
+          issues={issuesByStepId.get(treeNodeDto.entityId)}
+        />
+      );
     }
 
     const isDropTarget = dropTarget?.key === treeNodeDto.key;

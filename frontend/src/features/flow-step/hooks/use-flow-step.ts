@@ -21,9 +21,16 @@ export function useFlowStep(id: number | null) {
 export function useFlowStepMutations() {
   const queryClient = useQueryClient();
 
+  // Anything that changes a step can change what is broken about the flow around it, so the
+  // validation badges are refetched alongside the step itself.
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["flowStep"] });
+    queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
+  };
+
   const createFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.create(dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+    onSuccess: invalidate,
     // onError: (err) => {
     //   console.error("Failed to create FlowStep", err);
     // },
@@ -31,19 +38,19 @@ export function useFlowStepMutations() {
 
   const updateFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.update(dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+    onSuccess: invalidate,
   });
 
   const deleteFlowStepMutation = useMutation({
     mutationFn: (id: number) => backendApiService.FlowStep.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+    onSuccess: invalidate,
   });
 
   // A move rewrites more than the step it moved: reparenting clears the search results that
   // steps below it can no longer reach, so the cached details of the whole flow are suspect.
   const moveFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepMoveDto) => backendApiService.FlowStep.move(dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+    onSuccess: invalidate,
   });
 
   return {

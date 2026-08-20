@@ -2,6 +2,7 @@ import type { IpcBroadcastMessage, IpcRequestMessage } from "../../../../electro
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
+import type { FlowValidationResultDto } from "@/shared/models/database/flow-validation-result-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
 import type {
@@ -35,6 +36,8 @@ export const backendApiService = {
     getLazy: (dto: LazyDto) =>
       call<LazyResponseDto<FlowDto>>("Flow.getLazy", dto),
     getTreeNodes: (id: number) => call<TreeNodeDto[]>("Flow.getTreeNodes", id),
+    validate: (id: number) =>
+      call<FlowValidationResultDto>("Flow.validate", id),
   },
 
   FlowStep: {
