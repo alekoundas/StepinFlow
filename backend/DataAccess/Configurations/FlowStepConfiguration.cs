@@ -39,11 +39,12 @@ namespace DataAccess.Configurations
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
 
 
-            // Relationship with SubFlow (one-to-many)
-            builder.HasOne(x => x.SubFlow)
-                .WithMany(x => x.FlowSteps)
-                .HasForeignKey(x => x.SubFlowId)
-                .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
+            // The flow a SUB_FLOW step runs. A reference, not ownership: deleting the invoked
+            // flow clears the reference and the validator reports it, the same as a deleted area.
+            builder.HasOne(x => x.InvokedFlow)
+                .WithMany()
+                .HasForeignKey(x => x.InvokedFlowId)
+                .OnDelete(DeleteBehavior.SetNull);
 
 
             // Relationship with Parent FlowStep (one-to-many)

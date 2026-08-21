@@ -8,9 +8,12 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 type Props = {
   className?: string;
+
+  /** Which side of the flag to list. The two pages never show each other. */
+  isSubFlow: boolean;
 };
 
-export function FlowDataTableComponent({ className }: Props) {
+export function FlowDataTableComponent({ className, isSubFlow }: Props) {
   const navigate = useNavigate();
   const { deleteFlowMutation } = useFlowMutations();
 
@@ -39,8 +42,8 @@ export function FlowDataTableComponent({ className }: Props) {
     <div className={className}>
       <DataTableComponent
         columns={columns}
-        queryKey={["flows", "list"]}
-        queryFn={backendApiService.Flow.getLazy}
+        queryKey={["flows", "list", isSubFlow]}
+        queryFn={(dto) => backendApiService.Flow.getLazy({ ...dto, isSubFlow })}
       />
     </div>
   );

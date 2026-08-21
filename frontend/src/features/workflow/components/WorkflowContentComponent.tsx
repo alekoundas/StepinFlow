@@ -16,6 +16,8 @@ import { FlowFormComponent } from "@/features/flow/components/form/FlowFormCompo
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import ExtractSubFlowButtonComponent from "@/features/workflow/components/ExtractSubFlowButtonComponent";
+import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 export function WorkflowContentComponent() {
@@ -231,17 +233,40 @@ export function WorkflowContentComponent() {
 
   const StepForm = form.component;
 
+  // Structural branches belong to the step above them, so there is nothing there to lift out.
+  const canExtract =
+    selectedTreeNode.flowStepType !== FlowStepTypeEnum.SUCCESS &&
+    selectedTreeNode.flowStepType !== FlowStepTypeEnum.FAILURE;
+
   // react-hook-form reads defaultValues once, on mount. Two steps of the same type render the
   // same component, so without a key React reuses the instance and the form keeps the first
   // step's values. The key also drops any unsaved edits with the step they belonged to.
   return panel(
-    <StepForm
-      key={stepId}
-      formMode={formMode}
-      onSubmit={handleSave}
-      onCancel={() => setFormMode(FormMode.VIEW)}
-      onEdit={() => setFormMode(FormMode.EDIT)}
-      defaultValues={new FlowStepDto(loadedStep as FlowStepDto)}
-    />,
+    <>
+      {canExtract && formMode === FormMode.VIEW && (
+        <div className="flex justify-content-end mb-2">
+          <ExtractSubFlowButtonComponent
+            node={selectedTreeNode}
+            rootFlowId={rootFlowId ?? 0}
+            onExtracted={({ flowStepId, parentId, isFlow }) =>
+              setTreeRefreshTrigger({
+                id: parentId,
+                isFlow,
+                selectNodeIdAfterLoad: flowStepId,
+              })
+            }
+          />
+        </div>
+      )}
+
+      <StepForm
+        key={stepId}
+        formMode={formMode}
+        onSubmit={handleSave}
+        onCancel={() => setFormMode(FormMode.VIEW)}
+        onEdit={() => setFormMode(FormMode.EDIT)}
+        defaultValues={new FlowStepDto(loadedStep as FlowStepDto)}
+      />
+    </>,
   );
 }

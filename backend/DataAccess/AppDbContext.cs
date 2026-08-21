@@ -8,7 +8,6 @@ namespace DataAccess
     public class AppDbContext : DbContext
     {
         public DbSet<Flow> Flows { get; set; }
-        public DbSet<SubFlow> SubFlows { get; set; }
         public DbSet<FlowArea> FlowAreas { get; set; }
         public DbSet<FlowPoint> FlowPoints { get; set; }
         public DbSet<FlowStep> FlowSteps { get; set; }
@@ -27,7 +26,6 @@ namespace DataAccess
             base.OnModelCreating(builder);
 
             builder.ApplyConfiguration(new FlowConfiguration());
-            builder.ApplyConfiguration(new SubFlowConfiguration());
             builder.ApplyConfiguration(new FlowAreaConfiguration());
             builder.ApplyConfiguration(new FlowPointConfiguration());
             builder.ApplyConfiguration(new FlowStepConfiguration());

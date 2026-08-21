@@ -54,6 +54,10 @@ const router = createHashRouter([
         element: <FlowListPage />,
       },
       {
+        path: "/sub-flows",
+        element: <FlowListPage isSubFlow={true} />,
+      },
+      {
         path: "/flows/new",
         element: <FlowFormPage />,
       },

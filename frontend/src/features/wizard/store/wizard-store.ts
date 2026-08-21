@@ -18,6 +18,9 @@ interface Props {
    */
   lookupFlowId: number | undefined;
 
+  /** Whether the flow the recorder is about to create should be a sub-flow. */
+  createAsSubFlow: boolean;
+
   /** What the recorder captured, in order. Never mutated once set. */
   actions: RecordedActionDto[];
 
@@ -35,6 +38,7 @@ interface Props {
   openParentBranch: FlowStepTypeEnum | undefined;
 
   setTarget: (target: FlowDraftTargetDto | undefined, lookupFlowId?: number) => void;
+  setCreateAsSubFlow: (isSubFlow: boolean) => void;
   setActions: (actions: RecordedActionDto[]) => void;
 
   addSteps: (
@@ -59,6 +63,7 @@ interface Props {
 const initial = {
   target: undefined,
   lookupFlowId: undefined,
+  createAsSubFlow: false,
   actions: [],
   cursor: 0,
   steps: [],
@@ -72,6 +77,8 @@ export const useWizardStore = create<Props>()(
 
     setTarget: (target, lookupFlowId) =>
       set({ target, lookupFlowId: lookupFlowId ?? target?.targetFlowId ?? undefined }),
+
+    setCreateAsSubFlow: (isSubFlow) => set({ createAsSubFlow: isSubFlow }),
     setActions: (actions) =>
       set({ actions, cursor: 0, steps: [], openParentTempId: undefined, openParentBranch: undefined }),
 

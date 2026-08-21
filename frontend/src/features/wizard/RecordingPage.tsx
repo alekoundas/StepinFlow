@@ -25,7 +25,7 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
  */
 export default function RecordingPage() {
   const navigate = useNavigate();
-  const { target, setTarget, setActions, reset } = useWizardStore();
+  const { target, createAsSubFlow, setTarget, setActions, reset } = useWizardStore();
 
   const [flowName, setFlowName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -73,7 +73,7 @@ export default function RecordingPage() {
 
     try {
       const flowId = await backendApiService.Flow.create(
-        new FlowDto({ name: flowName.trim() }),
+        new FlowDto({ name: flowName.trim(), isSubFlow: createAsSubFlow }),
       );
 
       setTarget({ targetFlowId: flowId, targetIndex: 0 }, flowId);

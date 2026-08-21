@@ -26,7 +26,7 @@ namespace App.AutoMapper
             CreateMap<FlowStepDto, FlowStep>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
-                .ForMember(x => x.SubFlow, o => o.Ignore())
+                .ForMember(x => x.InvokedFlow, o => o.Ignore())
                 .ForMember(x => x.FlowArea, o => o.Ignore())
                 .ForMember(x => x.FlowPoint, o => o.Ignore())
                 .ForMember(x => x.FlowPointEnd, o => o.Ignore())
@@ -60,12 +60,6 @@ namespace App.AutoMapper
             CreateMap<FlowStepImageDto, FlowStepImage>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.FlowStep, o => o.Ignore());
-
-            // SubFlow
-            CreateMap<SubFlow, SubFlowDto>();
-            CreateMap<SubFlowDto, SubFlow>()
-                .ForMember(x => x.CreatedOn, o => o.Ignore())
-                .ForMember(x => x.FlowSteps, o => o.Ignore());
         }
     }
 }

@@ -41,6 +41,9 @@ namespace App.Ipc
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.getLazy" => await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.validate" => await _mediator.Send(new ValidateFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Flow.getCallers" => await _mediator.Send(new GetFlowCallersQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Flow.promoteToSubFlow" => await _mediator.Send(new PromoteFlowToSubFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Flow.extractSubFlow" => await _mediator.Send(new ExtractSubFlowCommand(JsonSerializer.Deserialize<ExtractSubFlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowStep
@@ -76,17 +79,12 @@ namespace App.Ipc
                     "FlowStepImage.create" => await _mediator.Send(new CreateFlowStepImageCommand(JsonSerializer.Deserialize<FlowStepImageDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStepImage.get" => await _mediator.Send(new GetFlowStepImageQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
-                    // SubFlow
-                    "SubFlow.create" => await _mediator.Send(new CreateSubFlowCommand(JsonSerializer.Deserialize<SubFlowDto>(request.Payload, _jsonOptions)!), ct),
-                    "SubFlow.update" => await _mediator.Send(new UpdateSubFlowCommand(JsonSerializer.Deserialize<SubFlowDto>(request.Payload, _jsonOptions)!), ct),
-                    "SubFlow.delete" => await _mediator.Send(new DeleteSubFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "SubFlow.get" => await _mediator.Send(new GetSubFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-
                     // Lookups
                     "Lookup.window" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.monitor" => await _mediator.Send(new GetLookupMonitorQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowStep" => await _mediator.Send(new GetLookupFlowStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowPoint" => await _mediator.Send(new GetLookupFlowPointQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.subFlow" => await _mediator.Send(new GetLookupSubFlowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
                     "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),

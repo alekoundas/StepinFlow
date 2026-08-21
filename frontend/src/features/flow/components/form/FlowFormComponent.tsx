@@ -11,6 +11,7 @@ import { FlowAreaDataTableComponent } from "@/features/flow-area/components/Flow
 import { FlowPointDataTableComponent } from "@/features/flow-point/components/FlowPointDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import FlowSubFlowPanelComponent from "@/features/flow/components/form/FlowSubFlowPanelComponent";
 import { useEffect } from "react";
 
 interface Props {
@@ -115,6 +116,11 @@ export function FlowFormComponent({
               />
             </div>
           </div>
+
+          <FlowSubFlowPanelComponent
+            flowId={defaultValues.id}
+            isSubFlow={defaultValues.isSubFlow}
+          />
 
           <FormFooterComponent
             formMode={formMode}

@@ -7,6 +7,8 @@ namespace Core.Models.Database
         public string Name { get; set; } = string.Empty;
         public int OrderNumber { get; set; }
 
+        public bool IsSubFlow { get; set; }
+
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();
         public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();

@@ -7,6 +7,9 @@ export class FlowDto {
   name: string = "";
   orderNumber: number = -1;
 
+  /** A flow meant to be called by another rather than started on its own. One way, never unset. */
+  isSubFlow: boolean = false;
+
   flowSteps: FlowStepDto[] = [];
   flowAreas: FlowAreaDto[] = [];
   flowPoints: FlowPointDto[] = [];

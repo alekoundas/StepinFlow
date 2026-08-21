@@ -27,9 +27,13 @@ import type {
 } from "@/shared/models/database/flow-draft-dto";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
-import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
+import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
+import type {
+  ExtractSubFlowDto,
+  ExtractSubFlowResultDto,
+} from "@/shared/models/database/extract-sub-flow-dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 
@@ -47,6 +51,11 @@ export const backendApiService = {
     getTreeNodes: (id: number) => call<TreeNodeDto[]>("Flow.getTreeNodes", id),
     validate: (id: number) =>
       call<FlowValidationResultDto>("Flow.validate", id),
+
+    getCallers: (id: number) => call<LookupItemDto[]>("Flow.getCallers", id),
+    promoteToSubFlow: (id: number) => call<boolean>("Flow.promoteToSubFlow", id),
+    extractSubFlow: (dto: ExtractSubFlowDto) =>
+      call<ExtractSubFlowResultDto>("Flow.extractSubFlow", dto),
   },
 
   FlowStep: {
@@ -101,13 +110,6 @@ export const backendApiService = {
       call<ScreenPointDto>("FlowPoint.getPreview", id),
   },
 
-  SubFlow: {
-    create: (dto: SubFlowDto) => call<number>("SubFlow.create", dto),
-    update: (dto: SubFlowDto) => call<SubFlowDto>("SubFlow.update", dto),
-    delete: (id: number) => call<boolean>("SubFlow.delete", id),
-    get: (id: number) => call<SubFlowDto>("SubFlow.get", id),
-  },
-
   Lookup: {
     window: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.window", dto),
@@ -119,6 +121,8 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.flowPoint", dto),
     flowArea: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.flowArea", dto),
+    subFlow: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.subFlow", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
   },

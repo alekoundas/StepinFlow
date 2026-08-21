@@ -8,10 +8,17 @@ import { FlowDataTableComponent } from "@/features/flow/components/FlowDataTable
 import { FlowDataGridComponent } from "@/features/flow/components/FlowDataGridComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
-export default function FlowListPage() {
+interface Props {
+  /** Sub-flows are the same page with the flag flipped: same table, same recorder, same editor. */
+  isSubFlow?: boolean;
+}
+
+export default function FlowListPage({ isSubFlow = false }: Props) {
   const navigate = useNavigate();
-  const { setTarget } = useWizardStore();
+  const { setTarget, setCreateAsSubFlow } = useWizardStore();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+
+  const noun = isSubFlow ? "Sub-Flow" : "Flow";
 
   const handleNew = () => navigate("/flows/new");
 
@@ -19,32 +26,35 @@ export default function FlowListPage() {
   // search areas and points from.
   const handleRecord = () => {
     setTarget(undefined);
+    setCreateAsSubFlow(isSubFlow);
     navigate("/record");
   };
+
   return (
     <div className="m-4">
-      {/* Title */}
       <div className="flex flex-wrap justify-content-between items-center">
         <LabelComponent
-          text="Flows"
+          text={isSubFlow ? "Sub-Flows" : "Flows"}
           size="5xl"
           weight="bold"
         />
 
         <div className="flex gap-2">
           <Button
-            label="Record a Flow"
+            label={`Record a ${noun}`}
             icon="pi pi-circle-fill"
             onClick={handleRecord}
             className="p-button-outlined"
             tooltip="Do the task once and let the steps be written for you"
             tooltipOptions={{ position: "bottom" }}
           />
-          <Button
-            label="New Flow"
-            icon="pi pi-plus"
-            onClick={handleNew}
-          />
+          {!isSubFlow && (
+            <Button
+              label="New Flow"
+              icon="pi pi-plus"
+              onClick={handleNew}
+            />
+          )}
         </div>
       </div>
 
@@ -52,12 +62,16 @@ export default function FlowListPage() {
         <div className="flex flex-wrap justify-content-between items-center">
           <div className="flex flex-column">
             <LabelComponent
-              text="Available Flows"
+              text={isSubFlow ? "Available Sub-Flows" : "Available Flows"}
               size="lg"
               weight="bold"
             />
             <LabelComponent
-              text="Available Flows"
+              text={
+                isSubFlow
+                  ? "Flows meant to be run from another flow rather than started on their own."
+                  : "Everything you can run."
+              }
               size="xs"
             />
           </div>
@@ -68,9 +82,20 @@ export default function FlowListPage() {
           />
         </div>
 
-        {viewMode === "table" && <FlowDataTableComponent className="mt-4" />}
+        {viewMode === "table" && (
+          <FlowDataTableComponent
+            className="mt-4"
+            isSubFlow={isSubFlow}
+          />
+        )}
       </Card>
-      {viewMode === "cards" && <FlowDataGridComponent className="mt-4" />}
+
+      {viewMode === "cards" && (
+        <FlowDataGridComponent
+          className="mt-4"
+          isSubFlow={isSubFlow}
+        />
+      )}
     </div>
   );
 }

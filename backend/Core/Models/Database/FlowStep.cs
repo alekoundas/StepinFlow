@@ -26,7 +26,6 @@ namespace Core.Models.Database
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
         public float Accuracy { get; set; } = 0.8f;
 
-        /// <summary>Safety cap so a low threshold cannot return thousands of hits.</summary>
         public int MaxMatches { get; set; } = 20;
 
         // Waiting modes only. 0 timeout waits forever.
@@ -106,9 +105,10 @@ namespace Core.Models.Database
         public Flow? Flow { get; set; }
 
 
-        // Sub Flow
-        public int? SubFlowId { get; set; }
-        public SubFlow? SubFlow { get; set; }
+        // SUB_FLOW: the flow this step runs. Ownership is FlowId; this is a reference, and a
+        // deleted target clears it rather than taking this step with it.
+        public int? InvokedFlowId { get; set; }
+        public Flow? InvokedFlow { get; set; }
 
 
         // FlowArea

@@ -2,7 +2,6 @@ import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
@@ -89,9 +88,9 @@ export class FlowStepDto {
   flowId?: number;
   flow?: FlowDto;
 
-  // Sub Flow
-  subFlowId?: number;
-  subFlow?: SubFlowDto;
+  // SUB_FLOW: the flow this step runs.
+  invokedFlowId?: number;
+  invokedFlow?: FlowDto;
 
   // FlowArea
   flowAreaId?: number;

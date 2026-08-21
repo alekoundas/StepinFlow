@@ -59,7 +59,7 @@ namespace Business.Ipc.Handlers
                         PointEndName = x.FlowPointEnd != null ? x.FlowPointEnd.Name : null,
                         ReferenceStepName = x.FlowStepReference != null ? x.FlowStepReference.Name : null,
                         ReferenceStepEndName = x.FlowStepReferenceEnd != null ? x.FlowStepReferenceEnd.Name : null,
-                        SubFlowName = x.SubFlow != null ? x.SubFlow.Name : null,
+                        SubFlowName = x.InvokedFlow != null ? x.InvokedFlow.Name : null,
 
                         IsPointCustom = x.IsPointCustom,
                         IsPointEndCustom = x.IsPointEndCustom,

@@ -91,9 +91,9 @@ namespace Core.Models.Dtos
         public FlowDto? Flow { get; set; }
 
 
-        // Sub Flow
-        public int? SubFlowId { get; set; }
-        public SubFlowDto? SubFlow { get; set; }
+        // SUB_FLOW: the flow this step runs.
+        public int? InvokedFlowId { get; set; }
+        public FlowDto? InvokedFlow { get; set; }
 
 
         // FlowArea

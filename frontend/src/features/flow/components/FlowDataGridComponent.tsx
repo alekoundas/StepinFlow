@@ -7,9 +7,12 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 type Props = {
   className?: string;
+
+  /** Which side of the flag to list. The two pages never show each other. */
+  isSubFlow: boolean;
 };
 
-export function FlowDataGridComponent({ className }: Props) {
+export function FlowDataGridComponent({ className, isSubFlow }: Props) {
   const navigate = useNavigate();
 
   const onClick = (id: number) => navigate(`/workflow/${id}`);
@@ -40,8 +43,8 @@ export function FlowDataGridComponent({ className }: Props) {
   return (
     <div className={className}>
       <DataGridComponent<FlowDto>
-        queryKey={["flows", "list"]}
-        queryFn={backendApiService.Flow.getLazy}
+        queryKey={["flows", "list", isSubFlow]}
+        queryFn={(dto) => backendApiService.Flow.getLazy({ ...dto, isSubFlow })}
         itemTemplate={cardTemplate}
         enablePaging={true}
       />

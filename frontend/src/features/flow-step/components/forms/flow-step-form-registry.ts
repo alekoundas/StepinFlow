@@ -14,6 +14,7 @@ import FlowStepReadTextFormComponent from "@/features/flow-step/components/forms
 import FlowStepCheckValueFormComponent from "@/features/flow-step/components/forms/check-value/FlowStepCheckValueFormComponent";
 import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
 import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
+import FlowStepSubFlowFormComponent from "@/features/flow-step/components/forms/sub-flow/FlowStepSubFlowFormComponent";
 
 import {
   CURSOR_FLOW_STEP_TYPES,
@@ -112,6 +113,11 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   [FlowStepTypeEnum.SYSTEM_COMMAND]: {
     component: FlowStepSystemCommandFormComponent,
     newStepValues: () => ({ name: "System Command" }),
+  },
+
+  [FlowStepTypeEnum.SUB_FLOW]: {
+    component: FlowStepSubFlowFormComponent,
+    newStepValues: () => ({ name: "Sub-Flow" }),
   },
 
   [FlowStepTypeEnum.SYSTEM_ACTION]: {
