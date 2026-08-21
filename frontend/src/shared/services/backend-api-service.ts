@@ -19,6 +19,12 @@ import type { RunCommandTestResultDto } from "@/shared/models/database/run-comma
 import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
 import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
 import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
+import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
+import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
+import type {
+  FlowDraftDto,
+  FlowDraftResultDto,
+} from "@/shared/models/database/flow-draft-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
@@ -44,6 +50,8 @@ export const backendApiService = {
 
   FlowStep: {
     create: (dto: FlowStepDto) => call<number>("FlowStep.create", dto),
+    createMany: (dto: FlowDraftDto) =>
+      call<FlowDraftResultDto>("FlowStep.createMany", dto),
     update: (dto: FlowStepDto) => call<FlowStepDto>("FlowStep.update", dto),
     delete: (id: number) => call<boolean>("FlowStep.delete", id),
 
@@ -112,6 +120,21 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.flowArea", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
+  },
+
+  Recording: {
+    start: () => call<boolean>("Recording.start"),
+    stop: () => call<FlowDraftDto>("Recording.stop"),
+    discard: () => call<boolean>("Recording.discard"),
+    // .Net returns byte[], which arrives here as a base64 string
+    getScreenshot: (index: number) =>
+      call<string>("Recording.getScreenshot", index),
+  },
+
+  Settings: {
+    getAll: () => call<AppSettingDto[]>("Settings.getAll"),
+    set: (key: AppSettingKeyEnum, value: string) =>
+      call<boolean>("Settings.set", { key, value }),
   },
 
   System: {

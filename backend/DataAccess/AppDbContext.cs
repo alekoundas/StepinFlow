@@ -15,6 +15,7 @@ namespace DataAccess
         public DbSet<FlowStepImage> FlowStepImages { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStep> ExecutionSteps { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
 
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
@@ -33,6 +34,7 @@ namespace DataAccess
             builder.ApplyConfiguration(new FlowStepImageConfiguration());
             builder.ApplyConfiguration(new ExecutionConfiguration());
             builder.ApplyConfiguration(new ExecutionStepConfiguration());
+            builder.ApplyConfiguration(new AppSettingConfiguration());
         }
     }
 }

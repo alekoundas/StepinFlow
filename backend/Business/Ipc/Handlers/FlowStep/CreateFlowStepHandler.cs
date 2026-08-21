@@ -31,36 +31,12 @@ namespace Business.Ipc.Handlers
 
             dbContext.FlowSteps.Add(flowStep);
             FlowStepImageSyncHelper.Sync(dbContext, flowStep, request.dto.FlowStepImages);
-            AddBranchChildren(dbContext, flowStep);
+            dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(flowStep));
 
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<int>.Success(flowStep.Id);
         }
 
-
-        // ================================================================
-        // Private methods
-        // ================================================================
-
-        private static void AddBranchChildren(AppDbContext dbContext, FlowStep flowStep)
-        {
-            if (!TreeStepHelper.HasBranchChildren(flowStep.FlowStepType))
-                return;
-
-            dbContext.FlowSteps.AddRange(
-                NewBranch(flowStep, FlowStepTypeEnum.SUCCESS, "Success", 0),
-                NewBranch(flowStep, FlowStepTypeEnum.FAILURE, "Failure", 1));
-        }
-
-        private static FlowStep NewBranch(FlowStep parent, FlowStepTypeEnum type, string name, int orderNumber) =>
-            new FlowStep
-            {
-                ParentFlowStep = parent,
-                FlowStepType = type,
-                Name = name,
-                OrderNumber = orderNumber,
-                RootId = parent.RootId,
-            };
     }
 }

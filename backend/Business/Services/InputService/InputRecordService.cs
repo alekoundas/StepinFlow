@@ -237,25 +237,29 @@ namespace Business.Services.InputService
 
         private void OnMouseMoved(object? sender, MouseHookEventArgs e)
         {
-            // The overlay only cares about drags, and a free moving cursor fires constantly.
-            if (Volatile.Read(ref _recordingMode) != ModeAll)
-                return;
-
-            if (!TryPassThrottle(ref _lastMovedBroadcastTicks, MoveThrottleTicks))
-                return;
-
-            Publish(new RecordedInput
-            {
-                Type = RecordedInputTypeEnum.CURSOR_MOVE,
-                PhysicalX = e.Data.X,
-                PhysicalY = e.Data.Y,
-                CursorButtonType = null,
-            });
+            // Nothing consumes a free moving cursor. The overlay only cares about drags, and a
+            // recording wants actions: at 16ms a two minute session is ~8000 events that would
+            // push the real ones out of a DropOldest channel.
         }
 
         private void OnMouseWheel(object? sender, MouseWheelHookEventArgs e)
         {
-            // Record scroll
+            if (!IsRecording)
+                return;
+
+            // SharpHook reports rotation as signed detents: positive is away from the user.
+            int rotation = e.Data.Rotation;
+            if (rotation == 0)
+                return;
+
+            Publish(new RecordedInput
+            {
+                Type = RecordedInputTypeEnum.CURSOR_SCROLL,
+                PhysicalX = e.Data.X,
+                PhysicalY = e.Data.Y,
+                ScrollDirection = rotation > 0 ? CursorScrollDirectionTypeEnum.UP : CursorScrollDirectionTypeEnum.DOWN,
+                ScrollAmount = Math.Abs(rotation),
+            });
         }
 
         private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)

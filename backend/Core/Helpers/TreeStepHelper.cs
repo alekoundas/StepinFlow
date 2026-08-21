@@ -1,5 +1,6 @@
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Database;
 
 namespace Core.Helpers
 {
@@ -76,6 +77,33 @@ namespace Core.Helpers
                 depth++;
             }
         }
+
+        /// <summary>
+        /// The Success and Failure children a branching step owns, or nothing when its type does
+        /// not branch. Shared so a step created one at a time and a step created in a batch come
+        /// out of the database looking the same.
+        /// </summary>
+        public static IReadOnlyList<FlowStep> CreateBranchChildren(FlowStep parent)
+        {
+            if (!HasBranchChildren(parent.FlowStepType))
+                return [];
+
+            return
+            [
+                NewBranch(parent, FlowStepTypeEnum.SUCCESS, "Success", 0),
+                NewBranch(parent, FlowStepTypeEnum.FAILURE, "Failure", 1),
+            ];
+        }
+
+        private static FlowStep NewBranch(FlowStep parent, FlowStepTypeEnum type, string name, int orderNumber) =>
+            new FlowStep
+            {
+                ParentFlowStep = parent,
+                FlowStepType = type,
+                Name = name,
+                OrderNumber = orderNumber,
+                RootId = parent.RootId,
+            };
 
         public static bool CanReadResultOf(
             IReadOnlyDictionary<int, StepChainNode> byId,

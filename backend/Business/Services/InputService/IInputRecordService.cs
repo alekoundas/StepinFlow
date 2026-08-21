@@ -1,4 +1,6 @@
 ﻿
+using Core.Models.Business;
+
 namespace Business.Services.InputService
 {
     public interface IInputRecordService
@@ -8,6 +10,9 @@ namespace Business.Services.InputService
 
         public Task<bool> StartRecordingAllAsync();
         public Task<bool> StopRecordingAllAsync();
+
+        /// <summary>Drains recorded actions in order. One reader only.</summary>
+        public IAsyncEnumerable<RecordedInput> GetActions();
 
         public Task<bool> StartRecordingOverlayAsync();
         public Task<bool> StopRecordingOverlayAsync();

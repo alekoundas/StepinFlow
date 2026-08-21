@@ -27,6 +27,27 @@ namespace Business.Services.ScreenshotService
 
 
         //==================================================
+        // P/Invoke Get the window the user is actually in
+        //==================================================
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        /// <summary>
+        /// Title of the window with focus, or null when there is none. Used by the recorder to
+        /// say which app an action happened in, so it is a hint and never worth throwing over.
+        /// </summary>
+        public static string? GetForegroundWindowTitle()
+        {
+            IntPtr hWnd = GetForegroundWindow();
+            if (hWnd == IntPtr.Zero)
+                return null;
+
+            string title = GetAppWindowText(hWnd);
+            return string.IsNullOrWhiteSpace(title) ? null : title;
+        }
+
+
+        //==================================================
         // P/Invoke Get window name (max 512 chars)
         //==================================================
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]

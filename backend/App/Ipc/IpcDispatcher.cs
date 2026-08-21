@@ -45,6 +45,7 @@ namespace App.Ipc
 
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.createMany" => await _mediator.Send(new CreateFlowStepsCommand(JsonSerializer.Deserialize<FlowDraftDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.update" => await _mediator.Send(new UpdateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
@@ -89,6 +90,16 @@ namespace App.Ipc
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
                     "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),
+
+                    // Recording
+                    "Recording.start" => await _mediator.Send(new StartRecordingCommand(), ct),
+                    "Recording.stop" => await _mediator.Send(new StopRecordingCommand(), ct),
+                    "Recording.discard" => await _mediator.Send(new DiscardRecordingCommand(), ct),
+                    "Recording.getScreenshot" => await _mediator.Send(new GetRecordingScreenshotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+
+                    // Settings
+                    "Settings.getAll" => await _mediator.Send(new GetAppSettingsQuery(), ct),
+                    "Settings.set" => await _mediator.Send(new SetAppSettingCommand(JsonSerializer.Deserialize<SetAppSettingDto>(request.Payload, _jsonOptions)!), ct),
 
                     // System IO
                     "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),

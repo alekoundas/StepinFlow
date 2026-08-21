@@ -7,7 +7,9 @@ using Business.Services.AreaPointService;
 using Business.Services.FlowValidationService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
+using Business.Services.AppSettingService;
 using Business.Services.OcrService;
+using Business.Services.RecordingService;
 using Business.Services.ScreenshotService;
 using Business.Services.SystemActionService;
 using Core.Interfaces;
@@ -49,6 +51,8 @@ namespace App
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
             builder.Services.AddSingleton<IFlowValidator, FlowValidator>();
+            builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
+            builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
 
 
             // IPC

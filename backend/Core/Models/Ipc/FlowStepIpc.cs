@@ -17,6 +17,7 @@ namespace Core.Models.Ipc
 
     // ============== COMMANDS ==============
     public record CreateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<int>>;
+    public record CreateFlowStepsCommand(FlowDraftDto dto) : IRequest<ResultDto<FlowDraftResultDto>>;
     public record UpdateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<FlowStepDto>>;
     public record DeleteFlowStepCommand(int id) : IRequest<ResultDto<bool>>;
     public record MoveFlowStepCommand(FlowStepMoveDto dto) : IRequest<ResultDto<bool>>;

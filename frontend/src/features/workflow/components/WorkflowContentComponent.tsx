@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "primereact/button";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
@@ -13,6 +15,7 @@ import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
+import { useWizardStore } from "@/features/wizard/store/wizard-store";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 export function WorkflowContentComponent() {
@@ -23,6 +26,9 @@ export function WorkflowContentComponent() {
     setTreeRefreshTrigger,
     setSelectedFlowStepTypeToAdd,
   } = useWorkflowStore();
+
+  const navigate = useNavigate();
+  const { setTarget, setDraft } = useWizardStore();
 
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
   const [modeNodeKey, setModeNodeKey] = useState<string | undefined>(undefined);
@@ -115,7 +121,34 @@ export function WorkflowContentComponent() {
 
   // 1. New FlowStep → type picker
   if (selectedTreeNode.isNew && !selectedFlowStepTypeToAdd) {
-    return panel(<FlowStepTypesDataGridComponent />);
+    // Recording lands the steps exactly where this placeholder sits, so the position the user
+    // already chose in the tree is the position they get.
+    const startRecording = () => {
+      setDraft(undefined);
+      setTarget({
+        targetFlowId: selectedTreeNode.parentFlowStepId ? undefined : selectedTreeNode.parentFlowId,
+        targetParentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+        targetIndex: selectedTreeNode.orderNumber,
+      });
+      navigate("/record");
+    };
+
+    return panel(
+      <>
+        <div className="flex justify-content-end mb-3">
+          <Button
+            type="button"
+            label="Record steps here"
+            icon="pi pi-circle-fill"
+            onClick={startRecording}
+            className="p-button-outlined"
+            tooltip="Do the task once and let the steps be written into this position"
+            tooltipOptions={{ position: "left" }}
+          />
+        </div>
+        <FlowStepTypesDataGridComponent />
+      </>,
+    );
   }
 
   // 2. New FlowStep → ADD form

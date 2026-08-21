@@ -103,6 +103,16 @@ export interface RecordedInput {
   keyCode?: KeyCodeEnum;
   KeyChar?: string; // Human readable
 
+  // Scroll
+  scrollDirection?: CursorScrollDirectionTypeEnum;
+  scrollAmount?: number;
+
+  // Recording session only. Position in the session, which is also the screenshot key, so the
+  // live feed can name an image it never carries.
+  index: number;
+  windowTitle?: string | null;
+  hasScreenshot: boolean;
+
   createdOn: Date;
 }
 
@@ -111,6 +121,7 @@ export interface RecordedInput {
 export const BroadcastTypeEnum = {
   OVERLAY_MOUSE_EVENT: "OVERLAY_MOUSE_EVENT",
   POINT_CAPTURE_EVENT: "POINT_CAPTURE_EVENT",
+  RECORDING_EVENT: "RECORDING_EVENT",
   LOG: "LOG",
 } as const;
 export type BroadcastTypeEnum =
@@ -129,6 +140,15 @@ export const RecordedInputTypeEnum = {
 } as const;
 export type RecordedInputTypeEnum =
   (typeof RecordedInputTypeEnum)[keyof typeof RecordedInputTypeEnum];
+
+export const CursorScrollDirectionTypeEnum = {
+  UP: "UP",
+  DOWN: "DOWN",
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+} as const;
+export type CursorScrollDirectionTypeEnum =
+  (typeof CursorScrollDirectionTypeEnum)[keyof typeof CursorScrollDirectionTypeEnum];
 
 export const CursorButtonTypeEnum = {
   LEFT_BUTTON: "LEFT_BUTTON",
