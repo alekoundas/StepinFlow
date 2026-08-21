@@ -2,26 +2,30 @@ using Core.Enums;
 using Core.Enums.Business;
 using Core.Models.Business;
 using Core.Models.Dtos;
+using System.Globalization;
 using System.Text;
 
 namespace Business.Services.RecordingService
 {
     /// <summary>
-    /// Turns raw input into the steps a person would have written by hand.
+    /// Folds raw input into the things a person would say they did.
     ///
-    /// The mapping is not one to one and that is the whole point: a press and a release are one
-    /// click, a burst of typing is one Keyboard Input, and the pause between them is a Wait the
-    /// user probably wants. Everything here is a proposal the wizard lets the user correct.
+    /// A press and a release are one click; a burst of typing is one entry; a long gap is a pause
+    /// worth mentioning. That much is mechanical and belongs here.
+    ///
+    /// What any of it should become is not decided here. A click could be a cursor click, an
+    /// image search, or both, and only the user knows which — so this stops at the action and the
+    /// wizard asks.
     /// </summary>
-    public static class RecordingDraftBuilder
+    public static class RecordingActionBuilder
     {
         /// <summary>Below this a press and release at different points is still a click, not a drag.</summary>
         private const int DragThresholdPixels = 5;
 
         /// <summary>Shorter gaps are just human latency, not a wait the flow needs to reproduce.</summary>
-        private static readonly TimeSpan WaitThreshold = TimeSpan.FromMilliseconds(1500);
+        private static readonly TimeSpan PauseThreshold = TimeSpan.FromMilliseconds(1500);
 
-        /// <summary>Keys that type a character rather than doing something.</summary>
+        /// <summary>Held rather than typed, so they never end a run or become an action.</summary>
         private static readonly HashSet<KeyCodeEnum> ModifierKeys =
         [
             KeyCodeEnum.LeftShift, KeyCodeEnum.RightShift,
@@ -31,29 +35,27 @@ namespace Business.Services.RecordingService
             KeyCodeEnum.CapsLock, KeyCodeEnum.NumLock,
         ];
 
-        public static List<DraftStepDto> Build(IReadOnlyList<RecordedInput> events)
+        public static List<RecordedActionDto> Build(IReadOnlyList<RecordedInput> events)
         {
-            List<DraftStepDto> steps = new List<DraftStepDto>();
+            List<RecordedActionDto> actions = new List<RecordedActionDto>();
             StringBuilder typed = new StringBuilder();
             DateTime? typedStartedOn = null;
-            DateTime? previousActionEndedOn = null;
-            int tempId = 1;
+            DateTime? previousEndedOn = null;
 
             // The click that stopped the recording is part of stopping it, not part of the task.
             List<RecordedInput> trimmed = TrimTrailingClick(events);
 
-            void Emit(DraftStepDto step, DateTime startedOn, DateTime endedOn)
+            void Emit(RecordedActionDto action, DateTime startedOn, DateTime endedOn)
             {
-                if (previousActionEndedOn is DateTime previous)
+                if (previousEndedOn is DateTime previous)
                 {
                     TimeSpan gap = startedOn - previous;
-                    if (gap >= WaitThreshold)
-                        steps.Add(BuildWait(tempId++, gap));
+                    if (gap >= PauseThreshold)
+                        actions.Add(Number(BuildPause(gap), actions.Count));
                 }
 
-                step.TempId = tempId++;
-                steps.Add(step);
-                previousActionEndedOn = endedOn;
+                actions.Add(Number(action, actions.Count));
+                previousEndedOn = endedOn;
             }
 
             void FlushTyping()
@@ -66,7 +68,7 @@ namespace Business.Services.RecordingService
                 typed.Clear();
                 typedStartedOn = null;
 
-                Emit(BuildKeyboardText(text), startedOn, startedOn);
+                Emit(BuildTyping(text), startedOn, startedOn);
             }
 
             for (int i = 0; i < trimmed.Count; i++)
@@ -130,7 +132,7 @@ namespace Business.Services.RecordingService
                             break;
                         }
 
-                        // Enter, Tab, arrows and the like end the run and become their own step.
+                        // Enter, Tab, arrows and the like end the run and stand on their own.
                         FlushTyping();
                         Emit(BuildKeyCombination(current), current.CreatedOn, current.CreatedOn);
                         break;
@@ -140,13 +142,19 @@ namespace Business.Services.RecordingService
 
             FlushTyping();
 
-            return steps;
+            return actions;
         }
 
 
         // ================================================================
         // Private methods
         // ================================================================
+
+        private static RecordedActionDto Number(RecordedActionDto action, int index)
+        {
+            action.Index = index;
+            return action;
+        }
 
         private static List<RecordedInput> TrimTrailingClick(IReadOnlyList<RecordedInput> events)
         {
@@ -184,110 +192,61 @@ namespace Business.Services.RecordingService
             return -1;
         }
 
-        private static DraftStepDto BuildClick(RecordedInput down) => new DraftStepDto
+        private static RecordedActionDto BuildClick(RecordedInput down) => new RecordedActionDto
         {
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.CURSOR_CLICK,
-                Name = "Click",
-                IsPointCustom = true,
-                CursorButtonType = down.CursorButtonType,
-                CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK,
-            },
-            NewPoint = PointAt(down, "Click point"),
-            Evidence = Evidence(down, $"Clicked at {down.PhysicalX}, {down.PhysicalY}"),
+            Kind = RecordedActionKindEnum.CLICK,
+            Summary = $"Clicked at {down.PhysicalX}, {down.PhysicalY}",
+            WindowTitle = down.WindowTitle,
+            ScreenshotIndex = down.HasScreenshot ? down.Index : null,
+            LocationX = down.PhysicalX,
+            LocationY = down.PhysicalY,
+            CursorButtonType = down.CursorButtonType,
         };
 
-        private static DraftStepDto BuildDrag(RecordedInput down, RecordedInput up) => new DraftStepDto
+        private static RecordedActionDto BuildDrag(RecordedInput down, RecordedInput up) => new RecordedActionDto
         {
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.CURSOR_DRAG,
-                Name = "Drag",
-                IsPointCustom = true,
-                IsPointEndCustom = true,
-                CursorButtonType = down.CursorButtonType,
-            },
-            NewPoint = PointAt(down, "Drag from"),
-            NewPointEnd = PointAt(up, "Drag to"),
-            Evidence = Evidence(down, $"Dragged from {down.PhysicalX}, {down.PhysicalY} to {up.PhysicalX}, {up.PhysicalY}"),
+            Kind = RecordedActionKindEnum.DRAG,
+            Summary = $"Dragged from {down.PhysicalX}, {down.PhysicalY} to {up.PhysicalX}, {up.PhysicalY}",
+            WindowTitle = down.WindowTitle,
+            ScreenshotIndex = down.HasScreenshot ? down.Index : null,
+            LocationX = down.PhysicalX,
+            LocationY = down.PhysicalY,
+            LocationEndX = up.PhysicalX,
+            LocationEndY = up.PhysicalY,
+            CursorButtonType = down.CursorButtonType,
         };
 
-        private static DraftStepDto BuildScroll(RecordedInput scroll, int amount) => new DraftStepDto
+        private static RecordedActionDto BuildScroll(RecordedInput scroll, int amount) => new RecordedActionDto
         {
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL,
-                Name = $"Scroll {scroll.ScrollDirection.ToString()?.ToLowerInvariant()}",
-                IsPointCustom = true,
-                CursorScrollDirectionType = scroll.ScrollDirection,
-                LoopCount = amount,
-            },
-            NewPoint = PointAt(scroll, "Scroll point"),
-            Evidence = Evidence(scroll, $"Scrolled {scroll.ScrollDirection.ToString()?.ToLowerInvariant()} {amount}"),
+            Kind = RecordedActionKindEnum.SCROLL,
+            Summary = $"Scrolled {scroll.ScrollDirection.ToString()?.ToLowerInvariant()} {amount}",
+            WindowTitle = scroll.WindowTitle,
+            LocationX = scroll.PhysicalX,
+            LocationY = scroll.PhysicalY,
+            ScrollDirection = scroll.ScrollDirection,
+            ScrollAmount = amount,
         };
 
-        private static DraftStepDto BuildKeyboardText(string text) => new DraftStepDto
+        private static RecordedActionDto BuildTyping(string text) => new RecordedActionDto
         {
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
-                Name = "Type text",
-                KeyboardInputType = KeyboardInputTypeEnum.TEXT,
-                KeyboardInputText = text,
-            },
-            Evidence = new DraftEvidenceDto { Summary = $"Typed \"{text}\"" },
+            Kind = RecordedActionKindEnum.TYPING,
+            Summary = $"Typed \"{text}\"",
+            Text = text,
         };
 
-        private static DraftStepDto BuildKeyCombination(RecordedInput key) => new DraftStepDto
+        private static RecordedActionDto BuildKeyCombination(RecordedInput key) => new RecordedActionDto
         {
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
-                Name = $"Press {key.KeyCode}",
-                KeyboardInputType = KeyboardInputTypeEnum.COMBINATION,
-                KeyboardInputText = key.KeyCode.ToString() ?? string.Empty,
-            },
-            Evidence = new DraftEvidenceDto
-            {
-                WindowTitle = key.WindowTitle,
-                Summary = $"Pressed {key.KeyCode}",
-            },
+            Kind = RecordedActionKindEnum.KEY_COMBINATION,
+            Summary = $"Pressed {key.KeyCode}",
+            WindowTitle = key.WindowTitle,
+            Text = key.KeyCode.ToString(),
         };
 
-        private static DraftStepDto BuildWait(int tempId, TimeSpan gap) => new DraftStepDto
+        private static RecordedActionDto BuildPause(TimeSpan gap) => new RecordedActionDto
         {
-            TempId = tempId,
-            Source = DraftStepSourceEnum.RECORDING,
-            Values = new FlowStepDto
-            {
-                FlowStepType = FlowStepTypeEnum.WAIT,
-                Name = "Wait",
-                WaitForMilliseconds = (int)Math.Round(gap.TotalMilliseconds),
-            },
-            Evidence = new DraftEvidenceDto
-            {
-                Summary = $"You paused for {Math.Round(gap.TotalSeconds, 1)}s here",
-            },
-        };
-
-        private static DraftPointDto PointAt(RecordedInput input, string name) => new DraftPointDto
-        {
-            Name = name,
-            LocationX = input.PhysicalX,
-            LocationY = input.PhysicalY,
-        };
-
-        private static DraftEvidenceDto Evidence(RecordedInput input, string summary) => new DraftEvidenceDto
-        {
-            ScreenshotIndex = input.HasScreenshot ? input.Index : null,
-            WindowTitle = input.WindowTitle,
-            Summary = summary,
+            Kind = RecordedActionKindEnum.PAUSE,
+            Summary = $"Paused for {Math.Round(gap.TotalSeconds, 1).ToString(CultureInfo.InvariantCulture)}s",
+            PauseMilliseconds = (int)Math.Round(gap.TotalMilliseconds),
         };
 
         /// <summary>

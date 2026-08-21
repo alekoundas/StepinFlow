@@ -1,68 +1,108 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
+import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type {
   DraftStepDto,
-  FlowDraftDto,
   FlowDraftTargetDto,
 } from "@/shared/models/database/flow-draft-dto";
+import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 
 interface Props {
-  /** Where the steps will land, chosen before the recording starts. */
+  /** Where the steps land. */
   target: FlowDraftTargetDto | undefined;
 
-  /** What the recorder produced, resolved in place by the wizard. */
-  draft: FlowDraftDto | undefined;
+  /**
+   * The flow the step forms look areas and points up against. Not the same as target.flowId:
+   * when the steps land under a parent step the target names the step, not the flow.
+   */
+  lookupFlowId: number | undefined;
 
-  setTarget: (target: FlowDraftTargetDto | undefined) => void;
-  setDraft: (draft: FlowDraftDto | undefined) => void;
+  /** What the recorder captured, in order. Never mutated once set. */
+  actions: RecordedActionDto[];
 
-  /** Replaces one step, matched on tempId, leaving the rest untouched. */
+  /** How far through the actions the user has decided. */
+  cursor: number;
+
+  /** Steps confirmed so far, in save order. */
+  steps: DraftStepDto[];
+
+  /**
+   * The branch new steps are currently landing in, or undefined at the top level. Set when the
+   * user places an action inside a previous step Success branch.
+   */
+  openParentTempId: number | undefined;
+  openParentBranch: FlowStepTypeEnum | undefined;
+
+  setTarget: (target: FlowDraftTargetDto | undefined, lookupFlowId?: number) => void;
+  setActions: (actions: RecordedActionDto[]) => void;
+
+  addSteps: (
+    steps: DraftStepDto[],
+    open: { parentTempId?: number; parentBranch?: FlowStepTypeEnum },
+  ) => void;
+
   updateStep: (tempId: number, update: (step: DraftStepDto) => DraftStepDto) => void;
-  removeStep: (tempId: number) => void;
+
+  /**
+   * Rewinds to an action, dropping every decision made after it.
+   *
+   * Placement cascades, so a later step can be a child of the one being changed. Keeping those
+   * would leave steps parented to a shape that no longer exists, which is worse than losing
+   * work the user is already choosing to redo.
+   */
+  rewindTo: (cursor: number) => void;
 
   reset: () => void;
 }
 
-/**
- * Holds the draft across the hop from the recording page to the wizard. Deliberately not
- * persisted: a half resolved wizard is not worth restoring, and the screenshots it points at
- * live in the backend session anyway.
- */
+const initial = {
+  target: undefined,
+  lookupFlowId: undefined,
+  actions: [],
+  cursor: 0,
+  steps: [],
+  openParentTempId: undefined,
+  openParentBranch: undefined,
+};
+
 export const useWizardStore = create<Props>()(
   devtools((set) => ({
-    target: undefined,
-    draft: undefined,
+    ...initial,
 
-    setTarget: (target) => set({ target }),
-    setDraft: (draft) => set({ draft }),
+    setTarget: (target, lookupFlowId) =>
+      set({ target, lookupFlowId: lookupFlowId ?? target?.targetFlowId ?? undefined }),
+    setActions: (actions) =>
+      set({ actions, cursor: 0, steps: [], openParentTempId: undefined, openParentBranch: undefined }),
+
+    addSteps: (steps, open) =>
+      set((state) => ({
+        steps: [...state.steps, ...steps],
+        cursor: state.cursor + 1,
+        openParentTempId: open.parentTempId,
+        openParentBranch: open.parentBranch,
+      })),
 
     updateStep: (tempId, update) =>
-      set((state) =>
-        state.draft
-          ? {
-              draft: {
-                ...state.draft,
-                steps: state.draft.steps.map((step) =>
-                  step.tempId === tempId ? update(step) : step,
-                ),
-              },
-            }
-          : state,
-      ),
+      set((state) => ({
+        steps: state.steps.map((step) => (step.tempId === tempId ? update(step) : step)),
+      })),
 
-    removeStep: (tempId) =>
-      set((state) =>
-        state.draft
-          ? {
-              draft: {
-                ...state.draft,
-                steps: state.draft.steps.filter((step) => step.tempId !== tempId),
-              },
-            }
-          : state,
-      ),
+    rewindTo: (cursor) =>
+      set((state) => {
+        // Every step carries the index of the action that produced it, so truncating the steps
+        // is the same question as truncating the actions.
+        const kept = state.steps.filter((step) => (step.actionIndex ?? 0) < cursor);
+        const last = kept[kept.length - 1];
 
-    reset: () => set({ target: undefined, draft: undefined }),
+        return {
+          cursor,
+          steps: kept,
+          openParentTempId: last?.parentTempId ?? undefined,
+          openParentBranch: last?.parentBranch ?? undefined,
+        };
+      }),
+
+    reset: () => set(initial),
   })),
 );

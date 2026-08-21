@@ -16,15 +16,21 @@ export interface FlowDraftTargetDto {
   targetFlowId?: number | null;
   targetParentFlowStepId?: number | null;
   targetIndex: number;
-
-  /** Set instead of targetFlowId to create the flow and drop the steps into it. */
-  newFlowName?: string | null;
 }
 
 export interface DraftStepDto {
   tempId: number;
   parentTempId?: number | null;
   parentBranch?: FlowStepTypeEnum | null;
+
+  /** Another step in this same draft whose result this one reads, by temp id. */
+  referenceTempId?: number | null;
+
+  /**
+   * Which recorded action produced this step. Frontend only, so rewinding to an action can
+   * truncate exactly the steps it created.
+   */
+  actionIndex?: number;
 
   values: FlowStepDto;
 

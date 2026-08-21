@@ -2,48 +2,120 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { DraftStepDto } from "@/shared/models/database/flow-draft-dto";
 import { TreeNodeDto, type TreeNodeDetailDto } from "@/shared/models/tree-node-dto";
 
-/**
- * Draft steps as tree nodes, so the preview is drawn by the same row component the real tree
- * uses. A pending step then looks exactly like the step it is about to become, which is the
- * whole point of showing a preview rather than a list of names.
- */
-export const buildDraftTree = (steps: DraftStepDto[]): TreeNodeDto[] => {
-  const nodeByTempId = new Map<number, TreeNodeDto>();
+/** Types the save gives a Success and a Failure child to, mirroring TreeStepHelper. */
+const BRANCHING_TYPES: FlowStepTypeEnum[] = [
+  FlowStepTypeEnum.IMAGE_SEARCH,
+  FlowStepTypeEnum.READ_TEXT,
+  FlowStepTypeEnum.SYSTEM_COMMAND,
+  FlowStepTypeEnum.CHECK_VALUE,
+];
 
-  const nodes = steps.map((step) => {
+/**
+ * Confirmed steps as tree nodes, drawn by the same row component the real tree uses, so a
+ * pending step looks exactly like the step it is about to become.
+ *
+ * The Success and Failure rows are synthesised here because the save creates them and a child
+ * needs somewhere visible to sit. Nothing else in the draft knows they exist.
+ */
+export const buildDraftTree = (
+  steps: DraftStepDto[],
+  pending?: { parentTempId?: number; parentBranch?: FlowStepTypeEnum; name: string },
+): TreeNodeDto[] => {
+  const nodeByTempId = new Map<number, TreeNodeDto>();
+  const branchByKey = new Map<string, TreeNodeDto>();
+  const roots: TreeNodeDto[] = [];
+
+  const branchKey = (tempId: number, branch: FlowStepTypeEnum) => `${tempId}-${branch}`;
+
+  const attach = (
+    node: TreeNodeDto,
+    parentTempId?: number | null,
+    parentBranch?: FlowStepTypeEnum | null,
+  ) => {
+    const parent = parentTempId != null ? nodeByTempId.get(parentTempId) : undefined;
+
+    if (!parent) {
+      roots.push(node);
+      return;
+    }
+
+    if (parentBranch == null) {
+      parent.children.push(node);
+      parent.leaf = false;
+      return;
+    }
+
+    const branch = branchByKey.get(branchKey(parentTempId!, parentBranch));
+    if (branch) {
+      branch.children.push(node);
+      branch.leaf = false;
+    } else {
+      parent.children.push(node);
+      parent.leaf = false;
+    }
+  };
+
+  for (const step of steps) {
     const node = new TreeNodeDto({
       key: `draft-${step.tempId}`,
       entityId: step.tempId,
       name: step.values.name,
       flowStepType: step.values.flowStepType,
-      orderNumber: 0,
       isFlow: false,
       isNew: false,
       leaf: true,
       draggable: false,
       droppable: false,
-      selectable: true,
+      selectable: false,
       detail: buildDetail(step),
       children: [],
     });
 
     nodeByTempId.set(step.tempId, node);
-    return node;
-  });
+    attach(node, step.parentTempId, step.parentBranch);
 
-  const roots: TreeNodeDto[] = [];
+    if (BRANCHING_TYPES.includes(step.values.flowStepType)) {
+      node.leaf = false;
 
-  steps.forEach((step, index) => {
-    const node = nodes[index];
-    const parent = step.parentTempId != null ? nodeByTempId.get(step.parentTempId) : undefined;
+      for (const branch of [FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE]) {
+        const branchNode = new TreeNodeDto({
+          key: `draft-${step.tempId}-${branch}`,
+          entityId: -1,
+          name: branch === FlowStepTypeEnum.SUCCESS ? "Success" : "Failure",
+          flowStepType: branch,
+          isFlow: false,
+          isNew: false,
+          leaf: true,
+          draggable: false,
+          droppable: false,
+          selectable: false,
+          children: [],
+        });
 
-    if (parent) {
-      parent.children.push(node);
-      parent.leaf = false;
-    } else {
-      roots.push(node);
+        branchByKey.set(branchKey(step.tempId, branch), branchNode);
+        node.children.push(branchNode);
+      }
     }
-  });
+  }
+
+  // A dashed placeholder for the action being decided, so the shape is visible before it is
+  // committed rather than after.
+  if (pending) {
+    const node = new TreeNodeDto({
+      key: "draft-pending",
+      entityId: -2,
+      name: pending.name,
+      isFlow: false,
+      isNew: true,
+      leaf: true,
+      draggable: false,
+      droppable: false,
+      selectable: false,
+      children: [],
+    });
+
+    attach(node, pending.parentTempId, pending.parentBranch);
+  }
 
   return roots;
 };
@@ -61,7 +133,7 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
     // A point the save is going to create has no name yet, so the row says where it goes.
     pointName: step.newPoint ? step.newPoint.name : null,
     pointEndName: step.newPointEnd ? step.newPointEnd.name : null,
-    referenceStepName: null,
+    referenceStepName: step.referenceTempId != null ? "the search above" : null,
     referenceStepEndName: null,
     subFlowName: null,
 
@@ -95,11 +167,3 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
     childCount: 0,
   };
 };
-
-/** Branch steps get their Success and Failure children on save, which the preview should show. */
-export const BRANCHING_TYPES: FlowStepTypeEnum[] = [
-  FlowStepTypeEnum.IMAGE_SEARCH,
-  FlowStepTypeEnum.READ_TEXT,
-  FlowStepTypeEnum.SYSTEM_COMMAND,
-  FlowStepTypeEnum.CHECK_VALUE,
-];

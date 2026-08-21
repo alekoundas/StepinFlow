@@ -8,6 +8,7 @@ using Core.Interfaces;
 using Core.Models.Business;
 using System.Collections.Concurrent;
 using System.Drawing;
+using System.Threading.Channels;
 
 namespace Business.Services.RecordingService
 {
@@ -15,13 +16,15 @@ namespace Business.Services.RecordingService
     /// Owns one recording at a time: the ordered actions, the screenshot taken for each click,
     /// and the live feed the recording page renders.
     ///
-    /// It reads InputRecordService's channel rather than being called from the hook, which is
-    /// what keeps screen capture off the hook thread. A capture costs tens of milliseconds and a
-    /// hook callback that slow is felt as input lag across the whole machine.
+    /// The queue belongs to the session and is created with it, so a recording can never inherit
+    /// events from before it started. Stopping completes the writer rather than cancelling the
+    /// reader: a completed channel ends the read normally, where a cancelled one throws on every
+    /// stop and leaves a single reader channel unusable for everything after it.
     ///
-    /// Pixels never go on the live feed. A click screenshot is around 100KB and a session has
-    /// dozens, so the broadcast carries an index and the wizard asks for the image when it draws
-    /// that step.
+    /// Capture happens on the drain side, never in the event handler, because that handler runs
+    /// on the hook thread and a screen capture costs tens of milliseconds. Pixels never go on the
+    /// live feed either: the broadcast carries an index and the wizard asks for the image when it
+    /// draws that action.
     /// </summary>
     public sealed class RecordingSessionService : IRecordingSessionService, IDisposable
     {
@@ -40,11 +43,8 @@ namespace Business.Services.RecordingService
         private readonly ConcurrentDictionary<int, byte[]> _screenshots = new();
         private readonly Lock _eventsLock = new();
 
-        private readonly CancellationTokenSource _lifetimeCts = new();
-        private readonly Lock _pumpLock = new();
-
-        private Task? _pump;
-        private volatile bool _isSessionOpen;
+        private Channel<RecordedInput>? _queue;
+        private Task? _drain;
         private Size _captureSize = new(400, 400);
 
         public RecordingSessionService(
@@ -59,7 +59,7 @@ namespace Business.Services.RecordingService
             _broadcastService = broadcastService;
         }
 
-        public bool IsRecording => _isSessionOpen;
+        public bool IsRecording => _queue != null;
 
 
         // ================================================================
@@ -82,24 +82,37 @@ namespace Business.Services.RecordingService
             if (!await _inputRecordService.StartRecordingAllAsync())
                 return false;
 
-            EnsurePumpRunning();
-            _isSessionOpen = true;
+            Channel<RecordedInput> queue = Channel.CreateUnbounded<RecordedInput>(
+                new UnboundedChannelOptions { SingleReader = true });
+
+            _queue = queue;
+            _drain = Task.Run(() => DrainAsync(queue), CancellationToken.None);
+            _inputRecordService.ActionRecorded += OnActionRecorded;
 
             return true;
         }
 
         public async Task<IReadOnlyList<RecordedInput>> StopAsync(CancellationToken ct = default)
         {
-            if (!_isSessionOpen)
+            Channel<RecordedInput>? queue = _queue;
+            if (queue == null)
                 return GetEvents();
 
             await _inputRecordService.StopRecordingAllAsync();
+            _inputRecordService.ActionRecorded -= OnActionRecorded;
 
-            // The hook stops publishing immediately but the channel still holds what it queued,
-            // so the session stays open long enough for the pump to hand those over.
+            // The hook stops publishing immediately but may still be inside a handler, so the
+            // queue stays open long enough for those to land.
             await Task.Delay(DrainDelay, ct);
 
-            _isSessionOpen = false;
+            _queue = null;
+            queue.Writer.Complete();
+
+            if (_drain != null)
+            {
+                await _drain;
+                _drain = null;
+            }
 
             return GetEvents();
         }
@@ -126,47 +139,44 @@ namespace Business.Services.RecordingService
         // Private methods
         // ================================================================
 
-        /// <summary>
-        /// Started once and left running.
-        ///
-        /// The channel has a single reader and outlives any one recording, so tearing the pump
-        /// down between sessions would mean cancelling a blocked read: an exception thrown on
-        /// every stop, for something that is not an error. Draining continuously also stops the
-        /// channel filling with events from the overlay and point capture modes, which nothing
-        /// else reads.
-        /// </summary>
-        private void EnsurePumpRunning()
+        // On the hook thread. Nothing here may block.
+        private void OnActionRecorded(RecordedInput action) => _queue?.Writer.TryWrite(action);
+
+        private async Task DrainAsync(Channel<RecordedInput> queue)
         {
-            lock (_pumpLock)
-                _pump ??= Task.Run(() => PumpAsync(_lifetimeCts.Token), CancellationToken.None);
+            await foreach (RecordedInput action in queue.Reader.ReadAllAsync())
+            {
+                // One bad action must not end the drain. It is the only reader, so if it dies the
+                // rest of the recording is silently lost.
+                try
+                {
+                    await HandleAsync(action);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[Recording] Dropped an action: {ex.Message}");
+                }
+            }
         }
 
-        private async Task PumpAsync(CancellationToken ct)
+        private async Task HandleAsync(RecordedInput action)
         {
-            await foreach (RecordedInput action in _inputRecordService.GetActions().WithCancellation(ct))
+            int index;
+            lock (_eventsLock)
             {
-                // Between sessions the pump still drains, so the overlay and point capture modes
-                // cannot fill the channel behind us. Those events are simply not ours.
-                if (!_isSessionOpen)
-                    continue;
-
-                int index;
-                lock (_eventsLock)
-                {
-                    index = _events.Count;
-                    action.Index = index;
-                    _events.Add(action);
-                }
-
-                action.WindowTitle = TryGetForegroundWindowTitle();
-
-                // The frame the user was looking at when they decided to click. Waiting for the
-                // release would capture whatever the click had already changed.
-                if (action.Type == RecordedInputTypeEnum.BUTTON_DOWN)
-                    action.HasScreenshot = TryCapture(index, action.PhysicalX, action.PhysicalY);
-
-                await _broadcastService.SendAsync(BroadcastTypeEnum.RECORDING_EVENT, action);
+                index = _events.Count;
+                action.Index = index;
+                _events.Add(action);
             }
+
+            action.WindowTitle = TryGetForegroundWindowTitle();
+
+            // The frame the user was looking at when they decided to click. Waiting for the
+            // release would capture whatever the click had already changed.
+            if (action.Type == RecordedInputTypeEnum.BUTTON_DOWN)
+                action.HasScreenshot = TryCapture(index, action.PhysicalX, action.PhysicalY);
+
+            await _broadcastService.SendAsync(BroadcastTypeEnum.RECORDING_EVENT, action);
         }
 
         private bool TryCapture(int index, int centreX, int centreY)
@@ -208,9 +218,9 @@ namespace Business.Services.RecordingService
 
         public void Dispose()
         {
-            _isSessionOpen = false;
-            _lifetimeCts.Cancel();
-            _lifetimeCts.Dispose();
+            _inputRecordService.ActionRecorded -= OnActionRecorded;
+            _queue?.Writer.TryComplete();
+            _queue = null;
         }
     }
 }

@@ -4,7 +4,6 @@ using Core.Interfaces;
 using Core.Models.Business;
 using SharpHook;
 using SharpHook.Data;
-using System.Threading.Channels;
 
 namespace Business.Services.InputService
 {
@@ -13,15 +12,17 @@ namespace Business.Services.InputService
         // SharpHook
         private readonly IGlobalHook _hook = new TaskPoolGlobalHook();
 
-        // Bounded so a recording session with no consumer attached (the overlay only listens to
-        // the broadcast) cannot grow for the lifetime of the process. The newest events are the
-        // only ones that matter, so the oldest are dropped instead of blocking the hook callback.
-        private readonly Channel<RecordedInput> _actionChannel = Channel.CreateBounded<RecordedInput>(
-            new BoundedChannelOptions(4096)
-            {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-            });
+        /// <summary>
+        /// Raised for every recorded input while any mode is active.
+        ///
+        /// An event rather than a queue: a queue here would have to outlive every session and
+        /// belong to nobody, so it would fill whenever no recording was running and hand its
+        /// backlog to whoever read it next. A subscriber that only exists for the length of a
+        /// session cannot inherit anything.
+        ///
+        /// Handlers run on the hook thread, so a subscriber must return immediately.
+        /// </summary>
+        public event Action<RecordedInput>? ActionRecorded;
 
         // Recording mode. Handlers stay subscribed for the whole process lifetime and gate on this
         // instead: subscribing and unsubscribing per session drifted out of balance and left
@@ -86,11 +87,6 @@ namespace Business.Services.InputService
         // ================================================================
         // Public methods
         // ================================================================
-        public IAsyncEnumerable<RecordedInput> GetActions()
-        {
-            return _actionChannel.Reader.ReadAllAsync();
-        }
-
         public Task<bool> StartRecordingAllAsync() => Task.FromResult(StartRecording(ModeAll));
 
         public Task<bool> StopRecordingAllAsync() => Task.FromResult(StopRecording(ModeAll));
@@ -125,7 +121,7 @@ namespace Business.Services.InputService
 
         private void Publish(RecordedInput recordedInput)
         {
-            _actionChannel.Writer.TryWrite(recordedInput);
+            ActionRecorded?.Invoke(recordedInput);
 
             BroadcastTypeEnum? broadcastType = BroadcastType;
             if (broadcastType != null)
@@ -426,7 +422,6 @@ namespace Business.Services.InputService
         // ================================================================
         public void Dispose()
         {
-            _actionChannel.Writer.Complete();
             _hook.Dispose();
         }
     }

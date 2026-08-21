@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
+import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 
@@ -13,6 +14,7 @@ import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
+import { FlowDto } from "@/shared/models/database/flow-dto";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
 /**
@@ -23,8 +25,10 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
  */
 export default function RecordingPage() {
   const navigate = useNavigate();
-  const { target, setDraft, reset } = useWizardStore();
+  const { target, setTarget, setActions, reset } = useWizardStore();
 
+  const [flowName, setFlowName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [events, setEvents] = useState<RecordedInput[]>([]);
@@ -58,20 +62,42 @@ export default function RecordingPage() {
     }
   };
 
+  // The flow is created before anything is recorded, not on save. Every step form then has a
+  // real flow to list search areas and points against, and to save a new one into, which is the
+  // difference between an image search step you can finish here and one you cannot.
+  const handleCreateFlow = async () => {
+    if (flowName.trim().length === 0) return;
+
+    setIsCreating(true);
+    setError(null);
+
+    try {
+      const flowId = await backendApiService.Flow.create(
+        new FlowDto({ name: flowName.trim() }),
+      );
+
+      setTarget({ targetFlowId: flowId, targetIndex: 0 }, flowId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const handleStop = async () => {
     setIsStopping(true);
     setError(null);
 
     try {
-      const draft = await backendApiService.Recording.stop();
+      const recorded = await backendApiService.Recording.stop();
       setIsRecording(false);
 
-      if (draft.steps.length === 0) {
+      if (recorded.length === 0) {
         setError("Nothing was recorded. Start again and perform the task you want automated.");
         return;
       }
 
-      setDraft({ ...draft, target: target ?? { targetIndex: 0, newFlowName: "Recorded flow" } });
+      setActions(recorded);
       navigate("/wizard");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -108,7 +134,24 @@ export default function RecordingPage() {
         </div>
 
         <div className="flex gap-2">
-          {!isRecording ? (
+          {!target ? (
+            <>
+              <InputText
+                value={flowName}
+                onChange={(e) => setFlowName(e.target.value)}
+                placeholder="Name the flow"
+                className="w-14rem"
+              />
+              <Button
+                type="button"
+                label="Create and continue"
+                icon="pi pi-check"
+                loading={isCreating}
+                disabled={flowName.trim().length === 0 || isCreating}
+                onClick={handleCreateFlow}
+              />
+            </>
+          ) : !isRecording ? (
             <Button
               type="button"
               label="Start recording"

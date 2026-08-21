@@ -11,8 +11,11 @@ namespace Business.Services.InputService
         public Task<bool> StartRecordingAllAsync();
         public Task<bool> StopRecordingAllAsync();
 
-        /// <summary>Drains recorded actions in order. One reader only.</summary>
-        public IAsyncEnumerable<RecordedInput> GetActions();
+        /// <summary>
+        /// Raised for every recorded input while any mode is active. Handlers run on the hook
+        /// thread and must return immediately.
+        /// </summary>
+        public event Action<RecordedInput>? ActionRecorded;
 
         public Task<bool> StartRecordingOverlayAsync();
         public Task<bool> StopRecordingOverlayAsync();

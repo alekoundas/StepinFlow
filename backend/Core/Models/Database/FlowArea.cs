@@ -1,4 +1,5 @@
 using Core.Enums;
+using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {
@@ -58,8 +59,8 @@ namespace Core.Models.Database
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;
 
-        public IEnumerable<FlowArea> ChildFlowAreas { get; set; } = [];
-        public IEnumerable<FlowPoint> FlowPoints { get; set; } = [];
-        public IEnumerable<FlowStep> FlowSteps { get; set; } = [];
+        public IEnumerable<FlowArea> ChildFlowAreas { get; set; } = new Collection<FlowArea>();
+        public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();
+        public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
     }
 }

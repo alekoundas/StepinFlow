@@ -1,4 +1,5 @@
 using Core.Enums;
+using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {
@@ -25,9 +26,9 @@ namespace Core.Models.Database
         public Flow Flow { get; set; } = null!;
 
         // Steps using this location as their primary point.
-        public IEnumerable<FlowStep> FlowSteps { get; set; } = [];
+        public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
 
         // Steps using this location as their end point (CURSOR_DRAG).
-        public IEnumerable<FlowStep> EndFlowSteps { get; set; } = [];
+        public IEnumerable<FlowStep> EndFlowSteps { get; set; } = new Collection<FlowStep>();
     }
 }

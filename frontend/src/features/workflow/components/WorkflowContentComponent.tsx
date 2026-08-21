@@ -28,7 +28,7 @@ export function WorkflowContentComponent() {
   } = useWorkflowStore();
 
   const navigate = useNavigate();
-  const { setTarget, setDraft } = useWizardStore();
+  const { setTarget } = useWizardStore();
 
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
   const [modeNodeKey, setModeNodeKey] = useState<string | undefined>(undefined);
@@ -124,12 +124,16 @@ export function WorkflowContentComponent() {
     // Recording lands the steps exactly where this placeholder sits, so the position the user
     // already chose in the tree is the position they get.
     const startRecording = () => {
-      setDraft(undefined);
-      setTarget({
-        targetFlowId: selectedTreeNode.parentFlowStepId ? undefined : selectedTreeNode.parentFlowId,
-        targetParentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-        targetIndex: selectedTreeNode.orderNumber,
-      });
+      setTarget(
+        {
+          targetFlowId: selectedTreeNode.parentFlowStepId
+            ? undefined
+            : selectedTreeNode.parentFlowId,
+          targetParentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+          targetIndex: selectedTreeNode.orderNumber,
+        },
+        rootFlowId,
+      );
       navigate("/record");
     };
 

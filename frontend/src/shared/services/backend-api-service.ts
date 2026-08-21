@@ -25,6 +25,7 @@ import type {
   FlowDraftDto,
   FlowDraftResultDto,
 } from "@/shared/models/database/flow-draft-dto";
+import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { SubFlowDto } from "@/shared/models/database/sub-flow-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
@@ -124,7 +125,7 @@ export const backendApiService = {
 
   Recording: {
     start: () => call<boolean>("Recording.start"),
-    stop: () => call<FlowDraftDto>("Recording.stop"),
+    stop: () => call<RecordedActionDto[]>("Recording.stop"),
     discard: () => call<boolean>("Recording.discard"),
     // .Net returns byte[], which arrives here as a base64 string
     getScreenshot: (index: number) =>

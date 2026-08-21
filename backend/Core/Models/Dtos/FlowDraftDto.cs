@@ -22,9 +22,6 @@ namespace Core.Models.Dtos
         public int? TargetFlowId { get; set; }
         public int? TargetParentFlowStepId { get; set; }
         public int TargetIndex { get; set; }
-
-        /// <summary>Set instead of TargetFlowId to create the flow and drop the steps into it.</summary>
-        public string? NewFlowName { get; set; }
     }
 
     public class DraftStepDto
@@ -39,6 +36,12 @@ namespace Core.Models.Dtos
 
         /// <summary>SUCCESS or FAILURE when the step sits in a branch of its parent.</summary>
         public FlowStepTypeEnum? ParentBranch { get; set; }
+
+        /// <summary>
+        /// Another step in this same draft whose result this one reads, by temp id. A click that
+        /// acts on an image search cannot know the real id until the save has written both.
+        /// </summary>
+        public int? ReferenceTempId { get; set; }
 
         /// <summary>The step itself. Ids are unset; the save fills them in.</summary>
         public FlowStepDto Values { get; set; } = new FlowStepDto();

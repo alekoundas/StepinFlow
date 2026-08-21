@@ -1,4 +1,3 @@
-using Business.Services.FlowValidationService;
 using Business.Services.RecordingService;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -27,34 +26,23 @@ namespace Business.Ipc.Handlers
     }
 
     /// <summary>
-    /// Stops and coalesces in one call, so the wizard opens on a draft rather than on raw input
-    /// it would have to interpret a second way.
+    /// Stops and coalesces in one call, so the wizard opens on actions rather than on raw input
+    /// it would have to fold a second way.
     /// </summary>
-    public class StopRecordingHandler : IRequestHandler<StopRecordingCommand, ResultDto<FlowDraftDto>>
+    public class StopRecordingHandler : IRequestHandler<StopRecordingCommand, ResultDto<IReadOnlyList<RecordedActionDto>>>
     {
         private readonly IRecordingSessionService _recordingSessionService;
-        private readonly IFlowValidator _flowValidator;
 
-        public StopRecordingHandler(
-            IRecordingSessionService recordingSessionService,
-            IFlowValidator flowValidator)
+        public StopRecordingHandler(IRecordingSessionService recordingSessionService)
         {
             _recordingSessionService = recordingSessionService;
-            _flowValidator = flowValidator;
         }
 
-        public async Task<ResultDto<FlowDraftDto>> Handle(StopRecordingCommand request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> Handle(StopRecordingCommand request, CancellationToken ct)
         {
             IReadOnlyList<RecordedInput> events = await _recordingSessionService.StopAsync(ct);
 
-            FlowDraftDto draft = new FlowDraftDto
-            {
-                Steps = RecordingDraftBuilder.Build(events),
-            };
-
-            DraftValidator.Annotate(draft, _flowValidator);
-
-            return ResultDto<FlowDraftDto>.Success(draft);
+            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(RecordingActionBuilder.Build(events));
         }
     }
 

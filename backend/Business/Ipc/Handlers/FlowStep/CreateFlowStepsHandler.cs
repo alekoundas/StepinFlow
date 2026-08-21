@@ -1,5 +1,6 @@
 using AutoMapper;
 using Business.Helpers;
+using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -62,6 +63,18 @@ namespace Business.Ipc.Handlers
                 }
 
                 Dictionary<int, FlowStep> stepByTempId = new Dictionary<int, FlowStep>();
+
+                // The Success and Failure rows created alongside a branching step, so a later
+                // draft step can be hung off the right one.
+                Dictionary<(int TempId, FlowStepTypeEnum Branch), FlowStep> branchByOwner = new();
+
+                // Draft order is the running order, and only the steps landing at the target get
+                // renumbered against existing siblings. Anything nested inside the draft has to be
+                // numbered here or a move and the click that follows it come out arbitrary.
+                Dictionary<FlowStep, int> childCount = new();
+                int NextOrder(FlowStep parent) =>
+                    childCount[parent] = childCount.TryGetValue(parent, out int used) ? used + 1 : 0;
+
                 List<FlowStep> rootLevel = new List<FlowStep>();
 
                 foreach (DraftStepDto draftStep in draft.Steps)
@@ -77,9 +90,23 @@ namespace Business.Ipc.Handlers
 
                     // A step with no parent inside the draft lands at the target position; one
                     // with a parent hangs off it wherever that ends up.
-                    if (draftStep.ParentTempId is int parentTempId && stepByTempId.TryGetValue(parentTempId, out FlowStep? draftParent))
+                    //
+                    // A branching parent owns nothing directly, so the step goes under the named
+                    // branch rather than under the step itself. Getting this wrong puts the child
+                    // somewhere the tree cannot represent, and leaves anything reading the
+                    // parent's result unable to see it.
+                    if (draftStep.ParentTempId is int parentTempId &&
+                        draftStep.ParentBranch is FlowStepTypeEnum branchType &&
+                        branchByOwner.TryGetValue((parentTempId, branchType), out FlowStep? branch))
+                    {
+                        step.ParentFlowStep = branch;
+                        step.OrderNumber = NextOrder(branch);
+                    }
+                    else if (draftStep.ParentTempId is int plainParentTempId &&
+                             stepByTempId.TryGetValue(plainParentTempId, out FlowStep? draftParent))
                     {
                         step.ParentFlowStep = draftParent;
+                        step.OrderNumber = NextOrder(draftParent);
                     }
                     else if (parentStepId != null)
                     {
@@ -94,14 +121,21 @@ namespace Business.Ipc.Handlers
 
                     dbContext.FlowSteps.Add(step);
                     FlowStepImageSyncHelper.Sync(dbContext, step, draftStep.Values.FlowStepImages);
-                    dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(step));
+
+                    IReadOnlyList<FlowStep> branches = TreeStepHelper.CreateBranchChildren(step);
+                    dbContext.FlowSteps.AddRange(branches);
+
+                    foreach (FlowStep created in branches)
+                        branchByOwner[(draftStep.TempId, created.FlowStepType)] = created;
 
                     stepByTempId[draftStep.TempId] = step;
                 }
 
-                // Saved before renumbering so the new steps have real ids to be ordered against.
+                // Saved before the rest so the new steps have real ids to point at and be
+                // ordered against.
                 await dbContext.SaveChangesAsync(ct);
 
+                ResolveReferences(draft, stepByTempId);
                 await RenumberDestinationAsync(dbContext, draft.Target, parentStepId, flow.Id, rootLevel, ct);
                 await dbContext.SaveChangesAsync(ct);
 
@@ -128,14 +162,8 @@ namespace Business.Ipc.Handlers
 
         private static async Task<Flow?> ResolveFlowAsync(AppDbContext dbContext, FlowDraftTargetDto target, CancellationToken ct)
         {
-            if (!string.IsNullOrWhiteSpace(target.NewFlowName))
-            {
-                Flow created = new Flow { Name = target.NewFlowName.Trim() };
-                dbContext.Flows.Add(created);
-                await dbContext.SaveChangesAsync(ct);
-                return created;
-            }
-
+            // The flow always exists by now: recording into a new one creates it up front, so
+            // every step form has a real flow to list search areas and points against.
             if (target.TargetFlowId is int flowId)
                 return await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == flowId, ct);
 
@@ -150,6 +178,24 @@ namespace Business.Ipc.Handlers
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Swaps temp ids for the real ones now that every step has been written. A click built
+        /// from an image search points at it this way, which is what makes the pair survive the
+        /// window moving.
+        /// </summary>
+        private static void ResolveReferences(FlowDraftDto draft, Dictionary<int, FlowStep> stepByTempId)
+        {
+            foreach (DraftStepDto draftStep in draft.Steps)
+            {
+                if (draftStep.ReferenceTempId is not int referenceTempId)
+                    continue;
+
+                if (stepByTempId.TryGetValue(referenceTempId, out FlowStep? reference) &&
+                    stepByTempId.TryGetValue(draftStep.TempId, out FlowStep? step))
+                    step.FlowStepReferenceId = reference.Id;
+            }
         }
 
         /// <summary>

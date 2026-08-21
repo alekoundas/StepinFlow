@@ -12,8 +12,8 @@ namespace Core.Models.Ipc
     // ============== COMMANDS ==============
     public record StartRecordingCommand() : IRequest<ResultDto<bool>>;
 
-    /// <summary>Stops and hands back the coalesced draft, ready for the wizard.</summary>
-    public record StopRecordingCommand() : IRequest<ResultDto<FlowDraftDto>>;
+    /// <summary>Stops and hands back the coalesced actions, ready for the wizard to ask about.</summary>
+    public record StopRecordingCommand() : IRequest<ResultDto<IReadOnlyList<RecordedActionDto>>>;
 
     public record DiscardRecordingCommand() : IRequest<ResultDto<bool>>;
 }

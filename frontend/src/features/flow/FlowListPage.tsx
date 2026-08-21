@@ -10,15 +10,15 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
 export default function FlowListPage() {
   const navigate = useNavigate();
-  const { setTarget, setDraft } = useWizardStore();
+  const { setTarget } = useWizardStore();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   const handleNew = () => navigate("/flows/new");
 
-  // The recorder creates the flow on save, so nothing exists yet to navigate to first.
+  // The recorder names and creates the flow itself, so its step forms have somewhere to list
+  // search areas and points from.
   const handleRecord = () => {
-    setDraft(undefined);
-    setTarget({ targetIndex: 0, newFlowName: "Recorded flow" });
+    setTarget(undefined);
     navigate("/record");
   };
   return (
