@@ -43,18 +43,28 @@ export default function ActionFieldsComponent({
     defaultValues: { ...answers } as never,
   });
 
-  // Held in a ref so the subscription below is set up once rather than torn down on every
-  // keystroke, which would drop the field being typed in.
+  // Held in refs so the subscription below is set up once rather than torn down on every
+  // keystroke, which would drop the field being typed in. Reading `answers` through a ref rather
+  // than the closure matters: the effect runs once, so the captured value is whatever the answers
+  // were on the first render, and merging into that would replay stale ones on every change.
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+
   useEffect(() => {
     const subscription = form.watch((next) =>
-      onChangeRef.current({ ...answers, ...next } as ActionAnswers),
+      onChangeRef.current({
+        ...answersRef.current,
+        ...next,
+        // The crop is not a form field, so nothing the form reports can speak for it. Picking a
+        // search area used to hand back a `template` of undefined and clear the crop.
+        template: answersRef.current.template,
+      } as ActionAnswers),
     );
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
   const hasTemplate = answers.template != null;

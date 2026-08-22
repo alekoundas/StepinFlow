@@ -15,6 +15,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { FlowDto } from "@/shared/models/database/flow-dto";
+import { useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
 /**
@@ -26,6 +27,7 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
 export default function RecordingPage() {
   const navigate = useNavigate();
   const { target, createAsSubFlow, setTarget, setActions, reset } = useWizardStore();
+  const { createFlowMutation } = useFlowMutations();
 
   const [flowName, setFlowName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -72,7 +74,7 @@ export default function RecordingPage() {
     setError(null);
 
     try {
-      const flowId = await backendApiService.Flow.create(
+      const flowId = await createFlowMutation.mutateAsync(
         new FlowDto({ name: flowName.trim(), isSubFlow: createAsSubFlow }),
       );
 

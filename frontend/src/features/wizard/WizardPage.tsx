@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import { Panel } from "primereact/panel";
@@ -45,6 +46,7 @@ interface StepperHandle {
  */
 export default function WizardPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { openConfirm } = useDialogStore();
   const {
     target,
@@ -191,6 +193,14 @@ export default function WizardPage() {
 
     try {
       const result = await backendApiService.FlowStep.createMany({ target, steps });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["flow"] }),
+        queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+        queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+      ]);
+
       reset();
       navigate(`/workflow/${result.flowId}`);
     } catch (err) {
