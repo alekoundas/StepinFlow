@@ -32,7 +32,7 @@ namespace Business.Ipc.Handlers
                 return ResultDto<FlowDto>.Failure("Flow not found");
 
             existingFlow.Name = request.dto.Name;
-            existingFlow.OrderNumber = request.dto.OrderNumber;
+            existingFlow.Description = request.dto.Description;
 
             // Areas first: a location can point at an area created in this same payload.
             Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.dto.FlowAreas);

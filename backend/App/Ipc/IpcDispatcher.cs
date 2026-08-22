@@ -41,6 +41,7 @@ namespace App.Ipc
                     "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.getLazy" => await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.validate" => await _mediator.Send(new ValidateFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Flow.getHealth" => await _mediator.Send(new GetFlowHealthQuery(JsonSerializer.Deserialize<FlowHealthRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.getCallers" => await _mediator.Send(new GetFlowCallersQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.promoteToSubFlow" => await _mediator.Send(new PromoteFlowToSubFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Flow.extractSubFlow" => await _mediator.Send(new ExtractSubFlowCommand(JsonSerializer.Deserialize<ExtractSubFlowDto>(request.Payload, _jsonOptions)!), ct),

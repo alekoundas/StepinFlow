@@ -13,6 +13,12 @@ interface Props<T extends DataTableValue> {
   queryKey: readonly unknown[];
   queryFn: (params: LazyDto) => Promise<any>;
   className?: string;
+
+  /**
+   * Makes the whole row open the thing it describes. Optional, because a table of rows that go
+   * nowhere should not look clickable.
+   */
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTableComponent<T extends DataTableValue>({
@@ -20,6 +26,7 @@ export function DataTableComponent<T extends DataTableValue>({
   queryKey,
   queryFn,
   className = "",
+  onRowClick,
 }: Props<T>) {
   const [lazyParams, setLazyParams] = useState<LazyDto>({
     first: 0,
@@ -108,6 +115,19 @@ export function DataTableComponent<T extends DataTableValue>({
         showGridlines
         rowsPerPageOptions={[5, 10, 20, 50]}
         emptyMessage="No flows found."
+        rowClassName={() => (onRowClick ? "cursor-pointer" : "")}
+        onRowClick={
+          onRowClick
+            ? (e) => {
+                // The actions column has its own buttons, and a click there means that button,
+                // not the row.
+                const target = e.originatingEvent.target as HTMLElement;
+                if (target.closest("button, a, .p-menu")) return;
+
+                onRowClick(e.data as T);
+              }
+            : undefined
+        }
       >
         {columns.map((col) => (
           <Column

@@ -9,6 +9,9 @@ namespace Core.Models.Ipc
     public record GetFlowTreeNodeQuery(int id) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowDto>>>;
 
+    /// <summary>Error and warning counts for a page of flows, fetched after the list renders.</summary>
+    public record GetFlowHealthQuery(FlowHealthRequestDto dto) : IRequest<ResultDto<IReadOnlyList<FlowHealthDto>>>;
+
     /// <summary>The flows that invoke this one, so editing a shared sub-flow is a decision.</summary>
     public record GetFlowCallersQuery(int id) : IRequest<ResultDto<IReadOnlyList<LookupItemDto>>>;
 

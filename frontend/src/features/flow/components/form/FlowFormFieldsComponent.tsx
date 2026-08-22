@@ -1,4 +1,3 @@
-import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 
 interface Props {
@@ -15,12 +14,11 @@ export function FlowFormFieldsComponent({ isDisabled = false }: Props) {
         isDisabled={isDisabled}
       />
 
-      <FormInputNumberComponent
-        fieldName="orderNumber"
-        label="Order Number"
-        min={0}
-        max={2147483647}
-        isRequired={true}
+      <FormInputTextComponent
+        fieldName="description"
+        label="Description"
+        placeholderText="Logs in and downloads this month's invoices"
+        hintText="Shown in the list. Worth a line, so you can tell two flows apart at a glance."
         isDisabled={isDisabled}
       />
     </>

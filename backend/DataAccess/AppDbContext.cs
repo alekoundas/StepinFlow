@@ -21,6 +21,29 @@ namespace DataAccess
         {
         }
 
+        /// <summary>
+        /// Stamps UpdatedOn on anything modified. Central so no handler has to remember, and so
+        /// adding one later cannot forget.
+        /// </summary>
+        public override int SaveChanges()
+        {
+            StampUpdatedOn();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            StampUpdatedOn();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void StampUpdatedOn()
+        {
+            foreach (var entry in ChangeTracker.Entries<BaseDbModel>())
+                if (entry.State == EntityState.Modified)
+                    entry.Entity.UpdatedOn = DateTime.UtcNow;
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

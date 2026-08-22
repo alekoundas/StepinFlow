@@ -1,0 +1,19 @@
+/*
+ * The app's own styles. Everything else comes from the PrimeReact theme, and this file exists
+ * for the few rules a theme has no opinion about.
+ *
+ * Colours here are theme variables, never literals — the theme is swappable and a hardcoded
+ * colour would be the one thing that does not follow.
+ */
+
+/* Cards in a DataGridComponent. Lifting on hover is what tells you the whole card is clickable. */
+.data-grid-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px var(--surface-overlay);
+  transform: translateY(-2px);
+}
+
+/* A clickable row wants the same affordance as a clickable card. */
+.p-datatable .p-datatable-tbody > tr.cursor-pointer:hover > td {
+  background: var(--surface-hover);
+}

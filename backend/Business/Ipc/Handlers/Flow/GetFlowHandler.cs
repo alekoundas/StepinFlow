@@ -29,7 +29,10 @@ namespace Business.Ipc.Handlers
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    OrderNumber = x.OrderNumber,
+                    Description = x.Description,
+                    IsSubFlow = x.IsSubFlow,
+                    CreatedOn = x.CreatedOn,
+                    UpdatedOn = x.UpdatedOn,
 
                     FlowAreas = x.FlowAreas
                         .OrderBy(a => a.Name)

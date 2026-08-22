@@ -5,7 +5,8 @@ namespace Core.Models.Database
     public class Flow : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
-        public int OrderNumber { get; set; }
+
+        public string Description { get; set; } = string.Empty;
 
         public bool IsSubFlow { get; set; }
 

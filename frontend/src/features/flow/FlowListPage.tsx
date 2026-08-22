@@ -82,20 +82,18 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
           />
         </div>
 
-        {viewMode === "table" && (
+        {viewMode === "table" ? (
           <FlowDataTableComponent
+            className="mt-4"
+            isSubFlow={isSubFlow}
+          />
+        ) : (
+          <FlowDataGridComponent
             className="mt-4"
             isSubFlow={isSubFlow}
           />
         )}
       </Card>
-
-      {viewMode === "cards" && (
-        <FlowDataGridComponent
-          className="mt-4"
-          isSubFlow={isSubFlow}
-        />
-      )}
     </div>
   );
 }

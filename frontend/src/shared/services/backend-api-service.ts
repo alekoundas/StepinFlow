@@ -34,6 +34,7 @@ import type {
   ExtractSubFlowDto,
   ExtractSubFlowResultDto,
 } from "@/shared/models/database/extract-sub-flow-dto";
+import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 
@@ -53,6 +54,8 @@ export const backendApiService = {
       call<FlowValidationResultDto>("Flow.validate", id),
 
     getCallers: (id: number) => call<LookupItemDto[]>("Flow.getCallers", id),
+    getHealth: (flowIds: number[]) =>
+      call<FlowHealthDto[]>("Flow.getHealth", { flowIds }),
     promoteToSubFlow: (id: number) => call<boolean>("Flow.promoteToSubFlow", id),
     extractSubFlow: (dto: ExtractSubFlowDto) =>
       call<ExtractSubFlowResultDto>("Flow.extractSubFlow", dto),

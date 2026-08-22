@@ -21,7 +21,6 @@ namespace Business.Ipc.Handlers
             List<TreeNodeDto> children = await dbContext.Flows
                 .AsNoTracking()
                 .Where(x => x.Id == request.id)
-                .OrderBy(x => x.OrderNumber)
                 .Select(x => new TreeNodeDto
                 {
                     EntityId = x.Id,
@@ -32,7 +31,7 @@ namespace Business.Ipc.Handlers
 
                     Name = x.Name,
                     flowStepType = null,
-                    OrderNumber = x.OrderNumber,
+                    OrderNumber = 0,
                     IsFlow = true,
                     IsNew = false,
 

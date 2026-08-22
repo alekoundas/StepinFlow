@@ -65,11 +65,16 @@ namespace Business.Ipc.Handlers
                 if (crossing != null)
                     return ResultDto<ExtractSubFlowResultDto>.Failure(crossing);
 
+                string sourceName = await dbContext.Flows
+                    .Where(x => x.Id == dto.SourceRootId)
+                    .Select(x => x.Name)
+                    .FirstOrDefaultAsync(ct) ?? "another flow";
+
                 Flow subFlow = new Flow
                 {
                     Name = dto.Name.Trim(),
                     IsSubFlow = true,
-                    OrderNumber = await NextOrderNumberAsync(dbContext, ct),
+                    Description = $"Extracted from {sourceName}.",
                 };
 
                 dbContext.Flows.Add(subFlow);
@@ -265,12 +270,6 @@ namespace Business.Ipc.Handlers
             siblings.Add(placeholder);
 
             TreeStepMoveHelper.ApplyOrder(siblings, placeholder, dto.SourceOrderNumber);
-        }
-
-        private static async Task<int> NextOrderNumberAsync(AppDbContext dbContext, CancellationToken ct)
-        {
-            List<int> orders = await dbContext.Flows.Select(x => x.OrderNumber).ToListAsync(ct);
-            return orders.Count == 0 ? 0 : orders.Max() + 1;
         }
     }
 }

@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
 import "primeicons/primeicons.css";
 import "primereact/resources/themes/soho-dark/theme.css";
 import "primeflex/primeflex.css";
+import "@/styles/app.css";
 
 // Global shared types
 import {
