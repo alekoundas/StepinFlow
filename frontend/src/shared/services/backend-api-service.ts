@@ -30,6 +30,7 @@ import type { CommandPresetDto } from "@/shared/models/database/command-preset-d
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
 import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
+import type { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import type {
   ExtractSubFlowDto,
   ExtractSubFlowResultDto,
@@ -59,6 +60,20 @@ export const backendApiService = {
     promoteToSubFlow: (id: number) => call<boolean>("Flow.promoteToSubFlow", id),
     extractSubFlow: (dto: ExtractSubFlowDto) =>
       call<ExtractSubFlowResultDto>("Flow.extractSubFlow", dto),
+  },
+
+  DiscordBot: {
+    create: (dto: DiscordBotDto) => call<number>("DiscordBot.create", dto),
+    update: (dto: DiscordBotDto) => call<DiscordBotDto>("DiscordBot.update", dto),
+    delete: (id: number) => call<boolean>("DiscordBot.delete", id),
+
+    get: (id: number) => call<DiscordBotDto>("DiscordBot.get", id),
+    getLazy: (dto: LazyDto) =>
+      call<LazyResponseDto<DiscordBotDto>>("DiscordBot.getLazy", dto),
+
+    /** Sends immediately, skipping the throttle. Takes form values so an unsaved URL can be checked. */
+    test: (dto: { webhookUrl: string; botName: string; avatarUrl: string }) =>
+      call<boolean>("DiscordBot.test", dto),
   },
 
   FlowStep: {
@@ -126,6 +141,12 @@ export const backendApiService = {
       call<LookupResponseDto>("Lookup.flowArea", dto),
     subFlow: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.subFlow", dto),
+    discordBot: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.discordBot", dto),
+
+    /** The mirror of flowStep: steps whose failure can be reported from where a Notify step sits. */
+    failedStep: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.failedStep", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
   },

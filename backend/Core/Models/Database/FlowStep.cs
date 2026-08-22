@@ -94,8 +94,6 @@ namespace Core.Models.Database
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
 
 
-        // NOTIFICATION_EMAIL
-        // TODO
 
         // Keep the root Flow or SubFlow id for easier and faster queries
         public int RootId { get; set; }
@@ -109,6 +107,13 @@ namespace Core.Models.Database
         // deleted target clears it rather than taking this step with it.
         public int? InvokedFlowId { get; set; }
         public Flow? InvokedFlow { get; set; }
+
+
+        // Notify
+        public int? DiscordBotId { get; set; }
+        public DiscordBot? DiscordBot { get; set; }
+
+        public string NotifyMessage { get; set; } = string.Empty;
 
 
         // FlowArea

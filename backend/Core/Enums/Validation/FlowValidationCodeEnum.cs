@@ -39,6 +39,12 @@ namespace Core.Enums
         LOOP_COUNT_MISSING,
         SUB_FLOW_MISSING,
 
+        // Notifications
+        DISCORD_BOT_MISSING,
+
+        /// <summary>Set, but the step it reports on no longer fails above this one.</summary>
+        FAILED_STEP_UNREACHABLE,
+
         // Warnings
         BRANCHES_EMPTY,
         NAME_MISSING,

@@ -13,6 +13,12 @@ namespace App.AutoMapper
         // Handlers own child collections explicitly instead.
         public AutoMapperProfile()
         {
+            // DiscordBot
+            CreateMap<DiscordBot, DiscordBotDto>();
+            CreateMap<DiscordBotDto, DiscordBot>()
+                .ForMember(x => x.CreatedOn, o => o.Ignore())
+                .ForMember(x => x.FlowSteps, o => o.Ignore());
+
             // Flow
             CreateMap<Flow, FlowDto>();
             CreateMap<FlowDto, Flow>()
@@ -27,6 +33,7 @@ namespace App.AutoMapper
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
                 .ForMember(x => x.InvokedFlow, o => o.Ignore())
+                .ForMember(x => x.DiscordBot, o => o.Ignore())
                 .ForMember(x => x.FlowArea, o => o.Ignore())
                 .ForMember(x => x.FlowPoint, o => o.Ignore())
                 .ForMember(x => x.FlowPointEnd, o => o.Ignore())

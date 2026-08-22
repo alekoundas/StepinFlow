@@ -102,6 +102,10 @@ namespace Business.Services.FlowValidationService
                         if (step.InvokedFlowId == null)
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SUB_FLOW_MISSING, "Pick the flow to run.");
                         break;
+
+                    case FlowStepTypeEnum.NOTIFY:
+                        ValidateNotify(result, step, byId);
+                        break;
                 }
 
                 // A step that branches and has nothing in either branch does its work and then
@@ -178,6 +182,20 @@ namespace Business.Services.FlowValidationService
 
             if (ConditionHelper.NeedsSecondValue(step.ConditionType.Value) && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
+        }
+
+        private static void ValidateNotify(
+            FlowValidationResultDto result,
+            FlowStep step,
+            IReadOnlyDictionary<int, StepChainNode> byId)
+        {
+            if (step.DiscordBotId == null)
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.DISCORD_BOT_MISSING, "Pick the bot to send through.");
+
+            if (step.FlowStepReferenceId is int referenceId
+                && !TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId))
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE,
+                    "The step this reports on does not fail above it any more.");
         }
 
         private static void ValidateWindow(FlowValidationResultDto result, FlowStep step)

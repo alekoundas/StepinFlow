@@ -140,10 +140,10 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     iconName: "power-off",
   },
   {
-    flowStepType: FlowStepTypeEnum.NOTIFICATION_EMAIL,
+    flowStepType: FlowStepTypeEnum.NOTIFY,
     group: FlowStepGroupEnum.SYSTEM,
-    label: "Email Notification",
-    iconName: "envelope",
+    label: "Notify",
+    iconName: "send",
   },
 
   // ── Branches ── structural, created with their parent

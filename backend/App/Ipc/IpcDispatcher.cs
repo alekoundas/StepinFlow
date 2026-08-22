@@ -47,6 +47,14 @@ namespace App.Ipc
                     "Flow.extractSubFlow" => await _mediator.Send(new ExtractSubFlowCommand(JsonSerializer.Deserialize<ExtractSubFlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
 
+                    // DiscordBot
+                    "DiscordBot.create" => await _mediator.Send(new CreateDiscordBotCommand(JsonSerializer.Deserialize<DiscordBotDto>(request.Payload, _jsonOptions)!), ct),
+                    "DiscordBot.update" => await _mediator.Send(new UpdateDiscordBotCommand(JsonSerializer.Deserialize<DiscordBotDto>(request.Payload, _jsonOptions)!), ct),
+                    "DiscordBot.delete" => await _mediator.Send(new DeleteDiscordBotCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "DiscordBot.get" => await _mediator.Send(new GetDiscordBotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "DiscordBot.getLazy" => await _mediator.Send(new GetLazyDiscordBotQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "DiscordBot.test" => await _mediator.Send(new TestDiscordBotCommand(JsonSerializer.Deserialize<TestDiscordBotDto>(request.Payload, _jsonOptions)!), ct),
+
                     // FlowStep
                     "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.createMany" => await _mediator.Send(new CreateFlowStepsCommand(JsonSerializer.Deserialize<FlowDraftDto>(request.Payload, _jsonOptions)!), ct),
@@ -86,6 +94,8 @@ namespace App.Ipc
                     "Lookup.flowStep" => await _mediator.Send(new GetLookupFlowStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowPoint" => await _mediator.Send(new GetLookupFlowPointQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.subFlow" => await _mediator.Send(new GetLookupSubFlowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.discordBot" => await _mediator.Send(new GetLookupDiscordBotQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.failedStep" => await _mediator.Send(new GetLookupFailedStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
                     "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),

@@ -16,6 +16,9 @@ namespace Core.Helpers
             FlowStepTypeEnum.READ_TEXT,
             FlowStepTypeEnum.SYSTEM_COMMAND,
             FlowStepTypeEnum.CHECK_VALUE,
+            FlowStepTypeEnum.WINDOW_FOCUS,
+            FlowStepTypeEnum.WINDOW_RESIZE,
+            FlowStepTypeEnum.WINDOW_RELOCATE,
         ];
 
         /// <summary>Types the user can drop steps into.</summary>
@@ -43,16 +46,8 @@ namespace Core.Helpers
         public static bool IsLeaf(FlowStepTypeEnum type) =>
             !CanContainChildren(type) && !HasBranchChildren(type);
 
-        /// <summary>
-        /// The ancestors of <paramref name="fromStepId"/> whose result can be read there, nearest
-        /// first. A result only exists once the step that produced it has run and succeeded, so the
-        /// way down from it has to be its Success branch. Anywhere else is either the failure path
-        /// or a step that may not have run.
-        ///
-        /// The starting node is never returned, which is what lets the "add a step" case pass the
-        /// branch the new step will live under and get the same answer as the saved step would.
-        /// </summary>
-        public static IEnumerable<(StepChainNode Step, int Depth)> ReadableAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
+
+        public static IEnumerable<(StepChainNode Step, int Depth)> SuccessfulAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
             if (!byId.TryGetValue(fromStepId, out StepChainNode from))
                 yield break;
@@ -76,6 +71,38 @@ namespace Core.Helpers
                 currentId = current.ParentFlowStepId;
                 depth++;
             }
+        }
+
+
+        public static IEnumerable<(StepChainNode Step, int Depth)> FailedAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
+        {
+            if (!byId.TryGetValue(fromStepId, out StepChainNode from))
+                yield break;
+
+            int childId = fromStepId;
+            int? currentId = from.ParentFlowStepId;
+            int depth = 1;
+
+            int guard = byId.Count + 1;
+
+            while (currentId != null && guard-- > 0)
+            {
+                if (!byId.TryGetValue(currentId.Value, out StepChainNode current))
+                    yield break;
+
+                if (byId[childId].FlowStepType == FlowStepTypeEnum.FAILURE)
+                    yield return (current, depth);
+
+                childId = current.Id;
+                currentId = current.ParentFlowStepId;
+                depth++;
+            }
+        }
+
+        /// <summary>Whether a Notify step at <paramref name="fromStepId"/> sits on that step's failure path.</summary>
+        public static bool CanReportFailureOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
+        {
+            return FailedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
 
         /// <summary>
@@ -109,6 +136,6 @@ namespace Core.Helpers
             IReadOnlyDictionary<int, StepChainNode> byId,
             int fromStepId,
             int referenceId) =>
-            ReadableAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+            SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
     }
 }

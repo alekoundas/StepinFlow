@@ -78,7 +78,7 @@ namespace Core.Models.Dtos
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
 
 
-        // NOTIFICATION_EMAIL
+        // NOTIFY
         // TODO
 
 
@@ -93,6 +93,8 @@ namespace Core.Models.Dtos
 
         // SUB_FLOW: the flow this step runs.
         public int? InvokedFlowId { get; set; }
+        public int? DiscordBotId { get; set; }
+        public string NotifyMessage { get; set; } = string.Empty;
         public FlowDto? InvokedFlow { get; set; }
 
 

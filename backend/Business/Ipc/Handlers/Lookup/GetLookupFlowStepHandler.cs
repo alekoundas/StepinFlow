@@ -68,7 +68,7 @@ namespace Business.Ipc.Handlers
                 .ToDictionaryAsync(x => x.Id, ct);
 
             List<LookupItemDto> items = TreeStepHelper
-                .ReadableAncestors(byId, dto.FlowStepId.Value)
+                .SuccessfulAncestors(byId, dto.FlowStepId.Value)
                 .Where(x => producingTypes.Contains(x.Step.FlowStepType) && !dto.ExcludedIds.Contains(x.Step.Id))
                 .Select(x => new LookupItemDto
                 {

@@ -15,6 +15,7 @@ import FlowStepCheckValueFormComponent from "@/features/flow-step/components/for
 import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
 import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
 import FlowStepSubFlowFormComponent from "@/features/flow-step/components/forms/sub-flow/FlowStepSubFlowFormComponent";
+import FlowStepNotifyFormComponent from "@/features/flow-step/components/forms/notify/FlowStepNotifyFormComponent";
 
 import {
   CURSOR_FLOW_STEP_TYPES,
@@ -123,6 +124,11 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   [FlowStepTypeEnum.SYSTEM_ACTION]: {
     component: FlowStepSystemActionFormComponent,
     newStepValues: () => ({ name: SYSTEM_ACTIONS[0].defaultName }),
+  },
+
+  [FlowStepTypeEnum.NOTIFY]: {
+    component: FlowStepNotifyFormComponent,
+    newStepValues: () => ({ name: "Notify", notifyMessage: "" }),
   },
 };
 

@@ -70,6 +70,13 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
         "Test what an earlier step read or printed, and branch on the answer.",
       iconName: "filter",
     },
+    {
+      flowStepType: FlowStepTypeEnum.NOTIFY,
+      name: "Notify",
+      description:
+        "Post a message to Discord. Inside a Failure branch it can say what broke.",
+      iconName: "send",
+    },
 
     // ── Cursor ──
     {

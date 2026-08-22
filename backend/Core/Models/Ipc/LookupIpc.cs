@@ -10,6 +10,8 @@ namespace Core.Models.Ipc
     public record GetLookupFlowPointQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupFlowAreaQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupSubFlowQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
+    public record GetLookupDiscordBotQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
+    public record GetLookupFailedStepQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupCommandPresetsQuery() : IRequest<ResultDto<IReadOnlyList<CommandPresetDto>>>;
     public record GetLookupOcrLanguagesQuery() : IRequest<ResultDto<IReadOnlyList<OcrLanguageDto>>>;
 

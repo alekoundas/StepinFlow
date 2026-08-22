@@ -17,7 +17,7 @@ export interface IDialogConfirmComponentProps {
   /** Wider than a question needs, for bodies that show something rather than ask something. */
   width?: string;
 
-  onConfirm?: () => void | Promise<void>;
+  onConfirm?: () => void | Promise<any>;
   onClose?: () => void; // injected by DialogRootComponent
 }
 

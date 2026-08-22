@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Business.Services.NotificationService;
 
 namespace App
 {
@@ -53,6 +54,16 @@ namespace App
             builder.Services.AddSingleton<IFlowValidator, FlowValidator>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
+
+            // Notifications.
+            // The queue is a singleton because the throttle is per bot and has to be remembered between flows, not per request.
+            builder.Services.AddHttpClient(nameof(DiscordNotifier), client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(15);
+            });
+            builder.Services.AddSingleton<IDiscordNotifier, DiscordNotifier>();
+            builder.Services.AddSingleton<DiscordSendQueue>();
+            builder.Services.AddSingleton<IDiscordSendQueue>(x => x.GetRequiredService<DiscordSendQueue>());
 
 
             // IPC

@@ -15,6 +15,7 @@ namespace DataAccess
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStep> ExecutionSteps { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
+        public DbSet<DiscordBot> DiscordBots { get; set; }
 
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)

@@ -98,7 +98,7 @@ export function DataTableComponent<T extends DataTableValue>({
 
       <DataTable
         value={response.data}
-        lazy = {true}
+        lazy={true}
         paginator
         rows={lazyParams.rows}
         first={lazyParams.first}
@@ -121,8 +121,8 @@ export function DataTableComponent<T extends DataTableValue>({
             ? (e) => {
                 // The actions column has its own buttons, and a click there means that button,
                 // not the row.
-                const target = e.originatingEvent.target as HTMLElement;
-                if (target.closest("button, a, .p-menu")) return;
+                // const target = e.originatingEvent.target as HTMLElement;
+                // if (target.closest("button, a, .p-menu")) return;
 
                 onRowClick(e.data as T);
               }

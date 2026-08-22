@@ -90,6 +90,10 @@ export class FlowStepDto {
 
   // SUB_FLOW: the flow this step runs.
   invokedFlowId?: number;
+
+  // NOTIFY
+  discordBotId?: number;
+  notifyMessage: string = "";
   invokedFlow?: FlowDto;
 
   // FlowArea

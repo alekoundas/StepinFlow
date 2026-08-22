@@ -10,7 +10,7 @@ namespace Core.Enums
         SYSTEM_ACTION,
         SUB_FLOW,
         CHECK_VALUE,
-        NOTIFICATION_EMAIL,
+        NOTIFY,
 
         // Input Steps
         CURSOR_DRAG,
