@@ -55,6 +55,10 @@ export default function FlowAreaFormFieldsComponent({
   const sizingMode = useWatch({ control, name: "sizingMode" });
   const parentId = useWatch({ control, name: "parentFlowAreaId" });
 
+  // The test reports bounds the way the area will actually resolve them, so the numbers on screen
+  // are the numbers the flow gets rather than a different measurement of the same window.
+  const useClientArea = useWatch({ control, name: "useClientArea" });
+
   const { openWindow, isWindowOpen } = useWindowOverlay();
 
   /**
@@ -346,6 +350,7 @@ export default function FlowAreaFormFieldsComponent({
         <>
           <WindowMatchFieldsComponent
             isDisabled={isDisabled}
+            useClientArea={useClientArea === true}
             onWindowPicked={(label) => nameFromPick("Window", label)}
           />
 

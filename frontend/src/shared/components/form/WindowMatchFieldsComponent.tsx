@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
@@ -8,6 +9,7 @@ import { FormInputTextComponent } from "@/shared/components/form/FormInputTextCo
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
+import type { WindowMatchDto } from "@/shared/models/window-match-dto";
 
 /** Lowercase because they read as the start of a sentence the text field finishes. */
 const MATCH_MODE_OPTIONS = [
@@ -25,6 +27,12 @@ interface WindowOption {
 
 interface Props {
   isDisabled?: boolean;
+
+  /**
+   * Mirrors the area's own checkbox so the tested bounds are the ones it will really resolve to.
+   * Steps leave it false: resize and relocate always mean the outer frame.
+   */
+  useClientArea?: boolean;
 
   /**
    * Fires when an application is picked, with its label. The caller decides what to do with it —
@@ -49,14 +57,19 @@ interface Props {
  */
 export default function WindowMatchFieldsComponent({
   isDisabled = false,
+  useClientArea = false,
   onWindowPicked,
 }: Props) {
-  const { control, setValue } = useFormContext();
+  const { control, setValue, getValues } = useFormContext();
   const queryClient = useQueryClient();
 
   const processName = useWatch({ control, name: "processName" }) as string | undefined;
 
   const [isByTitle, setIsByTitle] = useState(!processName);
+
+  const [isTesting, setIsTesting] = useState(false);
+  const [matches, setMatches] = useState<WindowMatchDto[] | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
 
   const loadWindows = (filter?: string): Promise<WindowOption[]> =>
     backendApiService.Lookup.window({ searchText: filter }).then((res) =>
@@ -71,8 +84,36 @@ export default function WindowMatchFieldsComponent({
   // not to cache; this is for when something opened while the form was already up.
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["lookup", "window"] });
 
+  /**
+   * The matcher is the one part of a flow with no feedback until it runs, and the count is the
+   * interesting half: the first match is the one that runs, so two matches means the flow takes
+   * whichever window happens to be in front.
+   */
+  const test = async () => {
+    setIsTesting(true);
+    setTestError(null);
+    setMatches(null);
+
+    try {
+      const result = await backendApiService.Lookup.testWindowMatch({
+        processName: (getValues("processName") as string) ?? "",
+        titlePattern: (getValues("titlePattern") as string) ?? "",
+        titleMatchMode: getValues("titleMatchMode") as TitleMatchModeEnum,
+        useClientArea,
+      });
+
+      setMatches(result.matches);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const switchMode = (byTitle: boolean) => {
     setIsByTitle(byTitle);
+    setMatches(null);
+    setTestError(null);
 
     // Leaving a process name behind while the user matches on a title would keep narrowing the
     // search to an app they stopped naming.
@@ -184,6 +225,89 @@ export default function WindowMatchFieldsComponent({
           />
         </div>
       </div>
+
+      {!isDisabled && (
+        <div className="flex flex-column gap-2 mt-2">
+          <div>
+            <Button
+              type="button"
+              label={isTesting ? "Looking..." : "Test the match"}
+              icon="pi pi-search"
+              loading={isTesting}
+              disabled={isTesting}
+              onClick={() => void test()}
+              className="p-button-outlined p-button-sm"
+            />
+          </div>
+
+          {testError && (
+            <Message
+              severity="error"
+              className="w-full justify-content-start"
+              text={testError}
+            />
+          )}
+
+          {matches !== null && <MatchResult matches={matches} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * What the matcher found, right now, on this machine.
+ *
+ * Deliberately leads with the count rather than a verdict. One match is the answer; several means
+ * the flow will take whichever is frontmost, which is the thing a matcher gets wrong silently.
+ */
+function MatchResult({ matches }: { matches: WindowMatchDto[] }) {
+  if (matches.length === 0)
+    return (
+      <Message
+        severity="warn"
+        className="w-full justify-content-start"
+        text="Nothing matches. Check the app is open, or loosen the title."
+      />
+    );
+
+  const headline =
+    matches.length === 1
+      ? "1 window matches"
+      : `${matches.length} windows match — using the frontmost`;
+
+  return (
+    <div className="surface-100 border-round p-3 flex flex-column gap-2">
+      <LabelComponent
+        text={headline}
+        size="sm"
+        weight="semibold"
+        color={matches.length === 1 ? "success" : "warning"}
+      />
+
+      {matches.map((match, index) => (
+        <div
+          key={`${match.processName}-${index}`}
+          className="flex flex-column"
+        >
+          <LabelComponent
+            text={`${index === 0 ? "▸ " : "   "}${match.title}`}
+            size="sm"
+            color={index === 0 ? "primary" : "secondary"}
+          />
+          <LabelComponent
+            text={`${match.processName} · ${match.width} × ${match.height} at ${match.x}, ${match.y}`}
+            size="xs"
+            color="secondary"
+          />
+        </div>
+      ))}
+
+      <LabelComponent
+        text="Tested against this machine. It catches typos and patterns that are too broad, not whether the app exists wherever the flow finally runs."
+        size="xs"
+        color="secondary"
+      />
     </div>
   );
 }

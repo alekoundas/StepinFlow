@@ -12,8 +12,7 @@ namespace Core.Models.Business
         public string TitlePattern { get; set; } = string.Empty;
         public TitleMatchModeEnum TitleMatchMode { get; set; }
 
-        /// <summary>Which one when several match, in z-order.</summary>
-
+        /// <summary>Measure inside the title bar and borders rather than the whole frame.</summary>
         public bool UseClientArea { get; set; } = true;
     }
 }

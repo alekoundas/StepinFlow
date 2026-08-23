@@ -12,6 +12,9 @@ namespace Core.Models.Ipc
     public record GetLookupSubFlowQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupDiscordBotQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
     public record GetLookupFailedStepQuery(LookupRequestDto dto) : IRequest<ResultDto<LookupResponseDto>>;
+
+    /// <summary>What a window matcher finds right now, so a typo is caught while it is typed.</summary>
+    public record TestWindowMatchQuery(WindowMatchTestRequestDto dto) : IRequest<ResultDto<WindowMatchTestResultDto>>;
     public record GetLookupCommandPresetsQuery() : IRequest<ResultDto<IReadOnlyList<CommandPresetDto>>>;
     public record GetLookupOcrLanguagesQuery() : IRequest<ResultDto<IReadOnlyList<OcrLanguageDto>>>;
 

@@ -32,6 +32,10 @@ import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-respons
 import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
 import type { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import type {
+  WindowMatchTestRequestDto,
+  WindowMatchTestResultDto,
+} from "@/shared/models/window-match-dto";
+import type {
   ExtractSubFlowDto,
   ExtractSubFlowResultDto,
 } from "@/shared/models/database/extract-sub-flow-dto";
@@ -147,6 +151,10 @@ export const backendApiService = {
     /** The mirror of flowStep: steps whose failure can be reported from where a Notify step sits. */
     failedStep: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.failedStep", dto),
+
+    /** Runs a window matcher against this machine and returns every window it hits. */
+    testWindowMatch: (dto: WindowMatchTestRequestDto) =>
+      call<WindowMatchTestResultDto>("Lookup.testWindowMatch", dto),
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
   },

@@ -96,6 +96,7 @@ namespace App.Ipc
                     "Lookup.subFlow" => await _mediator.Send(new GetLookupSubFlowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.discordBot" => await _mediator.Send(new GetLookupDiscordBotQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.failedStep" => await _mediator.Send(new GetLookupFailedStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Lookup.testWindowMatch" => await _mediator.Send(new TestWindowMatchQuery(JsonSerializer.Deserialize<WindowMatchTestRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
                     "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),

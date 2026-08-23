@@ -178,6 +178,20 @@ namespace Business.Services.ScreenshotService
             return new Rectangle(origin.X, origin.Y, clientRect.Right - clientRect.Left, clientRect.Bottom - clientRect.Top);
         }
 
+        /// <summary>
+        /// Every window the query matches, in z-order, with what it takes to recognise one.
+        /// FindWindow answers "which one runs"; this answers "what did I actually write".
+        /// </summary>
+        public static IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query) =>
+            FindWindows(query)
+                .Select(hWnd => new WindowMatch
+                {
+                    Title = GetAppWindowText(hWnd),
+                    ProcessName = GetProcessName(hWnd),
+                    Bounds = GetWindowBounds(hWnd, query.UseClientArea),
+                })
+                .ToList();
+
         public static IReadOnlyList<SystemWindow> GetApplicationWindows()
         {
             Collection<SystemWindow> windows = new Collection<SystemWindow>();
