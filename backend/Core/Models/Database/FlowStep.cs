@@ -69,9 +69,10 @@ namespace Core.Models.Database
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-        //
-        // The window itself is a FlowArea of type APPLICATION, and RELOCATE moves it to a
-        // FlowPoint, so both survive being run on another machine.
+        public string ProcessName { get; set; } = string.Empty;
+        public string TitlePattern { get; set; } = string.Empty;
+        public TitleMatchModeEnum TitleMatchMode { get; set; }
+
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
 

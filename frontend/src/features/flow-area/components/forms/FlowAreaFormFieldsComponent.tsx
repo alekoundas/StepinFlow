@@ -15,10 +15,9 @@ import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
-import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { BrowserTypeEnum } from "@/shared/enums/backend/area/browser-type-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
+import WindowMatchFieldsComponent from "@/shared/components/form/WindowMatchFieldsComponent";
 
 interface EnumOption {
   label: string;
@@ -49,7 +48,7 @@ export default function FlowAreaFormFieldsComponent({
   childAreas = [],
   isDisabled = false,
 }: Props) {
-  const { control, setValue } = useFormContext();
+  const { control, setValue, getValues } = useFormContext();
   const [captureError, setCaptureError] = useState<string | null>(null);
 
   const type = useWatch({ control, name: "type" });
@@ -58,22 +57,42 @@ export default function FlowAreaFormFieldsComponent({
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
 
+  /**
+   * Picking from a dropdown names the area, so a list of them is readable without opening each
+   * one. Only while the name is still one this form wrote - "Window - Chrome", "Monitor - ..." or
+   * empty - so changing the dropdown never overwrites something typed on purpose.
+   */
+  const nameFromPick = (prefix: string, label: string) => {
+    const current = (getValues("name") as string) ?? "";
+
+    const isUntouched =
+      current.length === 0 ||
+      current.startsWith("Window - ") ||
+      current.startsWith("Monitor - ");
+
+    if (isUntouched)
+      setValue("name", `${prefix} - ${label}`, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+  };
+
   const typeOptions = [
     { label: "Region", value: FlowAreaTypeEnum.CUSTOM },
     {
       label: "Application",
       value: FlowAreaTypeEnum.APPLICATION,
-        disabled: !!parentId,
+      disabled: !!parentId,
     },
     {
       label: "Browser tab",
       value: FlowAreaTypeEnum.BROWSER_TAB,
-        disabled: !!parentId,
+      disabled: !!parentId,
     },
     {
       label: "Monitor",
       value: FlowAreaTypeEnum.MONITOR,
-        disabled: !!parentId,
+      disabled: !!parentId,
     },
   ];
 
@@ -269,17 +288,53 @@ export default function FlowAreaFormFieldsComponent({
             <div className="flex gap-3">
               {/* No min/max: InputNumber clamps out of range values back into the form, which
                   would quietly resize a drag that left the area. Let the schema say it. */}
-              <FormInputFloatComponent fieldName="ratioX" label="X" isPercent={true} isDisabled={isDisabled} />
-              <FormInputFloatComponent fieldName="ratioY" label="Y" isPercent={true} isDisabled={isDisabled} />
-              <FormInputFloatComponent fieldName="ratioWidth" label="Width" isPercent={true} isDisabled={isDisabled} />
-              <FormInputFloatComponent fieldName="ratioHeight" label="Height" isPercent={true} isDisabled={isDisabled} />
+              <FormInputFloatComponent
+                fieldName="ratioX"
+                label="X"
+                isPercent={true}
+                isDisabled={isDisabled}
+              />
+              <FormInputFloatComponent
+                fieldName="ratioY"
+                label="Y"
+                isPercent={true}
+                isDisabled={isDisabled}
+              />
+              <FormInputFloatComponent
+                fieldName="ratioWidth"
+                label="Width"
+                isPercent={true}
+                isDisabled={isDisabled}
+              />
+              <FormInputFloatComponent
+                fieldName="ratioHeight"
+                label="Height"
+                isPercent={true}
+                isDisabled={isDisabled}
+              />
             </div>
           ) : (
             <div className="flex gap-3">
-              <FormInputNumberComponent fieldName="locationX" label="X" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="locationY" label="Y" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="width" label="Width" isDisabled={isDisabled} />
-              <FormInputNumberComponent fieldName="height" label="Height" isDisabled={isDisabled} />
+              <FormInputNumberComponent
+                fieldName="locationX"
+                label="X"
+                isDisabled={isDisabled}
+              />
+              <FormInputNumberComponent
+                fieldName="locationY"
+                label="Y"
+                isDisabled={isDisabled}
+              />
+              <FormInputNumberComponent
+                fieldName="width"
+                label="Width"
+                isDisabled={isDisabled}
+              />
+              <FormInputNumberComponent
+                fieldName="height"
+                label="Height"
+                isDisabled={isDisabled}
+              />
             </div>
           )}
         </>
@@ -289,78 +344,33 @@ export default function FlowAreaFormFieldsComponent({
       {(type === FlowAreaTypeEnum.APPLICATION ||
         type === FlowAreaTypeEnum.BROWSER_TAB) && (
         <>
-          <FormDropdownComponent<FlowAreaDto, LookupItemDto>
-            fieldName="processName"
-            labelText="Application"
-            mode="remote"
-            queryKey={["lookup", "window"]}
-            queryFn={(filter) =>
-              backendApiService.Lookup.window({ searchText: filter }).then(
-                (res) => res.data,
-              )
-            }
-            optionLabel="label"
-            optionValue="value"
-            placeholderText="Search open windows..."
+          <WindowMatchFieldsComponent
             isDisabled={isDisabled}
-            defaultValue={""}
-            hintText="Matched on the process name, which does not change while the app runs."
+            onWindowPicked={(label) => nameFromPick("Window", label)}
           />
 
-          <FormInputTextComponent
-            fieldName="titlePattern"
-            label="Window title"
-            isDisabled={isDisabled}
-          />
-
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <FormDropdownComponent<FlowAreaDto, EnumOption>
-                fieldName="titleMatchMode"
-                labelText="Title match"
-                mode="local"
-                options={toOptions(TitleMatchModeEnum)}
-                optionLabel="label"
-                optionValue="value"
-                isRequired={true}
-                isDisabled={isDisabled}
-              />
-            </div>
-            <div className="flex-1">
-              <FormInputNumberComponent
-                fieldName="instanceIndex"
-                label="If several match, use #"
-                min={0}
-                isDisabled={isDisabled}
-              />
-            </div>
+          <div className="mt-3">
+            <FormInputCheckboxComponent
+              fieldName="useClientArea"
+              label="Ignore title bar and borders"
+              isDisabled={isDisabled}
+              hintText="Points stay put when the title bar or borders change size."
+            />
           </div>
-
-          <FormInputCheckboxComponent
-            fieldName="useClientArea"
-            label="Ignore title bar and borders"
-            isDisabled={isDisabled}
-            hintText="Keeps offsets correct whatever chrome the window has."
-          />
         </>
       )}
 
       {/* BROWSER_TAB */}
       {type === FlowAreaTypeEnum.BROWSER_TAB && (
         <>
+          <LabelComponent
+            text="The block above picks the browser window. These pick the tab inside it."
+            size="xs"
+            color="secondary"
+            className="mt-3"
+          />
+
           <div className="flex gap-3">
-            <div className="flex-1">
-              <FormDropdownComponent<FlowAreaDto, EnumOption>
-                fieldName="browserType"
-                labelText="Browser"
-                mode="local"
-                options={toOptions(BrowserTypeEnum)}
-                optionLabel="label"
-                optionValue="value"
-                isRequired={true}
-                isDisabled={isDisabled}
-              />
-            </div>
             <div className="flex-1">
               <FormDropdownComponent<FlowAreaDto, EnumOption>
                 fieldName="tabMatchOn"
@@ -385,7 +395,7 @@ export default function FlowAreaFormFieldsComponent({
           <LabelComponent
             size="sm"
             color="warning"
-            text="Browser tabs are not resolved yet. The area saves, but it will not run until tab support lands."
+            text="Steps that search in this area fail when that tab is not the active one. Tab matching is not resolved yet, so the area saves but will not run until it lands."
           />
         </>
       )}
@@ -406,6 +416,9 @@ export default function FlowAreaFormFieldsComponent({
           isRequired={true}
           isDisabled={isDisabled}
           defaultValue={""}
+          onChanged={(_value, option) => {
+            if (option) nameFromPick("Monitor", option.label);
+          }}
         />
       )}
     </>

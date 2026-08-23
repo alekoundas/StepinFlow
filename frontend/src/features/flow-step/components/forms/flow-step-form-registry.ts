@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
+import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
@@ -77,6 +78,7 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     component: FlowStepWindowFormComponent,
     newStepValues: (type) => ({
       name: WINDOW_STEP_DEFAULT_NAMES[type as WindowFlowStepType],
+      titleMatchMode: TitleMatchModeEnum.CONTAINS,
     }),
   }),
 

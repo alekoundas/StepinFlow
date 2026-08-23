@@ -2,7 +2,6 @@ import { z } from "zod";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { BrowserTypeEnum } from "@/shared/enums/backend/area/browser-type-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 
 export const FlowAreaZod = z
@@ -33,10 +32,8 @@ export const FlowAreaZod = z
     processName: z.string(),
     titlePattern: z.string(),
     titleMatchMode: z.enum(TitleMatchModeEnum),
-    instanceIndex: z.number().int().min(0),
     useClientArea: z.boolean(),
 
-    browserType: z.enum(BrowserTypeEnum),
     tabMatchValue: z.string(),
     tabMatchOn: z.enum(TabMatchOnEnum),
 

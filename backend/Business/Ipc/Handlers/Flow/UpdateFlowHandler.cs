@@ -84,10 +84,8 @@ namespace Business.Ipc.Handlers
                 area.ProcessName = dto.ProcessName;
                 area.TitlePattern = dto.TitlePattern;
                 area.TitleMatchMode = dto.TitleMatchMode;
-                area.InstanceIndex = dto.InstanceIndex;
                 area.UseClientArea = dto.UseClientArea;
 
-                area.BrowserType = dto.BrowserType;
                 area.TabMatchValue = dto.TabMatchValue;
                 area.TabMatchOn = dto.TabMatchOn;
 

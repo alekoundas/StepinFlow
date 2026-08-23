@@ -13,7 +13,6 @@ namespace DataAccess.Configurations
             builder.Property(x => x.Type).HasConversion<string>();
             builder.Property(x => x.SizingMode).HasConversion<string>();
             builder.Property(x => x.TitleMatchMode).HasConversion<string>();
-            builder.Property(x => x.BrowserType).HasConversion<string>();
             builder.Property(x => x.TabMatchOn).HasConversion<string>();
 
 

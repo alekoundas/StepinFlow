@@ -200,7 +200,8 @@ namespace Business.Services.FlowValidationService
 
         private static void ValidateWindow(FlowValidationResultDto result, FlowStep step)
         {
-            ValidateArea(result, step);
+            if (string.IsNullOrWhiteSpace(step.ProcessName) && string.IsNullOrWhiteSpace(step.TitlePattern))
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_MATCH_MISSING, "Pick an application, or type a title to match.");
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && (step.WindowWidth < 1 || step.WindowHeight < 1))
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");

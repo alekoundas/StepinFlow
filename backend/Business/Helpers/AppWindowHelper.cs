@@ -144,11 +144,8 @@ namespace Business.Services.ScreenshotService
         public static IntPtr FindWindow(WindowQuery query)
         {
             IReadOnlyList<IntPtr> matches = FindWindows(query);
-            if (matches.Count == 0)
-                return IntPtr.Zero;
 
-            int index = Math.Clamp(query.InstanceIndex, 0, matches.Count - 1);
-            return matches[index];
+            return matches.Count == 0 ? IntPtr.Zero : matches[0];
         }
 
         /// <summary>

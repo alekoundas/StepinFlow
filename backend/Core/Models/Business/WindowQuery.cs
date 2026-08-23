@@ -13,7 +13,6 @@ namespace Core.Models.Business
         public TitleMatchModeEnum TitleMatchMode { get; set; }
 
         /// <summary>Which one when several match, in z-order.</summary>
-        public int InstanceIndex { get; set; }
 
         public bool UseClientArea { get; set; } = true;
     }

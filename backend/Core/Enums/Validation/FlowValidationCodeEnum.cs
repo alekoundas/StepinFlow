@@ -34,6 +34,7 @@ namespace Core.Enums
 
         // Windows
         WINDOW_SIZE_MISSING,
+        WINDOW_MATCH_MISSING,
 
         // Control
         LOOP_COUNT_MISSING,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 
 export const WINDOW_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.WINDOW_FOCUS,
@@ -19,8 +20,11 @@ export const FlowStepWindowSchema = z
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
 
-    // The window itself, an APPLICATION area.
-    flowAreaId: z.number().int().nullish(),
+    // The window itself. Named here rather than borrowed from an APPLICATION area: a matcher is
+    // the same on every machine, so it has no reason to be a separate tunable record.
+    processName: z.string(),
+    titlePattern: z.string(),
+    titleMatchMode: z.enum(TitleMatchModeEnum),
 
     // WINDOW_RESIZE
     windowWidth: z.number().int().min(0).max(2147483647),
@@ -30,11 +34,12 @@ export const FlowStepWindowSchema = z
     flowPointId: z.number().int().nullish(),
   })
   .superRefine((data, ctx) => {
-    if (!data.flowAreaId) {
+    // Either half is enough. Matching on nothing would act on whatever window is in front.
+    if (data.processName.length === 0 && data.titlePattern.length === 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Pick the window this step acts on",
-        path: ["flowAreaId"],
+        message: "Pick an application, or type a title to match",
+        path: ["titlePattern"],
       });
     }
 

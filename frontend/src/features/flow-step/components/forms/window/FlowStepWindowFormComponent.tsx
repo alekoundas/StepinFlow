@@ -85,7 +85,10 @@ export default function FlowStepWindowFormComponent({
       ...defaultValues,
       name: data.name,
       flowStepType: data.flowStepType,
-      flowAreaId: data.flowAreaId ?? undefined,
+
+      processName: data.processName,
+      titlePattern: data.titlePattern,
+      titleMatchMode: data.titleMatchMode,
 
       windowWidth: isResize ? data.windowWidth : 0,
       windowHeight: isResize ? data.windowHeight : 0,

@@ -39,14 +39,12 @@ namespace Core.Models.Database
         public string ProcessName { get; set; } = string.Empty;
         public string TitlePattern { get; set; } = string.Empty;
         public TitleMatchModeEnum TitleMatchMode { get; set; }
-        public int InstanceIndex { get; set; }
 
         /// <summary>Client area excludes the title bar and borders, which is nearly always wanted.</summary>
         public bool UseClientArea { get; set; } = true;
 
 
         // BROWSER_TAB
-        public BrowserTypeEnum BrowserType { get; set; }
         public string TabMatchValue { get; set; } = string.Empty;
         public TabMatchOnEnum TabMatchOn { get; set; }
 

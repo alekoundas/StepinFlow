@@ -28,6 +28,12 @@ interface BaseProps<TForm extends FieldValues, T> {
   itemTemplate?: (item: T) => ReactNode;
   valueTemplate?: (option: T | null, props: DropdownProps) => ReactNode;
 
+  /**
+   * Fires after the field is set, with the option behind the value. For callers that need more
+   * than the id — filling a name field from the picked label, say.
+   */
+  onChanged?: (value: number | string | null, option: T | undefined) => void;
+
   // Filtering
   filter?: boolean;
   filterBy?: string;
@@ -45,6 +51,12 @@ type RemoteProps<TForm extends FieldValues, T> = BaseProps<TForm, T> & {
   options?: never;
   queryKey: readonly unknown[];
   queryFn: (filter?: string) => Promise<T[]>;
+
+  /**
+   * Overrides the global five minute cache. Lookups of live state — open windows, connected
+   * monitors — are stale the moment they are fetched, so they pass 0.
+   */
+  staleTime?: number;
 };
 
 export function FormDropdownComponent<TForm extends FieldValues, T>({
@@ -64,6 +76,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
   // Actionns
   itemTemplate,
   valueTemplate,
+  onChanged,
 
   ...props // Rest of props includes either local or remote specific props
 }: LocalProps<TForm, T> | RemoteProps<TForm, T>) {
@@ -86,6 +99,7 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
       ? () => props.queryFn(filterValue)
       : () => Promise.resolve([]),
     enabled: isRemote,
+    staleTime: isRemote ? props.staleTime : undefined,
   });
 
   const options = useMemo(() => {
@@ -99,6 +113,19 @@ export function FormDropdownComponent<TForm extends FieldValues, T>({
 
   const handleChange = (value: number | string | null): void => {
     onChange(value ?? defaultValue ?? null);
+
+    if (!onChanged) return;
+
+    const valueOf = (item: T): unknown => {
+      if (typeof optionValue === "function") return optionValue(item);
+      if (optionValue !== undefined) return item[optionValue as keyof T];
+      return item;
+    };
+
+    onChanged(
+      value,
+      (options as T[]).find((item) => valueOf(item) === value),
+    );
   };
 
   // Helper to get display value

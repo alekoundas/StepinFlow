@@ -1,7 +1,6 @@
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { BrowserTypeEnum } from "@/shared/enums/backend/area/browser-type-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 
 export class FlowAreaDto {
@@ -29,11 +28,9 @@ export class FlowAreaDto {
   processName: string = "";
   titlePattern: string = "";
   titleMatchMode: TitleMatchModeEnum = TitleMatchModeEnum.CONTAINS;
-  instanceIndex: number = 0;
   useClientArea: boolean = true;
 
   // BROWSER_TAB
-  browserType: BrowserTypeEnum = BrowserTypeEnum.ANY;
   tabMatchValue: string = "";
   tabMatchOn: TabMatchOnEnum = TabMatchOnEnum.TITLE;
 

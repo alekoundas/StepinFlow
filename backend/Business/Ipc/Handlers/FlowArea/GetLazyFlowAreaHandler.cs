@@ -42,10 +42,8 @@ namespace Business.Ipc.Handlers
                     ProcessName = x.ProcessName,
                     TitlePattern = x.TitlePattern,
                     TitleMatchMode = x.TitleMatchMode,
-                    InstanceIndex = x.InstanceIndex,
                     UseClientArea = x.UseClientArea,
 
-                    BrowserType = x.BrowserType,
                     TabMatchValue = x.TabMatchValue,
                     TabMatchOn = x.TabMatchOn,
 

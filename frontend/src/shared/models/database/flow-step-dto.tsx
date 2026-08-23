@@ -16,6 +16,7 @@ import type { RunCommandShellEnum } from "@/shared/enums/backend/command/run-com
 import type { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import type { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
 import type { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
+import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 
 export class FlowStepDto {
   // Core fields
@@ -63,6 +64,13 @@ export class FlowStepDto {
   conditionType?: ConditionTypeEnum;
 
   // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
+  //
+  // The window is named here rather than through an APPLICATION area. Either half identifies it
+  // and both together narrow. Resize and relocate always mean the outer frame.
+  processName: string = "";
+  titlePattern: string = "";
+  titleMatchMode: TitleMatchModeEnum = TitleMatchModeEnum.CONTAINS;
+
   windowHeight: number = 0;
   windowWidth: number = 0;
 

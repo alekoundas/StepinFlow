@@ -119,7 +119,6 @@ namespace Business.Services.AreaPointService
                 ProcessName = area.ProcessName,
                 TitlePattern = area.TitlePattern,
                 TitleMatchMode = area.TitleMatchMode,
-                InstanceIndex = area.InstanceIndex,
                 UseClientArea = area.UseClientArea,
             };
 
