@@ -84,7 +84,7 @@ export default function HotkeysPanelComponent() {
       const input = message.payload as RecordedInput;
 
       // The hook's own name for the key, which is what gets stored: nothing translates it.
-      const name = input.KeyChar;
+      const name = input.keyChar;
       if (!name) return;
 
       if (input.type === RecordedInputTypeEnum.KEY_DOWN) {
@@ -101,17 +101,14 @@ export default function HotkeysPanelComponent() {
         commit(heldRef.current.join("+"));
     });
 
-    return () => unsubscribe?.();
+    // Also covers leaving the page mid-capture, which would otherwise leave the hook
+    // broadcasting every key.
+    return () => {
+      unsubscribe?.();
+      void backendApiService.System.inputRecordHotkeyStop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capturingKey]);
-
-  // Leaving the page mid-capture would otherwise leave the hook broadcasting every key.
-  useEffect(
-    () => () => {
-      void backendApiService.System.inputRecordHotkeyStop();
-    },
-    [],
-  );
 
   const rebind = async (setting: AppSettingDto) => {
     setError(null);

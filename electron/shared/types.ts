@@ -101,7 +101,7 @@ export interface RecordedInput {
 
   // Keyboard
   keyCode?: KeyCodeEnum;
-  KeyChar?: string; // Human readable
+  keyChar?: string; // Human readable
 
   // Scroll
   scrollDirection?: CursorScrollDirectionTypeEnum;
