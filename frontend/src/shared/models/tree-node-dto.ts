@@ -12,6 +12,7 @@ import type { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-
 // Display only. What a tree row shows under the step name.
 export interface TreeNodeDetailDto {
   waitForMilliseconds: number;
+  waitForMillisecondsMax: number;
   loopCount: number;
   isLoopInfinite: boolean;
 

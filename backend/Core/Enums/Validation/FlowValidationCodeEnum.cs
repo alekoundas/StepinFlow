@@ -38,6 +38,7 @@ namespace Core.Enums
 
         // Control
         LOOP_COUNT_MISSING,
+        WAIT_RANGE_INVALID,
         SUB_FLOW_MISSING,
 
         // Notifications

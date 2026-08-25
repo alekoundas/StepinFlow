@@ -15,6 +15,7 @@ namespace Core.Models.Dtos
 
         // WAIT
         public int WaitForMilliseconds { get; set; }
+        public int WaitForMillisecondsMax { get; set; }
 
 
         // LOOP, CURSOR_SCROLL (scroll notch count)

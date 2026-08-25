@@ -63,7 +63,16 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
   switch (node.flowStepType) {
     case FlowStepTypeEnum.WAIT:
-      return { chips: [{ text: duration(detail.waitForMilliseconds) }] };
+      return {
+        chips: [
+          {
+            // A random wait shows its range: the minimum alone would read as the whole story.
+            text: detail.waitForMillisecondsMax
+              ? `${duration(detail.waitForMilliseconds)} - ${duration(detail.waitForMillisecondsMax)}`
+              : duration(detail.waitForMilliseconds),
+          },
+        ],
+      };
 
     case FlowStepTypeEnum.LOOP:
       return {

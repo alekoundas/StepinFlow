@@ -93,6 +93,12 @@ namespace Business.Services.FlowValidationService
                         ValidateCheckValue(result, step, byId);
                         break;
 
+                    case FlowStepTypeEnum.WAIT:
+                        // Zero is "not a range" rather than a bad range, so it is not an error.
+                        if (step.WaitForMillisecondsMax > 0 && step.WaitForMillisecondsMax <= step.WaitForMilliseconds)
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WAIT_RANGE_INVALID, "The longest wait has to be longer than the shortest.");
+                        break;
+
                     case FlowStepTypeEnum.LOOP:
                         if (!step.IsLoopInfinite && step.LoopCount < 1)
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LOOP_COUNT_MISSING, "A loop runs at least once, or for ever.");

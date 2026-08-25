@@ -51,6 +51,7 @@ namespace Business.Ipc.Handlers
                     Detail = new TreeNodeDetailDto
                     {
                         WaitForMilliseconds = x.WaitForMilliseconds,
+                        WaitForMillisecondsMax = x.WaitForMillisecondsMax,
                         LoopCount = x.LoopCount,
                         IsLoopInfinite = x.IsLoopInfinite,
 

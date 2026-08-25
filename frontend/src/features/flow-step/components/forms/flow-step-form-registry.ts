@@ -84,7 +84,11 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
 
   [FlowStepTypeEnum.WAIT]: {
     component: FlowStepWaitFormComponent,
-    newStepValues: () => ({ name: "Wait", waitForMilliseconds: 50 }),
+    newStepValues: () => ({
+      name: "Wait",
+      waitForMilliseconds: 50,
+      waitForMillisecondsMax: 0,
+    }),
   },
 
   [FlowStepTypeEnum.LOOP]: {

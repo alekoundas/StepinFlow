@@ -28,6 +28,9 @@ export class FlowStepDto {
   // WAIT
   waitForMilliseconds: number = 0;
 
+  /** Upper bound of the random range. 0 waits exactly waitForMilliseconds. */
+  waitForMillisecondsMax: number = 0;
+
   // LOOP, CURSOR_SCROLL (scroll notch count)
   loopCount: number = 0;
   isLoopInfinite: boolean = false;
