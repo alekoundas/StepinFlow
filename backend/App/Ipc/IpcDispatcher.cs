@@ -124,6 +124,8 @@ namespace App.Ipc
                     "System.inputRecordOverlayStop" => await _mediator.Send(new SystemInputRecordOverlayStopCommand(), ct),
                     "System.inputRecordPointCaptureStart" => await _mediator.Send(new SystemInputRecordPointCaptureStartCommand(), ct),
                     "System.inputRecordPointCaptureStop" => await _mediator.Send(new SystemInputRecordPointCaptureStopCommand(), ct),
+                    "System.inputRecordHotkeyStart" => await _mediator.Send(new SystemInputRecordHotkeyStartCommand(), ct),
+                    "System.inputRecordHotkeyStop" => await _mediator.Send(new SystemInputRecordHotkeyStopCommand(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

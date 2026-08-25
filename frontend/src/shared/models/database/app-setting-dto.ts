@@ -1,7 +1,11 @@
-import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
+import type {
+  AppSettingKeyEnum,
+  AppSettingKindEnum,
+} from "@/shared/enums/backend/app-setting-key-enum";
 
 export interface AppSettingDto {
   key: AppSettingKeyEnum;
+  kind: AppSettingKindEnum;
   label: string;
   description: string;
 

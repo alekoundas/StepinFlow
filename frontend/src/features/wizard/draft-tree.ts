@@ -126,6 +126,7 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
 
   return {
     waitForMilliseconds: values.waitForMilliseconds,
+    waitForMillisecondsMax: 0,
     loopCount: values.loopCount,
     isLoopInfinite: values.isLoopInfinite,
 

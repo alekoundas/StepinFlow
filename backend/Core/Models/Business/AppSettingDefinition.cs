@@ -3,10 +3,6 @@ using System.Globalization;
 
 namespace Core.Models.Business
 {
-    /// <summary>
-    /// What a setting is, in one place: its key, its type, its default and its bounds. Adding a
-    /// setting is a definition plus an enum member, never a migration.
-    /// </summary>
     public abstract class AppSettingDefinition
     {
         protected AppSettingDefinition(AppSettingKeyEnum key, string label, string description)
@@ -25,6 +21,29 @@ namespace Core.Models.Business
         /// <summary>Bounds for the UI to render, null when the setting is not numeric.</summary>
         public virtual int? Minimum => null;
         public virtual int? Maximum => null;
+
+        /// <summary>What control the Settings page should render. A number box is not a hotkey.</summary>
+        public abstract AppSettingKindEnum Kind { get; }
+    }
+
+
+    public sealed class HotkeyAppSettingDefinition : AppSettingDefinition
+    {
+        public HotkeyAppSettingDefinition(
+            AppSettingKeyEnum key,
+            string label,
+            string description,
+            string defaultCombination)
+            : base(key, label, description)
+        {
+            DefaultCombination = defaultCombination;
+        }
+
+        public string DefaultCombination { get; }
+
+        public override AppSettingKindEnum Kind => AppSettingKindEnum.HOTKEY;
+
+        public override string DefaultAsText => DefaultCombination;
     }
 
     public sealed class IntAppSettingDefinition : AppSettingDefinition
@@ -46,6 +65,8 @@ namespace Core.Models.Business
         public int DefaultValue { get; }
         public override int? Minimum { get; }
         public override int? Maximum { get; }
+
+        public override AppSettingKindEnum Kind => AppSettingKindEnum.INT;
 
         public override string DefaultAsText => DefaultValue.ToString(CultureInfo.InvariantCulture);
 

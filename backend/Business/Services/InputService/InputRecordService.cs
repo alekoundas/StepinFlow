@@ -31,6 +31,7 @@ namespace Business.Services.InputService
         private const int ModeAll = 1;
         private const int ModeOverlay = 2;
         private const int ModePointCapture = 3;
+        private const int ModeHotkey = 4;
         private int _recordingMode = ModeNone;
 
         // Throttling events. Interlocked because TaskPoolGlobalHook dispatches on the thread pool.
@@ -58,6 +59,7 @@ namespace Business.Services.InputService
         {
             ModeOverlay => BroadcastTypeEnum.OVERLAY_MOUSE_EVENT,
             ModePointCapture => BroadcastTypeEnum.POINT_CAPTURE_EVENT,
+            ModeHotkey => BroadcastTypeEnum.HOTKEY_CAPTURE_EVENT,
             _ => null,
         };
 
@@ -98,6 +100,10 @@ namespace Business.Services.InputService
         public Task<bool> StartRecordingPointCaptureAsync() => Task.FromResult(StartRecording(ModePointCapture));
 
         public Task<bool> StopRecordingPointCaptureAsync() => Task.FromResult(StopRecording(ModePointCapture));
+
+        public Task<bool> StartRecordingHotkeyAsync() => Task.FromResult(StartRecording(ModeHotkey));
+
+        public Task<bool> StopRecordingHotkeyAsync() => Task.FromResult(StopRecording(ModeHotkey));
 
 
         // ================================================================

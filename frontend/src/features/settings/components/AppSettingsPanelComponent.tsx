@@ -4,6 +4,7 @@ import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
+import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import {
   useAppSettingMutations,
   useAppSettings,
@@ -14,7 +15,10 @@ import {
  * from a hardcoded list, so adding a setting is a definition on one side only.
  */
 export default function AppSettingsPanelComponent() {
-  const { data: settings = [], isLoading } = useAppSettings();
+  const { data: all = [], isLoading } = useAppSettings();
+
+  // Numeric only: a hotkey rendered through InputNumber is NaN in a spinner.
+  const settings = all.filter((x) => x.kind === AppSettingKindEnum.INT);
   const { setSettingMutation } = useAppSettingMutations();
 
   // Committed on blur, not on every keystroke: a partially typed number is not a setting.

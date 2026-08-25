@@ -30,6 +30,19 @@ namespace Business.Services.AppSettingService
             return definition.Parse(stored);
         }
 
+        public async Task<string> GetTextAsync(AppSettingDefinition definition, CancellationToken ct = default)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            string? stored = await dbContext.AppSettings
+                .AsNoTracking()
+                .Where(x => x.Key == definition.Key)
+                .Select(x => x.Value)
+                .FirstOrDefaultAsync(ct);
+
+            return string.IsNullOrWhiteSpace(stored) ? definition.DefaultAsText : stored;
+        }
+
         public async Task<IReadOnlyList<AppSettingDto>> GetAllAsync(CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
@@ -42,6 +55,7 @@ namespace Business.Services.AppSettingService
                 .Select(definition => new AppSettingDto
                 {
                     Key = definition.Key,
+                    Kind = definition.Kind,
                     Label = definition.Label,
                     Description = definition.Description,
                     Value = stored.TryGetValue(definition.Key, out string? value) ? value : definition.DefaultAsText,

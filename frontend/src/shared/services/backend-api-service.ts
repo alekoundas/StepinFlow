@@ -155,9 +155,11 @@ export const backendApiService = {
     /** Runs a window matcher against this machine and returns every window it hits. */
     testWindowMatch: (dto: WindowMatchTestRequestDto) =>
       call<WindowMatchTestResultDto>("Lookup.testWindowMatch", dto),
+
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
   },
+
 
   Recording: {
     start: () => call<boolean>("Recording.start"),
@@ -192,6 +194,8 @@ export const backendApiService = {
       call<boolean>("System.inputRecordPointCaptureStart"),
     inputRecordPointCaptureStop: () =>
       call<boolean>("System.inputRecordPointCaptureStop"),
+    inputRecordHotkeyStart: () => call<boolean>("System.inputRecordHotkeyStart"),
+    inputRecordHotkeyStop: () => call<boolean>("System.inputRecordHotkeyStop"),
   },
 
   OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {
