@@ -8,5 +8,6 @@
         POINT_CAPTURE_EVENT,
         RECORDING_EVENT,
         HOTKEY_CAPTURE_EVENT,
+        EXECUTION_EVENT,
     }
 }

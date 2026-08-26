@@ -32,10 +32,25 @@ namespace Business.Services.ScreenshotService
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
-        /// <summary>
-        /// Title of the window with focus, or null when there is none. Used by the recorder to
-        /// say which app an action happened in, so it is a hint and never worth throwing over.
-        /// </summary>
+        private const int SW_RESTORE = 9;
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_NOACTIVATE = 0x0010;
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+
         public static string? GetForegroundWindowTitle()
         {
             IntPtr hWnd = GetForegroundWindow();
@@ -178,10 +193,44 @@ namespace Business.Services.ScreenshotService
             return new Rectangle(origin.X, origin.Y, clientRect.Right - clientRect.Left, clientRect.Bottom - clientRect.Top);
         }
 
-        /// <summary>
-        /// Every window the query matches, in z-order, with what it takes to recognise one.
-        /// FindWindow answers "which one runs"; this answers "what did I actually write".
-        /// </summary>
+        public static bool FocusWindow(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero)
+                return false;
+
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
+
+            if (!SetForegroundWindow(hWnd))
+                return false;
+
+            return GetForegroundWindow() == hWnd;
+        }
+
+        /// <summary>The outer frame, title bar and borders included.</summary>
+        public static bool ResizeWindow(IntPtr hWnd, int width, int height)
+        {
+            if (hWnd == IntPtr.Zero)
+                return false;
+
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
+
+            return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+
+        /// <summary>The top left of the outer frame lands on the point.</summary>
+        public static bool MoveWindow(IntPtr hWnd, int x, int y)
+        {
+            if (hWnd == IntPtr.Zero)
+                return false;
+
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
+
+            return SetWindowPos(hWnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+
         public static IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query) =>
             FindWindows(query)
                 .Select(hWnd => new WindowMatch

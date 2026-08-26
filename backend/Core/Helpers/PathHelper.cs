@@ -44,6 +44,21 @@
             return path;
         }
 
+        public static string GetExecutionRunPath(string flowName, DateTime startedOn)
+        {
+            string safeName = string.Concat(flowName.Split(Path.GetInvalidFileNameChars())).Trim();
+            if (safeName.Length == 0)
+                safeName = "Flow";
+
+            string folder = $"{safeName} - {startedOn:yyyy-MM-dd HH.mm.ss}";
+            string path = Path.Combine(GetExecutionHistoryDataPath(), folder);
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            return path;
+        }
+
         public static string GetExecutionHistoryDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Execution History");

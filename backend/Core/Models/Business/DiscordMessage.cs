@@ -11,7 +11,7 @@ namespace Core.Models.Business
 
         public string Content { get; set; } = string.Empty;
 
-        public List<DiscordAttachment> Attachments { get; set; } = new();
+        public List<DiscordAttachment> Attachments { get; set; } = new List<DiscordAttachment>();
     }
 
     public class DiscordAttachment

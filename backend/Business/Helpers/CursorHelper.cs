@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace Business.Helpers
@@ -18,6 +19,16 @@ namespace Business.Helpers
 
         [DllImport("user32.dll")]
         private static extern int GetSystemMetrics(int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
 
 
         //==================================================
@@ -60,6 +71,16 @@ namespace Business.Helpers
         /// Moves the cursor to an absolute point on the virtual desktop, in physical pixels.
         /// Returns false when the virtual screen metrics cannot be read.
         /// </summary>
+        /// <summary>
+        /// Where the cursor actually is, in physical pixels. Read back after a move, because
+        /// SendInput reports success and does nothing when the window in front is elevated.
+        /// </summary>
+        public static Point CurrentPosition()
+        {
+            GetCursorPos(out POINT point);
+            return new Point(point.X, point.Y);
+        }
+
         public static bool MoveCursor(int x, int y)
         {
             int virtualLeft = GetSystemMetrics(SM_XVIRTUALSCREEN);
