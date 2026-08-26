@@ -21,7 +21,7 @@ interface Props {
 
 export default function FlowStepSubFlowFormFieldsComponent({ isDisabled = false }: Props) {
   const { control } = useFormContext();
-  const invokedFlowId = useWatch({ control, name: "invokedFlowId" });
+  const subFlowId = useWatch({ control, name: "subFlowId" });
 
   const loadSubFlows = (filter?: string): Promise<FlowOption[]> =>
     backendApiService.Lookup.subFlow({ searchText: filter }).then((res) =>
@@ -43,7 +43,7 @@ export default function FlowStepSubFlowFormFieldsComponent({ isDisabled = false 
       />
 
       <FormDropdownComponent<SubFlowForm, FlowOption>
-        fieldName="invokedFlowId"
+        fieldName="subFlowId"
         labelText="Flow to run"
         mode="remote"
         queryKey={["lookup", "subFlow"]}
@@ -56,7 +56,7 @@ export default function FlowStepSubFlowFormFieldsComponent({ isDisabled = false 
         isDisabled={isDisabled}
       />
 
-      {invokedFlowId && <SubFlowPreviewComponent flowId={invokedFlowId} />}
+      {subFlowId && <SubFlowPreviewComponent flowId={subFlowId} />}
     </>
   );
 }

@@ -42,9 +42,9 @@ namespace DataAccess.Configurations
 
             // The flow a SUB_FLOW step runs. A reference, not ownership: deleting the invoked
             // flow clears the reference and the validator reports it, the same as a deleted area.
-            builder.HasOne(x => x.InvokedFlow)
+            builder.HasOne(x => x.SubFlow)
                 .WithMany()
-                .HasForeignKey(x => x.InvokedFlowId)
+                .HasForeignKey(x => x.SubFlowId)
                 .OnDelete(DeleteBehavior.SetNull);
 
 

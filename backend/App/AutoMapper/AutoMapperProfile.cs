@@ -32,7 +32,7 @@ namespace App.AutoMapper
             CreateMap<FlowStepDto, FlowStep>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.Flow, o => o.Ignore())
-                .ForMember(x => x.InvokedFlow, o => o.Ignore())
+                .ForMember(x => x.SubFlow, o => o.Ignore())
                 .ForMember(x => x.DiscordBot, o => o.Ignore())
                 .ForMember(x => x.FlowArea, o => o.Ignore())
                 .ForMember(x => x.FlowPoint, o => o.Ignore())

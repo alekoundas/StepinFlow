@@ -49,7 +49,7 @@ export default function FlowStepSubFlowFormComponent({
       new FlowStepDto({
         ...defaultValues,
         ...data,
-        invokedFlowId: data.invokedFlowId ?? undefined,
+        subFlowId: data.subFlowId ?? undefined,
       }),
     );
 
