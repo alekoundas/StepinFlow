@@ -3,6 +3,7 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825203029_ExecutionHistoryModel")]
+    partial class ExecutionHistoryModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -120,25 +123,13 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Command")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Depth")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("DurationMilliseconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Error")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("ExecutionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("ExitCode")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("FlowStepId")
@@ -148,17 +139,11 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("LoopPass")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("MatchCount")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("MatchIndex")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -168,10 +153,10 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ParentSequence")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("ResultImagePath")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResultJson")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ResultLocationX")
@@ -180,23 +165,17 @@ namespace DataAccess.Migrations
                     b.Property<int?>("ResultLocationY")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Sequence")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("StartedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Value")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowStepId");
+                    b.HasIndex("ExecutionId");
 
-                    b.HasIndex("ExecutionId", "Sequence");
+                    b.HasIndex("FlowStepId");
 
                     b.ToTable("ExecutionSteps");
                 });
