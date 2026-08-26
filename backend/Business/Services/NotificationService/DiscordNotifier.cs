@@ -18,7 +18,7 @@ namespace Business.Services.NotificationService
     {
         public const int MaxContentLength = 2000; // Max content Discord allows.
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
@@ -67,7 +67,7 @@ namespace Business.Services.NotificationService
         /// </summary>
         private static MultipartFormDataContent BuildForm(DiscordMessage message)
         {
-            MultipartFormDataContent form = new();
+            MultipartFormDataContent form = new MultipartFormDataContent();
 
             var payload = new
             {
@@ -86,7 +86,7 @@ namespace Business.Services.NotificationService
             {
                 DiscordAttachment attachment = message.Attachments[i];
 
-                ByteArrayContent file = new(attachment.Bytes);
+                ByteArrayContent file = new ByteArrayContent(attachment.Bytes);
                 file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
 
                 // The indexed part name is what Discord matches attachments on.
