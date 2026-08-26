@@ -55,7 +55,7 @@ namespace Business.Ipc.Handlers
                     // that is still one thing depending on it.
                     CallerCount = x.IsSubFlow
                         ? dbContext.FlowSteps
-                            .Where(step => step.InvokedFlowId == x.Id)
+                            .Where(step => step.SubFlowId == x.Id)
                             .Select(step => step.RootId)
                             .Distinct()
                             .Count()

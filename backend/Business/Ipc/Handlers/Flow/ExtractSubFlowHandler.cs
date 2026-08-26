@@ -99,7 +99,7 @@ namespace Business.Ipc.Handlers
                     Name = dto.Name.Trim(),
                     FlowStepType = FlowStepTypeEnum.SUB_FLOW,
                     RootId = dto.SourceRootId,
-                    InvokedFlowId = subFlow.Id,
+                    SubFlowId = subFlow.Id,
                     FlowId = dto.SourceFlowId,
                     ParentFlowStepId = dto.SourceParentFlowStepId,
                     OrderNumber = dto.SourceOrderNumber,

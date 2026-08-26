@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Ipc.Handlers
 {
     /// <summary>
-    /// Marks a flow as callable. One way on purpose: a caller's InvokedFlowId can then never
+    /// Marks a flow as callable. One way on purpose: a caller's SubFlowId can then never
     /// point at something that has stopped being invokable, which is what removes every stale
     /// caller case from the rest of the feature.
     /// </summary>
@@ -59,7 +59,7 @@ namespace Business.Ipc.Handlers
             // RootId is the flow the step lives in, which is exactly the caller.
             List<int> callerIds = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.InvokedFlowId == request.id)
+                .Where(x => x.SubFlowId == request.id)
                 .Select(x => x.RootId)
                 .Distinct()
                 .ToListAsync(ct);
