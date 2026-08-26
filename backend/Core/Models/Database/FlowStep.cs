@@ -108,8 +108,8 @@ namespace Core.Models.Database
 
         // SUB_FLOW: the flow this step runs. Ownership is FlowId; this is a reference, and a
         // deleted target clears it rather than taking this step with it.
-        public int? InvokedFlowId { get; set; }
-        public Flow? InvokedFlow { get; set; }
+        public int? SubFlowId { get; set; }
+        public Flow? SubFlow { get; set; }
 
 
         // Notify

@@ -97,10 +97,10 @@ namespace Core.Models.Dtos
 
 
         // SUB_FLOW: the flow this step runs.
-        public int? InvokedFlowId { get; set; }
+        public int? SubFlowId { get; set; }
         public int? DiscordBotId { get; set; }
         public string NotifyMessage { get; set; } = string.Empty;
-        public FlowDto? InvokedFlow { get; set; }
+        public FlowDto? SubFlow { get; set; }
 
 
         // FlowArea
