@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { Button } from "primereact/button";
 import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
@@ -11,9 +12,8 @@ export default function WorkflowPage() {
   const { id } = useParams<{
     id?: string; // Flow Id
   }>();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  // const handleNew = () => navigate("/flows/new");
   const { setRootFlowId } = useWorkflowStore();
   useEffect(() => {
     setRootFlowId(id ? +id : undefined);
@@ -26,6 +26,13 @@ export default function WorkflowPage() {
           text="Flows"
           size="5xl"
           weight="bold"
+        />
+
+        <Button
+          label="Run"
+          icon="pi pi-play"
+          onClick={() => navigate(`/execution/${id}`)}
+          disabled={!id}
         />
       </div>
 

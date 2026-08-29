@@ -17,3 +17,91 @@
 .p-datatable .p-datatable-tbody > tr.cursor-pointer:hover > td {
   background: var(--surface-hover);
 }
+
+/* ── Execution ─────────────────────────────────────────────────────────────── */
+
+/* A dot and a word. Severity only ever comes from these variables so a theme swap carries it. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 100px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.status-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+.status-pill-running { color: var(--blue-500); border-color: var(--blue-500); }
+.status-pill-paused { color: var(--yellow-500); border-color: var(--yellow-500); }
+.status-pill-success { color: var(--green-500); border-color: var(--green-500); }
+.status-pill-danger { color: var(--red-500); border-color: var(--red-500); }
+
+.status-pill-pulse { animation: status-pill-breathe 1.6s ease-in-out infinite; }
+@keyframes status-pill-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-pill-pulse { animation: none; }
+}
+
+/* The breakpoint gutter. An empty ring until you click it, so the whole column is a target. */
+.execution-breakpoint {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--surface-border);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.execution-breakpoint:hover { border-color: var(--red-500); }
+.execution-breakpoint-on {
+  background: var(--red-500);
+  border-color: var(--red-500);
+}
+
+/* The run. Monospace because it is columnar - names, types and durations all line up. */
+.execution-step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-family-monospace, monospace);
+  font-size: 0.78rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.execution-step-row:hover { background: var(--surface-hover); }
+.execution-step-row-selected { border-color: var(--primary-color); }
+
+/* A hit served from an earlier search's screenshot. Nothing executed, so it reads quieter. */
+.execution-step-row-served { opacity: 0.62; }
+
+.execution-step-sequence {
+  color: var(--text-color-secondary);
+  opacity: 0.6;
+  text-align: right;
+  min-width: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+.execution-step-duration {
+  color: var(--text-color-secondary);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.75rem;
+}
+.execution-step-type {
+  color: var(--text-color-secondary);
+  opacity: 0.55;
+  font-size: 0.68rem;
+}

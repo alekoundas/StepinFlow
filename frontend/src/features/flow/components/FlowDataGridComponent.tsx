@@ -49,6 +49,17 @@ export function FlowDataGridComponent({ className, isSubFlow }: Props) {
             />
             <Button
               type="button"
+              icon="pi pi-play"
+              text
+              className="p-button-sm"
+              aria-label="Run"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/execution/${item.id}`);
+              }}
+            />
+            <Button
+              type="button"
               icon="pi pi-trash"
               text
               className="p-button-sm p-button-danger"

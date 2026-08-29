@@ -42,6 +42,9 @@ import type {
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
+import type { ExecutionDto } from "@/shared/models/database/execution-dto";
+import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
+import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
 
 export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
@@ -196,6 +199,21 @@ export const backendApiService = {
       call<boolean>("System.inputRecordPointCaptureStop"),
     inputRecordHotkeyStart: () => call<boolean>("System.inputRecordHotkeyStart"),
     inputRecordHotkeyStop: () => call<boolean>("System.inputRecordHotkeyStop"),
+  },
+
+  Execution: {
+    start: (dto: ExecutionStartDto) => call<number>("Execution.start", dto),
+    stop: () => call<boolean>("Execution.stop"),
+    pause: () => call<boolean>("Execution.pause"),
+    continue: () => call<boolean>("Execution.continue"),
+    stepInto: () => call<boolean>("Execution.stepInto"),
+    stepOver: () => call<boolean>("Execution.stepOver"),
+    setBreakpoints: (flowStepIds: number[]) =>
+      call<boolean>("Execution.setBreakpoints", flowStepIds),
+
+    get: (id: number) => call<ExecutionDto>("Execution.get", id),
+    getList: (flowId: number) => call<ExecutionDto[]>("Execution.getList", flowId),
+    getState: () => call<ExecutionStateDto>("Execution.getState"),
   },
 
   OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {

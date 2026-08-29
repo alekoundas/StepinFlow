@@ -135,6 +135,9 @@ namespace App.Ipc
                     "Execution.stepInto" => await _mediator.Send(new StepIntoExecutionCommand(), ct),
                     "Execution.stepOver" => await _mediator.Send(new StepOverExecutionCommand(), ct),
                     "Execution.setBreakpoints" => await _mediator.Send(new SetExecutionBreakpointsCommand(JsonSerializer.Deserialize<List<int>>(request.Payload, _jsonOptions)!), ct),
+                    "Execution.get" => await _mediator.Send(new GetExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Execution.getList" => await _mediator.Send(new GetExecutionListQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Execution.getState" => await _mediator.Send(new GetExecutionStateQuery(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

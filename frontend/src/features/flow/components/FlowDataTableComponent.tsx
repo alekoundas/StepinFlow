@@ -92,6 +92,11 @@ export function FlowDataTableComponent({ className, isSubFlow }: Props) {
           onDelete={() => deleteFlow(row)}
           extraActions={[
             {
+              label: "Run",
+              icon: "pi pi-play",
+              command: (id) => navigate(`/execution/${id}`),
+            },
+            {
               label: "Settings",
               icon: "pi pi-cog",
               command: (id) => navigate(`/flows/${id}/edit`),
