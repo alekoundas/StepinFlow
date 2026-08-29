@@ -105,7 +105,7 @@ namespace Business.Services.FlowValidationService
                         break;
 
                     case FlowStepTypeEnum.SUB_FLOW:
-                        if (step.InvokedFlowId == null)
+                        if (step.SubFlowId == null)
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SUB_FLOW_MISSING, "Pick the flow to run.");
                         break;
 

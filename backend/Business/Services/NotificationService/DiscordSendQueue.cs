@@ -24,8 +24,8 @@ namespace Business.Services.NotificationService
         private readonly Channel<DiscordMessage> _channel = Channel.CreateUnbounded<DiscordMessage>(
             new UnboundedChannelOptions { SingleReader = true });
 
-        private readonly ConcurrentDictionary<int, DateTime> _lastSentByBot = new();
-        private readonly CancellationTokenSource _cts = new();
+        private readonly ConcurrentDictionary<int, DateTime> _lastSentByBot = new ConcurrentDictionary<int, DateTime>();
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly Task _pump;
 
         private readonly IDiscordNotifier _notifier;
@@ -39,6 +39,9 @@ namespace Business.Services.NotificationService
             _pump = Task.Run(() => PumpAsync(_cts.Token));
         }
 
+        // ================================================================
+        // Public methods
+        // ================================================================
         public bool Enqueue(DiscordMessage message, TimeSpan minimumInterval)
         {
             if (minimumInterval > TimeSpan.Zero && !TryClaimSlot(message.DiscordBotId, minimumInterval))

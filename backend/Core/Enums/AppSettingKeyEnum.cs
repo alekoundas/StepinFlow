@@ -9,12 +9,15 @@ namespace Core.Enums
         RECORDING_CAPTURE_HEIGHT,
 
 
-        // Debugger hotkeys. Global rather than in-window: while a flow runs, the focused
-        // application is the one being automated, so a key handler in our own window never fires.
+        // Debugger hotkeys.
         HOTKEY_CONTINUE,
         HOTKEY_STEP_INTO,
         HOTKEY_STEP_OVER,
         HOTKEY_PAUSE,
         HOTKEY_STOP,
+
+
+        /// <summary>How many screenshots are kept, to be written out when a step fails.</summary>
+        EXECUTION_SCREENSHOT_RING_SIZE,
     }
 }
