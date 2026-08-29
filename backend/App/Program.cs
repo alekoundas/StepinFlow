@@ -19,6 +19,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Business.Services.NotificationService;
+using App.DependencyInjection;
+using Core.Enums;
 
 namespace App
 {
@@ -54,6 +56,8 @@ namespace App
             builder.Services.AddSingleton<IFlowValidator, FlowValidator>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
+
+            builder.Services.AddExecutionEngine();
 
             // Notifications.
             // The queue is a singleton because the throttle is per bot and has to be remembered between flows, not per request.
@@ -102,6 +106,12 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
 
+            // Check if any exution is set as RUNNING and stop them.
+            await dbContext.Executions
+                .Where(x => x.Status == ExecutionStatusEnum.RUNNING)
+                .ExecuteUpdateAsync(x => x
+                    .SetProperty(execution => execution.Status, ExecutionStatusEnum.ABANDONED)
+                    .SetProperty(execution => execution.CompletedAt, DateTime.UtcNow));
 
             await app.RunAsync();
         }

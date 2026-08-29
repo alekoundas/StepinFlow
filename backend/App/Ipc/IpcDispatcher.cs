@@ -127,6 +127,15 @@ namespace App.Ipc
                     "System.inputRecordHotkeyStart" => await _mediator.Send(new SystemInputRecordHotkeyStartCommand(), ct),
                     "System.inputRecordHotkeyStop" => await _mediator.Send(new SystemInputRecordHotkeyStopCommand(), ct),
 
+                    // Execution
+                    "Execution.start" => await _mediator.Send(new StartExecutionCommand(JsonSerializer.Deserialize<ExecutionStartDto>(request.Payload, _jsonOptions)!), ct),
+                    "Execution.stop" => await _mediator.Send(new StopExecutionCommand(), ct),
+                    "Execution.pause" => await _mediator.Send(new PauseExecutionCommand(), ct),
+                    "Execution.continue" => await _mediator.Send(new ContinueExecutionCommand(), ct),
+                    "Execution.stepInto" => await _mediator.Send(new StepIntoExecutionCommand(), ct),
+                    "Execution.stepOver" => await _mediator.Send(new StepOverExecutionCommand(), ct),
+                    "Execution.setBreakpoints" => await _mediator.Send(new SetExecutionBreakpointsCommand(JsonSerializer.Deserialize<List<int>>(request.Payload, _jsonOptions)!), ct),
+
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };
 
