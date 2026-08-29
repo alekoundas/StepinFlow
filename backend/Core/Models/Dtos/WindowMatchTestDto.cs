@@ -22,7 +22,7 @@ namespace Core.Models.Dtos
         /// Every window that matches, in z-order. The count is the point: with the first match
         /// winning, "3 match" is the only way to learn a pattern is too broad.
         /// </summary>
-        public List<WindowMatchDto> Matches { get; set; } = new();
+        public List<WindowMatchDto> Matches { get; set; } = new List<WindowMatchDto>();
     }
 
     public class WindowMatchDto

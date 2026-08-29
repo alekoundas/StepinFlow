@@ -57,6 +57,7 @@ namespace App.DependencyInjection
                 x.GetRequiredService<PassThroughStepWorker>()));
 
             services.AddSingleton<IExecutionCacheService, ExecutionCacheService>();
+            services.AddSingleton<IExecutionHistoryService, ExecutionHistoryService>();
             services.AddSingleton<IExecutionEngine, ExecutionEngine>();
 
             return services;
