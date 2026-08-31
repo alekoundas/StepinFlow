@@ -95,6 +95,10 @@ export const backendApiService = {
       call<LazyResponseDto<FlowStepDto>>("FlowStep.getLazy", dto),
     getTreeNodes: (dto: TreeNodeRequestDto) =>
       call<TreeNodeDto[]>("FlowStep.getTreeNodes", dto),
+
+    /** A whole flow in one query, for a screen that needs every step at once. */
+    getTreeNodesRecursive: (flowId: number) =>
+      call<TreeNodeDto[]>("FlowStep.getTreeNodesRecursive", flowId),
     getMovePreview: (dto: FlowStepMoveDto) =>
       call<FlowStepMovePreviewDto>("FlowStep.getMovePreview", dto),
     move: (dto: FlowStepMoveDto) => call<boolean>("FlowStep.move", dto),

@@ -30,10 +30,12 @@ export default function ExecutionFlowTreeComponent({ flowId }: Props) {
 
   const { setBreakpointsMutation } = useExecutionMutations();
 
+  // The whole flow at once, not a level at a time: a step you have not expanded to is a step you
+  // could not put a breakpoint on.
   const { data: treeNodes } = useQuery({
-    queryKey: ["flow", "treeNodes", flowId],
-    queryFn: () => backendApiService.Flow.getTreeNodes(flowId),
-    enabled: !!flowId,
+    queryKey: ["flowStep", "treeNodesRecursive", flowId],
+    queryFn: () => backendApiService.FlowStep.getTreeNodesRecursive(flowId),
+    enabled: flowId > 0,
   });
 
   // A breakpoint added mid run has to reach the engine, or it only takes effect next time.
@@ -60,7 +62,6 @@ export default function ExecutionFlowTreeComponent({ flowId }: Props) {
           <i
             className={classNames("execution-breakpoint", {
               "execution-breakpoint-on": breakpointStepIds.includes(node.entityId),
-              hidden: node.isFlow,
             })}
             onClick={(e) => {
               e.stopPropagation();
