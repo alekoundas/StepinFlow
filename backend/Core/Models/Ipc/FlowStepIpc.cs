@@ -8,6 +8,7 @@ namespace Core.Models.Ipc
     // ============== QUERIES ==============
     public record GetFlowStepQuery(int id) : IRequest<ResultDto<FlowStepDto>>;
     public record GetFlowStepTreeNodeQuery(TreeNodeRequestDto dto) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
+    public record GetFlowStepTreeNodesRecursiveQuery(int flowId) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
     public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
     public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
