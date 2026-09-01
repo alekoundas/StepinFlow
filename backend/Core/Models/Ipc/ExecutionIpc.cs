@@ -17,4 +17,5 @@ namespace Core.Models.Ipc
     public record GetExecutionQuery(int id) : IRequest<ResultDto<ExecutionDto>>;
     public record GetExecutionListQuery(int flowId) : IRequest<ResultDto<List<ExecutionDto>>>;
     public record GetExecutionStateQuery() : IRequest<ResultDto<ExecutionStateDto>>;
+    public record GetExecutionStepScreenshotQuery(int executionStepId) : IRequest<ResultDto<string?>>;
 }

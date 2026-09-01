@@ -68,6 +68,16 @@ namespace Core.Helpers
             minimum: 5,
             maximum: 50);
 
+        // Written until the count is reached and then no more, rather than kept rolling: a search
+        // inside a loop would otherwise write a screenshot on every pass of an unattended run.
+        public static readonly IntAppSettingDefinition ExecutionScreenshotLimit = new IntAppSettingDefinition(
+            AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT,
+            "Screenshots kept per run",
+            "How many screenshots a run leaves behind, so you can see what a step was looking at. Zero keeps none.",
+            defaultValue: 20,
+            minimum: 0,
+            maximum: 500);
+
 
         // AI. Nothing is on until a provider is chosen: every feature checks first and stays
         // disabled rather than failing at the moment somebody clicks it.
@@ -107,6 +117,7 @@ namespace Core.Helpers
             HotkeyStop,
 
             ExecutionScreenshotRingSize,
+            ExecutionScreenshotLimit,
 
             AiProvider,
             AiModel,
@@ -124,7 +135,9 @@ namespace Core.Helpers
             HotkeyStop,
         ];
 
-        public static AppSettingDefinition? Find(AppSettingKeyEnum key) =>
-            All.FirstOrDefault(x => x.Key == key);
+        public static AppSettingDefinition? Find(AppSettingKeyEnum key)
+        {
+            return All.FirstOrDefault(x => x.Key == key);
+        }
     }
 }

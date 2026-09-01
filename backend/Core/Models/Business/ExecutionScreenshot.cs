@@ -1,7 +1,7 @@
 namespace Core.Models.Business
 {
     /// <summary>
-    /// One screenshot in the ring, and who took it. The name is copied because the ring outlives
+    /// One screenshot a run took, and who took it. The name is copied because the ring outlives
     /// the step that filled it - a failure dumps whatever is in there, most of it somebody else's.
     /// </summary>
     public class ExecutionScreenshot

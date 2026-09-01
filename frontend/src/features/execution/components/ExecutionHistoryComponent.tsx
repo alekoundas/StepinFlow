@@ -71,6 +71,10 @@ export default function ExecutionHistoryComponent({
         body={(execution: ExecutionDto) => duration(execution)}
       />
       <Column
+        header="Screenshots"
+        body={(execution: ExecutionDto) => execution.screenshotFolderName ?? "—"}
+      />
+      <Column
         header="Kept"
         body={(execution: ExecutionDto) =>
           currentStructureHash &&

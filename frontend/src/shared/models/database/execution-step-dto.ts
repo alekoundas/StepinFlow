@@ -34,7 +34,8 @@ export interface ExecutionStepDto {
   error?: string | null;
   command?: string | null;
 
-  resultImagePath?: string | null;
+  // The file under the run's folder. Null when the run did not keep one.
+  screenshotFileName?: string | null;
 
   executionId: number;
   flowStepId?: number | null;

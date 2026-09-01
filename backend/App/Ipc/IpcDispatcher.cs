@@ -140,6 +140,7 @@ namespace App.Ipc
                     "Execution.get" => await _mediator.Send(new GetExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Execution.getList" => await _mediator.Send(new GetExecutionListQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Execution.getState" => await _mediator.Send(new GetExecutionStateQuery(), ct),
+                    "Execution.getStepScreenshot" => await _mediator.Send(new GetExecutionStepScreenshotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // Ai
                     "Ai.explainExecution" => await _mediator.Send(new ExplainExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),

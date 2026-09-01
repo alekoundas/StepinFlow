@@ -7,6 +7,8 @@ export const executionKeys = {
   detail: (id: number) => ["execution", "detail", id] as const,
   list: (flowId: number) => ["execution", "list", flowId] as const,
   state: () => ["execution", "state"] as const,
+  stepScreenshot: (executionStepId: number) =>
+    ["execution", "stepScreenshot", executionStepId] as const,
 } as const;
 
 /** One past run and every step of it. */
@@ -15,6 +17,17 @@ export function useExecution(id: number | null) {
     queryKey: id ? executionKeys.detail(id) : ["execution", "detail", "disabled"],
     queryFn: () => backendApiService.Execution.get(id!),
     enabled: !!id,
+  });
+}
+
+/** One screenshot a run left on disk, base64. Null when it is not there any more. */
+export function useExecutionStepScreenshot(executionStepId: number | null) {
+  return useQuery({
+    queryKey: executionStepId
+      ? executionKeys.stepScreenshot(executionStepId)
+      : ["execution", "stepScreenshot", "disabled"],
+    queryFn: () => backendApiService.Execution.getStepScreenshot(executionStepId!),
+    enabled: !!executionStepId,
   });
 }
 

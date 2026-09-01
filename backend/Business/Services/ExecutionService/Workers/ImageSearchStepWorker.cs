@@ -68,7 +68,12 @@ namespace Business.Services.ExecutionService.Workers
 
                 // A zero timeout waits for ever.
                 if (step.TimeoutMilliseconds > 0 && DateTime.UtcNow >= giveUpAt)
-                    return ExecutionStep.Failure(Detail(step, "gave up waiting"));
+                {
+                    ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting"));
+                    gaveUp.Screenshot = search.Screenshot;
+
+                    return gaveUp;
+                }
 
                 await Task.Delay(step.PollIntervalMilliseconds, ct);
             }
@@ -83,8 +88,16 @@ namespace Business.Services.ExecutionService.Workers
 
             // The screenshot that was actually matched against, not one taken a moment later that
             // could show something else. Whether it is worth keeping is the cache's business.
-            cache.RecordScreenshot(haystack, step);
+            ExecutionScreenshot? screenshot = cache.RecordScreenshot(haystack, step);
 
+            ExecutionStep result = Match(step, bounds, haystack, cache);
+            result.Screenshot = screenshot;
+
+            return result;
+        }
+
+        private ExecutionStep Match(FlowStep step, Rectangle bounds, RawImage haystack, IExecutionCacheService cache)
+        {
             List<Point> hits = new List<Point>();
 
             foreach (FlowStepImage image in step.FlowStepImages)

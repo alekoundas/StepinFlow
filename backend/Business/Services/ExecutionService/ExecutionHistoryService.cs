@@ -1,3 +1,4 @@
+using Business.Services.AppSettingService;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
@@ -27,21 +28,26 @@ namespace Business.Services.ExecutionService
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IExecutionCacheService _cache;
+        private readonly IAppSettingService _appSettingService;
         private readonly ILogger<ExecutionHistoryService> _logger;
 
         private readonly List<ExecutionStep> _unwrittenExecutionSteps = new List<ExecutionStep>();//Every one that has run and not gone down yet. A loop of fifty passes is fifty of these
 
         private ExecutionHistoryLevelEnum _historyLevel;
         private string _flowName = string.Empty;
-        private string _runFolder = string.Empty;// Made on the first failure, so a clean run leaves nothing behind
+        private string _runFolder = string.Empty;// Made on the first write, so a run that keeps nothing leaves nothing behind
+        private int _screenshotLimit;
+        private int _screenshotsWritten;
 
         public ExecutionHistoryService(
             IDbContextFactory<AppDbContext> dbContextFactory,
             IExecutionCacheService cache,
+            IAppSettingService appSettingService,
             ILogger<ExecutionHistoryService> logger)
         {
             _dbContextFactory = dbContextFactory;
             _cache = cache;
+            _appSettingService = appSettingService;
             _logger = logger;
         }
 
@@ -59,6 +65,8 @@ namespace Business.Services.ExecutionService
         public async Task<int> StartAsync(ExecutionStartDto dto, IReadOnlyDictionary<int, FlowStep> stepsById, CancellationToken ct)
         {
             Reset(dto);
+
+            _screenshotLimit = await _appSettingService.GetAsync(AppSettingCatalog.ExecutionScreenshotLimit, ct);
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
@@ -96,8 +104,7 @@ namespace Business.Services.ExecutionService
 
             bool isFailure = executionStep.Outcome == StepOutcomeEnum.FAILURE;
 
-            if (isFailure)
-                executionStep.ResultImagePath = WriteScreenshots(executionStep);
+            WriteScreenshots(executionStep, isFailure);
 
             _unwrittenExecutionSteps.Add(executionStep);
 
@@ -121,6 +128,10 @@ namespace Business.Services.ExecutionService
             execution.ErrorFlowStepId = errorFlowStepId;
             execution.StepCount = stepCount;
 
+            // One folder for the whole run, so it belongs to the run. 
+            if (_runFolder.Length > 0)
+                execution.ScreenshotFolderName = Path.GetFileName(_runFolder);
+
             await dbContext.SaveChangesAsync();
         }
 
@@ -138,6 +149,7 @@ namespace Business.Services.ExecutionService
 
             _flowName = string.Empty;
             _runFolder = string.Empty;
+            _screenshotsWritten = 0;
         }
 
         private async Task WriteExecutionStepsAsync()
@@ -161,39 +173,44 @@ namespace Business.Services.ExecutionService
             }
         }
 
-        /// <summary>
-        /// The folder is made on the first failure rather than at the start, so a run that goes well
-        /// leaves nothing on disk at all.
-        /// </summary>
-        private string? WriteScreenshots(ExecutionStep executionStep)
+        private void WriteScreenshots(ExecutionStep executionStep, bool isFailure)
         {
-            IReadOnlyList<ExecutionScreenshot> screenshots = _cache.TakeScreenshots();
-            if (screenshots.Count == 0)
-                return null;
+            if (_historyLevel != ExecutionHistoryLevelEnum.STEPS_AND_IMAGES)
+                return;
 
+            if (executionStep.Screenshot != null && _screenshotsWritten < _screenshotLimit)
+            {
+                executionStep.ScreenshotFileName = WriteScreenshot(executionStep.Screenshot, $"{executionStep.Sequence} {executionStep.Name}");
+                if (executionStep.ScreenshotFileName != null)
+                    _screenshotsWritten++;
+            }
+
+            if (!isFailure)
+                return;
+
+            IReadOnlyList<ExecutionScreenshot> runUp = _cache.TakeScreenshots();
+
+            for (int i = 0; i < runUp.Count; i++)
+                WriteScreenshot(runUp[i], $"{runUp[i].CapturedOn:HH.mm.ss.fff} {runUp[i].StepName} {i + 1} of {runUp.Count}");
+        }
+
+        // Actual write to disk.
+        private string? WriteScreenshot(ExecutionScreenshot screenshot, string name)
+        {
             try
             {
                 if (_runFolder.Length == 0)
                     _runFolder = PathHelper.GetExecutionRunPath(_flowName, DateTime.Now);
 
-                // Each one is named after the step that took it, not the one that failed: most of
-                // the ring belongs to whatever ran before, and that is the point of keeping it.
-                for (int i = 0; i < screenshots.Count; i++)
-                {
-                    ExecutionScreenshot screenshot = screenshots[i];
+                string fileName = $"{string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim()}.jpg";
 
-                    string safeName = string.Concat(screenshot.StepName.Split(Path.GetInvalidFileNameChars())).Trim();
-                    string stamp = screenshot.CapturedOn.ToString("HH.mm.ss.fff");
+                File.WriteAllBytes(Path.Combine(_runFolder, fileName), screenshot.Image);
 
-                    string file = Path.Combine(_runFolder, $"{stamp} {safeName} {i + 1} of {screenshots.Count}.jpg");
-                    File.WriteAllBytes(file, screenshot.Image);
-                }
-
-                return _runFolder;
+                return fileName;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not write the screenshots for step {FlowStepId}.", executionStep.FlowStepId);// Screenshot disk save, cant take down the execution.
+                _logger.LogWarning(ex, "Could not write the screenshot {StepName} took.", screenshot.StepName);// Screenshot disk save, cant take down the execution.
                 return null;
             }
         }

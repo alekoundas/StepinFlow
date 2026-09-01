@@ -3,6 +3,7 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260901094707_SearchImagePathOnExecutionStep")]
+    partial class SearchImagePathOnExecutionStep
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -97,9 +100,6 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ScreenshotFolderName")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -174,13 +174,16 @@ namespace DataAccess.Migrations
                     b.Property<int?>("ParentSequence")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ResultImagePath")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("ResultLocationX")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("ResultLocationY")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ScreenshotFileName")
+                    b.Property<string>("SearchImagePath")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Sequence")

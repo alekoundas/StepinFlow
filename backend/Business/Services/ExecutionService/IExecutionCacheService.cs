@@ -29,7 +29,9 @@ namespace Business.Services.ExecutionService
 
 
         // Screenshots
-        void RecordScreenshot(RawImage screenshot, FlowStep flowStep);
+        /// <summary>Rings it for the run-up, and hands it back for the step to carry.</summary>
+        ExecutionScreenshot? RecordScreenshot(RawImage screenshot, FlowStep flowStep);
+
         IReadOnlyList<ExecutionScreenshot> TakeScreenshots();
     }
 }

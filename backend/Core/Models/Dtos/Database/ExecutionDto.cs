@@ -18,6 +18,8 @@ namespace Core.Models.Dtos
         public int? ErrorFlowStepId { get; set; } //The failure that ended the run - a step that failed into a Failure branch is not this
         public string ErrorMessage { get; set; } = string.Empty;
 
+        public string? ScreenshotFolderName { get; set; } //The run folder under the history path, shared by everything this run wrote
+
         public string FlowStructureHash { get; set; } = string.Empty; //The shape of the flow at the time - a run stops being replayable once this stops matching
 
         public int FlowId { get; set; }

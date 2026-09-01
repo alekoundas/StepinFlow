@@ -14,8 +14,8 @@ namespace Core.Models.Database
         public string ErrorMessage { get; set; } = string.Empty;
         public int StepCount { get; set; }
         public ExecutionHistoryLevelEnum HistoryLevel { get; set; }
+        public string? ScreenshotFolderName { get; set; }
 
-      
         public string FlowStructureHash { get; set; } = string.Empty;
 
         public int FlowId { get; set; }

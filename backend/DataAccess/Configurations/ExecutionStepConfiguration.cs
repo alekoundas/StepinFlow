@@ -27,6 +27,7 @@ namespace DataAccess.Configurations
 
             // The two location columns are one value in code and never queried apart.
             builder.Ignore(x => x.Location);
+            builder.Ignore(x => x.Screenshot);
 
             // How a run is always read: its own steps, in the order they happened.
             builder.HasIndex(x => new { x.ExecutionId, x.Sequence });

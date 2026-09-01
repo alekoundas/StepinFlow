@@ -1,6 +1,7 @@
 using System.Drawing;
 
 using Core.Enums;
+using Core.Models.Business;
 
 namespace Core.Models.Database
 {
@@ -52,13 +53,17 @@ namespace Core.Models.Database
         public string? Error { get; set; }
         public string? Command { get; set; }
 
-        public string? ResultImagePath { get; set; }
+        public string? ScreenshotFileName { get; set; }
 
         public int ExecutionId { get; set; }
         public Execution Execution { get; set; } = null!;
 
         public int? FlowStepId { get; set; }
         public FlowStep? FlowStep { get; set; }
+
+
+        // What the step saw, carried to whatever writes it. Not a column - see ExecutionStepConfiguration
+        public ExecutionScreenshot? Screenshot { get; set; }
 
 
         // The two location columns as one value. Not a column - see ExecutionStepConfiguration

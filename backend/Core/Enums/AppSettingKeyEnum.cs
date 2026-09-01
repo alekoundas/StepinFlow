@@ -20,6 +20,9 @@ namespace Core.Enums
         /// <summary>How many screenshots are kept, to be written out when a step fails.</summary>
         EXECUTION_SCREENSHOT_RING_SIZE,
 
+        /// <summary>How many screenshots a step may leave on disk in one run.</summary>
+        EXECUTION_SCREENSHOT_LIMIT,
+
 
         /// <summary>Who runs the model, and what it needs to reach it.</summary>
         AI_PROVIDER,

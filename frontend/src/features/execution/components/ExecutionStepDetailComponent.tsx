@@ -5,6 +5,7 @@ import IconComponent from "@/shared/components/IconComponent";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
+import { useExecutionStepScreenshot } from "@/features/execution/hooks/use-execution";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -98,7 +99,14 @@ export default function ExecutionStepDetailComponent({
 
       {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
       executionStep.flowStepId ? (
-        <SearchedTemplates flowStepId={executionStep.flowStepId} />
+        <TemplateImages flowStepId={executionStep.flowStepId} />
+      ) : null}
+
+      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH ? (
+        <StepScreenshot
+          executionStepId={executionStep.id}
+          fileName={executionStep.screenshotFileName}
+        />
       ) : null}
 
       {executionStep.value ? (
@@ -139,29 +147,15 @@ export default function ExecutionStepDetailComponent({
           </div>
         </div>
       ) : null}
-
-      {/* A folder rather than a file: the ring is written out together, named per step. */}
-      {executionStep.resultImagePath ? (
-        <div className="flex flex-column gap-1">
-          <LabelComponent
-            text="Screenshots"
-            size="sm"
-            color="secondary"
-          />
-          <div className="text-sm text-color-secondary">
-            {executionStep.resultImagePath}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
 
-interface SearchedTemplatesProps {
+interface TemplateImagesProps {
   flowStepId: number;
 }
 
-function SearchedTemplates({ flowStepId }: SearchedTemplatesProps) {
+function TemplateImages({ flowStepId }: TemplateImagesProps) {
   const { data: flowStep } = useFlowStep(flowStepId);
 
   const images = flowStep?.flowStepImages ?? [];
@@ -170,7 +164,7 @@ function SearchedTemplates({ flowStepId }: SearchedTemplatesProps) {
   return (
     <div className="flex flex-column gap-1">
       <LabelComponent
-        text="Templates searched"
+        text="Template images"
         size="sm"
         color="secondary"
       />
@@ -211,6 +205,47 @@ function SearchedTemplates({ flowStepId }: SearchedTemplatesProps) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+interface StepScreenshotProps {
+  executionStepId: number;
+
+  /** Whether the run kept one at all, which the fetch alone cannot tell from a deleted file. */
+  fileName?: string | null;
+}
+
+function StepScreenshot({ executionStepId, fileName }: StepScreenshotProps) {
+  const { data: screenshot } = useExecutionStepScreenshot(
+    fileName ? executionStepId : null,
+  );
+
+  return (
+    <div className="flex flex-column gap-1">
+      <LabelComponent
+        text="Screenshot"
+        size="sm"
+        color="secondary"
+      />
+
+      {screenshot ? (
+        <img
+          src={`data:image/jpeg;base64,${screenshot}`}
+          alt=""
+          className="w-full h-auto border-round-sm block"
+        />
+      ) : (
+        <LabelComponent
+          text={
+            fileName
+              ? "That screenshot is no longer on disk."
+              : "Not kept. Run with screenshots on, and raise the per-run limit in Settings."
+          }
+          size="xs"
+          color="secondary"
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,9 @@ export interface ExecutionDto {
   errorFlowStepId?: number | null;
   errorMessage: string;
 
+  /** The run folder under the history path, shared by everything this run wrote. */
+  screenshotFolderName?: string | null;
+
   /** The shape of the flow at the time - a run stops being replayable once this stops matching. */
   flowStructureHash: string;
 

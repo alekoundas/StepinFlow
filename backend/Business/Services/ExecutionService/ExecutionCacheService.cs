@@ -105,18 +105,21 @@ namespace Business.Services.ExecutionService
 
 
         // Cache screenshots
-        public void RecordScreenshot(RawImage screenshot, FlowStep flowStep)
+        public ExecutionScreenshot? RecordScreenshot(RawImage screenshot, FlowStep flowStep)
         {
             if (!_keepsScreenshots || screenshot.IsEmpty)
-                return;
+                return null;
 
             // Encoded here and not by the caller, so nothing pays for a JPEG that gets thrown away.
             byte[] encoded = _screenshotService.Encode(screenshot, ScreenshotFormatEnum.JPEG, _screenshotQuality);
+            ExecutionScreenshot cached = new ExecutionScreenshot(encoded, flowStep.Name, DateTime.Now);
 
-            _cachedScreenshots.Enqueue(new ExecutionScreenshot(encoded, flowStep.Name, DateTime.Now));
+            _cachedScreenshots.Enqueue(cached);
 
             while (_cachedScreenshots.Count > _screenshotRingSize)
                 _cachedScreenshots.Dequeue();
+
+            return cached;
         }
 
         public IReadOnlyList<ExecutionScreenshot> TakeScreenshots()
@@ -126,5 +129,6 @@ namespace Business.Services.ExecutionService
 
             return screenshots;
         }
+
     }
 }

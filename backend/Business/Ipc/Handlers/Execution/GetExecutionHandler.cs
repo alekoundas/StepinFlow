@@ -37,6 +37,7 @@ namespace Business.Ipc.Handlers.Execution
                     StepCount = x.StepCount,
                     ErrorFlowStepId = x.ErrorFlowStepId,
                     ErrorMessage = x.ErrorMessage,
+                    ScreenshotFolderName = x.ScreenshotFolderName,
                     FlowStructureHash = x.FlowStructureHash,
                     FlowId = x.FlowId,
                 })
@@ -70,7 +71,7 @@ namespace Business.Ipc.Handlers.Execution
                     ExitCode = x.ExitCode,
                     Error = x.Error,
                     Command = x.Command,
-                    ResultImagePath = x.ResultImagePath,
+                    ScreenshotFileName = x.ScreenshotFileName,
                     ExecutionId = x.ExecutionId,
                     FlowStepId = x.FlowStepId,
                 })

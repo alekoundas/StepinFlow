@@ -222,6 +222,8 @@ export const backendApiService = {
     get: (id: number) => call<ExecutionDto>("Execution.get", id),
     getList: (flowId: number) => call<ExecutionDto[]>("Execution.getList", flowId),
     getState: () => call<ExecutionStateDto>("Execution.getState"),
+    getStepScreenshot: (executionStepId: number) =>
+      callNullable<string>("Execution.getStepScreenshot", executionStepId),
   },
 
   Ai: {

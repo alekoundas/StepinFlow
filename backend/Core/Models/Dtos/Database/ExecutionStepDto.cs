@@ -33,7 +33,7 @@ namespace Core.Models.Dtos
         public string? Error { get; set; }
         public string? Command { get; set; }
 
-        public string? ResultImagePath { get; set; }
+        public string? ScreenshotFileName { get; set; }
 
         public int ExecutionId { get; set; }
         public int? FlowStepId { get; set; }

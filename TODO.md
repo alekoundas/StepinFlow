@@ -22,6 +22,10 @@ is lost between sessions.
 - [ ] **Poll interval jitter** for `WAIT_UNTIL_FOUND` searches.
 - [ ] **Downscale matching** for template search.
 - [ ] **Dry-run mode** that logs resolved coordinates instead of clicking.
+- [ ] **Remove the `Success` / `Failure` static factories from `ExecutionStep`.** They build an
+      entity, which reads as though an execution step is something a worker mints rather than a row
+      the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
+      `Message` directly, or the shape should move to a type that is not the EF entity.
 
 ## AI
 
