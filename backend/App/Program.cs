@@ -7,6 +7,7 @@ using Business.Services.AreaPointService;
 using Business.Services.FlowValidationService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
+using Business.Services.AiService;
 using Business.Services.AppSettingService;
 using Business.Services.OcrService;
 using Business.Services.RecordingService;
@@ -58,6 +59,26 @@ namespace App
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
 
             builder.Services.AddExecutionEngine();
+
+            // AI.
+            // Scoped per call rather than singleton: the client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
+            builder.Services.AddScoped<IChatClientFactory, ChatClientFactory>();
+            builder.Services.AddScoped<IAiService, AiService>();
+            builder.Services.AddSingleton<IAiModelDownloadService, AiModelDownloadService>();
+
+            // Ollama is on this machine, so a short timeout is right: a long wait means it is not
+            // running, and the settings page should say so rather than hang.
+            builder.Services.AddHttpClient(nameof(AiService), client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
+
+            // Its own client, because a five second timeout is right for asking what is installed
+            // and hopeless for downloading five gigabytes.
+            builder.Services.AddHttpClient(nameof(AiModelDownloadService), client =>
+            {
+                client.Timeout = Timeout.InfiniteTimeSpan;
+            });
 
             // Notifications.
             // The queue is a singleton because the throttle is per bot and has to be remembered between flows, not per request.

@@ -58,11 +58,33 @@ namespace Business.Services.AppSettingService
                     Kind = definition.Kind,
                     Label = definition.Label,
                     Description = definition.Description,
-                    Value = stored.TryGetValue(definition.Key, out string? value) ? value : definition.DefaultAsText,
+                    Value = ValueFor(definition, stored),
                     Minimum = definition.Minimum,
                     Maximum = definition.Maximum,
+                    Options = definition is ChoiceAppSettingDefinition choice ? choice.Options : [],
+                    IsSet = IsSetFor(definition, stored),
                 })
                 .ToList();
+        }
+
+        /// <summary>
+        /// An api key is never sent back out. The page needs to know one is stored, not what it is,
+        /// so a secret that has been set reads as empty and the page shows it as already set.
+        /// </summary>
+        private static string ValueFor(AppSettingDefinition definition, Dictionary<AppSettingKeyEnum, string> stored)
+        {
+            if (definition.Kind == AppSettingKindEnum.SECRET)
+                return string.Empty;
+
+            if (stored.TryGetValue(definition.Key, out string? value))
+                return value;
+
+            return definition.DefaultAsText;
+        }
+
+        private static bool IsSetFor(AppSettingDefinition definition, Dictionary<AppSettingKeyEnum, string> stored)
+        {
+            return stored.TryGetValue(definition.Key, out string? value) && !string.IsNullOrWhiteSpace(value);
         }
 
         public async Task SetAsync(AppSettingKeyEnum key, string value, CancellationToken ct = default)

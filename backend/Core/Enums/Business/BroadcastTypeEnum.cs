@@ -9,5 +9,6 @@
         RECORDING_EVENT,
         HOTKEY_CAPTURE_EVENT,
         EXECUTION_EVENT,
+        AI_MODEL_PULL_EVENT,
     }
 }

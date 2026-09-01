@@ -5,5 +5,13 @@ namespace Core.Enums
     {
         INT,
         HOTKEY,
+        TEXT,
+
+        /// <summary>Text the page must never show back in full - an api key.</summary>
+        SECRET,
+
+        /// <summary>One of a fixed list.</summary>
+        CHOICE,
+        BOOL,
     }
 }

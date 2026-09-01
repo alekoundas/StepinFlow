@@ -82,4 +82,81 @@ namespace Core.Models.Business
         public string ToText(int value) =>
             Math.Clamp(value, Minimum!.Value, Maximum!.Value).ToString(CultureInfo.InvariantCulture);
     }
+
+
+    public sealed class TextAppSettingDefinition : AppSettingDefinition
+    {
+        public TextAppSettingDefinition(
+            AppSettingKeyEnum key,
+            string label,
+            string description,
+            string defaultValue = "",
+            bool isSecret = false)
+            : base(key, label, description)
+        {
+            DefaultValue = defaultValue;
+            IsSecret = isSecret;
+        }
+
+        public string DefaultValue { get; }
+
+        /// <summary>An api key. The page shows that one is set, never what it is.</summary>
+        public bool IsSecret { get; }
+
+        public override AppSettingKindEnum Kind => IsSecret
+            ? AppSettingKindEnum.SECRET
+            : AppSettingKindEnum.TEXT;
+
+        public override string DefaultAsText => DefaultValue;
+    }
+
+    public sealed class ChoiceAppSettingDefinition : AppSettingDefinition
+    {
+        public ChoiceAppSettingDefinition(
+            AppSettingKeyEnum key,
+            string label,
+            string description,
+            string defaultValue,
+            IReadOnlyList<string> options)
+            : base(key, label, description)
+        {
+            DefaultValue = defaultValue;
+            Options = options;
+        }
+
+        public string DefaultValue { get; }
+        public IReadOnlyList<string> Options { get; }
+
+        public override AppSettingKindEnum Kind => AppSettingKindEnum.CHOICE;
+
+        public override string DefaultAsText => DefaultValue;
+    }
+
+    public sealed class BoolAppSettingDefinition : AppSettingDefinition
+    {
+        public BoolAppSettingDefinition(
+            AppSettingKeyEnum key,
+            string label,
+            string description,
+            bool defaultValue)
+            : base(key, label, description)
+        {
+            DefaultValue = defaultValue;
+        }
+
+        public bool DefaultValue { get; }
+
+        public override AppSettingKindEnum Kind => AppSettingKindEnum.BOOL;
+
+        public override string DefaultAsText => DefaultValue ? "true" : "false";
+
+        /// <summary>Anything unparsable falls back rather than throws, as the int one does.</summary>
+        public bool Parse(string? text)
+        {
+            if (bool.TryParse(text, out bool value))
+                return value;
+
+            return DefaultValue;
+        }
+    }
 }

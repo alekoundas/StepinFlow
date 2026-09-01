@@ -23,6 +23,23 @@ is lost between sessions.
 - [ ] **Downscale matching** for template search.
 - [ ] **Dry-run mode** that logs resolved coordinates instead of clicking.
 
+## AI
+
+- [ ] **Decide on an orchestration framework at feature 3.** Asking questions about flows is the
+      first feature needing a tool-calling loop, which is the first point where a framework would
+      do real work rather than wrap one HTTP call. Until then the loop is ~40 lines and no
+      framework earns its place.
+- [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Windows DPAPI
+      (ProtectedData.Protect) is about ten lines and needs no key management.
+- [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a
+      spinner for 20+ seconds. Needs a broadcast type and partial-message plumbing.
+- [ ] **Anthropic as a native provider.** Only OpenAI-compatible endpoints work today, which
+      covers OpenAI, Ollama and gateways like OpenRouter, but not Anthropic directly.
+- [ ] **No way to clear a stored API key.** A secret reads back as empty, so emptying the box
+      compares equal to what is saved and nothing is written. Switching provider is the only way
+      to stop using a key, and the key stays in the table. Wants an explicit Clear next to the
+      field rather than a rule about when an empty value counts as an edit.
+
 ## Notify
 
 - [ ] **Read the failed step's result.** `NotifyMessageBuilder` builds every line from saved

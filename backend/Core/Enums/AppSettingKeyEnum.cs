@@ -19,5 +19,12 @@ namespace Core.Enums
 
         /// <summary>How many screenshots are kept, to be written out when a step fails.</summary>
         EXECUTION_SCREENSHOT_RING_SIZE,
+
+
+        /// <summary>Who runs the model, and what it needs to reach it.</summary>
+        AI_PROVIDER,
+        AI_MODEL,
+        AI_API_KEY,
+        AI_OLLAMA_URL,
     }
 }

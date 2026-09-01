@@ -140,6 +140,15 @@ namespace App.Ipc
                     "Execution.getList" => await _mediator.Send(new GetExecutionListQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Execution.getState" => await _mediator.Send(new GetExecutionStateQuery(), ct),
 
+                    // Ai
+                    "Ai.explainExecution" => await _mediator.Send(new ExplainExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Ai.getStatus" => await _mediator.Send(new GetAiStatusQuery(), ct),
+                    "Ai.getModels" => await _mediator.Send(new GetAiModelsQuery(), ct),
+                    "Ai.getModelSuggestions" => await _mediator.Send(new GetAiModelSuggestionsQuery(), ct),
+                    "Ai.pullModel" => await _mediator.Send(new PullAiModelCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
+                    "Ai.getPullState" => await _mediator.Send(new GetAiPullStateQuery(), ct),
+                    "Ai.clearPullState" => await _mediator.Send(new ClearAiPullStateCommand(), ct),
+
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };
 

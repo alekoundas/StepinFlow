@@ -68,6 +68,33 @@ namespace Core.Helpers
             minimum: 5,
             maximum: 50);
 
+
+        // AI. Nothing is on until a provider is chosen: every feature checks first and stays
+        // disabled rather than failing at the moment somebody clicks it.
+        public static readonly ChoiceAppSettingDefinition AiProvider = new ChoiceAppSettingDefinition(
+            AppSettingKeyEnum.AI_PROVIDER,
+            "AI provider",
+            "Where the model runs. Ollama keeps everything on this machine; OpenAI is faster and better but needs a key and sends data away.",
+            defaultValue: nameof(AiProviderEnum.NONE),
+            options: [nameof(AiProviderEnum.NONE), nameof(AiProviderEnum.OLLAMA), nameof(AiProviderEnum.OPENAI)]);
+
+        public static readonly TextAppSettingDefinition AiModel = new TextAppSettingDefinition(
+            AppSettingKeyEnum.AI_MODEL,
+            "Model",
+            "Which model to ask. For Ollama this is whatever you have pulled, for example qwen2.5.");
+
+        public static readonly TextAppSettingDefinition AiApiKey = new TextAppSettingDefinition(
+            AppSettingKeyEnum.AI_API_KEY,
+            "API key",
+            "Only needed for a provider that charges. Ollama ignores it.",
+            isSecret: true);
+
+        public static readonly TextAppSettingDefinition AiOllamaUrl = new TextAppSettingDefinition(
+            AppSettingKeyEnum.AI_OLLAMA_URL,
+            "Ollama address",
+            "Where Ollama is listening. The default is right unless you moved it.",
+            defaultValue: "http://localhost:11434");
+
         public static IReadOnlyList<AppSettingDefinition> All { get; } =
         [
             RecordingCaptureWidth,
@@ -80,6 +107,11 @@ namespace Core.Helpers
             HotkeyStop,
 
             ExecutionScreenshotRingSize,
+
+            AiProvider,
+            AiModel,
+            AiApiKey,
+            AiOllamaUrl,
         ];
 
         /// <summary>In the order the Settings page lists them.</summary>

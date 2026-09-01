@@ -10,6 +10,7 @@ import ExecutionFlowTreeComponent from "@/features/execution/components/Executio
 import ExecutionStepListComponent from "@/features/execution/components/ExecutionStepListComponent";
 import ExecutionStepDetailComponent from "@/features/execution/components/ExecutionStepDetailComponent";
 import ExecutionHistoryComponent from "@/features/execution/components/ExecutionHistoryComponent";
+import ExplainExecutionComponent from "@/features/ai/components/ExplainExecutionComponent";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionEvents } from "@/features/execution/hooks/use-execution-events";
 import { useExecutionState } from "@/features/execution/hooks/use-execution";
@@ -24,6 +25,7 @@ export default function ExecutionPage() {
   const flowId = id ? +id : -1;
 
   const {
+    executionId,
     executionSteps,
     selectedSequence,
     setExecutionSteps,
@@ -124,6 +126,10 @@ export default function ExecutionPage() {
                 </SplitterPanel>
               </Splitter>
             </div>
+          </TabPanel>
+
+          <TabPanel header="Explain">
+            <ExplainExecutionComponent executionId={openedExecution?.id ?? executionId} />
           </TabPanel>
 
           <TabPanel header="History">

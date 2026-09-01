@@ -1,50 +1,106 @@
-import { useState } from "react";
 import { InputNumber } from "primereact/inputnumber";
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Dropdown } from "primereact/dropdown";
+import { InputSwitch } from "primereact/inputswitch";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
 import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import {
-  useAppSettingMutations,
-  useAppSettings,
-} from "@/features/settings/hooks/use-app-settings";
+import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
+
+interface Props {
+  header: string;
+  description: string;
+
+  /** Which settings belong to this panel. The catalog decides what exists, this decides where. */
+  keyPrefix: string;
+
+  /** Shown after a number, when the number has a unit worth saying. */
+  numberSuffix?: string;
+}
 
 /**
- * Every numeric setting the catalog exposes, rendered from what the backend says rather than
- * from a hardcoded list, so adding a setting is a definition on one side only.
+ * A group of settings, rendered from what the backend says rather than from a hardcoded list, so
+ * adding a setting is a definition on one side only. What control each one gets comes from its
+ * kind - the page never branches on the key.
  */
-export default function AppSettingsPanelComponent() {
+export default function AppSettingsPanelComponent({
+  header,
+  description,
+  keyPrefix,
+  numberSuffix,
+}: Props) {
   const { data: all = [], isLoading } = useAppSettings();
+  const { valueOf, edit, commit, commitNow } = useSettingEditor();
 
-  // Numeric only: a hotkey rendered through InputNumber is NaN in a spinner.
-  const settings = all.filter((x) => x.kind === AppSettingKindEnum.INT);
-  const { setSettingMutation } = useAppSettingMutations();
+  const settings = all.filter((x) => x.key.startsWith(keyPrefix));
 
-  // Committed on blur, not on every keystroke: a partially typed number is not a setting.
-  const [editing, setEditing] = useState<Record<string, number | null>>({});
+  const control = (setting: AppSettingDto) => {
+    switch (setting.kind) {
+      case AppSettingKindEnum.INT:
+        return (
+          <InputNumber
+            value={Number(valueOf(setting.key, setting.value))}
+            min={setting.minimum ?? undefined}
+            max={setting.maximum ?? undefined}
+            onValueChange={(e) => edit(setting.key, String(e.value ?? ""))}
+            onBlur={() => commit(setting.key, setting.value)}
+            showButtons
+            suffix={numberSuffix}
+            className="w-8rem"
+          />
+        );
 
-  const valueOf = (setting: AppSettingDto): number =>
-    editing[setting.key] ?? Number(setting.value);
+      case AppSettingKindEnum.CHOICE:
+        return (
+          <Dropdown
+            value={valueOf(setting.key, setting.value)}
+            options={setting.options}
+            onChange={(e) => commitNow(setting.key, e.value)}
+            className="w-12rem"
+          />
+        );
 
-  const commit = (setting: AppSettingDto) => {
-    const value = editing[setting.key];
-    if (value == null) return;
+      case AppSettingKindEnum.BOOL:
+        return (
+          <InputSwitch
+            checked={valueOf(setting.key, setting.value) === "true"}
+            onChange={(e) => commitNow(setting.key, e.value ? "true" : "false")}
+          />
+        );
 
-    setEditing((previous) => {
-      const next = { ...previous };
-      delete next[setting.key];
-      return next;
-    });
+      case AppSettingKindEnum.SECRET:
+        return (
+          <Password
+            value={valueOf(setting.key, setting.value)}
+            placeholder={setting.isSet ? "Already set" : "Not set"}
+            onChange={(e) => edit(setting.key, e.target.value)}
+            onBlur={() => commit(setting.key, setting.value)}
+            feedback={false}
+            toggleMask
+            className="w-14rem"
+          />
+        );
 
-    if (String(value) !== setting.value)
-      setSettingMutation.mutate({ key: setting.key, value: String(value) });
+      default:
+        return (
+          <InputText
+            value={valueOf(setting.key, setting.value)}
+            onChange={(e) => edit(setting.key, e.target.value)}
+            onBlur={() => commit(setting.key, setting.value)}
+            className="w-14rem"
+          />
+        );
+    }
   };
 
   return (
-    <Panel header="Recording">
+    <Panel header={header}>
       <LabelComponent
-        text="How much of the screen is captured around the pointer each time you click while recording. Bigger gives the wizard more to crop a template from."
+        text={description}
         size="sm"
         color="secondary"
       />
@@ -71,18 +127,7 @@ export default function AppSettingsPanelComponent() {
               />
             </div>
 
-            <InputNumber
-              value={valueOf(setting)}
-              min={setting.minimum ?? undefined}
-              max={setting.maximum ?? undefined}
-              onValueChange={(e) =>
-                setEditing((previous) => ({ ...previous, [setting.key]: e.value ?? null }))
-              }
-              onBlur={() => commit(setting)}
-              showButtons
-              suffix=" px"
-              className="w-8rem"
-            />
+            {control(setting)}
           </div>
         ))}
       </div>

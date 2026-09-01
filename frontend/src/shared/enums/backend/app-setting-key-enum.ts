@@ -7,12 +7,23 @@ export const AppSettingKeyEnum = {
   HOTKEY_STEP_OVER: "HOTKEY_STEP_OVER",
   HOTKEY_PAUSE: "HOTKEY_PAUSE",
   HOTKEY_STOP: "HOTKEY_STOP",
+
+  EXECUTION_SCREENSHOT_RING_SIZE: "EXECUTION_SCREENSHOT_RING_SIZE",
+
+  AI_PROVIDER: "AI_PROVIDER",
+  AI_MODEL: "AI_MODEL",
+  AI_API_KEY: "AI_API_KEY",
+  AI_OLLAMA_URL: "AI_OLLAMA_URL",
 } as const;
 
 /** What control a setting needs. The page renders on this rather than branching on the key. */
 export const AppSettingKindEnum = {
   INT: "INT",
   HOTKEY: "HOTKEY",
+  TEXT: "TEXT",
+  SECRET: "SECRET",
+  CHOICE: "CHOICE",
+  BOOL: "BOOL",
 } as const;
 
 export type AppSettingKindEnum =
