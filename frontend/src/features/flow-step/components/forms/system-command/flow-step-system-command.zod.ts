@@ -17,8 +17,7 @@ export const FlowStepSystemCommandSchema = z
 
     runCommandShell: z.enum(RunCommandShellEnum),
     runCommandPreset: z.enum(RunCommandPresetEnum),
-    runCommandPresetValue: z.string(),
-    runCommand: z.string(),
+    runCommandValue: z.string(),
     runCommandWorkingDirectory: z.string(),
 
     successExitCodes: z
@@ -31,11 +30,11 @@ export const FlowStepSystemCommandSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.runCommandPreset === RunCommandPresetEnum.CUSTOM) {
-      if (data.runCommand.trim().length === 0) {
+      if (data.runCommandValue.trim().length === 0) {
         ctx.addIssue({
           code: "custom",
           message: "Type the command to run",
-          path: ["runCommand"],
+          path: ["runCommandValue"],
         });
       }
       return;
@@ -43,11 +42,11 @@ export const FlowStepSystemCommandSchema = z
 
     if (PRESETS_WITHOUT_PARAMETER.includes(data.runCommandPreset)) return;
 
-    if (data.runCommandPresetValue.trim().length === 0) {
+    if (data.runCommandValue.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
         message: "This is required",
-        path: ["runCommandPresetValue"],
+        path: ["runCommandValue"],
       });
     }
   });

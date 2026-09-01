@@ -39,9 +39,8 @@ namespace Core.Models.Database
         public RunCommandShellEnum RunCommandShell { get; set; }
         public RunCommandPresetEnum RunCommandPreset { get; set; }
 
-        /// <summary>The preset's single parameter. Ignored by CUSTOM, which uses RunCommand.</summary>
-        public string RunCommandPresetValue { get; set; } = string.Empty;
-        public string RunCommand { get; set; } = string.Empty;
+        /// <summary>The preset's single parameter, or the whole command when the preset is CUSTOM.</summary>
+        public string RunCommandValue { get; set; } = string.Empty;
         public string RunCommandWorkingDirectory { get; set; } = string.Empty;
 
         /// <summary>Comma separated. Anything else runs the Failure children.</summary>
@@ -86,12 +85,11 @@ namespace Core.Models.Database
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
         //
-        // Point source per point:
-        //   IsPointCustom = true  -> FlowPointId          (reusable named point on the Flow)
-        //   IsPointCustom = false -> FlowStepReferenceId      (result of an ancestor IMAGE_SEARCH / READ_TEXT)
+        // Point source per point, decided by whichever of the two is set:
+        //   FlowPointId         -> a reusable named point on the Flow
+        //   FlowStepReferenceId -> the result of an ancestor IMAGE_SEARCH / READ_TEXT
+        // Never both: every save path clears the one it is not using.
         // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
-        public bool IsPointCustom { get; set; }
-        public bool IsPointEndCustom { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }

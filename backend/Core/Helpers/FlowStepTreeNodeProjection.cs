@@ -47,8 +47,6 @@ namespace Core.Helpers
                 ReferenceStepEndName = x.FlowStepReferenceEnd != null ? x.FlowStepReferenceEnd.Name : null,
                 SubFlowName = x.SubFlow != null ? x.SubFlow.Name : null,
 
-                IsPointCustom = x.IsPointCustom,
-                IsPointEndCustom = x.IsPointEndCustom,
 
                 CursorButtonType = x.CursorButtonType,
                 CursorButtonActionType = x.CursorButtonActionType,
@@ -73,7 +71,7 @@ namespace Core.Helpers
 
                 RunCommandShell = x.RunCommandShell,
                 RunCommandPreset = x.RunCommandPreset,
-                RunCommand = x.RunCommand,
+                RunCommandValue = x.RunCommandValue,
 
                 SystemActionType = x.SystemActionType,
 

@@ -138,9 +138,6 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
     referenceStepEndName: null,
     subFlowName: null,
 
-    isPointCustom: values.isPointCustom,
-    isPointEndCustom: values.isPointEndCustom,
-
     cursorButtonType: values.cursorButtonType,
     cursorButtonActionType: values.cursorButtonActionType,
     cursorScrollDirectionType: values.cursorScrollDirectionType,
@@ -161,7 +158,7 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
 
     runCommandShell: values.runCommandShell,
     runCommandPreset: values.runCommandPreset,
-    runCommand: values.runCommand,
+    runCommandValue: values.runCommandValue,
 
     systemActionType: values.systemActionType,
 

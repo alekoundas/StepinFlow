@@ -46,8 +46,8 @@ export class FlowStepDto {
   // SYSTEM_COMMAND
   runCommandShell: RunCommandShellEnum = "CMD";
   runCommandPreset: RunCommandPresetEnum = "CUSTOM";
-  runCommandPresetValue: string = "";
-  runCommand: string = "";
+  // The preset's single parameter, or the whole command when the preset is CUSTOM.
+  runCommandValue: string = "";
   runCommandWorkingDirectory: string = "";
   successExitCodes: string = "0";
   resultSource: ResultSourceEnum = "STDOUT";
@@ -84,10 +84,9 @@ export class FlowStepDto {
   // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
   //
   // Point source per point:
-  //   isPointCustom = true  -> flowPointId       (reusable named point on the Flow)
-  //   isPointCustom = false -> flowStepReferenceId  (result of an ancestor IMAGE_SEARCH / READ_TEXT)
-  isPointCustom: boolean = false;
-  isPointEndCustom: boolean = false;
+  //   flowPointId         -> a reusable named point on the Flow
+  //   flowStepReferenceId -> the result of an ancestor IMAGE_SEARCH / READ_TEXT
+  // Never both: whichever is set is the source.
   cursorButtonType?: CursorButtonTypeEnum;
   cursorButtonActionType?: CursorButtonActionTypeEnum;
   cursorScrollDirectionType?: CursorScrollDirectionTypeEnum;

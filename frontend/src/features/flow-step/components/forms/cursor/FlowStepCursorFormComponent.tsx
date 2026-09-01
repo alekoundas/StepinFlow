@@ -38,7 +38,12 @@ export default function FlowStepCursorFormComponent({
   const form = useForm<z.infer<typeof FlowStepCursorSchema>>({
     resolver: zodResolver(FlowStepCursorSchema),
     mode: "onChange",
-    defaultValues: { ...defaultValues } as any,
+    // Form state only: the saved step says which source it uses by which id is set.
+    defaultValues: {
+      ...defaultValues,
+      isPointCustom: defaultValues.flowStepReferenceId == null,
+      isPointEndCustom: defaultValues.flowStepReferenceEndId == null,
+    } as any,
   });
 
   const {
@@ -93,7 +98,6 @@ export default function FlowStepCursorFormComponent({
       name: data.name,
       flowStepType: data.flowStepType,
 
-      isPointCustom: hasStartPoint ? data.isPointCustom : false,
       flowPointId:
         hasStartPoint && data.isPointCustom
           ? (data.flowPointId ?? undefined)
@@ -103,7 +107,6 @@ export default function FlowStepCursorFormComponent({
           ? (data.flowStepReferenceId ?? undefined)
           : undefined,
 
-      isPointEndCustom: isDrag ? data.isPointEndCustom : false,
       flowPointEndId:
         isDrag && data.isPointEndCustom
           ? (data.flowPointEndId ?? undefined)

@@ -36,8 +36,7 @@ namespace Core.Models.Dtos
         // SYSTEM_COMMAND
         public RunCommandShellEnum RunCommandShell { get; set; }
         public RunCommandPresetEnum RunCommandPreset { get; set; }
-        public string RunCommandPresetValue { get; set; } = string.Empty;
-        public string RunCommand { get; set; } = string.Empty;
+        public string RunCommandValue { get; set; } = string.Empty;
         public string RunCommandWorkingDirectory { get; set; } = string.Empty;
         public string SuccessExitCodes { get; set; } = "0";
         public ResultSourceEnum ResultSource { get; set; }
@@ -76,8 +75,6 @@ namespace Core.Models.Dtos
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
-        public bool IsPointCustom { get; set; }
-        public bool IsPointEndCustom { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }

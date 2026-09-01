@@ -89,7 +89,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
     case FlowStepTypeEnum.CURSOR_RELOCATE:
       return {
         text: pointName(
-          detail.isPointCustom,
+          detail.referenceStepName == null,
           detail.pointName,
           detail.referenceStepName,
         ),
@@ -100,7 +100,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
     case FlowStepTypeEnum.CURSOR_DRAG:
       return {
-        text: `${pointName(detail.isPointCustom, detail.pointName, detail.referenceStepName)} -> ${pointName(detail.isPointEndCustom, detail.pointEndName, detail.referenceStepEndName)}`,
+        text: `${pointName(detail.referenceStepName == null, detail.pointName, detail.referenceStepName)} -> ${pointName(detail.referenceStepEndName == null, detail.pointEndName, detail.referenceStepEndName)}`,
         chips: [],
       };
 
@@ -160,7 +160,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
       return {
         text: isCustom
-          ? truncate(detail.runCommand ?? "")
+          ? truncate(detail.runCommandValue ?? "")
           : readable(detail.runCommandPreset),
         chips: isCustom
           ? [{ text: readable(detail.runCommandShell), isMuted: true }]

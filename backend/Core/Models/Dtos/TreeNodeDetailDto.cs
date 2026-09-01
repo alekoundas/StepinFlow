@@ -25,8 +25,6 @@ namespace Core.Models.Dtos
         public string? SubFlowName { get; set; }
 
         // Point source per point, so the row can say "the click lands here".
-        public bool IsPointCustom { get; set; }
-        public bool IsPointEndCustom { get; set; }
 
         // CURSOR
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
@@ -56,7 +54,7 @@ namespace Core.Models.Dtos
         // SYSTEM_COMMAND
         public RunCommandShellEnum? RunCommandShell { get; set; }
         public RunCommandPresetEnum? RunCommandPreset { get; set; }
-        public string? RunCommand { get; set; }
+        public string? RunCommandValue { get; set; }
 
         // SYSTEM_ACTION
         public SystemActionTypeEnum? SystemActionType { get; set; }

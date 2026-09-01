@@ -130,31 +130,27 @@ namespace Business.Services.FlowValidationService
 
         private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
-            ValidatePoint(result, step, byId, step.IsPointCustom, step.FlowPointId, step.FlowStepReferenceId, "");
+            ValidatePoint(result, step, byId, step.FlowPointId, step.FlowStepReferenceId, "");
 
             if (step.FlowStepType == FlowStepTypeEnum.CURSOR_DRAG)
-                ValidatePoint(result, step, byId, step.IsPointEndCustom, step.FlowPointEndId, step.FlowStepReferenceEndId, "drop ");
+                ValidatePoint(result, step, byId, step.FlowPointEndId, step.FlowStepReferenceEndId, "drop ");
         }
 
         private static void ValidatePoint(
             FlowValidationResultDto result,
             FlowStep step,
             IReadOnlyDictionary<int, StepChainNode> byId,
-            bool isCustom,
             int? flowPointId,
             int? referenceId,
             string label)
         {
-            if (isCustom)
-            {
-                if (flowPointId == null)
-                    Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, $"There is no {label}point to act on.");
+            if (flowPointId != null)
                 return;
-            }
 
+            // Neither set says nothing about which was meant, so the message offers both.
             if (referenceId == null)
             {
-                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_MISSING, $"Pick the search whose result gives the {label}point.");
+                Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, $"There is no {label}point to act on. Pick a saved point, or a search whose result gives one.");
                 return;
             }
 
@@ -226,7 +222,7 @@ namespace Business.Services.FlowValidationService
         {
             if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
             {
-                if (string.IsNullOrWhiteSpace(step.RunCommand))
+                if (string.IsNullOrWhiteSpace(step.RunCommandValue))
                     Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");
                 return;
             }
@@ -235,7 +231,7 @@ namespace Business.Services.FlowValidationService
             // preset is added or changed.
             CommandPresetDto preset = CommandPresetCatalog.Get(step.RunCommandPreset);
 
-            if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandPresetValue))
+            if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandValue))
                 Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
         }
 

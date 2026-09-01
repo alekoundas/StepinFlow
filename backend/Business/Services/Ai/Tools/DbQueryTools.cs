@@ -123,8 +123,7 @@ namespace Business.Services.Ai.Tools
                     EF.Functions.Like(x.ProcessName, t) ||
                     EF.Functions.Like(x.TitlePattern, t) ||
                     EF.Functions.Like(x.KeyboardInputText, t) ||
-                    EF.Functions.Like(x.RunCommand, t) ||
-                    EF.Functions.Like(x.RunCommandPresetValue, t) ||
+                    EF.Functions.Like(x.RunCommandValue, t) ||
                     EF.Functions.Like(x.ConditionText, t)))
                 .Take(_maxRows)
                 .Select(Projection())
@@ -291,7 +290,7 @@ namespace Business.Services.Ai.Tools
                 x.ProcessName,
                 x.TitlePattern,
                 x.KeyboardInputText,
-                x.RunCommand,
+                x.RunCommandValue,
                 x.ConditionText,
                 x.SubFlowId,
                 x.FlowAreaId,

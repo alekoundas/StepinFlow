@@ -42,8 +42,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
   const { control, setValue } = useFormContext();
 
   const preset = useWatch({ control, name: "runCommandPreset" });
-  const presetValue = useWatch({ control, name: "runCommandPresetValue" });
-  const runCommand = useWatch({ control, name: "runCommand" });
+  const commandValue = useWatch({ control, name: "runCommandValue" });
 
   const activePreset = presets.find((x) => x.preset === preset);
   const isCustom = preset === RunCommandPresetEnum.CUSTOM;
@@ -55,21 +54,21 @@ export default function FlowStepSystemCommandFormFieldsComponent({
 
     setValue("runCommandShell", activePreset.shell, { shouldValidate: true });
 
-    if (activePreset.hasParameter && !presetValue)
-      setValue("runCommandPresetValue", activePreset.parameterDefault, {
+    if (activePreset.hasParameter && !commandValue)
+      setValue("runCommandValue", activePreset.parameterDefault, {
         shouldValidate: true,
       });
 
-    if (!activePreset.hasParameter && presetValue)
-      setValue("runCommandPresetValue", "", { shouldValidate: true });
-  }, [activePreset, isCustom, presetValue, setValue]);
+    if (!activePreset.hasParameter && commandValue)
+      setValue("runCommandValue", "", { shouldValidate: true });
+  }, [activePreset, isCustom, commandValue, setValue]);
 
   const resolvedCommand = !activePreset
     ? ""
     : isCustom
-      ? runCommand
+      ? commandValue
       : activePreset.hasParameter
-        ? activePreset.commandTemplate.replace("{0}", presetValue ?? "")
+        ? activePreset.commandTemplate.replace("{0}", commandValue ?? "")
         : activePreset.commandTemplate;
 
   return (
@@ -135,7 +134,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
           />
 
           <FormInputTextComponent
-            fieldName="runCommand"
+            fieldName="runCommandValue"
             label="Command"
             placeholderText="ipconfig /flushdns"
             isRequired={true}
@@ -146,7 +145,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
       ) : (
         activePreset?.hasParameter && (
           <FormInputTextComponent
-            fieldName="runCommandPresetValue"
+            fieldName="runCommandValue"
             label={activePreset.parameterLabel}
             placeholderText={activePreset.parameterPlaceholder}
             isRequired={true}

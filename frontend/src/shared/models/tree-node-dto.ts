@@ -23,8 +23,6 @@ export interface TreeNodeDetailDto {
   referenceStepEndName?: string | null;
   subFlowName?: string | null;
 
-  isPointCustom: boolean;
-  isPointEndCustom: boolean;
 
   cursorButtonType?: CursorButtonTypeEnum | null;
   cursorButtonActionType?: CursorButtonActionTypeEnum | null;
@@ -47,7 +45,7 @@ export interface TreeNodeDetailDto {
 
   runCommandShell?: RunCommandShellEnum | null;
   runCommandPreset?: RunCommandPresetEnum | null;
-  runCommand?: string | null;
+  runCommandValue?: string | null;
 
   systemActionType?: SystemActionTypeEnum | null;
 

@@ -11,8 +11,7 @@ namespace Business.Services.CommandService
     {
         public async Task<RunCommandTestResultDto> RunAsync(FlowStepDto step, CancellationToken ct = default)
         {
-            string command = CommandPresetCatalog.Resolve(
-                step.RunCommandPreset, step.RunCommandPresetValue, step.RunCommand);
+            string command = CommandPresetCatalog.Resolve(step.RunCommandPreset, step.RunCommandValue);
 
             RunCommandTestResultDto result = new RunCommandTestResultDto { ResolvedCommand = command };
 

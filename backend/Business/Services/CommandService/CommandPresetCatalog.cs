@@ -104,15 +104,15 @@ namespace Business.Services.CommandService
             All.First(x => x.Preset == preset);
 
         /// <summary>The command a step would run, with its preset parameter filled in.</summary>
-        public static string Resolve(RunCommandPresetEnum preset, string presetValue, string customCommand)
+        public static string Resolve(RunCommandPresetEnum preset, string value)
         {
             if (preset == RunCommandPresetEnum.CUSTOM)
-                return customCommand;
+                return value;
 
             CommandPresetDto definition = Get(preset);
 
             return definition.HasParameter
-                ? definition.CommandTemplate.Replace("{0}", presetValue)
+                ? definition.CommandTemplate.Replace("{0}", value)
                 : definition.CommandTemplate;
         }
     }

@@ -68,8 +68,6 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     component: FlowStepCursorFormComponent,
     newStepValues: (type) => ({
       name: CURSOR_STEP_DEFAULT_NAMES[type as CursorFlowStepType],
-      isPointCustom: true,
-      isPointEndCustom: true,
     }),
   }),
 

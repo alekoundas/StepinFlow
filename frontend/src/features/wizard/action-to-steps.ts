@@ -262,7 +262,7 @@ export const buildSteps = (
         ...base({
           flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
           name: "Move to position",
-          isPointCustom: true,
+          
         }),
         newPoint: {
           name: `Click point ${pointName}`,
@@ -292,7 +292,7 @@ export const buildSteps = (
           flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
           name: "Move onto it",
           // The search result is the position, so there is no point to create.
-          isPointCustom: false,
+          
         }),
         ...inSuccess,
         referenceTempId: found.tempId,
@@ -310,8 +310,8 @@ export const buildSteps = (
           ...base({
             flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
             name: answers.name,
-            isPointCustom: true,
-            isPointEndCustom: true,
+            
+            
             cursorButtonType: answers.cursorButtonType,
           }),
           newPoint: {
@@ -333,7 +333,7 @@ export const buildSteps = (
         ...base({
           flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
           name: "Move to position",
-          isPointCustom: true,
+          
         }),
         newPoint: {
           name: `Scroll point ${pointName}`,

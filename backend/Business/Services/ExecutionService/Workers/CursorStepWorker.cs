@@ -52,7 +52,7 @@ namespace Business.Services.ExecutionService.Workers
 
         private async Task<ExecutionStep> MoveAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
-            Point? target = await ResolvePointAsync(step.IsPointCustom, step.FlowPointId, step.FlowStepReferenceId, cache, ct);
+            Point? target = await ResolvePointAsync(step.FlowPointId, step.FlowStepReferenceId, cache, ct);
             if (target == null)
                 return ExecutionStep.Failure("There is nowhere to move to.");
 
@@ -84,11 +84,11 @@ namespace Business.Services.ExecutionService.Workers
 
         private async Task<ExecutionStep> DragAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
-            Point? from = await ResolvePointAsync(step.IsPointCustom, step.FlowPointId, step.FlowStepReferenceId, cache, ct);
+            Point? from = await ResolvePointAsync(step.FlowPointId, step.FlowStepReferenceId, cache, ct);
             if (from == null)
                 return ExecutionStep.Failure("There is nowhere to drag from.");
 
-            Point? to = await ResolvePointAsync(step.IsPointEndCustom, step.FlowPointEndId, step.FlowStepReferenceEndId, cache, ct);
+            Point? to = await ResolvePointAsync(step.FlowPointEndId, step.FlowStepReferenceEndId, cache, ct);
             if (to == null)
                 return ExecutionStep.Failure("There is nowhere to drag to.");
 
@@ -101,13 +101,10 @@ namespace Business.Services.ExecutionService.Workers
         }
 
         // A saved point, or the result of an earlier search.
-        private async Task<Point?> ResolvePointAsync(bool isCustom, int? flowPointId, int? flowStepReferenceId, IExecutionCacheService cache, CancellationToken ct)
+        private async Task<Point?> ResolvePointAsync(int? flowPointId, int? flowStepReferenceId, IExecutionCacheService cache, CancellationToken ct)
         {
-            if (!isCustom)
-                return cache.GetStepLocationFrom(flowStepReferenceId);
-
             if (flowPointId == null)
-                return null;
+                return cache.GetStepLocationFrom(flowStepReferenceId);
 
             PointResolution resolution = await _areaPointResolver.ResolvePointAsync(flowPointId.Value, ct);
             if (!resolution.IsResolved)
