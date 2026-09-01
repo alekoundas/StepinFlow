@@ -1,4 +1,6 @@
-namespace Business.Helpers
+using Core.Models.Dtos;
+
+namespace Business.Services.AiService.Helpers
 {
     /// <summary>
     /// The standing instructions. Kept apart from the run itself so it is obvious which half is
@@ -29,5 +31,10 @@ namespace Business.Helpers
             - If the run did not fail, say so in one sentence.
             - Never invent a step, a value or a screen that is not in the run.
             """;
+
+        public static string FormatExecution(ExecutionDto execution, bool includeScreenValues)
+        {
+           return ExecutionPromptHelper.Format(execution, includeScreenValues);
+        }
     }
 }

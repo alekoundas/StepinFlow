@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Helpers
+namespace Business.Services.AiService.Helpers
 {
     /// <summary>
     /// A handful of local models worth suggesting to somebody who has none.
@@ -11,7 +11,7 @@ namespace Business.Helpers
     ///
     /// Sizes are approximate, and what actually arrives is whatever Ollama is serving that day.
     /// </summary>
-    public static class AiModelCatalog
+    public static class AvailableAiModelsHelper
     {
         public static IReadOnlyList<AiModelSuggestionDto> Suggestions { get; } =
         [

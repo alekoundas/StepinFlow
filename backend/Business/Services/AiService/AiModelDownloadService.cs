@@ -12,13 +12,7 @@ namespace Business.Services.AiService
 {
     /// <summary>
     /// Downloads a model, and remembers how it is going.
-    ///
-    /// A singleton for the same reason the execution engine is one: it owns something that runs for
-    /// minutes and outlives every page that might be watching. Progress is broadcast as it arrives
-    /// so a page can follow it live, and also kept here so a page that was not listening - opened
-    /// later, or navigated away and back - can simply ask.
-    ///
-    /// One at a time. Two pulls would compete for the same disk and there is one progress to report.
+    /// One at a time.
     /// </summary>
     public sealed class AiModelDownloadService : IAiModelDownloadService
     {
@@ -46,7 +40,7 @@ namespace Business.Services.AiService
         }
 
         /// <summary>
-        /// Read under the lock, like every other touch of it. The download writes this from its own
+        /// Read under the lock. The download writes this from its own
         /// thread while a page reads it from the pipe's, and the "one at a time" guard is only worth
         /// anything if the value it tests is the one that was last written.
         /// </summary>
@@ -97,8 +91,7 @@ namespace Business.Services.AiService
         {
             lock (_lockObj)
             {
-                // A running download is not something a page can dismiss - it would come back on
-                // the next progress line anyway, and the file would keep growing regardless.
+                // A running download is not something a page can dismiss.
                 if (_current != null && !_current.IsDone)
                     return;
 
@@ -111,16 +104,12 @@ namespace Business.Services.AiService
         // Private methods
         // ================================================================
 
-        /// <summary>
-        /// Ollama answers a pull with a stream of json lines, one per progress update, for as long
-        /// as the download takes.
-        /// </summary>
+        // Ollama answers a pull with a stream of json lines, one per progress update, for as long as the download takes.
         private async Task PullToEndAsync(string model, string baseUrl)
         {
             try
             {
                 HttpClient client = _httpClientFactory.CreateClient(nameof(AiModelDownloadService));
-
                 using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, OllamaUrlHelper.ToPullEndpoint(baseUrl))
                 {
                     Content = JsonContent.Create(new { model = model, stream = true }),
@@ -200,7 +189,7 @@ namespace Business.Services.AiService
             }
         }
 
-        /// <summary>Kept for whoever asks later, and sent to whoever is watching now.</summary>
+        // Kept for whoever asks later, and sent to whoever is watching now.
         private async Task ReportAsync(AiModelPullEventDto payload)
         {
             lock (_lockObj)

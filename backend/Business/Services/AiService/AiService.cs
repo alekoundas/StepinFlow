@@ -1,11 +1,10 @@
 using System.Text.Json;
-
 using Business.Helpers;
+using Business.Services.AiService.Helpers;
 using Business.Services.AppSettingService;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Dtos;
-
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -22,7 +21,7 @@ namespace Business.Services.AiService
     /// </summary>
     public sealed class AiService : IAiService
     {
-        /// <summary>The ones worth offering. Asking OpenAI for its list returns hundreds.</summary>
+        // The ones worth offering.
         private static readonly string[] _openAiModels =
         [
             "gpt-4o-mini",
@@ -70,9 +69,8 @@ namespace Business.Services.AiService
         }
 
         /// <summary>
-        /// For Ollama, whatever has actually been pulled onto this machine - anything else would
-        /// offer a model that is not there. For a paid provider it is a curated list, because
-        /// asking the api returns every embedding and speech model alongside the useful ones.
+        /// For Ollama, whatever has actually been pulled onto this machine - anything else would offer a model that is not there. 
+        /// For a paid provider it is a curated list.
         /// </summary>
         public async Task<AiModelsDto> GetModelsAsync(CancellationToken ct = default)
         {
@@ -123,7 +121,7 @@ namespace Business.Services.AiService
                 .Select(OllamaUrlHelper.NormaliseModelName)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            return AiModelCatalog.Suggestions
+            return AvailableAiModelsHelper.Suggestions
                 .Select(x => new AiModelSuggestionDto
                 {
                     Name = x.Name,
@@ -161,8 +159,7 @@ namespace Business.Services.AiService
                 return Failed("That run no longer exists.");
 
             bool includeScreenValues = await GetIncludeScreenValuesAsync(ct);
-            string prompt = ExecutionRunFormatter.Format(execution, includeScreenValues);
-
+            string prompt = AiPromptHelper.FormatExecution(execution, includeScreenValues);
             List<ChatMessage> messages =
             [
                 new ChatMessage(ChatRole.System, AiPromptHelper.ExplainExecution),
@@ -205,21 +202,13 @@ namespace Business.Services.AiService
             };
         }
 
-        /// <summary>
-        /// Whether the model may see text a Read Text step found. That is whatever was on the
-        /// screen - an account number, a password an OCR step happened to catch - so it goes out
-        /// only to a model running on this machine, and the provider is the whole rule. There is
-        /// no setting to disagree with.
-        /// </summary>
         private async Task<bool> GetIncludeScreenValuesAsync(CancellationToken ct)
         {
             AiProviderEnum provider = await _chatClientFactory.GetProviderAsync(ct);
             return provider == AiProviderEnum.OLLAMA;
         }
 
-        /// <summary>
-        /// The run and its steps, projected the same way the execution page reads them.
-        /// </summary>
+        /// <summary> The run and its steps, projected the same way the execution page reads them. </summary>
         private async Task<ExecutionDto?> LoadAsync(int executionId, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);

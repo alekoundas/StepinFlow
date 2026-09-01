@@ -1,43 +1,31 @@
 using System.Text;
-
 using Core.Enums;
 using Core.Models.Dtos;
 
-namespace Business.Services.AiService
+namespace Business.Services.AiService.Helpers
 {
     /// <summary>
-    /// Turns a run into the text a model reads.
+    /// Turns an execution run into the text a model reads.
     ///
     /// Ordered by sequence and indented by depth it reads like a stack trace, which is the shape a language
     /// model handles best - and it is exactly why both columns are stored.
     ///
     /// Two things it has to get right:
-    /// 1) a long run will not fit, so it keeps the failure, everything the failure ran inside, and
-    ///    the steps just before it. Cutting the end would throw away the only part that matters.
-    /// 2) text read off the screen is whatever was on the screen, so it only goes out when the
-    ///    user has said it may.
+    /// 1) a long run will not fit, so it keeps the failure, everything the failure ran inside, and the steps just before it. 
+    /// 2) text read off the screen is whatever was on the screen, so it only goes out when the user has said it may.
     /// </summary>
-    public static class ExecutionRunFormatter
+    public static class ExecutionPromptHelper
     {
-        /// <summary>Roughly what fits comfortably alongside a system prompt on a small local model.</summary>
-        private const int _maxSteps = 60;
-
-        /// <summary>How much run-up to keep before the failure when a run has to be cut down.</summary>
-        private const int _stepsBeforeFailure = 30;
-
-        /// <summary>
-        /// And how much after it. A run does not always stop at its last failure - a handled one
-        /// early in a long loop leaves thousands of steps behind it, and every one of them is
-        /// about what happened next rather than about why.
-        /// </summary>
-        private const int _stepsAfterFailure = 10;
+        private const int _maxSteps = 60;// Roughly what fits comfortably alongside a system prompt on a small local model.
+        private const int _stepsBeforeFailure = 30; //How much run-up to keep before the failure when a run has to be cut down.
+        private const int _stepsAfterFailure = 10; //And how much after it. A run does not always stop at its last failure .
 
         private const string _redacted = "(hidden)";
 
         public static string Format(ExecutionDto execution, bool includeScreenValues)
         {
             List<ExecutionStepDto> steps = execution.ExecutionSteps.OrderBy(x => x.Sequence).ToList();
-            List<ExecutionStepDto> kept = Trim(steps, execution.ErrorFlowStepId, out int omitted);
+            List<ExecutionStepDto> kept = RemoveExcessSteps(steps, execution.ErrorFlowStepId, out int omitted);
 
             StringBuilder builder = new StringBuilder();
 
@@ -62,7 +50,7 @@ namespace Business.Services.AiService
                 if (previousSequence >= 0 && step.Sequence != previousSequence + 1)
                     builder.AppendLine("   ...");
 
-                builder.AppendLine(Line(step, execution.ErrorFlowStepId, includeScreenValues));
+                builder.AppendLine(ExecutionStepToText(step, execution.ErrorFlowStepId, includeScreenValues));
                 previousSequence = step.Sequence;
             }
 
@@ -74,10 +62,7 @@ namespace Business.Services.AiService
         // Private methods
         // ================================================================
 
-        /// <summary>
-        /// One step on one line, indented by how deep it ran.
-        /// </summary>
-        private static string Line(ExecutionStepDto step, int? errorFlowStepId, bool includeScreenValues)
+        private static string ExecutionStepToText(ExecutionStepDto step, int? errorFlowStepId, bool includeScreenValues)
         {
             bool isFatal = errorFlowStepId != null && step.FlowStepId == errorFlowStepId;
             bool isFailure = step.Outcome == StepOutcomeEnum.FAILURE;
@@ -119,15 +104,7 @@ namespace Business.Services.AiService
             return line.ToString();
         }
 
-        /// <summary>
-        /// Takes the value back out of a sentence that quoted it.
-        ///
-        /// Workers put what they read on Value and describe it in words, so this does nothing
-        /// today. It is here because redacting one field and printing two is how the rule was
-        /// broken the first time: a message reading `Read "4111 1111 1111 1111", which does not
-        /// satisfy...` sat one line under a Value already replaced with (hidden). The next worker
-        /// that reaches for string interpolation should not be able to undo the rule by accident.
-        /// </summary>
+      
         private static string Redact(string text, string? value, bool includeScreenValues)
         {
             if (includeScreenValues || string.IsNullOrWhiteSpace(value))
@@ -141,10 +118,7 @@ namespace Business.Services.AiService
         /// ran inside, and the run-up. Walking ParentSequence up is the same idea as the rule about
         /// which results a step is allowed to read - the chain of parents is the causal context.
         /// </summary>
-        private static List<ExecutionStepDto> Trim(
-            List<ExecutionStepDto> steps,
-            int? errorFlowStepId,
-            out int omitted)
+        private static List<ExecutionStepDto> RemoveExcessSteps(List<ExecutionStepDto> steps, int? errorFlowStepId, out int omitted)
         {
             omitted = 0;
 
