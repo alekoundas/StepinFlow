@@ -66,6 +66,7 @@ namespace App.Ipc
                     "FlowStep.getTreeNodesRecursive" => await _mediator.Send(new GetFlowStepTreeNodesRecursiveQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.getMovePreview" => await _mediator.Send(new GetFlowStepMovePreviewQuery(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.move" => await _mediator.Send(new MoveFlowStepCommand(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
+
                     "FlowStep.testImageSearch" => await _mediator.Send(new TestImageSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testRunCommand" => await _mediator.Send(new TestRunCommandQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testReadText" => await _mediator.Send(new TestReadTextQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),

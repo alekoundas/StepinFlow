@@ -72,7 +72,7 @@ namespace Business.Ipc.Handlers
                     TemplateImage = image.TemplateImage ?? [],
                     Mode = image.TemplateMatchMode ?? step.TemplateMatchMode,
                     Threshold = image.Accuracy ?? step.Accuracy,
-                    ScaleRatio = ScaleRatio(image, area.Bounds.Width),
+                    ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, area.Bounds.Width),
                     AllowMultiScale = image.AllowMultiScale,
                     ScaleTolerance = image.ScaleTolerance,
                     MaxMatches = step.MaxMatches,
@@ -130,12 +130,12 @@ namespace Business.Ipc.Handlers
                 : result.Images.Any(x => x.IsFound);
         }
 
-        private static float ScaleRatio(FlowStepImageDto image, int currentFrameWidth)
+        private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)
         {
-            if (image.AuthoredFrameWidth <= 0 || currentFrameWidth <= 0)
+            if (authoredFrameWidth <= 0 || currentFrameWidth <= 0)
                 return 1f;
 
-            return (float)currentFrameWidth / image.AuthoredFrameWidth;
+            return (float)currentFrameWidth / authoredFrameWidth;
         }
 
         private static ImageSearchTestResultDto Failed(string error) => new ImageSearchTestResultDto

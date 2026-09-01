@@ -95,6 +95,7 @@ namespace Business.Services.ExecutionService.Workers
                     TemplateImage = image.TemplateImage ?? [],
                     Mode = image.TemplateMatchMode ?? step.TemplateMatchMode,
                     Threshold = image.Accuracy ?? step.Accuracy,
+                    ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, bounds.Width),
                     AllowMultiScale = image.AllowMultiScale,
                     ScaleTolerance = image.ScaleTolerance,
                     MaxMatches = step.MaxMatches,
@@ -130,6 +131,14 @@ namespace Business.Services.ExecutionService.Workers
             found.MatchCount = hits.Count;
 
             return found;
+        }
+
+        private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)
+        {
+            if (authoredFrameWidth <= 0 || currentFrameWidth <= 0)
+                return 1f;
+
+            return (float)currentFrameWidth / authoredFrameWidth;
         }
 
         /// <summary>Says what was being looked for and how hard, which is what a failure turns on.</summary>

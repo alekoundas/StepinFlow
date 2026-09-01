@@ -50,7 +50,8 @@ export default function AppSettingsPanelComponent({
             onBlur={() => commit(setting.key, setting.value)}
             showButtons
             suffix={numberSuffix}
-            className="w-8rem"
+            inputClassName="w-6rem"
+            className="flex-shrink-0"
           />
         );
 
@@ -118,7 +119,7 @@ export default function AppSettingsPanelComponent({
             key={setting.key}
             className="flex align-items-center justify-content-between gap-3"
           >
-            <div className="flex flex-column">
+            <div className="flex flex-column flex-1 min-w-0">
               <LabelComponent text={setting.label} />
               <LabelComponent
                 text={setting.description}

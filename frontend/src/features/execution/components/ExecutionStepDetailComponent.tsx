@@ -1,5 +1,10 @@
+import { Tag } from "primereact/tag";
+
 import LabelComponent from "@/shared/components/LabelComponent";
+import IconComponent from "@/shared/components/IconComponent";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
+import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -91,6 +96,11 @@ export default function ExecutionStepDetailComponent({
         ) : null}
       </div>
 
+      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
+      executionStep.flowStepId ? (
+        <SearchedTemplates flowStepId={executionStep.flowStepId} />
+      ) : null}
+
       {executionStep.value ? (
         <div className="flex flex-column gap-1">
           <LabelComponent
@@ -143,6 +153,64 @@ export default function ExecutionStepDetailComponent({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+interface SearchedTemplatesProps {
+  flowStepId: number;
+}
+
+function SearchedTemplates({ flowStepId }: SearchedTemplatesProps) {
+  const { data: flowStep } = useFlowStep(flowStepId);
+
+  const images = flowStep?.flowStepImages ?? [];
+  if (images.length === 0) return null;
+
+  return (
+    <div className="flex flex-column gap-1">
+      <LabelComponent
+        text="Templates searched"
+        size="sm"
+        color="secondary"
+      />
+
+      <div className="flex flex-wrap gap-2">
+        {images.map((image) => (
+          <div
+            key={image.id}
+            className="surface-ground border-1 surface-border border-round p-2 flex flex-column align-items-center gap-1"
+            style={{ width: 96 }}
+          >
+            {image.templateImage ? (
+              <img
+                src={`data:image/png;base64,${image.templateImage}`}
+                alt={image.name}
+                style={{
+                  width: 64,
+                  height: 64,
+                  objectFit: "contain",
+                  imageRendering: "pixelated",
+                }}
+              />
+            ) : (
+              <IconComponent name="image" />
+            )}
+
+            <LabelComponent
+              text={image.name || `Template ${image.orderNumber + 1}`}
+              size="xs"
+            />
+
+            {image.isRequired && (
+              <Tag
+                severity="info"
+                value="required"
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
