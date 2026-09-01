@@ -7,6 +7,6 @@ namespace Business.Services.MatchService
         /// <summary>
         /// Every match at or above the threshold, best first. Empty when nothing matches.
         /// </summary>
-        IReadOnlyList<TemplateMatch> Match(TemplateMatchRequest request);
+        IReadOnlyList<TemplateMatchResult> Match(TemplateMatchRequest request);
     }
 }

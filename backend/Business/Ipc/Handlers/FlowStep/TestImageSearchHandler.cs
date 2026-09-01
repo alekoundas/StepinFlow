@@ -66,7 +66,7 @@ namespace Business.Ipc.Handlers
                     IsRequired = image.IsRequired,
                 };
 
-                IReadOnlyList<TemplateMatch> matches = _templateMatcher.Match(new TemplateMatchRequest
+                IReadOnlyList<TemplateMatchResult> matches = _templateMatcher.Match(new TemplateMatchRequest
                 {
                     Haystack = haystack,
                     TemplateImage = image.TemplateImage ?? [],
@@ -96,7 +96,7 @@ namespace Business.Ipc.Handlers
 
                 if (matches.Count > 0)
                 {
-                    TemplateMatch best = matches[0];
+                    TemplateMatchResult best = matches[0];
 
                     imageResult.BestScore = best.Score;
                     imageResult.Scale = best.Scale;

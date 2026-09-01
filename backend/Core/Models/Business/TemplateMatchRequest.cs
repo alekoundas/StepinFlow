@@ -21,16 +21,4 @@ namespace Core.Models.Business
         /// <summary>Stop after this many, so a bad threshold cannot return thousands.</summary>
         public int MaxMatches { get; set; } = 20;
     }
-
-    public sealed record TemplateMatch(
-        int X,
-        int Y,
-        int Width,
-        int Height,
-        float Score,
-        float Scale)
-    {
-        public int CenterX => X + Width / 2;
-        public int CenterY => Y + Height / 2;
-    }
 }

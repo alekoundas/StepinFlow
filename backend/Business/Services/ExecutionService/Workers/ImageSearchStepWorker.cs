@@ -89,7 +89,7 @@ namespace Business.Services.ExecutionService.Workers
 
             foreach (FlowStepImage image in step.FlowStepImages)
             {
-                IReadOnlyList<TemplateMatch> matches = _templateMatcher.Match(new TemplateMatchRequest
+                IReadOnlyList<TemplateMatchResult> matches = _templateMatcher.Match(new TemplateMatchRequest
                 {
                     Haystack = haystack,
                     TemplateImage = image.TemplateImage ?? [],
@@ -101,7 +101,7 @@ namespace Business.Services.ExecutionService.Workers
                     MaxMatches = step.MaxMatches,
                 });
 
-                foreach (TemplateMatch match in matches)
+                foreach (TemplateMatchResult match in matches)
                 {
                     int x = bounds.Left + match.X + (int)MathF.Round(image.ClickOffsetX * match.Scale);
                     int y = bounds.Top + match.Y + (int)MathF.Round(image.ClickOffsetY * match.Scale);

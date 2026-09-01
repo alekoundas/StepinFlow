@@ -17,7 +17,7 @@ namespace Business.Services.MatchService
         // How many steps either side of the expected scale when the first pass finds nothing.
         private const int MultiScaleSteps = 4;
 
-        public IReadOnlyList<TemplateMatch> Match(TemplateMatchRequest request)
+        public IReadOnlyList<TemplateMatchResult> Match(TemplateMatchRequest request)
         {
             if (request.Haystack.IsEmpty || request.TemplateImage.Length == 0)
                 return [];
@@ -41,7 +41,7 @@ namespace Business.Services.MatchService
                 ? ToTemplateMatchModes(request.Mode)
                 : ToMaskableMatchModes(request.Mode);
 
-            List<TemplateMatch> matches = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
+            List<TemplateMatchResult> matches = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
             if (matches.Count > 0 || !request.AllowMultiScale)
                 return matches;
 
@@ -61,7 +61,7 @@ namespace Business.Services.MatchService
         // Private methods
         // ================================================================
 
-        private static List<TemplateMatch> MatchAtScale(
+        private static List<TemplateMatchResult> MatchAtScale(
             Mat haystack,
             Mat template,
             Mat? mask,
@@ -123,7 +123,7 @@ namespace Business.Services.MatchService
         /// Pull every peak over the threshold. Each accepted hit blanks its own footprint so the
         /// neighbouring pixels of the same match cannot be reported again.
         /// </summary>
-        private static List<TemplateMatch> Collect(
+        private static List<TemplateMatchResult> Collect(
             Mat result,
             TemplateMatchRequest request,
             TemplateMatchModes mode,
@@ -134,7 +134,7 @@ namespace Business.Services.MatchService
             // The mode actually used, which is not always the one asked for: a masked template
             // may have been moved onto a mask capable mode.
             bool lowerIsBetter = mode == TemplateMatchModes.SqDiff || mode == TemplateMatchModes.SqDiffNormed;
-            List<TemplateMatch> matches = new List<TemplateMatch>();
+            List<TemplateMatchResult> matches = new List<TemplateMatchResult>();
 
             using Mat working = result.Clone();
 
@@ -148,7 +148,15 @@ namespace Business.Services.MatchService
                 if (score < request.Threshold)
                     break;
 
-                matches.Add(new TemplateMatch(location.X, location.Y, width, height, (float)score, scale));
+                matches.Add(new TemplateMatchResult
+                {
+                    X = location.X,
+                    Y = location.Y,
+                    Width = width,
+                    Height = height,
+                    Score = (float)score,
+                    Scale = scale,
+                });
 
                 // Non maximum suppression: blank the whole footprint, not just the peak.
                 Rect footprint = new Rect(
