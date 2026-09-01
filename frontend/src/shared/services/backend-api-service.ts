@@ -232,7 +232,7 @@ export const backendApiService = {
     getModelSuggestions: () =>
       call<AiModelSuggestionDto[]>("Ai.getModelSuggestions"),
     pullModel: (model: string) => call<boolean>("Ai.pullModel", model),
-    getPullState: () => call<AiModelPullEventDto | null>("Ai.getPullState"),
+    getPullState: () => callNullable<AiModelPullEventDto>("Ai.getPullState"),
     clearPullState: () => call<boolean>("Ai.clearPullState"),
   },
 
@@ -242,6 +242,21 @@ export const backendApiService = {
 };
 
 async function call<T = any>(action: string, payload: any = {}): Promise<T> {
+  const data = await callNullable<T>(action, payload);
+
+  if (data === null) {
+    console.error(`Backend call returned no data [${action}]`);
+    throw new Error(`Backend call returned no data [${action}]`);
+  }
+
+  return data;
+}
+
+// For actions whose answer is legitimately nothing. A missing payload is a value here, not a failure.
+async function callNullable<T = any>(
+  action: string,
+  payload: any = {},
+): Promise<T | null> {
   const msg: IpcRequestMessage = {
     action,
     payload,
@@ -249,11 +264,10 @@ async function call<T = any>(action: string, payload: any = {}): Promise<T> {
 
   const resultDto = await window.electronApi.backendApi.invoke<T>(msg);
 
-  // Only null/undefined mean "no payload". A legitimate 0, false or "" is a value.
-  if (!resultDto.isSuccess || resultDto.data === undefined || resultDto.data === null) {
+  if (!resultDto.isSuccess) {
     console.error(`Backend call failed [${action}]`, resultDto?.errorMessage);
     throw new Error(resultDto?.errorMessage ?? `Backend call failed [${action}]`);
   }
 
-  return resultDto.data;
+  return resultDto.data ?? null;
 }
