@@ -7,7 +7,7 @@ using Business.Services.AreaPointService;
 using Business.Services.FlowValidationService;
 using Business.Services.InputService;
 using Business.Services.MatchService;
-using Business.Services.AiService;
+using Business.Services.Ai;
 using Business.Services.AppSettingService;
 using Business.Services.OcrService;
 using Business.Services.RecordingService;
@@ -22,6 +22,8 @@ using Microsoft.Extensions.Logging;
 using Business.Services.NotificationService;
 using App.DependencyInjection;
 using Core.Enums;
+using Business.Services.Ai.Providers;
+using Business.Services.Ai.AiModels;
 
 namespace App
 {
@@ -62,19 +64,20 @@ namespace App
 
             // AI.
             // Scoped per call rather than singleton: the client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
-            builder.Services.AddScoped<IChatClientFactory, ChatClientFactory>();
-            builder.Services.AddScoped<IAiService, AiService>();
+            builder.Services.AddScoped<IAiProviderService, AiProviderService>();
+            builder.Services.AddScoped<IAiClientFactory, AiClientFactory>();
+            builder.Services.AddScoped<IAiModelService, AiModelService>();
+            builder.Services.AddScoped<IExecutionRunExplainService, ExecutionRunExplainService>();
+            builder.Services.AddScoped<IFlowQuestionService, FlowQuestionService>();
             builder.Services.AddSingleton<IAiModelDownloadService, AiModelDownloadService>();
 
-            // Ollama is on this machine, so a short timeout is right: a long wait means it is not
-            // running, and the settings page should say so rather than hang.
-            builder.Services.AddHttpClient(nameof(AiService), client =>
+            // Ollama is on this machine, so a short timeout is right.
+            builder.Services.AddHttpClient(nameof(AiModelService), client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
             });
 
-            // Its own client, because a five second timeout is right for asking what is installed
-            // and hopeless for downloading five gigabytes.
+            // Infinite for downloading 9 gigabytes.
             builder.Services.AddHttpClient(nameof(AiModelDownloadService), client =>
             {
                 client.Timeout = Timeout.InfiniteTimeSpan;

@@ -91,7 +91,7 @@ namespace Core.Helpers
         public static readonly TextAppSettingDefinition AiModel = new TextAppSettingDefinition(
             AppSettingKeyEnum.AI_MODEL,
             "Model",
-            "Which model to ask. For Ollama this is whatever you have pulled, for example qwen2.5.");
+            "Which model to ask. For Ollama this is whatever you have downloaded, for example qwen2.5.");
 
         public static readonly TextAppSettingDefinition AiApiKey = new TextAppSettingDefinition(
             AppSettingKeyEnum.AI_API_KEY,

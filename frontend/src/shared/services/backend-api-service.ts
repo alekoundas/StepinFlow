@@ -46,9 +46,14 @@ import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
 import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
 import type { AiAnswerDto } from "@/shared/models/ai-answer-dto";
+import type {
+  AiChatAnswerDto,
+  AiChatAvailabilityDto,
+  AiChatRequestDto,
+} from "@/shared/models/ai-chat-dtos";
 import type { AiModelsDto } from "@/shared/models/ai-models-dto";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
-import type { AiModelPullEventDto } from "@/shared/models/ai-model-pull-event-dto";
+import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
 export const backendApiService = {
   greet: (name: string) => call<{ greeting: string }>("greet", { name }),
@@ -169,6 +174,9 @@ export const backendApiService = {
 
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
+    aiModels: () => call<AiModelsDto>("Lookup.aiModels"),
+    aiModelSuggestions: () =>
+      call<AiModelSuggestionDto[]>("Lookup.aiModelSuggestions"),
   },
 
 
@@ -230,12 +238,12 @@ export const backendApiService = {
     explainExecution: (executionId: number) =>
       call<AiAnswerDto>("Ai.explainExecution", executionId),
     getStatus: () => call<boolean>("Ai.getStatus"),
-    getModels: () => call<AiModelsDto>("Ai.getModels"),
-    getModelSuggestions: () =>
-      call<AiModelSuggestionDto[]>("Ai.getModelSuggestions"),
-    pullModel: (model: string) => call<boolean>("Ai.pullModel", model),
-    getPullState: () => callNullable<AiModelPullEventDto>("Ai.getPullState"),
-    clearPullState: () => call<boolean>("Ai.clearPullState"),
+    getChatAvailability: () =>
+      call<AiChatAvailabilityDto>("Ai.getChatAvailability"),
+    ask: (dto: AiChatRequestDto) => call<AiChatAnswerDto>("Ai.ask", dto),
+    downloadModel: (model: string) => call<boolean>("Ai.downloadModel", model),
+    getDownloadState: () => callNullable<AiModelDownloadEventDto>("Ai.getDownloadState"),
+    clearDownloadState: () => call<boolean>("Ai.clearDownloadState"),
   },
 
   OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {

@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Services.AiService.Helpers
+namespace Business.Services.Ai.Helpers
 {
     /// <summary>
     /// A handful of local models worth suggesting to somebody who has none.

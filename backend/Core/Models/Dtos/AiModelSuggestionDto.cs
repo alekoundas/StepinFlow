@@ -12,7 +12,7 @@ namespace Core.Models.Dtos
         public string Size { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
-        /// <summary>Already pulled, so the button says so rather than offering it again.</summary>
+        /// <summary>Already downloaded, so the button says so rather than offering it again.</summary>
         public bool IsInstalled { get; set; }
     }
 }

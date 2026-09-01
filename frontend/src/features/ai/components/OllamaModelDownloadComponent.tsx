@@ -3,9 +3,9 @@ import { ProgressBar } from "primereact/progressbar";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useAiModelSuggestions } from "@/features/ai/hooks/use-ai";
-import { useAiModelPull } from "@/features/ai/hooks/use-ai-model-pull";
+import { useAiModelDownload } from "@/features/ai/hooks/use-ai-model-download";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
-import type { AiModelPullEventDto } from "@/shared/models/ai-model-pull-event-dto";
+import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
 interface Props {
   /** Only Ollama downloads anything. A paid provider hosts its own models. */
@@ -13,7 +13,7 @@ interface Props {
 }
 
 /**
- * Pulls a model onto this machine.
+ * Downloads a model onto this machine.
  *
  * Without this the model list is empty on a fresh Ollama and there is no way out of the settings
  * page - you would have to know to open a terminal. A download is gigabytes, so it reports as it
@@ -21,7 +21,7 @@ interface Props {
  */
 export default function OllamaModelDownloadComponent({ isEnabled }: Props) {
   const { data: suggestions = [], isLoading } = useAiModelSuggestions(isEnabled);
-  const { progress, isPulling, pull, dismiss } = useAiModelPull();
+  const { progress, isDownloading, download, dismiss } = useAiModelDownload();
 
   if (!isEnabled) return null;
 
@@ -45,9 +45,9 @@ export default function OllamaModelDownloadComponent({ isEnabled }: Props) {
         <SuggestionRow
           key={suggestion.name}
           suggestion={suggestion}
-          isPulling={isPulling}
-          isPullingThis={isPulling && progress?.model === suggestion.name}
-          onDownload={() => pull(suggestion.name)}
+          isDownloading={isDownloading}
+          isDownloadingThis={isDownloading && progress?.model === suggestion.name}
+          onDownload={() => download(suggestion.name)}
         />
       ))}
 
@@ -95,15 +95,15 @@ export default function OllamaModelDownloadComponent({ isEnabled }: Props) {
 
 interface SuggestionRowProps {
   suggestion: AiModelSuggestionDto;
-  isPulling: boolean;
-  isPullingThis: boolean;
+  isDownloading: boolean;
+  isDownloadingThis: boolean;
   onDownload: () => void;
 }
 
 function SuggestionRow({
   suggestion,
-  isPulling,
-  isPullingThis,
+  isDownloading,
+  isDownloadingThis,
   onDownload,
 }: SuggestionRowProps) {
   return (
@@ -129,9 +129,9 @@ function SuggestionRow({
           icon="pi pi-download"
           size="small"
           outlined
-          // One at a time: two pulls at once compete for the same disk and the same progress bar.
-          disabled={isPulling}
-          loading={isPullingThis}
+          // One at a time: two downloads at once compete for the same disk and the same progress bar.
+          disabled={isDownloading}
+          loading={isDownloadingThis}
           onClick={onDownload}
         />
       )}
@@ -140,7 +140,7 @@ function SuggestionRow({
 }
 
 /** Ollama's own wording while it works, and something plainer at either end. */
-function statusText(progress: AiModelPullEventDto): string {
+function statusText(progress: AiModelDownloadEventDto): string {
   if (progress.error) return progress.error;
 
   if (progress.total > 0)

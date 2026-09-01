@@ -5,7 +5,7 @@ import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { aiKeys } from "@/features/ai/hooks/use-ai";
-import type { AiModelPullEventDto } from "@/shared/models/ai-model-pull-event-dto";
+import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
 /**
  * Downloads a model and follows it.
@@ -17,33 +17,33 @@ import type { AiModelPullEventDto } from "@/shared/models/ai-model-pull-event-dt
  * Broadcasts keep it smooth, the poll keeps it correct: a missed message costs a second of
  * staleness instead of a page that has lost the download entirely.
  */
-export function useAiModelPull() {
+export function useAiModelDownload() {
   const queryClient = useQueryClient();
 
   const { data: progress } = useQuery({
-    queryKey: aiKeys.pullState(),
-    queryFn: () => backendApiService.Ai.getPullState(),
+    queryKey: aiKeys.downloadState(),
+    queryFn: () => backendApiService.Ai.getDownloadState(),
     // Only while something is running. A finished one changes when somebody presses a button.
     refetchInterval: (query) => {
-      const current = query.state.data as AiModelPullEventDto | null | undefined;
+      const current = query.state.data as AiModelDownloadEventDto | null | undefined;
       return current && !current.isDone ? 1000 : false;
     },
   });
 
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
-      if (message.type !== BroadcastTypeEnum.AI_MODEL_PULL_EVENT) return;
+      if (message.type !== BroadcastTypeEnum.AI_MODEL_DOWNLOAD_EVENT) return;
 
-      const event = message.payload as AiModelPullEventDto;
-      queryClient.setQueryData(aiKeys.pullState(), event);
+      const event = message.payload as AiModelDownloadEventDto;
+      queryClient.setQueryData(aiKeys.downloadState(), event);
 
       // Finished, so what is installed has changed and the model list is stale. The backend
-      // forgets a successful pull, so asking again clears the panel rather than leaving a banner.
+      // forgets a finished download, so asking again clears the panel rather than leaving a banner.
       if (event.isDone && !event.error) {
         queryClient.invalidateQueries({ queryKey: aiKeys.models() });
         queryClient.invalidateQueries({ queryKey: aiKeys.suggestions() });
         queryClient.invalidateQueries({ queryKey: aiKeys.status() });
-        queryClient.invalidateQueries({ queryKey: aiKeys.pullState() });
+        queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
       }
     });
 
@@ -53,11 +53,11 @@ export function useAiModelPull() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pull = async (model: string) => {
+  const download = async (model: string) => {
     try {
-      await backendApiService.Ai.pullModel(model);
+      await backendApiService.Ai.downloadModel(model);
     } catch (error) {
-      queryClient.setQueryData(aiKeys.pullState(), {
+      queryClient.setQueryData(aiKeys.downloadState(), {
         model: model,
         status: "",
         completed: 0,
@@ -67,21 +67,21 @@ export function useAiModelPull() {
           error instanceof Error
             ? error.message
             : "The download could not be started.",
-      } satisfies AiModelPullEventDto);
+      } satisfies AiModelDownloadEventDto);
       return;
     }
 
-    queryClient.invalidateQueries({ queryKey: aiKeys.pullState() });
+    queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
   };
 
   // Only a finished one can be dismissed. Hiding a running download would be a lie - the file
   // keeps growing either way, and the backend refuses.
   const dismiss = async () => {
-    await backendApiService.Ai.clearPullState();
-    queryClient.invalidateQueries({ queryKey: aiKeys.pullState() });
+    await backendApiService.Ai.clearDownloadState();
+    queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
   };
 
-  const isPulling = !!progress && !progress.isDone;
+  const isDownloading = !!progress && !progress.isDone;
 
-  return { progress: progress ?? undefined, isPulling, pull, dismiss };
+  return { progress: progress ?? undefined, isDownloading, download, dismiss };
 }

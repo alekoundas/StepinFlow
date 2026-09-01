@@ -112,14 +112,14 @@ export default function AiSettingsPanelComponent() {
             label="Model"
             description={
               isOllama
-                ? "The models you have pulled with Ollama."
+                ? "The models you have downloaded with Ollama."
                 : "Which model to ask. The cheaper ones are enough to read a run."
             }
           >
             <Dropdown
               value={model}
               options={models}
-              // A model that is set but no longer pulled would otherwise vanish from the box.
+              // A model that is set but no longer downloaded would otherwise vanish from the box.
               placeholder={isFetchingModels ? "Looking..." : model || "Choose a model"}
               emptyMessage="Nothing to choose from"
               onChange={(e) => commitNow(AppSettingKeyEnum.AI_MODEL, e.value)}

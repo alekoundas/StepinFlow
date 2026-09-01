@@ -6,7 +6,8 @@ export const aiKeys = {
   status: () => ["ai", "status"] as const,
   models: () => ["ai", "models"] as const,
   suggestions: () => ["ai", "suggestions"] as const,
-  pullState: () => ["ai", "pullState"] as const,
+  downloadState: () => ["ai", "downloadState"] as const,
+  chatAvailability: () => ["ai", "chatAvailability"] as const,
 } as const;
 
 /**
@@ -28,19 +29,19 @@ export function useAiStatus() {
 export function useAiModels(isEnabled: boolean) {
   return useQuery({
     queryKey: aiKeys.models(),
-    queryFn: () => backendApiService.Ai.getModels(),
+    queryFn: () => backendApiService.Lookup.aiModels(),
     enabled: isEnabled,
     staleTime: 0,
   });
 }
 
 /**
- * Local models worth offering to somebody who has none, with the ones already pulled marked.
+ * Local models worth offering to somebody who has none, with the ones already downloaded marked.
  */
 export function useAiModelSuggestions(isEnabled: boolean) {
   return useQuery({
     queryKey: aiKeys.suggestions(),
-    queryFn: () => backendApiService.Ai.getModelSuggestions(),
+    queryFn: () => backendApiService.Lookup.aiModelSuggestions(),
     enabled: isEnabled,
     staleTime: 0,
   });

@@ -17,6 +17,8 @@ namespace Core.Models.Ipc
     public record TestWindowMatchQuery(WindowMatchTestRequestDto dto) : IRequest<ResultDto<WindowMatchTestResultDto>>;
     public record GetLookupCommandPresetsQuery() : IRequest<ResultDto<IReadOnlyList<CommandPresetDto>>>;
     public record GetLookupOcrLanguagesQuery() : IRequest<ResultDto<IReadOnlyList<OcrLanguageDto>>>;
+    public record GetLookupAiModelsQuery() : IRequest<ResultDto<AiModelsDto>>;
+    public record GetLookupAiModelSuggestionsQuery() : IRequest<ResultDto<IReadOnlyList<AiModelSuggestionDto>>>;
 
 
     // ============== COMMANDS ==============

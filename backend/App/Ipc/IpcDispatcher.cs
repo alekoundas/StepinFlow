@@ -102,6 +102,8 @@ namespace App.Ipc
                     "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
                     "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),
+                    "Lookup.aiModels" => await _mediator.Send(new GetLookupAiModelsQuery(), ct),
+                    "Lookup.aiModelSuggestions" => await _mediator.Send(new GetLookupAiModelSuggestionsQuery(), ct),
 
                     // Recording
                     "Recording.start" => await _mediator.Send(new StartRecordingCommand(), ct),
@@ -145,11 +147,11 @@ namespace App.Ipc
                     // Ai
                     "Ai.explainExecution" => await _mediator.Send(new ExplainExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "Ai.getStatus" => await _mediator.Send(new GetAiStatusQuery(), ct),
-                    "Ai.getModels" => await _mediator.Send(new GetAiModelsQuery(), ct),
-                    "Ai.getModelSuggestions" => await _mediator.Send(new GetAiModelSuggestionsQuery(), ct),
-                    "Ai.pullModel" => await _mediator.Send(new PullAiModelCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
-                    "Ai.getPullState" => await _mediator.Send(new GetAiPullStateQuery(), ct),
-                    "Ai.clearPullState" => await _mediator.Send(new ClearAiPullStateCommand(), ct),
+                    "Ai.getChatAvailability" => await _mediator.Send(new GetAiChatAvailabilityQuery(), ct),
+                    "Ai.ask" => await _mediator.Send(new AskAiQuery(JsonSerializer.Deserialize<AiChatRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Ai.downloadModel" => await _mediator.Send(new DownloadAiModelCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
+                    "Ai.getDownloadState" => await _mediator.Send(new GetAiDownloadStateQuery(), ct),
+                    "Ai.clearDownloadState" => await _mediator.Send(new ClearAiDownloadStateCommand(), ct),
 
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };

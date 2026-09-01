@@ -1,14 +1,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-
-using Business.Helpers;
+using Business.Services.Ai.Helpers;
 using Core.Enums;
 using Core.Interfaces;
 using Core.Models.Dtos;
-
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.AiService
+namespace Business.Services.Ai.AiModels
 {
     /// <summary>
     /// Downloads a model, and remembers how it is going.
@@ -27,7 +25,7 @@ namespace Business.Services.AiService
 
         private readonly object _lockObj = new object();
 
-        private AiModelPullEventDto? _current;
+        private AiModelDownloadEventDto? _current;
 
         public AiModelDownloadService(
             IHttpClientFactory httpClientFactory,
@@ -44,7 +42,7 @@ namespace Business.Services.AiService
         /// thread while a page reads it from the pipe's, and the "one at a time" guard is only worth
         /// anything if the value it tests is the one that was last written.
         /// </summary>
-        public AiModelPullEventDto? Current
+        public AiModelDownloadEventDto? Current
         {
             get
             {
@@ -70,7 +68,7 @@ namespace Business.Services.AiService
                 if (_current != null && !_current.IsDone)
                     return false;
 
-                _current = new AiModelPullEventDto
+                _current = new AiModelDownloadEventDto
                 {
                     Model = model,
                     Status = "starting",
@@ -78,7 +76,7 @@ namespace Business.Services.AiService
             }
 
             // Fire and forget: nothing awaits this, so it must never throw.
-            _ = PullToEndAsync(model, baseUrl);
+            _ = DownloadToEndAsync(model, baseUrl);
 
             return true;
         }
@@ -105,12 +103,12 @@ namespace Business.Services.AiService
         // ================================================================
 
         // Ollama answers a pull with a stream of json lines, one per progress update, for as long as the download takes.
-        private async Task PullToEndAsync(string model, string baseUrl)
+        private async Task DownloadToEndAsync(string model, string baseUrl)
         {
             try
             {
                 HttpClient client = _httpClientFactory.CreateClient(nameof(AiModelDownloadService));
-                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, OllamaUrlHelper.ToPullEndpoint(baseUrl))
+                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, OllamaUrlHelper.ToDownloadEndpoint(baseUrl))
                 {
                     Content = JsonContent.Create(new { model = model, stream = true }),
                 };
@@ -130,7 +128,7 @@ namespace Business.Services.AiService
                     if (string.IsNullOrWhiteSpace(line))
                         continue;
 
-                    OllamaPullProgress? progress = JsonSerializer.Deserialize<OllamaPullProgress>(line, _jsonOptions);
+                    OllamaDownloadProgress? progress = JsonSerializer.Deserialize<OllamaDownloadProgress>(line, _jsonOptions);
                     if (progress == null)
                         continue;
 
@@ -140,7 +138,7 @@ namespace Business.Services.AiService
                     // generic message below could only say that something did.
                     bool isFailed = !string.IsNullOrWhiteSpace(progress.Error);
 
-                    await ReportAsync(new AiModelPullEventDto
+                    await ReportAsync(new AiModelDownloadEventDto
                     {
                         Model = model,
                         Status = progress.Status,
@@ -155,11 +153,11 @@ namespace Business.Services.AiService
                 }
 
                 // The stream ended without saying "success", which Ollama does on some errors.
-                AiModelPullEventDto? last = Current;
+                AiModelDownloadEventDto? last = Current;
 
                 if (last != null && !last.IsDone)
                 {
-                    await ReportAsync(new AiModelPullEventDto
+                    await ReportAsync(new AiModelDownloadEventDto
                     {
                         Model = model,
                         IsDone = true,
@@ -178,9 +176,9 @@ namespace Business.Services.AiService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not pull the model {Model}.", model);
+                _logger.LogWarning(ex, "Could not download the model {Model}.", model);
 
-                await ReportAsync(new AiModelPullEventDto
+                await ReportAsync(new AiModelDownloadEventDto
                 {
                     Model = model,
                     IsDone = true,
@@ -190,14 +188,14 @@ namespace Business.Services.AiService
         }
 
         // Kept for whoever asks later, and sent to whoever is watching now.
-        private async Task ReportAsync(AiModelPullEventDto payload)
+        private async Task ReportAsync(AiModelDownloadEventDto payload)
         {
             lock (_lockObj)
             {
                 _current = payload;
             }
 
-            await _broadcastService.SendAsync(BroadcastTypeEnum.AI_MODEL_PULL_EVENT, payload);
+            await _broadcastService.SendAsync(BroadcastTypeEnum.AI_MODEL_DOWNLOAD_EVENT, payload);
         }
 
 
@@ -205,7 +203,7 @@ namespace Business.Services.AiService
         // Private types
         // ================================================================
 
-        private sealed class OllamaPullProgress
+        private sealed class OllamaDownloadProgress
         {
             public string Status { get; set; } = string.Empty;
             public long Completed { get; set; }

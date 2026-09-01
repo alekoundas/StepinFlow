@@ -2,7 +2,7 @@ using System.Text;
 using Core.Enums;
 using Core.Models.Dtos;
 
-namespace Business.Services.AiService.Helpers
+namespace Business.Services.Ai.Helpers
 {
     /// <summary>
     /// Turns an execution run into the text a model reads.
@@ -14,7 +14,7 @@ namespace Business.Services.AiService.Helpers
     /// 1) a long run will not fit, so it keeps the failure, everything the failure ran inside, and the steps just before it. 
     /// 2) text read off the screen is whatever was on the screen, so it only goes out when the user has said it may.
     /// </summary>
-    public static class ExecutionPromptHelper
+    public static class ExecutionRunPromptHelper
     {
         private const int _maxSteps = 60;// Roughly what fits comfortably alongside a system prompt on a small local model.
         private const int _stepsBeforeFailure = 30; //How much run-up to keep before the failure when a run has to be cut down.

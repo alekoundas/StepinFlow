@@ -1,8 +1,8 @@
 /**
- * How a download is going. Arrives on the broadcast pipe rather than as a reply, because pulling a
+ * How a download is going. Arrives on the broadcast pipe rather than as a reply, because downloading a
  * model is minutes and gigabytes and a request that waited for it would time out.
  */
-export interface AiModelPullEventDto {
+export interface AiModelDownloadEventDto {
   model: string;
 
   /** Ollama's own wording - "pulling manifest", "verifying sha256 digest". */

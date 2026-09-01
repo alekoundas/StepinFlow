@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { ExecutionEventTypeEnum } from "@/shared/enums/backend/execution/execution-event-type-enum";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
@@ -23,9 +24,26 @@ export function useExecutionEvents(flowId: number) {
 
   const {
     addExecutionStep,
+    setExecutionSteps,
     setRunState,
     setCurrentStep,
   } = useExecutionStore();
+
+  /**
+   * A broadcast carries no database id and nothing the history filled in - the screenshot a step
+   * kept, its exit code, its stderr. With history on the saved rows are the same steps with those
+   * present, and the engine has flushed them all before it says the run ended.
+   */
+  const replaceWithSavedSteps = async (executionId: number) => {
+    const execution = await queryClient.fetchQuery({
+      queryKey: executionKeys.detail(executionId),
+      queryFn: () => backendApiService.Execution.get(executionId),
+    });
+
+    // History off writes nothing, and the live rows are then all there is.
+    if (execution.executionSteps.length > 0)
+      setExecutionSteps(execution.executionSteps);
+  };
 
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
@@ -57,6 +75,8 @@ export function useExecutionEvents(flowId: number) {
 
         // The run is only in the history list once it has ended.
         queryClient.invalidateQueries({ queryKey: executionKeys.list(flowId) });
+
+        void replaceWithSavedSteps(event.executionId);
       }
     });
 

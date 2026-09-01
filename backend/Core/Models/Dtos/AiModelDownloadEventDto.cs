@@ -1,10 +1,10 @@
 namespace Core.Models.Dtos
 {
     /// <summary>
-    /// How a download is going. Sent over the broadcast pipe rather than returned, because pulling
+    /// How a download is going. Sent over the broadcast pipe rather than returned, because downloading
     /// a model is minutes and gigabytes and a request that waited for it would simply time out.
     /// </summary>
-    public class AiModelPullEventDto
+    public class AiModelDownloadEventDto
     {
         public string Model { get; set; } = string.Empty;
 

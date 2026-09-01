@@ -165,3 +165,20 @@ export const getFlowStepCatalogEntry = (
   flowStepType: FlowStepTypeEnum | undefined,
 ): FlowStepCatalogEntry | undefined =>
   FLOW_STEP_CATALOG.find((x) => x.flowStepType === flowStepType);
+
+/**
+ * Types created with a Success and a Failure child. Mirrors TreeStepHelper.BranchTypes - only these
+ * route on their outcome, so only these are worth reporting one for.
+ */
+const BRANCH_STEP_TYPES: FlowStepTypeEnum[] = [
+  FlowStepTypeEnum.IMAGE_SEARCH,
+  FlowStepTypeEnum.READ_TEXT,
+  FlowStepTypeEnum.SYSTEM_COMMAND,
+  FlowStepTypeEnum.CHECK_VALUE,
+  FlowStepTypeEnum.WINDOW_FOCUS,
+  FlowStepTypeEnum.WINDOW_RESIZE,
+  FlowStepTypeEnum.WINDOW_RELOCATE,
+];
+
+export const hasBranches = (flowStepType: FlowStepTypeEnum | undefined): boolean =>
+  !!flowStepType && BRANCH_STEP_TYPES.includes(flowStepType);

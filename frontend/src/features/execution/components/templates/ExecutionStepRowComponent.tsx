@@ -1,6 +1,7 @@
 import { classNames } from "primereact/utils";
 
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
+import { hasBranches } from "@/shared/models/flow-step-catalog";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -56,6 +57,19 @@ export default function ExecutionStepRowComponent({
       <span style={{ paddingLeft: `${executionStep.depth}rem` }}>
         {executionStep.name}
       </span>
+
+      {/* Only a branching step routes on its outcome. Everywhere else it is noise. */}
+      {hasBranches(executionStep.flowStepType) ? (
+        <span
+          className={classNames("p-tag text-xs", {
+            "p-tag-success": !isFailure,
+            "p-tag-warning": isFailure && !isFatal,
+            "p-tag-danger": isFailure && isFatal,
+          })}
+        >
+          {isFailure ? "failed" : "success"}
+        </span>
+      ) : null}
 
       {executionStep.matchCount ? (
         <span className="p-tag p-tag-info text-xs">

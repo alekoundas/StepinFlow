@@ -4,6 +4,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { hasBranches } from "@/shared/models/flow-step-catalog";
 import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
 import { useExecutionStepScreenshot } from "@/features/execution/hooks/use-execution";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
@@ -42,11 +43,20 @@ export default function ExecutionStepDetailComponent({
 
   return (
     <div className="flex flex-column gap-3 p-3">
-      <LabelComponent
-        text={executionStep.name}
-        weight="semibold"
-        color={isFailure ? "error" : undefined}
-      />
+      <div className="flex align-items-center gap-2">
+        <LabelComponent
+          text={executionStep.name}
+          weight="semibold"
+          color={isFailure ? "error" : undefined}
+        />
+
+        {hasBranches(executionStep.flowStepType) ? (
+          <Tag
+            severity={isFailure ? "danger" : "success"}
+            value={isFailure ? "Failed" : "Succeeded"}
+          />
+        ) : null}
+      </div>
 
       <div className="flex flex-column gap-2">
         <DetailRow

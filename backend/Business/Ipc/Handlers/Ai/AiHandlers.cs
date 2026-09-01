@@ -1,4 +1,6 @@
-using Business.Services.AiService;
+using Business.Services.Ai;
+using Business.Services.Ai.AiModels;
+using Business.Services.Ai.Providers;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 
@@ -9,16 +11,16 @@ namespace Business.Ipc.Handlers.Ai
     /// <summary>Reads a run and says what went wrong.</summary>
     public class ExplainExecutionHandler : IRequestHandler<ExplainExecutionQuery, ResultDto<AiAnswerDto>>
     {
-        private readonly IAiService _aiService;
+        private readonly IExecutionRunExplainService _runExplainService;
 
-        public ExplainExecutionHandler(IAiService aiService)
+        public ExplainExecutionHandler(IExecutionRunExplainService runExplainService)
         {
-            _aiService = aiService;
+            _runExplainService = runExplainService;
         }
 
         public async Task<ResultDto<AiAnswerDto>> Handle(ExplainExecutionQuery request, CancellationToken ct)
         {
-            AiAnswerDto answer = await _aiService.ExplainExecutionAsync(request.executionId, ct);
+            AiAnswerDto answer = await _runExplainService.ExplainExecutionAsync(request.executionId, ct);
             return ResultDto<AiAnswerDto>.Success(answer);
         }
     }
@@ -26,52 +28,17 @@ namespace Business.Ipc.Handlers.Ai
     /// <summary>Whether a provider is set up, so the page can offer the button or explain why not.</summary>
     public class GetAiStatusHandler : IRequestHandler<GetAiStatusQuery, ResultDto<bool>>
     {
-        private readonly IAiService _aiService;
+        private readonly IAiProviderService _providerService;
 
-        public GetAiStatusHandler(IAiService aiService)
+        public GetAiStatusHandler(IAiProviderService providerService)
         {
-            _aiService = aiService;
+            _providerService = providerService;
         }
 
         public async Task<ResultDto<bool>> Handle(GetAiStatusQuery request, CancellationToken ct)
         {
-            bool isConfigured = await _aiService.IsConfiguredAsync(ct);
+            bool isConfigured = await _providerService.IsConfiguredAsync(ct);
             return ResultDto<bool>.Success(isConfigured);
-        }
-    }
-
-    /// <summary>What the chosen provider offers, so the model setting is a list and not a guess.</summary>
-    public class GetAiModelsHandler : IRequestHandler<GetAiModelsQuery, ResultDto<AiModelsDto>>
-    {
-        private readonly IAiService _aiService;
-
-        public GetAiModelsHandler(IAiService aiService)
-        {
-            _aiService = aiService;
-        }
-
-        public async Task<ResultDto<AiModelsDto>> Handle(GetAiModelsQuery request, CancellationToken ct)
-        {
-            AiModelsDto models = await _aiService.GetModelsAsync(ct);
-            return ResultDto<AiModelsDto>.Success(models);
-        }
-    }
-
-    /// <summary>Local models worth offering, with the ones already pulled marked.</summary>
-    public class GetAiModelSuggestionsHandler
-        : IRequestHandler<GetAiModelSuggestionsQuery, ResultDto<IReadOnlyList<AiModelSuggestionDto>>>
-    {
-        private readonly IAiService _aiService;
-
-        public GetAiModelSuggestionsHandler(IAiService aiService)
-        {
-            _aiService = aiService;
-        }
-
-        public async Task<ResultDto<IReadOnlyList<AiModelSuggestionDto>>> Handle(GetAiModelSuggestionsQuery request, CancellationToken ct)
-        {
-            IReadOnlyList<AiModelSuggestionDto> suggestions = await _aiService.GetModelSuggestionsAsync(ct);
-            return ResultDto<IReadOnlyList<AiModelSuggestionDto>>.Success(suggestions);
         }
     }
 
@@ -79,18 +46,18 @@ namespace Business.Ipc.Handlers.Ai
     /// Starts a download and comes straight back. It runs for minutes, so how it is going arrives
     /// on the broadcast pipe rather than on this call.
     /// </summary>
-    public class PullAiModelHandler : IRequestHandler<PullAiModelCommand, ResultDto<bool>>
+    public class DownloadAiModelHandler : IRequestHandler<DownloadAiModelCommand, ResultDto<bool>>
     {
-        private readonly IAiService _aiService;
+        private readonly IAiModelService _modelService;
 
-        public PullAiModelHandler(IAiService aiService)
+        public DownloadAiModelHandler(IAiModelService modelService)
         {
-            _aiService = aiService;
+            _modelService = modelService;
         }
 
-        public async Task<ResultDto<bool>> Handle(PullAiModelCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> Handle(DownloadAiModelCommand request, CancellationToken ct)
         {
-            bool isStarted = await _aiService.StartModelPullAsync(request.model, ct);
+            bool isStarted = await _modelService.StartModelDownloadAsync(request.model, ct);
 
             if (!isStarted)
                 return ResultDto<bool>.Failure("Downloading a model needs Ollama to be the chosen provider.");
@@ -99,33 +66,65 @@ namespace Business.Ipc.Handlers.Ai
         }
     }
 
+    /// <summary>Whether the chat can be offered, and why not when it cannot.</summary>
+    public class GetAiChatAvailabilityHandler : IRequestHandler<GetAiChatAvailabilityQuery, ResultDto<AiChatAvailabilityDto>>
+    {
+        private readonly IFlowQuestionService _flowQuestionService;
+
+        public GetAiChatAvailabilityHandler(IFlowQuestionService flowQuestionService)
+        {
+            _flowQuestionService = flowQuestionService;
+        }
+
+        public async Task<ResultDto<AiChatAvailabilityDto>> Handle(GetAiChatAvailabilityQuery request, CancellationToken ct)
+        {
+            return ResultDto<AiChatAvailabilityDto>.Success(await _flowQuestionService.GetAvailabilityAsync(ct));
+        }
+    }
+
+    /// <summary>Answers a question about the flows, by letting the model query the database.</summary>
+    public class AskAiHandler : IRequestHandler<AskAiQuery, ResultDto<AiChatAnswerDto>>
+    {
+        private readonly IFlowQuestionService _flowQuestionService;
+
+        public AskAiHandler(IFlowQuestionService flowQuestionService)
+        {
+            _flowQuestionService = flowQuestionService;
+        }
+
+        public async Task<ResultDto<AiChatAnswerDto>> Handle(AskAiQuery request, CancellationToken ct)
+        {
+            return ResultDto<AiChatAnswerDto>.Success(await _flowQuestionService.AskAsync(request.dto, ct));
+        }
+    }
+
     /// <summary>How the current or last download is going, for a page that has just opened./summary>
-    public class GetAiPullStateHandler : IRequestHandler<GetAiPullStateQuery, ResultDto<AiModelPullEventDto?>>
+    public class GetAiDownloadStateHandler : IRequestHandler<GetAiDownloadStateQuery, ResultDto<AiModelDownloadEventDto?>>
     {
         private readonly IAiModelDownloadService _downloadService;
 
-        public GetAiPullStateHandler(IAiModelDownloadService downloadService)
+        public GetAiDownloadStateHandler(IAiModelDownloadService downloadService)
         {
             _downloadService = downloadService;
         }
 
-        public Task<ResultDto<AiModelPullEventDto?>> Handle(GetAiPullStateQuery request, CancellationToken ct)
+        public Task<ResultDto<AiModelDownloadEventDto?>> Handle(GetAiDownloadStateQuery request, CancellationToken ct)
         {
-            return Task.FromResult(ResultDto<AiModelPullEventDto?>.Success(_downloadService.Current));
+            return Task.FromResult(ResultDto<AiModelDownloadEventDto?>.Success(_downloadService.Current));
         }
     }
 
     /// <summary>Dismisses a finished download. A running one stays, because dismissing it would be a lie.</summary>
-    public class ClearAiPullStateHandler : IRequestHandler<ClearAiPullStateCommand, ResultDto<bool>>
+    public class ClearAiDownloadStateHandler : IRequestHandler<ClearAiDownloadStateCommand, ResultDto<bool>>
     {
         private readonly IAiModelDownloadService _downloadService;
 
-        public ClearAiPullStateHandler(IAiModelDownloadService downloadService)
+        public ClearAiDownloadStateHandler(IAiModelDownloadService downloadService)
         {
             _downloadService = downloadService;
         }
 
-        public Task<ResultDto<bool>> Handle(ClearAiPullStateCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> Handle(ClearAiDownloadStateCommand request, CancellationToken ct)
         {
             _downloadService.Clear();
             return Task.FromResult(ResultDto<bool>.Success(true));

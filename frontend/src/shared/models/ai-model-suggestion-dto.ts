@@ -9,6 +9,6 @@ export interface AiModelSuggestionDto {
   size: string;
   description: string;
 
-  /** Already pulled, so the row says so rather than offering it again. */
+  /** Already downloaded, so the row says so rather than offering it again. */
   isInstalled: boolean;
 }

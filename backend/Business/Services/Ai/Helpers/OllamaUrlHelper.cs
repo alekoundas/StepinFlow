@@ -1,4 +1,4 @@
-namespace Business.Helpers
+namespace Business.Services.Ai.Helpers
 {
     /// <summary>
     /// Ollama serves two things off one address: an OpenAI compatible api under /v1, and its own
@@ -11,14 +11,20 @@ namespace Business.Helpers
             return $"{Trim(baseUrl)}/v1";
         }
 
-        /// <summary>The models actually pulled onto this machine.</summary>
+        /// <summary>The models actually downloaded onto this machine.</summary>
         public static string ToTagsEndpoint(string baseUrl)
         {
             return $"{Trim(baseUrl)}/api/tags";
         }
 
+        /// <summary>What a model can do, capabilities included - "tools" is the one that matters.</summary>
+        public static string ToShowEndpoint(string baseUrl)
+        {
+            return $"{Trim(baseUrl)}/api/show";
+        }
+
         /// <summary>Downloads one. Answers with a stream of progress lines, not a single reply.</summary>
-        public static string ToPullEndpoint(string baseUrl)
+        public static string ToDownloadEndpoint(string baseUrl)
         {
             return $"{Trim(baseUrl)}/api/pull";
         }
@@ -28,7 +34,7 @@ namespace Business.Helpers
         ///
         /// The tag is the model: qwen2.5:3b and qwen2.5:7b are different downloads of different
         /// sizes, and comparing only the part before the colon would call one of them the other.
-        /// A name with no tag means :latest, which is what Ollama pulls when you leave it off.
+        /// A name with no tag means :latest, which is what Ollama downloads when you leave it off.
         /// </summary>
         public static string NormaliseModelName(string name)
         {
