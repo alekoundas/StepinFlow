@@ -35,11 +35,17 @@ namespace Business.Services.Ai.Tools
         [Description("Lists flows whose name or description matches the text. Pass an empty string to list every flow. Use this first when the question names a flow.")]
         public async Task<IReadOnlyList<FlowSummary>> SearchFlows([Description("Text to match in the name or description. Empty lists all.")] string text)
         {
+            List<string> tokens = SearchPatterns(text);
+
+            // Nothing worth searching for - whitespace included - means the whole list, which is
+            // what the description promises for an empty string.
+            bool isListAll = tokens.Count == 0;
+
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
             return await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => text == "" || EF.Functions.Like(x.Name, $"%{text}%") || EF.Functions.Like(x.Description, $"%{text}%"))
+                .Where(x => isListAll || tokens.Any(t => EF.Functions.Like(x.Name, t) || EF.Functions.Like(x.Description, t)))
                 .OrderBy(x => x.Name)
                 .Take(_maxRows)
                 .Select(x => new FlowSummary(
@@ -104,23 +110,22 @@ namespace Business.Services.Ai.Tools
             [Description("Text to look for, for example an application name.")] string text,
             [Description("Optional step type to narrow to. Empty searches every type.")] string flowStepType)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            List<string> tokens = SearchPatterns(text);
+            if (tokens.Count == 0)
                 return [];
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-            string like = $"%{text}%";
-
             return await Steps(dbContext)
                 .Where(x => flowStepType == "" || x.FlowStepType.ToString() == flowStepType)
-                .Where(x =>
-                    EF.Functions.Like(x.Name, like) ||
-                    EF.Functions.Like(x.ProcessName, like) ||
-                    EF.Functions.Like(x.TitlePattern, like) ||
-                    EF.Functions.Like(x.KeyboardInputText, like) ||
-                    EF.Functions.Like(x.RunCommand, like) ||
-                    EF.Functions.Like(x.RunCommandPresetValue, like) ||
-                    EF.Functions.Like(x.ConditionText, like))
+                .Where(x => tokens.Any(t =>
+                    EF.Functions.Like(x.Name, t) ||
+                    EF.Functions.Like(x.ProcessName, t) ||
+                    EF.Functions.Like(x.TitlePattern, t) ||
+                    EF.Functions.Like(x.KeyboardInputText, t) ||
+                    EF.Functions.Like(x.RunCommand, t) ||
+                    EF.Functions.Like(x.RunCommandPresetValue, t) ||
+                    EF.Functions.Like(x.ConditionText, t)))
                 .Take(_maxRows)
                 .Select(Projection())
                 .ToListAsync();
@@ -170,6 +175,31 @@ namespace Business.Services.Ai.Tools
                 .ToListAsync();
         }
 
+        [Description("How many steps of each type a flow has. Use this for \"what does this flow mostly do\" instead of listing every step.")]
+        public async Task<IReadOnlyList<StepTypeCount>> CountStepsByType([Description("The flow id.")] int flowId)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+            return await Steps(dbContext)
+                .Where(x => x.RootId == flowId)
+                .GroupBy(x => x.FlowStepType)
+                .Select(g => new StepTypeCount(g.Key.ToString(), g.Count()))
+                .ToListAsync();
+        }
+
+        [Description("How many runs finished, were stopped, or ended with an error. Use this for \"how reliable is this flow\" instead of listing runs.")]
+        public async Task<IReadOnlyList<RunOutcomeCount>> CountRunOutcomes([Description("Optional flow id. Zero counts runs of every flow.")] int flowId)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+            return await dbContext.Executions
+                .AsNoTracking()
+                .Where(x => flowId == 0 || x.FlowId == flowId)
+                .GroupBy(x => x.Status)
+                .Select(g => new RunOutcomeCount(g.Key.ToString(), g.Count()))
+                .ToListAsync();
+        }
+
         [Description("The application settings and their current values, so a problem caused by a setting can be seen. The api key is never included.")]
         public async Task<IReadOnlyList<SettingSummary>> GetSettings()
         {
@@ -206,6 +236,39 @@ namespace Business.Services.Ai.Tools
         // ================================================================
         // Private methods
         // ================================================================
+
+        /// <summary>
+        /// A phrase matched a word at a time rather than whole, because "Google Chrome" has to find
+        /// chrome.exe and a single LIKE over the phrase never will. Recall bought with precision:
+        /// a step matching only "google" comes back too.
+        /// </summary>
+        private static List<string> SearchPatterns(string text)
+        {
+            char[] tokenSeparators = [' ', '\t', ',', ';', '/', '\\', '"', '\''];
+            int maxSearchTokens = 4; //Enough for "google chrome browser". More words than that is not a search term.
+            return text
+                .Split(tokenSeparators, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => StripExecutableSuffix(x.Trim().ToLowerInvariant()))
+                .Where(x => x.Length >= 2)
+                .Distinct()
+                .Take(maxSearchTokens)
+                .Select(x => $"%{x}%")
+                .ToList();
+        }
+
+        /// <summary>Typing chrome.exe should find the same rows as typing chrome.</summary>
+        private static string StripExecutableSuffix(string token)
+        {
+            string[] executableSuffixes = [".exe", ".app", ".com"];
+
+            foreach (string suffix in executableSuffixes)
+            {
+                if (token.Length > suffix.Length && token.EndsWith(suffix, StringComparison.Ordinal))
+                    return token[..^suffix.Length];
+            }
+
+            return token;
+        }
 
         private static IQueryable<Core.Models.Database.FlowStep> Steps(AppDbContext dbContext)
         {
@@ -253,6 +316,10 @@ namespace Business.Services.Ai.Tools
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 
         public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, int DurationMilliseconds, string? Value, string? Message, int? ExitCode);
+
+        public record StepTypeCount(string Type, int Count);
+
+        public record RunOutcomeCount(string Status, int Count);
 
         public record SettingSummary(string Key, string Label, string Description, string Value, bool IsChanged);
 

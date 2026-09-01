@@ -56,6 +56,18 @@ namespace Business.Services.Ai.Helpers
               when something ended it.
             - A setting with IsChanged false is still on its default.
 
+            Worked examples of the first call to make:
+            - "which flows use Chrome?"        -> SearchSteps(text: "chrome", flowStepType: "")
+            - "what does the ddd flow do?"     -> SearchFlows(text: "ddd"), then CountStepsByType(flowId)
+            - "list every step in ddd"         -> SearchFlows(text: "ddd"), then GetFlowSteps(flowId, "")
+            - "why did the last run fail?"     -> GetRuns(flowId: 0), then GetRunSteps(executionId)
+            - "how often does ddd fail?"       -> SearchFlows(text: "ddd"), then CountRunOutcomes(flowId)
+            - "what do my flows type?"         -> SearchSteps(text: "", flowStepType: "KEYBOARD_INPUT")
+            - "is history turned on?"          -> GetSettings()
+
+            Prefer a count over a list. CountStepsByType and CountRunOutcomes answer "mostly" and
+            "how often" in a few rows, where listing every step or run answers them in hundreds.
+
             Your answer:
             - Short and direct. Name flows and steps by name, and give ids when the user would need
               them to go and look.

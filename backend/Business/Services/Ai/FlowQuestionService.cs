@@ -93,7 +93,7 @@ namespace Business.Services.Ai
 
             ChatOptions options = new ChatOptions
             {
-                Tools = BuildTools(),
+                Tools = BuildDbTools(),
                 MaxOutputTokens = 1200,
             };
 
@@ -144,7 +144,7 @@ namespace Business.Services.Ai
         }
 
 
-        private IList<AITool> BuildTools()
+        private IList<AITool> BuildDbTools()
         {
             DbQueryTools tools = new DbQueryTools(_dbContextFactory);
 
@@ -156,6 +156,8 @@ namespace Business.Services.Ai
                 AIFunctionFactory.Create(tools.SearchSteps),
                 AIFunctionFactory.Create(tools.GetRuns),
                 AIFunctionFactory.Create(tools.GetRunSteps),
+                AIFunctionFactory.Create(tools.CountStepsByType),
+                AIFunctionFactory.Create(tools.CountRunOutcomes),
                 AIFunctionFactory.Create(tools.GetSettings),
                 AIFunctionFactory.Create(tools.GetDiscordBots),
             ];
