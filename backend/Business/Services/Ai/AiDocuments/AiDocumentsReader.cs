@@ -1,8 +1,7 @@
 using System.Reflection;
-
 using Core.Models.Business;
 
-namespace Business.Services.Ai.Rag
+namespace Business.Services.Ai.AiDocuments
 {
     /// <summary>
     /// The shipped help, in chunks.
@@ -11,15 +10,15 @@ namespace Business.Services.Ai.Rag
     /// no folder to find, nothing to copy per platform, and no way for an install to be missing
     /// the pages the assistant answers from.
     /// </summary>
-    public static class HelpDocsReader
+    public static class AiDocumentsReader
     {
         private const string _extension = ".md";
 
-        public static IReadOnlyList<DocumentChunk> Read()
+        public static IReadOnlyList<AiDocumentChunk> Read()
         {
-            Assembly assembly = typeof(DocumentChunk).Assembly;
+            Assembly assembly = typeof(AiDocumentChunk).Assembly;
 
-            List<DocumentChunk> chunks = new List<DocumentChunk>();
+            List<AiDocumentChunk> chunks = new List<AiDocumentChunk>();
 
             // Enumerated rather than named. Resource names are built from the folder layout, so
             // spelling one out here would break the next time a file moves.
@@ -33,7 +32,7 @@ namespace Business.Services.Ai.Rag
                     continue;
 
                 using StreamReader reader = new StreamReader(stream);
-                chunks.AddRange(HelpDocChunker.Split(reader.ReadToEnd(), name));
+                chunks.AddRange(AiAiDocumentChunker.Split(reader.ReadToEnd(), name));
             }
 
             return chunks;

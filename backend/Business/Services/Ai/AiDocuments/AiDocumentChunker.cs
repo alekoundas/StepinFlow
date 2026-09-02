@@ -1,6 +1,6 @@
 using Core.Models.Business;
 
-namespace Business.Services.Ai.Rag
+namespace Business.Services.Ai.AiDocuments
 {
     /// <summary>
     /// Splits a markdown document into retrievable pieces.
@@ -11,11 +11,11 @@ namespace Business.Services.Ai.Rag
     /// Every chunk starts with its document title and heading. 
     /// A chunk is read alone, by a model that will not see the page it came from, so it has to say what it is about.
     /// </summary>
-    public static class HelpDocChunker
+    public static class AiAiDocumentChunker
     {
         private const int _maxCharacters = 2000; //The hard cap of bge-small-en-v1.5. Counts the heading, which is part of what gets embedded.
 
-        public static IReadOnlyList<DocumentChunk> Split(string markdown, string source)
+        public static IReadOnlyList<AiDocumentChunk> Split(string markdown, string source)
         {
             if (string.IsNullOrWhiteSpace(markdown))
                 return [];
@@ -30,7 +30,7 @@ namespace Business.Services.Ai.Rag
             // Find all sections (double '##')
             List<Section> sections = SplitIntoSections(lines);
 
-            List<DocumentChunk> chunks = new List<DocumentChunk>();
+            List<AiDocumentChunk> chunks = new List<AiDocumentChunk>();
             foreach (Section section in sections)
             {
                 if (section.Lines.All(x => x.Trim().Length == 0))
@@ -44,7 +44,7 @@ namespace Business.Services.Ai.Rag
                     header = $"{title} > {section.Heading}\n\n";
 
                 foreach (string part in Pack(section.Lines, _maxCharacters - header.Length))
-                    chunks.Add(new DocumentChunk(source, title, section.Heading, header + part, chunks.Count));
+                    chunks.Add(new AiDocumentChunk(source, title, section.Heading, header + part, chunks.Count));
             }
 
             return chunks;
