@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="AiDocs\**\*.md" />
+    <EmbeddedResource Include="AiDocuments\**\*.md" />
   </ItemGroup>
 
   <!-- Downloaded by "npm run model:download" into AiModels/, which is gitignored. Content

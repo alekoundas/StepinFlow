@@ -6,7 +6,7 @@ namespace Core.Models.Business
     /// Sized to be answerable on its own: a chunk that needs the paragraph above it to make sense
     /// is a chunk that will be retrieved without it.
     /// </summary>
-    public sealed record DocumentChunk(
+    public sealed record AiDocumentChunk(
         string Source,
         string Title,
         string Heading,
