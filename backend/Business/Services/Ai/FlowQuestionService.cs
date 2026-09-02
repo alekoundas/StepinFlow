@@ -153,6 +153,7 @@ namespace Business.Services.Ai
                 AIFunctionFactory.Create(tools.SearchFlows),
                 AIFunctionFactory.Create(tools.GetFlow),
                 AIFunctionFactory.Create(tools.GetFlowSteps),
+                AIFunctionFactory.Create(tools.GetFlowStepDetail),
                 AIFunctionFactory.Create(tools.SearchSteps),
                 AIFunctionFactory.Create(tools.GetRuns),
                 AIFunctionFactory.Create(tools.GetRunSteps),

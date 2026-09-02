@@ -24,11 +24,14 @@ export function useAiChatAvailability(isEnabled: boolean) {
  * and there is nothing to expire, resume or clean up.
  */
 export function useAskAi() {
-  const { conversations, addMessage, setPending, setAnswer, setError } =
-    useAiChatStore();
+  const { addMessage, setPending, setAnswer, setError } = useAiChatStore();
 
   const ask = async (conversationId: string, question: string) => {
-    const conversation = conversations.find((x) => x.id === conversationId);
+    // From the store rather than a render closure: a conversation started a moment ago is
+    // already in the store and not yet in this component's props.
+    const conversation = useAiChatStore
+      .getState()
+      .conversations.find((x) => x.id === conversationId);
     if (!conversation || conversation.isPending) return;
 
     const asked = [

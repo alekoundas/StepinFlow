@@ -1,4 +1,5 @@
 import { Tag } from "primereact/tag";
+import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
@@ -7,6 +8,9 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { hasBranches } from "@/shared/models/flow-step-catalog";
 import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
 import { useExecutionStepScreenshot } from "@/features/execution/hooks/use-execution";
+import { useAiStatus } from "@/features/ai/hooks/use-ai";
+import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
+import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -56,6 +60,8 @@ export default function ExecutionStepDetailComponent({
             value={isFailure ? "Failed" : "Succeeded"}
           />
         ) : null}
+
+        {isFailure ? <SuggestFixButton executionStep={executionStep} /> : null}
       </div>
 
       <div className="flex flex-column gap-2">
@@ -158,6 +164,44 @@ export default function ExecutionStepDetailComponent({
         </div>
       ) : null}
     </div>
+  );
+}
+
+interface SuggestFixButtonProps {
+  executionStep: ExecutionStepDto;
+}
+
+/**
+ * Asks the chat about this step, with the ids already in the question.
+ *
+ * Not its own one-shot answer: a fix is a conversation. "Lower the accuracy to 0.7" invites "why?"
+ * and "what else could it be?", and the chat can take those where a single verdict cannot.
+ */
+function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
+  const { data: isConfigured } = useAiStatus();
+  const { open, startConversation } = useAiChatStore();
+  const { ask } = useAskAi();
+
+  if (!isConfigured || !executionStep.flowStepId) return null;
+
+  const suggest = () => {
+    const conversationId = startConversation();
+    open();
+
+    ask(
+      conversationId,
+      `Step ${executionStep.flowStepId} ("${executionStep.name}") failed in run ${executionStep.executionId}. Why did it fail, and how do I fix it?`,
+    );
+  };
+
+  return (
+    <Button
+      label="Suggest a fix"
+      icon="pi pi-sparkles"
+      size="small"
+      text
+      onClick={suggest}
+    />
   );
 }
 

@@ -25,7 +25,7 @@ interface Actions {
   open: () => void;
   close: () => void;
 
-  startConversation: () => void;
+  startConversation: () => string;
   closeConversation: (id: string) => void;
   setActive: (id: string) => void;
 
@@ -65,14 +65,16 @@ export const useAiChatStore = create<Props & Actions>()(
 
     close: (): void => set({ isOpen: false }),
 
-    startConversation: (): void =>
-      set((state) => {
-        const next = newConversation();
-        return {
-          conversations: [...state.conversations, next],
-          activeId: next.id,
-        };
-      }),
+    startConversation: (): string => {
+      const next = newConversation();
+
+      set((state) => ({
+        conversations: [...state.conversations, next],
+        activeId: next.id,
+      }));
+
+      return next.id;
+    },
 
     // Closing the last one leaves an empty conversation rather than an empty window.
     closeConversation: (id: string): void =>

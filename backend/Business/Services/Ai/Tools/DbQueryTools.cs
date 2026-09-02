@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Core.Enums;
 using Core.Helpers;
+using Core.Helpers;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -128,6 +129,63 @@ namespace Business.Services.Ai.Tools
                 .Take(_maxRows)
                 .Select(Projection())
                 .ToListAsync();
+        }
+
+        [Description("Everything one step is configured with - only the settings its type actually uses, plus its area and templates where it has them. Use this before suggesting why a step misbehaves.")]
+        public async Task<StepDetail?> GetFlowStepDetail([Description("The step id, from GetFlowSteps or SearchSteps.")] int flowStepId)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+            Core.Models.Database.FlowStep? step = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Include(x => x.FlowStepImages)
+                .Include(x => x.FlowArea)
+                .FirstOrDefaultAsync(x => x.Id == flowStepId);
+
+            if (step == null)
+                return null;
+
+            // Only the columns this type uses. A WAIT step carrying an accuracy and an OCR language
+            // reads as though both mean something, and fifty nulls cost context for nothing.
+            Dictionary<string, object?> settings = new Dictionary<string, object?>();
+
+            foreach (string field in FlowStepFieldCatalog.FieldsFor(step.FlowStepType))
+            {
+                object? value = typeof(Core.Models.Database.FlowStep).GetProperty(field)?.GetValue(step);
+                settings[field] = value is Enum ? value.ToString() : value;
+            }
+
+            AreaSummary? area = step.FlowArea == null
+                ? null
+                : new AreaSummary(
+                    step.FlowArea.Id,
+                    step.FlowArea.Name,
+                    step.FlowArea.Type.ToString(),
+                    step.FlowArea.ProcessName,
+                    step.FlowArea.TitlePattern,
+                    step.FlowArea.MonitorUniqueId,
+                    step.FlowArea.Width,
+                    step.FlowArea.Height);
+
+            List<TemplateSummary> templates = step.FlowStepImages
+                .Select(x => new TemplateSummary(
+                    x.Id,
+                    x.Name,
+                    x.IsRequired,
+                    x.Accuracy,
+                    x.AllowMultiScale,
+                    x.AuthoredFrameWidth,
+                    x.AuthoredFrameHeight))
+                .ToList();
+
+            return new StepDetail(
+                step.Id,
+                step.RootId,
+                step.Name,
+                step.FlowStepType.ToString(),
+                settings,
+                area,
+                templates);
         }
 
         [Description("Recent runs, newest first. Says whether each finished, was stopped, or ended with an error.")]
@@ -311,6 +369,10 @@ namespace Business.Services.Ai.Tools
         public record PointSummary(int Id, string Name, int X, int Y);
 
         public record StepSummary(int Id, int FlowId, string Name, string Type, string ProcessName, string TitlePattern, string TypedText, string Command, string ConditionText, int? SubFlowId, int? FlowAreaId, int? FlowPointId);
+
+        public record StepDetail(int Id, int FlowId, string Name, string Type, Dictionary<string, object?> Settings, AreaSummary? Area, List<TemplateSummary> Templates);
+
+        public record TemplateSummary(int Id, string Name, bool IsRequired, float? Accuracy, bool AllowMultiScale, int AuthoredFrameWidth, int AuthoredFrameHeight);
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 

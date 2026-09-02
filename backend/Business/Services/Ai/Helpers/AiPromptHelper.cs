@@ -61,9 +61,15 @@ namespace Business.Services.Ai.Helpers
             - "what does the ddd flow do?"     -> SearchFlows(text: "ddd"), then CountStepsByType(flowId)
             - "list every step in ddd"         -> SearchFlows(text: "ddd"), then GetFlowSteps(flowId, "")
             - "why did the last run fail?"     -> GetRuns(flowId: 0), then GetRunSteps(executionId)
+            - "why did step 12 fail?"          -> GetFlowStepDetail(12), then GetRunSteps(executionId)
             - "how often does ddd fail?"       -> SearchFlows(text: "ddd"), then CountRunOutcomes(flowId)
             - "what do my flows type?"         -> SearchSteps(text: "", flowStepType: "KEYBOARD_INPUT")
             - "is history turned on?"          -> GetSettings()
+
+            Asked why a step fails or how to fix it: read GetFlowStepDetail for how it is set up and
+            GetRunSteps for what it actually did, then say which setting to change and to what. An
+            image search that finds nothing is usually its accuracy, its search area, or a template
+            captured at a different window size. Say which one you think it is.
 
             Prefer a count over a list. CountStepsByType and CountRunOutcomes answer "mostly" and
             "how often" in a few rows, where listing every step or run answers them in hundreds.
