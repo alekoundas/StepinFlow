@@ -64,6 +64,15 @@ is lost between sessions.
       server side; aggregate tools such as `CountStepsByType(flowId)`, which answers "what does this
       flow mostly do" in 18 rows instead of 500. Aggregates are the biggest lever, because a tool
       result is re-sent on every later round of the loop.
+- [ ] **Say it out loud when the docs index is unavailable.** If the embedding model is missing or
+      ONNX will not load, help answers fall back to whatever the tools can reach and the assistant
+      is quietly worse at questions about the app itself. The AI settings panel should say so, and
+      it is worth deciding whether that also deserves a banner across the top of the app - a
+      degraded feature nobody is told about is the failure mode this codebase keeps rejecting.
+      This matters more than it would otherwise, because the model ships as `Content` - a loose
+      file beside the exe rather than sealed into the assembly - so a user can simply delete it.
+      Check the file on startup and report it, rather than finding out when somebody asks a
+      question and gets a worse answer for no stated reason.
 - [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Windows DPAPI
       (ProtectedData.Protect) is about ten lines and needs no key management.
 - [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a

@@ -1,0 +1,112 @@
+name: Publish embedding model
+
+# The ONNX model is too big for git and never changes, so it lives in its own release and the app
+# build downloads it from there. Run this once per model; a new model means a new tag.
+#
+# Server to server: the bytes go HuggingFace -> runner -> release without crossing your connection.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag. A new model means a new tag - model-v2, model-v3."
+        required: true
+        default: "model-v1"
+      repo:
+        description: "HuggingFace repository"
+        required: true
+        default: "BAAI/bge-small-en-v1.5"
+      revision:
+        description: "HuggingFace commit sha. Not 'main' - the author can push new bytes to it."
+        required: true
+      model_path:
+        description: "Path to the ONNX file inside the HF repo"
+        required: true
+        default: "onnx/model.onnx"
+      dimensions:
+        description: "Embedding size the model must produce"
+        required: true
+        default: "384"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # The point of a tag is that it always serves the same bytes, so a build from March and one
+      # from December resolve identically. Overwriting one would lose that silently.
+      - name: Refuse to overwrite an existing release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "${{ inputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Release ${{ inputs.tag }} already exists. Use a new tag."
+            exit 1
+          fi
+
+      # --fail so an error page is never written to disk as a model.
+      - name: Download from HuggingFace
+        run: |
+          mkdir -p model
+          base="https://huggingface.co/${{ inputs.repo }}/resolve/${{ inputs.revision }}"
+
+          curl --fail --location --show-error --silent -o model/model.onnx "$base/${{ inputs.model_path }}"
+          curl --fail --location --show-error --silent -o model/vocab.txt "$base/vocab.txt"
+
+          ls -l model
+
+      # model_path is typed by hand, and pointing it at an fp16 or a differently sized export gives
+      # a real, loadable ONNX file that fails nowhere - it just embeds at the wrong precision or
+      # width, and retrieval is quietly poor months later. This is the only check that catches it.
+      - name: Smoke test the model
+        run: |
+          pip install --quiet onnxruntime numpy
+          python - <<'PY'
+          import numpy, onnxruntime, sys
+
+          session = onnxruntime.InferenceSession("model/model.onnx", providers=["CPUExecutionProvider"])
+
+          inputs = {i.name: i for i in session.get_inputs()}
+          print("inputs :", list(inputs))
+          print("outputs:", [(o.name, o.shape) for o in session.get_outputs()])
+
+          tokens = 8
+          feed = {}
+          for name in inputs:
+              value = numpy.ones((1, tokens), dtype=numpy.int64)
+              if name == "token_type_ids":
+                  value = numpy.zeros((1, tokens), dtype=numpy.int64)
+              feed[name] = value
+
+          result = session.run(None, feed)[0]
+          print("output shape:", result.shape)
+
+          expected = int("${{ inputs.dimensions }}")
+          if result.shape[-1] != expected:
+              sys.exit(f"expected {expected} dimensions, model produced {result.shape[-1]}")
+
+          if not numpy.isfinite(result).all():
+              sys.exit("model produced NaN or infinity")
+
+          print(f"ok: {expected} finite dimensions")
+          PY
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "${{ inputs.tag }}" \
+            model/model.onnx model/vocab.txt \
+            --title "Embedding model ${{ inputs.tag }}" \
+            --notes "HuggingFace \`${{ inputs.repo }}\` at revision \`${{ inputs.revision }}\`, file \`${{ inputs.model_path }}\`, ${{ inputs.dimensions }} dimensions.
+
+          Downloaded by the app build with:
+
+          \`\`\`
+          gh release download ${{ inputs.tag }} --dir backend/Core/AiModels
+          \`\`\`"
