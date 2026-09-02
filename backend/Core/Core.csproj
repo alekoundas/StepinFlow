@@ -10,6 +10,13 @@
     <EmbeddedResource Include="AiDocs\**\*.md" />
   </ItemGroup>
 
+  <!-- Downloaded by "npm run model:download" into AiModels/, which is gitignored. Content
+       rather than EmbeddedResource: it stays a loose file beside the exe, which single file
+       publish leaves alone. -->
+  <ItemGroup>
+    <Content Include="AiModels\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="MediatR" Version="14.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

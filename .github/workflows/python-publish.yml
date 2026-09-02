@@ -51,8 +51,14 @@ jobs:
       - name: Clean previous build artifacts
         run: npm run clean
 
+      - name: Copy protobuf schema
+        run: npm run protobuf:copy
+
       - name: Build frontend (Vite + React → dist/frontend/)
         run: npm run build:frontend
+
+      - name: Download embedding model
+        run: npm run model:download
 
       - name: Build backend (.NET → dist/backend/)
         run: npm run build:backend
