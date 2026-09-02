@@ -145,10 +145,8 @@ namespace Business.Services.Ai.Tools
             if (step == null)
                 return null;
 
-            // Only the columns this type uses. A WAIT step carrying an accuracy and an OCR language
-            // reads as though both mean something, and fifty nulls cost context for nothing.
+            // Get columns with value via Reflection.
             Dictionary<string, object?> settings = new Dictionary<string, object?>();
-
             foreach (string field in FlowStepFieldCatalog.FieldsFor(step.FlowStepType))
             {
                 object? value = typeof(Core.Models.Database.FlowStep).GetProperty(field)?.GetValue(step);
