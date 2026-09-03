@@ -26,7 +26,15 @@ export function useAiChatAvailability(isEnabled: boolean) {
 export function useAskAi() {
   const { addMessage, setPending, setAnswer, setError } = useAiChatStore();
 
-  const ask = async (conversationId: string, question: string) => {
+  /**
+   * @param executionId The run the question is about, when it came from one. It is what lets the
+   *   backend attach that run's screenshots, so a vision model can see what the step saw.
+   */
+  const ask = async (
+    conversationId: string,
+    question: string,
+    executionId?: number,
+  ) => {
     // From the store rather than a render closure: a conversation started a moment ago is
     // already in the store and not yet in this component's props.
     const conversation = useAiChatStore
@@ -43,7 +51,7 @@ export function useAskAi() {
     setPending(conversationId, true);
 
     try {
-      const answer = await backendApiService.Ai.ask({ messages: asked });
+      const answer = await backendApiService.Ai.ask({ messages: asked, executionId });
 
       if (answer.error) setError(conversationId, answer.error);
       else setAnswer(conversationId, answer.answer, answer.toolCalls);

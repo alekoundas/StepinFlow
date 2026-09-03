@@ -119,7 +119,9 @@ function AskAiButtons({ execution, flowName }: AskAiButtonsProps) {
   const askAbout = (question: string) => {
     const conversationId = startConversation();
     open();
-    ask(conversationId, question);
+
+    // The run goes with it, so a model that can see is shown what the failing step saw.
+    ask(conversationId, question, execution.id);
   };
 
   return (

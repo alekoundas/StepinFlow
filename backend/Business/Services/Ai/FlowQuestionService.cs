@@ -4,6 +4,7 @@ using Business.Services.Ai.Providers;
 using Business.Services.Ai.AiDocuments;
 using Business.Services.Ai.Tools;
 using Core.Enums;
+using Core.Models.Business;
 using Core.Models.Dtos;
 
 using DataAccess;
@@ -32,6 +33,7 @@ namespace Business.Services.Ai
         private readonly IAiModelService _modelService;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
+        private readonly IExecutionScreenshotReader _executionScreenshotReader;
         private readonly ILogger<FlowQuestionService> _logger;
 
         public FlowQuestionService(
@@ -40,6 +42,7 @@ namespace Business.Services.Ai
             IAiModelService modelService,
             IDbContextFactory<AppDbContext> dbContextFactory,
             IAiDocumentIndexService aiDocumentIndexService,
+            IExecutionScreenshotReader executionScreenshotReader,
             ILogger<FlowQuestionService> logger)
         {
             _providerService = providerService;
@@ -47,6 +50,7 @@ namespace Business.Services.Ai
             _modelService = modelService;
             _dbContextFactory = dbContextFactory;
             _aiDocumentIndexService = aiDocumentIndexService;
+            _executionScreenshotReader = executionScreenshotReader;
             _logger = logger;
         }
 
@@ -95,6 +99,8 @@ namespace Business.Services.Ai
             List<ChatMessage> messages = [new ChatMessage(ChatRole.System, AiPromptHelper.AskAboutFlows)];
             messages.AddRange(request.Messages.Select(x => ToChatMessage(x)));
 
+            await AttachScreenshotsAsync(messages, request.ExecutionId, ct);
+
             ChatOptions options = new ChatOptions
             {
                 Tools = BuildDbTools(),
@@ -136,6 +142,33 @@ namespace Business.Services.Ai
         private static AiChatAvailabilityDto Unavailable(string model, string reason)
         {
             return new AiChatAvailabilityDto { IsAvailable = false, Model = model, Reason = reason };
+        }
+
+        // Pictures ride on the newest question only, never on the ones behind it.
+        //
+        // UseFunctionInvocation replays the whole conversation on every round of the tool loop, up
+        // to _maxToolRounds, so an image left in the history is re-read that many times per
+        // question. Ollama's cpu backend keeps no cache between requests, so nothing absorbs that.
+        private async Task AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, CancellationToken ct)
+        {
+            if (executionId == null)
+                return;
+
+            ChatMessage? newest = messages.LastOrDefault(x => x.Role == ChatRole.User);
+            if (newest == null)
+                return;
+
+            IReadOnlyList<AiImage> images = await _executionScreenshotReader.GetForExecutionAsync(executionId.Value, ct);
+            if (images.Count == 0)
+                return;
+
+            // Each one says what it is before it arrives. Unlabelled, they are just pictures, and a
+            // model describes pictures instead of comparing them.
+            foreach (AiImage image in images)
+            {
+                newest.Contents.Add(new TextContent(image.Label));
+                newest.Contents.Add(new DataContent(image.Bytes, image.MediaType));
+            }
         }
 
         private static ChatMessage ToChatMessage(AiChatMessageDto message)

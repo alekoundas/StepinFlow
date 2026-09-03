@@ -201,6 +201,7 @@ function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
     ask(
       conversationId,
       `Step ${executionStep.flowStepId} ("${executionStep.name}") failed in run ${executionStep.executionId}. Why did it fail, and how do I fix it?`,
+      executionStep.executionId,
     );
   };
 

@@ -12,11 +12,12 @@ namespace Business.Services.ExecutionService
     /// <summary>
     /// What one run holds in memory while it walks.
     ///
-    /// Three things, all of them bounded, so a run going for three weeks holds no more than one
-    /// going for three seconds:
+    /// Two things, both bounded, so a run going for three weeks holds no more than one going for three seconds:
     /// 1) the execution steps a step below can still read - dropped as the walk leaves a branch.
     /// 2) the hits a FIND_ALL search came back with - dropped with the step that produced them.
-    /// 3) the last few screenshots - rolling out of a fixed ring.
+    ///
+    /// Screenshots are not held here. Each belongs to the step that took it and goes straight to
+    /// that step, so there is nothing to roll out of a ring and nothing to hand over on failure.
     ///
     /// Nothing here is written anywhere. A run with history off keeps all of it and saves none of
     /// it, which is why turning history off can never change what a flow does.
@@ -30,10 +31,8 @@ namespace Business.Services.ExecutionService
 
         private readonly Dictionary<int, ExecutionStep> _readableByStepId = new Dictionary<int, ExecutionStep>();                    //What a step below can still read, keyed by the flow step. One per step - a loop overwrites its own
         private readonly Dictionary<int, IReadOnlyList<Point>> _cachedPointsByStepId = new Dictionary<int, IReadOnlyList<Point>>();  //Every hit a FIND_ALL came back with
-        private readonly Queue<ExecutionScreenshot> _cachedScreenshots = new Queue<ExecutionScreenshot>();                           //The dashcam - only ever read when a step fails
 
         private bool _keepsScreenshots;
-        private int _screenshotRingSize = 5;
 
         public ExecutionCacheService(
             IAppSettingService appSettingService,
@@ -57,9 +56,6 @@ namespace Business.Services.ExecutionService
 
             _readableByStepId.Clear();
             _cachedPointsByStepId.Clear();
-            _cachedScreenshots.Clear();
-
-            _screenshotRingSize = await _appSettingService.GetAsync(AppSettingCatalog.ExecutionScreenshotRingSize, ct);
         }
 
 
@@ -104,30 +100,14 @@ namespace Business.Services.ExecutionService
         }
 
 
-        // Cache screenshots
         public ExecutionScreenshot? RecordScreenshot(RawImage screenshot, FlowStep flowStep)
         {
             if (!_keepsScreenshots || screenshot.IsEmpty)
                 return null;
 
-            // Encoded here and not by the caller, so nothing pays for a JPEG that gets thrown away.
             byte[] encoded = _screenshotService.Encode(screenshot, ScreenshotFormatEnum.JPEG, _screenshotQuality);
-            ExecutionScreenshot cached = new ExecutionScreenshot(encoded, flowStep.Name, DateTime.Now);
 
-            _cachedScreenshots.Enqueue(cached);
-
-            while (_cachedScreenshots.Count > _screenshotRingSize)
-                _cachedScreenshots.Dequeue();
-
-            return cached;
-        }
-
-        public IReadOnlyList<ExecutionScreenshot> TakeScreenshots()
-        {
-            List<ExecutionScreenshot> screenshots = new List<ExecutionScreenshot>(_cachedScreenshots);
-            _cachedScreenshots.Clear();
-
-            return screenshots;
+            return new ExecutionScreenshot(encoded, flowStep.Name, DateTime.Now);
         }
 
     }

@@ -14,6 +14,12 @@ namespace Core.Models.Dtos
     public class AiChatRequestDto
     {
         public List<AiChatMessageDto> Messages { get; set; } = new List<AiChatMessageDto>();
+
+        /// <summary>
+        /// The execution this conversation was started from, when it was started from one. It is
+        /// what lets the assistant be shown the screenshots it kept.
+        /// </summary>
+        public int? ExecutionId { get; set; }
     }
 
     public class AiChatAnswerDto

@@ -67,6 +67,14 @@ namespace Business.Services.Ai.Helpers
             - A run's Status is COMPLETED, STOPPED, ERRORED or ABANDONED. ErrorMessage is set only
               when something ended it.
             - A setting with IsChanged false is still on its default.
+            - An image search reports BestScore: the best anything on screen scored, whether or not
+              it passed. Read it against that step's accuracy setting.
+              Just under it, 0.78 against 0.80 -> the accuracy is a shade too tight. Lowering it is
+              the fix, and it is a small, reversible change.
+              Far under it, 0.38 against 0.80 -> nothing resembling the template was on screen. The
+              cause is the template, the window size or the search area. Never suggest lowering the
+              accuracy for a score like this: it would make the flow click something that is not the
+              thing it was looking for.
 
             Worked examples of the first call to make:
             - "how do I click on an image?"    -> SearchAiDocuments(question: "how do I click on an image?")
@@ -82,11 +90,25 @@ namespace Business.Services.Ai.Helpers
             - "what do my flows type?"         -> SearchSteps(text: "", flowStepType: "KEYBOARD_INPUT")
             - "is history turned on?"          -> GetSettings()
 
+            Pictures arrive labelled, in this order: the template the failing step was hunting for,
+            then the screen just before that step, then the screen at it. They are there to be read
+            against each other, not described one at a time:
+            - The template is nowhere on the screen -> the flow is not where it thought it was. A
+              WINDOW_FOCUS, or the search area is pointing somewhere else.
+            - The template is there but looks different - another size, colour or state -> the
+              template is out of date, or the window is not the size it was captured at.
+            - The two screens look the same -> nothing changed between them, so whatever ran before
+              had not finished. A WAIT, or WAIT_UNTIL_FOUND instead of a plain search.
+            - Something is loading, greyed out, or behind a dialog -> say so, and say what is in the
+              way.
+            Say plainly when the pictures tell you nothing. A guess dressed as an observation is
+            worse than no observation, because it sends someone off to fix the wrong thing.
+
             Asked why a step fails or how to fix it: SearchAiDocuments for how that kind of step is
             meant to work, GetFlowStepDetail for how theirs is set up and GetRunSteps for what it
-            actually did, then say which setting to change and to what. An
-            image search that finds nothing is usually its accuracy, its search area, or a template
-            captured at a different window size. Say which one you think it is.
+            actually did, then say which setting to change and to what. An image search that finds
+            nothing is its accuracy, its search area, or a template captured at a different window
+            size - and BestScore tells you which, so use it rather than picking one.
 
             Prefer a count over a list. CountStepsByType and CountRunOutcomes answer "mostly" and
             "how often" in a few rows, where listing every step or run answers them in hundreds.

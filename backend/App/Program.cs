@@ -70,6 +70,7 @@ namespace App
             builder.Services.AddScoped<IAiModelService, AiModelService>();
             builder.Services.AddScoped<IExecutionRunExplainService, ExecutionRunExplainService>();
             builder.Services.AddScoped<IFlowQuestionService, FlowQuestionService>();
+            builder.Services.AddScoped<IExecutionScreenshotReader, ExecutionScreenshotReader>();
             builder.Services.AddSingleton<IAiModelDownloadService, AiModelDownloadService>();
 
             // Singletons, unlike the rest of AI: these hold the loaded onnx model and the built index, which cost seconds to produce and nothing to keep.

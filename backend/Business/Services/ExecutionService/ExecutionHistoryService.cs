@@ -1,7 +1,6 @@
-using Business.Services.AppSettingService;
+﻿using Business.Services.AppSettingService;
 using Core.Enums;
 using Core.Helpers;
-using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -104,7 +103,7 @@ namespace Business.Services.ExecutionService
 
             bool isFailure = executionStep.Outcome == StepOutcomeEnum.FAILURE;
 
-            WriteScreenshots(executionStep, isFailure);
+            WriteScreenshots(executionStep);
 
             _unwrittenExecutionSteps.Add(executionStep);
 
@@ -173,46 +172,34 @@ namespace Business.Services.ExecutionService
             }
         }
 
-        private void WriteScreenshots(ExecutionStep executionStep, bool isFailure)
+        // Actual write to disk.
+        private void WriteScreenshots(ExecutionStep executionStep)
         {
             if (_historyLevel != ExecutionHistoryLevelEnum.STEPS_AND_IMAGES)
                 return;
 
-            if (executionStep.Screenshot != null && _screenshotsWritten < _screenshotLimit)
-            {
-                executionStep.ScreenshotFileName = WriteScreenshot(executionStep.Screenshot, $"{executionStep.Sequence} {executionStep.Name}");
-                if (executionStep.ScreenshotFileName != null)
-                    _screenshotsWritten++;
-            }
-
-            if (!isFailure)
+            if (executionStep.Screenshot == null || _screenshotsWritten >= _screenshotLimit)
                 return;
 
-            IReadOnlyList<ExecutionScreenshot> runUp = _cache.TakeScreenshots();
-
-            for (int i = 0; i < runUp.Count; i++)
-                WriteScreenshot(runUp[i], $"{runUp[i].CapturedOn:HH.mm.ss.fff} {runUp[i].StepName} {i + 1} of {runUp.Count}");
-        }
-
-        // Actual write to disk.
-        private string? WriteScreenshot(ExecutionScreenshot screenshot, string name)
-        {
             try
             {
                 if (_runFolder.Length == 0)
                     _runFolder = PathHelper.GetExecutionRunPath(_flowName, DateTime.Now);
 
-                string fileName = $"{string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim()}.jpg";
+                string fileName = $"{string.Concat($"{executionStep.Sequence} {executionStep.Name}".Split(Path.GetInvalidFileNameChars())).Trim()}.jpg";
 
-                File.WriteAllBytes(Path.Combine(_runFolder, fileName), screenshot.Image);
+                File.WriteAllBytes(Path.Combine(_runFolder, fileName), executionStep.Screenshot.Image);
 
-                return fileName;
+                executionStep.ScreenshotFileName = fileName;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not write the screenshot {StepName} took.", screenshot.StepName);// Screenshot disk save, cant take down the execution.
-                return null;
+                _logger.LogWarning(ex, "Could not write the screenshot {StepName} took.", executionStep.Screenshot.StepName);// Screenshot disk save, cant take down the execution.
+                return;
             }
+
+            if (executionStep.ScreenshotFileName != null)
+                _screenshotsWritten++;
         }
     }
 }

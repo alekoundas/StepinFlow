@@ -57,23 +57,10 @@ namespace Core.Helpers
             "End the run.",
             "VcF8");
 
-        // Nothing is written while a flow is going well. A failure writes out the screenshots
-        // leading up to it, which is where the cause is - the one taken at the failure only shows
-        // a screen the thing was not on.
-        public static readonly IntAppSettingDefinition ExecutionScreenshotRingSize = new IntAppSettingDefinition(
-            AppSettingKeyEnum.EXECUTION_SCREENSHOT_RING_SIZE,
-            "Screenshots kept before a failure",
-            "How much run-up is saved with a failed step. Nothing is written while a flow succeeds.",
-            defaultValue: 5,
-            minimum: 5,
-            maximum: 50);
-
-        // Written until the count is reached and then no more, rather than kept rolling: a search
-        // inside a loop would otherwise write a screenshot on every pass of an unattended run.
         public static readonly IntAppSettingDefinition ExecutionScreenshotLimit = new IntAppSettingDefinition(
             AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT,
-            "Screenshots kept per run",
-            "How many screenshots a run leaves behind, so you can see what a step was looking at. Zero keeps none.",
+            "Screenshots kept per execution",
+            "How many screenshots one execution may leave on disk, whether the steps worked or not. Raise it if a long flow stops keeping them before the part you care about.",
             defaultValue: 20,
             minimum: 0,
             maximum: 500);
@@ -122,7 +109,6 @@ namespace Core.Helpers
             HotkeyPause,
             HotkeyStop,
 
-            ExecutionScreenshotRingSize,
             ExecutionScreenshotLimit,
 
             AiProvider,

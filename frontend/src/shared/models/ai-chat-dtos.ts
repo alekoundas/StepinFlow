@@ -6,6 +6,9 @@ export interface AiChatMessageDto {
 
 export interface AiChatRequestDto {
   messages: AiChatMessageDto[];
+
+  /** The run this conversation is about, so its screenshots can be attached. */
+  executionId?: number;
 }
 
 export interface AiChatAnswerDto {
