@@ -14,6 +14,7 @@ export const AppSettingKeyEnum = {
   AI_PROVIDER: "AI_PROVIDER",
   AI_MODEL: "AI_MODEL",
   AI_API_KEY: "AI_API_KEY",
+  AI_SEND_SCREEN_CONTENT: "AI_SEND_SCREEN_CONTENT",
   AI_OLLAMA_URL: "AI_OLLAMA_URL",
 } as const;
 

@@ -11,4 +11,7 @@ export interface AiModelSuggestionDto {
 
   /** Already downloaded, so the row says so rather than offering it again. */
   isInstalled: boolean;
+
+  /** What it is expected to do. Hand kept, because Ollama only answers for models you have. */
+  capabilities: string[];
 }

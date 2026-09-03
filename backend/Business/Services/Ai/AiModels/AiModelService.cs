@@ -149,6 +149,7 @@ namespace Business.Services.Ai.AiModels
                     Name = x.Name,
                     Size = x.Size,
                     Description = x.Description,
+                    Capabilities = x.Capabilities,
                     IsInstalled = names.Contains(OllamaUrlHelper.NormaliseModelName(x.Name)),
                 })
                 .ToList();

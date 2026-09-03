@@ -109,7 +109,32 @@ function SuggestionRow({
   return (
     <div className="flex align-items-center justify-content-between gap-3">
       <div className="flex flex-column">
-        <LabelComponent text={`${suggestion.name} · ${suggestion.size}`} />
+        <div className="flex align-items-center gap-2">
+          <LabelComponent text={`${suggestion.name} · ${suggestion.size}`} />
+
+          {/* Which one to pick turns on these: vision decides whether it can read a screenshot. */}
+          {(suggestion.capabilities ?? [])
+            .filter((x) => x === "tools" || x === "vision" || x === "thinking")
+            .map((capability) => (
+              <span
+                key={capability}
+                style={{
+                  padding: "0.1rem 0.4rem",
+                  borderRadius: 4,
+                  border: "1px solid var(--surface-border)",
+                  background: "var(--surface-ground)",
+                  color:
+                    capability === "vision"
+                      ? "var(--primary-color)"
+                      : "var(--text-color-secondary)",
+                  fontSize: "0.65rem",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {capability}
+              </span>
+            ))}
+        </div>
         <LabelComponent
           text={suggestion.description}
           size="xs"

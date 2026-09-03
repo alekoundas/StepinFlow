@@ -14,5 +14,12 @@ namespace Core.Models.Dtos
 
         /// <summary>Already downloaded, so the button says so rather than offering it again.</summary>
         public bool IsInstalled { get; set; }
+
+        /// <summary>
+        /// What it is expected to do, hand kept - Ollama only answers this for a model that is
+        /// already pulled. Once it is installed the real capabilities come from the provider and
+        /// these are not used.
+        /// </summary>
+        public IReadOnlyList<string> Capabilities { get; set; } = [];
     }
 }
