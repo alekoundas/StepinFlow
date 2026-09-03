@@ -7,6 +7,8 @@ import { FlowViewToggleComponent } from "@/features/flow/components/FlowViewTogg
 import { FlowDataTableComponent } from "@/features/flow/components/FlowDataTableComponent";
 import { FlowDataGridComponent } from "@/features/flow/components/FlowDataGridComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
+import { FlowCreateChoiceDialogComponent } from "@/features/flow/components/FlowCreateChoiceDialogComponent";
 
 interface Props {
   /** Sub-flows are the same page with the flag flipped: same table, same recorder, same editor. */
@@ -16,11 +18,32 @@ interface Props {
 export default function FlowListPage({ isSubFlow = false }: Props) {
   const navigate = useNavigate();
   const { setTarget, setCreateAsSubFlow } = useWizardStore();
+  const { openCustom } = useDialogStore();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   const noun = isSubFlow ? "Sub-Flow" : "Flow";
 
   const handleNew = () => navigate("/flows/new");
+
+  // Recording was a button of its own next to New, which read as a different kind of thing rather
+  // than another way of doing the same thing. All three start here now.
+  const handleCreate = () => {
+    openCustom(
+      "flow-create-choice",
+      <FlowCreateChoiceDialogComponent
+        noun={noun}
+        onManual={isSubFlow ? undefined : handleNew}
+        onRecord={handleRecord}
+        onAi={handleCreateWithAi}
+      />,
+    );
+  };
+
+  const handleCreateWithAi = () => {
+    setTarget(undefined);
+    setCreateAsSubFlow(isSubFlow);
+    navigate("/flows/ai");
+  };
 
   // The recorder names and creates the flow itself, so its step forms have somewhere to list
   // search areas and points from.
@@ -39,23 +62,11 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
           weight="bold"
         />
 
-        <div className="flex gap-2">
-          <Button
-            label={`Record a ${noun}`}
-            icon="pi pi-circle-fill"
-            onClick={handleRecord}
-            className="p-button-outlined"
-            tooltip="Do the task once and let the steps be written for you"
-            tooltipOptions={{ position: "bottom" }}
-          />
-          {!isSubFlow && (
-            <Button
-              label="New Flow"
-              icon="pi pi-plus"
-              onClick={handleNew}
-            />
-          )}
-        </div>
+        <Button
+          label={`New ${noun}`}
+          icon="pi pi-plus"
+          onClick={handleCreate}
+        />
       </div>
 
       <Card className="mt-6">
