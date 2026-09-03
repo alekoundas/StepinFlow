@@ -2,6 +2,10 @@ import { z } from "zod";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 
 export const FlowPointZod = z.object({
+  // Kept in the schema on purpose: zod strips unknown keys, so leaving it out sent the
+  // flow save a point with no id, which reads as new - the old row was deleted and every
+  // step pointing at it had its FlowPointId nulled.
+  id: z.number().int(),
   name: z.string().min(1, "Name is required").max(120, "Name too long"),
 
   flowAreaId: z.number().int().nullish(),

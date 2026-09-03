@@ -6,6 +6,10 @@ import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 
 export const FlowAreaZod = z
   .object({
+    // Kept in the schema on purpose: zod strips unknown keys, so leaving it out sent
+    // the flow save an area with no id, which reads as new - the old row was deleted
+    // and every step pointing at it had its FlowAreaId nulled.
+    id: z.number().int(),
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
     type: z.enum(FlowAreaTypeEnum),
 
