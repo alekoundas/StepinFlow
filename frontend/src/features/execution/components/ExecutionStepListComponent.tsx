@@ -61,37 +61,14 @@ export default function ExecutionStepListComponent({
   return (
     <div className="flex flex-column p-2">
       {rows.map((executionStep) => (
-        <div key={executionStep.sequence}>
-          <ExecutionStepRowComponent
-            executionStep={executionStep}
-            isFatal={
-              !!errorFlowStepId && executionStep.flowStepId === errorFlowStepId
-            }
-            isSelected={executionStep.sequence === selectedSequence}
-            maxDurationMilliseconds={maxDurationMilliseconds}
-            onSelect={setSelectedSequence}
-          />
-
-          {/* The whole diagnosis of a failed search, on the row that failed. */}
-          {executionStep.outcome === StepOutcomeEnum.FAILURE &&
-          executionStep.bestScore !== null &&
-          executionStep.bestScore !== undefined ? (
-            <div
-              className="flex align-items-center gap-2 border-1 surface-border border-round px-3 py-2 mb-1"
-              style={{ marginLeft: "3rem", background: "var(--surface-ground)" }}
-            >
-              <IconComponent
-                name="info-circle"
-                size="sm"
-                className="text-orange-400"
-              />
-              <LabelComponent
-                text={`Best match scored ${executionStep.bestScore.toFixed(2)}`}
-                size="sm"
-              />
-            </div>
-          ) : null}
-        </div>
+        <ExecutionStepRowComponent
+          key={executionStep.sequence}
+          executionStep={executionStep}
+          isFatal={!!errorFlowStepId && executionStep.flowStepId === errorFlowStepId}
+          isSelected={executionStep.sequence === selectedSequence}
+          maxDurationMilliseconds={maxDurationMilliseconds}
+          onSelect={setSelectedSequence}
+        />
       ))}
 
       {/* Parked before a step, so it has no row yet - there is nothing to report until it runs. */}

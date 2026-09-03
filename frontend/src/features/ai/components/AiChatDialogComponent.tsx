@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { classNames } from "primereact/utils";
+import Markdown from "react-markdown";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
@@ -202,14 +203,18 @@ function MessageList({ conversation }: MessageListProps) {
         >
           <div
             className={classNames(
-              "border-round p-3 white-space-pre-wrap",
+              "border-round p-3",
               message.role === "user"
-                ? "surface-100 text-900"
+                ? "surface-100 text-900 white-space-pre-wrap"
                 : "surface-ground border-1 surface-border",
             )}
             style={{ maxWidth: "85%" }}
           >
-            {message.text}
+            {message.role === "user" ? (
+              message.text
+            ) : (
+              <AnswerComponent text={message.text} />
+            )}
           </div>
         </div>
       ))}
@@ -249,6 +254,98 @@ function MessageList({ conversation }: MessageListProps) {
       ) : null}
 
       <div ref={bottomRef} />
+    </div>
+  );
+}
+
+interface AnswerComponentProps {
+  text: string;
+}
+
+/**
+ * An answer, as the model wrote it.
+ *
+ * The model is told to write markdown, so a bold lead, a list of options and a step name in
+ * backticks all arrive as markup. Rendered as plain text they read as one wall with asterisks in
+ * it, which is how a good answer ends up looking like a bad one.
+ *
+ * Every element is styled inline rather than by a stylesheet, and sized down: a heading in a chat
+ * bubble is a line that stands out, not a page title.
+ */
+function AnswerComponent({ text }: AnswerComponentProps) {
+  return (
+    <Markdown
+      components={{
+        p: ({ children }) => (
+          <p style={{ margin: "0 0 0.6rem", lineHeight: 1.55 }}>{children}</p>
+        ),
+        strong: ({ children }) => (
+          <strong style={{ fontWeight: 600, color: "var(--text-color)" }}>{children}</strong>
+        ),
+        ul: ({ children }) => (
+          <ul style={{ margin: "0 0 0.6rem", paddingLeft: "1.1rem" }}>{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol style={{ margin: "0 0 0.6rem", paddingLeft: "1.3rem" }}>{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li style={{ marginBottom: "0.25rem", lineHeight: 1.5 }}>{children}</li>
+        ),
+        h1: ({ children }) => <ChatHeading>{children}</ChatHeading>,
+        h2: ({ children }) => <ChatHeading>{children}</ChatHeading>,
+        h3: ({ children }) => <ChatHeading>{children}</ChatHeading>,
+        code: ({ children }) => (
+          <code
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--surface-border)",
+              borderRadius: 4,
+              padding: "0.05rem 0.3rem",
+              fontSize: "0.85em",
+            }}
+          >
+            {children}
+          </code>
+        ),
+        pre: ({ children }) => (
+          <pre
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--surface-border)",
+              borderRadius: 6,
+              padding: "0.6rem 0.8rem",
+              margin: "0 0 0.6rem",
+              overflowX: "auto",
+              fontSize: "0.85em",
+            }}
+          >
+            {children}
+          </pre>
+        ),
+      }}
+    >
+      {text}
+    </Markdown>
+  );
+}
+
+interface ChatHeadingProps {
+  children: React.ReactNode;
+}
+
+// Every heading level renders the same: inside a bubble the depth means nothing, and a real h1
+// would be larger than the dialog title above it.
+function ChatHeading({ children }: ChatHeadingProps) {
+  return (
+    <div
+      style={{
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        margin: "0.3rem 0 0.4rem",
+        color: "var(--text-color)",
+      }}
+    >
+      {children}
     </div>
   );
 }

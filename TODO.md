@@ -127,6 +127,15 @@ is lost between sessions.
       pass on local cpu, so it wants to be the exception rather than the pattern. And precise
       coordinate grounding is the weakest thing small vision models do - qwen3-vl is explicitly
       tuned for it, which is a fair sign it does not come free.
+- [ ] **Let the model think, as a choice on the chat.** Thinking models put their reasoning in a
+      separate channel and spend the output budget on it: on qwen3.5:4b a 1200 token cap produced
+      5582 characters of reasoning and an empty answer, which is why `OllamaContextChatClient` now
+      sends `think: false` on every request. Measured on one simple question, thinking cost 10.3
+      seconds against 2.9 for the same answer - but that was one easy question, and "explain this
+      run and tell me what to change" is exactly the multi-step reasoning thinking exists for. It
+      should be a checkbox on the chat rather than a global setting, so the same question can be
+      asked both ways and compared. Off by default. Only worth showing when the model reports the
+      `thinking` capability, which `/api/show` already returns.
 - [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Windows DPAPI
       (ProtectedData.Protect) is about ten lines and needs no key management.
 - [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a

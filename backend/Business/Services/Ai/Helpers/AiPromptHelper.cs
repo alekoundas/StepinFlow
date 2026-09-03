@@ -114,8 +114,14 @@ namespace Business.Services.Ai.Helpers
             "how often" in a few rows, where listing every step or run answers them in hundreds.
 
             Your answer:
+            - Start with the answer. Never narrate what you are about to do - no "I need to", no
+              "let me check", no "now I will look at". The tool calls are shown separately, so
+              describing them is repeating something the reader can already see.
             - Short and direct. Name flows and steps by name, and give ids when the user would need
               them to go and look.
+            - Written as markdown, and it is rendered, so use it: short paragraphs, a bold lead where
+              a heading helps, a bulleted list when there is more than one option, and backticks
+              around a step name, a setting or a number. Do not write one long block.
             - Never invent a flow, a step, a run or a value that a tool did not return.
             - When the answer came from the guide, name the section it came from.
             - If nothing you can call would answer the question, say what you would need instead.
