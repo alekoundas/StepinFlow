@@ -27,5 +27,8 @@ namespace Core.Enums
 
         /// <summary>Whether a cloud provider may be shown what was on screen - read text and screenshots.</summary>
         AI_SEND_SCREEN_CONTENT,
+
+        /// <summary>How big a context window to ask Ollama for, since it serves 4096 by default.</summary>
+        AI_OLLAMA_CONTEXT_LENGTH,
     }
 }

@@ -16,5 +16,8 @@ namespace Business.Services.Ai.Providers
         /// screenshots a run kept. A local model is not covered by this: nothing leaves the machine.
         /// </summary>
         Task<bool> IsScreenContentAllowedAsync(CancellationToken ct = default);
+
+        /// <summary>How big a context window to ask Ollama for. Meaningless for a cloud provider.</summary>
+        Task<int> GetOllamaContextLengthAsync(CancellationToken ct = default);
     }
 }

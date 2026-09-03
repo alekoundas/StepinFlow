@@ -1,9 +1,12 @@
 using System.ClientModel;
+
 using Business.Services.Ai.Helpers;
 using Core.Enums;
 using Core.Models.Business;
 
 using Microsoft.Extensions.AI;
+
+using OllamaSharp;
 using OpenAI;
 
 namespace Business.Services.Ai.Providers
@@ -11,9 +14,11 @@ namespace Business.Services.Ai.Providers
     /// <summary>
     /// Turns the settings into a client.
     ///
-    /// Local and cloud are the same client with a different address: Ollama serves an OpenAI
-    /// compatible api, so pointing at localhost is the whole of "run it on this machine". Nothing
-    /// above this class ever learns which one it got.
+    /// Local and cloud were the same client with a different address for a while, because Ollama
+    /// serves an OpenAI compatible api. That endpoint gives no way to set the context window and
+    /// reloads the model at its own 4096 default, which is not enough to hold the system prompt,
+    /// eleven tool schemas and a screenshot at the same time. So Ollama gets its own client, talking
+    /// to its native api, and everything above this class still only ever sees an IChatClient.
     /// </summary>
     public sealed class AiClientFactory : IAiClientFactory
     {
@@ -30,12 +35,17 @@ namespace Business.Services.Ai.Providers
             if (settings == null)
                 return null;
 
-            OpenAIClientOptions options = new OpenAIClientOptions();
-
             if (settings.Provider == AiProviderEnum.OLLAMA)
-                options.Endpoint = new Uri(OllamaUrlHelper.ToOpenAiEndpoint(settings.OllamaUrl));
+            {
+                int contextLength = await _providerService.GetOllamaContextLengthAsync(ct);
+                OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.Model);
 
+                return new OllamaContextChatClient(ollama, contextLength);
+            }
+
+            OpenAIClientOptions options = new OpenAIClientOptions();
             OpenAIClient client = new OpenAIClient(new ApiKeyCredential(settings.ApiKey), options);
+
             return client.GetChatClient(settings.Model).AsIChatClient();
         }
     }

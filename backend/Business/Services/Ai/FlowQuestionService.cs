@@ -104,7 +104,7 @@ namespace Business.Services.Ai
             ChatOptions options = new ChatOptions
             {
                 Tools = BuildDbTools(),
-                MaxOutputTokens = 1200,
+                MaxOutputTokens = 4000,
             };
 
             try

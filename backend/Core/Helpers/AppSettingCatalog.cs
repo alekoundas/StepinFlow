@@ -92,6 +92,17 @@ namespace Core.Helpers
             "Off by default. Text read by OCR and the screenshots a run kept are whatever was on your screen - an account number, a message, a password field. A local model never leaves this machine, so this only ever applies to a cloud provider.",
             defaultValue: false);
 
+        // Ollama serves 4096 whatever the model can hold, and that is not enough for the prompt,
+        // the tools and a screenshot together. Bigger costs memory: the key value cache grows with
+        // it, so a machine that is tight on ram wants this lower.
+        public static readonly IntAppSettingDefinition AiOllamaContextLength = new IntAppSettingDefinition(
+            AppSettingKeyEnum.AI_OLLAMA_CONTEXT_LENGTH,
+            "Context window to ask Ollama for",
+            "How much the model may hold at once. 4096 is Ollama's default and too small once screenshots are involved. Higher uses more memory.",
+            defaultValue: 32768,
+            minimum: 4096,
+            maximum: 131072);
+
         public static readonly TextAppSettingDefinition AiOllamaUrl = new TextAppSettingDefinition(
             AppSettingKeyEnum.AI_OLLAMA_URL,
             "Ollama address",
@@ -115,6 +126,7 @@ namespace Core.Helpers
             AiModel,
             AiApiKey,
             AiSendScreenContent,
+            AiOllamaContextLength,
             AiOllamaUrl,
         ];
 

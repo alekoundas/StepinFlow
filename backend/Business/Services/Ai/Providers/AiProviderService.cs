@@ -78,6 +78,11 @@ namespace Business.Services.Ai.Providers
             return AppSettingCatalog.AiSendScreenContent.Parse(value);
         }
 
+        public Task<int> GetOllamaContextLengthAsync(CancellationToken ct = default)
+        {
+            return _appSettingService.GetAsync(AppSettingCatalog.AiOllamaContextLength, ct);
+        }
+
         public Task<string> GetOllamaUrlAsync(CancellationToken ct = default)
         {
             return _appSettingService.GetTextAsync(AppSettingCatalog.AiOllamaUrl, ct);
