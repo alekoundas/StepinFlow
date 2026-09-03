@@ -29,5 +29,8 @@ namespace Core.Enums
         AI_MODEL,
         AI_API_KEY,
         AI_OLLAMA_URL,
+
+        /// <summary>Whether a cloud provider may be shown what was on screen - read text and screenshots.</summary>
+        AI_SEND_SCREEN_CONTENT,
     }
 }

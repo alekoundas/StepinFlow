@@ -98,10 +98,16 @@ namespace Business.Services.Ai
         /// Text a Read Text step found is whatever was on the screen, so it goes out only to a model
         /// running on this machine. The provider is the whole rule; there is no setting to disagree.
         /// </summary>
+        // Whether what was on screen may be shown to the model. A local model is always allowed -
+        // nothing leaves the machine. A cloud one is allowed only when the setting says so, and it
+        // is off until someone turns it on.
         private async Task<bool> GetIncludeScreenValuesAsync(CancellationToken ct)
         {
             AiProviderEnum provider = await _providerService.GetProviderAsync(ct);
-            return provider == AiProviderEnum.OLLAMA;
+            if (provider == AiProviderEnum.OLLAMA)
+                return true;
+
+            return await _providerService.IsScreenContentAllowedAsync(ct);
         }
 
         private async Task<ExecutionDto?> LoadExecutionAndStepsAsync(int executionId, CancellationToken ct)

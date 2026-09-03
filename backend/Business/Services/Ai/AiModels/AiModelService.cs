@@ -15,12 +15,15 @@ namespace Business.Services.Ai.AiModels
     public sealed class AiModelService : IAiModelService
     {
         // The ones worth offering. Asking OpenAI returns hundreds.
-        private static readonly string[] _openAiModels =
+        // Hand kept, because OpenAI has no endpoint that answers this the way Ollama's /api/show
+        // does. Every model here reads images and calls tools; the numbers are their published
+        // context windows.
+        private static readonly AiModelDto[] _openAiModels =
         [
-            "gpt-4o-mini",
-            "gpt-4o",
-            "gpt-4.1-mini",
-            "gpt-4.1",
+            new AiModelDto { Name = "gpt-4o-mini", Capabilities = ["completion", "tools", "vision"], ContextLength = 128_000 },
+            new AiModelDto { Name = "gpt-4o", Capabilities = ["completion", "tools", "vision"], ContextLength = 128_000 },
+            new AiModelDto { Name = "gpt-4.1-mini", Capabilities = ["completion", "tools", "vision"], ContextLength = 1_000_000 },
+            new AiModelDto { Name = "gpt-4.1", Capabilities = ["completion", "tools", "vision"], ContextLength = 1_000_000 },
         ];
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -76,10 +79,13 @@ namespace Business.Services.Ai.AiModels
                 await using Stream stream = await response.Content.ReadAsStreamAsync(ct);
                 OllamaTagsResponse? tags = await JsonSerializer.DeserializeAsync<OllamaTagsResponse>(stream, _jsonOptions, ct);
 
-                return new AiModelsDto
-                {
-                    Models = tags?.Models.Select(x => x.Name).OrderBy(x => x).ToList() ?? [],
-                };
+                List<string> names = tags?.Models.Select(x => x.Name).OrderBy(x => x).ToList() ?? [];
+
+                // One /api/show per model, in parallel. Serially this is a visible pause on the
+                // settings page as soon as somebody has more than a couple of models pulled.
+                AiModelDto[] models = await Task.WhenAll(names.Select(x => DescribeAsync(baseUrl, x, ct)));
+
+                return new AiModelsDto { Models = models };
             }
             catch (Exception ex)
             {
@@ -92,6 +98,39 @@ namespace Business.Services.Ai.AiModels
             }
         }
 
+        // What one model can do, straight from Ollama. A model that will not answer still comes
+        // back - it is in the list either way, just without badges.
+        private async Task<AiModelDto> DescribeAsync(string baseUrl, string name, CancellationToken ct)
+        {
+            try
+            {
+                HttpClient client = _httpClientFactory.CreateClient(nameof(AiModelService));
+
+                using HttpResponseMessage response = await client.PostAsJsonAsync(
+                    OllamaUrlHelper.ToShowEndpoint(baseUrl),
+                    new { model = name },
+                    ct);
+
+                response.EnsureSuccessStatusCode();
+
+                await using Stream stream = await response.Content.ReadAsStreamAsync(ct);
+                OllamaShowResponse? shown = await JsonSerializer.DeserializeAsync<OllamaShowResponse>(stream, _jsonOptions, ct);
+
+                return new AiModelDto
+                {
+                    Name = name,
+                    Capabilities = shown?.Capabilities ?? [],
+                    ContextLength = shown?.ContextLength() ?? 0,
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not read the capabilities of {Model}.", name);
+
+                return new AiModelDto { Name = name };
+            }
+        }
+
         public async Task<IReadOnlyList<AiModelSuggestionDto>> GetModelSuggestionsAsync(CancellationToken ct = default)
         {
             AiModelsDto installed = await GetModelsAsync(ct);
@@ -100,6 +139,7 @@ namespace Business.Services.Ai.AiModels
             // different downloads - so matching on the name alone would mark both as installed
             // when only one of them is.
             HashSet<string> names = installed.Models
+                .Select(x => x.Name)
                 .Select(OllamaUrlHelper.NormaliseModelName)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -132,39 +172,36 @@ namespace Business.Services.Ai.AiModels
         /// Ollama reports what a model can do, so nothing here keeps a list that goes stale every
         /// time somebody downloads something new. A paid provider's models all call tools.
         /// </summary>
-        public async Task<bool> SupportsToolsAsync(CancellationToken ct = default)
+        public Task<bool> SupportsToolsAsync(CancellationToken ct = default)
+        {
+            return SupportsAsync("tools", ct);
+        }
+
+        public Task<bool> SupportsVisionAsync(CancellationToken ct = default)
+        {
+            return SupportsAsync("vision", ct);
+        }
+
+        // Whether the model in settings reports a capability. Only Ollama answers this per model:
+        // a cloud provider is taken at its word from the curated list, and NONE supports nothing
+        // because there is nothing to ask.
+        private async Task<bool> SupportsAsync(string capability, CancellationToken ct)
         {
             AiProviderEnum provider = await _providerService.GetProviderAsync(ct);
-            if (provider != AiProviderEnum.OLLAMA)
-                return provider != AiProviderEnum.NONE;
+            if (provider == AiProviderEnum.NONE)
+                return false;
 
             string model = await _providerService.GetModelAsync(ct);
             if (string.IsNullOrWhiteSpace(model))
                 return false;
 
+            if (provider != AiProviderEnum.OLLAMA)
+                return _openAiModels.FirstOrDefault(x => x.Name == model)?.Supports(capability) ?? false;
+
             string baseUrl = await _providerService.GetOllamaUrlAsync(ct);
+            AiModelDto described = await DescribeAsync(baseUrl, model, ct);
 
-            try
-            {
-                HttpClient client = _httpClientFactory.CreateClient(nameof(AiModelService));
-
-                using HttpResponseMessage response = await client.PostAsJsonAsync(
-                    OllamaUrlHelper.ToShowEndpoint(baseUrl),
-                    new { model = model },
-                    ct);
-
-                response.EnsureSuccessStatusCode();
-
-                await using Stream stream = await response.Content.ReadAsStreamAsync(ct);
-                OllamaShowResponse? shown = await JsonSerializer.DeserializeAsync<OllamaShowResponse>(stream, _jsonOptions, ct);
-
-                return shown?.Capabilities.Any(x => string.Equals(x, "tools", StringComparison.OrdinalIgnoreCase)) == true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not ask Ollama what {Model} can do.", model);
-                return false;
-            }
+            return described.Supports(capability);
         }
 
 
@@ -185,6 +222,25 @@ namespace Business.Services.Ai.AiModels
         private sealed class OllamaShowResponse
         {
             public List<string> Capabilities { get; set; } = [];
+
+            // Everything the gguf declares. The context length is under a key named after the
+            // architecture - qwen2.context_length, llama.context_length - so it is found by its
+            // suffix rather than by guessing the family.
+            public Dictionary<string, JsonElement> ModelInfo { get; set; } = new Dictionary<string, JsonElement>();
+
+            public int ContextLength()
+            {
+                foreach (KeyValuePair<string, JsonElement> entry in ModelInfo)
+                {
+                    if (!entry.Key.EndsWith(".context_length", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (entry.Value.ValueKind == JsonValueKind.Number && entry.Value.TryGetInt32(out int length))
+                        return length;
+                }
+
+                return 0;
+            }
         }
     }
 }

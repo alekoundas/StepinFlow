@@ -99,6 +99,12 @@ namespace Core.Helpers
             "Only needed for a provider that charges. Ollama ignores it.",
             isSecret: true);
 
+        public static readonly BoolAppSettingDefinition AiSendScreenContent = new BoolAppSettingDefinition(
+            AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT,
+            "Let a cloud model see your screen",
+            "Off by default. Text read by OCR and the screenshots a run kept are whatever was on your screen - an account number, a message, a password field. A local model never leaves this machine, so this only ever applies to a cloud provider.",
+            defaultValue: false);
+
         public static readonly TextAppSettingDefinition AiOllamaUrl = new TextAppSettingDefinition(
             AppSettingKeyEnum.AI_OLLAMA_URL,
             "Ollama address",
@@ -122,6 +128,7 @@ namespace Core.Helpers
             AiProvider,
             AiModel,
             AiApiKey,
+            AiSendScreenContent,
             AiOllamaUrl,
         ];
 

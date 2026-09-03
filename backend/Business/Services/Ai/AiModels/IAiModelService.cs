@@ -8,5 +8,6 @@ namespace Business.Services.Ai.AiModels
         Task<IReadOnlyList<AiModelSuggestionDto>> GetModelSuggestionsAsync(CancellationToken ct = default);
         Task<bool> StartModelDownloadAsync(string model, CancellationToken ct = default);
         Task<bool> SupportsToolsAsync(CancellationToken ct = default);
+        Task<bool> SupportsVisionAsync(CancellationToken ct = default);
     }
 }

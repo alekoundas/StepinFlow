@@ -71,6 +71,13 @@ namespace Business.Services.Ai.Providers
             return _appSettingService.GetTextAsync(AppSettingCatalog.AiModel, ct);
         }
 
+        public async Task<bool> IsScreenContentAllowedAsync(CancellationToken ct = default)
+        {
+            string value = await _appSettingService.GetTextAsync(AppSettingCatalog.AiSendScreenContent, ct);
+
+            return AppSettingCatalog.AiSendScreenContent.Parse(value);
+        }
+
         public Task<string> GetOllamaUrlAsync(CancellationToken ct = default)
         {
             return _appSettingService.GetTextAsync(AppSettingCatalog.AiOllamaUrl, ct);

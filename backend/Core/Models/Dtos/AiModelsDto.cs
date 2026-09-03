@@ -6,7 +6,7 @@ namespace Core.Models.Dtos
     /// </summary>
     public class AiModelsDto
     {
-        public IReadOnlyList<string> Models { get; set; } = [];
+        public IReadOnlyList<AiModelDto> Models { get; set; } = [];
         public string Error { get; set; } = string.Empty;
     }
 }
