@@ -25,6 +25,7 @@ import AppLayout from "@/app-layout";
 import HomePage from "@/pages/home/home-page";
 import WorkflowPage from "@/features/workflow/WorkflowPage";
 import ExecutionPage from "@/features/execution/ExecutionPage";
+import ExecutionsPage from "@/features/execution/ExecutionsPage";
 import FlowListPage from "@/features/flow/FlowListPage";
 import FlowFormPage from "@/features/flow/FlowFormPage";
 import SettingsPage from "@/features/settings/SettingsPage";
@@ -78,6 +79,10 @@ const router = createHashRouter([
       {
         path: "/workflow/:id",
         element: <WorkflowPage />,
+      },
+      {
+        path: "/executions",
+        element: <ExecutionsPage />,
       },
       {
         path: "/execution/:id",

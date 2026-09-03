@@ -7,9 +7,18 @@ export const executionKeys = {
   detail: (id: number) => ["execution", "detail", id] as const,
   list: (flowId: number) => ["execution", "list", flowId] as const,
   state: () => ["execution", "state"] as const,
+  flowSummaries: () => ["execution", "flowSummaries"] as const,
   stepScreenshot: (executionStepId: number) =>
     ["execution", "stepScreenshot", executionStepId] as const,
 } as const;
+
+/** Every flow with the shape of its run history, for the executions list. */
+export function useFlowExecutionSummaries() {
+  return useQuery({
+    queryKey: executionKeys.flowSummaries(),
+    queryFn: () => backendApiService.Execution.getFlowSummaries(),
+  });
+}
 
 /** One past run and every step of it. */
 export function useExecution(id: number | null) {

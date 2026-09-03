@@ -66,6 +66,7 @@ export default function AppLayout() {
     menuItemTemplate("Home", "home", "/"),
     menuItemTemplate("Flows", "cog", "/flows"),
     menuItemTemplate("Sub-Flows", "sitemap", "/sub-flows"),
+    menuItemTemplate("Executions", "chart-bar", "/executions"),
   ];
 
   const menuItemsBottom: MenuItem[] = [

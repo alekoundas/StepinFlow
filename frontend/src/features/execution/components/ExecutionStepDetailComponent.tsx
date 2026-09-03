@@ -114,6 +114,16 @@ export default function ExecutionStepDetailComponent({
       </div>
 
       {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
+      executionStep.flowStepId &&
+      executionStep.bestScore !== null &&
+      executionStep.bestScore !== undefined ? (
+        <AccuracyMeterComponent
+          flowStepId={executionStep.flowStepId}
+          bestScore={executionStep.bestScore}
+        />
+      ) : null}
+
+      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
       executionStep.flowStepId ? (
         <TemplateImages flowStepId={executionStep.flowStepId} />
       ) : null}
@@ -202,6 +212,107 @@ function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
       text
       onClick={suggest}
     />
+  );
+}
+
+interface AccuracyMeterProps {
+  flowStepId: number;
+  bestScore: number;
+}
+
+/**
+ * What the search needed against what it got.
+ *
+ * A failed image search otherwise says only that it failed, and the three usual causes - the
+ * accuracy being a shade tight, the search area, a template captured at another window size - read
+ * identically until you can see how close it came.
+ *
+ * The accuracy is the step's setting as it stands now, not a copy taken during the run, so editing
+ * the step moves this line.
+ */
+function AccuracyMeterComponent({ flowStepId, bestScore }: AccuracyMeterProps) {
+  const { data: flowStep } = useFlowStep(flowStepId);
+
+  const accuracy = flowStep?.accuracy;
+  if (accuracy === undefined || accuracy === null) return null;
+
+  const isPass = bestScore >= accuracy;
+  const colour = isPass ? "var(--green-400)" : "var(--red-400)";
+  const shortBy = (accuracy - bestScore).toFixed(2);
+
+  return (
+    <div className="flex flex-column gap-2">
+      <div className="flex align-items-center justify-content-between">
+        <LabelComponent
+          text="Accuracy"
+          size="sm"
+          color="secondary"
+        />
+        <LabelComponent
+          text={isPass ? "cleared it" : `short by ${shortBy}`}
+          size="sm"
+          color={isPass ? "success" : "error"}
+        />
+      </div>
+
+      <div
+        style={{
+          position: "relative",
+          height: 8,
+          borderRadius: 4,
+          background: "var(--surface-ground)",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${Math.min(1, Math.max(0, bestScore)) * 100}%`,
+            borderRadius: 4,
+            background: colour,
+          }}
+        />
+        {/* Where the bar had to reach. A number on its own does not say how near it came. */}
+        <div
+          style={{
+            position: "absolute",
+            left: `${Math.min(1, Math.max(0, accuracy)) * 100}%`,
+            top: -5,
+            width: 2,
+            height: 18,
+            borderRadius: 1,
+            background: "var(--text-color)",
+          }}
+        />
+      </div>
+
+      <div className="flex align-items-center justify-content-between">
+        <div className="flex align-items-baseline gap-2">
+          <LabelComponent
+            text={bestScore.toFixed(2)}
+            weight="semibold"
+          />
+          <LabelComponent
+            text="best match"
+            size="sm"
+            color="secondary"
+          />
+        </div>
+        <div className="flex align-items-baseline gap-2">
+          <LabelComponent
+            text="needs"
+            size="sm"
+            color="secondary"
+          />
+          <LabelComponent
+            text={accuracy.toFixed(2)}
+            weight="semibold"
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

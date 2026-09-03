@@ -64,6 +64,7 @@ namespace Business.Ipc.Handlers.Execution
                     DurationMilliseconds = x.DurationMilliseconds,
                     ResultLocationX = x.ResultLocationX,
                     ResultLocationY = x.ResultLocationY,
+                    BestScore = x.BestScore,
                     MatchIndex = x.MatchIndex,
                     MatchCount = x.MatchCount,
                     Value = x.Value,

@@ -1,4 +1,5 @@
 using Core.Models.Dtos;
+using Core.Models.Dtos.Database;
 using MediatR;
 
 namespace Core.Models.Ipc
@@ -17,5 +18,6 @@ namespace Core.Models.Ipc
     public record GetExecutionQuery(int id) : IRequest<ResultDto<ExecutionDto>>;
     public record GetExecutionListQuery(int flowId) : IRequest<ResultDto<List<ExecutionDto>>>;
     public record GetExecutionStateQuery() : IRequest<ResultDto<ExecutionStateDto>>;
+    public record GetFlowExecutionSummariesQuery() : IRequest<ResultDto<List<FlowExecutionSummaryDto>>>;
     public record GetExecutionStepScreenshotQuery(int executionStepId) : IRequest<ResultDto<string?>>;
 }

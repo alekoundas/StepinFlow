@@ -45,6 +45,7 @@ import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
 import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
+import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
 import type { AiAnswerDto } from "@/shared/models/ai-answer-dto";
 import type {
   AiChatAnswerDto,
@@ -230,6 +231,8 @@ export const backendApiService = {
     get: (id: number) => call<ExecutionDto>("Execution.get", id),
     getList: (flowId: number) => call<ExecutionDto[]>("Execution.getList", flowId),
     getState: () => call<ExecutionStateDto>("Execution.getState"),
+    getFlowSummaries: () =>
+      call<FlowExecutionSummaryDto[]>("Execution.getFlowSummaries"),
     getStepScreenshot: (executionStepId: number) =>
       callNullable<string>("Execution.getStepScreenshot", executionStepId),
   },

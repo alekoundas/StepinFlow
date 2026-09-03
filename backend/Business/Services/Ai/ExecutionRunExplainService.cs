@@ -139,6 +139,7 @@ namespace Business.Services.Ai
                     FlowStepType = x.FlowStepType,
                     Outcome = x.Outcome,
                     DurationMilliseconds = x.DurationMilliseconds,
+                    BestScore = x.BestScore,
                     MatchIndex = x.MatchIndex,
                     MatchCount = x.MatchCount,
                     Value = x.Value,

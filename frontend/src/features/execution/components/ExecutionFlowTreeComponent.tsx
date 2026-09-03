@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { classNames } from "primereact/utils";
 import type { TreeExpandedKeysType } from "primereact/tree";
 
@@ -59,14 +60,9 @@ export default function ExecutionFlowTreeComponent({ flowId }: Props) {
       expandedKeys={expandedKeys}
       nodeTemplate={(node: TreeNodeDto) => (
         <div className="flex align-items-center gap-2">
-          <i
-            className={classNames("execution-breakpoint", {
-              "execution-breakpoint-on": breakpointStepIds.includes(node.entityId),
-            })}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleBreakpoint(node.entityId);
-            }}
+          <BreakpointDot
+            isOn={breakpointStepIds.includes(node.entityId)}
+            onToggle={() => toggleBreakpoint(node.entityId)}
           />
 
           <span
@@ -88,4 +84,36 @@ function collectKeys(nodes: TreeNodeDto[], keys: TreeExpandedKeysType): void {
     keys[node.key] = true;
     collectKeys(node.children ?? [], keys);
   }
+}
+
+interface BreakpointDotProps {
+  isOn: boolean;
+  onToggle: () => void;
+}
+
+/** An empty ring until you click it, so the whole gutter column is a target. */
+function BreakpointDot({ isOn, onToggle }: BreakpointDotProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <i
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        width: 11,
+        height: 11,
+        borderRadius: "50%",
+        flex: "0 0 auto",
+        cursor: "pointer",
+        background: isOn ? "var(--red-500)" : undefined,
+        border: `1px solid ${
+          isOn || isHovered ? "var(--red-500)" : "var(--surface-border)"
+        }`,
+      }}
+    />
+  );
 }
