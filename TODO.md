@@ -19,23 +19,38 @@ is lost between sessions.
       list (SUCCESS, FAILURE, LOOP, GO_TO, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
+- [ ] **The non-normalised match modes cannot honour an accuracy threshold.** SqDiff, CCorr and
+      CCoeff return unbounded numbers - measured against one real 70x71 template: SqDiff 27-32
+      million, CCorr 67-74 million, CCoeff -1.05 to +1.01 million. The threshold is a 0..1 accuracy,
+      so CCorr and CCoeff pass every position (matches everything, up to MaxMatches) and SqDiff
+      passes none (finds nothing, ever). Both are silent. The old app papered over this by
+      normalising against the min/max of that one result matrix, which makes the best match in any
+      image score 100% by construction - so the threshold could never reject anything there either.
+      There is no correct absolute mapping for an unbounded score. Either drop the three from
+      TemplateMatchModeEnum (stored as strings, so it is a data migration and a form change) or
+      keep them and hide the accuracy field when one is picked, which admits they are relative.
 - [ ] **Poll interval jitter** for `WAIT_UNTIL_FOUND` searches.
 - [ ] **Downscale matching** for template search.
 - [ ] **Dry-run mode** that logs resolved coordinates instead of clicking.
 - [ ] **Details dialog for an image search's screenshot.** Panel 3 shows the frame but nothing on
       it. Wants a button opening `FlowStepImageSearchTestDialogComponent`, which already draws
-      boxes, click points and per-template scores, plus one addition: the best candidate that
-      *failed* the accuracy threshold, drawn differently from a real hit, so "0.79 against your
-      0.80" is visible. FIND_ALL shows every successful position.
-      The match data must be recorded **during the run**, not recomputed on open: the matcher works
-      on raw BGRA and the saved screenshot is JPEG q60, so re-matching returns scores the run never
-      computed - and the step's accuracy or templates may have been edited since. Recording is
-      nearly free (`IOpenCvService.Match` already returns boxes and scores, the worker discards
-      them); the only new work is a second pass at threshold 0, `MaxMatches: 1`, for the best
-      rejected candidate, run only when nothing matched and the screenshot is being kept.
-      Undecided: where it goes - a JSON sidecar beside the .jpg, a column on `ExecutionStep`, or an
-      `ExecutionStepMatch` table. Whatever it is, extract the per-template loop
-      `TestImageSearchHandler` already has so the two paths cannot drift again.
+      boxes, click points and per-template scores.
+      The matcher half is done. `IOpenCvService.Match` returns a `TemplateMatchOutcome` carrying
+      `Matches` and `Rejected` - the next candidates below the accuracy, with their positions and
+      scores, kept in a separate list so nothing that walks the matches can click one. The Test now
+      path already returns them (`ImageSearchTestMatchDto.IsAccepted`), so that dialog can draw a
+      near miss as soon as the frontend reads the flag.
+      What is left is the **execution page** version, which needs the candidates persisted per run.
+      `ExecutionStep.BestScore` holds the scalar today, which is what the ai reads and works at
+      every history level, but it has no position - and the position is half the diagnosis: 0.79 on
+      the button means lower the accuracy, 0.79 somewhere else means the template matches the wrong
+      thing and loosening it would make the flow click there.
+      Undecided: a JSON sidecar beside the .jpg (dies when screenshots are off, but so does the
+      dialog) or an `ExecutionStepMatch` table (queryable, survives without screenshots, and adds
+      rows a FIND_ALL run multiplies - retention is already unsolved). A json column is out; the
+      `ResultJson` blob was deliberately removed.
+      Whatever it is, extract the per-template loop `TestImageSearchHandler` already has so the two
+      paths cannot drift again.
 - [ ] **Remove the `Success` / `Failure` static factories from `ExecutionStep`.** They build an
       entity, which reads as though an execution step is something a worker mints rather than a row
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and

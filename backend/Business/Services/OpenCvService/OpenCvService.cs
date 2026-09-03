@@ -17,10 +17,10 @@ namespace Business.Services.MatchService
         // How many steps either side of the expected scale when the first pass finds nothing.
         private const int MultiScaleSteps = 4;
 
-        public IReadOnlyList<TemplateMatchResult> Match(TemplateMatchRequest request)
+        public TemplateMatchOutcome Match(TemplateMatchRequest request)
         {
             if (request.Haystack.IsEmpty || request.TemplateImage.Length == 0)
-                return [];
+                return new TemplateMatchOutcome();
 
             using Mat haystack = ToGrayMat(request.Haystack);
 
@@ -30,30 +30,35 @@ namespace Business.Services.MatchService
             using Mat decoded = Cv2.ImDecode(request.TemplateImage, ImreadModes.Unchanged);
 
             if (haystack.Empty() || decoded.Empty())
-                return [];
+                return new TemplateMatchOutcome();
 
             using Mat template = ToGrayTemplate(decoded);
             using Mat? mask = ToMask(decoded);
 
-            // OpenCV only accepts a mask for the SqDiff and CCorrNormed families, so an erased
-            // template is matched with the closest mode that supports one.
-            TemplateMatchModes mode = mask == null
-                ? ToTemplateMatchModes(request.Mode)
-                : ToMaskableMatchModes(request.Mode);
+            // Every mode takes a mask, so an erased template is matched with the mode that was
+            // asked for. Substituting one that "supports masks" used to silently move CCoeffNormed
+            // onto CCorrNormed, which scores 0.95 against blank grey and matched anything.
+            TemplateMatchModes mode = ToTemplateMatchModes(request.Mode);
 
-            List<TemplateMatchResult> matches = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
-            if (matches.Count > 0 || !request.AllowMultiScale)
-                return matches;
+            TemplateMatchOutcome outcome = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
+            if (outcome.Matches.Count > 0 || !request.AllowMultiScale)
+                return outcome;
 
             // Nothing at the expected size. Sweep around it before giving up.
+            TemplateMatchOutcome closest = outcome;
+
             foreach (float scale in ScaleSweep(request))
             {
-                matches = MatchAtScale(haystack, template, mask, request, mode, scale);
-                if (matches.Count > 0)
-                    return matches;
+                TemplateMatchOutcome swept = MatchAtScale(haystack, template, mask, request, mode, scale);
+                if (swept.Matches.Count > 0)
+                    return swept;
+
+                // The scale that came closest, with its candidates - not the last one tried.
+                if (swept.BestScore > closest.BestScore)
+                    closest = swept;
             }
 
-            return [];
+            return closest;
         }
 
 
@@ -61,7 +66,7 @@ namespace Business.Services.MatchService
         // Private methods
         // ================================================================
 
-        private static List<TemplateMatchResult> MatchAtScale(
+        private static TemplateMatchOutcome MatchAtScale(
             Mat haystack,
             Mat template,
             Mat? mask,
@@ -73,7 +78,7 @@ namespace Business.Services.MatchService
             int height = (int)MathF.Round(template.Height * scale);
 
             if (width < 2 || height < 2 || width > haystack.Width || height > haystack.Height)
-                return [];
+                return new TemplateMatchOutcome();
 
             Mat? scaled = null;
             Mat? scaledMask = null;
@@ -123,7 +128,7 @@ namespace Business.Services.MatchService
         /// Pull every peak over the threshold. Each accepted hit blanks its own footprint so the
         /// neighbouring pixels of the same match cannot be reported again.
         /// </summary>
-        private static List<TemplateMatchResult> Collect(
+        private static TemplateMatchOutcome Collect(
             Mat result,
             TemplateMatchRequest request,
             TemplateMatchModes mode,
@@ -135,20 +140,40 @@ namespace Business.Services.MatchService
             // may have been moved onto a mask capable mode.
             bool lowerIsBetter = mode == TemplateMatchModes.SqDiff || mode == TemplateMatchModes.SqDiffNormed;
             List<TemplateMatchResult> matches = new List<TemplateMatchResult>();
+            List<TemplateMatchResult> rejected = new List<TemplateMatchResult>();
 
             using Mat working = result.Clone();
 
-            while (matches.Count < request.MaxMatches)
+            // A masked correlation over a flat region is 0/0. Screenshots are full of flat regions,
+            // and one NaN poisons MinMaxLoc for the whole matrix - which loses the real match, not
+            // just the blank area. Rewrite them as the worst score this mode can hold instead.
+            Cv2.PatchNaNs(working, lowerIsBetter ? 1d : 0d);
+
+            while (matches.Count < request.MaxMatches || rejected.Count < request.RejectedLimit)
             {
                 working.MinMaxLoc(out double minValue, out double maxValue, out Point minLocation, out Point maxLocation);
 
                 double score = lowerIsBetter ? 1d - minValue : maxValue;
                 Point location = lowerIsBetter ? minLocation : maxLocation;
 
-                if (score < request.Threshold)
+                // NaN compares false against everything, so without this it is not rejected - it is
+                // added as a match with a NaN score. A masked correlation over a flat region produces
+                // exactly that.
+                if (double.IsNaN(score))
                     break;
 
-                matches.Add(new TemplateMatchResult
+                // Below the bar. Keep taking them anyway, up to the limit, so the caller can show
+                // where the cut fell - the suppression below stops the same one coming back.
+                bool isAccepted = score >= request.Threshold;
+
+                if (!isAccepted && rejected.Count >= request.RejectedLimit)
+                    break;
+
+                // The frame is already full of accepted hits; nothing left to learn from more.
+                if (isAccepted && matches.Count >= request.MaxMatches)
+                    break;
+
+                (isAccepted ? matches : rejected).Add(new TemplateMatchResult
                 {
                     X = location.X,
                     Y = location.Y,
@@ -172,7 +197,11 @@ namespace Business.Services.MatchService
                 working[footprint].SetTo(lowerIsBetter ? Scalar.All(1d) : Scalar.All(0d));
             }
 
-            return matches.OrderByDescending(x => x.Score).ToList();
+            return new TemplateMatchOutcome
+            {
+                Matches = matches.OrderByDescending(x => x.Score).ToList(),
+                Rejected = rejected.OrderByDescending(x => x.Score).ToList(),
+            };
         }
 
         private static IEnumerable<float> ScaleSweep(TemplateMatchRequest request)
@@ -233,18 +262,5 @@ namespace Business.Services.MatchService
             TemplateMatchModeEnum.CCorrNormed => TemplateMatchModes.CCorrNormed,
             TemplateMatchModeEnum.CCoeff => TemplateMatchModes.CCoeff,
             _ => TemplateMatchModes.CCoeffNormed,
-        };
-
-        /// <summary>
-        /// The nearest mode that accepts a mask. The CCoeff family does not, so a template with
-        /// erased areas is matched with CCorrNormed instead: keeping CCoeff would mean ignoring
-        /// the mask and comparing the screen against a block of black.
-        /// </summary>
-        private static TemplateMatchModes ToMaskableMatchModes(TemplateMatchModeEnum mode) => mode switch
-        {
-            TemplateMatchModeEnum.SqDiff => TemplateMatchModes.SqDiff,
-            TemplateMatchModeEnum.SqDiffNormed => TemplateMatchModes.SqDiffNormed,
-            _ => TemplateMatchModes.CCorrNormed,
-        };
-    }
+        };    }
 }

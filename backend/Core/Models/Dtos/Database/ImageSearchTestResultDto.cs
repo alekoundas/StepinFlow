@@ -45,7 +45,11 @@ namespace Core.Models.Dtos
         /// <summary>Scale the template had to be resized by. 1 = the area matches how it was captured.</summary>
         public float Scale { get; set; }
 
-        /// <summary>Every hit, capped by MaxMatches. Empty when nothing matched.</summary>
+        /// <summary>
+        /// Every hit, capped by MaxMatches, followed by the next candidates that did not clear the
+        /// accuracy. IsAccepted says which is which, so the details view can draw a near miss
+        /// differently from a real hit rather than hiding it.
+        /// </summary>
         public List<ImageSearchTestMatchDto> Matches { get; set; } = new List<ImageSearchTestMatchDto>();
     }
 
@@ -55,6 +59,9 @@ namespace Core.Models.Dtos
     /// </summary>
     public class ImageSearchTestMatchDto
     {
+        /// <summary>False for a candidate that scored under the accuracy and was not a match.</summary>
+        public bool IsAccepted { get; set; } = true;
+
         public int X { get; set; }
         public int Y { get; set; }
         public int Width { get; set; }

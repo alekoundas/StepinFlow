@@ -66,7 +66,7 @@ namespace Business.Ipc.Handlers
                     IsRequired = image.IsRequired,
                 };
 
-                IReadOnlyList<TemplateMatchResult> matches = _templateMatcher.Match(new TemplateMatchRequest
+                TemplateMatchOutcome outcome = _templateMatcher.Match(new TemplateMatchRequest
                 {
                     Haystack = haystack,
                     TemplateImage = image.TemplateImage ?? [],
@@ -75,15 +75,21 @@ namespace Business.Ipc.Handlers
                     ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, area.Bounds.Width),
                     AllowMultiScale = image.AllowMultiScale,
                     ScaleTolerance = image.ScaleTolerance,
-                    MaxMatches = step.MaxMatches,
+                    MaxMatches = step.SearchMode == SearchModeEnum.FIND_ALL ? step.MaxMatches : 1,
                 });
+
+                IReadOnlyList<TemplateMatchResult> matches = outcome.Matches;
 
                 imageResult.MatchCount = matches.Count;
                 imageResult.IsFound = matches.Count > 0;
 
-                // Every hit, in area relative coordinates, so the details view can draw them.
-                imageResult.Matches = matches.Select(match => new ImageSearchTestMatchDto
+                // The best thing in the frame, hit or not. Without it "0.79 against your 0.80" and
+                // "not on screen at all" both read as no result.
+                imageResult.BestScore = outcome.BestScore ?? 0f;
+
+                ImageSearchTestMatchDto ToDto(TemplateMatchResult match, bool isAccepted) => new ImageSearchTestMatchDto
                 {
+                    IsAccepted = isAccepted,
                     X = match.X,
                     Y = match.Y,
                     Width = match.Width,
@@ -92,7 +98,13 @@ namespace Business.Ipc.Handlers
                     Scale = match.Scale,
                     ClickX = match.X + (int)MathF.Round(image.ClickOffsetX * match.Scale),
                     ClickY = match.Y + (int)MathF.Round(image.ClickOffsetY * match.Scale),
-                }).ToList();
+                };
+
+                // Hits first, then the next ones down, all in area relative coordinates so the
+                // details view can draw them on the screenshot as they are.
+                imageResult.Matches = matches.Select(x => ToDto(x, true))
+                    .Concat(outcome.Rejected.Select(x => ToDto(x, false)))
+                    .ToList();
 
                 if (matches.Count > 0)
                 {

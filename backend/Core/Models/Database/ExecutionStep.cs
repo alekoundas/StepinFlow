@@ -39,6 +39,13 @@ namespace Core.Models.Database
         public int? ResultLocationY { get; set; }
 
         /// <summary>FIND_ALL only: which hit this pass was, of how many.</summary>
+        /// <summary>
+        /// IMAGE_SEARCH only: the best score the frame produced, whether or not it cleared the
+        /// accuracy. On a failure this is the whole diagnosis - 0.79 against a 0.80 accuracy is a
+        /// threshold to nudge, 0.40 is a template that does not belong to what is on screen.
+        /// </summary>
+        public float? BestScore { get; set; }
+
         public int? MatchIndex { get; set; }
         public int? MatchCount { get; set; }
 

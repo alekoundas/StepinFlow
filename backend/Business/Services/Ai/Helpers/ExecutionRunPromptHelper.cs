@@ -79,6 +79,11 @@ namespace Business.Services.Ai.Helpers
             if (step.MatchCount != null)
                 line.Append($"  match {(step.MatchIndex ?? 0) + 1} of {step.MatchCount}");
 
+            // How close the search came. Without it a failed search says only that it failed, and
+            // the accuracy, the search area and a template captured at another size all look alike.
+            if (step.BestScore != null)
+                line.Append($"  best match scored {step.BestScore:F2}");
+
             if (step.LoopPass != null)
                 line.Append($"  loop pass {step.LoopPass + 1}");
 

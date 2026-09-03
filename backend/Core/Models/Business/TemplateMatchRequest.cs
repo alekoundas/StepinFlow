@@ -20,5 +20,11 @@ namespace Core.Models.Business
 
         /// <summary>Stop after this many, so a bad threshold cannot return thousands.</summary>
         public int MaxMatches { get; set; } = 20;
+
+        /// <summary>
+        /// How many below-threshold candidates to report after the matches. One is enough to show
+        /// where the cut fell and what it cost.
+        /// </summary>
+        public int RejectedLimit { get; set; } = 1;
     }
 }

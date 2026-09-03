@@ -55,6 +55,7 @@ namespace Business.Services.ExecutionService.Workers
         {
             bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
             DateTime giveUpAt = DateTime.UtcNow.AddMilliseconds(step.TimeoutMilliseconds);
+            float? bestOverPolls = null;
 
             while (true)
             {
@@ -67,10 +68,16 @@ namespace Business.Services.ExecutionService.Workers
                     return search;
 
                 // A zero timeout waits for ever.
+                // The closest any attempt came, not the last one. "It peaked at 0.78 over sixty
+                // tries" and "it never passed 0.40" want different fixes; the final poll says
+                // neither.
+                bestOverPolls = Best(bestOverPolls, search.BestScore);
+
                 if (step.TimeoutMilliseconds > 0 && DateTime.UtcNow >= giveUpAt)
                 {
                     ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting"));
                     gaveUp.Screenshot = search.Screenshot;
+                    gaveUp.BestScore = bestOverPolls;
 
                     return gaveUp;
                 }
@@ -99,10 +106,11 @@ namespace Business.Services.ExecutionService.Workers
         private ExecutionStep Match(FlowStep step, Rectangle bounds, RawImage haystack, IExecutionCacheService cache)
         {
             List<Point> hits = new List<Point>();
+            float? bestScore = null;
 
             foreach (FlowStepImage image in step.FlowStepImages)
             {
-                IReadOnlyList<TemplateMatchResult> matches = _templateMatcher.Match(new TemplateMatchRequest
+                TemplateMatchOutcome outcome = _templateMatcher.Match(new TemplateMatchRequest
                 {
                     Haystack = haystack,
                     TemplateImage = image.TemplateImage ?? [],
@@ -111,8 +119,14 @@ namespace Business.Services.ExecutionService.Workers
                     ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, bounds.Width),
                     AllowMultiScale = image.AllowMultiScale,
                     ScaleTolerance = image.ScaleTolerance,
-                    MaxMatches = step.MaxMatches,
+                    MaxMatches = step.SearchMode == SearchModeEnum.FIND_ALL ? step.MaxMatches : 1,
                 });
+
+                IReadOnlyList<TemplateMatchResult> matches = outcome.Matches;
+
+                // Whether it passed or not, so a run records how close a search came. Across every
+                // template, because the closest one is the one worth reporting.
+                bestScore = Best(bestScore, outcome.BestScore);
 
                 foreach (TemplateMatchResult match in matches)
                 {
@@ -130,10 +144,20 @@ namespace Business.Services.ExecutionService.Workers
             }
 
             if (hits.Count == 0)
-                return ExecutionStep.Failure(Detail(step, "no template matched"));
+            {
+                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched"));
+                missed.BestScore = bestScore;
+
+                return missed;
+            }
 
             if (step.SearchMode != SearchModeEnum.FIND_ALL)
-                return ExecutionStep.Success(hits[0]);
+            {
+                ExecutionStep hit = ExecutionStep.Success(hits[0]);
+                hit.BestScore = bestScore;
+
+                return hit;
+            }
 
             // Every hit came from this one screenshot. The walk takes them one at a time from here,
             // and each gets its own execution step rather than the search running again.
@@ -142,8 +166,21 @@ namespace Business.Services.ExecutionService.Workers
             ExecutionStep found = ExecutionStep.Success(hits[0]);
             found.MatchIndex = 0;
             found.MatchCount = hits.Count;
+            found.BestScore = bestScore;
 
             return found;
+        }
+
+        /// <summary>The higher of two scores, either of which may be missing.</summary>
+        private static float? Best(float? left, float? right)
+        {
+            if (left == null)
+                return right;
+
+            if (right == null)
+                return left;
+
+            return MathF.Max(left.Value, right.Value);
         }
 
         private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)

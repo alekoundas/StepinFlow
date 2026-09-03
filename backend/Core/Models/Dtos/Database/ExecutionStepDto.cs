@@ -20,6 +20,7 @@ namespace Core.Models.Dtos
 
         public int? ResultLocationX { get; set; }
         public int? ResultLocationY { get; set; }
+        public float? BestScore { get; set; }
         public int? MatchIndex { get; set; }
         public int? MatchCount { get; set; }
 

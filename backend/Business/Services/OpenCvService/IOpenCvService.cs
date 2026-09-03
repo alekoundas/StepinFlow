@@ -5,8 +5,9 @@ namespace Business.Services.MatchService
     public interface IOpenCvService
     {
         /// <summary>
-        /// Every match at or above the threshold, best first. Empty when nothing matches.
+        /// Every match at or above the threshold, best first, and how close the frame came when
+        /// none of them cleared it.
         /// </summary>
-        IReadOnlyList<TemplateMatchResult> Match(TemplateMatchRequest request);
+        TemplateMatchOutcome Match(TemplateMatchRequest request);
     }
 }

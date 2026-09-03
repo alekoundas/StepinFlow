@@ -226,7 +226,8 @@ namespace Business.Services.Ai.Tools
                     x.DurationMilliseconds,
                     x.Value,
                     x.Message,
-                    x.ExitCode))
+                    x.ExitCode,
+                    x.BestScore))
                 .ToListAsync();
         }
 
@@ -374,7 +375,7 @@ namespace Business.Services.Ai.Tools
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 
-        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, int DurationMilliseconds, string? Value, string? Message, int? ExitCode);
+        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
         public record StepTypeCount(string Type, int Count);
 
