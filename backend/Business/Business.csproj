@@ -11,9 +11,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Cloud.Unum.USearch" Version="2.26.2" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.9.0" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.9.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
     <!--<PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.22621.3233" />-->
     <!--<PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.22621.0" />-->
     <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />

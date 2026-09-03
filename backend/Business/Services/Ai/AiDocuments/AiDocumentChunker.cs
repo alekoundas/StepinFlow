@@ -5,13 +5,14 @@ namespace Business.Services.Ai.AiDocuments
     /// <summary>
     /// Splits a markdown document into retrievable pieces.
     ///
-    /// 1) extract document title by the single '#'
-    /// 2) split document sections by the double '##'
-    /// 3)
+    /// 1) extract document title by the single '#'.
+    /// 2) split document sections by the double '##'.
+    /// 3) split document section into paragraphs if it doesnt fit.
+    /// 
     /// Every chunk starts with its document title and heading. 
     /// A chunk is read alone, by a model that will not see the page it came from, so it has to say what it is about.
     /// </summary>
-    public static class AiAiDocumentChunker
+    public static class AiDocumentChunker
     {
         private const int _maxCharacters = 2000; //The hard cap of bge-small-en-v1.5. Counts the heading, which is part of what gets embedded.
 

@@ -1,6 +1,7 @@
 using Business.Services.Ai.AiModels;
 using Business.Services.Ai.Helpers;
 using Business.Services.Ai.Providers;
+using Business.Services.Ai.AiDocuments;
 using Business.Services.Ai.Tools;
 using Core.Enums;
 using Core.Models.Dtos;
@@ -30,6 +31,7 @@ namespace Business.Services.Ai
         private readonly IAiClientFactory _clientFactory;
         private readonly IAiModelService _modelService;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IAiDocumentIndexService _aiDocumentIndexService;
         private readonly ILogger<FlowQuestionService> _logger;
 
         public FlowQuestionService(
@@ -37,12 +39,14 @@ namespace Business.Services.Ai
             IAiClientFactory clientFactory,
             IAiModelService modelService,
             IDbContextFactory<AppDbContext> dbContextFactory,
+            IAiDocumentIndexService aiDocumentIndexService,
             ILogger<FlowQuestionService> logger)
         {
             _providerService = providerService;
             _clientFactory = clientFactory;
             _modelService = modelService;
             _dbContextFactory = dbContextFactory;
+            _aiDocumentIndexService = aiDocumentIndexService;
             _logger = logger;
         }
 
@@ -89,7 +93,7 @@ namespace Business.Services.Ai
                 .Build();
 
             List<ChatMessage> messages = [new ChatMessage(ChatRole.System, AiPromptHelper.AskAboutFlows)];
-            messages.AddRange(request.Messages.Select(x=>ToChatMessage(x)));
+            messages.AddRange(request.Messages.Select(x => ToChatMessage(x)));
 
             ChatOptions options = new ChatOptions
             {
@@ -147,9 +151,11 @@ namespace Business.Services.Ai
         private IList<AITool> BuildDbTools()
         {
             DbQueryTools tools = new DbQueryTools(_dbContextFactory);
+            AiDocumentTools helpTools = new AiDocumentTools(_aiDocumentIndexService);
 
             return
             [
+                AIFunctionFactory.Create(helpTools.SearchAiDocuments),
                 AIFunctionFactory.Create(tools.SearchFlows),
                 AIFunctionFactory.Create(tools.GetFlow),
                 AIFunctionFactory.Create(tools.GetFlowSteps),

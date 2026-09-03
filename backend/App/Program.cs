@@ -1,4 +1,4 @@
-using App.AutoMapper;
+﻿using App.AutoMapper;
 using App.Ipc;
 using Business.Helpers;
 using Business.Ipc.Handlers;
@@ -23,6 +23,7 @@ using Business.Services.NotificationService;
 using App.DependencyInjection;
 using Core.Enums;
 using Business.Services.Ai.Providers;
+using Business.Services.Ai.AiDocuments;
 using Business.Services.Ai.AiModels;
 
 namespace App
@@ -71,6 +72,10 @@ namespace App
             builder.Services.AddScoped<IFlowQuestionService, FlowQuestionService>();
             builder.Services.AddSingleton<IAiModelDownloadService, AiModelDownloadService>();
 
+            // Singletons, unlike the rest of AI: these hold the loaded onnx model and the built index, which cost seconds to produce and nothing to keep.
+            builder.Services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+            builder.Services.AddSingleton<IAiDocumentIndexService, AiDocumentIndexService>();
+
             // Ollama is on this machine, so a short timeout is right.
             builder.Services.AddHttpClient(nameof(AiModelService), client =>
             {
@@ -104,6 +109,8 @@ namespace App
 
             // SharpHook 
             builder.Services.AddHostedService<HostedSharpHookService>(); // <- Background service!
+
+            builder.Services.AddHostedService<HostedAiDocumentIndexService>(); // <- Background service!
 
             // MediatR
             builder.Services.AddMediatR(cfg =>
@@ -154,6 +161,39 @@ namespace App
         private readonly IpcBroadcastPipe _ipcBroadcastPipe;
         public HostedBroadcaststPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
         protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+    }
+
+    // Embed the docs at startup.
+    internal class HostedAiDocumentIndexService : BackgroundService
+    {
+        private readonly IAiDocumentIndexService _aiDocumentIndexService;
+        private readonly ILogger<HostedAiDocumentIndexService> _logger;
+
+        public HostedAiDocumentIndexService(IAiDocumentIndexService aiDocumentIndexService, ILogger<HostedAiDocumentIndexService> logger)
+        {
+            _aiDocumentIndexService = aiDocumentIndexService;
+            _logger = logger;
+        }
+
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    if (_aiDocumentIndexService.IsAvailable())
+                        _logger.LogInformation("Ai document index is ready.");
+                    else
+                        _logger.LogWarning("Ai document index is unavailable, so help questions are answered without the docs. The embedding model in AiModels is missing or unreadable.");
+                }
+                catch (Exception exception)
+                {
+                    // A background service that throws stops the host by default, and an index for
+                    // the help docs is not worth the app failing to start over.
+                    _logger.LogError(exception, "Building the ai document index failed.");
+                }
+            }, cancellationToken);
+        }
     }
 
     // Start global input recording hook.

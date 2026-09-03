@@ -72,7 +72,21 @@ is lost between sessions.
       This matters more than it would otherwise, because the model ships as `Content` - a loose
       file beside the exe rather than sealed into the assembly - so a user can simply delete it.
       Check the file on startup and report it, rather than finding out when somebody asks a
-      question and gets a worse answer for no stated reason.
+      question and gets a worse answer for no stated reason. `IDocsIndexService.IsAvailable()` is
+      the check; it is already what `SearchHelp` returns nothing on, so all that is missing is
+      saying so in the ui.
+- [ ] **Keyword search alongside the vectors.** Retrieval is embeddings only, which is strong on
+      paraphrase and weak on the exact word. Measured against the shipped docs: "how do I repeat a
+      set of steps" puts `Loop` at #1, but "what does the loop step do" - which contains the literal
+      section name - drops it to #4, behind three generic chunks about steps and the debugger. The
+      word `loop` is what a keyword index would have matched first. Wants BM25 over the same chunks
+      fused with the vector ranking by reciprocal rank fusion (`1/(k+rank)`, k about 60). Top 5
+      currently hides the problem; a harder corpus would not.
+- [ ] **Build the docs index off the first question.** `DocsIndexService` builds lazily, so the
+      first question after an install waits about 3.2 seconds while 128 chunks are embedded; every
+      later start loads the saved index in about 0.3. Deliberate - an app that never asks the
+      assistant anything never loads a 127mb model - but a background warm on startup, once ai is
+      known to be configured, would take that wait off the first question.
 - [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Windows DPAPI
       (ProtectedData.Protect) is about ten lines and needs no key management.
 - [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a
