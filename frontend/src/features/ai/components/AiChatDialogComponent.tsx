@@ -219,8 +219,12 @@ function MessageList({ conversation }: MessageListProps) {
         </div>
       ))}
 
-      {/* What it actually read, so an answer can be checked rather than taken on trust. */}
-      {conversation.toolCalls.length > 0 && !conversation.isPending ? (
+      {/* What it actually read, so an answer can be checked rather than taken on trust. The
+          pictures are shown apart from the tools because it chose the tools and was simply handed
+          these - and an answer that says nothing about a screenshot it was given reads differently
+          once you can see it had one. */}
+      {(conversation.toolCalls.length > 0 || conversation.images.length > 0) &&
+      !conversation.isPending ? (
         <div className="flex flex-wrap gap-1 align-items-center">
           <LabelComponent
             text="Looked at:"
@@ -233,6 +237,23 @@ function MessageList({ conversation }: MessageListProps) {
               className="p-tag text-xs"
             >
               {toolCall}
+            </span>
+          ))}
+          {conversation.images.map((image, index) => (
+            <span
+              key={`${image}-${index}`}
+              className="p-tag text-xs flex align-items-center gap-1"
+              style={{
+                background: "transparent",
+                color: "var(--text-color-secondary)",
+                border: "1px solid var(--surface-border)",
+              }}
+            >
+              <IconComponent
+                name="image"
+                className="text-xs"
+              />
+              {image}
             </span>
           ))}
         </div>

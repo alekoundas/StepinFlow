@@ -11,6 +11,9 @@ export interface AiConversation {
   /** What the last answer looked at. Kept per conversation so switching tabs keeps it. */
   toolCalls: string[];
 
+  /** The pictures the last answer was handed, alongside the tools it chose to call. */
+  images: string[];
+
   isPending: boolean;
   error: string;
 }
@@ -31,7 +34,7 @@ interface Actions {
 
   addMessage: (id: string, message: AiChatMessageDto) => void;
   setPending: (id: string, isPending: boolean) => void;
-  setAnswer: (id: string, text: string, toolCalls: string[]) => void;
+  setAnswer: (id: string, text: string, toolCalls: string[], images: string[]) => void;
   setError: (id: string, error: string) => void;
 }
 
@@ -40,6 +43,7 @@ const newConversation = (): AiConversation => ({
   title: "New question",
   messages: [],
   toolCalls: [],
+  images: [],
   isPending: false,
   error: "",
 });
@@ -118,7 +122,7 @@ export const useAiChatStore = create<Props & Actions>()(
         ),
       })),
 
-    setAnswer: (id: string, text: string, toolCalls: string[]): void =>
+    setAnswer: (id: string, text: string, toolCalls: string[], images: string[]): void =>
       set((state) => ({
         conversations: state.conversations.map((x) =>
           x.id !== id
@@ -127,6 +131,7 @@ export const useAiChatStore = create<Props & Actions>()(
                 ...x,
                 messages: [...x.messages, { role: "assistant", text: text }],
                 toolCalls: toolCalls,
+                images: images,
                 isPending: false,
               },
         ),

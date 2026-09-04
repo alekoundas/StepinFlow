@@ -150,6 +150,18 @@ is lost between sessions.
       webhook urls, which is why those two columns are left unselected rather than redacted.
       Wants one pass every tool result goes through, keyed on provider exactly as the existing rule
       is, so a cloud model gets `(hidden)` where a local one gets the value.
+- [ ] **`EnableSensitiveData` is hardcoded on.** `AiClientFactory.WithTelemetry` always tells the
+      OpenTelemetry client to record raw content, so a trace carries the full prompt, every tool
+      result and every screenshot - including `FlowStep.KeyboardInputText`, which is a typed
+      password in plaintext. Harmless today only because nothing listens: no exporter is registered
+      unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set, so a normal run records nothing. Wants the flag
+      to follow something deliberate rather than the build - the `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`
+      variable the library already reads is enough, and leaving the property unset is the whole fix.
+      Related to the redaction item above, which is the same data seen from the other end.
+- [ ] **Screenshots do not fit in a span.** A base64 png inside `gen_ai.input.messages` makes a
+      multi-megabyte attribute, and OTLP over grpc caps a message at 4 MB by default, so a vision
+      call is liable to be truncated or dropped rather than traced. Wants the image content stripped
+      before it reaches the attribute, leaving a note of how many were attached.
 - [ ] **No way to clear a stored API key.** A secret reads back as empty, so emptying the box
       compares equal to what is saved and nothing is written. Switching provider is the only way
       to stop using a key, and the key stays in the table. Wants an explicit Clear next to the

@@ -1,6 +1,6 @@
 using System.ComponentModel;
+using Business.Services.Ai.Helpers;
 using Core.Enums;
-using Core.Helpers;
 using Core.Helpers;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -207,28 +207,53 @@ namespace Business.Services.Ai.Tools
                 .ToListAsync();
         }
 
-        [Description("The steps of one run, in the order they happened. Indent by depth to read it as a tree.")]
+        [Description("The steps of one run, in the order they happened. Indent by depth to read it as a tree. Says of each failure whether it ended the run or was caught by a Failure branch.")]
         public async Task<IReadOnlyList<RunStepSummary>> GetRunSteps([Description("The run id, from GetRuns.")] int executionId)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-            return await dbContext.ExecutionSteps
+            // Which failure ended the run is a fact about the run, not about any step, so it has to
+            // be read before the steps can say what kind of failure they were.
+            int? errorFlowStepId = await dbContext.Executions
+                .AsNoTracking()
+                .Where(x => x.Id == executionId)
+                .Select(x => x.ErrorFlowStepId)
+                .FirstOrDefaultAsync();
+
+            List<RunStep> steps = await dbContext.ExecutionSteps
                 .AsNoTracking()
                 .Where(x => x.ExecutionId == executionId)
                 .OrderBy(x => x.Sequence)
                 .Take(_maxRows * 4)
-                .Select(x => new RunStepSummary(
+                .Select(x => new RunStep(
                     x.Sequence,
                     x.Depth,
                     x.Name,
                     x.FlowStepType.ToString(),
-                    x.Outcome.ToString(),
+                    x.Outcome,
+                    x.FlowStepId,
                     x.DurationMilliseconds,
                     x.Value,
                     x.Message,
                     x.ExitCode,
                     x.BestScore))
                 .ToListAsync();
+
+            return steps
+                .Select(x => new RunStepSummary(
+                    x.Sequence,
+                    x.Depth,
+                    x.Name,
+                    x.Type,
+                    x.Outcome.ToString(),
+                    StepFailureHelper.EndedRun(x.FlowStepId, errorFlowStepId),
+                    StepFailureHelper.WasHandled(x.Outcome, x.FlowStepId, errorFlowStepId),
+                    x.DurationMilliseconds,
+                    x.Value,
+                    x.Message,
+                    x.ExitCode,
+                    x.BestScore))
+                .ToList();
         }
 
         [Description("How many steps of each type a flow has. Use this for \"what does this flow mostly do\" instead of listing every step.")]
@@ -375,7 +400,16 @@ namespace Business.Services.Ai.Tools
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 
-        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
+        /// <summary>
+        /// EndedRun and WasHandled are the difference between a broken flow and a working one.
+        /// Outcome on its own says FAILURE for both, and most failures in a healthy run are the
+        /// second kind.
+        /// </summary>
+        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
+
+        // The columns the summary is built from. Kept apart because the outcome has to stay an enum
+        // until the run's error step is known, and that is not something sql can answer per row.
+        private record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
         public record StepTypeCount(string Type, int Count);
 

@@ -64,8 +64,8 @@ namespace Business.Services.Ai.Helpers
 
         private static string ExecutionStepToText(ExecutionStepDto step, int? errorFlowStepId, bool includeScreenValues)
         {
-            bool isFatal = errorFlowStepId != null && step.FlowStepId == errorFlowStepId;
-            bool isFailure = step.Outcome == StepOutcomeEnum.FAILURE;
+            bool isFatal = StepFailureHelper.EndedRun(step.FlowStepId, errorFlowStepId);
+            bool isHandled = StepFailureHelper.WasHandled(step.Outcome, step.FlowStepId, errorFlowStepId);
 
             StringBuilder line = new StringBuilder();
 
@@ -97,7 +97,7 @@ namespace Business.Services.Ai.Helpers
             // is the flow working; only this one stopped the run.
             if (isFatal)
                 line.Append("   <-- THIS ENDED THE RUN");
-            else if (isFailure)
+            else if (isHandled)
                 line.Append("   (handled - a Failure branch took over)");
 
             if (!string.IsNullOrWhiteSpace(step.Message))

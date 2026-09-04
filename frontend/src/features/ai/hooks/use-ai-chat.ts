@@ -54,7 +54,7 @@ export function useAskAi() {
       const answer = await backendApiService.Ai.ask({ messages: asked, executionId });
 
       if (answer.error) setError(conversationId, answer.error);
-      else setAnswer(conversationId, answer.answer, answer.toolCalls);
+      else setAnswer(conversationId, answer.answer, answer.toolCalls, answer.images);
     } catch (error) {
       setError(
         conversationId,

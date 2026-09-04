@@ -29,6 +29,13 @@ namespace Core.Models.Dtos
         /// <summary>What it looked at to answer, so the reply can be checked rather than trusted.</summary>
         public List<string> ToolCalls { get; set; } = new List<string>();
 
+        /// <summary>
+        /// The pictures it was handed. Kept apart from ToolCalls because it did not ask for these -
+        /// they arrive with the question - and because an answer that ignores a screenshot it was
+        /// given reads very differently once you know it had one.
+        /// </summary>
+        public List<string> Images { get; set; } = new List<string>();
+
         public string Error { get; set; } = string.Empty;
     }
 

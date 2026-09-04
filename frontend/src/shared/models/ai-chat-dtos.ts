@@ -17,6 +17,9 @@ export interface AiChatAnswerDto {
   /** What it looked at, so the reply can be checked rather than trusted. */
   toolCalls: string[];
 
+  /** The pictures it was handed. It did not ask for these - they arrive with the question. */
+  images: string[];
+
   error: string;
 }
 
