@@ -7,7 +7,9 @@ export function useDeleteFlow() {
   const { openConfirm } = useDialogStore();
   const { deleteFlowMutation } = useFlowMutations();
 
-  return (flow: FlowDto) => {
+  // onDeleted is for callers that were showing the flow they just deleted, and have to go
+  // somewhere else afterwards.
+  return (flow: FlowDto, onDeleted?: () => void) => {
     const noun = flow.isSubFlow ? "sub-flow" : "flow";
 
     const size =
@@ -27,7 +29,10 @@ export function useDeleteFlow() {
       children: (
         <LabelComponent text={`${size}${used} This cannot be undone.`} />
       ),
-      onConfirm: () => deleteFlowMutation.mutateAsync(flow.id),
+      onConfirm: async () => {
+        await deleteFlowMutation.mutateAsync(flow.id);
+        onDeleted?.();
+      },
     });
   };
 }

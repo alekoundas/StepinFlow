@@ -11,6 +11,7 @@ namespace Core.Models.Ipc
     public record GetFlowStepTreeNodesRecursiveQuery(int flowId) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
     public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
     public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
+    public record GetFlowStepDeleteImpactQuery(int id) : IRequest<ResultDto<FlowStepDeleteImpactDto>>;
     public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
     public record TestRunCommandQuery(FlowStepDto dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
     public record TestReadTextQuery(FlowStepDto dto) : IRequest<ResultDto<ReadTextTestResultDto>>;

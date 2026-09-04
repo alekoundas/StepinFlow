@@ -64,6 +64,7 @@ namespace App.Ipc
                     "FlowStep.getLazy" => await _mediator.Send(new GetLazyStepFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<TreeNodeRequestDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.getTreeNodesRecursive" => await _mediator.Send(new GetFlowStepTreeNodesRecursiveQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowStep.getDeleteImpact" => await _mediator.Send(new GetFlowStepDeleteImpactQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowStep.getMovePreview" => await _mediator.Send(new GetFlowStepMovePreviewQuery(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.move" => await _mediator.Send(new MoveFlowStepCommand(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
 

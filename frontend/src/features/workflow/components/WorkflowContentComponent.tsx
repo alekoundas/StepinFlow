@@ -19,6 +19,8 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
 import ExtractSubFlowButtonComponent from "@/features/workflow/components/ExtractSubFlowButtonComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
+import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
+import { useDeleteFlowStep } from "@/features/flow-step/hooks/use-delete-flow-step";
 
 export function WorkflowContentComponent() {
   const {
@@ -27,6 +29,7 @@ export function WorkflowContentComponent() {
     rootFlowId,
     setTreeRefreshTrigger,
     setSelectedFlowStepTypeToAdd,
+    setSelectedTreeNode,
   } = useWorkflowStore();
 
   const navigate = useNavigate();
@@ -56,6 +59,23 @@ export function WorkflowContentComponent() {
   const { createFlowStepMutation, updateFlowStepMutation } =
     useFlowStepMutations();
   const { updateFlowMutation } = useFlowMutations();
+
+  const deleteFlow = useDeleteFlow();
+  const deleteFlowStep = useDeleteFlowStep();
+
+  // The deleted step is the one on screen, so the tree has to reload and the selection has to let
+  // go of a node that no longer exists.
+  const handleStepDeleted = () => {
+    const node = selectedTreeNode;
+
+    setSelectedTreeNode(undefined);
+
+    if (node?.parentFlowStepId)
+      setTreeRefreshTrigger({ id: node.parentFlowStepId, isFlow: false });
+
+    if (node?.parentFlowId)
+      setTreeRefreshTrigger({ id: node.parentFlowId, isFlow: true });
+  };
 
   const handleFlowSave = async (saveDto: FlowDto) => {
     await updateFlowMutation.mutateAsync(saveDto);
@@ -205,14 +225,32 @@ export function WorkflowContentComponent() {
     }
 
     return panel(
-      <FlowFormComponent
-        key={flowId}
-        formMode={formMode}
-        defaultValues={loadedFlow}
-        onSubmit={handleFlowSave}
-        onCancel={() => setFormMode(FormMode.VIEW)}
-        onEdit={() => setFormMode(FormMode.EDIT)}
-      />,
+      <>
+        {/* Only in VIEW, so it is never one button away from Save. */}
+        {formMode === FormMode.VIEW && (
+          <div className="flex justify-content-end mb-2">
+            <Button
+              type="button"
+              label="Delete flow"
+              icon="pi pi-trash"
+              outlined
+              severity="danger"
+              onClick={() =>
+                deleteFlow(loadedFlow, () => navigate("/flows"))
+              }
+            />
+          </div>
+        )}
+
+        <FlowFormComponent
+          key={flowId}
+          formMode={formMode}
+          defaultValues={loadedFlow}
+          onSubmit={handleFlowSave}
+          onCancel={() => setFormMode(FormMode.VIEW)}
+          onEdit={() => setFormMode(FormMode.EDIT)}
+        />
+      </>,
     );
   }
 
@@ -233,18 +271,19 @@ export function WorkflowContentComponent() {
 
   const StepForm = form.component;
 
-  // Structural branches belong to the step above them, so there is nothing there to lift out.
-  const canExtract =
-    selectedTreeNode.flowStepType !== FlowStepTypeEnum.SUCCESS &&
-    selectedTreeNode.flowStepType !== FlowStepTypeEnum.FAILURE;
+  // Structural branches belong to the step above them, so there is nothing there to lift out -
+  // and nothing to delete on its own either. A Failure branch goes when its step goes.
+  const isStructural =
+    selectedTreeNode.flowStepType === FlowStepTypeEnum.SUCCESS ||
+    selectedTreeNode.flowStepType === FlowStepTypeEnum.FAILURE;
 
   // react-hook-form reads defaultValues once, on mount. Two steps of the same type render the
   // same component, so without a key React reuses the instance and the form keeps the first
   // step's values. The key also drops any unsaved edits with the step they belonged to.
   return panel(
     <>
-      {canExtract && formMode === FormMode.VIEW && (
-        <div className="flex justify-content-end mb-2">
+      {!isStructural && formMode === FormMode.VIEW && (
+        <div className="flex justify-content-end gap-2 mb-2">
           <ExtractSubFlowButtonComponent
             node={selectedTreeNode}
             rootFlowId={rootFlowId ?? 0}
@@ -255,6 +294,15 @@ export function WorkflowContentComponent() {
                 selectNodeIdAfterLoad: flowStepId,
               })
             }
+          />
+
+          <Button
+            type="button"
+            label="Delete step"
+            icon="pi pi-trash"
+            outlined
+            severity="danger"
+            onClick={() => deleteFlowStep(selectedTreeNode, handleStepDeleted)}
           />
         </div>
       )}

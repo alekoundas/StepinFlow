@@ -4,6 +4,7 @@ import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowValidationResultDto } from "@/shared/models/database/flow-validation-result-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { FlowStepDeleteImpactDto } from "@/shared/models/database/flow-step-delete-impact-dto";
 import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
 import type {
   FlowStepMoveDto,
@@ -99,6 +100,8 @@ export const backendApiService = {
       call<FlowDraftResultDto>("FlowStep.createMany", dto),
     update: (dto: FlowStepDto) => call<FlowStepDto>("FlowStep.update", dto),
     delete: (id: number) => call<boolean>("FlowStep.delete", id),
+    getDeleteImpact: (id: number) =>
+      call<FlowStepDeleteImpactDto>("FlowStep.getDeleteImpact", id),
 
     get: (id: number) => call<FlowStepDto>("FlowStep.get", id),
     getDataTable: (dto: LazyDto) =>
