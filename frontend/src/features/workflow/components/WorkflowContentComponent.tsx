@@ -20,6 +20,7 @@ import ExtractSubFlowButtonComponent from "@/features/workflow/components/Extrac
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
+import { usePromoteFlow } from "@/features/flow/hooks/use-promote-flow";
 import { useDeleteFlowStep } from "@/features/flow-step/hooks/use-delete-flow-step";
 
 export function WorkflowContentComponent() {
@@ -61,6 +62,7 @@ export function WorkflowContentComponent() {
   const { updateFlowMutation } = useFlowMutations();
 
   const deleteFlow = useDeleteFlow();
+  const promoteFlow = usePromoteFlow();
   const deleteFlowStep = useDeleteFlowStep();
 
   // The deleted step is the one on screen, so the tree has to reload and the selection has to let
@@ -228,7 +230,18 @@ export function WorkflowContentComponent() {
       <>
         {/* Only in VIEW, so it is never one button away from Save. */}
         {formMode === FormMode.VIEW && (
-          <div className="flex justify-content-end mb-2">
+          <div className="flex justify-content-end gap-2 mb-2">
+            {/* Only offered on a flow: a sub-flow is already one, and it is a one-way trip. */}
+            {!loadedFlow.isSubFlow && (
+              <Button
+                type="button"
+                label="Make this a sub-flow"
+                icon="pi pi-sitemap"
+                outlined
+                onClick={() => promoteFlow(loadedFlow.id)}
+              />
+            )}
+
             <Button
               type="button"
               label="Delete flow"
