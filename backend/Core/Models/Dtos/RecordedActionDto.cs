@@ -30,12 +30,28 @@ namespace Core.Models.Dtos
         public int LocationEndY { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
 
+        /// <summary>
+        /// Single or double, so a double click is offered as one rather than as two clicks the
+        /// flow would replay too slowly to register as one.
+        /// </summary>
+        public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
+
         // Scroll
         public CursorScrollDirectionTypeEnum? ScrollDirection { get; set; }
         public int ScrollAmount { get; set; }
 
         // Keyboard: the typed run, or the name of the key that was pressed.
         public string? Text { get; set; }
+
+        /// <summary>
+        /// How many times the keyboard repeated the key while it was held. Zero for an ordinary
+        /// press. The repeats are not replayed - a flow that types forty a's because a finger
+        /// lingered is worse than one that types a single a - so this is what was left out.
+        /// </summary>
+        public int RepeatCount { get; set; }
+
+        /// <summary>How long the key was down, which is the part a hold is actually about.</summary>
+        public int HoldMilliseconds { get; set; }
 
         // Pause
         public int PauseMilliseconds { get; set; }

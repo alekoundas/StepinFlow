@@ -1,5 +1,6 @@
 import type { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-kind-enum";
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
+import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 
 /**
@@ -23,9 +24,18 @@ export interface RecordedActionDto {
   locationEndY: number;
   cursorButtonType?: CursorButtonTypeEnum | null;
 
+  /** Single or double, measured from how close the two presses were. */
+  cursorButtonActionType?: CursorButtonActionTypeEnum | null;
+
   scrollDirection?: CursorScrollDirectionTypeEnum | null;
   scrollAmount: number;
 
   text?: string | null;
+
+  /** How many times the keyboard repeated a held key. Not replayed; recorded so it is not lost. */
+  repeatCount: number;
+
+  /** How long the key was down. */
+  holdMilliseconds: number;
   pauseMilliseconds: number;
 }

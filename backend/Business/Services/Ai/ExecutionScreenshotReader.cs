@@ -74,7 +74,7 @@ namespace Business.Services.Ai
                 .AsNoTracking()
                 .Where(x => x.ExecutionId == executionId && x.ScreenshotFileName != null)
                 .OrderBy(x => x.Sequence)
-                .Select(x => new StepScreenshot(x.Sequence, x.FlowStepId, x.Outcome, x.ScreenshotFileName!))
+                .Select(x => new StepScreenshot(x.Sequence, x.Name, x.FlowStepId, x.Outcome, x.ScreenshotFileName!))
                 .ToListAsync(ct);
 
             if (screenshots.Count == 0)
@@ -100,9 +100,9 @@ namespace Business.Services.Ai
             // Then the screenshots, oldest first, so "before" and "after" read in the order they
             // happened.
             if (index > 0)
-                AddScreenshot(images, folder.FolderName, screenshots[index - 1].ScreenshotFileName, "The screen just BEFORE the step that failed.");
+                AddScreenshot(images, folder.FolderName, screenshots[index - 1].ScreenshotFileName, EarlierLabel(screenshots[index - 1], screenshots[index]), $"Earlier screen \"{screenshots[index - 1].Name}\"");
 
-            AddScreenshot(images, folder.FolderName, screenshots[index].ScreenshotFileName, "The screen AT the step that failed. This is what the search actually looked at.");
+            AddScreenshot(images, folder.FolderName, screenshots[index].ScreenshotFileName, "The screen AT the step that failed. This is what the search actually looked at.", $"Screen at \"{screenshots[index].Name}\"");
 
             return images;
         }
@@ -151,6 +151,7 @@ namespace Business.Services.Ai
                 images.Add(new AiImage
                 {
                     Label = $"The template image it was searching for, \"{templateImage.Name}\". Anything erased from it shows as white and was not part of the search.",
+                    Name = $"Template \"{templateImage.Name}\"",
                     Bytes = flattened,
                     MediaType = "image/png",
                 });
@@ -159,13 +160,28 @@ namespace Business.Services.Ai
             return images;
         }
 
-        private void AddScreenshot(List<AiImage> images, string folderName, string fileName, string label)
+        // Only the steps that captured anything are in the list, so the one before the failure in it
+        // is not the step before the failure in the run - the screenshot limit can leave dozens of
+        // steps and a whole sub-flow between the two. Calling that "just before" invites the one
+        // reading two distant pictures cannot support: that nothing happened in between, so the
+        // flow was waiting on something.
+        private static string EarlierLabel(StepScreenshot earlier, StepScreenshot failed)
+        {
+            int stepsApart = failed.Sequence - earlier.Sequence;
+
+            if (stepsApart == 1)
+                return "The screen just BEFORE the step that failed. Nothing ran in between these two.";
+
+            return $"The screen at an earlier step, \"{earlier.Name}\", {stepsApart} steps before the one that failed. Steps ran in between that captured nothing, so what changed between this and the next picture does not say what caused it.";
+        }
+
+        private void AddScreenshot(List<AiImage> images, string folderName, string fileName, string label, string name)
         {
             byte[]? bytes = Read(folderName, fileName);
             if (bytes == null)
                 return;
 
-            images.Add(new AiImage { Label = label, Bytes = bytes });
+            images.Add(new AiImage { Label = label, Name = name, Bytes = bytes });
         }
 
         // Template images are png with erased pixels. 
@@ -245,7 +261,7 @@ namespace Business.Services.Ai
         // ================================================================
 
         private sealed record ExecutionFolder(string? FolderName, int? ErrorFlowStepId);
-        private sealed record StepScreenshot(int Sequence, int? FlowStepId, StepOutcomeEnum Outcome, string ScreenshotFileName);
+        private sealed record StepScreenshot(int Sequence, string Name, int? FlowStepId, StepOutcomeEnum Outcome, string ScreenshotFileName);
         private sealed record StepTemplateImage(string Name, byte[] TemplateImage);
     }
 }

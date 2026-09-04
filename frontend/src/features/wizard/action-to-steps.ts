@@ -66,7 +66,8 @@ export const defaultAnswers = (
 ): ActionAnswers => ({
   name: defaultName(action, optionId),
   cursorButtonType: action.cursorButtonType ?? undefined,
-  cursorButtonActionType: cursorButtonActionTypeEnum.SINGLE_CLICK,
+  cursorButtonActionType:
+    action.cursorButtonActionType ?? cursorButtonActionTypeEnum.SINGLE_CLICK,
   cursorScrollDirectionType: action.scrollDirection ?? undefined,
   loopCount: action.scrollAmount,
   keyboardInputText: action.text ?? "",
