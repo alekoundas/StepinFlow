@@ -99,7 +99,7 @@ namespace Business.Services.Ai
             List<ChatMessage> messages = [new ChatMessage(ChatRole.System, AiPromptHelper.AskAboutFlows)];
             messages.AddRange(request.Messages.Select(x => ToChatMessage(x)));
 
-            await AttachScreenshotsAsync(messages, request.ExecutionId, ct);
+            IReadOnlyList<string> attached = await AttachScreenshotsAsync(messages, request.ExecutionId, ct);
 
             ChatOptions options = new ChatOptions
             {
@@ -120,6 +120,7 @@ namespace Business.Services.Ai
                         .OfType<FunctionCallContent>()
                         .Select(x => x.Name)
                         .ToList(),
+                    Images = attached.ToList(),
                 };
             }
             catch (Exception ex)
@@ -149,18 +150,18 @@ namespace Business.Services.Ai
         // UseFunctionInvocation replays the whole conversation on every round of the tool loop, up
         // to _maxToolRounds, so an image left in the history is re-read that many times per
         // question. Ollama's cpu backend keeps no cache between requests, so nothing absorbs that.
-        private async Task AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, CancellationToken ct)
+        private async Task<IReadOnlyList<string>> AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, CancellationToken ct)
         {
             if (executionId == null)
-                return;
+                return [];
 
             ChatMessage? newest = messages.LastOrDefault(x => x.Role == ChatRole.User);
             if (newest == null)
-                return;
+                return [];
 
             IReadOnlyList<AiImage> images = await _executionScreenshotReader.GetForExecutionAsync(executionId.Value, ct);
             if (images.Count == 0)
-                return;
+                return [];
 
             // Each one says what it is before it arrives. Unlabelled, they are just pictures, and a
             // model describes pictures instead of comparing them.
@@ -169,6 +170,8 @@ namespace Business.Services.Ai
                 newest.Contents.Add(new TextContent(image.Label));
                 newest.Contents.Add(new DataContent(image.Bytes, image.MediaType));
             }
+
+            return images.Select(x => x.Name).ToList();
         }
 
         private static ChatMessage ToChatMessage(AiChatMessageDto message)

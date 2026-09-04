@@ -65,7 +65,28 @@ namespace Business.Services.ExecutionService.Workers
         private ExecutionStep Click(FlowStep step)
         {
             Point at = _inputService.CursorPosition();
-            _inputService.SimulateMouseClick(at.X, at.Y, ButtonOf(step.CursorButtonType));
+            MouseButton button = ButtonOf(step.CursorButtonType);
+
+            switch (step.CursorButtonActionType)
+            {
+                case CursorButtonActionTypeEnum.DOUBLE_CLICK:
+                    _inputService.SimulateMouseDoubleClick(at.X, at.Y, button);
+                    break;
+
+                // Held and released are two halves of one gesture, so each is a step of its own and
+                // whatever runs between them happens with the button down.
+                case CursorButtonActionTypeEnum.HOLD_CLICK:
+                    _inputService.SimulateMouseDown(at.X, at.Y, button);
+                    break;
+
+                case CursorButtonActionTypeEnum.RELEASE_CLICK:
+                    _inputService.SimulateMouseUp(at.X, at.Y, button);
+                    break;
+
+                default:
+                    _inputService.SimulateMouseClick(at.X, at.Y, button);
+                    break;
+            }
 
             return ExecutionStep.Success(at);
         }

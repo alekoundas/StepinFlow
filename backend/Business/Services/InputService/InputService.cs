@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using Business.Helpers;
 using SharpHook;
 using SharpHook.Data;
@@ -14,6 +14,10 @@ namespace Business.Services.InputService
         // the click at the previous position.
         private const int MoveSettleMilliseconds = 16;
 
+        // Well inside the Windows default of 500ms, and far enough apart that the two presses are
+        // not swallowed as one.
+        private const int DoubleClickGapMilliseconds = 40;
+
         // Cursor movement does not go through SharpHook: its absolute coordinates are DPI
         // virtualized, and everything stored in the database is in physical pixels.
         public bool MoveCursor(int x, int y) => CursorHelper.MoveCursor(x, y);
@@ -24,6 +28,38 @@ namespace Business.Services.InputService
             Thread.Sleep(MoveSettleMilliseconds);
 
             _simulator.SimulateMousePress(button);
+            _simulator.SimulateMouseRelease(button);
+        }
+
+        public void SimulateMouseDoubleClick(int x, int y, MouseButton button)
+        {
+            MoveCursor(x, y);
+            Thread.Sleep(MoveSettleMilliseconds);
+
+            _simulator.SimulateMousePress(button);
+            _simulator.SimulateMouseRelease(button);
+
+            // Two clicks, not one long one. Windows pairs them into a double click by the gap
+            // between them, so this has to be short enough to count and long enough to be two.
+            Thread.Sleep(DoubleClickGapMilliseconds);
+
+            _simulator.SimulateMousePress(button);
+            _simulator.SimulateMouseRelease(button);
+        }
+
+        public void SimulateMouseDown(int x, int y, MouseButton button)
+        {
+            MoveCursor(x, y);
+            Thread.Sleep(MoveSettleMilliseconds);
+
+            _simulator.SimulateMousePress(button);
+        }
+
+        public void SimulateMouseUp(int x, int y, MouseButton button)
+        {
+            MoveCursor(x, y);
+            Thread.Sleep(MoveSettleMilliseconds);
+
             _simulator.SimulateMouseRelease(button);
         }
 
@@ -59,6 +95,20 @@ namespace Business.Services.InputService
         {
             _simulator.SimulateKeyPress(key);
             _simulator.SimulateKeyRelease(key);
+        }
+
+        public void SimulateKeyCombination(IReadOnlyList<KeyCode> modifiers, KeyCode key)
+        {
+            foreach (KeyCode modifier in modifiers)
+                _simulator.SimulateKeyPress(modifier);
+
+            _simulator.SimulateKeyPress(key);
+            _simulator.SimulateKeyRelease(key);
+
+            // Let go in the order a hand would, so nothing is left held if the app is watching the
+            // modifiers rather than the combination.
+            for (int i = modifiers.Count - 1; i >= 0; i--)
+                _simulator.SimulateKeyRelease(modifiers[i]);
         }
 
 
