@@ -234,6 +234,11 @@ function registerSignalCloseHandler(
     // Runs once. Closing the windows fires their own "closed" listeners, which call back in here.
     let isCleanedUp = false;
 
+    // Whoever gets here first decides the answer, and it is decided before any awaiting starts.
+    // Closing the windows is the last thing a confirm does, so their "closed" events arrive after
+    // a result already exists - and a window closing only means "cancelled" when nothing was sent.
+    let isSettled = false;
+
     // Resolves only after the recorder has actually stopped, so reopening the overlay cannot
     // race the stop and find the recorder still busy.
     const cleanup = async () => {
@@ -252,18 +257,28 @@ function registerSignalCloseHandler(
       }
     };
 
-    ipcMain.once(
-      IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW,
-      (_event, rect: Rectangle | null) => {
-        void cleanup().then(() => resolve(rect));
-      },
-    );
+    const settle = (rect: Rectangle | null): void => {
+      if (isSettled) return;
+      isSettled = true;
+
+      // The listener never fires on the cancelled paths, and a leftover one would answer for the
+      // next overlay as well as this one.
+      ipcMain.removeListener(
+        IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW,
+        onSignalClose,
+      );
+
+      void cleanup().then(() => resolve(rect));
+    };
+
+    const onSignalClose = (_event: unknown, rect: Rectangle | null): void =>
+      settle(rect);
+
+    ipcMain.once(IPC_CHANNELS.OVERLAY_SIGNAL_CLOSE_WINDOW, onSignalClose);
 
     // If user force-closes the overlay window (e.g. Alt+F4)
     electronWindows.forEach((win) => {
-      win.once("closed", () => {
-        void cleanup().then(() => resolve(null));
-      });
+      win.once("closed", () => settle(null));
     });
   });
 }

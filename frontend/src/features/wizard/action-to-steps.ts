@@ -4,6 +4,7 @@ import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
+import { centreClickOffset } from "@/shared/utils/image-size";
 import { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
@@ -36,6 +37,13 @@ export interface Placement {
   parentTempId?: number;
   parentBranch?: FlowStepTypeEnum;
 }
+
+const recordedTemplate = (base64: string): FlowStepImageDto =>
+  new FlowStepImageDto({
+    name: "Recorded template",
+    templateImage: base64,
+    ...centreClickOffset(base64),
+  });
 
 /**
  * What the wizard asks about an action, in the words of the step rather than the recording.
@@ -252,9 +260,7 @@ export const buildSteps = (
       searchMode,
       timeoutMilliseconds,
       flowAreaId: answers.flowAreaId,
-      flowStepImages: answers.template
-        ? [new FlowStepImageDto({ name: "Recorded template", templateImage: answers.template })]
-        : [],
+      flowStepImages: answers.template ? [recordedTemplate(answers.template)] : [],
     });
 
   switch (optionId) {

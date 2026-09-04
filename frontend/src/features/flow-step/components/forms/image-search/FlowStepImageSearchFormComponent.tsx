@@ -1,3 +1,4 @@
+import { centreClickOffset } from "@/shared/utils/image-size";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import type z from "zod";
 
@@ -170,6 +171,7 @@ export default function FlowStepImageSearchFormComponent({
         templateImage: screenshot,
         authoredFrameWidth: frameWidth,
         authoredFrameHeight: frameHeight,
+        ...centreClickOffset(screenshot),
       }),
     ]);
   };
@@ -183,7 +185,13 @@ export default function FlowStepImageSearchFormComponent({
 
     updateImage(
       index,
-      new FlowStepImageDto({ ...image, templateImage: edited }),
+      // Re-cropping moves every pixel, so a click point picked on the old image now points at
+      // something else - or off the edge. The middle of the new one is the honest answer.
+      new FlowStepImageDto({
+        ...image,
+        templateImage: edited,
+        ...centreClickOffset(edited),
+      }),
     );
   };
 
