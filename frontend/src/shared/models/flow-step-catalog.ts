@@ -65,7 +65,7 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
     group: FlowStepGroupEnum.INPUT,
     label: "Cursor Click",
-    iconName: "mouse",
+    iconName: "bullseye",
   },
   {
     flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
@@ -89,7 +89,7 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     flowStepType: FlowStepTypeEnum.KEYBOARD_INPUT,
     group: FlowStepGroupEnum.INPUT,
     label: "Keyboard Input",
-    iconName: "keyboard",
+    iconName: "pencil",
   },
 
   // ── Window ──
@@ -131,7 +131,7 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     flowStepType: FlowStepTypeEnum.SYSTEM_COMMAND,
     group: FlowStepGroupEnum.SYSTEM,
     label: "System Command",
-    iconName: "terminal",
+    iconName: "code",
   },
   {
     flowStepType: FlowStepTypeEnum.SYSTEM_ACTION,

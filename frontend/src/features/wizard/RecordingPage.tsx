@@ -264,13 +264,13 @@ const iconFor = (event: RecordedInput): string => {
   switch (event.type) {
     case "BUTTON_DOWN":
     case "BUTTON_UP":
-      return "mouse";
+      return "bullseye";
     case "CURSOR_DRAG":
       return "arrows-alt";
     case "CURSOR_SCROLL":
       return "sort-alt";
     default:
-      return "keyboard";
+      return "pencil";
   }
 };
 

@@ -15,7 +15,7 @@ export const CURSOR_MODES: CursorMode[] = [
   {
     flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
     label: "Click",
-    iconName: "mouse",
+    iconName: "bullseye",
     defaultName: "Cursor Click",
     description:
       "Press a mouse button at the resolved location. Single, double, hold or release.",

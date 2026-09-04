@@ -110,7 +110,7 @@ const CLICK_OPTIONS: ActionOption[] = [
     id: "click",
     label: "Click at this position",
     description: "Moves to the exact coordinates and clicks. Breaks if the window moves.",
-    iconName: "mouse",
+    iconName: "bullseye",
     stepCount: 2,
   },
   {
@@ -136,7 +136,7 @@ const TYPING_OPTIONS: ActionOption[] = [
     id: "type-text",
     label: "Type this text",
     description: "Sends the characters as typed.",
-    iconName: "keyboard",
+    iconName: "pencil",
     stepCount: 1,
   },
   {

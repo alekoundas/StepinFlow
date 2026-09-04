@@ -47,7 +47,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       name: "System Command",
       description:
         "Run a command on this machine, branch on whether it worked, and use what it printed in later steps.",
-      iconName: "terminal",
+      iconName: "code",
     },
     {
       flowStepType: FlowStepTypeEnum.SYSTEM_ACTION,
@@ -84,7 +84,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       name: "Cursor",
       description:
         "Simulate a cursor action. Click, drag, scroll, or relocate the cursor to specific coordinates.",
-      iconName: "mouse",
+      iconName: "bullseye",
     },
 
     // ── Window ──
@@ -102,7 +102,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       name: "Keyboard Input",
       description:
         "Type a string or send individual key combinations (e.g. Ctrl+C, Enter, Tab) to the active window.",
-      iconName: "keyboard",
+      iconName: "pencil",
     },
 
     // ── Screen Search ──
