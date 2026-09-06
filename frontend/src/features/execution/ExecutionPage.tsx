@@ -40,9 +40,12 @@ export default function ExecutionPage() {
   );
 
   // Arrived from the executions list with a run named. Open that one rather than the last state.
-  const { data: requestedExecution } = useExecution(
-    requestedExecutionId ? +requestedExecutionId : null,
-  );
+  const {
+    data: requestedExecution,
+    isLoading: isRequestedExecutionLoading,
+    isError: isRequestedExecutionError,
+    error: requestedExecutionError,
+  } = useExecution(requestedExecutionId ? +requestedExecutionId : null);
 
   const { data: flow } = useFlow(flowId > 0 ? flowId : null);
   const { data: engineState } = useExecutionState();
@@ -79,6 +82,15 @@ export default function ExecutionPage() {
     setExecutionSteps(requestedExecution.executionSteps ?? []);
   }, [requestedExecution, openedExecution, setExecutionSteps]);
 
+
+  // Only a past run can fail to load: a live one builds its rows from the events as they arrive.
+  const emptyReason = !isPastRun
+    ? "idle"
+    : isRequestedExecutionLoading
+      ? "loading"
+      : isRequestedExecutionError
+        ? "error"
+        : "noHistory";
 
   return (
     <div className="flex flex-column gap-3 p-4 h-full">
@@ -145,6 +157,12 @@ export default function ExecutionPage() {
             <ExecutionStepListComponent
               errorFlowStepId={openedExecution?.errorFlowStepId}
               showFailuresOnly={showFailuresOnly}
+              emptyReason={emptyReason}
+              emptyMessage={
+                isRequestedExecutionError
+                  ? (requestedExecutionError as Error)?.message
+                  : undefined
+              }
             />
           </PanelCard>
         </SplitterPanel>

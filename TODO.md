@@ -183,6 +183,11 @@ is lost between sessions.
 
 ## Frontend
 
+- [ ] **A recorded template records no authored frame size.** `AuthoredFrameWidth` and
+      `AuthoredFrameHeight` are saved as 0 by the recorder, and `ImageSearchStepWorker.ScaleRatio`
+      returns 1 for anything <= 0 - so multi-scale matching silently does nothing on a recorded
+      template, and a window at a different size than it was recorded at just fails to match. The
+      manual capture path fills both in; the wizard has the same numbers available and does not.
 - [ ] **Flow edit / view / clone routes are broken.** `FlowFormPage` reads a `formMode` route param
       that no route declares, and `const flow = null` means it never loads the flow it is editing.
 

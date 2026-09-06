@@ -23,9 +23,16 @@ namespace Business.Services.RecordingService
         private const int DragThresholdPixels = 5;
 
         /// <summary>Shorter gaps are just human latency, not a wait the flow needs to reproduce.</summary>
-        private static readonly TimeSpan PauseThreshold = TimeSpan.FromMilliseconds(1500);
+        private static readonly TimeSpan PauseThreshold = TimeSpan.FromMilliseconds(550);
 
-        /// <summary>Held rather than typed, so they never end a run or become an action.</summary>
+        // Two presses this close together, at the same spot, are one double click. Further apart
+        // and they are two clicks, which is a different thing for a flow to repeat.
+        private static readonly TimeSpan DoubleClickWindow = TimeSpan.FromMilliseconds(500);
+
+        // A hand moves a little between the two presses.
+        private const int DoubleClickSlopPixels = 6;
+
+        // Held rather than typed, so they never become an action of their own.
         private static readonly HashSet<KeyCodeEnum> ModifierKeys =
         [
             KeyCodeEnum.LeftShift, KeyCodeEnum.RightShift,
@@ -35,12 +42,30 @@ namespace Business.Services.RecordingService
             KeyCodeEnum.CapsLock, KeyCodeEnum.NumLock,
         ];
 
+        // The ones that turn a key into a shortcut. Shift is deliberately not here: shift and a
+        // letter is still typing, only in capitals, where Ctrl and a letter is a command.
+        private static readonly HashSet<KeyCodeEnum> CombiningModifiers =
+        [
+            KeyCodeEnum.LeftCtrl, KeyCodeEnum.RightCtrl,
+            KeyCodeEnum.LeftAlt, KeyCodeEnum.RightAlt,
+            KeyCodeEnum.LeftMeta, KeyCodeEnum.RightMeta,
+        ];
+
         public static List<RecordedActionDto> Build(IReadOnlyList<RecordedInput> events)
         {
             List<RecordedActionDto> actions = new List<RecordedActionDto>();
             StringBuilder typed = new StringBuilder();
             DateTime? typedStartedOn = null;
             DateTime? previousEndedOn = null;
+
+            // Every key physically down, and when it went down. Auto-repeat arrives as more
+            // KEY_DOWNs with no KEY_UP between them, so a key already in here is the keyboard
+            // repeating rather than the user pressing again.
+            Dictionary<KeyCodeEnum, DateTime> downSince = new Dictionary<KeyCodeEnum, DateTime>();
+
+            // The last action a key produced, so its release can say how long it was held.
+            RecordedActionDto? keyAction = null;
+            KeyCodeEnum? keyActionCode = null;
 
             // The click that stopped the recording is part of stopping it, not part of the task.
             List<RecordedInput> trimmed = TrimTrailingClick(events);
@@ -88,8 +113,30 @@ namespace Business.Services.RecordingService
                             Math.Abs(release.PhysicalX - current.PhysicalX) > DragThresholdPixels ||
                             Math.Abs(release.PhysicalY - current.PhysicalY) > DragThresholdPixels;
 
+                        if (isDrag)
+                        {
+                            Emit(BuildDrag(current, release), current.CreatedOn, release.CreatedOn);
+                            i = releaseIndex >= 0 ? releaseIndex : i;
+                            break;
+                        }
+
+                        int secondPress = FindDoubleClick(trimmed, i, releaseIndex, current);
+                        if (secondPress >= 0)
+                        {
+                            int secondRelease = FindRelease(trimmed, secondPress);
+                            RecordedInput last = secondRelease >= 0 ? trimmed[secondRelease] : trimmed[secondPress];
+
+                            Emit(
+                                BuildClick(current, CursorButtonActionTypeEnum.DOUBLE_CLICK),
+                                current.CreatedOn,
+                                last.CreatedOn);
+
+                            i = secondRelease >= 0 ? secondRelease : secondPress;
+                            break;
+                        }
+
                         Emit(
-                            isDrag ? BuildDrag(current, release) : BuildClick(current),
+                            BuildClick(current, CursorButtonActionTypeEnum.SINGLE_CLICK),
                             current.CreatedOn,
                             release.CreatedOn);
 
@@ -118,23 +165,86 @@ namespace Business.Services.RecordingService
                         break;
                     }
 
-                    case RecordedInputTypeEnum.KEY_UP:
+                    // Keys are decided on the way down, not the way up. A modifier is often let go
+                    // a moment before the letter - ctrl down, c down, ctrl up, c up is an ordinary
+                    // Ctrl+C - and reading it at the release finds no ctrl and types a c.
+                    case RecordedInputTypeEnum.KEY_DOWN:
                     {
-                        if (current.KeyCode == null || ModifierKeys.Contains(current.KeyCode.Value))
+                        if (current.KeyCode == null)
                             break;
 
-                        string? character = PrintableCharacter(current.KeyCode.Value);
+                        KeyCodeEnum code = current.KeyCode.Value;
+
+                        if (downSince.ContainsKey(code))
+                        {
+                            // The keyboard repeating itself. One press is what the user did.
+                            if (keyAction != null && keyActionCode == code)
+                                keyAction.RepeatCount++;
+
+                            break;
+                        }
+
+                        downSince[code] = current.CreatedOn;
+
+                        if (ModifierKeys.Contains(code))
+                            break;
+
+                        if (downSince.Keys.Any(x => CombiningModifiers.Contains(x)))
+                        {
+                            FlushTyping();
+                            keyAction = BuildKeyCombination(current, ShortcutModifiers(downSince.Keys));
+                            keyActionCode = code;
+                            Emit(keyAction, current.CreatedOn, current.CreatedOn);
+                            break;
+                        }
+
+                        string? character = PrintableCharacter(code);
 
                         if (character != null)
                         {
+                            bool isShifted =
+                                downSince.ContainsKey(KeyCodeEnum.LeftShift) ||
+                                downSince.ContainsKey(KeyCodeEnum.RightShift);
+
                             typedStartedOn ??= current.CreatedOn;
-                            typed.Append(character);
+                            typed.Append(isShifted ? character.ToUpperInvariant() : character);
+
+                            keyAction = null;
+                            keyActionCode = null;
                             break;
                         }
 
                         // Enter, Tab, arrows and the like end the run and stand on their own.
                         FlushTyping();
-                        Emit(BuildKeyCombination(current), current.CreatedOn, current.CreatedOn);
+                        keyAction = BuildKeyCombination(current, []);
+                        keyActionCode = code;
+                        Emit(keyAction, current.CreatedOn, current.CreatedOn);
+                        break;
+                    }
+
+                    case RecordedInputTypeEnum.KEY_UP:
+                    {
+                        if (current.KeyCode == null)
+                            break;
+
+                        KeyCodeEnum code = current.KeyCode.Value;
+
+                        if (!downSince.TryGetValue(code, out DateTime pressedAt))
+                            break;
+
+                        downSince.Remove(code);
+
+                        if (keyAction == null || keyActionCode != code)
+                            break;
+
+                        // The action ran until the key came back up, so a long hold is not also a
+                        // pause before whatever came next.
+                        keyAction.HoldMilliseconds = (int)Math.Round((current.CreatedOn - pressedAt).TotalMilliseconds);
+                        previousEndedOn = current.CreatedOn;
+
+                        if (keyAction.RepeatCount > 0)
+                            keyAction.Summary += $", held {Math.Round(keyAction.HoldMilliseconds / 1000d, 1).ToString(CultureInfo.InvariantCulture)}s";
+
                         break;
                     }
                 }
@@ -192,16 +302,46 @@ namespace Business.Services.RecordingService
             return -1;
         }
 
-        private static RecordedActionDto BuildClick(RecordedInput down) => new RecordedActionDto
+        // The second press of a double click: the same button, close behind, and near enough that
+        // the hand did not move on to something else in between.
+        private static int FindDoubleClick(IReadOnlyList<RecordedInput> events, int downIndex, int releaseIndex, RecordedInput down)
         {
-            Kind = RecordedActionKindEnum.CLICK,
-            Summary = $"Clicked at {down.PhysicalX}, {down.PhysicalY}",
-            WindowTitle = down.WindowTitle,
-            ScreenshotIndex = down.HasScreenshot ? down.Index : null,
-            LocationX = down.PhysicalX,
-            LocationY = down.PhysicalY,
-            CursorButtonType = down.CursorButtonType,
-        };
+            for (int i = Math.Max(downIndex, releaseIndex) + 1; i < events.Count; i++)
+            {
+                RecordedInput candidate = events[i];
+
+                if (candidate.Type == RecordedInputTypeEnum.BUTTON_UP)
+                    continue;
+
+                if (candidate.Type != RecordedInputTypeEnum.BUTTON_DOWN ||
+                    candidate.CursorButtonType != down.CursorButtonType ||
+                    candidate.CreatedOn - down.CreatedOn > DoubleClickWindow ||
+                    Math.Abs(candidate.PhysicalX - down.PhysicalX) > DoubleClickSlopPixels ||
+                    Math.Abs(candidate.PhysicalY - down.PhysicalY) > DoubleClickSlopPixels)
+                    return -1;
+
+                return i;
+            }
+
+            return -1;
+        }
+
+        private static RecordedActionDto BuildClick(RecordedInput down, CursorButtonActionTypeEnum buttonAction)
+        {
+            bool isDouble = buttonAction == CursorButtonActionTypeEnum.DOUBLE_CLICK;
+
+            return new RecordedActionDto
+            {
+                Kind = RecordedActionKindEnum.CLICK,
+                Summary = $"{(isDouble ? "Double-clicked" : "Clicked")} at {down.PhysicalX}, {down.PhysicalY}",
+                WindowTitle = down.WindowTitle,
+                ScreenshotIndex = down.HasScreenshot ? down.Index : null,
+                LocationX = down.PhysicalX,
+                LocationY = down.PhysicalY,
+                CursorButtonType = down.CursorButtonType,
+                CursorButtonActionType = buttonAction,
+            };
+        }
 
         private static RecordedActionDto BuildDrag(RecordedInput down, RecordedInput up) => new RecordedActionDto
         {
@@ -234,13 +374,42 @@ namespace Business.Services.RecordingService
             Text = text,
         };
 
-        private static RecordedActionDto BuildKeyCombination(RecordedInput key) => new RecordedActionDto
+        private static RecordedActionDto BuildKeyCombination(RecordedInput key, IReadOnlyList<string> modifiers)
         {
-            Kind = RecordedActionKindEnum.KEY_COMBINATION,
-            Summary = $"Pressed {key.KeyCode}",
-            WindowTitle = key.WindowTitle,
-            Text = key.KeyCode.ToString(),
-        };
+            string combination = string.Join("+", modifiers.Append(key.KeyCode.ToString()));
+
+            return new RecordedActionDto
+            {
+                Kind = RecordedActionKindEnum.KEY_COMBINATION,
+                Summary = $"Pressed {combination}",
+                WindowTitle = key.WindowTitle,
+                Text = combination,
+            };
+        }
+
+        // Named and ordered the way a shortcut is written rather than the order the keys went down,
+        // and left and right collapse into one because nobody writes "LeftCtrl+C".
+        //
+        // Shift is here even though it never starts a combination on its own: once Ctrl is down it
+        // is part of the shortcut, and Ctrl+Shift+S is not Ctrl+S.
+        private static List<string> ShortcutModifiers(ICollection<KeyCodeEnum> held)
+        {
+            List<string> names = new List<string>();
+
+            if (held.Contains(KeyCodeEnum.LeftCtrl) || held.Contains(KeyCodeEnum.RightCtrl))
+                names.Add("Ctrl");
+
+            if (held.Contains(KeyCodeEnum.LeftAlt) || held.Contains(KeyCodeEnum.RightAlt))
+                names.Add("Alt");
+
+            if (held.Contains(KeyCodeEnum.LeftShift) || held.Contains(KeyCodeEnum.RightShift))
+                names.Add("Shift");
+
+            if (held.Contains(KeyCodeEnum.LeftMeta) || held.Contains(KeyCodeEnum.RightMeta))
+                names.Add("Win");
+
+            return names;
+        }
 
         private static RecordedActionDto BuildPause(TimeSpan gap) => new RecordedActionDto
         {
@@ -249,11 +418,10 @@ namespace Business.Services.RecordingService
             PauseMilliseconds = (int)Math.Round(gap.TotalMilliseconds),
         };
 
-        /// <summary>
-        /// What a key types, or null when it does something instead. Deliberately unshifted: the
-        /// recorder does not track modifier state, and guessing case wrong is worse than letting
-        /// the user fix the text in the wizard where they can see it.
-        /// </summary>
+        // What a key types, or null when it does something instead. Letters come back lowercase and
+        // the caller raises them when shift was down; the punctuation keys stay unshifted, because
+        // which symbol sits above a key is a property of the layout and guessing it wrong is worse
+        // than letting the user fix the text in the wizard where they can see it.
         private static string? PrintableCharacter(KeyCodeEnum keyCode) => keyCode switch
         {
             >= KeyCodeEnum.A and <= KeyCodeEnum.Z => keyCode.ToString().ToLowerInvariant(),

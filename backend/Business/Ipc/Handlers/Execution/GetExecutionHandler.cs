@@ -1,4 +1,4 @@
-using Core.Models.Dtos;
+﻿using Core.Models.Dtos;
 using Core.Models.Ipc;
 
 using DataAccess;
@@ -77,6 +77,13 @@ namespace Business.Ipc.Handlers.Execution
                     FlowStepId = x.FlowStepId,
                 })
                 .ToListAsync(ct);
+
+            // A score of infinity cannot be written as json, and one of them fails the whole
+            // response rather than the one field - so a run that recorded one could not be opened
+            // at all. Runs from before the matcher clamped its scores still hold them.
+            foreach (ExecutionStepDto step in execution.ExecutionSteps)
+                if (step.BestScore != null && !float.IsFinite(step.BestScore.Value))
+                    step.BestScore = null;
 
             return ResultDto<ExecutionDto>.Success(execution);
         }

@@ -1,4 +1,4 @@
-using Core.Enums;
+﻿using Core.Enums;
 using Core.Models.Business;
 using OpenCvSharp;
 
@@ -16,6 +16,11 @@ namespace Business.Services.MatchService
     {
         // How many steps either side of the expected scale when the first pass finds nothing.
         private const int MultiScaleSteps = 4;
+
+        // What a normalized correlation can legitimately produce. Anything outside is an artefact
+        // of the division, not a measurement.
+        private const double ScoreCeiling = 1d;
+        private const double ScoreFloor = -1d;
 
         public TemplateMatchOutcome Match(TemplateMatchRequest request)
         {
@@ -148,6 +153,13 @@ namespace Business.Services.MatchService
             // and one NaN poisons MinMaxLoc for the whole matrix - which loses the real match, not
             // just the blank area. Rewrite them as the worst score this mode can hold instead.
             Cv2.PatchNaNs(working, lowerIsBetter ? 1d : 0d);
+
+            // The same division underflows to an infinity rather than a NaN, which PatchNaNs leaves
+            // alone. An infinite score then beats every real one: it sorts to the front, clears any
+            // accuracy, and is recorded as the best the frame had. Every normalized mode lives in
+            // [-1, 1], so clamping there removes the infinities and touches nothing genuine.
+            Cv2.Min(working, ScoreCeiling, working);
+            Cv2.Max(working, ScoreFloor, working);
 
             while (matches.Count < request.MaxMatches || rejected.Count < request.RejectedLimit)
             {

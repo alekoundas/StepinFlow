@@ -5,12 +5,49 @@ import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 
+type EmptyReason = "idle" | "loading" | "error" | "noHistory";
+
+const emptyTitle = (reason: EmptyReason): string => {
+  switch (reason) {
+    case "loading":
+      return "Loading the run...";
+    case "error":
+      return "That run could not be loaded.";
+    case "noHistory":
+      return "This run kept no steps.";
+    default:
+      return "Nothing has run yet.";
+  }
+};
+
+const emptyDetail = (reason: EmptyReason): string => {
+  switch (reason) {
+    case "loading":
+      return "Reading the steps it saved.";
+    case "error":
+      return "It may have been deleted, or the backend is not reachable.";
+    case "noHistory":
+      return "History was off when it ran, so only the outcome was saved.";
+    default:
+      return "Start the flow, or open a past run from History.";
+  }
+};
+
 interface Props {
   /** The step that ended the run, when there was one. Comes off the Execution, not off a step. */
   errorFlowStepId?: number | null;
 
   /** Hide everything that succeeded, for a long run where only the failures matter. */
   showFailuresOnly?: boolean;
+
+  /**
+   * Why there is nothing to show, when there is nothing to show. A run that failed to load and a
+   * run that kept no history look identical otherwise, and the difference is the whole answer.
+   */
+  emptyReason?: EmptyReason;
+
+  /** What the backend said, when it said anything. Better than a guess about what went wrong. */
+  emptyMessage?: string;
 }
 
 /**
@@ -22,6 +59,8 @@ interface Props {
 export default function ExecutionStepListComponent({
   errorFlowStepId,
   showFailuresOnly = false,
+  emptyReason = "idle",
+  emptyMessage,
 }: Props) {
   const {
     executionSteps,
@@ -35,13 +74,13 @@ export default function ExecutionStepListComponent({
     return (
       <div className="flex flex-column align-items-center justify-content-center gap-2 p-6 text-center">
         <IconComponent
-          name="play"
+          name={emptyReason === "error" ? "exclamation-triangle" : "play"}
           size="lg"
           className="text-color-secondary opacity-50"
         />
-        <LabelComponent text="Nothing has run yet." color="secondary" />
+        <LabelComponent text={emptyTitle(emptyReason)} color="secondary" />
         <LabelComponent
-          text="Start the flow, or open a past run from History."
+          text={emptyMessage ?? emptyDetail(emptyReason)}
           size="sm"
           color="secondary"
         />
