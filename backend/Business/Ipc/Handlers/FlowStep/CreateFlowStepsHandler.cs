@@ -120,7 +120,7 @@ namespace Business.Ipc.Handlers
                     }
 
                     dbContext.FlowSteps.Add(step);
-                    FlowStepImageSyncHelper.Sync(dbContext, step, draftStep.Values.FlowStepImages);
+                    FlowStepTemplateSyncHelper.Sync(dbContext, step, draftStep.Values.FlowStepTemplates);
 
                     IReadOnlyList<FlowStep> branches = TreeStepHelper.CreateBranchChildren(step);
                     dbContext.FlowSteps.AddRange(branches);

@@ -10,8 +10,11 @@ namespace DataAccess
         public DbSet<Flow> Flows { get; set; }
         public DbSet<FlowArea> FlowAreas { get; set; }
         public DbSet<FlowPoint> FlowPoints { get; set; }
+        public DbSet<FlowViewport> FlowViewports { get; set; }
+        public DbSet<FlowCsvColumn> FlowCsvColumns { get; set; }
         public DbSet<FlowStep> FlowSteps { get; set; }
-        public DbSet<FlowStepImage> FlowStepImages { get; set; }
+        public DbSet<FlowStepTemplate> FlowStepTemplates { get; set; }
+        public DbSet<FlowStepLastGoodScreenshotHistory> FlowStepLastGoodScreenshotHistories { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStep> ExecutionSteps { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
@@ -53,7 +56,8 @@ namespace DataAccess
             builder.ApplyConfiguration(new FlowAreaConfiguration());
             builder.ApplyConfiguration(new FlowPointConfiguration());
             builder.ApplyConfiguration(new FlowStepConfiguration());
-            builder.ApplyConfiguration(new FlowStepImageConfiguration());
+            builder.ApplyConfiguration(new FlowStepTemplateConfiguration());
+            builder.ApplyConfiguration(new FlowStepLastGoodScreenshotHistoryConfiguration());
             builder.ApplyConfiguration(new ExecutionConfiguration());
             builder.ApplyConfiguration(new ExecutionStepConfiguration());
             builder.ApplyConfiguration(new AppSettingConfiguration());

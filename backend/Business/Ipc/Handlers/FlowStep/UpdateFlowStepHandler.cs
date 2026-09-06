@@ -25,7 +25,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowStep? existingFlowStep = await dbContext.FlowSteps
-                .Include(x => x.FlowStepImages)
+                .Include(x => x.FlowStepTemplates)
                 .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
             if (existingFlowStep == null)
@@ -36,7 +36,7 @@ namespace Business.Ipc.Handlers
             // (absent from the dto) keeps its original value.
             dbContext.Entry(existingFlowStep).CurrentValues.SetValues(request.dto);
 
-            FlowStepImageSyncHelper.Sync(dbContext, existingFlowStep, request.dto.FlowStepImages);
+            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, request.dto.FlowStepTemplates);
 
             await dbContext.SaveChangesAsync(ct);
 

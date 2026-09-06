@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DataAccess.Configurations
 {
-    public class FlowStepImageConfiguration : IEntityTypeConfiguration<FlowStepImage>
+    public class FlowStepTemplateConfiguration : IEntityTypeConfiguration<FlowStepTemplate>
     {
-        public void Configure(EntityTypeBuilder<FlowStepImage> builder)
+        public void Configure(EntityTypeBuilder<FlowStepTemplate> builder)
         {
             builder.HasKey(x => x.Id);
 
@@ -15,7 +15,7 @@ namespace DataAccess.Configurations
 
             // Relationship with FlowStep (one-to-many)
             builder.HasOne(x => x.FlowStep)
-                .WithMany(x => x.FlowStepImages  )
+                .WithMany(x => x.FlowStepTemplates)
                 .HasForeignKey(x => x.FlowStepId)
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
         }

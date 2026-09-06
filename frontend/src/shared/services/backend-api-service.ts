@@ -11,7 +11,7 @@ import type {
   FlowStepMovePreviewDto,
 } from "@/shared/models/flow-step-move.dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import type { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
@@ -123,10 +123,10 @@ export const backendApiService = {
       call<ReadTextTestResultDto>("FlowStep.testReadText", dto),
   },
 
-  FlowStepImage: {
-    create: (dto: FlowStepImageDto) =>
-      call<number>("FlowStepImage.create", dto),
-    get: (id: number) => call<FlowStepImageDto>("FlowStepImage.get", id),
+  FlowStepTemplate: {
+    create: (dto: FlowStepTemplateDto) =>
+      call<number>("FlowStepTemplate.create", dto),
+    get: (id: number) => call<FlowStepTemplateDto>("FlowStepTemplate.get", id),
   },
 
   FlowArea: {

@@ -15,7 +15,7 @@ export interface ImageSearchTestMatchDto {
 }
 
 export interface ImageSearchTestImageDto {
-  flowStepImageId: number;
+  flowStepTemplateId: number;
   name: string;
   isFound: boolean;
   isRequired: boolean;

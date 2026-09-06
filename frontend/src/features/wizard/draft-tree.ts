@@ -149,7 +149,7 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
     windowHeight: values.windowHeight,
 
     searchMode: values.searchMode,
-    templateCount: values.flowStepImages.length,
+    templateCount: values.flowStepTemplates.length,
     thumbnail: null,
 
     conditionText: values.conditionText,

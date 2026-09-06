@@ -6,11 +6,11 @@ import { Checkbox } from "primereact/checkbox";
 import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
-import { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
 
 interface Props {
-  images: FlowStepImageDto[];
+  images: FlowStepTemplateDto[];
   // Keyed by list index, since a freshly added template has no id yet.
   testResults: Map<number, ImageSearchTestImageDto>;
   isDisabled?: boolean;
@@ -18,11 +18,11 @@ interface Props {
   onAdd: () => void;
   onEditImage: (index: number) => void;
   onSetClickPoint: (index: number) => void;
-  onChange: (index: number, image: FlowStepImageDto) => void;
+  onChange: (index: number, image: FlowStepTemplateDto) => void;
   onRemove: (index: number) => void;
 }
 
-export function FlowStepImageListComponent({
+export function FlowStepTemplateListComponent({
   images,
   testResults,
   isDisabled = false,
@@ -130,7 +130,7 @@ export function FlowStepImageListComponent({
                   onChange={(e) =>
                     onChange(
                       index,
-                      new FlowStepImageDto({ ...image, isRequired: !!e.checked }),
+                      new FlowStepTemplateDto({ ...image, isRequired: !!e.checked }),
                     )
                   }
                 />

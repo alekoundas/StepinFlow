@@ -108,7 +108,7 @@ namespace Business.Services.ExecutionService.Workers
             List<Point> hits = new List<Point>();
             float? bestScore = null;
 
-            foreach (FlowStepImage image in step.FlowStepImages)
+            foreach (FlowStepTemplate image in step.FlowStepTemplates)
             {
                 TemplateMatchOutcome outcome = _templateMatcher.Match(new TemplateMatchRequest
                 {
@@ -194,7 +194,7 @@ namespace Business.Services.ExecutionService.Workers
         /// <summary>Says what was being looked for and how hard, which is what a failure turns on.</summary>
         private static string Detail(FlowStep step, string outcome)
         {
-            string templates = string.Join(", ", step.FlowStepImages.Select(x => x.Name));
+            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => x.Name));
             if (templates.Length == 0)
                 templates = "no templates";
 

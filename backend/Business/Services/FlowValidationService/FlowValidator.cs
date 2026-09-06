@@ -65,21 +65,29 @@ namespace Business.Services.FlowValidationService
 
                 switch (step.FlowStepType)
                 {
-                    case FlowStepTypeEnum.IMAGE_SEARCH:
+                    case FlowStepTypeEnum.CAPTURE_SCREEN:
+                        ValidateArea(result, step);
+                        break;
+
+                    case FlowStepTypeEnum.CONDITION_IMAGE:
                         ValidateArea(result, step);
 
                         if (!templateCountByStepId.TryGetValue(step.Id, out int templates) || templates == 0)
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NO_TEMPLATES, "There is nothing to look for: add a template.");
                         break;
 
-                    case FlowStepTypeEnum.READ_TEXT:
+                    case FlowStepTypeEnum.CONDITION_TEXT:
                         ValidateArea(result, step);
 
-                        // Reading once succeeds on having read anything, so only the waiting modes
-                        // need something to wait for.
-                        if (step.SearchMode is SearchModeEnum.WAIT_UNTIL_FOUND or SearchModeEnum.WAIT_UNTIL_NOT_FOUND
-                            && string.IsNullOrWhiteSpace(step.ConditionText))
-                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to wait for.");
+                        if (string.IsNullOrWhiteSpace(step.ConditionText))
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
+
+                        if (string.IsNullOrWhiteSpace(step.OcrLanguage))
+                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
+                        break;
+
+                    case FlowStepTypeEnum.READ_TEXT:
+                        ValidateArea(result, step);
 
                         if (string.IsNullOrWhiteSpace(step.OcrLanguage))
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
@@ -89,7 +97,7 @@ namespace Business.Services.FlowValidationService
                         ValidateCommand(result, step);
                         break;
 
-                    case FlowStepTypeEnum.CHECK_VALUE:
+                    case FlowStepTypeEnum.CONDITION_VALUE:
                         ValidateCheckValue(result, step, byId);
                         break;
 

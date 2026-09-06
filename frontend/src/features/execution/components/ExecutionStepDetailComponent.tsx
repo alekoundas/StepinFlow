@@ -324,7 +324,7 @@ interface TemplateImagesProps {
 function TemplateImages({ flowStepId }: TemplateImagesProps) {
   const { data: flowStep } = useFlowStep(flowStepId);
 
-  const images = flowStep?.flowStepImages ?? [];
+  const images = flowStep?.flowStepTemplates ?? [];
   if (images.length === 0) return null;
 
   return (

@@ -213,7 +213,7 @@ namespace Business.Services.ExecutionService
 
                 List<FlowStep> steps = await dbContext.FlowSteps
                     .AsNoTracking()
-                    .Include(x => x.FlowStepImages)
+                    .Include(x => x.FlowStepTemplates)
                     .Where(x => x.RootId == currentFlowId)
                     .ToListAsync(ct);
 

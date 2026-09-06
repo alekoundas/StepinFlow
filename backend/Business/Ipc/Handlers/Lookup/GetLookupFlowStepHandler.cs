@@ -15,8 +15,8 @@ namespace Business.Ipc.Handlers
         {
             [StepResultKindEnum.LOCATION] =
             [
-                FlowStepTypeEnum.IMAGE_SEARCH,
-                FlowStepTypeEnum.READ_TEXT,
+                FlowStepTypeEnum.CONDITION_IMAGE,
+                FlowStepTypeEnum.CONDITION_TEXT,
             ],
             [StepResultKindEnum.VALUE] =
             [

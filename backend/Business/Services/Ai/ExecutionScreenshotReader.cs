@@ -131,7 +131,7 @@ namespace Business.Services.Ai
             if (flowStepId == null)
                 return [];
 
-            List<StepTemplateImage> templateImages = await dbContext.FlowStepImages
+            List<StepTemplateImage> templateImages = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => x.FlowStepId == flowStepId && x.TemplateImage != null)
                 .OrderByDescending(x => x.IsRequired)

@@ -8,28 +8,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Business.Ipc.Handlers
 {
-    public class CreateFlowStepImageHandler : IRequestHandler<CreateFlowStepImageCommand, ResultDto<int>>
+    public class CreateFlowStepTemplateHandler : IRequestHandler<CreateFlowStepTemplateCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public CreateFlowStepImageHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
+        public CreateFlowStepTemplateHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _mapper = mapper;
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<int>> Handle(CreateFlowStepImageCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> Handle(CreateFlowStepTemplateCommand request, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowStepImage flowStepImage = _mapper.Map<FlowStepImage>(request.dto);
-            flowStepImage.Id = 0;
+            FlowStepTemplate flowStepTemplate = _mapper.Map<FlowStepTemplate>(request.dto);
+            flowStepTemplate.Id = 0;
 
-            dbContext.FlowStepImages.Add(flowStepImage);
+            dbContext.FlowStepTemplates.Add(flowStepTemplate);
             await dbContext.SaveChangesAsync(ct);
 
-            return ResultDto<int>.Success(flowStepImage.Id);
+            return ResultDto<int>.Success(flowStepTemplate.Id);
         }
     }
 }

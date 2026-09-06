@@ -43,7 +43,7 @@ namespace App.AutoMapper
                 .ForMember(x => x.ChildrenFlowSteps, o => o.Ignore())
                 .ForMember(x => x.FlowStepReferences, o => o.Ignore())
                 .ForMember(x => x.FlowStepReferencesEnd, o => o.Ignore())
-                .ForMember(x => x.FlowStepImages, o => o.Ignore());
+                .ForMember(x => x.FlowStepTemplates, o => o.Ignore());
 
             // FlowArea
             CreateMap<FlowArea, FlowAreaDto>()
@@ -62,9 +62,9 @@ namespace App.AutoMapper
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.EndFlowSteps, o => o.Ignore());
 
-            // FlowStepImage
-            CreateMap<FlowStepImage, FlowStepImageDto>();
-            CreateMap<FlowStepImageDto, FlowStepImage>()
+            // FlowStepTemplate
+            CreateMap<FlowStepTemplate, FlowStepTemplateDto>();
+            CreateMap<FlowStepTemplateDto, FlowStepTemplate>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.FlowStep, o => o.Ignore());
         }

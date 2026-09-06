@@ -13,7 +13,7 @@ import { FormFooterComponent } from "@/shared/components/form/FormFooterComponen
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type {
   ImageSearchTestImageDto,
   ImageSearchTestResultDto,
@@ -26,7 +26,7 @@ import {
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
 import FlowStepImageSearchFormFieldsComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormFieldsComponent";
-import { FlowStepImageListComponent } from "@/features/flow-step/components/forms/image-search/FlowStepImageListComponent";
+import { FlowStepTemplateListComponent } from "@/features/flow-step/components/forms/image-search/FlowStepTemplateListComponent";
 import FlowStepImageSearchTestDialogComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchTestDialogComponent";
 
 const TEST_DETAILS_ID = "image-search-test-details";
@@ -59,8 +59,8 @@ export default function FlowStepImageSearchFormComponent({
 
   // Templates are a list rather than form fields: they carry binary and are edited through
   // their own windows.
-  const [images, setImages] = useState<FlowStepImageDto[]>(
-    defaultValues.flowStepImages ?? [],
+  const [images, setImages] = useState<FlowStepTemplateDto[]>(
+    defaultValues.flowStepTemplates ?? [],
   );
 
   // Capturing a template opens a window and waits, so by the time it resolves this component has
@@ -72,13 +72,13 @@ export default function FlowStepImageSearchFormComponent({
   // invisible to react-hook-form, isDirty never flips, and Save stays disabled. Setting the real
   // value rather than a flag also means undoing a change goes back to clean.
   const applyImages = (
-    update: (previous: FlowStepImageDto[]) => FlowStepImageDto[],
+    update: (previous: FlowStepTemplateDto[]) => FlowStepTemplateDto[],
   ) => {
     const next = update(imagesRef.current);
 
     imagesRef.current = next;
     setImages(next);
-    form.setValue("flowStepImages", next, { shouldDirty: true });
+    form.setValue("flowStepTemplates", next, { shouldDirty: true });
   };
   const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
     null,
@@ -117,7 +117,7 @@ export default function FlowStepImageSearchFormComponent({
       ...defaultValues,
       ...(data ?? (form.getValues() as never)),
       flowAreaId: (data ?? form.getValues()).flowAreaId ?? undefined,
-      flowStepImages: imagesRef.current,
+      flowStepTemplates: imagesRef.current,
     });
 
   // Captured region becomes the template, and the area it was captured in becomes the
@@ -166,7 +166,7 @@ export default function FlowStepImageSearchFormComponent({
 
     applyImages((previous) => [
       ...previous,
-      new FlowStepImageDto({
+      new FlowStepTemplateDto({
         name: `Template ${previous.length + 1}`,
         templateImage: screenshot,
         authoredFrameWidth: frameWidth,
@@ -187,7 +187,7 @@ export default function FlowStepImageSearchFormComponent({
       index,
       // Re-cropping moves every pixel, so a click point picked on the old image now points at
       // something else - or off the edge. The middle of the new one is the honest answer.
-      new FlowStepImageDto({
+      new FlowStepTemplateDto({
         ...image,
         templateImage: edited,
         ...centreClickOffset(edited),
@@ -204,7 +204,7 @@ export default function FlowStepImageSearchFormComponent({
 
     updateImage(
       index,
-      new FlowStepImageDto({
+      new FlowStepTemplateDto({
         ...image,
         clickOffsetX: point.x,
         clickOffsetY: point.y,
@@ -212,7 +212,7 @@ export default function FlowStepImageSearchFormComponent({
     );
   };
 
-  const updateImage = (index: number, image: FlowStepImageDto) =>
+  const updateImage = (index: number, image: FlowStepTemplateDto) =>
     applyImages((previous) => previous.map((x, i) => (i === index ? image : x)));
 
   const handleTest = async () => {
@@ -252,7 +252,7 @@ export default function FlowStepImageSearchFormComponent({
             isDisabled={formMode === "VIEW"}
           />
 
-          <FlowStepImageListComponent
+          <FlowStepTemplateListComponent
             images={images}
             testResults={testResultsByIndex}
             isDisabled={formMode === "VIEW" || isWindowOpen}

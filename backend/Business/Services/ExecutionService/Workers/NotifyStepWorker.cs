@@ -76,7 +76,7 @@ namespace Business.Services.ExecutionService.Workers
             if (failedStep == null)
                 return new List<string>();
 
-            return failedStep.FlowStepImages
+            return failedStep.FlowStepTemplates
                 .Select(x => x.Name)
                 .ToList();
         }

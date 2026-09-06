@@ -7,25 +7,25 @@ namespace Business.Helpers
     /// <summary>
     /// Templates are edited as part of their step, so they are matched by Id and updated in place rather than replaced. 
     /// </summary>
-    public static class FlowStepImageSyncHelper
+    public static class FlowStepTemplateSyncHelper
     {
-        public static void Sync(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepImageDto> dtos)
+        public static void Sync(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos)
         {
-            List<FlowStepImage> existing = step.FlowStepImages.ToList();
+            List<FlowStepTemplate> existing = step.FlowStepTemplates.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
 
-            foreach (FlowStepImage removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowStepImages.Remove(removed);
+            foreach (FlowStepTemplate removed in existing.Where(x => !keptIds.Contains(x.Id)))
+                dbContext.FlowStepTemplates.Remove(removed);
 
             int order = 0;
-            foreach (FlowStepImageDto dto in dtos)
+            foreach (FlowStepTemplateDto dto in dtos)
             {
-                FlowStepImage? image = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+                FlowStepTemplate? image = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
 
                 if (image == null)
                 {
-                    image = new FlowStepImage { FlowStep = step };
-                    dbContext.FlowStepImages.Add(image);
+                    image = new FlowStepTemplate { FlowStep = step };
+                    dbContext.FlowStepTemplates.Add(image);
                 }
 
                 image.Name = dto.Name;

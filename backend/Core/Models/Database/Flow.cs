@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {
@@ -13,5 +13,7 @@ namespace Core.Models.Database
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();
         public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();
+        public IEnumerable<FlowViewport> FlowViewports { get; set; } = new Collection<FlowViewport>();
+        public IEnumerable<FlowCsvColumn> FlowCsvColumns { get; set; } = new Collection<FlowCsvColumn>();
     }
 }

@@ -34,13 +34,13 @@ export default function FlowStepImageSearchTestDialogComponent({ result }: Props
   const height = result.searchAreaHeight;
 
   const isHidden = (image: ImageSearchTestImageDto) =>
-    hiddenIds.includes(image.flowStepImageId);
+    hiddenIds.includes(image.flowStepTemplateId);
 
   const toggle = (image: ImageSearchTestImageDto) =>
     setHiddenIds((prev) =>
-      prev.includes(image.flowStepImageId)
-        ? prev.filter((x) => x !== image.flowStepImageId)
-        : [...prev, image.flowStepImageId],
+      prev.includes(image.flowStepTemplateId)
+        ? prev.filter((x) => x !== image.flowStepTemplateId)
+        : [...prev, image.flowStepTemplateId],
     );
 
   const colourOf = (index: number) => BOX_COLOURS[index % BOX_COLOURS.length];
@@ -71,7 +71,7 @@ export default function FlowStepImageSearchTestDialogComponent({ result }: Props
             ? null
             : image.matches.map((match, matchIndex) => (
                 <div
-                  key={`${image.flowStepImageId}-${matchIndex}`}
+                  key={`${image.flowStepTemplateId}-${matchIndex}`}
                   className="absolute"
                   style={{
                     left: percent(match.x, width),
@@ -106,11 +106,11 @@ export default function FlowStepImageSearchTestDialogComponent({ result }: Props
       <div className="flex flex-column gap-2">
         {result.images.map((image, index) => (
           <div
-            key={image.flowStepImageId}
+            key={image.flowStepTemplateId}
             className="flex align-items-center gap-2"
           >
             <Checkbox
-              inputId={`template-${image.flowStepImageId}`}
+              inputId={`template-${image.flowStepTemplateId}`}
               checked={!isHidden(image)}
               disabled={image.matches.length === 0}
               onChange={() => toggle(image)}
@@ -127,7 +127,7 @@ export default function FlowStepImageSearchTestDialogComponent({ result }: Props
             />
 
             <label
-              htmlFor={`template-${image.flowStepImageId}`}
+              htmlFor={`template-${image.flowStepTemplateId}`}
               className={classNames("text-sm flex-1", {
                 "text-color-secondary": image.matches.length === 0,
               })}

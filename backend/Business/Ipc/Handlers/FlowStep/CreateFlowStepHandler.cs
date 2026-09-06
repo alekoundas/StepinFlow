@@ -30,7 +30,7 @@ namespace Business.Ipc.Handlers
             flowStep.Id = 0;
 
             dbContext.FlowSteps.Add(flowStep);
-            FlowStepImageSyncHelper.Sync(dbContext, flowStep, request.dto.FlowStepImages);
+            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, request.dto.FlowStepTemplates);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(flowStep));
 
             await dbContext.SaveChangesAsync(ct);

@@ -6,7 +6,7 @@ namespace Core.Models.Business
     {
         public RawImage Haystack { get; set; } = new RawImage();
 
-        /// <summary>Encoded template, as stored on FlowStepImage.</summary>
+        /// <summary>Encoded template, as stored on FlowStepTemplate.</summary>
         public byte[] TemplateImage { get; set; } = [];
 
         public TemplateMatchModeEnum Mode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;

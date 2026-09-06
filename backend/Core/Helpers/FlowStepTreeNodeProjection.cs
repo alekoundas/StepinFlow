@@ -59,8 +59,8 @@ namespace Core.Helpers
                 WindowHeight = x.WindowHeight,
 
                 SearchMode = x.SearchMode,
-                TemplateCount = x.FlowStepImages.Count(),
-                Thumbnail = x.FlowStepImages
+                TemplateCount = x.FlowStepTemplates.Count(),
+                Thumbnail = x.FlowStepTemplates
                     .OrderBy(image => image.OrderNumber)
                     .Select(image => image.Thumbnail)
                     .FirstOrDefault(),

@@ -138,7 +138,7 @@ namespace Business.Services.Ai.Tools
 
             Core.Models.Database.FlowStep? step = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Include(x => x.FlowStepImages)
+                .Include(x => x.FlowStepTemplates)
                 .Include(x => x.FlowArea)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
 
@@ -165,7 +165,7 @@ namespace Business.Services.Ai.Tools
                     step.FlowArea.Width,
                     step.FlowArea.Height);
 
-            List<TemplateSummary> templates = step.FlowStepImages
+            List<TemplateSummary> templates = step.FlowStepTemplates
                 .Select(x => new TemplateSummary(
                     x.Id,
                     x.Name,

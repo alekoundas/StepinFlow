@@ -58,7 +58,7 @@ namespace Business.Ipc.Handlers
                 .Where(x => all || flowIds.Contains(x.RootId))
                 .ToListAsync(ct);
 
-            Dictionary<int, int> templateCounts = await dbContext.FlowStepImages
+            Dictionary<int, int> templateCounts = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => all || flowIds.Contains(x.FlowStep.RootId))
                 .GroupBy(x => x.FlowStepId)

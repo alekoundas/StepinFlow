@@ -87,9 +87,9 @@ namespace App.Ipc
                     "FlowPoint.get" => await _mediator.Send(new GetFlowPointQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
                     "FlowPoint.getPreview" => await _mediator.Send(new GetFlowPointPreviewQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
-                    // FlowStepImage
-                    "FlowStepImage.create" => await _mediator.Send(new CreateFlowStepImageCommand(JsonSerializer.Deserialize<FlowStepImageDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStepImage.get" => await _mediator.Send(new GetFlowStepImageQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    // FlowStepTemplate
+                    "FlowStepTemplate.create" => await _mediator.Send(new CreateFlowStepTemplateCommand(JsonSerializer.Deserialize<FlowStepTemplateDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStepTemplate.get" => await _mediator.Send(new GetFlowStepTemplateQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
 
                     // Lookups
                     "Lookup.window" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),

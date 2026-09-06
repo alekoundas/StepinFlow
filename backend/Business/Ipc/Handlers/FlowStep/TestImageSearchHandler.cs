@@ -57,11 +57,11 @@ namespace Business.Ipc.Handlers
                 Screenshot = _screenshotService.Encode(haystack, ScreenshotFormatEnum.JPEG, 80),
             };
 
-            foreach (FlowStepImageDto image in step.FlowStepImages)
+            foreach (FlowStepTemplateDto image in step.FlowStepTemplates)
             {
                 ImageSearchTestImageDto imageResult = new ImageSearchTestImageDto
                 {
-                    FlowStepImageId = image.Id,
+                    FlowStepTemplateId = image.Id,
                     Name = image.Name,
                     IsRequired = image.IsRequired,
                 };

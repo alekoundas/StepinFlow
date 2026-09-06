@@ -48,9 +48,14 @@ namespace App.DependencyInjection
                     [FlowStepTypeEnum.WINDOW_RELOCATE] = x.GetRequiredService<WindowStepWorker>(),
 
                     [FlowStepTypeEnum.KEYBOARD_INPUT] = x.GetRequiredService<KeyboardStepWorker>(),
-                    [FlowStepTypeEnum.IMAGE_SEARCH] = x.GetRequiredService<ImageSearchStepWorker>(),
+
                     [FlowStepTypeEnum.READ_TEXT] = x.GetRequiredService<ReadTextStepWorker>(),
-                    [FlowStepTypeEnum.CHECK_VALUE] = x.GetRequiredService<CheckValueStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_IMAGE] = x.GetRequiredService<ImageSearchStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_TEXT] = x.GetRequiredService<ReadTextStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_VALUE] = x.GetRequiredService<CheckValueStepWorker>(),
+
+                    [FlowStepTypeEnum.MARKER] = x.GetRequiredService<PassThroughStepWorker>(),
+
                     [FlowStepTypeEnum.SYSTEM_COMMAND] = x.GetRequiredService<SystemCommandStepWorker>(),
                     [FlowStepTypeEnum.SYSTEM_ACTION] = x.GetRequiredService<SystemActionStepWorker>(),
                 },

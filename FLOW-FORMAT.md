@@ -33,13 +33,13 @@ Steps:
 
 ## Start from a clean browser
 
-# A fresh profile each run, so run two never inherits run one's session.
+# A fresh profile every time, so the second execution never inherits the first one's session.
 Launch   "chrome.exe"  args "--user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
 
 Condition Image  "Wait for the login form"   template "login-form.png"   in Browser
                  wait until found   timeout 15s
   Failure:
-    End Run  failed  "the site never loaded"
+    End Execution  failed  "the site never loaded"
 
 ## Sign in
 
@@ -48,7 +48,7 @@ Capture Screen   "login page"   in Browser
 Condition Image  "Find username field"   template "username-field.png"
                  in "login page"   find best   accuracy 0.85
   Failure:
-    End Run  failed  "no username field on the login page"
+    End Execution  failed  "no username field on the login page"
   Success:
     Click  at "Find username field"
     Type   {{username}}
@@ -56,14 +56,14 @@ Condition Image  "Find username field"   template "username-field.png"
 Condition Image  "Find password field"   template "password-field.png"
                  in "login page"   find best   accuracy 0.85
   Failure:
-    End Run  failed  "no password field on the login page"
+    End Execution  failed  "no password field on the login page"
   Success:
     Click  at "Find password field"
     Type   {{password}}
 
 Condition Image  "Find login button"   template "login-button.png"   in "login page"
   Failure:
-    End Run  failed  "no login button"
+    End Execution  failed  "no login button"
   Success:
     Click  at "Find login button"
 
@@ -73,7 +73,7 @@ Condition Text   "Products page loaded"   contains "Products"   in Inventory
   Failure:
     Read Text    "Login error"   in "Login form"
     Notify       "Login failed: {{Login error}}"
-    End Run      failed  "did not reach the products page"
+    End Execution  failed  "did not reach the products page"
 
 ## Add everything on the page to the cart
 
@@ -82,7 +82,7 @@ Capture Screen   "inventory"   in Inventory
 Condition Image  "Find add buttons"   template "add-to-cart.png"
                  in "inventory"   find all   accuracy 0.90
   Failure:
-    End Run  failed  "no products to add"
+    End Execution  failed  "no products to add"
   Success:
     Loop  each match in "Find add buttons"
       Click  at match
@@ -90,11 +90,11 @@ Condition Image  "Find add buttons"   template "add-to-cart.png"
       Condition Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"
                        wait until found  timeout 3s
         Failure:
-          End Run  failed  "the cart did not update after adding an item"
+          End Execution  failed  "the cart did not update after adding an item"
 
 ## Check out
 
-Run Flow  "flows/checkout.flow"
+Sub Flow  "flows/checkout.flow"
 ```
 
 ---
@@ -117,7 +117,7 @@ The display name. The file name is the identity.
 Sizes:  1920x1080, 1024x768, 390x844
 ```
 
-The viewports this flow is expected to pass at. The runner executes the whole flow once per size
+The viewports this flow is expected to pass at. The engine executes the whole flow once per size
 and reports one result per size. `{{width}}` and `{{height}}` resolve to the current pass, which is
 how the launch line above sizes the browser without a resize step.
 
@@ -160,11 +160,12 @@ flow configuration, and a password in a repository is a leak.
 Inputs:
   username
   password      secret
-  order id      optional
 ```
 
 `secret` means the value is never written to any file and resolves from the environment.
-`optional` means a run may leave it empty.
+
+What happens when a row leaves a value empty - error, fall back to the recorded default, or type
+nothing - is undecided, and gets settled when csv binding is built rather than guessed at now.
 
 ---
 
@@ -186,7 +187,7 @@ to a number only on a collision.
 
 ```
 ## Sign in
-# A fresh profile each run, so run two never inherits run one's session.
+# A fresh profile every time, so the second execution never inherits the first one's session.
 ```
 
 `##` marks a **section**, and a section carries a verdict: it fails if any step beneath it failed,
@@ -231,7 +232,7 @@ Condition Image  "Find login button"   template "login-button.png"
   Success:
     Click  at "Find login button"
   Failure:
-    End Run  failed  "no login button"
+    End Execution  failed  "no login button"
 ```
 
 Modes, one per condition:
@@ -286,11 +287,11 @@ One step, three sources. Inside `each match`, the keyword `match` refers to the 
 silently re-entered its own success branch — the repetition is now visible in the file, and steps
 can run between passes.
 
-### Ending a run
+### Ending an execution
 
 ```
-End Run  failed   "did not reach the products page"
-End Run  passed
+End Execution  failed   "did not reach the products page"
+End Execution  passed
 ```
 
 Stops the flow and stamps the verdict. Without it a flow ends when it runs out of steps, and the
@@ -302,13 +303,13 @@ Cleanup belongs above it, which is why it is a step and not a flag:
   Failure:
     Click    at point "Log out"
     Notify   "checkout failed"
-    End Run  failed  "could not complete the order"
+    End Execution  failed  "could not complete the order"
 ```
 
 ### Sub-flows
 
 ```
-Run Flow  "flows/checkout.flow"
+Sub Flow  "flows/checkout.flow"
 ```
 
 A path relative to the repository root, because names are only unique within a flow.

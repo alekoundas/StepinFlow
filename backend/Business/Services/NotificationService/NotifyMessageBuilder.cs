@@ -34,8 +34,8 @@ namespace Business.Services.NotificationService
             StringBuilder builder = new StringBuilder();
             builder.Append("**").Append(Header(flowName, failedStep)).Append("**");
 
-            if (!string.IsNullOrWhiteSpace(notifyStep.NotifyMessage))
-                builder.Append('\n').Append(notifyStep.NotifyMessage.Trim());
+            if (!string.IsNullOrWhiteSpace(notifyStep.Message))
+                builder.Append('\n').Append(notifyStep.Message.Trim());
 
             if (failedStep == null)
                 return Clamp(builder.ToString());
@@ -61,7 +61,7 @@ namespace Business.Services.NotificationService
             return head + "\n```\n" + detail + "\n```";
         }
 
-        /// <summary>"Image Search" reads better in an alert than IMAGE_SEARCH.</summary>
+        /// <summary>"Condition Image" reads better in an alert than CONDITION_IMAGE.</summary>
         public static string DisplayType(FlowStepTypeEnum type)
         {
             return string.Join(' ', type.ToString()
@@ -85,9 +85,9 @@ namespace Business.Services.NotificationService
         {
             return failedStep.FlowStepType switch
             {
-                FlowStepTypeEnum.IMAGE_SEARCH => ImageSearchDetail(failedStep, templateNames),
+                FlowStepTypeEnum.CONDITION_IMAGE => ImageSearchDetail(failedStep, templateNames),
                 FlowStepTypeEnum.READ_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
-                FlowStepTypeEnum.CHECK_VALUE => $"the value did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
+                FlowStepTypeEnum.CONDITION_VALUE => $"the value did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
                 FlowStepTypeEnum.SYSTEM_COMMAND => $"the command did not exit with {failedStep.SuccessExitCodes}",
 
                 FlowStepTypeEnum.WINDOW_FOCUS => "the window could not be found",

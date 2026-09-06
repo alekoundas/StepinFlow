@@ -9,8 +9,9 @@ namespace Core.Enums
         SYSTEM_COMMAND,
         SYSTEM_ACTION,
         SUB_FLOW,
-        CHECK_VALUE,
         NOTIFY,
+        END_EXECUTION,
+        MARKER,
 
         // Input Steps
         CURSOR_DRAG,
@@ -22,15 +23,16 @@ namespace Core.Enums
         WINDOW_RELOCATE,
         KEYBOARD_INPUT,
 
-        // Screen Search
-        IMAGE_SEARCH,
+        // Screen Reading
+        CAPTURE_SCREEN,
         READ_TEXT,
 
-
+        // Decisions.
+        CONDITION_IMAGE,
+        CONDITION_TEXT,
+        CONDITION_VALUE,
 
         SUCCESS, // Hidden. Not available for user selection.
         FAILURE, // Hidden. Not available for user selection.
-        
-        
     }
 }

@@ -1,4 +1,4 @@
-using Core.Enums;
+﻿using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 
@@ -12,10 +12,10 @@ namespace Core.Helpers
         /// </summary>
         private static readonly FlowStepTypeEnum[] BranchTypes =
         [
-            FlowStepTypeEnum.IMAGE_SEARCH,
-            FlowStepTypeEnum.READ_TEXT,
+            FlowStepTypeEnum.CONDITION_IMAGE,
+            FlowStepTypeEnum.CONDITION_TEXT,
+            FlowStepTypeEnum.CONDITION_VALUE,
             FlowStepTypeEnum.SYSTEM_COMMAND,
-            FlowStepTypeEnum.CHECK_VALUE,
             FlowStepTypeEnum.WINDOW_FOCUS,
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,

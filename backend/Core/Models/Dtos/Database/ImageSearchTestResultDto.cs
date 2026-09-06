@@ -29,7 +29,7 @@ namespace Core.Models.Dtos
 
     public class ImageSearchTestImageDto
     {
-        public int FlowStepImageId { get; set; }
+        public int FlowStepTemplateId { get; set; }
         public string Name { get; set; } = string.Empty;
 
         public bool IsFound { get; set; }

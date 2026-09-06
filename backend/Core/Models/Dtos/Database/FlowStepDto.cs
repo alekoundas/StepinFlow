@@ -128,6 +128,6 @@ namespace Core.Models.Dtos
         public IEnumerable<FlowStepDto> ChildrenFlowSteps { get; set; } = new Collection<FlowStepDto>();
         public IEnumerable<FlowStepDto> FlowStepReferences { get; set; } = new Collection<FlowStepDto>();
         public IEnumerable<FlowStepDto> FlowStepReferencesEnd { get; set; } = new Collection<FlowStepDto>();
-        public IEnumerable<FlowStepImageDto> FlowStepImages { get; set; } = new Collection<FlowStepImageDto>();
+        public IEnumerable<FlowStepTemplateDto> FlowStepTemplates { get; set; } = new Collection<FlowStepTemplateDto>();
     }
 }

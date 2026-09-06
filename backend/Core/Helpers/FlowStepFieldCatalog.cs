@@ -1,4 +1,4 @@
-using Core.Enums;
+﻿using Core.Enums;
 using Core.Models.Database;
 
 namespace Core.Helpers
@@ -103,9 +103,20 @@ namespace Core.Helpers
                 nameof(FlowStep.KeyboardInputType),
             ],
 
-            [FlowStepTypeEnum.IMAGE_SEARCH] =
+            [FlowStepTypeEnum.CAPTURE_SCREEN] = [nameof(FlowStep.FlowAreaId)],
+
+            [FlowStepTypeEnum.READ_TEXT] =
             [
                 nameof(FlowStep.FlowAreaId),
+                nameof(FlowStep.OcrLanguage),
+                nameof(FlowStep.ResultExtractPattern),
+                nameof(FlowStep.FlowStepReferenceId),
+            ],
+
+            [FlowStepTypeEnum.CONDITION_IMAGE] =
+            [
+                nameof(FlowStep.FlowAreaId),
+                nameof(FlowStep.FlowStepReferenceId),
                 nameof(FlowStep.SearchMode),
                 nameof(FlowStep.Accuracy),
                 nameof(FlowStep.TemplateMatchMode),
@@ -113,21 +124,29 @@ namespace Core.Helpers
                 .. _waiting,
             ],
 
-            [FlowStepTypeEnum.READ_TEXT] =
+            [FlowStepTypeEnum.CONDITION_TEXT] =
             [
                 nameof(FlowStep.FlowAreaId),
+                nameof(FlowStep.FlowStepReferenceId),
                 nameof(FlowStep.SearchMode),
                 nameof(FlowStep.OcrLanguage),
-                nameof(FlowStep.ResultExtractPattern),
                 .. _condition,
                 .. _waiting,
             ],
 
-            [FlowStepTypeEnum.CHECK_VALUE] =
+            [FlowStepTypeEnum.CONDITION_VALUE] =
             [
                 nameof(FlowStep.FlowStepReferenceId),
                 .. _condition,
             ],
+
+            [FlowStepTypeEnum.END_EXECUTION] =
+            [
+                nameof(FlowStep.EndExecutionVerdict),
+                nameof(FlowStep.Message),
+            ],
+
+            [FlowStepTypeEnum.MARKER] = [],
 
             [FlowStepTypeEnum.SYSTEM_COMMAND] =
             [
@@ -146,7 +165,7 @@ namespace Core.Helpers
             [FlowStepTypeEnum.NOTIFY] =
             [
                 nameof(FlowStep.DiscordBotId),
-                nameof(FlowStep.NotifyMessage),
+                nameof(FlowStep.Message),
                 nameof(FlowStep.FlowStepReferenceId),
             ],
         };

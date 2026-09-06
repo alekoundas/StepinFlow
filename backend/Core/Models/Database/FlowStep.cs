@@ -1,4 +1,4 @@
-using Core.Enums;
+﻿using Core.Enums;
 using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
@@ -6,12 +6,12 @@ namespace Core.Models.Database
     public class FlowStep : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
+        public string CodeComment { get; set; } = string.Empty;
         public FlowStepTypeEnum FlowStepType { get; set; }
         public int OrderNumber { get; set; }
 
 
         // WAIT
-        //
         public int WaitForMilliseconds { get; set; }
         public int WaitForMillisecondsMax { get; set; }
 
@@ -114,7 +114,11 @@ namespace Core.Models.Database
         public int? DiscordBotId { get; set; }
         public DiscordBot? DiscordBot { get; set; }
 
-        public string NotifyMessage { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+
+
+        // END_EXECUTION
+        public ExecutionVerdictEnum? EndExecutionVerdict { get; set; }
 
 
         // FlowArea
@@ -145,6 +149,7 @@ namespace Core.Models.Database
         public IEnumerable<FlowStep> ChildrenFlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStep> FlowStepReferences { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStep> FlowStepReferencesEnd { get; set; } = new Collection<FlowStep>();
-        public IEnumerable<FlowStepImage> FlowStepImages { get; set; } = new Collection<FlowStepImage>();
+        public IEnumerable<FlowStepTemplate> FlowStepTemplates { get; set; } = new Collection<FlowStepTemplate>();
+        public IEnumerable<FlowStepLastGoodScreenshotHistory> FlowStepLastGoodScreenshotHistories { get; set; } = new Collection<FlowStepLastGoodScreenshotHistory>();
     }
 }

@@ -1,6 +1,6 @@
 import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 
-export class FlowStepImageDto {
+export class FlowStepTemplateDto {
   id: number = 0;
   name: string = "";
   orderNumber: number = 0;
@@ -29,7 +29,7 @@ export class FlowStepImageDto {
 
   flowStepId: number = 0;
 
-  constructor(data: Partial<FlowStepImageDto> = {}) {
+  constructor(data: Partial<FlowStepTemplateDto> = {}) {
     Object.assign(this, {
       ...data,
     });

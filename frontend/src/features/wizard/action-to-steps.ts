@@ -5,7 +5,7 @@ import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-b
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { centreClickOffset } from "@/shared/utils/image-size";
-import { FlowStepImageDto } from "@/shared/models/database/flow-step-image-dto";
+import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { DraftStepSourceEnum } from "@/shared/enums/backend/draft-step-source-enum";
@@ -38,8 +38,8 @@ export interface Placement {
   parentBranch?: FlowStepTypeEnum;
 }
 
-const recordedTemplate = (base64: string): FlowStepImageDto =>
-  new FlowStepImageDto({
+const recordedTemplate = (base64: string): FlowStepTemplateDto =>
+  new FlowStepTemplateDto({
     name: "Recorded template",
     templateImage: base64,
     ...centreClickOffset(base64),
@@ -260,7 +260,7 @@ export const buildSteps = (
       searchMode,
       timeoutMilliseconds,
       flowAreaId: answers.flowAreaId,
-      flowStepImages: answers.template ? [recordedTemplate(answers.template)] : [],
+      flowStepTemplates: answers.template ? [recordedTemplate(answers.template)] : [],
     });
 
   switch (optionId) {

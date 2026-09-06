@@ -35,7 +35,7 @@ namespace Business.Ipc.Handlers
 
             // Counted rather than Included: the templates themselves are megabytes and only their
             // number matters here.
-            var templateCounts = await dbContext.FlowStepImages
+            var templateCounts = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => x.FlowStep.RootId == request.id)
                 .GroupBy(x => x.FlowStepId)

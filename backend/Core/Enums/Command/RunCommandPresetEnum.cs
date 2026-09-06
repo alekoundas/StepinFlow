@@ -1,4 +1,4 @@
-namespace Core.Enums
+﻿namespace Core.Enums
 {
     /// <summary>
     /// A ready made command. The step stores the preset and its one parameter rather than the
@@ -14,5 +14,6 @@ namespace Core.Enums
         CHECK_INTERNET,
         SHUTDOWN_IN,
         CANCEL_SHUTDOWN,
+        LAUNCH_APP,
     }
 }
