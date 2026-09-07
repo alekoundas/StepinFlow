@@ -15,13 +15,13 @@ namespace Business.Services.ExecutionService.Workers
     /// One screenshot per attempt, and every template matched against it.
     /// FIND_ALL returns every hit from that one screenshot rather than searching again between them.
     /// </summary>
-    public class ConditionImageStepWorker : IStepWorker
+    public class SearchImageStepWorker : IStepWorker
     {
         private readonly IScreenshotService _screenshotService;
         private readonly IOpenCvService _templateMatcher;
         private readonly IAreaPointResolver _areaPointResolver;
 
-        public ConditionImageStepWorker(
+        public SearchImageStepWorker(
             IScreenshotService screenshotService,
             IOpenCvService templateMatcher,
             IAreaPointResolver areaPointResolver)
@@ -33,27 +33,14 @@ namespace Business.Services.ExecutionService.Workers
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
-            bool isWaiting = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
-
-            // A screenshot a CAPTURE_SCREEN step took, when this condition was pointed at one. The
-            // waiting modes never use it: waiting on a picture from a moment ago waits for ever.
-            CapturedScreenshot? captured;
-            if (isWaiting)
-                captured = null;
-            else
-                captured = cache.GetScreenshotFrom(step.FlowStepReferenceId);
-
-            if (captured != null)
-                return Match(step, captured.Bounds, captured.Image, cache);
-
             if (step.FlowAreaId == null)
-                return ExecutionStep.Failure("This step has nowhere to look: give it an area, or point it at a capture.");
+                return ExecutionStep.Failure("This step has no search area.");
 
             AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
                 return ExecutionStep.Failure(area.Error);
 
-            if (isWaiting)
+            if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
                 return await LoopSearchAsync(step, area.Bounds, cache, ct);
 
             return Search(step, area.Bounds, cache);

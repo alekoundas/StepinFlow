@@ -61,7 +61,7 @@ namespace Business.Services.NotificationService
             return head + "\n```\n" + detail + "\n```";
         }
 
-        /// <summary>"Condition Image" reads better in an alert than CONDITION_IMAGE.</summary>
+        /// <summary>"Search Image" reads better in an alert than SEARCH_IMAGE.</summary>
         public static string DisplayType(FlowStepTypeEnum type)
         {
             return string.Join(' ', type.ToString()
@@ -85,9 +85,9 @@ namespace Business.Services.NotificationService
         {
             return failedStep.FlowStepType switch
             {
-                FlowStepTypeEnum.CONDITION_IMAGE => ImageSearchDetail(failedStep, templateNames),
-                FlowStepTypeEnum.READ_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
-                FlowStepTypeEnum.CONDITION_VALUE => $"the value did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
+                FlowStepTypeEnum.SEARCH_IMAGE => ImageSearchDetail(failedStep, templateNames),
+                FlowStepTypeEnum.SEARCH_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
+                FlowStepTypeEnum.CHECK_VALUE => $"the value did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
                 FlowStepTypeEnum.SYSTEM_COMMAND => $"the command did not exit with {failedStep.SuccessExitCodes}",
 
                 FlowStepTypeEnum.WINDOW_FOCUS => "the window could not be found",

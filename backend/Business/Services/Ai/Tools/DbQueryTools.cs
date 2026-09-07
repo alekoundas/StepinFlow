@@ -92,7 +92,7 @@ namespace Business.Services.Ai.Tools
         [Description("The steps of one flow, in tree order. Optionally filtered to one step type.")]
         public async Task<IReadOnlyList<StepSummary>> GetFlowSteps(
             [Description("The flow id.")] int flowId,
-            [Description("Optional step type, for example IMAGE_SEARCH, READ_TEXT, CURSOR_CLICK, KEYBOARD_INPUT, SYSTEM_COMMAND. Empty returns every step.")] string flowStepType)
+            [Description("Optional step type, for example SEARCH_IMAGE, SEARCH_TEXT, CURSOR_CLICK, KEYBOARD_INPUT, SYSTEM_COMMAND. Empty returns every step.")] string flowStepType)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 

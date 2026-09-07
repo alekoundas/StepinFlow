@@ -2,10 +2,6 @@ using Core.Enums;
 
 namespace Core.Models.Dtos
 {
-    /// <summary>
-    /// Display only. What a tree row shows under the step name, so the tree says what a step does
-    /// without opening it. Everything is optional: each step type reads the few fields it needs.
-    /// </summary>
     public class TreeNodeDetailDto
     {
         // WAIT
@@ -39,14 +35,14 @@ namespace Core.Models.Dtos
         public int WindowWidth { get; set; }
         public int WindowHeight { get; set; }
 
-        // IMAGE_SEARCH, READ_TEXT
+        // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum? SearchMode { get; set; }
         public int TemplateCount { get; set; }
 
         /// <summary>First template only. A row shows one image and a count, never a gallery.</summary>
         public byte[]? Thumbnail { get; set; }
 
-        // READ_TEXT, CHECK_VALUE
+        // SEARCH_TEXT, CHECK_VALUE
         public string? ConditionText { get; set; }
         public string? ConditionTextEnd { get; set; }
         public ConditionTypeEnum? ConditionType { get; set; }

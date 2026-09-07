@@ -29,7 +29,7 @@ namespace Business.Services.ExecutionService
         private readonly IAppSettingService _appSettingService;
         private readonly IScreenshotService _screenshotService;
 
-        private readonly Dictionary<int, ExecutionStep> _readableByStepId = new Dictionary<int, ExecutionStep>();                    //What a step below can still read, keyed by the flow step. One per step - a loop overwrites its own
+        private readonly Dictionary<int, ExecutionStep> _cachedExecutionStepsById = new Dictionary<int, ExecutionStep>();            //Cache all flowstep parents execution steps with result. One per step - a loop overwrites its own
         private readonly Dictionary<int, IReadOnlyList<Point>> _cachedPointsByStepId = new Dictionary<int, IReadOnlyList<Point>>();  //Every hit a FIND_ALL came back with
 
         private bool _keepsScreenshots;
@@ -54,7 +54,7 @@ namespace Business.Services.ExecutionService
             StepsById = stepsById;
             _keepsScreenshots = keepsScreenshots;
 
-            _readableByStepId.Clear();
+            _cachedExecutionStepsById.Clear();
             _cachedPointsByStepId.Clear();
         }
 
@@ -62,18 +62,19 @@ namespace Business.Services.ExecutionService
         // Cache execution steps
         public void RecordExecutionStep(int flowStepId, ExecutionStep executionStep)
         {
-            _readableByStepId[flowStepId] = executionStep;
+            _cachedExecutionStepsById[flowStepId] = executionStep;
         }
 
         public void ForgetExecutionStep(int flowStepId)
         {
-            _readableByStepId.Remove(flowStepId);
+            _cachedExecutionStepsById.Remove(flowStepId);
             _cachedPointsByStepId.Remove(flowStepId);
         }
 
+
         public ExecutionStep? GetExecutionStepFrom(int flowStepId)
         {
-            _readableByStepId.TryGetValue(flowStepId, out ExecutionStep? executionStep);
+            _cachedExecutionStepsById.TryGetValue(flowStepId, out ExecutionStep? executionStep);
             return executionStep;
         }
 
@@ -87,7 +88,7 @@ namespace Business.Services.ExecutionService
         }
 
 
-        // Cache search matches
+        // Cache points
         public void RecordMatches(int flowStepId, IReadOnlyList<Point> matches)
         {
             _cachedPointsByStepId[flowStepId] = matches;
@@ -100,7 +101,7 @@ namespace Business.Services.ExecutionService
         }
 
 
-        public ExecutionScreenshot? RecordScreenshot(RawImage screenshot, FlowStep flowStep)
+        public ExecutionScreenshot? EncodeForHistory(RawImage screenshot, FlowStep flowStep)
         {
             if (!_keepsScreenshots || screenshot.IsEmpty)
                 return null;

@@ -24,13 +24,11 @@ namespace Core.Enums
         KEYBOARD_INPUT,
 
         // Screen Reading
-        CAPTURE_SCREEN,
-        READ_TEXT,
+        SEARCH_IMAGE,
+        SEARCH_TEXT,
 
         // Decisions.
-        CONDITION_IMAGE,
-        CONDITION_TEXT,
-        CONDITION_VALUE,
+        CHECK_VALUE,
 
         SUCCESS, // Hidden. Not available for user selection.
         FAILURE, // Hidden. Not available for user selection.

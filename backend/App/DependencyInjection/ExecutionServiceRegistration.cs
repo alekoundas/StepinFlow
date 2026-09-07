@@ -26,11 +26,9 @@ namespace App.DependencyInjection
             services.AddSingleton<CursorStepWorker>();
             services.AddSingleton<WindowStepWorker>();
             services.AddSingleton<KeyboardStepWorker>();
-            services.AddSingleton<CaptureScreenStepWorker>();
-            services.AddSingleton<ConditionImageStepWorker>();
-            services.AddSingleton<ReadTextStepWorker>();
-            services.AddSingleton<ConditionTextStepWorker>();
-            services.AddSingleton<ConditionValueStepWorker>();
+            services.AddSingleton<SearchImageStepWorker>();
+            services.AddSingleton<SearchTextStepWorker>();
+            services.AddSingleton<CheckValueStepWorker>();
             services.AddSingleton<SystemCommandStepWorker>();
             services.AddSingleton<SystemActionStepWorker>();
             services.AddSingleton<EndExecutionStepWorker>();
@@ -52,11 +50,9 @@ namespace App.DependencyInjection
 
                     [FlowStepTypeEnum.KEYBOARD_INPUT] = x.GetRequiredService<KeyboardStepWorker>(),
 
-                    [FlowStepTypeEnum.CAPTURE_SCREEN] = x.GetRequiredService<CaptureScreenStepWorker>(),
-                    [FlowStepTypeEnum.READ_TEXT] = x.GetRequiredService<ReadTextStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_IMAGE] = x.GetRequiredService<ConditionImageStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_TEXT] = x.GetRequiredService<ConditionTextStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_VALUE] = x.GetRequiredService<ConditionValueStepWorker>(),
+                    [FlowStepTypeEnum.SEARCH_IMAGE] = x.GetRequiredService<SearchImageStepWorker>(),
+                    [FlowStepTypeEnum.SEARCH_TEXT] = x.GetRequiredService<SearchTextStepWorker>(),
+                    [FlowStepTypeEnum.CHECK_VALUE] = x.GetRequiredService<CheckValueStepWorker>(),
 
                     [FlowStepTypeEnum.MARKER] = x.GetRequiredService<PassThroughStepWorker>(),
                     [FlowStepTypeEnum.END_EXECUTION] = x.GetRequiredService<EndExecutionStepWorker>(),

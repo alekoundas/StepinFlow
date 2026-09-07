@@ -103,17 +103,7 @@ namespace Core.Helpers
                 nameof(FlowStep.KeyboardInputType),
             ],
 
-            [FlowStepTypeEnum.CAPTURE_SCREEN] = [nameof(FlowStep.FlowAreaId)],
-
-            [FlowStepTypeEnum.READ_TEXT] =
-            [
-                nameof(FlowStep.FlowAreaId),
-                nameof(FlowStep.OcrLanguage),
-                nameof(FlowStep.ResultExtractPattern),
-                nameof(FlowStep.FlowStepReferenceId),
-            ],
-
-            [FlowStepTypeEnum.CONDITION_IMAGE] =
+            [FlowStepTypeEnum.SEARCH_IMAGE] =
             [
                 nameof(FlowStep.FlowAreaId),
                 nameof(FlowStep.FlowStepReferenceId),
@@ -124,17 +114,18 @@ namespace Core.Helpers
                 .. _waiting,
             ],
 
-            [FlowStepTypeEnum.CONDITION_TEXT] =
+            [FlowStepTypeEnum.SEARCH_TEXT] =
             [
                 nameof(FlowStep.FlowAreaId),
                 nameof(FlowStep.FlowStepReferenceId),
                 nameof(FlowStep.SearchMode),
                 nameof(FlowStep.OcrLanguage),
+                nameof(FlowStep.ResultExtractPattern),
                 .. _condition,
                 .. _waiting,
             ],
 
-            [FlowStepTypeEnum.CONDITION_VALUE] =
+            [FlowStepTypeEnum.CHECK_VALUE] =
             [
                 nameof(FlowStep.FlowStepReferenceId),
                 .. _condition,
@@ -142,7 +133,7 @@ namespace Core.Helpers
 
             [FlowStepTypeEnum.END_EXECUTION] =
             [
-                nameof(FlowStep.EndExecutionVerdict),
+                nameof(FlowStep.EndExecutionAsSuccess),
                 nameof(FlowStep.Message),
             ],
 

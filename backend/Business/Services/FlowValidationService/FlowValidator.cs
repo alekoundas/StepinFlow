@@ -65,18 +65,14 @@ namespace Business.Services.FlowValidationService
 
                 switch (step.FlowStepType)
                 {
-                    case FlowStepTypeEnum.CAPTURE_SCREEN:
-                        ValidateArea(result, step);
-                        break;
-
-                    case FlowStepTypeEnum.CONDITION_IMAGE:
+                    case FlowStepTypeEnum.SEARCH_IMAGE:
                         ValidateArea(result, step);
 
                         if (!templateCountByStepId.TryGetValue(step.Id, out int templates) || templates == 0)
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NO_TEMPLATES, "There is nothing to look for: add a template.");
                         break;
 
-                    case FlowStepTypeEnum.CONDITION_TEXT:
+                    case FlowStepTypeEnum.SEARCH_TEXT:
                         ValidateArea(result, step);
 
                         if (string.IsNullOrWhiteSpace(step.ConditionText))
@@ -86,18 +82,11 @@ namespace Business.Services.FlowValidationService
                             Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
                         break;
 
-                    case FlowStepTypeEnum.READ_TEXT:
-                        ValidateArea(result, step);
-
-                        if (string.IsNullOrWhiteSpace(step.OcrLanguage))
-                            Add(result, step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
-                        break;
-
                     case FlowStepTypeEnum.SYSTEM_COMMAND:
                         ValidateCommand(result, step);
                         break;
 
-                    case FlowStepTypeEnum.CONDITION_VALUE:
+                    case FlowStepTypeEnum.CHECK_VALUE:
                         ValidateCheckValue(result, step, byId);
                         break;
 

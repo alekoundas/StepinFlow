@@ -23,7 +23,7 @@ namespace Core.Models.Dtos
         public bool IsLoopInfinite { get; set; }
 
 
-        // IMAGE_SEARCH, READ_TEXT
+        // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum SearchMode { get; set; }
 
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
@@ -46,15 +46,15 @@ namespace Core.Models.Dtos
         public SystemActionTypeEnum SystemActionType { get; set; }
 
 
-        // SYSTEM_COMMAND, READ_TEXT
+        // SYSTEM_COMMAND, SEARCH_TEXT
         public string ResultExtractPattern { get; set; } = string.Empty;
 
 
-        // READ_TEXT
+        // SEARCH_TEXT
         public string OcrLanguage { get; set; } = string.Empty;
 
 
-        // CHECK_VALUE, READ_TEXT (the text being looked for)
+        // SEARCH_TEXT, CHECK_VALUE (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
         public string ConditionTextEnd { get; set; } = string.Empty;
         public ConditionTypeEnum? ConditionType { get; set; }
@@ -69,7 +69,7 @@ namespace Core.Models.Dtos
         public int WindowWidth { get; set; }
 
 
-        // KYEBOARD_INPUT
+        // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }
 

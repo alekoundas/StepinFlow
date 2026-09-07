@@ -13,7 +13,7 @@ namespace Business.Services.ScreenshotService
         RawImage CaptureRaw(Rectangle rect);
 
         /// <summary>
-        /// Encodes pixels that were already captured. Lets a caller show the very frame it
+        /// Encodes pixels that were already captured. Lets a caller show the very screenshot it
         /// matched against: capturing a second time for display would put the boxes over
         /// whatever moved in between.
         /// </summary>

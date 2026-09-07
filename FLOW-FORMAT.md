@@ -36,59 +36,52 @@ Steps:
 # A fresh profile every time, so the second execution never inherits the first one's session.
 Launch   "chrome.exe"  args "--user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
 
-Condition Image  "Wait for the login form"   template "login-form.png"   in Browser
-                 wait until found   timeout 15s
+Wait For Image  "Login form appears"   template "login-form.png"   in Browser   timeout 15s
   Failure:
     End Execution  failed  "the site never loaded"
 
 ## Sign in
 
-Capture Screen   "login page"   in Browser
-
-Condition Image  "Find username field"   template "username-field.png"
-                 in "login page"   find best   accuracy 0.85
+Find Image  "Find username field"   template "username-field.png"
+            in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no username field on the login page"
   Success:
     Click  at "Find username field"
     Type   {{username}}
 
-Condition Image  "Find password field"   template "password-field.png"
-                 in "login page"   find best   accuracy 0.85
+Find Image  "Find password field"   template "password-field.png"
+            in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no password field on the login page"
   Success:
     Click  at "Find password field"
     Type   {{password}}
 
-Condition Image  "Find login button"   template "login-button.png"   in "login page"
+Find Image  "Find login button"   template "login-button.png"   in "Login form"
   Failure:
     End Execution  failed  "no login button"
   Success:
     Click  at "Find login button"
 
 # The assertion: this is what makes the recording a test.
-Condition Text   "Products page loaded"   contains "Products"   in Inventory
-                 wait until found   timeout 10s
+Wait For Text  "Products page loaded"   contains "Products"   in Inventory   timeout 10s
   Failure:
-    Read Text    "Login error"   in "Login form"
+    Check Text   "Login error"   is not empty   in "Login form"
     Notify       "Login failed: {{Login error}}"
     End Execution  failed  "did not reach the products page"
 
 ## Add everything on the page to the cart
 
-Capture Screen   "inventory"   in Inventory
-
-Condition Image  "Find add buttons"   template "add-to-cart.png"
-                 in "inventory"   find all   accuracy 0.90
+Find All Images  "Find add buttons"   template "add-to-cart.png"
+                 in Inventory   accuracy 0.90
   Failure:
     End Execution  failed  "no products to add"
   Success:
     Loop  each match in "Find add buttons"
       Click  at match
       # Give the badge a moment to update before the next click.
-      Condition Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"
-                       wait until found  timeout 3s
+      Wait For Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"  timeout 3s
         Failure:
           End Execution  failed  "the cart did not update after adding an item"
 
@@ -180,7 +173,7 @@ because they share one namespace. That single rule is what lets a step be refere
 than by position, so a later step reads `Click at "Find login button"` and an edit somewhere above
 it changes nothing.
 
-The recorder names steps from what it saw — `Find login button`, not `Condition 7` — and falls back
+The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
 to a number only on a collision.
 
 ### Comments and sections
@@ -213,51 +206,58 @@ end up in front of everyone.
 `#` is a **comment**, attached to the step below it. This is where intent lives — the thing a
 screenshot can never show, and the first thing a model reads when diagnosing a failure.
 
-### Capture
+### Checks
+
+A check takes its own screenshot, looks at it, decides, and produces a result. Checks are what turn
+a recording into a test — a flow holding none of them proves nothing.
 
 ```
-Capture Screen  "login page"   in Browser
-```
-
-Takes a frame at the moment the engine reaches it, and names it. Conditions search inside a named
-capture, so several checks can be made against the same instant rather than three different ones.
-
-### Conditions
-
-A condition searches, decides, and produces a location. It is the only step that branches.
-
-```
-Condition Image  "Find login button"   template "login-button.png"
-                 in "login page"   find best   accuracy 0.85
+Find Image  "Find login button"   template "login-button.png"
+            in "Login form"   accuracy 0.85
   Success:
     Click  at "Find login button"
   Failure:
     End Execution  failed  "no login button"
 ```
 
-Modes, one per condition:
+There are three things to check and four ways to look, and the keyword says both at once:
 
-| Mode | Produces | Use |
+| Keyword | Produces | Use |
 |---|---|---|
-| `find best` | one location | the default |
-| `find all` | a list | feeds `Loop each match` |
-| `wait until found  timeout 10s` | one location | polls, capturing its own frames |
-| `wait until not found  timeout 5s` | nothing | the spinner is gone; the banner has cleared |
+| `Find Image` | one location | the default |
+| `Find All Images` | a list | feeds `Loop each match` |
+| `Wait For Image` | one location | polls until it appears |
+| `Wait Until No Image` | nothing | the spinner is gone; the banner has cleared |
+| `Check Text` | the text read | assert what the screen says |
+| `Wait For Text` | the text read | polls until it says it |
+| `Wait Until No Text` | nothing | the error message has cleared |
+| `Check Value` | nothing | tests a value an earlier step produced |
 
-`wait until found` needs no preceding `Capture Screen` — it takes its own, repeatedly, until it
-finds the template or the timeout expires. That replaces every recorded sleep, and recorded sleeps
-are the largest single source of flakiness in any record-and-replay tool.
+The waiting forms take `timeout 10s` and poll, taking a fresh screenshot each time until the answer
+comes out right or the timeout expires. That replaces every recorded sleep, and recorded sleeps are
+the largest single source of flakiness in any record-and-replay tool. A timeout of `0` waits for
+ever.
 
-Other condition kinds:
+Making the mode part of the keyword means an impossible combination cannot be written down.
+`Find All` reads a single screenshot and hands back every hit, which is meaningful for templates and
+not for text, so there is no `Find All Texts` to mistype.
+
+`Wait Until No …` is not "wait until gone": nothing verifies the thing was ever there, so it
+succeeds immediately when the screen never matched at all.
+
+The text forms narrow before they judge — `matches "total: (\d+)"` keeps the captured group, and the
+condition is then tested against that. What is kept is what later steps read as `{{Name}}`, whether
+the check passed or failed, because a failure that says what was actually on screen is worth far
+more than one that only says it failed.
 
 ```
-Condition Text   "Products page loaded"  contains "Products"  in Inventory
-Condition Value  "Order is large"        "{{total}}" > 100
+Check Text   "Read the total"        matches "total: (\d+)"   in "Cart badge"
+Check Value  "Order is large"        "{{Read the total}}" > 100
 ```
 
-**A condition's result must be read.** A condition nobody branches on and nothing references is a
-check that was never made, and the validator rejects it before the file is saved. Both branches are
-optional; ignoring the condition entirely is not.
+**A check's result must be read.** One that nothing branches on and nothing references was never
+really made, and the validator rejects it before the file is saved. Both branches are optional;
+ignoring the check entirely is not.
 
 ### Actions
 
@@ -271,8 +271,8 @@ Scroll      down 3   in "Results panel"
 Wait        800ms
 ```
 
-`at` takes a name from the one namespace — a condition result, a point, or `match` inside a loop.
-`Wait` is a fixed sleep and a last resort; prefer a condition in `wait until found` mode.
+`at` takes a name from the one namespace — a check's result, a point, or `match` inside a loop.
+`Wait` is a fixed sleep and a last resort; prefer a `Wait For` check.
 
 ### Loops
 
@@ -295,7 +295,7 @@ End Execution  passed
 ```
 
 Stops the flow and stamps the verdict. Without it a flow ends when it runs out of steps, and the
-verdict comes from whether every condition that was checked passed.
+verdict comes from whether every check passed.
 
 Cleanup belongs above it, which is why it is a step and not a flag:
 
@@ -353,7 +353,10 @@ because renames should be rare.
 ## Settled
 
 - **`Launch` is one step.** Its target is an executable or a URL; anything else goes in `args`.
-- **`Read Text` produces a value read as `{{Name}}`**, sharing the syntax with inputs. One
+- **The text checks produce a value read as `{{Name}}`**, sharing the syntax with inputs. One
   substitution rule, and a step result and an input read the same because at the point of use they
   are the same thing.
+- **There is no separate read step.** A read that nothing checks is a check that was never made, so
+  reading and deciding are one step: `Check Text … is not empty` is the read that used to exist,
+  and it can no longer silently hand on an empty string.
 - **Sections carry a verdict**, and are the unit a report is built from.

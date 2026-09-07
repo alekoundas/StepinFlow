@@ -67,7 +67,7 @@ namespace Business.Services.ScreenshotService
         /// scaled coordinate space and monitors with a different scale factor
         /// come out stretched, clipped or missing entirely. Instead every monitor
         /// is captured on its own with Windows.Graphics.Capture (real pixels) and
-        /// the frames are stitched using each monitor's DEVMODE position.
+        /// the screenshots are stitched using each monitor's DEVMODE position.
         /// </summary>
         public byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
@@ -112,7 +112,7 @@ namespace Business.Services.ScreenshotService
         // ================================================================
 
         /// <summary>
-        /// Capture every monitor separately and paint the frames into one bitmap
+        /// Capture every monitor separately and paint the screenshots into one bitmap
         /// laid out with the monitors' real device pixel positions.
         /// Returns an empty array when no monitor could be captured.
         /// </summary>

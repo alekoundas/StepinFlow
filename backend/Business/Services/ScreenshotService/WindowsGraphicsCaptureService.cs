@@ -9,7 +9,7 @@
 //   byte[]? CaptureWindowCompressed (hwnd,     format, quality)    → JPEG/PNG
 //
 // How it works 
-//   WGC frame → IDirect3DDxgiInterfaceAccess → raw ID3D11Texture2D (GPU)
+//   WGC screenshot → IDirect3DDxgiInterfaceAccess → raw ID3D11Texture2D (GPU)
 //   → D3D11 staging texture (CPU-readable)
 //   → CopyResource (GPU copy, no DWM round-trip)
 //   → Map/Unmap → row-by-row memcpy into byte[]
@@ -52,7 +52,7 @@ namespace Business.Services.ScreenshotService
         // ================================================================
         private readonly IntPtr _devicePtr;             // raw ID3D11Device*
         private readonly IntPtr _contextPtr;            // raw ID3D11DeviceContext*
-        private readonly IDirect3DDevice _wrtDevice;    // WinRT wrapper (for WGC frame pool)
+        private readonly IDirect3DDevice _wrtDevice;    // WinRT wrapper (for WGC screenshot pool)
         private bool _disposed;
 
 
@@ -67,7 +67,7 @@ namespace Business.Services.ScreenshotService
         // ================================================================
 
         /// <summary>
-        /// Capture a single frame from the specified monitor.
+        /// Capture a single screenshot from the specified monitor.
         /// Capture monitor and compress to JPEG or PNG.
         /// This is what you call from ScreenshotService for the IPC transfer.
         /// Returns raw BGRA bytes (width × height × 4), or null on failure.
@@ -82,7 +82,7 @@ namespace Business.Services.ScreenshotService
 
 
         /// <summary>
-        /// Capture a single frame from the specified window.
+        /// Capture a single screenshot from the specified window.
         /// Capture window and compress to JPEG or PNG.
         /// Returns raw BGRA bytes (width × height × 4), or null on failure.
         /// </summary>
@@ -212,11 +212,11 @@ namespace Business.Services.ScreenshotService
 
             bool gotFrame = frameReady.Wait(millisecondsTimeout: 3000);
             framePool.FrameArrived -= onFrame;
-            session.Dispose(); // stop capture immediately — we only need 1 frame
+            session.Dispose(); // stop capture immediately — we only need 1 screenshot
 
             if (!gotFrame || capturedFrame is null)
             {
-                Console.Error.WriteLine("[WGC] Timeout waiting for frame.");
+                Console.Error.WriteLine("[WGC] Timeout waiting for screenshot.");
                 return null;
             }
 

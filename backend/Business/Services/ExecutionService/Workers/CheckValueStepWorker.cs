@@ -8,7 +8,7 @@ namespace Business.Services.ExecutionService.Workers
     /// <summary>
     /// Tests what an earlier step produced.
     /// </summary>
-    public class ConditionValueStepWorker : IStepWorker
+    public class CheckValueStepWorker : IStepWorker
     {
         public Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {

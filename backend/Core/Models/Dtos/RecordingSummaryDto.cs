@@ -47,7 +47,7 @@ namespace Core.Models.Dtos
         public List<int> ActionIndexes { get; set; } = new List<int>();
 
         /// <summary>
-        /// Clicked at more than one position, so it moves. A step for this wants an IMAGE_SEARCH
+        /// Clicked at more than one position, so it moves. A step for this wants a SEARCH_IMAGE
         /// and a click on the result, not a saved point.
         /// </summary>
         public bool IsMoving { get; set; }

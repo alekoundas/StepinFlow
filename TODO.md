@@ -5,6 +5,15 @@ is lost between sessions.
 
 ## Execution
 
+- [ ] **A check failure and a harness failure are not the same thing, and the report will need to
+      say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
+      test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
+      failing means the harness could not do its job - the window was not there, the command would
+      not run - which says nothing about the product. `TreeStepHelper.BranchTypes` holds both kinds
+      and nothing distinguishes them. JUnit already has the distinction as `<failure>` versus
+      `<error>`, and a dashboard that counts a missing window as a product regression will be
+      ignored within a week. Decide it when the JUnit writer is built, not before.
+
 - [ ] **Nothing fails unless an END_EXECUTION says so, and only the validator can catch that.**
       The engine no longer infers a verdict: it does not count checks, and the walker no longer
       notices that a failure branch was empty. Both were removed on purpose - inferring was implicit
@@ -13,8 +22,8 @@ is lost between sessions.
       COMPLETED. A suite of those is green and proves nothing, which is the exact failure this whole
       model was built to stop.
       Two things have to carry that weight, and neither exists yet:
-      1) **A validator rule.** A `CONDITION_*` step whose failure path reaches no `End Execution` -
-         not in its own Failure branch, not in any condition below it - is a check whose result
+      1) **A validator rule.** A check step whose failure path reaches no `End Execution` -
+         not in its own Failure branch, not in any check below it - is a check whose result
          changes nothing. Warn at save and at export, naming the step. An empty failure branch stays
          legal; a check that can never fail the execution is what gets flagged.
       2) **The QA recorder seeds `End Execution failed`** into every failure branch it creates, so
@@ -124,13 +133,13 @@ is lost between sessions.
       loop and gives up reproducibility, breakpoints and a run you can read - which is everything
       this app is for. This is the opposite, a deterministic flow with a model at the one point
       determinism cannot reach. It needs no new machinery: it is a step, it has Success and Failure
-      branches, it produces a `Value` that `FlowStepReferenceId` reads, exactly like READ_TEXT.
+      branches, it produces a `Value` that `FlowStepReferenceId` reads, exactly like SEARCH_TEXT.
       Three shapes, best fit first:
       *AI_CHECK* - "is this screen showing an error?", branching on the answer. The strongest of the
       three, because a semantic condition is something template matching cannot express at all, and
       a wrong answer only takes a branch that was already designed.
       *AI_READ* - semantic extraction where OCR plus a regex is brittle. "The order total" instead
-      of a `keep (\d+)` that breaks when the currency symbol moves. Feeds CHECK_VALUE as READ_TEXT
+      of a `keep (\d+)` that breaks when the currency symbol moves. Feeds CHECK_VALUE as SEARCH_TEXT
       already does.
       *AI_CLICK* - the model returns coordinates to click. **This is the one that needs a decision
       rather than an implementation.** AI-generated flows already go to the editor and never
@@ -200,8 +209,18 @@ is lost between sessions.
 
 ## Frontend
 
+- [ ] **The step types are out of sync with the backend and the app will not run.** The backend enum
+      is now `SEARCH_IMAGE`, `SEARCH_TEXT`, `CHECK_VALUE`, `END_EXECUTION`, `MARKER`;
+      `flow-step-types-enum.ts` still carries `IMAGE_SEARCH`, `CHECK_VALUE`, `READ_TEXT` and has
+      none of the new ones. Nothing type-errors because the enum is string constants, so this fails
+      at runtime instead. About 22 files: the enum, `flow-step-catalog.ts`, the form registry, the
+      `image-search/` and `read-text/` form folders (which become `search-image/` and
+      `search-text/`), their zod schemas, `flow-step-tree-detail.ts`, the wizard's draft mapping,
+      and `backend-api-service.ts` where `FlowStep.testReadText` is now `FlowStep.testSearchText`.
+      `END_EXECUTION` and `MARKER` have no form at all yet.
+
 - [ ] **A recorded template records no authored frame size.** `AuthoredFrameWidth` and
-      `AuthoredFrameHeight` are saved as 0 by the recorder, and `ImageSearchStepWorker.ScaleRatio`
+      `AuthoredFrameHeight` are saved as 0 by the recorder, and `SearchImageStepWorker.ScaleRatio`
       returns 1 for anything <= 0 - so multi-scale matching silently does nothing on a recorded
       template, and a window at a different size than it was recorded at just fails to match. The
       manual capture path fills both in; the wizard has the same numbers available and does not.

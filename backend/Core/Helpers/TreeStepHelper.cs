@@ -12,13 +12,21 @@ namespace Core.Helpers
         /// </summary>
         private static readonly FlowStepTypeEnum[] BranchTypes =
         [
-            FlowStepTypeEnum.CONDITION_IMAGE,
-            FlowStepTypeEnum.CONDITION_TEXT,
-            FlowStepTypeEnum.CONDITION_VALUE,
+            FlowStepTypeEnum.SEARCH_IMAGE,
+            FlowStepTypeEnum.SEARCH_TEXT,
+            FlowStepTypeEnum.CHECK_VALUE,
             FlowStepTypeEnum.SYSTEM_COMMAND,
             FlowStepTypeEnum.WINDOW_FOCUS,
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,
+        ];
+
+        /// <summary>The steps that verify something. A flow holding none of these proves nothing.</summary>
+        private static readonly FlowStepTypeEnum[] CheckTypes =
+        [
+            FlowStepTypeEnum.SEARCH_IMAGE,
+            FlowStepTypeEnum.SEARCH_TEXT,
+            FlowStepTypeEnum.CHECK_VALUE,
         ];
 
         /// <summary>Types the user can drop steps into.</summary>
@@ -39,6 +47,8 @@ namespace Core.Helpers
         public static bool HasBranchChildren(FlowStepTypeEnum type) => BranchTypes.Contains(type);
 
         public static bool CanContainChildren(FlowStepTypeEnum type) => ContainerTypes.Contains(type);
+
+        public static bool IsCheck(FlowStepTypeEnum type) => CheckTypes.Contains(type);
 
         public static bool IsBranchChild(FlowStepTypeEnum type) => BranchChildTypes.Contains(type);
 

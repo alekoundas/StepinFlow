@@ -21,7 +21,7 @@ namespace Core.Models.Database
         public bool IsLoopInfinite { get; set; }
 
 
-        // IMAGE_SEARCH, READ_TEXT
+        // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum SearchMode { get; set; }
 
         // Defaults for the step's templates, each of which may override them.
@@ -52,16 +52,16 @@ namespace Core.Models.Database
         public SystemActionTypeEnum SystemActionType { get; set; }
 
 
-        // SYSTEM_COMMAND, READ_TEXT
+        // SYSTEM_COMMAND, SEARCH_TEXT
         /// <summary>Regex, first capture group. Empty keeps the whole text.</summary>
         public string ResultExtractPattern { get; set; } = string.Empty;
 
 
-        // READ_TEXT
+        // SEARCH_TEXT
         public string OcrLanguage { get; set; } = string.Empty;
 
 
-        // CHECK_VALUE, READ_TEXT (the text being looked for)
+        // SEARCH_TEXT, CHECK_VALUE (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
         public ConditionTypeEnum? ConditionType { get; set; }
 
@@ -78,18 +78,12 @@ namespace Core.Models.Database
         public int WindowWidth { get; set; }
 
 
-        // KYEBOARD_INPUT
+        // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
-        //
-        // Point source per point, decided by whichever of the two is set:
-        //   FlowPointId         -> a reusable named point on the Flow
-        //   FlowStepReferenceId -> the result of an ancestor IMAGE_SEARCH / READ_TEXT
-        // Never both: every save path clears the one it is not using.
-        // The "End" variants are the same thing for the drop point of CURSOR_DRAG.
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
@@ -104,8 +98,7 @@ namespace Core.Models.Database
         public Flow? Flow { get; set; }
 
 
-        // SUB_FLOW: the flow this step runs. Ownership is FlowId; this is a reference, and a
-        // deleted target clears it rather than taking this step with it.
+        // SUB_FLOW
         public int? SubFlowId { get; set; }
         public Flow? SubFlow { get; set; }
 

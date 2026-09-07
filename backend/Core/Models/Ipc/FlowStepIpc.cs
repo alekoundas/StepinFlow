@@ -14,7 +14,7 @@ namespace Core.Models.Ipc
     public record GetFlowStepDeleteImpactQuery(int id) : IRequest<ResultDto<FlowStepDeleteImpactDto>>;
     public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
     public record TestRunCommandQuery(FlowStepDto dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
-    public record TestReadTextQuery(FlowStepDto dto) : IRequest<ResultDto<ReadTextTestResultDto>>;
+    public record TestSearchTextQuery(FlowStepDto dto) : IRequest<ResultDto<SearchTextTestResultDto>>;
 
 
     // ============== COMMANDS ==============

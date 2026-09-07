@@ -1,6 +1,6 @@
 namespace Core.Models.Dtos
 {
-    public class ReadTextTestResultDto
+    public class SearchTextTestResultDto
     {
         public bool IsResolved { get; set; }
         public string? ErrorMessage { get; set; }

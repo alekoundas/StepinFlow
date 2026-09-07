@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using Business.Services.ExecutionService.Workers;
 using Core.Enums;
+using Core.Helpers;
 using Core.Interfaces;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -86,27 +87,31 @@ namespace Business.Services.ExecutionService
             string error = string.Empty;
             int? errorStepId = null;
             int stepCount = 0;
-            
+
             // Load
             Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
             await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
             ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
             _walker = new ExecutionFlowWalker(_cache);
 
-            
+
             // Fire and forget:
             // Starts running synchronously on the calling thread and keeps running until it hits an await that genuinely suspends. Only then does it return an incomplete Task, and only then does StartAsync reach return ExecutionId.
             _ = Task.Run(async () =>
             {
                 // Start execution
-                try 
+                try
                 {
                     using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _cancellation.Token);
-                    stepCount = await WalkAsync(linked.Token);
+                    WalkOutcome outcome = await WalkAsync(linked.Token);
+
+                    stepCount = outcome.StepCount;
+                    status = outcome.Status;
+                    error = outcome.Reason;
                 }
                 catch (OperationCanceledException)  // Cancellation is how a run is stopped, not a fault.
                 {
-                    status = ExecutionStatusEnum.STOPPED;   
+                    status = ExecutionStatusEnum.STOPPED;
                 }
                 catch (Exception ex) // Actual exception.
                 {
@@ -230,7 +235,7 @@ namespace Business.Services.ExecutionService
         }
 
 
-        private async Task<int> WalkAsync(CancellationToken ct)
+        private async Task<WalkOutcome> WalkAsync(CancellationToken ct)
         {
             FlowStep? step = _walker.Start(FlowId);
             int stepCount = 0;
@@ -248,6 +253,15 @@ namespace Business.Services.ExecutionService
                 ExecutionStep result = await ExecuteAsync(step, ct);
                 stepCount++;
 
+                // The one step that ends an execution on purpose, and says how it ended.
+                if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
+                {
+                    return new WalkOutcome(
+                        stepCount,
+                        step.EndExecutionAsSuccess ? ExecutionStatusEnum.COMPLETED : ExecutionStatusEnum.FAILED,
+                        step.Message);
+                }
+
                 step = _walker.Next(step, result);
 
                 // Working out what runs next can hand out a FIND_ALL search's remaining hits. Nobody
@@ -260,7 +274,7 @@ namespace Business.Services.ExecutionService
                 }
             }
 
-            return stepCount;
+            return new WalkOutcome(stepCount, ExecutionStatusEnum.COMPLETED, string.Empty);
         }
 
         private async Task<ExecutionStep> ExecuteAsync(FlowStep step, CancellationToken ct)
@@ -334,5 +348,15 @@ namespace Business.Services.ExecutionService
         {
             await _broadcastService.SendAsync(BroadcastTypeEnum.EXECUTION_EVENT, payload);
         }
+
+
+        // ================================================================
+        // Private types
+        // ================================================================
+
+        /// <summary>How the walk ended, so nothing has to be remembered in a field between steps.</summary>
+        private sealed record WalkOutcome(int StepCount, ExecutionStatusEnum Status, string Reason);
+
+
     }
 }

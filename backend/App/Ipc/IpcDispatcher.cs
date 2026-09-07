@@ -70,7 +70,7 @@ namespace App.Ipc
 
                     "FlowStep.testImageSearch" => await _mediator.Send(new TestImageSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
                     "FlowStep.testRunCommand" => await _mediator.Send(new TestRunCommandQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.testReadText" => await _mediator.Send(new TestReadTextQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.testSearchText" => await _mediator.Send(new TestSearchTextQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
 
                     // FlowArea
                     "FlowArea.create" => await _mediator.Send(new CreateFlowAreaCommand(JsonSerializer.Deserialize<FlowAreaDto>(request.Payload, _jsonOptions)!), ct),

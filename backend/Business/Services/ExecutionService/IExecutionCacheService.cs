@@ -30,6 +30,6 @@ namespace Business.Services.ExecutionService
 
         // Screenshots
         /// <summary>The screenshot a step searched, handed back for that step to carry.</summary>
-        ExecutionScreenshot? RecordScreenshot(RawImage screenshot, FlowStep flowStep);
+        ExecutionScreenshot? EncodeForHistory(RawImage screenshot, FlowStep flowStep);
     }
 }
