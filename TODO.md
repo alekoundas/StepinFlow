@@ -193,6 +193,53 @@ is lost between sessions.
       to stop using a key, and the key stays in the table. Wants an explicit Clear next to the
       field rather than a rule about when an empty value counts as an edit.
 
+## Recording
+
+- [ ] **Every recorded click becomes a `SEARCH_IMAGE` in `WAIT_UNTIL_FOUND`, never `FIND_BEST`.**
+      The tempting shortcut is to read the human's speed - a quick click means the element was fast,
+      a slow one means it was slow - and it is wrong in both directions. A quick click means the
+      element was *already on screen* when the human arrived, which is evidence of nothing except
+      the recording machine's speed; baking that in is the recorded-sleep problem wearing a
+      different hat. A slow click is just as likely to be someone reading, thinking or alt-tabbing
+      as it is the app being slow.
+      There is also no speed argument for `FIND_BEST`: `LoopSearchAsync` runs its first search
+      before any delay, so a `WAIT_UNTIL_FOUND` that hits on the first poll does exactly the same
+      one capture and one match. It is never slower when the element is there, and it is correct
+      when it is not.
+
+- [ ] **`TimeoutMilliseconds` defaults to 0, which means wait for ever.** The property has no
+      initializer and `LoopSearchAsync` only checks the clock when it is `> 0`. A recorder that
+      creates waiting steps without setting one hangs the execution indefinitely on the first
+      failure - survivable interactively, fatal in CI where it eats the whole job budget. The
+      recorder must always write a timeout explicitly, or the default has to stop being "for ever".
+
+- [ ] **Size the recorded timeout as `max(10s, observed × 3)`, capped at 60s.** The human's delay
+      is a sample of one and a poor estimate of anything, so it should not set the timeout on its
+      own - but a 20 second wait is real signal that something slow happened, and no flat default
+      survives that. The floor covers the common case, the multiple catches the outlier. Not
+      `+10%`: the timeout answers "how long before we call this failed", not "how long the app
+      should take", and CI runners are routinely 2-5x slower than the desktop that recorded it.
+      Being generous costs time only on executions that were going to fail anyway.
+
+- [ ] **Back the poll interval off as a wait drags on.** The default is now 200ms, which is right
+      for the first second or two. Most elements appear early, so polling five times a second at
+      second 25 is burning a core on something about to time out anyway - 100ms for the first
+      second, 200ms to five, 500ms after that would cost nothing in latency where it matters. Do
+      not go below ~100ms at any point: the matching competes for CPU with the application being
+      waited on, so past a point it slows down the very thing it is timing. The screenshot is a
+      GPU copy and cheap; the match is the cost, and it scales with search area × template area.
+
+- [ ] **Write the observed delay into `CodeComment`** - `recorded after a 4.2s wait`. Even where it
+      does not drive the timeout it is exactly the intent a screenshot cannot carry, and it is the
+      first thing a model reads when working out why a step got slow. Exports as a `#` comment
+      above the step.
+
+- [ ] **Warn on a step with both a populated Failure branch and a long timeout.** That combination
+      is almost always a branch point written as a wait - "which layout am I in" asked with ten
+      seconds of patience it cannot use, paid on every execution that takes the fallback. The fix
+      is the anchor pattern in FLOW-FORMAT.md: wait once on something always present, then branch
+      instantly with `FIND_BEST`. A warning, not an error - the flow still works, it is just slow.
+
 ## Notify
 
 - [ ] **Read the failed step's result.** `NotifyMessageBuilder` builds every line from saved
@@ -217,7 +264,9 @@ is lost between sessions.
       `image-search/` and `read-text/` form folders (which become `search-image/` and
       `search-text/`), their zod schemas, `flow-step-tree-detail.ts`, the wizard's draft mapping,
       and `backend-api-service.ts` where `FlowStep.testReadText` is now `FlowStep.testSearchText`.
-      `END_EXECUTION` and `MARKER` have no form at all yet.
+      `END_EXECUTION` and `MARKER` have no form at all yet. `flow-step-dto.tsx` also still defaults
+      `pollIntervalMilliseconds` to 500, which is the value new steps actually get - both backend
+      defaults are now 200.
 
 - [ ] **A recorded template records no authored frame size.** `AuthoredFrameWidth` and
       `AuthoredFrameHeight` are saved as 0 by the recorder, and `SearchImageStepWorker.ScaleRatio`

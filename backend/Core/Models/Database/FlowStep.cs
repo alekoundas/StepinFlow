@@ -31,7 +31,7 @@ namespace Core.Models.Database
         public int MaxMatches { get; set; } = 20;
 
         // Waiting modes only. 0 timeout waits forever.
-        public int PollIntervalMilliseconds { get; set; } = 500;
+        public int PollIntervalMilliseconds { get; set; } = 200;
         public int TimeoutMilliseconds { get; set; }
 
 

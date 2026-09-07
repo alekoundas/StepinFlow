@@ -259,6 +259,38 @@ Check Value  "Order is large"        "{{Read the total}}" > 100
 really made, and the validator rejects it before the file is saved. Both branches are optional;
 ignoring the check entirely is not.
 
+### Wait once, then branch freely
+
+`Wait For` and `Find` answer different questions, and using the wrong one is what makes a suite slow
+rather than wrong.
+
+`Wait For` asks *"has this appeared yet?"* — a question whose answer changes, so waiting is the
+point. `Find` asks *"which state am I in?"* — a question whose answer is already final. A phone
+layout does not turn into a desktop layout after ten seconds, so a timeout there buys nothing and
+costs its full length on every execution that takes the fallback.
+
+So wait once, on something that is always present, then branch instantly:
+
+```
+Wait For Image  "Page loaded"   template "logo.png"   in Browser   timeout 15s
+  Failure:
+    End Execution  failed  "the page never loaded"
+
+Find Image  "Desktop nav present?"   template "nav-bar.png"   in Browser
+  Failure:
+    Click  at point "Hamburger menu"
+  Success:
+    Click  at "Desktop nav present?"
+```
+
+The anchor absorbs the patience once per page. Every layout question after it is free and still
+safe, because the page is already known to have rendered. Three fallbacks on that page cost nothing
+instead of three timeouts.
+
+A step carrying both a populated `Failure:` branch and a long timeout is almost always a branch
+point that was written as a wait. That is a warning, not an error - the flow still works, it is
+just paying for patience it cannot use.
+
 ### Actions
 
 ```
