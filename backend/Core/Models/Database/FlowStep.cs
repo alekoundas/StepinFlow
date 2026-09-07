@@ -118,7 +118,7 @@ namespace Core.Models.Database
 
 
         // END_EXECUTION
-        public ExecutionVerdictEnum? EndExecutionVerdict { get; set; }
+        public bool EndExecutionAsSuccess { get; set; }
 
 
         // FlowArea

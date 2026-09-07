@@ -26,11 +26,14 @@ namespace App.DependencyInjection
             services.AddSingleton<CursorStepWorker>();
             services.AddSingleton<WindowStepWorker>();
             services.AddSingleton<KeyboardStepWorker>();
-            services.AddSingleton<ImageSearchStepWorker>();
+            services.AddSingleton<CaptureScreenStepWorker>();
+            services.AddSingleton<ConditionImageStepWorker>();
             services.AddSingleton<ReadTextStepWorker>();
-            services.AddSingleton<CheckValueStepWorker>();
+            services.AddSingleton<ConditionTextStepWorker>();
+            services.AddSingleton<ConditionValueStepWorker>();
             services.AddSingleton<SystemCommandStepWorker>();
             services.AddSingleton<SystemActionStepWorker>();
+            services.AddSingleton<EndExecutionStepWorker>();
 
             services.AddSingleton<IStepWorkerFactory>(x => new StepWorkerFactory(
                 new Dictionary<FlowStepTypeEnum, IStepWorker>
@@ -49,12 +52,14 @@ namespace App.DependencyInjection
 
                     [FlowStepTypeEnum.KEYBOARD_INPUT] = x.GetRequiredService<KeyboardStepWorker>(),
 
+                    [FlowStepTypeEnum.CAPTURE_SCREEN] = x.GetRequiredService<CaptureScreenStepWorker>(),
                     [FlowStepTypeEnum.READ_TEXT] = x.GetRequiredService<ReadTextStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_IMAGE] = x.GetRequiredService<ImageSearchStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_TEXT] = x.GetRequiredService<ReadTextStepWorker>(),
-                    [FlowStepTypeEnum.CONDITION_VALUE] = x.GetRequiredService<CheckValueStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_IMAGE] = x.GetRequiredService<ConditionImageStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_TEXT] = x.GetRequiredService<ConditionTextStepWorker>(),
+                    [FlowStepTypeEnum.CONDITION_VALUE] = x.GetRequiredService<ConditionValueStepWorker>(),
 
                     [FlowStepTypeEnum.MARKER] = x.GetRequiredService<PassThroughStepWorker>(),
+                    [FlowStepTypeEnum.END_EXECUTION] = x.GetRequiredService<EndExecutionStepWorker>(),
 
                     [FlowStepTypeEnum.SYSTEM_COMMAND] = x.GetRequiredService<SystemCommandStepWorker>(),
                     [FlowStepTypeEnum.SYSTEM_ACTION] = x.GetRequiredService<SystemActionStepWorker>(),

@@ -5,6 +5,23 @@ is lost between sessions.
 
 ## Execution
 
+- [ ] **Nothing fails unless an END_EXECUTION says so, and only the validator can catch that.**
+      The engine no longer infers a verdict: it does not count checks, and the walker no longer
+      notices that a failure branch was empty. Both were removed on purpose - inferring was implicit
+      magic, and an empty failure branch is a legitimate thing to write. The consequence is that a
+      flow whose every check fails, with no `End Execution` anywhere, walks to the end and reports
+      COMPLETED. A suite of those is green and proves nothing, which is the exact failure this whole
+      model was built to stop.
+      Two things have to carry that weight, and neither exists yet:
+      1) **A validator rule.** A `CONDITION_*` step whose failure path reaches no `End Execution` -
+         not in its own Failure branch, not in any condition below it - is a check whose result
+         changes nothing. Warn at save and at export, naming the step. An empty failure branch stays
+         legal; a check that can never fail the execution is what gets flagged.
+      2) **The QA recorder seeds `End Execution failed`** into every failure branch it creates, so
+         the common path is safe without anybody knowing the rule. A tester deleting it is then a
+         decision rather than an omission.
+      Until both land, a green execution means "it walked to the end", not "it passed".
+
 - [ ] **Clear the execution cache when the walk ends.** `ForgetFrom` only runs inside `Pop()`, and
       when the stack empties `Pop()` returns `null` without calling it — so the last path's values
       sit in the cache until the next run resets it. Clear on end of walk, and log if anything was

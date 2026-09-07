@@ -8,10 +8,11 @@ namespace Business.Services.ExecutionService.Workers
     /// <summary>
     /// Tests what an earlier step produced.
     /// </summary>
-    public class CheckValueStepWorker : IStepWorker
+    public class ConditionValueStepWorker : IStepWorker
     {
         public Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
+            // Validate.
             if (step.FlowStepReferenceId == null)
                 return Task.FromResult(ExecutionStep.Failure("There is no step to read a value from."));
 
@@ -19,6 +20,7 @@ namespace Business.Services.ExecutionService.Workers
             if (source == null)
                 return Task.FromResult(ExecutionStep.Failure("The step this reads from has not run."));
 
+            // Execute.
             string value = source.Value ?? string.Empty;
             bool satisfied = ConditionEvaluator.IsSatisfied(value, step.ConditionType, step.ConditionText, step.ConditionTextEnd);
 
