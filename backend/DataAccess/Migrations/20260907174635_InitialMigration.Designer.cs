@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260906200523_InitialMigration1")]
-    partial class InitialMigration1
+    [Migration("20260907174635_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -115,9 +115,6 @@ namespace DataAccess.Migrations
 
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Verdict")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ViewportHeight")
                         .HasColumnType("INTEGER");
@@ -465,7 +462,7 @@ namespace DataAccess.Migrations
                     b.Property<int?>("DiscordBotId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("EndExecutionVerdict")
+                    b.Property<int?>("EndExecutionStatus")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("FlowAreaId")

@@ -23,8 +23,7 @@ namespace DataAccess.Configurations
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
 
 
-            // A CUSTOM area may sit inside another area. Removing the frame leaves its regions
-            // behind as absolute rather than deleting work the user may still want.
+            // Relationship with ParentFlowArea (one-to-many)
             builder.HasOne(x => x.ParentFlowArea)
                 .WithMany(x => x.ChildFlowAreas)
                 .HasForeignKey(x => x.ParentFlowAreaId)

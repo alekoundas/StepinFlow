@@ -16,7 +16,7 @@ namespace Core.Models.Dtos
 
         /// <summary>
         /// The exact pixels the matches were found in, so the details view can draw the boxes over
-        /// the frame they belong to. JPEG on purpose: this one is for looking at, not matching,
+        /// the screenshot they belong to. JPEG on purpose: this one is for looking at, not matching,
         /// and a monitor sized area as PNG would be megabytes over the pipe.
         /// </summary>
         public byte[]? Screenshot { get; set; }

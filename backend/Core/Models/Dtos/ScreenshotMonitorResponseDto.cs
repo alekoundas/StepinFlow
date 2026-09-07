@@ -1,8 +1,7 @@
 namespace Core.Models.Dtos
 {
     /// <summary>
-    /// One monitor's frozen frame plus its bounds in physical pixels. Electron converts to DIPs
-    /// with screen.screenToDipRect when it places the overlay window.
+    /// One monitor's frozen screenshot plus its bounds in physical pixels. 
     /// </summary>
     public class ScreenshotMonitorResponseDto
     {

@@ -156,7 +156,7 @@ namespace Business.Services.MatchService
 
             // The same division underflows to an infinity rather than a NaN, which PatchNaNs leaves
             // alone. An infinite score then beats every real one: it sorts to the front, clears any
-            // accuracy, and is recorded as the best the frame had. Every normalized mode lives in
+            // accuracy, and is recorded as the best the screenshot had. Every normalized mode lives in
             // [-1, 1], so clamping there removes the infinities and touches nothing genuine.
             Cv2.Min(working, ScoreCeiling, working);
             Cv2.Max(working, ScoreFloor, working);
@@ -181,7 +181,7 @@ namespace Business.Services.MatchService
                 if (!isAccepted && rejected.Count >= request.RejectedLimit)
                     break;
 
-                // The frame is already full of accepted hits; nothing left to learn from more.
+                // The screenshot is already full of accepted hits; nothing left to learn from more.
                 if (isAccepted && matches.Count >= request.MaxMatches)
                     break;
 

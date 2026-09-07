@@ -67,7 +67,6 @@ namespace DataAccess.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     CompletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Status = table.Column<string>(type: "TEXT", nullable: false),
-                    Verdict = table.Column<int>(type: "INTEGER", nullable: false),
                     HistoryLevel = table.Column<string>(type: "TEXT", nullable: false),
                     StepCount = table.Column<int>(type: "INTEGER", nullable: false),
                     CsvRowIndex = table.Column<int>(type: "INTEGER", nullable: false),
@@ -268,7 +267,7 @@ namespace DataAccess.Migrations
                     SubFlowId = table.Column<int>(type: "INTEGER", nullable: true),
                     DiscordBotId = table.Column<int>(type: "INTEGER", nullable: true),
                     Message = table.Column<string>(type: "TEXT", nullable: false),
-                    EndExecutionVerdict = table.Column<int>(type: "INTEGER", nullable: true),
+                    EndExecutionStatus = table.Column<int>(type: "INTEGER", nullable: true),
                     FlowAreaId = table.Column<int>(type: "INTEGER", nullable: true),
                     FlowPointId = table.Column<int>(type: "INTEGER", nullable: true),
                     FlowPointEndId = table.Column<int>(type: "INTEGER", nullable: true),
@@ -417,10 +416,10 @@ namespace DataAccess.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     OrderNumber = table.Column<int>(type: "INTEGER", nullable: false),
+                    TemplateMatchMode = table.Column<string>(type: "TEXT", nullable: true),
                     TemplateImage = table.Column<byte[]>(type: "BLOB", nullable: true),
                     Thumbnail = table.Column<byte[]>(type: "BLOB", nullable: true),
                     IsRequired = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TemplateMatchMode = table.Column<string>(type: "TEXT", nullable: true),
                     Accuracy = table.Column<float>(type: "REAL", nullable: true),
                     ClickOffsetX = table.Column<int>(type: "INTEGER", nullable: false),
                     ClickOffsetY = table.Column<int>(type: "INTEGER", nullable: false),
@@ -492,9 +491,10 @@ namespace DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_FlowStepLastGoodScreenshotHistories_FlowStepId",
+                name: "IX_FlowStepLastGoodScreenshotHistories_FlowStepId_ViewportWidth_ViewportHeight",
                 table: "FlowStepLastGoodScreenshotHistories",
-                column: "FlowStepId");
+                columns: new[] { "FlowStepId", "ViewportWidth", "ViewportHeight" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_FlowSteps_DiscordBotId",

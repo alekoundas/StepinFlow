@@ -169,7 +169,7 @@ namespace Business.Services.ScreenshotService
             IDirect3DDxgiInterfaceAccess access = (IDirect3DDxgiInterfaceAccess)Marshal.GetObjectForIUnknown(surfacePtr);
 
 
-            //Guid texGuid = IID_IDXGISurface; // The frame texture implements IDXGISurface
+            //Guid texGuid = IID_IDXGISurface; // The screenshot texture implements IDXGISurface
             //int hr = access.GetInterface(ref texGuid, out IntPtr frameSurfacePtr);
             //if (hr < 0 || frameSurfacePtr == IntPtr.Zero)
             //{
@@ -229,7 +229,7 @@ namespace Business.Services.ScreenshotService
 
             try
             {
-                // 3. GPU copy: frame texture → staging texture.
+                // 3. GPU copy: screenshot texture → staging texture.
                 //    This is asynchronous on the GPU but CopyResource() on the immediate
                 //    context synchronizes before Map().
                 var fnCopyResource = GetVtableFunc<CopyResourceDelegate>(contextPtr, SLOT_ID3D11DeviceContext_CopyResource);
@@ -281,7 +281,7 @@ namespace Business.Services.ScreenshotService
         // ================================================================
 
         /// <summary>
-        /// WGC's frame pool requires a WinRT IDirect3DDevice, not a raw ID3D11Device*.
+        /// WGC's screenshot pool requires a WinRT IDirect3DDevice, not a raw ID3D11Device*.
         /// CreateDirect3D11DeviceFromDXGIDevice() (exported from d3d11.dll) converts
         /// a IDXGIDevice (QI'd from ID3D11Device) into the WinRT wrapper.
         /// </summary>

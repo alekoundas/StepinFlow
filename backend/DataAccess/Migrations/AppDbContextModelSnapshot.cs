@@ -113,9 +113,6 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Verdict")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("ViewportHeight")
                         .HasColumnType("INTEGER");
 
@@ -462,7 +459,7 @@ namespace DataAccess.Migrations
                     b.Property<int?>("DiscordBotId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("EndExecutionVerdict")
+                    b.Property<int?>("EndExecutionStatus")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("FlowAreaId")

@@ -171,7 +171,7 @@ namespace Business.Services.RecordingService
 
             action.WindowTitle = TryGetForegroundWindowTitle();
 
-            // The frame the user was looking at when they decided to click. Waiting for the
+            // The screenshot the user was looking at when they decided to click. Waiting for the
             // release would capture whatever the click had already changed.
             if (action.Type == RecordedInputTypeEnum.BUTTON_DOWN)
                 action.HasScreenshot = TryCapture(index, action.PhysicalX, action.PhysicalY);

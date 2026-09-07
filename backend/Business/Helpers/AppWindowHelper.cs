@@ -207,7 +207,6 @@ namespace Business.Services.ScreenshotService
             return GetForegroundWindow() == hWnd;
         }
 
-        /// <summary>The outer frame, title bar and borders included.</summary>
         public static bool ResizeWindow(IntPtr hWnd, int width, int height)
         {
             if (hWnd == IntPtr.Zero)
@@ -219,7 +218,6 @@ namespace Business.Services.ScreenshotService
             return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
 
-        /// <summary>The top left of the outer frame lands on the point.</summary>
         public static bool MoveWindow(IntPtr hWnd, int x, int y)
         {
             if (hWnd == IntPtr.Zero)

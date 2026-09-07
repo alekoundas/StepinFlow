@@ -8,7 +8,6 @@ namespace Core.Models.Database
         public DateTime? CompletedAt { get; set; }
 
         public ExecutionStatusEnum Status { get; set; } = ExecutionStatusEnum.RUNNING;
-        public ExecutionVerdictEnum Verdict { get; set; } = ExecutionVerdictEnum.UNKNOWN;
         public ExecutionHistoryLevelEnum HistoryLevel { get; set; }
 
 

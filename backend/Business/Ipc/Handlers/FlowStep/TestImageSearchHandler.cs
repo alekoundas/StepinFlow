@@ -83,7 +83,7 @@ namespace Business.Ipc.Handlers
                 imageResult.MatchCount = matches.Count;
                 imageResult.IsFound = matches.Count > 0;
 
-                // The best thing in the frame, hit or not. Without it "0.79 against your 0.80" and
+                // The best thing in the screenshot, hit or not. Without it "0.79 against your 0.80" and
                 // "not on screen at all" both read as no result.
                 imageResult.BestScore = outcome.BestScore ?? 0f;
 
