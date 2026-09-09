@@ -26,7 +26,7 @@ and a sequence of clicks in one place needs only one move.
 Relocate and drag take their position from one of two sources:
 
 - **A saved point** on the flow.
-- **An earlier step's result** — an `IMAGE_SEARCH` or `READ_TEXT` above it, reached through a
+- **An earlier step's result** — a `SEARCH_IMAGE` or `SEARCH_TEXT` above it, reached through a
   Success branch.
 
 Drag has both sources twice: one for where the drag starts and one for where it ends.
@@ -48,6 +48,6 @@ uses.
 
 ## Why the cursor is moved by the app rather than by the recorder
 
-Cursor movement during a run is generated directly by StepinFlow rather than replayed through the
+Cursor movement during an execution is generated directly by StepinFlow rather than replayed through the
 input hook. On a machine with scaled or mixed-DPI monitors, replaying recorded movement lands
 clicks in the wrong place.

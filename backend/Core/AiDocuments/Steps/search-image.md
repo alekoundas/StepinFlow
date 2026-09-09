@@ -1,13 +1,16 @@
-# Image Search step
+# Search Image step
 
-## What Image Search does
+## What Search Image does
 
-`IMAGE_SEARCH` takes a screenshot of an area and looks in it for one or more template images you
+`SEARCH_IMAGE` takes a screenshot of an area and looks in it for one or more template images you
 saved earlier. It has **Success** and **Failure** branches.
 
 Where it found something becomes a position that cursor steps below it can use.
 
-## Image Search modes
+It is one of the three **checks** - `SEARCH_IMAGE`, `SEARCH_TEXT`, `CHECK_VALUE` - which are the
+steps that decide. A flow holding none of them proves nothing, whatever it does to the screen.
+
+## Search modes
 
 | Mode | What it does |
 |---|---|
@@ -17,7 +20,28 @@ Where it found something becomes a position that cursor steps below it can use.
 | `WAIT_UNTIL_NOT_FOUND` | Searches repeatedly until it stops matching. |
 
 `WAIT_UNTIL_FOUND` and `WAIT_UNTIL_NOT_FOUND` poll every few hundred milliseconds. A timeout of 0
-waits forever.
+waits forever, which in an unattended execution means it never gives up.
+
+## Which mode to use, and why it matters for speed
+
+`WAIT_UNTIL_FOUND` costs nothing when the image is already there: the first search runs before any
+delay, so it does the same one screenshot and one match that `FIND_BEST` would. Prefer it wherever
+the flow is waiting for something that ought to appear.
+
+`FIND_BEST` is for a **branch point** - "which layout am I in", "is the desktop nav there or the
+hamburger". That question already has a final answer, so waiting on it buys nothing and costs the
+whole timeout on every execution that takes the fallback.
+
+The pattern that gets both right is to wait once on something always present, then branch freely:
+
+```
+Wait for the page logo        WAIT_UNTIL_FOUND, timeout 15s
+Is the desktop nav there?     FIND_BEST
+  Failure: click the hamburger
+```
+
+A step with a populated Failure branch and a long timeout is usually a branch point written as a
+wait.
 
 ## What WAIT_UNTIL_NOT_FOUND actually waits for
 
@@ -30,7 +54,7 @@ If you need "wait for the spinner to appear and then go away", that is two steps
 ## How FIND_ALL runs
 
 `FIND_ALL` takes **one** screenshot and works through every hit found in it. The search never runs
-a second time. Hits after the first appear in the run as their own steps with a duration of 0 ms,
+a second time. Hits after the first appear in the execution as their own steps with a duration of 0 ms,
 because they are served from the screenshot the first search already took.
 
 This matters if the screen changes while you work through the hits — the positions come from the
@@ -65,7 +89,7 @@ up.
 
 Templates are stored as PNG, never JPEG. JPEG artifacts wreck normalised template matching.
 
-## Testing an Image Search
+## Testing a Search Image
 
 **Test now** runs the real search against the live screen and reports whether each template was
 found and with what score. It clicks nothing.
@@ -73,7 +97,7 @@ found and with what score. It clicks nothing.
 The form also generates a sentence describing what the step will actually do, which is worth reading
 when several settings interact.
 
-## Clicking what an Image Search found
+## Clicking what a search found
 
 The search does not click. A cursor step below it, inside the **Success** branch, takes the search
 result as its position. "Find this and click it" is three steps: the search, a move, and a click.

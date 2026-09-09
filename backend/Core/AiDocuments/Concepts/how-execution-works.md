@@ -1,9 +1,9 @@
 # How execution works
 
-## One run at a time
+## One execution at a time
 
 There is one mouse, one keyboard and one screen, so only one flow runs at a time. Starting a second
-run while one is going is refused rather than queued.
+execution while one is going is refused rather than queued.
 
 ## How the runner decides what is next
 
@@ -29,17 +29,17 @@ does not grow the stack on every pass, which it would if the target were pushed 
 Returning from a sub-flow is the stack unwinding, so it needs no machinery. Nesting is limited to a
 depth of 50, which is what stops runaway recursion.
 
-## What a run keeps while it is running
+## What an execution keeps while it is running
 
 - The results a step below can still read. These are dropped as the walk leaves the branch they
   belong to.
 - Every hit from a `FIND_ALL` search.
 - The last few screenshots.
 
-All of it is bounded by how deep the tree is, not by how long the run has been going, so a run
+All of it is bounded by how deep the tree is, not by how long the execution has been going, so an execution
 lasting three weeks holds no more than one lasting three seconds.
 
-## What a run leaves behind
+## What an execution leaves behind
 
 History has three levels: nothing, steps only, or steps and screenshots.
 
@@ -50,7 +50,7 @@ same values in memory either way, so a step still reads the step above it.
 
 Screenshots work like a dashcam. Nothing is written while a flow is going well. When a step fails,
 the last few frames are written out, each named after the step that took it — most of them belong
-to steps that ran earlier, which is the point: the frame at the moment of failure usually shows a
+to steps that ran earlier, which is the point: the screenshot at the moment of failure usually shows a
 screen the thing was never on.
 
 The number of frames kept is a setting.
@@ -61,11 +61,11 @@ Breakpoints, pause, continue, step into and step over.
 
 **Step over** remembers the depth it started at and runs until the walk is back at or above that
 depth. A breakpoint always wins over a step over — if you step over a step containing a breakpoint,
-the run stops at the breakpoint.
+the execution stops at the breakpoint.
 
-## Reading the run
+## Reading the execution
 
-The run list is ordered by sequence and indented by depth, so it reads like a stack trace. Each row
+The execution list is ordered by sequence and indented by depth, so it reads like a stack trace. Each row
 shows what ran, whether it succeeded, and how long it took.
 
 A row with `match 2 of 3` is a `FIND_ALL` search working through its hits. A row like that with 0 ms

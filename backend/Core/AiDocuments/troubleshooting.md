@@ -71,18 +71,18 @@ machine.
 Templates captured inside a resized window scale correctly to a different resolution. Templates
 captured off a full desktop do not.
 
-## A run ended and I do not know why
+## An execution ended and I do not know why
 
-Open the run. The step that ended it is red and says so. Failures that a Failure branch caught are
+Open the execution. The step that ended it is red and says so. Failures that a Failure branch caught are
 amber and marked **handled** — those are the flow working, not the problem.
 
 If screenshots were kept, the failed step has the frames leading up to it. Most of them belong to
-earlier steps, which is deliberate: the frame at the moment of failure usually shows a screen the
+earlier steps, which is deliberate: the screenshot at the moment of failure usually shows a screen the
 thing was never on.
 
-If an AI provider is set up, the **Explain** tab reads the run and says what it thinks went wrong.
+If an AI provider is set up, the **Explain** tab reads the execution and says what it thinks went wrong.
 
-## The run will not start
+## The execution will not start
 
 Only one run happens at a time. A second start is refused while one is going.
 
@@ -92,7 +92,7 @@ missing area or point will fail when it is reached.
 ## A loop never ends
 
 That is a supported thing to build. Stop it with the debugger's stop key, or put a step inside the
-loop that ends the run.
+loop that ends the execution.
 
 ## Nothing types where I expect
 

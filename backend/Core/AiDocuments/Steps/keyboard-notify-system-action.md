@@ -29,7 +29,7 @@ Bots are configured in Settings: a name, the webhook URL, the bot name to post a
 rate limit in seconds. The webhook URL is the credential, so it is never written to a log.
 
 Sending happens off the flow's thread, and a send that fails never stops a flow. A notification is
-about the run; it should not be able to end it.
+about the execution; it should not be able to end it.
 
 ### Reporting another step's failure
 

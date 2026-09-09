@@ -16,7 +16,7 @@ typing becomes one entry; a long gap becomes a pause.
 Cursor movement on its own is not recorded. Recording every movement would produce thousands of
 events in a couple of minutes and bury the ones that matter.
 
-When you press a mouse button, the screen around the pointer is captured — the frame you were
+When you press a mouse button, the screen around the pointer is captured — the screenshot you were
 looking at when you decided to click, rather than whatever the click then changed. How much is
 captured is a setting.
 

@@ -76,4 +76,4 @@ window.
 **BRANCHES_EMPTY** — a step has Success and Failure branches and both are empty, so the step's
 result changes nothing.
 
-**NAME_MISSING** — the step has no name. It still runs; it is just hard to find in a run.
+**NAME_MISSING** — the step has no name. It still runs; it is just hard to find in an execution.

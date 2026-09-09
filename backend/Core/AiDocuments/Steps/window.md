@@ -32,5 +32,5 @@ was yesterday.
 
 ## Moving a window
 
-`WINDOW_RELOCATE` moves the window to a point. The position is always the outer frame, not the
-client area.
+`WINDOW_RELOCATE` moves the window to a point. The position is always the window's outer bounds, not
+the client area.

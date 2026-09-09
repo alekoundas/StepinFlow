@@ -34,7 +34,7 @@ you did not expect.
 A cursor step that carries a position takes it from one of two places:
 
 - **A saved point** — a named point on the flow, reusable by several steps.
-- **An earlier step's result** — an `IMAGE_SEARCH` or `READ_TEXT` above it, whose match position
+- **An earlier step's result** — a `SEARCH_IMAGE` or `SEARCH_TEXT` above it, whose match position
   becomes the cursor's target.
 
 Only steps reachable through a **Success** branch above the cursor step are offered as a source.

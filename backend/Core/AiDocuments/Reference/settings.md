@@ -7,10 +7,10 @@ each time you click while recording. Bigger gives the wizard more to crop a temp
 
 ## Execution
 
-**Screenshots kept before a failure** — how many frames of run-up are written out with a failed
+**Screenshots kept before a failure** — how many screenshots of the lead-up are written out with a failed
 step. Nothing is written while a flow succeeds.
 
-**Screenshots kept per run** — how many screenshots a run leaves behind so you can see what a step
+**Screenshots kept per execution** — how many screenshots an execution leaves behind so you can see what a step
 was looking at. Zero keeps none.
 
 ## AI

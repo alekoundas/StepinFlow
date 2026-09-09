@@ -16,12 +16,14 @@ branch.
 
 ## Reading a number off the screen and acting on it
 
-Cover: `READ_TEXT` with a Keep only expression, then `CHECK_VALUE` with a numeric comparison, and
-why a non-numeric read fails rather than taking the false branch.
+Cover: a single `SEARCH_TEXT` with a Keep only expression and a numeric condition - the read and
+the comparison are one step now - and why a non-numeric read fails rather than taking the false
+branch. Then when a second `CHECK_VALUE` is still worth adding: asking another question of the same
+read without going back to the screen.
 
 ## Retrying something that sometimes fails
 
-Cover: a `LOOP` around a search, breaking out on success, and how the run view distinguishes a
+Cover: a `LOOP` around a search, breaking out on success, and how the execution view distinguishes a
 handled retry from a real failure.
 
 ## Working through a list of items
@@ -35,5 +37,5 @@ Cover: Extract to sub-flow, what gets copied versus moved, and why references ar
 
 ## Being told when a flow fails
 
-Cover: a `NOTIFY` step in a Failure branch, reporting on the parent step, and what an image search
+Cover: a `NOTIFY` step in a Failure branch, reporting on the parent step, and what a `SEARCH_IMAGE`
 failure attaches.

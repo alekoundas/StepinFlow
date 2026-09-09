@@ -10,13 +10,17 @@ another flow. Steps sit in a tree. Order and nesting decide what runs when.
 These step types are created with a **Success** and a **Failure** child, and anything that should
 run conditionally goes inside one of them:
 
-- `IMAGE_SEARCH`
-- `READ_TEXT`
+- `SEARCH_IMAGE`
+- `SEARCH_TEXT`
 - `CHECK_VALUE`
 - `SYSTEM_COMMAND`
 - `WINDOW_FOCUS`, `WINDOW_RESIZE`, `WINDOW_RELOCATE`
 
-Every other step type is a leaf or a container, and either succeeds or ends the run.
+The first three are the **checks** - the steps that exist to decide, and the ones a report is built
+from. The rest branch for a different reason: a command that will not run or a window that is not
+there is the harness failing, which says nothing about the application being tested.
+
+Every other step type is a leaf or a container, and either succeeds or ends the execution.
 
 Success and Failure are structural. You do not create or delete them, and you cannot move them.
 They appear with their parent and disappear with it.
@@ -26,10 +30,10 @@ They appear with their parent and disappear with it.
 If the step has branches, its **Failure** branch runs and the flow carries on. That is the flow
 working as designed — a search that finds nothing and takes the other path is not an error.
 
-If the step has no branches, the run ends there.
+If the step has no branches, the execution ends there.
 
-The run view shows the difference. A failure that a Failure branch caught is amber and marked
-**handled**. The one that ended the run is red.
+The execution view shows the difference. A failure that a Failure branch caught is amber and marked
+**handled**. The one that ended the execution is red.
 
 ## Steps that hold other steps
 

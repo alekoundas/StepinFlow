@@ -9,8 +9,11 @@ Use it when a step produced a value and what happens next depends on what that v
 
 ## Where the value comes from
 
-You pick the source step from a dropdown of `READ_TEXT` and `SYSTEM_COMMAND` steps above this one,
+You pick the source step from a dropdown of `SEARCH_TEXT` and `SYSTEM_COMMAND` steps above this one,
 reached through a **Success** branch.
+
+A `SEARCH_TEXT` keeps what it read whether it passed or failed, so a `CHECK_VALUE` below one can ask
+a second question of the same read without going back to the screen.
 
 The pick is stored by id, not by name, so renaming the source step cannot break the check.
 
