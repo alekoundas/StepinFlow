@@ -22,6 +22,7 @@ export class FlowStepDto {
   // Core fields
   id: number = 0;
   name: string = "";
+  codeComment: string = "";
   flowStepType: FlowStepTypeEnum = FlowStepTypeEnum.FAILURE;
   orderNumber: number = -1;
 
@@ -35,12 +36,12 @@ export class FlowStepDto {
   loopCount: number = 0;
   isLoopInfinite: boolean = false;
 
-  // IMAGE_SEARCH, READ_TEXT
+  // SEARCH_IMAGE, SEARCH_TEXT
   searchMode: SearchModeEnum = "FIND_BEST";
   templateMatchMode: TemplateMatchModeEnum = "CCoeffNormed";
   accuracy: number = 0.8;
   maxMatches: number = 20;
-  pollIntervalMilliseconds: number = 500;
+  pollIntervalMilliseconds: number = 200;
   timeoutMilliseconds: number = 0;
 
   // SYSTEM_COMMAND
@@ -55,13 +56,13 @@ export class FlowStepDto {
   // SYSTEM_ACTION
   systemActionType: SystemActionTypeEnum = "LOCK_WORKSTATION";
 
-  // SYSTEM_COMMAND, READ_TEXT
+  // SYSTEM_COMMAND, SEARCH_TEXT
   resultExtractPattern: string = "";
 
-  // READ_TEXT
+  // SEARCH_TEXT
   ocrLanguage: string = "";
 
-  // CHECK_VALUE, READ_TEXT (the text being looked for)
+  // SEARCH_TEXT, CHECK_VALUE (the text being looked for)
   conditionText: string = "";
   conditionTextEnd: string = "";
   conditionType?: ConditionTypeEnum;
@@ -77,7 +78,7 @@ export class FlowStepDto {
   windowHeight: number = 0;
   windowWidth: number = 0;
 
-  // KYEBOARD_INPUT
+  // KEYBOARD_INPUT
   keyboardInputText: string = "";
   keyboardInputType?: KeyboardInputTypeEnum;
 
@@ -85,7 +86,7 @@ export class FlowStepDto {
   //
   // Point source per point:
   //   flowPointId         -> a reusable named point on the Flow
-  //   flowStepReferenceId -> the result of an ancestor IMAGE_SEARCH / READ_TEXT
+  //   flowStepReferenceId -> the result of an ancestor SEARCH_IMAGE / SEARCH_TEXT
   // Never both: whichever is set is the source.
   cursorButtonType?: CursorButtonTypeEnum;
   cursorButtonActionType?: CursorButtonActionTypeEnum;
@@ -101,10 +102,13 @@ export class FlowStepDto {
   // SUB_FLOW: the flow this step runs.
   subFlowId?: number;
 
-  // NOTIFY
+  // NOTIFY, END_EXECUTION
   discordBotId?: number;
-  notifyMessage: string = "";
+  message: string = "";
   subFlow?: FlowDto;
+
+  // END_EXECUTION
+  endExecutionAsSuccess: boolean = false;
 
   // FlowArea
   flowAreaId?: number;

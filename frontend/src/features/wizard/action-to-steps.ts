@@ -255,7 +255,7 @@ export const buildSteps = (
   /** The search half of every image option, which is where the template and area live. */
   const search = (searchMode: SearchModeEnum, timeoutMilliseconds = 0): DraftStepDto =>
     base({
-      flowStepType: FlowStepTypeEnum.IMAGE_SEARCH,
+      flowStepType: FlowStepTypeEnum.SEARCH_IMAGE,
       name: answers.name,
       searchMode,
       timeoutMilliseconds,

@@ -17,7 +17,7 @@ import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
-import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
+import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
 import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
@@ -119,8 +119,8 @@ export const backendApiService = {
       call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
     testRunCommand: (dto: FlowStepDto) =>
       call<RunCommandTestResultDto>("FlowStep.testRunCommand", dto),
-    testReadText: (dto: FlowStepDto) =>
-      call<ReadTextTestResultDto>("FlowStep.testReadText", dto),
+    testSearchText: (dto: FlowStepDto) =>
+      call<SearchTextTestResultDto>("FlowStep.testSearchText", dto),
   },
 
   FlowStepTemplate: {

@@ -9,6 +9,7 @@ namespace Core.Models.Dtos
         public int Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
+        public string CodeComment { get; set; } = string.Empty;
         public FlowStepTypeEnum FlowStepType { get; set; }
         public int OrderNumber { get; set; }
 
@@ -95,9 +96,14 @@ namespace Core.Models.Dtos
 
         // SUB_FLOW: the flow this step runs.
         public int? SubFlowId { get; set; }
-        public int? DiscordBotId { get; set; }
-        public string NotifyMessage { get; set; } = string.Empty;
         public FlowDto? SubFlow { get; set; }
+
+        public int? DiscordBotId { get; set; }
+        public string Message { get; set; } = string.Empty;
+
+
+        // END_EXECUTION
+        public bool EndExecutionAsSuccess { get; set; }
 
 
         // FlowArea

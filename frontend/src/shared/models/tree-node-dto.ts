@@ -49,6 +49,9 @@ export interface TreeNodeDetailDto {
 
   systemActionType?: SystemActionTypeEnum | null;
 
+  message?: string | null;
+  endExecutionAsSuccess: boolean;
+
   childCount: number;
 }
 

@@ -6,11 +6,12 @@ export interface SearchMode {
   description: string;
 }
 
-export const IMAGE_SEARCH_MODES: SearchMode[] = [
+export const SEARCH_IMAGE_MODES: SearchMode[] = [
   {
     value: SearchModeEnum.FIND_BEST,
     label: "Best match",
-    description: "Look once and act on the strongest match, then branch on what was found.",
+    description:
+      "Look once and act on the strongest match. The one to use for a branch point - \"which layout am I in\" has a final answer, so waiting on it only costs time.",
   },
   {
     value: SearchModeEnum.FIND_ALL,
@@ -36,11 +37,11 @@ export const IMAGE_SEARCH_MODES: SearchMode[] = [
  * Reading an area produces one block of text and no positions, so there is nothing for
  * FIND_ALL to act on each of.
  */
-export const READ_TEXT_MODES: SearchMode[] = [
+export const SEARCH_TEXT_MODES: SearchMode[] = [
   {
     value: SearchModeEnum.FIND_BEST,
-    label: "Read once",
-    description: "Read the area once. Succeeds when there is something to read.",
+    label: "Check once",
+    description: "Read the area once and decide. Succeeds when the condition holds.",
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_FOUND,
@@ -55,7 +56,7 @@ export const READ_TEXT_MODES: SearchMode[] = [
   },
 ];
 
-export const READ_TEXT_MODE_VALUES = READ_TEXT_MODES.map((x) => x.value) as [
+export const SEARCH_TEXT_MODE_VALUES = SEARCH_TEXT_MODES.map((x) => x.value) as [
   SearchModeEnum,
   ...SearchModeEnum[],
 ];

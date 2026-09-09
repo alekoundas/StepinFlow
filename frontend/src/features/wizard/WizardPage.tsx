@@ -13,6 +13,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { hasBranches } from "@/shared/models/flow-step-catalog";
 import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templates/data-tree/FlowStepTreeNodeComponent";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { DraftStepDto } from "@/shared/models/database/flow-draft-dto";
@@ -22,14 +23,6 @@ import { optionsFor } from "@/features/wizard/action-to-steps";
 import ActionDecisionComponent, {
   type PlacementOption,
 } from "@/features/wizard/components/ActionDecisionComponent";
-
-/** Types the save gives branches to, which is what makes "inside Success" an option at all. */
-const BRANCHING: FlowStepTypeEnum[] = [
-  FlowStepTypeEnum.IMAGE_SEARCH,
-  FlowStepTypeEnum.READ_TEXT,
-  FlowStepTypeEnum.SYSTEM_COMMAND,
-  FlowStepTypeEnum.CHECK_VALUE,
-];
 
 interface StepperHandle {
   nextCallback: () => void;
@@ -93,7 +86,7 @@ export default function WizardPage() {
       },
     ];
 
-    if (BRANCHING.includes(last.values.flowStepType)) {
+    if (hasBranches(last.values.flowStepType)) {
       options.push({
         id: "inside",
         label: `Inside "${last.values.name}" → Success`,

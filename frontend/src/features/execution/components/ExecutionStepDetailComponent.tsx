@@ -113,7 +113,7 @@ export default function ExecutionStepDetailComponent({
         ) : null}
       </div>
 
-      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
+      {executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE &&
       executionStep.flowStepId &&
       executionStep.bestScore !== null &&
       executionStep.bestScore !== undefined ? (
@@ -123,12 +123,12 @@ export default function ExecutionStepDetailComponent({
         />
       ) : null}
 
-      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH &&
+      {executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE &&
       executionStep.flowStepId ? (
         <TemplateImages flowStepId={executionStep.flowStepId} />
       ) : null}
 
-      {executionStep.flowStepType === FlowStepTypeEnum.IMAGE_SEARCH ? (
+      {executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE ? (
         <StepScreenshot
           executionStepId={executionStep.id}
           fileName={executionStep.screenshotFileName}

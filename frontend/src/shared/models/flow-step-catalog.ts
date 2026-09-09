@@ -59,6 +59,18 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     label: "Check Value",
     iconName: "filter",
   },
+  {
+    flowStepType: FlowStepTypeEnum.END_EXECUTION,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "End Execution",
+    iconName: "stop-circle",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.MARKER,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Marker",
+    iconName: "bookmark",
+  },
 
   // ── Input ──
   {
@@ -114,15 +126,15 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
 
   // ── Perception ──
   {
-    flowStepType: FlowStepTypeEnum.IMAGE_SEARCH,
+    flowStepType: FlowStepTypeEnum.SEARCH_IMAGE,
     group: FlowStepGroupEnum.PERCEPTION,
-    label: "Image Search",
+    label: "Search Image",
     iconName: "search",
   },
   {
-    flowStepType: FlowStepTypeEnum.READ_TEXT,
+    flowStepType: FlowStepTypeEnum.SEARCH_TEXT,
     group: FlowStepGroupEnum.PERCEPTION,
-    label: "Read Text",
+    label: "Search Text",
     iconName: "file-edit",
   },
 
@@ -171,10 +183,10 @@ export const getFlowStepCatalogEntry = (
  * route on their outcome, so only these are worth reporting one for.
  */
 const BRANCH_STEP_TYPES: FlowStepTypeEnum[] = [
-  FlowStepTypeEnum.IMAGE_SEARCH,
-  FlowStepTypeEnum.READ_TEXT,
-  FlowStepTypeEnum.SYSTEM_COMMAND,
+  FlowStepTypeEnum.SEARCH_IMAGE,
+  FlowStepTypeEnum.SEARCH_TEXT,
   FlowStepTypeEnum.CHECK_VALUE,
+  FlowStepTypeEnum.SYSTEM_COMMAND,
   FlowStepTypeEnum.WINDOW_FOCUS,
   FlowStepTypeEnum.WINDOW_RESIZE,
   FlowStepTypeEnum.WINDOW_RELOCATE,

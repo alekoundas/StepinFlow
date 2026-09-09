@@ -42,16 +42,14 @@ Wait For Image  "Login form appears"   template "login-form.png"   in Browser   
 
 ## Sign in
 
-Find Image  "Find username field"   template "username-field.png"
-            in "Login form"   accuracy 0.85
+Find Image  "Find username field"   template "username-field.png" in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no username field on the login page"
   Success:
     Click  at "Find username field"
     Type   {{username}}
 
-Find Image  "Find password field"   template "password-field.png"
-            in "Login form"   accuracy 0.85
+Find Image  "Find password field"   template "password-field.png" in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no password field on the login page"
   Success:
@@ -73,8 +71,7 @@ Wait For Text  "Products page loaded"   contains "Products"   in Inventory   tim
 
 ## Add everything on the page to the cart
 
-Find All Images  "Find add buttons"   template "add-to-cart.png"
-                 in Inventory   accuracy 0.90
+Find All Images  "Find add buttons"   template "add-to-cart.png"                 in Inventory   accuracy 0.90
   Failure:
     End Execution  failed  "no products to add"
   Success:
@@ -118,7 +115,7 @@ Overridable from the command line, so CI can narrow or widen the matrix without 
 
 ### Areas
 
-An area is a rectangle to look inside. Areas are the vocabulary of *where*, which is why steps say
+An area is a rectangle to look inside. Areas are the vocabulary of _where_, which is why steps say
 `in Inventory` rather than carrying coordinates.
 
 ```
@@ -186,8 +183,8 @@ to a number only on a collision.
 `##` marks a **section**, and a section carries a verdict: it fails if any step beneath it failed,
 and passes otherwise. Sections do not nest and do not indent the steps under them.
 
-That verdict is what a report is built from. A flow at one viewport is a test *suite*, and each
-section in it is a *test case*:
+That verdict is what a report is built from. A flow at one viewport is a test _suite_, and each
+section in it is a _test case_:
 
 ```xml
 <testsuite name="login [1920x1080]" tests="3" failures="1">
@@ -199,7 +196,7 @@ section in it is a *test case*:
 </testsuite>
 ```
 
-So a CI dashboard shows *"Sign in has failed 4 of the last 20 builds, only at 390×844"* rather than
+So a CI dashboard shows _"Sign in has failed 4 of the last 20 builds, only at 390×844"_ rather than
 one flow flapping. Name sections after what a person would say they were doing, because those names
 end up in front of everyone.
 
@@ -222,16 +219,16 @@ Find Image  "Find login button"   template "login-button.png"
 
 There are three things to check and four ways to look, and the keyword says both at once:
 
-| Keyword | Produces | Use |
-|---|---|---|
-| `Find Image` | one location | the default |
-| `Find All Images` | a list | feeds `Loop each match` |
-| `Wait For Image` | one location | polls until it appears |
-| `Wait Until No Image` | nothing | the spinner is gone; the banner has cleared |
-| `Check Text` | the text read | assert what the screen says |
-| `Wait For Text` | the text read | polls until it says it |
-| `Wait Until No Text` | nothing | the error message has cleared |
-| `Check Value` | nothing | tests a value an earlier step produced |
+| Keyword               | Produces      | Use                                         |
+| --------------------- | ------------- | ------------------------------------------- |
+| `Find Image`          | one location  | the default                                 |
+| `Find All Images`     | a list        | feeds `Loop each match`                     |
+| `Wait For Image`      | one location  | polls until it appears                      |
+| `Wait Until No Image` | nothing       | the spinner is gone; the banner has cleared |
+| `Check Text`          | the text read | assert what the screen says                 |
+| `Wait For Text`       | the text read | polls until it says it                      |
+| `Wait Until No Text`  | nothing       | the error message has cleared               |
+| `Check Value`         | nothing       | tests a value an earlier step produced      |
 
 The waiting forms take `timeout 10s` and poll, taking a fresh screenshot each time until the answer
 comes out right or the timeout expires. That replaces every recorded sleep, and recorded sleeps are
@@ -264,8 +261,8 @@ ignoring the check entirely is not.
 `Wait For` and `Find` answer different questions, and using the wrong one is what makes a suite slow
 rather than wrong.
 
-`Wait For` asks *"has this appeared yet?"* — a question whose answer changes, so waiting is the
-point. `Find` asks *"which state am I in?"* — a question whose answer is already final. A phone
+`Wait For` asks _"has this appeared yet?"_ — a question whose answer changes, so waiting is the
+point. `Find` asks _"which state am I in?"_ — a question whose answer is already final. A phone
 layout does not turn into a desktop layout after ten seconds, so a timeout there buys nothing and
 costs its full length on every execution that takes the fallback.
 
@@ -361,7 +358,7 @@ flows/
     username-field.png
 ```
 
-A folder, not an archive: git can then show *which* image changed, which is the whole point of
+A folder, not an archive: git can then show _which_ image changed, which is the whole point of
 putting tests in a repository.
 
 Each template carries its click offset and the window size it was captured at. Those are properties

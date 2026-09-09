@@ -27,7 +27,7 @@ const BOX_COLOURS = [
 const percent = (value: number, total: number) =>
   total > 0 ? `${(value / total) * 100}%` : "0%";
 
-export default function FlowStepImageSearchTestDialogComponent({ result }: Props) {
+export default function FlowStepSearchImageTestDialogComponent({ result }: Props) {
   const [hiddenIds, setHiddenIds] = useState<number[]>([]);
 
   const width = result.searchAreaWidth;

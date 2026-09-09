@@ -71,6 +71,20 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "filter",
     },
     {
+      flowStepType: FlowStepTypeEnum.END_EXECUTION,
+      name: "End Execution",
+      description:
+        "Stop the flow here and stamp the verdict. Without one, a flow ends when it runs out of steps.",
+      iconName: "stop-circle",
+    },
+    {
+      flowStepType: FlowStepTypeEnum.MARKER,
+      name: "Marker",
+      description:
+        "Name the section that follows. Each one becomes a test case in the report.",
+      iconName: "bookmark",
+    },
+    {
       flowStepType: FlowStepTypeEnum.NOTIFY,
       name: "Notify",
       description:
@@ -107,17 +121,17 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
 
     // ── Screen Search ──
     {
-      flowStepType: FlowStepTypeEnum.IMAGE_SEARCH,
-      name: "Image Search",
+      flowStepType: FlowStepTypeEnum.SEARCH_IMAGE,
+      name: "Search Image",
       description:
-        "Search the screen for a template image and return its center coordinates. Result can be used by Cursor steps.",
+        "Look for a template image on screen and branch on whether it is there. Its location is what Cursor steps click.",
       iconName: "search",
     },
     {
-      flowStepType: FlowStepTypeEnum.READ_TEXT,
-      name: "Read Text",
+      flowStepType: FlowStepTypeEnum.SEARCH_TEXT,
+      name: "Search Text",
       description:
-        "Read the text inside an area, branch on whether it matches, and hand it to later steps.",
+        "Read the text inside an area, decide whether it says what it should, and hand what was read to later steps.",
       iconName: "file-edit",
     },
   ];

@@ -1,6 +1,6 @@
 # Image Editor Window
 
-Editor used to produce the **template image** an `IMAGE_SEARCH` flow step searches
+Editor used to produce the **template image** a `SEARCH_IMAGE` flow step searches
 for. Electron opens it in its own window with a PNG (today: a screenshot of the
 whole virtual desktop), the user crops / erases it, and the edited PNG is
 returned to the caller.

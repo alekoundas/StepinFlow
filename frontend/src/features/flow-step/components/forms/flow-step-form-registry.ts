@@ -10,13 +10,16 @@ import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wai
 import FlowStepLoopFormComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormComponent";
 import FlowStepCursorFormComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormComponent";
 import FlowStepWindowFormComponent from "@/features/flow-step/components/forms/window/FlowStepWindowFormComponent";
-import FlowStepImageSearchFormComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormComponent";
-import FlowStepReadTextFormComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormComponent";
+import FlowStepSearchImageFormComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageFormComponent";
+import FlowStepSearchTextFormComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextFormComponent";
 import FlowStepCheckValueFormComponent from "@/features/flow-step/components/forms/check-value/FlowStepCheckValueFormComponent";
 import FlowStepSystemCommandFormComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormComponent";
 import FlowStepSystemActionFormComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormComponent";
 import FlowStepSubFlowFormComponent from "@/features/flow-step/components/forms/sub-flow/FlowStepSubFlowFormComponent";
 import FlowStepNotifyFormComponent from "@/features/flow-step/components/forms/notify/FlowStepNotifyFormComponent";
+import FlowStepKeyboardFormComponent from "@/features/flow-step/components/forms/keyboard/FlowStepKeyboardFormComponent";
+import FlowStepEndExecutionFormComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormComponent";
+import FlowStepMarkerFormComponent from "@/features/flow-step/components/forms/marker/FlowStepMarkerFormComponent";
 
 import {
   CURSOR_FLOW_STEP_TYPES,
@@ -29,6 +32,7 @@ import {
 } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
 import { WINDOW_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/window/window-modes";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
+import { KEYBOARD_MODES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 
 /** Every step form takes the same props, which is what lets one caller render all of them. */
 export interface FlowStepFormProps {
@@ -94,13 +98,13 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     newStepValues: () => ({ name: "Loop" }),
   },
 
-  [FlowStepTypeEnum.IMAGE_SEARCH]: {
-    component: FlowStepImageSearchFormComponent,
+  [FlowStepTypeEnum.SEARCH_IMAGE]: {
+    component: FlowStepSearchImageFormComponent,
     newStepValues: () => ({ name: "Image Search" }),
   },
 
-  [FlowStepTypeEnum.READ_TEXT]: {
-    component: FlowStepReadTextFormComponent,
+  [FlowStepTypeEnum.SEARCH_TEXT]: {
+    component: FlowStepSearchTextFormComponent,
     newStepValues: () => ({
       name: "Read Text",
       conditionType: ConditionTypeEnum.CONTAINS,
@@ -132,7 +136,32 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
 
   [FlowStepTypeEnum.NOTIFY]: {
     component: FlowStepNotifyFormComponent,
-    newStepValues: () => ({ name: "Notify", notifyMessage: "" }),
+    newStepValues: () => ({ name: "Notify", message: "" }),
+  },
+
+  [FlowStepTypeEnum.KEYBOARD_INPUT]: {
+    component: FlowStepKeyboardFormComponent,
+    newStepValues: () => ({
+      name: KEYBOARD_MODES[0].defaultName,
+      keyboardInputType: KEYBOARD_MODES[0].value,
+      keyboardInputText: "",
+    }),
+  },
+
+  // Fails unless it says otherwise: a step added and left half configured should not quietly
+  // turn a broken execution green.
+  [FlowStepTypeEnum.END_EXECUTION]: {
+    component: FlowStepEndExecutionFormComponent,
+    newStepValues: () => ({
+      name: "End Execution",
+      endExecutionAsSuccess: false,
+      message: "",
+    }),
+  },
+
+  [FlowStepTypeEnum.MARKER]: {
+    component: FlowStepMarkerFormComponent,
+    newStepValues: () => ({ name: "Marker" }),
   },
 };
 

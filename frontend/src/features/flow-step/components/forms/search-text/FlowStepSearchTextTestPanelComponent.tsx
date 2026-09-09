@@ -2,15 +2,13 @@ import { Tag } from "primereact/tag";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
+import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 
 interface Props {
-  result: ReadTextTestResultDto;
-  // The two kinds of step ask different questions, so the same flag means different things.
-  isWaiting: boolean;
+  result: SearchTextTestResultDto;
 }
 
-export default function FlowStepReadTextTestPanelComponent({ result, isWaiting }: Props) {
+export default function FlowStepSearchTextTestPanelComponent({ result }: Props) {
   if (!result.isResolved) {
     return (
       <Panel
@@ -33,15 +31,7 @@ export default function FlowStepReadTextTestPanelComponent({ result, isWaiting }
     >
       <Tag
         severity={result.isMatch ? "success" : "danger"}
-        value={
-          isWaiting
-            ? result.isMatch
-              ? "Condition holds"
-              : "Condition does not hold"
-            : result.isMatch
-              ? "Read"
-              : "Nothing read"
-        }
+        value={result.isMatch ? "Condition holds" : "Condition does not hold"}
       />
 
       {/* The whole read, so a near miss shows itself instead of just failing. */}

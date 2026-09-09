@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { useState } from "react";
 
 export default function HomePage() {
-  // Temporary playground until the IMAGE_SEARCH flow step exists.
+  // Temporary playground until the SEARCH_IMAGE flow step exists.
   const [status, setStatus] = useState("idle");
   const [templatePreview, setTemplatePreview] = useState<string | null>(null);
 

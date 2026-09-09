@@ -24,10 +24,10 @@ import {
   useWindowImageEditor,
 } from "@/windows/image-editor/hooks/use-window-image-editor";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
-import FlowStepImageSearchFormFieldsComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchFormFieldsComponent";
-import { FlowStepTemplateListComponent } from "@/features/flow-step/components/forms/image-search/FlowStepTemplateListComponent";
-import FlowStepImageSearchTestDialogComponent from "@/features/flow-step/components/forms/image-search/FlowStepImageSearchTestDialogComponent";
+import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms/search-image/flow-step-search-image.zod";
+import FlowStepSearchImageFormFieldsComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageFormFieldsComponent";
+import { FlowStepTemplateListComponent } from "@/features/flow-step/components/forms/search-image/FlowStepTemplateListComponent";
+import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestDialogComponent";
 
 const TEST_DETAILS_ID = "image-search-test-details";
 
@@ -39,15 +39,15 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function FlowStepImageSearchFormComponent({
+export default function FlowStepSearchImageFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepImageSearchSchema>>({
-    resolver: zodResolver(FlowStepImageSearchSchema),
+  const form = useForm<z.infer<typeof FlowStepSearchImageSchema>>({
+    resolver: zodResolver(FlowStepSearchImageSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -100,7 +100,7 @@ export default function FlowStepImageSearchFormComponent({
       hideConfirm: true,
       cancelLabel: "Close",
       width: "min(60rem, 90vw)",
-      children: <FlowStepImageSearchTestDialogComponent result={testResult} />,
+      children: <FlowStepSearchImageTestDialogComponent result={testResult} />,
       onConfirm: () => close(TEST_DETAILS_ID),
     });
   };
@@ -112,7 +112,7 @@ export default function FlowStepImageSearchFormComponent({
     return () => clearTimeout(timer);
   }, [trigger]);
 
-  const buildDto = (data?: z.infer<typeof FlowStepImageSearchSchema>) =>
+  const buildDto = (data?: z.infer<typeof FlowStepSearchImageSchema>) =>
     new FlowStepDto({
       ...defaultValues,
       ...(data ?? (form.getValues() as never)),
@@ -246,7 +246,7 @@ export default function FlowStepImageSearchFormComponent({
           onSubmit={form.handleSubmit((data) => onSubmit(buildDto(data)))}
           className="flex flex-column h-full"
         >
-          <FlowStepImageSearchFormFieldsComponent
+          <FlowStepSearchImageFormFieldsComponent
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             templateCount={images.length}
             isDisabled={formMode === "VIEW"}

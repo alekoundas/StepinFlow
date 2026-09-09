@@ -11,14 +11,14 @@ import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectBu
 import LabelComponent from "@/shared/components/LabelComponent";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
-import { FlowStepImageSearchSchema } from "@/features/flow-step/components/forms/image-search/flow-step-image-search.zod";
+import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms/search-image/flow-step-search-image.zod";
 import {
-  IMAGE_SEARCH_MODES,
+  SEARCH_IMAGE_MODES,
   isWaitingMode,
 } from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
 
-type ImageSearchForm = z.infer<typeof FlowStepImageSearchSchema>;
+type ImageSearchForm = z.infer<typeof FlowStepSearchImageSchema>;
 
 interface EnumOption {
   label: string;
@@ -31,7 +31,7 @@ interface Props {
   isDisabled?: boolean;
 }
 
-export default function FlowStepImageSearchFormFieldsComponent({
+export default function FlowStepSearchImageFormFieldsComponent({
   flowId,
   templateCount,
   isDisabled = false,
@@ -86,13 +86,13 @@ export default function FlowStepImageSearchFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={IMAGE_SEARCH_MODES.map((x) => ({
+        options={SEARCH_IMAGE_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isDisabled={isDisabled}
         isRequired={true}
-        hintText={IMAGE_SEARCH_MODES.find((x) => x.value === mode)?.description}
+        hintText={SEARCH_IMAGE_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent

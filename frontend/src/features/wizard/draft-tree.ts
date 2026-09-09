@@ -1,14 +1,7 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { hasBranches } from "@/shared/models/flow-step-catalog";
 import type { DraftStepDto } from "@/shared/models/database/flow-draft-dto";
 import { TreeNodeDto, type TreeNodeDetailDto } from "@/shared/models/tree-node-dto";
-
-/** Types the save gives a Success and a Failure child to, mirroring TreeStepHelper. */
-const BRANCHING_TYPES: FlowStepTypeEnum[] = [
-  FlowStepTypeEnum.IMAGE_SEARCH,
-  FlowStepTypeEnum.READ_TEXT,
-  FlowStepTypeEnum.SYSTEM_COMMAND,
-  FlowStepTypeEnum.CHECK_VALUE,
-];
 
 /**
  * Confirmed steps as tree nodes, drawn by the same row component the real tree uses, so a
@@ -74,7 +67,7 @@ export const buildDraftTree = (
     nodeByTempId.set(step.tempId, node);
     attach(node, step.parentTempId, step.parentBranch);
 
-    if (BRANCHING_TYPES.includes(step.values.flowStepType)) {
+    if (hasBranches(step.values.flowStepType)) {
       node.leaf = false;
 
       for (const branch of [FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE]) {
@@ -161,6 +154,9 @@ const buildDetail = (step: DraftStepDto): TreeNodeDetailDto => {
     runCommandValue: values.runCommandValue,
 
     systemActionType: values.systemActionType,
+
+    message: values.message,
+    endExecutionAsSuccess: values.endExecutionAsSuccess,
 
     childCount: 0,
   };

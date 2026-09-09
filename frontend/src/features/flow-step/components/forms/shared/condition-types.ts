@@ -24,11 +24,22 @@ export const needsValue = (condition: ConditionTypeEnum): boolean =>
 export const needsSecondValue = (condition: ConditionTypeEnum): boolean =>
   condition === ConditionTypeEnum.BETWEEN;
 
-/** Reading a whole block of text against a number is not a comparison, so only these apply. */
-export const READ_TEXT_CONDITION_TYPES = [
+/**
+ * All of them. The extract pattern narrows the read before the condition sees it, so what is being
+ * compared is the captured group rather than the whole block - which is what makes "the total is
+ * over 100" a sensible thing to ask of a screen.
+ */
+export const SEARCH_TEXT_CONDITION_TYPES = [
   ConditionTypeEnum.CONTAINS,
+  ConditionTypeEnum.NOT_CONTAINS,
   ConditionTypeEnum.EQUALS,
+  ConditionTypeEnum.NOT_EQUALS,
   ConditionTypeEnum.MATCHES_REGEX,
+  ConditionTypeEnum.IS_EMPTY,
+  ConditionTypeEnum.IS_NOT_EMPTY,
+  ConditionTypeEnum.GREATER_THAN,
+  ConditionTypeEnum.LESS_THAN,
+  ConditionTypeEnum.BETWEEN,
 ] as const;
 
 export const conditionOptions = (types: readonly ConditionTypeEnum[]) =>

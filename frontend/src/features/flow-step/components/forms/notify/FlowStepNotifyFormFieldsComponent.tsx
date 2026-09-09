@@ -154,9 +154,9 @@ export default function FlowStepNotifyFormFieldsComponent({
           autoResize
           disabled={isDisabled}
           placeholder="Broke overnight, check the VPN."
-          value={(watch("notifyMessage") as string) ?? ""}
+          value={(watch("message") as string) ?? ""}
           onChange={(e) =>
-            setValue("notifyMessage", e.target.value, { shouldDirty: true })
+            setValue("message", e.target.value, { shouldDirty: true })
           }
         />
         <LabelComponent

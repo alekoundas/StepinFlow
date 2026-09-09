@@ -6,7 +6,7 @@ export const FlowStepNotifySchema = z
     discordBotId: z.number().int().nullish(),
 
     /** Optional, always. A message with only the flow name is still a message. */
-    notifyMessage: z.string().max(1500, "Discord will not take a message this long"),
+    message: z.string().max(1500, "Discord will not take a message this long"),
 
     /** Which failed step to describe. Unset means "just send my message". */
     flowStepReferenceId: z.number().int().nullish(),

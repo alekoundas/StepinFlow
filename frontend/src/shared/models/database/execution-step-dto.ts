@@ -25,7 +25,7 @@ export interface ExecutionStepDto {
   matchIndex?: number | null;
   matchCount?: number | null;
 
-  /** IMAGE_SEARCH: the best score the frame produced, whether or not it cleared the accuracy. */
+  /** SEARCH_IMAGE: the best score the screenshot produced, whether or not it cleared the accuracy. */
   bestScore?: number | null;
 
   // What came back

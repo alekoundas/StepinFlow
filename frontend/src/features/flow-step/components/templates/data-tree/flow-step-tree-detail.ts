@@ -134,7 +134,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         chips: [],
       };
 
-    case FlowStepTypeEnum.IMAGE_SEARCH:
+    case FlowStepTypeEnum.SEARCH_IMAGE:
       return {
         text: detail.areaName ?? "no area picked",
         chips: [
@@ -149,7 +149,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         ],
       };
 
-    case FlowStepTypeEnum.READ_TEXT:
+    case FlowStepTypeEnum.SEARCH_TEXT:
       return {
         text: `${detail.areaName ?? "no area picked"} · "${truncate(detail.conditionText ?? "", 24)}"`,
         chips: searchChips(detail),
@@ -170,6 +170,17 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
     case FlowStepTypeEnum.SYSTEM_ACTION:
       return { text: readable(detail.systemActionType), chips: [] };
+
+    case FlowStepTypeEnum.END_EXECUTION:
+      return {
+        text: detail.message ? truncate(detail.message) : undefined,
+        chips: [
+          {
+            text: detail.endExecutionAsSuccess ? "passed" : "failed",
+            isMuted: detail.endExecutionAsSuccess,
+          },
+        ],
+      };
 
     case FlowStepTypeEnum.CHECK_VALUE:
       return {

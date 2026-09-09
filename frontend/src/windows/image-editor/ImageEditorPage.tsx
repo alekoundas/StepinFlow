@@ -3,7 +3,7 @@
  *
  * Opened by Electron with a PNG screenshot; the user crops / erases it and the
  * result is returned to the caller as PNG base64 (this is the template image an
- * IMAGE_SEARCH flow step will search for).
+ * SEARCH_IMAGE flow step will search for).
  *
  * Flow:
  *  1. signalReady()        -> base64 PNG of the image to edit

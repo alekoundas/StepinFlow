@@ -75,6 +75,9 @@ namespace Core.Helpers
 
                 SystemActionType = x.SystemActionType,
 
+                Message = x.Message,
+                EndExecutionAsSuccess = x.EndExecutionAsSuccess,
+
                 ChildCount = x.ChildrenFlowSteps.Count(),
             },
         };

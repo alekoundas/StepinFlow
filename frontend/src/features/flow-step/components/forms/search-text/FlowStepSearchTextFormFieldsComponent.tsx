@@ -8,18 +8,20 @@ import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectBu
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import {
   conditionOptions,
-  READ_TEXT_CONDITION_TYPES,
+  needsSecondValue,
+  needsValue,
+  SEARCH_TEXT_CONDITION_TYPES,
 } from "@/features/flow-step/components/forms/shared/condition-types";
 import {
   isWaitingMode,
-  READ_TEXT_MODES,
+  SEARCH_TEXT_MODES,
 } from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
-import { FlowStepReadTextSchema } from "@/features/flow-step/components/forms/read-text/flow-step-read-text.zod";
+import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
 import { useOcrLanguages } from "@/features/settings/hooks/use-ocr-languages";
 
-type ReadTextForm = z.infer<typeof FlowStepReadTextSchema>;
+type SearchTextForm = z.infer<typeof FlowStepSearchTextSchema>;
 
 interface Option {
   label: string;
@@ -31,7 +33,7 @@ interface Props {
   isDisabled?: boolean;
 }
 
-export default function FlowStepReadTextFormFieldsComponent({
+export default function FlowStepSearchTextFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
@@ -62,13 +64,13 @@ export default function FlowStepReadTextFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={READ_TEXT_MODES.map((x) => ({
+        options={SEARCH_TEXT_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={READ_TEXT_MODES.find((x) => x.value === mode)?.description}
+        hintText={SEARCH_TEXT_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepSearchAreaFieldComponent
@@ -78,7 +80,7 @@ export default function FlowStepReadTextFormFieldsComponent({
         isDisabled={isDisabled}
       />
 
-      <FormDropdownComponent<ReadTextForm, Option>
+      <FormDropdownComponent<SearchTextForm, Option>
         fieldName="ocrLanguage"
         labelText="Language"
         mode="local"
@@ -93,60 +95,67 @@ export default function FlowStepReadTextFormFieldsComponent({
 
       {/* Before the condition, because the condition is tested against what this leaves. */}
       <FlowStepResultExtractFieldComponent
-        resultDescription={
-          isWaiting
-            ? "The condition below is tested against what is left."
-            : "The step succeeds when something is left."
-        }
+        resultDescription="The condition below is tested against what is left, and later steps read it."
         isDisabled={isDisabled}
       />
 
+      {/* Every mode decides, so this is never hidden - only the polling fields below are. */}
+      <div className="flex gap-3">
+        <FormDropdownComponent<SearchTextForm, Option>
+          fieldName="conditionType"
+          labelText="Condition"
+          mode="local"
+          options={conditionOptions(SEARCH_TEXT_CONDITION_TYPES)}
+          optionLabel="label"
+          optionValue="value"
+          isRequired={true}
+          isDisabled={isDisabled}
+          classNameContainer="flex-1"
+        />
+
+        {needsValue(conditionType) && (
+          <FormInputTextComponent
+            fieldName="conditionText"
+            label={isPattern ? "Pattern to match" : "Text to compare"}
+            placeholderText={isPattern ? "total: ([0-9]+)" : "Done"}
+            isRequired={true}
+            isDisabled={isDisabled}
+            className="flex-1"
+          />
+        )}
+
+        {needsSecondValue(conditionType) && (
+          <FormInputTextComponent
+            fieldName="conditionTextEnd"
+            label="And"
+            isRequired={true}
+            isDisabled={isDisabled}
+            className="flex-1"
+          />
+        )}
+      </div>
+
       {isWaiting && (
-        <>
-          <div className="flex gap-3">
-            <FormDropdownComponent<ReadTextForm, Option>
-              fieldName="conditionType"
-              labelText="Condition"
-              mode="local"
-              options={conditionOptions(READ_TEXT_CONDITION_TYPES)}
-              optionLabel="label"
-              optionValue="value"
-              isRequired={true}
-              isDisabled={isDisabled}
-              classNameContainer="flex-1"
-            />
-
-            <FormInputTextComponent
-              fieldName="conditionText"
-              label={isPattern ? "Pattern to match" : "Text to wait for"}
-              placeholderText={isPattern ? "Error [0-9]+" : "Done"}
-              isRequired={true}
-              isDisabled={isDisabled}
-              className="flex-1"
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <FormInputNumberComponent
-              fieldName="pollIntervalMilliseconds"
-              label="Check every (ms)"
-              min={50}
-              max={2147483647}
-              isRequired={true}
-              isDisabled={isDisabled}
-              className="flex-1"
-            />
-            <FormInputNumberComponent
-              fieldName="timeoutMilliseconds"
-              label="Give up after (ms)"
-              min={0}
-              max={2147483647}
-              isDisabled={isDisabled}
-              className="flex-1"
-              hintText="0 = wait forever"
-            />
-          </div>
-        </>
+        <div className="flex gap-3">
+          <FormInputNumberComponent
+            fieldName="pollIntervalMilliseconds"
+            label="Check every (ms)"
+            min={50}
+            max={2147483647}
+            isRequired={true}
+            isDisabled={isDisabled}
+            className="flex-1"
+          />
+          <FormInputNumberComponent
+            fieldName="timeoutMilliseconds"
+            label="Give up after (ms)"
+            min={0}
+            max={2147483647}
+            isDisabled={isDisabled}
+            className="flex-1"
+            hintText="0 = wait forever"
+          />
+        </div>
       )}
     </>
   );

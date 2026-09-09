@@ -256,17 +256,16 @@ is lost between sessions.
 
 ## Frontend
 
-- [ ] **The step types are out of sync with the backend and the app will not run.** The backend enum
-      is now `SEARCH_IMAGE`, `SEARCH_TEXT`, `CHECK_VALUE`, `END_EXECUTION`, `MARKER`;
-      `flow-step-types-enum.ts` still carries `IMAGE_SEARCH`, `CHECK_VALUE`, `READ_TEXT` and has
-      none of the new ones. Nothing type-errors because the enum is string constants, so this fails
-      at runtime instead. About 22 files: the enum, `flow-step-catalog.ts`, the form registry, the
-      `image-search/` and `read-text/` form folders (which become `search-image/` and
-      `search-text/`), their zod schemas, `flow-step-tree-detail.ts`, the wizard's draft mapping,
-      and `backend-api-service.ts` where `FlowStep.testReadText` is now `FlowStep.testSearchText`.
-      `END_EXECUTION` and `MARKER` have no form at all yet. `flow-step-dto.tsx` also still defaults
-      `pollIntervalMilliseconds` to 500, which is the value new steps actually get - both backend
-      defaults are now 200.
+- [ ] **`CodeComment` reaches the database but no form shows it.** The column, the dto and the
+      recorder's "recorded after a 4.2s wait" all exist; nothing renders or edits it. It is the
+      intent line that exports as a `#` comment above the step, so it wants a field on every step
+      form rather than one of them - probably beside Name, and optional everywhere.
+
+- [ ] **The wizard cannot author the three newest step types.** `action-to-steps.ts` maps recorded
+      actions onto steps and has no case producing `END_EXECUTION` or `MARKER`. Correct for a
+      recording - neither has a recorded action behind it - but it means a recorded flow can never
+      fail on purpose until someone opens the editor afterwards. Ties into the recorder seeding
+      `End Execution failed` into the failure branches it creates.
 
 - [ ] **A recorded template records no authored frame size.** `AuthoredFrameWidth` and
       `AuthoredFrameHeight` are saved as 0 by the recorder, and `SearchImageStepWorker.ScaleRatio`
@@ -275,6 +274,22 @@ is lost between sessions.
       manual capture path fills both in; the wizard has the same numbers available and does not.
 - [ ] **Flow edit / view / clone routes are broken.** `FlowFormPage` reads a `formMode` route param
       that no route declares, and `const flow = null` means it never loads the flow it is editing.
+
+## Documentation
+
+- [ ] **The AI documents still describe steps that no longer exist.** `backend/Core/AiDocuments/` is
+      what the model reads to answer questions about flows, and later to write them - so a stale
+      document is not a stale comment, it is the model being told the wrong vocabulary. Eight files
+      mention `IMAGE_SEARCH` or `READ_TEXT`: `Steps/image-search.md` and `Steps/read-text.md` need
+      renaming to the search steps, `Steps/check-value.md` names `READ_TEXT` as a source step,
+      `Concepts/steps-and-branches.md` lists the branching types, `Concepts/points.md` and
+      `Steps/cursor.md` name the result sources, and `Guides/task-guides.md` teaches the old
+      read-then-check pair that is now one `SEARCH_TEXT`. Worth doing as one pass with FLOW-FORMAT.md
+      fed in beside them, since the grammar is what a generated flow has to come out as.
+
+- [ ] **PROJECT.md predates the rename** and in places predates more than that - it still describes
+      `FlowStepImage` (now `FlowStepTemplate`), `IMAGE_SEARCH`, and a `TEXT_SEARCH` that never
+      existed under any spelling.
 
 ## Codebase sweep
 

@@ -10,11 +10,10 @@ import { Button } from "primereact/button";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import type { ReadTextTestResultDto } from "@/shared/models/database/read-text-test-result-dto";
-import { FlowStepReadTextSchema } from "@/features/flow-step/components/forms/read-text/flow-step-read-text.zod";
-import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
-import FlowStepReadTextFormFieldsComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextFormFieldsComponent";
-import FlowStepReadTextTestPanelComponent from "@/features/flow-step/components/forms/read-text/FlowStepReadTextTestPanelComponent";
+import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
+import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
+import FlowStepSearchTextFormFieldsComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextFormFieldsComponent";
+import FlowStepSearchTextTestPanelComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextTestPanelComponent";
 
 interface Props {
   formMode: FormMode;
@@ -24,15 +23,15 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function FlowStepReadTextFormComponent({
+export default function FlowStepSearchTextFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepReadTextSchema>>({
-    resolver: zodResolver(FlowStepReadTextSchema),
+  const form = useForm<z.infer<typeof FlowStepSearchTextSchema>>({
+    resolver: zodResolver(FlowStepSearchTextSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -43,7 +42,7 @@ export default function FlowStepReadTextFormComponent({
   } = form;
 
   const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<ReadTextTestResultDto | null>(null);
+  const [testResult, setTestResult] = useState<SearchTextTestResultDto | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,7 +55,7 @@ export default function FlowStepReadTextFormComponent({
     setIsTesting(true);
     try {
       setTestResult(
-        await backendApiService.FlowStep.testReadText(buildDto(form.getValues())),
+        await backendApiService.FlowStep.testSearchText(buildDto(form.getValues())),
       );
     } catch (err) {
       console.error(err);
@@ -65,21 +64,21 @@ export default function FlowStepReadTextFormComponent({
     }
   };
 
-  const buildDto = (data: z.infer<typeof FlowStepReadTextSchema>) =>
+  const buildDto = (data: z.infer<typeof FlowStepSearchTextSchema>) =>
     new FlowStepDto({
       ...defaultValues,
       ...data,
       flowAreaId: data.flowAreaId ?? undefined,
     });
 
-  const handleSubmit = (data: z.infer<typeof FlowStepReadTextSchema>) =>
+  const handleSubmit = (data: z.infer<typeof FlowStepSearchTextSchema>) =>
     onSubmit(buildDto(data));
 
   return (
     <>
       <FormHeaderComponent
-        title="Read Text Step Configuration"
-        description="Read the text inside an area, branch on whether it matches, and hand it to later steps."
+        title="Search Text Step Configuration"
+        description="Read the text inside an area, decide whether it says what it should, and hand what was read to later steps."
         formMode={formMode}
         onEdit={onEdit}
       />
@@ -89,7 +88,7 @@ export default function FlowStepReadTextFormComponent({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepReadTextFormFieldsComponent
+          <FlowStepSearchTextFormFieldsComponent
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />
@@ -109,10 +108,7 @@ export default function FlowStepReadTextFormComponent({
           </div>
 
           {testResult && (
-            <FlowStepReadTextTestPanelComponent
-              result={testResult}
-              isWaiting={isWaitingMode(form.getValues("searchMode"))}
-            />
+            <FlowStepSearchTextTestPanelComponent result={testResult} />
           )}
 
           <FormFooterComponent

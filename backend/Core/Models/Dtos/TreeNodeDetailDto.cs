@@ -55,6 +55,12 @@ namespace Core.Models.Dtos
         // SYSTEM_ACTION
         public SystemActionTypeEnum? SystemActionType { get; set; }
 
+        // NOTIFY, END_EXECUTION
+        public string? Message { get; set; }
+
+        // END_EXECUTION
+        public bool EndExecutionAsSuccess { get; set; }
+
         // SUCCESS, FAILURE, LOOP
         public int ChildCount { get; set; }
     }
