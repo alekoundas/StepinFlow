@@ -45,16 +45,10 @@ namespace Core.Helpers
         ];
 
         public static bool HasBranchChildren(FlowStepTypeEnum type) => BranchTypes.Contains(type);
-
         public static bool CanContainChildren(FlowStepTypeEnum type) => ContainerTypes.Contains(type);
-
         public static bool IsCheck(FlowStepTypeEnum type) => CheckTypes.Contains(type);
-
         public static bool IsBranchChild(FlowStepTypeEnum type) => BranchChildTypes.Contains(type);
-
-        /// <summary>A branch step holds nothing directly but still expands, to reveal its branches.</summary>
-        public static bool IsLeaf(FlowStepTypeEnum type) =>
-            !CanContainChildren(type) && !HasBranchChildren(type);
+        public static bool IsLeaf(FlowStepTypeEnum type) => !CanContainChildren(type) && !HasBranchChildren(type);
 
 
         public static IEnumerable<(StepChainNode Step, int Depth)> SuccessfulAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
@@ -115,11 +109,6 @@ namespace Core.Helpers
             return FailedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
 
-        /// <summary>
-        /// The Success and Failure children a branching step owns, or nothing when its type does
-        /// not branch. Shared so a step created one at a time and a step created in a batch come
-        /// out of the database looking the same.
-        /// </summary>
         public static IReadOnlyList<FlowStep> CreateBranchChildren(FlowStep parent)
         {
             if (!HasBranchChildren(parent.FlowStepType))
@@ -132,8 +121,9 @@ namespace Core.Helpers
             ];
         }
 
-        private static FlowStep NewBranch(FlowStep parent, FlowStepTypeEnum type, string name, int orderNumber) =>
-            new FlowStep
+        private static FlowStep NewBranch(FlowStep parent, FlowStepTypeEnum type, string name, int orderNumber)
+        {
+            return new FlowStep
             {
                 ParentFlowStep = parent,
                 FlowStepType = type,
@@ -141,11 +131,10 @@ namespace Core.Helpers
                 OrderNumber = orderNumber,
                 RootId = parent.RootId,
             };
-
-        public static bool CanReadResultOf(
-            IReadOnlyDictionary<int, StepChainNode> byId,
-            int fromStepId,
-            int referenceId) =>
-            SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+        }
+        public static bool CanReadResultOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
+        {
+            return SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+        }
     }
 }

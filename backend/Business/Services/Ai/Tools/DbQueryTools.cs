@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using Business.Services.Ai.Helpers;
+using Business.Services.FlowValidationService;
 using Core.Enums;
 using Core.Helpers;
+using Core.Models.Business;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,10 +24,12 @@ namespace Business.Services.Ai.Tools
         private const int _maxRows = 50;
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IFlowValidationService _flowValidationService;
 
-        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory)
+        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
         {
             _dbContextFactory = dbContextFactory;
+            _flowValidationService = flowValidationService;
         }
 
 
@@ -268,6 +272,48 @@ namespace Business.Services.Ai.Tools
                 .ToListAsync();
         }
 
+        [Description("What a flow verifies: every check it contains, the section it belongs to, whether failing it ends the execution, and what that failure means. Use this for \"what does this flow test\", and before proposing a fix, because a check nothing acts on is the usual reason a flow passes while the application is broken.")]
+        public async Task<IReadOnlyList<FlowCheckSummary>> GetFlowChecks([Description("The flow id, from SearchFlows.")] int flowId)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+            // Success and Failure rows are kept here, unlike everywhere else in this class: the walk
+            // from a check to the End Execution its failure reaches goes straight through them.
+            //
+            // Not capped either, unlike everywhere else. A truncated tree gives confident wrong
+            // answers - a check whose Failure branch was cut looks like one that ends nothing - so
+            // the row limit belongs on the checks that come out, not on the steps going in.
+            List<FlowCheckNode> steps = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => x.RootId == flowId)
+                .OrderBy(x => x.ParentFlowStepId)
+                .ThenBy(x => x.OrderNumber)
+                .Select(x => new FlowCheckNode
+                {
+                    Id = x.Id,
+                    ParentFlowStepId = x.ParentFlowStepId,
+                    FlowStepType = x.FlowStepType,
+                    OrderNumber = x.OrderNumber,
+                    Name = x.Name,
+                    CodeComment = x.CodeComment,
+                    Message = x.Message,
+                    EndExecutionAsSuccess = x.EndExecutionAsSuccess,
+                })
+                .ToListAsync();
+
+            return _flowValidationService.GetChecks(steps)
+                .Take(_maxRows)
+                .Select(x => new FlowCheckSummary(
+                    x.FlowStepId,
+                    x.Name,
+                    x.CodeComment,
+                    x.FlowStepType.ToString(),
+                    x.MarkerName,
+                    x.IsFatal,
+                    x.FailureMessage))
+                .ToList();
+        }
+
         [Description("How many runs finished, were stopped, or ended with an error. Use this for \"how reliable is this flow\" instead of listing runs.")]
         public async Task<IReadOnlyList<RunOutcomeCount>> CountRunOutcomes([Description("Optional flow id. Zero counts runs of every flow.")] int flowId)
         {
@@ -400,18 +446,13 @@ namespace Business.Services.Ai.Tools
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 
-        /// <summary>
-        /// EndedRun and WasHandled are the difference between a broken flow and a working one.
-        /// Outcome on its own says FAILURE for both, and most failures in a healthy run are the
-        /// second kind.
-        /// </summary>
         public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
-        // The columns the summary is built from. Kept apart because the outcome has to stay an enum
-        // until the run's error step is known, and that is not something sql can answer per row.
         private record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
         public record StepTypeCount(string Type, int Count);
+
+        public record FlowCheckSummary(int FlowStepId, string Name, string CodeComment, string Type, string? MarkerName, bool IsFatal, string? FailureMessage);
 
         public record RunOutcomeCount(string Status, int Count);
 

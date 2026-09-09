@@ -277,15 +277,17 @@ is lost between sessions.
 
 ## Documentation
 
-- [ ] **The AI documents still describe steps that no longer exist.** `backend/Core/AiDocuments/` is
-      what the model reads to answer questions about flows, and later to write them - so a stale
-      document is not a stale comment, it is the model being told the wrong vocabulary. Eight files
-      mention `IMAGE_SEARCH` or `READ_TEXT`: `Steps/image-search.md` and `Steps/read-text.md` need
-      renaming to the search steps, `Steps/check-value.md` names `READ_TEXT` as a source step,
-      `Concepts/steps-and-branches.md` lists the branching types, `Concepts/points.md` and
-      `Steps/cursor.md` name the result sources, and `Guides/task-guides.md` teaches the old
-      read-then-check pair that is now one `SEARCH_TEXT`. Worth doing as one pass with FLOW-FORMAT.md
-      fed in beside them, since the grammar is what a generated flow has to come out as.
+- [ ] **The AI tools still speak in runs.** Rename in `DbQueryTools`, and the registration in
+      `FlowQuestionService.BuildDbTools`:
+      `GetRuns` -> `GetExecutions`, `GetRunSteps` -> `GetExecutionSteps`,
+      `CountRunOutcomes` -> `CountExecutionOutcomes`, and the records `RunSummary` ->
+      `ExecutionSummary`, `RunStepSummary` -> `ExecutionStepSummary`, `RunOutcomeCount` ->
+      `ExecutionOutcomeCount`. The `[Description]` text goes with them - "Recent runs, newest
+      first", "whether it ended the run", "how reliable is this flow instead of listing runs".
+      The AI documents were moved to `execution`; these were not, and a tool name plus its
+      description is what teaches the model which word to use when it answers. It changes the
+      function names the model calls, so it wants doing on its own rather than folded into
+      something else.
 
 - [ ] **PROJECT.md predates the rename** and in places predates more than that - it still describes
       `FlowStepImage` (now `FlowStepTemplate`), `IMAGE_SEARCH`, and a `TEXT_SEARCH` that never

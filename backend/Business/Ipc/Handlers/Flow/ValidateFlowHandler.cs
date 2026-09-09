@@ -16,12 +16,12 @@ namespace Business.Ipc.Handlers
     public class ValidateFlowHandler : IRequestHandler<ValidateFlowQuery, ResultDto<FlowValidationResultDto>>
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IFlowValidator _flowValidator;
+        private readonly IFlowValidationService _flowValidationService;
 
-        public ValidateFlowHandler(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidator flowValidator)
+        public ValidateFlowHandler(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
         {
             _dbContextFactory = dbContextFactory;
-            _flowValidator = flowValidator;
+            _flowValidationService = flowValidationService;
         }
 
         public async Task<ResultDto<FlowValidationResultDto>> Handle(ValidateFlowQuery request, CancellationToken ct)
@@ -42,9 +42,7 @@ namespace Business.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToListAsync(ct);
 
-            FlowValidationResultDto result = _flowValidator.Validate(
-                steps,
-                templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count));
+            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count));
 
             return ResultDto<FlowValidationResultDto>.Success(result);
         }

@@ -27,14 +27,14 @@ namespace Business.Ipc.Handlers
     public class GetFlowHealthHandler : IRequestHandler<GetFlowHealthQuery, ResultDto<IReadOnlyList<FlowHealthDto>>>
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IFlowValidator _flowValidator;
+        private readonly IFlowValidationService _flowValidationService;
 
         public GetFlowHealthHandler(
             IDbContextFactory<AppDbContext> dbContextFactory,
-            IFlowValidator flowValidator)
+            IFlowValidationService flowValidationService)
         {
             _dbContextFactory = dbContextFactory;
-            _flowValidator = flowValidator;
+            _flowValidationService = flowValidationService;
         }
 
         public async Task<ResultDto<IReadOnlyList<FlowHealthDto>>> Handle(GetFlowHealthQuery request, CancellationToken ct)
@@ -70,8 +70,7 @@ namespace Business.Ipc.Handlers
             List<FlowHealthDto> health = flowIds
                 .Select(flowId =>
                 {
-                    FlowValidationResultDto result =
-                        _flowValidator.Validate(stepsByRoot[flowId].ToList(), templateCounts);
+                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts);
 
                     return new FlowHealthDto
                     {

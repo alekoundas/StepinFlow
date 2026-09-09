@@ -7,7 +7,8 @@ search the screen for an image, read text off it, run commands, and call other f
 ## Where to start
 
 - **Concepts** — [Flows](concepts/flows.md), [Areas](concepts/areas.md), [Points](concepts/points.md),
-  [Steps and branches](concepts/steps-and-branches.md), [How execution works](concepts/how-execution-works.md)
+  [Steps and branches](concepts/steps-and-branches.md), [Checks](concepts/checks.md),
+  [How execution works](concepts/how-execution-works.md)
 - **Step reference** — one page per family, in [steps/](steps/)
 - **Guides** — [Recording a flow](guides/recording-a-flow.md), [Debugging an execution](guides/debugging-an-execution.md)
 - **Reference** — [Validation messages](reference/validation-messages.md), [Settings](reference/settings.md)

@@ -3,6 +3,7 @@ using Business.Services.Ai.Helpers;
 using Business.Services.Ai.Providers;
 using Business.Services.Ai.AiDocuments;
 using Business.Services.Ai.Tools;
+using Business.Services.FlowValidationService;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -34,6 +35,7 @@ namespace Business.Services.Ai
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
         private readonly IExecutionScreenshotReader _executionScreenshotReader;
+        private readonly IFlowValidationService _flowValidationService;
         private readonly ILogger<FlowQuestionService> _logger;
 
         public FlowQuestionService(
@@ -186,7 +188,7 @@ namespace Business.Services.Ai
 
         private IList<AITool> BuildDbTools()
         {
-            DbQueryTools tools = new DbQueryTools(_dbContextFactory);
+            DbQueryTools tools = new DbQueryTools(_dbContextFactory, _flowValidationService);
             AiDocumentTools helpTools = new AiDocumentTools(_aiDocumentIndexService);
 
             return
@@ -200,6 +202,7 @@ namespace Business.Services.Ai
                 AIFunctionFactory.Create(tools.GetRuns),
                 AIFunctionFactory.Create(tools.GetRunSteps),
                 AIFunctionFactory.Create(tools.CountStepsByType),
+                AIFunctionFactory.Create(tools.GetFlowChecks),
                 AIFunctionFactory.Create(tools.CountRunOutcomes),
                 AIFunctionFactory.Create(tools.GetSettings),
                 AIFunctionFactory.Create(tools.GetDiscordBots),

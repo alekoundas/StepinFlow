@@ -49,6 +49,7 @@ namespace Core.Enums
 
         // Warnings
         BRANCHES_EMPTY,
+        CHECK_DECIDES_NOTHING,
         NAME_MISSING,
     }
 }

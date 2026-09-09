@@ -5,6 +5,7 @@ using Business.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
 using Business.Services.FlowValidationService;
+using Business.Services.FlowValidationService.Rules;
 using Business.Services.InputService;
 using Business.Services.MatchService;
 using Business.Services.Ai;
@@ -57,9 +58,13 @@ namespace App
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
-            builder.Services.AddSingleton<IFlowValidator, FlowValidator>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
+
+            // Validation
+            builder.Services.AddSingleton<FlowStepValidator>();
+            builder.Services.AddSingleton<FlowStructureValidator>();
+            builder.Services.AddSingleton<IFlowValidationService, FlowValidationService>();
 
             builder.Services.AddExecutionEngine();
 
@@ -151,17 +156,31 @@ namespace App
 
 
     // TODO: move them from here
+
+    // Main Pipe
     internal class HostedRequestPipeListener : BackgroundService
     {
         private readonly IpcRequestPipe _ipcRequestPipe;
         public HostedRequestPipeListener(IpcRequestPipe ipcRequestPipe) => _ipcRequestPipe = ipcRequestPipe;
         protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcRequestPipe.StartBackgroundService(cancellationToken);
     }
+
+    // Broadcast Pipe
     internal class HostedBroadcaststPipeListener : BackgroundService
     {
         private readonly IpcBroadcastPipe _ipcBroadcastPipe;
         public HostedBroadcaststPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
         protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+    }
+
+    
+
+    // Start global input recording hook.
+    internal class HostedSharpHookService : BackgroundService
+    {
+        private readonly IInputRecordService _inputRecordService;
+        public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
+        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _inputRecordService.StartGlobalHookAsync();
     }
 
     // Embed the docs at startup.
@@ -196,13 +215,4 @@ namespace App
             }, cancellationToken);
         }
     }
-
-    // Start global input recording hook.
-    internal class HostedSharpHookService : BackgroundService
-    {
-        private readonly IInputRecordService _inputRecordService;
-        public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _inputRecordService.StartGlobalHookAsync();
-    }
-
 }
