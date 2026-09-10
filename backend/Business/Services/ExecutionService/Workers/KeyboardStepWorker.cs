@@ -5,6 +5,8 @@ using Core.Models.Database;
 
 using SharpHook.Data;
 
+using Core.Helpers;
+
 namespace Business.Services.ExecutionService.Workers
 {
     /// <summary>
@@ -27,19 +29,23 @@ namespace Business.Services.ExecutionService.Workers
             if (string.IsNullOrEmpty(step.KeyboardInputText))
                 return Task.FromResult(ExecutionStep.Success());
 
+            VariableTranslationResult text = cache.ResolveVariables(step.KeyboardInputText);
+            if (!text.IsResolved)
+                return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUnresolved(text.Unresolved)));
+
             if (step.KeyboardInputType != KeyboardInputTypeEnum.COMBINATION)
             {
-                _inputService.SimulateKeyboard(step.KeyboardInputText);
+                _inputService.SimulateKeyboard(text.Text);
 
                 return Task.FromResult(ExecutionStep.Success());
             }
 
-            if (!KeyCombinationHelper.TryParse(step.KeyboardInputText, out List<KeyCode> modifiers, out KeyCode key))
-                return Task.FromResult(ExecutionStep.Failure($"\"{step.KeyboardInputText}\" is not a key combination this can press."));
+            if (!KeyCombinationHelper.TryParse(text.Text, out List<KeyCode> modifiers, out KeyCode key))
+                return Task.FromResult(ExecutionStep.Failure($"\"{text.Text}\" is not a key combination this can press."));
 
             _inputService.SimulateKeyCombination(modifiers, key);
 
-            return Task.FromResult(ExecutionStep.Success(message: $"Pressed {step.KeyboardInputText}"));
+            return Task.FromResult(ExecutionStep.Success(message: $"Pressed {text.Text}"));
         }
     }
 }

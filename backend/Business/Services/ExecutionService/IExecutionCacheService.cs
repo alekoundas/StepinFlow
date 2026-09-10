@@ -28,6 +28,17 @@ namespace Business.Services.ExecutionService
         IReadOnlyList<Point>? GetMatchesFrom(int flowStepId);
 
 
+        // Variables
+        /// <summary>
+        /// Swaps {{name}} for what it stands for, using what this execution knows so far.
+        ///
+        /// Lives here because the values do: what an earlier step produced, and later the csv row
+        /// and the viewport being executed. A worker asks rather than assembling its own answer, so
+        /// adding a source is one change here instead of one per worker.
+        /// </summary>
+        VariableTranslationResult ResolveVariables(string? text);
+
+
         // Screenshots
         /// <summary>The screenshot a step searched, handed back for that step to carry.</summary>
         ExecutionScreenshot? EncodeForHistory(RawImage screenshot, FlowStep flowStep);

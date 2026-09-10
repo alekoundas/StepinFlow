@@ -34,7 +34,7 @@ namespace Business.Services.FlowValidationService.Rules
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             ILookup<int?, FlowStep> childrenByParentId,
             IReadOnlyList<FlowCheck> checks,
-            IReadOnlyList<string> areaAndPointNames,
+            IReadOnlyList<string> flowNames,
             FlowValidationResultDto result)
         {
             foreach (FlowStep step in authoredSteps)
@@ -54,7 +54,8 @@ namespace Business.Services.FlowValidationService.Rules
             }
 
             ValidateChecksDecideSomething(authoredSteps, checks, result);
-            ValidateNamesAreUnique(authoredSteps, areaAndPointNames, result);
+            ValidateNamesAreUnique(authoredSteps, flowNames, result);
+            ValidateVariables(authoredSteps, flowNames, result);
         }
 
 
@@ -62,13 +63,41 @@ namespace Business.Services.FlowValidationService.Rules
         // Private methods
         // ================================================================
 
+        // A name nothing defines can never resolve, so the step will stop the execution when it
+        // gets there. Better said now, while the person who typed it is looking at it.
+        private static void ValidateVariables(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
+        {
+            HashSet<string> known = new HashSet<string>(flowNames, StringComparer.OrdinalIgnoreCase);
+
+            foreach (FlowStep step in authoredSteps)
+                known.Add(step.Name.Trim());
+
+            foreach (string reserved in VariableTranslator.ViewportNames)
+                known.Add(reserved);
+
+            foreach (FlowStep step in authoredSteps)
+            {
+                List<string> unknown = VariableTranslator.VariableBearingText(step)
+                    .SelectMany(VariableTranslator.Names)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Where(x => !known.Contains(x))
+                    .ToList();
+
+                foreach (string name in unknown)
+                {
+                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.VARIABLE_UNKNOWN,
+                        $"Nothing in this flow is called \"{name}\", so this step can never fill it in.");
+                }
+            }
+        }
+
         // Steps, areas and points are one namespace, because the script refers to all three by
         // name. A duplicate makes "Click at \"Find button\"" ambiguous, and makes execution history
         // correlate two different steps into one trend.
-        private static void ValidateNamesAreUnique(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> areaAndPointNames, FlowValidationResultDto result)
+        private static void ValidateNamesAreUnique(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
         {
             IReadOnlyList<string> duplicates = FlowNameHelper.Duplicates(
-                authoredSteps.Select(x => x.Name).Concat(areaAndPointNames));
+                authoredSteps.Select(x => x.Name).Concat(flowNames));
 
             if (duplicates.Count == 0)
                 return;

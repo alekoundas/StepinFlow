@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Helpers
 {
     /// <summary>
-    /// The names already in use in a flow - steps, areas and points, which are one namespace.
+    /// The names already in use in a flow - steps, areas, points and csv columns, one namespace.
     ///
     /// Shared between the create paths so a step saved one at a time and a whole draft saved at
     /// once cannot disagree about what counts as taken.
@@ -27,6 +27,10 @@ namespace Business.Helpers
                     .Where(x => x.FlowId == flowId)
                     .Select(x => x.Name))
                 .Concat(dbContext.FlowPoints
+                    .AsNoTracking()
+                    .Where(x => x.FlowId == flowId)
+                    .Select(x => x.Name))
+                .Concat(dbContext.FlowCsvColumns
                     .AsNoTracking()
                     .Where(x => x.FlowId == flowId)
                     .Select(x => x.Name))

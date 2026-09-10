@@ -101,6 +101,30 @@ namespace Business.Services.ExecutionService
         }
 
 
+        public VariableTranslationResult ResolveVariables(string? text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return new VariableTranslationResult { Text = text ?? string.Empty };
+
+            // Built per call rather than kept: a step's result changes as the walk goes, and a map
+            // built once would answer with what was true earlier.
+            Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (KeyValuePair<int, FlowStep> pair in StepsById)
+            {
+                if (string.IsNullOrWhiteSpace(pair.Value.Name))
+                    continue;
+
+                ExecutionStep? result = GetExecutionStepFrom(pair.Key);
+                if (result?.Value == null)
+                    continue;
+
+                values[pair.Value.Name.Trim()] = result.Value;
+            }
+
+            return VariableTranslator.Resolve(text, values);
+        }
+
         public ExecutionScreenshot? EncodeForHistory(RawImage screenshot, FlowStep flowStep)
         {
             if (!_keepsScreenshots || screenshot.IsEmpty)

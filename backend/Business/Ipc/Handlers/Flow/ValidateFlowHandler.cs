@@ -42,9 +42,9 @@ namespace Business.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToListAsync(ct);
 
-            // Areas and points share a namespace with steps, so uniqueness cannot be judged
-            // without them.
-            List<string> areaAndPointNames = await dbContext.FlowAreas
+            // Areas, points and csv columns share a namespace with steps, and a {{name}} resolves
+            // against any of them, so neither question is answerable without all four.
+            List<string> flowNames = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Where(x => x.FlowId == request.id)
                 .Select(x => x.Name)
@@ -52,9 +52,13 @@ namespace Business.Ipc.Handlers
                     .AsNoTracking()
                     .Where(x => x.FlowId == request.id)
                     .Select(x => x.Name))
+                .Concat(dbContext.FlowCsvColumns
+                    .AsNoTracking()
+                    .Where(x => x.FlowId == request.id)
+                    .Select(x => x.Name))
                 .ToListAsync(ct);
 
-            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count), areaAndPointNames);
+            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count), flowNames);
 
             return ResultDto<FlowValidationResultDto>.Success(result);
         }

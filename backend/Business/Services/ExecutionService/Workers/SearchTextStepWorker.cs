@@ -97,7 +97,13 @@ namespace Business.Services.ExecutionService.Workers
             string text = await _ocrService.ReadAsync(image, step.OcrLanguage, ct);
             string value = TextExtractHelper.Extract(text, step.ResultExtractPattern);
 
-            ExecutionStep result = ConditionEvaluator.IsSatisfied(value, step.ConditionType, step.ConditionText, step.ConditionTextEnd)
+            VariableTranslationResult expected = cache.ResolveVariables(step.ConditionText);
+            VariableTranslationResult expectedEnd = cache.ResolveVariables(step.ConditionTextEnd);
+
+            if (!expected.IsResolved || !expectedEnd.IsResolved)
+                return ExecutionStep.Failure(VariableTranslator.DescribeUnresolved([.. expected.Unresolved, .. expectedEnd.Unresolved]));
+
+            ExecutionStep result = ConditionEvaluator.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text)
                                    ? ExecutionStep.Success(Centre(bounds))
                                    : ExecutionStep.Failure($"Read \"{value}\", which does not satisfy {ConditionEvaluator.Describe(step)}.");
 

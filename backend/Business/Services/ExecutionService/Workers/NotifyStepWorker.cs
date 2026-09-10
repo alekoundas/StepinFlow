@@ -1,5 +1,6 @@
 using Business.Services.NotificationService;
 using Core.Models.Business;
+using Core.Helpers;
 using Core.Models.Database;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,8 @@ namespace Business.Services.ExecutionService.Workers
             if (step.FlowStepReferenceId != null)
                 cache.StepsById.TryGetValue(step.FlowStepReferenceId.Value, out failedStep);
 
+            VariableTranslationResult notifyMessage = cache.ResolveVariables(step.Message);
+
             string flowName = await FlowNameAsync(dbContext, step, ct);
             List<string> templateNames = TemplateNamesOf(failedStep);
 
@@ -47,7 +50,7 @@ namespace Business.Services.ExecutionService.Workers
                 WebhookUrl = bot.WebhookUrl,
                 BotName = bot.BotName,
                 AvatarUrl = bot.AvatarUrl,
-                Content = NotifyMessageBuilder.Build(flowName, step, failedStep, templateNames),
+                Content = NotifyMessageBuilder.Build(flowName, notifyMessage.Text, failedStep, templateNames),
             };
 
             bool queued = _sendQueue.Enqueue(message, TimeSpan.FromSeconds(bot.RateLimitSeconds));

@@ -1,6 +1,7 @@
 
 using AutoMapper;
 using Business.Services.CommandService;
+using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -24,6 +25,16 @@ namespace Business.Services.ExecutionService.Workers
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
             FlowStepDto dto = _mapper.Map<FlowStepDto>(step);
+
+            // A launch line carries the viewport - "--window-size={{width}},{{height}}" - so this is
+            // where a flow sizes the application it is testing. The dto is a copy, so resolving into
+            // it cannot change the step the cache holds.
+            VariableTranslationResult command = cache.ResolveVariables(dto.RunCommandValue);
+            if (!command.IsResolved)
+                return ExecutionStep.Failure(VariableTranslator.DescribeUnresolved(command.Unresolved));
+
+            dto.RunCommandValue = command.Text;
+
             RunCommandTestResultDto run = await _commandRunner.RunAsync(dto, ct);
 
             ExecutionStep result = ExecutionStep.Success();

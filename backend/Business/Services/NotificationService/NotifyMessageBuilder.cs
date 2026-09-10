@@ -29,13 +29,13 @@ namespace Business.Services.NotificationService
         private const int FenceOverhead = 10;
         private const int MinDetailRoom = 40;
 
-        public static string Build(string flowName, FlowStep notifyStep, FlowStep? failedStep, IReadOnlyList<string> templateNames)
+        public static string Build(string flowName, string notifyMessage, FlowStep? failedStep, IReadOnlyList<string> templateNames)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append("**").Append(Header(flowName, failedStep)).Append("**");
 
-            if (!string.IsNullOrWhiteSpace(notifyStep.Message))
-                builder.Append('\n').Append(notifyStep.Message.Trim());
+            if (!string.IsNullOrWhiteSpace(notifyMessage))
+                builder.Append('\n').Append(notifyMessage.Trim());
 
             if (failedStep == null)
                 return Clamp(builder.ToString());

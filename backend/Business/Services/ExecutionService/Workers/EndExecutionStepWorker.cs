@@ -1,5 +1,8 @@
 using Core.Models.Database;
 
+using Core.Helpers;
+using Core.Models.Business;
+
 namespace Business.Services.ExecutionService.Workers
 {
     /// <summary>
@@ -13,13 +16,16 @@ namespace Business.Services.ExecutionService.Workers
     {
         public Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
-            string message;
             if (string.IsNullOrWhiteSpace(step.Message))
-                message = (step.EndExecutionAsSuccess ? "Execution ended as a pass." : "Execution ended as a failure.");
-            else
-                message = step.Message;
+            {
+                string fallback = step.EndExecutionAsSuccess ? "Execution ended as a pass." : "Execution ended as a failure.";
 
-            return Task.FromResult(ExecutionStep.Success(message: message));
+                return Task.FromResult(ExecutionStep.Success(message: fallback));
+            }
+
+            VariableTranslationResult message = cache.ResolveVariables(step.Message);
+
+            return Task.FromResult(ExecutionStep.Success(message: message.Text));
         }
     }
 }

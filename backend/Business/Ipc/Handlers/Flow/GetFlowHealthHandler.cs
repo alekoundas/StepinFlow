@@ -75,6 +75,10 @@ namespace Business.Ipc.Handlers
                     .AsNoTracking()
                     .Where(x => all || flowIds.Contains(x.FlowId))
                     .Select(x => new { x.FlowId, x.Name }))
+                .Concat(dbContext.FlowCsvColumns
+                    .AsNoTracking()
+                    .Where(x => all || flowIds.Contains(x.FlowId))
+                    .Select(x => new { x.FlowId, x.Name }))
                 .Select(x => ValueTuple.Create(x.FlowId, x.Name))
                 .ToListAsync(ct);
 

@@ -53,6 +53,9 @@ namespace Core.Enums
         /// </summary>
         NAME_DUPLICATE,
 
+        /// <summary>A step writes a name nothing in the flow defines, so it can never resolve.</summary>
+        VARIABLE_UNKNOWN,
+
         // Warnings
         BRANCHES_EMPTY,
         CHECK_DECIDES_NOTHING,
