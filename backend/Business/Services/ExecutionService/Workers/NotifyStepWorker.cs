@@ -39,7 +39,7 @@ namespace Business.Services.ExecutionService.Workers
             if (step.FlowStepReferenceId != null)
                 cache.StepsById.TryGetValue(step.FlowStepReferenceId.Value, out failedStep);
 
-            VariableTranslationResult notifyMessage = cache.ResolveVariables(step.Message);
+            VariableTranslationResult notifyMessage = cache.TranslateVariables(step.Message);
 
             string flowName = await FlowNameAsync(dbContext, step, ct);
             List<string> templateNames = TemplateNamesOf(failedStep);

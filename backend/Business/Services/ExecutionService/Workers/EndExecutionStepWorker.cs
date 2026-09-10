@@ -23,7 +23,7 @@ namespace Business.Services.ExecutionService.Workers
                 return Task.FromResult(ExecutionStep.Success(message: fallback));
             }
 
-            VariableTranslationResult message = cache.ResolveVariables(step.Message);
+            VariableTranslationResult message = cache.TranslateVariables(step.Message);
 
             return Task.FromResult(ExecutionStep.Success(message: message.Text));
         }

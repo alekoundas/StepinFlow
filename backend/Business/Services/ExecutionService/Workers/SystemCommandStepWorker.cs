@@ -29,9 +29,9 @@ namespace Business.Services.ExecutionService.Workers
             // A launch line carries the viewport - "--window-size={{width}},{{height}}" - so this is
             // where a flow sizes the application it is testing. The dto is a copy, so resolving into
             // it cannot change the step the cache holds.
-            VariableTranslationResult command = cache.ResolveVariables(dto.RunCommandValue);
-            if (!command.IsResolved)
-                return ExecutionStep.Failure(VariableTranslator.DescribeUnresolved(command.Unresolved));
+            VariableTranslationResult command = cache.TranslateVariables(dto.RunCommandValue);
+            if (!command.IsTranslated)
+                return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated(command.Untranslated));
 
             dto.RunCommandValue = command.Text;
 

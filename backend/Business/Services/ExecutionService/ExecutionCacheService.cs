@@ -101,7 +101,7 @@ namespace Business.Services.ExecutionService
         }
 
 
-        public VariableTranslationResult ResolveVariables(string? text)
+        public VariableTranslationResult TranslateVariables(string? text)
         {
             if (string.IsNullOrEmpty(text))
                 return new VariableTranslationResult { Text = text ?? string.Empty };
@@ -122,7 +122,7 @@ namespace Business.Services.ExecutionService
                 values[pair.Value.Name.Trim()] = result.Value;
             }
 
-            return VariableTranslator.Resolve(text, values);
+            return VariableTranslator.Translate(text, values);
         }
 
         public ExecutionScreenshot? EncodeForHistory(RawImage screenshot, FlowStep flowStep)

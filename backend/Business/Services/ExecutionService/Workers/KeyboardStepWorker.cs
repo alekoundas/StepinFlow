@@ -29,9 +29,9 @@ namespace Business.Services.ExecutionService.Workers
             if (string.IsNullOrEmpty(step.KeyboardInputText))
                 return Task.FromResult(ExecutionStep.Success());
 
-            VariableTranslationResult text = cache.ResolveVariables(step.KeyboardInputText);
-            if (!text.IsResolved)
-                return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUnresolved(text.Unresolved)));
+            VariableTranslationResult text = cache.TranslateVariables(step.KeyboardInputText);
+            if (!text.IsTranslated)
+                return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUntranslated(text.Untranslated)));
 
             if (step.KeyboardInputType != KeyboardInputTypeEnum.COMBINATION)
             {

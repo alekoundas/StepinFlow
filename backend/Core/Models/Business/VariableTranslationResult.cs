@@ -6,11 +6,11 @@ namespace Core.Models.Business
         public string Text { get; set; } = string.Empty;
 
         /// <summary>Names nothing had a value for. Their braces are still in the text.</summary>
-        public IReadOnlyList<string> Unresolved { get; set; } = [];
+        public IReadOnlyList<string> Untranslated { get; set; } = [];
 
-        public bool IsResolved
+        public bool IsTranslated
         {
-            get { return Unresolved.Count == 0; }
+            get { return Untranslated.Count == 0; }
         }
     }
 }

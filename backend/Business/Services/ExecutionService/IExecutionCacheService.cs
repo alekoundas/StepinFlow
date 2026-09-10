@@ -36,7 +36,7 @@ namespace Business.Services.ExecutionService
         /// and the viewport being executed. A worker asks rather than assembling its own answer, so
         /// adding a source is one change here instead of one per worker.
         /// </summary>
-        VariableTranslationResult ResolveVariables(string? text);
+        VariableTranslationResult TranslateVariables(string? text);
 
 
         // Screenshots

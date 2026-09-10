@@ -63,7 +63,7 @@ namespace Business.Services.FlowValidationService.Rules
         // Private methods
         // ================================================================
 
-        // A name nothing defines can never resolve, so the step will stop the execution when it
+        // A name nothing defines can never translate, so the step will stop the execution when it
         // gets there. Better said now, while the person who typed it is looking at it.
         private static void ValidateVariables(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
         {

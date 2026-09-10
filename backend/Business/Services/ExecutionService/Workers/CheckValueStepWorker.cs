@@ -22,11 +22,11 @@ namespace Business.Services.ExecutionService.Workers
 
             // Execute.
             string value = source.Value ?? string.Empty;
-            VariableTranslationResult expected = cache.ResolveVariables(step.ConditionText);
-            VariableTranslationResult expectedEnd = cache.ResolveVariables(step.ConditionTextEnd);
+            VariableTranslationResult expected = cache.TranslateVariables(step.ConditionText);
+            VariableTranslationResult expectedEnd = cache.TranslateVariables(step.ConditionTextEnd);
 
-            if (!expected.IsResolved || !expectedEnd.IsResolved)
-                return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUnresolved([.. expected.Unresolved, .. expectedEnd.Unresolved])));
+            if (!expected.IsTranslated || !expectedEnd.IsTranslated)
+                return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUntranslated([.. expected.Untranslated, .. expectedEnd.Untranslated])));
 
             bool satisfied = ConditionEvaluator.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text);
 

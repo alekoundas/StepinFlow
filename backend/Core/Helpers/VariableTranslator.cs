@@ -14,7 +14,7 @@ namespace Core.Helpers
     /// </summary>
     public static class VariableTranslator
     {
-        /// <summary>Reserved names, resolved from the viewport rather than from the flow.</summary>
+        /// <summary>Reserved names, translated from the viewport rather than from the flow.</summary>
         public static readonly string[] ViewportNames = ["width", "height"];
 
         private static readonly TimeSpan _patternTimeout = TimeSpan.FromMilliseconds(200);
@@ -28,7 +28,7 @@ namespace Core.Helpers
             _patternTimeout);
 
         /// <summary>
-        /// The fields a variable can be written into - the ones the workers resolve.
+        /// The fields a variable can be written into - the ones the workers translate.
         ///
         /// The regex fields are deliberately absent. A pattern is full of braces of its own, and
         /// "keep only" would be a strange place to want a value the flow did not know.
@@ -46,7 +46,7 @@ namespace Core.Helpers
         /// Why a step stopped, said the same way wherever it happens. Names the variables rather
         /// than the fields, because the variable is what the author wrote and can go and fix.
         /// </summary>
-        public static string DescribeUnresolved(IReadOnlyCollection<string> names)
+        public static string DescribeUntranslated(IReadOnlyCollection<string> names)
         {
             IEnumerable<string> written = names.Select(x => "{{" + x + "}}");
 
@@ -81,14 +81,14 @@ namespace Core.Helpers
         /// an empty string would type nothing into a password box and call it a pass; leaving the
         /// braces is at least visible.
         /// </summary>
-        public static VariableTranslationResult Resolve(string? text, IReadOnlyDictionary<string, string> values)
+        public static VariableTranslationResult Translate(string? text, IReadOnlyDictionary<string, string> values)
         {
             if (string.IsNullOrEmpty(text))
                 return new VariableTranslationResult { Text = text ?? string.Empty };
 
-            List<string> unresolved = new List<string>();
+            List<string> untranslated = new List<string>();
 
-            string resolved = _variable.Replace(text, match =>
+            string translated = _variable.Replace(text, match =>
             {
                 if (match.Groups[1].Success)
                     return "{{";
@@ -98,13 +98,13 @@ namespace Core.Helpers
                 if (values.TryGetValue(name, out string? value))
                     return value;
 
-                if (!unresolved.Contains(name, StringComparer.OrdinalIgnoreCase))
-                    unresolved.Add(name);
+                if (!untranslated.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    untranslated.Add(name);
 
                 return match.Value;
             });
 
-            return new VariableTranslationResult { Text = resolved, Unresolved = unresolved };
+            return new VariableTranslationResult { Text = translated, Untranslated = untranslated };
         }
     }
 }
