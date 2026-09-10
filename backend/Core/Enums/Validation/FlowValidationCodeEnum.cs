@@ -47,6 +47,12 @@ namespace Core.Enums
         /// <summary>Set, but the step it reports on no longer fails above this one.</summary>
         FAILED_STEP_UNREACHABLE,
 
+        /// <summary>
+        /// Two steps, areas or points share a name. They are one namespace, and the script
+        /// references them by name, so a duplicate makes the reference ambiguous.
+        /// </summary>
+        NAME_DUPLICATE,
+
         // Warnings
         BRANCHES_EMPTY,
         CHECK_DECIDES_NOTHING,

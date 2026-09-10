@@ -65,12 +65,26 @@ namespace Business.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
 
+            // One query for both, split in memory, so the shape matches the steps above rather
+            // than adding a round trip per flow.
+            List<(int FlowId, string Name)> named = await dbContext.FlowAreas
+                .AsNoTracking()
+                .Where(x => all || flowIds.Contains(x.FlowId))
+                .Select(x => new { x.FlowId, x.Name })
+                .Concat(dbContext.FlowPoints
+                    .AsNoTracking()
+                    .Where(x => all || flowIds.Contains(x.FlowId))
+                    .Select(x => new { x.FlowId, x.Name }))
+                .Select(x => ValueTuple.Create(x.FlowId, x.Name))
+                .ToListAsync(ct);
+
+            ILookup<int, string> namesByFlow = named.ToLookup(x => x.FlowId, x => x.Name);
             ILookup<int, FlowStep> stepsByRoot = steps.ToLookup(x => x.RootId);
 
             List<FlowHealthDto> health = flowIds
                 .Select(flowId =>
                 {
-                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts);
+                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts, namesByFlow[flowId].ToList());
 
                     return new FlowHealthDto
                     {

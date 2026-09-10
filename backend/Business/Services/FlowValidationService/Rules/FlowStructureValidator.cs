@@ -34,6 +34,7 @@ namespace Business.Services.FlowValidationService.Rules
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             ILookup<int?, FlowStep> childrenByParentId,
             IReadOnlyList<FlowCheck> checks,
+            IReadOnlyList<string> areaAndPointNames,
             FlowValidationResultDto result)
         {
             foreach (FlowStep step in authoredSteps)
@@ -53,12 +54,41 @@ namespace Business.Services.FlowValidationService.Rules
             }
 
             ValidateChecksDecideSomething(authoredSteps, checks, result);
+            ValidateNamesAreUnique(authoredSteps, areaAndPointNames, result);
         }
 
 
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Steps, areas and points are one namespace, because the script refers to all three by
+        // name. A duplicate makes "Click at \"Find button\"" ambiguous, and makes execution history
+        // correlate two different steps into one trend.
+        private static void ValidateNamesAreUnique(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> areaAndPointNames, FlowValidationResultDto result)
+        {
+            IReadOnlyList<string> duplicates = FlowNameHelper.Duplicates(
+                authoredSteps.Select(x => x.Name).Concat(areaAndPointNames));
+
+            if (duplicates.Count == 0)
+                return;
+
+            HashSet<string> duplicated = new HashSet<string>(duplicates, StringComparer.OrdinalIgnoreCase);
+
+            foreach (FlowStep step in authoredSteps.Where(x => duplicated.Contains(x.Name.Trim())))
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NAME_DUPLICATE,
+                    $"\"{step.Name}\" is used more than once. Steps, areas and points share one set of names, because the script refers to them by name.");
+            }
+
+            // A name shared by two areas, or an area and a point, has no step to hang the message
+            // on - but it is the same problem and has to be sayable.
+            foreach (string name in duplicates.Where(x => !authoredSteps.Any(s => string.Equals(s.Name.Trim(), x, StringComparison.OrdinalIgnoreCase))))
+            {
+                result.Add(null, name, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NAME_DUPLICATE,
+                    $"\"{name}\" is used by more than one area or point.");
+            }
+        }
 
         // A check whose failure stops nothing and whose result nothing reads is a check that was
         // never really made. The flow still passes with the application broken, which is the exact

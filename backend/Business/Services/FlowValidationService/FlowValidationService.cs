@@ -30,7 +30,7 @@ namespace Business.Services.FlowValidationService
         /// <summary>
         /// Per flow validate references and form fields validity 
         /// </summary>
-        public FlowValidationResultDto Validate(IReadOnlyList<FlowStep> steps, IReadOnlyDictionary<int, int> templateCountByStepId)
+        public FlowValidationResultDto Validate(IReadOnlyList<FlowStep> steps, IReadOnlyDictionary<int, int> templateCountByStepId, IReadOnlyList<string> areaAndPointNames)
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
 
@@ -49,7 +49,7 @@ namespace Business.Services.FlowValidationService
             IReadOnlyList<FlowCheck> checks = GetChecks(steps.Select(ToCheckNode).ToList());
 
             _stepValidator.Validate(authored, templateCountByStepId, result);
-            _structureValidator.Validate(authored, byStepId, childrenByParentId, checks, result);
+            _structureValidator.Validate(authored, byStepId, childrenByParentId, checks, areaAndPointNames, result);
 
             return Finish(result);
         }

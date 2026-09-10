@@ -45,6 +45,7 @@ namespace Business.Services.Ai
             IDbContextFactory<AppDbContext> dbContextFactory,
             IAiDocumentIndexService aiDocumentIndexService,
             IExecutionScreenshotReader executionScreenshotReader,
+            IFlowValidationService flowValidationService,
             ILogger<FlowQuestionService> logger)
         {
             _providerService = providerService;
@@ -53,6 +54,7 @@ namespace Business.Services.Ai
             _dbContextFactory = dbContextFactory;
             _aiDocumentIndexService = aiDocumentIndexService;
             _executionScreenshotReader = executionScreenshotReader;
+            _flowValidationService = flowValidationService;
             _logger = logger;
         }
 

@@ -42,7 +42,19 @@ namespace Business.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToListAsync(ct);
 
-            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count));
+            // Areas and points share a namespace with steps, so uniqueness cannot be judged
+            // without them.
+            List<string> areaAndPointNames = await dbContext.FlowAreas
+                .AsNoTracking()
+                .Where(x => x.FlowId == request.id)
+                .Select(x => x.Name)
+                .Concat(dbContext.FlowPoints
+                    .AsNoTracking()
+                    .Where(x => x.FlowId == request.id)
+                    .Select(x => x.Name))
+                .ToListAsync(ct);
+
+            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count), areaAndPointNames);
 
             return ResultDto<FlowValidationResultDto>.Success(result);
         }

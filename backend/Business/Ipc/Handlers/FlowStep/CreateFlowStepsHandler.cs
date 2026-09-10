@@ -62,6 +62,10 @@ namespace Business.Ipc.Handlers
                     rootId = parent.RootId;
                 }
 
+                // Grows as the draft adds to it, so the twelfth step is unique against the
+                // eleven before it as well as against what was already saved.
+                HashSet<string> taken = await FlowNameLookup.TakenAsync(dbContext, rootId, ct);
+
                 Dictionary<int, FlowStep> stepByTempId = new Dictionary<int, FlowStep>();
 
                 // The Success and Failure rows created alongside a branching step, so a later
@@ -86,7 +90,10 @@ namespace Business.Ipc.Handlers
                     step.ParentFlowStepId = null;
                     step.ParentFlowStep = null;
 
-                    AttachPoints(dbContext, flow, step, draftStep);
+                    step.Name = FlowNameHelper.MakeUnique(step.Name, taken);
+                    taken.Add(step.Name);
+
+                    AttachPoints(dbContext, flow, step, draftStep, taken);
 
                     // A step with no parent inside the draft lands at the target position; one
                     // with a parent hangs off it wherever that ends up.
@@ -203,11 +210,11 @@ namespace Business.Ipc.Handlers
         /// FlowPoint. Creating them here is what makes a recording runnable without the user
         /// having to place every point by hand.
         /// </summary>
-        private static void AttachPoints(AppDbContext dbContext, Flow flow, FlowStep step, DraftStepDto draftStep)
+        private static void AttachPoints(AppDbContext dbContext, Flow flow, FlowStep step, DraftStepDto draftStep, HashSet<string> taken)
         {
             if (draftStep.NewPoint is DraftPointDto start)
             {
-                FlowPoint point = NewPoint(flow, start);
+                FlowPoint point = NewPoint(flow, start, taken);
                 dbContext.FlowPoints.Add(point);
                 step.FlowPoint = point;
                 step.FlowPointId = null;
@@ -215,20 +222,26 @@ namespace Business.Ipc.Handlers
 
             if (draftStep.NewPointEnd is DraftPointDto end)
             {
-                FlowPoint point = NewPoint(flow, end);
+                FlowPoint point = NewPoint(flow, end, taken);
                 dbContext.FlowPoints.Add(point);
                 step.FlowPointEnd = point;
                 step.FlowPointEndId = null;
             }
         }
 
-        private static FlowPoint NewPoint(Flow flow, DraftPointDto dto) => new FlowPoint
+        private static FlowPoint NewPoint(Flow flow, DraftPointDto dto, HashSet<string> taken)
         {
-            Flow = flow,
-            Name = dto.Name,
-            LocationX = dto.LocationX,
-            LocationY = dto.LocationY,
-        };
+            string name = FlowNameHelper.MakeUnique(dto.Name, taken);
+            taken.Add(name);
+
+            return new FlowPoint
+            {
+                Flow = flow,
+                Name = name,
+                LocationX = dto.LocationX,
+                LocationY = dto.LocationY,
+            };
+        }
 
         /// <summary>
         /// Slots the new steps into the destination at the requested index and renumbers the
