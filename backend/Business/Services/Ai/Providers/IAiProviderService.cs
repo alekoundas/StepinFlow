@@ -17,6 +17,12 @@ namespace Business.Services.Ai.Providers
         /// </summary>
         Task<bool> IsScreenContentAllowedAsync(CancellationToken ct = default);
 
+        /// <summary>
+        /// A local model always may: nothing leaves the machine.
+        /// A cloud provider may only when the setting says so, and it is off until someone turns it on.
+        /// </summary>
+        Task<bool> CanSendScreenDataAsync(CancellationToken ct = default);
+
         /// <summary>How big a context window to ask Ollama for. Meaningless for a cloud provider.</summary>
         Task<int> GetOllamaContextLengthAsync(CancellationToken ct = default);
     }

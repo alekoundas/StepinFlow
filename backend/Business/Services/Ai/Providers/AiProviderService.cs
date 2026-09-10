@@ -78,6 +78,15 @@ namespace Business.Services.Ai.Providers
             return AppSettingCatalog.AiSendScreenContent.Parse(value);
         }
 
+        public async Task<bool> CanSendScreenDataAsync(CancellationToken ct = default)
+        {
+            AiProviderEnum provider = await GetProviderAsync(ct);
+            if (provider == AiProviderEnum.OLLAMA)
+                return true;
+
+            return await IsScreenContentAllowedAsync(ct);
+        }
+
         public Task<int> GetOllamaContextLengthAsync(CancellationToken ct = default)
         {
             return _appSettingService.GetAsync(AppSettingCatalog.AiOllamaContextLength, ct);

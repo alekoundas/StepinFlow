@@ -18,18 +18,25 @@ namespace Business.Services.Ai.Tools
     ///
     /// Two columns are never selected. The api key and a bot's webhook url are credentials, and the
     /// answer to "what is my api key" should be that nothing here can read it.
+    ///
+    /// A third is conditional. What a flow was recorded typing is whatever was on screen at the
+    /// time - a password into a login form as readily as a search term - so it is redacted unless
+    /// this provider may be shown screen data, and not searched either.
     /// </summary>
     public sealed class DbQueryTools
     {
         private const int _maxRows = 50;
+        private const string _redacted = "(hidden)";
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IFlowValidationService _flowValidationService;
+        private readonly bool _canSendScreenData;
 
-        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
+        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, bool canSendScreenData)
         {
             _dbContextFactory = dbContextFactory;
             _flowValidationService = flowValidationService;
+            _canSendScreenData = canSendScreenData;
         }
 
 
@@ -100,7 +107,7 @@ namespace Business.Services.Ai.Tools
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-            return await Steps(dbContext)
+            List<StepSummary> steps = await Steps(dbContext)
                 .Where(x => x.FlowId == flowId || x.RootId == flowId)
                 .Where(x => flowStepType == "" || x.FlowStepType.ToString() == flowStepType)
                 .OrderBy(x => x.ParentFlowStepId)
@@ -108,6 +115,8 @@ namespace Business.Services.Ai.Tools
                 .Take(_maxRows * 4)
                 .Select(Projection())
                 .ToListAsync();
+
+            return Redact(steps);
         }
 
         [Description("Searches every flow's steps for text, across process names, window titles, typed text, commands, conditions and step names. Use this for questions like 'which flows use Chrome'.")]
@@ -121,18 +130,24 @@ namespace Business.Services.Ai.Tools
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-            return await Steps(dbContext)
+            // Typed text is not searched either when it may not be shown: a search that answers
+            // "does any flow type this" confirms a guess just as well as reading it would.
+            bool canSearchTypedText = _canSendScreenData;
+
+            List<StepSummary> steps = await Steps(dbContext)
                 .Where(x => flowStepType == "" || x.FlowStepType.ToString() == flowStepType)
                 .Where(x => tokens.Any(t =>
                     EF.Functions.Like(x.Name, t) ||
                     EF.Functions.Like(x.ProcessName, t) ||
                     EF.Functions.Like(x.TitlePattern, t) ||
-                    EF.Functions.Like(x.KeyboardInputText, t) ||
+                    (canSearchTypedText && EF.Functions.Like(x.KeyboardInputText, t)) ||
                     EF.Functions.Like(x.RunCommandValue, t) ||
                     EF.Functions.Like(x.ConditionText, t)))
                 .Take(_maxRows)
                 .Select(Projection())
                 .ToListAsync();
+
+            return Redact(steps);
         }
 
         [Description("Everything one step is configured with - only the settings its type actually uses, plus its area and templates where it has them. Use this before suggesting why a step misbehaves.")]
@@ -153,6 +168,12 @@ namespace Business.Services.Ai.Tools
             Dictionary<string, object?> settings = new Dictionary<string, object?>();
             foreach (string field in FlowStepFieldCatalog.FieldsFor(step.FlowStepType))
             {
+                if (!_canSendScreenData && field == nameof(Core.Models.Database.FlowStep.KeyboardInputText))
+                {
+                    settings[field] = _redacted;
+                    continue;
+                }
+
                 object? value = typeof(Core.Models.Database.FlowStep).GetProperty(field)?.GetValue(step);
                 settings[field] = value is Enum ? value.ToString() : value;
             }
@@ -395,6 +416,18 @@ namespace Business.Services.Ai.Tools
             }
 
             return token;
+        }
+
+        // What a flow was recorded typing is what was on the screen at the time - a password into a
+        // login form as readily as a search term. The recorder cannot tell which, so neither can this.
+        private IReadOnlyList<StepSummary> Redact(List<StepSummary> steps)
+        {
+            if (_canSendScreenData)
+                return steps;
+
+            return steps
+                .Select(x => x.TypedText.Length == 0 ? x : x with { TypedText = _redacted })
+                .ToList();
         }
 
         private static IQueryable<Core.Models.Database.FlowStep> Steps(AppDbContext dbContext)

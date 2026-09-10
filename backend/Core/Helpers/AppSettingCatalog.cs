@@ -89,7 +89,7 @@ namespace Core.Helpers
         public static readonly BoolAppSettingDefinition AiSendScreenContent = new BoolAppSettingDefinition(
             AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT,
             "Let a cloud model see your screen",
-            "Off by default. Text read by OCR and the screenshots a run kept are whatever was on your screen - an account number, a message, a password field. A local model never leaves this machine, so this only ever applies to a cloud provider.",
+            "Off by default. The screenshots a run kept, text read by OCR, and whatever a flow was recorded typing are all whatever was on your screen - an account number, a message, a password field. A local model never leaves this machine, so this only ever applies to a cloud provider.",
             defaultValue: false);
 
         // Ollama serves 4096 whatever the model can hold, and that is not enough for the prompt,

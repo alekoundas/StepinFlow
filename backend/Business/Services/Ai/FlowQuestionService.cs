@@ -101,11 +101,15 @@ namespace Business.Services.Ai
             List<ChatMessage> messages = [new ChatMessage(ChatRole.System, AiPromptHelper.AskAboutFlows)];
             messages.AddRange(request.Messages.Select(x => ToChatMessage(x)));
 
-            IReadOnlyList<string> attached = await AttachScreenshotsAsync(messages, request.ExecutionId, ct);
+            // Asked once and used by both paths, so the pictures and the rows cannot disagree
+            // about what this provider is allowed to see.
+            bool canSendScreenData = await _providerService.CanSendScreenDataAsync(ct);
+
+            IReadOnlyList<string> attached = await AttachScreenshotsAsync(messages, request.ExecutionId, canSendScreenData, ct);
 
             ChatOptions options = new ChatOptions
             {
-                Tools = BuildDbTools(),
+                Tools = BuildDbTools(canSendScreenData),
                 MaxOutputTokens = 4000,
             };
 
@@ -152,9 +156,15 @@ namespace Business.Services.Ai
         // UseFunctionInvocation replays the whole conversation on every round of the tool loop, up
         // to _maxToolRounds, so an image left in the history is re-read that many times per
         // question. Ollama's cpu backend keeps no cache between requests, so nothing absorbs that.
-        private async Task<IReadOnlyList<string>> AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, CancellationToken ct)
+        private async Task<IReadOnlyList<string>> AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, bool canSendScreenData, CancellationToken ct)
         {
             if (executionId == null)
+                return [];
+
+            // A screenshot cannot be redacted - a font the OCR does not know, a language it does
+            // not have, text drawn into an image. So it is all or nothing, and nothing is the
+            // default for a cloud provider.
+            if (!canSendScreenData)
                 return [];
 
             ChatMessage? newest = messages.LastOrDefault(x => x.Role == ChatRole.User);
@@ -186,9 +196,9 @@ namespace Business.Services.Ai
         }
 
 
-        private IList<AITool> BuildDbTools()
+        private IList<AITool> BuildDbTools(bool canSendScreenData)
         {
-            DbQueryTools tools = new DbQueryTools(_dbContextFactory, _flowValidationService);
+            DbQueryTools tools = new DbQueryTools(_dbContextFactory, _flowValidationService, canSendScreenData);
             AiDocumentTools helpTools = new AiDocumentTools(_aiDocumentIndexService);
 
             return
