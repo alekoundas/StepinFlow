@@ -1,9 +1,11 @@
 using System.Diagnostics;
 
 using Business.Services.ExecutionService.Workers;
+using Business.Services.ScreenshotService;
 using Core.Enums;
 using Core.Helpers;
 using Core.Interfaces;
+using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -121,6 +123,14 @@ namespace Business.Services.ExecutionService
 
                     _logger.LogWarning(ex, "Execution {ExecutionId} stopped at step {FlowStepId}.", ExecutionId, _currentStepId);
                 }
+
+                // Closed before the history is written off, and whatever the verdict: the next
+                // viewport pass has to start against a clean screen rather than this one's wreckage.
+                //
+                // Not after a stop. Somebody who pressed Stop is usually looking at the screen, and
+                // closing the application out from under them is the opposite of helpful.
+                if (status != ExecutionStatusEnum.STOPPED)
+                    await CloseAppUnderTestAsync(dto.FlowId);
 
                 // Complete execution
                 try
@@ -334,6 +344,75 @@ namespace Business.Services.ExecutionService
             // Only ever spins while somebody is sat looking at a paused run, and Stop cancels it out.
             while (State == RunStateEnum.PAUSED && !_debuggerSignalNextStep)
                 await Task.Delay(50, ct);
+        }
+
+        // Never throws. The verdict has already been decided by the time this runs, and closing a
+        // window failing must not turn a finished execution into an errored one.
+        //
+        // CancellationToken.None on purpose - the token that ended the walk is often the one that
+        // was cancelled, and cleanup that gives up because the walk was cancelled is cleanup that
+        // never runs when it matters.
+        private async Task CloseAppUnderTestAsync(int flowId)
+        {
+            try
+            {
+                await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(CancellationToken.None);
+
+                Flow? flow = await dbContext.Flows
+                    .AsNoTracking()
+                    .Include(x => x.AppUnderTestArea)
+                    .FirstOrDefaultAsync(x => x.Id == flowId, CancellationToken.None);
+
+                if (flow == null || flow.AppCloseMode == AppCloseModeEnum.LEAVE || flow.AppUnderTestArea == null)
+                    return;
+
+                if (flow.AppCloseMode == AppCloseModeEnum.KILL_PROCESS)
+                {
+                    KillProcess(flow.AppUnderTestArea.ProcessName);
+                    return;
+                }
+
+                WindowQuery query = new WindowQuery
+                {
+                    ProcessName = flow.AppUnderTestArea.ProcessName,
+                    TitlePattern = flow.AppUnderTestArea.TitlePattern,
+                    TitleMatchMode = flow.AppUnderTestArea.TitleMatchMode,
+                    UseClientArea = false,
+                };
+
+                // Every match, not the first: an application opened by the flow may have put up a
+                // second window, and leaving one behind is the same problem as leaving them all.
+                foreach (IntPtr window in AppWindowHelper.FindWindows(query))
+                    AppWindowHelper.CloseWindow(window);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "The application under test of flow {FlowId} could not be closed.", flowId);
+            }
+        }
+
+        private void KillProcess(string processName)
+        {
+            if (string.IsNullOrWhiteSpace(processName))
+                return;
+
+            string name = Path.GetFileNameWithoutExtension(processName);
+
+            foreach (Process process in Process.GetProcessesByName(name))
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not kill {ProcessName}.", name);
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
         }
 
         private async Task FinishAsync(ExecutionStatusEnum status, string error, int? errorStepId, int stepCount)

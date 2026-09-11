@@ -9,6 +9,7 @@ import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
 import { FlowAreaDataTableComponent } from "@/features/flow-area/components/FlowAreaDataTableComponent";
 import { FlowPointDataTableComponent } from "@/features/flow-point/components/FlowPointDataTableComponent";
+import { FlowViewportDataTableComponent } from "@/features/flow-viewport/components/FlowViewportDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import FlowSubFlowPanelComponent from "@/features/flow/components/form/FlowSubFlowPanelComponent";
@@ -53,6 +54,17 @@ export function FlowFormComponent({
   });
 
   const {
+    fields: viewportFields,
+    append: appendViewport,
+    remove: removeViewport,
+    update: updateViewport,
+  } = useFieldArray<z.infer<typeof FlowSchema>, "flowViewports", "fieldId">({
+    control,
+    name: "flowViewports",
+    keyName: "fieldId",
+  });
+
+  const {
     fields: locationFields,
     append: appendLocation,
     remove: removeLocation,
@@ -90,7 +102,10 @@ export function FlowFormComponent({
           )}
           className="flex flex-column h-full"
         >
-          <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          <FlowFormFieldsComponent
+            flowId={defaultValues.id}
+            isDisabled={formMode === "VIEW"}
+          />
 
           <div className="grid">
             <div className="col-12 lg:col-6">
@@ -116,6 +131,15 @@ export function FlowFormComponent({
               />
             </div>
           </div>
+
+          <FlowViewportDataTableComponent
+            fields={viewportFields}
+            append={appendViewport}
+            remove={removeViewport}
+            update={updateViewport}
+            formMode={formMode}
+            isDisabled={formMode === "VIEW"}
+          />
 
           <FlowSubFlowPanelComponent
             flowId={defaultValues.id}

@@ -25,7 +25,12 @@ namespace App.AutoMapper
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.FlowAreas, o => o.Ignore())
-                .ForMember(x => x.FlowPoints, o => o.Ignore());
+                .ForMember(x => x.FlowPoints, o => o.Ignore())
+                .ForMember(x => x.AppUnderTestArea, o => o.Ignore())
+                .ForMember(x => x.FlowViewports, o => o.Ignore());
+
+            // FlowViewport
+            CreateMap<FlowViewport, FlowViewportDto>();
 
             // FlowStep
             CreateMap<FlowStep, FlowStepDto>();

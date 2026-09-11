@@ -26,6 +26,7 @@ namespace Business.Ipc.Handlers
             Flow? existingFlow = await dbContext.Flows
                 .Include(x => x.FlowAreas)
                 .Include(x => x.FlowPoints)
+                .Include(x => x.FlowViewports)
                 .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
 
             if (existingFlow == null)
@@ -37,6 +38,7 @@ namespace Business.Ipc.Handlers
             // Areas first: a location can point at an area created in this same payload.
             Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.dto.FlowAreas);
             SyncFlowPoints(dbContext, existingFlow, request.dto.FlowPoints, areasByDtoId);
+            SyncFlowViewports(dbContext, existingFlow, request.dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
 
@@ -48,6 +50,33 @@ namespace Business.Ipc.Handlers
         // ================================================================
         // Private methods
         // ================================================================
+        // Order is what the matrix runs in, so it comes from the list rather than from the ids.
+        private static void SyncFlowViewports(AppDbContext dbContext, Flow flow, IEnumerable<FlowViewportDto> dtos)
+        {
+            List<FlowViewport> existing = flow.FlowViewports.ToList();
+            HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
+
+            foreach (FlowViewport removed in existing.Where(x => !keptIds.Contains(x.Id)))
+                dbContext.FlowViewports.Remove(removed);
+
+            int order = 0;
+
+            foreach (FlowViewportDto dto in dtos)
+            {
+                FlowViewport? viewport = dto.Id > 0 ? existing.FirstOrDefault(x => x.Id == dto.Id) : null;
+
+                if (viewport == null)
+                {
+                    viewport = new FlowViewport { FlowId = flow.Id };
+                    dbContext.FlowViewports.Add(viewport);
+                }
+
+                viewport.Width = dto.Width;
+                viewport.Height = dto.Height;
+                viewport.OrderNumber = order++;
+            }
+        }
+
         private static Dictionary<int, FlowArea> SyncFlowAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowAreaDto> dtos)
         {
             List<FlowArea> existing = flow.FlowAreas.ToList();

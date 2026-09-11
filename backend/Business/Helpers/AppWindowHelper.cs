@@ -12,6 +12,14 @@ namespace Business.Services.ScreenshotService
     {
 
         //==================================================
+        // P/Invoke Ask a window to close
+        //==================================================
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        private const uint WM_CLOSE = 0x0010;
+
+
+        //==================================================
         // P/Invoke See if window is visible
         //==================================================
         [DllImport("user32.dll")]
@@ -227,6 +235,18 @@ namespace Business.Services.ScreenshotService
                 ShowWindow(hWnd, SW_RESTORE);
 
             return SetWindowPos(hWnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+
+        /// <summary>
+        /// Asks the window to close, the way clicking its X does. Posted rather than sent, so an
+        /// application that puts up "are you sure" cannot block the caller for ever.
+        /// </summary>
+        public static bool CloseWindow(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero)
+                return false;
+
+            return PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
         public static IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query) =>
