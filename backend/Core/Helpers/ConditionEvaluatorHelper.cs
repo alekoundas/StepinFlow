@@ -1,16 +1,14 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-
 using Core.Enums;
 using Core.Models.Database;
 
 namespace Core.Helpers
 {
     /// <summary>
-    /// Tests a value against a step's condition. Shared so Check Value and Read Text agree on what
-    /// "contains" means, and so a dry run answers the same as a real one.
+    /// Tests a value against a step's condition. 
     /// </summary>
-    public static class ConditionEvaluator
+    public static class ConditionEvaluatorHelper
     {
         /// <summary>The condition as a sentence, so a failure can say what it was holding out for.</summary>
         public static string Describe(FlowStep step)
@@ -84,11 +82,11 @@ namespace Core.Helpers
             }
         }
 
-        /// <summary>Text that will not parse as a number is a failure, not a false result.</summary>
         private static bool Compare(string actual, string expected, out int comparison)
         {
             comparison = 0;
 
+            // Text that will not parse as a number is a failure.
             if (!TryParse(actual, out double left) || !TryParse(expected, out double right))
                 return false;
 

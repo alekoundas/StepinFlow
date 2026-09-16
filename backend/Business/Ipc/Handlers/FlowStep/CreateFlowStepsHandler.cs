@@ -64,7 +64,7 @@ namespace Business.Ipc.Handlers
 
                 // Grows as the draft adds to it, so the twelfth step is unique against the
                 // eleven before it as well as against what was already saved.
-                HashSet<string> taken = await FlowNameLookup.TakenAsync(dbContext, rootId, ct);
+                HashSet<string> taken = await FlowNameLookupHelper.TakenAsync(dbContext, rootId, ct);
 
                 Dictionary<int, FlowStep> stepByTempId = new Dictionary<int, FlowStep>();
 

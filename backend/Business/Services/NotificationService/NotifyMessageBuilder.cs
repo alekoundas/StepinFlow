@@ -86,8 +86,8 @@ namespace Business.Services.NotificationService
             return failedStep.FlowStepType switch
             {
                 FlowStepTypeEnum.SEARCH_IMAGE => ImageSearchDetail(failedStep, templateNames),
-                FlowStepTypeEnum.SEARCH_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
-                FlowStepTypeEnum.CHECK_VALUE => $"the value did not satisfy: {ConditionEvaluator.Describe(failedStep)}",
+                FlowStepTypeEnum.SEARCH_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluatorHelper.Describe(failedStep)}",
+                FlowStepTypeEnum.CHECK_VALUE => $"the value did not satisfy: {ConditionEvaluatorHelper.Describe(failedStep)}",
                 FlowStepTypeEnum.SYSTEM_COMMAND => $"the command did not exit with {failedStep.SuccessExitCodes}",
 
                 FlowStepTypeEnum.WINDOW_FOCUS => "the window could not be found",

@@ -5,18 +5,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Helpers
 {
     /// <summary>
-    /// The names already in use in a flow - steps, areas, points and csv columns, one namespace.
-    ///
-    /// Shared between the create paths so a step saved one at a time and a whole draft saved at
-    /// once cannot disagree about what counts as taken.
+    /// The names already in use in a flow: steps, areas, points and csv columns.
     /// </summary>
-    public static class FlowNameLookup
+    public static class FlowNameLookupHelper
     {
         public static async Task<HashSet<string>> TakenAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {
-            // Success and Failure rows are excluded, matching the validator: they are structural,
-            // nothing refers to them by name, and reserving those two words would rename a step the
-            // validator would then never explain.
             List<string> names = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.RootId == flowId)

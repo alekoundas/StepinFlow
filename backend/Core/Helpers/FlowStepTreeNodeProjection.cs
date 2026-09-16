@@ -83,10 +83,6 @@ namespace Core.Helpers
         };
 
 
-        // ================================================================
-        // Public methods
-        // ================================================================
-
         /// <summary>
         /// The rules that are not worth making EF translate, applied to every row after it lands.
         /// </summary>

@@ -28,11 +28,11 @@ namespace Business.Services.ExecutionService.Workers
             if (!expected.IsTranslated || !expectedEnd.IsTranslated)
                 return Task.FromResult(ExecutionStep.Failure(VariableTranslator.DescribeUntranslated([.. expected.Untranslated, .. expectedEnd.Untranslated])));
 
-            bool satisfied = ConditionEvaluator.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text);
+            bool satisfied = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text);
 
             if (!satisfied)
             {
-                ExecutionStep unsatisfied = ExecutionStep.Failure($"\"{value}\" does not satisfy {ConditionEvaluator.Describe(step)}.");
+                ExecutionStep unsatisfied = ExecutionStep.Failure($"\"{value}\" does not satisfy {ConditionEvaluatorHelper.Describe(step)}.");
                 unsatisfied.Value = value;
                 return Task.FromResult(unsatisfied);
             }

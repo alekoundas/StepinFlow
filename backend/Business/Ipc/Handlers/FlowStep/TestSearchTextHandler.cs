@@ -63,7 +63,7 @@ namespace Business.Ipc.Handlers
                 IsResolved = true,
                 Text = text,
                 ResultValue = value,
-                IsMatch = ConditionEvaluator.IsSatisfied(value, step.ConditionType, step.ConditionText, step.ConditionTextEnd),
+                IsMatch = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, step.ConditionText, step.ConditionTextEnd),
             });
         }
 

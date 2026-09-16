@@ -71,7 +71,7 @@ namespace Business.Services.ExecutionService.Workers
                 {
                     // The last read, not a generic message: what the screen actually said when it
                     // gave up is the whole of what a person needs to see.
-                    ExecutionStep gaveUp = ExecutionStep.Failure($"Gave up waiting. Last read \"{read.Value}\", against {ConditionEvaluator.Describe(step)}.");
+                    ExecutionStep gaveUp = ExecutionStep.Failure($"Gave up waiting. Last read \"{read.Value}\", against {ConditionEvaluatorHelper.Describe(step)}.");
                     gaveUp.Value = read.Value;
                     gaveUp.Screenshot = read.Screenshot;
 
@@ -102,9 +102,9 @@ namespace Business.Services.ExecutionService.Workers
             if (!expected.IsTranslated || !expectedEnd.IsTranslated)
                 return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated([.. expected.Untranslated, .. expectedEnd.Untranslated]));
 
-            ExecutionStep result = ConditionEvaluator.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text)
+            ExecutionStep result = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text)
                                    ? ExecutionStep.Success(Centre(bounds))
-                                   : ExecutionStep.Failure($"Read \"{value}\", which does not satisfy {ConditionEvaluator.Describe(step)}.");
+                                   : ExecutionStep.Failure($"Read \"{value}\", which does not satisfy {ConditionEvaluatorHelper.Describe(step)}.");
 
             result.Value = value;
             result.Screenshot = screenshot;

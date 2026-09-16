@@ -15,6 +15,19 @@ namespace Core.Catalogs
     /// </summary>
     public static class FlowStepFieldCatalog
     {
+
+        /// <summary>The columns this type uses. Empty for the structural branch nodes.</summary>
+        public static IReadOnlyList<string> FieldsFor(FlowStepTypeEnum type)
+        {
+            return _byType.TryGetValue(type, out string[]? fields) ? fields : [];
+        }
+
+        /// <summary>Types that search an area, so a caller knows to fetch the area with the step.</summary>
+        public static bool UsesArea(FlowStepTypeEnum type)
+        {
+            return FieldsFor(type).Contains(nameof(FlowStep.FlowAreaId));
+        }
+
         private static readonly string[] _windowMatch =
         [
             nameof(FlowStep.ProcessName),
@@ -160,17 +173,5 @@ namespace Core.Catalogs
                 nameof(FlowStep.FlowStepReferenceId),
             ],
         };
-
-        /// <summary>The columns this type uses. Empty for the structural branch nodes.</summary>
-        public static IReadOnlyList<string> FieldsFor(FlowStepTypeEnum type)
-        {
-            return _byType.TryGetValue(type, out string[]? fields) ? fields : [];
-        }
-
-        /// <summary>Types that search an area, so a caller knows to fetch the area with the step.</summary>
-        public static bool UsesArea(FlowStepTypeEnum type)
-        {
-            return FieldsFor(type).Contains(nameof(FlowStep.FlowAreaId));
-        }
     }
 }
