@@ -1,8 +1,7 @@
 using System.Drawing;
 
 using Business.Services.AreaPointService;
-using Business.Services.OcrService;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;

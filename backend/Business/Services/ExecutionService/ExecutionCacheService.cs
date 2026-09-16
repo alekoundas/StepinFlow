@@ -1,7 +1,7 @@
 using System.Drawing;
 
 using Business.Services.AppSettingService;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;

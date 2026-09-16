@@ -1,9 +1,8 @@
-using Business.Services.InputService;
+﻿using Core.Ports;
 using Core.Enums;
+using Core.Enums.Business;
 using Core.Models.Business;
 using Core.Models.Database;
-
-using SharpHook.Data;
 
 using Core.Helpers;
 
@@ -40,7 +39,7 @@ namespace Business.Services.ExecutionService.Workers
                 return Task.FromResult(ExecutionStep.Success());
             }
 
-            if (!KeyCombinationHelper.TryParse(text.Text, out List<KeyCode> modifiers, out KeyCode key))
+            if (!KeyCombinationParser.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
                 return Task.FromResult(ExecutionStep.Failure($"\"{text.Text}\" is not a key combination this can press."));
 
             _inputService.SimulateKeyCombination(modifiers, key);

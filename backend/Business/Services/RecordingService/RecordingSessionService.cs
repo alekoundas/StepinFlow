@@ -1,10 +1,8 @@
-using Business.Helpers;
+using Core.Catalogs;
 using Business.Services.AppSettingService;
-using Business.Services.InputService;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
-using Core.Interfaces;
 using Core.Models.Business;
 using System.Collections.Concurrent;
 using System.Drawing;
@@ -38,6 +36,8 @@ namespace Business.Services.RecordingService
         private readonly IScreenshotService _screenshotService;
         private readonly IAppSettingService _appSettingService;
         private readonly IIpcBroadcastService _broadcastService;
+        private readonly IWindowService _windowService;
+        private readonly IScreenService _screenService;
 
         private readonly List<RecordedInput> _events = new();
         private readonly ConcurrentDictionary<int, byte[]> _screenshots = new();
@@ -51,12 +51,16 @@ namespace Business.Services.RecordingService
             IInputRecordService inputRecordService,
             IScreenshotService screenshotService,
             IAppSettingService appSettingService,
-            IIpcBroadcastService broadcastService)
+            IIpcBroadcastService broadcastService,
+            IWindowService windowService,
+            IScreenService screenService)
         {
             _inputRecordService = inputRecordService;
             _screenshotService = screenshotService;
             _appSettingService = appSettingService;
             _broadcastService = broadcastService;
+            _windowService = windowService;
+            _screenService = screenService;
         }
 
         public bool IsRecording => _queue != null;
@@ -189,7 +193,7 @@ namespace Business.Services.RecordingService
                         centreY - _captureSize.Height / 2,
                         _captureSize.Width,
                         _captureSize.Height),
-                    ScreenHelper.GetVirtualScreenBounds());
+                    _screenService.GetVirtualScreenBounds());
 
                 if (region.Width <= 0 || region.Height <= 0)
                     return false;
@@ -204,11 +208,11 @@ namespace Business.Services.RecordingService
             }
         }
 
-        private static string? TryGetForegroundWindowTitle()
+        private string? TryGetForegroundWindowTitle()
         {
             try
             {
-                return AppWindowHelper.GetForegroundWindowTitle();
+                return _windowService.GetForegroundWindowTitle();
             }
             catch
             {

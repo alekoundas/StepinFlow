@@ -1,14 +1,14 @@
-using Business.Services.Ai.AiModels;
+﻿using Business.Services.Ai.AiModels;
 using Business.Services.Ai.Providers;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
+using Core.Ports;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using OpenCvSharp;
 
 namespace Business.Services.Ai
 {
@@ -35,17 +35,20 @@ namespace Business.Services.Ai
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IAiProviderService _providerService;
         private readonly IAiModelService _modelService;
+        private readonly IOpenCvService _openCvService;
         private readonly ILogger<ExecutionScreenshotReader> _logger;
 
         public ExecutionScreenshotReader(
             IDbContextFactory<AppDbContext> dbContextFactory,
             IAiProviderService providerService,
             IAiModelService modelService,
+            IOpenCvService openCvService,
             ILogger<ExecutionScreenshotReader> logger)
         {
             _dbContextFactory = dbContextFactory;
             _providerService = providerService;
             _modelService = modelService;
+            _openCvService = openCvService;
             _logger = logger;
         }
 
@@ -144,7 +147,7 @@ namespace Business.Services.Ai
 
             foreach (StepTemplateImage templateImage in templateImages)
             {
-                byte[]? flattened = Flatten(templateImage.TemplateImage);
+                byte[]? flattened = _openCvService.FlattenErasedPixels(templateImage.TemplateImage);
                 if (flattened == null)
                     continue;
 
@@ -184,39 +187,6 @@ namespace Business.Services.Ai
             images.Add(new AiImage { Label = label, Name = name, Bytes = bytes });
         }
 
-        // Template images are png with erased pixels. 
-        // The erased pixels must set as white and explain what white means in prompt.
-        // Stays png rather than jpeg: a template image is all hard edges, and jpeg rings around them.
-        private static byte[]? Flatten(byte[] png)
-        {
-            try
-            {
-                using Mat decoded = Cv2.ImDecode(png, ImreadModes.Unchanged);
-                if (decoded.Empty())
-                    return null;
-
-                if (decoded.Channels() != 4)
-                    return decoded.ImEncode(".png");
-
-                using Mat colour = new Mat();
-                Cv2.CvtColor(decoded, colour, ColorConversionCodes.BGRA2BGR);
-
-                // Only the fully erased pixels. A threshold rather than an inverted alpha, because
-                // inverting turns a half transparent pixel fully white, and those were part of the
-                // search - at less weight, but they were there.
-                using Mat alpha = decoded.ExtractChannel(3);
-                using Mat erased = new Mat();
-                Cv2.Threshold(alpha, erased, 0, 255, ThresholdTypes.BinaryInv);
-
-                colour.SetTo(Scalar.All(255), erased);
-
-                return colour.ImEncode(".png");
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
 
         // A missing file is not an error. 
         private byte[]? Read(string folderName, string fileName)
@@ -227,7 +197,7 @@ namespace Business.Services.Ai
                 if (!File.Exists(path))
                     return null;
 
-                return Downscale(File.ReadAllBytes(path));
+                return _openCvService.Downscale(File.ReadAllBytes(path), _maxEdge, _quality);
             }
             catch (Exception ex)
             {
@@ -237,24 +207,6 @@ namespace Business.Services.Ai
             }
         }
 
-        // Sent at the size the model reads it at rather than the size the screen was.
-        private static byte[] Downscale(byte[] jpeg)
-        {
-            using Mat decoded = Cv2.ImDecode(jpeg, ImreadModes.Color);
-            if (decoded.Empty())
-                return jpeg;
-
-            int longest = Math.Max(decoded.Width, decoded.Height);
-            if (longest <= _maxEdge)
-                return jpeg;
-
-            double scale = (double)_maxEdge / longest;
-
-            using Mat resized = new Mat();
-            Cv2.Resize(decoded, resized, new Size(0, 0), scale, scale, InterpolationFlags.Area);
-
-            return resized.ImEncode(".jpg", [(int)ImwriteFlags.JpegQuality, _quality]);
-        }
 
         // ================================================================
         // Private types

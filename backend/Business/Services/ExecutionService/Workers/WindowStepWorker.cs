@@ -1,7 +1,5 @@
-using System.Drawing;
-
 using Business.Services.AreaPointService;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -14,10 +12,12 @@ namespace Business.Services.ExecutionService.Workers
     public class WindowStepWorker : IStepWorker
     {
         private readonly IAreaPointResolver _areaPointResolver;
+        private readonly IWindowService _windowService;
 
-        public WindowStepWorker(IAreaPointResolver areaPointResolver)
+        public WindowStepWorker(IAreaPointResolver areaPointResolver, IWindowService windowService)
         {
             _areaPointResolver = areaPointResolver;
+            _windowService = windowService;
         }
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
@@ -30,7 +30,7 @@ namespace Business.Services.ExecutionService.Workers
                 UseClientArea = false,
             };
 
-            IntPtr window = AppWindowHelper.FindWindow(query);
+            IntPtr window = _windowService.FindWindow(query);
             if (window == IntPtr.Zero)
                 return ExecutionStep.Failure(Detail(step, "no window matched"));
 
@@ -55,20 +55,20 @@ namespace Business.Services.ExecutionService.Workers
         // Private methods
         // ================================================================
 
-        private static ExecutionStep Focus(FlowStep step, IntPtr window)
+        private ExecutionStep Focus(FlowStep step, IntPtr window)
         {
-            if (!AppWindowHelper.FocusWindow(window))
+            if (!_windowService.FocusWindow(window))
                 return ExecutionStep.Failure(Detail(step, "the window would not come to the front"));
 
             return ExecutionStep.Success(message: Detail(step, "focused"));
         }
 
-        private static ExecutionStep Resize(FlowStep step, IntPtr window)
+        private ExecutionStep Resize(FlowStep step, IntPtr window)
         {
             if (step.WindowWidth < 1 || step.WindowHeight < 1)
                 return ExecutionStep.Failure(Detail(step, "no size to resize to"));
 
-            if (!AppWindowHelper.ResizeWindow(window, step.WindowWidth, step.WindowHeight))
+            if (!_windowService.ResizeWindow(window, step.WindowWidth, step.WindowHeight))
                 return ExecutionStep.Failure(Detail(step, "the window would not resize"));
 
             return ExecutionStep.Success(message: Detail(step, $"{step.WindowWidth} x {step.WindowHeight}"));
@@ -83,7 +83,7 @@ namespace Business.Services.ExecutionService.Workers
             if (!point.IsResolved)
                 return ExecutionStep.Failure(point.Error);
 
-            if (!AppWindowHelper.MoveWindow(window, point.Point.X, point.Point.Y))
+            if (!_windowService.MoveWindow(window, point.Point.X, point.Point.Y))
                 return ExecutionStep.Failure(Detail(step, "the window would not move"));
 
             return ExecutionStep.Success(point.Point, Detail(step, "moved"));

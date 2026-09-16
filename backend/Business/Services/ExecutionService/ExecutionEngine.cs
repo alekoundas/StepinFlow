@@ -1,10 +1,9 @@
 using System.Diagnostics;
 
 using Business.Services.ExecutionService.Workers;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
-using Core.Interfaces;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -32,6 +31,7 @@ namespace Business.Services.ExecutionService
         private readonly IExecutionCacheService _cache;
         private readonly IExecutionHistoryService _history;
         private readonly IIpcBroadcastService _broadcastService;
+        private readonly IWindowService _windowService;
         private readonly ILogger<ExecutionEngine> _logger;
         private ExecutionFlowWalker _walker = null!;
 
@@ -52,6 +52,7 @@ namespace Business.Services.ExecutionService
             IExecutionCacheService cache,
             IExecutionHistoryService history,
             IIpcBroadcastService broadcastService,
+            IWindowService windowService,
             ILogger<ExecutionEngine> logger)
         {
             _dbContextFactory = dbContextFactory;
@@ -59,6 +60,7 @@ namespace Business.Services.ExecutionService
             _cache = cache;
             _history = history;
             _broadcastService = broadcastService;
+            _windowService = windowService;
             _logger = logger;
         }
 
@@ -382,8 +384,8 @@ namespace Business.Services.ExecutionService
 
                 // Every match, not the first: an application opened by the flow may have put up a
                 // second window, and leaving one behind is the same problem as leaving them all.
-                foreach (IntPtr window in AppWindowHelper.FindWindows(query))
-                    AppWindowHelper.CloseWindow(window);
+                foreach (IntPtr window in _windowService.FindWindows(query))
+                    _windowService.CloseWindow(window);
             }
             catch (Exception ex)
             {
