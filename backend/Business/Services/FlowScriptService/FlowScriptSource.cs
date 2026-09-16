@@ -1,0 +1,46 @@
+using Core.Models.Database;
+
+namespace Business.Services.FlowScriptService
+{
+    /// <summary>
+    /// Everything the writer needs, arranged once.
+    ///
+    /// Names rather than ids, because the script refers to a step, an area and a point by name -
+    /// which is why phase 1 made them unique.
+    /// </summary>
+    public class FlowScriptSource
+    {
+        public Flow Flow { get; set; } = null!;
+
+        public IReadOnlyList<FlowArea> Areas { get; set; } = [];
+        public IReadOnlyList<FlowPoint> Points { get; set; } = [];
+        public IReadOnlyList<FlowCsvColumn> Inputs { get; set; } = [];
+        public IReadOnlyList<FlowViewport> Viewports { get; set; } = [];
+
+        /// <summary>Every step including the branch rows, which the walk goes through.</summary>
+        public IReadOnlyList<FlowStep> Steps { get; set; } = [];
+
+        public IReadOnlyDictionary<int, string> AreaNamesById { get; set; } = new Dictionary<int, string>();
+        public IReadOnlyDictionary<int, string> PointNamesById { get; set; } = new Dictionary<int, string>();
+        public IReadOnlyDictionary<int, string> StepNamesById { get; set; } = new Dictionary<int, string>();
+
+        /// <summary>The file each template was written to, named by content hash.</summary>
+        public IReadOnlyDictionary<int, IReadOnlyList<string>> TemplateFileNamesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<string>>();
+
+        /// <summary>A sub-flow's path relative to the repository root.</summary>
+        public IReadOnlyDictionary<int, string> SubFlowPathsById { get; set; } = new Dictionary<int, string>();
+
+        private ILookup<int?, FlowStep>? _childrenByParent;
+
+        /// <summary>
+        /// A step's children in running order. Built on first use rather than by the caller, so the
+        /// writer cannot be handed a source that orders them by chance.
+        /// </summary>
+        public IEnumerable<FlowStep> ChildrenOf(int? parentFlowStepId)
+        {
+            _childrenByParent ??= Steps.ToLookup(x => x.ParentFlowStepId);
+
+            return _childrenByParent[parentFlowStepId].OrderBy(x => x.OrderNumber);
+        }
+    }
+}
