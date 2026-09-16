@@ -1,20 +1,14 @@
 ﻿using App.AutoMapper;
 using App.Ipc;
-using Business.Helpers;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
 using Business.Services.FlowValidationService;
 using Business.Services.FlowValidationService.Rules;
-using Business.Services.InputService;
-using Business.Services.MatchService;
+using Core.Ports;
 using Business.Services.Ai;
 using Business.Services.AppSettingService;
-using Business.Services.OcrService;
 using Business.Services.RecordingService;
-using Business.Services.ScreenshotService;
-using Business.Services.SystemActionService;
-using Core.Interfaces;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +20,13 @@ using Core.Enums;
 using Business.Services.Ai.Providers;
 using Business.Services.Ai.AiDocuments;
 using Business.Services.Ai.AiModels;
+using Platform.Windows.Input;
+using Platform.Windows.Native;
+using Platform.Windows.Ocr;
+using Platform.Windows.Screen;
+using Platform.Windows.SystemActions;
+using Platform.Windows.Vision;
+using Platform.Windows.Windowing;
 
 namespace App
 {
@@ -35,7 +36,7 @@ namespace App
         {
             // First thing, before any coordinate API: without it Windows virtualizes every rect
             // to 96 DPI and nothing matches the capture buffers or the input hook.
-            ScreenHelper.EnablePerMonitorDpiAwareness();
+            ScreenMetrics.EnablePerMonitorDpiAwareness();
 
             HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
@@ -48,16 +49,20 @@ namespace App
             builder.Services.AddCustomDbContextFactory();
 
 
-            // Services
-            builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
+            // Ports
             builder.Services.AddSingleton<IOpenCvService, OpenCvService>();
             builder.Services.AddSingleton<IInputService, InputService>();
-            builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
-            builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
-            builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
+            builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
+            builder.Services.AddSingleton<IScreenService, ScreenService>();
+            builder.Services.AddSingleton<IWindowService, WindowService>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
+            builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
+
+            // Services
+            builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
+            builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
 
