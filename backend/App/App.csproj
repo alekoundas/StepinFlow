@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Business\Business.csproj" />
+    <ProjectReference Include="..\Platform.Windows\Platform.Windows.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
-<Solution>
+﻿<Solution>
   <Project Path="App/App.csproj" />
   <Project Path="Business/Business.csproj" />
   <Project Path="Core/Core.csproj" />
   <Project Path="DataAccess/DataAccess.csproj" />
+  <Project Path="Platform.Windows/Platform.Windows.csproj" />
 </Solution>
