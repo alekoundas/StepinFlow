@@ -17,44 +17,45 @@ every step of the flow, and the file wins.
 
 ```
 Flow:    Login and add to cart
+Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080, 1024x768, 390x844
 
 Areas:
-  Browser         window process "chrome.exe" title contains "Swag Labs"
-  Login form      inside Browser    ratio 0.30 0.18  0.40 0.40
-  Inventory       inside Browser    ratio 0.00 0.15  1.00 0.85
-  Cart badge      inside Browser    ratio 0.88 0.00  0.12 0.10
+  "Browser"       window process "chrome.exe" title contains "Swag Labs"
+  "Cart badge"    inside "Browser"   ratio 0.88 0.00  0.12 0.10
+  "Inventory"     inside "Browser"   ratio 0.00 0.15  1.00 0.85
+  "Login form"    inside "Browser"   ratio 0.30 0.18  0.40 0.40
 
 Inputs:
-  username
-  password        secret
+  "username"
+  "password"      secret
 
 Steps:
 
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   "chrome.exe"  args "--user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
+Launch   "chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
 
-Wait For Image  "Login form appears"   template "login-form.png"   in Browser   timeout 15s
+Wait For Image  "Login form appears"   template "login-form.png"   in "Browser"   timeout 15s
   Failure:
     End Execution  failed  "the site never loaded"
 
 ## Sign in
 
-Find Image  "Find username field"   template "username-field.png" in "Login form"   accuracy 0.85
+Find Image  "Find username field"   template "username-field.png"   in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no username field on the login page"
   Success:
     Click  at "Find username field"
-    Type   {{username}}
+    Type   "{{username}}"
 
-Find Image  "Find password field"   template "password-field.png" in "Login form"   accuracy 0.85
+Find Image  "Find password field"   template "password-field.png"   in "Login form"   accuracy 0.85
   Failure:
     End Execution  failed  "no password field on the login page"
   Success:
     Click  at "Find password field"
-    Type   {{password}}
+    Type   "{{password}}"
 
 Find Image  "Find login button"   template "login-button.png"   in "Login form"
   Failure:
@@ -63,7 +64,7 @@ Find Image  "Find login button"   template "login-button.png"   in "Login form"
     Click  at "Find login button"
 
 # The assertion: this is what makes the recording a test.
-Wait For Text  "Products page loaded"   contains "Products"   in Inventory   timeout 10s
+Wait For Text  "Products page loaded"   contains "Products"   in "Inventory"   timeout 10s
   Failure:
     Check Text   "Login error"   is not empty   in "Login form"
     Notify       "Login failed: {{Login error}}"
@@ -71,7 +72,7 @@ Wait For Text  "Products page loaded"   contains "Products"   in Inventory   tim
 
 ## Add everything on the page to the cart
 
-Find All Images  "Find add buttons"   template "add-to-cart.png"                 in Inventory   accuracy 0.90
+Find All Images  "Find add buttons"   template "add-to-cart.png"   in "Inventory"   accuracy 0.90
   Failure:
     End Execution  failed  "no products to add"
   Success:
@@ -84,7 +85,7 @@ Find All Images  "Find add buttons"   template "add-to-cart.png"                
 
 ## Check out
 
-Sub Flow  "flows/checkout.flow"
+Sub Flow  "flows/checkout.sflw"
 ```
 
 ---
@@ -93,13 +94,24 @@ Sub Flow  "flows/checkout.flow"
 
 Everything the reader needs before the first step. Declared once, referenced by name.
 
-### Flow
+### Flow and Id
 
 ```
 Flow:  Login and add to cart
+Id:    8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 ```
 
-The display name. The file name is the identity.
+`Flow` is the display name. `Id` is the identity, and it is what matters: an integer is unique to
+one machine's database, and a repository is cloned into many. Without it a fresh clone cannot tell
+"a new version of the login flow" from "a second flow that happens to be called login".
+
+It is generated once and travels with every copy and export of that flow from then on.
+
+### Names are always quoted
+
+Every name is written in quotes, in the header and in the steps, whether or not it contains a
+space. One rule reads back unambiguously; a rule about which names need quoting means a parser has
+to guess where `Login form inside Browser` stops being a name.
 
 ### Sizes
 
@@ -116,14 +128,17 @@ Overridable from the command line, so CI can narrow or widen the matrix without 
 ### Areas
 
 An area is a rectangle to look inside. Areas are the vocabulary of _where_, which is why steps say
-`in Inventory` rather than carrying coordinates.
+`in "Inventory"` rather than carrying coordinates.
 
 ```
 Areas:
-  Browser       window process "chrome.exe" title contains "Swag Labs"
-  Inventory     inside Browser   ratio 0.00 0.15  1.00 0.85
-  Header        inside Browser   offset 0 0  size 1920 90
+  "Browser"     window process "chrome.exe" title contains "Swag Labs"
+  "Header"      inside "Browser"   offset 0 0  size 1920 90
+  "Inventory"   inside "Browser"   ratio 0.00 0.15  1.00 0.85
 ```
+
+Roots first, then their children, each group alphabetical - so a child's `inside` always names
+something already read, and two exports of one flow are the same bytes.
 
 A root area binds to a window by process and title. A child area is placed inside its parent,
 either by **ratio** (`x y width height`, each 0–1) or by fixed **offset and size** in pixels.
@@ -137,8 +152,8 @@ A fixed position to click, for the cases where nothing is worth searching for.
 
 ```
 Points:
-  Menu toggle   inside Browser   ratio 0.95 0.05
-  Origin        inside Browser   offset 12 12
+  "Menu toggle"   inside "Browser"   ratio 0.95 0.05
+  "Origin"        inside "Browser"   offset 12 12
 ```
 
 ### Inputs
@@ -148,8 +163,8 @@ flow configuration, and a password in a repository is a leak.
 
 ```
 Inputs:
-  username
-  password      secret
+  "username"
+  "password"    secret
 ```
 
 `secret` means the value is never written to any file and resolves from the environment.
@@ -269,11 +284,11 @@ costs its full length on every execution that takes the fallback.
 So wait once, on something that is always present, then branch instantly:
 
 ```
-Wait For Image  "Page loaded"   template "logo.png"   in Browser   timeout 15s
+Wait For Image  "Page loaded"   template "logo.png"   in "Browser"   timeout 15s
   Failure:
     End Execution  failed  "the page never loaded"
 
-Find Image  "Desktop nav present?"   template "nav-bar.png"   in Browser
+Find Image  "Desktop nav present?"   template "nav-bar.png"   in "Browser"
   Failure:
     Click  at point "Hamburger menu"
   Success:
@@ -294,7 +309,7 @@ just paying for patience it cannot use.
 Click       at "Find login button"          left double
 Click       at point "Menu toggle"
 Move        to "Find username field"
-Type        {{username}}
+Type        "{{username}}"
 Press       Ctrl+C
 Scroll      down 3   in "Results panel"
 Wait        800ms
@@ -338,7 +353,7 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 ### Sub-flows
 
 ```
-Sub Flow  "flows/checkout.flow"
+Sub Flow  "flows/checkout.sflw"
 ```
 
 A path relative to the repository root, because names are only unique within a flow.

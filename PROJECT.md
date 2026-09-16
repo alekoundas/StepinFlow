@@ -1,59 +1,278 @@
 # StepinFlow — Project Reference
 
-> Working reference for the app: what it is, how it is built, what exists today, and what is
-> knowingly broken or unfinished. Written to be pasted into an AI prompt as context, or skimmed
-> to recall the business.
+> The whole application in one document: what it is for, how it is built, what exists today, and
+> what is knowingly unfinished. Written to be read top to bottom by a person joining the project,
+> or pasted into a model as context.
 >
-> Last synced with the repo: 2026-08-07.
+> `FLOW-FORMAT.md` holds the flow script grammar and is kept separate on purpose — it is a
+> specification you read while writing a parser, not prose. `PLAN.md` is the build order.
+> `TODO.md` is everything deferred.
+>
+> Last synced with the repo: 2026-09-16.
 
 ---
 
-## 1. What it is
+## 1. What it is and who it's for
 
-A Windows desktop **workflow automation bot**. The user builds a **Flow** out of ordered,
-nestable **FlowSteps** (click here, wait, loop, search the screen for an image, type text …) and
-then executes it. The app drives the real mouse and keyboard and reads the real screen, so a flow
-automates any application, not just a browser.
+StepinFlow turns a QA tester's recording into a test that runs on every build.
 
-Two halves:
+A tester records what they do to an application. The recording becomes a flow: a tree of typed
+steps that clicks, types, waits, reads the screen and branches on what it finds. That flow then
+runs unattended — at several screen sizes, against several rows of data — and reports which checks
+passed.
 
-- **Authoring** — a tree of steps on the right, a per-step-type form on the left.
-- **Execution** — the same page replays the flow live, showing each step's state and result.
+There are no selectors, no DOM and no code. Everything works from what is on screen: a template
+image, or text read by OCR. So it does not matter whether the application under test is a website,
+a desktop program, or something nobody has ever written an automation library for.
+
+**Who it is for.** A QA tester who knows the application and does not write code. Secondarily the
+developer who has to work out why the pipeline went red, and who will read the test as a file in a
+pull request rather than opening the app at all.
+
+### What makes it different
+
+Record-and-replay tools have existed for twenty years and testers do not trust them, because a
+recording breaks the first time anything moves and nobody can tell why. Three things answer that:
+
+**A recording is not a test until it has validated.** A freshly recorded flow has been seen working
+once, by the person who recorded it, on their machine. That is not the same as being a test, and
+the app says so rather than letting a green suite prove nothing.
+
+**A failure is diagnosed, not just reported.** The screenshots, the templates it was looking for,
+the flow as text, and a model that has read the customer's own requirements all go into explaining
+what went wrong.
+
+**The test is a file in the customer's repository.** Reviewable in a pull request by someone who
+has never opened the app, with `git log` and `git blame` as its version history.
 
 ---
 
-## 2. Stack
+## 2. Architecture
 
-| Layer | Tech |
-|---|---|
-| Shell | Electron (main + preload, multiple BrowserWindows) |
-| UI | React + Vite + TypeScript, PrimeReact + PrimeFlex |
-| State | Zustand (UI state), TanStack Query (server state) |
-| Forms | React Hook Form + Zod (`zodResolver`) |
-| Routing | `react-router-dom`, `createHashRouter` |
-| Backend | .NET 10 console host (`Host.CreateApplicationBuilder`), MediatR, AutoMapper |
-| Data | EF Core + SQLite (file-backed, `AddPooledDbContextFactory`) |
-| Input | SharpHook (global hook + event simulation) |
-| Capture | Direct3D11 / Windows.Graphics.Capture |
-| IPC | Two named pipes, protobuf-net ↔ protobufjs |
+### The layout
 
-The .NET process is **DPI-unaware by design** (see §5).
-
----
-
-## 3. Process model and IPC
-
-Three processes:
+Five projects. The dependency arrows are the design; everything else is detail.
 
 ```
-Electron main  ──named pipe "stepinflow-request"──►  .NET host   (request/response)
-      ▲                                                   │
-      │        ──named pipe "stepinflow-broadcast"─────────┘       (server → client push)
-      │
+App ──────→ Business ──→ DataAccess ──→ Core
+ └────────→ Platform.Windows ─────────→ Core
+```
+
+| Project | Target | Holds | References |
+|---|---|---|---|
+| `Core` | `net10.0` | Models, DTOs, enums, ports, pure logic | — |
+| `DataAccess` | `net10.0` | `AppDbContext`, configurations, migrations | Core |
+| `Platform.Windows` | `net10.0-windows` | Everything that touches the machine | Core |
+| `Business` | `net10.0` | Domain services and use cases | Core, DataAccess |
+| `App` | `net10.0-windows` | Host, DI, IPC pipes | all |
+
+**`Business` does not reference `Platform.Windows`.** They are siblings. `App` is the only project
+that knows both exist, because `App` is the composition root and binding a port to an adapter is
+its job and nobody else's.
+
+### Ports and adapters
+
+The interfaces for anything outside the process live in `Core/Ports`. The implementations live in
+`Platform.Windows`. `Business` consumes the interface and never sees the implementation.
+
+```
+Core/Ports/IScreenshotService        →  Platform.Windows/Windows/Screen/ScreenshotService
+Core/Ports/IInputService             →  Platform.Windows/Windows/Input/InputService
+Core/Ports/IOcrService               →  Platform.Windows/Windows/Ocr/OcrService
+Core/Ports/IWindowService            →  Platform.Windows/Windows/Window/WindowService
+Core/Ports/ISystemActionService      →  Platform.Windows/Windows/System/SystemActionService
+Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
+Core/Ports/IIpcBroadcastService      →  App/Ipc/BroadcastService
+```
+
+**The rule for `Core/Ports`: it holds only interfaces that Core and Business cannot implement
+themselves.** `IFlowValidationService`, `IExecutionEngine`, `IAppSettingService` and
+`IFlowScriptWriter` are declared and implemented inside `Business`, so they stay beside their
+implementations. Sweeping every interface into `Ports` would make the folder mean "interfaces"
+again and the name would stop carrying information.
+
+### What goes in Platform.Windows
+
+> **A file belongs in Platform if it touches the machine rather than the model** — a `DllImport`, a
+> `using Windows.*`, or a type wrapping a native handle (GDI+ `Bitmap`, OpenCvSharp `Mat`,
+> SharpHook's global hook).
+
+Falsifiable form: *would removing it let the project drop `-windows` or a `.runtime.win` package?*
+
+The folders inside it split on a second axis — whether the native code is OS-specific:
+
+```
+Platform.Windows/
+  Windows/     Screen, Input, Window, Ocr, System, Native   — Win32, WinRT, GDI+
+  Common/      Vision                                        — native, but identical on every OS
+```
+
+`Common` exists for OpenCvSharp. It is native code, so it is not `Business`; it is byte-identical
+on Linux, so it is not `Windows`. Without `Common` it would be homeless. Note the trap:
+`System.Drawing.Common` is named Common and is **not** — GDI+ is Windows-only since .NET 6 and
+belongs under `Windows/`.
+
+What this rule deliberately **excludes**: `DiscordNotifier` and the Ollama client are external
+*system* adapters, not platform adapters. They sit behind interfaces already and they do not
+constrain the target framework, so they stay in `Business`.
+
+### Why this boundary exists
+
+Before the split, nine files carried a hard Windows dependency and those nine were the entire
+reason the 16,000-line `Business` project targeted `net10.0-windows`. Every other line — the
+validator, the script writer, the execution walker, the AI services — had no idea what OS it was
+on. Everything else that touched `System.Drawing` used only `Rectangle`, `Point` and `Size`, which
+live in `System.Drawing.Primitives`, ship with the framework, and are cross-platform.
+
+Splitting gives two things that are not available from folders and convention:
+
+**Business cannot reach native code.** `AppWindowHelper.Focus(...)` inside the execution walker used
+to compile, because it was a `public static` class in the same assembly. Now the type does not
+exist as far as the Business compiler is concerned — `CS0103`, a hard error.
+
+This is a tripwire rather than a prison, and it is worth being honest about the difference. A
+hand-written `[DllImport("user32.dll")]` still compiles in a plain `net10.0` project; P/Invoke is
+not gated by the target framework, it just fails at runtime on a platform without the library. What
+the boundary changes is visibility: a lone `DllImport` in a project that has none of them, and no
+reference to Platform, is a conspicuous act in review. The same line today blends in with forty
+others. (If that tripwire is ever tripped, `Microsoft.CodeAnalysis.BannedApiAnalyzers` with a
+`BannedSymbols.txt` turns it into a build error.)
+
+**Platform internals can be `internal`.** `Direct3D11Interop`, `ThumbnailHelper`, `NativeCursor` and
+`ScreenMetrics` are called only from inside Platform. They were `public static` solely because one
+assembly left no other option. The assembly boundary makes "this is a private detail of the
+screenshot adapter" a compiler fact.
+
+**The verification:** `Business` drops the `System.Drawing.Common` package reference entirely. If it
+still compiles, the domain is genuinely GDI-free. One-line test, run it after the move.
+
+### Splitting the machine from the decision
+
+Moving a file to Platform is the moment to ask what is actually in it. Most of the native helpers
+have two things tangled together.
+
+`AppWindowHelper` is the clearest case. Its 343 lines are half `EnumWindows` / `GetWindowRect` /
+`PostMessage` — the machine — and half matching a `WindowQuery` against a list of windows by process
+name, title pattern and `TitleMatchModeEnum`. The second half is pure logic that has nothing to do
+with Windows, and today it cannot be tested without Chrome actually running.
+
+```
+Core/Ports/IWindowService                 GetWindows(), CloseWindow(nint), Focus, Move, Resize
+Business/…/WindowMatcher                  Match(WindowQuery, IEnumerable<SystemWindow>) — pure
+Platform.Windows/…/WindowService          the P/Invoke, and only that
+```
+
+Ask the same question of all nine: *what here is the machine, and what here is a decision?* The
+decisions go up, the machine stays down.
+
+And the corollary — **most of Platform needs no interface at all.** `Direct3D11Interop` is called
+only by `WindowsGraphicsCaptureService`, both inside Platform. It is an implementation detail, not a
+port. Only the things `Business` calls get an interface.
+
+### Linux, and why it is not close
+
+Linux is on the roadmap, not in the plan. Under **X11** the port is close to one-for-one:
+
+| Windows | X11 / EWMH |
+|---|---|
+| `EnumWindows` | `_NET_CLIENT_LIST` |
+| `GetWindowText` | `_NET_WM_NAME` |
+| `GetWindowThreadProcessId` | `_NET_WM_PID` |
+| `GetWindowRect` / `ClientToScreen` | `XGetWindowAttributes`, `XTranslateCoordinates`, `_NET_FRAME_EXTENTS` |
+| `SetForegroundWindow` | `_NET_ACTIVE_WINDOW` |
+| `SetWindowPos` | `XMoveResizeWindow` |
+| `PostMessage(WM_CLOSE)` | `_NET_CLOSE_WINDOW` |
+
+Under **Wayland** most of it is forbidden by design — a client cannot enumerate or control another
+client's windows, and that is the security model rather than a missing feature. What exists is
+compositor-specific: `wlr-foreign-toplevel-management` on wlroots compositors gives title, activate
+and close but **not geometry, move or resize**; KDE has its own protocol; GNOME's Mutter implements
+no foreign-toplevel protocol at all. Screen capture goes through PipeWire and `xdg-desktop-portal`,
+which typically prompts the user for consent per session. Input synthesis needs `libei` or
+`/dev/uinput` permissions. Wayland is the default on Ubuntu 21.04+, Fedora and RHEL 9.
+
+**X11 is a port; Wayland is a different product.** For a tool whose premise is deterministic
+viewport sizes and pixel-accurate matching, losing precise geometry and gaining a consent dialog is
+not a rough edge. The ports make Linux *possible* and make the feasibility answerable on day one —
+implement `IWindowService` and find out — but they do not make it cheap.
+
+### Building and releasing
+
+Project references resolve at **build** time, not runtime. Nothing detects the current OS.
+
+```bash
+npm run build
+```
+
+runs `dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true` into
+`dist/backend/`, builds the renderer, then packages with electron-builder. The RID is named
+explicitly; the backend exe is carried as an electron-builder `extraResources` entry.
+
+Per-RID publishing is not avoidable here even in principle — the native dependencies (OpenCV,
+libuiohook) ship different binaries per platform, so there is no single artifact that runs on both.
+
+When Linux arrives there are two routes, both resolved at build time. Either multi-target one
+project (`<TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>` with MSBuild excluding
+`Windows/**` from the portable one, which is what MAUI does with its `Platforms/` folder), or split
+into `Platform.Windows` and `Platform.Linux` with a RID-conditional `ProjectReference`. The second
+is simpler and is why the project is named `Platform.Windows` rather than `Platform` from the start.
+
+One thing that route has to solve: `App` currently targets `net10.0-windows`, and an unsuffixed
+project cannot reference a platform-suffixed one. So a Linux build needs `App` multi-targeted, or
+two thin entry projects over a shared host. That is a real cost and it is not being paid yet.
+
+---
+
+## 3. Concepts and vocabulary
+
+The words below mean exactly one thing in this codebase and in the UI.
+
+**Flow** — one test. A name, the application it tests, the screen sizes to test at, the data
+columns it takes, and a tree of steps. Identified across machines by `PublicId`, a GUID.
+
+**FlowStep** — one node of the tree. Typed: the type decides which of the wide table's columns mean
+anything and which worker executes it. Steps nest; a step that can fail has `Success` and `Failure`
+children so a flow handles its own problems rather than stopping.
+
+**FlowArea** — a named rectangle owned by a flow. Either fixed coordinates, a monitor, or a window
+matched by process name and title. Search steps look inside one.
+
+**FlowPoint** — a named point owned by a flow. Cursor steps aim at one.
+
+**Template image** — the picture a `SEARCH_IMAGE` step looks for. Always called a template image or
+a screenshot; never a "frame" and never a "search image".
+
+**Screenshot** — what the app captures off the screen. An output, per-execution, never checked into
+a repository.
+
+**FlowViewport** — one screen size the flow is tested at.
+
+**FlowCsvColumn** — one input to the flow. Ten rows of CSV means ten executions.
+
+**Execution** — one complete walk of a flow, at one viewport, with one row of data. The word is
+always "execution"; "run" is not used in this codebase.
+
+**Marker** — a named divider in the step tree with no behaviour, which becomes a `##` heading in
+the script.
+
+---
+
+## 4. Process model and IPC
+
+Three processes, two named pipes.
+
+```
+ Electron main  ──"stepinflow-request"────►  .NET host      request / response
+       ▲                                          │
+       │        ──"stepinflow-broadcast"──────────┘         server → client push
+       │
   React renderer(s) via contextBridge (preload)
 ```
 
-**Only three protobuf messages exist** — the envelope is protobuf, the body is JSON bytes:
+The .NET host owns the database, the screen, the mouse and the keyboard. Electron is the shell and
+the bridge; the React renderer never talks to .NET directly.
+
+**Only three protobuf messages exist.** The envelope is protobuf, the body is JSON bytes:
 
 ```proto
 message IpcRequest   { string action = 1; bytes payload = 2; string correlationId = 3; }
@@ -61,430 +280,635 @@ message IpcResponse  { string action = 1; bytes payload = 2; string correlationI
 message IpcBroadcast { string type = 1;   bytes payload = 2; }
 ```
 
-- `action` is a string like `"FlowStep.update"`, routed by a switch in
-  `backend/App/Ipc/IpcDispatcher.cs` to a MediatR request.
-- `payload` is UTF-8 JSON (camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`).
-  **Adding a new DTO never touches the .proto.**
-- Every response body is `ResultDto<T>` (`isSuccess`, `data`, `errorMessage`, `errors`).
-- Broadcasts are fire-and-forget, delivered to **all** BrowserWindows, discriminated by `type`
-  (`BroadcastTypeEnum` as a string).
+`action` is a string like `"FlowStep.update"`, routed by a switch in `App/Ipc/IpcDispatcher.cs` to a
+MediatR request. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
+**Adding a new DTO never touches the `.proto`.** Every response body is `ResultDto<T>`.
 
-Electron IPC channels live in `electron/shared/channels.ts`; shared TS types in
-`electron/shared/types.ts` (imported directly by the React code via relative path).
+Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated by `type`
+(`BroadcastTypeEnum` as a string). They carry execution progress, recorded input events and model
+download progress.
 
-**Backend hosted services** (`Program.cs`): request pipe listener, broadcast pipe listener, and the
-SharpHook global hook — the hook runs for the whole process lifetime from startup.
+Hosted services started in `Program.cs`: the request pipe listener, the broadcast pipe listener, and
+the SharpHook global hook, which runs for the whole process lifetime.
 
 ---
 
-## 4. Database
+## 5. Data model
 
-SQLite file at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`. EF migrations are applied on
-startup (`dbContext.Database.Migrate()`). 13 migrations so far (`InitialMigration` … `InitialMigration12`).
-
-### Tables
+SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on startup with
+`dbContext.Database.Migrate()`. Contexts come from `AddPooledDbContextFactory`.
 
 | Table | Purpose |
 |---|---|
-| `Flow` | The workflow. Name, OrderNumber. |
-| `SubFlow` | Reusable sub-workflow. Modelled, **no UI yet**. |
-| `FlowStep` | One node of the flow tree. Wide table, one column set per step type. |
-| `FlowArea` | Named reusable **rectangle** owned by a Flow. |
-| `FlowPoint` | Named reusable **point** owned by a Flow. |
-| `FlowStepImage` | Template image + match settings for IMAGE_SEARCH. Blob lives here, off `FlowStep`. |
-| `Execution` | One run of a Flow. **Modelled, not implemented.** |
-| `ExecutionStep` | Per-step result of a run. **Modelled, not implemented.** |
+| `Flows` | The test. Name, `PublicId`, the app under test, what to do when it ends. |
+| `FlowAreas` | Named rectangle owned by a flow. |
+| `FlowPoints` | Named point owned by a flow. |
+| `FlowViewports` | One screen size to test at. |
+| `FlowCsvColumns` | One input column. `IsSecret` means the value never reaches a file. |
+| `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
+| `FlowStepTemplates` | Template image + match settings. The blob lives here, off `FlowStep`. |
+| `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
+| `Executions` | One walk of a flow, at one viewport, with one data row. |
+| `ExecutionSteps` | Per-step result within an execution. |
+| `AppSettings` | Key/value, defined by `AppSettingCatalog`. |
+| `DiscordBots` | Webhook targets for notifications. |
 
-`BaseDbModel` gives every row `Id` + `CreatedOn`.
+`BaseDbModel` gives every row `Id` and `CreatedOn`. Enums are stored as strings
+(`HasConversion<string>()`) — which means a migration adding one needs a **parseable**
+`defaultValue`, not `""`.
+
+### Flow identity: `PublicId`
+
+`Flow.PublicId` is a GUID, generated once at creation, carried in the script file and copied onto
+every later version of that flow.
+
+The integer `Id` is unique to one machine's database; a repository is cloned into many. Without a
+stable id in the file, a fresh clone cannot tell "a new version of the login flow" from "a second
+flow that happens to be called login". It is also what lets an edited flow become a new row while
+old executions stay valid — they still point at the same logical test, so history accumulates
+instead of fragmenting.
+
+It is called `PublicId` rather than `Guid` because `Guid` names the C# type, not the meaning.
 
 ### The wide-table decision
 
-`FlowStep` holds **every** field for **every** step type, all nullable/defaulted, and
-`FlowStepType` is the discriminator. This is deliberate:
+`FlowStep` holds every field for every step type, all nullable, with `FlowStepType` as the
+discriminator.
 
-- SQLite stores a NULL column as ~1 byte of record header and **zero payload bytes**, so ~30 unused
-  columns per row cost almost nothing.
-- The executor loads a whole step in one row with no joins.
-- The DTO is flat, so the form binds straight to it with no mapping layer.
+SQLite stores a NULL column as about a byte of record header and zero payload bytes, so thirty
+unused columns per row cost almost nothing. The executor loads a whole step in one row with no
+joins, and the DTO is flat so the form binds straight to it. `FlowStepFieldCatalog` is the list of
+which columns mean anything for which type — written with `nameof`, so renaming a column breaks the
+build rather than quietly dropping the field from everything that reads it.
 
-The form shows only the fields its `flowStepType` uses.
+### `RootId`
 
-### FlowStep relationships
+`FlowStep.RootId` denormalises the owning flow id onto every descendant, so a whole tree loads with
+one `WHERE RootId = ?` instead of a recursive CTE.
+
+### Delete behaviour
 
 | FK | Points at | On delete |
 |---|---|---|
 | `FlowId` | Flow | Cascade |
-| `SubFlowId` | SubFlow | Cascade |
-| `ParentFlowStepId` | FlowStep (`ChildrenFlowSteps`) | Cascade |
-| `FlowAreaId` | FlowArea | **SetNull** |
-| `FlowPointId` | FlowPoint (`FlowSteps`) | **SetNull** |
-| `FlowPointEndId` | FlowPoint (`EndFlowSteps`) | **SetNull** |
-| `FlowStepReferenceId` | FlowStep (`FlowStepReferences`) | **SetNull** |
-| `FlowStepReferenceEndId` | FlowStep (`FlowStepReferencesEnd`) | **SetNull** |
+| `ParentFlowStepId` | FlowStep | Cascade |
+| `FlowAreaId` | FlowArea | SetNull |
+| `FlowPointId` / `FlowPointEndId` | FlowPoint | SetNull |
+| `FlowStepReferenceId` / `…EndId` | FlowStep | SetNull |
+| `Flow.AppUnderTestAreaId` | FlowArea | NoAction |
 
-The `SetNull` group is deliberate: search areas, locations and referenced steps are **reusable**, so
-deleting one must clear the reference rather than delete every step using it.
-
-Indexes: `RootId`, `(FlowId, OrderNumber)`, `(ParentFlowStepId, OrderNumber)`.
-
-### RootId
-
-`FlowStep.RootId` denormalises the owning Flow/SubFlow id onto every descendant so a whole tree can
-be fetched with one `WHERE RootId = ?` instead of a recursive CTE. Used by the ancestor lookup and
-intended for the executor's single-query load.
+The `SetNull` group is deliberate: areas, points and referenced steps are **reusable**, so deleting
+one must clear the reference rather than delete every step using it. `AppUnderTestAreaId` is
+`NoAction` to break a cascade cycle — Flow → FlowArea → Flow.
 
 ---
 
-## 5. Coordinate spaces — read this before touching anything positional
+## 6. Recording
 
-This is the single most error-prone area of the app.
+Before the first click is captured, the tester answers three questions in a setup form:
 
-- The .NET process is **DPI-unaware on purpose**, so multi-monitor screenshots stitch correctly.
-- Consequence: `GetMonitorInfo` returns **DPI-virtualised** ("logical") coordinates, while
-  `EnumDisplaySettings`/DEVMODE returns **real device pixels** ("physical").
-- `MonitorInfo` carries both: `Bounds` (logical) and `PhysicalBounds` (physical).
+**What is this flow called.** It has to be unique.
 
-**Everything persisted is in PHYSICAL pixels** — `FlowArea`, `FlowPoint`, and the
-coordinates SharpHook's global hook reports.
+**What does it test, and how is it opened.** An application, a browser, a new tab. A **Test** button
+tries the opening there and then, so a wrong command is found before a recording is wasted on it.
+Screen sizes are added here too, one dialog per size.
 
-**Cursor movement does not go through SharpHook.** `Business/Helpers/CursorHelper.cs` calls
-`SendInput` with `MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK`, normalised to `[0,65535]` over
-the virtual desktop, from inside a thread that temporarily sets
-`DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2` and restores it before returning. The per-thread
-context is what lets the rest of the process stay DPI-unaware while the move speaks physical pixels.
+**What should happen to that application when an execution ends** — leave it, close the window, kill
+the process.
 
-`OverlayCapturePage.tsx` documents its own contract at the top: selection state is physical
-absolute; logical is used only at the edges (mouse input → broadcast, broadcast → render clip).
+None of this is a step. It is configuration on the flow, so it stays editable afterwards and the
+recorder is not the only way to set it.
 
-> ⚠ **Unverified:** the SendInput normalisation has not been tested on a machine with a monitor at
-> non-100% scale. Test: set a display to 150%, capture a FlowPoint, press **Test**, confirm the
-> cursor lands on the same pixel.
+Then recording starts and the system tracks input. **Pausing is part of authoring**: the tester can
+pause, type a wrong value on purpose, resume, and record what the application does when it rejects
+it. That is how failure paths get written — by provoking them rather than imagining them.
 
----
+### The two gestures
 
-## 6. Reusable positional entities — the portability story
+**Ctrl + left click** asks what should be checked at that spot. Does this text or image need to
+exist? Should the flow wait until it appears, or until it goes away? The click position matters,
+which is why it is the left button.
 
-The problem: a flow authored on one PC has hard-coded screen coordinates and breaks on another.
+**Ctrl + right click** asks what should happen there instead of a click: run a command, open another
+application, or take a value from a CSV column. Position does not matter for any of those, which is
+why it is the right button. Choosing a column offers the ones this flow already has, or defines a
+new one with the recorded value as its default — which is why the CSV is per-flow and its template
+is generated from the flow.
 
-The answer is to never let a step store raw coordinates. Steps point at a **named, reusable entity
-owned by the Flow**, resolved at runtime. Moving a flow to a new machine means re-capturing a handful
-of named entities; every step keeps working.
+### Search mode, timeout and poll rate
 
-### FlowArea — a rectangle
+Every recorded click becomes a `SEARCH_IMAGE` step, and how it searches depends on how long the
+tester waited before clicking.
 
-Selected in a dropdown by IMAGE_SEARCH / TEXT_SEARCH. `FlowAreaTypeEnum`:
+A quick click becomes `FIND_BEST` — the element was already there. A click after a visible pause
+becomes `WAIT_UNTIL_FOUND`, because the pause is evidence the tester was waiting for something. The
+recorded wait plus headroom becomes the timeout, so a step that took 4.2 seconds gets a timeout
+derived from 4.2 seconds rather than a flat default. A flat ten-second default would make every
+failing branch on a slow viewport ten seconds slower, forever.
 
-| Type | Stores | Resolved at runtime by |
-|---|---|---|
-| `CUSTOM` | `LocationX/Y/Width/Height` | used as-is |
-| `APPLICATION` | `AppWindowName` | finding the window and taking its rect |
-| `MONITOR` | `MonitorUniqueId` | looking the monitor up |
+The step carries a code comment recording why: `# recorded after a 4.2s wait`.
 
-Authored with the **overlay capture window** (drag a rectangle).
-
-### FlowPoint — a point
-
-Same idea one dimension down: `Name`, `LocationX`, `LocationY`, `FlowId`. Used by cursor steps.
-
-Authored **in place**, without opening a window (see §9).
-
-Both are edited as `useFieldArray` collections inside the **Flow form**, side by side, and both grids
-show a **"Used By"** count of the steps referencing them. The count is computed in SQLite by the same
-query that loads the Flow (`GetFlowHandler` is a projection, not `Include` + map). Deleting an entry
-that is in use warns with the count first.
+Polling is deliberately not as fast as possible. Screenshot plus template match is real CPU, and a
+tight loop on a tester's laptop competes with the application being tested.
 
 ---
 
-## 7. Flow step types
+## 7. The flow script
 
-`FlowStepTypeEnum`:
+A flow exports to a `.sflw` text file. `FLOW-FORMAT.md` is the grammar; this is the shape and the
+decisions behind it.
 
 ```
-System : WAIT, LOOP, GO_TO, RUN_CMD, SUB_FLOW, VARIABLE_CONDITION, NOTIFICATION_EMAIL
-Input  : CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_DRAG, CURSOR_SCROLL,
-         WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, KEYBOARD_INPUT
-Search : IMAGE_SEARCH, TEXT_SEARCH
-Hidden : SUCCESS, FAILURE   (control-flow children, not user-selectable)
+Flow:    Login and add to cart
+Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
+Sizes:   1920x1080, 390x844
+
+Areas:
+  "Browser"       window process "chrome.exe" title contains "Swag Labs"
+  "Inventory"     inside "Browser"   ratio 0.00 0.15  1.00 0.85
+
+Steps:
+
+## Sign in
+
+Find Image      "Find username field"   template "username-field.png"   in "Login form"   accuracy 0.85
+  Success:
+    Click           at "Find username field"
+    Type            "{{username}}"
+  Failure:
+    End Execution   failed  "no username field on the login page"
 ```
 
-### Implemented
+### The writer
 
-| Type | Fields used | Notes |
-|---|---|---|
-| `WAIT` | `name`, `waitForMilliseconds` | |
-| `LOOP` | `name`, `loopCount`, `isLoopInfinite` | mutually exclusive, enforced in the form; can have children |
-| `CURSOR_CLICK` | `name`, click action, `cursorButtonType`, start point | |
-| `CURSOR_RELOCATE` | `name`, start point | move without clicking |
-| `CURSOR_DRAG` | `name`, `cursorButtonType`, start point, end point | |
-| `CURSOR_SCROLL` | `name`, `cursorScrollDirectionType`, `loopCount` (notches) | no point |
+`FlowScriptWriter.Write(FlowScriptSource) → string` is a pure function. Deterministic: the same flow
+writes the same bytes, which is what makes a round trip testable — branch order from `OrderNumber`,
+areas roots-then-children alphabetically, and `FlowScriptSource` builds its own child lookup so a
+caller cannot hand it steps ordered by chance.
 
-`SUCCESS` / `FAILURE` / `LOOP` are the only droppable (child-accepting) node types in the tree.
+`FlowScriptKeywords` (step type + search mode → one keyword) and `Words` (enum → the word a reviewer
+reads) are kept apart from the writer **so the parser can read the same tables backwards**. One
+place ties `CONTAINS` to `contains`, rather than two that drift.
 
-### Not implemented
+### Four grammar rules that only emerged from reading real output
 
-`GO_TO`, `RUN_CMD`, `SUB_FLOW`, `VARIABLE_CONDITION`, `NOTIFICATION_EMAIL`, `WINDOW_*`,
-`KEYBOARD_INPUT`, `IMAGE_SEARCH`, `TEXT_SEARCH`. Model columns exist for most of them
-(`RunCommand`, `ConditionText/Type`, `WindowName/Height/Width`, `KeyboardInputText/Type`,
-`LocationX/Y/EndX/EndY` for the WINDOW_* steps).
+**Every name is quoted**, even when it would read fine without. The original spec had bare names in
+aligned columns — a parser cannot tell where such a name stops. One rule is easier to parse back
+than a rule about which names need it.
 
----
+**`Launch` takes one command string**, not an executable plus arguments. The model stores one
+string; inventing a split it does not have would fail the round trip on the first export.
 
-## 8. Cursor steps — the design
+**`Id:` is in the header.** Identity travels in the file or a clone cannot recognise a flow.
 
-**Four separate `FlowStepType` values, one shared form.**
-
-The alternative considered was a single `CURSOR` step type plus a mode enum. Four types won because:
-
-- the executor stays a **flat dispatch** (`Dictionary<FlowStepTypeEnum, IFlowStepExecutor>`) instead
-  of a nested switch;
-- tree icons, labels and the type-picker grid stay per-type with no special-casing;
-- Zod validation is per-type;
-- the four values already existed — zero migration.
-
-The UI merges them: one card in the type picker, then **four mode buttons** (Click / Move / Drag /
-Scroll) that rewrite `flowStepType`. Fields below change per mode. Switching mode in EDIT is allowed;
-on submit the fields belonging to the other modes are explicitly cleared so a scroll step never
-carries a stale click action.
-
-Files: `frontend/src/features/flow-step/components/forms/cursor/`
-(`FlowStepCursorFormComponent`, `…FormFieldsComponent`, `…LocationFieldsComponent`,
-`cursor-modes.ts`, `flow-step-cursor.zod.ts`).
-
-### Point resolution
-
-Each cursor point has two possible sources, chosen by a boolean:
-
-| `isPointCustom` | Source | Field |
-|---|---|---|
-| `true` | a saved **FlowPoint** on the Flow | `flowPointId` |
-| `false` | the **result of an ancestor step** | `flowStepReferenceId` |
-
-`CURSOR_DRAG` has the whole set twice: `isPointEndCustom`, `flowPointEndId`,
-`flowStepReferenceEndId`.
-
-`flowStepReferenceId` holds the id of an **ancestor** `IMAGE_SEARCH` / `TEXT_SEARCH` step. At
-execution time the executor takes the latest `ExecutionStep` row for that step and uses its
-`ResultLocationX/Y`. Only ancestors are offered — anything off the parent chain may not have run yet
-when the cursor step executes. `Lookup.flowStep` implements this: one query by `RootId`, then walk
-the parent chain in memory, nearest first.
+**A blank line separates top-level steps, but never two.** A marker already leaves one behind it,
+and a heading followed by empty space reads as a section with nothing in it.
 
 ---
 
-## 9. Custom Electron windows and capture flows
+## 8. Execution
 
-### Overlay capture (used by FlowArea)
+### The engine
 
-1. Caller invokes `OVERLAY_OPEN_CAPTURE_WINDOW`.
-2. Electron opens a **fullscreen transparent window per monitor**, all loading `/overlay-capture`.
-3. Backend takes a screenshot per monitor (`System.captureForOverlay`) and starts
-   `System.inputRecordOverlayStart`, which broadcasts mouse/key events as `OVERLAY_MOUSE_EVENT`.
-4. Every window renders the frozen screenshot + a dimmer, clipping the shared physical selection
-   rect to its own monitor.
-5. Confirm → renderer sends the **physical absolute rect** back; Electron closes all overlay windows
-   and resolves the caller's promise. Escape cancels.
+A flow is walked with an **explicit stack**, not recursion. Infinite loops and `Go To` make
+recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
 
-### Point capture (used by FlowPoint) — no window
+Everything an execution needs sits in memory and is dropped as the walk leaves it behind, so a flow
+running for three weeks holds no more than one running for three seconds. History is written in
+batches and only if it was asked for — turning history off changes what gets stored and never what a
+flow does.
 
-Deliberately **not** a window. Click **Capture Location**, then click anywhere on screen:
+`StepWorkerFactory` maps `FlowStepTypeEnum` to an `IStepWorker`. The map is built in
+`App/DependencyInjection/ExecutionServiceRegistration.cs` rather than inside the factory, so the
+factory needs no container and the whole type-to-worker relationship is on one screen. Workers are
+singletons because they hold no state.
 
-1. `System.inputRecordPointCaptureStart` puts the always-running global hook into point-capture mode,
-   broadcasting as `POINT_CAPTURE_EVENT`.
-2. `use-capture-point.ts` resolves a promise on the first `BUTTON_DOWN`.
-   It listens for **BUTTON_DOWN, not BUTTON_UP** — the press that armed the capture happened before
-   recording started, so its release is the only stale event that can arrive.
-3. `KEY_UP` + `Escape` cancels; so does clicking the button again; unmount tears the session down.
+### The step types
 
-> The click is **not swallowed** — SharpHook observes, it does not suppress. That is what allows
-> picking a point inside a live app, but it also means the click reaches whatever is underneath.
-> Suppressing would need a low-level hook returning non-zero.
+```
+System     WAIT, LOOP, GO_TO, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
+           NOTIFY, END_EXECUTION, MARKER
+Input      CURSOR_CLICK, CURSOR_DRAG, CURSOR_SCROLL, CURSOR_RELOCATE,
+           WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, KEYBOARD_INPUT
+Perception SEARCH_IMAGE, SEARCH_TEXT
+Decision   CHECK_VALUE
+Hidden     SUCCESS, FAILURE
+```
 
-A **Test** button next to any location calls `System.moveCursor` and physically moves the cursor
-there, so the user can confirm the point before saving.
+`SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` are the branching types: each gets `Success` and
+`Failure` children. The script shows the *mode* rather than the type, so `SEARCH_IMAGE` in
+`WAIT_UNTIL_FOUND` mode writes as `Wait For Image` and in `FIND_ALL` as `Find All Images`.
 
-### Image editor
+`SearchModeEnum` is one axis, not two: `FIND_BEST`, `FIND_ALL`, `WAIT_UNTIL_FOUND`,
+`WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking once, so it is a
+mode rather than a flag that would be dead in three cases out of four.
 
-Opens a window at `/image-editor` with a PNG, used to produce the IMAGE_SEARCH template.
-Implemented: zoom, pan, toggleable pixel grid with adjustable opacity and hover X/Y readout,
-minimap, rectangular crop, freehand/polygonal lasso crop, eraser (pixels → transparent),
-undo/redo stack with thumbnail history.
-Actions: crop-and-apply-as-new-background, and erase pixels to transparent.
+### The matrix
 
----
+`Execution` carries `ViewportWidth`, `ViewportHeight` and `CsvRowIndex`. One execution is one
+viewport and one CSV row, which means **the matrix loop sits above the walk and cannot be a step**.
+Three sizes and ten rows is thirty executions.
 
-## 10. Backend conventions
+It runs **sequentially**. There is one mouse, one keyboard and one screen. That triples wall-clock
+in CI for three sizes and nobody should be surprised by it later.
 
-- **One handler per action**, MediatR, in `Business/Ipc/Handlers/<Entity>/`.
-- Handlers take `IDbContextFactory<AppDbContext>` and own their own `DbContext`.
-  There is **no generic repository / data service** — an earlier `IDataService` was removed because
-  it rented a context per call and its `SaveChangesAsync()` row count was misread as success/failure.
-- **Reads**: `AsNoTracking()`, and project straight into the DTO when the shape is known
-  (`GetFlowHandler`, tree queries, lookups) so counts and joins happen in SQLite in one round trip.
-- **Updates**: load the tracked entity, then
-  `dbContext.Entry(entity).CurrentValues.SetValues(dto)` — copies scalars and FKs only, so the
-  navigations the client round-tripped back cannot overwrite unrelated rows, and `CreatedOn` survives.
-- **Deletes**: `ExecuteDeleteAsync()`.
-- **Child collections** (Flow → search areas / locations) are synced **by hand**, matching on `Id`:
-  update matched, insert `Id == 0`, delete missing. AutoMapper must never assign a collection onto a
-  tracked entity — it deletes and re-inserts every row, changing ids and breaking every `FlowStep`
-  that referenced one.
-- **AutoMapper**: entity → DTO maps may carry navigations; **DTO → entity maps ignore every
-  navigation and `CreatedOn`**.
-- Enums are stored **as strings** (`HasConversion<string>()`).
+### Setup and teardown
 
-### Services
+Each viewport pass is launch, then steps, then teardown. Self-contained and repeatable, which is
+what makes a sequential matrix safe.
 
-| Service | Role |
+Teardown cannot be steps at the bottom of the tree, because `END_EXECUTION` stops the walk where it
+stands. A failed pass at 1920x1080 would leave the application open, the next pass would start
+against a stale window, and the suite would report a cascade of failures caused by the first one.
+Cascading red is the fastest way to lose trust in a test suite, so `ExecutionEngine` runs teardown
+on the way out whatever the verdict — unless the execution was stopped by hand.
+
+`AppCloseModeEnum` is `LEAVE`, `CLOSE_WINDOW` (posts `WM_CLOSE`), or `KILL_PROCESS`.
+
+### Variables
+
+Three kinds of name translate through one helper, `VariableTranslator`:
+
+| written | translates from |
 |---|---|
-| `IInputService` / `InputService` | `MoveCursor` (via `CursorHelper`), click, scroll, keyboard. Adds a settle delay between move and press because targets process the move asynchronously. |
-| `IInputRecordService` / `InputRecordService` | The global hook. Handlers subscribe **once at construction** and gate on a mode int (`None`/`All`/`Overlay`/`PointCapture`) set with `Interlocked.CompareExchange`, so only one recording runs at a time and subscriptions can't drift. Events go to a **bounded** channel (`DropOldest`, 4096) plus an optional broadcast. |
-| `IScreenshotService` | `Capture(rect)`, `CaptureVirtualScreen`, `CaptureSearchArea`, `CaptureAppWindow`, `CaptureMonitor`. |
-| `IWindowsGraphicsCaptureService` | D3D11 / Windows.Graphics.Capture backend. |
+| `{{username}}` | a CSV column |
+| `{{width}}`, `{{height}}` | the viewport being executed |
+| `{{Read the total}}` | what an earlier step produced |
 
-Helpers: `ScreenHelper` (monitors, logical vs physical bounds), `AppWindowHelper` (enumerate/find
-windows, `[ThreadStatic]` title buffer), `CursorHelper` (DPI-correct SendInput), `Direct3D11Helper`.
+There are **two substitution mechanisms**, because there are two different needs. A keyboard step in
+column mode holds a `FlowCsvColumnId` — a foreign key, not text — because the whole value is one
+column, and a foreign key is what makes renaming a column safe. Free text fields hold `{{name}}`
+variables, because a notify message like `"Login failed: {{Login error}}"` mixes literal and
+variable and that mixing is the point. Renaming a column rewrites the variables across that flow's
+steps in one transaction; a validator rule catches a variable that names nothing, at save rather
+than at execution. The writer emits `{{username}}` either way, so the script reads the same.
+
+### Coordinates
+
+Everything persisted is in **physical pixels**. The process is Per-Monitor-DPI-V2 aware, so a flow
+authored on a 150% display runs correctly on a 100% one.
+`ScreenHelper.EnablePerMonitorDpiAwareness` must run before anything else touches a coordinate API —
+without it Windows virtualises every rect to 96 DPI and nothing lines up with the capture buffers or
+the low-level input hook, both of which are always physical.
 
 ---
 
-## 11. Frontend conventions
+## 9. Validation and the fix loop
 
-- **Feature-based**: `features/<name>/{components,hooks,store}`, shared code in `shared/`,
-  Electron-window pages in `windows/`.
-- Every entity form is a pair: `XFormComponent` (RHF setup, header, footer, submit) +
-  `XFormFieldsComponent` (fields only, reads `useFormContext`), with a sibling `x.zod.ts`.
-- **Any field missing from the Zod schema is dropped on submit** — forms submit
-  `{ ...defaultValues, ...data }`, so an unvalidated field silently keeps its default.
-- TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["lookup", …]`;
-  mutations invalidate.
-- Zustand for UI state (`workflow-store` holds the selected tree node, the step type being added,
-  the tree refresh trigger, and the root flow id).
-- Dialogs go through `useDialogStore` (`openForm`/`closeAll`) rendering into `DialogRootComponent`.
-- Reusable form controls in `shared/components/form/` all bind via `useController`.
+**A freshly recorded flow is not allowed to run in CI.**
+
+A **Validate** button executes the flow and stops at the first `END_EXECUTION`. If it passes, the
+flow is marked ready and viewports can be added. Each viewport then has to pass validation of its
+own, because a flow has to work at that size to be worth running there.
+
+If it fails, the app asks a model for a fix, giving it:
+
+1. the flow exported as a script
+2. the application's own documentation
+3. the customer's documents — requirements, acceptance criteria, whatever they have
+4. common issues and their solutions
+5. scripts of flows that already validate
+
+The app applies the proposed fix and executes again. After a bounded number of attempts — ten is the
+working number — it stops and asks the tester rather than editing forever. When the tester answers,
+the app re-executes, takes fresh screenshots where it needs them, regenerates templates, and carries
+on from where validation stopped.
+
+This is the loop the whole product turns on: the difference between a recorder that produces a
+brittle script and a tool that produces a test somebody trusts.
+
+### Static validation
+
+`FlowValidationService` orchestrates rules in `Rules/` and runs before any of that — a flow tells
+you what is broken before you execute it. `FlowCheckProjection` and the `GetFlowChecks` AI tool
+expose the same information to a model: every check a flow contains, so a question about "what does
+this flow verify" is answerable without walking the tree by hand.
+
+`NAME_DUPLICATE` is an error rather than a warning: a duplicate name cannot round-trip through the
+script and makes two steps share one history trend.
+
+---
+
+## 10. AI
+
+### The local model is always on. The cloud is an addition, not an alternative.
+
+| | local | cloud |
+|---|---|---|
+| always present | yes | only when an API key is set |
+| sees screenshots, OCR text, typed values | yes | only on opt-in |
+| receives the local model's structured findings | — | always |
+| job | see, extract, structure | reason, propose, summarise |
+
+Every install gets a working assistant with no configuration, which matters most for the fix loop —
+the feature the product turns on cannot be gated behind an API key a customer may never add. It also
+means one component touches raw screen data and everything downstream gets derived text.
+
+**Accepted limitation:** a good vision model wants a GPU. A tester's laptop may not have one, and
+small CPU models read dense interfaces poorly. That cost is being taken for now rather than designed
+around.
+
+### The screen-data gate
+
+`AI_SEND_SCREEN_CONTENT` is a boolean, **default off**. `IAiProviderService.MaySendScreenDataAsync`
+is the single chokepoint — local always may, a cloud provider only on the setting. Typed text is
+redacted on three paths, and `DbQueryTools` never selects the `AppSetting` API key or
+`DiscordBot.WebhookUrl` in any projection: the webhook URL *is* the credential and is never logged.
+
+AI-generated flows go into the editor and never execute on their own.
+
+### Structured output, not prose
+
+The local model returns a schema:
+
+```
+elements:    type, label, x, y, width, height, state     (OmniParser produces these)
+screenState: normal | loading | modal | error
+notes:       short strings — what looks wrong, what is covering what
+```
+
+**This localises leakage; it does not remove it.** `label` and `notes` are both text read off the
+screen, so a label can be `Welcome, alex@company.com`. The schema means there are exactly two fields
+where screen text can appear rather than an unbounded paragraph, which is what makes review
+possible.
+
+### The payload is shown before it is sent
+
+Which is the actual guarantee. The cloud query is assembled from local findings and displayed first,
+with `label` and `notes` highlighted as the fields carrying screen text. Visibility rather than a
+promise: a filter that claims to catch everything is worse than a preview that admits it cannot.
+
+### Documents
+
+`AiDocumentIndexService` embeds markdown chunks locally with ONNX and searches them with USearch.
+`OnnxEmbeddingService` runs on the machine, but `AiDocumentTools` returns raw chunk text — so
+**embedding is not a privacy layer** and must not be described as one.
+
+---
+
+## 11. Repository and CI
+
+How a flow gets out of the database, into a repository, through a pipeline, and back to whoever has
+to work out why it went red.
+
+### The file is `.sflw`
+
+Git decides binary or text by looking for NUL bytes, not by extension, so a UTF-8 script diffs
+correctly with no configuration. What does want configuring is line endings: `*.sflw text eol=lf` in
+`.gitattributes`, because flows are authored on Windows and CI runs on Linux, and the round-trip
+test compares bytes.
+
+### Git is the version history. The execution carries what ran.
+
+Once a flow is a text file, `git log`, `git blame` and `git show HEAD~20:...` are the version
+history, with diffs and pull requests no in-app feature would match. Building a second history in
+the database would duplicate that, and only for customers who use a repository at all.
+
+What git cannot answer is "what exactly ran in execution 37". So the execution stores the flow script
+as text — a few KB — alongside the branch and commit it ran at. That reproduces the execution
+exactly, renders read-only in the app, and works whether or not the customer uses git.
+
+### Templates are inputs and live in the repository. Screenshots are outputs and never do.
+
+A template is part of the test definition, like a snapshot in a unit test: a flow from three months
+ago cannot execute without the images it was written against. They sit in the folder beside the flow
+and they are small. Locally they are named by **content hash**, so an unchanged image is stored once
+however many versions reference it.
+
+Screenshots are per-execution, large, and grow without bound. They travel as build artifacts.
+
+### Results travel as an execution bundle
+
+The CLI runner writes a folder: the JUnit XML, the execution steps as JSON, the flow script that ran,
+and the failure screenshots. CI uploads it as a build artifact, which every CI system already does.
+The app imports it.
+
+JUnit XML is the interchange format because every CI system already renders it. `<failure>` means
+the product is broken; `<error>` means the harness is.
+
+Later the app can fetch that same bundle from the CI provider's API instead of the user downloading
+it. A central StepinFlow server that receives results directly is a product decision about becoming a
+service, not a technical one, and it should not get decided by accident.
+
+### The app under test is the flow's root area
+
+You cannot resize "a flow", only a window, so the viewport matrix needs a target — and guessing it
+from whichever window has focus is exactly the implicit behaviour that breaks on another machine.
+
+`FlowArea` already binds to a window by process name and title, so this needs no new concept: one
+field on `Flow` naming the root area that is the application under test, plus the command that
+launches it. Viewport sizing targets that window; every other `WINDOW_*` step is untouched.
+
+### Secrets live in the local database, never in the repository
+
+Resolution order, most specific first:
+
+```
+CI argument  >  environment variable  >  local secrets file  >  stored value
+```
+
+`FlowCsvColumn.IsSecret` means the value is never stored in any file. A password in a repository is
+a leak.
+
+Stored values are encrypted at rest under a master password. Not DPAPI — that is Windows-only and
+this has to work on Linux. Plain AES-256, composed from .NET's own primitives:
+
+| stored in the clear | what it is |
+|---|---|
+| salt | 16 random bytes, per installation |
+| wrapped data key | a random 32-byte key, encrypted with the password-derived key |
+| each value | nonce, tag and ciphertext, with a fresh 12-byte nonce every time |
+
+`Rfc2898DeriveBytes` turns the master password into a key, deliberately slowly, because a password is
+short and guessable where a key is not. `AesGcm` encrypts and authenticates, so a tampered value
+fails loudly instead of decrypting to noise. Both live in `System.Security.Cryptography` and behave
+identically on Windows and Linux.
+
+The wrapped data key is what makes changing the master password cheap: derive a new key, re-wrap the
+same data key, and every stored value is untouched. It also removes the need for a separate password
+verifier — a wrong password simply fails to unwrap, and that failure is the check.
+
+Two consequences that are features rather than bugs. Forgetting the password means the stored values
+are unrecoverable, so there is a "reset stored values" path. And **CI never decrypts anything**,
+because a pipeline resolves from environment variables — a headless execution that can block on a
+password prompt is a broken CI story.
+
+### Sub-flows always resolve to the latest version
+
+Not pinned. A fix to a shared sub-flow reaches every flow that calls it, which is the point of having
+one.
+
+### Switching branches hides flows, it never deletes them
+
+The working tree is the truth; the database is a cache plus execution history. On a branch switch the
+app rescans the flows folder and shows what the working tree contains. Anything else is hidden,
+because its executions still matter.
+
+This only holds together because identity is `PublicId`: the same flow on two branches is one family,
+so its executions accumulate rather than fragmenting. Each execution records the branch and commit,
+which is what turns "why does this fail in CI but not locally" into an answerable question.
+
+### Flows appear in the folder structure the repository has
+
+Adding a folder in the app adds a folder in the repository; adding a flow inside it writes the script
+there. Script changes are visible in the app — including what a model changed when asked to fix
+something, so a tester can see the edit before trusting it.
+
+---
+
+## 12. Reporting and notifications
+
+Every check that can fail an execution is a thing worth counting.
+
+A flow that ran a hundred times — fifty at one viewport, fifty at another — with four failures is a
+sentence the product should be able to say. So is which checks those four fell into, and which checks
+have never failed at all. That is the difference between "the login test is flaky" and "the login
+test fails at 390x844 four times in fifty, always on the cart badge check".
+
+**Discord notifications** post to a webhook when a step fails, with the reason and the template images
+it was looking for, rate-limited per bot so a flow in a retry loop cannot flood a channel.
+
+**Failure screenshots**: nothing is written while a flow goes well. A failure writes out the last few
+frames leading up to it, each named after the step that took it.
+
+---
+
+## 13. Frontend
+
+Feature-based: `features/<name>/{components,hooks,store}`, shared code in `shared/`, Electron-window
+pages in `windows/`.
+
+Every entity form is a pair — `XFormComponent` (React Hook Form setup, header, footer, submit) and
+`XFormFieldsComponent` (fields only, reads `useFormContext`) — with a sibling `x.zod.ts`.
+
+> **Any field missing from the Zod schema is dropped on submit.** Forms submit
+> `{ ...defaultValues, ...data }`, so an unvalidated field silently keeps its default. This has
+> already cost one debugging session: a form typechecked, looked correct, and quietly discarded two
+> new columns because the schema had not been updated.
+
+TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["lookup", …]`; mutations
+invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
+`DialogRootComponent`.
 
 ### The tree
 
 `DataTreeComponent` renders a PrimeReact `Tree`, lazily loading children on expand.
 
-**Node keys are namespaced.** Flow ids and FlowStep ids are separate sequences, so a raw id makes
+**Node keys are namespaced.** Flow ids and FlowStep ids are separate sequences, so a raw id would make
 Flow 5 and FlowStep 5 the same node as far as selection and expansion are concerned. Keys are
-`flow-{id}` / `step-{id}`, built by `TreeNodeDto.BuildKey` (C#) and `buildTreeNodeKey` (TS) — **these
-two must stay in sync**. `TreeNodeDto.entityId` carries the real id; nothing parses the key.
+`flow-{id}` / `step-{id}`, built by `TreeNodeDto.BuildKey` in C# and `buildTreeNodeKey` in TypeScript
+— **these two must stay in sync.** `TreeNodeDto.entityId` carries the real id; nothing parses the key.
 
-For the same reason `FlowStep.getTreeNodes` takes `{ id, isFlow }`, not a bare id:
-`isFlow: true` → `WHERE FlowId = id AND ParentFlowStepId IS NULL` (the flow's root steps),
-`isFlow: false` → `WHERE ParentFlowStepId = id`.
+For the same reason `FlowStep.getTreeNodes` takes `{ id, isFlow }` rather than a bare id.
 
-Each expanded node appends a synthetic "New item" node (random UUID key, `isNew: true`) that opens
-the step-type picker.
+### Capture flows
 
-### Routes (`createHashRouter`)
+**Overlay capture** (for `FlowArea`) opens a fullscreen transparent window per monitor, all showing a
+frozen screenshot plus a dimmer, clipping one shared physical selection rect to their own monitor.
+Confirm sends the physical absolute rect back.
 
-`/`, `/flows`, `/flows/new`, `/flows/:id/{view,edit,clone}`, `/workflow/:id`,
-plus the window routes `/overlay-capture`, `/overlay-preview`, `/image-editor`.
+**Point capture** (for `FlowPoint`) is deliberately not a window. The always-running global hook is
+put into point-capture mode and resolves on the first `BUTTON_DOWN` — not `BUTTON_UP`, because the
+press that armed the capture happened before recording started, so its release is the only stale
+event that can arrive.
 
----
+> The click is **not swallowed**. SharpHook observes, it does not suppress. That is what allows
+> picking a point inside a live application, but it also means the click reaches whatever is
+> underneath.
 
-## 12. IPC action catalogue
-
-```
-Flow            create update delete get getLazy getTreeNodes
-FlowStep        create update delete get getLazy getTreeNodes
-FlowArea  create update delete get getLazy
-FlowPoint    create update delete get
-FlowStepImage   create get
-SubFlow         create update delete get
-Lookup          window monitor flowStep flowPoint
-System          takeScreenshot captureForOverlay moveCursor
-                inputRecordAllStart/Stop
-                inputRecordOverlayStart/Stop
-                inputRecordPointCaptureStart/Stop
-```
+**Image editor** opens at `/image-editor` to produce a template: zoom, pan, pixel grid, minimap,
+rectangular and lasso crop, eraser to transparency, undo/redo with thumbnail history.
 
 ---
 
-## 13. Known issues and inconsistencies
+## 14. Conventions
 
-### 🔴 Cursor enum split is currently inconsistent across layers
+### Naming
 
-There are now **two** discriminators for the same concept and the click action does not round-trip.
+> **`Helper` requires static + pure — no `DbContext`, no `DllImport`, no `async`. Anything else gets
+> a real noun.**
 
-| Layer | Fields |
-|---|---|
-| Entity `FlowStep` | `CursorType` (CLICK/MOVE/SCROLL/DRAG), `CursorButtonActionType` (SINGLE/DOUBLE/HOLD/RELEASE), `CursorButtonType`, `CursorScrollDirectionType` |
-| `FlowStepDto` (C#) | `CursorType`, `CursorButtonType`, `CursorScrollDirectionType` — **`CursorButtonActionType` missing** |
-| `FlowStepDto` (TS) | `cursorActionType`, `cursorButtonActionType` (both typed as the CLICK/MOVE/SCROLL/DRAG enum), `cursorButtonType`, `cursorScrollDirectionType` — **no `cursorType`** |
-| Cursor form / Zod | discriminates on `flowStepType`; binds the **"Click Action"** dropdown to `cursorActionType`, which now offers CLICK/MOVE/SCROLL/DRAG |
+The suffix is right for a static class that does one simple thing. What it must not become is the
+folder where anything without a home lands. Three different species used to live under `Helpers/`:
+native interop that is really the OS API surface, genuine pure functions, and things with a
+`DbContext` inside them that are queries wearing a static method.
 
-Consequences: the click action cannot be saved or loaded; the "Click Action" dropdown shows the
-wrong four options; `CursorType` never arrives from the form.
+The best-named classes in this repo already skip the suffix — `VariableTranslator`,
+`ConditionEvaluator`, `FlowStructureHasher`, `WindowMatcher`. Each names what it does. `Helper` is
+the fallback for when no such noun exists, not the default.
 
-Decision still open: **either** keep the four `FlowStepType` values and delete `CursorTypeEnum`
-(the form already discriminates on `flowStepType`), **or** keep `CursorType` and collapse the four
-step types into one. Not both. Recommended: drop `CursorTypeEnum`, rename the click-action field to
-`CursorButtonActionType` consistently in all four layers.
+### Catalogs and constants
 
-Also: `backend/Core/Enums/Cursor/CursorActionTypeEnum.cs` declares a type named `CursorTypeEnum` —
-filename and type disagree.
+Two different things, two homes.
 
-### 🟠 Not built
+**`Core/Catalogs/`** holds structured tables that answer a question: `AppSettingCatalog` (every
+setting's label, description, default, min and max — read by the loader *and* the settings page so
+the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type),
+`CommandPresetCatalog`. These are not constants; they are queried, and a `Constants.cs` full of
+`public const string` would describe them less accurately than `Catalog` does. The pattern has a
+well-known precedent in Roslyn's `SyntaxFacts`.
 
-- **The whole execution engine.** `Execution` / `ExecutionStep` are modelled but have no handlers,
-  no IPC actions and no executor. See §14.
-- `SubFlow` CRUD is wired but has no UI; `GetSubFlowTreeNodeHandler.cs` is entirely commented out.
-- `GetLazyFlowStepImageQuery`, `UpdateFlowStepImageCommand`, `DeleteFlowStepImageCommand` are
-  declared with no handler and no dispatcher entry (unreachable, so no runtime error).
+**`Constants/`** holds things that genuinely are constants — the OCR installable-tag list, `WM_CLOSE`,
+the DPI awareness handles, recorder poll rates.
 
-### 🟡 Smaller
+Neither belongs under `Helpers/`.
 
-- `Execution.Status` / `ExecutionStep.Status` are `string`, unlike every other enum.
-- `Lookup.window` returns window **titles** only. Titles mutate constantly
-  ("Document1 - Word" → "Report - Word"), so a saved `AppWindowName` goes stale. Should key on
-  process name + an optional title pattern; `SystemWindow.ProcessName` already exists but is unused.
-- Window matching is `title.Contains(x)`, first `EnumWindows` hit wins, no z-order preference —
-  "Notepad" matches "Notepad++".
-- `CursorActionTypeEnum.HOLD_CLICK` without a matching `RELEASE_CLICK` leaves the physical button
-  down. The executor must force-release held buttons and modifiers on completion, failure and abort.
-- Overlay capture uses JPEG. Fine for display; **must not** feed an IMAGE_SEARCH template — JPEG
-  artifacts wreck template matching.
-- Dead copy-paste files: `features/flow-area/hooks/use-flow-step.ts` and
-  `features/flow-area/store/flow-step-store.ts` are duplicates of the flow-step versions.
-- `WorkflowContentComponent` still switches per step type twice (ADD branch and VIEW/EDIT branch).
-  At 17 step types this becomes ~700 lines. A single registry
-  (`Record<FlowStepTypeEnum, {label, icon, form: lazy(...), defaults}>`) would collapse it and
-  code-split the forms.
-- Every form repeats a `setTimeout(() => trigger(), 0)` on mount to sync `isValid`.
+### Backend
 
----
+- **One handler per action**, MediatR, in `Business/Ipc/Handlers/<Entity>/`. The folder mirrors
+  `Core/Models/Ipc/`, so you can find either end from the other.
+- Handlers take `IDbContextFactory<AppDbContext>` and own their `DbContext`. **There is no generic
+  repository.** A MediatR handler *is* the transaction boundary and EF's `DbSet` *is* the
+  repository; a repository layer over `DbContext` would add indirection and remove LINQ. An earlier
+  `IDataService` was removed because it rented a context per call and its `SaveChangesAsync()` row
+  count was misread as success.
+- **Reads** use `AsNoTracking()` and project straight into the DTO when the shape is known, so counts
+  and joins happen in SQLite in one round trip.
+- **Updates** load the tracked entity then `Entry(entity).CurrentValues.SetValues(dto)` — scalars and
+  FKs only, so round-tripped navigations cannot overwrite unrelated rows and `CreatedOn` survives.
+- **Deletes** use `ExecuteDeleteAsync()`.
+- **Child collections are synced by hand**, matching on `Id`: update matched, insert `Id == 0`, delete
+  missing. AutoMapper must never assign a collection onto a tracked entity — it deletes and
+  re-inserts every row, changing ids and breaking every `FlowStep` that referenced one.
+- **AutoMapper**: entity → DTO maps may carry navigations; DTO → entity maps ignore every navigation
+  and `CreatedOn`.
 
-## 14. Execution engine — decisions to make before building it
+### C# style
 
-Not implemented. The design intent:
+- Explicit types over `var`.
+- No expression-bodied `=>` members.
+- `<summary>` on public members; `//` on private ones.
+- Comments explain *why*, not *what*. Names and logic carry the meaning.
+- `//===` section banners inside long P/Invoke files.
 
-- **Load the whole flow in one query** using `RootId`, build the tree in memory, execute with zero
-  DB round trips in the hot path.
-- **Explicit stack, not recursion** — `Stack<Frame>` of `{ stepId, childIndex, iteration }`.
-  Infinite `LOOP` + `GO_TO` make recursion depth unbounded, and an explicit stack gives
-  pause / resume / step-into for free, which the workflow page wants.
-- **Do not write an `ExecutionStep` row per step** — for fast steps the INSERT dominates. Keep run
-  state in memory, stream progress over the existing broadcast pipe, persist only the `Execution`
-  header, checkpoints and failures (or batch-flush).
-- **Budget + panic key.** `GO_TO` plus infinite `LOOP` can never terminate. Wire a step budget and a
-  global panic key (Esc/F12) to cancel — the global hook is already running, so it is nearly free.
-- **Dry-run mode** that logs resolved coordinates instead of clicking. Makes the whole
-  FlowPoint/FlowArea portability model debuggable.
-- One executor class per step type resolved from DI
-  (`Dictionary<FlowStepTypeEnum, IFlowStepExecutor>`), sharing an injected point resolver.
-  Never a giant switch.
-- Consider storing IMAGE_SEARCH templates as **files** with a path in the DB rather than blobs in
-  `FlowStepImage`, so no query accidentally drags megabytes of PNG along.
+### Priorities
+
+**Correctness → execution speed → memory → clean structure.** In that order, when they conflict.
 
 ---
 
-## 15. Conventions worth stating to an AI
+## 15. Status
 
-- Priorities, in order: **correctness → execution/load speed → memory → clean structure.**
-- Prefer one round trip and a projection over `Include` + AutoMapper for read paths.
-- Prefer adding a nullable column on `FlowStep` over a new child table, unless the thing needs to be
-  **named and shared** across steps (that is what `FlowArea` and `FlowPoint` are for).
-- Naming: `XComponent.tsx`, `XFormComponent` / `XFormFieldsComponent` / `x.zod.ts`,
-  `XHandler.cs`, `XDto`, `XEnum`. Handlers are one class per file under `Handlers/<Entity>/`.
-- C# style in this repo: explicit types over `var`, `//` section banners, comments explaining *why*.
+In active development, not released.
+
+Working: the flow builder, the recorder, image search, OCR, sub-flows, notifications, the execution
+engine with breakpoints and step-into, execution history, validation, and the AI assistant with
+local and cloud providers.
+
+`PLAN.md` holds the build order and which phases have landed. `TODO.md` holds everything deferred.
+
+### Known gaps
+
+- The flow script **writer** exists and is verified; the **parser** does not. Nothing round-trips yet.
+- The writer has no caller — no export handler and no button.
+- Templates are not yet written to disk by content hash, and no CSV template is generated.
+- `Platform.Windows` does not exist yet; the nine native files still sit in `Business`, which is why
+  `Business` still targets `net10.0-windows`. §2 describes the target, not the present.
+- `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the
+  screen, so it is not currently redacted for AI. Flagged in `TODO.md` rather than folded in silently.
+
+---
+
+## Licence
+
+GPL-3.0-or-later. Copyright (C) 2026 Alex Psihogios.

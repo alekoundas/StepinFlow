@@ -162,8 +162,10 @@ is lost between sessions.
       should be a checkbox on the chat rather than a global setting, so the same question can be
       asked both ways and compared. Off by default. Only worth showing when the model reports the
       `thinking` capability, which `/api/show` already returns.
-- [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Windows DPAPI
-      (ProtectedData.Protect) is about ten lines and needs no key management.
+- [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Use the same master
+      password scheme `REPO-AND-CI.md` settles for input secrets - key derivation plus `AesGcm`,
+      not DPAPI, which is Windows only and would become a porting blocker. One mechanism for every
+      secret the app holds, or there will be two half-solutions.
 - [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a
       spinner for 20+ seconds. Needs a broadcast type and partial-message plumbing.
 - [ ] **Anthropic as a native provider.** Only OpenAI-compatible endpoints work today, which
@@ -274,6 +276,35 @@ is lost between sessions.
       manual capture path fills both in; the wizard has the same numbers available and does not.
 - [ ] **Flow edit / view / clone routes are broken.** `FlowFormPage` reads a `formMode` route param
       that no route declares, and `const flow = null` means it never loads the flow it is editing.
+
+## The plan
+
+Three documents, not this one:
+
+- `BRD.md` - what the product does and why. Recording, data, happy path validation and the fix
+  loop, viewports, pipelines, git, reporting.
+- `REPO-AND-CI.md` - the technical decisions those features assume. Flow identity, git as the
+  version history, templates, the execution bundle, secrets and encryption, branch switching.
+- `PLAN.md` - the build order, sixteen phases from closing the leaks to reporting.
+
+`TODO.md` stays what it has always been: deferred work that is not part of that plan.
+
+- [ ] **Decide whether `RunCommandValue` is screen data.** Phase 0 gated screenshots, OCR text and
+      typed text behind `MaySendScreenDataAsync`. A command line was left alone: it is authored
+      rather than read off the screen, and "which flows use curl" is a fair question. But
+      `curl -H "Authorization: Bearer ..."` is a credential sitting in a field the model reads
+      freely. Either gate it, or say plainly that command lines are not the place for secrets.
+
+- [ ] **`KeyboardInputText` is sent to the model.** `DbQueryTools` projects it (line 420) and
+      searches it (line 130), so a password recorded while typing into a login form reaches
+      whatever ai provider is configured, cloud included. `AppSetting.Value` and
+      `DiscordBot.WebhookUrl` are already excluded by hand; this needs the same. It has to land
+      before stored secrets move into the database, or the grid makes an existing leak wider.
+
+- [ ] **A recorded flow still cannot fail on its own.** The AI path adds `End Execution`, and the
+      recorder deliberately does not. So "record and execute right away" produces a flow that walks
+      to the end and reports COMPLETED whatever the application did. Fine while the AI pass is the
+      intended route; worth revisiting if recording alone is ever offered as a way to make a test.
 
 ## Documentation
 

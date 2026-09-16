@@ -7,10 +7,10 @@
 
 # StepinFlow
 
-**Automate any Windows application by describing what to do on screen.**
+**Record a test once. Run it on every build, at every screen size, against real data.**
 
-Build a flow out of clicks, key presses, image searches and conditions — then run it with a
-real debugger: breakpoints, step over, and a full history of what happened.
+A QA tester records what they do to an application. The recording becomes a test that runs
+unattended in CI and reports which checks passed — with no selectors, no DOM and no code.
 
 </div>
 
@@ -25,88 +25,109 @@ real debugger: breakpoints, step over, and a full history of what happened.
 
 ## What it is
 
-StepinFlow drives the **real mouse and keyboard** and reads the **real screen**, so it automates
-any application — not just a browser. There is no scripting language: a flow is a tree of typed
-steps you build in the UI.
+StepinFlow works from **what is on screen** — a template image, or text read by OCR — rather than
+from a selector or an accessibility tree. So it does not care whether the thing under test is a
+website, a desktop program, or something nobody has written an automation library for.
 
-It is a Windows desktop app. Everything runs locally and nothing leaves your machine.
+A test is a **flow**: a tree of typed steps that clicks, types, waits, reads the screen and branches
+on what it finds. You build it in the UI or record it, and it exports to a text file you can review
+in a pull request.
 
-**Why it exists.** Most automation tools either record blind coordinate clicks that break the
-moment a window moves, or need the target application to expose an API. StepinFlow finds things
-by looking at the screen — a template image, or text read by OCR — so a flow keeps working when
-the window is somewhere else, or a different size.
+**Why it exists.** Record-and-replay tools have existed for twenty years and testers do not trust
+them, because a recording breaks the first time anything moves and nobody can tell why. Three things
+answer that here:
+
+- **A recording is not a test until it has validated.** The app executes it once and says so, rather
+  than letting a green suite prove nothing.
+- **A failure is diagnosed, not just reported** — with the screenshots, the templates it was looking
+  for, the flow as text, and a model that has read your own requirements.
+- **The test is a file in your repository**, reviewable by someone who has never opened the app.
 
 ---
 
 ## Features
 
+### Record
+
+- **Setup first** — what the flow is called, what it tests and how to open it, what to do when it ends
+- **A Test button on the launch command**, so a wrong one is caught before a recording is wasted on it
+- **Pause mid-recording** to type a wrong value on purpose and capture how the app rejects it — that is
+  how failure paths get written
+- **Ctrl + left click** to add a check at that spot: must this exist, wait until it appears, wait until it goes
+- **Ctrl + right click** to do something other than click: run a command, or take the value from a CSV column
+
 ### Build
 
-- **Visual flow tree** — drag steps to reorder or renest them, with the move validated before it happens
-- **Recorder** — perform the task once with the real mouse and keyboard; the recorder turns it into a draft flow
-- **Wizard** — walks you through turning a recording into steps, cropping template images as you go
-- **Reusable areas and points** — name a rectangle or a location once and reference it from any step
-- **Sub-flows** — extract part of a flow into a reusable one, and call it from anywhere
-- **Live validation** — a flow tells you what is broken before you run it
+- **Visual flow tree** — drag steps to reorder or renest, with the move validated before it happens
+- **Reusable areas and points** — name a rectangle or a location once, reference it from any step
+- **Sub-flows** — extract part of a flow and call it from anywhere; changes reach every caller
+- **Live validation** — a flow tells you what is broken before you execute it
+- **AI assistant** — local model always on, cloud provider optional, screen data off by default
 
 ### See the screen
 
-- **Image search** — OpenCV template matching, with multi-scale tolerance so a resized window still matches
-- **Four search modes** — first match, every match, wait until found, wait until gone
-- **Read text** — Windows OCR over a screen region, with a regex to pull out the part you want
-- **Search areas that follow a window** — anchor a region to an application window and the coordinates stay correct wherever the user drags it
+- **Image search** — OpenCV template matching, multi-scale so a resized window still matches
+- **Four search modes** — best match, every match, wait until found, wait until gone
+- **Read text** — Windows OCR over a region, with a regex to pull out the part you want
+- **Areas that follow a window** — anchor a region to an application window and the coordinates stay
+  correct wherever the user drags it
 
-### Run and debug
+### Execute and debug
 
 - **Breakpoints** — click the gutter beside any step
-- **Step into / step over** — step over runs a whole sub-flow and stops after it
-- **Pause and continue** mid-run
-- **Live run view** — every step as it happens, indented by how deep it ran
-- **Execution history** — past runs kept, with per-step duration, result and location
-- **Failure screenshots** — nothing is written while a flow goes well; a failure writes out the last few frames leading up to it, each named after the step that took it
+- **Step into / step over** — step over executes a whole sub-flow and stops after it
+- **Pause and continue** mid-execution
+- **Live view** — every step as it happens, indented by how deep it ran
+- **Execution history** — per-step duration, result and location
+- **Failure screenshots** — nothing is written while a flow goes well; a failure writes the last few
+  frames leading up to it, each named after the step that took it
 
-<!-- SCREENSHOT 3 — the debugger, mid-run or paused on a breakpoint.
+<!-- SCREENSHOT 3 — the debugger, mid-execution or paused on a breakpoint.
      Show the toolbar (Continue / Step into / Step over active), a breakpoint dot in the tree,
-     and the run list with a few finished steps. This is the feature nothing else here has.
+     and the list with a few finished steps. This is the feature nothing else here has.
      Save as docs/images/debugger.png -->
 
-![Running a flow](docs/images/debugger.png)
+![Executing a flow](docs/images/debugger.png)
 
-### Tell you about it
+### Ship results
 
-- **Discord notifications** — post to a webhook when a step fails, with the reason and the template images it was looking for
-- **Rate limited per bot** so a flow in a retry loop cannot flood a channel
+- **Data-driven** — a flow's inputs are CSV columns, and it executes once per row
+- **Viewports** — the same recording executes at every screen size you add
+- **Secrets** — marked columns never reach a file; CI resolves them from the environment
+- **Discord notifications** on failure, rate-limited so a retry loop cannot flood a channel
 
 ---
 
 ## Step types
 
-Eighteen step types you can add, in five groups. Any step that can fail has **Success** and
-**Failure** branches, so a flow handles its own problems rather than stopping.
+Twenty-one step types in five groups. Any step that can fail has **Success** and **Failure**
+branches, so a flow handles its own problems rather than stopping.
 
 | Group | Step | What it does |
 |---|---|---|
 | **Control** | Wait | Pause, for a fixed time or a random range |
 | | Loop | Repeat its children a number of times, or forever |
 | | Go To | Jump to another step |
-| | Sub-Flow | Run another flow and come back |
-| | Check Value | Test what an earlier step produced |
+| | Sub-Flow | Execute another flow and come back |
+| | End Execution | Finish, passed or failed, with a reason |
+| | Marker | A named divider — becomes a heading in the script |
 | **Input** | Cursor Click | Click at a point, a found image, or an earlier step's result |
-| | Cursor Drag & Drop | Drag between two locations |
+| | Cursor Drag | Drag between two locations |
 | | Cursor Scroll | Scroll at a location |
 | | Cursor Relocate | Move the cursor without clicking |
-| | Keyboard Input | Type text or send key combinations |
+| | Keyboard Input | Type text, a CSV column, or send key combinations |
 | **Window** | Window Focus | Bring an application window to the front |
 | | Window Resize | Resize a window |
 | | Window Relocate | Move a window |
-| **Perception** | Image Search | Find a template image on screen |
-| | Read Text | OCR a region and optionally extract with a regex |
+| **Perception** | Search Image | Find a template image on screen |
+| | Search Text | OCR a region, optionally extracting with a regex |
+| **Decision** | Check Value | Test what an earlier step produced |
 | **System** | System Command | Run a shell command and check its exit code |
 | | System Action | Sleep, lock, shut down and similar |
 | | Notify | Post a message to Discord |
 
-Every step can be positioned from a **named point**, a **found image**, or **another step's
-result** — which is what makes a flow survive the window moving.
+Every step can be positioned from a **named point**, a **found image**, or **another step's result**
+— which is what makes a flow survive the window moving.
 
 ---
 
@@ -122,19 +143,32 @@ Three processes, talking over two named pipes:
   React renderer
 ```
 
-- The **.NET host** owns the database, the screen, the mouse and the keyboard.
-- **Electron** is the shell and the bridge; the React renderer never talks to .NET directly.
-- The IPC envelope is protobuf, the body is JSON — so adding a new DTO never touches the `.proto`.
+The **.NET host** owns the database, the screen, the mouse and the keyboard. **Electron** is the
+shell and the bridge; the React renderer never talks to .NET directly. The IPC envelope is protobuf
+and the body is JSON, so adding a new DTO never touches the `.proto`.
 
 ### The execution engine
 
 A flow is walked with an **explicit stack**, not recursion — infinite loops and `Go To` make
 recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
 
-Everything a run needs sits in memory and is dropped as the walk leaves it behind, so a flow
-running for three weeks holds no more than one running for three seconds. History is written in
-batches, and only if you asked for it — turning history off changes what gets stored and never
-what a flow does.
+Everything an execution needs sits in memory and is dropped as the walk leaves it behind, so a flow
+running for three weeks holds no more than one running for three seconds.
+
+### The backend layering
+
+```
+App ──────→ Business ──→ DataAccess ──→ Core
+ └────────→ Platform.Windows ─────────→ Core
+```
+
+`Business` holds the domain — validation, the script writer, the execution walker — and **cannot
+reach native code**, because it does not reference `Platform.Windows`. The ports it calls
+(`IScreenshotService`, `IInputService`, `IWindowService` …) are declared in `Core` and bound to
+their Windows adapters in `App`, the composition root. That boundary is what keeps the domain
+testable without a screen, and what a Linux port would slot into.
+
+See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ---
 
@@ -152,10 +186,11 @@ what a flow does.
 | Input | SharpHook — global hook and event simulation |
 | Vision | OpenCvSharp4 template matching, `Windows.Media.Ocr` |
 | Capture | Direct3D11 / `Windows.Graphics.Capture` |
+| AI | Ollama or OpenAI, ONNX embeddings, USearch vector index |
 | IPC | Named pipes, protobuf-net ↔ protobufjs |
 
-**DPI-aware, everything in physical pixels** — a flow authored on a 150% display runs correctly on
-a 100% one.
+**DPI-aware, everything in physical pixels** — a flow authored on a 150% display executes correctly
+on a 100% one.
 
 ---
 
@@ -176,8 +211,8 @@ npm run install:full
 npm run dev
 ```
 
-That starts the Vite dev server, the .NET host and Electron together. The SQLite database is
-created on first run and migrations are applied at startup.
+That starts the Vite dev server, the .NET host and Electron together. The SQLite database is created
+on first run and migrations are applied at startup.
 
 ### Build a release
 
@@ -185,8 +220,8 @@ created on first run and migrations are applied at startup.
 npm run build
 ```
 
-Publishes the backend self-contained, builds the renderer, and packages everything with
-electron-builder into `dist/`.
+Publishes the backend self-contained for `win-x64`, builds the renderer, and packages everything with
+electron-builder into `release/`.
 
 ### Useful scripts
 
@@ -199,32 +234,25 @@ electron-builder into `dist/`.
 
 ---
 
-## Project structure
+## Documentation
 
-```
-backend/
-  App/          Host, IPC pipes, dependency injection
-  Business/     Services, IPC handlers, the execution engine
-  Core/         Models, DTOs, enums, helpers — no dependencies
-  DataAccess/   EF Core context, configurations, migrations
-electron/       Main process, preload, protobuf bridge
-frontend/src/
-  features/     One folder per feature: page, components, hooks, store
-  shared/       Components, models, enums, the backend API service
-```
-
-The backend is layered so `Core` knows nothing about EF, and `Business` knows nothing about the
-transport. Adding a step type means a worker in `Business`, a form in `frontend/features/flow-step`,
-and one line in the registration.
+| File | What is in it |
+|---|---|
+| [PROJECT.md](PROJECT.md) | The whole application — architecture, data model, execution, AI, CI |
+| [FLOW-FORMAT.md](FLOW-FORMAT.md) | The `.sflw` flow script grammar |
+| [PLAN.md](PLAN.md) | Build order, and what has landed |
+| [TODO.md](TODO.md) | Everything deferred |
 
 ---
 
 ## Status
 
 In active development, and not yet released. The builder, recorder, image search, OCR, sub-flows,
-notifications and the execution engine all work. Expect rough edges around the newer screens.
+notifications, execution engine and AI assistant all work.
 
-See [TODO.md](TODO.md) for what is known to be missing.
+The flow script **writer** is done and verified; the **parser** is not, so nothing round-trips yet.
+Linux is on the roadmap — the port boundary exists for it, but Wayland makes it a larger job than a
+straight port. See [PROJECT.md §2](PROJECT.md) for why.
 
 ---
 
@@ -236,8 +264,8 @@ Copyright (C) 2026 Alex Psihogios.
 
 StepinFlow is free software: you can redistribute it and modify it under the terms of the GPL as
 published by the Free Software Foundation, either version 3 or (at your option) any later version.
-It is distributed in the hope that it will be useful, but **without any warranty** — without even
-the implied warranty of merchantability or fitness for a particular purpose.
+It is distributed in the hope that it will be useful, but **without any warranty** — without even the
+implied warranty of merchantability or fitness for a particular purpose.
 
 In short: fork it, change it, use it. If you distribute a modified version, that version has to be
 open under the same licence.
