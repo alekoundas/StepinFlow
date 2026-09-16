@@ -26,4 +26,7 @@ namespace Core.Models.Ipc
 
     public record ExtractSubFlowCommand(ExtractSubFlowDto dto) : IRequest<ResultDto<ExtractSubFlowResultDto>>;
 
+    /// <summary>Writes the flow out as a script with its template images beside it.</summary>
+    public record ExportFlowCommand(FlowExportRequestDto dto) : IRequest<ResultDto<FlowExportResultDto>>;
+
 }

@@ -3,6 +3,7 @@ using App.Ipc;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
+using Business.Services.FlowScriptService;
 using Business.Services.FlowValidationService;
 using Business.Services.FlowValidationService.Rules;
 using Core.Ports;
@@ -70,6 +71,10 @@ namespace App
             builder.Services.AddSingleton<FlowStepValidator>();
             builder.Services.AddSingleton<FlowStructureValidator>();
             builder.Services.AddSingleton<IFlowValidationService, FlowValidationService>();
+
+            // Flow script
+            builder.Services.AddSingleton<IFlowScriptWriter, FlowScriptWriter>();
+            builder.Services.AddSingleton<IFlowScriptExporter, FlowScriptExporter>();
 
             builder.Services.AddExecutionEngine();
 
