@@ -76,11 +76,13 @@ The interfaces for anything outside the process live in `Core/Ports`. The implem
 `Platform.Windows`. `Business` consumes the interface and never sees the implementation.
 
 ```
-Core/Ports/IScreenshotService        →  Platform.Windows/Windows/Screen/ScreenshotService
-Core/Ports/IInputService             →  Platform.Windows/Windows/Input/InputService
-Core/Ports/IOcrService               →  Platform.Windows/Windows/Ocr/OcrService
-Core/Ports/IWindowService            →  Platform.Windows/Windows/Window/WindowService
-Core/Ports/ISystemActionService      →  Platform.Windows/Windows/System/SystemActionService
+Core/Ports/IScreenshotService        →  Platform.Windows/Screen/ScreenshotService
+Core/Ports/IScreenService            →  Platform.Windows/Screen/ScreenService
+Core/Ports/IInputService             →  Platform.Windows/Input/InputService
+Core/Ports/IInputRecordService       →  Platform.Windows/Input/InputRecordService
+Core/Ports/IWindowService            →  Platform.Windows/Windowing/WindowService
+Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
+Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
 Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
 Core/Ports/IIpcBroadcastService      →  App/Ipc/BroadcastService
 ```
@@ -103,14 +105,18 @@ The folders inside it split on a second axis — whether the native code is OS-s
 
 ```
 Platform.Windows/
-  Windows/     Screen, Input, Window, Ocr, System, Native   — Win32, WinRT, GDI+
-  Common/      Vision                                        — native, but identical on every OS
+  Screen/  Input/  Windowing/  Ocr/  SystemActions/  Native/   — Win32, WinRT, GDI+
+  Common/Vision/                                               — native, identical everywhere
 ```
 
-`Common` exists for OpenCvSharp. It is native code, so it is not `Business`; it is byte-identical
-on Linux, so it is not `Windows`. Without `Common` it would be homeless. Note the trap:
-`System.Drawing.Common` is named Common and is **not** — GDI+ is Windows-only since .NET 6 and
-belongs under `Windows/`.
+There is no `Windows/` wrapper folder: the project name already carries the OS. What the split
+still has to say is which code would move unchanged into a `Platform.Linux`, and that is
+`Common/`.
+
+It exists for OpenCvSharp. That is native code, so it is not `Business`; it is byte-identical on
+Linux, so it does not belong beside the Win32. Without `Common` it would be homeless. Note the
+trap: `System.Drawing.Common` is named Common and is **not** — GDI+ has been Windows-only since
+.NET 6, so it sits with the rest of the Win32 code.
 
 What this rule deliberately **excludes**: `DiscordNotifier` and the Ollama client are external
 *system* adapters, not platform adapters. They sit behind interfaces already and they do not
@@ -128,7 +134,9 @@ Splitting gives two things that are not available from folders and convention:
 
 **Business cannot reach native code.** `AppWindowHelper.Focus(...)` inside the execution walker used
 to compile, because it was a `public static` class in the same assembly. Now the type does not
-exist as far as the Business compiler is concerned — `CS0103`, a hard error.
+exist as far as the Business compiler is concerned — `CS0103` for a bare name, `CS0246` for a
+qualified one. A hard error either way, and checked by dropping a probe file into `Business`
+that names a Platform type: it fails to compile.
 
 This is a tripwire rather than a prison, and it is worth being honest about the difference. A
 hand-written `[DllImport("user32.dll")]` still compiles in a plain `net10.0` project; P/Invoke is
@@ -138,13 +146,19 @@ reference to Platform, is a conspicuous act in review. The same line today blend
 others. (If that tripwire is ever tripped, `Microsoft.CodeAnalysis.BannedApiAnalyzers` with a
 `BannedSymbols.txt` turns it into a build error.)
 
-**Platform internals can be `internal`.** `Direct3D11Interop`, `ThumbnailHelper`, `NativeCursor` and
-`ScreenMetrics` are called only from inside Platform. They were `public static` solely because one
-assembly left no other option. The assembly boundary makes "this is a private detail of the
-screenshot adapter" a compiler fact.
+**Platform internals can be `internal`.** `Direct3D11Interop`, `NativeCursor` and
+`OcrLanguageCatalog` are called only from inside Platform. They were `public static` solely
+because one assembly left no other option, and the assembly boundary makes "this is a private
+detail of the screenshot adapter" a compiler fact.
 
-**The verification:** `Business` drops the `System.Drawing.Common` package reference entirely. If it
-still compiles, the domain is genuinely GDI-free. One-line test, run it after the move.
+Two could not follow. `ScreenMetrics` stays public because `App` calls
+`EnablePerMonitorDpiAwareness` at startup, before a container exists.
+`IWindowsGraphicsCaptureService` stays public because registration lives in `App` by house rule,
+so `App` has to be able to name the type.
+
+**The verification:** `Business` drops the `System.Drawing.Common` package reference entirely and
+still compiles, so the domain is genuinely GDI-free. `Rectangle`, `Point` and `Size` come from
+`System.Drawing.Primitives`, which ships with the framework.
 
 ### Splitting the machine from the decision
 
@@ -154,13 +168,19 @@ have two things tangled together.
 `AppWindowHelper` is the clearest case. Its 343 lines are half `EnumWindows` / `GetWindowRect` /
 `PostMessage` — the machine — and half matching a `WindowQuery` against a list of windows by process
 name, title pattern and `TitleMatchModeEnum`. The second half is pure logic that has nothing to do
-with Windows, and today it cannot be tested without Chrome actually running.
+with Windows, and before the split it could not be tested without Chrome actually running.
 
 ```
-Core/Ports/IWindowService                 GetWindows(), CloseWindow(nint), Focus, Move, Resize
-Business/…/WindowMatcher                  Match(WindowQuery, IEnumerable<SystemWindow>) — pure
-Platform.Windows/…/WindowService          the P/Invoke, and only that
+Core/Ports/IWindowService                 FindWindows, GetWindowBounds, Focus, Move, Resize, Close
+Core/Helpers/WindowMatcherHelper          Matches(SystemWindow, WindowQuery) — pure
+Platform.Windows/Windowing/WindowService  the P/Invoke, and only that
 ```
+
+`WindowMatcherHelper` sits in `Core` rather than `Business` because the adapter needs it too — it
+is the filter inside the enumeration. That is the shape to expect: a rule both sides share
+belongs below both of them. It is checked against a hand built list of `SystemWindow` with
+nothing open, including the case this codebase documents as the reason process name exists at
+all: `CONTAINS "Notepad"` does match Notepad++, and adding the process name separates them.
 
 Ask the same question of all nine: *what here is the machine, and what here is a decision?* The
 decisions go up, the machine stays down.
@@ -825,17 +845,22 @@ rectangular and lasso crop, eraser to transparency, undo/redo with thumbnail his
 
 ### Naming
 
-> **`Helper` requires static + pure — no `DbContext`, no `DllImport`, no `async`. Anything else gets
-> a real noun.**
+> **A `Helper` is a static class that owns nothing.** It holds no state and no injected
+> dependency: everything it needs arrives as an argument, including a `DbContext` when it needs
+> one. Anything that owns something is a service.
 
-The suffix is right for a static class that does one simple thing. What it must not become is the
-folder where anything without a home lands. Three different species used to live under `Helpers/`:
-native interop that is really the OS API surface, genuine pure functions, and things with a
-`DbContext` inside them that are queries wearing a static method.
+The line is ownership, not purity. `FlowNameLookupHelper.TakenAsync(dbContext, flowId, ct)` is
+async and touches the database, and it is still a helper — the caller owns the context and the
+transaction, and the helper just asks a question with it. `IAppSettingService` holds its own
+factory, so it is a service. That is the whole distinction, and it is what makes a helper safe to
+call from anywhere: there is nothing in it to share, configure or dispose.
 
-The best-named classes in this repo already skip the suffix — `VariableTranslator`,
-`ConditionEvaluator`, `FlowStructureHasher`, `WindowMatcher`. Each names what it does. `Helper` is
-the fallback for when no such noun exists, not the default.
+What `Helpers/` must not become is the folder where anything without a home lands. Native interop
+is the case that went wrong once: `AppWindowHelper` and `Direct3D11Helper` were the OS API
+surface wearing the name, and they moved to `Platform.Windows` in the split.
+
+A few classes keep an agent noun where it says more than the suffix would — `VariableTranslator`,
+`FlowStructureHasher`, `FlowStepTreeNodeProjection`. They follow the same ownership rule.
 
 ### Catalogs and constants
 
@@ -895,15 +920,14 @@ Working: the flow builder, the recorder, image search, OCR, sub-flows, notificat
 engine with breakpoints and step-into, execution history, validation, and the AI assistant with
 local and cloud providers.
 
-`PLAN.md` holds the build order and which phases have landed. `TODO.md` holds everything deferred.
+`PLAN.md` holds the build order and which phases have landed. `TODO.md` holds everything
+deferred.
 
 ### Known gaps
 
 - The flow script **writer** exists and is verified; the **parser** does not. Nothing round-trips yet.
 - The writer has no caller — no export handler and no button.
 - Templates are not yet written to disk by content hash, and no CSV template is generated.
-- `Platform.Windows` does not exist yet; the nine native files still sit in `Business`, which is why
-  `Business` still targets `net10.0-windows`. §2 describes the target, not the present.
 - `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the
   screen, so it is not currently redacted for AI. Flagged in `TODO.md` rather than folded in silently.
 

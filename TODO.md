@@ -279,13 +279,13 @@ is lost between sessions.
 
 ## The plan
 
-Three documents, not this one:
+`PLAN.md` is the build order. `PROJECT.md` is what the product does and how it is put together.
 
-- `BRD.md` - what the product does and why. Recording, data, happy path validation and the fix
-  loop, viewports, pipelines, git, reporting.
-- `REPO-AND-CI.md` - the technical decisions those features assume. Flow identity, git as the
-  version history, templates, the execution bundle, secrets and encryption, branch switching.
-- `PLAN.md` - the build order, sixteen phases from closing the leaks to reporting.
+`BRD.md` and `REPO-AND-CI.md` no longer exist as separate documents. They were written, never
+committed, and lost in a revert on 2026-09-16; `REPO-AND-CI.md` survives in full as
+`PROJECT.md` section 11, and the product half of `BRD.md` is spread through sections 1, 6 and 9.
+`PLAN.md` was rebuilt from the code on the same day - the phase list and ordering are intact,
+and every finished item in it was checked against the repository rather than recalled.
 
 `TODO.md` stays what it has always been: deferred work that is not part of that plan.
 

@@ -39,7 +39,7 @@ namespace Business.Services.ExecutionService.Workers
                 return Task.FromResult(ExecutionStep.Success());
             }
 
-            if (!KeyCombinationParser.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
+            if (!KeyCombinationHelper.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
                 return Task.FromResult(ExecutionStep.Failure($"\"{text.Text}\" is not a key combination this can press."));
 
             _inputService.SimulateKeyCombination(modifiers, key);

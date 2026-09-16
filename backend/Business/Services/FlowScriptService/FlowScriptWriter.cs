@@ -184,7 +184,7 @@ namespace Business.Services.FlowScriptService
             WriteBranches(builder, source, step, depth);
 
             // A container holds its steps directly - a loop's body, not a branch.
-            if (TreeStepFacts.CanContainChildren(step.FlowStepType))
+            if (TreeStepHelper.CanContainChildren(step.FlowStepType))
             {
                 foreach (FlowStep child in source.ChildrenOf(step.Id))
                     WriteStep(builder, source, child, depth + 1);
@@ -193,7 +193,7 @@ namespace Business.Services.FlowScriptService
 
         private static void WriteBranches(StringBuilder builder, FlowScriptSource source, FlowStep step, int depth)
         {
-            if (!TreeStepFacts.HasBranchChildren(step.FlowStepType))
+            if (!TreeStepHelper.HasBranchChildren(step.FlowStepType))
                 return;
 
             string indent = new string(' ', (depth + 1) * IndentWidth);
