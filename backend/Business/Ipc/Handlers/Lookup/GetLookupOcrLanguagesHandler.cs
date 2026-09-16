@@ -1,4 +1,4 @@
-using Business.Services.OcrService;
+using Core.Ports;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
@@ -14,7 +14,9 @@ namespace Business.Ipc.Handlers
             _ocrService = ocrService;
         }
 
-        public Task<ResultDto<IReadOnlyList<OcrLanguageDto>>> Handle(GetLookupOcrLanguagesQuery request, CancellationToken ct) =>
-            Task.FromResult(ResultDto<IReadOnlyList<OcrLanguageDto>>.Success(_ocrService.GetLanguages()));
+        public Task<ResultDto<IReadOnlyList<OcrLanguageDto>>> Handle(GetLookupOcrLanguagesQuery request, CancellationToken ct)
+        {
+            return Task.FromResult(ResultDto<IReadOnlyList<OcrLanguageDto>>.Success(_ocrService.GetLanguages()));
+        }
     }
 }

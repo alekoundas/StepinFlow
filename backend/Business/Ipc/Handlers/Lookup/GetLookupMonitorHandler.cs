@@ -1,4 +1,4 @@
-using Business.Helpers;
+using Core.Ports;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
@@ -7,9 +7,16 @@ namespace Business.Ipc.Handlers
 {
     public class GetLookupMonitorHandler : IRequestHandler<GetLookupMonitorQuery, ResultDto<LookupResponseDto>>
     {
+        private readonly IScreenService _screenService;
+
+        public GetLookupMonitorHandler(IScreenService screenService)
+        {
+            _screenService = screenService;
+        }
+
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupMonitorQuery request, CancellationToken ct)
         {
-            List<LookupItemDto> items = ScreenHelper.GetAllMonitors().Select(monitor =>
+            List<LookupItemDto> items = _screenService.GetAllMonitors().Select(monitor =>
                 new LookupItemDto
                 {
                     Value = monitor.DeviceId,

@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Business.Services.Ai.Helpers;
 using Core.Enums;
-using Core.Interfaces;
+using Core.Ports;
 using Core.Models.Dtos;
 using Microsoft.Extensions.Logging;
 

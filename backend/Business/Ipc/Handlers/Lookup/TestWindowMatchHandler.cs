@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -11,6 +11,13 @@ namespace Business.Ipc.Handlers
 {
     public class TestWindowMatchHandler : IRequestHandler<TestWindowMatchQuery, ResultDto<WindowMatchTestResultDto>>
     {
+        private readonly IWindowService _windowService;
+
+        public TestWindowMatchHandler(IWindowService windowService)
+        {
+            _windowService = windowService;
+        }
+
         public Task<ResultDto<WindowMatchTestResultDto>> Handle(TestWindowMatchQuery request, CancellationToken ct)
         {
             WindowMatchTestRequestDto dto = request.dto;
@@ -38,7 +45,7 @@ namespace Business.Ipc.Handlers
                 }
             }
 
-            List<WindowMatchDto> matches = AppWindowHelper.FindWindowMatches(query)
+            List<WindowMatchDto> matches = _windowService.FindWindowMatches(query)
                 .Select(x => new WindowMatchDto
                 {
                     Title = x.Title,

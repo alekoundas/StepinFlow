@@ -1,5 +1,5 @@
 ﻿using Core.Enums;
-using Core.Interfaces;
+using Core.Ports;
 using Core.Models.Ipc.Protobuf;
 using System.Text.Json;
 using System.Text.Json.Serialization;

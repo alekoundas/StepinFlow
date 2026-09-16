@@ -1,11 +1,10 @@
-using System.Drawing;
+﻿using System.Drawing;
 using Business.Services.AreaPointService;
-using Business.Services.InputService;
+using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 
-using SharpHook.Data;
 
 namespace Business.Services.ExecutionService.Workers
 {
@@ -65,7 +64,7 @@ namespace Business.Services.ExecutionService.Workers
         private ExecutionStep Click(FlowStep step)
         {
             Point at = _inputService.CursorPosition();
-            MouseButton button = ButtonOf(step.CursorButtonType);
+            CursorButtonTypeEnum button = step.CursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON;
 
             switch (step.CursorButtonActionType)
             {
@@ -116,7 +115,7 @@ namespace Business.Services.ExecutionService.Workers
             if (!_inputService.MoveCursor(from.Value.X, from.Value.Y))
                 return ExecutionStep.Failure("The cursor did not move. The window in front is probably running as administrator.");
 
-            _inputService.SimulateMouseDrag(from.Value.X, from.Value.Y, to.Value.X, to.Value.Y, ButtonOf(step.CursorButtonType));
+            _inputService.SimulateMouseDrag(from.Value.X, from.Value.Y, to.Value.X, to.Value.Y, step.CursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON);
 
             return ExecutionStep.Success(to.Value);
         }
@@ -132,21 +131,6 @@ namespace Business.Services.ExecutionService.Workers
                 return null;
 
             return resolution.Point;
-        }
-
-        private static MouseButton ButtonOf(CursorButtonTypeEnum? type)
-        {
-            switch (type)
-            {
-                case CursorButtonTypeEnum.RIGHT_BUTTON:
-                    return MouseButton.Button2;
-
-                case CursorButtonTypeEnum.MIDDLE_BUTTON:
-                    return MouseButton.Button3;
-
-                default:
-                    return MouseButton.Button1;
-            }
         }
     }
 }

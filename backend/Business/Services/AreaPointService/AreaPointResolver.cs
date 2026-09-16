@@ -1,5 +1,4 @@
-using Business.Helpers;
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -12,10 +11,14 @@ namespace Business.Services.AreaPointService
     public sealed class AreaPointResolver : IAreaPointResolver
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IWindowService _windowService;
+        private readonly IScreenService _screenService;
 
-        public AreaPointResolver(IDbContextFactory<AppDbContext> dbContextFactory)
+        public AreaPointResolver(IDbContextFactory<AppDbContext> dbContextFactory, IWindowService windowService, IScreenService screenService)
         {
             _dbContextFactory = dbContextFactory;
+            _windowService = windowService;
+            _screenService = screenService;
         }
 
 
@@ -101,9 +104,9 @@ namespace Business.Services.AreaPointService
         // Private methods
         // ================================================================
 
-        private static AreaResolution ResolveMonitor(FlowArea area)
+        private AreaResolution ResolveMonitor(FlowArea area)
         {
-            MonitorInfo? monitor = ScreenHelper.GetAllMonitors()
+            MonitorInfo? monitor = _screenService.GetAllMonitors()
                 .FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorUniqueId, StringComparison.OrdinalIgnoreCase));
 
             if (monitor == null)
@@ -112,7 +115,7 @@ namespace Business.Services.AreaPointService
             return AreaResolution.Ok(monitor.Bounds);
         }
 
-        private static AreaResolution ResolveApplication(FlowArea area)
+        private AreaResolution ResolveApplication(FlowArea area)
         {
             WindowQuery query = new WindowQuery
             {
@@ -122,11 +125,11 @@ namespace Business.Services.AreaPointService
                 UseClientArea = area.UseClientArea,
             };
 
-            IntPtr hwnd = AppWindowHelper.FindWindow(query);
+            IntPtr hwnd = _windowService.FindWindow(query);
             if (hwnd == IntPtr.Zero)
                 return AreaResolution.Fail($"No window matches \"{area.Name}\".");
 
-            Rectangle bounds = AppWindowHelper.GetWindowBounds(hwnd, area.UseClientArea);
+            Rectangle bounds = _windowService.GetWindowBounds(hwnd, area.UseClientArea);
             if (bounds.Width <= 0 || bounds.Height <= 0)
                 return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.");
 

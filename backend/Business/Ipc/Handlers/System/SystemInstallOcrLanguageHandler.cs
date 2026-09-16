@@ -1,4 +1,4 @@
-using Business.Services.OcrService;
+using Core.Ports;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;

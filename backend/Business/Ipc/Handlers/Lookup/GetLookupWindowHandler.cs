@@ -1,4 +1,4 @@
-using Business.Services.ScreenshotService;
+using Core.Ports;
 using Core.Models.Business;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
@@ -8,13 +8,20 @@ namespace Business.Ipc.Handlers
 {
     public class GetLookupWindowHandler : IRequestHandler<GetLookupWindowQuery, ResultDto<LookupResponseDto>>
     {
+        private readonly IWindowService _windowService;
+
+        public GetLookupWindowHandler(IWindowService windowService)
+        {
+            _windowService = windowService;
+        }
+
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupWindowQuery request, CancellationToken ct)
         {
             string search = request.dto.SearchText ?? string.Empty;
 
             // Value is the process name: window titles change constantly, process names do not.
             // The title comes along in ExtraData so the form can offer it as a starting pattern.
-            List<LookupItemDto> items = AppWindowHelper.GetApplicationWindows()
+            List<LookupItemDto> items = _windowService.GetApplicationWindows()
                 .Where(x => x.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
                     || x.ProcessName.Contains(search, StringComparison.OrdinalIgnoreCase))
                 .Select(x => new LookupItemDto
