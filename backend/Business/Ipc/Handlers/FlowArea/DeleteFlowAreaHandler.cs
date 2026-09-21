@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class DeleteFlowAreaHandler : IRequestHandler<DeleteFlowAreaCommand, ResultDto<bool>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public DeleteFlowAreaHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

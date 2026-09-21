@@ -10,7 +10,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowStepMovePreviewHandler : IRequestHandler<GetFlowStepMovePreviewQuery, ResultDto<FlowStepMovePreviewDto>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowStepMovePreviewHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

@@ -12,7 +12,7 @@ namespace Business.Ipc.Handlers
     public class GetLazyFlowHandler : IRequestHandler<GetLazyFlowQuery, ResultDto<LazyResponseDto<FlowDto>>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetLazyFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

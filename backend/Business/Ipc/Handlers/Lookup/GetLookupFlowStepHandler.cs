@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
             ],
         };
 
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetLookupFlowStepHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

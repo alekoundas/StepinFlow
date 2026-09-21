@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetLazyFlowAreaHandler : IRequestHandler<GetLazyFlowAreaQuery, ResultDto<LazyResponseDto<FlowAreaDto>>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetLazyFlowAreaHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

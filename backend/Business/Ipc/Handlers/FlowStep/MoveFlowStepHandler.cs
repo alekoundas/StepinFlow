@@ -10,7 +10,7 @@ namespace Business.Ipc.Handlers
 {
     public class MoveFlowStepHandler : IRequestHandler<MoveFlowStepCommand, ResultDto<bool>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public MoveFlowStepHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

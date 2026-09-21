@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowTreeNodeHandler : IRequestHandler<GetFlowTreeNodeQuery, ResultDto<IEnumerable<TreeNodeDto>>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowTreeNodeHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

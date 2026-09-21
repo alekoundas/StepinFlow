@@ -12,7 +12,7 @@ namespace Business.Ipc.Handlers
     public class UpdateFlowStepHandler : IRequestHandler<UpdateFlowStepCommand, ResultDto<FlowStepDto>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public UpdateFlowStepHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

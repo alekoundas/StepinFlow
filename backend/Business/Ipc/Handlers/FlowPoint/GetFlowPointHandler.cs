@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowPointHandler : IRequestHandler<GetFlowPointQuery, ResultDto<FlowPointDto>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowPointHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

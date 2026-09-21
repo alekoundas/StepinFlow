@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class DeleteFlowPointHandler : IRequestHandler<DeleteFlowPointCommand, ResultDto<bool>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public DeleteFlowPointHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

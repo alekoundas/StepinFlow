@@ -9,7 +9,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetLookupFlowAreaHandler : IRequestHandler<GetLookupFlowAreaQuery, ResultDto<LookupResponseDto>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetLookupFlowAreaHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {

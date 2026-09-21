@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class CreateFlowPointHandler : IRequestHandler<CreateFlowPointCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public CreateFlowPointHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

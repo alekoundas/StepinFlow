@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class GetLazyFlowStepHandler : IRequestHandler<GetLazyStepFlowQuery, ResultDto<LazyResponseDto<FlowStepDto>>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetLazyFlowStepHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

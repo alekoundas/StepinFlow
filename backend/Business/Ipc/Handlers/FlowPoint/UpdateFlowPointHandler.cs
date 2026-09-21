@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class UpdateFlowPointHandler : IRequestHandler<UpdateFlowPointCommand, ResultDto<FlowPointDto>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public UpdateFlowPointHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

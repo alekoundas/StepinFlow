@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class CreateFlowStepTemplateHandler : IRequestHandler<CreateFlowStepTemplateCommand, ResultDto<int>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public CreateFlowStepTemplateHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

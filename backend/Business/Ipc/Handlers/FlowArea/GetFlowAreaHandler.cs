@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class GetFlowAreaHandler : IRequestHandler<GetFlowAreaQuery, ResultDto<FlowAreaDto>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

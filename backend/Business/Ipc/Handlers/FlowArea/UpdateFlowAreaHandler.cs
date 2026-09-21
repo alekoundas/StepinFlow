@@ -11,7 +11,7 @@ namespace Business.Ipc.Handlers
     public class UpdateFlowAreaHandler : IRequestHandler<UpdateFlowAreaCommand, ResultDto<FlowAreaDto>>
     {
         private readonly IMapper _mapper;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public UpdateFlowAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
         {

@@ -15,7 +15,7 @@ namespace Business.Ipc.Handlers
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowAreaPreviewHandler(
             IAreaPointResolver areaPointResolver,
