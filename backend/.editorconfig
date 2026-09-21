@@ -1,0 +1,78 @@
+# The rules this codebase is held to, and every place it departs from the defaults with the reason
+# written next to it. 
+#
+# Severity: none | silent | suggestion | warning | error
+
+root = true
+
+[*.cs]
+
+# ----------------------------------------------------------------------------------------------
+# Naming
+# ----------------------------------------------------------------------------------------------
+
+# CA1707 "identifiers should not contain underscores"
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1711 "identifiers should not have incorrect suffix" (force inheritance by class name suffix)
+dotnet_diagnostic.CA1711.severity = none
+
+# CA1725 "Parameter names should match base declaration" (param names must match interface params)
+dotnet_diagnostic.CA1725.severity = warning
+
+# CA1848 "Use the LoggerMessage delegates" (Microsoft recommends using the LoggerMessage pattern to optimize high-performance logging)
+dotnet_diagnostic.CA1848.severity = none
+
+#CA1716 "Identifiers should not match keywords" (Keywords from VB as well)
+dotnet_diagnostic.CA1716.severity = none
+
+#CA1720 "Identifiers should not contain type names" (Keywords from VB as well)
+dotnet_diagnostic.CA1720.severity = none
+
+
+# ----------------------------------------------------------------------------------------------
+# Performance
+# ----------------------------------------------------------------------------------------------
+
+#CA1859 "Use concrete types when possible for improved performance" (Using interfaces like IEnumerable<string> causes runtime performance cost, use for example ICollection or List )
+dotnet_diagnostic.CA1859.severity = suggestion
+
+#CA1861 "Avoid constant arrays as arguments" (.NET runtime is forced to allocate a brand-new array on the heap every single time that line of code executes)
+dotnet_diagnostic.CA1861.severity = suggestion
+
+#CA1000 "Do not declare static members on generic types" (Generic classes shouldnt have a static method because it gets ccoppied for every type (int,string etc) )
+dotnet_diagnostic.CA1000.severity = suggestion
+
+# ----------------------------------------------------------------------------------------------
+# Culture
+# ----------------------------------------------------------------------------------------------
+
+#CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
+dotnet_diagnostic.CA1305.severity = suggestion
+
+
+# ----------------------------------------------------------------------------------------------
+# House coding style
+# ----------------------------------------------------------------------------------------------
+
+# The full new TypeName(), never new().
+csharp_style_implicit_object_creation_when_type_is_apparent = false:suggestion
+
+# No expression-bodied members. (no arrows allowed)
+csharp_style_expression_bodied_methods = false:suggestion
+csharp_style_expression_bodied_properties = false:suggestion
+csharp_style_expression_bodied_indexers = false:suggestion
+csharp_style_expression_bodied_accessors = false:suggestion
+
+
+
+
+# ----------------------------------------------------------------------------------------------
+# Project specific
+# ----------------------------------------------------------------------------------------------
+
+#CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
+# A number written into a .sflw file on a machine whose decimal separator is a comma is a file the
+# parser cannot read back. The writer already formats invariantly; this is what keeps the next one doing it.
+[Business/Services/FlowScriptService/**.cs]
+dotnet_diagnostic.CA1305.severity = warning

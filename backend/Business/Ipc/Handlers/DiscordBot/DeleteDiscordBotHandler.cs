@@ -16,7 +16,6 @@ namespace Business.Ipc.Handlers
     /// </summary>
     public class DeleteDiscordBotHandler : IRequestHandler<DeleteDiscordBotCommand, ResultDto<bool>>
     {
-        private const int NamesShown = 5;
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -57,14 +56,14 @@ namespace Business.Ipc.Handlers
 
         private static string Refusal(List<string> users)
         {
-            string listed = string.Join(", ", users.Take(NamesShown));
+            int namesShown = 5;
+            string listed = string.Join(", ", users.Take(namesShown));
 
-            string rest = users.Count > NamesShown
-                ? $" and {users.Count - NamesShown} more"
+            string rest = users.Count > namesShown
+                ? $" and {users.Count - namesShown} more"
                 : string.Empty;
 
-            return $"{users.Count} step(s) still send through this bot: {listed}{rest}. " +
-                   "Point them at another bot, or remove them, then delete it.";
+            return $"{users.Count} step(s) still send through this bot: {listed}{rest}. " + "Point them at another bot, or remove them, then delete it.";
         }
     }
 }

@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    Every project under backend/ inherits this. One file rather than five copies, so a rule cannot
+    be on in Business and off in Core without somebody deciding that on purpose.
+
+    TreatWarningsAsErrors is deliberately not here yet - see backend/.editorconfig.
+  -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!-- IDE rules are editor-only by default. This is what makes the house style build. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+</Project>

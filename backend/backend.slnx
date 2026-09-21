@@ -1,4 +1,8 @@
 ﻿<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+  </Folder>
   <Project Path="App/App.csproj" />
   <Project Path="Business/Business.csproj" />
   <Project Path="Core/Core.csproj" />
