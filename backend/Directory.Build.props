@@ -25,4 +25,20 @@
     <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
   </PropertyGroup>
 
+  <!-- BannedApiAnalyzers -->
+  <!-- Closest to MISRA rules. Two lists, one rule for Platform.Windows and a global one for the others. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.*" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Everything except Platform.Windows. -->
+  <ItemGroup Condition="$(MSBuildProjectName) != 'Platform.Windows'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" Visible="false" />
+  </ItemGroup>
+
+  <!-- Platform.Windows ONLY. -->
+  <ItemGroup Condition="$(MSBuildProjectName) == 'Platform.Windows'">
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
 </Project>

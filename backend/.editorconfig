@@ -60,7 +60,7 @@ dotnet_diagnostic.SYSLIB1054.severity = suggestion
 # ----------------------------------------------------------------------------------------------
 
 #CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
-dotnet_diagnostic.CA1305.severity = suggestion
+dotnet_diagnostic.CA1305.severity = warning
 
 
 # ----------------------------------------------------------------------------------------------
@@ -95,8 +95,8 @@ dotnet_diagnostic.IDE0028.severity = none
 #CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
 # A number written into a .sflw file on a machine whose decimal separator is a comma is a file the
 # parser cannot read back. The writer already formats invariantly; this is what keeps the next one doing it.
-[Business/Services/FlowScriptService/**.cs]
-dotnet_diagnostic.CA1305.severity = warning
+#[Business/Services/FlowScriptService/**.cs]
+#dotnet_diagnostic.CA1305.severity = warning
 
 
 #CA1725 "Parameter names should match base declaration"
@@ -106,3 +106,21 @@ dotnet_diagnostic.CA1305.severity = warning
 # Off here and nowhere else - the rule caught five real ones in WindowService and one in AppDbContext.
 [Business/Ipc/Handlers/**.cs]
 dotnet_diagnostic.CA1725.severity = none
+
+
+
+
+
+
+
+
+
+#TODO 
+
+#RS0030 "The symbol is banned in this project" (backend/Rules/BannedSymbols.txt)
+# CommandRunner is the deviation, and a port would not fix it: BuildStartInfo launches cmd.exe or
+# powershell.exe and reads the console OEM code page, and every CommandPresetCatalog entry is a
+# Windows command. The question is whether the runner moves to Platform.Windows whole - see PLAN.md
+# phase 4.6. Until it is answered this is the one place Business may hold a Process.
+[Business/Services/CommandService/**.cs]
+dotnet_diagnostic.RS0030.severity = none

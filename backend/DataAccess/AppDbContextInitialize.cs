@@ -1,4 +1,5 @@
 ﻿using Core.Helpers;
+using DataAccess.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,9 +17,14 @@ namespace DataAccess
             if (!File.Exists(dataSource))
                 File.Create(dataSource).Close();
 
-            services.AddPooledDbContextFactory<AppDbContext>(options =>
+            services.AddSingleton<TimestampInterceptor>();
+
+            services.AddPooledDbContextFactory<AppDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlite($"Data Source={dataSource};");
+
+                // Intercept INSERT/UPDATE commands and fill the CreatedOn/UpdatedOn of the BaseDbModel.
+                options.AddInterceptors(serviceProvider.GetRequiredService<TimestampInterceptor>());
             });
 
             return services;

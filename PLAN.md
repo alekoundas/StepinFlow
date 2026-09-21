@@ -260,11 +260,24 @@ method does: define the subset, enforce it with a tool, record every deviation. 
       provider's equivalent, so a step's `DurationMilliseconds` is now a number a test can decide
       rather than however long the machine happened to take.
 
-      Two sites were deliberately left: `BaseDbModel.CreatedOn` and `RecordedInput.CreatedOn` are
-      property initializers on models, and a model has no constructor to inject into. Making those
-      testable means an EF `SaveChanges` interceptor, which is a different piece of work and not
-      one this phase needs. They are the reason the ban below is scoped to `Business` rather than
-      applied to `Core` as well.
+      The two model initializers went too, which is what let the ban below apply to the whole
+      solution. `BaseDbModel.CreatedOn` moved into a `TimestampInterceptor`, joining the
+      `UpdatedOn` stamp that `AppDbContext` was already doing by hand - two halves of one concept
+      that had been handled two different ways, one of them testable and one not. An interceptor
+      rather than the existing `SaveChanges` override because the factory is **pooled**, and a
+      pooled context may only have the one `DbContextOptions` constructor, so there is nowhere on
+      it to put a clock.
+
+      That moves `CreatedOn` from `new` to save: anything reading it in between now sees
+      `0001-01-01`. Checked every read first - AutoMapper ignores it and the two query handlers
+      read it back out of the database - so nothing does. Verified against a real SQLite database
+      with the clock set to 2031: stamped on insert, not re-stamped on update, `UpdatedOn` null
+      until modified.
+
+      `RecordedInput` is not an entity and never reaches EF - its `CreatedOn` is the moment an
+      input happened, read straight back to work out the gap between keystrokes. It is stamped in
+      `InputRecordService.Publish`, the one place every recorded input passes through, so a
+      seventh input type cannot forget to do it.
 - [x] **Analyzers.** `backend/Directory.Build.props` decides which rules run - `EnableNETAnalyzers`,
       `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`, and now
       `TreatWarningsAsErrors` with NU1901-1904 exempt, because a CVE published overnight against a
@@ -291,11 +304,28 @@ method does: define the subset, enforce it with a tool, record every deviation. 
       `.editorconfig` for a rule, a path-scoped section for a folder, and a `[SuppressMessage]`
       with a `Justification` for the single site where forwarding a token to `Task.Run` would let
       a cancelled execution skip writing its own history.
-- [ ] **`BannedApiAnalyzers`.** The other half, and the one that makes the architecture a build
-      error rather than a convention: `Process` and `DllImport` banned in `Business`, with
-      `CommandService` deviated by path until the Windows adapter question above is settled.
-      `DateTime.UtcNow` joins them when `TimeProvider` lands, not before - banning it today would
-      only write down eight exceptions.
+- [x] **`BannedApiAnalyzers`.** The half that makes the architecture a build error rather than a
+      convention. Two lists, and which project gets which is the rule:
+
+      `backend/BannedSymbols.txt` goes to all five - `DateTime.UtcNow`, `DateTime.Now` and their
+      `DateTimeOffset` twins. Nothing in this solution has a reason to read the wall clock, so that
+      one is not about layering at all, it is about a timeout being a value a test can move.
+
+      `backend/Rules/BannedSymbols.txt` goes to every project **except `Platform.Windows`** -
+      `Process`, `DllImport`, `LibraryImport`. That exception is the whole statement: driving the
+      machine is one project's job, and a solution-wide ban would have banned it in the project
+      that exists to do it. Neither symbol is caught by the target framework, because `Process` is
+      cross platform and `net10.0` compiles it happily - the architectural rule is stricter than
+      the compiler's, and this is where the difference is written down.
+
+      One deviation: `Business/Services/CommandService`, which a port would not fix. Recorded in
+      `.editorconfig` beside the item above that has to decide it.
+
+      **`P:` and not `M:`.** `DateTime.UtcNow` is a property, and `M:System.DateTime.get_UtcNow`
+      silently matches nothing - the build goes green and the rule does not exist. Caught by
+      dropping a file into `Core` that used a banned symbol and checking it failed; the `Process`
+      ban fired and the clock ban did not. Worth remembering: a ban that matches nothing looks
+      exactly like a ban nobody has broken.
 - [ ] **Hold the execution task.** `_ = Task.Run(...)` in `StartAsync` is handed to nobody, so
       shutdown cannot await it and a test can only poll `IsRunning` in a sleep loop. Keep it and
       expose `Task Completion`. Three callers want it: shutdown, the tests, and phase 12's CLI

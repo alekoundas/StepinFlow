@@ -39,9 +39,12 @@ namespace Platform.Windows.Input
         private static readonly long DragThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
 
         private readonly IIpcBroadcastService _broadcastService;
-        public InputRecordService(IIpcBroadcastService broadcastService)
+        private readonly TimeProvider _timeProvider;
+
+        public InputRecordService(IIpcBroadcastService broadcastService, TimeProvider timeProvider)
         {
             _broadcastService = broadcastService;
+            _timeProvider = timeProvider;
 
             _hook.MouseReleased += OnMouseReleased;
             _hook.MousePressed += OnMousePressed;
@@ -125,6 +128,8 @@ namespace Platform.Windows.Input
 
         private void Publish(RecordedInput recordedInput)
         {
+            recordedInput.CreatedOn = _timeProvider.GetLocalNow().DateTime;
+
             ActionRecorded?.Invoke(recordedInput);
 
             BroadcastTypeEnum? broadcastType = BroadcastType;
@@ -133,9 +138,9 @@ namespace Platform.Windows.Input
         }
 
         // Returns true at most once per throttle window.
-        private static bool TryPassThrottle(ref long lastTicks, long throttleTicks)
+        private static bool TryPassThrottle(ref long lastTicks, long throttleTicks, long nowTicks)
         {
-            long now = DateTime.UtcNow.Ticks;
+            long now = nowTicks;
             long last = Interlocked.Read(ref lastTicks);
 
             if (now - last < throttleTicks)
@@ -223,7 +228,7 @@ namespace Platform.Windows.Input
             if (!IsRecording)
                 return;
 
-            if (!TryPassThrottle(ref _lastDragBroadcastTicks, DragThrottleTicks))
+            if (!TryPassThrottle(ref _lastDragBroadcastTicks, DragThrottleTicks, _timeProvider.GetUtcNow().UtcDateTime.Ticks))
                 return;
 
             Publish(new RecordedInput

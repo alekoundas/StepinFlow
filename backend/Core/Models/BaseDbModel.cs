@@ -3,11 +3,10 @@
     public class BaseDbModel
     {
         public int Id { get; set; }
-        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        /// <summary>Stamped by TimestampInterceptor on the way to the database.</summary>
+        public DateTime CreatedOn { get; set; }
 
-        /// <summary>
-        /// Stamped centrally by AppDbContext.SaveChanges on anything modified, so no handler has to remember.  
-        /// </summary>
+        /// <summary>Stamped by TimestampInterceptor on the way to the database.</summary>
         public DateTime? UpdatedOn { get; set; }
     }
 }

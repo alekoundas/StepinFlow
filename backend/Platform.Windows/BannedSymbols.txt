@@ -1,0 +1,8 @@
+# BannedApiAnalyzers
+# Platform.Windows only. It does not inherit backend/BannedSymbols.txt. 
+# the whole point of this project is Process, DllImport and LibraryImport.
+
+P:System.DateTime.UtcNow;Take a TimeProvider. This project already does.
+P:System.DateTime.Now;Take a TimeProvider. This project already does.
+P:System.DateTimeOffset.UtcNow;Take a TimeProvider.
+P:System.DateTimeOffset.Now;Take a TimeProvider.

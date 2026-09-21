@@ -156,11 +156,12 @@ namespace App
             dbContext.Database.Migrate();
 
             // Check if any exution is set as RUNNING and stop them.
+            TimeProvider timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
             await dbContext.Executions
                 .Where(x => x.Status == ExecutionStatusEnum.RUNNING)
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(execution => execution.Status, ExecutionStatusEnum.ABANDONED)
-                    .SetProperty(execution => execution.CompletedAt, DateTime.UtcNow));
+                    .SetProperty(execution => execution.CompletedAt, timeProvider.GetUtcNow().UtcDateTime));
 
             await app.RunAsync();
         }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- net10.0, not net10.0-windows. The domain does not know what it is running on: everything
        that touches the machine lives in Platform.Windows, which this project does not reference.

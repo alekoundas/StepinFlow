@@ -29,6 +29,6 @@ namespace Core.Models.Business
         //public KeyModifierEnum? Modifiers { get; set; }  // Ctrl, Shift, Alt, Meta
 
 
-        public DateTime CreatedOn { get; set; }  = DateTime.Now;
+        public DateTime CreatedOn { get; set; }
     }
 }
