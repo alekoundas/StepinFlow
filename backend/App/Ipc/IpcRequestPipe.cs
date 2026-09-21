@@ -3,14 +3,18 @@ using ProtoBuf;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipes;
+using Microsoft.Extensions.Logging;
 
 namespace App.Ipc
 {
     public sealed class IpcRequestPipe
     {
         private readonly IpcDispatcher _dispatcher;
-        public IpcRequestPipe(IpcDispatcher dispatcher)
+        private readonly ILogger<IpcRequestPipe> _logger;
+
+        public IpcRequestPipe(IpcDispatcher dispatcher, ILogger<IpcRequestPipe> logger)
         {
+            _logger = logger;
             _dispatcher = dispatcher;
         }
 
@@ -35,9 +39,9 @@ namespace App.Ipc
                 try
                 {
                     // Wait for Electron to conect to the pipe.
-                    Console.WriteLine("[.NET Pipe] Waiting for connection...");
+                    _logger.LogInformation("[.NET Pipe] Waiting for connection...");
                     await requestPipe.WaitForConnectionAsync(stoppingToken);
-                    Console.WriteLine("[.NET Pipe] Client connected.");
+                    _logger.LogInformation("[.NET Pipe] Client connected.");
 
                     // Start listening for requests
                     await HandleRequestAsync(requestPipe, stoppingToken);

@@ -5,6 +5,7 @@ using Core.Models.Ipc.Protobuf;
 using MediatR;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace App.Ipc
 {
@@ -19,8 +20,11 @@ namespace App.Ipc
 
         };
 
-        public IpcDispatcher(IMediator mediator)
+        private readonly ILogger<IpcDispatcher> _logger;
+
+        public IpcDispatcher(IMediator mediator, ILogger<IpcDispatcher> logger)
         {
+            _logger = logger;
             _mediator = mediator;
 
             // Add Enum to string converter
@@ -29,7 +33,9 @@ namespace App.Ipc
 
         public async Task<IpcResponse> HandleAsync(IpcRequest request, CancellationToken ct = default)
         {
-            Console.WriteLine("[.NET Dispatcher]: Recieved " + request.Action.ToString());
+            // Every request passes through here, so the argument is only built when Debug is on.
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("[.NET Dispatcher]: Received {Action}", request.Action);
             try
             {
                 object? responsePayload = request.Action switch

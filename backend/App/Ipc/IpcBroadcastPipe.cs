@@ -4,6 +4,7 @@ using ProtoBuf;
 using System.Buffers.Binary;
 using System.IO.Pipes;
 using System.Threading.Channels;
+using Microsoft.Extensions.Logging;
 
 namespace App.Ipc
 {
@@ -22,8 +23,11 @@ namespace App.Ipc
                 SingleReader = true,
             });
 
-        public IpcBroadcastPipe()
+        private readonly ILogger<IpcBroadcastPipe> _logger;
+
+        public IpcBroadcastPipe(ILogger<IpcBroadcastPipe> logger)
         {
+            _logger = logger;
         }
 
 
@@ -48,9 +52,9 @@ namespace App.Ipc
                 try
                 {
                     // Wait for Electron to conect to the pipe.
-                    Console.WriteLine("[.NET Pipe] Waiting for connection...");
+                    _logger.LogInformation("[.NET Pipe] Waiting for connection...");
                     await broadcastPipe.WaitForConnectionAsync(stoppingToken);
-                    Console.WriteLine("[.NET Pipe] Client connected.");
+                    _logger.LogInformation("[.NET Pipe] Client connected.");
 
                     // Anything queued while nobody was listening is stale by definition.
                     while (_broadcastChannel.Reader.TryRead(out _)) { }
@@ -116,7 +120,7 @@ namespace App.Ipc
                 {
                     // Normal when the client goes away: drop this pipe and let the outer loop
                     // wait for the next connection.
-                    Console.WriteLine($"[.NET Pipe] Broadcast client gone: {ex.Message}");
+                    _logger.LogInformation(ex, "[.NET Pipe] Broadcast client gone");
                     pipeCts.Cancel();
                     break;
                 }
