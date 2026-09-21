@@ -5,6 +5,7 @@ using Core.Models.Ipc;
 using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Business.Ipc.Handlers
 {
@@ -57,7 +58,7 @@ namespace Business.Ipc.Handlers
                 .Where(x => !dto.ExcludedIds.Contains(x.Step.Id))
                 .Select(x => new LookupItemDto
                 {
-                    Value = x.Step.Id.ToString(),
+                    Value = x.Step.Id.ToString(CultureInfo.InvariantCulture),
                     Label = x.Step.Name,
                     Description = $"{x.Step.FlowStepType} · {x.Depth} level(s) up",
                 })

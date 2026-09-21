@@ -139,7 +139,7 @@ namespace Business.Services.CommandService
                 ResultSourceEnum.COMBINED => string.Join(
                     Environment.NewLine,
                     new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
-                ResultSourceEnum.EXIT_CODE => result.ExitCode.ToString(),
+                ResultSourceEnum.EXIT_CODE => result.ExitCode.ToString(CultureInfo.InvariantCulture),
                 _ => result.StandardOutput,
             };
 

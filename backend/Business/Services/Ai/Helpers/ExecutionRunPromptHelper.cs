@@ -1,6 +1,7 @@
 using System.Text;
 using Core.Enums;
 using Core.Models.Dtos;
+using System.Globalization;
 
 namespace Business.Services.Ai.Helpers
 {
@@ -29,17 +30,17 @@ namespace Business.Services.Ai.Helpers
 
             StringBuilder builder = new StringBuilder();
 
-            builder.AppendLine($"Run #{execution.Id} of flow {execution.FlowId}");
-            builder.AppendLine($"Result: {execution.Status}");
-            builder.AppendLine($"Steps that ran: {execution.StepCount}");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"Run #{execution.Id} of flow {execution.FlowId}");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"Result: {execution.Status}");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"Steps that ran: {execution.StepCount}");
 
             if (!string.IsNullOrWhiteSpace(execution.ErrorMessage))
-                builder.AppendLine($"The run ended with: {execution.ErrorMessage}");
+                builder.AppendLine(CultureInfo.InvariantCulture, $"The run ended with: {execution.ErrorMessage}");
 
             builder.AppendLine();
 
             if (omitted > 0)
-                builder.AppendLine($"({omitted} steps away from the failure left out to keep this short.)");
+                builder.AppendLine(CultureInfo.InvariantCulture, $"({omitted} steps away from the failure left out to keep this short.)");
 
             int previousSequence = -1;
 
@@ -69,29 +70,29 @@ namespace Business.Services.Ai.Helpers
 
             StringBuilder line = new StringBuilder();
 
-            line.Append($"[{step.Sequence}] ");
+            line.Append(CultureInfo.InvariantCulture, $"[{step.Sequence}] ");
             line.Append(new string(' ', step.Depth * 2));
             line.Append(step.Name);
-            line.Append($"  {step.FlowStepType}");
-            line.Append($"  {step.Outcome}");
-            line.Append($"  {step.DurationMilliseconds}ms");
+            line.Append(CultureInfo.InvariantCulture, $"  {step.FlowStepType}");
+            line.Append(CultureInfo.InvariantCulture, $"  {step.Outcome}");
+            line.Append(CultureInfo.InvariantCulture, $"  {step.DurationMilliseconds}ms");
 
             if (step.MatchCount != null)
-                line.Append($"  match {(step.MatchIndex ?? 0) + 1} of {step.MatchCount}");
+                line.Append(CultureInfo.InvariantCulture, $"  match {(step.MatchIndex ?? 0) + 1} of {step.MatchCount}");
 
             // How close the search came. Without it a failed search says only that it failed, and
             // the accuracy, the search area and a template captured at another size all look alike.
             if (step.BestScore != null)
-                line.Append($"  best match scored {step.BestScore:F2}");
+                line.Append(CultureInfo.InvariantCulture, $"  best match scored {step.BestScore:F2}");
 
             if (step.LoopPass != null)
-                line.Append($"  loop pass {step.LoopPass + 1}");
+                line.Append(CultureInfo.InvariantCulture, $"  loop pass {step.LoopPass + 1}");
 
             if (step.ExitCode != null)
-                line.Append($"  exit code {step.ExitCode}");
+                line.Append(CultureInfo.InvariantCulture, $"  exit code {step.ExitCode}");
 
             if (!string.IsNullOrWhiteSpace(step.Value))
-                line.Append($"  read: \"{(includeScreenValues ? step.Value : _redacted)}\"");
+                line.Append(CultureInfo.InvariantCulture, $"  read: \"{(includeScreenValues ? step.Value : _redacted)}\"");
 
             // The distinction the whole answer turns on. A failure with a Failure branch under it
             // is the flow working; only this one stopped the run.
@@ -101,10 +102,10 @@ namespace Business.Services.Ai.Helpers
                 line.Append("   (handled - a Failure branch took over)");
 
             if (!string.IsNullOrWhiteSpace(step.Message))
-                line.Append($"{Environment.NewLine}      {Redact(step.Message, step.Value, includeScreenValues)}");
+                line.Append(CultureInfo.InvariantCulture, $"{Environment.NewLine}      {Redact(step.Message, step.Value, includeScreenValues)}");
 
             if (!string.IsNullOrWhiteSpace(step.Error))
-                line.Append($"{Environment.NewLine}      stderr: {Redact(step.Error, step.Value, includeScreenValues)}");
+                line.Append(CultureInfo.InvariantCulture, $"{Environment.NewLine}      stderr: {Redact(step.Error, step.Value, includeScreenValues)}");
 
             return line.ToString();
         }

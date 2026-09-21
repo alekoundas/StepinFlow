@@ -40,7 +40,9 @@ namespace App.Localization
                 //    return arg;
                 //}).ToArray();
 
-                return new LocalizedString(name, string.Format(actualValue.Value, arguments), false);
+                // CurrentCulture and not invariant: this is the one place in the solution whose
+                // whole job is to format for whoever is reading it.
+                return new LocalizedString(name, string.Format(CultureInfo.CurrentCulture, actualValue.Value, arguments), false);
             }
         }
 

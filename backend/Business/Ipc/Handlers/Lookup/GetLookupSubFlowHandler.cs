@@ -3,6 +3,7 @@ using Core.Models.Ipc;
 using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Business.Ipc.Handlers
 {
@@ -40,7 +41,7 @@ namespace Business.Ipc.Handlers
                 .OrderBy(x => x.Name)
                 .Select(x => new LookupItemDto
                 {
-                    Value = x.Id.ToString(),
+                    Value = x.Id.ToString(CultureInfo.InvariantCulture),
                     Label = x.Name,
                     Description = $"{x.FlowSteps.Count(step => step.ParentFlowStepId == null)} step(s)",
                 })

@@ -3,6 +3,7 @@ using System.Text;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
+using System.Globalization;
 
 namespace Business.Services.NotificationService
 {
@@ -109,9 +110,9 @@ namespace Business.Services.NotificationService
                    .Append(string.Join(", ", templateNames.Take(MaxAttachments)));
 
             if (templateNames.Count > MaxAttachments)
-                builder.Append('\n').Append($"{templateNames.Count - MaxAttachments} more templates not shown");
+                builder.Append('\n').Append(CultureInfo.InvariantCulture, $"{templateNames.Count - MaxAttachments} more templates not shown");
 
-            builder.Append('\n').Append($"search mode: {failedStep.SearchMode}, accuracy: {failedStep.Accuracy}");
+            builder.Append('\n').Append(CultureInfo.InvariantCulture, $"search mode: {failedStep.SearchMode}, accuracy: {failedStep.Accuracy}");
 
             return builder.ToString();
         }
