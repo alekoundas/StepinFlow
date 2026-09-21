@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>false</UseWindowsForms>
     <UseWPF>false</UseWPF>
+
+    <!-- The [LibraryImport] attribute causes the source generator to emit unsafe code (marshalling C# -> c++ data mapping and back). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,7 +7,7 @@ namespace Platform.Windows.Native
     /// Cursor movement in physical (real device) pixels, which is the space the process runs in
     /// now that it is Per-Monitor-V2 aware.
     /// </summary>
-    internal static class NativeCursor
+    internal static partial class NativeCursor
     {
         //==================================================
         // P/Invoke Virtual screen metrics
@@ -17,11 +17,12 @@ namespace Platform.Windows.Native
         private const int SM_CXVIRTUALSCREEN = 78;
         private const int SM_CYVIRTUALSCREEN = 79;
 
-        [DllImport("user32.dll")]
-        private static extern int GetSystemMetrics(int nIndex);
+        [LibraryImport("user32.dll")]
+        private static partial int GetSystemMetrics(int nIndex);
 
-        [DllImport("user32.dll")]
-        private static extern bool GetCursorPos(out POINT lpPoint);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool GetCursorPos(out POINT lpPoint);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT

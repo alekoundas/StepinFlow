@@ -9,22 +9,24 @@ using System.Text.RegularExpressions;
 
 namespace Platform.Windows.Windowing
 {
-    public sealed class WindowService : IWindowService
+    public sealed partial class WindowService : IWindowService
     {
 
         //==================================================
         // P/Invoke Ask a window to close
         //==================================================
-        [DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        [LibraryImport("user32.dll", EntryPoint = "PostMessageW")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         private const uint WM_CLOSE = 0x0010;
 
 
         //==================================================
         // P/Invoke See if window is visible
         //==================================================
-        [DllImport("user32.dll")]
-        private static extern bool IsWindowVisible(IntPtr hWnd);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsWindowVisible(IntPtr hWnd);
 
 
         //==================================================
@@ -38,8 +40,8 @@ namespace Platform.Windows.Windowing
         //==================================================
         // P/Invoke Get the window the user is actually in
         //==================================================
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+        [LibraryImport("user32.dll")]
+        private static partial IntPtr GetForegroundWindow();
 
         private const int SW_RESTORE = 9;
         private const uint SWP_NOSIZE = 0x0001;
@@ -47,17 +49,21 @@ namespace Platform.Windows.Windowing
         private const uint SWP_NOZORDER = 0x0004;
         private const uint SWP_NOACTIVATE = 0x0010;
 
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetForegroundWindow(IntPtr hWnd);
 
-        [DllImport("user32.dll")]
-        private static extern bool IsIconic(IntPtr hWnd);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsIconic(IntPtr hWnd);
 
-        [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        [DllImport("user32.dll")]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
 
 
         public string? GetForegroundWindowTitle()
@@ -111,20 +117,20 @@ namespace Platform.Windows.Windowing
             public int Y;
         }
 
-        [DllImport("user32.dll")]
+        [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
+        private static partial bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
 
-        [DllImport("user32.dll")]
+        [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetClientRect(IntPtr hWnd, ref RECT lpRect);
+        private static partial bool GetClientRect(IntPtr hWnd, ref RECT lpRect);
 
-        [DllImport("user32.dll")]
+        [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+        private static partial bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
 
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        [LibraryImport("user32.dll")]
+        private static partial uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
 
 

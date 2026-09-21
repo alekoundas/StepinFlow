@@ -294,11 +294,32 @@ method does: define the subset, enforce it with a tool, record every deviation. 
       compiler enforced opacity, stops a monitor handle being passed where a window handle belongs,
       and gives the Linux XID - 32 bits, not a pointer - one place to live instead of every call
       site.
-- [ ] **Synchronise `State` and `_debuggerSignalNextStep`.** Written from the IPC thread by `Stop`,
-      `Pause`, `Continue`, `StepInto` and `StepOver`, read and written by the walk task, neither
-      `volatile`, and the `lock` guards only `Reset`. **Not a live bug** - the `await` points are
-      memory barriers, so the loop does observe the change - and ranked last for that reason. But
-      it is unsynchronised shared mutable state in a class whose own summary is about concurrency.
+- [x] **Synchronise `State` and `_debuggerSignalNextStep`, and leave `_cancellation` alone.**
+      Two problems that look like one and are not.
+
+      **The lock is for a race.** Checking whether an execution is going and claiming it are two
+      steps, so two IPC messages arriving together could both get past the check and start a walk.
+      Two walks, one mouse - the thing the class summary says must never happen. `lock` fuses the
+      check and the claim, and that is the only thing it is for. Five lines, and the comment now
+      says so, because `_lockObj` names the mechanism and not the reason.
+
+      **`volatile` is for visibility, which is not a race at all.** One thread writes `State`, one
+      reads it. The question is whether the pause gate ever sees the write: the JIT may keep a
+      field the loop never assigns in a register, and then Continue never resumes the run. A lock
+      would also work and would mean taking one twenty times a second on a parked walk.
+
+      **CA1001 was satisfied and then unsatisfied, which is the part worth recording.** Disposing
+      `_cancellation` on replacement looked obviously right, and made this item a live bug: `Stop`
+      could read the source, `Reset` could dispose it, and `Cancel` would throw on the IPC thread.
+      Guarding that cost a lock in `Stop`, a try/catch, a lock in `Dispose` and `IDisposable` on
+      the class - 25 lines. Then the question nobody had asked: what does disposing it release?
+      The source is never given a `CancelAfter`, and the only token linked to it is disposed by the
+      `using` that made it, so the registration is already gone. Nothing. The disposal was removed,
+      CA1001 is suppressed on the class with that reasoning, and the engine is 23 lines shorter.
+
+      Owning a disposable field is not owning a resource, and a rule worth turning on is still a
+      rule worth arguing with. The run's token is captured while the lock is held, so the
+      background walk never reads shared state at all.
 - [ ] **`<see cref="Helpers.WindowMatcher"/>` in `IWindowService` names a class that was renamed**
       to `WindowMatcherHelper`. While there: `FlowStepTreeNodeProjection`, `FlowStructureHasher` and
       `VariableTranslator` sit in `Core/Helpers/` without the suffix. If that is deliberate, because

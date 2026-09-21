@@ -7,17 +7,22 @@ namespace Platform.Windows.SystemActions
     /// <summary>
     /// Windows does these through an API call.
     /// </summary>
-    public sealed class SystemActionService : ISystemActionService
+    public sealed partial class SystemActionService : ISystemActionService
     {
 
-        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, uint flags, uint timeoutMs, out IntPtr result);
+        [LibraryImport("user32.dll", EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+        private static partial IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, uint flags, uint timeoutMs, out IntPtr result);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool LockWorkStation();
+        [LibraryImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool LockWorkStation();
 
-        [DllImport("powrprof.dll", SetLastError = true)]
-        private static extern bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent);
+        [LibraryImport("powrprof.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetSuspendState(
+            [MarshalAs(UnmanagedType.Bool)] bool hibernate,
+            [MarshalAs(UnmanagedType.Bool)] bool forceCritical,
+            [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent);
 
 
         private const int HWND_BROADCAST = 0xFFFF;

@@ -11,15 +11,16 @@ namespace Platform.Windows.Native
     /// coordinate API. Without it Windows virtualizes every rect to 96 DPI and nothing lines up
     /// with the capture buffers or the low level input hook, both of which are always physical.
     /// </summary>
-    public static class ScreenMetrics
+    public static partial class ScreenMetrics
     {
         //==================================================
         // P/Invoke Process DPI awareness
         //==================================================
         private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool SetProcessDpiAwarenessContext(IntPtr value);
+        [LibraryImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetProcessDpiAwarenessContext(IntPtr value);
 
 
         //==================================================
@@ -58,8 +59,8 @@ namespace Platform.Windows.Native
         //==================================================
         private const int MDT_EFFECTIVE_DPI = 0;
 
-        [DllImport("shcore.dll")]
-        private static extern int GetDpiForMonitor(IntPtr hMonitor, int dpiType, out uint dpiX, out uint dpiY);
+        [LibraryImport("shcore.dll")]
+        private static partial int GetDpiForMonitor(IntPtr hMonitor, int dpiType, out uint dpiX, out uint dpiY);
 
 
         //==================================================

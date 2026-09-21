@@ -48,6 +48,12 @@ dotnet_diagnostic.CA1000.severity = suggestion
 # "Collection initialization can be simplified" (LinQ chaining a ".ToList()" at the end is worst than spreadinng "[.. query.Where()]"
 dotnet_diagnostic.IDE0305.severity = suggestion
 
+# SYSLIB1054 "Use LibraryImport instead of DllImport" (ONLY for Platform.Windows proj)
+# Compile-time marshalling matters for NativeAOT and trimming, neither of which this ships with.
+# EnumWindows and EnumDisplayMonitors cannot convert at all - their callbacks are closures, and an
+# unmanaged function pointer cannot capture.
+dotnet_diagnostic.SYSLIB1054.severity = suggestion
+
 
 # ----------------------------------------------------------------------------------------------
 # Culture

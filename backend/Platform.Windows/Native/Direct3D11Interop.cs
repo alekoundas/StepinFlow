@@ -4,7 +4,7 @@ using Windows.Graphics.DirectX.Direct3D11;
 
 namespace Platform.Windows.Native
 {
-    internal static class Direct3D11Interop
+    internal static partial class Direct3D11Interop
     {
 
         // ================================================================
@@ -41,8 +41,8 @@ namespace Platform.Windows.Native
         // ================================================================
         // P/Invoke 
         // ================================================================
-        [DllImport("d3d11.dll", CallingConvention = CallingConvention.Winapi, PreserveSig = true)]
-        private static extern int D3D11CreateDevice(
+        [LibraryImport("d3d11.dll")]
+        private static partial int D3D11CreateDevice(
             IntPtr pAdapter,
             int DriverType,
             IntPtr Software,
@@ -55,8 +55,8 @@ namespace Platform.Windows.Native
             out IntPtr ppImmediateContext);
 
         // Converts a DXGI device COM pointer into the WinRT IDirect3DDevice wrapper
-        [DllImport("d3d11.dll", EntryPoint = "CreateDirect3D11DeviceFromDXGIDevice", CallingConvention = CallingConvention.Winapi, PreserveSig = true)]
-        private static extern int CreateDirect3D11DeviceFromDXGIDevice(IntPtr dxgiDevice, out IntPtr graphicsDevice);
+        [LibraryImport("d3d11.dll", EntryPoint = "CreateDirect3D11DeviceFromDXGIDevice")]
+        private static partial int CreateDirect3D11DeviceFromDXGIDevice(IntPtr dxgiDevice, out IntPtr graphicsDevice);
 
 
         // ================================================================
