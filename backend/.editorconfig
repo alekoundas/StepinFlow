@@ -64,6 +64,12 @@ csharp_style_expression_bodied_properties = false:suggestion
 csharp_style_expression_bodied_indexers = false:suggestion
 csharp_style_expression_bodied_accessors = false:suggestion
 
+#IDE0290 "Use primary constructor" (Dont warn to use class like: public void ClassName(int param){...} )
+dotnet_diagnostic.IDE0290.severity = none
+
+# IDE0028 "Collection initialization can be simplified"
+dotnet_diagnostic.IDE0028.severity = none
+
 
 
 
