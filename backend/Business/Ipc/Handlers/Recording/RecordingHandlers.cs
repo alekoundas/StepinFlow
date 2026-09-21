@@ -32,17 +32,19 @@ namespace Business.Ipc.Handlers
     public class StopRecordingHandler : IRequestHandler<StopRecordingCommand, ResultDto<IReadOnlyList<RecordedActionDto>>>
     {
         private readonly IRecordingSessionService _recordingSessionService;
+        private readonly TimeProvider _timeProvider;
 
-        public StopRecordingHandler(IRecordingSessionService recordingSessionService)
+        public StopRecordingHandler(IRecordingSessionService recordingSessionService, TimeProvider timeProvider)
         {
             _recordingSessionService = recordingSessionService;
+            _timeProvider = timeProvider;
         }
 
         public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> Handle(StopRecordingCommand request, CancellationToken ct)
         {
             IReadOnlyList<RecordedInput> events = await _recordingSessionService.StopAsync(ct);
 
-            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(RecordingActionBuilder.Build(events));
+            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(RecordingActionBuilder.Build(events, _timeProvider));
         }
     }
 

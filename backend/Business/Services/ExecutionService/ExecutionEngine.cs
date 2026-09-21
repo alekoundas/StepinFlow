@@ -31,6 +31,7 @@ namespace Business.Services.ExecutionService
         private readonly IExecutionCacheService _cache;
         private readonly IExecutionHistoryService _history;
         private readonly IIpcBroadcastService _broadcastService;
+        private readonly TimeProvider _timeProvider;
         private readonly ILogger<ExecutionEngine> _logger;
         private ExecutionFlowWalker _walker = null!;
 
@@ -58,6 +59,7 @@ namespace Business.Services.ExecutionService
             IExecutionCacheService cache,
             IExecutionHistoryService history,
             IIpcBroadcastService broadcastService,
+            TimeProvider timeProvider,
             ILogger<ExecutionEngine> logger)
         {
             _dbContextFactory = dbContextFactory;
@@ -65,6 +67,7 @@ namespace Business.Services.ExecutionService
             _cache = cache;
             _history = history;
             _broadcastService = broadcastService;
+            _timeProvider = timeProvider;
             _logger = logger;
         }
 
@@ -111,7 +114,7 @@ namespace Business.Services.ExecutionService
             Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
             await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
             ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
-            _walker = new ExecutionFlowWalker(_cache);
+            _walker = new ExecutionFlowWalker(_cache, _timeProvider);
 
 
             // Fire and forget:
@@ -309,16 +312,15 @@ namespace Business.Services.ExecutionService
         {
             IStepWorker worker = _workerFactory.GetWorker(step.FlowStepType);
 
-            DateTime startedOn = DateTime.UtcNow;
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            DateTime startedOn = _timeProvider.GetUtcNow().UtcDateTime;
+            long startedAt = _timeProvider.GetTimestamp();
             await BroadcastAsync(ExecutionEventDto.Started(ExecutionId, step));
 
             ExecutionStep executionStep = await worker.ExecuteAsync(step, _cache, ct);
-            stopwatch.Stop();
 
             // A worker reports what happened; where it happened in the run is not its business.
             executionStep.StartedOn = startedOn;
-            executionStep.DurationMilliseconds = (int)stopwatch.ElapsedMilliseconds;
+            executionStep.DurationMilliseconds = (int)_timeProvider.GetElapsedTime(startedAt).TotalMilliseconds;
 
             _walker.PlaceInRun(executionStep, step);
 

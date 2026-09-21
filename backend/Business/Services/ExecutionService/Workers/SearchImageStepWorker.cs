@@ -19,15 +19,18 @@ namespace Business.Services.ExecutionService.Workers
         private readonly IScreenshotService _screenshotService;
         private readonly IOpenCvService _templateMatcher;
         private readonly IAreaPointResolver _areaPointResolver;
+        private readonly TimeProvider _timeProvider;
 
         public SearchImageStepWorker(
             IScreenshotService screenshotService,
             IOpenCvService templateMatcher,
-            IAreaPointResolver areaPointResolver)
+            IAreaPointResolver areaPointResolver,
+            TimeProvider timeProvider)
         {
             _screenshotService = screenshotService;
             _templateMatcher = templateMatcher;
             _areaPointResolver = areaPointResolver;
+            _timeProvider = timeProvider;
         }
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
@@ -53,7 +56,7 @@ namespace Business.Services.ExecutionService.Workers
         private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, Rectangle bounds, IExecutionCacheService cache, CancellationToken ct)
         {
             bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
-            DateTime giveUpAt = DateTime.UtcNow.AddMilliseconds(step.TimeoutMilliseconds);
+            DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
             float? bestOverPolls = null;
 
             while (true)
@@ -72,7 +75,7 @@ namespace Business.Services.ExecutionService.Workers
                 // neither.
                 bestOverPolls = Best(bestOverPolls, search.BestScore);
 
-                if (step.TimeoutMilliseconds > 0 && DateTime.UtcNow >= giveUpAt)
+                if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
                     ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting"));
                     gaveUp.Screenshot = search.Screenshot;

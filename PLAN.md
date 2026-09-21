@@ -247,10 +247,24 @@ method does: define the subset, enforce it with a tool, record every deviation. 
       with one caller is indirection rather than agreement. Inlined back into `AreaPointResolver`.
       Worth remembering as a rule: the case for a helper is two callers that must not drift, so it
       disappears when the second one does.
-- [ ] **`TimeProvider` instead of `DateTime.UtcNow`.** Eight sites in `Business`. The two that
-      matter are `SearchImageStepWorker` and `SearchTextStepWorker`, which compute a timeout off the
-      wall clock, so any test of timeout behaviour costs real seconds. In the framework since
-      .NET 8, and `FakeTimeProvider` fakes `Task.Delay` too, which settles the debugger poll below.
+- [x] **`TimeProvider` instead of `DateTime.UtcNow`.** Eleven sites across eight files, and
+      `Business` now holds no clock of its own. One registration, `AddSingleton(TimeProvider.System)`,
+      and everything else takes it the way it takes any other dependency.
+
+      The two that mattered were `SearchImageStepWorker` and `SearchTextStepWorker`, which compute
+      a give-up time off the wall clock - so every test of a timeout used to cost the timeout.
+      `FakeTimeProvider` moves that clock by hand, and fakes `Task.Delay` with it, which is what
+      makes the debugger poll below testable as well.
+
+      `ExecutionEngine` lost its `Stopwatch` too. `GetTimestamp` and `GetElapsedTime` are the
+      provider's equivalent, so a step's `DurationMilliseconds` is now a number a test can decide
+      rather than however long the machine happened to take.
+
+      Two sites were deliberately left: `BaseDbModel.CreatedOn` and `RecordedInput.CreatedOn` are
+      property initializers on models, and a model has no constructor to inject into. Making those
+      testable means an EF `SaveChanges` interceptor, which is a different piece of work and not
+      one this phase needs. They are the reason the ban below is scoped to `Business` rather than
+      applied to `Core` as well.
 - [x] **Analyzers.** `backend/Directory.Build.props` decides which rules run - `EnableNETAnalyzers`,
       `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`, and now
       `TreatWarningsAsErrors` with NU1901-1904 exempt, because a CVE published overnight against a

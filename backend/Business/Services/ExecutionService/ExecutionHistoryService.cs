@@ -29,6 +29,7 @@ namespace Business.Services.ExecutionService
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IExecutionCacheService _cache;
         private readonly IAppSettingService _appSettingService;
+        private readonly TimeProvider _timeProvider;
         private readonly ILogger<ExecutionHistoryService> _logger;
 
         private readonly List<ExecutionStep> _unwrittenExecutionSteps = new List<ExecutionStep>();//Every one that has run and not gone down yet. A loop of fifty passes is fifty of these
@@ -43,11 +44,13 @@ namespace Business.Services.ExecutionService
             IDbContextFactory<AppDbContext> dbContextFactory,
             IExecutionCacheService cache,
             IAppSettingService appSettingService,
+            TimeProvider timeProvider,
             ILogger<ExecutionHistoryService> logger)
         {
             _dbContextFactory = dbContextFactory;
             _cache = cache;
             _appSettingService = appSettingService;
+            _timeProvider = timeProvider;
             _logger = logger;
         }
 
@@ -122,7 +125,7 @@ namespace Business.Services.ExecutionService
                 return;
 
             execution.Status = status;
-            execution.CompletedAt = DateTime.UtcNow;
+            execution.CompletedAt = _timeProvider.GetUtcNow().UtcDateTime;
             execution.ErrorMessage = error;
             execution.ErrorFlowStepId = errorFlowStepId;
             execution.StepCount = stepCount;
@@ -184,7 +187,7 @@ namespace Business.Services.ExecutionService
             try
             {
                 if (_runFolder.Length == 0)
-                    _runFolder = PathHelper.GetExecutionRunPath(_flowName, DateTime.Now);
+                    _runFolder = PathHelper.GetExecutionRunPath(_flowName, _timeProvider.GetLocalNow().DateTime);
 
                 string fileName = $"{string.Concat($"{executionStep.Sequence} {executionStep.Name}".Split(Path.GetInvalidFileNameChars())).Trim()}.jpg";
 

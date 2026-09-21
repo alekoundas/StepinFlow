@@ -50,6 +50,9 @@ namespace App
             builder.Services.AddCustomDbContextFactory();
 
 
+            // TimeProvider offers an abstraction over the DateTime.UtcNow. That means the methods are easy to unit test.
+            builder.Services.AddSingleton(TimeProvider.System);
+
             // Ports
             builder.Services.AddSingleton<IOpenCvService, OpenCvService>();
             builder.Services.AddSingleton<IInputService, InputService>();

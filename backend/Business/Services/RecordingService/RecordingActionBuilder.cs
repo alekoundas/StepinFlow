@@ -51,7 +51,7 @@ namespace Business.Services.RecordingService
             KeyCodeEnum.LeftMeta, KeyCodeEnum.RightMeta,
         ];
 
-        public static List<RecordedActionDto> Build(IReadOnlyList<RecordedInput> events)
+        public static List<RecordedActionDto> Build(IReadOnlyList<RecordedInput> events, TimeProvider timeProvider)
         {
             List<RecordedActionDto> actions = new List<RecordedActionDto>();
             StringBuilder typed = new StringBuilder();
@@ -89,7 +89,7 @@ namespace Business.Services.RecordingService
                     return;
 
                 string text = typed.ToString();
-                DateTime startedOn = typedStartedOn ?? DateTime.Now;
+                DateTime startedOn = typedStartedOn ?? timeProvider.GetLocalNow().DateTime;
                 typed.Clear();
                 typedStartedOn = null;
 

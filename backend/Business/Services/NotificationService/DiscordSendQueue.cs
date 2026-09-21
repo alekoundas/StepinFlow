@@ -29,11 +29,13 @@ namespace Business.Services.NotificationService
         private readonly Task _pump;
 
         private readonly IDiscordNotifier _notifier;
+        private readonly TimeProvider _timeProvider;
         private readonly ILogger<DiscordSendQueue> _logger;
 
-        public DiscordSendQueue(IDiscordNotifier notifier, ILogger<DiscordSendQueue> logger)
+        public DiscordSendQueue(IDiscordNotifier notifier, TimeProvider timeProvider, ILogger<DiscordSendQueue> logger)
         {
             _notifier = notifier;
+            _timeProvider = timeProvider;
             _logger = logger;
 
             _pump = Task.Run(() => PumpAsync(_cts.Token));
@@ -78,7 +80,7 @@ namespace Business.Services.NotificationService
         /// </summary>
         private bool TryClaimSlot(int discordBotId, TimeSpan minimumInterval)
         {
-            DateTime now = DateTime.UtcNow;
+            DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
             bool claimed = false;
 
             _lastSentByBot.AddOrUpdate(

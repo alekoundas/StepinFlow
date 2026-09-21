@@ -20,15 +20,18 @@ namespace Business.Services.ExecutionService.Workers
         private readonly IScreenshotService _screenshotService;
         private readonly IOcrService _ocrService;
         private readonly IAreaPointResolver _areaPointResolver;
+        private readonly TimeProvider _timeProvider;
 
         public SearchTextStepWorker(
             IScreenshotService screenshotService,
             IOcrService ocrService,
-            IAreaPointResolver areaPointResolver)
+            IAreaPointResolver areaPointResolver,
+            TimeProvider timeProvider)
         {
             _screenshotService = screenshotService;
             _ocrService = ocrService;
             _areaPointResolver = areaPointResolver;
+            _timeProvider = timeProvider;
         }
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
@@ -54,7 +57,7 @@ namespace Business.Services.ExecutionService.Workers
         private async Task<ExecutionStep> LoopReadAsync(FlowStep step, Rectangle bounds, IExecutionCacheService cache, CancellationToken ct)
         {
             bool wantSatisfied = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
-            DateTime giveUpAt = DateTime.UtcNow.AddMilliseconds(step.TimeoutMilliseconds);
+            DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
 
             while (true)
             {
@@ -67,7 +70,7 @@ namespace Business.Services.ExecutionService.Workers
                     return read;
 
                 // A zero timeout waits for ever.
-                if (step.TimeoutMilliseconds > 0 && DateTime.UtcNow >= giveUpAt)
+                if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
                     // The last read, not a generic message: what the screen actually said when it
                     // gave up is the whole of what a person needs to see.

@@ -28,6 +28,7 @@ namespace Business.Services.ExecutionService
 
         private readonly IAppSettingService _appSettingService;
         private readonly IScreenshotService _screenshotService;
+        private readonly TimeProvider _timeProvider;
 
         private readonly Dictionary<int, ExecutionStep> _cachedExecutionStepsById = new Dictionary<int, ExecutionStep>();            //Cache all flowstep parents execution steps with result. One per step - a loop overwrites its own
         private readonly Dictionary<int, IReadOnlyList<Point>> _cachedPointsByStepId = new Dictionary<int, IReadOnlyList<Point>>();  //Every hit a FIND_ALL came back with
@@ -36,10 +37,12 @@ namespace Business.Services.ExecutionService
 
         public ExecutionCacheService(
             IAppSettingService appSettingService,
-            IScreenshotService screenshotService)
+            IScreenshotService screenshotService,
+            TimeProvider timeProvider)
         {
             _appSettingService = appSettingService;
             _screenshotService = screenshotService;
+            _timeProvider = timeProvider;
         }
 
         public IReadOnlyDictionary<int, FlowStep> StepsById { get; private set; } = new Dictionary<int, FlowStep>();
@@ -132,7 +135,7 @@ namespace Business.Services.ExecutionService
 
             byte[] encoded = _screenshotService.Encode(screenshot, ScreenshotFormatEnum.JPEG, _screenshotQuality);
 
-            return new ExecutionScreenshot(encoded, flowStep.Name, DateTime.Now);
+            return new ExecutionScreenshot(encoded, flowStep.Name, _timeProvider.GetLocalNow().DateTime);
         }
 
     }

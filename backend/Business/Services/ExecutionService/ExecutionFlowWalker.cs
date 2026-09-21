@@ -23,6 +23,7 @@ namespace Business.Services.ExecutionService
         private const int _maxSubFlowDepth = 50;// A flow calling a flow calling a flow - count
 
         private readonly IExecutionCacheService _cache;
+        private readonly TimeProvider _timeProvider;
         private readonly Stack<PendingStep> _executionStack = new Stack<PendingStep>();                   // Its THE stack
         private readonly Dictionary<int, int> _loopPasses = new Dictionary<int, int>();                   //How many times each loop has come round, keyed by the LOOP step
         private readonly Dictionary<int, PendingMatches> _pendingMatches = new Dictionary<int, PendingMatches>();//Which hit a FIND_ALL search is on, keyed by the search step
@@ -33,9 +34,10 @@ namespace Business.Services.ExecutionService
         private int _subFlowDepth;
         private int _executionStepSequence;
 
-        public ExecutionFlowWalker(IExecutionCacheService cache)
+        public ExecutionFlowWalker(IExecutionCacheService cache, TimeProvider timeProvider)
         {
             _cache = cache;
+            _timeProvider = timeProvider;
         }
 
         public int Depth { get; private set; }
@@ -234,7 +236,7 @@ namespace Business.Services.ExecutionService
                 Location = points[matches.Index],
                 MatchIndex = matches.Index,
                 MatchCount = matches.Count,
-                StartedOn = DateTime.UtcNow,
+                StartedOn = _timeProvider.GetUtcNow().UtcDateTime,
                 DurationMilliseconds = 0,
                 ScreenshotFileName = _cache.GetExecutionStepFrom(step.Id)?.ScreenshotFileName, //Every hit came off the one screenshot the search tookEvery hit came off the one screenshot the search took
             };
