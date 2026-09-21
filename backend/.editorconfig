@@ -45,6 +45,10 @@ dotnet_diagnostic.CA1861.severity = suggestion
 #CA1000 "Do not declare static members on generic types" (Generic classes shouldnt have a static method because it gets ccoppied for every type (int,string etc) )
 dotnet_diagnostic.CA1000.severity = suggestion
 
+# "Collection initialization can be simplified" (LinQ chaining a ".ToList()" at the end is worst than spreadinng "[.. query.Where()]"
+dotnet_diagnostic.IDE0305.severity = suggestion
+
+
 # ----------------------------------------------------------------------------------------------
 # Culture
 # ----------------------------------------------------------------------------------------------
@@ -69,8 +73,11 @@ csharp_style_expression_bodied_accessors = false:suggestion
 #IDE0290 "Use primary constructor" (Dont warn to use class like: public ClassName(int param){...} )
 dotnet_diagnostic.IDE0290.severity = none
 
-# IDE0028 "Collection initialization can be simplified"
-dotnet_diagnostic.IDE0028.severity = none
+#IDE0066 "Use 'switch' expression"
+dotnet_diagnostic.IDE0066.severity = none 
+            
+# IDE0028 "Collection initialization can be simplified" (Allow the "new" keyword ex. List<string> names = new List<string>())  
+dotnet_diagnostic.IDE0028.severity = none 
 
 
 
