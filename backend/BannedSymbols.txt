@@ -1,10 +1,22 @@
 # BannedApiAnalyzers
 # Every project except Platform.Windows, which has its own list and does not inherit this one.
+# P = Property, M = Method, backtick-1 "`1" means "generic with one type parameter" 
 
+# TimeProvider
 P:System.DateTime.UtcNow;Take a TimeProvider. A timeout read off the wall clock is a test that has to wait for it.
 P:System.DateTime.Now;Take a TimeProvider. Local time is a display concern - what gets stored is UTC.
 P:System.DateTimeOffset.UtcNow;Take a TimeProvider.
 P:System.DateTimeOffset.Now;Take a TimeProvider.
+
+# Ports
 T:System.Diagnostics.Process;Driving another program is touching the machine. Put it behind a port in Core/Ports.
+
+# DllImport and LibraryImport Attributes
 T:System.Runtime.InteropServices.DllImportAttribute;Native calls belong in Platform.Windows.
 T:System.Runtime.InteropServices.LibraryImportAttribute;Native calls belong in Platform.Windows.
+
+# Never block an asynchronous thread synchronously.
+P:System.Threading.Tasks.Task`1.Result;Await it. Blocking on a task is how a deadlock gets built.
+M:System.Threading.Tasks.Task.Wait;Await it.
+M:System.Threading.Tasks.Task.GetAwaiter;Await it. GetAwaiter().GetResult() is Wait() wearing a hat.
+M:System.Threading.Tasks.Task`1.GetAwaiter;Await it. The generic Task carries its own GetAwaiter.

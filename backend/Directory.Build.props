@@ -28,7 +28,7 @@
   <!-- BannedApiAnalyzers -->
   <!-- Closest to MISRA rules. Two lists, one rule for Platform.Windows and a global one for the others. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.*" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- Everything except Platform.Windows. -->

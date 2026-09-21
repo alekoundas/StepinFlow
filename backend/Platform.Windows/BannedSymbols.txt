@@ -1,8 +1,17 @@
 # BannedApiAnalyzers
 # Platform.Windows only. It does not inherit backend/BannedSymbols.txt. 
 # the whole point of this project is Process, DllImport and LibraryImport.
+# P = Property, M = Method, backtick-1 "`1" means "generic with one type parameter" 
 
+# TimeProvider
 P:System.DateTime.UtcNow;Take a TimeProvider. This project already does.
 P:System.DateTime.Now;Take a TimeProvider. This project already does.
 P:System.DateTimeOffset.UtcNow;Take a TimeProvider.
 P:System.DateTimeOffset.Now;Take a TimeProvider.
+
+
+# Never block an asynchronous thread synchronously.
+P:System.Threading.Tasks.Task`1.Result;Await it. Blocking on a task is how a deadlock gets built.
+M:System.Threading.Tasks.Task.Wait;Await it.
+M:System.Threading.Tasks.Task.GetAwaiter;Await it. GetAwaiter().GetResult() is Wait() wearing a hat.
+M:System.Threading.Tasks.Task`1.GetAwaiter;Await it. The generic Task carries its own GetAwaiter.
