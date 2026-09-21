@@ -30,7 +30,7 @@ namespace Business.Ipc.Handlers
 
             List<string> users = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.DiscordBotId == request.id)
+                .Where(x => x.DiscordBotId == request.Id)
                 .Select(x => x.Flow!.Name + " - " + x.Name)
                 .Distinct()
                 .OrderBy(x => x)
@@ -40,7 +40,7 @@ namespace Business.Ipc.Handlers
                 return ResultDto<bool>.Failure(Refusal(users));
 
             int count = await dbContext.DiscordBots
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .ExecuteDeleteAsync(ct);
 
             if (count <= 0)

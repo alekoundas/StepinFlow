@@ -30,14 +30,14 @@ namespace Business.Ipc.Handlers
 
             List<FlowStep> steps = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.RootId == request.id)
+                .Where(x => x.RootId == request.Id)
                 .ToListAsync(ct);
 
             // Counted rather than Included: the templates themselves are megabytes and only their
             // number matters here.
             var templateCounts = await dbContext.FlowStepTemplates
                 .AsNoTracking()
-                .Where(x => x.FlowStep.RootId == request.id)
+                .Where(x => x.FlowStep.RootId == request.Id)
                 .GroupBy(x => x.FlowStepId)
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToListAsync(ct);
@@ -46,15 +46,15 @@ namespace Business.Ipc.Handlers
             // against any of them, so neither question is answerable without all four.
             List<string> flowNames = await dbContext.FlowAreas
                 .AsNoTracking()
-                .Where(x => x.FlowId == request.id)
+                .Where(x => x.FlowId == request.Id)
                 .Select(x => x.Name)
                 .Concat(dbContext.FlowPoints
                     .AsNoTracking()
-                    .Where(x => x.FlowId == request.id)
+                    .Where(x => x.FlowId == request.Id)
                     .Select(x => x.Name))
                 .Concat(dbContext.FlowCsvColumns
                     .AsNoTracking()
-                    .Where(x => x.FlowId == request.id)
+                    .Where(x => x.FlowId == request.Id)
                     .Select(x => x.Name))
                 .ToListAsync(ct);
 

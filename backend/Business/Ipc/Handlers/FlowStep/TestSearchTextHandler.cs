@@ -30,7 +30,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<SearchTextTestResultDto>> Handle(TestSearchTextQuery request, CancellationToken ct)
         {
-            FlowStepDto step = request.dto;
+            FlowStepDto step = request.Dto;
 
             if (step.FlowAreaId == null)
                 return Unresolved("Pick an area to read first.");

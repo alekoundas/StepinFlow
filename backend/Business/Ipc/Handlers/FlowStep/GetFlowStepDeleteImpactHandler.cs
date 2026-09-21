@@ -29,7 +29,7 @@ namespace Business.Ipc.Handlers
 
             int? rootId = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .Select(x => (int?)x.RootId)
                 .FirstOrDefaultAsync(ct);
 
@@ -42,7 +42,7 @@ namespace Business.Ipc.Handlers
                 .Select(x => new StepLink(x.Id, x.ParentFlowStepId, x.FlowStepReferenceId, x.FlowStepReferenceEndId))
                 .ToListAsync(ct);
 
-            HashSet<int> removed = Removed(links, request.id);
+            HashSet<int> removed = Removed(links, request.Id);
 
             // Only the ones that outlive the delete. A reference from inside the subtree goes with
             // everything else, so counting it would be counting a problem that cannot happen.

@@ -17,7 +17,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupWindowQuery request, CancellationToken ct)
         {
-            string search = request.dto.SearchText ?? string.Empty;
+            string search = request.Dto.SearchText ?? string.Empty;
 
             // Value is the process name: window titles change constantly, process names do not.
             // The title comes along in ExtraData so the form can offer it as a starting pattern.

@@ -24,7 +24,7 @@ namespace Business.Ipc.Handlers
 
             Core.Models.Database.DiscordBot? bot = await dbContext.DiscordBots
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
 
             if (bot == null)
                 return ResultDto<DiscordBotDto>.Failure("That Discord bot no longer exists.");

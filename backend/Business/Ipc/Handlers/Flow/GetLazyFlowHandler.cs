@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
             IQueryable<Flow> query = dbContext.Flows.AsNoTracking();
 
             // Unset lists everything, which is what a lookup wants; the two pages always set it.
-            if (request.dto.IsSubFlow is bool isSubFlow)
+            if (request.Dto.IsSubFlow is bool isSubFlow)
                 query = query.Where(x => x.IsSubFlow == isSubFlow);
 
             // Projected, not mapped: the list wants counts, and loading three collections per

@@ -24,7 +24,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             FlowStepTemplate? flowStepTemplate = await dbContext.FlowStepTemplates
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
 
             if (flowStepTemplate == null)
                 return ResultDto<FlowStepTemplateDto>.Failure("Entity doesnt exist in the Database!");

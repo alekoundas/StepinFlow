@@ -32,7 +32,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupFailedStepQuery request, CancellationToken ct)
         {
-            LookupRequestDto dto = request.dto;
+            LookupRequestDto dto = request.Dto;
 
             if (dto.FlowStepId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());

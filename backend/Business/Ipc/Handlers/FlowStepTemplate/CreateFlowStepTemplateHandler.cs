@@ -23,7 +23,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowStepTemplate flowStepTemplate = _mapper.Map<FlowStepTemplate>(request.dto);
+            FlowStepTemplate flowStepTemplate = _mapper.Map<FlowStepTemplate>(request.Dto);
             flowStepTemplate.Id = 0;
 
             dbContext.FlowStepTemplates.Add(flowStepTemplate);

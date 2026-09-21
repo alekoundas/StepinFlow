@@ -24,7 +24,7 @@ namespace Business.Ipc.Handlers
         {
             try
             {
-                FlowExportResultDto result = await _exporter.ExportAsync(request.dto.FlowId, request.dto.FolderPath, ct);
+                FlowExportResultDto result = await _exporter.ExportAsync(request.Dto.FlowId, request.Dto.FolderPath, ct);
 
                 return ResultDto<FlowExportResultDto>.Success(result);
             }

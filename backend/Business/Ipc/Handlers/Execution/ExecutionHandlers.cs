@@ -19,7 +19,7 @@ namespace Business.Ipc.Handlers
             try
             {
                 // Not the request's token: the run outlives the call that asked for it.
-                int executionId = await _executionEngine.StartAsync(request.dto, CancellationToken.None);
+                int executionId = await _executionEngine.StartAsync(request.Dto, CancellationToken.None);
                 return ResultDto<int>.Success(executionId);
             }
             catch (InvalidOperationException ex)
@@ -104,7 +104,7 @@ namespace Business.Ipc.Handlers
 
         public Task<ResultDto<bool>> Handle(SetExecutionBreakpointsCommand request, CancellationToken ct)
         {
-            return Apply(engine => engine.SetBreakpoints(request.flowStepIds));
+            return Apply(engine => engine.SetBreakpoints(request.FlowStepIds));
         }
     }
 }

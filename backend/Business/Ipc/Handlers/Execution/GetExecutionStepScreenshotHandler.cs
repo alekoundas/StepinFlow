@@ -27,7 +27,7 @@ namespace Business.Ipc.Handlers
 
             ScreenshotLocation? location = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.Id == request.executionStepId)
+                .Where(x => x.Id == request.ExecutionStepId)
                 .Select(x => new ScreenshotLocation(x.Execution.ScreenshotFolderName, x.ScreenshotFileName))
                 .FirstOrDefaultAsync(ct);
 

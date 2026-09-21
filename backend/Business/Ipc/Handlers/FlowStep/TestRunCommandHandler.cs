@@ -20,7 +20,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<RunCommandTestResultDto>> Handle(TestRunCommandQuery request, CancellationToken ct)
         {
-            RunCommandTestResultDto result = await _commandRunner.RunAsync(request.dto, ct);
+            RunCommandTestResultDto result = await _commandRunner.RunAsync(request.Dto, ct);
             return ResultDto<RunCommandTestResultDto>.Success(result);
         }
     }

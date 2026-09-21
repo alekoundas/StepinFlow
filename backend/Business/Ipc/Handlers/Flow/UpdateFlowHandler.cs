@@ -27,18 +27,18 @@ namespace Business.Ipc.Handlers
                 .Include(x => x.FlowAreas)
                 .Include(x => x.FlowPoints)
                 .Include(x => x.FlowViewports)
-                .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
 
             if (existingFlow == null)
                 return ResultDto<FlowDto>.Failure("Flow not found");
 
-            existingFlow.Name = request.dto.Name;
-            existingFlow.Description = request.dto.Description;
+            existingFlow.Name = request.Dto.Name;
+            existingFlow.Description = request.Dto.Description;
 
             // Areas first: a location can point at an area created in this same payload.
-            Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.dto.FlowAreas);
-            SyncFlowPoints(dbContext, existingFlow, request.dto.FlowPoints, areasByDtoId);
-            SyncFlowViewports(dbContext, existingFlow, request.dto.FlowViewports);
+            Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.Dto.FlowAreas);
+            SyncFlowPoints(dbContext, existingFlow, request.Dto.FlowPoints, areasByDtoId);
+            SyncFlowViewports(dbContext, existingFlow, request.Dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
 

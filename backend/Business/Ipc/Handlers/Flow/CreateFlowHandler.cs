@@ -23,7 +23,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            Flow flow = _mapper.Map<Flow>(request.dto);
+            Flow flow = _mapper.Map<Flow>(request.Dto);
             flow.Id = 0;
 
             dbContext.Flows.Add(flow);

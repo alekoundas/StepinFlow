@@ -21,7 +21,7 @@ namespace Business.Ipc.Handlers
 
             FlowPointDto? flowPointDto = await dbContext.FlowPoints
                 .AsNoTracking()
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .Select(x => new FlowPointDto
                 {
                     Id = x.Id,

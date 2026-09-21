@@ -20,7 +20,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             List<TreeNodeDto> children = await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .Select(x => new TreeNodeDto
                 {
                     EntityId = x.Id,

@@ -23,7 +23,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowPoint flowPoint = _mapper.Map<FlowPoint>(request.dto);
+            FlowPoint flowPoint = _mapper.Map<FlowPoint>(request.Dto);
             flowPoint.Id = 0;
 
             dbContext.FlowPoints.Add(flowPoint);

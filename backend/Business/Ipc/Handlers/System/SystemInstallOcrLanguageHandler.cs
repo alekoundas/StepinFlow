@@ -16,7 +16,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<OcrLanguageInstallResultDto>> Handle(SystemInstallOcrLanguageCommand request, CancellationToken ct)
         {
-            OcrLanguageInstallResultDto result = await _ocrService.InstallLanguageAsync(request.languageTag, ct);
+            OcrLanguageInstallResultDto result = await _ocrService.InstallLanguageAsync(request.LanguageTag, ct);
 
             return result.ErrorMessage == null
                 ? ResultDto<OcrLanguageInstallResultDto>.Success(result)

@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers.Execution
 
             ExecutionDto? execution = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .Select(x => new ExecutionDto
                 {
                     Id = x.Id,
@@ -48,7 +48,7 @@ namespace Business.Ipc.Handlers.Execution
 
             execution.ExecutionSteps = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.ExecutionId == request.id)
+                .Where(x => x.ExecutionId == request.Id)
                 .OrderBy(x => x.Sequence)
                 .Select(x => new ExecutionStepDto
                 {

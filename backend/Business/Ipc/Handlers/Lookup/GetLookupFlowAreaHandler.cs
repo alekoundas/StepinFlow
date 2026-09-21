@@ -18,7 +18,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupFlowAreaQuery request, CancellationToken ct)
         {
-            LookupRequestDto dto = request.dto;
+            LookupRequestDto dto = request.Dto;
 
             if (dto.FlowId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());

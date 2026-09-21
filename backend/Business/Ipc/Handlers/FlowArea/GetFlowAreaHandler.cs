@@ -25,7 +25,7 @@ namespace Business.Ipc.Handlers
             FlowArea? flowArea = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Include(x => x.FlowSteps)
-                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
 
             if (flowArea == null)
                 return ResultDto<FlowAreaDto>.Failure("Entity doesnt exist in the Database!");

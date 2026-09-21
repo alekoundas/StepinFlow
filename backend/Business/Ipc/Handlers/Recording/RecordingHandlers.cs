@@ -78,7 +78,7 @@ namespace Business.Ipc.Handlers
 
         public Task<ResultDto<byte[]>> Handle(GetRecordingScreenshotQuery request, CancellationToken ct)
         {
-            byte[]? image = _recordingSessionService.GetScreenshot(request.index);
+            byte[]? image = _recordingSessionService.GetScreenshot(request.Index);
 
             return Task.FromResult(image == null
                 ? ResultDto<byte[]>.Failure("That action has no screenshot.")

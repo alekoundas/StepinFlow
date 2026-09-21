@@ -4,12 +4,12 @@ using MediatR;
 namespace Core.Models.Ipc
 {
     // ============== QUERIES ==============
-    public record GetFlowPointQuery(int id) : IRequest<ResultDto<FlowPointDto>>;
-    public record GetFlowPointPreviewQuery(int id) : IRequest<ResultDto<ScreenPointDto>>;
+    public record GetFlowPointQuery(int Id) : IRequest<ResultDto<FlowPointDto>>;
+    public record GetFlowPointPreviewQuery(int Id) : IRequest<ResultDto<ScreenPointDto>>;
 
 
     // ============== COMMANDS ==============
-    public record CreateFlowPointCommand(FlowPointDto dto) : IRequest<ResultDto<int>>;
-    public record UpdateFlowPointCommand(FlowPointDto dto) : IRequest<ResultDto<FlowPointDto>>;
-    public record DeleteFlowPointCommand(int id) : IRequest<ResultDto<bool>>;
+    public record CreateFlowPointCommand(FlowPointDto Dto) : IRequest<ResultDto<int>>;
+    public record UpdateFlowPointCommand(FlowPointDto Dto) : IRequest<ResultDto<FlowPointDto>>;
+    public record DeleteFlowPointCommand(int Id) : IRequest<ResultDto<bool>>;
 }

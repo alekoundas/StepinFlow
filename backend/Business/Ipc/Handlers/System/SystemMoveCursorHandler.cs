@@ -16,7 +16,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<bool>> Handle(SystemMoveCursorCommand request, CancellationToken ct)
         {
-            bool moved = _inputService.MoveCursor(request.dto.X, request.dto.Y);
+            bool moved = _inputService.MoveCursor(request.Dto.X, request.Dto.Y);
 
             if (!moved)
                 return ResultDto<bool>.Failure("Could not move the cursor to the requested point.");

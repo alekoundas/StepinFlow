@@ -10,7 +10,7 @@ namespace Core.Models.Ipc
 
 
     // ============== COMMANDS ==============
-    public record SystemTakeScreenshotCommand(ScreenshotRequestDto dto) : IRequest<ResultDto<byte[]>>;
+    public record SystemTakeScreenshotCommand(ScreenshotRequestDto Dto) : IRequest<ResultDto<byte[]>>;
     public record SystemCaptureForOverlayCommand() : IRequest<ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>>;
 
 
@@ -28,8 +28,8 @@ namespace Core.Models.Ipc
 
     public record SystemInputRecordHotkeyStopCommand() : IRequest<ResultDto<bool>>;
 
-    public record SystemMoveCursorCommand(ScreenPointDto dto) : IRequest<ResultDto<bool>>;
+    public record SystemMoveCursorCommand(ScreenPointDto Dto) : IRequest<ResultDto<bool>>;
 
-    public record SystemInstallOcrLanguageCommand(string languageTag) : IRequest<ResultDto<OcrLanguageInstallResultDto>>;
+    public record SystemInstallOcrLanguageCommand(string LanguageTag) : IRequest<ResultDto<OcrLanguageInstallResultDto>>;
     public record SystemOpenWindowsLanguageSettingsCommand() : IRequest<ResultDto<bool>>;
 }

@@ -6,21 +6,21 @@ namespace Core.Models.Ipc
 {
 
     // ============== QUERIES ==============
-    public record GetFlowStepQuery(int id) : IRequest<ResultDto<FlowStepDto>>;
-    public record GetFlowStepTreeNodeQuery(TreeNodeRequestDto dto) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
-    public record GetFlowStepTreeNodesRecursiveQuery(int flowId) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
-    public record GetLazyStepFlowQuery(LazyRequestDto dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
-    public record GetFlowStepMovePreviewQuery(FlowStepMoveDto dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
-    public record GetFlowStepDeleteImpactQuery(int id) : IRequest<ResultDto<FlowStepDeleteImpactDto>>;
-    public record TestImageSearchQuery(FlowStepDto dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
-    public record TestRunCommandQuery(FlowStepDto dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
-    public record TestSearchTextQuery(FlowStepDto dto) : IRequest<ResultDto<SearchTextTestResultDto>>;
+    public record GetFlowStepQuery(int Id) : IRequest<ResultDto<FlowStepDto>>;
+    public record GetFlowStepTreeNodeQuery(TreeNodeRequestDto Dto) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
+    public record GetFlowStepTreeNodesRecursiveQuery(int FlowId) : IRequest<ResultDto<IEnumerable<TreeNodeDto>>>;
+    public record GetLazyStepFlowQuery(LazyRequestDto Dto) : IRequest<ResultDto<LazyResponseDto<FlowStepDto>>>;
+    public record GetFlowStepMovePreviewQuery(FlowStepMoveDto Dto) : IRequest<ResultDto<FlowStepMovePreviewDto>>;
+    public record GetFlowStepDeleteImpactQuery(int Id) : IRequest<ResultDto<FlowStepDeleteImpactDto>>;
+    public record TestImageSearchQuery(FlowStepDto Dto) : IRequest<ResultDto<ImageSearchTestResultDto>>;
+    public record TestRunCommandQuery(FlowStepDto Dto) : IRequest<ResultDto<RunCommandTestResultDto>>;
+    public record TestSearchTextQuery(FlowStepDto Dto) : IRequest<ResultDto<SearchTextTestResultDto>>;
 
 
     // ============== COMMANDS ==============
-    public record CreateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<int>>;
-    public record CreateFlowStepsCommand(FlowDraftDto dto) : IRequest<ResultDto<FlowDraftResultDto>>;
-    public record UpdateFlowStepCommand(FlowStepDto dto) : IRequest<ResultDto<FlowStepDto>>;
-    public record DeleteFlowStepCommand(int id) : IRequest<ResultDto<bool>>;
-    public record MoveFlowStepCommand(FlowStepMoveDto dto) : IRequest<ResultDto<bool>>;
+    public record CreateFlowStepCommand(FlowStepDto Dto) : IRequest<ResultDto<int>>;
+    public record CreateFlowStepsCommand(FlowDraftDto Dto) : IRequest<ResultDto<FlowDraftResultDto>>;
+    public record UpdateFlowStepCommand(FlowStepDto Dto) : IRequest<ResultDto<FlowStepDto>>;
+    public record DeleteFlowStepCommand(int Id) : IRequest<ResultDto<bool>>;
+    public record MoveFlowStepCommand(FlowStepMoveDto Dto) : IRequest<ResultDto<bool>>;
 }

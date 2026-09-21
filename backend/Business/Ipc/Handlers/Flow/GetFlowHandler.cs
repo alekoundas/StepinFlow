@@ -8,7 +8,7 @@ namespace Business.Ipc.Handlers
 {
     public class GetFlowHandler : IRequestHandler<GetFlowQuery, ResultDto<FlowDto>>
     {
-        private IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
         public GetFlowHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {
@@ -24,7 +24,7 @@ namespace Business.Ipc.Handlers
 
             FlowDto? flowDto = await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .Select(x => new FlowDto
                 {
                     Id = x.Id,

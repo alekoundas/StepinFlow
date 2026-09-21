@@ -27,7 +27,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<bool>> Handle(TestDiscordBotCommand request, CancellationToken ct)
         {
-            TestDiscordBotDto dto = request.dto;
+            TestDiscordBotDto dto = request.Dto;
 
             if (string.IsNullOrWhiteSpace(dto.WebhookUrl))
                 return ResultDto<bool>.Failure("Paste the webhook URL first.");

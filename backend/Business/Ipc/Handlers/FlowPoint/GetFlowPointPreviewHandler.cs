@@ -17,7 +17,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<ScreenPointDto>> Handle(GetFlowPointPreviewQuery request, CancellationToken ct)
         {
-            PointResolution resolution = await _areaPointResolver.ResolvePointAsync(request.id, ct);
+            PointResolution resolution = await _areaPointResolver.ResolvePointAsync(request.Id, ct);
 
             if (!resolution.IsResolved)
                 return ResultDto<ScreenPointDto>.Failure(resolution.Error!);

@@ -30,7 +30,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<byte[]>> Handle(SystemTakeScreenshotCommand request, CancellationToken ct)
         {
-            ScreenshotRequestDto dto = request.dto;
+            ScreenshotRequestDto dto = request.Dto;
 
             if (dto.FlowAreaId != null)
                 return await CaptureArea(dto, ct);

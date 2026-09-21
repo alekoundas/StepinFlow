@@ -39,7 +39,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<IReadOnlyList<FlowHealthDto>>> Handle(GetFlowHealthQuery request, CancellationToken ct)
         {
-            List<int> requested = request.dto.FlowIds;
+            List<int> requested = request.Dto.FlowIds;
             bool all = requested.Count == 0;
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);

@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowStep flowStep = _mapper.Map<FlowStep>(request.dto);
+            FlowStep flowStep = _mapper.Map<FlowStep>(request.Dto);
             flowStep.Id = 0;
 
             // Made unique here rather than argued about at export: the script refers to a step by
@@ -35,7 +35,7 @@ namespace Business.Ipc.Handlers
             flowStep.Name = FlowNameHelper.MakeUnique(flowStep.Name, taken);
 
             dbContext.FlowSteps.Add(flowStep);
-            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, request.dto.FlowStepTemplates);
+            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, request.Dto.FlowStepTemplates);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(flowStep));
 
             await dbContext.SaveChangesAsync(ct);

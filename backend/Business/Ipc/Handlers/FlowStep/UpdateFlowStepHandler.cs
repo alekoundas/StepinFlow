@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
 
             FlowStep? existingFlowStep = await dbContext.FlowSteps
                 .Include(x => x.FlowStepTemplates)
-                .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
 
             if (existingFlowStep == null)
                 return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");
@@ -34,9 +34,9 @@ namespace Business.Ipc.Handlers
             // SetValues copies scalars and foreign keys only, so the navigations the client
             // round-tripped back to us cannot re-insert or overwrite anything, and CreatedOn
             // (absent from the dto) keeps its original value.
-            dbContext.Entry(existingFlowStep).CurrentValues.SetValues(request.dto);
+            dbContext.Entry(existingFlowStep).CurrentValues.SetValues(request.Dto);
 
-            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, request.dto.FlowStepTemplates);
+            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, request.Dto.FlowStepTemplates);
 
             await dbContext.SaveChangesAsync(ct);
 

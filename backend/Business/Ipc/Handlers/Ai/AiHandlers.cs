@@ -20,7 +20,7 @@ namespace Business.Ipc.Handlers.Ai
 
         public async Task<ResultDto<AiAnswerDto>> Handle(ExplainExecutionQuery request, CancellationToken ct)
         {
-            AiAnswerDto answer = await _runExplainService.ExplainExecutionAsync(request.executionId, ct);
+            AiAnswerDto answer = await _runExplainService.ExplainExecutionAsync(request.ExecutionId, ct);
             return ResultDto<AiAnswerDto>.Success(answer);
         }
     }
@@ -57,7 +57,7 @@ namespace Business.Ipc.Handlers.Ai
 
         public async Task<ResultDto<bool>> Handle(DownloadAiModelCommand request, CancellationToken ct)
         {
-            bool isStarted = await _modelService.StartModelDownloadAsync(request.model, ct);
+            bool isStarted = await _modelService.StartModelDownloadAsync(request.Model, ct);
 
             if (!isStarted)
                 return ResultDto<bool>.Failure("Downloading a model needs Ollama to be the chosen provider.");
@@ -94,7 +94,7 @@ namespace Business.Ipc.Handlers.Ai
 
         public async Task<ResultDto<AiChatAnswerDto>> Handle(AskAiQuery request, CancellationToken ct)
         {
-            return ResultDto<AiChatAnswerDto>.Success(await _flowQuestionService.AskAsync(request.dto, ct));
+            return ResultDto<AiChatAnswerDto>.Success(await _flowQuestionService.AskAsync(request.Dto, ct));
         }
     }
 

@@ -36,7 +36,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<ExtractSubFlowResultDto>> Handle(ExtractSubFlowCommand request, CancellationToken ct)
         {
-            ExtractSubFlowDto dto = request.dto;
+            ExtractSubFlowDto dto = request.Dto;
 
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return ResultDto<ExtractSubFlowResultDto>.Failure("Give the sub-flow a name.");
@@ -51,8 +51,7 @@ namespace Business.Ipc.Handlers
                     return ResultDto<ExtractSubFlowResultDto>.Failure("That step no longer exists.");
 
                 if (TreeStepHelper.IsBranchChild(head.FlowStepType))
-                    return ResultDto<ExtractSubFlowResultDto>.Failure(
-                        "Success and Failure belong to the step above them and cannot be extracted on their own.");
+                    return ResultDto<ExtractSubFlowResultDto>.Failure("Success and Failure belong to the step above them and cannot be extracted on their own.");
 
                 List<FlowStep> steps = await dbContext.FlowSteps
                     .Where(x => x.RootId == head.RootId)

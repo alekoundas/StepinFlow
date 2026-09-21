@@ -33,7 +33,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<FlowDraftResultDto>> Handle(CreateFlowStepsCommand request, CancellationToken ct)
         {
-            FlowDraftDto draft = request.dto;
+            FlowDraftDto draft = request.Dto;
 
             if (draft.Steps.Count == 0)
                 return ResultDto<FlowDraftResultDto>.Failure("There is nothing to save.");

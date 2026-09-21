@@ -25,7 +25,7 @@ namespace Business.Ipc.Handlers
             FlowStep? flowStep = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Include(x => x.FlowStepTemplates.OrderBy(image => image.OrderNumber))
-                .FirstOrDefaultAsync(x => x.Id == request.id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
 
             if (flowStep == null)
                 return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");

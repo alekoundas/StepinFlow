@@ -20,7 +20,7 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             int count = await dbContext.FlowAreas
-                .Where(x => x.Id == request.id)
+                .Where(x => x.Id == request.Id)
                 .ExecuteDeleteAsync(ct);
 
             if (count <= 0)

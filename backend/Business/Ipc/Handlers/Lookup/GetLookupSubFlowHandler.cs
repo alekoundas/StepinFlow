@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupSubFlowQuery request, CancellationToken ct)
         {
-            LookupRequestDto dto = request.dto;
+            LookupRequestDto dto = request.Dto;
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 

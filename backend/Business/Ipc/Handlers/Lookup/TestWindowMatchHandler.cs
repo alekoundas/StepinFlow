@@ -20,7 +20,7 @@ namespace Business.Ipc.Handlers
 
         public Task<ResultDto<WindowMatchTestResultDto>> Handle(TestWindowMatchQuery request, CancellationToken ct)
         {
-            WindowMatchTestRequestDto dto = request.dto;
+            WindowMatchTestRequestDto dto = request.Dto;
 
             if (string.IsNullOrWhiteSpace(dto.ProcessName) && string.IsNullOrWhiteSpace(dto.TitlePattern))
                 return Task.FromResult(ResultDto<WindowMatchTestResultDto>.Failure("Pick an application or type a title first, or this matches whatever window is in front."));

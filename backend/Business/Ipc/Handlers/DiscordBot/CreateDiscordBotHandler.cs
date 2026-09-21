@@ -23,7 +23,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            DiscordBot bot = _mapper.Map<DiscordBot>(request.dto);
+            DiscordBot bot = _mapper.Map<DiscordBot>(request.Dto);
             bot.Id = 0;
 
             dbContext.DiscordBots.Add(bot);

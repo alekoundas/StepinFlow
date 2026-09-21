@@ -30,7 +30,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<ImageSearchTestResultDto>> Handle(TestImageSearchQuery request, CancellationToken ct)
         {
-            FlowStepDto step = request.dto;
+            FlowStepDto step = request.Dto;
 
             if (step.FlowAreaId == null)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed("Pick a search area first."));

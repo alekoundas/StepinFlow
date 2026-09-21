@@ -24,9 +24,9 @@ namespace Business.Ipc.Handlers
             // children. Both arrive here, so the caller says which one it is: matching the id
             // against both columns would let a FlowStep adopt the root steps of the Flow that
             // happens to share its id.
-            IQueryable<Core.Models.Database.FlowStep> query = request.dto.IsFlow
-                ? dbContext.FlowSteps.Where(x => x.FlowId == request.dto.Id && x.ParentFlowStepId == null)
-                : dbContext.FlowSteps.Where(x => x.ParentFlowStepId == request.dto.Id);
+            IQueryable<Core.Models.Database.FlowStep> query = request.Dto.IsFlow
+                ? dbContext.FlowSteps.Where(x => x.FlowId == request.Dto.Id && x.ParentFlowStepId == null)
+                : dbContext.FlowSteps.Where(x => x.ParentFlowStepId == request.Dto.Id);
 
             List<TreeNodeDto> children = await query
                 .AsNoTracking()

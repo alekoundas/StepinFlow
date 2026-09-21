@@ -26,7 +26,7 @@ namespace Business.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == request.id, ct);
+            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (flow == null)
                 return ResultDto<bool>.Failure("That flow no longer exists.");
 
@@ -60,7 +60,7 @@ namespace Business.Ipc.Handlers
             // RootId is the flow the step lives in, which is exactly the caller.
             List<int> callerIds = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.SubFlowId == request.id)
+                .Where(x => x.SubFlowId == request.Id)
                 .Select(x => x.RootId)
                 .Distinct()
                 .ToListAsync(ct);

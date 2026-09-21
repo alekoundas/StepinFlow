@@ -24,12 +24,12 @@ namespace Business.Ipc.Handlers
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowArea? existingFlowArea = await dbContext.FlowAreas
-                .FirstOrDefaultAsync(x => x.Id == request.dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
 
             if (existingFlowArea == null)
                 return ResultDto<FlowAreaDto>.Failure("Entity doesnt exist in the Database!");
 
-            dbContext.Entry(existingFlowArea).CurrentValues.SetValues(request.dto);
+            dbContext.Entry(existingFlowArea).CurrentValues.SetValues(request.Dto);
 
             await dbContext.SaveChangesAsync(ct);
 

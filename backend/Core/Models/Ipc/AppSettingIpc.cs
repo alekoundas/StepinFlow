@@ -8,5 +8,5 @@ namespace Core.Models.Ipc
 
 
     // ============== COMMANDS ==============
-    public record SetAppSettingCommand(SetAppSettingDto dto) : IRequest<ResultDto<bool>>;
+    public record SetAppSettingCommand(SetAppSettingDto Dto) : IRequest<ResultDto<bool>>;
 }

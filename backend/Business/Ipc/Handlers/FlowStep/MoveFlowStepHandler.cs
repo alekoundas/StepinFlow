@@ -19,7 +19,7 @@ namespace Business.Ipc.Handlers
 
         public async Task<ResultDto<bool>> Handle(MoveFlowStepCommand request, CancellationToken ct)
         {
-            FlowStepMoveDto dto = request.dto;
+            FlowStepMoveDto dto = request.Dto;
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 

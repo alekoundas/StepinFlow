@@ -32,7 +32,7 @@ namespace Business.Ipc.Handlers
 
             List<TreeNodeDto> nodes = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.RootId == request.flowId)
+                .Where(x => x.RootId == request.FlowId)
                 .OrderBy(x => x.OrderNumber)
                 .Select(FlowStepTreeNodeProjection.Row)
                 .ToListAsync(ct);

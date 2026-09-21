@@ -6,7 +6,7 @@ namespace Core.Models.Ipc
     // ============== QUERIES ==============
 
     /// <summary>The PNG captured for one recorded action.</summary>
-    public record GetRecordingScreenshotQuery(int index) : IRequest<ResultDto<byte[]>>;
+    public record GetRecordingScreenshotQuery(int Index) : IRequest<ResultDto<byte[]>>;
 
 
     // ============== COMMANDS ==============
