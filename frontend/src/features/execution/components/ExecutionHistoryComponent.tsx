@@ -95,8 +95,11 @@ function statusSeverity(status: ExecutionStatusEnum): StatusPillSeverity {
       return "running";
     case ExecutionStatusEnum.COMPLETED:
       return "success";
+    case ExecutionStatusEnum.FAILED:
     case ExecutionStatusEnum.ERRORED:
       return "danger";
+    case ExecutionStatusEnum.INCONCLUSIVE:
+      return "warning";
     default:
       return "paused";
   }
@@ -108,8 +111,12 @@ function statusText(status: ExecutionStatusEnum): string {
       return "Running";
     case ExecutionStatusEnum.COMPLETED:
       return "Completed";
-    case ExecutionStatusEnum.ERRORED:
+    case ExecutionStatusEnum.FAILED:
       return "Failed";
+    case ExecutionStatusEnum.ERRORED:
+      return "Errored";
+    case ExecutionStatusEnum.INCONCLUSIVE:
+      return "Inconclusive";
     case ExecutionStatusEnum.STOPPED:
       return "Stopped";
     default:

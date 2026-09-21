@@ -5,6 +5,9 @@ namespace Core.Enums
         RUNNING,
         COMPLETED,
         FAILED,
+
+        /// <summary>The walk reached the end and no End Execution ever said how it went.</summary>
+        INCONCLUSIVE,
         STOPPED,
         ERRORED,
 

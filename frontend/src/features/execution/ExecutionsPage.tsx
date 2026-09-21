@@ -250,8 +250,11 @@ function outcomeColour(outcome: ExecutionStatusEnum): string {
   switch (outcome) {
     case ExecutionStatusEnum.COMPLETED:
       return "var(--green-400)";
+    case ExecutionStatusEnum.FAILED:
     case ExecutionStatusEnum.ERRORED:
       return "var(--red-400)";
+    case ExecutionStatusEnum.INCONCLUSIVE:
+      return "var(--orange-400)";
     case ExecutionStatusEnum.RUNNING:
       return "var(--yellow-500)";
     default:

@@ -356,6 +356,25 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 Sub Flow  "flows/checkout.sflw"
 ```
 
+### Cleanup under End Execution
+
+`End Execution` decides the verdict and everything indented under it is what happens afterwards -
+closing the application, a notification, a webhook. They are ordinary steps, so anything a flow can
+do a teardown can do:
+
+```
+End Execution  failed  "did not reach the products page"
+  Run     KILL_PROCESS  "chrome.exe"
+  Notify  "login smoke failed at {{width}}x{{height}}"
+```
+
+The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes
+nothing, and a second `End Execution` underneath is rejected - the first one already decided.
+
+A flow that reaches the end without an `End Execution` anywhere is **inconclusive**: not a pass and
+not a failure, because nothing in it ever said. A flow whose every check failed looks exactly the
+same from the outside, which is why walking to the end is not reported as success.
+
 A path relative to the repository root, because names are only unique within a flow.
 
 ---
@@ -366,7 +385,7 @@ A path relative to the repository root, because names are only unique within a f
 
 ```
 flows/
-  login.flow
+  login.sflw
   login.csv            ← values, gitignored
   login/
     login-button.png
@@ -375,6 +394,11 @@ flows/
 
 A folder, not an archive: git can then show _which_ image changed, which is the whole point of
 putting tests in a repository.
+
+The file is named after the template, with whitespace hyphenated and a number appended if two
+templates in one flow want the same name. **Not** a content hash: a hash changes whenever the
+image is edited, so git would record a delete and an add rather than a modification, which
+throws away the one thing this layout is for.
 
 Each template carries its click offset and the window size it was captured at. Those are properties
 of the image, so they live beside it rather than cluttering the step line.

@@ -3,8 +3,6 @@ using System.Diagnostics;
 using Business.Services.ExecutionService.Workers;
 using Core.Ports;
 using Core.Enums;
-using Core.Helpers;
-using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -31,7 +29,6 @@ namespace Business.Services.ExecutionService
         private readonly IExecutionCacheService _cache;
         private readonly IExecutionHistoryService _history;
         private readonly IIpcBroadcastService _broadcastService;
-        private readonly IWindowService _windowService;
         private readonly ILogger<ExecutionEngine> _logger;
         private ExecutionFlowWalker _walker = null!;
 
@@ -52,7 +49,6 @@ namespace Business.Services.ExecutionService
             IExecutionCacheService cache,
             IExecutionHistoryService history,
             IIpcBroadcastService broadcastService,
-            IWindowService windowService,
             ILogger<ExecutionEngine> logger)
         {
             _dbContextFactory = dbContextFactory;
@@ -60,7 +56,6 @@ namespace Business.Services.ExecutionService
             _cache = cache;
             _history = history;
             _broadcastService = broadcastService;
-            _windowService = windowService;
             _logger = logger;
         }
 
@@ -125,14 +120,6 @@ namespace Business.Services.ExecutionService
 
                     _logger.LogWarning(ex, "Execution {ExecutionId} stopped at step {FlowStepId}.", ExecutionId, _currentStepId);
                 }
-
-                // Closed before the history is written off, and whatever the verdict: the next
-                // viewport pass has to start against a clean screen rather than this one's wreckage.
-                //
-                // Not after a stop. Somebody who pressed Stop is usually looking at the screen, and
-                // closing the application out from under them is the opposite of helpful.
-                if (status != ExecutionStatusEnum.STOPPED)
-                    await CloseAppUnderTestAsync(dto.FlowId);
 
                 // Complete execution
                 try
@@ -251,6 +238,7 @@ namespace Business.Services.ExecutionService
         {
             FlowStep? step = _walker.Start(FlowId);
             int stepCount = 0;
+            WalkOutcome? verdict = null;
 
             while (step != null)
             {
@@ -265,11 +253,14 @@ namespace Business.Services.ExecutionService
                 ExecutionStep result = await ExecuteAsync(step, ct);
                 stepCount++;
 
-                // The one step that ends an execution on purpose, and says how it ended.
-                if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
+                // The one step that ends an execution on purpose, and says how it ended. It does
+                // not stop the walk - the walker drops everything pending and pushes this step's
+                // children, so the cleanup written under it still runs. The verdict is latched
+                // because that cleanup must not be able to change what the flow already said.
+                if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION && verdict == null)
                 {
-                    return new WalkOutcome(
-                        stepCount,
+                    verdict = new WalkOutcome(
+                        0,
                         step.EndExecutionAsSuccess ? ExecutionStatusEnum.COMPLETED : ExecutionStatusEnum.FAILED,
                         step.Message);
                 }
@@ -286,7 +277,11 @@ namespace Business.Services.ExecutionService
                 }
             }
 
-            return new WalkOutcome(stepCount, ExecutionStatusEnum.COMPLETED, string.Empty);
+            // Nobody said how it went.
+            if (verdict == null)
+                return new WalkOutcome(stepCount, ExecutionStatusEnum.INCONCLUSIVE, string.Empty);
+
+            return verdict with { StepCount = stepCount };
         }
 
         private async Task<ExecutionStep> ExecuteAsync(FlowStep step, CancellationToken ct)
@@ -346,75 +341,6 @@ namespace Business.Services.ExecutionService
             // Only ever spins while somebody is sat looking at a paused run, and Stop cancels it out.
             while (State == RunStateEnum.PAUSED && !_debuggerSignalNextStep)
                 await Task.Delay(50, ct);
-        }
-
-        // Never throws. The verdict has already been decided by the time this runs, and closing a
-        // window failing must not turn a finished execution into an errored one.
-        //
-        // CancellationToken.None on purpose - the token that ended the walk is often the one that
-        // was cancelled, and cleanup that gives up because the walk was cancelled is cleanup that
-        // never runs when it matters.
-        private async Task CloseAppUnderTestAsync(int flowId)
-        {
-            try
-            {
-                await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(CancellationToken.None);
-
-                Flow? flow = await dbContext.Flows
-                    .AsNoTracking()
-                    .Include(x => x.AppUnderTestArea)
-                    .FirstOrDefaultAsync(x => x.Id == flowId, CancellationToken.None);
-
-                if (flow == null || flow.AppCloseMode == AppCloseModeEnum.LEAVE || flow.AppUnderTestArea == null)
-                    return;
-
-                if (flow.AppCloseMode == AppCloseModeEnum.KILL_PROCESS)
-                {
-                    KillProcess(flow.AppUnderTestArea.ProcessName);
-                    return;
-                }
-
-                WindowQuery query = new WindowQuery
-                {
-                    ProcessName = flow.AppUnderTestArea.ProcessName,
-                    TitlePattern = flow.AppUnderTestArea.TitlePattern,
-                    TitleMatchMode = flow.AppUnderTestArea.TitleMatchMode,
-                    UseClientArea = false,
-                };
-
-                // Every match, not the first: an application opened by the flow may have put up a
-                // second window, and leaving one behind is the same problem as leaving them all.
-                foreach (IntPtr window in _windowService.FindWindows(query))
-                    _windowService.CloseWindow(window);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "The application under test of flow {FlowId} could not be closed.", flowId);
-            }
-        }
-
-        private void KillProcess(string processName)
-        {
-            if (string.IsNullOrWhiteSpace(processName))
-                return;
-
-            string name = Path.GetFileNameWithoutExtension(processName);
-
-            foreach (Process process in Process.GetProcessesByName(name))
-            {
-                try
-                {
-                    process.Kill(entireProcessTree: true);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Could not kill {ProcessName}.", name);
-                }
-                finally
-                {
-                    process.Dispose();
-                }
-            }
         }
 
         private async Task FinishAsync(ExecutionStatusEnum status, string error, int? errorStepId, int stepCount)

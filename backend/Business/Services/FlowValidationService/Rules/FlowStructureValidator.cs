@@ -48,6 +48,9 @@ namespace Business.Services.FlowValidationService.Rules
                 if (step.FlowStepType == FlowStepTypeEnum.NOTIFY)
                     ValidateNotify(result, step, byStepId);
 
+                if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
+                    ValidateEndExecution(result, step, byStepId);
+
                 // A step that branches and has nothing in.
                 if (TreeStepHelper.HasBranchChildren(step.FlowStepType) && IsEveryBranchEmpty(step, childrenByParentId))
                     result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
@@ -62,6 +65,32 @@ namespace Business.Services.FlowValidationService.Rules
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Steps under an End Execution are its cleanup, and the verdict is already latched by the
+        // time they run. A second End Execution down there reads as a decision and is not one.
+        private static void ValidateEndExecution(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byStepId)
+        {
+            if (!byStepId.TryGetValue(step.Id, out StepChainNode node))
+                return;
+
+            int? currentId = node.ParentFlowStepId;
+            int guard = byStepId.Count + 1;
+
+            while (currentId != null && guard-- > 0)
+            {
+                if (!byStepId.TryGetValue(currentId.Value, out StepChainNode current))
+                    return;
+
+                if (current.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
+                {
+                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.END_EXECUTION_UNREACHABLE,
+                        $"\"{current.Name}\" already ended the execution, so this one never decides anything.");
+                    return;
+                }
+
+                currentId = current.ParentFlowStepId;
+            }
+        }
 
         // A name nothing defines can never translate, so the step will stop the execution when it
         // gets there. Better said now, while the person who typed it is looking at it.

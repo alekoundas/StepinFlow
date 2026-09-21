@@ -19,7 +19,6 @@ namespace Core.Models.Database
         // it from whatever has focus is what breaks on another machine.
         public int? AppUnderTestAreaId { get; set; }
         public FlowArea? AppUnderTestArea { get; set; }
-        public AppCloseModeEnum AppCloseMode { get; set; }
 
 
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();

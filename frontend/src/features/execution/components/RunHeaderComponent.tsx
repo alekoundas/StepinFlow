@@ -153,8 +153,11 @@ function statusSeverity(status: ExecutionStatusEnum): StatusPillSeverity {
       return "running";
     case ExecutionStatusEnum.COMPLETED:
       return "success";
+    case ExecutionStatusEnum.FAILED:
     case ExecutionStatusEnum.ERRORED:
       return "danger";
+    case ExecutionStatusEnum.INCONCLUSIVE:
+      return "warning";
     default:
       return "paused";
   }

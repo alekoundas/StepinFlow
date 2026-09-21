@@ -537,13 +537,21 @@ in CI for three sizes and nobody should be surprised by it later.
 Each viewport pass is launch, then steps, then teardown. Self-contained and repeatable, which is
 what makes a sequential matrix safe.
 
-Teardown cannot be steps at the bottom of the tree, because `END_EXECUTION` stops the walk where it
-stands. A failed pass at 1920x1080 would leave the application open, the next pass would start
-against a stale window, and the suite would report a cascade of failures caused by the first one.
-Cascading red is the fastest way to lose trust in a test suite, so `ExecutionEngine` runs teardown
-on the way out whatever the verdict — unless the execution was stopped by hand.
+**Teardown is steps under `End Execution`.** That step no longer stops the walk: the walker drops
+everything still pending — the stack holds a sibling for every level walked down to reach it — and
+pushes the step's own children, so the cleanup written beneath it runs and the walk ends when that
+cleanup does. Close the application, notify, call a webhook: all of them are ordinary steps, which
+means they are visible in the tree, in the script and in the execution history, and copy-paste
+replicates them across every `End Execution` in a flow.
 
-`AppCloseModeEnum` is `LEAVE`, `CLOSE_WINDOW` (posts `WM_CLOSE`), or `KILL_PROCESS`.
+The verdict is **latched** at the first `End Execution` reached. Cleanup below it is recorded like
+anything else but cannot change what the flow already said happened, and a second `End Execution`
+under the first is rejected by the validator as unreachable.
+
+An **exception** is the one path with no cleanup, because there is no `End Execution` in scope and
+so nothing was authored to run. It ends the whole execution, the viewport matrix included — there
+is no next pass to protect, which is what the old flow-level close mode existed for. What that path
+gets instead is a notification: see the roadmap.
 
 ### Variables
 
@@ -692,8 +700,10 @@ exactly, renders read-only in the app, and works whether or not the customer use
 
 A template is part of the test definition, like a snapshot in a unit test: a flow from three months
 ago cannot execute without the images it was written against. They sit in the folder beside the flow
-and they are small. Locally they are named by **content hash**, so an unchanged image is stored once
-however many versions reference it.
+and they are small. They are named after the template, hyphenated, with a number appended on a
+collision - **not** by content hash. A hash would dedupe identical images, but it also changes
+whenever one is edited, so git would record a delete and an add instead of a modification, and
+the point of a folder of loose images is that a reviewer can see which one changed.
 
 Screenshots are per-execution, large, and grow without bound. They travel as build artifacts.
 
@@ -926,8 +936,8 @@ deferred.
 ### Known gaps
 
 - The flow script **writer** exists and is verified; the **parser** does not. Nothing round-trips yet.
-- The writer has no caller — no export handler and no button.
-- Templates are not yet written to disk by content hash, and no CSV template is generated.
+- No CSV template is generated yet, and no `.gitignore` entry is written for the secrets file.
+- Export has no button. `Flow.export` is reachable over IPC but nothing in the UI calls it.
 - `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the
   screen, so it is not currently redacted for AI. Flagged in `TODO.md` rather than folded in silently.
 

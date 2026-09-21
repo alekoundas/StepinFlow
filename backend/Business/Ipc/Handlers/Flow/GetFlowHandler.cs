@@ -35,7 +35,6 @@ namespace Business.Ipc.Handlers
                     UpdatedOn = x.UpdatedOn,
 
                     AppUnderTestAreaId = x.AppUnderTestAreaId,
-                    AppCloseMode = x.AppCloseMode,
 
                     FlowViewports = x.FlowViewports
                         .OrderBy(v => v.OrderNumber)

@@ -100,12 +100,11 @@ namespace Business.Services.ExecutionService
             if (_historyLevel == ExecutionHistoryLevelEnum.NONE)
                 return;
 
-            executionStep.ExecutionId = ExecutionId;
 
             bool isFailure = executionStep.Outcome == StepOutcomeEnum.FAILURE;
 
+            executionStep.ExecutionId = ExecutionId;
             WriteScreenshots(executionStep);
-
             _unwrittenExecutionSteps.Add(executionStep);
 
             if (isFailure || _unwrittenExecutionSteps.Count >= _flushBatchSize)

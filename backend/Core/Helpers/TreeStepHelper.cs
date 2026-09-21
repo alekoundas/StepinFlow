@@ -35,6 +35,7 @@ namespace Core.Helpers
             FlowStepTypeEnum.SUCCESS,
             FlowStepTypeEnum.FAILURE,
             FlowStepTypeEnum.LOOP,
+            FlowStepTypeEnum.END_EXECUTION,
         ];
 
         /// <summary>Structural nodes the user did not create and must not move or delete.</summary>

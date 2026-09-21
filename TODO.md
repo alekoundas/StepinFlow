@@ -29,7 +29,11 @@ is lost between sessions.
       2) **The QA recorder seeds `End Execution failed`** into every failure branch it creates, so
          the common path is safe without anybody knowing the rule. A tester deleting it is then a
          decision rather than an omission.
-      Until both land, a green execution means "it walked to the end", not "it passed".
+      **Half done, 2026-09-21.** Walking to the end with no `End Execution` now reports
+      `INCONCLUSIVE` rather than COMPLETED, so such a flow is amber instead of green. That is the
+      runtime backstop; both items above are still open, and they are the half that tells somebody
+      while they are still authoring. Until they land, an inconclusive execution means "nobody
+      said", and every recorded flow is one.
 
 - [ ] **Clear the execution cache when the walk ends.** `ForgetFrom` only runs inside `Pop()`, and
       when the stack empties `Pop()` returns `null` without calling it — so the last path's values
@@ -55,6 +59,17 @@ is lost between sessions.
       There is no correct absolute mapping for an unbounded score. Either drop the three from
       TemplateMatchModeEnum (stored as strings, so it is a data migration and a form change) or
       keep them and hide the accuracy field when one is picked, which admits they are relative.
+- [ ] **Notify on an unhandled exception.** The one path with no cleanup: no `End Execution` is in
+      scope, so nothing was authored to run, and the execution ends there - the rest of the
+      viewport matrix included. Settings names the default Discord bot; a per flow on/off decides
+      whether it sends. Two constraints, neither optional. **The message is not `ex.Message`**: a
+      command that throws puts its own command line in the exception, and a command line can hold
+      `curl -H "Authorization: Bearer ..."` - which is already an open question further down this
+      file. Exception text also carries SQL, paths and OCR'd screen content, so a webhook built on
+      it walks straight past both `CanSendScreenDataAsync` and the `IsSecret` rule. Send the flow
+      name, the execution id, the step name and the exception **type**. Send it through
+      `DiscordSendQueue` like `NotifyStepWorker` does, so the rate limiting is shared, and if the
+      thing that threw *is* the Discord path, log it and give up rather than retry.
 - [ ] **Poll interval jitter** for `WAIT_UNTIL_FOUND` searches.
 - [ ] **Downscale matching** for template search.
 - [ ] **Dry-run mode** that logs resolved coordinates instead of clicking.
@@ -328,3 +343,65 @@ and every finished item in it was checked against the repository rather than rec
 
 - [ ] **Target-typed `new()`.** Pre-existing uses were left in files not authored during the
       execution-engine work. House style is the full `new TypeName()`.
+
+## Tests
+
+There is no test project. Adding one is its own piece of work, to plan properly rather than bolt on
+- the order below is what makes it cheap, and the first two layers need no production change at all.
+
+- [ ] **Decide the shape before writing a line.** Coverage per project rather than one number:
+      `Core` near total, because it is pure decisions and has no excuse; `Business` decision code
+      high - walker, writer, parser, validators; `Business` orchestration moderate and by
+      integration test; `Platform.Windows` near zero **on purpose**, because it is the part that
+      touches the machine. That table is the architecture diagram, and being able to say why the
+      number is what it is beats reporting a high one. A blanket 100% target buys tests for
+      property getters and catches nothing.
+
+- [ ] **Layer 1 - `ExecutionFlowWalker`.** 400 lines of pure decision: no database, no screen, no
+      mouse. The most intricate code in the repository and the cheapest to test, with nothing to
+      refactor first. Build a tree in memory, feed results, assert the sequence of step names - the
+      assertion then reads like the flow it describes. Cover loop pass counting, the
+      `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a FIND_ALL search's second and third
+      hit, and `_depthByStepId` dropping results as the walk leaves a subtree. Worth property-based
+      testing here (CsCheck or FsCheck): generate random trees, then assert the walk always
+      terminates, the stack ends empty, and every visited id exists in `StepsById`.
+
+- [ ] **Layer 2 - the workers.** Testable today, with no changes, because of the ports: a fake
+      `IInputService` plus `CursorStepWorker` asserts what was clicked, and that `MoveCursor`
+      returning false produces a failure rather than an exception. Hand-write the nine port fakes
+      rather than reaching for a mocking library - a `FakeInputService` recording tuples reads
+      better in a test than a `Received()` call, and for a repository about separating concerns it
+      shows on the page what the ports bought.
+
+- [ ] **Layer 3 - `ExecutionEngine`, which needs three changes first.** All three are phase 4.6
+      in `PLAN.md`, so by the time this is picked up they should already be done.
+      1) The background task is unobservable. `_ = Task.Run(...)` in `StartAsync` means a test can
+         only poll `IsRunning` in a sleep loop. Hold it and expose `Task Completion` - the same fix
+         as the shutdown item under Execution, and phase 12's CLI runner needs it anyway.
+      2) `DebugWaitAsync` polls two fields on a 50ms `Task.Delay`, so a pause and step-over test
+         pays 50ms per decision and is timing-dependent. `TimeProvider` makes it instant; replacing
+         the spin with a `SemaphoreSlim` released by Continue / StepInto / StepOver removes it.
+      3) `Process.GetProcessesByName` and `Kill` have to move behind a port, or the test kills real
+         processes on whatever machine runs it.
+      Then: SQLite in-memory, fake ports, a recording broadcast, and assert the event sequence and
+      the `Execution` row. That is where the things that actually bite get checked - a second
+      `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
+      worker throwing leaving `errorStepId` on the right step, and a breakpoint inside a
+      stepped-over subtree parking there anyway.
+
+- [ ] **Layer 4 - architecture tests.** NetArchTest asserting that Business does not reference
+      `Platform.Windows`, that `Core` depends on nothing but the framework, and that nothing
+      outside `Platform.Windows` names OpenCvSharp or SharpHook. It turns PROJECT.md section 2 from
+      a claim into a build failure, which for this repository is the whole point.
+
+- [ ] **Layer 5 - the script round trip.** Verify snapshots over the exporter, then export, import,
+      export and compare bytes once the parser exists. That is the parser's acceptance test.
+
+- [ ] **Tooling, with the traps written down.** xUnit v3; Shouldly or AwesomeAssertions
+      (FluentAssertions v8 moved to a paid licence for commercial use, AwesomeAssertions is the
+      community fork of v7); NSubstitute for incidental fakes; **SQLite `:memory:` with the
+      connection held open, not `UseInMemoryDatabase`** - EF's in-memory provider is not relational,
+      enforces no foreign key, and would leave the `DeleteBehavior.NoAction` cycle-breaking
+      completely unverified; `TimeProvider` with `Microsoft.Extensions.TimeProvider.Testing`;
+      coverlet with ReportGenerator. If one number is wanted for the readme, Stryker.NET's mutation
+      score over the walker means something that line coverage does not.

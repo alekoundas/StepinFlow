@@ -1,4 +1,3 @@
-import type { AppCloseModeEnum } from "@/shared/enums/backend/app-close-mode-enum";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
@@ -16,9 +15,6 @@ export class FlowDto {
 
   /** The area bound to the application this flow tests. What a viewport resizes. */
   appUnderTestAreaId?: number;
-
-  /** What happens to that application when an execution ends, whatever the verdict. */
-  appCloseMode: AppCloseModeEnum = "LEAVE";
 
   createdOn?: string;
   updatedOn?: string | null;

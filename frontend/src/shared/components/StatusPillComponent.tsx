@@ -5,6 +5,7 @@ export type StatusPillSeverity =
   | "running"
   | "paused"
   | "success"
+  | "warning"
   | "danger";
 
 interface Props {
@@ -68,6 +69,8 @@ function severityColour(severity: StatusPillSeverity): string | undefined {
       return "var(--yellow-500)";
     case "success":
       return "var(--green-500)";
+    case "warning":
+      return "var(--orange-500)";
     case "danger":
       return "var(--red-500)";
     default:

@@ -38,6 +38,9 @@ namespace Core.Enums
 
         // Control
         LOOP_COUNT_MISSING,
+
+        /// <summary> An End Execution below another one.</summary>
+        END_EXECUTION_UNREACHABLE,
         WAIT_RANGE_INVALID,
         SUB_FLOW_MISSING,
 

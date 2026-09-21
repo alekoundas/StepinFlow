@@ -69,12 +69,18 @@ Three kinds of name go through one helper: a csv column, the viewport being exec
       Sizing a viewport needs a window to size, and guessing it from whatever has focus is what
       breaks on another machine. `DeleteBehavior.NoAction`, to break the Flow to FlowArea to Flow
       cascade cycle.
-- [x] **`AppCloseModeEnum`** - `LEAVE`, `CLOSE_WINDOW`, `KILL_PROCESS`.
-- [x] **`ExecutionEngine.CloseAppUnderTestAsync`** runs on the way out whatever the verdict, unless
-      the execution was stopped by hand, with `CancellationToken.None` so a cancelled execution
-      still cleans up. Teardown cannot be steps at the bottom of the tree, because `END_EXECUTION`
-      stops the walk where it stands - a failed pass would leave the application open and the next
-      viewport would start against a stale window.
+- [x] ~~**`AppCloseModeEnum`** - `LEAVE`, `CLOSE_WINDOW`, `KILL_PROCESS`.~~ **Reversed on
+      2026-09-21**, along with `ExecutionEngine.CloseAppUnderTestAsync` and the `AppUnderTestCloser`
+      that briefly replaced it. Both are gone, and so is the column. Teardown is steps under
+      `End Execution` - see phase 4.7.
+
+      The reason recorded here was that `END_EXECUTION` stops the walk where it stands, so a
+      failed pass would leave the application open. True of the walk as it was written; not a law.
+      The walker now drops everything pending when it reaches an `End Execution` and pushes that
+      step's own children, so cleanup written under it runs and the walk ends when it does. The
+      remaining case - an exception, where no `End Execution` is in scope and nothing is authored
+      to run - ends the whole execution including the rest of the viewport matrix, so there is no
+      next pass to protect.
 - [x] **`FlowViewport`** - width, height, order, owned by the flow. Configuration rather than a
       step, so it stays editable after recording.
 
@@ -121,12 +127,28 @@ What reading the output changed in `FLOW-FORMAT.md`:
 - **Sub-flow paths are `.sflw`**, which the spec still wrote as `.flow`.
 - **`Id:`** joined the header, which the technical decisions described but the grammar never showed.
 
+Then the caller, so that the writer runs against a real flow rather than one built in memory:
+
+- [x] **`FlowScriptExporter`** loads the flow, orders it, resolves template file names and hands
+      the lot to the writer. `RenderAsync` returns the text alone, which is what the phase 9 fix
+      loop needs; `ExportAsync` also writes the files. Registered, routed as `Flow.export`, and
+      handled by `ExportFlowHandler`.
+- [x] **Templates to a folder beside the script**, named after the template rather than by
+      content hash. A hash would dedupe identical images but changes whenever one is edited, so
+      git would record a delete and an add rather than a modification - throwing away the reason
+      the images are loose files at all. `FLOW-FORMAT.md` and `PROJECT.md` section 11 disagreed
+      on this; the grammar won, because its stated rationale is the one a hash breaks.
+- [x] **Written with LF endings**, because the round trip compares bytes and CI runs on Linux.
+
+Running the writer against a flow loaded from the database rather than built in memory was the
+point of doing this before the parser, and it earned its keep: template names came out with
+spaces in them, which is friction in every shell and CI file that touches a repository path.
+Now hyphenated.
+
 Still open:
 
-- [ ] Templates to the folder beside the file, named by content hash. The writer already takes the
-      file names; nothing writes the files yet.
 - [ ] The CSV template beside it, plus a `.gitignore` entry for the secrets file.
-- [ ] An export handler and a button. The writer is a pure function today with no caller.
+- [ ] A button. `Flow.export` is reachable over IPC; nothing in the UI calls it yet.
 
 ### 4.5. The project split
 
@@ -178,6 +200,140 @@ Linux is a later roadmap item, not a follow up. Under X11 the port is close to o
 Wayland a client cannot enumerate or control another client's windows at all, and Wayland is the
 default on Ubuntu, Fedora and RHEL 9. The ports make the question answerable on day one - implement
 `IWindowService` and find out - without promising the answer is cheap.
+
+### 4.6. Seams and enforcement
+
+A review of the backend produced ten changes. They land before the parser rather than after it
+because six of them are seams the parser and its tests will lean on, and a seam is cheap to cut
+until something depends on it being missing.
+
+The review arrived with three ideas from C rather than C#: the opaque pointer, the Law of Demeter
+and MISRA C. The first two this codebase already follows without naming them - the `nint` window
+handle is an opaque pointer and `IWindowService` documents it as one. MISRA's rules mostly do not
+transfer, because no dynamic allocation and single exit exist for reasons C# does not have, but its
+method does: define the subset, enforce it with a tool, record every deviation. That is item 5.
+
+- [x] **Extract `AppUnderTestCloser` from `ExecutionEngine`.** `CloseAppUnderTestAsync` and
+      `KillProcess` were 65 lines doing a different job from walking a flow, and they were the
+      Demeter violation, the platform leak and the untestable part of the class all at once.
+      `IWindowService` came off the engine's constructor; the context factory stayed, because
+      loading the reachable steps still needs it.
+
+      **Deleted two days later by phase 4.7**, which moved teardown into the flow itself. The
+      extraction was still the right move - pulling it out is what made it obvious that the whole
+      thing was a flow-level setting doing a step's job.
+- [x] **`IProcessService` port.** `Process.GetProcessesByName` and `Kill` are now
+      `Platform.Windows/SystemActions/ProcessService`. Process control had been living in the layer
+      whose stated purpose is not to touch the machine, and the `net10.0` target did not catch it
+      because `Process` is cross platform - which is the point: the architectural rule is stricter
+      than the compiler's. It returns `bool` rather than logging, because no adapter in
+      `Platform.Windows` takes an `ILogger` and this was not the place to start; the closer logs
+      the false.
+- [ ] **`CommandRunner` is a Windows adapter sitting in `Business`, and a port will not fix it.**
+      Found while doing the item above. It is not only `new Process`: `BuildStartInfo` launches
+      `cmd.exe` or `powershell.exe` and reads the console OEM code page, and every entry in
+      `CommandPresetCatalog` is a Windows command - `taskkill`, `Get-Process`, `shutdown /s`,
+      `Get-Clipboard`. Hiding the process behind a port would leave all of that behind. The real
+      question is whether the runner moves to `Platform.Windows` whole and the preset catalog
+      becomes per platform, which is a design decision rather than an extraction, and it belongs
+      with the Linux work rather than here.
+- [ ] **`IProcessService` has no caller.** Phase 4.7 removed the only one. Killing a process is a
+      `Run KILL_PROCESS` step today, which goes through `CommandRunner` and `taskkill`. Keep the
+      port for the `Close Window` step below, or delete it - but do not leave it unreferenced.
+- [x] **`WindowQueryHelper.From(FlowArea)`.** Removed four `flow.AppUnderTestArea.X` reach throughs
+      from the engine, and the identical block `AreaPointResolver` carried.
+
+      **Deleted by phase 4.7 as well.** With the closer gone there is one caller left, and a helper
+      with one caller is indirection rather than agreement. Inlined back into `AreaPointResolver`.
+      Worth remembering as a rule: the case for a helper is two callers that must not drift, so it
+      disappears when the second one does.
+- [ ] **`TimeProvider` instead of `DateTime.UtcNow`.** Eight sites in `Business`. The two that
+      matter are `SearchImageStepWorker` and `SearchTextStepWorker`, which compute a timeout off the
+      wall clock, so any test of timeout behaviour costs real seconds. In the framework since
+      .NET 8, and `FakeTimeProvider` fakes `Task.Delay` too, which settles the debugger poll below.
+- [ ] **Analyzers.** `Directory.Build.props` with `TreatWarningsAsErrors`, `EnableNETAnalyzers` and
+      `EnforceCodeStyleInBuild`; `Microsoft.CodeAnalysis.BannedApiAnalyzers` with a
+      `BannedSymbols.txt` in `Business` banning `Process`, `DateTime.UtcNow` and `DllImport`, each
+      with its reason as the message; `.editorconfig` for per folder severity, which is how a
+      deviation gets recorded. Turning this on in an existing codebase produces several hundred
+      warnings on day one, so the existing set goes into a `.globalconfig` and only new code is
+      held to the rule. **Its own commit**, not folded into anything else.
+- [ ] **Hold the execution task.** `_ = Task.Run(...)` in `StartAsync` is handed to nobody, so
+      shutdown cannot await it and a test can only poll `IsRunning` in a sleep loop. Keep it and
+      expose `Task Completion`. Three callers want it: shutdown, the tests, and phase 12's CLI
+      runner. The `TODO.md` entry under Execution says `_ = WalkToEndAsync(ct)`, which is the shape
+      before the `Task.Run` wrapper; it comes out of `TODO.md` when this lands.
+- [ ] **Replace the 50ms poll in `DebugWaitAsync`.** A `SemaphoreSlim` released by `Continue`,
+      `StepInto` and `StepOver` removes both the spin and the latency. The comment in the code
+      already concedes the design.
+- [ ] **`WindowHandle` readonly record struct.** Turns the documented opacity of `nint` into
+      compiler enforced opacity, stops a monitor handle being passed where a window handle belongs,
+      and gives the Linux XID - 32 bits, not a pointer - one place to live instead of every call
+      site.
+- [ ] **Synchronise `State` and `_debuggerSignalNextStep`.** Written from the IPC thread by `Stop`,
+      `Pause`, `Continue`, `StepInto` and `StepOver`, read and written by the walk task, neither
+      `volatile`, and the `lock` guards only `Reset`. **Not a live bug** - the `await` points are
+      memory barriers, so the loop does observe the change - and ranked last for that reason. But
+      it is unsynchronised shared mutable state in a class whose own summary is about concurrency.
+- [ ] **`<see cref="Helpers.WindowMatcher"/>` in `IWindowService` names a class that was renamed**
+      to `WindowMatcherHelper`. While there: `FlowStepTreeNodeProjection`, `FlowStructureHasher` and
+      `VariableTranslator` sit in `Core/Helpers/` without the suffix. If that is deliberate, because
+      they own something and so are not helpers, then the folder name is the part that misleads.
+
+Acceptance: a test project can be added afterwards without any further production change. That is
+what the six seams are for, and it is checkable - `ExecutionFlowWalker` and the workers are already
+there, so if the engine still cannot be driven from a test, one of these was done by halves.
+
+Not in this phase: the tests themselves. The layering, the tooling and its traps are written up
+under `## Tests` in `TODO.md`, to plan properly rather than bolt on.
+
+### 4.7. Teardown is steps, and a verdict nobody gave
+
+The flow-level close mode is gone - the column, the enum, the closer and the form field. What
+replaces it is smaller and says more.
+
+- [x] **`End Execution` holds children.** One entry in `TreeStepHelper.ContainerTypes` and the rest
+      followed: `FlowStepTreeNodeProjection` feeds `Droppable` and `Leaf` to the tree, so the UI
+      allows the drop; `TreeStepMoveHelper` and `CreateFlowStepsHandler` read the same rule;
+      `FlowScriptWriter` already indents a container's children. Nothing in the frontend needed
+      touching.
+- [x] **The walk no longer stops at `End Execution`.** It ends when the stack empties, like every
+      other flow. The walker clears the stack when it reaches one - the stack holds a sibling for
+      every level walked down to get there, so skipping only this step's continuation would have
+      carried on with an ancestor's - and pushes that step's own children instead. The cleanup
+      written underneath runs, and the walk ends when it does.
+- [x] **The verdict is latched** at the first `End Execution` reached, so cleanup below it is
+      recorded like anything else but cannot change what the flow already said. A second
+      `End Execution` under the first is an error, `END_EXECUTION_UNREACHABLE`, because it reads
+      as a decision and is not one.
+- [x] **`INCONCLUSIVE`.** Walking to the end with no `End Execution` anywhere used to report
+      COMPLETED - which is how a flow whose every check failed came out green, the exact failure
+      this model exists to stop. It is now its own status: not a pass, not a failure, nobody said.
+      MSTest and NUnit both carry the same outcome; JUnit writes it as `skipped`, which is amber in
+      every dashboard rather than green. No inference was added - the engine still does not count
+      checks. It reports the structural fact that nothing declared a verdict.
+- [x] **Every recorded flow is now amber**, because the recorder deliberately adds no
+      `End Execution`. That is the honest reading and the point of the change, but it wants the
+      validator warning and the recorder seeding landing near it - both under Execution in
+      `TODO.md` - or it reads as a regression.
+- [x] **The frontend status enum was missing `FAILED` entirely**, so a failed execution had been
+      falling through to the `ERRORED` label since the day both existed. Both added, plus a
+      `warning` pill severity for inconclusive.
+
+An exception is the one path with no cleanup: no `End Execution` is in scope, so nothing was
+authored to run. It ends the whole execution including the rest of the viewport matrix, which is
+what the old close mode was protecting - there is no next pass to keep clean. What it needs instead
+is a notification, which is in `TODO.md` rather than here.
+
+Still open, and the reason this is not quite finished:
+
+- [ ] **There is no `Close Window` step.** `AppCloseModeEnum.CLOSE_WINDOW` posted `WM_CLOSE`, which
+      lets an application write its session, release its profile lock and remove its own temp
+      files. The only way to close something from a step today is `Run KILL_PROCESS`, which is
+      `taskkill /F` - a kill, not a close. Removing the close mode without adding the step loses
+      the graceful option, so this is a gap the change opened rather than a nice to have. It wants
+      a `WINDOW_CLOSE` type beside `WINDOW_FOCUS`, `WINDOW_RESIZE` and `WINDOW_RELOCATE`, and it
+      would give `IProcessService` a caller again.
 
 ### 5. The parser
 
