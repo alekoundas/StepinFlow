@@ -25,3 +25,7 @@ backend/appsettings.Development.json
 
 # Embedding model - 127 MB, fetched from the model-v1 release on first build
 backend/Core/AiModels/
+
+# Probes
+probes/**/bin/
+probes/**/obj/
