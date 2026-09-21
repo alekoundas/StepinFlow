@@ -3,6 +3,14 @@ using Core.Models.Database;
 
 namespace Business.Services.FlowScriptService
 {
+    /// <summary>A keyword and everything about a step that the keyword alone decides.</summary>
+    public sealed record ScriptKeyword(
+        string Text,
+        FlowStepTypeEnum Type,
+        SearchModeEnum? SearchMode = null,
+        KeyboardInputTypeEnum? KeyboardInputType = null,
+        RunCommandPresetEnum? RunCommandPreset = null);
+
     /// <summary>
     /// The word a step is written as.
     ///
@@ -81,6 +89,73 @@ namespace Business.Services.FlowScriptService
             }
         }
 
+
+        /// <summary>
+        /// The same table read the other way. One list, so a keyword cannot mean one thing on write
+        /// and another on read - which is the only way a round trip can be relied on.
+        ///
+        /// Longest first: "Move Window" has to win over "Move", and "Wait Until No Image" over
+        /// "Wait For Image" over "Wait".
+        /// </summary>
+        public static IReadOnlyList<ScriptKeyword> All { get; } =
+        [
+            new ScriptKeyword("Wait Until No Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
+            new ScriptKeyword("Wait Until No Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
+            new ScriptKeyword("Find All Images", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.FIND_ALL),
+            new ScriptKeyword("Wait For Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.WAIT_UNTIL_FOUND),
+            new ScriptKeyword("Wait For Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.WAIT_UNTIL_FOUND),
+            new ScriptKeyword("End Execution", FlowStepTypeEnum.END_EXECUTION),
+            new ScriptKeyword("Resize Window", FlowStepTypeEnum.WINDOW_RESIZE),
+            new ScriptKeyword("Focus Window", FlowStepTypeEnum.WINDOW_FOCUS),
+            new ScriptKeyword("Move Window", FlowStepTypeEnum.WINDOW_RELOCATE),
+            new ScriptKeyword("Check Value", FlowStepTypeEnum.CHECK_VALUE),
+            new ScriptKeyword("Find Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.FIND_BEST),
+            new ScriptKeyword("Check Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.FIND_BEST),
+            new ScriptKeyword("Sub Flow", FlowStepTypeEnum.SUB_FLOW),
+            new ScriptKeyword("Go To", FlowStepTypeEnum.GO_TO),
+            new ScriptKeyword("Notify", FlowStepTypeEnum.NOTIFY),
+            new ScriptKeyword("Scroll", FlowStepTypeEnum.CURSOR_SCROLL),
+            new ScriptKeyword("System", FlowStepTypeEnum.SYSTEM_ACTION),
+            new ScriptKeyword("Launch", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset: RunCommandPresetEnum.LAUNCH_APP),
+            new ScriptKeyword("Click", FlowStepTypeEnum.CURSOR_CLICK),
+            new ScriptKeyword("Press", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType: KeyboardInputTypeEnum.COMBINATION),
+            new ScriptKeyword("Drag", FlowStepTypeEnum.CURSOR_DRAG),
+            new ScriptKeyword("Move", FlowStepTypeEnum.CURSOR_RELOCATE),
+            new ScriptKeyword("Loop", FlowStepTypeEnum.LOOP),
+            new ScriptKeyword("Type", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType: KeyboardInputTypeEnum.TEXT),
+            new ScriptKeyword("Wait", FlowStepTypeEnum.WAIT),
+            new ScriptKeyword("Run", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset: RunCommandPresetEnum.CUSTOM),
+        ];
+
+        /// <summary>
+        /// The keyword a line starts with, and how many words it took. Null when the first word is
+        /// not a keyword at all, which is what the reader reports as an unknown step.
+        /// </summary>
+        public static ScriptKeyword? Match(IReadOnlyList<ScriptToken> tokens)
+        {
+            foreach (ScriptKeyword keyword in All)
+            {
+                string[] words = keyword.Text.Split(' ');
+                if (tokens.Count < words.Length)
+                    continue;
+
+                bool matched = true;
+                for (int i = 0; i < words.Length; i++)
+                {
+                    // A quoted word is a name that happens to read like a keyword, not a keyword.
+                    if (tokens[i].WasQuoted || !string.Equals(tokens[i].Text, words[i], StringComparison.Ordinal))
+                    {
+                        matched = false;
+                        break;
+                    }
+                }
+
+                if (matched)
+                    return keyword;
+            }
+
+            return null;
+        }
 
         // ================================================================
         // Private methods

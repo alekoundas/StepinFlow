@@ -435,11 +435,55 @@ Still open, and the reason this is not quite finished:
 
 ### 5. The parser
 
-- [ ] Parse, validate, then replace, in one transaction. A typo leaves the existing flow untouched.
-- [ ] Errors carry a line and column and say what was expected.
-- [ ] Read `FlowScriptKeywords` and `Words` backwards rather than restating them, so a keyword can
-      never mean one thing on write and another on read.
-- [ ] **Round trip is the acceptance test**: export, import, export again, byte identical.
+Four pieces, split the way the writer and exporter are - pure first, database last, so the part
+that has to be right can be tested without one.
+
+`ScriptTokenizer` turns text into lines of words. The writer's one rule is what makes it small:
+every name is quoted, always, even when it would read fine without, so a quoted run is a single
+word whatever is inside it and nothing else needs escaping. Indent is counted in levels of two
+rather than spaces, because a parser that accepts three-space indentation accepts a file no
+exporter could produce.
+
+`FlowScriptReader` turns lines into a document where every reference is still a name. An
+unreadable line is recorded and skipped rather than thrown, so one typo reports one error instead
+of hiding the nine below it.
+
+`FlowScriptResolver` turns the names into ids. Its own step because it needs the whole file - a
+cursor step can aim at a check written below it - and because needing no database is what lets the
+round trip be tested on its own.
+
+`FlowScriptImporter` writes the rows.
+
+- [x] **Parse, validate, then replace, in one transaction.** Everything before the transaction is
+      pure, so a file with a typo reports the line and leaves the flow exactly as it was. Proved
+      rather than asserted: the probe imports a script with `Find Image` misspelled, gets a refusal
+      naming line 25, and then exports the flow again and compares it to what it was before.
+- [x] **Errors carry a line and column** and say what was expected rather than what was found -
+      "Expected \"5 times\", \"forever\", or \"each match in\" a search" rather than "unexpected token".
+- [x] **`FlowScriptKeywords` and `Words` read backwards.** The reverse tables live in the same two
+      files as the forward ones, so a keyword cannot mean one thing on write and another on read.
+      Longest match first, which is what makes `Move Window` win over `Move` and
+      `Wait Until No Image` over `Wait`. A quoted word is never a keyword, so a step named "Click"
+      is a name.
+- [x] **Round trip is the acceptance test**: export, import, export again, byte identical. Passing
+      twice - once purely, on a flow built in memory that uses most of the grammar, and once
+      through a real SQLite database with template bytes written to disk and read back.
+
+      **It earned its keep on the first run.** `Scroll` was writing `in match`: the writer used the
+      point-target fragment for its `in` clause, which falls through to "match" when a scroll names
+      neither a point nor a step, while the format means an area. A line no parser could read,
+      found the moment something tried to read one. That is the argument for the round trip being
+      the acceptance test rather than a set of examples.
+
+Still open, and honestly rather than quietly:
+
+- [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer,
+      which then writes the step with a null `SubFlowId` - resolving it means reading the `Id:` out
+      of the file it names and matching that, and deciding what a missing file does.
+- [ ] **`FlowValidationService` does not run on import.** What the reader and resolver check is
+      structural: is that a keyword, is that a condition, does that name exist. The semantic rules -
+      a check nothing branches on, a variable nothing defines - are a service away and should run
+      before the replace rather than after the next save.
 
 ---
 
@@ -585,3 +629,91 @@ Groundwork already in: `FlowValidationService` with its rules, `FlowCheckHelper`
       able to say - and so is which checks those four fell into, and which checks have never failed.
 - [ ] That is the difference between "the login test is flaky" and "the login test fails at 390x844
       four times in fifty, always on the cart badge check".
+
+---
+
+## Tests
+
+There is no test project. Adding one is its own piece of work, to plan properly rather than bolt on
+- the order below is what makes it cheap, and the first two layers need no production change at all.
+
+- [ ] **Decide the shape before writing a line.** Coverage per project rather than one number:
+      `Core` near total, because it is pure decisions and has no excuse; `Business` decision code
+      high - walker, writer, parser, validators; `Business` orchestration moderate and by
+      integration test; `Platform.Windows` near zero **on purpose**, because it is the part that
+      touches the machine. That table is the architecture diagram, and being able to say why the
+      number is what it is beats reporting a high one. A blanket 100% target buys tests for
+      property getters and catches nothing.
+
+- [ ] **Layer 1 - `ExecutionFlowWalker`.** 400 lines of pure decision: no database, no screen, no
+      mouse. The most intricate code in the repository and the cheapest to test, with nothing to
+      refactor first. Build a tree in memory, feed results, assert the sequence of step names - the
+      assertion then reads like the flow it describes. Cover loop pass counting, the
+      `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a FIND_ALL search's second and third
+      hit, and `_depthByStepId` dropping results as the walk leaves a subtree. Worth property-based
+      testing here (CsCheck or FsCheck): generate random trees, then assert the walk always
+      terminates, the stack ends empty, and every visited id exists in `StepsById`.
+
+- [ ] **Layer 2 - the workers.** Testable today, with no changes, because of the ports: a fake
+      `IInputService` plus `CursorStepWorker` asserts what was clicked, and that `MoveCursor`
+      returning false produces a failure rather than an exception. Hand-write the nine port fakes
+      rather than reaching for a mocking library - a `FakeInputService` recording tuples reads
+      better in a test than a `Received()` call, and for a repository about separating concerns it
+      shows on the page what the ports bought.
+
+- [ ] **Layer 3 - `ExecutionEngine`.** Phase 4.6 cleared most of what was in the way:
+      `TimeProvider` is injected so a timeout is a value a test moves rather than a wait it sits
+      through, and process killing went behind a port so a test cannot kill the browser. Two are
+      left, both still open in 4.6:
+      1) The background task is unobservable. `_ = Task.Run(...)` in `StartAsync` means a test can
+         only poll `IsRunning` in a sleep loop. Hold it and expose `Task Completion` - phase 12's
+         CLI runner needs it anyway.
+      2) `DebugWaitAsync` still polls two fields on a 50ms `Task.Delay`, so a pause and step-over
+         test pays 50ms per decision. A `SemaphoreSlim` released by Continue / StepInto / StepOver
+         removes both the spin and the latency.
+      Then: SQLite in-memory, fake ports, a recording broadcast, and assert the event sequence and
+      the `Execution` row. That is where the things that actually bite get checked - a second
+      `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
+      worker throwing leaving `errorStepId` on the right step, and a breakpoint inside a
+      stepped-over subtree parking there anyway.
+
+- [ ] **Layer 4 - architecture tests.** NetArchTest asserting that Business does not reference
+      `Platform.Windows`, that `Core` depends on nothing but the framework, and that nothing
+      outside `Platform.Windows` names OpenCvSharp or SharpHook. It turns PROJECT.md section 2 from
+      a claim into a build failure, which for this repository is the whole point.
+
+- [ ] **Layer 5 - the script round trip. This one already exists and already passes** - it is
+      just not in the repository. Written while building the parser in phase 5, in two forms:
+      a pure one over a flow built in memory, and one through a real SQLite database with template
+      bytes written to disk and read back. Both compare bytes; the second also checks that a
+      script with a typo is refused and leaves the flow untouched. It found a writer bug on its
+      first run.
+
+      Three other probes were written the same way and have the same problem - they proved
+      something once and then went nowhere:
+
+      | probe | proved |
+      | --- | --- |
+      | P/Invoke entry points | every converted `LibraryImport` still resolves against live Win32 |
+      | timestamp interceptor | `CreatedOn` stamped on insert, `UpdatedOn` on modify, neither re-stamped |
+      | script round trip, pure | write, read, write again, byte identical |
+      | script round trip, database | export, import, export, byte identical, and a typo changes nothing |
+
+      All four live in a scratch folder outside the repository and will not survive. Rewriting
+      them is an hour that has already been spent once.
+
+- [ ] **Tooling, with the traps written down.** xUnit v3; Shouldly or AwesomeAssertions
+      (FluentAssertions v8 moved to a paid licence for commercial use, AwesomeAssertions is the
+      community fork of v7); NSubstitute for incidental fakes; **SQLite `:memory:` with the
+      connection held open, not `UseInMemoryDatabase`** - EF's in-memory provider is not relational,
+      enforces no foreign key, and would leave the `DeleteBehavior.NoAction` cycle-breaking
+      completely unverified; `TimeProvider` with `Microsoft.Extensions.TimeProvider.Testing`;
+      coverlet with ReportGenerator. If one number is wanted for the readme, Stryker.NET's mutation
+      score over the walker means something that line coverage does not.
+
+- [ ] **Do this before the feature folder move in `TODO.md`.** Renaming
+      `Business.Services.FlowScriptService` to `Business.FlowScript` and splitting the parser in
+      two is exactly the kind of change that compiles perfectly and is still subtly wrong - one
+      step type whose arguments quietly stop round-tripping, with the build still green. The round
+      trip is the only thing that would catch it, so it wants to be in the solution and runnable
+      before the move rather than after.

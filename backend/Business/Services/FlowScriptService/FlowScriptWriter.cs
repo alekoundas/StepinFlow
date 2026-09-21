@@ -239,8 +239,10 @@ namespace Business.Services.FlowScriptService
                 case FlowStepTypeEnum.CURSOR_DRAG:
                     return CursorArguments(step, source);
 
+                // The area to scroll inside, not a point: Target would fall through to "match"
+                // for a scroll that names neither, which is a line the parser cannot read back.
                 case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return $"{Words.ScrollDirection(step.CursorScrollDirectionType)} {step.LoopCount}{Target(step, source, " in ")}";
+                    return $"{Words.ScrollDirection(step.CursorScrollDirectionType)} {step.LoopCount}{Area(step, source)}";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     return step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION

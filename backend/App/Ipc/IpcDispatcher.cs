@@ -53,6 +53,7 @@ namespace App.Ipc
                     "Flow.extractSubFlow" => await _mediator.Send(new ExtractSubFlowCommand(JsonSerializer.Deserialize<ExtractSubFlowDto>(request.Payload, _jsonOptions)!), ct),
                     "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
                     "Flow.export" => await _mediator.Send(new ExportFlowCommand(JsonSerializer.Deserialize<FlowExportRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Flow.import" => await _mediator.Send(new ImportFlowCommand(JsonSerializer.Deserialize<FlowImportRequestDto>(request.Payload, _jsonOptions)!), ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await _mediator.Send(new CreateDiscordBotCommand(JsonSerializer.Deserialize<DiscordBotDto>(request.Payload, _jsonOptions)!), ct),

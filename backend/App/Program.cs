@@ -1,4 +1,4 @@
-﻿using App.AutoMapper;
+using App.AutoMapper;
 using App.Ipc;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
@@ -77,6 +77,8 @@ namespace App
             // Flow script
             builder.Services.AddSingleton<IFlowScriptWriter, FlowScriptWriter>();
             builder.Services.AddSingleton<IFlowScriptExporter, FlowScriptExporter>();
+            builder.Services.AddSingleton<IFlowScriptReader, FlowScriptReader>();
+            builder.Services.AddSingleton<IFlowScriptImporter, FlowScriptImporter>();
 
             builder.Services.AddExecutionEngine();
 

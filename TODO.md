@@ -351,64 +351,41 @@ and every finished item in it was checked against the repository rather than rec
 - [ ] **Target-typed `new()`.** Pre-existing uses were left in files not authored during the
       execution-engine work. House style is the full `new TypeName()`.
 
-## Tests
+## Feature folders
 
-There is no test project. Adding one is its own piece of work, to plan properly rather than bolt on
-- the order below is what makes it cheap, and the first two layers need no production change at all.
+`Business/Services/` is a level that claims everything below it is a service, and most of it is
+not. `ExecutionService/` holds the engine, the walker, the workers and a factory; only one of
+those is a service. The folder is a feature wearing a service's name.
 
-- [ ] **Decide the shape before writing a line.** Coverage per project rather than one number:
-      `Core` near total, because it is pure decisions and has no excuse; `Business` decision code
-      high - walker, writer, parser, validators; `Business` orchestration moderate and by
-      integration test; `Platform.Windows` near zero **on purpose**, because it is the part that
-      touches the machine. That table is the architecture diagram, and being able to say why the
-      number is what it is beats reporting a high one. A blanket 100% target buys tests for
-      property getters and catches nothing.
+**The folder suffix is the mistake, not the class suffix.** `ExecutionHistoryService` as a type is
+accurate and the suffix still earns its place by telling a reader it is not a model. It is
+`Business/Services/FlowScriptService/Syntax/Parser.cs` that is three words of ceremony claiming a
+parser is a service. The target is `Business/FlowScript/Syntax/Parser.cs`.
 
-- [ ] **Layer 1 - `ExecutionFlowWalker`.** 400 lines of pure decision: no database, no screen, no
-      mouse. The most intricate code in the repository and the cheapest to test, with nothing to
-      refactor first. Build a tree in memory, feed results, assert the sequence of step names - the
-      assertion then reads like the flow it describes. Cover loop pass counting, the
-      `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a FIND_ALL search's second and third
-      hit, and `_depthByStepId` dropping results as the walk leaves a subtree. Worth property-based
-      testing here (CsCheck or FsCheck): generate random trees, then assert the walk always
-      terminates, the stack ends empty, and every visited id exists in `StepsById`.
+- [ ] **Move `FlowScriptService` out first, as the pilot.** Not because it is newest but because it
+      is the only feature with a real acceptance test: the round trip catches a botched namespace
+      move on the first run, which nothing else in the repository would. `Business/Services/
+      FlowScriptService/` becomes `Business/FlowScript/`, and the namespace
+      `Business.Services.FlowScriptService` becomes `Business.FlowScript`. The callers are two IPC
+      handlers and `Program.cs`.
 
-- [ ] **Layer 2 - the workers.** Testable today, with no changes, because of the ports: a fake
-      `IInputService` plus `CursorStepWorker` asserts what was clicked, and that `MoveCursor`
-      returning false produces a failure rather than an exception. Hand-write the nine port fakes
-      rather than reaching for a mocking library - a `FakeInputService` recording tuples reads
-      better in a test than a `Received()` call, and for a repository about separating concerns it
-      shows on the page what the ports bought.
+      The codebase is then inconsistent on purpose until the rest follow, which is the cost of a
+      pilot and is worth writing down rather than discovering.
 
-- [ ] **Layer 3 - `ExecutionEngine`, which needs three changes first.** All three are phase 4.6
-      in `PLAN.md`, so by the time this is picked up they should already be done.
-      1) The background task is unobservable. `_ = Task.Run(...)` in `StartAsync` means a test can
-         only poll `IsRunning` in a sleep loop. Hold it and expose `Task Completion` - the same fix
-         as the shutdown item under Execution, and phase 12's CLI runner needs it anyway.
-      2) `DebugWaitAsync` polls two fields on a 50ms `Task.Delay`, so a pause and step-over test
-         pays 50ms per decision and is timing-dependent. `TimeProvider` makes it instant; replacing
-         the spin with a `SemaphoreSlim` released by Continue / StepInto / StepOver removes it.
-      3) `Process.GetProcessesByName` and `Kill` have to move behind a port, or the test kills real
-         processes on whatever machine runs it.
-      Then: SQLite in-memory, fake ports, a recording broadcast, and assert the event sequence and
-      the `Execution` row. That is where the things that actually bite get checked - a second
-      `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
-      worker throwing leaving `errorStepId` on the right step, and a breakpoint inside a
-      stepped-over subtree parking there anyway.
+- [ ] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
+      `AreaPoint`, `Command`, `AppSetting`, `FlowValidation`. Each is a namespace change and a
+      folder move with no behaviour in it, so each should be its own commit and nothing else.
 
-- [ ] **Layer 4 - architecture tests.** NetArchTest asserting that Business does not reference
-      `Platform.Windows`, that `Core` depends on nothing but the framework, and that nothing
-      outside `Platform.Windows` names OpenCvSharp or SharpHook. It turns PROJECT.md section 2 from
-      a claim into a build failure, which for this repository is the whole point.
+- [ ] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
+      partial is the thing. `Parser` keeps the document - header, sections, indentation, building
+      the tree - and `StepParser` takes one line and returns one step. 475 lines and the largest
+      switch in the codebase, and as its own class it is testable against a single line of text
+      with no document, no sections and no indentation around it.
 
-- [ ] **Layer 5 - the script round trip.** Verify snapshots over the exporter, then export, import,
-      export and compare bytes once the parser exists. That is the parser's acceptance test.
+- [ ] **Do it before the compiler restructure in `PLAN.md`**, so the files are only moved once.
+      The two open phase 5 items - sub-flow resolution and running the validator on import - both
+      land inside the binder, so they want the shape settled first.
 
-- [ ] **Tooling, with the traps written down.** xUnit v3; Shouldly or AwesomeAssertions
-      (FluentAssertions v8 moved to a paid licence for commercial use, AwesomeAssertions is the
-      community fork of v7); NSubstitute for incidental fakes; **SQLite `:memory:` with the
-      connection held open, not `UseInMemoryDatabase`** - EF's in-memory provider is not relational,
-      enforces no foreign key, and would leave the `DeleteBehavior.NoAction` cycle-breaking
-      completely unverified; `TimeProvider` with `Microsoft.Extensions.TimeProvider.Testing`;
-      coverlet with ReportGenerator. If one number is wanted for the readme, Stryker.NET's mutation
-      score over the walker means something that line coverage does not.
+- [ ] **Promote the round trip probe into the solution before starting.** It currently lives in a
+      scratch folder outside the repository, and it is the only thing that would catch a mistake
+      in any of the above. See the Tests section at the end of `PLAN.md`.

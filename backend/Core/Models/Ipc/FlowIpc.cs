@@ -28,5 +28,6 @@ namespace Core.Models.Ipc
 
     /// <summary>Writes the flow out as a script with its template images beside it.</summary>
     public record ExportFlowCommand(FlowExportRequestDto Dto) : IRequest<ResultDto<FlowExportResultDto>>;
+    public record ImportFlowCommand(FlowImportRequestDto Dto) : IRequest<ResultDto<FlowImportResultDto>>;
 
 }
