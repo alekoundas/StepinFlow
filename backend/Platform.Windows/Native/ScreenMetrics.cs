@@ -240,7 +240,7 @@ namespace Platform.Windows.Native
             int index,
             bool isVirtual)
         {
-            string baseName = "";
+            string baseName;
             if (string.IsNullOrWhiteSpace(monitor.DeviceString)
                 || monitor.DeviceString.Contains("Generic", StringComparison.OrdinalIgnoreCase)
                 || monitor.DeviceString.Contains("PnP", StringComparison.OrdinalIgnoreCase))

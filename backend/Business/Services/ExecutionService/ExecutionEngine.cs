@@ -38,7 +38,7 @@ namespace Business.Services.ExecutionService
         // Held for one thing: checking whether an execution is going and claiming it are two
         // steps, and two IPC messages arriving together would otherwise both get past the check
         // and start a walk. Two walks, one mouse.
-        private readonly object _lockObj = new object();
+        private readonly Lock _lockObj = new Lock();
         private CancellationTokenSource _cancellation = new CancellationTokenSource();
 
 
@@ -70,7 +70,10 @@ namespace Business.Services.ExecutionService
 
         public int FlowId { get; private set; }
         public int ExecutionId { get; private set; }
-        public bool IsRunning => State != RunStateEnum.FINISHED;
+        public bool IsRunning
+        {
+            get { return State != RunStateEnum.FINISHED; }
+        }
         public RunStateEnum State
         {
             get { return _state; }
