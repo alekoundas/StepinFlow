@@ -31,7 +31,7 @@ namespace Business.Services.ExecutionService
         private readonly List<ExecutionStep> _matchRepeats = new List<ExecutionStep>();                    //Hits served without executing anything, waiting for the engine to collect them
 
         private int _subFlowDepth;
-        private int _nextSequence;
+        private int _executionStepSequence;
 
         public ExecutionFlowWalker(IExecutionCacheService cache)
         {
@@ -55,9 +55,8 @@ namespace Business.Services.ExecutionService
         }
 
         /// <summary>
-        /// Hits that were served without anything being executed - a FIND_ALL search handing out its
-        /// second and third match. Nobody ran them, so the engine never saw them come back from
-        /// Next, and it collects them here to record and broadcast alongside the rest.
+        /// The FIND_ALL search maches. Generated on the first FIND_ALL executed step.
+        /// Return to engine and clear them.
         /// </summary>
         public IReadOnlyList<ExecutionStep> TakeMatchRepeats()
         {
@@ -82,8 +81,15 @@ namespace Business.Services.ExecutionService
 
         public FlowStep? Next(FlowStep step, ExecutionStep result)
         {
-            PushContinuation(step, result);
-            PushChild(step, result);
+            // End Execution abandons everything still pending, and the stack holds a sibling for
+            // every level walked down to get here. Its own children are the cleanup, so they run
+            // against an empty stack and the walk ends when they do.
+            if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
+                _executionStack.Clear();
+            else
+                PushContinuation(step, result); // Siblings or loops or GOTO
+
+            PushChild(step, result);            // Add Child last so its executed first
 
             return Pop();
         }
@@ -97,11 +103,12 @@ namespace Business.Services.ExecutionService
         {
             if (step.FlowStepType == FlowStepTypeEnum.GO_TO)
             {
-                bool isPushed = PushGoToTarget(step);
+                bool isPushed = GetGoToTargetStep(step);
                 if (isPushed)
                     return;
             }
-            if (step.FlowStepType == FlowStepTypeEnum.LOOP && HasAnotherLoop(step))
+
+            if (step.FlowStepType == FlowStepTypeEnum.LOOP && HasAnotherLoop(step)) // Re-add the same loop type step
             {
                 _executionStack.Push(new PendingStep(step, Depth, _subFlowDepth));
                 return;
@@ -134,7 +141,7 @@ namespace Business.Services.ExecutionService
                 _executionStack.Push(new PendingStep(first, Depth + 1, _subFlowDepth));
         }
 
-        private bool PushGoToTarget(FlowStep step)
+        private bool GetGoToTargetStep(FlowStep step)
         {
             if (step.FlowStepReferenceId == null)
                 return false;
@@ -164,25 +171,49 @@ namespace Business.Services.ExecutionService
             _executionStack.Push(new PendingStep(first, Depth + 1, _subFlowDepth + 1));
         }
 
+        // Get next step from THE stack.
         private FlowStep? Pop()
         {
             while (_executionStack.Count > 0)
             {
                 PendingStep pending = _executionStack.Pop();
 
-                // A search that comes back round is not looked at again: its matches came from one
-                // screenshot, and searching a second time would find what the flow already handled.
+                // A search that comes back round is not executed again!
+                // Buts its children does for all success finds.
                 if (pending.IsMatchRepeat)
                 {
-                    RepeatForNextMatch(pending);
+                    PendingMatches matches = _pendingMatches[pending.Step.Id].Advance(); // Advance match index.
+                    _pendingMatches[pending.Step.Id] = matches;
+
+                    GenerateAndInsertRepeatedExecutionStep(pending.Step, matches, pending.Depth); // Add execution like search did happend!
+
+                    if (matches.HasMoreMatches) // Re-add the same search step for the next match.
+                    {
+                        _executionStack.Push(pending);
+                    }
+                    else 
+                    {
+                        _pendingMatches.Remove(pending.Step.Id); // Cleanup after no more matches exist.
+
+                        // Add next sibling.
+                        FlowStep? sibling = NextSiblingOf(pending.Step);
+                        if (sibling != null)
+                            _executionStack.Push(new PendingStep(sibling, pending.Depth, pending.SubFlowDepth));
+                    }
+
+                    // Sibling might have a child!
+                    FlowStep? first = FirstChildOf(pending.Step, ExecutionStep.Success());
+                    if (first != null)
+                        _executionStack.Push(new PendingStep(first, pending.Depth + 1, pending.SubFlowDepth));
+
                     continue;
                 }
 
                 Depth = pending.Depth;
                 _subFlowDepth = pending.SubFlowDepth;
+                _depthByStepId[pending.Step.Id] = pending.Depth;
 
                 ForgetFrom(pending.Depth);
-                _depthByStepId[pending.Step.Id] = pending.Depth;
 
                 return pending.Step;
             }
@@ -190,39 +221,8 @@ namespace Business.Services.ExecutionService
             return null;
         }
 
-        private void RepeatForNextMatch(PendingStep pending)
-        {
-            PendingMatches matches = _pendingMatches[pending.Step.Id].Advance();
-            _pendingMatches[pending.Step.Id] = matches;
 
-            // One execution step per hit, so the walk below reads this hit rather than the first.
-            RepeatForMatch(pending.Step, matches, pending.Depth);
-
-            if (matches.HasNext)
-            {
-                _executionStack.Push(pending);
-            }
-            else
-            {
-                // Every hit has been walked, so the search is finally done. What is left goes as
-                // well as the continuation: coming back here later means a fresh screenshot.
-                _pendingMatches.Remove(pending.Step.Id);
-
-                FlowStep? sibling = NextSiblingOf(pending.Step);
-                if (sibling != null)
-                    _executionStack.Push(new PendingStep(sibling, pending.Depth, pending.SubFlowDepth));
-            }
-
-            FlowStep? first = FirstChildOf(pending.Step, ExecutionStep.Success());
-            if (first != null)
-                _executionStack.Push(new PendingStep(first, pending.Depth + 1, pending.SubFlowDepth));
-        }
-
-        /// <summary>
-        /// The next hit as an execution step of its own. The search is not run again - every hit
-        /// came from the one screenshot the first pass took - so it carries no duration.
-        /// </summary>
-        private void RepeatForMatch(FlowStep step, PendingMatches matches, int depth)
+        private void GenerateAndInsertRepeatedExecutionStep(FlowStep step, PendingMatches matches, int depth)
         {
             IReadOnlyList<Point>? points = _cache.GetMatchesFrom(step.Id);
             if (points == null || matches.Index >= points.Count)
@@ -251,15 +251,12 @@ namespace Business.Services.ExecutionService
             executionStep.Name = flowStep.Name;
             executionStep.FlowStepType = flowStep.FlowStepType;
             executionStep.Depth = depth;
-            executionStep.Sequence = _nextSequence++;
+            executionStep.Sequence = _executionStepSequence++;
 
             if (flowStep.FlowStepType == FlowStepTypeEnum.LOOP)
                 executionStep.LoopPass = _loopPasses.GetValueOrDefault(flowStep.Id);
 
-            // Depth only ever grows by one from the step running, and that step was just recorded at
-            // its own depth, so depth - 1 is always fresh. Deeper entries are left over from a
-            // subtree already finished and never get read: coming back down to them means recording
-            // at the shallower depth first, which overwrites them.
+            // Use the _sequenceByDepth to get the parent sequence. Not FK but keep parent id kinda.
             if (depth > 0 && _sequenceByDepth.TryGetValue(depth - 1, out int parentSequence))
                 executionStep.ParentSequence = parentSequence;
 
@@ -268,8 +265,7 @@ namespace Business.Services.ExecutionService
 
         /// <summary>
         /// Opens the run through a FIND_ALL search's hits. A step that actually executed always
-        /// starts a fresh set - anything left over describes a screenshot that is now stale, which
-        /// is what a GO_TO jumping back into an open search would otherwise be handed.
+        /// starts a fresh set - anything left over describes a screenshot that is now stale, 
         /// </summary>
         private bool OpenPendingMatches(FlowStep step, ExecutionStep result)
         {
@@ -311,8 +307,8 @@ namespace Business.Services.ExecutionService
             foreach (int flowStepId in gone)
             {
                 _depthByStepId.Remove(flowStepId);
-                _cache.ForgetExecutionStep(flowStepId);
                 _pendingMatches.Remove(flowStepId);
+                _cache.ForgetExecutionStep(flowStepId);
             }
         }
 
@@ -322,18 +318,18 @@ namespace Business.Services.ExecutionService
             return step;
         }
 
-        /// <summary>
-        /// The first step to run inside this one. Success and Failure are never executed - they
-        /// only say which way to go - so this reaches past them into the branch itself.
-        /// </summary>
         private FlowStep? FirstChildOf(FlowStep step, ExecutionStep result)
         {
+            // First child
             if (!TreeStepHelper.HasBranchChildren(step.FlowStepType))
                 return ChildrenOf(step.Id).FirstOrDefault();
 
-            FlowStepTypeEnum wanted = result.Outcome == StepOutcomeEnum.SUCCESS
-                ? FlowStepTypeEnum.SUCCESS
-                : FlowStepTypeEnum.FAILURE;
+            // Else find the correct branch and get the first child.
+            FlowStepTypeEnum wanted;
+            if (result.Outcome == StepOutcomeEnum.SUCCESS)
+                wanted = FlowStepTypeEnum.SUCCESS;
+            else
+                wanted = FlowStepTypeEnum.FAILURE;
 
             FlowStep? branch = ChildrenOf(step.Id).FirstOrDefault(x => x.FlowStepType == wanted);
             if (branch == null)

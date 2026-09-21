@@ -16,7 +16,7 @@ namespace Core.Models.Business
         public int Index { get; }
         public int Count { get; }
 
-        public bool HasNext => Index + 1 < Count;
+        public bool HasMoreMatches => Index + 1 < Count;
 
 
         // ================================================================

@@ -58,6 +58,7 @@ namespace App
             builder.Services.AddSingleton<IScreenService, ScreenService>();
             builder.Services.AddSingleton<IWindowService, WindowService>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
+            builder.Services.AddSingleton<IProcessService, ProcessService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
 
