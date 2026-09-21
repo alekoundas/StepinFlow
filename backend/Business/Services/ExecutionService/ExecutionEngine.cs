@@ -16,14 +16,15 @@ namespace Business.Services.ExecutionService
     /// <summary>
     /// Runs a flow.
     ///
-    /// A singleton holding the one run that is allowed to be going: one mouse, one keyboard, one
-    /// screen, so two flows racing for the cursor means one of them clicks where the other just
-    /// moved. A second start is refused rather than queued.
+    /// A singleton holding the one run that is allowed to be going
+    /// A second start is refused.
     ///
     /// What each step does belongs to a worker and what runs next belongs to the navigator, so the
     /// only thing in here is the walking, the pause gate and cancellation.
     /// </summary>
-    public sealed class ExecutionEngine : IExecutionEngine, IDisposable
+    [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
+        Justification = "The source is never timed and never holds a registration - the one token linked to it is disposed by the using that made it - so there is nothing for Dispose to release. Owning a disposable field is not owning a resource. Making the engine IDisposable put Stop in a race with Reset over a source it could then cancel after disposal: 25 lines of guarding around a no-op.")]
+    public sealed class ExecutionEngine : IExecutionEngine
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IStepWorkerFactory _workerFactory;
@@ -34,12 +35,19 @@ namespace Business.Services.ExecutionService
         private ExecutionFlowWalker _walker = null!;
 
 
+        // Held for one thing: checking whether an execution is going and claiming it are two
+        // steps, and two IPC messages arriving together would otherwise both get past the check
+        // and start a walk. Two walks, one mouse.
         private readonly object _lockObj = new object();
         private CancellationTokenSource _cancellation = new CancellationTokenSource();
 
 
         private int? _debuggerStepOverDepth;// Set while stepping over, so the walk runs until it is back at or above this depth
-        private bool _debuggerSignalNextStep;// Step into and step over stay paused but let one step through
+
+        // Written by whichever thread the IPC call arrives on, read by the walk. Volatile rather
+        // than locked: the pause gate reads them in a loop and must see the write that ends it.
+        private volatile bool _debuggerSignalNextStep;// Step into and step over stay paused but let one step through
+        private volatile RunStateEnum _state = RunStateEnum.FINISHED;
         private HashSet<int> _debuggerBreakpoints = new HashSet<int>();
         private int _currentDepth;
         private int? _currentStepId;
@@ -63,7 +71,11 @@ namespace Business.Services.ExecutionService
         public int FlowId { get; private set; }
         public int ExecutionId { get; private set; }
         public bool IsRunning => State != RunStateEnum.FINISHED;
-        public RunStateEnum State { get; private set; } = RunStateEnum.FINISHED;
+        public RunStateEnum State
+        {
+            get { return _state; }
+            private set { _state = value; }
+        }
 
 
         // ================================================================
@@ -75,12 +87,14 @@ namespace Business.Services.ExecutionService
         public async Task<int> StartAsync(ExecutionStartDto dto, CancellationToken ct)
         {
             // Thread safe.
+            CancellationToken runToken;
             lock (_lockObj)
             {
                 if (IsRunning)
                     throw new InvalidOperationException("A flow is already running. Stop it first - two flows cannot share the mouse.");
 
                 Reset(dto);
+                runToken = _cancellation.Token;
             }
 
             // Initialize.
@@ -104,7 +118,7 @@ namespace Business.Services.ExecutionService
                 // Start execution
                 try
                 {
-                    using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _cancellation.Token);
+                    using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct, runToken);
                     WalkOutcome outcome = await WalkAsync(linked.Token);
 
                     stepCount = outcome.StepCount;
@@ -177,12 +191,6 @@ namespace Business.Services.ExecutionService
             _debuggerBreakpoints = flowStepIds.ToHashSet();
         }
 
-        /// <summary>Called by the container on shutdown, this being a singleton.</summary>
-        public void Dispose()
-        {
-            _cancellation.Dispose();
-        }
-
 
         // ================================================================
         // Private methods
@@ -201,10 +209,8 @@ namespace Business.Services.ExecutionService
             _debuggerSignalNextStep = false;
             _debuggerBreakpoints = dto.Breakpoints.ToHashSet();
 
-            // A cancelled source stays cancelled, so the last run's cannot be reused. Disposed
-            // rather than dropped: it holds the registrations of every token linked to it, and a
-            // long session starts a lot of executions.
-            _cancellation.Dispose();
+            // A cancelled source stays cancelled, so the last run's cannot be reused. Dropped
+            // rather than disposed - see the suppression on the class.
             _cancellation = new CancellationTokenSource();
         }
 
