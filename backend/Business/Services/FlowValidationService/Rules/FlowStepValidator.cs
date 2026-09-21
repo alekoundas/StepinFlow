@@ -9,7 +9,7 @@ namespace Business.Services.FlowValidationService.Rules
     /// <summary>
     /// Whether each step is configured well enough to run, judged on its own fields.
     /// </summary>
-    public sealed class FlowStepValidator
+    public static class FlowStepValidator
     {
         private static readonly FlowStepTypeEnum[] WindowTypes =
         [
@@ -18,14 +18,10 @@ namespace Business.Services.FlowValidationService.Rules
             FlowStepTypeEnum.WINDOW_RELOCATE,
         ];
 
-        public FlowStepValidator()
-        {
-        }
-
         // ================================================================
         // Public methods
         // ================================================================
-        public void Validate(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyDictionary<int, int> templateCountByStepId, FlowValidationResultDto result)
+        public static void Validate(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyDictionary<int, int> templateCountByStepId, FlowValidationResultDto result)
         {
             foreach (FlowStep step in authoredSteps)
             {

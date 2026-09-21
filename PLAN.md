@@ -251,13 +251,37 @@ method does: define the subset, enforce it with a tool, record every deviation. 
       matter are `SearchImageStepWorker` and `SearchTextStepWorker`, which compute a timeout off the
       wall clock, so any test of timeout behaviour costs real seconds. In the framework since
       .NET 8, and `FakeTimeProvider` fakes `Task.Delay` too, which settles the debugger poll below.
-- [ ] **Analyzers.** `Directory.Build.props` with `TreatWarningsAsErrors`, `EnableNETAnalyzers` and
-      `EnforceCodeStyleInBuild`; `Microsoft.CodeAnalysis.BannedApiAnalyzers` with a
-      `BannedSymbols.txt` in `Business` banning `Process`, `DateTime.UtcNow` and `DllImport`, each
-      with its reason as the message; `.editorconfig` for per folder severity, which is how a
-      deviation gets recorded. Turning this on in an existing codebase produces several hundred
-      warnings on day one, so the existing set goes into a `.globalconfig` and only new code is
-      held to the rule. **Its own commit**, not folded into anything else.
+- [x] **Analyzers.** `backend/Directory.Build.props` decides which rules run - `EnableNETAnalyzers`,
+      `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`, and now
+      `TreatWarningsAsErrors` with NU1901-1904 exempt, because a CVE published overnight against a
+      transitive package should be news rather than a build that will not run.
+      `backend/.editorconfig` decides what each rule says, and it is the only one of the two that
+      can be scoped to a folder. Both are in the solution's `Solution Items` so they can be opened.
+
+      **350 warnings on day one, 0 now.** No `.globalconfig` of pre-approved exceptions was needed,
+      because roughly 250 of the 350 were three rules arguing with a deliberate convention:
+      CA1707 wanted the underscores out of `KILL_PROCESS`, CA1711 wanted the `Enum` suffix off
+      `FlowStepTypeEnum`, and CA1725 wanted MediatR's `cancellationToken` in place of the house
+      `ct` in 95 handlers. Each is off with the reason written beside it, and CA1725 is off only
+      under `Business/Ipc/Handlers/` - it caught six real ones elsewhere, five in `WindowService`
+      where the adapter was saying `hWnd` while its own port says `handle`.
+
+      The rest were fixed rather than silenced. Two were worth the exercise on their own: a
+      `ValueTask` discarded in `InputRecordService`, which may be backed by an object that gets
+      recycled under it, and `ExecutionEngine` never disposing the `CancellationTokenSource` it
+      replaces on every execution. CA1305, promoted to a warning over `FlowScriptService` because
+      a comma decimal separator there writes a file the parser cannot read, found two separate
+      culture bugs in one line of the writer.
+
+      A deviation is recorded three ways depending on how wide it is: a severity in
+      `.editorconfig` for a rule, a path-scoped section for a folder, and a `[SuppressMessage]`
+      with a `Justification` for the single site where forwarding a token to `Task.Run` would let
+      a cancelled execution skip writing its own history.
+- [ ] **`BannedApiAnalyzers`.** The other half, and the one that makes the architecture a build
+      error rather than a convention: `Process` and `DllImport` banned in `Business`, with
+      `CommandService` deviated by path until the Windows adapter question above is settled.
+      `DateTime.UtcNow` joins them when `TimeProvider` lands, not before - banning it today would
+      only write down eight exceptions.
 - [ ] **Hold the execution task.** `_ = Task.Run(...)` in `StartAsync` is handed to nobody, so
       shutdown cannot await it and a test can only poll `IsRunning` in a sleep loop. Keep it and
       expose `Task Completion`. Three callers want it: shutdown, the tests, and phase 12's CLI

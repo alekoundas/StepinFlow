@@ -31,7 +31,7 @@ namespace Business.Ipc.Handlers
 
     public abstract class ExecutionCommandHandler
     {
-        protected readonly IExecutionEngine _executionEngine;
+        private readonly IExecutionEngine _executionEngine;
 
         protected ExecutionCommandHandler(IExecutionEngine executionEngine)
         {

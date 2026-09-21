@@ -1,17 +1,28 @@
 <Project>
 
   <!--
-    Every project under backend/ inherits this. One file rather than five copies, so a rule cannot
-    be on in Business and off in Core without somebody deciding that on purpose.
-
-    TreatWarningsAsErrors is deliberately not here yet - see backend/.editorconfig.
+    Directory.Build.props is MSBuild. 
+    Its imported into every .csproj beneath it.
+    It runs at project evaluation — before the compiler is even invoked. 
+    It sets project-level properties: whether analyzers run at all, which analysis level, whether warnings are errors, what packages get referenced.
+    
   -->
   <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
 
-    <!-- IDE rules are editor-only by default. This is what makes the house style build. -->
+    <!-- Actually enforce .editorconfig file preferences at compile (IDE rules are editor-only by default. ) -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Force ALL warnings to behave as compile errors-->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Except from the security warninngs of:
+          NU1901 - Low
+          NU1902 - Moderate
+          NU1903 - High
+          NU1904 - Critical-->
+    <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
   </PropertyGroup>
 
 </Project>

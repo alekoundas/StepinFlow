@@ -69,8 +69,6 @@ namespace App
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
 
             // Validation
-            builder.Services.AddSingleton<FlowStepValidator>();
-            builder.Services.AddSingleton<FlowStructureValidator>();
             builder.Services.AddSingleton<IFlowValidationService, FlowValidationService>();
 
             // Flow script

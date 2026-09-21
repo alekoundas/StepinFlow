@@ -1,5 +1,4 @@
-# The rules this codebase is held to, and every place it departs from the defaults with the reason
-# written next to it. 
+# The rules this codebase is held to, and every place it departs from the defaults with the reason written next to it. 
 #
 # Severity: none | silent | suggestion | warning | error
 
@@ -11,7 +10,7 @@ root = true
 # Naming
 # ----------------------------------------------------------------------------------------------
 
-# CA1707 "identifiers should not contain underscores"
+# CA1707 "identifiers should not contain underscores" (ex. enums)
 dotnet_diagnostic.CA1707.severity = none
 
 # CA1711 "identifiers should not have incorrect suffix" (force inheritance by class name suffix)
@@ -25,6 +24,9 @@ dotnet_diagnostic.CA1848.severity = none
 
 #CA1716 "Identifiers should not match keywords" (Keywords from VB as well)
 dotnet_diagnostic.CA1716.severity = none
+
+#CA1051 "Do not declare visible instance fields" (Intefaces never expose fields only properties)
+dotnet_diagnostic.CA1051.severity = error
 
 #CA1720 "Identifiers should not contain type names" (Keywords from VB as well)
 dotnet_diagnostic.CA1720.severity = none
@@ -64,7 +66,7 @@ csharp_style_expression_bodied_properties = false:suggestion
 csharp_style_expression_bodied_indexers = false:suggestion
 csharp_style_expression_bodied_accessors = false:suggestion
 
-#IDE0290 "Use primary constructor" (Dont warn to use class like: public void ClassName(int param){...} )
+#IDE0290 "Use primary constructor" (Dont warn to use class like: public ClassName(int param){...} )
 dotnet_diagnostic.IDE0290.severity = none
 
 # IDE0028 "Collection initialization can be simplified"

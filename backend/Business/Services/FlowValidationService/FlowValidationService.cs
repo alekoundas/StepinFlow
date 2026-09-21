@@ -14,15 +14,6 @@ namespace Business.Services.FlowValidationService
     /// </summary>
     public sealed class FlowValidationService : IFlowValidationService
     {
-        private readonly FlowStepValidator _stepValidator;
-        private readonly FlowStructureValidator _structureValidator;
-
-        public FlowValidationService(FlowStepValidator stepValidator, FlowStructureValidator structureValidator)
-        {
-            _stepValidator = stepValidator;
-            _structureValidator = structureValidator;
-        }
-
         // ================================================================
         // Public methods
         // ================================================================
@@ -48,8 +39,8 @@ namespace Business.Services.FlowValidationService
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
             IReadOnlyList<FlowCheck> checks = GetChecks(steps.Select(ToCheckNode).ToList());
 
-            _stepValidator.Validate(authored, templateCountByStepId, result);
-            _structureValidator.Validate(authored, byStepId, childrenByParentId, checks, flowNames, result);
+            FlowStepValidator.Validate(authored, templateCountByStepId, result);
+            FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, checks, flowNames, result);
 
             return Finish(result);
         }

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using Business.Services.ExecutionService.Workers;
 using Core.Ports;
@@ -22,7 +23,7 @@ namespace Business.Services.ExecutionService
     /// What each step does belongs to a worker and what runs next belongs to the navigator, so the
     /// only thing in here is the walking, the pause gate and cancellation.
     /// </summary>
-    public sealed class ExecutionEngine : IExecutionEngine
+    public sealed class ExecutionEngine : IExecutionEngine, IDisposable
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IStepWorkerFactory _workerFactory;
@@ -69,6 +70,8 @@ namespace Business.Services.ExecutionService
         // Public methods
         // ================================================================
 
+        [SuppressMessage("Reliability", "CA2016:Forward the CancellationToken parameter to methods that take one",
+            Justification = "The walk outlives this call. ct is honoured inside through the linked source; handing it to Task.Run as well would let an already cancelled token stop the delegate before it starts, so nothing writes the history and the execution stays RUNNING.")]
         public async Task<int> StartAsync(ExecutionStartDto dto, CancellationToken ct)
         {
             // Thread safe.
@@ -174,6 +177,12 @@ namespace Business.Services.ExecutionService
             _debuggerBreakpoints = flowStepIds.ToHashSet();
         }
 
+        /// <summary>Called by the container on shutdown, this being a singleton.</summary>
+        public void Dispose()
+        {
+            _cancellation.Dispose();
+        }
+
 
         // ================================================================
         // Private methods
@@ -192,7 +201,10 @@ namespace Business.Services.ExecutionService
             _debuggerSignalNextStep = false;
             _debuggerBreakpoints = dto.Breakpoints.ToHashSet();
 
-            // A cancelled source stays cancelled, so the last run's cannot be reused.
+            // A cancelled source stays cancelled, so the last run's cannot be reused. Disposed
+            // rather than dropped: it holds the registrations of every token linked to it, and a
+            // long session starts a lot of executions.
+            _cancellation.Dispose();
             _cancellation = new CancellationTokenSource();
         }
 

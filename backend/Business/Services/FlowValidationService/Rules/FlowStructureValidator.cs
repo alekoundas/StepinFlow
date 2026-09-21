@@ -10,7 +10,7 @@ namespace Business.Services.FlowValidationService.Rules
     /// Whether the steps still agree with each other - the search a cursor step reads, the branch
     /// it now sits in, whether a check changes anything. What a drag and drop quietly breaks.
     /// </summary>
-    public sealed class FlowStructureValidator
+    public static class FlowStructureValidator
     {
         private static readonly FlowStepTypeEnum[] CursorTypes =
         [
@@ -20,16 +20,12 @@ namespace Business.Services.FlowValidationService.Rules
             FlowStepTypeEnum.CURSOR_RELOCATE,
         ];
 
-        public FlowStructureValidator()
-        {
-        }
-
 
         // ================================================================
         // Public  methods
         // ================================================================
 
-        public void Validate(
+        public static void Validate(
             IReadOnlyList<FlowStep> authoredSteps,
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             ILookup<int?, FlowStep> childrenByParentId,
