@@ -48,19 +48,19 @@ namespace DataAccess
                     entry.Entity.UpdatedOn = DateTime.UtcNow;
         }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
 
-            builder.ApplyConfiguration(new FlowConfiguration());
-            builder.ApplyConfiguration(new FlowAreaConfiguration());
-            builder.ApplyConfiguration(new FlowPointConfiguration());
-            builder.ApplyConfiguration(new FlowStepConfiguration());
-            builder.ApplyConfiguration(new FlowStepTemplateConfiguration());
-            builder.ApplyConfiguration(new FlowStepLastGoodScreenshotHistoryConfiguration());
-            builder.ApplyConfiguration(new ExecutionConfiguration());
-            builder.ApplyConfiguration(new ExecutionStepConfiguration());
-            builder.ApplyConfiguration(new AppSettingConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowAreaConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowPointConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowStepConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowStepTemplateConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowStepLastGoodScreenshotHistoryConfiguration());
+            modelBuilder.ApplyConfiguration(new ExecutionConfiguration());
+            modelBuilder.ApplyConfiguration(new ExecutionStepConfiguration());
+            modelBuilder.ApplyConfiguration(new AppSettingConfiguration());
         }
     }
 }

@@ -133,7 +133,7 @@ namespace Business.Services.Ai
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, $"The model could not be reached. {ex.Message}");
+                _logger.LogWarning(ex, "The model could not be reached.");
                 return Failed($"The model could not be reached. {ex.Message}");
             }
         }

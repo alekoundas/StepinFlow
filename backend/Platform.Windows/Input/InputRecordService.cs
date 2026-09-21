@@ -36,9 +36,7 @@ namespace Platform.Windows.Input
 
         // Throttling events. Interlocked because TaskPoolGlobalHook dispatches on the thread pool.
         private long _lastDragBroadcastTicks;
-        private long _lastMovedBroadcastTicks;
         private static readonly long DragThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
-        private static readonly long MoveThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
 
         private readonly IIpcBroadcastService _broadcastService;
         public InputRecordService(IIpcBroadcastService broadcastService)
@@ -131,7 +129,7 @@ namespace Platform.Windows.Input
 
             BroadcastTypeEnum? broadcastType = BroadcastType;
             if (broadcastType != null)
-                _broadcastService.SendAsync(broadcastType.Value, recordedInput);
+                _ = _broadcastService.SendAsync(broadcastType.Value, recordedInput).AsTask();
         }
 
         // Returns true at most once per throttle window.

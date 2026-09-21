@@ -482,7 +482,7 @@ namespace Business.Services.Ai.Tools
 
         public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
-        private record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
+        private sealed record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
 
         public record StepTypeCount(string Type, int Count);
 

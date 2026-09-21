@@ -31,7 +31,7 @@ using Platform.Windows.Windowing;
 
 namespace App
 {
-    internal class Program
+    internal sealed class Program
     {
         public static async Task Main(string[] args)
         {
@@ -169,7 +169,7 @@ namespace App
     // TODO: move them from here
 
     // Main Pipe
-    internal class HostedRequestPipeListener : BackgroundService
+    internal sealed class HostedRequestPipeListener : BackgroundService
     {
         private readonly IpcRequestPipe _ipcRequestPipe;
         public HostedRequestPipeListener(IpcRequestPipe ipcRequestPipe) => _ipcRequestPipe = ipcRequestPipe;
@@ -177,7 +177,7 @@ namespace App
     }
 
     // Broadcast Pipe
-    internal class HostedBroadcaststPipeListener : BackgroundService
+    internal sealed class HostedBroadcaststPipeListener : BackgroundService
     {
         private readonly IpcBroadcastPipe _ipcBroadcastPipe;
         public HostedBroadcaststPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
@@ -187,7 +187,7 @@ namespace App
     
 
     // Start global input recording hook.
-    internal class HostedSharpHookService : BackgroundService
+    internal sealed class HostedSharpHookService : BackgroundService
     {
         private readonly IInputRecordService _inputRecordService;
         public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
@@ -195,7 +195,7 @@ namespace App
     }
 
     // Embed the docs at startup.
-    internal class HostedAiDocumentIndexService : BackgroundService
+    internal sealed class HostedAiDocumentIndexService : BackgroundService
     {
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
         private readonly ILogger<HostedAiDocumentIndexService> _logger;

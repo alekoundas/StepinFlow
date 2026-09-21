@@ -167,77 +167,77 @@ namespace Platform.Windows.Windowing
         /// stored offset means the same thing whatever chrome the window happens to have.
         /// Returns empty when the handle is not a live window.
         /// </summary>
-        public Rectangle GetWindowBounds(IntPtr hWnd, bool useClientArea)
+        public Rectangle GetWindowBounds(IntPtr handle, bool useClientArea)
         {
-            if (hWnd == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
                 return Rectangle.Empty;
 
             if (!useClientArea)
             {
                 RECT windowRect = new RECT();
-                if (!GetWindowRect(hWnd, ref windowRect))
+                if (!GetWindowRect(handle, ref windowRect))
                     return Rectangle.Empty;
 
                 return Rectangle.FromLTRB(windowRect.Left, windowRect.Top, windowRect.Right, windowRect.Bottom);
             }
 
             RECT clientRect = new RECT();
-            if (!GetClientRect(hWnd, ref clientRect))
+            if (!GetClientRect(handle, ref clientRect))
                 return Rectangle.Empty;
 
             POINT origin = new POINT { X = clientRect.Left, Y = clientRect.Top };
-            if (!ClientToScreen(hWnd, ref origin))
+            if (!ClientToScreen(handle, ref origin))
                 return Rectangle.Empty;
 
             return new Rectangle(origin.X, origin.Y, clientRect.Right - clientRect.Left, clientRect.Bottom - clientRect.Top);
         }
 
-        public bool FocusWindow(IntPtr hWnd)
+        public bool FocusWindow(IntPtr handle)
         {
-            if (hWnd == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(hWnd))
-                ShowWindow(hWnd, SW_RESTORE);
+            if (IsIconic(handle))
+                ShowWindow(handle, SW_RESTORE);
 
-            if (!SetForegroundWindow(hWnd))
+            if (!SetForegroundWindow(handle))
                 return false;
 
-            return GetForegroundWindow() == hWnd;
+            return GetForegroundWindow() == handle;
         }
 
-        public bool ResizeWindow(IntPtr hWnd, int width, int height)
+        public bool ResizeWindow(IntPtr handle, int width, int height)
         {
-            if (hWnd == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(hWnd))
-                ShowWindow(hWnd, SW_RESTORE);
+            if (IsIconic(handle))
+                ShowWindow(handle, SW_RESTORE);
 
-            return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            return SetWindowPos(handle, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
 
-        public bool MoveWindow(IntPtr hWnd, int x, int y)
+        public bool MoveWindow(IntPtr handle, int x, int y)
         {
-            if (hWnd == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(hWnd))
-                ShowWindow(hWnd, SW_RESTORE);
+            if (IsIconic(handle))
+                ShowWindow(handle, SW_RESTORE);
 
-            return SetWindowPos(hWnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            return SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
 
         /// <summary>
         /// Asks the window to close, the way clicking its X does. Posted rather than sent, so an
         /// application that puts up "are you sure" cannot block the caller for ever.
         /// </summary>
-        public bool CloseWindow(IntPtr hWnd)
+        public bool CloseWindow(IntPtr handle)
         {
-            if (hWnd == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
                 return false;
 
-            return PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            return PostMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
         public IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query)
@@ -265,7 +265,7 @@ namespace Platform.Windows.Windowing
                 if (string.IsNullOrWhiteSpace(title))
                     return true;
 
-                GetWindowThreadProcessId(hWnd, out uint processId);
+                _ = GetWindowThreadProcessId(hWnd, out uint processId);
 
                 windows.Add(new SystemWindow
                 {
@@ -289,7 +289,7 @@ namespace Platform.Windows.Windowing
 
         private static string GetProcessName(IntPtr hWnd)
         {
-            GetWindowThreadProcessId(hWnd, out uint processId);
+            _ = GetWindowThreadProcessId(hWnd, out uint processId);
 
             try
             {

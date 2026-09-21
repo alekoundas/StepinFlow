@@ -212,6 +212,13 @@ is lost between sessions.
 
 ## Recording
 
+- [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
+      `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
+      nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were
+      deleted on 2026-09-21 when CS0169 found them, so this note is the only thing left saying
+      somebody meant to. Either every mouse move during a recording crosses the IPC boundary and
+      that is fine, or it is the same 16ms gate as the drag. Decide which.
+
 - [ ] **Every recorded click becomes a `SEARCH_IMAGE` in `WAIT_UNTIL_FOUND`, never `FIND_BEST`.**
       The tempting shortcut is to read the human's speed - a quick click means the element was fast,
       a slow one means it was slow - and it is wrong in both directions. A quick click means the

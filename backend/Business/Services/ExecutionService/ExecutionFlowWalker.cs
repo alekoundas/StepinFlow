@@ -372,7 +372,7 @@ namespace Business.Services.ExecutionService
         // ================================================================
 
         /// <summary>A step waiting to run, and where it sits. Depth is what tells a step over when to stop.</summary>
-        private class PendingStep
+        private sealed class PendingStep
         {
             public PendingStep(FlowStep step, int depth, int subFlowDepth, bool isMatchRepeat = false)
             {

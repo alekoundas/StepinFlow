@@ -147,7 +147,7 @@ namespace Business.Services.Ai.AiDocuments
             // 4. Get a vector per token (not chunk). [batch, token, dimension]
             // bge pools by taking the [CLS] token - not the mean.
             // we could also just save all the vectors in a technique called "late interaction - ColBERT" but size multiplies A LOT(times 285)! - also needs different model.
-            Microsoft.ML.OnnxRuntime.Tensors.Tensor<float> hidden = outputs.First().AsTensor<float>();
+            Microsoft.ML.OnnxRuntime.Tensors.Tensor<float> hidden = outputs[0].AsTensor<float>();
 
             float[] vector = new float[_dimensions];
             for (int i = 0; i < _dimensions; i++)

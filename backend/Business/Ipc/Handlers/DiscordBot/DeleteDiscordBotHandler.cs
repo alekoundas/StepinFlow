@@ -31,7 +31,7 @@ namespace Business.Ipc.Handlers
             List<string> users = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.DiscordBotId == request.id)
-                .Select(x => x.Flow.Name + " - " + x.Name)
+                .Select(x => x.Flow!.Name + " - " + x.Name)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToListAsync(ct);

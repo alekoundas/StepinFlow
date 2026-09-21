@@ -105,13 +105,13 @@ namespace Business.Services.FlowScriptService
                 string name = Pad(Quoted(point.Name), 16);
                 string placement = point.OffsetMode == AreaSizingModeEnum.RATIO
                     ? $"ratio {Ratio(point.RatioX)} {Ratio(point.RatioY)}"
-                    : $"offset {point.LocationX} {point.LocationY}";
+                    : $"offset {Integer(point.LocationX)} {Integer(point.LocationY)}";
 
                 string inside = point.FlowAreaId == null
                     ? "on screen"
                     : $"inside {Quoted(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
 
-                builder.Append("  ").AppendLine($"{name}{inside}   {placement}");
+                builder.Append("  ").AppendLine(CultureInfo.InvariantCulture, $"{name}{inside}   {placement}");
             }
 
             builder.AppendLine();
@@ -441,6 +441,13 @@ namespace Business.Services.FlowScriptService
         private static string Number(float value)
         {
             return value.ToString("0.####", CultureInfo.InvariantCulture);
+        }
+
+        // A machine reads this file back. Only the negative sign varies between cultures for an
+        // integer, but "offset −5 10" is still a line the parser cannot take.
+        private static string Integer(int value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string Pad(string text, int width)

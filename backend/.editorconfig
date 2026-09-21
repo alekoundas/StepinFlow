@@ -76,3 +76,12 @@ csharp_style_expression_bodied_accessors = false:suggestion
 # parser cannot read back. The writer already formats invariantly; this is what keeps the next one doing it.
 [Business/Services/FlowScriptService/**.cs]
 dotnet_diagnostic.CA1305.severity = warning
+
+
+#CA1725 "Parameter names should match base declaration"
+# MediatR declares Handle(TRequest request, CancellationToken cancellationToken). The house spells a
+# token ct, everywhere, in every port and service. 95 of the 102 hits were this one clash and
+# renaming them would leave the handlers the only files in the solution not saying ct.
+# Off here and nowhere else - the rule caught five real ones in WindowService and one in AppDbContext.
+[Business/Ipc/Handlers/**.cs]
+dotnet_diagnostic.CA1725.severity = none

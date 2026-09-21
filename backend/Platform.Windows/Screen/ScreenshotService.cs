@@ -224,7 +224,7 @@ namespace Platform.Windows.Screen
             }
         }
 
-        private Bitmap CaptureGraphics(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
+        private static Bitmap CaptureGraphics(Rectangle rect, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
             Bitmap bmp = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
             using Graphics graphics = Graphics.FromImage(bmp);
