@@ -31,6 +31,8 @@ dotnet_diagnostic.CA1051.severity = error
 #CA1720 "Identifiers should not contain type names" (Keywords from VB as well)
 dotnet_diagnostic.CA1720.severity = none
 
+# IDE0130 "Namespace does not match folder structure" (Dont force files to use the literal namespace - allow import grouping)
+dotnet_diagnostic.IDE0130.severity = none
 
 # ----------------------------------------------------------------------------------------------
 # Performance
@@ -49,9 +51,7 @@ dotnet_diagnostic.CA1000.severity = suggestion
 dotnet_diagnostic.IDE0305.severity = suggestion
 
 # SYSLIB1054 "Use LibraryImport instead of DllImport" (ONLY for Platform.Windows proj)
-# Compile-time marshalling matters for NativeAOT and trimming, neither of which this ships with.
-# EnumWindows and EnumDisplayMonitors cannot convert at all - their callbacks are closures, and an
-# unmanaged function pointer cannot capture.
+# Compile and generate source code for the marshalling of data transfer between C# and C++
 dotnet_diagnostic.SYSLIB1054.severity = suggestion
 
 
