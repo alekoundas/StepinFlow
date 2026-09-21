@@ -30,8 +30,8 @@ namespace Business.Services.ExecutionService.Workers
                 UseClientArea = false,
             };
 
-            IntPtr window = _windowService.FindWindow(query);
-            if (window == IntPtr.Zero)
+            WindowHandle window = _windowService.FindWindow(query);
+            if (!window.IsValid)
                 return ExecutionStep.Failure(Detail(step, "no window matched"));
 
             switch (step.FlowStepType)
@@ -55,7 +55,7 @@ namespace Business.Services.ExecutionService.Workers
         // Private methods
         // ================================================================
 
-        private ExecutionStep Focus(FlowStep step, IntPtr window)
+        private ExecutionStep Focus(FlowStep step, WindowHandle window)
         {
             if (!_windowService.FocusWindow(window))
                 return ExecutionStep.Failure(Detail(step, "the window would not come to the front"));
@@ -63,7 +63,7 @@ namespace Business.Services.ExecutionService.Workers
             return ExecutionStep.Success(message: Detail(step, "focused"));
         }
 
-        private ExecutionStep Resize(FlowStep step, IntPtr window)
+        private ExecutionStep Resize(FlowStep step, WindowHandle window)
         {
             if (step.WindowWidth < 1 || step.WindowHeight < 1)
                 return ExecutionStep.Failure(Detail(step, "no size to resize to"));
@@ -74,7 +74,7 @@ namespace Business.Services.ExecutionService.Workers
             return ExecutionStep.Success(message: Detail(step, $"{step.WindowWidth} x {step.WindowHeight}"));
         }
 
-        private async Task<ExecutionStep> RelocateAsync(FlowStep step, IntPtr window, CancellationToken ct)
+        private async Task<ExecutionStep> RelocateAsync(FlowStep step, WindowHandle window, CancellationToken ct)
         {
             if (step.FlowPointId == null)
                 return ExecutionStep.Failure(Detail(step, "nowhere to move to"));

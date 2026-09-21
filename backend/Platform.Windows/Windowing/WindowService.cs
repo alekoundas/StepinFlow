@@ -142,9 +142,9 @@ namespace Platform.Windows.Windowing
         /// <summary>
         /// Windows matching the query, in z-order. Empty when nothing matches.
         /// </summary>
-        public IReadOnlyList<IntPtr> FindWindows(WindowQuery query)
+        public IReadOnlyList<WindowHandle> FindWindows(WindowQuery query)
         {
-            List<IntPtr> matches = new List<IntPtr>();
+            List<WindowHandle> matches = new List<WindowHandle>();
 
             EnumWindows((hWnd, lParam) =>
             {
@@ -152,7 +152,7 @@ namespace Platform.Windows.Windowing
                     return true;
 
                 if (WindowMatcherHelper.Matches(GetAppWindowText(hWnd), GetProcessName(hWnd), query))
-                    matches.Add(hWnd);
+                    matches.Add(new WindowHandle(hWnd));
 
                 return true;
 
@@ -161,11 +161,11 @@ namespace Platform.Windows.Windowing
             return matches;
         }
 
-        public IntPtr FindWindow(WindowQuery query)
+        public WindowHandle FindWindow(WindowQuery query)
         {
-            IReadOnlyList<IntPtr> matches = FindWindows(query);
+            IReadOnlyList<WindowHandle> matches = FindWindows(query);
 
-            return matches.Count == 0 ? IntPtr.Zero : matches[0];
+            return matches.Count == 0 ? WindowHandle.None : matches[0];
         }
 
         /// <summary>
@@ -173,87 +173,97 @@ namespace Platform.Windows.Windowing
         /// stored offset means the same thing whatever chrome the window happens to have.
         /// Returns empty when the handle is not a live window.
         /// </summary>
-        public Rectangle GetWindowBounds(IntPtr handle, bool useClientArea)
+        public Rectangle GetWindowBounds(WindowHandle handle, bool useClientArea)
         {
-            if (handle == IntPtr.Zero)
+            IntPtr hWnd = handle.Value;
+
+            if (hWnd == IntPtr.Zero)
                 return Rectangle.Empty;
 
             if (!useClientArea)
             {
                 RECT windowRect = new RECT();
-                if (!GetWindowRect(handle, ref windowRect))
+                if (!GetWindowRect(hWnd, ref windowRect))
                     return Rectangle.Empty;
 
                 return Rectangle.FromLTRB(windowRect.Left, windowRect.Top, windowRect.Right, windowRect.Bottom);
             }
 
             RECT clientRect = new RECT();
-            if (!GetClientRect(handle, ref clientRect))
+            if (!GetClientRect(hWnd, ref clientRect))
                 return Rectangle.Empty;
 
             POINT origin = new POINT { X = clientRect.Left, Y = clientRect.Top };
-            if (!ClientToScreen(handle, ref origin))
+            if (!ClientToScreen(hWnd, ref origin))
                 return Rectangle.Empty;
 
             return new Rectangle(origin.X, origin.Y, clientRect.Right - clientRect.Left, clientRect.Bottom - clientRect.Top);
         }
 
-        public bool FocusWindow(IntPtr handle)
+        public bool FocusWindow(WindowHandle handle)
         {
-            if (handle == IntPtr.Zero)
+            IntPtr hWnd = handle.Value;
+
+            if (hWnd == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(handle))
-                ShowWindow(handle, SW_RESTORE);
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
 
-            if (!SetForegroundWindow(handle))
+            if (!SetForegroundWindow(hWnd))
                 return false;
 
-            return GetForegroundWindow() == handle;
+            return GetForegroundWindow() == hWnd;
         }
 
-        public bool ResizeWindow(IntPtr handle, int width, int height)
+        public bool ResizeWindow(WindowHandle handle, int width, int height)
         {
-            if (handle == IntPtr.Zero)
+            IntPtr hWnd = handle.Value;
+
+            if (hWnd == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(handle))
-                ShowWindow(handle, SW_RESTORE);
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
 
-            return SetWindowPos(handle, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
 
-        public bool MoveWindow(IntPtr handle, int x, int y)
+        public bool MoveWindow(WindowHandle handle, int x, int y)
         {
-            if (handle == IntPtr.Zero)
+            IntPtr hWnd = handle.Value;
+
+            if (hWnd == IntPtr.Zero)
                 return false;
 
-            if (IsIconic(handle))
-                ShowWindow(handle, SW_RESTORE);
+            if (IsIconic(hWnd))
+                ShowWindow(hWnd, SW_RESTORE);
 
-            return SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            return SetWindowPos(hWnd, IntPtr.Zero, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
 
         /// <summary>
         /// Asks the window to close, the way clicking its X does. Posted rather than sent, so an
         /// application that puts up "are you sure" cannot block the caller for ever.
         /// </summary>
-        public bool CloseWindow(IntPtr handle)
+        public bool CloseWindow(WindowHandle handle)
         {
-            if (handle == IntPtr.Zero)
+            IntPtr hWnd = handle.Value;
+
+            if (hWnd == IntPtr.Zero)
                 return false;
 
-            return PostMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            return PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
         public IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query)
         {
             return FindWindows(query)
-                .Select(hWnd => new WindowMatch
+                .Select(window => new WindowMatch
                 {
-                    Title = GetAppWindowText(hWnd),
-                    ProcessName = GetProcessName(hWnd),
-                    Bounds = GetWindowBounds(hWnd, query.UseClientArea),
+                    Title = GetAppWindowText(window.Value),
+                    ProcessName = GetProcessName(window.Value),
+                    Bounds = GetWindowBounds(window, query.UseClientArea),
                 })
                 .ToList();
         }

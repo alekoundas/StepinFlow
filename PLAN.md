@@ -334,10 +334,19 @@ method does: define the subset, enforce it with a tool, record every deviation. 
 - [ ] **Replace the 50ms poll in `DebugWaitAsync`.** A `SemaphoreSlim` released by `Continue`,
       `StepInto` and `StepOver` removes both the spin and the latency. The comment in the code
       already concedes the design.
-- [ ] **`WindowHandle` readonly record struct.** Turns the documented opacity of `nint` into
-      compiler enforced opacity, stops a monitor handle being passed where a window handle belongs,
-      and gives the Linux XID - 32 bits, not a pointer - one place to live instead of every call
-      site.
+- [x] **`WindowHandle` readonly record struct.** The opaque pointer, with the compiler enforcing
+      what the comment used to ask for. `IWindowService` speaks `WindowHandle` across all seven
+      methods; `WindowService` wraps at its own edge and unwraps to `IntPtr` on the first line of
+      each body, so the P/Invokes are untouched. A monitor handle can no longer be passed where a
+      window is wanted, and neither can arithmetic.
+
+      `WindowHandle.None` and `IsValid` replace comparing against `IntPtr.Zero`, which read as a
+      number and now reads as a question. Verified against live Win32: real handles, real bounds,
+      every entry point still resolving.
+
+      It also gives the Linux XID - 32 bits, not a pointer - one place to live rather than every
+      call site. CA1725 caught the one slip on the way: naming the adapter parameter `window`
+      while the port says `handle`.
 - [x] **Synchronise `State` and `_debuggerSignalNextStep`, and leave `_cancellation` alone.**
       Two problems that look like one and are not.
 

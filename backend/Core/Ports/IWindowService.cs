@@ -6,19 +6,19 @@ namespace Core.Ports
     /// <summary>
     /// Finding and driving application windows.
     ///
-    /// Handles are opaque: a Win32 HWND on Windows, an X11 window id elsewhere. Nothing outside the
-    /// adapter may interpret one, which is why they are only ever passed straight back in.
+    /// Handles are opaque: see <see cref="WindowHandle"/>. Nothing outside the adapter may
+    /// interpret one, which is why they are only ever passed straight back in.
     ///
-    /// Deciding whether a window matches is <see cref="Helpers.WindowMatcher"/> rather than an
+    /// Deciding whether a window matches is <see cref="Helpers.WindowMatcherHelper"/> rather than an
     /// implementation of this, because that is a rule and not a machine.
     /// </summary>
     public interface IWindowService
     {
         /// <summary>Windows matching the query, in z-order. Empty when nothing matches.</summary>
-        IReadOnlyList<nint> FindWindows(WindowQuery query);
+        IReadOnlyList<WindowHandle> FindWindows(WindowQuery query);
 
-        /// <summary>The first match, or zero.</summary>
-        nint FindWindow(WindowQuery query);
+        /// <summary>The first match, or <see cref="WindowHandle.None"/>.</summary>
+        WindowHandle FindWindow(WindowQuery query);
 
         /// <summary>Every match with the detail a person needs to tell them apart.</summary>
         IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query);
@@ -33,18 +33,18 @@ namespace Core.Ports
         /// stored offset means the same thing whatever chrome the window happens to have.
         /// Empty when the handle is not a live window.
         /// </summary>
-        Rectangle GetWindowBounds(nint handle, bool useClientArea);
+        Rectangle GetWindowBounds(WindowHandle handle, bool useClientArea);
 
-        bool FocusWindow(nint handle);
+        bool FocusWindow(WindowHandle handle);
 
-        bool ResizeWindow(nint handle, int width, int height);
+        bool ResizeWindow(WindowHandle handle, int width, int height);
 
-        bool MoveWindow(nint handle, int x, int y);
+        bool MoveWindow(WindowHandle handle, int x, int y);
 
         /// <summary>
         /// Asks the window to close, the way clicking its X does. Never waits, so an application
         /// that puts up "are you sure" cannot block the caller for ever.
         /// </summary>
-        bool CloseWindow(nint handle);
+        bool CloseWindow(WindowHandle handle);
     }
 }

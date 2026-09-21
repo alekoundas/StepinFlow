@@ -125,8 +125,8 @@ namespace Business.Services.AreaPointService
                 UseClientArea = area.UseClientArea,
             };
 
-            IntPtr hwnd = _windowService.FindWindow(query);
-            if (hwnd == IntPtr.Zero)
+            WindowHandle hwnd = _windowService.FindWindow(query);
+            if (!hwnd.IsValid)
                 return AreaResolution.Fail($"No window matches \"{area.Name}\".");
 
             Rectangle bounds = _windowService.GetWindowBounds(hwnd, area.UseClientArea);

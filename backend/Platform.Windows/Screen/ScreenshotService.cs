@@ -48,13 +48,13 @@ namespace Platform.Windows.Screen
         {
             byte[] result = [];
 
-            IntPtr hwnd = _windowService.FindWindow(new WindowQuery
+            WindowHandle hwnd = _windowService.FindWindow(new WindowQuery
             {
                 TitlePattern = appWindowName,
                 TitleMatchMode = TitleMatchModeEnum.CONTAINS,
             });
 
-            byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hwnd, out int width, out int height);
+            byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hwnd.Value, out int width, out int height);
 
             if (monitorBytes != null)
                 result = Compress(monitorBytes, width, height, screenshotFormat, jpegQuality);
