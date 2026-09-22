@@ -250,7 +250,7 @@ electron-builder into `release/`.
 In active development, and not yet released. The builder, recorder, image search, OCR, sub-flows,
 notifications, execution engine and AI assistant all work.
 
-The flow script **writer** is done and verified; the **parser** is not, so nothing round-trips yet.
+The flow script round-trips both ways: export, import, export again, byte identical.
 Linux is on the roadmap — the port boundary exists for it, but Wayland makes it a larger job than a
 straight port. See [PROJECT.md §2](PROJECT.md) for why.
 

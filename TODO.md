@@ -342,10 +342,6 @@ and every finished item in it was checked against the repository rather than rec
       function names the model calls, so it wants doing on its own rather than folded into
       something else.
 
-- [ ] **PROJECT.md predates the rename** and in places predates more than that - it still describes
-      `FlowStepImage` (now `FlowStepTemplate`), `IMAGE_SEARCH`, and a `TEXT_SEARCH` that never
-      existed under any spelling.
-
 ## Codebase sweep
 
 - [ ] **Target-typed `new()`.** Pre-existing uses were left in files not authored during the
@@ -362,30 +358,32 @@ accurate and the suffix still earns its place by telling a reader it is not a mo
 `Business/Services/FlowScriptService/Syntax/Parser.cs` that is three words of ceremony claiming a
 parser is a service. The target is `Business/FlowScript/Syntax/Parser.cs`.
 
-- [ ] **Move `FlowScriptService` out first, as the pilot.** Not because it is newest but because it
+- [x] **Move `FlowScriptService` out first, as the pilot.** Not because it is newest but because it
       is the only feature with a real acceptance test: the round trip catches a botched namespace
       move on the first run, which nothing else in the repository would. `Business/Services/
       FlowScriptService/` becomes `Business/FlowScript/`, and the namespace
       `Business.Services.FlowScriptService` becomes `Business.FlowScript`. The callers are two IPC
       handlers and `Program.cs`.
 
-      The codebase is then inconsistent on purpose until the rest follow, which is the cost of a
-      pilot and is worth writing down rather than discovering.
+      **Done 2026-09-22**, together with the compiler restructure in `PLAN.md` phase 5.5 so the
+      files moved once rather than twice. The codebase is now inconsistent on purpose until the
+      rest follow, which is the cost of a pilot and is worth writing down rather than discovering.
 
 - [ ] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
       `AreaPoint`, `Command`, `AppSetting`, `FlowValidation`. Each is a namespace change and a
       folder move with no behaviour in it, so each should be its own commit and nothing else.
 
-- [ ] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
+- [x] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
       partial is the thing. `Parser` keeps the document - header, sections, indentation, building
       the tree - and `StepParser` takes one line and returns one step. 475 lines and the largest
       switch in the codebase, and as its own class it is testable against a single line of text
       with no document, no sections and no indentation around it.
 
-- [ ] **Do it before the compiler restructure in `PLAN.md`**, so the files are only moved once.
-      The two open phase 5 items - sub-flow resolution and running the validator on import - both
-      land inside the binder, so they want the shape settled first.
+- [x] **Do it before the compiler restructure in `PLAN.md`**, so the files are only moved once.
+      Both landed in the same pass. The two open phase 5 items - sub-flow resolution and running
+      the validator on import - now land inside `Binding/Binder.cs`, which is where they belong.
 
-- [ ] **Promote the round trip probe into the solution before starting.** It currently lives in a
-      scratch folder outside the repository, and it is the only thing that would catch a mistake
-      in any of the above. See the Tests section at the end of `PLAN.md`.
+- [x] **Promote the round trip probe into the solution before starting.** Done - `probes/`, and
+      it earned it: the move was verified by running it after each step rather than by reading the
+      diff. See the Tests section at the end of `PLAN.md` for turning the four probes into real
+      tests.

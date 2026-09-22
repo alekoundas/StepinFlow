@@ -1,6 +1,9 @@
 // The full acceptance test: a flow in a real database, exported to a file, imported back over
 // itself, exported again. Byte identical, and the row counts unchanged.
-using Business.Services.FlowScriptService;
+using Business.FlowScript;
+using Business.FlowScript.Binding;
+using Business.FlowScript.Syntax;
+using Business.FlowScript.Text;
 
 using Core.Enums;
 using Core.Models.Database;
@@ -24,8 +27,8 @@ using (AppDbContext create = new AppDbContext(options))
     create.Database.EnsureCreated();
 
 Factory factory = new Factory(options);
-FlowScriptExporter exporter = new FlowScriptExporter(factory, new FlowScriptWriter());
-FlowScriptImporter importer = new FlowScriptImporter(factory, new FlowScriptReader());
+FlowScriptExporter exporter = new FlowScriptExporter(factory, new Printer());
+FlowScriptImporter importer = new FlowScriptImporter(factory, new Parser());
 
 int flowId = Seed(options);
 

@@ -1,33 +1,37 @@
 // The acceptance test PLAN.md asks for: export, import, export again, byte identical.
-using Business.Services.FlowScriptService;
+using Business.FlowScript;
+using Business.FlowScript.Binding;
+using Business.FlowScript.Syntax;
+using Business.FlowScript.Text;
 
 using Core.Enums;
 using Core.Models.Database;
+using Business.FlowScript.Diagnostics;
 
-FlowScriptWriter writer = new FlowScriptWriter();
-FlowScriptReader reader = new FlowScriptReader();
+Printer writer = new Printer();
+Parser reader = new Parser();
 
 string first = writer.Write(Sample());
 Console.WriteLine("---------------- first export ----------------");
 Console.WriteLine(first);
 
-FlowScriptDocument document = reader.Read(first);
+FlowSyntax document = reader.Read(first);
 
-if (document.Errors.Count > 0)
+if (document.Diagnostics.Count > 0)
 {
     Console.WriteLine("---------------- PARSE ERRORS ----------------");
-    foreach (FlowScriptError e in document.Errors)
+    foreach (Diagnostic e in document.Diagnostics)
         Console.WriteLine($"  line {e.Line} col {e.Column}: {e.Message}");
     return 1;
 }
 
-List<FlowScriptError> resolveErrors = new List<FlowScriptError>();
-FlowScriptSource resolved = FlowScriptResolver.Resolve(document, resolveErrors);
+List<Diagnostic> resolveErrors = new List<Diagnostic>();
+BoundFlow resolved = Binder.Resolve(document, resolveErrors);
 
 if (resolveErrors.Count > 0)
 {
     Console.WriteLine("---------------- RESOLVE ERRORS ----------------");
-    foreach (FlowScriptError e in resolveErrors)
+    foreach (Diagnostic e in resolveErrors)
         Console.WriteLine($"  line {e.Line}: {e.Message}");
     return 1;
 }
@@ -62,7 +66,7 @@ return 1;
 
 // A flow that uses as much of the grammar as one flow can: both search kinds, every placement
 // form, branches, a loop, a section, a comment, cleanup under End Execution.
-static FlowScriptSource Sample()
+static BoundFlow Sample()
 {
     Flow flow = new Flow { Id = 1, Name = "Login and add to cart", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111") };
 
@@ -145,7 +149,7 @@ static FlowScriptSource Sample()
     FlowStep end = Step(new FlowStep { Id = 150, FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
     Step(new FlowStep { Id = 151, FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end.Id);
 
-    return new FlowScriptSource
+    return new BoundFlow
     {
         Flow = flow,
         Areas = areas,

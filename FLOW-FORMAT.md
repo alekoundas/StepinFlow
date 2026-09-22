@@ -405,16 +405,26 @@ of the image, so they live beside it rather than cluttering the step line.
 
 ---
 
-## What the parser has to guarantee
+## What the parser guarantees
 
-**Import is transactional.** Parse the whole file, validate it, then replace. A typo must leave the
-existing flow untouched, never half-replaced.
+**Import is transactional.** Parse the whole file, bind it, then replace. Everything before the
+transaction is pure, so a typo reports its line and leaves the existing flow untouched rather than
+half-replaced.
 
-**Names correlate history.** Execution history is keyed on step name, so a re-import keeps the
-trend for every step whose name did not change. Renaming a step starts its history over — accepted,
-because renames should be rare.
+**Names correlate history.** Execution history is keyed on step name, and an execution step keeps
+the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps
+the trend for every step whose name did not change. Renaming a step starts its history over —
+accepted, because renames should be rare.
 
 **The file wins.** A UI edit and a `git pull` cannot both be true. Importing overwrites.
+
+**The round trip is the acceptance test.** Export, import, export again, byte identical. Verified
+two ways: purely, and through a real database with template bytes written to disk and read back.
+
+Two things it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
+means reading the `Id:` out of the file it names and deciding what a missing one does; and the
+semantic validator does not run on import, so what is checked is structural — is that a keyword, is
+that a condition, does that name exist.
 
 ---
 

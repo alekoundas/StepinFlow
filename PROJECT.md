@@ -83,13 +83,14 @@ Core/Ports/IInputRecordService       →  Platform.Windows/Input/InputRecordServ
 Core/Ports/IWindowService            →  Platform.Windows/Windowing/WindowService
 Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
 Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
+Core/Ports/IProcessService           →  Platform.Windows/SystemActions/ProcessService
 Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
 Core/Ports/IIpcBroadcastService      →  App/Ipc/BroadcastService
 ```
 
 **The rule for `Core/Ports`: it holds only interfaces that Core and Business cannot implement
-themselves.** `IFlowValidationService`, `IExecutionEngine`, `IAppSettingService` and
-`IFlowScriptWriter` are declared and implemented inside `Business`, so they stay beside their
+themselves.** `IFlowValidationService`, `IExecutionEngine`, `IAppSettingService` and the script's
+`IParser` and `IPrinter` are declared and implemented inside `Business`, so they stay beside their
 implementations. Sweeping every interface into `Ports` would make the folder mean "interfaces"
 again and the name would stop carrying information.
 
@@ -100,6 +101,12 @@ again and the name would stop carrying information.
 > SharpHook's global hook).
 
 Falsifiable form: *would removing it let the project drop `-windows` or a `.runtime.win` package?*
+
+A window handle crosses the port as `WindowHandle`, a `readonly record struct` over an `nint`. It
+is the opaque pointer of C, with the compiler enforcing what the comment used to ask for: nothing
+outside the adapter can interpret one, a monitor handle cannot be passed where a window is wanted,
+and the Linux XID - 32 bits rather than a pointer - has one place to live instead of every call
+site.
 
 The folders inside it split on a second axis — whether the native code is OS-specific:
 
@@ -138,13 +145,29 @@ exist as far as the Business compiler is concerned — `CS0103` for a bare name,
 qualified one. A hard error either way, and checked by dropping a probe file into `Business`
 that names a Platform type: it fails to compile.
 
-This is a tripwire rather than a prison, and it is worth being honest about the difference. A
-hand-written `[DllImport("user32.dll")]` still compiles in a plain `net10.0` project; P/Invoke is
-not gated by the target framework, it just fails at runtime on a platform without the library. What
-the boundary changes is visibility: a lone `DllImport` in a project that has none of them, and no
-reference to Platform, is a conspicuous act in review. The same line today blends in with forty
-others. (If that tripwire is ever tripped, `Microsoft.CodeAnalysis.BannedApiAnalyzers` with a
-`BannedSymbols.txt` turns it into a build error.)
+The target framework alone would be a tripwire rather than a gate, and it is worth being honest
+about the difference. A hand-written `[DllImport("user32.dll")]` compiles fine in a plain `net10.0`
+project; P/Invoke is not gated by the framework, it just fails at runtime on a platform without the
+library. The same is true of `System.Diagnostics.Process`, which is cross-platform and so slips
+past the compiler entirely while being exactly the kind of machine-touching the boundary exists to
+stop.
+
+**So the rule the framework cannot express is written down and enforced instead.**
+`Microsoft.CodeAnalysis.BannedApiAnalyzers` reads two lists:
+
+```
+backend/BannedSymbols.txt                  every project except Platform.Windows
+backend/Platform.Windows/BannedSymbols.txt Platform.Windows, which inherits nothing
+```
+
+`Process`, `DllImport` and `LibraryImport` are banned in the first and legal in the second, which
+is the architecture stated as a build error rather than as a paragraph. Both ban the ambient clock,
+because nothing anywhere has a reason to read `DateTime.UtcNow` when a `TimeProvider` is injected.
+
+One deviation, recorded in `.editorconfig` beside every other: `Business/Services/CommandService`,
+which a port would not fix — it launches `cmd.exe` and `powershell.exe` and every entry in its
+preset catalogue is a Windows command, so the question is whether the whole runner moves rather
+than whether the `Process` is hidden.
 
 **Platform internals can be `internal`.** `Direct3D11Interop`, `NativeCursor` and
 `OcrLanguageCatalog` are called only from inside Platform. They were `public static` solely
@@ -459,16 +482,56 @@ Find Image      "Find username field"   template "username-field.png"   in "Logi
     End Execution   failed  "no username field on the login page"
 ```
 
-### The writer
+### Shaped like a compiler
 
-`FlowScriptWriter.Write(FlowScriptSource) → string` is a pure function. Deterministic: the same flow
-writes the same bytes, which is what makes a round trip testable — branch order from `OrderNumber`,
-areas roots-then-children alphabetically, and `FlowScriptSource` builds its own child lookup so a
-caller cannot hand it steps ordered by chance.
+`Business/FlowScript/` is a pipeline, and the folders are its stages:
 
-`FlowScriptKeywords` (step type + search mode → one keyword) and `Words` (enum → the word a reviewer
-reads) are kept apart from the writer **so the parser can read the same tables backwards**. One
-place ties `CONTAINS` to `contains`, rather than two that drift.
+```
+Syntax/       Lexer → Parser → StepParser        text, and nothing but text
+Binding/      Binder → BoundFlow                 names become ids
+Text/         Printer                            the model back to text
+Diagnostics/  Diagnostic                         what went wrong, and whether it is fatal
+              FlowScriptImporter, FlowScriptExporter
+```
+
+The split that matters is the one a compiler is built around: **the parser never resolves a name
+and the binder never touches text.** A cursor step can aim at a check written below it, so nothing
+can be resolved until everything has been read — and because binding needs no database, the round
+trip is testable without one.
+
+`Printer.Write(BoundFlow) → string` is a pure function, and deterministic: the same flow writes the
+same bytes. Branch order from `OrderNumber`, areas roots-then-children alphabetically, and
+`BoundFlow` builds its own child lookup so a caller cannot hand it steps ordered by chance.
+
+`SyntaxFacts` holds every word the grammar knows **in both directions** — the keyword a step is
+written as and the step a keyword means, the words for a condition, a title match, a scroll
+direction and a button, and all of those read back. One file, because two is how a keyword comes to
+mean one thing on write and another on read.
+
+### Import is transactional
+
+Parse, bind, then replace. Everything before the transaction is pure, so a file with a typo reports
+the line and leaves the flow exactly as it was — half a flow is worse than no import, and whoever
+hit the error is usually mid-edit.
+
+Deleting the old steps does not take their history: an execution step keeps the name it ran under
+and its foreign key is `SetNull` rather than cascaded, so the trend for a step survives a re-import
+as long as its name does.
+
+A diagnostic carries a code and a severity as well as a line, so a warning is something a flow can
+be imported with and an error is not.
+
+### The round trip is the acceptance test
+
+Export, import, export again, byte identical — over a flow using both search kinds, all four search
+modes, every placement form, branches, a loop, a section, a comment and cleanup under
+`End Execution`. It runs two ways: purely, and through a real database with template bytes written
+to disk and read back. See `probes/`.
+
+It earned that status on its first run by finding a writer bug: `Scroll` emitted `in match`, because
+the writer used the point-target fragment for its `in` clause and that falls through to "match" when
+a scroll names neither a point nor a step — while the format means an area. A line no parser could
+read, found the moment something tried to read one.
 
 ### Four grammar rules that only emerged from reading real output
 
@@ -547,6 +610,27 @@ replicates them across every `End Execution` in a flow.
 The verdict is **latched** at the first `End Execution` reached. Cleanup below it is recorded like
 anything else but cannot change what the flow already said happened, and a second `End Execution`
 under the first is rejected by the validator as unreachable.
+
+### A flow that says nothing is not a flow that passed
+
+An execution ends one of five ways, and the distinction that matters is the third:
+
+| | |
+| --- | --- |
+| `COMPLETED` | an `End Execution` said it passed |
+| `FAILED` | an `End Execution` said it failed |
+| `INCONCLUSIVE` | the walk reached the end and **nothing ever said** |
+| `STOPPED` | somebody pressed stop |
+| `ERRORED` | the harness broke, not the product |
+
+`INCONCLUSIVE` exists because a flow whose every check failed looks, from the outside, exactly like
+a flow that ran to the end. Reporting that as green is the precise failure this whole model was
+built to stop. MSTest and NUnit both carry the same outcome; JUnit writes it as `skipped`, which is
+amber in every dashboard rather than green.
+
+It adds no inference. The engine still does not count checks — it reports the structural fact that
+no step declared a verdict. A recorded flow is inconclusive by default, because the recorder
+deliberately adds no `End Execution`, and that is the honest reading of it.
 
 An **exception** is the one path with no cleanup, because there is no `End Execution` in scope and
 so nothing was authored to run. It ends the whole execution, the viewport matrix included — there
@@ -916,6 +1000,25 @@ Neither belongs under `Helpers/`.
 - Comments explain *why*, not *what*. Names and logic carry the meaning.
 - `//===` section banners inside long P/Invoke files.
 
+### Rules a person has to remember are rules already broken
+
+The house style is enforced by the compiler wherever it can be. `backend/Directory.Build.props`
+decides which rules run — analyzers on, `EnforceCodeStyleInBuild`, and `TreatWarningsAsErrors` with
+the NuGet audit codes exempt, because a CVE published overnight against a transitive package is
+news rather than a reason nobody can build. `backend/.editorconfig` decides what each rule says,
+and it is the only one of the two that can be scoped to a folder.
+
+Roughly 350 warnings on the day it went on, and none now. Two thirds of those were three rules
+arguing with a deliberate convention rather than finding a defect: `CA1707` wanted the underscores
+out of `KILL_PROCESS`, `CA1711` wanted the `Enum` suffix off `FlowStepTypeEnum`, and `CA1725`
+wanted MediatR's `cancellationToken` in place of the house `ct`. Each is off with the reason
+written beside it, and the last is off only under `Ipc/Handlers`, because elsewhere it caught six
+real ones.
+
+A deviation is recorded three ways, and the width of the record matches the width of the exception:
+a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a folder, and a
+`[SuppressMessage]` with a `Justification` for a single call site.
+
 ### Priorities
 
 **Correctness → execution speed → memory → clean structure.** In that order, when they conflict.
@@ -927,15 +1030,17 @@ Neither belongs under `Helpers/`.
 In active development, not released.
 
 Working: the flow builder, the recorder, image search, OCR, sub-flows, notifications, the execution
-engine with breakpoints and step-into, execution history, validation, and the AI assistant with
-local and cloud providers.
+engine with breakpoints and step-into, execution history, validation, the flow script in both
+directions, and the AI assistant with local and cloud providers.
 
 `PLAN.md` holds the build order and which phases have landed. `TODO.md` holds everything
 deferred.
 
 ### Known gaps
 
-- The flow script **writer** exists and is verified; the **parser** does not. Nothing round-trips yet.
+- The flow script round-trips: writer, parser, binder and a transactional importer, with the
+  byte-identical round trip verified both purely and through a database. Two gaps remain inside it -
+  a `Sub Flow` step imports with no target, and `FlowValidationService` does not yet run on import.
 - No CSV template is generated yet, and no `.gitignore` entry is written for the secrets file.
 - Export has no button. `Flow.export` is reachable over IPC but nothing in the UI calls it.
 - `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the

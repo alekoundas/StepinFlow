@@ -1,16 +1,13 @@
-using Business.Services.FlowScriptService;
+using Business.FlowScript;
+using Business.FlowScript.Binding;
+using Business.FlowScript.Syntax;
+using Business.FlowScript.Text;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    /// <summary>
-    /// Replaces a flow with what a `.sflw` file says it is.
-    ///
-    /// Thin like its opposite number: parsing, validating and replacing are the importer's, and
-    /// the same work serves the fix loop, which imports text that was never on disk.
-    /// </summary>
     public class ImportFlowHandler : IRequestHandler<ImportFlowCommand, ResultDto<FlowImportResultDto>>
     {
         private readonly IFlowScriptImporter _importer;

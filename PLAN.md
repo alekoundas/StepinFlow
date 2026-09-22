@@ -489,6 +489,57 @@ Still open, and honestly rather than quietly:
 
 ## Turning a recording into a test
 
+### 5.5. The script, shaped like a compiler
+
+Sixteen files flat in one folder, which was the complaint that started the whole refactor
+conversation. The pipeline underneath was already right - the parser never resolved a name and the
+binder never touched text, which is the separation a compiler is built around and the reason the
+round trip could be tested without a database. The names and the folders hid it.
+
+- [x] **Out of `Services/` and into `Business/FlowScript/`.** The first feature to move; the rest
+      are in `TODO.md`. `Services/` was a level claiming everything below it was a service, and
+      `FlowScriptService/Syntax/Parser.cs` is three words of ceremony claiming a parser is one.
+- [x] **The pipeline, named after what it is.**
+
+      | was | is |
+      | --- | --- |
+      | `ScriptTokenizer` | `Syntax/Lexer` |
+      | `FlowScriptReader` + `.Steps` | `Syntax/Parser` + `Syntax/StepParser` |
+      | `FlowScriptKeywords` + `Words` | `Syntax/SyntaxFacts` |
+      | `FlowScriptDocument`, `ParsedStep` | `Syntax/FlowSyntax`, `StepSyntax` |
+      | `FlowScriptResolver` | `Binding/Binder` |
+      | `FlowScriptSource` | `Binding/BoundFlow` |
+      | `FlowScriptWriter` | `Text/Printer` |
+      | `FlowScriptError` | `Diagnostics/Diagnostic` |
+
+- [x] **`StepParser` is a class, not the other half of a `partial`.** The dot in `Parser.Steps.cs`
+      was the symptom; the partial was the thing. `Parser` owns the shape of the document -
+      sections, indentation, what is a parent of what - and `StepParser` owns the grammar of one
+      line. 475 lines and the largest switch in the codebase, now readable and testable against a
+      single line of text with no document around it. The helpers they shared moved to where they
+      belong: numbers and durations to `SyntaxFacts`, a token's column to `ScriptLine`.
+- [x] **`Words` merged into `SyntaxFacts`.** One table, read in both directions, in one file. Two
+      files is how a keyword comes to mean one thing on write and another on read.
+- [x] **Diagnostics carry a code and a severity.** `FLOW-FORMAT.md` already promised a warning -
+      "a long timeout on a branch point is a warning, not an error" - and the importer could not
+      express one, because every diagnostic was fatal and anonymous. `IsValid` now means no
+      errors rather than no diagnostics, and the code travels out through the DTO so the UI can
+      branch instead of matching on message text.
+
+      No span yet. A length would let an editor underline the word rather than point at the line,
+      and there is no script editor to do that with; worth adding with the editor, not before.
+
+**Not done: splitting `StepSyntax` from `FlowStep`.** It was first on the list of recommendations
+and it came off on closer reading. The argument was that it would delete the id mapping in the
+importer, and that was wrong - inserting into a database with generated keys means mapping
+synthetic ids to real ones however the model is shaped. What is left of the case is layering: a
+syntax node holding an EF entity is not what a compiler would do. True, and the price is
+duplicating forty fields and a mapper. Not obviously worth it at this size, so it is a decision to
+take deliberately rather than something to slip into a rename.
+
+The parser only fills what the text says; the binder fills everything structural. That was worth
+tidying on its own and it was nearly true already.
+
 ### 6. The local model
 
 Here rather than at the end, because the fix loop below is the feature the product turns on and it

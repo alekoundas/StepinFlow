@@ -1,16 +1,13 @@
-using Business.Services.FlowScriptService;
+using Business.FlowScript;
+using Business.FlowScript.Binding;
+using Business.FlowScript.Syntax;
+using Business.FlowScript.Text;
 using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
 namespace Business.Ipc.Handlers
 {
-    /// <summary>
-    /// Writes a flow out as a `.sflw` script with its template images beside it.
-    ///
-    /// Thin on purpose: the loading, ordering and file naming are the exporter's, so the same work
-    /// serves the fix loop, which needs the text and no files at all.
-    /// </summary>
     public class ExportFlowHandler : IRequestHandler<ExportFlowCommand, ResultDto<FlowExportResultDto>>
     {
         private readonly IFlowScriptExporter _exporter;
