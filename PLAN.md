@@ -487,8 +487,6 @@ Still open, and honestly rather than quietly:
 
 ---
 
-## Turning a recording into a test
-
 ### 5.5. The script, shaped like a compiler
 
 Sixteen files flat in one folder, which was the complaint that started the whole refactor
@@ -539,6 +537,189 @@ take deliberately rather than something to slip into a rename.
 
 The parser only fills what the text says; the binder fills everything structural. That was worth
 tidying on its own and it was nearly true already.
+
+## Structure
+
+### 5.6. Feature folders and the transport boundary
+
+`Business` carries two parallel trees describing the same features. `Services/` has eight folders,
+`Ipc/Handlers/` has twelve, and `Helpers/` belongs to neither. The two trees already agree with
+each other, so this is merging them rather than inventing a structure.
+
+#### The helpers
+
+- [ ] **`Business/Helpers/` is one feature wearing a generic name.** All three files serve a single
+      handler area - `FlowNameLookupHelper` and `FlowStepTemplateSyncHelper` are used by
+      `Handlers/FlowStep` and nothing else, `TreeStepMoveHelper` by `Handlers/Flow` and
+      `Handlers/FlowStep`. It is not a shared-helper folder and should not survive.
+
+- [ ] **The rule: one consumer and it lives with its consumer; two or more features and it is
+      shared vocabulary that stays in `Core/Helpers`.** Mechanical, and defensible out loud, which
+      matters more than where any single file lands.
+
+      | moves into its feature | stays in `Core/Helpers`, and why |
+      | --- | --- |
+      | `FlowStructureHasher` → Execution | `TreeStepHelper` - 6 consumers across 5 features |
+      | `KeyCombinationHelper` → Execution | `ConditionEvaluatorHelper` - Execution, Notification, FlowStep |
+      | `ConditionHelper` → Validation | `FlowNameHelper` - FlowScript, Ipc, Validation |
+      | `FlowStepTreeNodeProjection` → Flows | `VariableTranslator`, `TextExtractHelper` - 2 features each |
+
+      Two cannot move whatever their consumer count: `WindowMatcherHelper` is named in
+      `Core/Ports/IWindowService` and implemented against in `Platform.Windows`, so it is port
+      vocabulary, and `PathHelper` is used by `DataAccess` as well.
+
+- [ ] **Pure functions stay static; only what holds a dependency gets injected.** Four of the six
+      helpers under discussion are pure - `TreeStepMoveHelper`, `FlowStructureHasher`,
+      `FlowNameHelper`, `FlowStepTreeNodeProjection` - and a pure static function is the cheapest
+      thing in the repository to test: no fake, no fixture, no container. Wrapping them in one
+      injected orchestrator would make every consumer depend on all of them and turn a test that
+      needs nothing into a test that needs a six-member fake. It would also be a class whose only
+      description is "the flow-step things", which is a misc folder that learned to be injected.
+
+      The two that take an `AppDbContext` - `FlowNameLookupHelper.TakenAsync` and
+      `FlowStepTemplateSyncHelper.Sync` - are queries wearing a helper's name. Passing the context
+      in as a parameter is honest and testable, so this is a rename and a move rather than a
+      redesign.
+
+- [ ] **A `Helpers/` subfolder only past three files.** `Helpers` names what a class *is*, which is
+      the same mistake as `Services/` at a smaller scale. The better precedent is already in this
+      codebase: `Workers/`, `Rules/`, `Providers/`, `Syntax/`, `Binding/` all name a role. So
+      `Ai/Helpers` with five files keeps its folder, `FlowValidationService/Helpers` with one does
+      not, and a feature with two helpers leaves them flat beside the service.
+
+#### The duplication, extracted
+
+- [ ] **`ImageSearcher` and `TextSearcher`, called by both the worker and the handler.**
+      `TestImageSearchHandler` (158 lines) and `SearchImageStepWorker` (206) inject the same
+      `IScreenshotService` and `IOpenCvService`, both call `CaptureRaw`, both loop
+      `step.FlowStepTemplates`, and both build a `TemplateMatchRequest` with the same fields down
+      to an identical `MaxMatches = SearchMode == FIND_ALL ? step.MaxMatches : 1`. The search is
+      shared; only the reporting differs - the worker records to the cache and returns an
+      `ExecutionStep`, the handler builds per-match DTOs for the editor.
+
+      **This is already solved once in the codebase.** `TestRunCommandHandler` is 27 lines because
+      `ICommandRunner` exists and `SystemCommandStepWorker` calls the same one. The three handlers
+      prefixed `Test*` are exactly the three that shadow a worker, and one of them is already
+      right. Apply it to the other two.
+
+      This is the only part of 5.6 that is a refactor rather than a move, so it is the only part
+      that wants a test written first.
+
+#### How thin a handler should be
+
+- [ ] **As thin as the second caller makes it, and not one line thinner.** A handler whose body is
+      `return await _service.DoThing(request)` is a wasted file - a renamed method and an
+      indirection. Thin is a consequence, not a rule. The test is: who else needs this? One caller
+      and it stays in the handler, because extracting is speculation. Two or more callers, or a
+      caller that is not a handler at all, and it is feature logic that moves out.
+
+      CRUD stays: nothing but the editor creates a flow step. Search moves: the engine does it too.
+
+#### The transport boundary
+
+- [ ] **`Core` references MediatR and protobuf-net, and PROJECT.md says it references nothing.**
+      Section 3's table describes `Core` as "Models, DTOs, enums, ports, pure logic" with no
+      dependencies. `Core.csproj` disagrees, because `Core/Models/Ipc` holds thirteen files of
+      MediatR `IRequest` messages and the protobuf contracts. That is the transport living in the
+      domain, and it is a bigger crack than the handler question it came from.
+
+- [ ] **One `Transport` project for every transport.** This is not a new layer, it is a layer
+      that already exists spread across three projects:
+
+      | today | lines |
+      | --- | --- |
+      | `App/Ipc/` - the two pipes, the dispatcher, the broadcast service | 538 |
+      | `Business/Ipc/Handlers/` - twelve feature folders | 4,722 |
+      | `Core/Models/Ipc/` - the messages and the protobuf contracts, and why `Core` references MediatR and protobuf-net | 13 files |
+
+      One concern, three projects, and the only reason it is spread that way is that nothing ever
+      gave it a home. Collecting it is the change; where the CLI later sits inside it is a folder
+      decision, not an architectural one.
+
+      **It is an adapter, the same shape as `Platform.Windows`.** `IIpcBroadcastService` is already
+      a port in `Core/Ports` implemented by `App/Ipc/BroadcastService`, so `Transport` referencing
+      `Business` and implementing a port `Business` consumes is a pattern this codebase already
+      runs.
+
+      **And it keeps a boundary that merging into `App` would lose.** `App` is the only project
+      that references `Platform.Windows`. Handlers live in `Business` today, so a handler
+      *cannot* call `WindowService` directly - the compiler stops it. Move them into `App` and that
+      stops being true. A `Transport` project that does not reference `Platform.Windows` holds the
+      line that `Business` holds now.
+
+      `Core/Models/Dtos` stays where it is - both sides use it and it is plain records.
+
+- [ ] **Drop MediatR for a hand-rolled dispatcher.** The licence forced the question - MediatR
+      14.2.0 ships a Lucky Penny Software `LICENSE.md` offering RPL-1.5 or a paid commercial
+      licence, and this repository is GPL-3.0-or-later and ships as an installer, so neither arm
+      sits comfortably. See `TODO.md` under Licences, and AutoMapper with it.
+
+      But the licence is only what raised it. **MediatR is barely being used.** No
+      `IPipelineBehavior`, no `INotification`, no `IStreamRequest` anywhere, and the dispatch is
+      already hand-written: `IpcDispatcher` is a 99-arm switch on a string, and every arm names its
+      command type at compile time -
+
+      ```
+      "Flow.create" => await _mediator.Send(new CreateFlowCommand(Deserialize<FlowDto>(payload)), ct),
+      ```
+
+      so the only work left for the library is resolving `IRequestHandler<CreateFlowCommand, ...>`
+      out of the container. That is one `GetRequiredService` call behind a generic method.
+
+- [ ] **Take the route table while doing it.** The 99-arm switch is only half the registration: a
+      message also needs its handler, and the two are tied together by hand in two files, so a
+      forgotten arm is a route that silently does not exist. A handler declaring its own route
+      collapses both into one place and deletes the switch.
+
+      What that gives up is the compiler checking every arm, so it wants what the step workers
+      already want in `TODO.md` - **a startup check that every route resolves to exactly one
+      handler and every handler is reachable by a route.** Fail the host, not the request. That is
+      strictly better than the switch, which only ever proved the arm compiled.
+
+      Smaller alternative if this turns out to be a bad trade: keep the switch, replace
+      `_mediator.Send(x)` with a generic `Handle<TRequest, TResponse>` that deserializes, resolves
+      and calls. Same licence outcome, none of the redesign.
+
+#### The target
+
+```
+backend/Business/
+  Execution/        engine, walker, cache, history, StepWorkerFactory
+                    FlowStructureHasher, KeyCombinationHelper       (from Core/Helpers)
+                    Workers/        IStepWorker + 13 workers
+  Searching/        ImageSearcher, TextSearcher                     (new, extracted)
+  FlowScript/       Syntax/ Binding/ Text/ Diagnostics/ + importer, exporter   (done)
+  Flows/            TreeStepMoveHelper, FlowStepTreeNodeProjection
+                    FlowStepTemplateSync, FlowNameLookup            (from Business/Helpers)
+  Validation/       FlowValidationService, ConditionHelper, Rules/
+  Recording/        session service, action builder, summary builder
+  Notification/     DiscordNotifier, DiscordSendQueue, NotifyMessageBuilder
+  Command/          CommandRunner, CommandPresetCatalog
+  AreaPoint/        AreaPointResolver
+  AppSetting/       AppSettingService
+  Ai/               Providers/ Tools/ Helpers/ + the three services
+
+backend/Transport/  new project: Messages/ Protobuf/ Ipc/Handlers/ (12 folders, thin)
+                    Cli/ arrives in phase 12 as a folder beside Ipc/
+```
+
+Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
+
+#### Order
+
+- [ ] 1. **Extract the two searchers.** The only behaviour change, and the one place a test first
+      would pay.
+- [ ] 2. **Move the helpers** by the one-consumer rule.
+- [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
+      one commit per feature as `TODO.md` already says.
+- [ ] 4. **Split the `Transport` project out of `App`, `Business` and `Core`**, and drop MediatR
+      in the same pass - every handler file is being touched anyway, and the `IRequestHandler`
+      interface is the thing being replaced.
+
+Steps 2 to 4 are verified by the compiler. Step 1 is not, which is why it is first and why the
+round trip and a searcher test want to exist around it.
+
+## Turning a recording into a test
 
 ### 6. The local model
 
@@ -685,86 +866,218 @@ Groundwork already in: `FlowValidationService` with its rules, `FlowCheckHelper`
 
 ## Tests
 
-There is no test project. Adding one is its own piece of work, to plan properly rather than bolt on
-- the order below is what makes it cheap, and the first two layers need no production change at all.
+There is no test project yet. The order below is what makes one cheap, and the first two layers
+need no production change at all. Do it after phase 5.6, so nothing is written against a namespace
+that is about to move.
 
-- [ ] **Decide the shape before writing a line.** Coverage per project rather than one number:
-      `Core` near total, because it is pure decisions and has no excuse; `Business` decision code
-      high - walker, writer, parser, validators; `Business` orchestration moderate and by
-      integration test; `Platform.Windows` near zero **on purpose**, because it is the part that
-      touches the machine. That table is the architecture diagram, and being able to say why the
-      number is what it is beats reporting a high one. A blanket 100% target buys tests for
-      property getters and catches nothing.
+### The shape
 
-- [ ] **Layer 1 - `ExecutionFlowWalker`.** 400 lines of pure decision: no database, no screen, no
-      mouse. The most intricate code in the repository and the cheapest to test, with nothing to
-      refactor first. Build a tree in memory, feed results, assert the sequence of step names - the
-      assertion then reads like the flow it describes. Cover loop pass counting, the
-      `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a FIND_ALL search's second and third
-      hit, and `_depthByStepId` dropping results as the walk leaves a subtree. Worth property-based
-      testing here (CsCheck or FsCheck): generate random trees, then assert the walk always
-      terminates, the stack ends empty, and every visited id exists in `StepsById`.
+- [ ] **Coverage per project, not one number.** `Core` near total, because it is pure decisions and
+      has no excuse. `Business` decision code high - walker, printer, parser, binder, validators,
+      searchers. `Business` orchestration moderate and by integration test. `Platform.Windows` near
+      zero **on purpose**, because it is the part that touches the machine. That table is the
+      architecture diagram, and being able to say why a number is what it is beats reporting a high
+      one.
 
-- [ ] **Layer 2 - the workers.** Testable today, with no changes, because of the ports: a fake
-      `IInputService` plus `CursorStepWorker` asserts what was clicked, and that `MoveCursor`
-      returning false produces a failure rather than an exception. Hand-write the nine port fakes
-      rather than reaching for a mocking library - a `FakeInputService` recording tuples reads
-      better in a test than a `Received()` call, and for a repository about separating concerns it
-      shows on the page what the ports bought.
+      A blanket 100% target buys tests for property getters and catches nothing. The number worth
+      putting in the readme is a **mutation score over the walker and the script**, because that is
+      a claim about whether the tests detect defects rather than about which lines ran. For
+      reference: Google publishes no org-wide gate and treats 60% as acceptable, 75% commendable,
+      90% exemplary; most enterprises that gate at all gate 70-80% **on changed code**; mature
+      teams use a ratchet - coverage may not decrease - rather than a threshold. 100% is a
+      safety-critical standard, and there it means MC/DC coverage, not line coverage.
 
-- [ ] **Layer 3 - `ExecutionEngine`.** Phase 4.6 cleared most of what was in the way:
-      `TimeProvider` is injected so a timeout is a value a test moves rather than a wait it sits
-      through, and process killing went behind a port so a test cannot kill the browser. Two are
-      left, both still open in 4.6:
-      1) The background task is unobservable. `_ = Task.Run(...)` in `StartAsync` means a test can
-         only poll `IsRunning` in a sleep loop. Hold it and expose `Task Completion` - phase 12's
-         CLI runner needs it anyway.
-      2) `DebugWaitAsync` still polls two fields on a 50ms `Task.Delay`, so a pause and step-over
-         test pays 50ms per decision. A `SemaphoreSlim` released by Continue / StepInto / StepOver
+### The tooling, settled
+
+| | | |
+| --- | --- | --- |
+| runner | **xUnit v3** | each test project is a real executable rather than a dll in a shared runner - which matters here, with OpenCvSharp, SharpHook, ONNX Runtime and Tesseract all carrying native bits |
+| assertions | **Shouldly** or **AwesomeAssertions** | FluentAssertions v8 moved to a paid licence for commercial use; AwesomeAssertions is the community fork of v7 |
+| port fakes | **hand-written** | a `FakeInputService` recording tuples shows a reader what the ports bought; `Received()` shows them a mocking library. NSubstitute for anything incidental |
+| database | **SQLite `:memory:`** | not `UseInMemoryDatabase` - it is not relational, enforces no foreign key, and would leave the `DeleteBehavior` cycle-breaking unverified |
+| clock | `Microsoft.Extensions.TimeProvider.Testing` | `FakeTimeProvider`, already proven in `probes/TimestampInterceptor` |
+| snapshots | **Verify** | for the script |
+| architecture | **ArchUnitNET** | NetArchTest is semi-dormant |
+| coverage | coverlet collector + ReportGenerator | and **Fine Code Coverage**, the free VS extension - worth trying early, see below |
+| mutation | **Stryker.NET** | occasionally, scoped to one project |
+
+- [ ] **`backend/Tests/`**, capital T to match its neighbours - this repository has no `src/`, and
+      `App`, `Business`, `Core` are all capitalised. Solution folder `/Tests/`. Decide the case now
+      and never change it: `core.ignorecase` is true on Windows, so a later rename produces a repo
+      that is one case locally and the other on GitHub.
+
+- [ ] **Test projects inherit `backend/Directory.Build.props`** - analyzers, `TreatWarningsAsErrors`
+      and both `BannedSymbols.txt` files. That is mostly wanted: a test reaching for
+      `DateTime.UtcNow` or `Task.Result` should fail like anything else. A few rules will need
+      relaxing, and the lever is a second `Directory.Build.props` in `backend/Tests/` that imports
+      the one above it and then overrides a short, deliberate list - better than `.editorconfig`
+      sections for MSBuild-level settings, and it keeps the relaxations in one visible file.
+
+- [ ] **The database, per test, not shared.** A single seeded database serving every test is the
+      classic trap: tests that pass alone and fail together, a seed file that becomes a god object
+      nobody dares delete a row from, and failures where the first question is whose change broke
+      it. Seeding what a test needs *inside the test* is just the arrange step and is fine.
+
+      The one trick that catches everybody: with SQLite `:memory:` the database lives inside the
+      connection, and EF opens and closes connections as it pleases. Open one, hold it for the
+      test, and pass **that connection object** to `UseSqlite` rather than a connection string, or
+      the second query reports no such table.
+
+      `Database.Migrate()` rather than `EnsureCreated()`, so the fifteen real migrations run and a
+      broken one fails a test instead of a user. If the migration cost ever shows up across a few
+      hundred tests, the answer is a template database copied per test, not a shared mutable one.
+      Measure before bothering.
+
+- [ ] **Real PNGs in `Tests/Assets/`.** Template matching cannot be meaningfully faked, and a
+      read-only fixture directory has none of the problems a shared database has.
+
+### Layer 0 - `Core/Helpers` and the four pure ones
+
+- [ ] Pure static functions, no fakes, no fixtures, nothing to arrange but an argument.
+      `ConditionEvaluatorHelper`, `VariableTranslator`, `KeyCombinationHelper`, `FlowNameHelper`,
+      `TreeStepHelper`, `FlowStructureHasher`, `WindowMatcherHelper`, `TextExtractHelper`, and the
+      150 lines of drag-and-drop rules in `TreeStepMoveHelper`. An afternoon, and it gets the
+      solution wired, `dotnet test` green and the `Directory.Build.props` question settled before
+      anything harder starts.
+
+### Layer 1 - architecture tests
+
+- [ ] Highest value per line in the whole suite **for this repository specifically**, because
+      separation of concerns is the thesis. `Business` does not reference `Platform.Windows`;
+      nothing outside `Platform.Windows` names OpenCvSharp or SharpHook; `Core` depends on nothing
+      but the framework; `Business` does not reference MediatR.
+
+      **Two of those fail today** - `Core` carries MediatR and protobuf-net - which is the point.
+      They turn PROJECT.md section 2 from a claim into a build failure, and they are what stops
+      phase 5.6's boundary from quietly eroding afterwards.
+
+### Layer 2 - the workers
+
+- [ ] Testable with no production change, because of the ports. The entry toll is a
+      `FakeExecutionCache` (twelve members - let it throw `NotImplementedException` on the ones no
+      test needs yet) and a step builder; every worker after the first costs five lines.
+
+      Cheapest first: `CheckValueStepWorker` has no constructor dependencies and needs two cache
+      members. Then `PassThrough` and `EndExecution` - the second is where the verdict latches.
+      Then the one-port workers, then `Cursor` and `Window`, then the searchers once 5.6 has pulled
+      them out. `NotifyStepWorker` is the odd one: it takes an `IDbContextFactory` directly, so it
+      is an integration test rather than a unit test. Twelve workers talk to ports and one talks to
+      the database - that is the suite telling you something about the design before a line is
+      written.
+
+- [ ] **`WaitStepWorker` will not cooperate, and that is a finding.** Twenty-three lines, no
+      constructor, and two things a test cannot work with: `await Task.Delay(ms, ct)` means a test
+      of a five-second wait takes five seconds, and a `private static readonly Random` means "picks
+      a value between min and max" is not assertable. `TimeProvider.Delay` and `Random.Shared` fix
+      both, one line each. The second is worth doing regardless - a shared `Random` instance is
+      documented as not thread-safe and corrupts silently rather than throwing, which does not bite
+      on a single-threaded walk today and is not a property to rely on.
+
+### Layer 3 - the flow script
+
+- [ ] **The round trip, promoted from `probes/`.** Export, import, export again, byte identical,
+      in both forms - pure, and through a real database with template bytes written to disk and
+      read back. It found the `Scroll ... in match` writer bug on its first run.
+
+- [ ] **Snapshots beside it, with Verify.** The round trip proves `A == B`; it cannot prove either
+      is right. If the printer wrote a line the parser read back the same wrong way, the round trip
+      stays green. A `.verified.txt` is a real flow script committed in the repository that a human
+      read once and approved - simultaneously the fixture and the clearest documentation the format
+      will ever have, because the build fails when it drifts. Table tests over `SyntaxFacts` in
+      both directions belong here too.
+
+### Layer 4 - `ExecutionFlowWalker`
+
+- [ ] 400 lines of pure decision - no database, no screen, no mouse. The most intricate code in the
+      repository and the cheapest to test, with nothing to refactor first. Build a tree in memory,
+      feed results, assert the sequence of step names, and the assertion reads like the flow it
+      describes. Loop pass counting, the `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a
+      FIND_ALL search's second and third hit, `_depthByStepId` dropping results as the walk leaves
+      a subtree.
+
+- [ ] **Property-based testing, optional, and worth a conversation before it is started.** The
+      walker is the one place in the repository where random garbage is a legitimate input, because
+      the walker executes nothing - it takes a step and *a result handed to it* and returns the
+      next step. So a generator produces a structurally valid tree and a random sequence of
+      outcomes, and neither has to mean anything. A generated flow could never be executable, and
+      never needs to be: whether a check can read a step that ran is `ExecutionCacheService`'s
+      problem, and the walker never asks.
+
+      The properties are all structural - the walk terminates, the stack ends empty, every returned
+      step exists in `StepsById`, no loop runs more passes than its count. CsCheck then shrinks a
+      failing 40-node tree to the smallest one that still fails, which is the feature; the random
+      generation is only how it gets there. This is also why the technique fits nowhere else -
+      generating a flow that *means* something is hard, so the engine will never be tested this
+      way.
+
+### Layer 5 - `ExecutionEngine`
+
+- [ ] Phase 4.6 cleared most of what was in the way: `TimeProvider` is injected so a timeout is a
+      value a test moves rather than a wait it sits through, and process killing went behind a port
+      so a test cannot kill the browser. Two remain, both open in 4.6:
+
+      1. The background task is unobservable. `_ = Task.Run(...)` in `StartAsync` leaves a test
+         polling `IsRunning` in a sleep loop. Hold it and expose `Task Completion` - phase 12's CLI
+         runner needs it anyway.
+      2. `DebugWaitAsync` polls two fields on a 50ms `Task.Delay`, so a pause-and-step-over test
+         pays 50ms per decision. A `SemaphoreSlim` released by Continue / StepInto / StepOver
          removes both the spin and the latency.
-      Then: SQLite in-memory, fake ports, a recording broadcast, and assert the event sequence and
-      the `Execution` row. That is where the things that actually bite get checked - a second
-      `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
-      worker throwing leaving `errorStepId` on the right step, and a breakpoint inside a
-      stepped-over subtree parking there anyway.
 
-- [ ] **Layer 4 - architecture tests.** NetArchTest asserting that Business does not reference
-      `Platform.Windows`, that `Core` depends on nothing but the framework, and that nothing
-      outside `Platform.Windows` names OpenCvSharp or SharpHook. It turns PROJECT.md section 2 from
-      a claim into a build failure, which for this repository is the whole point.
+      Then: SQLite, fake ports, a recording broadcast, and assert the event sequence and the
+      `Execution` row. A second `StartAsync` refusing rather than queueing, `Stop()` landing as
+      STOPPED and not ERRORED, a worker throwing leaving `errorStepId` on the right step, a
+      breakpoint inside a stepped-over subtree parking there anyway, and a walk that reaches the
+      end with no `End Execution` recording INCONCLUSIVE.
 
-- [ ] **Layer 5 - the script round trip. This one already exists and already passes** - it is
-      just not in the repository. Written while building the parser in phase 5, in two forms:
-      a pure one over a flow built in memory, and one through a real SQLite database with template
-      bytes written to disk and read back. Both compare bytes; the second also checks that a
-      script with a typo is refused and leaves the flow untouched. It found a writer bug on its
-      first run.
+### The other three probes
 
-      Three other probes were written the same way and have the same problem - they proved
-      something once and then went nowhere:
+| probe | becomes |
+| --- | --- |
+| script round trip, pure | layer 3 |
+| script round trip, database | layer 3 |
+| timestamp interceptor | a `DataAccess` test - `CreatedOn` on insert, `UpdatedOn` on modify, neither re-stamped |
+| P/Invoke entry points | **stays a probe, or becomes a traited test** |
 
-      | probe | proved |
-      | --- | --- |
-      | P/Invoke entry points | every converted `LibraryImport` still resolves against live Win32 |
-      | timestamp interceptor | `CreatedOn` stamped on insert, `UpdatedOn` on modify, neither re-stamped |
-      | script round trip, pure | write, read, write again, byte identical |
-      | script round trip, database | export, import, export, byte identical, and a typo changes nothing |
+- [ ] **`PInvokeEntryPoints` needs a live desktop session** - it reads the foreground window - so it
+      can never run in headless CI. Give it `[Trait("Category", "Desktop")]` and filter it out of
+      the default run **from day one**, rather than discovering it when CI first goes red. Real
+      OpenCV against the files in `Tests/Assets/` belongs in the same bucket: `Platform.Windows`
+      near zero on purpose does not mean zero, it means the handful that need a real machine are
+      quarantined and labelled.
 
-      All four live in a scratch folder outside the repository and will not survive. Rewriting
-      them is an hour that has already been spent once.
+### Running it
 
-- [ ] **Tooling, with the traps written down.** xUnit v3; Shouldly or AwesomeAssertions
-      (FluentAssertions v8 moved to a paid licence for commercial use, AwesomeAssertions is the
-      community fork of v7); NSubstitute for incidental fakes; **SQLite `:memory:` with the
-      connection held open, not `UseInMemoryDatabase`** - EF's in-memory provider is not relational,
-      enforces no foreign key, and would leave the `DeleteBehavior.NoAction` cycle-breaking
-      completely unverified; `TimeProvider` with `Microsoft.Extensions.TimeProvider.Testing`;
-      coverlet with ReportGenerator. If one number is wanted for the readme, Stryker.NET's mutation
-      score over the walker means something that line coverage does not.
+- [ ] **Coverage is a property of a run, not of a test.** It instruments the production assemblies
+      and records which lines executed, so running one test correctly reports almost everything
+      uncovered. There is no per-method coverage button anywhere.
 
-- [ ] **Do this before the feature folder move in `TODO.md`.** Renaming
-      `Business.Services.FlowScriptService` to `Business.FlowScript` and splitting the parser in
-      two is exactly the kind of change that compiles perfectly and is still subtly wrong - one
-      step type whose arguments quietly stop round-tripping, with the build still green. The round
-      trip is the only thing that would catch it, so it wants to be in the solution and runnable
-      before the move rather than after.
+- [ ] **Try Fine Code Coverage early.** Visual Studio's built-in coverage is Enterprise only -
+      Community and Professional have none, and Test Explorer's Run All gives pass/fail and nothing
+      else. Fine Code Coverage is the free extension that fills the gap: it hooks the test run, so
+      Run All does produce coverage, into its own window and the editor margin. Rider has it built
+      in, every edition.
+
+- [ ] **Script the CLI pair anyway**, because it is also what CI runs, and put it beside the
+      existing npm scripts:
+
+      ```
+      dotnet test --collect:"XPlat Code Coverage"
+      reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coveragereport -reporttypes:Html
+      ```
+
+      Use `coverlet.collector`, not `coverlet.msbuild` - the older msbuild integration interacts
+      badly with multi-targeting.
+
+- [ ] **Stryker occasionally, scoped, and never in the build.** It runs the suite once per mutant,
+      so it is minutes to hours. Point it at the walker and `Business/FlowScript/` once their tests
+      exist, read the surviving mutants as a to-do list - each one is a sentence saying nothing
+      checks this line - fix what it finds, and put the number in the readme. Then leave it alone
+      for a quarter.
+
+### Not now
+
+- [ ] **Vitest and Testing Library** for the frontend. The `zod` schemas and the pure TS helpers
+      are testable with Vitest alone if a cheap win is ever wanted.
+- [ ] **No Playwright.** This product *is* a UI automation tool; driving it with another automation
+      harness is the wrong shape. The real end-to-end test for StepinFlow is a flow script that
+      tests StepinFlow, which belongs with phase 12.

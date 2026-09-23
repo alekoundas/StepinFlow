@@ -1,5 +1,4 @@
-﻿using Core.Enums;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 namespace Core.Models.Database
 {

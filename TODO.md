@@ -347,6 +347,43 @@ and every finished item in it was checked against the repository rather than rec
 - [ ] **Target-typed `new()`.** Pre-existing uses were left in files not authored during the
       execution-engine work. House style is the full `new TypeName()`.
 
+## Licences
+
+- [ ] **MediatR 14.2.0 and AutoMapper 16.2.0 are not free, and this repository is GPL-3.0.** Both
+      ship a Lucky Penny Software `LICENSE.md` offering **RPL-1.5 or a paid commercial licence**.
+      The app is distributed as a built installer, so private-use arguments do not apply. RPL-1.5
+      carries reciprocal conditions GPL-3.0 does not allow a combined work to add, and the
+      commercial arm is proprietary, which a GPL work cannot link either. Verify properly rather
+      than taking this at face value - but it needs an answer before a release, and it arrived
+      through a version bump rather than a decision.
+
+      Last freely licensed versions: MediatR 12.x and AutoMapper 13.x, both Apache-2.0. Pinning is
+      the cheap escape; the local NuGet cache still has `automapper/13.0.1`.
+
+      **MediatR is decided**: a hand-rolled dispatcher, in `PLAN.md` phase 5.6. Nothing in the
+      repository uses a pipeline behaviour, notification or stream, and `IpcDispatcher` already
+      routes by hand, so the library was only resolving a handler out of the container.
+
+      **AutoMapper is not decided.** 77 sites and one profile, so it is a real job. `Mapperly` is
+      the replacement worth the effort rather than a like-for-like swap - MIT, source generated,
+      and a missing property becomes a build error instead of a runtime surprise, which is the
+      trade phase 4.6 made everywhere else.
+
+- [ ] **Audit every NuGet licence across all five projects, once, and write the answer down.**
+      This one was found by reading a `LICENSE.md` in the local NuGet cache, not by anything in the
+      build. `NuGetAudit` reports vulnerabilities, not licence changes, so a package going
+      commercial between minor versions is completely silent - and `TreatWarningsAsErrors`,
+      the banned symbol lists and the analyzers all have nothing to say about it either.
+
+      This repository is **GPL-3.0-or-later**, which makes it the strictest case: every dependency
+      has to be GPL-compatible, and a permissive licence is not automatically one. Worth checking
+      the heavy ones by hand - OpenCvSharp, SharpHook, Tesseract, ONNX Runtime, OllamaSharp,
+      protobuf-net, USearch, EF Core - and recording the result somewhere it survives.
+
+      Worth knowing there is no tripwire for the next one. `dotnet-project-licenses` and
+      `nuget-license` both dump every package's licence as a report and could run as a build step
+      or a probe, which would turn this from a thing somebody remembers into a thing that fails.
+
 ## Feature folders
 
 `Business/Services/` is a level that claims everything below it is a service, and most of it is
@@ -372,6 +409,10 @@ parser is a service. The target is `Business/FlowScript/Syntax/Parser.cs`.
 - [ ] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
       `AreaPoint`, `Command`, `AppSetting`, `FlowValidation`. Each is a namespace change and a
       folder move with no behaviour in it, so each should be its own commit and nothing else.
+
+      **Planned in full as `PLAN.md` phase 5.6**, which grew three things around this move that it
+      turned out to need: where the helpers go, extracting the search both a worker and a handler
+      duplicate, and splitting the IPC contracts out of `Core`.
 
 - [x] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
       partial is the thing. `Parser` keeps the document - header, sections, indentation, building
