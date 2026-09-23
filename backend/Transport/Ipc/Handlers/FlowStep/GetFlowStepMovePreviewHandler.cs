@@ -1,14 +1,12 @@
 using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowStepMovePreviewHandler : IRequestHandler<GetFlowStepMovePreviewQuery, ResultDto<FlowStepMovePreviewDto>>
+    public class GetFlowStepMovePreviewHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -17,10 +15,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowStepMovePreviewDto>> Handle(GetFlowStepMovePreviewQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowStepMovePreviewDto>> HandleAsync(FlowStepMoveDto dto, CancellationToken ct)
         {
-            FlowStepMoveDto dto = request.Dto;
-
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowStep? moved = await dbContext.FlowSteps

@@ -1,8 +1,6 @@
 using Business.Services.NotificationService;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
@@ -16,7 +14,7 @@ namespace Transport.Ipc.Handlers
     /// Takes the values off the form rather than an id, so a webhook can be checked before it is
     /// ever saved.
     /// </summary>
-    public class TestDiscordBotHandler : IRequestHandler<TestDiscordBotCommand, ResultDto<bool>>
+    public class TestDiscordBotHandler
     {
         private readonly IDiscordNotifier _notifier;
 
@@ -25,10 +23,8 @@ namespace Transport.Ipc.Handlers
             _notifier = notifier;
         }
 
-        public async Task<ResultDto<bool>> Handle(TestDiscordBotCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(TestDiscordBotDto dto, CancellationToken ct)
         {
-            TestDiscordBotDto dto = request.Dto;
-
             if (string.IsNullOrWhiteSpace(dto.WebhookUrl))
                 return ResultDto<bool>.Failure("Paste the webhook URL first.");
 

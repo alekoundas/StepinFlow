@@ -3,8 +3,6 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
@@ -12,7 +10,7 @@ namespace Transport.Ipc.Handlers
     /// Runs the step's search against the live screen without clicking anything. Takes the whole
     /// dto rather than an id so it works on unsaved form state.
     /// </summary>
-    public class TestImageSearchHandler : IRequestHandler<TestImageSearchQuery, ResultDto<ImageSearchTestResultDto>>
+    public class TestImageSearchHandler
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
@@ -28,9 +26,9 @@ namespace Transport.Ipc.Handlers
             _templateMatcher = templateMatcher;
         }
 
-        public async Task<ResultDto<ImageSearchTestResultDto>> Handle(TestImageSearchQuery request, CancellationToken ct)
+        public async Task<ResultDto<ImageSearchTestResultDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
-            FlowStepDto step = request.Dto;
+            FlowStepDto step = dto;
 
             if (step.FlowAreaId == null)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed("Pick a search area first."));

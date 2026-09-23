@@ -3,12 +3,10 @@ using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class ImportFlowHandler : IRequestHandler<ImportFlowCommand, ResultDto<FlowImportResultDto>>
+    public class ImportFlowHandler
     {
         private readonly IFlowScriptImporter _importer;
 
@@ -17,11 +15,11 @@ namespace Transport.Ipc.Handlers
             _importer = importer;
         }
 
-        public async Task<ResultDto<FlowImportResultDto>> Handle(ImportFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowImportResultDto>> HandleAsync(FlowImportRequestDto dto, CancellationToken ct)
         {
             try
             {
-                FlowImportResultDto result = await _importer.ImportAsync(request.Dto.ScriptPath, ct);
+                FlowImportResultDto result = await _importer.ImportAsync(dto.ScriptPath, ct);
 
                 // A file that will not parse is not a failure of the call: the errors carry lines
                 // and the editor puts them next to the text, so the result comes back as success.

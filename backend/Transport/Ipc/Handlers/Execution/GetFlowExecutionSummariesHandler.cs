@@ -1,10 +1,8 @@
 using Core.Enums;
 using Core.Models.Dtos;
 using Core.Models.Dtos.Database;
-using Transport.Messages;
 
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers.Execution
@@ -15,7 +13,7 @@ namespace Transport.Ipc.Handlers.Execution
     /// Flows that have never run are included: "never run" is an answer, and leaving them out would
     /// make the list disagree with the flows page about how many flows exist.
     /// </summary>
-    public class GetFlowExecutionSummariesHandler : IRequestHandler<GetFlowExecutionSummariesQuery, ResultDto<List<FlowExecutionSummaryDto>>>
+    public class GetFlowExecutionSummariesHandler
     {
         // Read once and grouped in memory rather than a query per flow. Nothing prunes the table
         // yet, so this is also what stops a year of history being loaded to draw ten bars.
@@ -29,7 +27,7 @@ namespace Transport.Ipc.Handlers.Execution
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<List<FlowExecutionSummaryDto>>> Handle(GetFlowExecutionSummariesQuery request, CancellationToken ct)
+        public async Task<ResultDto<List<FlowExecutionSummaryDto>>> HandleAsync(CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 

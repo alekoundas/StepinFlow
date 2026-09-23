@@ -1,12 +1,10 @@
 using Business.Services.RecordingService;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class StartRecordingHandler : IRequestHandler<StartRecordingCommand, ResultDto<bool>>
+    public class StartRecordingHandler
     {
         private readonly IRecordingSessionService _recordingSessionService;
 
@@ -15,7 +13,7 @@ namespace Transport.Ipc.Handlers
             _recordingSessionService = recordingSessionService;
         }
 
-        public async Task<ResultDto<bool>> Handle(StartRecordingCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             bool started = await _recordingSessionService.StartAsync(ct);
 
@@ -29,7 +27,7 @@ namespace Transport.Ipc.Handlers
     /// Stops and coalesces in one call, so the wizard opens on actions rather than on raw input
     /// it would have to fold a second way.
     /// </summary>
-    public class StopRecordingHandler : IRequestHandler<StopRecordingCommand, ResultDto<IReadOnlyList<RecordedActionDto>>>
+    public class StopRecordingHandler
     {
         private readonly IRecordingSessionService _recordingSessionService;
         private readonly TimeProvider _timeProvider;
@@ -40,7 +38,7 @@ namespace Transport.Ipc.Handlers
             _timeProvider = timeProvider;
         }
 
-        public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> Handle(StopRecordingCommand request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> HandleAsync(CancellationToken ct)
         {
             IReadOnlyList<RecordedInput> events = await _recordingSessionService.StopAsync(ct);
 
@@ -48,7 +46,7 @@ namespace Transport.Ipc.Handlers
         }
     }
 
-    public class DiscardRecordingHandler : IRequestHandler<DiscardRecordingCommand, ResultDto<bool>>
+    public class DiscardRecordingHandler
     {
         private readonly IRecordingSessionService _recordingSessionService;
 
@@ -57,7 +55,7 @@ namespace Transport.Ipc.Handlers
             _recordingSessionService = recordingSessionService;
         }
 
-        public async Task<ResultDto<bool>> Handle(DiscardRecordingCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             if (_recordingSessionService.IsRecording)
                 await _recordingSessionService.StopAsync(ct);
@@ -67,7 +65,7 @@ namespace Transport.Ipc.Handlers
         }
     }
 
-    public class GetRecordingScreenshotHandler : IRequestHandler<GetRecordingScreenshotQuery, ResultDto<byte[]>>
+    public class GetRecordingScreenshotHandler
     {
         private readonly IRecordingSessionService _recordingSessionService;
 
@@ -76,9 +74,9 @@ namespace Transport.Ipc.Handlers
             _recordingSessionService = recordingSessionService;
         }
 
-        public Task<ResultDto<byte[]>> Handle(GetRecordingScreenshotQuery request, CancellationToken ct)
+        public Task<ResultDto<byte[]>> HandleAsync(int index, CancellationToken ct)
         {
-            byte[]? image = _recordingSessionService.GetScreenshot(request.Index);
+            byte[]? image = _recordingSessionService.GetScreenshot(index);
 
             return Task.FromResult(image == null
                 ? ResultDto<byte[]>.Failure("That action has no screenshot.")

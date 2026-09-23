@@ -1,7 +1,5 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
     /// steps in flows they are not looking at, so it is refused rather than flagged afterwards.
     /// The refusal names the flows, otherwise the user is left hunting for them.
     /// </summary>
-    public class DeleteDiscordBotHandler : IRequestHandler<DeleteDiscordBotCommand, ResultDto<bool>>
+    public class DeleteDiscordBotHandler
     {
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -24,13 +22,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<bool>> Handle(DeleteDiscordBotCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             List<string> users = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.DiscordBotId == request.Id)
+                .Where(x => x.DiscordBotId == id)
                 .Select(x => x.Flow!.Name + " - " + x.Name)
                 .Distinct()
                 .OrderBy(x => x)
@@ -40,7 +38,7 @@ namespace Transport.Ipc.Handlers
                 return ResultDto<bool>.Failure(Refusal(users));
 
             int count = await dbContext.DiscordBots
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .ExecuteDeleteAsync(ct);
 
             if (count <= 0)

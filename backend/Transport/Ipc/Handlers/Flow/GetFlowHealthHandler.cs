@@ -2,9 +2,7 @@ using Business.Services.FlowValidationService;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -24,7 +22,7 @@ namespace Transport.Ipc.Handlers
     /// every step in the database to do it, which is nothing at this size but is the first thing
     /// to page if a install ever holds hundreds of flows.
     /// </summary>
-    public class GetFlowHealthHandler : IRequestHandler<GetFlowHealthQuery, ResultDto<IReadOnlyList<FlowHealthDto>>>
+    public class GetFlowHealthHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IFlowValidationService _flowValidationService;
@@ -37,9 +35,9 @@ namespace Transport.Ipc.Handlers
             _flowValidationService = flowValidationService;
         }
 
-        public async Task<ResultDto<IReadOnlyList<FlowHealthDto>>> Handle(GetFlowHealthQuery request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<FlowHealthDto>>> HandleAsync(FlowHealthRequestDto dto, CancellationToken ct)
         {
-            List<int> requested = request.Dto.FlowIds;
+            List<int> requested = dto.FlowIds;
             bool all = requested.Count == 0;
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);

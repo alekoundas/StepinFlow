@@ -4,14 +4,12 @@ using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class CreateFlowStepHandler : IRequestHandler<CreateFlowStepCommand, ResultDto<int>>
+    public class CreateFlowStepHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -22,11 +20,11 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<int>> Handle(CreateFlowStepCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowStep flowStep = _mapper.Map<FlowStep>(request.Dto);
+            FlowStep flowStep = _mapper.Map<FlowStep>(dto);
             flowStep.Id = 0;
 
             // Made unique here rather than argued about at export: the script refers to a step by
@@ -35,7 +33,7 @@ namespace Transport.Ipc.Handlers
             flowStep.Name = FlowNameHelper.MakeUnique(flowStep.Name, taken);
 
             dbContext.FlowSteps.Add(flowStep);
-            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, request.Dto.FlowStepTemplates);
+            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, dto.FlowStepTemplates);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(flowStep));
 
             await dbContext.SaveChangesAsync(ct);

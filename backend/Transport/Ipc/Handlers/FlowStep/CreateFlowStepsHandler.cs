@@ -4,9 +4,7 @@ using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -20,7 +18,7 @@ namespace Transport.Ipc.Handlers
     /// Source agnostic by design. The recorder builds the draft today and the AI will build it
     /// later; neither of them appears anywhere below this line.
     /// </summary>
-    public class CreateFlowStepsHandler : IRequestHandler<CreateFlowStepsCommand, ResultDto<FlowDraftResultDto>>
+    public class CreateFlowStepsHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -31,9 +29,9 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowDraftResultDto>> Handle(CreateFlowStepsCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowDraftResultDto>> HandleAsync(FlowDraftDto dto, CancellationToken ct)
         {
-            FlowDraftDto draft = request.Dto;
+            FlowDraftDto draft = dto;
 
             if (draft.Steps.Count == 0)
                 return ResultDto<FlowDraftResultDto>.Failure("There is nothing to save.");

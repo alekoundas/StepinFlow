@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class CreateFlowAreaHandler : IRequestHandler<CreateFlowAreaCommand, ResultDto<int>>
+    public class CreateFlowAreaHandler
     {
         private readonly IMapper _mapper;
         private readonly    IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,11 +17,11 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<int>> Handle(CreateFlowAreaCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> HandleAsync(FlowAreaDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowArea flowArea = _mapper.Map<FlowArea>(request.Dto);
+            FlowArea flowArea = _mapper.Map<FlowArea>(dto);
             flowArea.Id = 0;
 
             dbContext.FlowAreas.Add(flowArea);

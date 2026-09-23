@@ -1,12 +1,10 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowPointHandler : IRequestHandler<GetFlowPointQuery, ResultDto<FlowPointDto>>
+    public class GetFlowPointHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -15,13 +13,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowPointDto>> Handle(GetFlowPointQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowPointDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowPointDto? flowPointDto = await dbContext.FlowPoints
                 .AsNoTracking()
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .Select(x => new FlowPointDto
                 {
                     Id = x.Id,

@@ -1,12 +1,10 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class DeleteFlowAreaHandler : IRequestHandler<DeleteFlowAreaCommand, ResultDto<bool>>
+    public class DeleteFlowAreaHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -15,12 +13,12 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<bool>> Handle(DeleteFlowAreaCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             int count = await dbContext.FlowAreas
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .ExecuteDeleteAsync(ct);
 
             if (count <= 0)

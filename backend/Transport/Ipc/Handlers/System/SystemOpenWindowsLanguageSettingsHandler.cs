@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemOpenWindowsLanguageSettingsHandler : IRequestHandler<SystemOpenWindowsLanguageSettingsCommand, ResultDto<bool>>
+    public class SystemOpenWindowsLanguageSettingsHandler
     {
         private readonly IOcrService _ocrService;
 
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
             _ocrService = ocrService;
         }
 
-        public Task<ResultDto<bool>> Handle(SystemOpenWindowsLanguageSettingsCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             _ocrService.OpenWindowsLanguageSettings();
             return Task.FromResult(ResultDto<bool>.Success(true));

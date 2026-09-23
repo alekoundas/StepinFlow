@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class CreateFlowStepTemplateHandler : IRequestHandler<CreateFlowStepTemplateCommand, ResultDto<int>>
+    public class CreateFlowStepTemplateHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,11 +17,11 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<int>> Handle(CreateFlowStepTemplateCommand request, CancellationToken ct)
+        public async Task<ResultDto<int>> HandleAsync(FlowStepTemplateDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            FlowStepTemplate flowStepTemplate = _mapper.Map<FlowStepTemplate>(request.Dto);
+            FlowStepTemplate flowStepTemplate = _mapper.Map<FlowStepTemplate>(dto);
             flowStepTemplate.Id = 0;
 
             dbContext.FlowStepTemplates.Add(flowStepTemplate);

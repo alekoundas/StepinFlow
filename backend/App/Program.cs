@@ -1,6 +1,9 @@
 using App.AutoMapper;
 using Transport.Ipc;
 using Transport.Ipc.Handlers;
+using Transport.Ipc.Handlers.Ai;
+using Transport.Ipc.Handlers.Execution;
+using Transport.Ipc.Handlers.Lookup;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
 using Business.FlowScript;
@@ -128,17 +131,108 @@ namespace App
             builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
             builder.Services.AddHostedService<HostedBroadcastPipeListener>();// <- Background service!
 
+            // IPC handlers.
+            builder.Services.AddTransient<CreateFlowHandler>();
+            builder.Services.AddTransient<UpdateFlowHandler>();
+            builder.Services.AddTransient<DeleteFlowHandler>();
+            builder.Services.AddTransient<GetFlowHandler>();
+            builder.Services.AddTransient<GetLazyFlowHandler>();
+            builder.Services.AddTransient<ValidateFlowHandler>();
+            builder.Services.AddTransient<GetFlowHealthHandler>();
+            builder.Services.AddTransient<GetFlowCallersHandler>();
+            builder.Services.AddTransient<PromoteFlowToSubFlowHandler>();
+            builder.Services.AddTransient<ExtractSubFlowHandler>();
+            builder.Services.AddTransient<GetFlowTreeNodeHandler>();
+            builder.Services.AddTransient<ExportFlowHandler>();
+            builder.Services.AddTransient<ImportFlowHandler>();
+            builder.Services.AddTransient<CreateDiscordBotHandler>();
+            builder.Services.AddTransient<UpdateDiscordBotHandler>();
+            builder.Services.AddTransient<DeleteDiscordBotHandler>();
+            builder.Services.AddTransient<GetDiscordBotHandler>();
+            builder.Services.AddTransient<GetLazyDiscordBotHandler>();
+            builder.Services.AddTransient<TestDiscordBotHandler>();
+            builder.Services.AddTransient<CreateFlowStepHandler>();
+            builder.Services.AddTransient<CreateFlowStepsHandler>();
+            builder.Services.AddTransient<UpdateFlowStepHandler>();
+            builder.Services.AddTransient<DeleteFlowStepHandler>();
+            builder.Services.AddTransient<GetFlowStepHandler>();
+            builder.Services.AddTransient<GetLazyFlowStepHandler>();
+            builder.Services.AddTransient<GetFlowStepTreeNodeHandler>();
+            builder.Services.AddTransient<GetFlowStepTreeNodesRecursiveHandler>();
+            builder.Services.AddTransient<GetFlowStepDeleteImpactHandler>();
+            builder.Services.AddTransient<GetFlowStepMovePreviewHandler>();
+            builder.Services.AddTransient<MoveFlowStepHandler>();
+            builder.Services.AddTransient<TestImageSearchHandler>();
+            builder.Services.AddTransient<TestRunCommandHandler>();
+            builder.Services.AddTransient<TestSearchTextHandler>();
+            builder.Services.AddTransient<CreateFlowAreaHandler>();
+            builder.Services.AddTransient<UpdateFlowAreaHandler>();
+            builder.Services.AddTransient<DeleteFlowAreaHandler>();
+            builder.Services.AddTransient<GetFlowAreaHandler>();
+            builder.Services.AddTransient<GetLazyFlowAreaHandler>();
+            builder.Services.AddTransient<GetFlowAreaPreviewHandler>();
+            builder.Services.AddTransient<CreateFlowPointHandler>();
+            builder.Services.AddTransient<UpdateFlowPointHandler>();
+            builder.Services.AddTransient<DeleteFlowPointHandler>();
+            builder.Services.AddTransient<GetFlowPointHandler>();
+            builder.Services.AddTransient<GetFlowPointPreviewHandler>();
+            builder.Services.AddTransient<CreateFlowStepTemplateHandler>();
+            builder.Services.AddTransient<GetFlowStepTemplateHandler>();
+            builder.Services.AddTransient<GetLookupWindowHandler>();
+            builder.Services.AddTransient<GetLookupMonitorHandler>();
+            builder.Services.AddTransient<GetLookupFlowStepHandler>();
+            builder.Services.AddTransient<GetLookupFlowPointHandler>();
+            builder.Services.AddTransient<GetLookupSubFlowHandler>();
+            builder.Services.AddTransient<GetLookupDiscordBotHandler>();
+            builder.Services.AddTransient<GetLookupFailedStepHandler>();
+            builder.Services.AddTransient<TestWindowMatchHandler>();
+            builder.Services.AddTransient<GetLookupFlowAreaHandler>();
+            builder.Services.AddTransient<GetLookupOcrLanguagesHandler>();
+            builder.Services.AddTransient<GetLookupAiModelsHandler>();
+            builder.Services.AddTransient<GetLookupAiModelSuggestionsHandler>();
+            builder.Services.AddTransient<StartRecordingHandler>();
+            builder.Services.AddTransient<StopRecordingHandler>();
+            builder.Services.AddTransient<DiscardRecordingHandler>();
+            builder.Services.AddTransient<GetRecordingScreenshotHandler>();
+            builder.Services.AddTransient<GetAppSettingsHandler>();
+            builder.Services.AddTransient<SetAppSettingHandler>();
+            builder.Services.AddTransient<SystemTakeScreenshotHandler>();
+            builder.Services.AddTransient<SystemCaptureForOverlayHandler>();
+            builder.Services.AddTransient<SystemMoveCursorHandler>();
+            builder.Services.AddTransient<SystemInstallOcrLanguageHandler>();
+            builder.Services.AddTransient<SystemOpenWindowsLanguageSettingsHandler>();
+            builder.Services.AddTransient<SystemInputRecordAllStartHandler>();
+            builder.Services.AddTransient<SystemInputRecordAllStopHandler>();
+            builder.Services.AddTransient<SystemInputRecordOverlayStartHandler>();
+            builder.Services.AddTransient<SystemInputRecordOverlayStopHandler>();
+            builder.Services.AddTransient<SystemInputRecordPointCaptureStartHandler>();
+            builder.Services.AddTransient<SystemInputRecordPointCaptureStopHandler>();
+            builder.Services.AddTransient<SystemInputRecordHotkeyStartHandler>();
+            builder.Services.AddTransient<SystemInputRecordHotkeyStopHandler>();
+            builder.Services.AddTransient<StartExecutionHandler>();
+            builder.Services.AddTransient<StopExecutionHandler>();
+            builder.Services.AddTransient<PauseExecutionHandler>();
+            builder.Services.AddTransient<ContinueExecutionHandler>();
+            builder.Services.AddTransient<StepIntoExecutionHandler>();
+            builder.Services.AddTransient<StepOverExecutionHandler>();
+            builder.Services.AddTransient<SetExecutionBreakpointsHandler>();
+            builder.Services.AddTransient<GetExecutionHandler>();
+            builder.Services.AddTransient<GetExecutionListHandler>();
+            builder.Services.AddTransient<GetExecutionStateHandler>();
+            builder.Services.AddTransient<GetFlowExecutionSummariesHandler>();
+            builder.Services.AddTransient<GetExecutionStepScreenshotHandler>();
+            builder.Services.AddTransient<ExplainExecutionHandler>();
+            builder.Services.AddTransient<GetAiStatusHandler>();
+            builder.Services.AddTransient<GetAiChatAvailabilityHandler>();
+            builder.Services.AddTransient<AskAiHandler>();
+            builder.Services.AddTransient<DownloadAiModelHandler>();
+            builder.Services.AddTransient<GetAiDownloadStateHandler>();
+            builder.Services.AddTransient<ClearAiDownloadStateHandler>();
+
+
             // SharpHook 
             builder.Services.AddHostedService<HostedSharpHookService>(); // <- Background service!
-
             builder.Services.AddHostedService<HostedAiDocumentIndexService>(); // <- Background service!
-
-            // MediatR
-            builder.Services.AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssembly(typeof(SystemTakeScreenshotHandler).Assembly); // scans all handlers in Transport
-            });
-
 
             // AutoMapper
             builder.Services.AddAutoMapper(config => config.AddProfile<AutoMapperProfile>());

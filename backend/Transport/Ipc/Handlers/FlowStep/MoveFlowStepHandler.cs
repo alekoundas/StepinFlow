@@ -1,14 +1,12 @@
 using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class MoveFlowStepHandler : IRequestHandler<MoveFlowStepCommand, ResultDto<bool>>
+    public class MoveFlowStepHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -17,10 +15,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<bool>> Handle(MoveFlowStepCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(FlowStepMoveDto dto, CancellationToken ct)
         {
-            FlowStepMoveDto dto = request.Dto;
-
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowStep? moved = await dbContext.FlowSteps.FirstOrDefaultAsync(x => x.Id == dto.FlowStepId, ct);

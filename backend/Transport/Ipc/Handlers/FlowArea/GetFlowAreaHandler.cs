@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowAreaHandler : IRequestHandler<GetFlowAreaQuery, ResultDto<FlowAreaDto>>
+    public class GetFlowAreaHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,13 +17,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowAreaDto>> Handle(GetFlowAreaQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowAreaDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             FlowArea? flowArea = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Include(x => x.FlowSteps)
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (flowArea == null)
                 return ResultDto<FlowAreaDto>.Failure("Entity doesnt exist in the Database!");

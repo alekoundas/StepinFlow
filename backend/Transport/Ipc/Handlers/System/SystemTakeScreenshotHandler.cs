@@ -4,15 +4,13 @@ using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemTakeScreenshotHandler : IRequestHandler<SystemTakeScreenshotCommand, ResultDto<byte[]>>
+    public class SystemTakeScreenshotHandler
     {
         private readonly IScreenshotService _screenshotService;
         private readonly IAreaPointResolver _areaPointResolver;
@@ -28,10 +26,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<byte[]>> Handle(SystemTakeScreenshotCommand request, CancellationToken ct)
+        public async Task<ResultDto<byte[]>> HandleAsync(ScreenshotRequestDto dto, CancellationToken ct)
         {
-            ScreenshotRequestDto dto = request.Dto;
-
             if (dto.FlowAreaId != null)
                 return await CaptureArea(dto, ct);
 

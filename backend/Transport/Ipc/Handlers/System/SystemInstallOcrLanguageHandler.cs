@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemInstallOcrLanguageHandler : IRequestHandler<SystemInstallOcrLanguageCommand, ResultDto<OcrLanguageInstallResultDto>>
+    public class SystemInstallOcrLanguageHandler
     {
         private readonly IOcrService _ocrService;
 
@@ -14,9 +12,9 @@ namespace Transport.Ipc.Handlers
             _ocrService = ocrService;
         }
 
-        public async Task<ResultDto<OcrLanguageInstallResultDto>> Handle(SystemInstallOcrLanguageCommand request, CancellationToken ct)
+        public async Task<ResultDto<OcrLanguageInstallResultDto>> HandleAsync(string languageTag, CancellationToken ct)
         {
-            OcrLanguageInstallResultDto result = await _ocrService.InstallLanguageAsync(request.LanguageTag, ct);
+            OcrLanguageInstallResultDto result = await _ocrService.InstallLanguageAsync(languageTag, ct);
 
             return result.ErrorMessage == null
                 ? ResultDto<OcrLanguageInstallResultDto>.Success(result)

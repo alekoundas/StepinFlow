@@ -1,13 +1,11 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLookupFlowPointHandler : IRequestHandler<GetLookupFlowPointQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupFlowPointHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -16,10 +14,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupFlowPointQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
-            LookupRequestDto dto = request.Dto;
-
             if (dto.FlowId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());
 

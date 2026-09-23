@@ -1,9 +1,7 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 
 using DataAccess;
 
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
     /// Walked in memory rather than asked of the database recursively: a flow is tens of steps, and
     /// three columns of all of them costs less than teaching sqlite to recurse through EF.
     /// </summary>
-    public class GetFlowStepDeleteImpactHandler : IRequestHandler<GetFlowStepDeleteImpactQuery, ResultDto<FlowStepDeleteImpactDto>>
+    public class GetFlowStepDeleteImpactHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -23,13 +21,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowStepDeleteImpactDto>> Handle(GetFlowStepDeleteImpactQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowStepDeleteImpactDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             int? rootId = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .Select(x => (int?)x.RootId)
                 .FirstOrDefaultAsync(ct);
 
@@ -42,7 +40,7 @@ namespace Transport.Ipc.Handlers
                 .Select(x => new StepLink(x.Id, x.ParentFlowStepId, x.FlowStepReferenceId, x.FlowStepReferenceEndId))
                 .ToListAsync(ct);
 
-            HashSet<int> removed = Removed(links, request.Id);
+            HashSet<int> removed = Removed(links, id);
 
             // Only the ones that outlive the delete. A reference from inside the subtree goes with
             // everything else, so counting it would be counting a problem that cannot happen.

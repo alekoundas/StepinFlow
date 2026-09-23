@@ -1,9 +1,7 @@
 using Core.Helpers;
 using Core.Models.Dtos;
-using Transport.Messages;
 
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -17,7 +15,6 @@ namespace Transport.Ipc.Handlers
     /// one per level.
     /// </summary>
     public class GetFlowStepTreeNodesRecursiveHandler
-        : IRequestHandler<GetFlowStepTreeNodesRecursiveQuery, ResultDto<IEnumerable<TreeNodeDto>>>
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -26,13 +23,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<IEnumerable<TreeNodeDto>>> Handle(GetFlowStepTreeNodesRecursiveQuery request, CancellationToken ct)
+        public async Task<ResultDto<IEnumerable<TreeNodeDto>>> HandleAsync(int flowId, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             List<TreeNodeDto> nodes = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.RootId == request.FlowId)
+                .Where(x => x.RootId == flowId)
                 .OrderBy(x => x.OrderNumber)
                 .Select(FlowStepTreeNodeProjection.Row)
                 .ToListAsync(ct);

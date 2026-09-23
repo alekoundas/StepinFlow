@@ -1,9 +1,7 @@
 using Core.Helpers;
 using Core.Models.Dtos;
-using Transport.Messages;
 
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -12,7 +10,7 @@ namespace Transport.Ipc.Handlers
     /// One screenshot back off disk, base64 for the page to draw. The path is built here from the
     /// run's folder and the step's file, so nothing the renderer sends decides what is read.
     /// </summary>
-    public class GetExecutionStepScreenshotHandler : IRequestHandler<GetExecutionStepScreenshotQuery, ResultDto<string?>>
+    public class GetExecutionStepScreenshotHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -21,13 +19,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<string?>> Handle(GetExecutionStepScreenshotQuery request, CancellationToken ct)
+        public async Task<ResultDto<string?>> HandleAsync(int executionStepId, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             ScreenshotLocation? location = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.Id == request.ExecutionStepId)
+                .Where(x => x.Id == executionStepId)
                 .Select(x => new ScreenshotLocation(x.Execution.ScreenshotFolderName, x.ScreenshotFileName))
                 .FirstOrDefaultAsync(ct);
 

@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemMoveCursorHandler : IRequestHandler<SystemMoveCursorCommand, ResultDto<bool>>
+    public class SystemMoveCursorHandler
     {
         private readonly IInputService _inputService;
 
@@ -14,9 +12,9 @@ namespace Transport.Ipc.Handlers
             _inputService = inputService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemMoveCursorCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(ScreenPointDto dto, CancellationToken ct)
         {
-            bool moved = _inputService.MoveCursor(request.Dto.X, request.Dto.Y);
+            bool moved = _inputService.MoveCursor(dto.X, dto.Y);
 
             if (!moved)
                 return ResultDto<bool>.Failure("Could not move the cursor to the requested point.");

@@ -1,7 +1,5 @@
 using Business.Services.CommandService;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
@@ -9,7 +7,7 @@ namespace Transport.Ipc.Handlers
     /// Runs the step's command for real so the author can see what it returns. There is no way to
     /// preview a command without running it, which is why destructive presets ask first.
     /// </summary>
-    public class TestRunCommandHandler : IRequestHandler<TestRunCommandQuery, ResultDto<RunCommandTestResultDto>>
+    public class TestRunCommandHandler
     {
         private readonly ICommandRunner _commandRunner;
 
@@ -18,9 +16,9 @@ namespace Transport.Ipc.Handlers
             _commandRunner = commandRunner;
         }
 
-        public async Task<ResultDto<RunCommandTestResultDto>> Handle(TestRunCommandQuery request, CancellationToken ct)
+        public async Task<ResultDto<RunCommandTestResultDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
-            RunCommandTestResultDto result = await _commandRunner.RunAsync(request.Dto, ct);
+            RunCommandTestResultDto result = await _commandRunner.RunAsync(dto, ct);
             return ResultDto<RunCommandTestResultDto>.Success(result);
         }
     }

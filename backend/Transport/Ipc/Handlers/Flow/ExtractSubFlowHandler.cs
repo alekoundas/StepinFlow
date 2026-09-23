@@ -4,9 +4,7 @@ using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -25,7 +23,7 @@ namespace Transport.Ipc.Handlers
     /// steps use are copied into the new sub-flow and the steps repointed, which is what makes it
     /// self contained enough to call from anywhere.
     /// </summary>
-    public class ExtractSubFlowHandler : IRequestHandler<ExtractSubFlowCommand, ResultDto<ExtractSubFlowResultDto>>
+    public class ExtractSubFlowHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -34,10 +32,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<ExtractSubFlowResultDto>> Handle(ExtractSubFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<ExtractSubFlowResultDto>> HandleAsync(ExtractSubFlowDto dto, CancellationToken ct)
         {
-            ExtractSubFlowDto dto = request.Dto;
-
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return ResultDto<ExtractSubFlowResultDto>.Failure("Give the sub-flow a name.");
 

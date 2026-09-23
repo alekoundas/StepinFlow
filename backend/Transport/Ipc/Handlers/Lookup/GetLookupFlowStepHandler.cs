@@ -2,15 +2,13 @@ using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLookupFlowStepHandler : IRequestHandler<GetLookupFlowStepQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupFlowStepHandler
     {
         private static readonly Dictionary<StepResultKindEnum, FlowStepTypeEnum[]> ProducingTypesByKind = new()
         {
@@ -43,10 +41,8 @@ namespace Transport.Ipc.Handlers
         ///
         /// In ADD mode there is no step row yet, so the caller passes the parent step id.
         /// </summary>
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupFlowStepQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
-            LookupRequestDto dto = request.Dto;
-
             if (dto.FlowStepId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());
 

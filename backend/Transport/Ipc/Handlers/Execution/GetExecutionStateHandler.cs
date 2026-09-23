@@ -1,8 +1,6 @@
 using Business.Services.ExecutionService;
 using Core.Models.Dtos;
-using Transport.Messages;
 
-using MediatR;
 
 namespace Transport.Ipc.Handlers.Execution
 {
@@ -10,7 +8,7 @@ namespace Transport.Ipc.Handlers.Execution
     /// Read on mount. The engine outlives the page, so a run started before you navigated away is
     /// still going, and the page has to find that out rather than assume it is idle.
     /// </summary>
-    public class GetExecutionStateHandler : IRequestHandler<GetExecutionStateQuery, ResultDto<ExecutionStateDto>>
+    public class GetExecutionStateHandler
     {
         private readonly IExecutionEngine _executionEngine;
 
@@ -19,7 +17,7 @@ namespace Transport.Ipc.Handlers.Execution
             _executionEngine = executionEngine;
         }
 
-        public Task<ResultDto<ExecutionStateDto>> Handle(GetExecutionStateQuery request, CancellationToken ct)
+        public Task<ResultDto<ExecutionStateDto>> HandleAsync(CancellationToken ct)
         {
             ExecutionStateDto dto = new ExecutionStateDto
             {

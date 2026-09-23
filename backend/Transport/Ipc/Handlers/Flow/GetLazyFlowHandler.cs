@@ -2,14 +2,12 @@ using AutoMapper;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLazyFlowHandler : IRequestHandler<GetLazyFlowQuery, ResultDto<LazyResponseDto<FlowDto>>>
+    public class GetLazyFlowHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -20,13 +18,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LazyResponseDto<FlowDto>>> Handle(GetLazyFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<LazyResponseDto<FlowDto>>> HandleAsync(LazyRequestDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             IQueryable<Flow> query = dbContext.Flows.AsNoTracking();
 
             // Unset lists everything, which is what a lookup wants; the two pages always set it.
-            if (request.Dto.IsSubFlow is bool isSubFlow)
+            if (dto.IsSubFlow is bool isSubFlow)
                 query = query.Where(x => x.IsSubFlow == isSubFlow);
 
             // Projected, not mapped: the list wants counts, and loading three collections per

@@ -1,9 +1,7 @@
 using Business.Services.FlowValidationService;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
@@ -13,7 +11,7 @@ namespace Transport.Ipc.Handlers
     /// step's result needs the whole parent chain, so a per branch check would reload the same
     /// tree on every expand.
     /// </summary>
-    public class ValidateFlowHandler : IRequestHandler<ValidateFlowQuery, ResultDto<FlowValidationResultDto>>
+    public class ValidateFlowHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IFlowValidationService _flowValidationService;
@@ -24,20 +22,20 @@ namespace Transport.Ipc.Handlers
             _flowValidationService = flowValidationService;
         }
 
-        public async Task<ResultDto<FlowValidationResultDto>> Handle(ValidateFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowValidationResultDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             List<FlowStep> steps = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.RootId == request.Id)
+                .Where(x => x.RootId == id)
                 .ToListAsync(ct);
 
             // Counted rather than Included: the templates themselves are megabytes and only their
             // number matters here.
             var templateCounts = await dbContext.FlowStepTemplates
                 .AsNoTracking()
-                .Where(x => x.FlowStep.RootId == request.Id)
+                .Where(x => x.FlowStep.RootId == id)
                 .GroupBy(x => x.FlowStepId)
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToListAsync(ct);
@@ -46,15 +44,15 @@ namespace Transport.Ipc.Handlers
             // against any of them, so neither question is answerable without all four.
             List<string> flowNames = await dbContext.FlowAreas
                 .AsNoTracking()
-                .Where(x => x.FlowId == request.Id)
+                .Where(x => x.FlowId == id)
                 .Select(x => x.Name)
                 .Concat(dbContext.FlowPoints
                     .AsNoTracking()
-                    .Where(x => x.FlowId == request.Id)
+                    .Where(x => x.FlowId == id)
                     .Select(x => x.Name))
                 .Concat(dbContext.FlowCsvColumns
                     .AsNoTracking()
-                    .Where(x => x.FlowId == request.Id)
+                    .Where(x => x.FlowId == id)
                     .Select(x => x.Name))
                 .ToListAsync(ct);
 

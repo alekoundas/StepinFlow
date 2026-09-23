@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class UpdateFlowPointHandler : IRequestHandler<UpdateFlowPointCommand, ResultDto<FlowPointDto>>
+    public class UpdateFlowPointHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,17 +17,17 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowPointDto>> Handle(UpdateFlowPointCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowPointDto>> HandleAsync(FlowPointDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowPoint? existingFlowPoint = await dbContext.FlowPoints
-                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (existingFlowPoint == null)
                 return ResultDto<FlowPointDto>.Failure("Entity doesnt exist in the Database!");
 
-            dbContext.Entry(existingFlowPoint).CurrentValues.SetValues(request.Dto);
+            dbContext.Entry(existingFlowPoint).CurrentValues.SetValues(dto);
 
             await dbContext.SaveChangesAsync(ct);
 

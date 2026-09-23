@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLookupMonitorHandler : IRequestHandler<GetLookupMonitorQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupMonitorHandler
     {
         private readonly IScreenService _screenService;
 
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
             _screenService = screenService;
         }
 
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupMonitorQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
             List<LookupItemDto> items = _screenService.GetAllMonitors().Select(monitor =>
                 new LookupItemDto

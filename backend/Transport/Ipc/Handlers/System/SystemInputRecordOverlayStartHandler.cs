@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemInputRecordOverlayStartHandler : IRequestHandler<SystemInputRecordOverlayStartCommand, ResultDto<bool>>
+    public class SystemInputRecordOverlayStartHandler
     {
         private readonly IMapper _mapper;
         private readonly IInputRecordService _inputRecordService;
@@ -17,7 +15,7 @@ namespace Transport.Ipc.Handlers
             _inputRecordService= inputRecordService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemInputRecordOverlayStartCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             bool result = await _inputRecordService.StartRecordingOverlayAsync();
 

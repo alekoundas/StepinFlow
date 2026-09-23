@@ -1,12 +1,10 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowHandler : IRequestHandler<GetFlowQuery, ResultDto<FlowDto>>
+    public class GetFlowHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -18,13 +16,13 @@ namespace Transport.Ipc.Handlers
         // One query. The child projections are inlined rather than shared with the lazy grid
         // handler: EF only accepts a stored Expression at the top level of a query, so reusing one
         // would force a round trip per collection.
-        public async Task<ResultDto<FlowDto>> Handle(GetFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowDto? flowDto = await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .Select(x => new FlowDto
                 {
                     Id = x.Id,

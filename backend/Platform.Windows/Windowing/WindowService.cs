@@ -83,7 +83,7 @@ namespace Platform.Windows.Windowing
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern int GetWindowText(IntPtr hWnd, [Out] char[] lpString, int nMaxCount);
 
-        // Reuse buffer to reduce allocations. ThreadStatic because MediatR runs handlers on the
+        // Reuse buffer to reduce allocations. ThreadStatic because the IPC pipe runs handlers on the
         // thread pool: a shared buffer lets two concurrent lookups read each other's titles.
         [ThreadStatic]
         private static char[]? _titleBuffer;

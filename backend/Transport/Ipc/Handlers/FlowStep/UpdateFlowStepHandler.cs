@@ -2,14 +2,12 @@ using AutoMapper;
 using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class UpdateFlowStepHandler : IRequestHandler<UpdateFlowStepCommand, ResultDto<FlowStepDto>>
+    public class UpdateFlowStepHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -20,13 +18,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowStepDto>> Handle(UpdateFlowStepCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowStepDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowStep? existingFlowStep = await dbContext.FlowSteps
                 .Include(x => x.FlowStepTemplates)
-                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (existingFlowStep == null)
                 return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");
@@ -34,9 +32,9 @@ namespace Transport.Ipc.Handlers
             // SetValues copies scalars and foreign keys only, so the navigations the client
             // round-tripped back to us cannot re-insert or overwrite anything, and CreatedOn
             // (absent from the dto) keeps its original value.
-            dbContext.Entry(existingFlowStep).CurrentValues.SetValues(request.Dto);
+            dbContext.Entry(existingFlowStep).CurrentValues.SetValues(dto);
 
-            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, request.Dto.FlowStepTemplates);
+            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, dto.FlowStepTemplates);
 
             await dbContext.SaveChangesAsync(ct);
 

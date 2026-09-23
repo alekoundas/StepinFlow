@@ -1,11 +1,9 @@
 using Business.Services.AppSettingService;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetAppSettingsHandler : IRequestHandler<GetAppSettingsQuery, ResultDto<IReadOnlyList<AppSettingDto>>>
+    public class GetAppSettingsHandler
     {
         private readonly IAppSettingService _appSettingService;
 
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
             _appSettingService = appSettingService;
         }
 
-        public async Task<ResultDto<IReadOnlyList<AppSettingDto>>> Handle(GetAppSettingsQuery request, CancellationToken ct) =>
+        public async Task<ResultDto<IReadOnlyList<AppSettingDto>>> HandleAsync(CancellationToken ct) =>
             ResultDto<IReadOnlyList<AppSettingDto>>.Success(await _appSettingService.GetAllAsync(ct));
     }
 }

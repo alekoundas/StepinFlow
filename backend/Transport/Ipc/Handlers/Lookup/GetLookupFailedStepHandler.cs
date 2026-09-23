@@ -1,9 +1,7 @@
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -21,7 +19,7 @@ namespace Transport.Ipc.Handlers
     ///
     /// In ADD mode there is no step row yet, so the caller passes the parent step id.
     /// </summary>
-    public class GetLookupFailedStepHandler : IRequestHandler<GetLookupFailedStepQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupFailedStepHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -30,10 +28,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupFailedStepQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
-            LookupRequestDto dto = request.Dto;
-
             if (dto.FlowStepId == null)
                 return ResultDto<LookupResponseDto>.Success(new LookupResponseDto());
 

@@ -1,8 +1,6 @@
 ﻿using Core.Models.Dtos;
-using Transport.Messages;
 
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers.Execution
@@ -11,7 +9,7 @@ namespace Transport.Ipc.Handlers.Execution
     /// One run and every step of it, in the order they happened. Projected rather than mapped: the
     /// page reads a flat list and indents it by Depth, so nothing needs loading through a relation.
     /// </summary>
-    public class GetExecutionHandler : IRequestHandler<GetExecutionQuery, ResultDto<ExecutionDto>>
+    public class GetExecutionHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -20,13 +18,13 @@ namespace Transport.Ipc.Handlers.Execution
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<ExecutionDto>> Handle(GetExecutionQuery request, CancellationToken ct)
+        public async Task<ResultDto<ExecutionDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             ExecutionDto? execution = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == request.Id)
+                .Where(x => x.Id == id)
                 .Select(x => new ExecutionDto
                 {
                     Id = x.Id,
@@ -48,7 +46,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             execution.ExecutionSteps = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.ExecutionId == request.Id)
+                .Where(x => x.ExecutionId == id)
                 .OrderBy(x => x.Sequence)
                 .Select(x => new ExecutionStepDto
                 {

@@ -4,12 +4,10 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class TestWindowMatchHandler : IRequestHandler<TestWindowMatchQuery, ResultDto<WindowMatchTestResultDto>>
+    public class TestWindowMatchHandler
     {
         private readonly IWindowService _windowService;
 
@@ -18,10 +16,8 @@ namespace Transport.Ipc.Handlers
             _windowService = windowService;
         }
 
-        public Task<ResultDto<WindowMatchTestResultDto>> Handle(TestWindowMatchQuery request, CancellationToken ct)
+        public Task<ResultDto<WindowMatchTestResultDto>> HandleAsync(WindowMatchTestRequestDto dto, CancellationToken ct)
         {
-            WindowMatchTestRequestDto dto = request.Dto;
-
             if (string.IsNullOrWhiteSpace(dto.ProcessName) && string.IsNullOrWhiteSpace(dto.TitlePattern))
                 return Task.FromResult(ResultDto<WindowMatchTestResultDto>.Failure("Pick an application or type a title first, or this matches whatever window is in front."));
 

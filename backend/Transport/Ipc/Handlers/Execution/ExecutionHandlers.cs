@@ -1,11 +1,9 @@
 using Business.Services.ExecutionService;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class StartExecutionHandler : IRequestHandler<StartExecutionCommand, ResultDto<int>>
+    public class StartExecutionHandler
     {
         private readonly IExecutionEngine _executionEngine;
 
@@ -14,12 +12,12 @@ namespace Transport.Ipc.Handlers
             _executionEngine = executionEngine;
         }
 
-        public async Task<ResultDto<int>> Handle(StartExecutionCommand request, CancellationToken _)
+        public async Task<ResultDto<int>> HandleAsync(ExecutionStartDto dto, CancellationToken ct)
         {
             try
             {
                 // Not the request's token: the run outlives the call that asked for it.
-                int executionId = await _executionEngine.StartAsync(request.Dto, CancellationToken.None);
+                int executionId = await _executionEngine.StartAsync(dto, CancellationToken.None);
                 return ResultDto<int>.Success(executionId);
             }
             catch (InvalidOperationException ex)
@@ -48,63 +46,63 @@ namespace Transport.Ipc.Handlers
         }
     }
 
-    public class StopExecutionHandler : ExecutionCommandHandler, IRequestHandler<StopExecutionCommand, ResultDto<bool>>
+    public class StopExecutionHandler : ExecutionCommandHandler
     {
         public StopExecutionHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(StopExecutionCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             return Apply(engine => engine.Stop());
         }
     }
 
-    public class PauseExecutionHandler : ExecutionCommandHandler, IRequestHandler<PauseExecutionCommand, ResultDto<bool>>
+    public class PauseExecutionHandler : ExecutionCommandHandler
     {
         public PauseExecutionHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(PauseExecutionCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             return Apply(engine => engine.Pause());
         }
     }
 
-    public class ContinueExecutionHandler : ExecutionCommandHandler, IRequestHandler<ContinueExecutionCommand, ResultDto<bool>>
+    public class ContinueExecutionHandler : ExecutionCommandHandler
     {
         public ContinueExecutionHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(ContinueExecutionCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             return Apply(engine => engine.Continue());
         }
     }
 
-    public class StepIntoExecutionHandler : ExecutionCommandHandler, IRequestHandler<StepIntoExecutionCommand, ResultDto<bool>>
+    public class StepIntoExecutionHandler : ExecutionCommandHandler
     {
         public StepIntoExecutionHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(StepIntoExecutionCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             return Apply(engine => engine.StepInto());
         }
     }
 
-    public class StepOverExecutionHandler : ExecutionCommandHandler, IRequestHandler<StepOverExecutionCommand, ResultDto<bool>>
+    public class StepOverExecutionHandler : ExecutionCommandHandler
     {
         public StepOverExecutionHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(StepOverExecutionCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             return Apply(engine => engine.StepOver());
         }
     }
 
-    public class SetExecutionBreakpointsHandler : ExecutionCommandHandler, IRequestHandler<SetExecutionBreakpointsCommand, ResultDto<bool>>
+    public class SetExecutionBreakpointsHandler : ExecutionCommandHandler
     {
         public SetExecutionBreakpointsHandler(IExecutionEngine executionEngine) : base(executionEngine) { }
 
-        public Task<ResultDto<bool>> Handle(SetExecutionBreakpointsCommand request, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(List<int> flowStepIds, CancellationToken ct)
         {
-            return Apply(engine => engine.SetBreakpoints(request.FlowStepIds));
+            return Apply(engine => engine.SetBreakpoints(flowStepIds));
         }
     }
 }

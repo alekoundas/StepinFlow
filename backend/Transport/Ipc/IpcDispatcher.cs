@@ -1,34 +1,45 @@
-
-using Core.Models.Dtos;
-using Transport.Messages;
-using Transport.Ipc.Protobuf;
-using MediatR;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using Core.Models.Dtos;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+using Transport.Ipc.Handlers;
+using Transport.Ipc.Handlers.Ai;
+using Transport.Ipc.Handlers.Execution;
+using Transport.Ipc.Handlers.Lookup;
+using Transport.Ipc.Protobuf;
 
 namespace Transport.Ipc
 {
+    /// <summary>
+    /// One request in, one response out.
+    ///
+    /// The switch is the protocol: every action the frontend can send is on this page, and the
+    /// compiler checks each one - a duplicate action will not compile, and a handler whose
+    /// signature changes breaks the arm that calls it. A route nobody wrote is a 404 on the first
+    /// click in development, which is where a name mismatch belongs.
+    /// </summary>
     public class IpcDispatcher
     {
-        private readonly IMediator _mediator;
-        private static readonly JsonSerializerOptions _jsonOptions = new()
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true, // JS -> .Net
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // .Net -> JS
-            ReferenceHandler = ReferenceHandler.IgnoreCycles // Ignore circular objects
-
+            PropertyNameCaseInsensitive = true,                 // JS -> .Net
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,  // .Net -> JS
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,   // Ignore circular objects
+            Converters = { new JsonStringEnumConverter() }
         };
 
+        private readonly IServiceProvider _services;
         private readonly ILogger<IpcDispatcher> _logger;
 
-        public IpcDispatcher(IMediator mediator, ILogger<IpcDispatcher> logger)
+        public IpcDispatcher(IServiceProvider services, ILogger<IpcDispatcher> logger)
         {
+            _services = services;
             _logger = logger;
-            _mediator = mediator;
-
-            // Add Enum to string converter
-            _jsonOptions.Converters.Add(new JsonStringEnumConverter());
         }
 
         public async Task<IpcResponse> HandleAsync(IpcRequest request, CancellationToken ct = default)
@@ -36,151 +47,136 @@ namespace Transport.Ipc
             // Every request passes through here, so the argument is only built when Debug is on.
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.LogDebug("[.NET Dispatcher]: Received {Action}", request.Action);
+
             try
             {
                 object? responsePayload = request.Action switch
                 {
+
                     // Flow
-                    "Flow.create" => await _mediator.Send(new CreateFlowCommand(JsonSerializer.Deserialize<FlowDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.update" => await _mediator.Send(new UpdateFlowCommand(JsonSerializer.Deserialize<FlowDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.delete" => await _mediator.Send(new DeleteFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.get" => await _mediator.Send(new GetFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.getLazy" => await _mediator.Send(new GetLazyFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.validate" => await _mediator.Send(new ValidateFlowQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.getHealth" => await _mediator.Send(new GetFlowHealthQuery(JsonSerializer.Deserialize<FlowHealthRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.getCallers" => await _mediator.Send(new GetFlowCallersQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.promoteToSubFlow" => await _mediator.Send(new PromoteFlowToSubFlowCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Flow.extractSubFlow" => await _mediator.Send(new ExtractSubFlowCommand(JsonSerializer.Deserialize<ExtractSubFlowDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.getTreeNodes" => await _mediator.Send(new GetFlowTreeNodeQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.export" => await _mediator.Send(new ExportFlowCommand(JsonSerializer.Deserialize<FlowExportRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Flow.import" => await _mediator.Send(new ImportFlowCommand(JsonSerializer.Deserialize<FlowImportRequestDto>(request.Payload, _jsonOptions)!), ct),
+                    "Flow.create" => await Handler<CreateFlowHandler>().HandleAsync(Payload<FlowDto>(request), ct),
+                    "Flow.update" => await Handler<UpdateFlowHandler>().HandleAsync(Payload<FlowDto>(request), ct),
+                    "Flow.delete" => await Handler<DeleteFlowHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.get" => await Handler<GetFlowHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.getLazy" => await Handler<GetLazyFlowHandler>().HandleAsync(Payload<LazyRequestDto>(request), ct),
+                    "Flow.validate" => await Handler<ValidateFlowHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.getHealth" => await Handler<GetFlowHealthHandler>().HandleAsync(Payload<FlowHealthRequestDto>(request), ct),
+                    "Flow.getCallers" => await Handler<GetFlowCallersHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.promoteToSubFlow" => await Handler<PromoteFlowToSubFlowHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.extractSubFlow" => await Handler<ExtractSubFlowHandler>().HandleAsync(Payload<ExtractSubFlowDto>(request), ct),
+                    "Flow.getTreeNodes" => await Handler<GetFlowTreeNodeHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.export" => await Handler<ExportFlowHandler>().HandleAsync(Payload<FlowExportRequestDto>(request), ct),
+                    "Flow.import" => await Handler<ImportFlowHandler>().HandleAsync(Payload<FlowImportRequestDto>(request), ct),
 
                     // DiscordBot
-                    "DiscordBot.create" => await _mediator.Send(new CreateDiscordBotCommand(JsonSerializer.Deserialize<DiscordBotDto>(request.Payload, _jsonOptions)!), ct),
-                    "DiscordBot.update" => await _mediator.Send(new UpdateDiscordBotCommand(JsonSerializer.Deserialize<DiscordBotDto>(request.Payload, _jsonOptions)!), ct),
-                    "DiscordBot.delete" => await _mediator.Send(new DeleteDiscordBotCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "DiscordBot.get" => await _mediator.Send(new GetDiscordBotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "DiscordBot.getLazy" => await _mediator.Send(new GetLazyDiscordBotQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "DiscordBot.test" => await _mediator.Send(new TestDiscordBotCommand(JsonSerializer.Deserialize<TestDiscordBotDto>(request.Payload, _jsonOptions)!), ct),
+                    "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),
+                    "DiscordBot.update" => await Handler<UpdateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),
+                    "DiscordBot.delete" => await Handler<DeleteDiscordBotHandler>().HandleAsync(Payload<int>(request), ct),
+                    "DiscordBot.get" => await Handler<GetDiscordBotHandler>().HandleAsync(Payload<int>(request), ct),
+                    "DiscordBot.getLazy" => await Handler<GetLazyDiscordBotHandler>().HandleAsync(Payload<LazyRequestDto>(request), ct),
+                    "DiscordBot.test" => await Handler<TestDiscordBotHandler>().HandleAsync(Payload<TestDiscordBotDto>(request), ct),
 
                     // FlowStep
-                    "FlowStep.create" => await _mediator.Send(new CreateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.createMany" => await _mediator.Send(new CreateFlowStepsCommand(JsonSerializer.Deserialize<FlowDraftDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.update" => await _mediator.Send(new UpdateFlowStepCommand(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.delete" => await _mediator.Send(new DeleteFlowStepCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowStep.get" => await _mediator.Send(new GetFlowStepQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowStep.getLazy" => await _mediator.Send(new GetLazyStepFlowQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.getTreeNodes" => await _mediator.Send(new GetFlowStepTreeNodeQuery(JsonSerializer.Deserialize<TreeNodeRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.getTreeNodesRecursive" => await _mediator.Send(new GetFlowStepTreeNodesRecursiveQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowStep.getDeleteImpact" => await _mediator.Send(new GetFlowStepDeleteImpactQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowStep.getMovePreview" => await _mediator.Send(new GetFlowStepMovePreviewQuery(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.move" => await _mediator.Send(new MoveFlowStepCommand(JsonSerializer.Deserialize<FlowStepMoveDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.create" => await Handler<CreateFlowStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.createMany" => await Handler<CreateFlowStepsHandler>().HandleAsync(Payload<FlowDraftDto>(request), ct),
+                    "FlowStep.update" => await Handler<UpdateFlowStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.delete" => await Handler<DeleteFlowStepHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowStep.get" => await Handler<GetFlowStepHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowStep.getLazy" => await Handler<GetLazyFlowStepHandler>().HandleAsync(Payload<LazyRequestDto>(request), ct),
+                    "FlowStep.getTreeNodes" => await Handler<GetFlowStepTreeNodeHandler>().HandleAsync(Payload<TreeNodeRequestDto>(request), ct),
+                    "FlowStep.getTreeNodesRecursive" => await Handler<GetFlowStepTreeNodesRecursiveHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowStep.getDeleteImpact" => await Handler<GetFlowStepDeleteImpactHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowStep.getMovePreview" => await Handler<GetFlowStepMovePreviewHandler>().HandleAsync(Payload<FlowStepMoveDto>(request), ct),
+                    "FlowStep.move" => await Handler<MoveFlowStepHandler>().HandleAsync(Payload<FlowStepMoveDto>(request), ct),
 
-                    "FlowStep.testImageSearch" => await _mediator.Send(new TestImageSearchQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.testRunCommand" => await _mediator.Send(new TestRunCommandQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStep.testSearchText" => await _mediator.Send(new TestSearchTextQuery(JsonSerializer.Deserialize<FlowStepDto>(request.Payload, _jsonOptions)!), ct),
+                    "FlowStep.testImageSearch" => await Handler<TestImageSearchHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.testRunCommand" => await Handler<TestRunCommandHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.testSearchText" => await Handler<TestSearchTextHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
 
                     // FlowArea
-                    "FlowArea.create" => await _mediator.Send(new CreateFlowAreaCommand(JsonSerializer.Deserialize<FlowAreaDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowArea.update" => await _mediator.Send(new UpdateFlowAreaCommand(JsonSerializer.Deserialize<FlowAreaDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowArea.delete" => await _mediator.Send(new DeleteFlowAreaCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowArea.get" => await _mediator.Send(new GetFlowAreaQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowArea.getLazy" => await _mediator.Send(new GetLazyFlowAreaQuery(JsonSerializer.Deserialize<LazyRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowArea.getPreview" => await _mediator.Send(new GetFlowAreaPreviewQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowArea.create" => await Handler<CreateFlowAreaHandler>().HandleAsync(Payload<FlowAreaDto>(request), ct),
+                    "FlowArea.update" => await Handler<UpdateFlowAreaHandler>().HandleAsync(Payload<FlowAreaDto>(request), ct),
+                    "FlowArea.delete" => await Handler<DeleteFlowAreaHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowArea.get" => await Handler<GetFlowAreaHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowArea.getLazy" => await Handler<GetLazyFlowAreaHandler>().HandleAsync(Payload<LazyRequestDto>(request), ct),
+                    "FlowArea.getPreview" => await Handler<GetFlowAreaPreviewHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // FlowPoint
-                    "FlowPoint.create" => await _mediator.Send(new CreateFlowPointCommand(JsonSerializer.Deserialize<FlowPointDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowPoint.update" => await _mediator.Send(new UpdateFlowPointCommand(JsonSerializer.Deserialize<FlowPointDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowPoint.delete" => await _mediator.Send(new DeleteFlowPointCommand(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowPoint.get" => await _mediator.Send(new GetFlowPointQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "FlowPoint.getPreview" => await _mediator.Send(new GetFlowPointPreviewQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowPoint.create" => await Handler<CreateFlowPointHandler>().HandleAsync(Payload<FlowPointDto>(request), ct),
+                    "FlowPoint.update" => await Handler<UpdateFlowPointHandler>().HandleAsync(Payload<FlowPointDto>(request), ct),
+                    "FlowPoint.delete" => await Handler<DeleteFlowPointHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowPoint.get" => await Handler<GetFlowPointHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowPoint.getPreview" => await Handler<GetFlowPointPreviewHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // FlowStepTemplate
-                    "FlowStepTemplate.create" => await _mediator.Send(new CreateFlowStepTemplateCommand(JsonSerializer.Deserialize<FlowStepTemplateDto>(request.Payload, _jsonOptions)!), ct),
-                    "FlowStepTemplate.get" => await _mediator.Send(new GetFlowStepTemplateQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "FlowStepTemplate.create" => await Handler<CreateFlowStepTemplateHandler>().HandleAsync(Payload<FlowStepTemplateDto>(request), ct),
+                    "FlowStepTemplate.get" => await Handler<GetFlowStepTemplateHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Lookups
-                    "Lookup.window" => await _mediator.Send(new GetLookupWindowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.monitor" => await _mediator.Send(new GetLookupMonitorQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.flowStep" => await _mediator.Send(new GetLookupFlowStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.flowPoint" => await _mediator.Send(new GetLookupFlowPointQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.subFlow" => await _mediator.Send(new GetLookupSubFlowQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.discordBot" => await _mediator.Send(new GetLookupDiscordBotQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.failedStep" => await _mediator.Send(new GetLookupFailedStepQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.testWindowMatch" => await _mediator.Send(new TestWindowMatchQuery(JsonSerializer.Deserialize<WindowMatchTestRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.flowArea" => await _mediator.Send(new GetLookupFlowAreaQuery(JsonSerializer.Deserialize<LookupRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Lookup.commandPresets" => await _mediator.Send(new GetLookupCommandPresetsQuery(), ct),
-                    "Lookup.ocrLanguages" => await _mediator.Send(new GetLookupOcrLanguagesQuery(), ct),
-                    "Lookup.aiModels" => await _mediator.Send(new GetLookupAiModelsQuery(), ct),
-                    "Lookup.aiModelSuggestions" => await _mediator.Send(new GetLookupAiModelSuggestionsQuery(), ct),
+                    "Lookup.window" => await Handler<GetLookupWindowHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.monitor" => await Handler<GetLookupMonitorHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.flowStep" => await Handler<GetLookupFlowStepHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.flowPoint" => await Handler<GetLookupFlowPointHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.subFlow" => await Handler<GetLookupSubFlowHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.discordBot" => await Handler<GetLookupDiscordBotHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.failedStep" => await Handler<GetLookupFailedStepHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.testWindowMatch" => await Handler<TestWindowMatchHandler>().HandleAsync(Payload<WindowMatchTestRequestDto>(request), ct),
+                    "Lookup.flowArea" => await Handler<GetLookupFlowAreaHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.commandPresets" => await GetLookupCommandPresetsHandler.HandleAsync(ct),
+                    "Lookup.ocrLanguages" => await Handler<GetLookupOcrLanguagesHandler>().HandleAsync(ct),
+                    "Lookup.aiModels" => await Handler<GetLookupAiModelsHandler>().HandleAsync(ct),
+                    "Lookup.aiModelSuggestions" => await Handler<GetLookupAiModelSuggestionsHandler>().HandleAsync(ct),
 
                     // Recording
-                    "Recording.start" => await _mediator.Send(new StartRecordingCommand(), ct),
-                    "Recording.stop" => await _mediator.Send(new StopRecordingCommand(), ct),
-                    "Recording.discard" => await _mediator.Send(new DiscardRecordingCommand(), ct),
-                    "Recording.getScreenshot" => await _mediator.Send(new GetRecordingScreenshotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Recording.start" => await Handler<StartRecordingHandler>().HandleAsync(ct),
+                    "Recording.stop" => await Handler<StopRecordingHandler>().HandleAsync(ct),
+                    "Recording.discard" => await Handler<DiscardRecordingHandler>().HandleAsync(ct),
+                    "Recording.getScreenshot" => await Handler<GetRecordingScreenshotHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Settings
-                    "Settings.getAll" => await _mediator.Send(new GetAppSettingsQuery(), ct),
-                    "Settings.set" => await _mediator.Send(new SetAppSettingCommand(JsonSerializer.Deserialize<SetAppSettingDto>(request.Payload, _jsonOptions)!), ct),
+                    "Settings.getAll" => await Handler<GetAppSettingsHandler>().HandleAsync(ct),
+                    "Settings.set" => await Handler<SetAppSettingHandler>().HandleAsync(Payload<SetAppSettingDto>(request), ct),
 
                     // System IO
-                    "System.takeScreenshot" => await _mediator.Send(new SystemTakeScreenshotCommand(JsonSerializer.Deserialize<ScreenshotRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "System.captureForOverlay" => await _mediator.Send(new SystemCaptureForOverlayCommand(), ct),
-                    "System.moveCursor" => await _mediator.Send(new SystemMoveCursorCommand(JsonSerializer.Deserialize<ScreenPointDto>(request.Payload, _jsonOptions)!), ct),
-                    "System.installOcrLanguage" => await _mediator.Send(new SystemInstallOcrLanguageCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
-                    "System.openWindowsLanguageSettings" => await _mediator.Send(new SystemOpenWindowsLanguageSettingsCommand(), ct),
+                    "System.takeScreenshot" => await Handler<SystemTakeScreenshotHandler>().HandleAsync(Payload<ScreenshotRequestDto>(request), ct),
+                    "System.captureForOverlay" => await Handler<SystemCaptureForOverlayHandler>().HandleAsync(ct),
+                    "System.moveCursor" => await Handler<SystemMoveCursorHandler>().HandleAsync(Payload<ScreenPointDto>(request), ct),
+                    "System.installOcrLanguage" => await Handler<SystemInstallOcrLanguageHandler>().HandleAsync(Payload<string>(request), ct),
+                    "System.openWindowsLanguageSettings" => await Handler<SystemOpenWindowsLanguageSettingsHandler>().HandleAsync(ct),
 
-                    "System.inputRecordAllStart" => await _mediator.Send(new SystemInputRecordAllStartCommand(), ct),
-                    "System.inputRecordAllStop" => await _mediator.Send(new SystemInputRecordAllStopCommand(), ct),
-                    "System.inputRecordOverlayStart" => await _mediator.Send(new SystemInputRecordOverlayStartCommand(), ct),
-                    "System.inputRecordOverlayStop" => await _mediator.Send(new SystemInputRecordOverlayStopCommand(), ct),
-                    "System.inputRecordPointCaptureStart" => await _mediator.Send(new SystemInputRecordPointCaptureStartCommand(), ct),
-                    "System.inputRecordPointCaptureStop" => await _mediator.Send(new SystemInputRecordPointCaptureStopCommand(), ct),
-                    "System.inputRecordHotkeyStart" => await _mediator.Send(new SystemInputRecordHotkeyStartCommand(), ct),
-                    "System.inputRecordHotkeyStop" => await _mediator.Send(new SystemInputRecordHotkeyStopCommand(), ct),
+                    "System.inputRecordAllStart" => await Handler<SystemInputRecordAllStartHandler>().HandleAsync(ct),
+                    "System.inputRecordAllStop" => await Handler<SystemInputRecordAllStopHandler>().HandleAsync(ct),
+                    "System.inputRecordOverlayStart" => await Handler<SystemInputRecordOverlayStartHandler>().HandleAsync(ct),
+                    "System.inputRecordOverlayStop" => await Handler<SystemInputRecordOverlayStopHandler>().HandleAsync(ct),
+                    "System.inputRecordPointCaptureStart" => await Handler<SystemInputRecordPointCaptureStartHandler>().HandleAsync(ct),
+                    "System.inputRecordPointCaptureStop" => await Handler<SystemInputRecordPointCaptureStopHandler>().HandleAsync(ct),
+                    "System.inputRecordHotkeyStart" => await Handler<SystemInputRecordHotkeyStartHandler>().HandleAsync(ct),
+                    "System.inputRecordHotkeyStop" => await Handler<SystemInputRecordHotkeyStopHandler>().HandleAsync(ct),
 
                     // Execution
-                    "Execution.start" => await _mediator.Send(new StartExecutionCommand(JsonSerializer.Deserialize<ExecutionStartDto>(request.Payload, _jsonOptions)!), ct),
-                    "Execution.stop" => await _mediator.Send(new StopExecutionCommand(), ct),
-                    "Execution.pause" => await _mediator.Send(new PauseExecutionCommand(), ct),
-                    "Execution.continue" => await _mediator.Send(new ContinueExecutionCommand(), ct),
-                    "Execution.stepInto" => await _mediator.Send(new StepIntoExecutionCommand(), ct),
-                    "Execution.stepOver" => await _mediator.Send(new StepOverExecutionCommand(), ct),
-                    "Execution.setBreakpoints" => await _mediator.Send(new SetExecutionBreakpointsCommand(JsonSerializer.Deserialize<List<int>>(request.Payload, _jsonOptions)!), ct),
-                    "Execution.get" => await _mediator.Send(new GetExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Execution.getList" => await _mediator.Send(new GetExecutionListQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Execution.getState" => await _mediator.Send(new GetExecutionStateQuery(), ct),
-                    "Execution.getFlowSummaries" => await _mediator.Send(new GetFlowExecutionSummariesQuery(), ct),
-                    "Execution.getStepScreenshot" => await _mediator.Send(new GetExecutionStepScreenshotQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
+                    "Execution.start" => await Handler<StartExecutionHandler>().HandleAsync(Payload<ExecutionStartDto>(request), ct),
+                    "Execution.stop" => await Handler<StopExecutionHandler>().HandleAsync(ct),
+                    "Execution.pause" => await Handler<PauseExecutionHandler>().HandleAsync(ct),
+                    "Execution.continue" => await Handler<ContinueExecutionHandler>().HandleAsync(ct),
+                    "Execution.stepInto" => await Handler<StepIntoExecutionHandler>().HandleAsync(ct),
+                    "Execution.stepOver" => await Handler<StepOverExecutionHandler>().HandleAsync(ct),
+                    "Execution.setBreakpoints" => await Handler<SetExecutionBreakpointsHandler>().HandleAsync(Payload<List<int>>(request), ct),
+                    "Execution.get" => await Handler<GetExecutionHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Execution.getList" => await Handler<GetExecutionListHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Execution.getState" => await Handler<GetExecutionStateHandler>().HandleAsync(ct),
+                    "Execution.getFlowSummaries" => await Handler<GetFlowExecutionSummariesHandler>().HandleAsync(ct),
+                    "Execution.getStepScreenshot" => await Handler<GetExecutionStepScreenshotHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Ai
-                    "Ai.explainExecution" => await _mediator.Send(new ExplainExecutionQuery(JsonSerializer.Deserialize<int>(request.Payload, _jsonOptions)), ct),
-                    "Ai.getStatus" => await _mediator.Send(new GetAiStatusQuery(), ct),
-                    "Ai.getChatAvailability" => await _mediator.Send(new GetAiChatAvailabilityQuery(), ct),
-                    "Ai.ask" => await _mediator.Send(new AskAiQuery(JsonSerializer.Deserialize<AiChatRequestDto>(request.Payload, _jsonOptions)!), ct),
-                    "Ai.downloadModel" => await _mediator.Send(new DownloadAiModelCommand(JsonSerializer.Deserialize<string>(request.Payload, _jsonOptions)!), ct),
-                    "Ai.getDownloadState" => await _mediator.Send(new GetAiDownloadStateQuery(), ct),
-                    "Ai.clearDownloadState" => await _mediator.Send(new ClearAiDownloadStateCommand(), ct),
-
+                    "Ai.explainExecution" => await Handler<ExplainExecutionHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Ai.getStatus" => await Handler<GetAiStatusHandler>().HandleAsync(ct),
+                    "Ai.getChatAvailability" => await Handler<GetAiChatAvailabilityHandler>().HandleAsync(ct),
+                    "Ai.ask" => await Handler<AskAiHandler>().HandleAsync(Payload<AiChatRequestDto>(request), ct),
+                    "Ai.downloadModel" => await Handler<DownloadAiModelHandler>().HandleAsync(Payload<string>(request), ct),
+                    "Ai.getDownloadState" => await Handler<GetAiDownloadStateHandler>().HandleAsync(ct),
+                    "Ai.clearDownloadState" => await Handler<ClearAiDownloadStateHandler>().HandleAsync(ct),
                     _ => throw new InvalidOperationException($"Unknown action: {request.Action}")
                 };
-
-                //object? responsePayload = null;
-                //switch (request.Action)
-                //{
-                //    // Flow
-                //    case "Flow.create":
-                //        //await _mediator.Send(JsonSerializer.Deserialize<CreateFlowCommand>(request.Payload, _jsonOptions) ?? new(new FlowCreateDto()), ct)
-                //        var innerDto = JsonSerializer.Deserialize<FlowCreateDto>(request.Payload, _jsonOptions);
-                //        Console.WriteLine($"Deserialized inner DTO: Name = {innerDto?.Name ?? "NULL"}, Order = {innerDto?.OrderNumber ?? -999}");
-
-                //        var command = new CreateFlowCommand(innerDto ?? new FlowCreateDto());
-                //        responsePayload = await _mediator.Send(command, ct);
-                //        break;
-
-                //}
-
 
                 byte[] payloadBytes = JsonSerializer.SerializeToUtf8Bytes(responsePayload, _jsonOptions);
 
@@ -198,7 +194,7 @@ namespace Transport.Ipc
                 // trace in System.Text.Json, with no way to tell which call sent what.
                 string payloadPreview = request.Payload == null || request.Payload.Length == 0
                     ? "<empty>"
-                    : System.Text.Encoding.UTF8.GetString(request.Payload, 0, Math.Min(request.Payload.Length, 512));
+                    : Encoding.UTF8.GetString(request.Payload, 0, Math.Min(request.Payload.Length, 512));
 
                 Console.Error.WriteLine(
                     $"[.NET Dispatcher] '{request.Action}' failed: {ex.Message}{Environment.NewLine}  payload: {payloadPreview}");
@@ -211,6 +207,21 @@ namespace Transport.Ipc
                     Error = ex.Message
                 };
             }
+        }
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private T Handler<T>() where T : notnull
+        {
+            return _services.GetRequiredService<T>();
+        }
+
+        private static T Payload<T>(IpcRequest request)
+        {
+            return JsonSerializer.Deserialize<T>(request.Payload, _jsonOptions)!;
         }
     }
 }

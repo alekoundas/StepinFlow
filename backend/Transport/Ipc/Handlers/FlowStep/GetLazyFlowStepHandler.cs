@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLazyFlowStepHandler : IRequestHandler<GetLazyStepFlowQuery, ResultDto<LazyResponseDto<FlowStepDto>>>
+    public class GetLazyFlowStepHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,7 +17,7 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LazyResponseDto<FlowStepDto>>> Handle(GetLazyStepFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<LazyResponseDto<FlowStepDto>>> HandleAsync(LazyRequestDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             List<FlowStep> flowSteps = await dbContext.FlowSteps.AsNoTracking().ToListAsync(ct);

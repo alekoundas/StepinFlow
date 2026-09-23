@@ -1,12 +1,10 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLazyFlowAreaHandler : IRequestHandler<GetLazyFlowAreaQuery, ResultDto<LazyResponseDto<FlowAreaDto>>>
+    public class GetLazyFlowAreaHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -15,7 +13,7 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LazyResponseDto<FlowAreaDto>>> Handle(GetLazyFlowAreaQuery request, CancellationToken ct)
+        public async Task<ResultDto<LazyResponseDto<FlowAreaDto>>> HandleAsync(LazyRequestDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 

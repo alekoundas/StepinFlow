@@ -1,12 +1,10 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetLazyDiscordBotHandler : IRequestHandler<GetLazyDiscordBotQuery, ResultDto<LazyResponseDto<DiscordBotDto>>>
+    public class GetLazyDiscordBotHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -15,7 +13,7 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LazyResponseDto<DiscordBotDto>>> Handle(GetLazyDiscordBotQuery request, CancellationToken ct)
+        public async Task<ResultDto<LazyResponseDto<DiscordBotDto>>> HandleAsync(LazyRequestDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 

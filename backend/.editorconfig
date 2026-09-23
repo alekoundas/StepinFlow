@@ -99,13 +99,6 @@ dotnet_diagnostic.IDE0028.severity = none
 #dotnet_diagnostic.CA1305.severity = warning
 
 
-#CA1725 "Parameter names should match base declaration"
-# MediatR declares Handle(TRequest request, CancellationToken cancellationToken). The house spells a
-# token ct, everywhere, in every port and service. 95 of the 102 hits were this one clash and
-# renaming them would leave the handlers the only files in the solution not saying ct.
-# Off here and nowhere else - the rule caught five real ones in WindowService and one in AppDbContext.
-[Transport/Ipc/Handlers/**.cs]
-dotnet_diagnostic.CA1725.severity = none
 
 
 

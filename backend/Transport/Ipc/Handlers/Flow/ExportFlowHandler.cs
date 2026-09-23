@@ -3,12 +3,10 @@ using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class ExportFlowHandler : IRequestHandler<ExportFlowCommand, ResultDto<FlowExportResultDto>>
+    public class ExportFlowHandler
     {
         private readonly IFlowScriptExporter _exporter;
 
@@ -17,11 +15,11 @@ namespace Transport.Ipc.Handlers
             _exporter = exporter;
         }
 
-        public async Task<ResultDto<FlowExportResultDto>> Handle(ExportFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowExportResultDto>> HandleAsync(FlowExportRequestDto dto, CancellationToken ct)
         {
             try
             {
-                FlowExportResultDto result = await _exporter.ExportAsync(request.Dto.FlowId, request.Dto.FolderPath, ct);
+                FlowExportResultDto result = await _exporter.ExportAsync(dto.FlowId, dto.FolderPath, ct);
 
                 return ResultDto<FlowExportResultDto>.Success(result);
             }

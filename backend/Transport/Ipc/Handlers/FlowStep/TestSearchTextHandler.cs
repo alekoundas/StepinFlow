@@ -3,8 +3,6 @@ using Core.Ports;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
@@ -12,7 +10,7 @@ namespace Transport.Ipc.Handlers
     /// Reads the step's area off the live screen. Takes the whole dto rather than an id so it
     /// works on unsaved form state, same as the image search test.
     /// </summary>
-    public class TestSearchTextHandler : IRequestHandler<TestSearchTextQuery, ResultDto<SearchTextTestResultDto>>
+    public class TestSearchTextHandler
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
@@ -28,9 +26,9 @@ namespace Transport.Ipc.Handlers
             _ocrService = ocrService;
         }
 
-        public async Task<ResultDto<SearchTextTestResultDto>> Handle(TestSearchTextQuery request, CancellationToken ct)
+        public async Task<ResultDto<SearchTextTestResultDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
-            FlowStepDto step = request.Dto;
+            FlowStepDto step = dto;
 
             if (step.FlowAreaId == null)
                 return Unresolved("Pick an area to read first.");

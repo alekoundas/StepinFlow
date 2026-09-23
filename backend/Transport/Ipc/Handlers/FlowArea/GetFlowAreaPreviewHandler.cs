@@ -4,14 +4,12 @@ using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowAreaPreviewHandler : IRequestHandler<GetFlowAreaPreviewQuery, ResultDto<FlowAreaPreviewDto>>
+    public class GetFlowAreaPreviewHandler
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
@@ -27,14 +25,14 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowAreaPreviewDto>> Handle(GetFlowAreaPreviewQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowAreaPreviewDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowArea? area = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Include(x => x.ParentFlowArea)
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (area == null)
                 return ResultDto<FlowAreaPreviewDto>.Failure("Entity doesnt exist in the Database!");

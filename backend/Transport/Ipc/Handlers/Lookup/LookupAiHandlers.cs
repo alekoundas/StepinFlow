@@ -1,13 +1,11 @@
 using Business.Services.Ai.AiModels;
 using Core.Models.Dtos;
-using Transport.Messages;
 
-using MediatR;
 
 namespace Transport.Ipc.Handlers.Lookup
 {
     /// <summary>What the chosen provider offers, so the model setting is a list and not a guess.</summary>
-    public class GetLookupAiModelsHandler : IRequestHandler<GetLookupAiModelsQuery, ResultDto<AiModelsDto>>
+    public class GetLookupAiModelsHandler
     {
         private readonly IAiModelService _modelService;
 
@@ -16,7 +14,7 @@ namespace Transport.Ipc.Handlers.Lookup
             _modelService = modelService;
         }
 
-        public async Task<ResultDto<AiModelsDto>> Handle(GetLookupAiModelsQuery request, CancellationToken ct)
+        public async Task<ResultDto<AiModelsDto>> HandleAsync(CancellationToken ct)
         {
             AiModelsDto models = await _modelService.GetModelsAsync(ct);
             return ResultDto<AiModelsDto>.Success(models);
@@ -25,7 +23,6 @@ namespace Transport.Ipc.Handlers.Lookup
 
     /// <summary>Local models worth offering, with the ones already downloaded marked.</summary>
     public class GetLookupAiModelSuggestionsHandler
-        : IRequestHandler<GetLookupAiModelSuggestionsQuery, ResultDto<IReadOnlyList<AiModelSuggestionDto>>>
     {
         private readonly IAiModelService _modelService;
 
@@ -34,7 +31,7 @@ namespace Transport.Ipc.Handlers.Lookup
             _modelService = modelService;
         }
 
-        public async Task<ResultDto<IReadOnlyList<AiModelSuggestionDto>>> Handle(GetLookupAiModelSuggestionsQuery request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<AiModelSuggestionDto>>> HandleAsync(CancellationToken ct)
         {
             IReadOnlyList<AiModelSuggestionDto> suggestions = await _modelService.GetModelSuggestionsAsync(ct);
             return ResultDto<IReadOnlyList<AiModelSuggestionDto>>.Success(suggestions);

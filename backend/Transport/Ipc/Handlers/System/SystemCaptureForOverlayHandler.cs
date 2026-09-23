@@ -2,12 +2,10 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemCaptureForOverlayHandler : IRequestHandler<SystemCaptureForOverlayCommand, ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>>
+    public class SystemCaptureForOverlayHandler
     {
         private readonly IScreenshotService _screenshotService;
         private readonly IScreenService _screenService;
@@ -18,7 +16,7 @@ namespace Transport.Ipc.Handlers
             _screenService = screenService;
         }
 
-        public async Task<ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>> Handle(SystemCaptureForOverlayCommand request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<ScreenshotMonitorResponseDto>>> HandleAsync(CancellationToken ct)
         {
             List<ScreenshotMonitorResponseDto> response = new List<ScreenshotMonitorResponseDto>();
 

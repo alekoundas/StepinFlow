@@ -1,8 +1,6 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers.Execution
@@ -11,7 +9,7 @@ namespace Transport.Ipc.Handlers.Execution
     /// Past runs of one flow, newest first. Capped, because nothing prunes the table yet and the
     /// history panel only ever shows the recent ones - see TODO.md, keep-last-X-runs retention.
     /// </summary>
-    public class GetExecutionListHandler : IRequestHandler<GetExecutionListQuery, ResultDto<List<ExecutionDto>>>
+    public class GetExecutionListHandler
     {
         private const int _maxRuns = 50;
 
@@ -22,13 +20,13 @@ namespace Transport.Ipc.Handlers.Execution
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<List<ExecutionDto>>> Handle(GetExecutionListQuery request, CancellationToken ct)
+        public async Task<ResultDto<List<ExecutionDto>>> HandleAsync(int flowId, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             List<ExecutionDto> executions = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.FlowId == request.FlowId)
+                .Where(x => x.FlowId == flowId)
                 .OrderByDescending(x => x.Id)
                 .Take(_maxRuns)
                 .Select(x => new ExecutionDto

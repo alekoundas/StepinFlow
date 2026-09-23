@@ -1,8 +1,6 @@
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -13,7 +11,7 @@ namespace Transport.Ipc.Handlers
     /// point at something that has stopped being invokable, which is what removes every stale
     /// caller case from the rest of the feature.
     /// </summary>
-    public class PromoteFlowToSubFlowHandler : IRequestHandler<PromoteFlowToSubFlowCommand, ResultDto<bool>>
+    public class PromoteFlowToSubFlowHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -22,11 +20,11 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<bool>> Handle(PromoteFlowToSubFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == id, ct);
             if (flow == null)
                 return ResultDto<bool>.Failure("That flow no longer exists.");
 
@@ -44,7 +42,7 @@ namespace Transport.Ipc.Handlers
     /// The flows that invoke this one. Shown on a sub-flow so editing it is a decision rather
     /// than a surprise for whoever depends on it.
     /// </summary>
-    public class GetFlowCallersHandler : IRequestHandler<GetFlowCallersQuery, ResultDto<IReadOnlyList<LookupItemDto>>>
+    public class GetFlowCallersHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -53,14 +51,14 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<IReadOnlyList<LookupItemDto>>> Handle(GetFlowCallersQuery request, CancellationToken ct)
+        public async Task<ResultDto<IReadOnlyList<LookupItemDto>>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             // RootId is the flow the step lives in, which is exactly the caller.
             List<int> callerIds = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.SubFlowId == request.Id)
+                .Where(x => x.SubFlowId == id)
                 .Select(x => x.RootId)
                 .Distinct()
                 .ToListAsync(ct);

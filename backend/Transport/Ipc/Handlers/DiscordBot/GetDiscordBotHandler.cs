@@ -1,13 +1,11 @@
 using AutoMapper;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetDiscordBotHandler : IRequestHandler<GetDiscordBotQuery, ResultDto<DiscordBotDto>>
+    public class GetDiscordBotHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -18,13 +16,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<DiscordBotDto>> Handle(GetDiscordBotQuery request, CancellationToken ct)
+        public async Task<ResultDto<DiscordBotDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             Core.Models.Database.DiscordBot? bot = await dbContext.DiscordBots
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (bot == null)
                 return ResultDto<DiscordBotDto>.Failure("That Discord bot no longer exists.");

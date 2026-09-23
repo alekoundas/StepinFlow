@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemInputRecordHotkeyStartHandler : IRequestHandler<SystemInputRecordHotkeyStartCommand, ResultDto<bool>>
+    public class SystemInputRecordHotkeyStartHandler
     {
         private readonly IInputRecordService _inputRecordService;
 
@@ -14,11 +12,11 @@ namespace Transport.Ipc.Handlers
             _inputRecordService = inputRecordService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemInputRecordHotkeyStartCommand request, CancellationToken ct) =>
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct) =>
             ResultDto<bool>.Success(await _inputRecordService.StartRecordingHotkeyAsync());
     }
 
-    public class SystemInputRecordHotkeyStopHandler : IRequestHandler<SystemInputRecordHotkeyStopCommand, ResultDto<bool>>
+    public class SystemInputRecordHotkeyStopHandler
     {
         private readonly IInputRecordService _inputRecordService;
 
@@ -27,7 +25,7 @@ namespace Transport.Ipc.Handlers
             _inputRecordService = inputRecordService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemInputRecordHotkeyStopCommand request, CancellationToken ct) =>
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct) =>
             ResultDto<bool>.Success(await _inputRecordService.StopRecordingHotkeyAsync());
     }
 }

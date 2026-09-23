@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowStepHandler : IRequestHandler<GetFlowStepQuery, ResultDto<FlowStepDto>>
+    public class GetFlowStepHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,13 +17,13 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowStepDto>> Handle(GetFlowStepQuery request, CancellationToken ct)
+        public async Task<ResultDto<FlowStepDto>> HandleAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             FlowStep? flowStep = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Include(x => x.FlowStepTemplates.OrderBy(image => image.OrderNumber))
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (flowStep == null)
                 return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");

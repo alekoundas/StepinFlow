@@ -1,12 +1,10 @@
 using Business.Services.AreaPointService;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class GetFlowPointPreviewHandler : IRequestHandler<GetFlowPointPreviewQuery, ResultDto<ScreenPointDto>>
+    public class GetFlowPointPreviewHandler
     {
         private readonly IAreaPointResolver _areaPointResolver;
 
@@ -15,9 +13,9 @@ namespace Transport.Ipc.Handlers
             _areaPointResolver = areaPointResolver;
         }
 
-        public async Task<ResultDto<ScreenPointDto>> Handle(GetFlowPointPreviewQuery request, CancellationToken ct)
+        public async Task<ResultDto<ScreenPointDto>> HandleAsync(int id, CancellationToken ct)
         {
-            PointResolution resolution = await _areaPointResolver.ResolvePointAsync(request.Id, ct);
+            PointResolution resolution = await _areaPointResolver.ResolvePointAsync(id, ct);
 
             if (!resolution.IsResolved)
                 return ResultDto<ScreenPointDto>.Failure(resolution.Error!);

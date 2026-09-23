@@ -1,14 +1,12 @@
 using AutoMapper;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
-    public class UpdateFlowHandler : IRequestHandler<UpdateFlowCommand, ResultDto<FlowDto>>
+    public class UpdateFlowHandler
     {
         private readonly IMapper _mapper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -19,7 +17,7 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<FlowDto>> Handle(UpdateFlowCommand request, CancellationToken ct)
+        public async Task<ResultDto<FlowDto>> HandleAsync(FlowDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
@@ -27,18 +25,18 @@ namespace Transport.Ipc.Handlers
                 .Include(x => x.FlowAreas)
                 .Include(x => x.FlowPoints)
                 .Include(x => x.FlowViewports)
-                .FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (existingFlow == null)
                 return ResultDto<FlowDto>.Failure("Flow not found");
 
-            existingFlow.Name = request.Dto.Name;
-            existingFlow.Description = request.Dto.Description;
+            existingFlow.Name = dto.Name;
+            existingFlow.Description = dto.Description;
 
             // Areas first: a location can point at an area created in this same payload.
-            Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, request.Dto.FlowAreas);
-            SyncFlowPoints(dbContext, existingFlow, request.Dto.FlowPoints, areasByDtoId);
-            SyncFlowViewports(dbContext, existingFlow, request.Dto.FlowViewports);
+            Dictionary<int, FlowArea> areasByDtoId = SyncFlowAreas(dbContext, existingFlow, dto.FlowAreas);
+            SyncFlowPoints(dbContext, existingFlow, dto.FlowPoints, areasByDtoId);
+            SyncFlowViewports(dbContext, existingFlow, dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
 

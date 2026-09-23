@@ -1,7 +1,5 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -11,7 +9,7 @@ namespace Transport.Ipc.Handlers
     /// The bots a Notify step can send through. The webhook URL is deliberately not returned:
     /// a dropdown never needs the credential, and this response reaches the renderer.
     /// </summary>
-    public class GetLookupDiscordBotHandler : IRequestHandler<GetLookupDiscordBotQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupDiscordBotHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -20,10 +18,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupDiscordBotQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
-            LookupRequestDto dto = request.Dto;
-
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             IQueryable<Core.Models.Database.DiscordBot> query = dbContext.DiscordBots.AsNoTracking();

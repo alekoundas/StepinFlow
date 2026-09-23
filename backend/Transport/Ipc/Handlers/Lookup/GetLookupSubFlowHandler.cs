@@ -1,7 +1,5 @@
 using Core.Models.Dtos;
-using Transport.Messages;
 using DataAccess;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -15,7 +13,7 @@ namespace Transport.Ipc.Handlers
     /// refusing a cycle here would be the one rule out of step with that, and a self call with
     /// an exit condition is recursion rather than a mistake.
     /// </summary>
-    public class GetLookupSubFlowHandler : IRequestHandler<GetLookupSubFlowQuery, ResultDto<LookupResponseDto>>
+    public class GetLookupSubFlowHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
@@ -24,10 +22,8 @@ namespace Transport.Ipc.Handlers
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task<ResultDto<LookupResponseDto>> Handle(GetLookupSubFlowQuery request, CancellationToken ct)
+        public async Task<ResultDto<LookupResponseDto>> HandleAsync(LookupRequestDto dto, CancellationToken ct)
         {
-            LookupRequestDto dto = request.Dto;
-
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             IQueryable<Core.Models.Database.Flow> query = dbContext.Flows

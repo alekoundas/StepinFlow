@@ -1,11 +1,9 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Transport.Messages;
-using MediatR;
 
 namespace Transport.Ipc.Handlers
 {
-    public class SystemInputRecordPointCaptureStopHandler : IRequestHandler<SystemInputRecordPointCaptureStopCommand, ResultDto<bool>>
+    public class SystemInputRecordPointCaptureStopHandler
     {
         private readonly IInputRecordService _inputRecordService;
 
@@ -14,7 +12,7 @@ namespace Transport.Ipc.Handlers
             _inputRecordService = inputRecordService;
         }
 
-        public async Task<ResultDto<bool>> Handle(SystemInputRecordPointCaptureStopCommand request, CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
         {
             bool result = await _inputRecordService.StopRecordingPointCaptureAsync();
 
