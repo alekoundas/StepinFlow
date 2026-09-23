@@ -1,14 +1,12 @@
 using App.AutoMapper;
-using App.Ipc;
+using Transport.Ipc;
 using Business.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
 using Business.FlowScript;
-using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Business.Services.FlowValidationService;
-using Business.Services.FlowValidationService.Rules;
 using Core.Ports;
 using Business.Services.Ai;
 using Business.Services.AppSettingService;
@@ -128,7 +126,7 @@ namespace App
             builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
             builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
-            builder.Services.AddHostedService<HostedBroadcaststPipeListener>();// <- Background service!
+            builder.Services.AddHostedService<HostedBroadcastPipeListener>();// <- Background service!
 
             // SharpHook 
             builder.Services.AddHostedService<HostedSharpHookService>(); // <- Background service!
@@ -184,14 +182,13 @@ namespace App
     }
 
     // Broadcast Pipe
-    internal sealed class HostedBroadcaststPipeListener : BackgroundService
+    internal sealed class HostedBroadcastPipeListener : BackgroundService
     {
         private readonly IpcBroadcastPipe _ipcBroadcastPipe;
-        public HostedBroadcaststPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
+        public HostedBroadcastPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
         protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
     }
 
-    
 
     // Start global input recording hook.
     internal sealed class HostedSharpHookService : BackgroundService

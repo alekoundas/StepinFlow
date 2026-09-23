@@ -6,7 +6,7 @@ using System.IO.Pipes;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
-namespace App.Ipc
+namespace Transport.Ipc
 {
     public sealed class IpcBroadcastPipe
     {

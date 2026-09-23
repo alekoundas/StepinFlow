@@ -5,7 +5,7 @@ using System.Buffers.Binary;
 using System.IO.Pipes;
 using Microsoft.Extensions.Logging;
 
-namespace App.Ipc
+namespace Transport.Ipc
 {
     public sealed class IpcRequestPipe
     {

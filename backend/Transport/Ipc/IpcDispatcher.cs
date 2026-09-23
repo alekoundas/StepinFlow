@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace App.Ipc
+namespace Transport.Ipc
 {
     public class IpcDispatcher
     {

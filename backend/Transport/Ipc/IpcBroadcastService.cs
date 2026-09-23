@@ -4,7 +4,7 @@ using Core.Models.Ipc.Protobuf;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace App.Ipc
+namespace Transport.Ipc
 {
     public sealed class IpcBroadcastService : IIpcBroadcastService
     {
