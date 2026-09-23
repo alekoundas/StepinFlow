@@ -1,6 +1,5 @@
 using Business.Services.Ai.Helpers;
 using Business.Services.Ai.Providers;
-using Core.Enums;
 using Core.Models.Dtos;
 
 using DataAccess;

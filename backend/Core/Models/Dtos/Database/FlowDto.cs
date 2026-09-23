@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 
-using Core.Enums;
 
 namespace Core.Models.Dtos
 {

@@ -1,5 +1,4 @@
-﻿using Core.Enums;
-
+﻿
 namespace Platform.Windows.Screen
 {
     public interface IWindowsGraphicsCaptureService

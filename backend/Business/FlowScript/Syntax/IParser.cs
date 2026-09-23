@@ -4,7 +4,7 @@ namespace Business.FlowScript.Syntax
     {
         /// <summary>
         /// A .sflw file as far as text alone can take it: names are still names, and an unreadable
-        /// line is an entry in <see cref="FlowSyntax.Errors"/> rather than an exception.
+        /// line is an entry in <see cref="FlowSyntax.Diagnostics"/> rather than an exception.
         /// </summary>
         FlowSyntax Read(string script);
     }

@@ -1,6 +1,5 @@
 using Core.Models.Database;
 
-using Core.Helpers;
 using Core.Models.Business;
 
 namespace Business.Services.ExecutionService.Workers

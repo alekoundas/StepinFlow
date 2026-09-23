@@ -9,7 +9,7 @@ namespace Business.FlowScript.Syntax
     /// <summary>
     /// A .sflw file back into a flow, as far as text alone can take it.
     ///
-    /// The mirror of <see cref="Printer"/> and pure like it: no database, no files, no
+    /// The mirror of <see cref="Text.Printer"/> and pure like it: no database, no files, no
     /// ids. What the script says by name stays a name, and <see cref="FlowScriptImporter"/> is
     /// what turns those into rows.
     ///

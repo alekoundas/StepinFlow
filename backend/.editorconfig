@@ -85,6 +85,8 @@ dotnet_diagnostic.IDE0066.severity = none
 # IDE0028 "Collection initialization can be simplified" (Allow the "new" keyword ex. List<string> names = new List<string>())  
 dotnet_diagnostic.IDE0028.severity = none 
 
+#IDE0005 "Using directive is unnecessary" (A dead "using" is not accepted)
+dotnet_diagnostic.IDE0005.severity = warning
 
 
 
@@ -92,6 +94,18 @@ dotnet_diagnostic.IDE0028.severity = none
 # Project specific
 # ----------------------------------------------------------------------------------------------
 
+
+#IDE0005 "Using directive is unnecessary" (A dead "using" is accepted ONLY in migrations)
+# EF writes a migration "usings" from a template and does not know which the migration uses.
+[DataAccess/Migrations/**.cs]
+dotnet_diagnostic.IDE0005.severity = none
+
+
+
+
+
+
+#TODO 
 #CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
 # A number written into a .sflw file on a machine whose decimal separator is a comma is a file the
 # parser cannot read back. The writer already formats invariantly; this is what keeps the next one doing it.
@@ -106,10 +120,6 @@ dotnet_diagnostic.IDE0028.severity = none
 
 
 
-
-
-#TODO 
-
 #RS0030 "The symbol is banned in this project" (backend/Rules/BannedSymbols.txt)
 # CommandRunner is the deviation, and a port would not fix it: BuildStartInfo launches cmd.exe or
 # powershell.exe and reads the console OEM code page, and every CommandPresetCatalog entry is a
@@ -117,3 +127,4 @@ dotnet_diagnostic.IDE0028.severity = none
 # phase 4.6. Until it is answered this is the one place Business may hold a Process.
 [Business/Services/CommandService/**.cs]
 dotnet_diagnostic.RS0030.severity = none
+

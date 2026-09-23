@@ -1,4 +1,3 @@
-using Core.Models;
 using Core.Models.Database;
 using DataAccess.Configurations;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,5 @@
 ﻿
 using Core.Models.Business;
-using System.Runtime.Intrinsics.Arm;
 
 namespace Core.Ports
 {

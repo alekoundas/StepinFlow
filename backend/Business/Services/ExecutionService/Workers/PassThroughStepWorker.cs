@@ -1,4 +1,3 @@
-using Core.Models.Business;
 using Core.Models.Database;
 
 namespace Business.Services.ExecutionService.Workers
