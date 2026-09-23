@@ -1,7 +1,7 @@
 using Core.Models.Dtos;
 using MediatR;
 
-namespace Core.Models.Ipc
+namespace Transport.Messages
 {
     // ============== QUERIES ==============
     public record ExplainExecutionQuery(int ExecutionId) : IRequest<ResultDto<AiAnswerDto>>;

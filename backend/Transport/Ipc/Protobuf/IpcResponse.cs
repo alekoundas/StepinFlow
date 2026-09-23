@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Core.Models.Ipc.Protobuf
+namespace Transport.Ipc.Protobuf
 {
     [ProtoContract]
     public class IpcResponse

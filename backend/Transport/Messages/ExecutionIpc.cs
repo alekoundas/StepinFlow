@@ -2,7 +2,7 @@ using Core.Models.Dtos;
 using Core.Models.Dtos.Database;
 using MediatR;
 
-namespace Core.Models.Ipc
+namespace Transport.Messages
 {
     // ============== COMMANDS ==============
     public record StartExecutionCommand(ExecutionStartDto Dto) : IRequest<ResultDto<int>>;

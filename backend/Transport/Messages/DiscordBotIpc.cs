@@ -1,7 +1,7 @@
 using Core.Models.Dtos;
 using MediatR;
 
-namespace Core.Models.Ipc
+namespace Transport.Messages
 {
     // ============== QUERIES ==============
     public record GetDiscordBotQuery(int Id) : IRequest<ResultDto<DiscordBotDto>>;

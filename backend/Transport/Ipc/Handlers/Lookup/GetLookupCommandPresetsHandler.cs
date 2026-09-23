@@ -1,6 +1,6 @@
 using Business.Services.CommandService;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 using MediatR;
 
 namespace Transport.Ipc.Handlers

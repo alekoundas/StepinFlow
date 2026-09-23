@@ -1,7 +1,7 @@
 using Core.Enums;
 using Core.Models.Dtos;
 using Core.Models.Dtos.Database;
-using Core.Models.Ipc;
+using Transport.Messages;
 
 using DataAccess;
 using MediatR;

@@ -1,4 +1,4 @@
-﻿using Core.Models.Ipc.Protobuf;
+﻿using Transport.Ipc.Protobuf;
 using ProtoBuf;
 using System.Buffers;
 using System.Buffers.Binary;

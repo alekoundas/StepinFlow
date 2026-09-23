@@ -1,6 +1,6 @@
 ﻿using Core.Enums;
 using Core.Ports;
-using Core.Models.Ipc.Protobuf;
+using Transport.Ipc.Protobuf;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

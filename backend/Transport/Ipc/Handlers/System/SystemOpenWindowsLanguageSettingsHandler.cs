@@ -1,6 +1,6 @@
 using Core.Ports;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 using MediatR;
 
 namespace Transport.Ipc.Handlers

@@ -2,7 +2,7 @@
 using Core.Models.Dtos;
 using MediatR;
 
-namespace Core.Models.Ipc
+namespace Transport.Messages
 {
 
     // ============== QUERIES ==============

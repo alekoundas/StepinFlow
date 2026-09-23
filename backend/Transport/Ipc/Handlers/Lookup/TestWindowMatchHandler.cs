@@ -4,7 +4,7 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 using MediatR;
 
 namespace Transport.Ipc.Handlers

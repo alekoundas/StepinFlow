@@ -2,7 +2,7 @@ using Business.Services.Ai;
 using Business.Services.Ai.AiModels;
 using Business.Services.Ai.Providers;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 
 using MediatR;
 

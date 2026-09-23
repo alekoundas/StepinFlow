@@ -1,7 +1,6 @@
-﻿using Core.Enums;
-using ProtoBuf;
+﻿using ProtoBuf;
 
-namespace Core.Models.Ipc.Protobuf
+namespace Transport.Ipc.Protobuf
 {
     [ProtoContract]
     public class IpcBroadcast

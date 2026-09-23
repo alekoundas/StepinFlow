@@ -2,7 +2,7 @@ using AutoMapper;
 using Business.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

@@ -3,7 +3,7 @@ using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Core.Models.Dtos;
-using Core.Models.Ipc;
+using Transport.Messages;
 using MediatR;
 
 namespace Transport.Ipc.Handlers

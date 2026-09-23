@@ -1,7 +1,7 @@
 
 using Core.Models.Dtos;
-using Core.Models.Ipc;
-using Core.Models.Ipc.Protobuf;
+using Transport.Messages;
+using Transport.Ipc.Protobuf;
 using MediatR;
 using System.Text.Json;
 using System.Text.Json.Serialization;
