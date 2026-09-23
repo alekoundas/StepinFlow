@@ -6,7 +6,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Counts what a delete would take, so the question asked before it is the true one.

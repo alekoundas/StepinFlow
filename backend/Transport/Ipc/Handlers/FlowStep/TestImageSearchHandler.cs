@@ -6,7 +6,7 @@ using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Runs the step's search against the live screen without clicking anything. Takes the whole

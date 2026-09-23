@@ -10,7 +10,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class SystemTakeScreenshotHandler : IRequestHandler<SystemTakeScreenshotCommand, ResultDto<byte[]>>
     {

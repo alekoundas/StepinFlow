@@ -7,7 +7,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Error and warning counts for a page of flows.

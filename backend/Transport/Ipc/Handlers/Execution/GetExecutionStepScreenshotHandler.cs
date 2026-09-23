@@ -6,7 +6,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// One screenshot back off disk, base64 for the page to draw. The path is built here from the

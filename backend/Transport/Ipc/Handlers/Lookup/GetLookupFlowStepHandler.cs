@@ -8,7 +8,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class GetLookupFlowStepHandler : IRequestHandler<GetLookupFlowStepQuery, ResultDto<LookupResponseDto>>
     {

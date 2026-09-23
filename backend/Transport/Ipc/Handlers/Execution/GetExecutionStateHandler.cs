@@ -4,7 +4,7 @@ using Core.Models.Ipc;
 
 using MediatR;
 
-namespace Business.Ipc.Handlers.Execution
+namespace Transport.Ipc.Handlers.Execution
 {
     /// <summary>
     /// Read on mount. The engine outlives the page, so a run started before you navigated away is

@@ -3,7 +3,7 @@ using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Runs the step's command for real so the author can see what it returns. There is no way to

@@ -6,7 +6,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class GetFlowStepMovePreviewHandler : IRequestHandler<GetFlowStepMovePreviewQuery, ResultDto<FlowStepMovePreviewDto>>
     {

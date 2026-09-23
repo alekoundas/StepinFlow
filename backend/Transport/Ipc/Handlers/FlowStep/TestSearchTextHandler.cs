@@ -6,7 +6,7 @@ using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Reads the step's area off the live screen. Takes the whole dto rather than an id so it

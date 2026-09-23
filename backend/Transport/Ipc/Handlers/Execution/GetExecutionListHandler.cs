@@ -5,7 +5,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers.Execution
+namespace Transport.Ipc.Handlers.Execution
 {
     /// <summary>
     /// Past runs of one flow, newest first. Capped, because nothing prunes the table yet and the

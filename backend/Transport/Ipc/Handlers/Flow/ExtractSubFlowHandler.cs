@@ -9,7 +9,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     /// <summary>
     /// Lifts a step and everything under it into a new sub-flow, leaving a SUB_FLOW step in its

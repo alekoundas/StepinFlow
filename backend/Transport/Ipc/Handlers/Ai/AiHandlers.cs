@@ -6,7 +6,7 @@ using Core.Models.Ipc;
 
 using MediatR;
 
-namespace Business.Ipc.Handlers.Ai
+namespace Transport.Ipc.Handlers.Ai
 {
     /// <summary>Reads a run and says what went wrong.</summary>
     public class ExplainExecutionHandler : IRequestHandler<ExplainExecutionQuery, ResultDto<AiAnswerDto>>

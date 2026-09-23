@@ -4,7 +4,7 @@ using Core.Models.Ipc;
 
 using MediatR;
 
-namespace Business.Ipc.Handlers.Lookup
+namespace Transport.Ipc.Handlers.Lookup
 {
     /// <summary>What the chosen provider offers, so the model setting is a list and not a guess.</summary>
     public class GetLookupAiModelsHandler : IRequestHandler<GetLookupAiModelsQuery, ResultDto<AiModelsDto>>

@@ -1,6 +1,6 @@
 using App.AutoMapper;
 using Transport.Ipc;
-using Business.Ipc.Handlers;
+using Transport.Ipc.Handlers;
 using Business.Services.CommandService;
 using Business.Services.AreaPointService;
 using Business.FlowScript;
@@ -136,7 +136,7 @@ namespace App
             // MediatR
             builder.Services.AddMediatR(cfg =>
             {
-                cfg.RegisterServicesFromAssembly(typeof(SystemTakeScreenshotHandler).Assembly); // scans all handlers in Business
+                cfg.RegisterServicesFromAssembly(typeof(SystemTakeScreenshotHandler).Assembly); // scans all handlers in Transport
             });
 
 

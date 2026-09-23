@@ -7,7 +7,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers.Execution
+namespace Transport.Ipc.Handlers.Execution
 {
     /// <summary>
     /// Every flow with the shape of its run history, for the executions list.

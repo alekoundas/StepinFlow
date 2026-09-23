@@ -5,7 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class GetLookupFlowAreaHandler : IRequestHandler<GetLookupFlowAreaQuery, ResultDto<LookupResponseDto>>
     {

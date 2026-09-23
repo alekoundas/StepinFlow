@@ -6,7 +6,7 @@ using Core.Models.Dtos;
 using Core.Models.Ipc;
 using MediatR;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class ExportFlowHandler : IRequestHandler<ExportFlowCommand, ResultDto<FlowExportResultDto>>
     {

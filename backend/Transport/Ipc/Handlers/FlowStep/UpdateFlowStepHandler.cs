@@ -7,7 +7,7 @@ using DataAccess;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Ipc.Handlers
+namespace Transport.Ipc.Handlers
 {
     public class UpdateFlowStepHandler : IRequestHandler<UpdateFlowStepCommand, ResultDto<FlowStepDto>>
     {

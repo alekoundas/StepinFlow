@@ -104,7 +104,7 @@ dotnet_diagnostic.IDE0028.severity = none
 # token ct, everywhere, in every port and service. 95 of the 102 hits were this one clash and
 # renaming them would leave the handlers the only files in the solution not saying ct.
 # Off here and nowhere else - the rule caught five real ones in WindowService and one in AppDbContext.
-[Business/Ipc/Handlers/**.cs]
+[Transport/Ipc/Handlers/**.cs]
 dotnet_diagnostic.CA1725.severity = none
 
 
