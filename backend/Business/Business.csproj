@@ -8,8 +8,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>false</UseWindowsForms>
-    <UseWPF>false</UseWPF>
+
+    <!-- Required for the IDE0005(dead usings) rule to work, by setting it to "true" you tell the compiler: 
+         "I want to generate a complete metadata map of my public code to expose to external systems."-->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
   </PropertyGroup>
 
   <ItemGroup>

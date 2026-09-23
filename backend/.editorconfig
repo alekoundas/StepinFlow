@@ -85,8 +85,11 @@ dotnet_diagnostic.IDE0066.severity = none
 # IDE0028 "Collection initialization can be simplified" (Allow the "new" keyword ex. List<string> names = new List<string>())  
 dotnet_diagnostic.IDE0028.severity = none 
 
+
 #IDE0005 "Using directive is unnecessary" (A dead "using" is not accepted)
 dotnet_diagnostic.IDE0005.severity = warning
+#CS1591 "Missing XML comment for publicly visible type or member" - required after IDE0005 (a public class or property without a comment "///")
+dotnet_diagnostic.CS1591.severity = none
 
 
 

@@ -617,14 +617,16 @@ each other, so this is merging them rather than inventing a structure.
 
 #### The transport boundary
 
-- [ ] **`Core` references MediatR and protobuf-net, and PROJECT.md says it references nothing.**
+- [x] **`Core` referenced MediatR and protobuf-net, and PROJECT.md said it referenced nothing.**
       Section 3's table describes `Core` as "Models, DTOs, enums, ports, pure logic" with no
       dependencies. `Core.csproj` disagrees, because `Core/Models/Ipc` holds thirteen files of
       MediatR `IRequest` messages and the protobuf contracts. That is the transport living in the
       domain, and it is a bigger crack than the handler question it came from.
 
-- [ ] **One `Transport` project for every transport.** This is not a new layer, it is a layer
-      that already exists spread across three projects:
+      **`Core.csproj` now has no `PackageReference` at all.**
+
+- [x] **One `Transport` project for every transport.** Not a new layer - a layer that already
+      existed spread across three projects:
 
       | today | lines |
       | --- | --- |
@@ -649,7 +651,17 @@ each other, so this is merging them rather than inventing a structure.
 
       `Core/Models/Dtos` stays where it is - both sides use it and it is plain records.
 
-- [ ] **Drop MediatR for a hand-rolled dispatcher.** The licence forced the question - MediatR
+      Done in four steps, each building green on its own: the empty project; `App/Ipc/` in;
+      `Business/Ipc/Handlers/` in; `Core/Models/Ipc/` in, splitting into `Transport/Messages/`
+      and `Transport/Ipc/Protobuf/`. **The order was forced** - the messages implement
+      `IRequest<>` and the handlers referenced them, so moving the messages before the handlers
+      would not compile.
+
+      One thing blocked it and was dead code: `DiscordNotifier` carried
+      `using ProtoBuf.WellKnownTypes;`, unused, which alone would have kept protobuf-net on
+      `Business`. Nothing in the build reported it, which is what led to IDE0005 below.
+
+- [x] **Drop MediatR for a hand-rolled dispatcher.** The licence forced the question - MediatR
       14.2.0 ships a Lucky Penny Software `LICENSE.md` offering RPL-1.5 or a paid commercial
       licence, and this repository is GPL-3.0-or-later and ships as an installer, so neither arm
       sits comfortably. See `TODO.md` under Licences, and AutoMapper with it.
@@ -666,19 +678,64 @@ each other, so this is merging them rather than inventing a structure.
       so the only work left for the library is resolving `IRequestHandler<CreateFlowCommand, ...>`
       out of the container. That is one `GetRequiredService` call behind a generic method.
 
-- [ ] **Take the route table while doing it.** The 99-arm switch is only half the registration: a
-      message also needs its handler, and the two are tied together by hand in two files, so a
-      forgotten arm is a route that silently does not exist. A handler declaring its own route
-      collapses both into one place and deletes the switch.
+- [x] **The switch stayed, and that took three tries to work out.** The plan here said to
+      replace it with a route table, and that was wrong. Three shapes were built:
 
-      What that gives up is the compiler checking every arm, so it wants what the step workers
-      already want in `TODO.md` - **a startup check that every route resolves to exactly one
-      handler and every handler is reachable by a route.** Fail the host, not the request. That is
-      strictly better than the switch, which only ever proved the arm compiled.
+      | | |
+      | --- | --- |
+      | `IIpcHandler<TPayload, TResult>` + `[IpcRoute]` on the class | two generic interfaces force `MakeGenericMethod` and a closure per route - 125 lines, most of it getting back to a typed call |
+      | `[IpcRoute]` on the method, no interface | much smaller: `JsonSerializer.Deserialize(payload, type, options)` is non generic, and `await (dynamic)` handles `Task<ResultDto<T>>` for any T |
+      | **the switch, kept** | 97 arms, `Handler<T>()` and `Payload<T>(request)` doing the repeated work |
 
-      Smaller alternative if this turns out to be a bad trade: keep the switch, replace
-      `_mediator.Send(x)` with a generic `Handle<TRequest, TResponse>` that deserializes, resolves
-      and calls. Same licence outcome, none of the redesign.
+      **The switch was never the problem - MediatR was.** The noise in the old arm was
+      `_mediator.Send(new GetFlowQuery(...), ct)`: a wrapper type per route, built so a library
+      could match on it. 103 of those records existed, **none with more than one field and 29 with
+      none at all**. Strip the wrapper and the arm reads as the route it serves:
+
+      ```
+      "Flow.get" => await Handler<GetFlowHandler>().HandleAsync(Payload<int>(request), ct),
+      ```
+
+      What the switch gives that neither reflective version did: a duplicate action is CS0152, a
+      handler whose signature changes breaks the arm that calls it, and F12 reaches the handler.
+      The startup check it was supposed to need is the compiler. Registration is 96 explicit
+      `AddTransient<T>()` lines in `Program.cs` - the other half of the protocol, and the price of
+      no reflection anywhere in `Transport`.
+
+      A route string nobody wrote is a 404 on the first click in development, which is where a
+      name mismatch belongs. An enum instead of strings is a later thought; it moves the mismatch
+      to `Enum.TryParse` rather than removing it, unless the frontend is generated from it.
+
+- [x] **The deviation deleted itself.** `.editorconfig` had CA1725 off under the handlers because
+      MediatR declares `Handle(TRequest request, CancellationToken cancellationToken)` and the
+      house spells a token `ct`. Our own signature spells it `ct`, so there is nothing to deviate
+      from - 194 suppressed diagnostics that stopped needing suppression. It found one on the way
+      out: `StartExecutionHandler` took `CancellationToken _`, which had been invisible inside the
+      suppression.
+
+- [x] **One handler, one file.** Six files held 25 classes between them - `AiHandlers.cs` alone
+      held seven. 98 files, 98 classes now. Four expression-bodied members became blocks.
+
+- [x] **IDE0005 turned on, and it is not free.** A dead `using` is how a project keeps a package
+      it stopped using, which is exactly what `DiscordNotifier` did with protobuf-net. The rule
+      only reports at build when `GenerateDocumentationFile` is set, because a `using` can be
+      needed by an XML `cref` alone and the compiler will not guess without binding doc comments.
+      That flag brings CS1591 with it - 4,116 hits, "missing XML comment on a public member" -
+      so it is in `NoWarn`.
+
+      24 dead usings across all five projects, each a change that did not finish:
+      `System.Diagnostics` in `ExecutionEngine` from before `TimeProvider`, `System.Globalization`
+      in `StepParser` from before the number helpers moved, and
+      `using System.Runtime.Intrinsics.Arm;` in `IInputRecordService`, which is autocomplete.
+
+      Two things worth knowing. IDE0005 reports a **run** of consecutive dead usings as one
+      diagnostic at the first line, so one pass does not finish the job. And EF migrations are
+      exempted by path - EF writes their usings from a template, so `migrations add` would fail
+      the build.
+
+      It also brought CS1573 and CS1574, four real ones, two of them stale names this refactor
+      had left behind: a cref to `FlowSyntax.Errors` after it became `Diagnostics`, and one to
+      `Printer` after it moved to `Business.FlowScript.Text`.
 
 #### The target
 
@@ -707,17 +764,18 @@ Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
 
 #### Order
 
+- [x] 4. **Split the `Transport` project out of `App`, `Business` and `Core`**, and drop MediatR
+      in the same pass - every handler file was being touched anyway, and `IRequestHandler` was
+      the thing being replaced. **Done first**, out of the order below, because the licence made
+      it the question that mattered.
 - [ ] 1. **Extract the two searchers.** The only behaviour change, and the one place a test first
       would pay.
 - [ ] 2. **Move the helpers** by the one-consumer rule.
 - [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
       one commit per feature as `TODO.md` already says.
-- [ ] 4. **Split the `Transport` project out of `App`, `Business` and `Core`**, and drop MediatR
-      in the same pass - every handler file is being touched anyway, and the `IRequestHandler`
-      interface is the thing being replaced.
 
-Steps 2 to 4 are verified by the compiler. Step 1 is not, which is why it is first and why the
-round trip and a searcher test want to exist around it.
+Steps 2 and 3 are verified by the compiler, and step 4 was. Step 1 is not, which is why the round
+trip and a searcher test want to exist around it.
 
 ## Turning a recording into a test
 

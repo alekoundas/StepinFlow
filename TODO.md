@@ -360,9 +360,10 @@ and every finished item in it was checked against the repository rather than rec
       Last freely licensed versions: MediatR 12.x and AutoMapper 13.x, both Apache-2.0. Pinning is
       the cheap escape; the local NuGet cache still has `automapper/13.0.1`.
 
-      **MediatR is decided**: a hand-rolled dispatcher, in `PLAN.md` phase 5.6. Nothing in the
-      repository uses a pipeline behaviour, notification or stream, and `IpcDispatcher` already
-      routes by hand, so the library was only resolving a handler out of the container.
+      **MediatR is gone**, 2026-09-24 - a hand-rolled dispatcher, `PLAN.md` phase 5.6. Nothing
+      in the repository used a pipeline behaviour, notification or stream, and `IpcDispatcher`
+      already routed by hand, so the library was only resolving a handler out of the container.
+      103 message records went with it.
 
       **AutoMapper is not decided.** 77 sites and one profile, so it is a real job. `Mapperly` is
       the replacement worth the effort rather than a like-for-like swap - MIT, source generated,
@@ -383,6 +384,18 @@ and every finished item in it was checked against the repository rather than rec
       Worth knowing there is no tripwire for the next one. `dotnet-project-licenses` and
       `nuget-license` both dump every package's licence as a report and could run as a build step
       or a probe, which would turn this from a thing somebody remembers into a thing that fails.
+
+## Transport
+
+- [ ] **Six handler files sit in a sub-namespace and the other 92 do not.** `Handlers.Ai`,
+      `Handlers.Execution` and `Handlers.Lookup` against `Transport.Ipc.Handlers` everywhere else.
+      It cost nothing while dispatch was reflective; now `IpcDispatcher.cs` and `Program.cs` each
+      carry three `using` lines that exist only for those six files. Flattening them deletes six
+      lines and the inconsistency - it is the IDE0130 argument, finally with a price attached.
+
+- [ ] **`Transport/Cli/` when phase 12 lands.** The project is one folder per transport by design;
+      `Ipc/` is the only one so far. Anything a second transport would need lives in `Business`
+      already, by the thin-handler rule.
 
 ## Feature folders
 
