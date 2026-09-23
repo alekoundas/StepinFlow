@@ -12,7 +12,9 @@ namespace Transport.Ipc.Handlers
             _appSettingService = appSettingService;
         }
 
-        public async Task<ResultDto<IReadOnlyList<AppSettingDto>>> HandleAsync(CancellationToken ct) =>
-            ResultDto<IReadOnlyList<AppSettingDto>>.Success(await _appSettingService.GetAllAsync(ct));
+        public async Task<ResultDto<IReadOnlyList<AppSettingDto>>> HandleAsync(CancellationToken ct)
+        {
+            return ResultDto<IReadOnlyList<AppSettingDto>>.Success(await _appSettingService.GetAllAsync(ct));
+        }
     }
 }

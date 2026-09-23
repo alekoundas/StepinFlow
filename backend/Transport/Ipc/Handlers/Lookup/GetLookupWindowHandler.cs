@@ -1,5 +1,4 @@
 using Core.Ports;
-using Core.Models.Business;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers

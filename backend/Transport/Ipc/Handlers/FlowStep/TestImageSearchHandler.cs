@@ -147,10 +147,13 @@ namespace Transport.Ipc.Handlers
             return (float)currentFrameWidth / authoredFrameWidth;
         }
 
-        private static ImageSearchTestResultDto Failed(string error) => new ImageSearchTestResultDto
+        private static ImageSearchTestResultDto Failed(string error)
         {
-            IsResolved = false,
-            ErrorMessage = error,
-        };
+            return new ImageSearchTestResultDto
+            {
+                IsResolved = false,
+                ErrorMessage = error,
+            };
+        }
     }
 }
