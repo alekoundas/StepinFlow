@@ -121,7 +121,6 @@ namespace Core.Catalogs
                 nameof(FlowStep.FlowAreaId),
                 nameof(FlowStep.FlowStepReferenceId),
                 nameof(FlowStep.SearchMode),
-                nameof(FlowStep.Accuracy),
                 nameof(FlowStep.TemplateMatchMode),
                 nameof(FlowStep.MaxMatches),
                 .. _waiting,

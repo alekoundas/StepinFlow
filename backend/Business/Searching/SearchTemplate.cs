@@ -1,6 +1,5 @@
 using System.Drawing;
 
-using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -17,11 +16,10 @@ namespace Business.Searching
     public sealed record SearchTemplate
     {
         public byte[] Image { get; init; } = [];
-        public TemplateMatchModeEnum? Mode { get; init; }
-        public float? Accuracy { get; init; }
-        public int AuthoredFrameWidth { get; init; }
-        public bool AllowMultiScale { get; init; }
-        public float ScaleTolerance { get; init; }
+        public float Accuracy { get; init; }
+        public int AuthoredFlowAreaWidth { get; init; }
+        public int AuthoredFlowAreaHeight { get; init; }
+        public int AuthoredDpi { get; init; }
         public int ClickOffsetX { get; init; }
         public int ClickOffsetY { get; init; }
 
@@ -30,11 +28,10 @@ namespace Business.Searching
             return new SearchTemplate
             {
                 Image = template.TemplateImage ?? [],
-                Mode = template.TemplateMatchMode,
                 Accuracy = template.Accuracy,
-                AuthoredFrameWidth = template.AuthoredFrameWidth,
-                AllowMultiScale = template.AllowMultiScale,
-                ScaleTolerance = template.ScaleTolerance,
+                AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
+                AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
+                AuthoredDpi = template.AuthoredDpi,
                 ClickOffsetX = template.ClickOffsetX,
                 ClickOffsetY = template.ClickOffsetY,
             };
@@ -45,11 +42,10 @@ namespace Business.Searching
             return new SearchTemplate
             {
                 Image = template.TemplateImage ?? [],
-                Mode = template.TemplateMatchMode,
                 Accuracy = template.Accuracy,
-                AuthoredFrameWidth = template.AuthoredFrameWidth,
-                AllowMultiScale = template.AllowMultiScale,
-                ScaleTolerance = template.ScaleTolerance,
+                AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
+                AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
+                AuthoredDpi = template.AuthoredDpi,
                 ClickOffsetX = template.ClickOffsetX,
                 ClickOffsetY = template.ClickOffsetY,
             };

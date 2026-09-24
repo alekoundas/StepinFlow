@@ -28,6 +28,7 @@ namespace Business.Searching
             List<TemplateMatchOutcome> outcomes = new List<TemplateMatchOutcome>();
             List<Point> hits = new List<Point>();
             float? bestScore = null;
+            int? bestTemplateIndex = null;
 
             // Take screenshot.
             RawImage haystack = _screenshotService.CaptureRaw(bounds);
@@ -35,14 +36,20 @@ namespace Business.Searching
                 return new ImageSearchResult { Error = "The search area produced no pixels." };
 
             // Compare every template image.
-            foreach (SearchTemplate template in templates)
+            for (int index = 0; index < templates.Count; index++)
             {
+                SearchTemplate template = templates[index];
                 TemplateMatchOutcome outcome = Match(haystack, bounds.Width, settings, template);
                 outcomes.Add(outcome);
 
                 // Whether it passed or not, so a run records how close a search came. Across every
-                // template, because the closest one is the one worth reporting.
-                bestScore = Best(bestScore, outcome.BestScore);
+                // template, because the closest one is the one worth reporting - with which one it
+                // was, since each is measured against its own accuracy.
+                if (outcome.BestScore != null && (bestScore == null || outcome.BestScore > bestScore))
+                {
+                    bestScore = outcome.BestScore;
+                    bestTemplateIndex = index;
+                }
 
                 foreach (TemplateMatchResult match in outcome.Matches)
                 {
@@ -62,6 +69,7 @@ namespace Business.Searching
                 Outcomes = outcomes,
                 Hits = hits,
                 BestScore = bestScore,
+                BestTemplateIndex = bestTemplateIndex,
             };
         }
 
@@ -77,13 +85,11 @@ namespace Business.Searching
                 Haystack = haystack,
                 TemplateImage = template.Image,
 
-                // The template wins where it says anything, and says nothing by default.
-                Mode = template.Mode ?? settings.Mode,
-                AccuracyThreshold = template.Accuracy ?? settings.Accuracy,
+                // The mode is the step's, for every template; the accuracy is each template's own.
+                Mode = settings.Mode,
+                AccuracyThreshold = template.Accuracy,
 
-                ScaleRatio = ScaleRatio(template.AuthoredFrameWidth, areaWidth),
-                AllowMultiScale = template.AllowMultiScale,
-                ScaleTolerance = template.ScaleTolerance,
+                ScaleRatio = ScaleRatio(template.AuthoredFlowAreaWidth, areaWidth),
 
                 // Only FIND_ALL wants more than the first hit; everything else stops at one.
                 MaxMatches = settings.SearchMode == SearchModeEnum.FIND_ALL ? settings.MaxMatches : 1,
@@ -102,18 +108,6 @@ namespace Business.Searching
                 return 1f;
 
             return (float)currentFrameWidth / authoredFrameWidth;
-        }
-
-        // The higher of two scores, either of which may be missing.
-        private static float? Best(float? left, float? right)
-        {
-            if (left == null)
-                return right;
-
-            if (right == null)
-                return left;
-
-            return MathF.Max(left.Value, right.Value);
         }
     }
 }

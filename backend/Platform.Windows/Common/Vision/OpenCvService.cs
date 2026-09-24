@@ -15,9 +15,6 @@ namespace Platform.Windows.Vision
     /// </summary>
     public sealed class OpenCvService : IOpenCvService
     {
-        // How many steps either side of the expected scale when the first pass finds nothing.
-        private const int MultiScaleSteps = 4;
-
         // What a normalized correlation can legitimately produce. Anything outside is an artefact
         // of the division, not a measurement.
         private const double ScoreCeiling = 1d;
@@ -46,25 +43,9 @@ namespace Platform.Windows.Vision
             // onto CCorrNormed, which scores 0.95 against blank grey and matched anything.
             TemplateMatchModes mode = ToTemplateMatchModes(request.Mode);
 
-            TemplateMatchOutcome outcome = MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
-            if (outcome.Matches.Count > 0 || !request.AllowMultiScale)
-                return outcome;
-
-            // Nothing at the expected size. Sweep around it before giving up.
-            TemplateMatchOutcome closest = outcome;
-
-            foreach (float scale in ScaleSweep(request))
-            {
-                TemplateMatchOutcome swept = MatchAtScale(haystack, template, mask, request, mode, scale);
-                if (swept.Matches.Count > 0)
-                    return swept;
-
-                // The scale that came closest, with its candidates - not the last one tried.
-                if (swept.BestScore > closest.BestScore)
-                    closest = swept;
-            }
-
-            return closest;
+            // One computed scale, one attempt. A sweep around it used to exist and never ran; a
+            // wrong ratio is now visible as a low score rather than hidden by guessing near it.
+            return MatchAtScale(haystack, template, mask, request, mode, request.ScaleRatio);
         }
 
 
@@ -215,17 +196,6 @@ namespace Platform.Windows.Vision
                 Matches = matches.OrderByDescending(x => x.Score).ToList(),
                 Rejected = rejected.OrderByDescending(x => x.Score).ToList(),
             };
-        }
-
-        private static IEnumerable<float> ScaleSweep(TemplateMatchRequest request)
-        {
-            float step = request.ScaleTolerance / MultiScaleSteps;
-
-            for (int i = 1; i <= MultiScaleSteps; i++)
-            {
-                yield return request.ScaleRatio + step * i;
-                yield return request.ScaleRatio - step * i;
-            }
         }
 
         private static Mat ToGrayMat(RawImage image)

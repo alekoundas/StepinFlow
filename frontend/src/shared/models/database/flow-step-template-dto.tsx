@@ -1,5 +1,3 @@
-import type { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
-
 export class FlowStepTemplateDto {
   id: number = 0;
   name: string = "";
@@ -10,22 +8,17 @@ export class FlowStepTemplateDto {
 
   isRequired: boolean = false;
 
-  // Null means "use the step's setting".
-  templateMatchMode?: TemplateMatchModeEnum;
-  accuracy?: number;
+  // Its own bar: one variant of an icon can need a looser one than another.
+  accuracy: number = 0.8;
 
   // Where to click inside the template, in template pixels from its top left.
   clickOffsetX: number = 0;
   clickOffsetY: number = 0;
 
-  // Area size the template was captured in. The scaling key.
-  authoredFrameWidth: number = 0;
-  authoredFrameHeight: number = 0;
-  authoredMonitorId: string = "";
-  authoredMonitorDpi: number = 0;
-
-  allowMultiScale: boolean = false;
-  scaleTolerance: number = 0.15;
+  // The size of the area it was captured in, and the DPI it was captured at.
+  authoredFlowAreaWidth: number = 0;
+  authoredFlowAreaHeight: number = 0;
+  authoredDpi: number = 0;
 
   flowStepId: number = 0;
 

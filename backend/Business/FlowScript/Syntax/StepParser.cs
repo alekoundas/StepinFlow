@@ -216,7 +216,7 @@ namespace Business.FlowScript.Syntax
                 switch (word)
                 {
                     case "template":
-                        parsed.TemplateFileNames.Add(line.Word(i + 1));
+                        parsed.Templates.Add(new ScriptTemplate(line.Word(i + 1), ScriptTemplate.DefaultAccuracy));
                         i += 2;
                         break;
 
@@ -225,8 +225,15 @@ namespace Business.FlowScript.Syntax
                         i += 2;
                         break;
 
+                    // Belongs to the template written just before it.
                     case "accuracy":
-                        step.Accuracy = SyntaxFacts.Float(line.Word(i + 1));
+                        if (parsed.Templates.Count == 0)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.ACCURACY_WITHOUT_TEMPLATE, line.Number, line.ColumnOf(i), "\"accuracy\" belongs after the template it applies to."));
+                            return;
+                        }
+
+                        parsed.Templates[^1].Accuracy = SyntaxFacts.Float(line.Word(i + 1));
                         i += 2;
                         break;
 

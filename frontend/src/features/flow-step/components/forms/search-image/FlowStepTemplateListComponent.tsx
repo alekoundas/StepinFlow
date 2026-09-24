@@ -105,8 +105,8 @@ export function FlowStepTemplateListComponent({
                   size="xs"
                   color="secondary"
                   text={
-                    image.authoredFrameWidth > 0
-                      ? `captured in a ${image.authoredFrameWidth}×${image.authoredFrameHeight} frame`
+                    image.authoredFlowAreaWidth > 0
+                      ? `captured in a ${image.authoredFlowAreaWidth}×${image.authoredFlowAreaHeight} area`
                       : "no area size recorded, scaling will be skipped"
                   }
                 />
@@ -114,11 +114,11 @@ export function FlowStepTemplateListComponent({
                 {/* Per template: one variant of an icon can need a looser bar than another. */}
                 <div className="flex align-items-center gap-2 mt-2">
                   <LabelComponent
-                    text={`Accuracy ${Number(image.accuracy ?? 0).toFixed(2)}`}
+                    text={`Accuracy ${image.accuracy.toFixed(2)}`}
                     size="xs"
                   />
                   <Slider
-                    value={image.accuracy ?? 0}
+                    value={image.accuracy}
                     min={0.1}
                     max={1}
                     step={0.01}

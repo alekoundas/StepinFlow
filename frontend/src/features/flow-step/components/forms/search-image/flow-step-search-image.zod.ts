@@ -11,7 +11,6 @@ export const FlowStepSearchImageSchema = z
     flowAreaId: z.number().int().nullish(),
 
     templateMatchMode: z.enum(TemplateMatchModeEnum),
-    accuracy: z.number().min(0.1).max(1),
     maxMatches: z.number().int().min(1).max(2147483647),
 
     pollIntervalMilliseconds: z.number().int().min(0).max(2147483647),

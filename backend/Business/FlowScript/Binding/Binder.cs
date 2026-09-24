@@ -115,9 +115,9 @@ namespace Business.FlowScript.Binding
         {
             List<FlowStep> steps = document.Steps.Select(x => x.Step).ToList();
 
-            Dictionary<int, IReadOnlyList<string>> templates = document.Steps
-                .Where(x => x.TemplateFileNames.Count > 0)
-                .ToDictionary(x => x.Step.Id, x => (IReadOnlyList<string>)x.TemplateFileNames);
+            Dictionary<int, IReadOnlyList<ScriptTemplate>> templates = document.Steps
+                .Where(x => x.Templates.Count > 0)
+                .ToDictionary(x => x.Step.Id, x => (IReadOnlyList<ScriptTemplate>)x.Templates);
 
             // A sub-flow is named by the path it lives at; the importer is what finds the flow.
             Dictionary<int, string> subFlowPaths = new Dictionary<int, string>();
@@ -138,7 +138,7 @@ namespace Business.FlowScript.Binding
                 AreaNamesById = document.Areas.ToDictionary(x => x.Area.Id, x => x.Area.Name),
                 PointNamesById = document.Points.ToDictionary(x => x.Point.Id, x => x.Point.Name),
                 StepNamesById = steps.Where(x => !string.IsNullOrEmpty(x.Name)).ToDictionary(x => x.Id, x => x.Name),
-                TemplateFileNamesByStepId = templates,
+                TemplatesByStepId = templates,
                 SubFlowPathsById = subFlowPaths,
             };
         }

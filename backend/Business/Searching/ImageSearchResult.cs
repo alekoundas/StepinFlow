@@ -33,6 +33,9 @@ namespace Business.Searching
         /// </summary>
         public float? BestScore { get; init; }
 
+        /// <summary>Which of the templates given produced <see cref="BestScore"/>, by position.</summary>
+        public int? BestTemplateIndex { get; init; }
+
         /// <summary>Set when there was nothing to search. No screenshot was taken.</summary>
         public string? Error { get; init; }
     }

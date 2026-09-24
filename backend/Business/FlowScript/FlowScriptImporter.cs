@@ -278,9 +278,9 @@ namespace Business.FlowScript
         {
             int written = 0;
 
-            for (int i = 0; i < parsed.TemplateFileNames.Count; i++)
+            for (int i = 0; i < parsed.Templates.Count; i++)
             {
-                string fileName = parsed.TemplateFileNames[i];
+                string fileName = parsed.Templates[i].FileName;
                 string path = templateFolderPath == null ? string.Empty : Path.Combine(templateFolderPath, fileName);
 
                 // A missing image is reported rather than fatal: the step is still the step, and a
@@ -296,6 +296,7 @@ namespace Business.FlowScript
                     OrderNumber = i,
                     TemplateImage = image,
                     IsRequired = true,
+                    Accuracy = parsed.Templates[i].Accuracy,
                 });
 
                 written++;

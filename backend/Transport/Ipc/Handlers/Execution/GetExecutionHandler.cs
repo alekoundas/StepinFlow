@@ -63,6 +63,7 @@ namespace Transport.Ipc.Handlers.Execution
                     ResultLocationX = x.ResultLocationX,
                     ResultLocationY = x.ResultLocationY,
                     BestScore = x.BestScore,
+                    BestTemplateId = x.BestTemplateId,
                     MatchIndex = x.MatchIndex,
                     MatchCount = x.MatchCount,
                     Value = x.Value,

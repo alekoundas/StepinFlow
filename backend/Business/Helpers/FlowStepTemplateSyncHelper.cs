@@ -40,19 +40,14 @@ namespace Business.Helpers
                     //image.Thumbnail = ThumbnailHelper.Create(dto.TemplateImage);
                 }
 
-                image.TemplateMatchMode = dto.TemplateMatchMode;
                 image.Accuracy = dto.Accuracy;
 
                 image.ClickOffsetX = dto.ClickOffsetX;
                 image.ClickOffsetY = dto.ClickOffsetY;
 
-                image.AuthoredFrameWidth = dto.AuthoredFrameWidth;
-                image.AuthoredFrameHeight = dto.AuthoredFrameHeight;
-                image.AuthoredMonitorId = dto.AuthoredMonitorId;
-                image.AuthoredMonitorDpi = dto.AuthoredMonitorDpi;
-
-                image.AllowMultiScale = dto.AllowMultiScale;
-                image.ScaleTolerance = dto.ScaleTolerance;
+                image.AuthoredFlowAreaWidth = dto.AuthoredFlowAreaWidth;
+                image.AuthoredFlowAreaHeight = dto.AuthoredFlowAreaHeight;
+                image.AuthoredDpi = dto.AuthoredDpi;
             }
         }
     }

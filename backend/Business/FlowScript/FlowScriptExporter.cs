@@ -4,6 +4,7 @@ using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Business.FlowScript.Binding;
+using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 
 namespace Business.FlowScript
@@ -102,7 +103,7 @@ namespace Business.FlowScript
             var templates = await dbContext.FlowStepTemplates.AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId)
                 .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
-                .Select(x => new { x.Id, x.FlowStepId, x.Name })
+                .Select(x => new { x.FlowStepId, x.Name, x.Accuracy })
                 .ToListAsync(ct);
 
             Dictionary<int, string> stepNames = steps.ToDictionary(x => x.Id, x => x.Name);
@@ -131,7 +132,7 @@ namespace Business.FlowScript
                 PointNamesById = points.ToDictionary(x => x.Id, x => x.Name),
                 StepNamesById = stepNames,
                 SubFlowPathsById = subFlowPaths,
-                TemplateFileNamesByStepId = TemplateFileNames(templates.Select(x => (x.Id, x.FlowStepId, x.Name)).ToList(), stepNames),
+                TemplatesByStepId = Templates(templates.Select(x => (x.FlowStepId, x.Name, x.Accuracy)).ToList(), stepNames),
             };
         }
 
@@ -144,12 +145,12 @@ namespace Business.FlowScript
         /// and an add instead of a modification - losing the one thing putting templates in a
         /// repository is for.
         /// </summary>
-        private static Dictionary<int, IReadOnlyList<string>> TemplateFileNames(IReadOnlyList<(int Id, int FlowStepId, string Name)> templates, IReadOnlyDictionary<int, string> stepNames)
+        private static Dictionary<int, IReadOnlyList<ScriptTemplate>> Templates(IReadOnlyList<(int FlowStepId, string Name, float Accuracy)> templates, IReadOnlyDictionary<int, string> stepNames)
         {
-            Dictionary<int, List<string>> byStep = new Dictionary<int, List<string>>();
+            Dictionary<int, List<ScriptTemplate>> byStep = new Dictionary<int, List<ScriptTemplate>>();
             HashSet<string> taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach ((int _, int flowStepId, string name) in templates)
+            foreach ((int flowStepId, string name, float accuracy) in templates)
             {
                 string desired = string.IsNullOrWhiteSpace(name)
                     ? stepNames.GetValueOrDefault(flowStepId, "template")
@@ -158,16 +159,16 @@ namespace Business.FlowScript
                 string fileName = FlowNameHelper.MakeUnique(FileNameOf(desired, "template"), taken);
                 taken.Add(fileName);
 
-                if (!byStep.TryGetValue(flowStepId, out List<string>? names))
+                if (!byStep.TryGetValue(flowStepId, out List<ScriptTemplate>? names))
                 {
-                    names = new List<string>();
+                    names = new List<ScriptTemplate>();
                     byStep[flowStepId] = names;
                 }
 
-                names.Add(fileName + ".png");
+                names.Add(new ScriptTemplate(fileName + ".png", accuracy));
             }
 
-            return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<string>)x.Value);
+            return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<ScriptTemplate>)x.Value);
         }
 
         private static async Task<int> WriteTemplatesAsync(AppDbContext dbContext, int flowId, BoundFlow source, string templateFolder, CancellationToken ct)
@@ -188,7 +189,7 @@ namespace Business.FlowScript
 
             foreach (var image in images)
             {
-                IReadOnlyList<string> names = source.TemplateFileNamesByStepId.GetValueOrDefault(image.FlowStepId, []);
+                IReadOnlyList<ScriptTemplate> names = source.TemplatesByStepId.GetValueOrDefault(image.FlowStepId, []);
 
                 int index = nextIndex.GetValueOrDefault(image.FlowStepId);
                 nextIndex[image.FlowStepId] = index + 1;
@@ -196,7 +197,7 @@ namespace Business.FlowScript
                 if (index >= names.Count)
                     continue;
 
-                await File.WriteAllBytesAsync(Path.Combine(templateFolder, names[index]), image.TemplateImage!, ct);
+                await File.WriteAllBytesAsync(Path.Combine(templateFolder, names[index].FileName), image.TemplateImage!, ct);
                 written++;
             }
 

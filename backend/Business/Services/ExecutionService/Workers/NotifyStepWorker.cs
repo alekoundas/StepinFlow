@@ -1,3 +1,4 @@
+using System.Globalization;
 using Business.Services.NotificationService;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -78,8 +79,9 @@ namespace Business.Services.ExecutionService.Workers
             if (failedStep == null)
                 return new List<string>();
 
+            // Each with its own accuracy, since that is what a template was searched at.
             return failedStep.FlowStepTemplates
-                .Select(x => x.Name)
+                .Select(x => $"{x.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}")
                 .ToList();
         }
     }

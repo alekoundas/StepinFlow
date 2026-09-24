@@ -13,8 +13,6 @@ namespace Core.Models.Business
         /// <summary>Current area size over the size the template was captured at. 1 = same.</summary>
         public float ScaleRatio { get; set; } = 1f;
 
-        public bool AllowMultiScale { get; set; }
-        public float ScaleTolerance { get; set; } = 0.15f;
 
         /// <summary>Stop after this many, so a bad threshold cannot return thousands.</summary>
         public int MaxMatches { get; set; } = 20;

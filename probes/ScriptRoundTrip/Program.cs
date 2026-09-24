@@ -119,7 +119,7 @@ static BoundFlow Sample()
         CodeComment = "A fresh profile every time.",
     }, null);
 
-    Step(new FlowStep { Id = 102, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = 10, Accuracy = 0.85f }, null);
+    Step(new FlowStep { Id = 102, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = 10 }, null);
     FlowStep okA = Step(new FlowStep { Id = 103, FlowStepType = FlowStepTypeEnum.SUCCESS }, 102);
     Step(new FlowStep { Id = 104, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = 102, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK }, okA.Id);
     Step(new FlowStep { Id = 105, FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.TEXT, KeyboardInputText = "{{username}}" }, okA.Id);
@@ -160,7 +160,7 @@ static BoundFlow Sample()
         AreaNamesById = areas.ToDictionary(x => x.Id, x => x.Name),
         PointNamesById = points.ToDictionary(x => x.Id, x => x.Name),
         StepNamesById = steps.Where(x => !string.IsNullOrEmpty(x.Name)).ToDictionary(x => x.Id, x => x.Name),
-        TemplateFileNamesByStepId = new Dictionary<int, IReadOnlyList<string>> { [102] = ["username-field.png", "username-alt.png"] },
+        TemplatesByStepId = new Dictionary<int, IReadOnlyList<ScriptTemplate>> { [102] = [new ScriptTemplate("username-field.png", 0.85f), new ScriptTemplate("username-alt.png", 0.9f)] },
         SubFlowPathsById = new Dictionary<int, string>(),
     };
 }

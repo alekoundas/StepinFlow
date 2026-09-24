@@ -27,6 +27,8 @@ export interface ExecutionStepDto {
 
   /** SEARCH_IMAGE: the best score the screenshot produced, whether or not it cleared the accuracy. */
   bestScore?: number | null;
+  /** Which template produced bestScore, so it is compared with that template's own accuracy. */
+  bestTemplateId?: number | null;
 
   // What came back
   value?: string | null;

@@ -119,6 +119,7 @@ export default function ExecutionStepDetailComponent({
       executionStep.bestScore !== undefined ? (
         <AccuracyMeterComponent
           flowStepId={executionStep.flowStepId}
+          bestTemplateId={executionStep.bestTemplateId}
           bestScore={executionStep.bestScore}
         />
       ) : null}
@@ -218,6 +219,7 @@ function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
 
 interface AccuracyMeterProps {
   flowStepId: number;
+  bestTemplateId?: number | null;
   bestScore: number;
 }
 
@@ -228,14 +230,16 @@ interface AccuracyMeterProps {
  * accuracy being a shade tight, the search area, a template captured at another window size - read
  * identically until you can see how close it came.
  *
- * The accuracy is the step's setting as it stands now, not a copy taken during the run, so editing
- * the step moves this line.
+ * Each template has its own accuracy, so the line is the one belonging to the template that came
+ * closest - as it stands now, not a copy taken during the run, so editing that template moves it.
  */
-function AccuracyMeterComponent({ flowStepId, bestScore }: AccuracyMeterProps) {
+function AccuracyMeterComponent({ flowStepId, bestTemplateId, bestScore }: AccuracyMeterProps) {
   const { data: flowStep } = useFlowStep(flowStepId);
 
-  const accuracy = flowStep?.accuracy;
-  if (accuracy === undefined || accuracy === null) return null;
+  const template = flowStep?.flowStepTemplates.find((x) => x.id === bestTemplateId);
+  if (!template) return null;
+
+  const accuracy = template.accuracy;
 
   const isPass = bestScore >= accuracy;
   const colour = isPass ? "var(--green-400)" : "var(--red-400)";
@@ -245,7 +249,7 @@ function AccuracyMeterComponent({ flowStepId, bestScore }: AccuracyMeterProps) {
     <div className="flex flex-column gap-2">
       <div className="flex align-items-center justify-content-between">
         <LabelComponent
-          text="Accuracy"
+          text={`Accuracy · ${template.name}`}
           size="sm"
           color="secondary"
         />

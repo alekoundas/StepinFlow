@@ -38,7 +38,7 @@ namespace Business.FlowScript.Syntax
         public string? ReferenceEndName { get; set; }
         public string? SubFlowPath { get; set; }
 
-        public List<string> TemplateFileNames { get; } = new List<string>();
+        public List<ScriptTemplate> Templates { get; } = new List<ScriptTemplate>();
     }
 
     /// <summary>

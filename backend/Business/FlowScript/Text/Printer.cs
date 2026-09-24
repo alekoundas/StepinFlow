@@ -288,13 +288,12 @@ namespace Business.FlowScript.Text
 
         private static string SearchImageArguments(FlowStep step, BoundFlow source)
         {
-            IEnumerable<string> templates = source.TemplateFileNamesByStepId
+            // Straight after its template, so it reads as that template's and not the step's.
+            IEnumerable<string> templates = source.TemplatesByStepId
                 .GetValueOrDefault(step.Id, [])
-                .Select(x => $"template {Quoted(x)}");
+                .Select(x => $"template {Quoted(x.FileName)} accuracy {Number(x.Accuracy)}");
 
-            string accuracy = step.Accuracy > 0 ? $"   accuracy {Number(step.Accuracy)}" : string.Empty;
-
-            return $"{Quoted(step.Name)}   {string.Join("  ", templates)}{Area(step, source)}{accuracy}{Waiting(step)}";
+            return $"{Quoted(step.Name)}   {string.Join("  ", templates)}{Area(step, source)}{Waiting(step)}";
         }
 
         private static string SearchTextArguments(FlowStep step, BoundFlow source)

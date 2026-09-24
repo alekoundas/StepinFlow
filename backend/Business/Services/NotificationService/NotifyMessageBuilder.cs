@@ -112,7 +112,7 @@ namespace Business.Services.NotificationService
             if (templateNames.Count > MaxAttachments)
                 builder.Append('\n').Append(CultureInfo.InvariantCulture, $"{templateNames.Count - MaxAttachments} more templates not shown");
 
-            builder.Append('\n').Append(CultureInfo.InvariantCulture, $"search mode: {failedStep.SearchMode}, accuracy: {failedStep.Accuracy}");
+            builder.Append('\n').Append(CultureInfo.InvariantCulture, $"search mode: {failedStep.SearchMode}");
 
             return builder.ToString();
         }

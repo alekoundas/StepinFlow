@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 
 using Business.Searching;
 using Business.Services.AreaPointService;
@@ -55,6 +56,7 @@ namespace Business.Services.ExecutionService.Workers
             bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
             DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
             float? bestOverPolls = null;
+            int? bestTemplateOverPolls = null;
 
             while (true)
             {
@@ -70,13 +72,18 @@ namespace Business.Services.ExecutionService.Workers
                 // The closest any attempt came, not the last one. "It peaked at 0.78 over sixty
                 // tries" and "it never passed 0.40" want different fixes; the final poll says
                 // neither.
-                bestOverPolls = Best(bestOverPolls, search.BestScore);
+                if (search.BestScore != null && (bestOverPolls == null || search.BestScore > bestOverPolls))
+                {
+                    bestOverPolls = search.BestScore;
+                    bestTemplateOverPolls = search.BestTemplateId;
+                }
 
                 if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
                     ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting"));
                     gaveUp.Screenshot = search.Screenshot;
                     gaveUp.BestScore = bestOverPolls;
+                    gaveUp.BestTemplateId = bestTemplateOverPolls;
 
                     return gaveUp;
                 }
@@ -88,7 +95,8 @@ namespace Business.Services.ExecutionService.Workers
         private ExecutionStep Search(FlowStep step, Rectangle bounds, IExecutionCacheService cache)
         {
             bool findAll = step.SearchMode == SearchModeEnum.FIND_ALL;
-            List<SearchTemplate> templates = step.FlowStepTemplates.Select(x => SearchTemplate.From(x)).ToList();
+            List<FlowStepTemplate> images = step.FlowStepTemplates.ToList();
+            List<SearchTemplate> templates = images.Select(x => SearchTemplate.From(x)).ToList();
 
             ImageSearchResult search = _imageSearcher.Search(bounds, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
             if (search.Error != null)
@@ -100,6 +108,7 @@ namespace Business.Services.ExecutionService.Workers
 
             ExecutionStep result = Result(step, bounds, search, cache, findAll);
             result.Screenshot = screenshot;
+            result.BestTemplateId = search.BestTemplateIndex is int best ? images[best].Id : null;
 
             return result;
         }
@@ -138,26 +147,14 @@ namespace Business.Services.ExecutionService.Workers
             return found;
         }
 
-        // The higher of two scores, either of which may be missing.
-        private static float? Best(float? left, float? right)
-        {
-            if (left == null)
-                return right;
-
-            if (right == null)
-                return left;
-
-            return MathF.Max(left.Value, right.Value);
-        }
-
         /// <summary>Says what was being looked for and how hard, which is what a failure turns on.</summary>
         private static string Detail(FlowStep step, string outcome)
         {
-            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => x.Name));
+            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}"));
             if (templates.Length == 0)
                 templates = "no templates";
 
-            return $"{outcome} - {templates}, {step.SearchMode} at {step.Accuracy} accuracy";
+            return $"{outcome} - {templates}, {step.SearchMode}";
         }
     }
 }

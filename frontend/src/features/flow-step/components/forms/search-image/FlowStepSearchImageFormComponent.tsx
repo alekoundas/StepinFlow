@@ -60,16 +60,8 @@ export default function FlowStepSearchImageFormComponent({
 
   // Templates are a list rather than form fields: they carry binary and are edited through
   // their own windows.
-  // Every template carries its own accuracy. One saved before that was null and fell back to the
-  // step's, so it starts on exactly that value - what it was already being matched at.
-  const [images, setImages] = useState<FlowStepTemplateDto[]>(() =>
-    (defaultValues.flowStepTemplates ?? []).map(
-      (x) =>
-        new FlowStepTemplateDto({
-          ...x,
-          accuracy: x.accuracy ?? defaultValues.accuracy ?? defaultAccuracyFor(defaultValues.templateMatchMode),
-        }),
-    ),
+  const [images, setImages] = useState<FlowStepTemplateDto[]>(
+    defaultValues.flowStepTemplates ?? [],
   );
 
   // Capturing a template opens a window and waits, so by the time it resolves this component has
@@ -196,8 +188,8 @@ export default function FlowStepSearchImageFormComponent({
         name: `Template ${previous.length + 1}`,
         templateImage: screenshot,
         accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
-        authoredFrameWidth: frameWidth,
-        authoredFrameHeight: frameHeight,
+        authoredFlowAreaWidth: frameWidth,
+        authoredFlowAreaHeight: frameHeight,
         ...centreClickOffset(screenshot),
       }),
     ]);

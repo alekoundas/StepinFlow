@@ -5,13 +5,12 @@ using Core.Models.Dtos;
 namespace Business.Searching
 {
     /// <summary>
-    /// What the step says about the search, as opposed to what each template says. A template may
-    /// override the mode and the accuracy; nothing overrides the search mode.
+    /// What the step says about the search, for every template in it: the mode and how many
+    /// matches. The accuracy is each template's own.
     /// </summary>
     public sealed record SearchSettings
     {
         public TemplateMatchModeEnum Mode { get; init; }
-        public float Accuracy { get; init; }
         public SearchModeEnum SearchMode { get; init; }
         public int MaxMatches { get; init; }
 
@@ -20,7 +19,6 @@ namespace Business.Searching
             return new SearchSettings
             {
                 Mode = step.TemplateMatchMode,
-                Accuracy = step.Accuracy,
                 SearchMode = step.SearchMode,
                 MaxMatches = step.MaxMatches,
             };
@@ -31,7 +29,6 @@ namespace Business.Searching
             return new SearchSettings
             {
                 Mode = step.TemplateMatchMode,
-                Accuracy = step.Accuracy,
                 SearchMode = step.SearchMode,
                 MaxMatches = step.MaxMatches,
             };

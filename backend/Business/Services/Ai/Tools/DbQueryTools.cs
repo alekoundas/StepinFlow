@@ -196,9 +196,9 @@ namespace Business.Services.Ai.Tools
                     x.Name,
                     x.IsRequired,
                     x.Accuracy,
-                    x.AllowMultiScale,
-                    x.AuthoredFrameWidth,
-                    x.AuthoredFrameHeight))
+                    x.AuthoredFlowAreaWidth,
+                    x.AuthoredFlowAreaHeight,
+                    x.AuthoredDpi))
                 .ToList();
 
             return new StepDetail(
@@ -475,7 +475,7 @@ namespace Business.Services.Ai.Tools
 
         public record StepDetail(int Id, int FlowId, string Name, string Type, Dictionary<string, object?> Settings, AreaSummary? Area, List<TemplateSummary> Templates);
 
-        public record TemplateSummary(int Id, string Name, bool IsRequired, float? Accuracy, bool AllowMultiScale, int AuthoredFrameWidth, int AuthoredFrameHeight);
+        public record TemplateSummary(int Id, string Name, bool IsRequired, float Accuracy, int AuthoredFlowAreaWidth, int AuthoredFlowAreaHeight, int AuthoredDpi);
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 

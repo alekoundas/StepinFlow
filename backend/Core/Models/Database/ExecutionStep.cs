@@ -39,6 +39,8 @@ namespace Core.Models.Database
         public int? ResultLocationY { get; set; }
 
         public float? BestScore { get; set; }
+        public int? BestTemplateId { get; set; }
+
 
         public int? MatchIndex { get; set; }
         public int? MatchCount { get; set; }

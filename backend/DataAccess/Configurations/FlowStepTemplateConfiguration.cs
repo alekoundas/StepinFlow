@@ -10,7 +10,6 @@ namespace DataAccess.Configurations
         {
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
 
 
             // Relationship with FlowStep (one-to-many)

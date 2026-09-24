@@ -952,12 +952,11 @@ reads it.
       template saved before this starts on the step's value, which is what it was already being
       matched at, so nothing shifts until someone moves it.
 
-      **What follows for step 3:** `FlowStep.Accuracy` has no control any more. It becomes dead
-      weight and should go, with `FlowStepTemplate.Accuracy` made required. It still has readers
-      that will be wrong the moment two templates differ:
-      - the execution detail's "0.79 against your 0.80" line compares the best score with the
-        step's accuracy - it needs the threshold of the template that scored best, and
-        `ExecutionStep` records only the score;
+      **Done in the templates step:** `FlowStep.Accuracy` is gone and `FlowStepTemplate.Accuracy`
+      is required. Its readers, each now per template:
+      - the execution detail's "0.79 against your 0.80" line - `ExecutionStep.BestTemplateId`
+        now records which template came closest, and the meter reads that template's accuracy as
+        it stands now and names it;
       - the failure text in `SearchImageStepWorker.Detail` and `NotifyMessageBuilder`;
       - `FlowStepFieldCatalog` and `DbQueryTools`, which tell the AI about it;
       - the script, where `accuracy` moves from the step line to the template.
@@ -1052,11 +1051,18 @@ template (a known limit).
 - [x] **Match modes**: `SHAPE` and `SHAPE_AND_BRIGHTNESS`, the other four gone, the form's
       dropdown of raw enum names replaced by a two-option control with a description per mode.
 - [x] **Accuracy per template in the UI**, the per-mode defaults, and the reset on a mode change.
-- [ ] **Templates**: drop `TemplateMatchMode`, `AllowMultiScale`, `ScaleTolerance`,
+- [x] **Templates**: drop `TemplateMatchMode`, `AllowMultiScale`, `ScaleTolerance`,
       `AuthoredMonitorId`; rename `AuthoredFrame*` to `AuthoredFlowArea*` and
       `AuthoredMonitorDpi` to `AuthoredDpi`; take the sweep out of `OpenCvService` and
       `TemplateMatchRequest`; drop `FlowStep.Accuracy`, make the template's required, and fix its
       readers listed above. One migration.
+
+      Done 2026-09-24. `accuracy` now follows its template in the script -
+      `template "a.png" accuracy 0.85` - and is the first template fact the round trip guards:
+      the printer prints it, so an importer that dropped it would change the bytes. Written before
+      any template, it is a diagnostic, `ACCURACY_WITHOUT_TEMPLATE`. Still stale until the AI docs
+      step: `search-image.md` says accuracy is set on the step and describes the sweep, and
+      `AiPromptHelper` tells the model to read a score against the step's accuracy.
 - [ ] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
       monitor. One migration.
 - [ ] **The resolver and the searcher maths**: the effective `ScalesWith`, the largest-part

@@ -141,8 +141,8 @@ static int Seed(DbContextOptions<AppDbContext> options)
     Add(new FlowStep { FlowStepType = FlowStepTypeEnum.MARKER, Name = "Sign in" }, null);
     Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", CodeComment = "A fresh profile every time." }, null);
 
-    FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, Accuracy = 0.85f }, null);
-    db.FlowStepTemplates.Add(new FlowStepTemplate { FlowStepId = find.Id, Name = "username field", OrderNumber = 0, TemplateImage = [1, 2, 3, 4], IsRequired = true });
+    FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id }, null);
+    db.FlowStepTemplates.Add(new FlowStepTemplate { FlowStepId = find.Id, Name = "username field", OrderNumber = 0, TemplateImage = [1, 2, 3, 4], IsRequired = true, Accuracy = 0.85f });
     db.SaveChanges();
 
     FlowStep ok = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);

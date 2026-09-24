@@ -1,3 +1,5 @@
+using Business.FlowScript.Syntax;
+
 using Core.Models.Database;
 
 namespace Business.FlowScript.Binding
@@ -24,8 +26,8 @@ namespace Business.FlowScript.Binding
         public IReadOnlyDictionary<int, string> PointNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> StepNamesById { get; set; } = new Dictionary<int, string>();
 
-        /// <summary>The file each template was written to, named by content hash.</summary>
-        public IReadOnlyDictionary<int, IReadOnlyList<string>> TemplateFileNamesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<string>>();
+        /// <summary>The templates each step names: the file each was written to, and its accuracy.</summary>
+        public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplate>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplate>>();
 
         /// <summary>A sub-flow's path relative to the repository root.</summary>
         public IReadOnlyDictionary<int, string> SubFlowPathsById { get; set; } = new Dictionary<int, string>();

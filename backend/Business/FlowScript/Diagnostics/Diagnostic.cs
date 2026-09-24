@@ -46,6 +46,7 @@ namespace Business.FlowScript.Diagnostics
         LOOP_MALFORMED,
         SYSTEM_ACTION_UNKNOWN,
         PROCESS_MISSING,
+        ACCURACY_WITHOUT_TEMPLATE,
 
         // Binding
         NAME_UNKNOWN,

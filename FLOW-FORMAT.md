@@ -43,14 +43,14 @@ Wait For Image  "Login form appears"   template "login-form.png"   in "Browser" 
 
 ## Sign in
 
-Find Image  "Find username field"   template "username-field.png"   in "Login form"   accuracy 0.85
+Find Image  "Find username field"   template "username-field.png" accuracy 0.85   in "Login form"
   Failure:
     End Execution  failed  "no username field on the login page"
   Success:
     Click  at "Find username field"
     Type   "{{username}}"
 
-Find Image  "Find password field"   template "password-field.png"   in "Login form"   accuracy 0.85
+Find Image  "Find password field"   template "password-field.png" accuracy 0.85   in "Login form"
   Failure:
     End Execution  failed  "no password field on the login page"
   Success:
@@ -72,7 +72,7 @@ Wait For Text  "Products page loaded"   contains "Products"   in "Inventory"   t
 
 ## Add everything on the page to the cart
 
-Find All Images  "Find add buttons"   template "add-to-cart.png"   in "Inventory"   accuracy 0.90
+Find All Images  "Find add buttons"   template "add-to-cart.png" accuracy 0.9   in "Inventory"
   Failure:
     End Execution  failed  "no products to add"
   Success:
@@ -224,8 +224,8 @@ A check takes its own screenshot, looks at it, decides, and produces a result. C
 a recording into a test — a flow holding none of them proves nothing.
 
 ```
-Find Image  "Find login button"   template "login-button.png"
-            in "Login form"   accuracy 0.85
+Find Image  "Find login button"   template "login-button.png" accuracy 0.85
+            in "Login form"
   Success:
     Click  at "Find login button"
   Failure:
@@ -400,8 +400,14 @@ templates in one flow want the same name. **Not** a content hash: a hash changes
 image is edited, so git would record a delete and an add rather than a modification, which
 throws away the one thing this layout is for.
 
-Each template carries its click offset and the window size it was captured at. Those are properties
-of the image, so they live beside it rather than cluttering the step line.
+`accuracy` follows the template it belongs to - `template "login-button.png" accuracy 0.85` -
+because each template has its own: one variant of an icon can need a looser bar than another.
+Written straight after it, it cannot be read as the step's. Left out, it is 0.8.
+
+The click offset, and the size and DPI of the area a template was captured at, are properties of
+the picture rather than the search. They belong in a `Templates:` section in the header, beside
+`Areas:`. **That section does not exist yet** (`PLAN.md` phase 5.7): today an import drops all
+three, so a round-tripped template clicks its top-left corner and does not scale.
 
 ---
 
