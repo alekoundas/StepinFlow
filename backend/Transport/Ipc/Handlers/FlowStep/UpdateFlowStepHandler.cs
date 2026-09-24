@@ -1,5 +1,5 @@
 using AutoMapper;
-using Business.Helpers;
+using Business.Flows;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
@@ -34,7 +34,7 @@ namespace Transport.Ipc.Handlers
             // (absent from the dto) keeps its original value.
             dbContext.Entry(existingFlowStep).CurrentValues.SetValues(dto);
 
-            FlowStepTemplateSyncHelper.Sync(dbContext, existingFlowStep, dto.FlowStepTemplates);
+            FlowStepTemplateSync.Sync(dbContext, existingFlowStep, dto.FlowStepTemplates);
 
             await dbContext.SaveChangesAsync(ct);
 

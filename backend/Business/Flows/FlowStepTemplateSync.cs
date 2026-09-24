@@ -2,12 +2,12 @@ using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 
-namespace Business.Helpers
+namespace Business.Flows
 {
     /// <summary>
     /// Templates are edited as part of their step, so they are matched by Id and updated in place rather than replaced. 
     /// </summary>
-    public static class FlowStepTemplateSyncHelper
+    public static class FlowStepTemplateSync
     {
         public static void Sync(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos)
         {

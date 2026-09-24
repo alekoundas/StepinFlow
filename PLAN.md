@@ -548,12 +548,12 @@ each other, so this is merging them rather than inventing a structure.
 
 #### The helpers
 
-- [ ] **`Business/Helpers/` is one feature wearing a generic name.** All three files serve a single
+- [x] **`Business/Helpers/` is one feature wearing a generic name.** All three files serve a single
       handler area - `FlowNameLookupHelper` and `FlowStepTemplateSyncHelper` are used by
       `Handlers/FlowStep` and nothing else, `TreeStepMoveHelper` by `Handlers/Flow` and
       `Handlers/FlowStep`. It is not a shared-helper folder and should not survive.
 
-- [ ] **The rule: one consumer and it lives with its consumer; two or more features and it is
+- [x] **The rule: one consumer and it lives with its consumer; two or more features and it is
       shared vocabulary that stays in `Core/Helpers`.** Mechanical, and defensible out loud, which
       matters more than where any single file lands.
 
@@ -568,7 +568,7 @@ each other, so this is merging them rather than inventing a structure.
       `Core/Ports/IWindowService` and implemented against in `Platform.Windows`, so it is port
       vocabulary, and `PathHelper` is used by `DataAccess` as well.
 
-- [ ] **Pure functions stay static; only what holds a dependency gets injected.** Four of the six
+- [x] **Pure functions stay static; only what holds a dependency gets injected.** Four of the six
       helpers under discussion are pure - `TreeStepMoveHelper`, `FlowStructureHasher`,
       `FlowNameHelper`, `FlowStepTreeNodeProjection` - and a pure static function is the cheapest
       thing in the repository to test: no fake, no fixture, no container. Wrapping them in one
@@ -581,7 +581,7 @@ each other, so this is merging them rather than inventing a structure.
       in as a parameter is honest and testable, so this is a rename and a move rather than a
       redesign.
 
-- [ ] **A `Helpers/` subfolder only past three files.** `Helpers` names what a class *is*, which is
+- [x] **A `Helpers/` subfolder only past three files.** `Helpers` names what a class *is*, which is
       the same mistake as `Services/` at a smaller scale. The better precedent is already in this
       codebase: `Workers/`, `Rules/`, `Providers/`, `Syntax/`, `Binding/` all name a role. So
       `Ai/Helpers` with five files keeps its folder, `FlowValidationService/Helpers` with one does
@@ -796,7 +796,22 @@ Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
       the thing being replaced. **Done first**, out of the order below, because the licence made
       it the question that mattered.
 - [x] 1. **Extract the searcher.** Image only - see above for why not text.
-- [ ] 2. **Move the helpers** by the one-consumer rule.
+- [x] 2. **Move the helpers** by the one-consumer rule.
+
+      Done 2026-09-25, with `git mv` so history follows. The consumers were counted again first -
+      the handlers had moved to `Transport` since the table was written - and the table held.
+      - `Business/Helpers/` is gone, into a new `Business/Flows/`: `FlowNameLookup` and
+        `FlowStepTemplateSync` (the `Helper` suffix dropped - they are queries), `TreeStepMoveHelper`,
+        and `FlowStepTreeNodeProjection` out of `Core/Helpers`.
+      - `FlowStructureHasher` and `KeyCombinationHelper` beside the execution engine,
+        `ConditionHelper` beside the validation service - in today's `Services/` folders, which
+        step 3 renames.
+      - `FlowValidationService/Helpers/` held one file, `FlowCheckHelper`, so the folder went.
+      - `Core/Helpers` keeps the seven with two or more features or a port behind them.
+      - Along the way: `ConditionHelper`'s arrow members, and a `var` and a multi-line ternary in
+        `ExtractSubFlowHandler`.
+
+      Verified by the build, IDE0005 included, and both round-trip probes.
 - [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
       one commit per feature as `TODO.md` already says.
 

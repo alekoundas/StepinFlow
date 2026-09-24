@@ -1,5 +1,5 @@
 using AutoMapper;
-using Business.Helpers;
+using Business.Flows;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
@@ -62,7 +62,7 @@ namespace Transport.Ipc.Handlers
 
                 // Grows as the draft adds to it, so the twelfth step is unique against the
                 // eleven before it as well as against what was already saved.
-                HashSet<string> taken = await FlowNameLookupHelper.TakenAsync(dbContext, rootId, ct);
+                HashSet<string> taken = await FlowNameLookup.TakenAsync(dbContext, rootId, ct);
 
                 Dictionary<int, FlowStep> stepByTempId = new Dictionary<int, FlowStep>();
 
@@ -125,7 +125,7 @@ namespace Transport.Ipc.Handlers
                     }
 
                     dbContext.FlowSteps.Add(step);
-                    FlowStepTemplateSyncHelper.Sync(dbContext, step, draftStep.Values.FlowStepTemplates);
+                    FlowStepTemplateSync.Sync(dbContext, step, draftStep.Values.FlowStepTemplates);
 
                     IReadOnlyList<FlowStep> branches = TreeStepHelper.CreateBranchChildren(step);
                     dbContext.FlowSteps.AddRange(branches);

@@ -1,5 +1,5 @@
 using AutoMapper;
-using Business.Helpers;
+using Business.Flows;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -28,11 +28,11 @@ namespace Transport.Ipc.Handlers
 
             // Made unique here rather than argued about at export: the script refers to a step by
             // name, so two steps called the same thing make the reference ambiguous.
-            HashSet<string> taken = await FlowNameLookupHelper.TakenAsync(dbContext, flowStep.RootId, ct);
+            HashSet<string> taken = await FlowNameLookup.TakenAsync(dbContext, flowStep.RootId, ct);
             flowStep.Name = FlowNameHelper.MakeUnique(flowStep.Name, taken);
 
             dbContext.FlowSteps.Add(flowStep);
-            FlowStepTemplateSyncHelper.Sync(dbContext, flowStep, dto.FlowStepTemplates);
+            FlowStepTemplateSync.Sync(dbContext, flowStep, dto.FlowStepTemplates);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(flowStep));
 
             await dbContext.SaveChangesAsync(ct);

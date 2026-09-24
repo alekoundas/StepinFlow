@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
 
-namespace Business.Services.FlowValidationService.Helpers
+namespace Business.Services.FlowValidationService
 {
     /// <summary>
     /// What a flow verifies, calculated by walking the tree.

@@ -1,10 +1,11 @@
 using System.Linq.Expressions;
 
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Core.Helpers
+namespace Business.Flows
 {
     /// <summary>
     /// What a FlowStep looks like as a tree row.

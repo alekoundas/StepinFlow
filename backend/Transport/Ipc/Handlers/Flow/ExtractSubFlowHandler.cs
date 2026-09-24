@@ -1,10 +1,11 @@
-using Business.Helpers;
+using Business.Flows;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Transport.Ipc.Handlers
 {
@@ -37,7 +38,7 @@ namespace Transport.Ipc.Handlers
                 return ResultDto<ExtractSubFlowResultDto>.Failure("Give the sub-flow a name.");
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+            await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
 
             try
             {
@@ -145,9 +146,11 @@ namespace Transport.Ipc.Handlers
                     if (moving.Contains(step.Id) == moving.Contains(target))
                         continue;
 
-                    return moving.Contains(step.Id)
-                        ? $"\"{step.Name}\" reads the result of \"{nameById[target]}\", which is staying behind. Move it in, or point that step somewhere else, then extract again."
-                        : $"\"{step.Name}\" reads the result of \"{nameById[target]}\", which is being extracted. Move it in, or point that step somewhere else, then extract again.";
+                    string where = "is being extracted";
+                    if (moving.Contains(step.Id))
+                        where = "is staying behind";
+
+                    return $"\"{step.Name}\" reads the result of \"{nameById[target]}\", which {where}. Move it in, or point that step somewhere else, then extract again.";
                 }
             }
 

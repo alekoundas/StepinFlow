@@ -2,12 +2,12 @@ using Core.Enums;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Helpers
+namespace Business.Flows
 {
     /// <summary>
     /// The names already in use in a flow: steps, areas, points and csv columns.
     /// </summary>
-    public static class FlowNameLookupHelper
+    public static class FlowNameLookup
     {
         public static async Task<HashSet<string>> TakenAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {

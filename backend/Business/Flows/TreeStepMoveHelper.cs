@@ -3,7 +3,7 @@ using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Helpers
+namespace Business.Flows
 {
     /// <summary>
     /// Tree maths for drag and drop, shared by the preview query and the move command so both

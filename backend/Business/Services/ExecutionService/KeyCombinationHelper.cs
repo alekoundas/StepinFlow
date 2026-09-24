@@ -1,6 +1,6 @@
 using Core.Enums.Business;
 
-namespace Core.Helpers
+namespace Business.Services.ExecutionService
 {
     /// <summary>
     /// Turns "Ctrl+V" back into keys.
