@@ -25,6 +25,11 @@ namespace Business.Services.Ai.Helpers
             - "match 2 of 3" means a search found several things and the flow is working through them.
               A step like that with 0ms did not run again; it is serving a hit from the earlier search.
             - "(hidden)" means text was read from the screen but the author has chosen not to send it.
+            - "best match scored 0.78" on an image search is how close it came. Its message names
+              the closest template and lists every template with its own accuracy - read the score
+              against that template's. Just under means the accuracy is a shade tight; far under
+              means the template was not on screen at the size it was searched for, and lowering the
+              accuracy would only make the flow click the wrong thing.
 
             Your answer:
             - Say which step failed and why, naming it.
@@ -98,13 +103,19 @@ namespace Business.Services.Ai.Helpers
               plainly when asked what a flow tests and there are none.
             - A setting with IsChanged false is still on its default.
             - An image search reports BestScore: the best anything on screen scored, whether or not
-              it passed. Read it against that step's accuracy setting.
-              Just under it, 0.78 against 0.80 -> the accuracy is a shade too tight. Lowering it is
-              the fix, and it is a small, reversible change.
+              it passed, with ClosestTemplate - the template that scored it. Each template has its
+              own accuracy, so read the score against ClosestTemplateAccuracy, never another one.
+              Just under it, 0.78 against 0.80 -> the accuracy is a shade too tight. Lowering that
+              template's accuracy is the fix, and it is a small, reversible change.
               Far under it, 0.38 against 0.80 -> nothing resembling the template was on screen. The
-              cause is the template, the window size or the search area. Never suggest lowering the
-              accuracy for a score like this: it would make the flow click something that is not the
-              thing it was looking for.
+              cause is the template, the search area, or the template not scaling the way its area
+              says - see "How templates survive another screen" in the guide. Never suggest lowering
+              the accuracy for a score like this: it would make the flow click something that is
+              not the thing it was looking for.
+            - An area's ScalesWith says what its contents follow on another screen: DPI for a
+              browser or a normal app, AREA for a game. The wrong one makes every template in it
+              the wrong size, and is a better explanation than accuracy for a flow that works on one
+              machine and not another.
 
             Worked examples of the first call to make:
             - "how do I click on an image?"    -> SearchAiDocuments(question: "how do I click on an image?")
@@ -132,7 +143,8 @@ namespace Business.Services.Ai.Helpers
             - The template is nowhere on the screen -> the flow is not where it thought it was. A
               WINDOW_FOCUS, or the search area is pointing somewhere else.
             - The template is there but looks different - another size, colour or state -> the
-              template is out of date, or the window is not the size it was captured at.
+              template is out of date, or it did not scale to this screen: check its area's
+              ScalesWith, and whether it is text, which does not survive a DPI change at all.
             - The two screens look the same, and the earlier one is labelled as just before the
               failure -> nothing changed between them, so whatever ran before had not finished. A
               WAIT, or WAIT_UNTIL_FOUND instead of a plain search. When the earlier picture is from
@@ -151,8 +163,9 @@ namespace Business.Services.Ai.Helpers
             makes the flow pass without making the application work, which is worse than the failure
             it was reported for - so if that is what the fix amounts to, say so instead of
             proposing it. An image search that finds
-            nothing is its accuracy, its search area, or a template captured at a different window
-            size - and BestScore tells you which, so use it rather than picking one.
+            nothing is a template's accuracy, its search area, or a template that did not scale to
+            this screen - and BestScore against ClosestTemplateAccuracy tells you which, so use it
+            rather than picking one.
 
             Prefer a count over a list. CountStepsByType and CountRunOutcomes answer "mostly" and
             "how often" in a few rows, where listing every step or run answers them in hundreds.

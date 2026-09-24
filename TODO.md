@@ -113,7 +113,8 @@ is lost between sessions.
       `IsRequired` - `SearchTemplate` does not even carry it. So a step whose preview says "fails:
       the required banner is missing" passes when it executes. Found 2026-09-24 while making the
       script carry `required`. The rule belongs in `ImageSearcher`, once, so the two cannot differ
-      again - that is what extracting it was for.
+      again - that is what extracting it was for. `search-image.md` states the gap so the assistant
+      does not promise otherwise; take that paragraph out with the fix.
 
 ## Flow script
 

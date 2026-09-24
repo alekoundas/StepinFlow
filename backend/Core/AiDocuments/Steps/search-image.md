@@ -70,28 +70,84 @@ Templates are a list. How they combine depends on whether any are marked require
   variants of the same icon.
 - **Some marked required** — every required one must be found.
 
+**Known gap:** today only **Test now** applies this. An execution succeeds on any template found,
+required or not. So a step whose test says it would fail because a required template is missing
+can still succeed when it executes.
+
 ## Accuracy
 
-Accuracy is how close a match has to be, between 0 and 1. It is set on the step, and any single
-template can override it.
+Accuracy is how close a match has to be, between 0 and 1. **Each template has its own** — one
+variant of an icon can need a looser bar than another. There is no accuracy on the step.
 
-Raising it reduces false matches and increases misses. Lowering it does the reverse. A template
-that matches a blank region is usually accuracy set too low.
+A new template starts on its mode's default, and changing the step's mode puts every template back
+on the new mode's default, because the same number means different things in the two modes.
 
-## How templates survive a different screen size
+Raising it reduces false matches and increases misses. Lowering it does the reverse.
 
-Each template records the click offset — where inside the image to click — and the size of the area
-it was captured in. At match time the template is scaled by the ratio between that recorded size
-and the area's size now, so a template captured on a 1080p screen still matches at 4K.
+A failed search records the best score anything reached and which template reached it. Read the
+score against **that template's** accuracy: 0.78 against 0.80 is an accuracy a shade too tight;
+0.38 against 0.80 means the template was not on screen at the size it was searched for, and
+lowering the accuracy would only make the flow click the wrong thing.
 
-If nothing matches at the expected size, a multi-scale sweep tries sizes either side before giving
-up.
+## Match modes
+
+The mode is set on the step and applies to every template in it.
+
+| Mode | Compares | Default accuracy | Use it for |
+|---|---|---|---|
+| `SHAPE` | the pattern, with each picture's own brightness taken out | 0.80 | nearly everything |
+| `SHAPE_AND_BRIGHTNESS` | the pixels as they are | 0.95 | telling states apart - an enabled button from a disabled one |
+
+`SHAPE` ignores how light or dark something is, so it finds a greyed-out button as readily as a
+live one. `SHAPE_AND_BRIGHTNESS` sees the difference, which is why it exists.
+
+Its default is high for a reason. A template is mostly background, and background always agrees,
+so at 0.80 `SHAPE_AND_BRIGHTNESS` finds a letter on a blank white screen. At 0.95 it does not.
+
+Both compare in grayscale. Colour is never compared.
+
+## How templates survive another screen
+
+Each template records where inside it to click, and the size and DPI of the area it was captured
+in. A template cannot be captured until the step has a search area, and the capture is confined to
+that area.
+
+When the search runs, the template is scaled once, by a ratio its **area** decides - the area's
+"Contents scale with" setting:
+
+| The area scales with | Ratio | For |
+|---|---|---|
+| Screen DPI | DPI now ÷ DPI it was captured at | browsers, normal apps, the OS - resizing the window does not resize what is in it |
+| Area size | the smaller of width now ÷ width then and height now ÷ height then | games - the picture stretches with the window, and gets bars when its shape changes |
+
+A region inside another area follows its parent unless set. Other areas default to Screen DPI,
+except an application, which has to be told - a normal app and a game look the same from outside.
+
+There is one attempt at one computed size, not a sweep of sizes. A score far below the accuracy at
+a sensible size says the setting is wrong rather than hiding it behind guesses.
+
+If the scaled template would be larger than the area, or under 2 pixels, the search fails with an
+error that gives the scale. It does not report "not found".
+
+A template with no recorded size or DPI - captured before they were recorded, or made by the
+recording wizard - is searched at the size it was captured, on every screen.
+
+## Known limits
+
+- **Text does not survive a DPI change.** At another Windows scaling, text is drawn again rather
+  than enlarged: an icon captured at 100% scores about 0.93 at 125%, a word about 0.67. Find icons
+  with Search Image; read words with Search Text.
+- **A single-colour template matches everywhere** in `SHAPE` - a picture with no variation scores
+  1.0 at every position, so the step succeeds and clicks the first spot. Capture something with
+  detail in it.
+- **Colour is never compared**, so two states with the same lightness in a different hue look the
+  same to both modes.
 
 Templates are stored as PNG, never JPEG. JPEG artifacts wreck normalised template matching.
 
 ## Testing a Search Image
 
-**Test now** runs the real search against the live screen and reports whether each template was
+**Test now** does the real search against the live screen and reports whether each template was
 found and with what score. It clicks nothing.
 
 The form also generates a sentence describing what the step will actually do, which is worth reading

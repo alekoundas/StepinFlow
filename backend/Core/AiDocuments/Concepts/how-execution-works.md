@@ -49,11 +49,11 @@ same values in memory either way, so a step still reads the step above it.
 ## Screenshots
 
 Screenshots work like a dashcam. Nothing is written while a flow is going well. When a step fails,
-the last few frames are written out, each named after the step that took it — most of them belong
+the last few screenshots are written out, each named after the step that took it — most of them belong
 to steps that ran earlier, which is the point: the screenshot at the moment of failure usually shows a
 screen the thing was never on.
 
-The number of frames kept is a setting.
+The number of screenshots kept is a setting.
 
 ## The debugger
 

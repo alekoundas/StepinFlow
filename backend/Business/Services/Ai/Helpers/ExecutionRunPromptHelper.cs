@@ -81,7 +81,7 @@ namespace Business.Services.Ai.Helpers
                 line.Append(CultureInfo.InvariantCulture, $"  match {(step.MatchIndex ?? 0) + 1} of {step.MatchCount}");
 
             // How close the search came. Without it a failed search says only that it failed, and
-            // the accuracy, the search area and a template captured at another size all look alike.
+            // a template's accuracy, the search area and a template at the wrong size all look alike.
             if (step.BestScore != null)
                 line.Append(CultureInfo.InvariantCulture, $"  best match scored {step.BestScore:F2}");
 

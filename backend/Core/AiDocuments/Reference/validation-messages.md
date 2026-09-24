@@ -77,3 +77,8 @@ window.
 result changes nothing.
 
 **NAME_MISSING** — the step has no name. It still runs; it is just hard to find in an execution.
+
+**SCREEN_COORDINATES** — the step uses an area or a point in screen coordinates: a region drawn
+with nothing around it, a point measured from nothing, or anything inside such a region. It works
+on this screen and lands somewhere else on any other. Put the region inside a window or a monitor,
+or measure the point from one.

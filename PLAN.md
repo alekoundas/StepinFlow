@@ -806,8 +806,10 @@ Steps 2 and 3 are verified by the compiler. **Phase 5.7 goes first**, ahead of b
 
 ### 5.7. A flow that survives another PC
 
-**In progress, ahead of the rest of 5.6.** The test that was to come first is deferred by
-decision - the changes go first, verified by the build and against the running app.
+**Done 2026-09-24, ahead of the rest of 5.6**, apart from the test that was to come first,
+deferred by decision. The changes were verified by the build, the round-trip probes, scratch
+programs against fakes and in-memory databases, and the running app where a step says so. The
+forms are the one part not yet clicked through.
 
 The point of a flow is that it runs somewhere else tomorrow: another monitor, another DPI, a
 browser window that is not maximised. Three things stop that today, and the third one makes the
@@ -918,7 +920,7 @@ reads it.
 - [x] **Drop `AuthoredMonitorId`.** Written empty, read by nothing; it was for a warning that was
       never built.
 
-- [ ] **The AI stops describing a feature nobody can reach.** `search-image.md` describes the
+- [x] **The AI stops describing a feature nobody can reach.** `search-image.md` describes the
       sweep and area-ratio scaling, and `DbQueryTools.TemplateSummary` exposes `AllowMultiScale`,
       so the assistant can tell someone to turn on something with no control. Rewrite both with
       the change.
@@ -1067,9 +1069,8 @@ template (a known limit).
       `template "a.png" accuracy 0.85` - and is the first template fact the round trip guards:
       the printer prints it, so an importer that dropped it would change the bytes. Written before
       any template, it is a diagnostic - `ACCURACY_WITHOUT_TEMPLATE` then, `CLAUSE_WITHOUT_TEMPLATE`
-      since the script step gave `required` the same rule. Still stale until the AI docs
-      step: `search-image.md` says accuracy is set on the step and describes the sweep, and
-      `AiPromptHelper` tells the model to read a score against the step's accuracy.
+      since the script step gave `required` the same rule. The AI docs caught up in their own
+      step, below.
 - [x] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
       monitor. One migration.
 
@@ -1185,7 +1186,35 @@ template (a known limit).
       and the warning (four steps flagged, the region inside a monitor not). **Not verified in
       the running app**: the forms themselves need clicking through - capture a template with and
       without an area, and an application area's "Contents scale with".
-- [ ] **The AI docs and `DbQueryTools`.**
+- [x] **The AI docs and `DbQueryTools`.**
+
+      Done 2026-09-24. What the assistant is told now matches what the app does:
+      - **`search-image.md`**: accuracy per template with per-mode defaults, the two match modes
+        and when each is right, scaling decided by the area's `ScalesWith` with one computed
+        attempt and no sweep, the impossible-ratio error, templates with nothing recorded, and the
+        known limits - text across a DPI change, a single-colour template, colour. It also states
+        the `IsRequired` gap plainly: only Test now honours it (`TODO.md`).
+      - **`areas.md`** gains what an area's contents scale with and screen coordinates; **`points.md`**
+        the point's own DPI and the warning; **`validation-messages.md`** `SCREEN_COORDINATES`;
+        **`troubleshooting.md`** the wrong `ScalesWith` as the likely cause of a far-off score on
+        another machine, and `SHAPE_AND_BRIGHTNESS` for a template found in the wrong state.
+      - **A score is read against the template that produced it.** The prompts said "that step's
+        accuracy", which no longer exists. `SearchImageStepWorker`'s failure message now names the
+        closest template - `no template matched, closest play hover at 0.86 - play at 0.80,
+        play hover at 0.90` - so the execution page, Explain and the tools all carry it, and
+        `GetRunSteps` returns `ClosestTemplate` and `ClosestTemplateAccuracy`. Read against the
+        wrong template, 0.86 would pass a 0.80 bar it never had to clear.
+      - **`DbQueryTools` says what portability turns on.** An area comes back with its parent, its
+        effective `ScalesWith` - `DPI (from Browser)` for an unset child, `DPI (default)` otherwise
+        - its DPI, and `primary` for the primary monitor; a point with the area it is measured
+        from, its mode and DPI; a template with its click point. Before, a point said only X and Y,
+        so the model could not tell an anchored point from a screen coordinate.
+      - Vocabulary: "frames" became screenshots in `how-execution-works.md` and
+        `troubleshooting.md`, and "run" execution where it named the thing.
+
+      Verified by a scratch program against an in-memory database: the four areas, two points,
+      two templates and one execution step came back as above, and every edited document still
+      splits into chunks under the embedding model's 2000-character cap.
 
 A migration per schema step rather than one at the end, so the app starts after each step:
 `Program.cs` runs `Migrate()`, and a model without its migration does not. Existing data is not

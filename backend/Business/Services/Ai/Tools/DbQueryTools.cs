@@ -71,33 +71,42 @@ namespace Business.Services.Ai.Tools
                 .ToListAsync();
         }
 
-        [Description("One flow with the areas and points it defines. Areas say which application or monitor the flow works against.")]
+        [Description("One flow with the areas and points it defines. Areas say which application or monitor the flow works against and what their contents scale with; points say what they are measured from. An area or point with nothing around it is in screen coordinates, and will not survive another screen.")]
         public async Task<FlowDetail?> GetFlow([Description("The flow id, from SearchFlows.")] int flowId)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-            FlowDetail? flow = await dbContext.Flows
+            FlowSummary? flow = await dbContext.Flows
                 .AsNoTracking()
                 .Where(x => x.Id == flowId)
-                .Select(x => new FlowDetail(
-                    x.Id,
-                    x.Name,
-                    x.Description,
-                    x.IsSubFlow,
-                    x.FlowSteps.Count(),
-                    x.FlowAreas.Select(a => new AreaSummary(
-                        a.Id,
-                        a.Name,
-                        a.Type.ToString(),
-                        a.ProcessName,
-                        a.TitlePattern,
-                        a.MonitorDeviceName,
-                        a.Width,
-                        a.Height)).ToList(),
-                    x.FlowPoints.Select(p => new PointSummary(p.Id, p.Name, p.LocationX, p.LocationY)).ToList()))
+                .Select(x => new FlowSummary(x.Id, x.Name, x.Description, x.IsSubFlow, x.FlowSteps.Count(), 0, 0))
                 .FirstOrDefaultAsync();
 
-            return flow;
+            if (flow == null)
+                return null;
+
+            List<Core.Models.Database.FlowArea> areas = await dbContext.FlowAreas
+                .AsNoTracking()
+                .Include(x => x.ParentFlowArea)
+                .Where(x => x.FlowId == flowId)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            List<Core.Models.Database.FlowPoint> points = await dbContext.FlowPoints
+                .AsNoTracking()
+                .Include(x => x.FlowArea)
+                .Where(x => x.FlowId == flowId)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            return new FlowDetail(
+                flow.Id,
+                flow.Name,
+                flow.Description,
+                flow.IsSubFlow,
+                flow.StepCount,
+                areas.Select(AreaSummaryOf).ToList(),
+                points.Select(PointSummaryOf).ToList());
         }
 
         [Description("The steps of one flow, in tree order. Optionally filtered to one step type.")]
@@ -159,6 +168,7 @@ namespace Business.Services.Ai.Tools
                 .AsNoTracking()
                 .Include(x => x.FlowStepTemplates)
                 .Include(x => x.FlowArea)
+                .ThenInclude(x => x!.ParentFlowArea)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
 
             if (step == null)
@@ -178,24 +188,19 @@ namespace Business.Services.Ai.Tools
                 settings[field] = value is Enum ? value.ToString() : value;
             }
 
-            AreaSummary? area = step.FlowArea == null
-                ? null
-                : new AreaSummary(
-                    step.FlowArea.Id,
-                    step.FlowArea.Name,
-                    step.FlowArea.Type.ToString(),
-                    step.FlowArea.ProcessName,
-                    step.FlowArea.TitlePattern,
-                    step.FlowArea.MonitorDeviceName,
-                    step.FlowArea.Width,
-                    step.FlowArea.Height);
+            AreaSummary? area = null;
+            if (step.FlowArea != null)
+                area = AreaSummaryOf(step.FlowArea);
 
             List<TemplateSummary> templates = step.FlowStepTemplates
+                .OrderBy(x => x.OrderNumber)
                 .Select(x => new TemplateSummary(
                     x.Id,
                     x.Name,
                     x.IsRequired,
                     x.Accuracy,
+                    x.ClickOffsetX,
+                    x.ClickOffsetY,
                     x.AuthoredFlowAreaWidth,
                     x.AuthoredFlowAreaHeight,
                     x.AuthoredDpi))
@@ -232,7 +237,7 @@ namespace Business.Services.Ai.Tools
                 .ToListAsync();
         }
 
-        [Description("The steps of one run, in the order they happened. Indent by depth to read it as a tree. Says of each failure whether it ended the run or was caught by a Failure branch.")]
+        [Description("The steps of one run, in the order they happened. Indent by depth to read it as a tree. Says of each failure whether it ended the run or was caught by a Failure branch. An image search's BestScore comes with the template that scored it and that template's own accuracy - read one against the other.")]
         public async Task<IReadOnlyList<RunStepSummary>> GetRunSteps([Description("The run id, from GetRuns.")] int executionId)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
@@ -261,8 +266,23 @@ namespace Business.Services.Ai.Tools
                     x.Value,
                     x.Message,
                     x.ExitCode,
-                    x.BestScore))
+                    x.BestScore,
+                    x.BestTemplateId))
                 .ToListAsync();
+
+            // Each template has its own accuracy, so a score is only readable next to the one that
+            // produced it. As the template stands now, the way the execution page reads it.
+            List<int> templateIds = steps
+                .Where(x => x.BestTemplateId != null)
+                .Select(x => x.BestTemplateId!.Value)
+                .Distinct()
+                .ToList();
+
+            Dictionary<int, Core.Models.Database.FlowStepTemplate> closest = await dbContext.FlowStepTemplates
+                .AsNoTracking()
+                .Where(x => templateIds.Contains(x.Id))
+                .Select(x => new Core.Models.Database.FlowStepTemplate { Id = x.Id, Name = x.Name, Accuracy = x.Accuracy })
+                .ToDictionaryAsync(x => x.Id);
 
             return steps
                 .Select(x => new RunStepSummary(
@@ -277,7 +297,9 @@ namespace Business.Services.Ai.Tools
                     x.Value,
                     x.Message,
                     x.ExitCode,
-                    x.BestScore))
+                    x.BestScore,
+                    closest.GetValueOrDefault(x.BestTemplateId ?? 0)?.Name,
+                    closest.GetValueOrDefault(x.BestTemplateId ?? 0)?.Accuracy))
                 .ToList();
         }
 
@@ -430,6 +452,53 @@ namespace Business.Services.Ai.Tools
                 .ToList();
         }
 
+        private static AreaSummary AreaSummaryOf(Core.Models.Database.FlowArea area)
+        {
+            string monitor = area.MonitorDeviceName;
+            if (area.Type == FlowAreaTypeEnum.MONITOR && monitor.Length == 0)
+                monitor = "primary";
+
+            return new AreaSummary(
+                area.Id,
+                area.Name,
+                area.Type.ToString(),
+                area.ParentFlowArea?.Name,
+                ScalesWithOf(area),
+                area.AuthoredDpi,
+                area.ProcessName,
+                area.TitlePattern,
+                monitor,
+                area.Width,
+                area.Height);
+        }
+
+        // Said as what it resolves to: null means "whatever the parent says", which the model
+        // should not have to work out.
+        private static string ScalesWithOf(Core.Models.Database.FlowArea area)
+        {
+            if (area.ScalesWith != null)
+                return area.ScalesWith.Value.ToString();
+
+            if (area.ParentFlowArea?.ScalesWith != null)
+                return $"{area.ParentFlowArea.ScalesWith.Value} (from {area.ParentFlowArea.Name})";
+
+            return "DPI (default)";
+        }
+
+        private static PointSummary PointSummaryOf(Core.Models.Database.FlowPoint point)
+        {
+            return new PointSummary(
+                point.Id,
+                point.Name,
+                point.FlowArea?.Name,
+                point.OffsetMode.ToString(),
+                point.LocationX,
+                point.LocationY,
+                point.RatioX,
+                point.RatioY,
+                point.AuthoredDpi);
+        }
+
         private static IQueryable<Core.Models.Database.FlowStep> Steps(AppDbContext dbContext)
         {
             return dbContext.FlowSteps
@@ -467,21 +536,26 @@ namespace Business.Services.Ai.Tools
 
         public record FlowDetail(int Id, string Name, string Description, bool IsSubFlow, int StepCount, List<AreaSummary> Areas, List<PointSummary> Points);
 
-        public record AreaSummary(int Id, string Name, string Type, string ProcessName, string TitlePattern, string MonitorDeviceName, int Width, int Height);
+        /// <summary>
+        /// <c>ParentName</c> null and <c>Type</c> CUSTOM is a region in screen coordinates.
+        /// <c>AuthoredDpi</c> 0 means its pixels are never scaled.
+        /// </summary>
+        public record AreaSummary(int Id, string Name, string Type, string? ParentName, string ScalesWith, int AuthoredDpi, string ProcessName, string TitlePattern, string Monitor, int Width, int Height);
 
-        public record PointSummary(int Id, string Name, int X, int Y);
+        /// <summary><c>AreaName</c> null is a screen coordinate.</summary>
+        public record PointSummary(int Id, string Name, string? AreaName, string OffsetMode, int X, int Y, float RatioX, float RatioY, int AuthoredDpi);
 
         public record StepSummary(int Id, int FlowId, string Name, string Type, string ProcessName, string TitlePattern, string TypedText, string Command, string ConditionText, int? SubFlowId, int? FlowAreaId, int? FlowPointId);
 
         public record StepDetail(int Id, int FlowId, string Name, string Type, Dictionary<string, object?> Settings, AreaSummary? Area, List<TemplateSummary> Templates);
 
-        public record TemplateSummary(int Id, string Name, bool IsRequired, float Accuracy, int AuthoredFlowAreaWidth, int AuthoredFlowAreaHeight, int AuthoredDpi);
+        public record TemplateSummary(int Id, string Name, bool IsRequired, float Accuracy, int ClickOffsetX, int ClickOffsetY, int AuthoredFlowAreaWidth, int AuthoredFlowAreaHeight, int AuthoredDpi);
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 
-        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
+        public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore, string? ClosestTemplate, float? ClosestTemplateAccuracy);
 
-        private sealed record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore);
+        private sealed record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore, int? BestTemplateId);
 
         public record StepTypeCount(string Type, int Count);
 

@@ -80,7 +80,7 @@ namespace Business.Services.ExecutionService.Workers
 
                 if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
-                    ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting"));
+                    ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls));
                     gaveUp.Screenshot = search.Screenshot;
                     gaveUp.BestScore = bestOverPolls;
                     gaveUp.BestTemplateId = bestTemplateOverPolls;
@@ -106,20 +106,24 @@ namespace Business.Services.ExecutionService.Workers
             // could show something else. Whether it is worth keeping is the cache's business.
             ExecutionScreenshot? screenshot = cache.EncodeForHistory(search.Haystack, step);
 
-            ExecutionStep result = Result(step, area.Bounds, search, cache, findAll);
+            int? bestTemplateId = null;
+            if (search.BestTemplateIndex is int best)
+                bestTemplateId = images[best].Id;
+
+            ExecutionStep result = Result(step, area.Bounds, search, bestTemplateId, cache, findAll);
             result.Screenshot = screenshot;
-            result.BestTemplateId = search.BestTemplateIndex is int best ? images[best].Id : null;
+            result.BestTemplateId = bestTemplateId;
 
             return result;
         }
 
         // What was found, said as an execution step. The points arrive relative to the search
         // area, and a click needs them on the screen.
-        private static ExecutionStep Result(FlowStep step, Rectangle bounds, ImageSearchResult search, IExecutionCacheService cache, bool findAll)
+        private static ExecutionStep Result(FlowStep step, Rectangle bounds, ImageSearchResult search, int? bestTemplateId, IExecutionCacheService cache, bool findAll)
         {
             if (search.Hits.Count == 0)
             {
-                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched"));
+                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched", search.BestScore, bestTemplateId));
                 missed.BestScore = search.BestScore;
 
                 return missed;
@@ -147,14 +151,24 @@ namespace Business.Services.ExecutionService.Workers
             return found;
         }
 
-        /// <summary>Says what was being looked for and how hard, which is what a failure turns on.</summary>
-        private static string Detail(FlowStep step, string outcome)
+        // What was looked for and how hard, and which template came closest: each has its own
+        // accuracy, so 0.78 means nothing until it is read against the bar of the one that scored it.
+        private static string Detail(FlowStep step, string outcome, float? bestScore, int? bestTemplateId)
         {
-            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}"));
+            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.Name} at {Score(x.Accuracy)}"));
             if (templates.Length == 0)
                 templates = "no templates";
 
-            return $"{outcome} - {templates}, {step.SearchMode}";
+            FlowStepTemplate? closest = step.FlowStepTemplates.FirstOrDefault(x => x.Id == bestTemplateId);
+            if (bestScore == null || closest == null)
+                return $"{outcome} - {templates}, {step.SearchMode}";
+
+            return $"{outcome}, closest {closest.Name} at {Score(bestScore.Value)} - {templates}, {step.SearchMode}";
+        }
+
+        private static string Score(float value)
+        {
+            return value.ToString("0.00", CultureInfo.InvariantCulture);
         }
     }
 }

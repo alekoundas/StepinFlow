@@ -25,7 +25,8 @@ one.
 
 Fix the window to a known size at the start of a flow, and everything inside it lands in a
 reproducible place. Areas defined as offsets inside that window then resolve identically on any
-machine, and templates captured at that size match without scaling.
+machine, and templates captured at that size need no scaling on a screen with the same Windows
+scaling - on one without, they scale by what their area's contents scale with.
 
 A flow that starts with a resize is far more reliable than one that hopes the window is where it
 was yesterday.
