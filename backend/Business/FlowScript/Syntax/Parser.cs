@@ -385,6 +385,27 @@ namespace Business.FlowScript.Syntax
                 return;
             }
 
+            // at 120dpi: optional, and without it the pixels stay as written.
+            int next = at + 3;
+            if (line.Word(next) == "at")
+            {
+                int? dpi = SyntaxFacts.ReadDpi(line.Word(next + 1));
+                if (dpi == null)
+                {
+                    document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, line.Number, line.ColumnOf(next + 1), $"\"{line.Word(next + 1)}\" is not a DPI. Expected something like 120dpi."));
+                    return;
+                }
+
+                point.AuthoredDpi = dpi.Value;
+                next += 2;
+            }
+
+            if (next < line.Tokens.Count)
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, line.Number, line.ColumnOf(next), $"\"{line.Word(next)}\" is not something a point takes."));
+                return;
+            }
+
             document.Points.Add(new PointSyntax { Point = point, AreaName = areaName, Line = line.Number });
         }
 

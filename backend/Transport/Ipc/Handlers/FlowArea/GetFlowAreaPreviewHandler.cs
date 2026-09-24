@@ -55,6 +55,7 @@ namespace Transport.Ipc.Handlers
                 LocationY = resolution.Bounds.Y,
                 Width = resolution.Bounds.Width,
                 Height = resolution.Bounds.Height,
+                Dpi = resolution.Dpi,
                 Screenshot = _screenshotService.CaptureResolvedArea(area, resolution.Bounds, ScreenshotFormatEnum.JPEG, 85),
             });
         }

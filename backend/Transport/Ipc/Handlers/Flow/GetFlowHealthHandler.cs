@@ -42,9 +42,9 @@ namespace Transport.Ipc.Handlers
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            List<int> flowIds = all
-                ? await dbContext.Flows.Select(x => x.Id).ToListAsync(ct)
-                : requested;
+            List<int> flowIds = requested;
+            if (all)
+                flowIds = await dbContext.Flows.Select(x => x.Id).ToListAsync(ct);
 
             if (flowIds.Count == 0)
                 return ResultDto<IReadOnlyList<FlowHealthDto>>.Success([]);
@@ -63,30 +63,42 @@ namespace Transport.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
 
-            // One query for both, split in memory, so the shape matches the steps above rather
-            // than adding a round trip per flow.
-            List<(int FlowId, string Name)> named = await dbContext.FlowAreas
+            // One query each for every flow asked about, split in memory, so the shape matches the
+            // steps above rather than adding a round trip per flow. Only what the rules read.
+            List<FlowArea> areas = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Where(x => all || flowIds.Contains(x.FlowId))
-                .Select(x => new { x.FlowId, x.Name })
-                .Concat(dbContext.FlowPoints
-                    .AsNoTracking()
-                    .Where(x => all || flowIds.Contains(x.FlowId))
-                    .Select(x => new { x.FlowId, x.Name }))
-                .Concat(dbContext.FlowCsvColumns
-                    .AsNoTracking()
-                    .Where(x => all || flowIds.Contains(x.FlowId))
-                    .Select(x => new { x.FlowId, x.Name }))
-                .Select(x => ValueTuple.Create(x.FlowId, x.Name))
+                .Select(x => new FlowArea { Id = x.Id, FlowId = x.FlowId, Name = x.Name, Type = x.Type, ParentFlowAreaId = x.ParentFlowAreaId })
                 .ToListAsync(ct);
 
-            ILookup<int, string> namesByFlow = named.ToLookup(x => x.FlowId, x => x.Name);
+            List<FlowPoint> points = await dbContext.FlowPoints
+                .AsNoTracking()
+                .Where(x => all || flowIds.Contains(x.FlowId))
+                .Select(x => new FlowPoint { Id = x.Id, FlowId = x.FlowId, Name = x.Name, FlowAreaId = x.FlowAreaId })
+                .ToListAsync(ct);
+
+            List<FlowCsvColumn> inputs = await dbContext.FlowCsvColumns
+                .AsNoTracking()
+                .Where(x => all || flowIds.Contains(x.FlowId))
+                .Select(x => new FlowCsvColumn { FlowId = x.FlowId, Name = x.Name })
+                .ToListAsync(ct);
+
+            ILookup<int, FlowArea> areasByFlow = areas.ToLookup(x => x.FlowId);
+            ILookup<int, FlowPoint> pointsByFlow = points.ToLookup(x => x.FlowId);
+            ILookup<int, string> inputNamesByFlow = inputs.ToLookup(x => x.FlowId, x => x.Name);
             ILookup<int, FlowStep> stepsByRoot = steps.ToLookup(x => x.RootId);
 
             List<FlowHealthDto> health = flowIds
                 .Select(flowId =>
                 {
-                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts, namesByFlow[flowId].ToList());
+                    List<FlowArea> flowAreas = areasByFlow[flowId].ToList();
+                    List<FlowPoint> flowPoints = pointsByFlow[flowId].ToList();
+                    List<string> flowNames = flowAreas.Select(x => x.Name)
+                        .Concat(flowPoints.Select(x => x.Name))
+                        .Concat(inputNamesByFlow[flowId])
+                        .ToList();
+
+                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts, flowAreas, flowPoints, flowNames);
 
                     return new FlowHealthDto
                     {

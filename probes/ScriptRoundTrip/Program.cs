@@ -145,6 +145,7 @@ static BoundFlow Sample()
     [
         new FlowPoint { Id = 20, Name = "Hamburger", FlowAreaId = 10, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.95f, RatioY = 0.05f },
         new FlowPoint { Id = 21, Name = "Origin", OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 12, LocationY = -12 },
+        new FlowPoint { Id = 22, Name = "Menu", FlowAreaId = 10, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 40, LocationY = 8, AuthoredDpi = 120 },
     ];
 
     List<FlowCsvColumn> inputs =

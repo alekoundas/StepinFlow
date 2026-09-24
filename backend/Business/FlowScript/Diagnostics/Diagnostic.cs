@@ -35,6 +35,7 @@ namespace Business.FlowScript.Diagnostics
         INPUT_MALFORMED,
         TITLE_MATCH_UNKNOWN,
         AREA_ARGUMENT_UNKNOWN,
+        POINT_ARGUMENT_UNKNOWN,
 
         // Templates
         TEMPLATE_MALFORMED,

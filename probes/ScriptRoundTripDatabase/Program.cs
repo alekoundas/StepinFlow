@@ -200,7 +200,8 @@ static int Seed(DbContextOptions<AppDbContext> options)
 
     FlowPoint hamburger = new FlowPoint { Name = "Hamburger", FlowId = flow.Id, FlowAreaId = browser.Id, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.95f, RatioY = 0.05f };
     FlowPoint origin = new FlowPoint { Name = "Origin", FlowId = flow.Id, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 12, LocationY = -12 };
-    db.FlowPoints.AddRange(hamburger, origin);
+    FlowPoint menu = new FlowPoint { Name = "Menu", FlowId = flow.Id, FlowAreaId = browser.Id, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 40, LocationY = 8, AuthoredDpi = 120 };
+    db.FlowPoints.AddRange(hamburger, origin, menu);
 
     db.FlowViewports.AddRange(
         new FlowViewport { FlowId = flow.Id, Width = 1920, Height = 1080, OrderNumber = 0 },

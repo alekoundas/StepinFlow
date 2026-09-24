@@ -19,8 +19,8 @@ namespace Core.Models.Database
         // child takes its parent's, and an area with no parent is DPI.
         public ScalesWithEnum? ScalesWith { get; set; }
 
-        // The DPI this area's pixel numbers were written at, so ABSOLUTE_PX children and points
-        // inside a DPI area can follow the monitor.
+        // The DPI its own offset and size were captured at, so an ABSOLUTE_PX child inside a DPI
+        // area follows the monitor. A point carries its own.
         public int AuthoredDpi { get; set; }
 
 

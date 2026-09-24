@@ -293,6 +293,11 @@ is lost between sessions.
       seconds of patience it cannot use, paid on every execution that takes the fallback. The fix
       is the anchor pattern in FLOW-FORMAT.md: wait once on something always present, then branch
       instantly with `FIND_BEST`. A warning, not an error - the flow still works, it is just slow.
+- [ ] **A recorded template carries no captured size or DPI.** The wizard's `recordedTemplate`
+      (`action-to-steps.ts`) builds it from the recording's screenshot with only a click point, so
+      it is never scaled - searched at the size it was recorded on every screen. The capture form
+      now records both from the step's area; the recorder should too, from the area the answer
+      picks, once that area is resolved at the moment of recording.
 
 ## Notify
 

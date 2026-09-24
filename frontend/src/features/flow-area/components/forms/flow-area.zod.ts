@@ -3,6 +3,7 @@ import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
+import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 export const FlowAreaZod = z
   .object({
@@ -12,6 +13,9 @@ export const FlowAreaZod = z
     id: z.number().int(),
     name: z.string().min(1, "Name is required").max(120, "Name too long"),
     type: z.enum(FlowAreaTypeEnum),
+
+    scalesWith: z.enum(ScalesWithEnum).nullish(),
+    authoredDpi: z.number().int(),
 
     parentFlowAreaId: z.number().int().nullish(),
     sizingMode: z.enum(AreaSizingModeEnum),
@@ -75,6 +79,15 @@ export const FlowAreaZod = z
           path: ["processName"],
         });
       }
+    }
+
+    // A native app and a game look the same from outside, so this is the one type that asks.
+    if (data.type === FlowAreaTypeEnum.APPLICATION && !data.scalesWith) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Pick what its contents scale with",
+        path: ["scalesWith"],
+      });
     }
 
     if (data.type === FlowAreaTypeEnum.BROWSER_TAB) {

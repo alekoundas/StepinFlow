@@ -14,6 +14,7 @@ import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponen
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
+import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type {
   ImageSearchTestImageDto,
   ImageSearchTestResultDto,
@@ -138,15 +139,51 @@ export default function FlowStepSearchImageFormComponent({
       flowStepTemplates: imagesRef.current,
     });
 
-  // Captured region becomes the template, and the area it was captured in becomes the
-  // scaling key so it still matches on a different resolution.
+  // A template is measured against the area it is searched in - that area's size and DPI are
+  // what let it scale on another screen - so there is no capturing one until the step has an
+  // area. The drag is confined to it, because a template from outside it can never be found.
   const handleAddTemplate = async () => {
-    const rect = await openWindow();
-    if (!rect) return;
-
     setTemplateError(null);
+
+    const areaId = form.getValues().flowAreaId;
+    if (!areaId) {
+      setTemplateError(
+        "Pick where to look first. A template is measured against the area it is searched in.",
+      );
+      return;
+    }
+
+    // An area added in this same editing session only has a temporary negative id, so there is
+    // nothing for the backend to resolve yet.
+    if (areaId < 0) {
+      setTemplateError(
+        "Save the flow before capturing in that area, which has not been created yet.",
+      );
+      return;
+    }
+
     try {
-      await captureTemplate(rect);
+      const area = await backendApiService.FlowArea.getPreview(areaId);
+      if (!area.isResolved) {
+        setTemplateError(
+          area.errorMessage ??
+            "The search area is not on screen right now, so a template cannot be measured against it.",
+        );
+        return;
+      }
+
+      const rect = await openWindow(
+        {
+          x: area.locationX,
+          y: area.locationY,
+          width: area.width,
+          height: area.height,
+        },
+        "Search area",
+      );
+      if (!rect) return;
+
+      await captureTemplate(rect, area);
     } catch (err) {
       // Without this the capture fails and the list simply stays empty, which reads as the
       // button doing nothing.
@@ -157,19 +194,7 @@ export default function FlowStepSearchImageFormComponent({
     }
   };
 
-  const captureTemplate = async (rect: Rectangle) => {
-    const areaId = form.getValues().flowAreaId;
-    let frameWidth = rect.width;
-    let frameHeight = rect.height;
-
-    if (areaId) {
-      const preview = await backendApiService.FlowArea.getPreview(areaId);
-      if (preview.isResolved) {
-        frameWidth = preview.width;
-        frameHeight = preview.height;
-      }
-    }
-
+  const captureTemplate = async (rect: Rectangle, area: FlowAreaPreviewDto) => {
     const screenshot = await backendApiService.System.takeScreenshot({
       formatType: "PNG",
       jpegQuality: 100,
@@ -188,8 +213,9 @@ export default function FlowStepSearchImageFormComponent({
         name: `Template ${previous.length + 1}`,
         templateImage: screenshot,
         accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
-        authoredFlowAreaWidth: frameWidth,
-        authoredFlowAreaHeight: frameHeight,
+        authoredFlowAreaWidth: area.width,
+        authoredFlowAreaHeight: area.height,
+        authoredDpi: area.dpi,
         ...centreClickOffset(screenshot),
       }),
     ]);

@@ -23,6 +23,24 @@ interface Props {
   onRemove: (index: number) => void;
 }
 
+// What a different screen is measured against: the area's size for one that scales with its
+// area, the DPI for one that scales with the monitor.
+const capturedIn = (image: FlowStepTemplateDto): string => {
+  const facts: string[] = [];
+
+  if (image.authoredFlowAreaWidth > 0)
+    facts.push(
+      `in a ${image.authoredFlowAreaWidth}×${image.authoredFlowAreaHeight} area`,
+    );
+
+  if (image.authoredDpi > 0) facts.push(`at ${image.authoredDpi} dpi`);
+
+  if (facts.length === 0)
+    return "nothing recorded about where it was captured, so it is searched at this size everywhere";
+
+  return `captured ${facts.join(" ")}`;
+};
+
 export function FlowStepTemplateListComponent({
   images,
   testResults,
@@ -104,11 +122,7 @@ export function FlowStepTemplateListComponent({
                 <LabelComponent
                   size="xs"
                   color="secondary"
-                  text={
-                    image.authoredFlowAreaWidth > 0
-                      ? `captured in a ${image.authoredFlowAreaWidth}×${image.authoredFlowAreaHeight} area`
-                      : "no area size recorded, scaling will be skipped"
-                  }
+                  text={capturedIn(image)}
                 />
 
                 {/* Per template: one variant of an icon can need a looser bar than another. */}

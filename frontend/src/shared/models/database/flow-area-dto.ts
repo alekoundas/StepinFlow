@@ -14,7 +14,7 @@ export class FlowAreaDto {
   // What makes its contents bigger or smaller on another screen. Null inherits the parent's, and
   // an area with no parent is DPI.
   scalesWith?: ScalesWithEnum | null;
-  // The DPI its pixel numbers were written at.
+  // The DPI its own offset and size were captured at. A point carries its own.
   authoredDpi: number = 0;
 
   // CUSTOM

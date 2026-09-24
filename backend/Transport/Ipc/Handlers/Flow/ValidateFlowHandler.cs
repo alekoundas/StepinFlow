@@ -33,30 +33,40 @@ namespace Transport.Ipc.Handlers
 
             // Counted rather than Included: the templates themselves are megabytes and only their
             // number matters here.
-            var templateCounts = await dbContext.FlowStepTemplates
+            Dictionary<int, int> templateCounts = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => x.FlowStep.RootId == id)
                 .GroupBy(x => x.FlowStepId)
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
+                .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
+
+            // Only what the rules read: the name, and what each one sits in.
+            List<FlowArea> areas = await dbContext.FlowAreas
+                .AsNoTracking()
+                .Where(x => x.FlowId == id)
+                .Select(x => new FlowArea { Id = x.Id, Name = x.Name, Type = x.Type, ParentFlowAreaId = x.ParentFlowAreaId })
+                .ToListAsync(ct);
+
+            List<FlowPoint> points = await dbContext.FlowPoints
+                .AsNoTracking()
+                .Where(x => x.FlowId == id)
+                .Select(x => new FlowPoint { Id = x.Id, Name = x.Name, FlowAreaId = x.FlowAreaId })
+                .ToListAsync(ct);
+
+            List<string> inputNames = await dbContext.FlowCsvColumns
+                .AsNoTracking()
+                .Where(x => x.FlowId == id)
+                .Select(x => x.Name)
                 .ToListAsync(ct);
 
             // Areas, points and csv columns share a namespace with steps, and a {{name}} resolves
             // against any of them, so neither question is answerable without all four.
-            List<string> flowNames = await dbContext.FlowAreas
-                .AsNoTracking()
-                .Where(x => x.FlowId == id)
-                .Select(x => x.Name)
-                .Concat(dbContext.FlowPoints
-                    .AsNoTracking()
-                    .Where(x => x.FlowId == id)
-                    .Select(x => x.Name))
-                .Concat(dbContext.FlowCsvColumns
-                    .AsNoTracking()
-                    .Where(x => x.FlowId == id)
-                    .Select(x => x.Name))
-                .ToListAsync(ct);
+            List<string> flowNames = areas.Select(x => x.Name)
+                .Concat(points.Select(x => x.Name))
+                .Concat(inputNames)
+                .ToList();
 
-            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts.ToDictionary(x => x.FlowStepId, x => x.Count), flowNames);
+            FlowValidationResultDto result = _flowValidationService.Validate(steps, templateCounts, areas, points, flowNames);
 
             return ResultDto<FlowValidationResultDto>.Success(result);
         }

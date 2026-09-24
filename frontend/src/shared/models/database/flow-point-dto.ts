@@ -10,6 +10,8 @@ export class FlowPointDto {
 
   locationX: number = 0;
   locationY: number = 0;
+  // The DPI those pixels were captured at, so inside a DPI area they follow the monitor.
+  authoredDpi: number = 0;
 
   ratioX: number = 0;
   ratioY: number = 0;

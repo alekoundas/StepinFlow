@@ -85,8 +85,10 @@ export default function FlowPointFormFieldsComponent({
       return;
     }
 
+    // Pixels mean something only at the DPI they were measured at, so that goes with them.
     write("locationX", offsetX);
     write("locationY", offsetY);
+    write("authoredDpi", preview.dpi);
   };
 
   const handleTest = async () => {

@@ -832,7 +832,7 @@ reads it.
 
 #### Decided
 
-- [ ] **`FlowArea.ScalesWith`: `DPI` or `AREA`**, written `scales with dpi` and
+- [x] **`FlowArea.ScalesWith`: `DPI` or `AREA`**, written `scales with dpi` and
       `scales with area` on the area line. One setting per area, inherited by every template,
       child area and point inside it, because everything in an area obeys the same physics - the
       browser tab does not grow its contents, the game does.
@@ -859,22 +859,28 @@ reads it.
       window, not of the picture between the bars. That only bites when the window changes shape,
       and template search does not need it - it scans the whole area.
 
-- [ ] **`FlowArea.AuthoredDpi`**, so `ABSOLUTE_PX` child areas and points inside a `DPI` area
+- [x] **`FlowArea.AuthoredDpi`**, so `ABSOLUTE_PX` child areas and points inside a `DPI` area
       scale with the monitor. The template keeps a DPI of its own, renamed
       `AuthoredMonitorDpi` -> `AuthoredDpi`, because it may be captured on a different day and
       monitor than its area was defined on: two moments, two DPIs. **And it gets written** - the
       overlay already has it.
 
+      **Changed in the forms step, 2026-09-24: a point carries its own DPI too** -
+      `FlowPoint.AuthoredDpi`. The same two-moments argument: a point is captured when it is
+      captured, and an application or monitor area has no pixel numbers of its own, so nothing
+      ever stamped a DPI on it for its points to borrow. Every set of pixel numbers now carries the
+      DPI it was captured at - a template, a child area's offset and size, a point.
+
       **The DPI now is the monitor holding the largest part of the area** - the rule Windows itself
       uses to give a window its DPI. `FindMonitorContaining` returns null for an area spanning two
       today, so it needs that rule rather than a null.
 
-- [ ] **Nesting stays.** The setting answers how big; a nested area answers where. A game inside a
+- [x] **Nesting stays.** The setting answers how big; a nested area answers where. A game inside a
       browser tab has no window handle of its own, so a fraction of the tab is the only portable
       way to say where it is - and it is exactly the case where the two areas need different
       settings: the tab is `DPI`, the game inside it is `AREA`.
 
-- [ ] **The sweep goes: `AllowMultiScale`, `ScaleTolerance`, `ScaleSweep`, `MultiScaleSteps`.**
+- [x] **The sweep goes: `AllowMultiScale`, `ScaleTolerance`, `ScaleSweep`, `MultiScaleSteps`.**
       It has never run - `allowMultiScale` defaults to false and no form control, script keyword
       or code path sets it. Deleting it changes no behaviour. What it might have covered has a
       computed answer, or is not this phase's problem:
@@ -890,26 +896,26 @@ reads it.
       positive, it took the first scale that matched rather than the best, and it tried larger
       before smaller. One computed attempt fails legibly - "0.62 at 1.25" says the ratio was wrong.
 
-- [ ] **An impossible ratio is an error, not an empty result.** A template scaled larger than the
+- [x] **An impossible ratio is an error, not an empty result.** A template scaled larger than the
       screenshot returns an empty outcome today - indistinguishable from "not on screen".
 
-- [ ] **`AuthoredFrameWidth/Height` -> `AuthoredFlowAreaWidth/Height`**, and the rule that makes
+- [x] **`AuthoredFrameWidth/Height` -> `AuthoredFlowAreaWidth/Height`**, and the rule that makes
       the name true: **no capture until the step has an area.** Today the capture falls back to
       the size of the crop itself, so a 50px template can be recorded as its own "area" and scaled
       16x against an 800px one. Touches the entity, both dtos, the capture form, the template list
       label, the sync helper, `SearchTemplate`, `ImageSearcher`, `DbQueryTools` and the AI docs;
       the dtos are the JSON contract, so frontend and backend ship together.
 
-- [ ] **A warning for anything positioned in screen coordinates.** A `CUSTOM` area with no parent,
+- [x] **A warning for anything positioned in screen coordinates.** A `CUSTOM` area with no parent,
       and a `FlowPoint` with no area - the same problem, found while checking the first. Both
       resolve as absolute screen coordinates and cannot survive another screen layout. A
       validator warning, like the other portability rules.
 
-- [ ] **`MonitorUniqueId` -> `MonitorDeviceName`, plus a primary monitor option.** It holds the GDI
+- [x] **`MonitorUniqueId` -> `MonitorDeviceName`, plus a primary monitor option.** It holds the GDI
       name - `\\.\DISPLAY1` - which renumbers when monitors are plugged and unplugged and may not
       exist on another PC. "Primary" is the portable choice and should be the default.
 
-- [ ] **Drop `AuthoredMonitorId`.** Written empty, read by nothing; it was for a warning that was
+- [x] **Drop `AuthoredMonitorId`.** Written empty, read by nothing; it was for a warning that was
       never built.
 
 - [ ] **The AI stops describing a feature nobody can reach.** `search-image.md` describes the
@@ -922,14 +928,14 @@ reads it.
 
 #### Match modes
 
-- [ ] **Two modes, not six.** Keep `CCoeffNormed` and `SqDiffNormed`. Drop `CCorrNormed` - bright
+- [x] **Two modes, not six.** Keep `CCoeffNormed` and `SqDiffNormed`. Drop `CCorrNormed` - bright
       flat regions score high against anything, and the code already records it scoring 0.95
       against blank grey - and the three unnormalised forms, which only answer "where is the best
       spot" and cannot take a threshold. Measured against a real 70x71 template: SqDiff 27-32
       million, CCorr 67-74 million, CCoeff +-1 million, so SqDiff never passes and the other two
       always do.
 
-- [ ] **Named by intent, and SCREAMING_CASE like every other enum here: `SHAPE` for
+- [x] **Named by intent, and SCREAMING_CASE like every other enum here: `SHAPE` for
       `CCoeffNormed`, `SHAPE_AND_BRIGHTNESS` for `SqDiffNormed`.** The name says the second is the
       stricter of the two, and that is only true because of its 0.95 default below - at 0.80 it is
       looser about shape, not stricter. The name and the default depend on each other. Written
@@ -939,7 +945,7 @@ reads it.
       brightness changes from pixel to pixel - edges and outlines - which is what `SHAPE` already
       responds to. What the second mode adds is brightness itself.
 
-- [ ] **The mode belongs to the step, for every template in it.** `FlowStepTemplate.TemplateMatchMode`
+- [x] **The mode belongs to the step, for every template in it.** `FlowStepTemplate.TemplateMatchMode`
       is dropped.
 
 - [x] **Accuracy belongs to each template.** One variant of an icon can need a looser bar than
@@ -1146,8 +1152,39 @@ template (a known limit).
       and timestamps aside, and imports a hand-written script to check a 41x20 png is clicked at
       21,10. It also prints, without failing, which step fields did not survive: only the cursor
       button, null on one side and `LEFT_BUTTON` on the other - see `TODO.md`.
-- [ ] **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by area
+- [x] **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by area
       type, the screen-coordinate warning.
+
+      Done 2026-09-24.
+      - **Capturing a template needs the step's area**, resolved on screen now: no area, an area
+        not saved yet, or one not on screen, and the form says which instead of opening the
+        overlay. The drag is confined to the area, because a template from outside it can never
+        be found. The template records the area's size and DPI - the preview now returns the DPI
+        of the monitor holding most of it, which is the DPI the searcher compares against.
+      - **Every capture of pixels writes the DPI beside them**: a child area's offset and size from
+        its parent's preview, a point's offset from its area's. Typed numbers keep whatever DPI
+        they had.
+      - **`FlowPoint.AuthoredDpi`**, one migration - see the decision above. The script writes it
+        on the point line: `"Menu"  inside "Browser"   offset 40 8   at 120dpi`.
+      - **"Contents scale with"** on every area: *Screen DPI* or *Area size*, plus *Same as "…"*
+        for a region inside another. Null is stored for "the default" and shown as what it means -
+        the parent's for a region inside one, DPI otherwise. An **application shows nothing picked
+        and will not save until someone says which**, because a native app and a game look the
+        same from outside.
+      - **`SCREEN_COORDINATES`**, a warning on each step that uses a region with no parent, a
+        region inside one, a point measured from nothing, or a point inside such a region. Its own
+        rule class, `FlowPortabilityValidator`, so the validator now takes the flow's areas and
+        points - id, name and what each sits in.
+      - Found on the way: **`ExtractSubFlowHandler` copied an area with half its fields** - no
+        ratio width or height, no window match, no monitor. A region extracted into a sub-flow
+        came out with no size. It copies every field now.
+
+      Verified: backend build, frontend type check and lint, both round-trip probes with a point
+      at 120dpi, and a scratch program against fakes - no database, no screen - for the resolver
+      (a point at 60 dpi on a 120 dpi monitor moves from 100,40 to 200,80 whatever its area's DPI)
+      and the warning (four steps flagged, the region inside a monitor not). **Not verified in
+      the running app**: the forms themselves need clicking through - capture a template with and
+      without an area, and an application area's "Contents scale with".
 - [ ] **The AI docs and `DbQueryTools`.**
 
 A migration per schema step rather than one at the end, so the app starts after each step:

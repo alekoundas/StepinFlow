@@ -24,8 +24,13 @@ namespace Transport.Ipc.Handlers
                 {
                     Id = x.Id,
                     Name = x.Name,
+                    FlowAreaId = x.FlowAreaId,
+                    OffsetMode = x.OffsetMode,
                     LocationX = x.LocationX,
                     LocationY = x.LocationY,
+                    AuthoredDpi = x.AuthoredDpi,
+                    RatioX = x.RatioX,
+                    RatioY = x.RatioY,
                     FlowId = x.FlowId,
                     FlowStepsCount = x.FlowSteps.Count() + x.EndFlowSteps.Count(),
                 })

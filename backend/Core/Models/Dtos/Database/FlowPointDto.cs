@@ -14,6 +14,7 @@ namespace Core.Models.Dtos
 
         public int LocationX { get; set; }
         public int LocationY { get; set; }
+        public int AuthoredDpi { get; set; }
 
         public float RatioX { get; set; }
         public float RatioY { get; set; }

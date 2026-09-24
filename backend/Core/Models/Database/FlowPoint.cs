@@ -17,6 +17,9 @@ namespace Core.Models.Database
         public int LocationX { get; set; }
         public int LocationY { get; set; }
 
+        // The DPI those pixels were captured at, so inside a DPI area they follow the monitor.
+        public int AuthoredDpi { get; set; }
+
         // RATIO: 0..1 of the area.
         public float RatioX { get; set; }
         public float RatioY { get; set; }

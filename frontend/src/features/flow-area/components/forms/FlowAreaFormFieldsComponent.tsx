@@ -18,6 +18,7 @@ import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
 import WindowMatchFieldsComponent from "@/shared/components/form/WindowMatchFieldsComponent";
+import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/forms/FlowAreaScalesWithFieldComponent";
 
 interface EnumOption {
   label: string;
@@ -184,10 +185,12 @@ export default function FlowAreaFormFieldsComponent({
       return;
     }
 
+    // Pixels mean something only at the DPI they were measured at, so that goes with them.
     write("locationX", rect.x - preview.locationX);
     write("locationY", rect.y - preview.locationY);
     write("width", rect.width);
     write("height", rect.height);
+    write("authoredDpi", preview.dpi);
   };
 
   return (
@@ -426,6 +429,12 @@ export default function FlowAreaFormFieldsComponent({
           }}
         />
       )}
+
+      <FlowAreaScalesWithFieldComponent
+        type={type}
+        parentName={parentId ? parentName : null}
+        isDisabled={isDisabled}
+      />
     </>
   );
 }

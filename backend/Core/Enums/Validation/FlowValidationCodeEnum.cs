@@ -63,5 +63,11 @@ namespace Core.Enums
         BRANCHES_EMPTY,
         CHECK_DECIDES_NOTHING,
         NAME_MISSING,
+
+        /// <summary>
+        /// An area or point in screen coordinates: a region with no parent, or a point measured
+        /// from nothing. Right on this screen, and somewhere else on every other.
+        /// </summary>
+        SCREEN_COORDINATES,
     }
 }

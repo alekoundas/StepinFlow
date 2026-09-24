@@ -192,6 +192,8 @@ namespace Transport.Ipc.Handlers
                 {
                     Name = area.Name,
                     Type = area.Type,
+                    ScalesWith = area.ScalesWith,
+                    AuthoredDpi = area.AuthoredDpi,
                     SizingMode = area.SizingMode,
                     LocationX = area.LocationX,
                     LocationY = area.LocationY,
@@ -199,6 +201,15 @@ namespace Transport.Ipc.Handlers
                     Height = area.Height,
                     RatioX = area.RatioX,
                     RatioY = area.RatioY,
+                    RatioWidth = area.RatioWidth,
+                    RatioHeight = area.RatioHeight,
+                    ProcessName = area.ProcessName,
+                    TitlePattern = area.TitlePattern,
+                    TitleMatchMode = area.TitleMatchMode,
+                    UseClientArea = area.UseClientArea,
+                    TabMatchValue = area.TabMatchValue,
+                    TabMatchOn = area.TabMatchOn,
+                    MonitorDeviceName = area.MonitorDeviceName,
                     Flow = subFlow,
                 };
 
@@ -220,6 +231,7 @@ namespace Transport.Ipc.Handlers
                     OffsetMode = point.OffsetMode,
                     LocationX = point.LocationX,
                     LocationY = point.LocationY,
+                    AuthoredDpi = point.AuthoredDpi,
                     RatioX = point.RatioX,
                     RatioY = point.RatioY,
                     Flow = subFlow,

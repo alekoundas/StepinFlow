@@ -14,6 +14,12 @@ namespace Core.Models.Dtos
         public int Width { get; set; }
         public int Height { get; set; }
 
+        /// <summary>
+        /// The DPI of the monitor holding most of it. What a capture inside it records, so the
+        /// pixels can follow the monitor on another screen.
+        /// </summary>
+        public int Dpi { get; set; }
+
         /// <summary>JPEG bytes, arrives in the renderer as base64.</summary>
         public byte[]? Screenshot { get; set; }
     }

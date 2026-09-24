@@ -100,10 +100,10 @@ namespace Business.Services.AreaPointService
 
             Rectangle bounds = area.Bounds;
 
-            // Pixels were written at the area's authored DPI. Inside a DPI area its contents are
-            // that much bigger or smaller on another monitor, so the offset is too. Inside an AREA
-            // area RATIO is the portable form, and pixels are left as they are.
-            float scale = DpiScale(area, point.FlowArea.AuthoredDpi);
+            // Pixels were captured at the point's DPI. Inside a DPI area its contents are that much
+            // bigger or smaller on another monitor, so the offset is too. Inside an AREA area RATIO
+            // is the portable form, and pixels are left as they are.
+            float scale = DpiScale(area, point.AuthoredDpi);
 
             // Both modes measure from the area's top left. Two ways to say the same thing would
             // just be a trap.

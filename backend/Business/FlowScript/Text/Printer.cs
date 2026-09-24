@@ -149,7 +149,11 @@ namespace Business.FlowScript.Text
                 if (point.FlowAreaId != null)
                     inside = $"inside {Quoted(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
 
-                builder.Append("  ").AppendLine(CultureInfo.InvariantCulture, $"{name}{inside}   {placement}");
+                string dpi = string.Empty;
+                if (point.AuthoredDpi > 0)
+                    dpi = $"   at {Dpi(point.AuthoredDpi)}";
+
+                builder.Append("  ").AppendLine(CultureInfo.InvariantCulture, $"{name}{inside}   {placement}{dpi}");
             }
 
             builder.AppendLine();

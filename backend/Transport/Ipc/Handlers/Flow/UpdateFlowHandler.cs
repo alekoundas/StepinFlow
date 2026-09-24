@@ -128,11 +128,9 @@ namespace Transport.Ipc.Handlers
             {
                 FlowArea area = byDtoId[dto.Id];
 
-                area.ParentFlowArea = dto.ParentFlowAreaId != null
-                    && byDtoId.TryGetValue(dto.ParentFlowAreaId.Value, out FlowArea? parent)
-                    && parent != area
-                        ? parent
-                        : null;
+                area.ParentFlowArea = null;
+                if (dto.ParentFlowAreaId != null && byDtoId.TryGetValue(dto.ParentFlowAreaId.Value, out FlowArea? parent) && parent != area)
+                    area.ParentFlowArea = parent;
 
                 if (area.ParentFlowArea == null)
                     area.ParentFlowAreaId = null;
@@ -163,13 +161,13 @@ namespace Transport.Ipc.Handlers
                 location.OffsetMode = dto.OffsetMode;
                 location.LocationX = dto.LocationX;
                 location.LocationY = dto.LocationY;
+                location.AuthoredDpi = dto.AuthoredDpi;
                 location.RatioX = dto.RatioX;
                 location.RatioY = dto.RatioY;
 
-                location.FlowArea = dto.FlowAreaId != null
-                    && areasByDtoId.TryGetValue(dto.FlowAreaId.Value, out FlowArea? area)
-                        ? area
-                        : null;
+                location.FlowArea = null;
+                if (dto.FlowAreaId != null && areasByDtoId.TryGetValue(dto.FlowAreaId.Value, out FlowArea? area))
+                    location.FlowArea = area;
 
                 if (location.FlowArea == null)
                     location.FlowAreaId = null;

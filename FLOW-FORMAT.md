@@ -170,8 +170,8 @@ Two optional clauses end the line:
   on another screen. A browser or a native app keeps its contents' size when the window changes and
   only the monitor's DPI moves them; a game's contents fill the window, so they follow its size.
   Left out, a child takes its parent's and a root is `dpi`.
-- **`at 120dpi`** - the DPI the area's pixel numbers were written at, so an `offset` child or
-  point inside a `dpi` area grows with the monitor. Left out, pixels stay as written.
+- **`at 120dpi`** - the DPI the area's `offset` and `size` were captured at, so inside a `dpi`
+  parent they grow with the monitor. Left out, pixels stay as written.
 
 ### Points
 
@@ -180,8 +180,12 @@ A fixed position to click, for the cases where nothing is worth searching for.
 ```
 Points:
   "Menu toggle"   inside "Browser"   ratio 0.95 0.05
-  "Origin"        inside "Browser"   offset 12 12
+  "Origin"        inside "Browser"   offset 12 12   at 120dpi
 ```
+
+A point carries its own `at 120dpi`, the DPI its `offset` was captured at, for the same reason an
+area does. `on screen` is a screen coordinate: right on this screen and nowhere else, which the
+validator warns about.
 
 ### Inputs
 

@@ -21,7 +21,12 @@ namespace Business.Services.FlowValidationService
         /// <summary>
         /// Per flow validate references and form fields validity 
         /// </summary>
-        public FlowValidationResultDto Validate(IReadOnlyList<FlowStep> steps, IReadOnlyDictionary<int, int> templateCountByStepId, IReadOnlyList<string> flowNames)
+        public FlowValidationResultDto Validate(
+            IReadOnlyList<FlowStep> steps,
+            IReadOnlyDictionary<int, int> templateCountByStepId,
+            IReadOnlyList<FlowArea> areas,
+            IReadOnlyList<FlowPoint> points,
+            IReadOnlyList<string> flowNames)
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
 
@@ -41,6 +46,7 @@ namespace Business.Services.FlowValidationService
 
             FlowStepValidator.Validate(authored, templateCountByStepId, result);
             FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, checks, flowNames, result);
+            FlowPortabilityValidator.Validate(authored, areas, points, result);
 
             return Finish(result);
         }

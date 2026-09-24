@@ -95,6 +95,7 @@ namespace Transport.Ipc.Handlers
                             OffsetMode = l.OffsetMode,
                             LocationX = l.LocationX,
                             LocationY = l.LocationY,
+                            AuthoredDpi = l.AuthoredDpi,
                             RatioX = l.RatioX,
                             RatioY = l.RatioY,
 
