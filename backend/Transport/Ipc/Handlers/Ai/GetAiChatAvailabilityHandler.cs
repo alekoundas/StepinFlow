@@ -1,4 +1,4 @@
-using Business.Services.Ai;
+using Business.Ai;
 using Core.Models.Dtos;
 
 

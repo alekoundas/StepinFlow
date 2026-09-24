@@ -8,7 +8,7 @@
 > specification you read while writing a parser, not prose. `PLAN.md` is the build order.
 > `TODO.md` is everything deferred.
 >
-> Last synced with the repo: 2026-09-16.
+> Last synced with the repo: 2026-09-25.
 
 ---
 
@@ -51,11 +51,11 @@ has never opened the app, with `git log` and `git blame` as its version history.
 
 ### The layout
 
-Five projects. The dependency arrows are the design; everything else is detail.
+Six projects. The dependency arrows are the design; everything else is detail.
 
 ```
-App ──────→ Business ──→ DataAccess ──→ Core
- └────────→ Platform.Windows ─────────→ Core
+App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
+ └────→ Platform.Windows ─────────────────────→ Core
 ```
 
 | Project | Target | Holds | References |
@@ -63,8 +63,36 @@ App ──────→ Business ──→ DataAccess ──→ Core
 | `Core` | `net10.0` | Models, DTOs, enums, ports, pure logic | — |
 | `DataAccess` | `net10.0` | `AppDbContext`, configurations, migrations | Core |
 | `Platform.Windows` | `net10.0-windows` | Everything that touches the machine | Core |
-| `Business` | `net10.0` | Domain services and use cases | Core, DataAccess |
-| `App` | `net10.0-windows` | Host, DI, IPC pipes | all |
+| `Business` | `net10.0` | The features: execution, search, the flow script, validation, AI | Core, DataAccess |
+| `Transport` | `net10.0` | The IPC pipes, the dispatcher and one handler per action | Business |
+| `App` | `net10.0-windows` | Host, DI, composition root | all |
+
+**`Transport` does not reference `Platform.Windows` either.** It is how a request gets in, not
+something that touches the machine. A command-line runner arrives in phase 12 as a folder beside
+`Ipc/`, not as another project.
+
+### Inside Business
+
+Feature folders, each named for what it does rather than for what its classes are:
+
+```
+Business/
+  Executions/    engine, walker, cache, history, Workers/
+  Searching/     ImageSearcher - shared by the engine and the editor's Test now
+  FlowScript/    Syntax/ Binding/ Text/ Diagnostics/, importer and exporter
+  Flows/         editing a flow's tree: moves, template sync, name lookup
+  Validation/    FlowValidationService, Rules/
+  Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
+```
+
+There is no `Services/` level: it claimed everything below it was a service, and most of it was an
+engine, a parser or a worker. `Executions` and `AppSettings` are plural because the singular is an
+entity, and a namespace named `Business.Execution` would hide the `Execution` class from every file
+under `Business`.
+
+**A helper lives with its only consumer.** Used by two or more features, it is shared vocabulary
+and goes in `Core/Helpers`; used by one, it sits in that feature's folder. A `Helpers/` subfolder
+only once there are more than three.
 
 **`Business` does not reference `Platform.Windows`.** They are siblings. `App` is the only project
 that knows both exist, because `App` is the composition root and binding a port to an adapter is
@@ -85,7 +113,7 @@ Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
 Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
 Core/Ports/IProcessService           →  Platform.Windows/SystemActions/ProcessService
 Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
-Core/Ports/IIpcBroadcastService      →  App/Ipc/BroadcastService
+Core/Ports/IIpcBroadcastService      →  Transport/Ipc/IpcBroadcastService
 ```
 
 **The rule for `Core/Ports`: it holds only interfaces that Core and Business cannot implement
@@ -164,7 +192,7 @@ backend/Platform.Windows/BannedSymbols.txt Platform.Windows, which inherits noth
 is the architecture stated as a build error rather than as a paragraph. Both ban the ambient clock,
 because nothing anywhere has a reason to read `DateTime.UtcNow` when a `TimeProvider` is injected.
 
-One deviation, recorded in `.editorconfig` beside every other: `Business/Services/CommandService`,
+One deviation, recorded in `.editorconfig` beside every other: `Business/Command`,
 which a port would not fix — it launches `cmd.exe` and `powershell.exe` and every entry in its
 preset catalogue is a Windows command, so the question is whether the whole runner moves rather
 than whether the `Process` is hidden.
@@ -323,8 +351,13 @@ message IpcResponse  { string action = 1; bytes payload = 2; string correlationI
 message IpcBroadcast { string type = 1;   bytes payload = 2; }
 ```
 
-`action` is a string like `"FlowStep.update"`, routed by a switch in `App/Ipc/IpcDispatcher.cs` to a
-MediatR request. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
+`action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
+to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
+
+The dispatcher is written by hand: one switch arm per action, every handler registered by name in
+`Program.cs`. MediatR did the same job until its licence changed to one this GPL repository cannot
+ship under, and a switch is also the more readable of the two - every route is on one screen, and
+an unknown action is an explicit arm rather than a missing registration found at runtime.
 **Adding a new DTO never touches the `.proto`.** Every response body is `ResultDto<T>`.
 
 Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated by `type`
@@ -660,11 +693,19 @@ than at execution. The writer emits `{{username}}` either way, so the script rea
 
 ### Coordinates
 
-Everything persisted is in **physical pixels**. The process is Per-Monitor-DPI-V2 aware, so a flow
-authored on a 150% display runs correctly on a 100% one.
-`ScreenHelper.EnablePerMonitorDpiAwareness` must run before anything else touches a coordinate API —
-without it Windows virtualises every rect to 96 DPI and nothing lines up with the capture buffers or
-the low-level input hook, both of which are always physical.
+Everything persisted is in **physical pixels**, and every set of pixels carries the DPI it was
+captured at - a template, a child area's offset and size, a point. The process is
+Per-Monitor-DPI-V2 aware. `ScreenHelper.EnablePerMonitorDpiAwareness` must run before anything else
+touches a coordinate API — without it Windows virtualises every rect to 96 DPI and nothing lines up
+with the capture buffers or the low-level input hook, both of which are always physical.
+
+What makes a flow authored at 150% work at 100% is the area. Each says what its contents scale
+with: **DPI** for a browser or a normal app, whose contents keep their size when the window changes,
+or **its own size** for a game, whose picture stretches. The DPI now is the monitor holding the
+largest part of the area - the rule Windows uses for a window. A template is scaled once, by that
+one ratio; there is no sweep of sizes. Anything placed in screen coordinates - a region with no
+parent, a point measured from nothing - gets a validation warning, because no ratio fixes it.
+`PLAN.md` phase 5.7 has the reasoning and the measurements.
 
 ---
 
@@ -977,10 +1018,12 @@ Neither belongs under `Helpers/`.
 
 ### Backend
 
-- **One handler per action**, MediatR, in `Business/Ipc/Handlers/<Entity>/`. The folder mirrors
-  `Core/Models/Ipc/`, so you can find either end from the other.
+- **One handler per action**, one class per file, in `Transport/Ipc/Handlers/<Entity>/` - the
+  folder is the part of the action before the dot. A plain class with `HandleAsync`, no base type.
+- **As thin as the second caller makes it.** Logic with one caller stays in its handler; a second
+  caller, or one that is not a handler, and it moves into its `Business` feature.
 - Handlers take `IDbContextFactory<AppDbContext>` and own their `DbContext`. **There is no generic
-  repository.** A MediatR handler *is* the transaction boundary and EF's `DbSet` *is* the
+  repository.** A handler *is* the transaction boundary and EF's `DbSet` *is* the
   repository; a repository layer over `DbContext` would add indirection and remove LINQ. An earlier
   `IDataService` was removed because it rented a context per call and its `SaveChangesAsync()` row
   count was misread as success.
@@ -1014,9 +1057,10 @@ and it is the only one of the two that can be scoped to a folder.
 Roughly 350 warnings on the day it went on, and none now. Two thirds of those were three rules
 arguing with a deliberate convention rather than finding a defect: `CA1707` wanted the underscores
 out of `KILL_PROCESS`, `CA1711` wanted the `Enum` suffix off `FlowStepTypeEnum`, and `CA1725`
-wanted MediatR's `cancellationToken` in place of the house `ct`. Each is off with the reason
-written beside it, and the last is off only under `Ipc/Handlers`, because elsewhere it caught six
-real ones.
+wanted MediatR's `cancellationToken` in place of the house `ct`. Each was turned off with the reason
+written beside it. The last was off only under the handlers, because elsewhere it caught six real
+ones, and it is on everywhere again now the handlers implement no MediatR interface. `IDE0005`
+reports an unused `using` as an error.
 
 A deviation is recorded three ways, and the width of the record matches the width of the exception:
 a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a folder, and a

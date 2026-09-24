@@ -1,7 +1,7 @@
 using System.Reflection;
 using Core.Models.Business;
 
-namespace Business.Services.Ai.AiDocuments
+namespace Business.Ai.AiDocuments
 {
     /// <summary>
     /// The shipped Ai documents.

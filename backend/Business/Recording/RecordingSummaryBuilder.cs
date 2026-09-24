@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Models.Dtos;
 using Core.Ports;
 
-namespace Business.Services.RecordingService
+namespace Business.Recording
 {
     /// <summary>
     /// Turns a finished recording into something a model can read.

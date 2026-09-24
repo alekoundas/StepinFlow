@@ -2,7 +2,7 @@ using Core.Models.Database;
 
 using Core.Models.Business;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Stops the execution and stamps its verdict.

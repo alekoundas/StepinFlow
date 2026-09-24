@@ -3,7 +3,7 @@ using Core.Enums;
 using Core.Models.Dtos;
 using System.Globalization;
 
-namespace Business.Services.Ai.Helpers
+namespace Business.Ai.Helpers
 {
     /// <summary>
     /// Turns an execution run into the text a model reads.

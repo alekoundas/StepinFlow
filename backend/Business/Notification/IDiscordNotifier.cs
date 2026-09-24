@@ -1,6 +1,6 @@
 using Core.Models.Business;
 
-namespace Business.Services.NotificationService
+namespace Business.Notification
 {
     public interface IDiscordNotifier
     {

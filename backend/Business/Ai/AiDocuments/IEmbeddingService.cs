@@ -1,4 +1,4 @@
-namespace Business.Services.Ai.AiDocuments
+namespace Business.Ai.AiDocuments
 {
     public interface IEmbeddingService
     {

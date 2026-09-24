@@ -1,4 +1,4 @@
-namespace Business.Services.Ai.Helpers
+namespace Business.Ai.Helpers
 {
     /// <summary>
     /// Ollama serves two things off one address: an OpenAI compatible api under /v1, and its own

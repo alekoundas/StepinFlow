@@ -1,7 +1,7 @@
-using Business.Services.ExecutionService.Workers;
+using Business.Executions.Workers;
 using Core.Enums;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     public class StepWorkerFactory : IStepWorkerFactory
     {

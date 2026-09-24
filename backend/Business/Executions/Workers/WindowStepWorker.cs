@@ -1,10 +1,10 @@
-using Business.Services.AreaPointService;
+using Business.AreaPoint;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Focus, resize and move. 

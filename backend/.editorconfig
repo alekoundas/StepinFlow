@@ -112,7 +112,7 @@ dotnet_diagnostic.IDE0005.severity = none
 #CA1305 "Specify IFormatProvider" Culture-sensitive formatting.
 # A number written into a .sflw file on a machine whose decimal separator is a comma is a file the
 # parser cannot read back. The writer already formats invariantly; this is what keeps the next one doing it.
-#[Business/Services/FlowScriptService/**.cs]
+#[Business/FlowScript/**.cs]
 #dotnet_diagnostic.CA1305.severity = warning
 
 
@@ -128,6 +128,6 @@ dotnet_diagnostic.IDE0005.severity = none
 # powershell.exe and reads the console OEM code page, and every CommandPresetCatalog entry is a
 # Windows command. The question is whether the runner moves to Platform.Windows whole - see PLAN.md
 # phase 4.6. Until it is answered this is the one place Business may hold a Process.
-[Business/Services/CommandService/**.cs]
+[Business/Command/**.cs]
 dotnet_diagnostic.RS0030.severity = none
 

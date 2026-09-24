@@ -3,7 +3,7 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Microsoft.ML.Tokenizers;
 
-namespace Business.Services.Ai.AiDocuments
+namespace Business.Ai.AiDocuments
 {
     /// <summary>
     /// Turns text into a vector with bge-small-en-v1.5, on the cpu, locally.

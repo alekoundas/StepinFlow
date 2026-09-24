@@ -1,5 +1,5 @@
 using Core.Catalogs;
-using Business.Services.AppSettingService;
+using Business.AppSettings;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Drawing;
 using System.Threading.Channels;
 
-namespace Business.Services.RecordingService
+namespace Business.Recording
 {
     /// <summary>
     /// Owns one recording at a time: the ordered actions, the screenshot taken for each click,

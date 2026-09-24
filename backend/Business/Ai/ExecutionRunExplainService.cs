@@ -1,5 +1,5 @@
-using Business.Services.Ai.Helpers;
-using Business.Services.Ai.Providers;
+using Business.Ai.Helpers;
+using Business.Ai.Providers;
 using Core.Models.Dtos;
 
 using DataAccess;
@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.Ai
+namespace Business.Ai
 {
     /// <summary>
     /// Feature one: read a finished run and say what went wrong.

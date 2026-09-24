@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 using Core.Helpers;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Typing, and shortcuts.

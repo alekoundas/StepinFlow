@@ -1,11 +1,11 @@
 using System.Globalization;
-using Business.Services.NotificationService;
+using Business.Notification;
 using Core.Models.Business;
 using Core.Models.Database;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Always succeeds. A notification that could not be delivered is not a reason to stop execution.

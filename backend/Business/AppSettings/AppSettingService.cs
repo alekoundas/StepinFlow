@@ -6,7 +6,7 @@ using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Services.AppSettingService
+namespace Business.AppSettings
 {
     public sealed class AppSettingService : IAppSettingService
     {

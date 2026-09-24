@@ -1,9 +1,9 @@
-using Business.Services.CommandService;
+using Business.Command;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.FlowValidationService.Rules
+namespace Business.Validation.Rules
 {
     /// <summary>
     /// Whether each step is configured well enough to run, judged on its own fields.

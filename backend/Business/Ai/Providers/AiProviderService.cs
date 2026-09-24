@@ -1,9 +1,9 @@
 using Core.Catalogs;
-using Business.Services.AppSettingService;
+using Business.AppSettings;
 using Core.Enums;
 using Core.Models.Business;
 
-namespace Business.Services.Ai.Providers
+namespace Business.Ai.Providers
 {
     /// <summary>
     /// What is set up, and what it needs. Nothing here talks to a model.

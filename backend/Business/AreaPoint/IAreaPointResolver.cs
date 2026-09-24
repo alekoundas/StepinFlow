@@ -1,7 +1,7 @@
 using Core.Models.Business;
 using Core.Models.Database;
 
-namespace Business.Services.AreaPointService
+namespace Business.AreaPoint
 {
     /// <summary>
     /// Turns the stored, portable definition of an area or a point into physical pixels on this

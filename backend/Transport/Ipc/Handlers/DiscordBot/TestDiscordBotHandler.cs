@@ -1,4 +1,4 @@
-using Business.Services.NotificationService;
+using Business.Notification;
 using Core.Models.Business;
 using Core.Models.Dtos;
 

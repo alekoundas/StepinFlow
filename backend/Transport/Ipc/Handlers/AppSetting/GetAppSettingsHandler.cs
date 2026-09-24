@@ -1,4 +1,4 @@
-using Business.Services.AppSettingService;
+using Business.AppSettings;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers

@@ -1,12 +1,12 @@
 
 using AutoMapper;
-using Business.Services.CommandService;
+using Business.Command;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Runs the step's command. A non zero exit is a Failure result rather than an error

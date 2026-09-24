@@ -447,13 +447,15 @@ parser is a service. The target is `Business/FlowScript/Syntax/Parser.cs`.
       files moved once rather than twice. The codebase is now inconsistent on purpose until the
       rest follow, which is the cost of a pilot and is worth writing down rather than discovering.
 
-- [ ] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
+- [x] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
       `AreaPoint`, `Command`, `AppSetting`, `FlowValidation`. Each is a namespace change and a
       folder move with no behaviour in it, so each should be its own commit and nothing else.
 
       **Planned in full as `PLAN.md` phase 5.6**, which grew three things around this move that it
       turned out to need: where the helpers go, extracting the search both a worker and a handler
       duplicate, and splitting the IPC contracts out of `Core`.
+
+      **Done 2026-09-25** as `PLAN.md` phase 5.6 step 3. `Business/Services/` is gone.
 
 - [x] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
       partial is the thing. `Parser` keeps the document - header, sections, indentation, building

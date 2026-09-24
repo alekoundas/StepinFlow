@@ -1,5 +1,5 @@
 ﻿using Core.Catalogs;
-using Business.Services.AppSettingService;
+using Business.AppSettings;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
@@ -9,7 +9,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// What a run leaves behind: the Execution it hangs off, a step per thing that happened, and

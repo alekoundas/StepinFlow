@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using Business.Services.Ai.AiDocuments;
+using Business.Ai.AiDocuments;
 
-namespace Business.Services.Ai.Tools
+namespace Business.Ai.Tools
 {
     /// <summary>
     /// What the model may ask the help.

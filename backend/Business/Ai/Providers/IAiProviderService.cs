@@ -1,7 +1,7 @@
 using Core.Enums;
 using Core.Models.Business;
 
-namespace Business.Services.Ai.Providers
+namespace Business.Ai.Providers
 {
     public interface IAiProviderService
     {

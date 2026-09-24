@@ -8,7 +8,7 @@ using Microsoft.Extensions.AI;
 using OllamaSharp;
 using OpenAI;
 
-namespace Business.Services.Ai.Providers
+namespace Business.Ai.Providers
 {
     /// <summary>
     /// Turns the settings into a client.

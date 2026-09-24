@@ -1,6 +1,6 @@
 using Core.Models.Business;
 
-namespace Business.Services.Ai
+namespace Business.Ai
 {
     public interface IExecutionScreenshotReader
     {

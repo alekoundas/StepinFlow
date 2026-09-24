@@ -5,7 +5,7 @@ using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// Decides what runs next.

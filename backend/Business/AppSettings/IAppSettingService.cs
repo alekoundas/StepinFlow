@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
 
-namespace Business.Services.AppSettingService
+namespace Business.AppSettings
 {
     public interface IAppSettingService
     {

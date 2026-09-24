@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 
-namespace Business.Services.Ai.Providers
+namespace Business.Ai.Providers
 {
     /// <summary>
     /// Sets the two things Ollama gets wrong for this app by default.

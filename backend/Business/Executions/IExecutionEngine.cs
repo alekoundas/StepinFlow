@@ -1,7 +1,7 @@
 using Core.Enums;
 using Core.Models.Dtos;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     public interface IExecutionEngine
     {

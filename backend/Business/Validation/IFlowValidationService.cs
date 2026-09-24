@@ -2,7 +2,7 @@ using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.FlowValidationService
+namespace Business.Validation
 {
     public interface IFlowValidationService
     {

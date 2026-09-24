@@ -4,7 +4,7 @@ using Cloud.Unum.USearch;
 using Core.Helpers;
 using Core.Models.Business;
 
-namespace Business.Services.Ai.AiDocuments
+namespace Business.Ai.AiDocuments
 {
     /// <summary>
     /// The shipped help, searchable by meaning.

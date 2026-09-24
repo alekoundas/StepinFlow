@@ -5,7 +5,7 @@ using Core.Helpers;
 using Core.Models.Database;
 using System.Globalization;
 
-namespace Business.Services.NotificationService
+namespace Business.Notification
 {
     /// <summary>
     /// Turns a Notify step, and the step whose failure it reports, into the text that gets posted.

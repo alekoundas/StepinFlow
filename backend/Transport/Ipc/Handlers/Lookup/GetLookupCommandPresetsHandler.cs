@@ -1,4 +1,4 @@
-using Business.Services.CommandService;
+using Business.Command;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers

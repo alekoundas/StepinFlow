@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Services.CommandService
+namespace Business.Command
 {
     public interface ICommandRunner
     {

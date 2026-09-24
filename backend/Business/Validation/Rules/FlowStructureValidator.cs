@@ -4,7 +4,7 @@ using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.FlowValidationService.Rules
+namespace Business.Validation.Rules
 {
     /// <summary>
     /// Whether the steps still agree with each other - the search a cursor step reads, the branch

@@ -1,13 +1,13 @@
 using System.Drawing;
 
-using Business.Services.AreaPointService;
+using Business.AreaPoint;
 using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 
-namespace Business.Services.ExecutionService.Workers
+namespace Business.Executions.Workers
 {
     /// <summary>
     /// Reads what is on screen and decides whether it says what it should.

@@ -1,13 +1,13 @@
 using System.Drawing;
 
-using Business.Services.AppSettingService;
+using Business.AppSettings;
 using Core.Ports;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// What one run holds in memory while it walks.

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-using Business.Services.ExecutionService.Workers;
+using Business.Executions.Workers;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Database;
@@ -10,7 +10,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// Runs a flow.

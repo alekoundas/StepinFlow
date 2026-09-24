@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.FlowValidationService.Rules
+namespace Business.Validation.Rules
 {
     /// <summary>
     /// What will not survive another screen. Warnings rather than errors: the flow executes here,

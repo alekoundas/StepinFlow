@@ -1,4 +1,4 @@
-using Business.Services.AreaPointService;
+using Business.AreaPoint;
 using Core.Models.Business;
 using Core.Models.Dtos;
 

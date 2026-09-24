@@ -1,12 +1,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Business.Services.Ai.Helpers;
-using Business.Services.Ai.Providers;
+using Business.Ai.Helpers;
+using Business.Ai.Providers;
 using Core.Enums;
 using Core.Models.Dtos;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.Ai.AiModels
+namespace Business.Ai.AiModels
 {
     /// <summary>
     /// Which models can be picked, what they can do, and getting one onto the machine.

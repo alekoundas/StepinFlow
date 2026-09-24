@@ -1,6 +1,6 @@
 using Core.Enums;
 
-namespace Business.Services.Ai.Helpers
+namespace Business.Ai.Helpers
 {
     /// <summary>
     /// What a failed step meant to the run it was in.

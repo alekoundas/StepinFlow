@@ -768,7 +768,7 @@ each other, so this is merging them rather than inventing a structure.
 
 ```
 backend/Business/
-  Execution/        engine, walker, cache, history, StepWorkerFactory
+  Executions/       engine, walker, cache, history, StepWorkerFactory
                     FlowStructureHasher, KeyCombinationHelper       (from Core/Helpers)
                     Workers/        IStepWorker + 13 workers
   Searching/        ImageSearcher, TextSearcher                     (new, extracted)
@@ -780,7 +780,7 @@ backend/Business/
   Notification/     DiscordNotifier, DiscordSendQueue, NotifyMessageBuilder
   Command/          CommandRunner, CommandPresetCatalog
   AreaPoint/        AreaPointResolver
-  AppSetting/       AppSettingService
+  AppSettings/      AppSettingService
   Ai/               Providers/ Tools/ Helpers/ + the three services
 
 backend/Transport/  new project: Messages/ Protobuf/ Ipc/Handlers/ (12 folders, thin)
@@ -812,8 +812,21 @@ Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
         `ExtractSubFlowHandler`.
 
       Verified by the build, IDE0005 included, and both round-trip probes.
-- [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
+- [x] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
       one commit per feature as `TODO.md` already says.
+
+      Done 2026-09-25. `Business/Services/` is gone: `Ai`, `AppSettings`, `AreaPoint`, `Command`,
+      `Executions`, `Notification`, `Recording` and `Validation` sit beside `FlowScript`,
+      `Searching` and `Flows`. **Two names are plural** because the singular is an entity:
+      namespace `Business.Execution` would hide the `Execution` class from all code under
+      `Business.*`, and `Business.AppSetting` the `AppSetting` class - the same reason `Flows` is
+      plural. The one path-based rule that named a folder, the `RS0030` exemption for
+      `CommandRunner` in `.editorconfig`, moved with it. Done as one change rather than a commit
+      per feature, because the consumers' `using` lines span features; each folder is still a
+      separate `git mv`, so the renames show as renames.
+
+      Verified by the build, IDE0005 and the banned-API analyzer included, and both round-trip
+      probes.
 
 Steps 2 and 3 are verified by the compiler. **Phase 5.7 went first and is done** (2026-09-25);
 these two are next.

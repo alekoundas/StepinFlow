@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Business.Services.CommandService
+namespace Business.Command
 {
     public sealed class CommandRunner : ICommandRunner
     {

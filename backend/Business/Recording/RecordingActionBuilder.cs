@@ -5,7 +5,7 @@ using Core.Models.Dtos;
 using System.Globalization;
 using System.Text;
 
-namespace Business.Services.RecordingService
+namespace Business.Recording
 {
     /// <summary>
     /// Folds raw input into the things a person would say they did.

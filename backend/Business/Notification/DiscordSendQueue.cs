@@ -4,7 +4,7 @@ using System.Threading.Channels;
 using Core.Models.Business;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.NotificationService
+namespace Business.Notification
 {
     /// <summary>
     /// Throttles by the clock and sends off the caller's thread.

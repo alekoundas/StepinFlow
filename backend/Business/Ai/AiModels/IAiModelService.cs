@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Services.Ai.AiModels
+namespace Business.Ai.AiModels
 {
     public interface IAiModelService
     {

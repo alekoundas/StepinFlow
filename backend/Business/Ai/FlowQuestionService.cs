@@ -1,9 +1,9 @@
-using Business.Services.Ai.AiModels;
-using Business.Services.Ai.Helpers;
-using Business.Services.Ai.Providers;
-using Business.Services.Ai.AiDocuments;
-using Business.Services.Ai.Tools;
-using Business.Services.FlowValidationService;
+using Business.Ai.AiModels;
+using Business.Ai.Helpers;
+using Business.Ai.Providers;
+using Business.Ai.AiDocuments;
+using Business.Ai.Tools;
+using Business.Validation;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
-namespace Business.Services.Ai
+namespace Business.Ai
 {
     /// <summary>
     /// Answers questions about the user's own flows by letting the model query the database.

@@ -1,4 +1,4 @@
-using Business.Services.AreaPointService;
+using Business.AreaPoint;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;

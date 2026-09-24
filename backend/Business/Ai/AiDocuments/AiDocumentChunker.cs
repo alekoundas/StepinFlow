@@ -1,6 +1,6 @@
 using Core.Models.Business;
 
-namespace Business.Services.Ai.AiDocuments
+namespace Business.Ai.AiDocuments
 {
     /// <summary>
     /// Splits a markdown document into retrievable pieces.

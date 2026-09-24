@@ -1,6 +1,6 @@
 using Core.Enums;
 
-namespace Business.Services.FlowValidationService
+namespace Business.Validation
 {
     public static class ConditionHelper
     {

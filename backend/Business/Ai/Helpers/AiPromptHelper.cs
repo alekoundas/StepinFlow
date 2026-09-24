@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Services.Ai.Helpers
+namespace Business.Ai.Helpers
 {
     /// <summary>
     /// The standing instructions. Kept apart from the run itself so it is obvious which half is

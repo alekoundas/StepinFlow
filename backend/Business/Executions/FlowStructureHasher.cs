@@ -3,7 +3,7 @@ using System.Text;
 
 using Core.Models.Database;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// The shape of a flow: which steps exist, where they sit and in what order.

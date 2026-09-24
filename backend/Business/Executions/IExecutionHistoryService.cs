@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Services.ExecutionService
+namespace Business.Executions
 {
     /// <summary>
     /// What a run leaves behind. Every method does nothing when history is off, so turning it off

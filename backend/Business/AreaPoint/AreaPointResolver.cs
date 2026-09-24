@@ -6,7 +6,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
-namespace Business.Services.AreaPointService
+namespace Business.AreaPoint
 {
     public sealed class AreaPointResolver : IAreaPointResolver
     {

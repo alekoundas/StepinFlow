@@ -1,5 +1,5 @@
-﻿using Business.Services.Ai.AiModels;
-using Business.Services.Ai.Providers;
+﻿using Business.Ai.AiModels;
+using Business.Ai.Providers;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 
-namespace Business.Services.Ai
+namespace Business.Ai
 {
     /// <summary>
     /// The pictures from an execution that are worth showing a model.

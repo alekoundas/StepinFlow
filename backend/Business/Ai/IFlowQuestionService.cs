@@ -1,6 +1,6 @@
 using Core.Models.Dtos;
 
-namespace Business.Services.Ai
+namespace Business.Ai
 {
     public interface IFlowQuestionService
     {

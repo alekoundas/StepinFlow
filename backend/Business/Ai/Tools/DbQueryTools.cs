@@ -1,13 +1,13 @@
 using Core.Catalogs;
 using System.ComponentModel;
-using Business.Services.Ai.Helpers;
-using Business.Services.FlowValidationService;
+using Business.Ai.Helpers;
+using Business.Validation;
 using Core.Enums;
 using Core.Models.Business;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Services.Ai.Tools
+namespace Business.Ai.Tools
 {
     /// <summary>
     /// What the model may ask the database.

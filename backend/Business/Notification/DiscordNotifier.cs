@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Business.Services.NotificationService
+namespace Business.Notification
 {
     /// <summary>
     /// Posts a message to a Discord incoming webhook.
