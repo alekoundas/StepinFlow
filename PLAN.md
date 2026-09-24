@@ -1067,14 +1067,39 @@ template (a known limit).
       monitor. One migration.
 
       Done 2026-09-24. `ScalesWith` is nullable - null inherits - and neither it nor `AuthoredDpi`
-      is written or read yet: the forms and the resolver steps do that. "Empty is primary" is one
-      rule in `Core/Helpers/MonitorHelper`, asked by both the resolver and the monitor capture, so
-      they cannot disagree. The monitor picker lists **Primary monitor** first with an empty value,
+      is written or read yet: the forms and the resolver steps do that. "Empty is primary" is
+      written where it is used - the resolver and the monitor capture - after a shared helper for
+      it was tried and dropped. The monitor picker lists **Primary monitor** first with an empty value,
       which makes it the default for a new area. Verified against the running app: an empty name
       resolved to the primary monitor, and an unplugged one failed naming the device.
-- [ ] **The resolver and the searcher maths**: the effective `ScalesWith`, the largest-part
+- [x] **The resolver and the searcher maths**: the effective `ScalesWith`, the largest-part
       monitor for the DPI, `ABSOLUTE_PX` children and points scaled by DPI, one uniform template
       ratio, an error for an impossible ratio.
+
+      Done 2026-09-24. `AreaResolution` now carries the area's effective `ScalesWith` and the DPI
+      of the monitor holding most of it, so the searcher gets both from the resolution it already
+      had. A child's pixels follow its **parent's** physics - it sits in the parent - while its own
+      setting governs what is inside it: a game canvas in a browser tab moves with the tab's DPI
+      and scales its templates with its own size.
+
+      Verified through the running app with a generated template and nothing read off the screen,
+      on a 120 DPI monitor:
+
+      | case | result |
+      | --- | --- |
+      | DPI area, template authored at 1 dpi | "scaled by 120.00 it is 4800x2400" - the impossible-ratio error, reporting the DPI |
+      | DPI area, authored at 120 | ratio 1, searched |
+      | DPI area, authored area size set | ignored |
+      | AREA area, authored at 10x10 | scale 216 = min(3840/10, 2160/10) - the smaller ratio |
+      | AREA area, authored at 1 dpi | ignored |
+      | `ABSOLUTE_PX` child 100x50 at (10,20), authored at 60 dpi | 200x100 at (20,40) |
+      | the same, no DPI recorded / parent AREA | 100x50 at (10,20), unscaled |
+      | `ABSOLUTE_PX` point (100,40), area authored at 60 dpi | (200,80) |
+
+      **Until the forms step writes DPI, nothing scales.** Every existing template and area has
+      `AuthoredDpi` 0, which leaves it as it is - correct on the machine it was made on, and what
+      the forms step is for. Before this step a template scaled by the area's width, which was
+      wrong for every browser.
 - [ ] **The script carries every fact**: `Templates:` in the header, `required`, `accuracy` and
       `match` on the step, `scales with` and the DPI on the area line, and the row-comparing
       round trip. Fixes the live bug on its own.

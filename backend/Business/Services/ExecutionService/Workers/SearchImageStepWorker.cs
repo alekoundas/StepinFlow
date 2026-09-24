@@ -41,9 +41,9 @@ namespace Business.Services.ExecutionService.Workers
                 return ExecutionStep.Failure(area.Error);
 
             if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
-                return await LoopSearchAsync(step, area.Bounds, cache, ct);
+                return await LoopSearchAsync(step, area, cache, ct);
 
-            return Search(step, area.Bounds, cache);
+            return Search(step, area, cache);
         }
 
 
@@ -51,7 +51,7 @@ namespace Business.Services.ExecutionService.Workers
         // Private methods
         // ================================================================
 
-        private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, Rectangle bounds, IExecutionCacheService cache, CancellationToken ct)
+        private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, AreaResolution area, IExecutionCacheService cache, CancellationToken ct)
         {
             bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
             DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
@@ -62,7 +62,7 @@ namespace Business.Services.ExecutionService.Workers
             {
                 ct.ThrowIfCancellationRequested();
 
-                ExecutionStep search = Search(step, bounds, cache);
+                ExecutionStep search = Search(step, area, cache);
                 bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
 
                 if (found == wantFound)
@@ -92,13 +92,13 @@ namespace Business.Services.ExecutionService.Workers
             }
         }
 
-        private ExecutionStep Search(FlowStep step, Rectangle bounds, IExecutionCacheService cache)
+        private ExecutionStep Search(FlowStep step, AreaResolution area, IExecutionCacheService cache)
         {
             bool findAll = step.SearchMode == SearchModeEnum.FIND_ALL;
             List<FlowStepTemplate> images = step.FlowStepTemplates.ToList();
             List<SearchTemplate> templates = images.Select(x => SearchTemplate.From(x)).ToList();
 
-            ImageSearchResult search = _imageSearcher.Search(bounds, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
+            ImageSearchResult search = _imageSearcher.Search(area, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
             if (search.Error != null)
                 return ExecutionStep.Failure(search.Error);
 
@@ -106,7 +106,7 @@ namespace Business.Services.ExecutionService.Workers
             // could show something else. Whether it is worth keeping is the cache's business.
             ExecutionScreenshot? screenshot = cache.EncodeForHistory(search.Haystack, step);
 
-            ExecutionStep result = Result(step, bounds, search, cache, findAll);
+            ExecutionStep result = Result(step, area.Bounds, search, cache, findAll);
             result.Screenshot = screenshot;
             result.BestTemplateId = search.BestTemplateIndex is int best ? images[best].Id : null;
 

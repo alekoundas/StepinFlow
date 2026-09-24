@@ -45,7 +45,7 @@ namespace Transport.Ipc.Handlers
 
             // Never stop early: a report that skipped the templates after the first hit would say
             // they were not there.
-            ImageSearchResult search = _imageSearcher.Search(area.Bounds, SearchSettings.From(step), templates, stopAtFirstHit: false);
+            ImageSearchResult search = _imageSearcher.Search(area, SearchSettings.From(step), templates, stopAtFirstHit: false);
             if (search.Error != null)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed(search.Error));
 

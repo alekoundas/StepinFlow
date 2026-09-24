@@ -1,5 +1,4 @@
-﻿using Core.Helpers;
-using Core.Ports;
+﻿using Core.Ports;
 using Platform.Windows.Native;
 using Core.Enums;
 using Core.Models.Business;
@@ -98,7 +97,14 @@ namespace Platform.Windows.Screen
         {
             MonitorInfo? monitor = null;
             if (area.Type == FlowAreaTypeEnum.MONITOR)
-                monitor = MonitorHelper.Find(ScreenMetrics.GetAllMonitors(), area.MonitorDeviceName);
+            {
+                IReadOnlyList<MonitorInfo> monitors = ScreenMetrics.GetAllMonitors();
+
+                // Empty is the primary monitor: the one choice that means the same thing on another PC.
+                monitor = area.MonitorDeviceName.Length == 0
+                    ? monitors.FirstOrDefault(x => x.IsPrimary)
+                    : monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
+            }
 
             if (monitor != null)
             {

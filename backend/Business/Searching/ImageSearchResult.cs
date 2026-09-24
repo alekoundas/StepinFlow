@@ -36,7 +36,10 @@ namespace Business.Searching
         /// <summary>Which of the templates given produced <see cref="BestScore"/>, by position.</summary>
         public int? BestTemplateIndex { get; init; }
 
-        /// <summary>Set when there was nothing to search. No screenshot was taken.</summary>
+        /// <summary>
+        /// Set when the search could not be made: nothing to search, or a template that cannot fit
+        /// at the ratio it scales to.
+        /// </summary>
         public string? Error { get; init; }
     }
 }

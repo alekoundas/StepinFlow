@@ -64,8 +64,15 @@ namespace Platform.Windows.Vision
             int width = (int)MathF.Round(template.Width * scale);
             int height = (int)MathF.Round(template.Height * scale);
 
+            // Not an empty result: a ratio that makes the template bigger than the screenshot, or
+            // nothing at all, means the scaling key is wrong, and "not found" would hide it.
             if (width < 2 || height < 2 || width > haystack.Width || height > haystack.Height)
-                return new TemplateMatchOutcome();
+            {
+                return new TemplateMatchOutcome
+                {
+                    Error = FormattableString.Invariant($"scaled by {scale:0.00} it is {width}x{height}, and the area it is searched in is {haystack.Width}x{haystack.Height}."),
+                };
+            }
 
             Mat? scaled = null;
             Mat? scaledMask = null;

@@ -1,4 +1,3 @@
-using Core.Helpers;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
@@ -60,21 +59,34 @@ namespace Business.Services.AreaPointService
 
         public AreaResolution ResolveArea(FlowArea area)
         {
+            AreaResolution placed;
             switch (area.Type)
             {
                 case FlowAreaTypeEnum.MONITOR:
-                    return ResolveMonitor(area);
+                    placed = ResolveMonitor(area);
+                    break;
 
                 case FlowAreaTypeEnum.APPLICATION:
-                    return ResolveApplication(area);
+                    placed = ResolveApplication(area);
+                    break;
 
                 case FlowAreaTypeEnum.BROWSER_TAB:
                     return AreaResolution.Fail("Browser tab areas are not supported yet.");
 
                 case FlowAreaTypeEnum.CUSTOM:
                 default:
-                    return ResolveCustom(area);
+                    placed = ResolveCustom(area);
+                    break;
             }
+
+            if (!placed.IsResolved)
+                return placed;
+
+            return placed with
+            {
+                ScalesWith = ScalesWithOf(area),
+                Dpi = DpiAt(placed.Bounds),
+            };
         }
 
         public PointResolution ResolvePoint(FlowPoint point)
@@ -88,13 +100,18 @@ namespace Business.Services.AreaPointService
 
             Rectangle bounds = area.Bounds;
 
+            // Pixels were written at the area's authored DPI. Inside a DPI area its contents are
+            // that much bigger or smaller on another monitor, so the offset is too. Inside an AREA
+            // area RATIO is the portable form, and pixels are left as they are.
+            float scale = DpiScale(area, point.FlowArea.AuthoredDpi);
+
             // Both modes measure from the area's top left. Two ways to say the same thing would
             // just be a trap.
             Point resolved = point.OffsetMode == AreaSizingModeEnum.RATIO
                 ? new Point(
                     bounds.X + (int)MathF.Floor(point.RatioX * bounds.Width),
                     bounds.Y + (int)MathF.Floor(point.RatioY * bounds.Height))
-                : Offset(new Point(bounds.X, bounds.Y), point.LocationX, point.LocationY);
+                : Offset(new Point(bounds.X, bounds.Y), Scaled(point.LocationX, scale), Scaled(point.LocationY, scale));
 
             return PointResolution.Ok(Clamp(resolved, bounds));
         }
@@ -107,7 +124,12 @@ namespace Business.Services.AreaPointService
 
         private AreaResolution ResolveMonitor(FlowArea area)
         {
-            MonitorInfo? monitor = MonitorHelper.Find(_screenService.GetAllMonitors(), area.MonitorDeviceName);
+            IReadOnlyList<MonitorInfo> monitors = _screenService.GetAllMonitors();
+
+            // Empty is the primary monitor: the one choice that means the same thing on another PC.
+            MonitorInfo? monitor = area.MonitorDeviceName.Length == 0
+                ? monitors.FirstOrDefault(x => x.IsPrimary)
+                : monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
 
             if (monitor == null)
             {
@@ -158,13 +180,23 @@ namespace Business.Services.AreaPointService
 
             Rectangle parentBounds = parent.Bounds;
 
+            // The child sits in its parent, so the parent's physics moves it: pixels written at the
+            // child's authored DPI grow with a DPI parent's monitor. Its own setting only governs
+            // what is inside it - a game canvas in a browser tab moves with the tab's DPI and
+            // scales its templates with its own size.
+            float scale = DpiScale(parent, area.AuthoredDpi);
+
             Rectangle bounds = area.SizingMode == AreaSizingModeEnum.RATIO
                 ? new Rectangle(
                     parentBounds.X + (int)MathF.Floor(area.RatioX * parentBounds.Width),
                     parentBounds.Y + (int)MathF.Floor(area.RatioY * parentBounds.Height),
                     (int)MathF.Floor(area.RatioWidth * parentBounds.Width),
                     (int)MathF.Floor(area.RatioHeight * parentBounds.Height))
-                : new Rectangle(parentBounds.X + area.LocationX, parentBounds.Y + area.LocationY, area.Width, area.Height);
+                : new Rectangle(
+                    parentBounds.X + Scaled(area.LocationX, scale),
+                    parentBounds.Y + Scaled(area.LocationY, scale),
+                    Scaled(area.Width, scale),
+                    Scaled(area.Height, scale));
 
             bounds = Rectangle.Intersect(bounds, parentBounds);
 
@@ -174,6 +206,53 @@ namespace Business.Services.AreaPointService
             return AreaResolution.Ok(bounds);
         }
 
+
+        // Null inherits: a CUSTOM child takes its parent's, and an area with no parent is DPI.
+        private static ScalesWithEnum ScalesWithOf(FlowArea area)
+        {
+            if (area.ScalesWith != null)
+                return area.ScalesWith.Value;
+
+            return area.ParentFlowArea != null ? ScalesWithOf(area.ParentFlowArea) : ScalesWithEnum.DPI;
+        }
+
+        // The monitor holding the largest part of the area decides its DPI - the rule Windows uses
+        // to give a window its DPI. An area on no monitor at all takes the primary's.
+        private int DpiAt(Rectangle bounds)
+        {
+            IReadOnlyList<MonitorInfo> monitors = _screenService.GetAllMonitors();
+
+            MonitorInfo? best = null;
+            long bestOverlap = 0;
+            foreach (MonitorInfo monitor in monitors)
+            {
+                Rectangle overlap = Rectangle.Intersect(bounds, monitor.Bounds);
+                long size = (long)overlap.Width * overlap.Height;
+
+                if (size > bestOverlap)
+                {
+                    bestOverlap = size;
+                    best = monitor;
+                }
+            }
+
+            return (best ?? monitors.FirstOrDefault(x => x.IsPrimary))?.Dpi ?? 96;
+        }
+
+        // How much bigger pixels written at authoredDpi are inside this area now. Only a DPI area's
+        // contents follow the monitor, and nothing recorded leaves them as they are.
+        private static float DpiScale(AreaResolution area, int authoredDpi)
+        {
+            if (area.ScalesWith != ScalesWithEnum.DPI || authoredDpi <= 0 || area.Dpi <= 0)
+                return 1f;
+
+            return (float)area.Dpi / authoredDpi;
+        }
+
+        private static int Scaled(int pixels, float scale)
+        {
+            return (int)MathF.Round(pixels * scale);
+        }
 
         private static Point Offset(Point origin, int dx, int dy) => new Point(origin.X + dx, origin.Y + dy);
 

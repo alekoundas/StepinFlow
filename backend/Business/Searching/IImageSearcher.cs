@@ -1,9 +1,9 @@
-using System.Drawing;
+using Core.Models.Business;
 
 namespace Business.Searching
 {
     public interface IImageSearcher
     {
-        ImageSearchResult Search(Rectangle bounds, SearchSettings settings, IReadOnlyList<SearchTemplate> templates, bool stopAtFirstHit);
+        ImageSearchResult Search(AreaResolution area, SearchSettings settings, IReadOnlyList<SearchTemplate> templates, bool stopAtFirstHit);
     }
 }

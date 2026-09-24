@@ -20,8 +20,10 @@ namespace Business.Searching
             _templateMatcher = templateMatcher;
         }
 
-        public ImageSearchResult Search(Rectangle bounds, SearchSettings settings, IReadOnlyList<SearchTemplate> templates, bool stopAtFirstHit)
+        public ImageSearchResult Search(AreaResolution area, SearchSettings settings, IReadOnlyList<SearchTemplate> templates, bool stopAtFirstHit)
         {
+            Rectangle bounds = area.Bounds;
+
             if (bounds.Width <= 0 || bounds.Height <= 0)
                 return new ImageSearchResult { Error = "The search area has no size. The window is probably minimised." };
 
@@ -39,7 +41,10 @@ namespace Business.Searching
             for (int index = 0; index < templates.Count; index++)
             {
                 SearchTemplate template = templates[index];
-                TemplateMatchOutcome outcome = Match(haystack, bounds.Width, settings, template);
+                TemplateMatchOutcome outcome = Match(haystack, area, settings, template);
+                if (outcome.Error != null)
+                    return new ImageSearchResult { Error = $"Template {index + 1}: {outcome.Error}" };
+
                 outcomes.Add(outcome);
 
                 // Whether it passed or not, so a run records how close a search came. Across every
@@ -78,7 +83,7 @@ namespace Business.Searching
         // Private methods
         // ================================================================
 
-        private TemplateMatchOutcome Match(RawImage haystack, int areaWidth, SearchSettings settings, SearchTemplate template)
+        private TemplateMatchOutcome Match(RawImage haystack, AreaResolution area, SearchSettings settings, SearchTemplate template)
         {
             TemplateMatchRequest request = new TemplateMatchRequest
             {
@@ -89,7 +94,7 @@ namespace Business.Searching
                 Mode = settings.Mode,
                 AccuracyThreshold = template.Accuracy,
 
-                ScaleRatio = ScaleRatio(template.AuthoredFlowAreaWidth, areaWidth),
+                ScaleRatio = ScaleRatio(template, area),
 
                 // Only FIND_ALL wants more than the first hit; everything else stops at one.
                 MaxMatches = settings.SearchMode == SearchModeEnum.FIND_ALL ? settings.MaxMatches : 1,
@@ -100,14 +105,26 @@ namespace Business.Searching
             return result;
         }
 
-        // The area is a different size now than when the template was captured, so the template
-        // is too. Zero on either side means nobody recorded it, and 1 leaves the template alone.
-        private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)
+        // How much bigger or smaller the template is here than where it was captured, and the area
+        // decides which question that is. A DPI area's contents keep their size when the window
+        // changes - a browser reflows - so only the monitor moves them. An AREA area's contents fill
+        // it, so they follow its size, by the smaller ratio: a game that changes shape letterboxes
+        // rather than stretches. Anything not recorded leaves the template as it is.
+        private static float ScaleRatio(SearchTemplate template, AreaResolution area)
         {
-            if (authoredFrameWidth <= 0 || currentFrameWidth <= 0)
-                return 1f;
+            if (area.ScalesWith == ScalesWithEnum.DPI)
+                return template.AuthoredDpi > 0 && area.Dpi > 0 ? (float)area.Dpi / template.AuthoredDpi : 1f;
 
-            return (float)currentFrameWidth / authoredFrameWidth;
+            float width = template.AuthoredFlowAreaWidth > 0 ? (float)area.Bounds.Width / template.AuthoredFlowAreaWidth : 0f;
+            float height = template.AuthoredFlowAreaHeight > 0 ? (float)area.Bounds.Height / template.AuthoredFlowAreaHeight : 0f;
+
+            if (width > 0 && height > 0)
+                return MathF.Min(width, height);
+
+            if (width > 0)
+                return width;
+
+            return height > 0 ? height : 1f;
         }
     }
 }
