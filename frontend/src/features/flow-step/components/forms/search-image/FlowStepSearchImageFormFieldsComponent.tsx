@@ -1,12 +1,10 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import { Slider } from "primereact/slider";
 import { Panel } from "primereact/panel";
 import { Message } from "primereact/message";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
-import LabelComponent from "@/shared/components/LabelComponent";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import {
   SEARCH_IMAGE_MODES,
@@ -26,11 +24,10 @@ export default function FlowStepSearchImageFormFieldsComponent({
   templateCount,
   isDisabled = false,
 }: Props) {
-  const { control, setValue } = useFormContext();
+  const { control } = useFormContext();
 
   const mode = useWatch({ control, name: "searchMode" });
   const matchMode = useWatch({ control, name: "templateMatchMode" });
-  const accuracy = useWatch({ control, name: "accuracy" });
   const timeout = useWatch({ control, name: "timeoutMilliseconds" });
   const pollInterval = useWatch({ control, name: "pollIntervalMilliseconds" });
   const maxMatches = useWatch({ control, name: "maxMatches" });
@@ -132,32 +129,6 @@ export default function FlowStepSearchImageFormFieldsComponent({
         collapsed
         className="mt-3"
       >
-        <div className="field">
-          <LabelComponent
-            text={`Accuracy: ${Number(accuracy ?? 0).toFixed(2)}`}
-            weight="bold"
-          />
-          <Slider
-            value={accuracy}
-            min={0.1}
-            max={1}
-            step={0.01}
-            disabled={isDisabled}
-            onChange={(e) =>
-              setValue("accuracy", e.value as number, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-            className="mt-2"
-          />
-          <LabelComponent
-            size="xs"
-            color="secondary"
-            text="Higher is stricter. Below about 0.7 you will start matching things you did not mean."
-            className="mt-1"
-          />
-        </div>
 
         <FormSelectButtonComponent
           fieldName="templateMatchMode"

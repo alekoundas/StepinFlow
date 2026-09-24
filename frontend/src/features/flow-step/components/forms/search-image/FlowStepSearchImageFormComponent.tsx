@@ -4,7 +4,7 @@ import type z from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Rectangle } from "electron";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
@@ -28,6 +28,7 @@ import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms
 import FlowStepSearchImageFormFieldsComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageFormFieldsComponent";
 import { FlowStepTemplateListComponent } from "@/features/flow-step/components/forms/search-image/FlowStepTemplateListComponent";
 import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestDialogComponent";
+import { defaultAccuracyFor } from "@/features/flow-step/components/forms/shared/match-modes";
 
 const TEST_DETAILS_ID = "image-search-test-details";
 
@@ -59,8 +60,16 @@ export default function FlowStepSearchImageFormComponent({
 
   // Templates are a list rather than form fields: they carry binary and are edited through
   // their own windows.
-  const [images, setImages] = useState<FlowStepTemplateDto[]>(
-    defaultValues.flowStepTemplates ?? [],
+  // Every template carries its own accuracy. One saved before that was null and fell back to the
+  // step's, so it starts on exactly that value - what it was already being matched at.
+  const [images, setImages] = useState<FlowStepTemplateDto[]>(() =>
+    (defaultValues.flowStepTemplates ?? []).map(
+      (x) =>
+        new FlowStepTemplateDto({
+          ...x,
+          accuracy: x.accuracy ?? defaultValues.accuracy ?? defaultAccuracyFor(defaultValues.templateMatchMode),
+        }),
+    ),
   );
 
   // Capturing a template opens a window and waits, so by the time it resolves this component has
@@ -71,15 +80,32 @@ export default function FlowStepSearchImageFormComponent({
   // Every template edit goes through here so it lands in the form too. Without that the list is
   // invisible to react-hook-form, isDirty never flips, and Save stays disabled. Setting the real
   // value rather than a flag also means undoing a change goes back to clean.
-  const applyImages = (
-    update: (previous: FlowStepTemplateDto[]) => FlowStepTemplateDto[],
-  ) => {
-    const next = update(imagesRef.current);
+  const applyImages = useCallback(
+    (update: (previous: FlowStepTemplateDto[]) => FlowStepTemplateDto[]) => {
+      const next = update(imagesRef.current);
 
-    imagesRef.current = next;
-    setImages(next);
-    form.setValue("flowStepTemplates", next, { shouldDirty: true });
-  };
+      imagesRef.current = next;
+      setImages(next);
+      form.setValue("flowStepTemplates", next, { shouldDirty: true });
+    },
+    [form],
+  );
+
+  // A value tuned for one mode means nothing in the other - 0.80 under shape and brightness finds
+  // a template on a blank screen - so changing the mode puts every template on the new mode's
+  // default instead of carrying the number over. watch fires on changes only, never on load.
+  useEffect(() => {
+    const subscription = form.watch((values, { name }) => {
+      if (name !== "templateMatchMode") return;
+
+      const accuracy = defaultAccuracyFor(values.templateMatchMode);
+      applyImages((previous) =>
+        previous.map((x) => new FlowStepTemplateDto({ ...x, accuracy })),
+      );
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, applyImages]);
   const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
     null,
   );
@@ -169,6 +195,7 @@ export default function FlowStepSearchImageFormComponent({
       new FlowStepTemplateDto({
         name: `Template ${previous.length + 1}`,
         templateImage: screenshot,
+        accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
         authoredFrameWidth: frameWidth,
         authoredFrameHeight: frameHeight,
         ...centreClickOffset(screenshot),

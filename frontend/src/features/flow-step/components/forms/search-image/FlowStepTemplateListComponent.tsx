@@ -2,6 +2,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Tag } from "primereact/tag";
 import { Checkbox } from "primereact/checkbox";
+import { Slider } from "primereact/slider";
 
 import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
@@ -109,6 +110,28 @@ export function FlowStepTemplateListComponent({
                       : "no area size recorded, scaling will be skipped"
                   }
                 />
+
+                {/* Per template: one variant of an icon can need a looser bar than another. */}
+                <div className="flex align-items-center gap-2 mt-2">
+                  <LabelComponent
+                    text={`Accuracy ${Number(image.accuracy ?? 0).toFixed(2)}`}
+                    size="xs"
+                  />
+                  <Slider
+                    value={image.accuracy ?? 0}
+                    min={0.1}
+                    max={1}
+                    step={0.01}
+                    disabled={isDisabled}
+                    onChange={(e) =>
+                      onChange(
+                        index,
+                        new FlowStepTemplateDto({ ...image, accuracy: e.value as number }),
+                      )
+                    }
+                    style={{ width: "10rem" }}
+                  />
+                </div>
               </div>
 
               {result && (
@@ -117,7 +140,7 @@ export function FlowStepTemplateListComponent({
                   value={
                     result.isFound
                       ? `found ${result.matchCount} · ${result.bestScore.toFixed(2)}`
-                      : "not found"
+                      : `not found · ${result.bestScore.toFixed(2)}`
                   }
                 />
               )}

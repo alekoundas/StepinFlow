@@ -3,8 +3,8 @@ namespace Core.Enums
     // https://github.com/opencv/opencv/blob/d3bc563c6e01c2bc153f23e7393322a95c7d3974/modules/imgproc/include/opencv2/imgproc.hpp#L3672
     public enum TemplateMatchModeEnum
     {
-        SHAPE, // SqDiff
-        SHAPE_AND_BRIGHTNESS, // SqDiffNormed
+        SHAPE, // CCoeffNormed
+        SHAPE_AND_BRIGHTNESS, // SqDiff
 
         //CCorr,
         //CCorrNormed,

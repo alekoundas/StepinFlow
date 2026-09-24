@@ -806,8 +806,8 @@ Steps 2 and 3 are verified by the compiler. **Phase 5.7 goes first**, ahead of b
 
 ### 5.7. A flow that survives another PC
 
-**Next, ahead of the rest of 5.6. Every question is answered (2026-09-24); it starts with the
-test in Order step 1.**
+**In progress, ahead of the rest of 5.6.** The test that was to come first is deferred by
+decision - the changes go first, verified by the build and against the running app.
 
 The point of a flow is that it runs somewhere else tomorrow: another monitor, another DPI, a
 browser window that is not maximised. Three things stop that today, and the third one makes the
@@ -940,12 +940,31 @@ reads it.
       responds to. What the second mode adds is brightness itself.
 
 - [ ] **The mode belongs to the step, for every template in it.** `FlowStepTemplate.TemplateMatchMode`
-      and `FlowStepTemplate.Accuracy` are dropped. Accuracy only means something relative to a
-      mode, and the mode is the step's - one of each, and no rule about which one wins. A template
-      that needs a different bar is a different step.
+      is dropped.
 
-- [ ] **Each mode has its own default accuracy, set when the step's mode changes: 0.80 for
-      `SHAPE`, 0.95 for `SHAPE_AND_BRIGHTNESS`.** One number cannot mean "82% close" in both, because they are
+- [x] **Accuracy belongs to each template.** One variant of an icon can need a looser bar than
+      another. The backend always supported it - `FlowStepTemplate.Accuracy` as an override,
+      `template.Accuracy ?? settings.Accuracy` in the searcher - and the frontend never set it,
+      so every template fell back to the step's one slider. **The first draft of this phase
+      dropped per-template accuracy; that was reversed on 2026-09-24.**
+
+      Done in the UI: a slider on each template in the list, and the step-wide slider removed. A
+      template saved before this starts on the step's value, which is what it was already being
+      matched at, so nothing shifts until someone moves it.
+
+      **What follows for step 3:** `FlowStep.Accuracy` has no control any more. It becomes dead
+      weight and should go, with `FlowStepTemplate.Accuracy` made required. It still has readers
+      that will be wrong the moment two templates differ:
+      - the execution detail's "0.79 against your 0.80" line compares the best score with the
+        step's accuracy - it needs the threshold of the template that scored best, and
+        `ExecutionStep` records only the score;
+      - the failure text in `SearchImageStepWorker.Detail` and `NotifyMessageBuilder`;
+      - `FlowStepFieldCatalog` and `DbQueryTools`, which tell the AI about it;
+      - the script, where `accuracy` moves from the step line to the template.
+
+- [x] **Each mode has its own default accuracy: 0.80 for `SHAPE`, 0.95 for
+      `SHAPE_AND_BRIGHTNESS`.** A new template starts on it, and changing the step's mode puts
+      every template back on the new mode's default rather than carrying a number over. One number cannot mean "82% close" in both, because they are
       different instruments. A UI crop is mostly background and background always agrees, so
       `SHAPE_AND_BRIGHTNESS` scores high whatever the foreground does; `SHAPE` subtracts the background
       first. Measured with the app's OpenCV build, its grayscale conversion and its score
@@ -1023,27 +1042,36 @@ prints these fields, so export, import, export produces the same bytes from diff
 Every question this phase raised has an answer above: how template facts travel (the header),
 what an area's size follows and the default per type (`ScalesWith`), letterboxing (the smaller
 ratio), which monitor's DPI (the largest part), the modes and their names, accuracy per mode, per
-template mode and accuracy (dropped), browser zoom and colour (`TODO.md`), and the single-colour
+template mode (dropped) and accuracy (kept, per template), browser zoom and colour (`TODO.md`), and the single-colour
 template (a known limit).
 
 #### Order
 
-- [ ] 1. **A test around the searcher first.** A `FakeOpenCvService` or a fixed `RawImage`, and a
-      test that imports a script and inspects the template rows. The maths about to change has
-      never run against a real area in development, and the import loss above was invisible to
-      the only acceptance test there is.
-- [ ] 2. **The script carries every fact**: `Templates:` in the header, `required` and `match` on
-      the step, `scales with` and the DPI on the area line, and the row-comparing round trip. Fixes the
-      live bug on its own.
-- [ ] 3. **Schema and one migration**: `ScalesWith`, both `AuthoredDpi`s, the renames, and the
-      dropped columns - `AllowMultiScale`, `ScaleTolerance`, `AuthoredMonitorId`,
-      `FlowStepTemplate.TemplateMatchMode`, `FlowStepTemplate.Accuracy` - with the match mode enum
-      cut to `SHAPE` and `SHAPE_AND_BRIGHTNESS`, and `MonitorDeviceName`.
-- [ ] 4. **The searcher maths**: `ScalesWith`, one uniform ratio, the largest-part monitor for
-      the DPI, an error for an impossible ratio, no sweep.
-- [ ] 5. **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by
-      area type, the mode resetting accuracy, the screen-coordinate warning.
-- [ ] 6. **The AI docs and `DbQueryTools`.**
+- [ ] **A test around the searcher first** - deferred by decision. A `FakeOpenCvService` or a
+      fixed `RawImage`, and a test that imports a script and inspects the template rows.
+- [x] **Match modes**: `SHAPE` and `SHAPE_AND_BRIGHTNESS`, the other four gone, the form's
+      dropdown of raw enum names replaced by a two-option control with a description per mode.
+- [x] **Accuracy per template in the UI**, the per-mode defaults, and the reset on a mode change.
+- [ ] **Templates**: drop `TemplateMatchMode`, `AllowMultiScale`, `ScaleTolerance`,
+      `AuthoredMonitorId`; rename `AuthoredFrame*` to `AuthoredFlowArea*` and
+      `AuthoredMonitorDpi` to `AuthoredDpi`; take the sweep out of `OpenCvService` and
+      `TemplateMatchRequest`; drop `FlowStep.Accuracy`, make the template's required, and fix its
+      readers listed above. One migration.
+- [ ] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
+      monitor. One migration.
+- [ ] **The resolver and the searcher maths**: the effective `ScalesWith`, the largest-part
+      monitor for the DPI, `ABSOLUTE_PX` children and points scaled by DPI, one uniform template
+      ratio, an error for an impossible ratio.
+- [ ] **The script carries every fact**: `Templates:` in the header, `required`, `accuracy` and
+      `match` on the step, `scales with` and the DPI on the area line, and the row-comparing
+      round trip. Fixes the live bug on its own.
+- [ ] **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by area
+      type, the screen-coordinate warning.
+- [ ] **The AI docs and `DbQueryTools`.**
+
+A migration per schema step rather than one at the end, so the app starts after each step:
+`Program.cs` runs `Migrate()`, and a model without its migration does not. Existing data is not
+preserved - no conversion SQL; the database is recreated.
 
 ## Turning a recording into a test
 
