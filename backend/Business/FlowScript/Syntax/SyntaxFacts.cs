@@ -248,6 +248,22 @@ namespace Business.FlowScript.Syntax
             }
         }
 
+        public static string ScalesWith(ScalesWithEnum scalesWith)
+        {
+            if (scalesWith == ScalesWithEnum.AREA)
+                return "area";
+
+            return "dpi";
+        }
+
+        public static string MatchMode(TemplateMatchModeEnum mode)
+        {
+            if (mode == TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)
+                return "shape and brightness";
+
+            return "shape";
+        }
+
         /// <summary>
         /// The button and what it does, left out entirely when it is a plain left click - which is
         /// nearly every click, and saying so on every line would bury the ones that differ.
@@ -284,7 +300,10 @@ namespace Business.FlowScript.Syntax
         {
             string W(int i)
             {
-                return at + i < tokens.Count && !tokens[at + i].WasQuoted ? tokens[at + i].Text : string.Empty;
+                if (at + i >= tokens.Count || tokens[at + i].WasQuoted)
+                    return string.Empty;
+
+                return tokens[at + i].Text;
             }
 
             string V(int i)
@@ -341,6 +360,36 @@ namespace Business.FlowScript.Syntax
                 case "contains": return (TitleMatchModeEnum.CONTAINS, 1);
                 default: return null;
             }
+        }
+
+        public static ScalesWithEnum? ReadScalesWith(string word)
+        {
+            switch (word)
+            {
+                case "dpi": return ScalesWithEnum.DPI;
+                case "area": return ScalesWithEnum.AREA;
+                default: return null;
+            }
+        }
+
+        /// <summary>How templates are compared, and how many words that took. Longest first again.</summary>
+        public static (TemplateMatchModeEnum Mode, int Words)? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int at)
+        {
+            string W(int i)
+            {
+                if (at + i >= tokens.Count || tokens[at + i].WasQuoted)
+                    return string.Empty;
+
+                return tokens[at + i].Text;
+            }
+
+            if (W(0) == "shape" && W(1) == "and" && W(2) == "brightness")
+                return (TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS, 3);
+
+            if (W(0) == "shape")
+                return (TemplateMatchModeEnum.SHAPE, 1);
+
+            return null;
         }
 
         public static CursorScrollDirectionTypeEnum? ReadScrollDirection(string word)
@@ -416,5 +465,30 @@ namespace Business.FlowScript.Syntax
             return Integer(text);
         }
 
+        /// <summary>"120dpi", or null when that is not what it says.</summary>
+        public static int? ReadDpi(string text)
+        {
+            if (!text.EndsWith("dpi", StringComparison.Ordinal))
+                return null;
+
+            if (!int.TryParse(text[..^3], NumberStyles.None, CultureInfo.InvariantCulture, out int dpi) || dpi <= 0)
+                return null;
+
+            return dpi;
+        }
+
+        /// <summary>Two integers joined by one character - "120,40" for a click, "800x600" for a size.</summary>
+        public static (int First, int Second)? ReadPair(string text, char separator)
+        {
+            string[] parts = text.Split(separator);
+            if (parts.Length != 2)
+                return null;
+
+            if (!int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int first)
+                || !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int second))
+                return null;
+
+            return (first, second);
+        }
     }
 }

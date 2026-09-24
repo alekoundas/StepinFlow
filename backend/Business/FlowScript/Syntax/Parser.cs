@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Globalization;
 
 using Core.Enums;
@@ -24,6 +25,7 @@ namespace Business.FlowScript.Syntax
             Areas,
             Points,
             Inputs,
+            Templates,
             Steps,
         }
 
@@ -75,6 +77,10 @@ namespace Business.FlowScript.Syntax
                         ReadInput(document, line);
                         break;
 
+                    case Section.Templates:
+                        ReadTemplate(document, line);
+                        break;
+
                     case Section.Steps:
                         StepParser.Read(document, line, lastIndexAtIndent, pendingComments, ref order);
                         break;
@@ -102,6 +108,7 @@ namespace Business.FlowScript.Syntax
                 case "Areas:": return Section.Areas;
                 case "Points:": return Section.Points;
                 case "Inputs:": return Section.Inputs;
+                case "Templates:": return Section.Templates;
                 case "Steps:": return Section.Steps;
                 default: return null;
             }
@@ -173,53 +180,91 @@ namespace Business.FlowScript.Syntax
 
             FlowArea area = new FlowArea { Name = line.Tokens[0].Text };
             string? parentName = null;
+            int next;
 
             if (line.Word(1) == "window")
             {
-                // A root area binds to a window: process, and optionally a title.
                 area.Type = FlowAreaTypeEnum.APPLICATION;
-
-                if (line.Word(2) != "process")
-                {
-                    document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, line.Number, line.Tokens[1].Column, "Expected \"window process\" followed by the process name."));
-                    return;
-                }
-
-                area.ProcessName = line.Word(3);
-
-                if (line.Word(4) == "title")
-                {
-                    (TitleMatchModeEnum Mode, int Words)? match = SyntaxFacts.ReadTitleMatch(line.Tokens, 5);
-                    if (match == null)
-                    {
-                        document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, line.Number, line.Tokens[4].Column, "Expected is, contains, starts with or matches after \"title\"."));
-                        return;
-                    }
-
-                    area.TitleMatchMode = match.Value.Mode;
-                    area.TitlePattern = line.Word(5 + match.Value.Words);
-                }
+                next = ReadWindow(document, line, area);
+            }
+            else if (line.Word(1) == "monitor")
+            {
+                area.Type = FlowAreaTypeEnum.MONITOR;
+                next = ReadMonitor(document, line, area);
+            }
+            else if (line.Word(1) == "on" && line.Word(2) == "screen")
+            {
+                // Screen coordinates: correct on the machine it was made on and nowhere else.
+                area.Type = FlowAreaTypeEnum.CUSTOM;
+                next = ReadPlacement(document, line, 3, area);
             }
             else if (line.Word(1) == "inside")
             {
                 area.Type = FlowAreaTypeEnum.CUSTOM;
                 parentName = line.Word(2);
-
-                if (!ReadPlacement(document, line, 3, area))
-                    return;
+                next = ReadPlacement(document, line, 3, area);
             }
             else
             {
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_PLACEMENT_UNKNOWN, line.Number, line.Tokens.Count > 1 ? line.Tokens[1].Column : 1,
-                    $"Expected \"window\" or \"inside\" after the area name, found \"{line.Word(1)}\"."));
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_PLACEMENT_UNKNOWN, line.Number, line.ColumnOf(1),
+                    $"Expected \"window\", \"monitor\", \"on screen\" or \"inside\" after the area name, found \"{line.Word(1)}\"."));
                 return;
             }
+
+            if (next < 0 || !ReadAreaScaling(document, line, next, area))
+                return;
 
             document.Areas.Add(new AreaSyntax { Area = area, ParentName = parentName, Line = line.Number });
         }
 
-        // ratio x y w h, or offset x y size w h
-        private static bool ReadPlacement(FlowSyntax document, ScriptLine line, int at, FlowArea area)
+        // window process "x", optionally title ... "y". Where the scaling clauses start, or -1.
+        private static int ReadWindow(FlowSyntax document, ScriptLine line, FlowArea area)
+        {
+            if (line.Word(2) != "process")
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, line.Number, line.ColumnOf(1), "Expected \"window process\" followed by the process name."));
+                return -1;
+            }
+
+            area.ProcessName = line.Word(3);
+
+            if (line.Word(4) != "title")
+                return 4;
+
+            (TitleMatchModeEnum Mode, int Words)? match = SyntaxFacts.ReadTitleMatch(line.Tokens, 5);
+            if (match == null)
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, line.Number, line.ColumnOf(4), "Expected is, contains, starts with or matches after \"title\"."));
+                return -1;
+            }
+
+            area.TitleMatchMode = match.Value.Mode;
+            area.TitlePattern = line.Word(5 + match.Value.Words);
+
+            return 6 + match.Value.Words;
+        }
+
+        // monitor primary, or monitor "\\.\DISPLAY2". Quoted, because a device could be called primary.
+        private static int ReadMonitor(FlowSyntax document, ScriptLine line, FlowArea area)
+        {
+            if (line.Word(2) == "primary" && !line.Tokens[2].WasQuoted)
+            {
+                area.MonitorDeviceName = string.Empty;
+                return 3;
+            }
+
+            if (line.Tokens.Count > 2 && line.Tokens[2].WasQuoted)
+            {
+                area.MonitorDeviceName = line.Word(2);
+                return 3;
+            }
+
+            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PLACEMENT_MALFORMED, line.Number, line.ColumnOf(2), "Expected \"monitor primary\" or \"monitor\" and the device name in quotes."));
+            return -1;
+        }
+
+        // ratio x y w h, or offset x y size w h. Where the scaling clauses start, or -1.
+        private static int ReadPlacement(FlowSyntax document, ScriptLine line, int at, FlowArea area)
         {
             if (line.Word(at) == "ratio")
             {
@@ -228,7 +273,7 @@ namespace Business.FlowScript.Syntax
                 area.RatioY = SyntaxFacts.Float(line.Word(at + 2));
                 area.RatioWidth = SyntaxFacts.Float(line.Word(at + 3));
                 area.RatioHeight = SyntaxFacts.Float(line.Word(at + 4));
-                return true;
+                return at + 5;
             }
 
             if (line.Word(at) == "offset" && line.Word(at + 3) == "size")
@@ -238,13 +283,60 @@ namespace Business.FlowScript.Syntax
                 area.LocationY = SyntaxFacts.Integer(line.Word(at + 2));
                 area.Width = SyntaxFacts.Integer(line.Word(at + 4));
                 area.Height = SyntaxFacts.Integer(line.Word(at + 5));
-                return true;
+                return at + 6;
             }
 
-            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PLACEMENT_MALFORMED, line.Number, at < line.Tokens.Count ? line.Tokens[at].Column : 1,
+            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PLACEMENT_MALFORMED, line.Number, line.ColumnOf(at),
                 "Expected \"ratio x y w h\" or \"offset x y size w h\"."));
 
-            return false;
+            return -1;
+        }
+
+        // scales with dpi|area, at 120dpi. Both optional: no setting inherits, no DPI leaves pixels as they are.
+        private static bool ReadAreaScaling(FlowSyntax document, ScriptLine line, int at, FlowArea area)
+        {
+            int i = at;
+
+            while (i < line.Tokens.Count)
+            {
+                string word = line.Word(i);
+
+                switch (word)
+                {
+                    case "scales":
+                        ScalesWithEnum? scalesWith = null;
+                        if (line.Word(i + 1) == "with")
+                            scalesWith = SyntaxFacts.ReadScalesWith(line.Word(i + 2));
+
+                        if (scalesWith == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, line.Number, line.ColumnOf(i), "Expected \"scales with dpi\" or \"scales with area\"."));
+                            return false;
+                        }
+
+                        area.ScalesWith = scalesWith.Value;
+                        i += 3;
+                        break;
+
+                    case "at":
+                        int? dpi = SyntaxFacts.ReadDpi(line.Word(i + 1));
+                        if (dpi == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, line.Number, line.ColumnOf(i + 1), $"\"{line.Word(i + 1)}\" is not a DPI. Expected something like 120dpi."));
+                            return false;
+                        }
+
+                        area.AuthoredDpi = dpi.Value;
+                        i += 2;
+                        break;
+
+                    default:
+                        document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, line.Number, line.ColumnOf(i), $"\"{word}\" is not something an area takes."));
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         private static void ReadPoint(FlowSyntax document, ScriptLine line)
@@ -288,7 +380,7 @@ namespace Business.FlowScript.Syntax
             }
             else
             {
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PLACEMENT_MALFORMED, line.Number, at < line.Tokens.Count ? line.Tokens[at].Column : 1,
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PLACEMENT_MALFORMED, line.Number, line.ColumnOf(at),
                     "Expected \"ratio x y\" or \"offset x y\"."));
                 return;
             }
@@ -310,6 +402,77 @@ namespace Business.FlowScript.Syntax
                 IsSecret = line.Word(1) == "secret",
                 OrderNumber = document.Inputs.Count,
             });
+        }
+
+        // "a.png"   click 120,40   captured 800x600 at 120dpi. Every fact is optional.
+        private static void ReadTemplate(FlowSyntax document, ScriptLine line)
+        {
+            if (!line.Tokens[0].WasQuoted)
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, 1, "A template starts with its file name in quotes."));
+                return;
+            }
+
+            string fileName = line.Tokens[0].Text;
+            if (document.Templates.Any(x => string.Equals(x.FileName, fileName, StringComparison.Ordinal)))
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, 1, $"\"{fileName}\" is already described above."));
+                return;
+            }
+
+            TemplateSyntax template = new TemplateSyntax { FileName = fileName, Line = line.Number };
+            int i = 1;
+
+            while (i < line.Tokens.Count)
+            {
+                string word = line.Word(i);
+                string value = line.Word(i + 1);
+
+                switch (word)
+                {
+                    case "click":
+                        (int X, int Y)? click = SyntaxFacts.ReadPair(value, ',');
+                        if (click == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, line.ColumnOf(i + 1), $"\"{value}\" is not a click point. Expected something like 120,40."));
+                            return;
+                        }
+
+                        template.ClickOffset = new Point(click.Value.X, click.Value.Y);
+                        break;
+
+                    case "captured":
+                        (int Width, int Height)? size = SyntaxFacts.ReadPair(value, 'x');
+                        if (size == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, line.ColumnOf(i + 1), $"\"{value}\" is not a size. Expected something like 800x600."));
+                            return;
+                        }
+
+                        template.AuthoredFlowAreaWidth = size.Value.Width;
+                        template.AuthoredFlowAreaHeight = size.Value.Height;
+                        break;
+
+                    case "at":
+                        int? dpi = SyntaxFacts.ReadDpi(value);
+                        if (dpi == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, line.ColumnOf(i + 1), $"\"{value}\" is not a DPI. Expected something like 120dpi."));
+                            return;
+                        }
+
+                        template.AuthoredDpi = dpi.Value;
+                        break;
+
+                    default:
+                        document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, line.ColumnOf(i), $"\"{word}\" is not something a template takes. Expected click, captured or at."));
+                        return;
+                }
+
+                i += 2;
+            }
+
+            document.Templates.Add(template);
         }
 
     }

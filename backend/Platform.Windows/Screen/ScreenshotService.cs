@@ -101,9 +101,10 @@ namespace Platform.Windows.Screen
                 IReadOnlyList<MonitorInfo> monitors = ScreenMetrics.GetAllMonitors();
 
                 // Empty is the primary monitor: the one choice that means the same thing on another PC.
-                monitor = area.MonitorDeviceName.Length == 0
-                    ? monitors.FirstOrDefault(x => x.IsPrimary)
-                    : monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
+                if (area.MonitorDeviceName.Length == 0)
+                    monitor = monitors.FirstOrDefault(x => x.IsPrimary);
+                else
+                    monitor = monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
             }
 
             if (monitor != null)

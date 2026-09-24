@@ -113,18 +113,34 @@ namespace Business.Searching
         private static float ScaleRatio(SearchTemplate template, AreaResolution area)
         {
             if (area.ScalesWith == ScalesWithEnum.DPI)
-                return template.AuthoredDpi > 0 && area.Dpi > 0 ? (float)area.Dpi / template.AuthoredDpi : 1f;
+            {
+                if (template.AuthoredDpi <= 0 || area.Dpi <= 0)
+                    return 1f;
 
-            float width = template.AuthoredFlowAreaWidth > 0 ? (float)area.Bounds.Width / template.AuthoredFlowAreaWidth : 0f;
-            float height = template.AuthoredFlowAreaHeight > 0 ? (float)area.Bounds.Height / template.AuthoredFlowAreaHeight : 0f;
+                return (float)area.Dpi / template.AuthoredDpi;
+            }
 
-            if (width > 0 && height > 0)
+            bool hasWidth = template.AuthoredFlowAreaWidth > 0;
+            bool hasHeight = template.AuthoredFlowAreaHeight > 0;
+            float width = 0f;
+            float height = 0f;
+
+            if (hasWidth)
+                width = (float)area.Bounds.Width / template.AuthoredFlowAreaWidth;
+
+            if (hasHeight)
+                height = (float)area.Bounds.Height / template.AuthoredFlowAreaHeight;
+
+            if (hasWidth && hasHeight)
                 return MathF.Min(width, height);
 
-            if (width > 0)
+            if (hasWidth)
                 return width;
 
-            return height > 0 ? height : 1f;
+            if (hasHeight)
+                return height;
+
+            return 1f;
         }
     }
 }

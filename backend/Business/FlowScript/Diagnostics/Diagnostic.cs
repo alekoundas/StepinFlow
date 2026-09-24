@@ -34,6 +34,11 @@ namespace Business.FlowScript.Diagnostics
         POINT_PLACEMENT_UNKNOWN,
         INPUT_MALFORMED,
         TITLE_MATCH_UNKNOWN,
+        AREA_ARGUMENT_UNKNOWN,
+
+        // Templates
+        TEMPLATE_MALFORMED,
+        TEMPLATE_DUPLICATE,
 
         // Steps
         STEP_UNKNOWN,
@@ -46,7 +51,8 @@ namespace Business.FlowScript.Diagnostics
         LOOP_MALFORMED,
         SYSTEM_ACTION_UNKNOWN,
         PROCESS_MISSING,
-        ACCURACY_WITHOUT_TEMPLATE,
+        CLAUSE_WITHOUT_TEMPLATE,
+        MATCH_MODE_UNKNOWN,
 
         // Binding
         NAME_UNKNOWN,

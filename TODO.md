@@ -107,6 +107,25 @@ is lost between sessions.
       entity, which reads as though an execution step is something a worker mints rather than a row
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
+- [ ] **Execution ignores `IsRequired`; the test button honours it.** `TestImageSearchHandler`
+      says a search would succeed when every required template is found, or any template when
+      none is required. `SearchImageStepWorker` succeeds on any hit at all and never reads
+      `IsRequired` - `SearchTemplate` does not even carry it. So a step whose preview says "fails:
+      the required banner is missing" passes when it executes. Found 2026-09-24 while making the
+      script carry `required`. The rule belongs in `ImageSearcher`, once, so the two cannot differ
+      again - that is what extracting it was for.
+
+## Flow script
+
+- [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
+      plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing
+      for a drag. So a click stored as null returns as left, and a drag stored as left returns as
+      null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field
+      `ScriptRoundTripDatabase` still reports as changed, and the only thing stopping that probe
+      comparing steps as strictly as it compares areas and templates.
+- [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
+      imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
+      resolver supporting tabs at all; the second wants a word such as `with frame`.
 
 ## AI
 

@@ -1,3 +1,5 @@
+using System.Drawing;
+
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -99,11 +101,22 @@ namespace Business.FlowScript
             List<FlowStep> steps = await dbContext.FlowSteps.AsNoTracking()
                 .Where(x => x.RootId == flowId).ToListAsync(ct);
 
-            // Names and order only. The images are megabytes and nothing here needs the pixels.
-            var templates = await dbContext.FlowStepTemplates.AsNoTracking()
+            // Everything but the pixels. The images are megabytes and nothing here needs them.
+            List<FlowStepTemplate> templates = await dbContext.FlowStepTemplates.AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId)
                 .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
-                .Select(x => new { x.FlowStepId, x.Name, x.Accuracy })
+                .Select(x => new FlowStepTemplate
+                {
+                    FlowStepId = x.FlowStepId,
+                    Name = x.Name,
+                    Accuracy = x.Accuracy,
+                    IsRequired = x.IsRequired,
+                    ClickOffsetX = x.ClickOffsetX,
+                    ClickOffsetY = x.ClickOffsetY,
+                    AuthoredFlowAreaWidth = x.AuthoredFlowAreaWidth,
+                    AuthoredFlowAreaHeight = x.AuthoredFlowAreaHeight,
+                    AuthoredDpi = x.AuthoredDpi,
+                })
                 .ToListAsync(ct);
 
             Dictionary<int, string> stepNames = steps.ToDictionary(x => x.Id, x => x.Name);
@@ -132,7 +145,7 @@ namespace Business.FlowScript
                 PointNamesById = points.ToDictionary(x => x.Id, x => x.Name),
                 StepNamesById = stepNames,
                 SubFlowPathsById = subFlowPaths,
-                TemplatesByStepId = Templates(templates.Select(x => (x.FlowStepId, x.Name, x.Accuracy)).ToList(), stepNames),
+                TemplatesByStepId = Templates(templates, stepNames),
             };
         }
 
@@ -145,27 +158,36 @@ namespace Business.FlowScript
         /// and an add instead of a modification - losing the one thing putting templates in a
         /// repository is for.
         /// </summary>
-        private static Dictionary<int, IReadOnlyList<ScriptTemplate>> Templates(IReadOnlyList<(int FlowStepId, string Name, float Accuracy)> templates, IReadOnlyDictionary<int, string> stepNames)
+        private static Dictionary<int, IReadOnlyList<ScriptTemplate>> Templates(IReadOnlyList<FlowStepTemplate> templates, IReadOnlyDictionary<int, string> stepNames)
         {
             Dictionary<int, List<ScriptTemplate>> byStep = new Dictionary<int, List<ScriptTemplate>>();
             HashSet<string> taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach ((int flowStepId, string name, float accuracy) in templates)
+            foreach (FlowStepTemplate template in templates)
             {
-                string desired = string.IsNullOrWhiteSpace(name)
-                    ? stepNames.GetValueOrDefault(flowStepId, "template")
-                    : name;
+                string desired = template.Name;
+                if (string.IsNullOrWhiteSpace(desired))
+                    desired = stepNames.GetValueOrDefault(template.FlowStepId, "template");
 
                 string fileName = FlowNameHelper.MakeUnique(FileNameOf(desired, "template"), taken);
                 taken.Add(fileName);
 
-                if (!byStep.TryGetValue(flowStepId, out List<ScriptTemplate>? names))
+                if (!byStep.TryGetValue(template.FlowStepId, out List<ScriptTemplate>? names))
                 {
                     names = new List<ScriptTemplate>();
-                    byStep[flowStepId] = names;
+                    byStep[template.FlowStepId] = names;
                 }
 
-                names.Add(new ScriptTemplate(fileName + ".png", accuracy));
+                names.Add(new ScriptTemplate
+                {
+                    FileName = fileName + ".png",
+                    Accuracy = template.Accuracy,
+                    IsRequired = template.IsRequired,
+                    ClickOffset = new Point(template.ClickOffsetX, template.ClickOffsetY),
+                    AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
+                    AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
+                    AuthoredDpi = template.AuthoredDpi,
+                });
             }
 
             return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<ScriptTemplate>)x.Value);
@@ -173,10 +195,10 @@ namespace Business.FlowScript
 
         private static async Task<int> WriteTemplatesAsync(AppDbContext dbContext, int flowId, BoundFlow source, string templateFolder, CancellationToken ct)
         {
-            var images = await dbContext.FlowStepTemplates.AsNoTracking()
+            List<FlowStepTemplate> images = await dbContext.FlowStepTemplates.AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId && x.TemplateImage != null)
                 .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
-                .Select(x => new { x.FlowStepId, x.TemplateImage })
+                .Select(x => new FlowStepTemplate { FlowStepId = x.FlowStepId, TemplateImage = x.TemplateImage })
                 .ToListAsync(ct);
 
             if (images.Count == 0)
@@ -187,7 +209,7 @@ namespace Business.FlowScript
             int written = 0;
             Dictionary<int, int> nextIndex = new Dictionary<int, int>();
 
-            foreach (var image in images)
+            foreach (FlowStepTemplate image in images)
             {
                 IReadOnlyList<ScriptTemplate> names = source.TemplatesByStepId.GetValueOrDefault(image.FlowStepId, []);
 

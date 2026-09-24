@@ -25,9 +25,9 @@ namespace Business.FlowScript.Syntax
             // A branch is a row of its own in the database, and the steps under it hang off it.
             if (line.Raw.Trim() == "Success:" || line.Raw.Trim() == "Failure:")
             {
-                FlowStepTypeEnum branchType = line.Raw.Trim() == "Success:"
-                    ? FlowStepTypeEnum.SUCCESS
-                    : FlowStepTypeEnum.FAILURE;
+                FlowStepTypeEnum branchType = FlowStepTypeEnum.FAILURE;
+                if (line.Raw.Trim() == "Success:")
+                    branchType = FlowStepTypeEnum.SUCCESS;
 
                 Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = branchType }, ref order);
                 return;
@@ -186,11 +186,14 @@ namespace Business.FlowScript.Syntax
         }
 
         // The search steps take their clauses in any order, so they are read as clauses rather
-        // than by position: template, in, accuracy, keep, timeout.
+        // than by position: template, accuracy, required, match, in, keep, timeout.
         private static void ReadSearch(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
         {
             FlowStep step = parsed.Step;
             step.Name = line.Word(at);
+
+            // A template with no accuracy starts on its mode's default, and "match" may come after it.
+            List<ScriptTemplate> withoutAccuracy = new List<ScriptTemplate>();
 
             int i = at + 1;
 
@@ -216,7 +219,9 @@ namespace Business.FlowScript.Syntax
                 switch (word)
                 {
                     case "template":
-                        parsed.Templates.Add(new ScriptTemplate(line.Word(i + 1), ScriptTemplate.DefaultAccuracy));
+                        ScriptTemplate template = new ScriptTemplate { FileName = line.Word(i + 1) };
+                        parsed.Templates.Add(template);
+                        withoutAccuracy.Add(template);
                         i += 2;
                         break;
 
@@ -229,12 +234,41 @@ namespace Business.FlowScript.Syntax
                     case "accuracy":
                         if (parsed.Templates.Count == 0)
                         {
-                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.ACCURACY_WITHOUT_TEMPLATE, line.Number, line.ColumnOf(i), "\"accuracy\" belongs after the template it applies to."));
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.CLAUSE_WITHOUT_TEMPLATE, line.Number, line.ColumnOf(i), "\"accuracy\" belongs after the template it applies to."));
                             return;
                         }
 
                         parsed.Templates[^1].Accuracy = SyntaxFacts.Float(line.Word(i + 1));
+                        withoutAccuracy.Remove(parsed.Templates[^1]);
                         i += 2;
+                        break;
+
+                    // So is this. Required turns "any of these" into "all of these", which a
+                    // reviewer should see on the template it applies to.
+                    case "required":
+                        if (parsed.Templates.Count == 0)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.CLAUSE_WITHOUT_TEMPLATE, line.Number, line.ColumnOf(i), "\"required\" belongs after the template it applies to."));
+                            return;
+                        }
+
+                        parsed.Templates[^1].IsRequired = true; //[^1] = last item
+                        i += 1;
+                        break;
+
+                    case "match":
+                        (TemplateMatchModeEnum Mode, int Words)? mode = null;
+                        if (step.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE)
+                            mode = SyntaxFacts.ReadMatchMode(line.Tokens, i + 1);
+
+                        if (mode == null)
+                        {
+                            document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.MATCH_MODE_UNKNOWN, line.Number, line.ColumnOf(i), "Expected \"match shape\" or \"match shape and brightness\", on an image search."));
+                            return;
+                        }
+
+                        step.TemplateMatchMode = mode.Value.Mode;
+                        i += 1 + mode.Value.Words;
                         break;
 
                     case "keep":
@@ -258,6 +292,9 @@ namespace Business.FlowScript.Syntax
                         return;
                 }
             }
+
+            foreach (ScriptTemplate template in withoutAccuracy)
+                template.Accuracy = ScriptTemplate.DefaultAccuracy(step.TemplateMatchMode);
         }
 
         private static void ReadCheckValue(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)

@@ -1,3 +1,6 @@
+using System.Buffers.Binary;
+using System.Drawing;
+
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -23,6 +26,8 @@ namespace Business.FlowScript
     /// </summary>
     public sealed class FlowScriptImporter : IFlowScriptImporter
     {
+        private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IParser _reader;
 
@@ -280,29 +285,57 @@ namespace Business.FlowScript
 
             for (int i = 0; i < parsed.Templates.Count; i++)
             {
-                string fileName = parsed.Templates[i].FileName;
-                string path = templateFolderPath == null ? string.Empty : Path.Combine(templateFolderPath, fileName);
+                ScriptTemplate template = parsed.Templates[i];
 
                 // A missing image is reported rather than fatal: the step is still the step, and a
                 // flow whose pictures did not come over is more use than no flow at all.
-                byte[]? image = File.Exists(path) ? await File.ReadAllBytesAsync(path, ct) : null;
+                byte[]? image = null;
+                if (templateFolderPath != null)
+                {
+                    string path = Path.Combine(templateFolderPath, template.FileName);
+                    if (File.Exists(path))
+                        image = await File.ReadAllBytesAsync(path, ct);
+                }
+
                 if (image == null)
-                    result.MissingTemplates.Add(fileName);
+                    result.MissingTemplates.Add(template.FileName);
+
+                Point click = template.ClickOffset ?? Centre(image);
 
                 dbContext.FlowStepTemplates.Add(new FlowStepTemplate
                 {
                     FlowStepId = step.Id,
-                    Name = Path.GetFileNameWithoutExtension(fileName),
+                    Name = Path.GetFileNameWithoutExtension(template.FileName),
                     OrderNumber = i,
                     TemplateImage = image,
-                    IsRequired = true,
-                    Accuracy = parsed.Templates[i].Accuracy,
+                    IsRequired = template.IsRequired,
+                    Accuracy = template.Accuracy,
+                    ClickOffsetX = click.X,
+                    ClickOffsetY = click.Y,
+                    AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
+                    AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
+                    AuthoredDpi = template.AuthoredDpi,
                 });
 
                 written++;
             }
 
             return written;
+        }
+
+        // Where the capture form puts a new template's click. A png says its size in the IHDR chunk
+        // at a fixed offset: eight bytes of signature, four of length and four of "IHDR", then the
+        // width and height as big-endian 32-bit numbers. Anything else clicks the top left.
+        private static Point Centre(byte[]? image)
+        {
+            if (image == null || image.Length < 24 || !image.AsSpan(0, 8).SequenceEqual(PngSignature))
+                return Point.Empty;
+
+            int width = BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(16, 4));
+            int height = BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(20, 4));
+
+            // Rounding half up, as the form's Math.round does.
+            return new Point((width + 1) / 2, (height + 1) / 2);
         }
 
         private static FlowImportResultDto Failed(params Diagnostic[] errors)

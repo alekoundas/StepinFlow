@@ -467,14 +467,17 @@ Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080, 390x844
 
 Areas:
-  "Browser"       window process "chrome.exe" title contains "Swag Labs"
-  "Inventory"     inside "Browser"   ratio 0.00 0.15  1.00 0.85
+  "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi
+  "Login form"    inside "Browser"   ratio 0.30 0.18  0.40 0.40
+
+Templates:
+  "username-field.png"    click 150,18   captured 922x648 at 120dpi
 
 Steps:
 
 ## Sign in
 
-Find Image      "Find username field"   template "username-field.png"   in "Login form"   accuracy 0.85
+Find Image      "Find username field"   template "username-field.png" accuracy 0.85   in "Login form"
   Success:
     Click           at "Find username field"
     Type            "{{username}}"

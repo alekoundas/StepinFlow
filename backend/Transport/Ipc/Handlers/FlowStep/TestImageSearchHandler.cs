@@ -141,9 +141,10 @@ namespace Transport.Ipc.Handlers
         {
             List<ImageSearchTestImageDto> required = result.Images.Where(x => x.IsRequired).ToList();
 
-            return required.Count > 0
-                ? required.All(x => x.IsFound)
-                : result.Images.Any(x => x.IsFound);
+            if (required.Count > 0)
+                return required.All(x => x.IsFound);
+
+            return result.Images.Any(x => x.IsFound);
         }
 
         private static ImageSearchTestResultDto Failed(string error)

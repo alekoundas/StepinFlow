@@ -107,11 +107,19 @@ namespace Business.Services.AreaPointService
 
             // Both modes measure from the area's top left. Two ways to say the same thing would
             // just be a trap.
-            Point resolved = point.OffsetMode == AreaSizingModeEnum.RATIO
-                ? new Point(
+            Point resolved;
+            if (point.OffsetMode == AreaSizingModeEnum.RATIO)
+            {
+                resolved = new Point(
                     bounds.X + (int)MathF.Floor(point.RatioX * bounds.Width),
-                    bounds.Y + (int)MathF.Floor(point.RatioY * bounds.Height))
-                : Offset(new Point(bounds.X, bounds.Y), Scaled(point.LocationX, scale), Scaled(point.LocationY, scale));
+                    bounds.Y + (int)MathF.Floor(point.RatioY * bounds.Height));
+            }
+            else
+            {
+                resolved = new Point(
+                    bounds.X + Scaled(point.LocationX, scale),
+                    bounds.Y + Scaled(point.LocationY, scale));
+            }
 
             return PointResolution.Ok(Clamp(resolved, bounds));
         }
@@ -127,16 +135,18 @@ namespace Business.Services.AreaPointService
             IReadOnlyList<MonitorInfo> monitors = _screenService.GetAllMonitors();
 
             // Empty is the primary monitor: the one choice that means the same thing on another PC.
-            MonitorInfo? monitor = area.MonitorDeviceName.Length == 0
-                ? monitors.FirstOrDefault(x => x.IsPrimary)
-                : monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
-
-            if (monitor == null)
+            if (area.MonitorDeviceName.Length == 0)
             {
-                return AreaResolution.Fail(area.MonitorDeviceName.Length == 0
-                    ? "No primary monitor was found."
-                    : $"Monitor \"{area.MonitorDeviceName}\" is not connected.");
+                MonitorInfo? primary = monitors.FirstOrDefault(x => x.IsPrimary);
+                if (primary == null)
+                    return AreaResolution.Fail("No primary monitor was found.");
+
+                return AreaResolution.Ok(primary.Bounds);
             }
+
+            MonitorInfo? monitor = monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
+            if (monitor == null)
+                return AreaResolution.Fail($"Monitor \"{area.MonitorDeviceName}\" is not connected.");
 
             return AreaResolution.Ok(monitor.Bounds);
         }
@@ -186,17 +196,23 @@ namespace Business.Services.AreaPointService
             // scales its templates with its own size.
             float scale = DpiScale(parent, area.AuthoredDpi);
 
-            Rectangle bounds = area.SizingMode == AreaSizingModeEnum.RATIO
-                ? new Rectangle(
+            Rectangle bounds;
+            if (area.SizingMode == AreaSizingModeEnum.RATIO)
+            {
+                bounds = new Rectangle(
                     parentBounds.X + (int)MathF.Floor(area.RatioX * parentBounds.Width),
                     parentBounds.Y + (int)MathF.Floor(area.RatioY * parentBounds.Height),
                     (int)MathF.Floor(area.RatioWidth * parentBounds.Width),
-                    (int)MathF.Floor(area.RatioHeight * parentBounds.Height))
-                : new Rectangle(
+                    (int)MathF.Floor(area.RatioHeight * parentBounds.Height));
+            }
+            else
+            {
+                bounds = new Rectangle(
                     parentBounds.X + Scaled(area.LocationX, scale),
                     parentBounds.Y + Scaled(area.LocationY, scale),
                     Scaled(area.Width, scale),
                     Scaled(area.Height, scale));
+            }
 
             bounds = Rectangle.Intersect(bounds, parentBounds);
 
@@ -213,7 +229,10 @@ namespace Business.Services.AreaPointService
             if (area.ScalesWith != null)
                 return area.ScalesWith.Value;
 
-            return area.ParentFlowArea != null ? ScalesWithOf(area.ParentFlowArea) : ScalesWithEnum.DPI;
+            if (area.ParentFlowArea != null)
+                return ScalesWithOf(area.ParentFlowArea);
+
+            return ScalesWithEnum.DPI;
         }
 
         // The monitor holding the largest part of the area decides its DPI - the rule Windows uses
@@ -236,7 +255,13 @@ namespace Business.Services.AreaPointService
                 }
             }
 
-            return (best ?? monitors.FirstOrDefault(x => x.IsPrimary))?.Dpi ?? 96;
+            if (best == null)
+                best = monitors.FirstOrDefault(x => x.IsPrimary);
+
+            if (best == null)
+                return 96;
+
+            return best.Dpi;
         }
 
         // How much bigger pixels written at authoredDpi are inside this area now. Only a DPI area's
@@ -254,10 +279,11 @@ namespace Business.Services.AreaPointService
             return (int)MathF.Round(pixels * scale);
         }
 
-        private static Point Offset(Point origin, int dx, int dy) => new Point(origin.X + dx, origin.Y + dy);
-
-        private static Point Clamp(Point point, Rectangle bounds) => new Point(
-            Math.Clamp(point.X, bounds.Left, Math.Max(bounds.Left, bounds.Right - 1)),
-            Math.Clamp(point.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - 1)));
+        private static Point Clamp(Point point, Rectangle bounds)
+        {
+            return new Point(
+                Math.Clamp(point.X, bounds.Left, Math.Max(bounds.Left, bounds.Right - 1)),
+                Math.Clamp(point.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - 1)));
+        }
     }
 }

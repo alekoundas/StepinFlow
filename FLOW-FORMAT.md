@@ -21,7 +21,7 @@ Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080, 1024x768, 390x844
 
 Areas:
-  "Browser"       window process "chrome.exe" title contains "Swag Labs"
+  "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi
   "Cart badge"    inside "Browser"   ratio 0.88 0.00  0.12 0.10
   "Inventory"     inside "Browser"   ratio 0.00 0.15  1.00 0.85
   "Login form"    inside "Browser"   ratio 0.30 0.18  0.40 0.40
@@ -29,6 +29,14 @@ Areas:
 Inputs:
   "username"
   "password"      secret
+
+Templates:
+  "add-to-cart.png"       click 48,16   captured 2304x1377 at 120dpi
+  "cart-badge.png"        click 12,12   captured 276x162 at 120dpi
+  "login-button.png"      click 150,20   captured 922x648 at 120dpi
+  "login-form.png"        click 200,150   captured 2304x1620 at 120dpi
+  "password-field.png"    click 150,18   captured 922x648 at 120dpi
+  "username-field.png"    click 150,18   captured 922x648 at 120dpi
 
 Steps:
 
@@ -132,19 +140,38 @@ An area is a rectangle to look inside. Areas are the vocabulary of _where_, whic
 
 ```
 Areas:
-  "Browser"     window process "chrome.exe" title contains "Swag Labs"
-  "Header"      inside "Browser"   offset 0 0  size 1920 90
+  "Browser"     window process "chrome.exe" title contains "Swag Labs"   scales with dpi
+  "Game"        inside "Browser"   ratio 0.10 0.20  0.80 0.70   scales with area
+  "Header"      inside "Browser"   offset 0 0  size 1920 90   at 120dpi
   "Inventory"   inside "Browser"   ratio 0.00 0.15  1.00 0.85
+  "Screen"      monitor primary
 ```
 
 Roots first, then their children, each group alphabetical - so a child's `inside` always names
 something already read, and two exports of one flow are the same bytes.
 
-A root area binds to a window by process and title. A child area is placed inside its parent,
-either by **ratio** (`x y width height`, each 0–1) or by fixed **offset and size** in pixels.
+A root area is one of three things:
+
+| form | what it is |
+| --- | --- |
+| `window process "chrome.exe" title contains "Swag"` | a window, by process and optionally title |
+| `monitor primary`, `monitor "\\.\DISPLAY2"` | a whole monitor; `primary` is the one that means the same thing on another PC |
+| `on screen   offset 10 20  size 300 200` | fixed screen coordinates - right on the machine it was made on and nowhere else |
+
+A child area is placed inside its parent, either by **ratio** (`x y width height`, each 0–1) or by
+fixed **offset and size** in pixels.
 
 Ratios are what make one flow work at several sizes: a region defined as the bottom 85% of the
 window is the bottom 85% at every width.
+
+Two optional clauses end the line:
+
+- **`scales with dpi`** or **`scales with area`** - what makes the things inside bigger or smaller
+  on another screen. A browser or a native app keeps its contents' size when the window changes and
+  only the monitor's DPI moves them; a game's contents fill the window, so they follow its size.
+  Left out, a child takes its parent's and a root is `dpi`.
+- **`at 120dpi`** - the DPI the area's pixel numbers were written at, so an `offset` child or
+  point inside a `dpi` area grows with the monitor. Left out, pixels stay as written.
 
 ### Points
 
@@ -400,14 +427,47 @@ templates in one flow want the same name. **Not** a content hash: a hash changes
 image is edited, so git would record a delete and an add rather than a modification, which
 throws away the one thing this layout is for.
 
-`accuracy` follows the template it belongs to - `template "login-button.png" accuracy 0.85` -
-because each template has its own: one variant of an icon can need a looser bar than another.
-Written straight after it, it cannot be read as the step's. Left out, it is 0.8.
+### On the step: how it is searched for
 
-The click offset, and the size and DPI of the area a template was captured at, are properties of
-the picture rather than the search. They belong in a `Templates:` section in the header, beside
-`Areas:`. **That section does not exist yet** (`PLAN.md` phase 5.7): today an import drops all
-three, so a round-tripped template clicks its top-left corner and does not scale.
+```
+Find Image  "Find login"   template "login.png" accuracy 0.97 required  template "login-alt.png" accuracy 0.9   match shape and brightness   in "Login form"
+```
+
+`accuracy` and `required` follow the template they belong to, so neither can be read as the
+step's.
+
+- **`accuracy`** - each template has its own: one variant of an icon can need a looser bar than
+  another. Left out, it is the mode's default.
+- **`required`** - with none marked, any one template found is enough: three variants of the same
+  icon. Marked, those templates all have to be there. It is on the line because it turns an OR into
+  an AND, and a reviewer should see that.
+- **`match shape and brightness`** - the mode, for every template in the step. Written only when it
+  is not the default, `match shape`.
+
+| mode | compares | default accuracy |
+| --- | --- | --- |
+| `shape` | the pattern, with each picture's own brightness subtracted | 0.8 |
+| `shape and brightness` | the pixels as they are - tells an enabled button from a disabled one | 0.95 |
+
+### In the header: what the picture is
+
+```
+Templates:
+  "login.png"           click 150,20   captured 922x648 at 120dpi
+```
+
+Facts about the picture rather than the search, once per file:
+
+- **`click 150,20`** - where a match is clicked, from the template's top left. It scales with the
+  template.
+- **`captured 922x648`** - the size of the area the template was captured in. What an area that
+  `scales with area` measures against.
+- **`at 120dpi`** - the DPI it was captured at. What an area that `scales with dpi` measures
+  against.
+
+Every fact is optional, and so is the line. A template with no `click` clicks the middle of the
+picture, which is what a person writing one by hand means. One with no size or DPI is searched at
+the size it was captured.
 
 ---
 
@@ -424,8 +484,10 @@ accepted, because renames should be rare.
 
 **The file wins.** A UI edit and a `git pull` cannot both be true. Importing overwrites.
 
-**The round trip is the acceptance test.** Export, import, export again, byte identical. Verified
-two ways: purely, and through a real database with template bytes written to disk and read back.
+**The round trip is the acceptance test.** Export, import, export again, byte identical - and the
+imported areas, points and templates equal to the originals field by field, because identical bytes
+cannot see a field the printer never prints. Verified two ways: purely, and through a real database
+with template bytes written to disk and read back.
 
 Two things it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
 means reading the `Id:` out of the file it names and deciding what a missing one does; and the

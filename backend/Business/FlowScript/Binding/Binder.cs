@@ -74,8 +74,16 @@ namespace Business.FlowScript.Binding
                 StepSyntax parsed = document.Steps[i];
                 FlowStep step = parsed.Step;
 
-                step.FlowId = parsed.ParentIndex == null ? flow.Id : null;
-                step.ParentFlowStepId = parsed.ParentIndex == null ? null : document.Steps[parsed.ParentIndex.Value].Step.Id;
+                if (parsed.ParentIndex == null)
+                {
+                    step.FlowId = flow.Id;
+                    step.ParentFlowStepId = null;
+                }
+                else
+                {
+                    step.FlowId = null;
+                    step.ParentFlowStepId = document.Steps[parsed.ParentIndex.Value].Step.Id;
+                }
 
                 if (parsed.AreaName != null)
                     step.FlowAreaId = Lookup(areaIds, parsed.AreaName, parsed.Line, "area", problems);
@@ -93,6 +101,8 @@ namespace Business.FlowScript.Binding
                     step.FlowStepReferenceEndId = Lookup(stepIds, parsed.ReferenceEndName, parsed.Line, "step", problems);
             }
 
+            JoinTemplateFacts(document);
+
             return Build(document, flow);
         }
 
@@ -109,6 +119,24 @@ namespace Business.FlowScript.Binding
             problems.Add(Diagnostic.Error(DiagnosticCodeEnum.NAME_UNKNOWN, line, 1, $"Nothing in this flow is called \"{name}\", so there is no {what} to point at."));
 
             return null;
+        }
+
+        // A template with no line in the header keeps a null click, and the importer centres it on
+        // the picture - the file was written by hand, and the middle is what a person would mean.
+        private static void JoinTemplateFacts(FlowSyntax document)
+        {
+            Dictionary<string, TemplateSyntax> facts = document.Templates.ToDictionary(x => x.FileName, StringComparer.Ordinal);
+
+            foreach (ScriptTemplate template in document.Steps.SelectMany(x => x.Templates))
+            {
+                if (!facts.TryGetValue(template.FileName, out TemplateSyntax? fact))
+                    continue;
+
+                template.ClickOffset = fact.ClickOffset;
+                template.AuthoredFlowAreaWidth = fact.AuthoredFlowAreaWidth;
+                template.AuthoredFlowAreaHeight = fact.AuthoredFlowAreaHeight;
+                template.AuthoredDpi = fact.AuthoredDpi;
+            }
         }
 
         private static BoundFlow Build(FlowSyntax document, Flow flow)

@@ -26,7 +26,10 @@ namespace Business.FlowScript.Binding
         public IReadOnlyDictionary<int, string> PointNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> StepNamesById { get; set; } = new Dictionary<int, string>();
 
-        /// <summary>The templates each step names: the file each was written to, and its accuracy.</summary>
+        /// <summary>
+        /// The templates each step names: the file each was written to, what the step decides about
+        /// it, and the facts the header carries.
+        /// </summary>
         public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplate>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplate>>();
 
         /// <summary>A sub-flow's path relative to the repository root.</summary>

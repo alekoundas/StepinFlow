@@ -1,3 +1,5 @@
+using System.Drawing;
+
 using Core.Models.Database;
 using Business.FlowScript.Diagnostics;
 
@@ -16,6 +18,20 @@ namespace Business.FlowScript.Syntax
     {
         public FlowPoint Point { get; init; } = null!;
         public string? AreaName { get; init; }
+        public int Line { get; init; }
+    }
+
+    /// <summary>
+    /// A line of the Templates section: the facts about one picture, joined to the steps that name
+    /// it by its file name.
+    /// </summary>
+    public sealed class TemplateSyntax
+    {
+        public string FileName { get; init; } = string.Empty;
+        public Point? ClickOffset { get; set; }
+        public int AuthoredFlowAreaWidth { get; set; }
+        public int AuthoredFlowAreaHeight { get; set; }
+        public int AuthoredDpi { get; set; }
         public int Line { get; init; }
     }
 
@@ -56,6 +72,7 @@ namespace Business.FlowScript.Syntax
         public List<AreaSyntax> Areas { get; } = new List<AreaSyntax>();
         public List<PointSyntax> Points { get; } = new List<PointSyntax>();
         public List<FlowCsvColumn> Inputs { get; } = new List<FlowCsvColumn>();
+        public List<TemplateSyntax> Templates { get; } = new List<TemplateSyntax>();
         public List<StepSyntax> Steps { get; } = new List<StepSyntax>();
 
         public List<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();

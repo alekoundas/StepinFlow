@@ -1,5 +1,9 @@
 // The full acceptance test: a flow in a real database, exported to a file, imported back over
-// itself, exported again. Byte identical, and the row counts unchanged.
+// itself, exported again. Byte identical - and the rows the same field by field, because bytes
+// alone hid an importer that dropped whatever the printer never printed.
+using System.Buffers.Binary;
+using System.Reflection;
+
 using Business.FlowScript;
 using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
@@ -48,6 +52,7 @@ string first = await File.ReadAllTextAsync(exported.ScriptPath);
 Check("exported", File.Exists(exported.ScriptPath), $"{exported.ScriptPath} ({exported.TemplateCount} templates)");
 
 // ---- import over itself ----
+Rows before = await Rows.LoadAsync(options, flowId);
 FlowImportResultDto imported = await importer.ImportAsync(exported.ScriptPath);
 
 if (!imported.IsSuccess)
@@ -60,6 +65,60 @@ if (!imported.IsSuccess)
 Check("imported", imported.IsSuccess, $"flow {imported.FlowId}, {imported.StepCount} steps, {imported.TemplateCount} templates");
 Check("no template lost", imported.MissingTemplates.Count == 0, string.Join(", ", imported.MissingTemplates) is { Length: > 0 } m ? m : "none");
 Check("replaced rather than added", imported.FlowId == flowId, $"same flow id {imported.FlowId}");
+
+// ---- the rows, not only the bytes ----
+Rows after = await Rows.LoadAsync(options, imported.FlowId);
+
+string[] notFacts = ["Id", "CreatedOn", "UpdatedOn", "FlowId", "RootId", "ParentFlowAreaId", "FlowAreaId", "FlowStepId",
+    "ParentFlowStepId", "FlowPointId", "FlowPointEndId", "FlowStepReferenceId", "FlowStepReferenceEndId", "SubFlowId"];
+
+Check("areas", before.Areas.Count == after.Areas.Count, $"{after.Areas.Count} of {before.Areas.Count}");
+foreach (FlowArea area in before.Areas)
+{
+    FlowArea? match = after.Areas.FirstOrDefault(x => x.Name == area.Name);
+    List<string> differences = Rows.Differences(area, match, notFacts);
+
+    if (before.AreaName(area.ParentFlowAreaId) != after.AreaName(match?.ParentFlowAreaId))
+        differences.Add("parent");
+
+    Check($"area \"{area.Name}\"", differences.Count == 0, Rows.Describe(differences));
+}
+
+foreach (FlowPoint point in before.Points)
+{
+    FlowPoint? match = after.Points.FirstOrDefault(x => x.Name == point.Name);
+    List<string> differences = Rows.Differences(point, match, notFacts);
+
+    if (before.AreaName(point.FlowAreaId) != after.AreaName(match?.FlowAreaId))
+        differences.Add("area");
+
+    Check($"point \"{point.Name}\"", differences.Count == 0, Rows.Describe(differences));
+}
+
+// Named after the file it was exported to, so the name is the one field a round trip may change.
+Check("templates", before.Templates.Count == after.Templates.Count, $"{after.Templates.Count} of {before.Templates.Count}");
+foreach (FlowStepTemplate template in before.Templates)
+{
+    FlowStepTemplate? match = after.Templates.FirstOrDefault(x => after.StepName(x.FlowStepId) == before.StepName(template.FlowStepId) && x.OrderNumber == template.OrderNumber);
+    List<string> differences = Rows.Differences(template, match, [.. notFacts, "Name"]);
+
+    Check($"template {template.OrderNumber} of \"{before.StepName(template.FlowStepId)}\"", differences.Count == 0, Rows.Describe(differences));
+}
+
+FlowStep searchBefore = before.Steps.First(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+FlowStep? searchAfter = after.Steps.FirstOrDefault(x => x.Name == searchBefore.Name);
+Check("the step's match mode", searchAfter?.TemplateMatchMode == searchBefore.TemplateMatchMode, $"{searchBefore.TemplateMatchMode} -> {searchAfter?.TemplateMatchMode}");
+
+// Not a check: what the script still does not carry about a step, so it is seen rather than guessed.
+SortedSet<string> stepLosses = new SortedSet<string>(StringComparer.Ordinal);
+foreach (FlowStep step in before.Steps)
+{
+    FlowStep? match = after.Steps.FirstOrDefault(x => x.OrderNumber == step.OrderNumber);
+    foreach (string difference in Rows.Differences(step, match, notFacts))
+        stepLosses.Add($"{step.FlowStepType}.{difference.Split(':')[0]}");
+}
+
+Console.WriteLine($"  info  step fields that did not survive: {Rows.Describe(stepLosses.ToList())}");
 
 // ---- export again ----
 FlowExportResultDto again = await exporter.ExportAsync(imported.FlowId, folder);
@@ -79,6 +138,30 @@ if (first != second)
             Console.WriteLine($"    line {i + 1}\n      out: {l}\n      in : {r}");
     }
 }
+
+// ---- a hand-written script: no Templates section, so the click is the picture's centre ----
+string handFolder = Path.Combine(folder, "hand");
+Directory.CreateDirectory(handFolder);
+await File.WriteAllBytesAsync(Path.Combine(handFolder, "button.png"), Png(41, 20));
+
+string hand = """
+    Flow:    Hand written
+    Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b112
+
+    Steps:
+    Find Image  "Find the button"   template "button.png"
+    """;
+
+FlowImportResultDto handImported = await importer.ImportTextAsync(hand, handFolder);
+FlowStepTemplate? button = null;
+if (handImported.IsSuccess)
+{
+    using AppDbContext read = new AppDbContext(options);
+    button = read.FlowStepTemplates.AsNoTracking().FirstOrDefault(x => x.FlowStep.RootId == handImported.FlowId);
+}
+
+Check("no header: the click is the centre, rounded up", button?.ClickOffsetX == 21 && button.ClickOffsetY == 10, $"{button?.ClickOffsetX},{button?.ClickOffsetY} for a 41x20 png");
+Check("no header: not required, SHAPE's accuracy", button?.IsRequired == false && button.Accuracy == 0.8f, $"required {button?.IsRequired}, accuracy {button?.Accuracy}");
 
 // ---- a typo must change nothing ----
 string broken = first.Replace("Find Image", "Fnid Image");
@@ -104,13 +187,16 @@ static int Seed(DbContextOptions<AppDbContext> options)
     db.Flows.Add(flow);
     db.SaveChanges();
 
-    FlowArea browser = new FlowArea { Name = "Browser", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS };
-    db.FlowAreas.Add(browser);
+    FlowArea browser = new FlowArea { Name = "Browser", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
+    FlowArea screen = new FlowArea { Name = "Screen", FlowId = flow.Id, Type = FlowAreaTypeEnum.MONITOR, ScalesWith = ScalesWithEnum.DPI };
+    FlowArea box = new FlowArea { Name = "Box", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 10, LocationY = 20, Width = 300, Height = 200, AuthoredDpi = 96 };
+    db.FlowAreas.AddRange(browser, screen, box);
     db.SaveChanges();
 
-    FlowArea badge = new FlowArea { Name = "Cart badge", FlowId = flow.Id, ParentFlowAreaId = browser.Id, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.88f, RatioY = 0f, RatioWidth = 0.12f, RatioHeight = 0.10f };
-    FlowArea header = new FlowArea { Name = "Header", FlowId = flow.Id, ParentFlowAreaId = browser.Id, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 0, LocationY = 0, Width = 1920, Height = 90 };
-    db.FlowAreas.AddRange(badge, header);
+    FlowArea badge = new FlowArea { Name = "Cart badge", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browser.Id, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.88f, RatioY = 0f, RatioWidth = 0.12f, RatioHeight = 0.10f };
+    FlowArea header = new FlowArea { Name = "Header", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browser.Id, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 0, LocationY = 0, Width = 1920, Height = 90, AuthoredDpi = 120 };
+    FlowArea game = new FlowArea { Name = "Game", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browser.Id, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.1f, RatioY = 0.2f, RatioWidth = 0.8f, RatioHeight = 0.7f, ScalesWith = ScalesWithEnum.AREA };
+    db.FlowAreas.AddRange(badge, header, game);
 
     FlowPoint hamburger = new FlowPoint { Name = "Hamburger", FlowId = flow.Id, FlowAreaId = browser.Id, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.95f, RatioY = 0.05f };
     FlowPoint origin = new FlowPoint { Name = "Origin", FlowId = flow.Id, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 12, LocationY = -12 };
@@ -141,8 +227,12 @@ static int Seed(DbContextOptions<AppDbContext> options)
     Add(new FlowStep { FlowStepType = FlowStepTypeEnum.MARKER, Name = "Sign in" }, null);
     Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", CodeComment = "A fresh profile every time." }, null);
 
-    FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id }, null);
-    db.FlowStepTemplates.Add(new FlowStepTemplate { FlowStepId = find.Id, Name = "username field", OrderNumber = 0, TemplateImage = [1, 2, 3, 4], IsRequired = true, Accuracy = 0.85f });
+    // Two variants, only one required, so an importer that forced every template required - which
+    // this one did - turns up as a changed row.
+    FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
+    db.FlowStepTemplates.AddRange(
+        new FlowStepTemplate { FlowStepId = find.Id, Name = "username field", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
+        new FlowStepTemplate { FlowStepId = find.Id, Name = "username alt", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
     db.SaveChanges();
 
     FlowStep ok = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);
@@ -168,6 +258,93 @@ static int Seed(DbContextOptions<AppDbContext> options)
     Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end.Id);
 
     return flow.Id;
+}
+
+// Only as much of a png as the importer reads: the signature and an IHDR chunk carrying the size.
+static byte[] Png(int width, int height)
+{
+    byte[] png = new byte[33];
+    byte[] signature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+    signature.CopyTo(png, 0);
+    png[11] = 13;
+    "IHDR"u8.CopyTo(png.AsSpan(12));
+    BinaryPrimitives.WriteInt32BigEndian(png.AsSpan(16), width);
+    BinaryPrimitives.WriteInt32BigEndian(png.AsSpan(20), height);
+    return png;
+}
+
+
+// A flow's rows, loaded to be compared: the ids differ after an import, so rows are matched by
+// name and anything that points at another row is compared by that row's name.
+internal sealed class Rows
+{
+    public List<FlowArea> Areas { get; init; } = [];
+    public List<FlowPoint> Points { get; init; } = [];
+    public List<FlowStep> Steps { get; init; } = [];
+    public List<FlowStepTemplate> Templates { get; init; } = [];
+
+    public static async Task<Rows> LoadAsync(DbContextOptions<AppDbContext> options, int flowId)
+    {
+        using AppDbContext db = new AppDbContext(options);
+
+        return new Rows
+        {
+            Areas = await db.FlowAreas.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(),
+            Points = await db.FlowPoints.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(),
+            Steps = await db.FlowSteps.AsNoTracking().Where(x => x.RootId == flowId).ToListAsync(),
+            Templates = await db.FlowStepTemplates.AsNoTracking().Where(x => x.FlowStep.RootId == flowId).ToListAsync(),
+        };
+    }
+
+    public string? AreaName(int? id)
+    {
+        return Areas.FirstOrDefault(x => x.Id == id)?.Name;
+    }
+
+    public string? StepName(int id)
+    {
+        return Steps.FirstOrDefault(x => x.Id == id)?.Name;
+    }
+
+    // Every scalar the two rows disagree on, apart from the ones named.
+    public static List<string> Differences(object before, object? after, string[] ignored)
+    {
+        if (after == null)
+            return ["missing"];
+
+        List<string> differences = new List<string>();
+
+        foreach (PropertyInfo property in before.GetType().GetProperties())
+        {
+            Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            bool isScalar = type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(byte[]);
+
+            if (!isScalar || ignored.Contains(property.Name))
+                continue;
+
+            object? left = property.GetValue(before);
+            object? right = property.GetValue(after);
+
+            bool same;
+            if (left is byte[] leftBytes && right is byte[] rightBytes)
+                same = leftBytes.SequenceEqual(rightBytes);
+            else
+                same = Equals(left, right);
+
+            if (!same)
+                differences.Add($"{property.Name}: {left} -> {right}");
+        }
+
+        return differences;
+    }
+
+    public static string Describe(List<string> differences)
+    {
+        if (differences.Count == 0)
+            return "none";
+
+        return string.Join("; ", differences);
+    }
 }
 
 

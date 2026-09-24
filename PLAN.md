@@ -1014,7 +1014,7 @@ template. Import (`FlowScriptImporter`) builds each template with a name, an ord
 **The round trip cannot see any of it.** It compares script to script, and the printer never
 prints these fields, so export, import, export produces the same bytes from different rows.
 
-- [ ] **Decided: a `Templates:` section in the header**, beside `Areas:` and `Inputs:` - declared
+- [x] **Decided: a `Templates:` section in the header**, beside `Areas:` and `Inputs:` - declared
       once, referenced by name from a step, parsed and printed by machinery that already handles
       header sections. The `.sflw` then holds every fact and the PNGs hold nothing but pixels. A
       sidecar per image would be a second source of truth, one a rename orphans and a reviewer
@@ -1032,7 +1032,7 @@ prints these fields, so export, import, export produces the same bytes from diff
         the default.
       - The area line carries `scales with ...` and its DPI, or they are lost the same way.
 
-- [ ] **The round trip compares rows, not only bytes.** Export, import, export being byte
+- [x] **The round trip compares rows, not only bytes.** Export, import, export being byte
       identical is exactly what hid this. The imported templates and areas are compared field by
       field with the originals, ids and timestamps aside.
 
@@ -1060,7 +1060,8 @@ template (a known limit).
       Done 2026-09-24. `accuracy` now follows its template in the script -
       `template "a.png" accuracy 0.85` - and is the first template fact the round trip guards:
       the printer prints it, so an importer that dropped it would change the bytes. Written before
-      any template, it is a diagnostic, `ACCURACY_WITHOUT_TEMPLATE`. Still stale until the AI docs
+      any template, it is a diagnostic - `ACCURACY_WITHOUT_TEMPLATE` then, `CLAUSE_WITHOUT_TEMPLATE`
+      since the script step gave `required` the same rule. Still stale until the AI docs
       step: `search-image.md` says accuracy is set on the step and describes the sweep, and
       `AiPromptHelper` tells the model to read a score against the step's accuracy.
 - [x] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
@@ -1100,9 +1101,51 @@ template (a known limit).
       `AuthoredDpi` 0, which leaves it as it is - correct on the machine it was made on, and what
       the forms step is for. Before this step a template scaled by the area's width, which was
       wrong for every browser.
-- [ ] **The script carries every fact**: `Templates:` in the header, `required`, `accuracy` and
+- [x] **The script carries every fact**: `Templates:` in the header, `required`, `accuracy` and
       `match` on the step, `scales with` and the DPI on the area line, and the row-comparing
       round trip. Fixes the live bug on its own.
+
+      Done 2026-09-24. Every row of the loss table above now survives:
+
+      ```
+      Areas:
+        "Browser"     window process "chrome.exe"   scales with dpi   at 120dpi
+        "Game"        inside "Browser"   ratio 0.10 0.20  0.80 0.70   scales with area
+        "Screen"      monitor primary
+
+      Templates:
+        "login.png"           click 150,20   captured 922x648 at 120dpi
+
+      Steps:
+      Find Image  "Find login"   template "login.png" accuracy 0.97 required   match shape and brightness   in "Browser"
+      ```
+
+      - The header's facts are joined to the step's templates by file name in the **binder**, the
+        stage that already turns names into things. The parser reads text; the binder resolves.
+      - A template with no header line, or none with a `click`, is **centred on its picture** by
+        the importer, read from the png's IHDR and rounded half up as the capture form rounds. A
+        hand-written flow then clicks the middle of a button rather than its corner.
+      - **No `accuracy` takes the mode's default**, 0.8 or 0.95 - applied once the whole line is
+        read, because `match` may come after the templates it governs.
+      - Written only when not the default: `match`, `required`, `scales with`, the DPI, the
+        captured size. Accuracy and click are always written.
+      - **Found on the way: the area line could only say "window" or "inside".** A monitor area
+        exported as `window process ""` and came back as an application with no process; a root
+        `CUSTOM` area did the same. Now `monitor primary`, `monitor "\\.\DISPLAY2"` and
+        `on screen   offset x y  size w h`. Still not in the grammar: `BROWSER_TAB` (exported as its
+        window, and the resolver does not support it yet) and `UseClientArea = false`.
+      - New diagnostics: `CLAUSE_WITHOUT_TEMPLATE` (was `ACCURACY_WITHOUT_TEMPLATE`, now also
+        `required`), `MATCH_MODE_UNKNOWN`, `AREA_ARGUMENT_UNKNOWN`, `TEMPLATE_MALFORMED`,
+        `TEMPLATE_DUPLICATE`.
+
+      **Verified** by both probes. `ScriptRoundTrip` prints a flow using every new clause, reads it
+      back byte identical, and checks the defaults on a hand-written script: no accuracy under
+      `match shape and brightness` is 0.95, `required` binds to its own template, a header line
+      without a click leaves it to the importer. `ScriptRoundTripDatabase` now loads the rows before
+      and after the import and compares every scalar field of every area, point and template, ids
+      and timestamps aside, and imports a hand-written script to check a 41x20 png is clicked at
+      21,10. It also prints, without failing, which step fields did not survive: only the cursor
+      button, null on one side and `LEFT_BUTTON` on the other - see `TODO.md`.
 - [ ] **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by area
       type, the screen-coordinate warning.
 - [ ] **The AI docs and `DbQueryTools`.**
