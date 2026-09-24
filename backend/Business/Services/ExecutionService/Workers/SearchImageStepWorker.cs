@@ -123,7 +123,14 @@ namespace Business.Services.ExecutionService.Workers
         {
             if (search.Hits.Count == 0)
             {
-                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched", search.BestScore, bestTemplateId));
+                string outcome = "no template matched";
+                if (search.MissingRequired.Count > 0)
+                {
+                    List<FlowStepTemplate> images = step.FlowStepTemplates.ToList();
+                    outcome = $"required {string.Join(", ", search.MissingRequired.Select(x => images[x].Name))} not found";
+                }
+
+                ExecutionStep missed = ExecutionStep.Failure(Detail(step, outcome, search.BestScore, bestTemplateId));
                 missed.BestScore = search.BestScore;
 
                 return missed;

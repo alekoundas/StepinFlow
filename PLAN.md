@@ -800,7 +800,8 @@ Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
 - [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
       one commit per feature as `TODO.md` already says.
 
-Steps 2 and 3 are verified by the compiler. **Phase 5.7 goes first**, ahead of both.
+Steps 2 and 3 are verified by the compiler. **Phase 5.7 went first and is done** (2026-09-25);
+these two are next.
 
 ## Portable search
 
@@ -1215,6 +1216,16 @@ template (a known limit).
       Verified by a scratch program against an in-memory database: the four areas, two points,
       two templates and one execution step came back as above, and every edited document still
       splits into chunks under the embedding model's 2000-character cap.
+
+- [x] **Required templates in an execution.** Found while making the script carry `required`:
+      Test now honoured it and an execution did not - any template found was a success.
+
+      Done 2026-09-25. The rule is in `ImageSearcher`, once, and Test now takes its verdict from
+      there instead of keeping a copy. None required: any one is enough and the first hit ends the
+      search. Some required: every required one is looked for before anything is decided, a missing
+      one leaves no hits whatever else matched, and the failure names it - `required login button
+      not found`. The waits follow: `WAIT_UNTIL_FOUND` until all required are there,
+      `WAIT_UNTIL_NOT_FOUND` until one is gone. Verified against a fake matcher in five cases.
 
 A migration per schema step rather than one at the end, so the app starts after each step:
 `Program.cs` runs `Migrate()`, and a model without its migration does not. Existing data is not

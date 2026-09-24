@@ -125,7 +125,8 @@ namespace Transport.Ipc.Handlers
                 result.TotalMatches += matches.Count;
             }
 
-            result.WouldSucceed = WouldSucceed(result);
+            // The searcher's verdict, the same one an execution gets.
+            result.WouldSucceed = search.Hits.Count > 0;
 
             return ResultDto<ImageSearchTestResultDto>.Success(result);
         }
@@ -134,18 +135,6 @@ namespace Transport.Ipc.Handlers
         // ================================================================
         // Private methods
         // ================================================================
-
-        // No image marked required means any one of them is enough, which is the "three variants
-        // of the same icon" case. Mark some and all of those have to be there.
-        private static bool WouldSucceed(ImageSearchTestResultDto result)
-        {
-            List<ImageSearchTestImageDto> required = result.Images.Where(x => x.IsRequired).ToList();
-
-            if (required.Count > 0)
-                return required.All(x => x.IsFound);
-
-            return result.Images.Any(x => x.IsFound);
-        }
 
         private static ImageSearchTestResultDto Failed(string error)
         {

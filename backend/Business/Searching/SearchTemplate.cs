@@ -17,6 +17,7 @@ namespace Business.Searching
     {
         public byte[] Image { get; init; } = [];
         public float Accuracy { get; init; }
+        public bool IsRequired { get; init; }
         public int AuthoredFlowAreaWidth { get; init; }
         public int AuthoredFlowAreaHeight { get; init; }
         public int AuthoredDpi { get; init; }
@@ -29,6 +30,7 @@ namespace Business.Searching
             {
                 Image = template.TemplateImage ?? [],
                 Accuracy = template.Accuracy,
+                IsRequired = template.IsRequired,
                 AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
                 AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
                 AuthoredDpi = template.AuthoredDpi,
@@ -43,6 +45,7 @@ namespace Business.Searching
             {
                 Image = template.TemplateImage ?? [],
                 Accuracy = template.Accuracy,
+                IsRequired = template.IsRequired,
                 AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
                 AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
                 AuthoredDpi = template.AuthoredDpi,

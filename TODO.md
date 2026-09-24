@@ -107,14 +107,6 @@ is lost between sessions.
       entity, which reads as though an execution step is something a worker mints rather than a row
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
-- [ ] **Execution ignores `IsRequired`; the test button honours it.** `TestImageSearchHandler`
-      says a search would succeed when every required template is found, or any template when
-      none is required. `SearchImageStepWorker` succeeds on any hit at all and never reads
-      `IsRequired` - `SearchTemplate` does not even carry it. So a step whose preview says "fails:
-      the required banner is missing" passes when it executes. Found 2026-09-24 while making the
-      script carry `required`. The rule belongs in `ImageSearcher`, once, so the two cannot differ
-      again - that is what extracting it was for. `search-image.md` states the gap so the assistant
-      does not promise otherwise; take that paragraph out with the fix.
 
 ## Flow script
 

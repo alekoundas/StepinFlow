@@ -70,9 +70,10 @@ Templates are a list. How they combine depends on whether any are marked require
   variants of the same icon.
 - **Some marked required** — every required one must be found.
 
-**Known gap:** today only **Test now** applies this. An execution succeeds on any template found,
-required or not. So a step whose test says it would fail because a required template is missing
-can still succeed when it executes.
+A missing required template fails the search even when others matched, and the failure message
+names it. The waiting modes use the same rule: `WAIT_UNTIL_FOUND` waits until every required one
+is there, `WAIT_UNTIL_NOT_FOUND` until at least one is gone. **Test now** and an execution decide it
+the same way.
 
 ## Accuracy
 

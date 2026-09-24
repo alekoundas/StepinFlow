@@ -37,6 +37,12 @@ namespace Business.Searching
         public int? BestTemplateIndex { get; init; }
 
         /// <summary>
+        /// Required templates that were not found, by position. Any at all and there are no hits,
+        /// whatever else matched.
+        /// </summary>
+        public IReadOnlyList<int> MissingRequired { get; init; } = [];
+
+        /// <summary>
         /// Set when the search could not be made: nothing to search, or a template that cannot fit
         /// at the ratio it scales to.
         /// </summary>
