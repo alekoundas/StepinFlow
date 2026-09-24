@@ -13,6 +13,12 @@ namespace Core.Models.Business
         /// <summary>Bytes per row, which is not always Width * 4.</summary>
         public int Stride { get; set; }
 
-        public bool IsEmpty => Width <= 0 || Height <= 0 || Pixels.Length == 0;
+        public bool IsEmpty
+        {
+            get
+            {
+                return Width <= 0 || Height <= 0 || Pixels.Length == 0;
+            }
+        }
     }
 }

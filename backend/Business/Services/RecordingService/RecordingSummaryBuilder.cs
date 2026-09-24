@@ -95,8 +95,7 @@ namespace Business.Services.RecordingService
 
                 foreach (ClickedCrop crop in clicked)
                 {
-                    RecordedActionSummaryDto? line = summary.Actions
-                        .FirstOrDefault(x => x.Index == crop.Action.Index);
+                    RecordedActionSummaryDto? line = summary.Actions.FirstOrDefault(x => x.Index == crop.Action.Index);
 
                     if (line != null)
                         line.TargetIndex = target.Index;

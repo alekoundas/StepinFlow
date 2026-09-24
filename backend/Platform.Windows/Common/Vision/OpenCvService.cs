@@ -144,7 +144,7 @@ namespace Platform.Windows.Vision
         {
             // The mode actually used, which is not always the one asked for: a masked template
             // may have been moved onto a mask capable mode.
-            bool lowerIsBetter = mode == TemplateMatchModes.SqDiff || mode == TemplateMatchModes.SqDiffNormed;
+            bool lowerIsBetter = mode == TemplateMatchModes.SqDiffNormed;
             List<TemplateMatchResult> matches = new List<TemplateMatchResult>();
             List<TemplateMatchResult> rejected = new List<TemplateMatchResult>();
 
@@ -177,7 +177,7 @@ namespace Platform.Windows.Vision
 
                 // Below the bar. Keep taking them anyway, up to the limit, so the caller can show
                 // where the cut fell - the suppression below stops the same one coming back.
-                bool isAccepted = score >= request.Threshold;
+                bool isAccepted = score >= request.AccuracyThreshold;
 
                 if (!isAccepted && rejected.Count >= request.RejectedLimit)
                     break;
@@ -239,12 +239,15 @@ namespace Platform.Windows.Vision
         }
 
         /// <summary>Grayscale for matching, whatever the source had.</summary>
-        private static Mat ToGrayTemplate(Mat decoded) => decoded.Channels() switch
+        private static Mat ToGrayTemplate(Mat decoded)
         {
-            4 => decoded.CvtColor(ColorConversionCodes.BGRA2GRAY),
-            3 => decoded.CvtColor(ColorConversionCodes.BGR2GRAY),
-            _ => decoded.Clone(),
-        };
+            return decoded.Channels() switch
+            {
+                4 => decoded.CvtColor(ColorConversionCodes.BGRA2GRAY),
+                3 => decoded.CvtColor(ColorConversionCodes.BGR2GRAY),
+                _ => decoded.Clone(),
+            };
+        }
 
         /// <summary>
         /// The alpha channel, which is what the eraser writes. Null when the template is fully
@@ -267,15 +270,14 @@ namespace Platform.Windows.Vision
             return alpha;
         }
 
-        private static TemplateMatchModes ToTemplateMatchModes(TemplateMatchModeEnum mode) => mode switch
+        private static TemplateMatchModes ToTemplateMatchModes(TemplateMatchModeEnum mode)
         {
-            TemplateMatchModeEnum.SqDiff => TemplateMatchModes.SqDiff,
-            TemplateMatchModeEnum.SqDiffNormed => TemplateMatchModes.SqDiffNormed,
-            TemplateMatchModeEnum.CCorr => TemplateMatchModes.CCorr,
-            TemplateMatchModeEnum.CCorrNormed => TemplateMatchModes.CCorrNormed,
-            TemplateMatchModeEnum.CCoeff => TemplateMatchModes.CCoeff,
-            _ => TemplateMatchModes.CCoeffNormed,
-        };
+            return mode switch
+            {
+                TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS => TemplateMatchModes.SqDiffNormed,
+                _ => TemplateMatchModes.CCoeffNormed,
+            };
+        }
 
 
         // ================================================================

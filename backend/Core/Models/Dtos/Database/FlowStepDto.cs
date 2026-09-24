@@ -27,7 +27,7 @@ namespace Core.Models.Dtos
         // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum SearchMode { get; set; }
 
-        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
+        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.SHAPE;
         public float Accuracy { get; set; } = 0.8f;
         public int MaxMatches { get; set; } = 20;
         public int PollIntervalMilliseconds { get; set; } = 200;

@@ -59,6 +59,17 @@ is lost between sessions.
       There is no correct absolute mapping for an unbounded score. Either drop the three from
       TemplateMatchModeEnum (stored as strings, so it is a data migration and a form change) or
       keep them and hide the accuracy field when one is picked, which admits they are relative.
+      **Moved to `PLAN.md` phase 5.7 and decided**: `CCorrNormed` goes with them, leaving
+      `CCoeffNormed` and `SqDiffNormed`, renamed by intent.
+- [ ] **Colour matching.** Both match modes run in grayscale, so two states with the same
+      lightness in a different hue look identical - rarity borders in a game are the likely case.
+      Matching the three channels costs roughly three times a grayscale match, affordable now the
+      scale sweep is gone. A third mode when a flow needs it; the enum is being renamed in phase
+      5.7 anyway, so adding one later breaks nothing.
+- [ ] **A step that sets the browser tab's zoom.** Zoom is indistinguishable from DPI from outside
+      the browser, so a tab at 110% breaks every template captured at 100%. Resetting it is a
+      keystroke with side effects and needs focus, which is why it is a step and not something a
+      search does quietly. An edge case; kept out of phase 5.7 on purpose.
 - [ ] **Notify on an unhandled exception.** The one path with no cleanup: no `End Execution` is in
       scope, so nothing was authored to run, and the execution ends there - the rest of the
       viewport matrix included. Settings names the default Discord bot; a per flow on/off decides
@@ -90,8 +101,8 @@ is lost between sessions.
       dialog) or an `ExecutionStepMatch` table (queryable, survives without screenshots, and adds
       rows a FIND_ALL run multiplies - retention is already unsolved). A json column is out; the
       `ResultJson` blob was deliberately removed.
-      Whatever it is, extract the per-template loop `TestImageSearchHandler` already has so the two
-      paths cannot drift again.
+      The per-template loop is extracted - `Business/Searching/ImageSearcher`, shared by the worker
+      and `TestImageSearchHandler` since phase 5.6 - so the two paths can no longer drift.
 - [ ] **Remove the `Success` / `Failure` static factories from `ExecutionStep`.** They build an
       entity, which reads as though an execution step is something a worker mints rather than a row
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and

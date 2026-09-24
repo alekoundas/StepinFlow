@@ -38,7 +38,7 @@ export class FlowStepDto {
 
   // SEARCH_IMAGE, SEARCH_TEXT
   searchMode: SearchModeEnum = "FIND_BEST";
-  templateMatchMode: TemplateMatchModeEnum = "CCoeffNormed";
+  templateMatchMode: TemplateMatchModeEnum = "SHAPE";
   accuracy: number = 0.8;
   maxMatches: number = 20;
   pollIntervalMilliseconds: number = 200;

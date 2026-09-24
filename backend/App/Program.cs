@@ -5,6 +5,7 @@ using Transport.Ipc.Handlers.Ai;
 using Transport.Ipc.Handlers.Execution;
 using Transport.Ipc.Handlers.Lookup;
 using Business.Services.CommandService;
+using Business.Searching;
 using Business.Services.AreaPointService;
 using Business.FlowScript;
 using Business.FlowScript.Syntax;
@@ -71,6 +72,7 @@ namespace App
 
             // Services
             builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
+            builder.Services.AddSingleton<IImageSearcher, ImageSearcher>();
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();

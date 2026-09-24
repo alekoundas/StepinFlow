@@ -1,10 +1,6 @@
 export const TemplateMatchModeEnum = {
-  SqDiff: "SqDiff",
-  SqDiffNormed: "SqDiffNormed",
-  CCorr: "CCorr",
-  CCorrNormed: "CCorrNormed",
-  CCoeff: "CCoeff",
-  CCoeffNormed: "CCoeffNormed",
+  SHAPE: "SHAPE",
+  SHAPE_AND_BRIGHTNESS: "SHAPE_AND_BRIGHTNESS",
 } as const;
 
 export type TemplateMatchModeEnum =

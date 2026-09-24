@@ -589,7 +589,7 @@ each other, so this is merging them rather than inventing a structure.
 
 #### The duplication, extracted
 
-- [ ] **`ImageSearcher` and `TextSearcher`, called by both the worker and the handler.**
+- [x] **`ImageSearcher` and `TextSearcher`, called by both the worker and the handler.**
       `TestImageSearchHandler` (158 lines) and `SearchImageStepWorker` (206) inject the same
       `IScreenshotService` and `IOpenCvService`, both call `CaptureRaw`, both loop
       `step.FlowStepTemplates`, and both build a `TemplateMatchRequest` with the same fields down
@@ -604,6 +604,33 @@ each other, so this is merging them rather than inventing a structure.
 
       This is the only part of 5.6 that is a refactor rather than a move, so it is the only part
       that wants a test written first.
+
+      **Done, and it grew.** `Business/Searching/` owns the whole look at the screen: the guards,
+      the capture, the template loop, the click points and the best score. The worker dropped
+      `IScreenshotService` entirely; neither caller names `IOpenCvService` any more.
+      `SearchTemplate.From` and `SearchSettings.From` exist once for the row and once for the
+      form's dto, side by side, because the worker holds entities and the handler holds unsaved
+      form state and neither could call the other's code.
+
+      It found that **the two guards disagreed** - the worker refused on `bounds.Width <= 0`, the
+      handler on `haystack.IsEmpty`, with different messages. Both now run, in the searcher.
+
+      The loops differ on purpose and the difference is a parameter, `stopAtFirstHit`: the engine
+      stops once anything matches, the editor never does, because a report that skipped the
+      templates after the first hit would say they were not there.
+
+      The boundary: the searcher knows the screen, OpenCV and templates, never an execution step,
+      the cache, a dto or the poll loop.
+
+      **`TextSearcher` was not built, because there was nothing to extract.** The text pair shares
+      capture, OCR, extract and evaluate, and three of those four were already behind
+      abstractions - the handler even carried a comment saying it follows the worker's order on
+      purpose. The one real difference is that only an execution can translate `{{variables}}`.
+      A class calling four things in a row so that two callers call one thing is ceremony.
+
+      **Not verified end to end:** the development database has no flow areas, so nothing reached
+      the capture or the match loop. It rests on being a move. Phase 5.7 changes the maths in
+      exactly this code, which is why it starts with a test.
 
 #### How thin a handler should be
 
@@ -768,14 +795,255 @@ Gone: `Services/`, `Business/Helpers/`, and three files out of `Core/Helpers`.
       in the same pass - every handler file was being touched anyway, and `IRequestHandler` was
       the thing being replaced. **Done first**, out of the order below, because the licence made
       it the question that mattered.
-- [ ] 1. **Extract the two searchers.** The only behaviour change, and the one place a test first
-      would pay.
+- [x] 1. **Extract the searcher.** Image only - see above for why not text.
 - [ ] 2. **Move the helpers** by the one-consumer rule.
 - [ ] 3. **Flatten `Services/`** into feature folders - `git mv` and namespaces, no logic touched,
       one commit per feature as `TODO.md` already says.
 
-Steps 2 and 3 are verified by the compiler, and step 4 was. Step 1 is not, which is why the round
-trip and a searcher test want to exist around it.
+Steps 2 and 3 are verified by the compiler. **Phase 5.7 goes first**, ahead of both.
+
+## Portable search
+
+### 5.7. A flow that survives another PC
+
+**Next, ahead of the rest of 5.6. Every question is answered (2026-09-24); it starts with the
+test in Order step 1.**
+
+The point of a flow is that it runs somewhere else tomorrow: another monitor, another DPI, a
+browser window that is not maximised. Three things stop that today, and the third one makes the
+other two pointless.
+
+#### What is wrong
+
+**One formula for two kinds of application.** `ScaleRatio = areaNow / authoredArea` is right for a
+game whose picture grows with its window and wrong for a browser, which reflows: make the window
+narrower and the login button stays the same size and moves. Area ratio shrinks the template
+anyway and nothing matches. It looked right because in the demo case - maximised, 1080p at 100%
+to 4K at 200% - the area ratio and the DPI ratio are both 2.0.
+
+**Pixels without a DPI, in three places.** Templates, `ABSOLUTE_PX` child areas
+(`parentBounds.X + area.LocationX`) and `ABSOLUTE_PX` points are all raw physical pixels. A 200px
+sidebar defined at 100% is 20% too narrow at 125%. `FlowStepTemplate.AuthoredMonitorDpi` exists
+for exactly this, and **nothing has ever written it** - the capture sets width and height and
+nothing else. The backend fetches per-monitor DPI for the capture overlay and the frontend never
+reads it.
+
+**The flow script drops everything that makes a template portable** - see below.
+
+#### Decided
+
+- [ ] **`FlowArea.ScalesWith`: `DPI` or `AREA`**, written `scales with dpi` and
+      `scales with area` on the area line. One setting per area, inherited by every template,
+      child area and point inside it, because everything in an area obeys the same physics - the
+      browser tab does not grow its contents, the game does.
+
+      | `ScalesWith` | apps | ratio |
+      | --- | --- | --- |
+      | `DPI` | browser, native apps, the OS | `dpiNow / authoredDpi` - the window's size does not matter |
+      | `AREA` | games | `min(widthNow / authoredWidth, heightNow / authoredHeight)` |
+
+      **Defaults:** a browser tab and a monitor scale with DPI. An application asks, because a
+      native app and a game look identical from outside. A `CUSTOM` child inherits its parent's
+      and can override - which is the game inside a browser tab.
+
+      `AREA` uses the **smaller** of the two ratios, because a game whose window
+      changes shape keeps its proportions and adds bars - letterboxing - rather than stretching
+      its art. When the shape is unchanged the two ratios are equal. One uniform number, so
+      `TemplateMatchResult.Scale` stays single. **The first draft had a non-uniform `STRETCH`
+      here, with `ScaleX` and `ScaleY`; stretching is the rare case and it came out.**
+
+      `AREA` must not also apply DPI: the area is measured in device pixels, so a higher DPI
+      already shows in its width. Both would square the correction.
+
+      Deferred: `RATIO` child areas and points inside a letterboxed area are fractions of the
+      window, not of the picture between the bars. That only bites when the window changes shape,
+      and template search does not need it - it scans the whole area.
+
+- [ ] **`FlowArea.AuthoredDpi`**, so `ABSOLUTE_PX` child areas and points inside a `DPI` area
+      scale with the monitor. The template keeps a DPI of its own, renamed
+      `AuthoredMonitorDpi` -> `AuthoredDpi`, because it may be captured on a different day and
+      monitor than its area was defined on: two moments, two DPIs. **And it gets written** - the
+      overlay already has it.
+
+      **The DPI now is the monitor holding the largest part of the area** - the rule Windows itself
+      uses to give a window its DPI. `FindMonitorContaining` returns null for an area spanning two
+      today, so it needs that rule rather than a null.
+
+- [ ] **Nesting stays.** The setting answers how big; a nested area answers where. A game inside a
+      browser tab has no window handle of its own, so a fraction of the tab is the only portable
+      way to say where it is - and it is exactly the case where the two areas need different
+      settings: the tab is `DPI`, the game inside it is `AREA`.
+
+- [ ] **The sweep goes: `AllowMultiScale`, `ScaleTolerance`, `ScaleSweep`, `MultiScaleSteps`.**
+      It has never run - `allowMultiScale` defaults to false and no form control, script keyword
+      or code path sets it. Deleting it changes no behaviour. What it might have covered has a
+      computed answer, or is not this phase's problem:
+
+      | case | answer |
+      | --- | --- |
+      | browser against game | the area's `ScalesWith` |
+      | the window changes shape | the smaller of the two ratios |
+      | an in-app UI scale slider | not measurable, so it looks different, so it is another template - several templates with none required is already an OR |
+      | browser zoom | not this phase - a step to set it, in `TODO.md` |
+
+      The sweep also cost more than CPU: nine attempts at one threshold is nine chances at a false
+      positive, it took the first scale that matched rather than the best, and it tried larger
+      before smaller. One computed attempt fails legibly - "0.62 at 1.25" says the ratio was wrong.
+
+- [ ] **An impossible ratio is an error, not an empty result.** A template scaled larger than the
+      screenshot returns an empty outcome today - indistinguishable from "not on screen".
+
+- [ ] **`AuthoredFrameWidth/Height` -> `AuthoredFlowAreaWidth/Height`**, and the rule that makes
+      the name true: **no capture until the step has an area.** Today the capture falls back to
+      the size of the crop itself, so a 50px template can be recorded as its own "area" and scaled
+      16x against an 800px one. Touches the entity, both dtos, the capture form, the template list
+      label, the sync helper, `SearchTemplate`, `ImageSearcher`, `DbQueryTools` and the AI docs;
+      the dtos are the JSON contract, so frontend and backend ship together.
+
+- [ ] **A warning for anything positioned in screen coordinates.** A `CUSTOM` area with no parent,
+      and a `FlowPoint` with no area - the same problem, found while checking the first. Both
+      resolve as absolute screen coordinates and cannot survive another screen layout. A
+      validator warning, like the other portability rules.
+
+- [ ] **`MonitorUniqueId` -> `MonitorDeviceName`, plus a primary monitor option.** It holds the GDI
+      name - `\\.\DISPLAY1` - which renumbers when monitors are plugged and unplugged and may not
+      exist on another PC. "Primary" is the portable choice and should be the default.
+
+- [ ] **Drop `AuthoredMonitorId`.** Written empty, read by nothing; it was for a warning that was
+      never built.
+
+- [ ] **The AI stops describing a feature nobody can reach.** `search-image.md` describes the
+      sweep and area-ratio scaling, and `DbQueryTools.TemplateSummary` exposes `AllowMultiScale`,
+      so the assistant can tell someone to turn on something with no control. Rewrite both with
+      the change.
+
+- [ ] Not in this phase: `Thumbnail`. Half built - the tree renders it, the projection reads it, and
+      the only writer is commented out - but it is not a portability problem.
+
+#### Match modes
+
+- [ ] **Two modes, not six.** Keep `CCoeffNormed` and `SqDiffNormed`. Drop `CCorrNormed` - bright
+      flat regions score high against anything, and the code already records it scoring 0.95
+      against blank grey - and the three unnormalised forms, which only answer "where is the best
+      spot" and cannot take a threshold. Measured against a real 70x71 template: SqDiff 27-32
+      million, CCorr 67-74 million, CCoeff +-1 million, so SqDiff never passes and the other two
+      always do.
+
+- [ ] **Named by intent, and SCREAMING_CASE like every other enum here: `SHAPE` for
+      `CCoeffNormed`, `SHAPE_AND_BRIGHTNESS` for `SqDiffNormed`.** The name says the second is the
+      stricter of the two, and that is only true because of its 0.95 default below - at 0.80 it is
+      looser about shape, not stricter. The name and the default depend on each other. Written
+      `match shape and brightness` on a step, and only when it is not `SHAPE`.
+
+      `SHAPE_PLUS_GRADIENT` was considered and rejected: in image processing a gradient is how fast
+      brightness changes from pixel to pixel - edges and outlines - which is what `SHAPE` already
+      responds to. What the second mode adds is brightness itself.
+
+- [ ] **The mode belongs to the step, for every template in it.** `FlowStepTemplate.TemplateMatchMode`
+      and `FlowStepTemplate.Accuracy` are dropped. Accuracy only means something relative to a
+      mode, and the mode is the step's - one of each, and no rule about which one wins. A template
+      that needs a different bar is a different step.
+
+- [ ] **Each mode has its own default accuracy, set when the step's mode changes: 0.80 for
+      `SHAPE`, 0.95 for `SHAPE_AND_BRIGHTNESS`.** One number cannot mean "82% close" in both, because they are
+      different instruments. A UI crop is mostly background and background always agrees, so
+      `SHAPE_AND_BRIGHTNESS` scores high whatever the foreground does; `SHAPE` subtracts the background
+      first. Measured with the app's OpenCV build, its grayscale conversion and its score
+      formula:
+
+      | | `SHAPE` | `SHAPE_AND_BRIGHTNESS` |
+      | --- | --- | --- |
+      | the right template | 1.000 | 1.000 |
+      | letter A, screen blank white | 0.000 | **0.893** |
+      | letter A, only B on screen | 0.302 | **0.823** |
+      | enabled button, disabled one on screen | **0.954** | 0.752 |
+
+      At 0.80 `SHAPE_AND_BRIGHTNESS` finds an "A" on an empty screen; at 0.95 it rejects all three
+      wrong cases. And `SHAPE` clicks a disabled button, which is the reason the second mode
+      exists at all.
+
+#### Known limits, recorded rather than fixed
+
+- **Text does not survive a DPI change.** Captured at 100%, searched at 125%: an icon scores 0.93
+  in `SHAPE`, a word scores 0.67. A new DPI *re-renders* text rather than scaling it - hinting
+  keeps strokes whole pixels, so 125% text is not a 125% copy. No ratio fixes that, and it does not
+  matter which side is resized: shrinking the screenshot instead of enlarging the template scored
+  the same, 0.930 against 0.931. **Capture icons with Find Image; read words with Search Text.**
+
+- **A single-colour template matches everywhere.** `SHAPE` scores it 1.000 at every one of 28,809
+  positions in the probe - OpenCV defines a template with no variance as a perfect match - so the
+  step succeeds and clicks the first position in the area. Not acted on: capturing a sensible
+  template is the author's and the recorder's job. If it ever bites, this is why. A blank
+  *screen* is fine: `SHAPE` scores 0.000 there, which is correctly "not found".
+
+- **Colour is never compared.** Both modes match in grayscale. State changes usually change
+  lightness, which `SHAPE_AND_BRIGHTNESS` sees. Where they do not - the same lightness in a different
+  hue, like rarity borders in a game - nothing tells them apart. In `TODO.md`.
+
+#### Found while planning: the script throws away what makes a template portable
+
+This is the one to read. Export writes the PNG and its file name, and nothing else about the
+template. Import (`FlowScriptImporter`) builds each template with a name, an order, the image and
+`IsRequired = true` - and every other field falls to its default:
+
+| lost on the way through | effect **today**, before any of 5.7 |
+| --- | --- |
+| `ClickOffsetX/Y` | the capture form centres it; import makes it 0,0 - **every imported flow clicks the top left corner of every button** |
+| `IsRequired` | forced to true - **a step with three variant templates and none required, an OR, becomes an AND** that needs all three on screen at once |
+| step `TemplateMatchMode` | not in the grammar at all - resets to `CCoeffNormed` |
+| authored size and DPI | gone - so the scaling key does not survive the one route a flow has to another PC |
+
+**The round trip cannot see any of it.** It compares script to script, and the printer never
+prints these fields, so export, import, export produces the same bytes from different rows.
+
+- [ ] **Decided: a `Templates:` section in the header**, beside `Areas:` and `Inputs:` - declared
+      once, referenced by name from a step, parsed and printed by machinery that already handles
+      header sections. The `.sflw` then holds every fact and the PNGs hold nothing but pixels. A
+      sidecar per image would be a second source of truth, one a rename orphans and a reviewer
+      never sees.
+
+      ```
+      Templates:
+        "login-form.png"    click 120,40   captured 800x600 at 120dpi
+      ```
+
+      - Facts about the picture go in the header: the click point, and the area size and DPI it
+        was captured at.
+      - Decisions about the search go on the step: `required` on the template clause, because it
+        turns an OR into an AND and a reviewer should see that; `match ...` when the mode is not
+        the default.
+      - The area line carries `scales with ...` and its DPI, or they are lost the same way.
+
+- [ ] **The round trip compares rows, not only bytes.** Export, import, export being byte
+      identical is exactly what hid this. The imported templates and areas are compared field by
+      field with the originals, ids and timestamps aside.
+
+#### Settled 2026-09-24
+
+Every question this phase raised has an answer above: how template facts travel (the header),
+what an area's size follows and the default per type (`ScalesWith`), letterboxing (the smaller
+ratio), which monitor's DPI (the largest part), the modes and their names, accuracy per mode, per
+template mode and accuracy (dropped), browser zoom and colour (`TODO.md`), and the single-colour
+template (a known limit).
+
+#### Order
+
+- [ ] 1. **A test around the searcher first.** A `FakeOpenCvService` or a fixed `RawImage`, and a
+      test that imports a script and inspects the template rows. The maths about to change has
+      never run against a real area in development, and the import loss above was invisible to
+      the only acceptance test there is.
+- [ ] 2. **The script carries every fact**: `Templates:` in the header, `required` and `match` on
+      the step, `scales with` and the DPI on the area line, and the row-comparing round trip. Fixes the
+      live bug on its own.
+- [ ] 3. **Schema and one migration**: `ScalesWith`, both `AuthoredDpi`s, the renames, and the
+      dropped columns - `AllowMultiScale`, `ScaleTolerance`, `AuthoredMonitorId`,
+      `FlowStepTemplate.TemplateMatchMode`, `FlowStepTemplate.Accuracy` - with the match mode enum
+      cut to `SHAPE` and `SHAPE_AND_BRIGHTNESS`, and `MonitorDeviceName`.
+- [ ] 4. **The searcher maths**: `ScalesWith`, one uniform ratio, the largest-part monitor for
+      the DPI, an error for an impossible ratio, no sweep.
+- [ ] 5. **The forms**: capture needs an area, DPI written, `ScalesWith` defaulted or asked by
+      area type, the mode resetting accuracy, the screen-coordinate warning.
+- [ ] 6. **The AI docs and `DbQueryTools`.**
 
 ## Turning a recording into a test
 

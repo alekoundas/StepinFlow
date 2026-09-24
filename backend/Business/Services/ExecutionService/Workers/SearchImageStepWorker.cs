@@ -1,7 +1,7 @@
 using System.Drawing;
 
+using Business.Searching;
 using Business.Services.AreaPointService;
-using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -16,19 +16,16 @@ namespace Business.Services.ExecutionService.Workers
     /// </summary>
     public class SearchImageStepWorker : IStepWorker
     {
-        private readonly IScreenshotService _screenshotService;
-        private readonly IOpenCvService _templateMatcher;
+        private readonly IImageSearcher _imageSearcher;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly TimeProvider _timeProvider;
 
         public SearchImageStepWorker(
-            IScreenshotService screenshotService,
-            IOpenCvService templateMatcher,
+            IImageSearcher imageSearcher,
             IAreaPointResolver areaPointResolver,
             TimeProvider timeProvider)
         {
-            _screenshotService = screenshotService;
-            _templateMatcher = templateMatcher;
+            _imageSearcher = imageSearcher;
             _areaPointResolver = areaPointResolver;
             _timeProvider = timeProvider;
         }
@@ -90,73 +87,41 @@ namespace Business.Services.ExecutionService.Workers
 
         private ExecutionStep Search(FlowStep step, Rectangle bounds, IExecutionCacheService cache)
         {
-            if (bounds.Width <= 0 || bounds.Height <= 0)
-                return ExecutionStep.Failure("The search area has no size. The window is probably minimised.");
+            bool findAll = step.SearchMode == SearchModeEnum.FIND_ALL;
+            List<SearchTemplate> templates = step.FlowStepTemplates.Select(x => SearchTemplate.From(x)).ToList();
 
-            RawImage haystack = _screenshotService.CaptureRaw(bounds);
+            ImageSearchResult search = _imageSearcher.Search(bounds, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
+            if (search.Error != null)
+                return ExecutionStep.Failure(search.Error);
 
             // The screenshot that was actually matched against, not one taken a moment later that
             // could show something else. Whether it is worth keeping is the cache's business.
-            ExecutionScreenshot? screenshot = cache.EncodeForHistory(haystack, step);
+            ExecutionScreenshot? screenshot = cache.EncodeForHistory(search.Haystack, step);
 
-            ExecutionStep result = Match(step, bounds, haystack, cache);
+            ExecutionStep result = Result(step, bounds, search, cache, findAll);
             result.Screenshot = screenshot;
 
             return result;
         }
 
-        private ExecutionStep Match(FlowStep step, Rectangle bounds, RawImage haystack, IExecutionCacheService cache)
+        // What was found, said as an execution step. The points arrive relative to the search
+        // area, and a click needs them on the screen.
+        private static ExecutionStep Result(FlowStep step, Rectangle bounds, ImageSearchResult search, IExecutionCacheService cache, bool findAll)
         {
-            List<Point> hits = new List<Point>();
-            float? bestScore = null;
-
-            foreach (FlowStepTemplate image in step.FlowStepTemplates)
-            {
-                TemplateMatchOutcome outcome = _templateMatcher.Match(new TemplateMatchRequest
-                {
-                    Haystack = haystack,
-                    TemplateImage = image.TemplateImage ?? [],
-                    Mode = image.TemplateMatchMode ?? step.TemplateMatchMode,
-                    Threshold = image.Accuracy ?? step.Accuracy,
-                    ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, bounds.Width),
-                    AllowMultiScale = image.AllowMultiScale,
-                    ScaleTolerance = image.ScaleTolerance,
-                    MaxMatches = step.SearchMode == SearchModeEnum.FIND_ALL ? step.MaxMatches : 1,
-                });
-
-                IReadOnlyList<TemplateMatchResult> matches = outcome.Matches;
-
-                // Whether it passed or not, so a run records how close a search came. Across every
-                // template, because the closest one is the one worth reporting.
-                bestScore = Best(bestScore, outcome.BestScore);
-
-                foreach (TemplateMatchResult match in matches)
-                {
-                    int x = bounds.Left + match.X + (int)MathF.Round(image.ClickOffsetX * match.Scale);
-                    int y = bounds.Top + match.Y + (int)MathF.Round(image.ClickOffsetY * match.Scale);
-
-                    hits.Add(new Point(x, y));
-
-                    if (step.SearchMode != SearchModeEnum.FIND_ALL)
-                        break;
-                }
-
-                if (hits.Count > 0 && step.SearchMode != SearchModeEnum.FIND_ALL)
-                    break;
-            }
-
-            if (hits.Count == 0)
+            if (search.Hits.Count == 0)
             {
                 ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched"));
-                missed.BestScore = bestScore;
+                missed.BestScore = search.BestScore;
 
                 return missed;
             }
 
-            if (step.SearchMode != SearchModeEnum.FIND_ALL)
+            List<Point> hits = search.Hits.Select(x => new Point(bounds.Left + x.X, bounds.Top + x.Y)).ToList();
+
+            if (!findAll)
             {
                 ExecutionStep hit = ExecutionStep.Success(hits[0]);
-                hit.BestScore = bestScore;
+                hit.BestScore = search.BestScore;
 
                 return hit;
             }
@@ -168,12 +133,12 @@ namespace Business.Services.ExecutionService.Workers
             ExecutionStep found = ExecutionStep.Success(hits[0]);
             found.MatchIndex = 0;
             found.MatchCount = hits.Count;
-            found.BestScore = bestScore;
+            found.BestScore = search.BestScore;
 
             return found;
         }
 
-        /// <summary>The higher of two scores, either of which may be missing.</summary>
+        // The higher of two scores, either of which may be missing.
         private static float? Best(float? left, float? right)
         {
             if (left == null)
@@ -183,14 +148,6 @@ namespace Business.Services.ExecutionService.Workers
                 return left;
 
             return MathF.Max(left.Value, right.Value);
-        }
-
-        private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)
-        {
-            if (authoredFrameWidth <= 0 || currentFrameWidth <= 0)
-                return 1f;
-
-            return (float)currentFrameWidth / authoredFrameWidth;
         }
 
         /// <summary>Says what was being looked for and how hard, which is what a failure turns on.</summary>

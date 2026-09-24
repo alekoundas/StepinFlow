@@ -6,8 +6,7 @@ namespace Core.Ports
 
 
     /// <summary>
-    /// The image operations the application needs, stated as questions rather than as steps of an
-    /// algorithm. Encoded bytes in, answers out: nothing here hands back a native image handle, so
+    /// The image comparisons the application needs. Encoded bytes in, answers out: nothing here hands back a native image handle, so
     /// a caller cannot start assembling its own pipeline and end up owning half the matching.
     /// </summary>
     public interface IOpenCvService

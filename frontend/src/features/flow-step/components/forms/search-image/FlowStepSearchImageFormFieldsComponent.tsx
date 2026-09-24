@@ -1,4 +1,3 @@
-import type z from "zod";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Slider } from "primereact/slider";
 import { Panel } from "primereact/panel";
@@ -6,24 +5,15 @@ import { Message } from "primereact/message";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
-import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
-import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms/search-image/flow-step-search-image.zod";
 import {
   SEARCH_IMAGE_MODES,
   isWaitingMode,
 } from "@/features/flow-step/components/forms/shared/search-modes";
+import { MATCH_MODES } from "@/features/flow-step/components/forms/shared/match-modes";
 import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
-
-type ImageSearchForm = z.infer<typeof FlowStepSearchImageSchema>;
-
-interface EnumOption {
-  label: string;
-  value: string;
-}
 
 interface Props {
   flowId: number | undefined;
@@ -39,6 +29,7 @@ export default function FlowStepSearchImageFormFieldsComponent({
   const { control, setValue } = useFormContext();
 
   const mode = useWatch({ control, name: "searchMode" });
+  const matchMode = useWatch({ control, name: "templateMatchMode" });
   const accuracy = useWatch({ control, name: "accuracy" });
   const timeout = useWatch({ control, name: "timeoutMilliseconds" });
   const pollInterval = useWatch({ control, name: "pollIntervalMilliseconds" });
@@ -168,19 +159,16 @@ export default function FlowStepSearchImageFormFieldsComponent({
           />
         </div>
 
-        <FormDropdownComponent<ImageSearchForm, EnumOption>
+        <FormSelectButtonComponent
           fieldName="templateMatchMode"
-          labelText="Match mode"
-          mode="local"
-          options={Object.values(TemplateMatchModeEnum).map((value) => ({
-            label: value,
-            value,
+          labelText="Compare"
+          options={MATCH_MODES.map((x) => ({
+            label: x.label,
+            value: x.value,
           }))}
-          optionLabel="label"
-          optionValue="value"
           isRequired={true}
           isDisabled={isDisabled}
-          hintText="The normalized modes are the ones where the accuracy number means something."
+          hintText={MATCH_MODES.find((x) => x.value === matchMode)?.description}
         />
 
       </Panel>

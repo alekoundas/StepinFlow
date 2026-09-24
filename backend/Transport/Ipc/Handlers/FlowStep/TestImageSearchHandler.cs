@@ -1,3 +1,6 @@
+using System.Drawing;
+
+using Business.Searching;
 using Business.Services.AreaPointService;
 using Core.Ports;
 using Core.Enums;
@@ -14,16 +17,16 @@ namespace Transport.Ipc.Handlers
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IScreenshotService _screenshotService;
-        private readonly IOpenCvService _templateMatcher;
+        private readonly IImageSearcher _imageSearcher;
 
         public TestImageSearchHandler(
             IAreaPointResolver areaPointResolver,
             IScreenshotService screenshotService,
-            IOpenCvService templateMatcher)
+            IImageSearcher imageSearcher)
         {
             _areaPointResolver = areaPointResolver;
             _screenshotService = screenshotService;
-            _templateMatcher = templateMatcher;
+            _imageSearcher = imageSearcher;
         }
 
         public async Task<ResultDto<ImageSearchTestResultDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
@@ -37,9 +40,14 @@ namespace Transport.Ipc.Handlers
             if (!area.IsResolved)
                 return ResultDto<ImageSearchTestResultDto>.Success(Failed(area.Error!));
 
-            RawImage haystack = _screenshotService.CaptureRaw(area.Bounds);
-            if (haystack.IsEmpty)
-                return ResultDto<ImageSearchTestResultDto>.Success(Failed("The search area produced no pixels."));
+            List<FlowStepTemplateDto> images = step.FlowStepTemplates.ToList();
+            List<SearchTemplate> templates = images.Select(x => SearchTemplate.From(x)).ToList();
+
+            // Never stop early: a report that skipped the templates after the first hit would say
+            // they were not there.
+            ImageSearchResult search = _imageSearcher.Search(area.Bounds, SearchSettings.From(step), templates, stopAtFirstHit: false);
+            if (search.Error != null)
+                return ResultDto<ImageSearchTestResultDto>.Success(Failed(search.Error));
 
             ImageSearchTestResultDto result = new ImageSearchTestResultDto
             {
@@ -49,31 +57,24 @@ namespace Transport.Ipc.Handlers
                 SearchAreaWidth = area.Bounds.Width,
                 SearchAreaHeight = area.Bounds.Height,
 
-                // The haystack itself, not a second capture: anything that moved in between would
-                // put the boxes over the wrong pixels, and the picture would be believed.
-                Screenshot = _screenshotService.Encode(haystack, ScreenshotFormatEnum.JPEG, 80),
+                // The haystack the search matched against, not a second capture: anything that
+                // moved in between would put the boxes over the wrong pixels, and the picture
+                // would be believed.
+                Screenshot = _screenshotService.Encode(search.Haystack, ScreenshotFormatEnum.JPEG, 80),
             };
 
-            foreach (FlowStepTemplateDto image in step.FlowStepTemplates)
+            for (int index = 0; index < images.Count; index++)
             {
+                FlowStepTemplateDto image = images[index];
+                SearchTemplate template = templates[index];
+                TemplateMatchOutcome outcome = search.Outcomes[index];
+
                 ImageSearchTestImageDto imageResult = new ImageSearchTestImageDto
                 {
                     FlowStepTemplateId = image.Id,
                     Name = image.Name,
                     IsRequired = image.IsRequired,
                 };
-
-                TemplateMatchOutcome outcome = _templateMatcher.Match(new TemplateMatchRequest
-                {
-                    Haystack = haystack,
-                    TemplateImage = image.TemplateImage ?? [],
-                    Mode = image.TemplateMatchMode ?? step.TemplateMatchMode,
-                    Threshold = image.Accuracy ?? step.Accuracy,
-                    ScaleRatio = ScaleRatio(image.AuthoredFrameWidth, area.Bounds.Width),
-                    AllowMultiScale = image.AllowMultiScale,
-                    ScaleTolerance = image.ScaleTolerance,
-                    MaxMatches = step.SearchMode == SearchModeEnum.FIND_ALL ? step.MaxMatches : 1,
-                });
 
                 IReadOnlyList<TemplateMatchResult> matches = outcome.Matches;
 
@@ -84,18 +85,23 @@ namespace Transport.Ipc.Handlers
                 // "not on screen at all" both read as no result.
                 imageResult.BestScore = outcome.BestScore ?? 0f;
 
-                ImageSearchTestMatchDto ToDto(TemplateMatchResult match, bool isAccepted) => new ImageSearchTestMatchDto
+                ImageSearchTestMatchDto ToDto(TemplateMatchResult match, bool isAccepted)
                 {
-                    IsAccepted = isAccepted,
-                    X = match.X,
-                    Y = match.Y,
-                    Width = match.Width,
-                    Height = match.Height,
-                    Score = match.Score,
-                    Scale = match.Scale,
-                    ClickX = match.X + (int)MathF.Round(image.ClickOffsetX * match.Scale),
-                    ClickY = match.Y + (int)MathF.Round(image.ClickOffsetY * match.Scale),
-                };
+                    Point click = template.ClickPoint(match);
+
+                    return new ImageSearchTestMatchDto
+                    {
+                        IsAccepted = isAccepted,
+                        X = match.X,
+                        Y = match.Y,
+                        Width = match.Width,
+                        Height = match.Height,
+                        Score = match.Score,
+                        Scale = match.Scale,
+                        ClickX = click.X,
+                        ClickY = click.Y,
+                    };
+                }
 
                 // Hits first, then the next ones down, all in area relative coordinates so the
                 // details view can draw them on the screenshot as they are.
@@ -106,12 +112,13 @@ namespace Transport.Ipc.Handlers
                 if (matches.Count > 0)
                 {
                     TemplateMatchResult best = matches[0];
+                    Point bestClick = template.ClickPoint(best);
 
                     imageResult.BestScore = best.Score;
                     imageResult.Scale = best.Scale;
                     // Absolute, click offset applied and scaled the same as the template.
-                    imageResult.BestX = area.Bounds.X + best.X + (int)MathF.Round(image.ClickOffsetX * best.Scale);
-                    imageResult.BestY = area.Bounds.Y + best.Y + (int)MathF.Round(image.ClickOffsetY * best.Scale);
+                    imageResult.BestX = area.Bounds.X + bestClick.X;
+                    imageResult.BestY = area.Bounds.Y + bestClick.Y;
                 }
 
                 result.Images.Add(imageResult);
@@ -137,14 +144,6 @@ namespace Transport.Ipc.Handlers
             return required.Count > 0
                 ? required.All(x => x.IsFound)
                 : result.Images.Any(x => x.IsFound);
-        }
-
-        private static float ScaleRatio(int authoredFrameWidth, int currentFrameWidth)
-        {
-            if (authoredFrameWidth <= 0 || currentFrameWidth <= 0)
-                return 1f;
-
-            return (float)currentFrameWidth / authoredFrameWidth;
         }
 
         private static ImageSearchTestResultDto Failed(string error)

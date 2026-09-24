@@ -25,7 +25,7 @@ namespace Core.Models.Database
         public SearchModeEnum SearchMode { get; set; }
 
         // Defaults for the step's templates, each of which may override them.
-        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.CCoeffNormed;
+        public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.SHAPE;
         public float Accuracy { get; set; } = 0.8f;
 
         public int MaxMatches { get; set; } = 20;
