@@ -1,4 +1,5 @@
-﻿using Core.Ports;
+﻿using Core.Helpers;
+using Core.Ports;
 using Platform.Windows.Native;
 using Core.Enums;
 using Core.Models.Business;
@@ -95,10 +96,13 @@ namespace Platform.Windows.Screen
         /// </summary>
         public byte[] CaptureResolvedArea(FlowArea area, Rectangle bounds, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
+            MonitorInfo? monitor = null;
             if (area.Type == FlowAreaTypeEnum.MONITOR)
+                monitor = MonitorHelper.Find(ScreenMetrics.GetAllMonitors(), area.MonitorDeviceName);
+
+            if (monitor != null)
             {
-                IntPtr hMon = ScreenMetrics.FindHMonitorById(area.MonitorUniqueId);
-                byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(hMon, out int monitorWidth, out int monitorHeight);
+                byte[]? monitorBytes = _windowsGraphicsCaptureService.CaptureMonitorRaw(monitor.HMonitor, out int monitorWidth, out int monitorHeight);
 
                 if (monitorBytes != null)
                     return Compress(monitorBytes, monitorWidth, monitorHeight, screenshotFormat, jpegQuality);

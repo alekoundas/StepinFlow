@@ -10,6 +10,9 @@ namespace Core.Models.Dtos
         public string Name { get; set; } = string.Empty;
         public FlowAreaTypeEnum Type { get; set; }
 
+        public ScalesWithEnum? ScalesWith { get; set; }
+        public int AuthoredDpi { get; set; }
+
 
         // CUSTOM
         public int? ParentFlowAreaId { get; set; }
@@ -38,8 +41,8 @@ namespace Core.Models.Dtos
         public TabMatchOnEnum TabMatchOn { get; set; }
 
 
-        // MONITOR
-        public string MonitorUniqueId { get; set; } = string.Empty;
+        // MONITOR. Empty is the primary monitor.
+        public string MonitorDeviceName { get; set; } = string.Empty;
 
 
         public int FlowId { get; set; }

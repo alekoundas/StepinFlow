@@ -116,7 +116,10 @@ namespace Transport.Ipc.Handlers
                 area.TabMatchValue = dto.TabMatchValue;
                 area.TabMatchOn = dto.TabMatchOn;
 
-                area.MonitorUniqueId = dto.MonitorUniqueId;
+                area.MonitorDeviceName = dto.MonitorDeviceName;
+
+                area.ScalesWith = dto.ScalesWith;
+                area.AuthoredDpi = dto.AuthoredDpi;
 
                 byDtoId[dto.Id] = area;
             }

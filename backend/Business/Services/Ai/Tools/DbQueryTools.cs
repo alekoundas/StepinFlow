@@ -91,7 +91,7 @@ namespace Business.Services.Ai.Tools
                         a.Type.ToString(),
                         a.ProcessName,
                         a.TitlePattern,
-                        a.MonitorUniqueId,
+                        a.MonitorDeviceName,
                         a.Width,
                         a.Height)).ToList(),
                     x.FlowPoints.Select(p => new PointSummary(p.Id, p.Name, p.LocationX, p.LocationY)).ToList()))
@@ -186,7 +186,7 @@ namespace Business.Services.Ai.Tools
                     step.FlowArea.Type.ToString(),
                     step.FlowArea.ProcessName,
                     step.FlowArea.TitlePattern,
-                    step.FlowArea.MonitorUniqueId,
+                    step.FlowArea.MonitorDeviceName,
                     step.FlowArea.Width,
                     step.FlowArea.Height);
 
@@ -467,7 +467,7 @@ namespace Business.Services.Ai.Tools
 
         public record FlowDetail(int Id, string Name, string Description, bool IsSubFlow, int StepCount, List<AreaSummary> Areas, List<PointSummary> Points);
 
-        public record AreaSummary(int Id, string Name, string Type, string ProcessName, string TitlePattern, string MonitorUniqueId, int Width, int Height);
+        public record AreaSummary(int Id, string Name, string Type, string ProcessName, string TitlePattern, string MonitorDeviceName, int Width, int Height);
 
         public record PointSummary(int Id, string Name, int X, int Y);
 

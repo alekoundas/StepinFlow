@@ -1063,8 +1063,15 @@ template (a known limit).
       any template, it is a diagnostic, `ACCURACY_WITHOUT_TEMPLATE`. Still stale until the AI docs
       step: `search-image.md` says accuracy is set on the step and describes the sweep, and
       `AiPromptHelper` tells the model to read a score against the step's accuracy.
-- [ ] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
+- [x] **Areas**: `ScalesWith`, `AuthoredDpi`, `MonitorDeviceName` with empty meaning the primary
       monitor. One migration.
+
+      Done 2026-09-24. `ScalesWith` is nullable - null inherits - and neither it nor `AuthoredDpi`
+      is written or read yet: the forms and the resolver steps do that. "Empty is primary" is one
+      rule in `Core/Helpers/MonitorHelper`, asked by both the resolver and the monitor capture, so
+      they cannot disagree. The monitor picker lists **Primary monitor** first with an empty value,
+      which makes it the default for a new area. Verified against the running app: an empty name
+      resolved to the primary monitor, and an unplugged one failed naming the device.
 - [ ] **The resolver and the searcher maths**: the effective `ScalesWith`, the largest-part
       monitor for the DPI, `ABSOLUTE_PX` children and points scaled by DPI, one uniform template
       ratio, an error for an impossible ratio.

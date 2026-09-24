@@ -1,3 +1,4 @@
+using Core.Helpers;
 using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
@@ -106,11 +107,14 @@ namespace Business.Services.AreaPointService
 
         private AreaResolution ResolveMonitor(FlowArea area)
         {
-            MonitorInfo? monitor = _screenService.GetAllMonitors()
-                .FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorUniqueId, StringComparison.OrdinalIgnoreCase));
+            MonitorInfo? monitor = MonitorHelper.Find(_screenService.GetAllMonitors(), area.MonitorDeviceName);
 
             if (monitor == null)
-                return AreaResolution.Fail($"Monitor \"{area.MonitorUniqueId}\" is not connected.");
+            {
+                return AreaResolution.Fail(area.MonitorDeviceName.Length == 0
+                    ? "No primary monitor was found."
+                    : $"Monitor \"{area.MonitorDeviceName}\" is not connected.");
+            }
 
             return AreaResolution.Ok(monitor.Bounds);
         }

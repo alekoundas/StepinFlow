@@ -73,7 +73,10 @@ namespace Transport.Ipc.Handlers
                             TabMatchValue = a.TabMatchValue,
                             TabMatchOn = a.TabMatchOn,
 
-                            MonitorUniqueId = a.MonitorUniqueId,
+                            MonitorDeviceName = a.MonitorDeviceName,
+
+                            ScalesWith = a.ScalesWith,
+                            AuthoredDpi = a.AuthoredDpi,
 
                             FlowId = a.FlowId,
                             FlowStepsCount = a.FlowSteps.Count(),

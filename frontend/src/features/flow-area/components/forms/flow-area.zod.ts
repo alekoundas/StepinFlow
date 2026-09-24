@@ -41,7 +41,7 @@ export const FlowAreaZod = z
     tabMatchValue: z.string(),
     tabMatchOn: z.enum(TabMatchOnEnum),
 
-    monitorUniqueId: z.string(),
+    monitorDeviceName: z.string(),
   })
   .superRefine((data, ctx) => {
     if (data.type === FlowAreaTypeEnum.CUSTOM) {
@@ -87,13 +87,4 @@ export const FlowAreaZod = z
       }
     }
 
-    if (data.type === FlowAreaTypeEnum.MONITOR) {
-      if (data.monitorUniqueId.length === 0) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Monitor is required",
-          path: ["monitorUniqueId"],
-        });
-      }
-    }
   });

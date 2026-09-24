@@ -2,6 +2,7 @@ import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
+import type { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 export class FlowAreaDto {
   // 0 for a new row. New rows get a negative id so a sibling added in the same save can
@@ -9,6 +10,12 @@ export class FlowAreaDto {
   id: number = 0;
   name: string = "";
   type: FlowAreaTypeEnum = FlowAreaTypeEnum.CUSTOM;
+
+  // What makes its contents bigger or smaller on another screen. Null inherits the parent's, and
+  // an area with no parent is DPI.
+  scalesWith?: ScalesWithEnum | null;
+  // The DPI its pixel numbers were written at.
+  authoredDpi: number = 0;
 
   // CUSTOM
   parentFlowAreaId?: number | null;
@@ -34,8 +41,8 @@ export class FlowAreaDto {
   tabMatchValue: string = "";
   tabMatchOn: TabMatchOnEnum = TabMatchOnEnum.TITLE;
 
-  // MONITOR
-  monitorUniqueId: string = "";
+  // MONITOR. Empty is the primary monitor.
+  monitorDeviceName: string = "";
 
   flowId: number = 0;
 

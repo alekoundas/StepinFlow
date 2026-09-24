@@ -15,6 +15,14 @@ namespace Core.Models.Database
         public string Name { get; set; } = string.Empty;
         public FlowAreaTypeEnum Type { get; set; }
 
+        // What makes its contents bigger or smaller on another screen. Null inherits: a CUSTOM
+        // child takes its parent's, and an area with no parent is DPI.
+        public ScalesWithEnum? ScalesWith { get; set; }
+
+        // The DPI this area's pixel numbers were written at, so ABSOLUTE_PX children and points
+        // inside a DPI area can follow the monitor.
+        public int AuthoredDpi { get; set; }
+
 
         // CUSTOM
         public int? ParentFlowAreaId { get; set; }
@@ -49,8 +57,8 @@ namespace Core.Models.Database
         public TabMatchOnEnum TabMatchOn { get; set; }
 
 
-        // MONITOR
-        public string MonitorUniqueId { get; set; } = string.Empty;
+        // MONITOR. The GDI device name - \\.\DISPLAY1.  Empty is the primary monitor, the portable choice.
+        public string MonitorDeviceName { get; set; } = string.Empty;
 
 
         // Flow

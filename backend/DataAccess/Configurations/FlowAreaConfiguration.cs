@@ -14,6 +14,7 @@ namespace DataAccess.Configurations
             builder.Property(x => x.SizingMode).HasConversion<string>();
             builder.Property(x => x.TitleMatchMode).HasConversion<string>();
             builder.Property(x => x.TabMatchOn).HasConversion<string>();
+            builder.Property(x => x.ScalesWith).HasConversion<string>();
 
 
             // Relationship with Flow (one-to-many)

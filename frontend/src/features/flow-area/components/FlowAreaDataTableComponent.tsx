@@ -156,7 +156,7 @@ export function FlowAreaDataTableComponent({
         ? `${Math.round(row.ratioWidth * 100)}% × ${Math.round(row.ratioHeight * 100)}%`
         : `${row.locationX}, ${row.locationY} (${row.width}×${row.height})`;
     }
-    if (row.type === FlowAreaTypeEnum.MONITOR) return row.monitorUniqueId || "-";
+    if (row.type === FlowAreaTypeEnum.MONITOR) return row.monitorDeviceName || "Primary monitor";
     if (row.type === FlowAreaTypeEnum.BROWSER_TAB)
       return row.tabMatchValue || row.processName || "-";
 

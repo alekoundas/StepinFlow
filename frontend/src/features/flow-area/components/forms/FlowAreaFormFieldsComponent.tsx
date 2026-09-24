@@ -408,7 +408,7 @@ export default function FlowAreaFormFieldsComponent({
       {/* MONITOR */}
       {type === FlowAreaTypeEnum.MONITOR && (
         <FormDropdownComponent<FlowAreaDto, LookupItemDto>
-          fieldName="monitorUniqueId"
+          fieldName="monitorDeviceName"
           labelText="Monitor"
           mode="remote"
           queryKey={["lookup", "monitor"]}
