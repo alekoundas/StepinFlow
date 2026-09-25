@@ -125,6 +125,9 @@ is lost between sessions.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
+- [ ] **`Go To to "Step"`.** The keyword is `Go To` and the parser then skips a `to`, so every
+      go-to reads with the word twice. Either the keyword becomes `Go` or the extra word goes. A
+      grammar change, so the approved sample file and FLOW-FORMAT.md change with it.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.

@@ -1,0 +1,75 @@
+Flow:    Login and add to cart
+Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
+Sizes:   1920x1080, 390x844
+
+Areas:
+  "Box"           on screen   offset -10 20  size 300 200
+  "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi
+  "Cart badge"    inside "Browser"   ratio 0.88 0.00  0.12 0.10
+  "Game"          inside "Browser"   ratio 0.10 0.20  0.80 0.70   scales with area
+  "Header"        inside "Browser"   offset 0 0  size 1920 90   at 120dpi
+  "Right screen"  monitor "\\.\DISPLAY2"   at 96dpi
+  "Screen"        monitor primary
+
+Points:
+  "Hamburger"     inside "Browser"   ratio 0.95 0.05
+  "Menu"          inside "Browser"   offset 40 8   at 120dpi
+  "Origin"        on screen   offset 12 -12
+
+Inputs:
+  "username"
+  "password"      secret
+
+Templates:
+  "username-alt.png"      click -4,10   at 96dpi
+  "username-field.png"    click 60,12   captured 1920x1080 at 120dpi
+
+Steps:
+
+## Sign in
+
+# A fresh profile every time.
+Launch          "chrome.exe https://www.saucedemo.com"
+
+Find Image      "Find username field"   template "username-field.png" accuracy 0.97 required  template "username-alt.png" accuracy 0.9   match shape and brightness   in "Browser"
+  Success:
+    Click           at "Find username field"
+    Type            "{{username}}"
+  Failure:
+    Click           at point "Hamburger"   right double
+
+Wait For Text   "Read the total"   matches "total: (\d+)"   in "Cart badge"   keep "(\d+)"   timeout 10s
+
+Check Value     "Order is large"   "{{Read the total}}" > "100"
+
+Wait Until No Text  "Banner cleared"   is not empty   in "Header"   no timeout
+
+Check Text      "In range"   between "1" and "9"   in "Header"
+
+Move            to point "Origin"
+
+Drag            at point "Hamburger" to point "Origin"
+
+Scroll          down 3   in "Browser"
+
+Press           Ctrl+C
+
+Wait            800ms to 1200ms
+
+System          LOCK_WORKSTATION
+
+Resize Window   process "chrome.exe" title starts with "Swag"   size 1280 720
+
+Move Window     process "chrome.exe"   to point "Origin"
+
+Focus Window    process "chrome.exe"
+
+Notify          "done"
+
+Go To           to "Read the total"
+
+Loop            5 times
+  Click           at "Find username field"
+
+End Execution   failed  "did not reach the products page"
+  Run             KILL_PROCESS "chrome.exe"

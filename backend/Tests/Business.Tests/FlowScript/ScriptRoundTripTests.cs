@@ -33,6 +33,14 @@ namespace Business.Tests.FlowScript
             new Printer().Write(bound).ShouldBe(first);
         }
 
+        // The round trip proves the printer and the parser agree, not that either is right: a line
+        // printed wrong and read back the same wrong way stays green. This file was read and approved.
+        [Fact]
+        public void The_sample_flow_prints_as_approved()
+        {
+            ApprovedFile.ShouldMatch(new Printer().Write(SampleFlow.Build()), "SampleFlow");
+        }
+
         // ================================================================
         // What a person writing one by hand gets for what they leave out
         // ================================================================

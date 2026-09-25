@@ -34,3 +34,6 @@ probes/**/obj/
 TestResults/
 coveragereport/
 
+
+# What a test printed when it differed from its .approved file. Looked at, never committed.
+*.received.*

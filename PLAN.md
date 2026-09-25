@@ -1633,7 +1633,7 @@ the first two layers need no production change at all.
       will ever have, because the build fails when it drifts. Table tests over `SyntaxFacts` in
       both directions belong here too.
 
-- [x] **Done 2026-09-25, except the snapshot: 86 tests** in `Business.Tests/FlowScript/`, and the
+- [x] **Done 2026-09-25: 87 tests** in `Business.Tests/FlowScript/`, and the
       two round-trip probes deleted.
       - `ScriptRoundTripTests`: print, read, bind, print over `SampleFlow` - every area and point
         form, templates with every fact - byte identical; and the defaults a hand-written script
@@ -1654,12 +1654,16 @@ the first two layers need no production change at all.
       or AI written script could reach it. `SyntaxFacts.TryReadName` takes a member's exact name
       and nothing else.
 
-      **The snapshot is waiting on a decision.** Verify 33 fails the build until the project
-      declares GitHub sponsorship, a paid licence, an exemption (open source with no revenue, under
-      US$10,000 revenue, or a consulting engagement), or that it accepts being in breach. Which is
-      true is a statement about the project, so Verify was taken out rather than configured. The
-      alternative is an approved-file comparison written here - read the approved file, compare,
-      write the received one beside it on a difference - which is about twenty lines.
+      **The snapshot, written here rather than with Verify.** Verify 33 fails the build until a
+      project declares sponsorship, a licence or an exemption - a statement about the project, so
+      it was not made for it. `ApprovedFile.ShouldMatch` is the twenty lines of it this needs: the
+      printed sample against `SampleFlow.approved.sflw`, committed beside the test; on a difference
+      the new text goes to `.received.sflw` (gitignored) and the failure names the first line that
+      changed. Line endings are not compared. The approved file is also the most complete example
+      of the format in the repository, and the build fails when it drifts.
+
+      Reading it for approval showed one thing no other test had: `Go To` prints as
+      `Go To   to "Read the total"`, the parser expecting a `to` after the keyword. In `TODO.md`.
 
 ### Layer 4 - `ExecutionFlowWalker`
 
