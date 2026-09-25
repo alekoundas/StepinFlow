@@ -1,13 +1,12 @@
 # Probes
 
-Four console programs that each prove one thing about the backend by doing it for real, rather
-than by asserting it. Each returns `0` when everything passed and the number of failures
-otherwise, so any of them works as a CI step as it stands.
+Console programs that each prove one thing about the backend by doing it for real, rather than
+by asserting it. Each returns `0` when everything passed and the number of failures otherwise.
 
-They are **not** the test suite. There isn't one yet — the plan for it is the Tests section at the
-end of `PLAN.md`, and these are the first things that should move into it. They live here because
-each was written to answer a question during a change, each answered it, and each found something
-that a green build had not.
+They are **not** the test suite - that is `backend/Tests/`. Each probe moves into it and is
+deleted, as the two script round trips already have (`Business.Tests/FlowScript/`). The two left
+are next: the timestamp interceptor into `DataAccess.Tests`, and the P/Invoke check into
+`Platform.Windows.Tests` behind a desktop-only trait.
 
 They sit outside `backend/` on purpose: `backend/Directory.Build.props` turns on the analyzers,
 `TreatWarningsAsErrors` and the banned-symbol lists, and a probe is throwaway code that should not
@@ -16,7 +15,7 @@ be held to the rules the product is held to.
 Run one with:
 
 ```bash
-dotnet run --project probes/ScriptRoundTripDatabase
+dotnet run --project probes/TimestampInterceptor
 ```
 
 ---
@@ -43,26 +42,3 @@ it is set, from `new` to save. If the interceptor were not wired up, every row w
 coincidence: stamped on insert, survives a round trip, `UpdatedOn` null until modified, and
 `CreatedOn` not re-stamped on update.
 
-## ScriptRoundTrip
-
-**Write, read, write again, byte identical** — over a flow built in memory that uses most of the
-grammar: both search kinds, all four search modes, every placement form, branches, a loop, a
-section, a comment, and cleanup under `End Execution`.
-
-No database and no files, so it is the fast one to run while changing the parser.
-
-This is the probe that caught `Scroll` being written as `in match`: the writer used the
-point-target fragment for its `in` clause, which falls through to `"match"` when a scroll names
-neither a point nor a step, while the format means an area. A line no parser could read, found the
-moment something tried to read one.
-
-## ScriptRoundTripDatabase
-
-**The same round trip through a real database**, which is the acceptance test `PLAN.md` phase 5
-asks for. Seeds a flow, exports it to a temp folder with its template bytes, imports it back over
-itself, exports again and compares.
-
-Also checks the two things the pure version cannot:
-
-- a script with `Find Image` misspelled is refused, with the line number
-- the flow is **unchanged** afterwards, which is the transactional guarantee

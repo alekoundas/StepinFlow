@@ -1622,7 +1622,7 @@ the first two layers need no production change at all.
 
 ### Layer 3 - the flow script
 
-- [ ] **The round trip, promoted from `probes/`.** Export, import, export again, byte identical,
+- [x] **The round trip, promoted from `probes/`.** Export, import, export again, byte identical,
       in both forms - pure, and through a real database with template bytes written to disk and
       read back. It found the `Scroll ... in match` writer bug on its first run.
 
@@ -1632,6 +1632,34 @@ the first two layers need no production change at all.
       read once and approved - simultaneously the fixture and the clearest documentation the format
       will ever have, because the build fails when it drifts. Table tests over `SyntaxFacts` in
       both directions belong here too.
+
+- [x] **Done 2026-09-25, except the snapshot: 86 tests** in `Business.Tests/FlowScript/`, and the
+      two round-trip probes deleted.
+      - `ScriptRoundTripTests`: print, read, bind, print over `SampleFlow` - every area and point
+        form, templates with every fact - byte identical; and the defaults a hand-written script
+        gets, one test each.
+      - `ScriptImportExportTests`: a real SQLite database per test. Export, import, export - the
+        bytes, and every area, point and template row compared field by field; the replace keeps
+        the flow's id; a template with no header line is clicked in its middle; a typo is refused
+        and leaves the flow exactly as it was.
+      - `SyntaxFactsTests`: every keyword, condition, title match, scroll direction, button,
+        match mode and `scales with` written and read back, and the number readers.
+      - `ParserDiagnosticsTests`: every diagnostic code from the smallest script that earns it, with
+        its line. The last test fails when a code is added without a case, so a new rule cannot
+        arrive untested.
+
+      **It found the `Ctrl+1` bug's twin:** `System` and `Run` parsed their enum with
+      `Enum.TryParse`, so `System 99` was accepted as a system action that does not exist and
+      `Run 2 "notepad"` became the preset at position 2. The printer writes names, so only a hand
+      or AI written script could reach it. `SyntaxFacts.TryReadName` takes a member's exact name
+      and nothing else.
+
+      **The snapshot is waiting on a decision.** Verify 33 fails the build until the project
+      declares GitHub sponsorship, a paid licence, an exemption (open source with no revenue, under
+      US$10,000 revenue, or a consulting engagement), or that it accepts being in breach. Which is
+      true is a statement about the project, so Verify was taken out rather than configured. The
+      alternative is an approved-file comparison written here - read the approved file, compare,
+      write the received one beside it on a difference - which is about twenty lines.
 
 ### Layer 4 - `ExecutionFlowWalker`
 

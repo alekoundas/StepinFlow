@@ -562,7 +562,9 @@ be imported with and an error is not.
 Export, import, export again, byte identical — over a flow using both search kinds, all four search
 modes, every placement form, branches, a loop, a section, a comment and cleanup under
 `End Execution`. It runs two ways: purely, and through a real database with template bytes written
-to disk and read back. See `probes/`.
+to disk and read back - where the imported rows are also compared with the originals field by
+field, because identical bytes cannot see a field the printer never prints. See
+`backend/Tests/Business.Tests/FlowScript/`.
 
 It earned that status on its first run by finding a writer bug: `Scroll` emitted `in match`, because
 the writer used the point-target fragment for its `in` clause and that falls through to "match" when

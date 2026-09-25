@@ -432,7 +432,7 @@ namespace Business.FlowScript.Syntax
 
         private static void ReadSystemAction(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
         {
-            if (Enum.TryParse(line.Word(at), out SystemActionTypeEnum action))
+            if (SyntaxFacts.TryReadName(line.Word(at), out SystemActionTypeEnum action))
             {
                 parsed.Step.SystemActionType = action;
                 return;
@@ -446,7 +446,7 @@ namespace Business.FlowScript.Syntax
             // Launch already carries its preset from the keyword; Run may name one before the value.
             if (parsed.Step.RunCommandPreset == RunCommandPresetEnum.CUSTOM
                 && !line.Tokens[at].WasQuoted
-                && Enum.TryParse(line.Word(at), out RunCommandPresetEnum preset))
+                && SyntaxFacts.TryReadName(line.Word(at), out RunCommandPresetEnum preset))
             {
                 parsed.Step.RunCommandPreset = preset;
                 at++;

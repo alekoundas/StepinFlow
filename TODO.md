@@ -122,9 +122,9 @@ is lost between sessions.
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing
       for a drag. So a click stored as null returns as left, and a drag stored as left returns as
-      null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field
-      `ScriptRoundTripDatabase` still reports as changed, and the only thing stopping that probe
-      comparing steps as strictly as it compares areas and templates.
+      null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
+      trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
+      strictly as it compares areas, points and templates.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.

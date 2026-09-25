@@ -362,6 +362,21 @@ namespace Business.FlowScript.Syntax
             }
         }
 
+        /// <summary>
+        /// A member of <typeparamref name="TEnum"/> by its exact name. Not Enum.TryParse, which
+        /// also takes a number - any number, whether a member has it or not.
+        /// </summary>
+        public static bool TryReadName<TEnum>(string word, out TEnum value) where TEnum : struct, Enum
+        {
+            value = default;
+
+            if (!Enum.GetNames<TEnum>().Contains(word, StringComparer.Ordinal))
+                return false;
+
+            value = Enum.Parse<TEnum>(word);
+            return true;
+        }
+
         public static ScalesWithEnum? ReadScalesWith(string word)
         {
             switch (word)
