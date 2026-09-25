@@ -66,8 +66,19 @@ namespace Business.Executions.Workers
                 ExecutionStep read = await ReadAsync(step, bounds, cache, ct);
                 bool satisfied = read.Outcome == StepOutcomeEnum.SUCCESS;
 
-                if (satisfied == wantSatisfied)
+                if (satisfied == wantSatisfied && wantSatisfied)
                     return read;
+
+                // No longer saying it is what this mode waits for, so it is a success - the read
+                // itself failed its condition, which on its own reads as a failure.
+                if (satisfied == wantSatisfied)
+                {
+                    ExecutionStep gone = ExecutionStep.Success(message: $"No longer {ConditionEvaluatorHelper.Describe(step)}.");
+                    gone.Value = read.Value;
+                    gone.Screenshot = read.Screenshot;
+
+                    return gone;
+                }
 
                 // A zero timeout waits for ever.
                 if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)

@@ -65,8 +65,20 @@ namespace Business.Executions.Workers
                 ExecutionStep search = Search(step, area, cache);
                 bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
 
-                if (found == wantFound)
+                if (found == wantFound && wantFound)
                     return search;
+
+                // Gone is what this mode waits for, so it is a success - the search itself said
+                // "nothing matched", which on its own reads as a failure.
+                if (found == wantFound)
+                {
+                    ExecutionStep gone = ExecutionStep.Success(message: "No longer on screen.");
+                    gone.Screenshot = search.Screenshot;
+                    gone.BestScore = search.BestScore;
+                    gone.BestTemplateId = search.BestTemplateId;
+
+                    return gone;
+                }
 
                 // A zero timeout waits for ever.
                 // The closest any attempt came, not the last one. "It peaked at 0.78 over sixty

@@ -108,6 +108,15 @@ is lost between sessions.
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
 
+- [ ] **Scrolling left or right scrolls up.** `CursorStepWorker.Scroll` only checks for `DOWN`, and
+      `IInputService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
+      `left` and `right` turn the vertical wheel. Needs a horizontal wheel on the port and in the
+      adapter. `InputWorkerTests` pins today's behaviour, so the test changes with the fix.
+- [ ] **`SystemCommandStepWorker` has no test because it takes an `IMapper`.** It maps the step to a
+      `FlowStepDto` only because `ICommandRunner.RunAsync` takes one; the runner needs a command,
+      a preset and the exit codes. Giving the runner what it needs removes the mapper, makes the
+      worker testable with a fake runner, and is one less AutoMapper use to decide on.
+
 ## Flow script
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a

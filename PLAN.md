@@ -1576,7 +1576,7 @@ the first two layers need no production change at all.
 
 ### Layer 2 - the workers
 
-- [ ] Testable with no production change, because of the ports. The entry toll is a
+- [x] Testable with no production change, because of the ports. The entry toll is a
       `FakeExecutionCache` (twelve members - let it throw `NotImplementedException` on the ones no
       test needs yet) and a step builder; every worker after the first costs five lines.
 
@@ -1595,6 +1595,30 @@ the first two layers need no production change at all.
       both, one line each. The second is worth doing regardless - a shared `Random` instance is
       documented as not thread-safe and corrupts silently rather than throwing, which does not bite
       on a single-threaded walk today and is not a property to rely on.
+
+- [x] **Done 2026-09-25: 54 tests over eleven of the twelve workers**, in
+      `Business.Tests/Executions/Workers/`. No `FakeExecutionCache` after all: the real
+      `ExecutionCacheService` is plain dictionaries and only needs the screenshot service when
+      asked to keep screenshots, so the tests use it - and exercise it along the way. The ports are
+      hand-written fakes that record what they were told as readable lines - `"move 200,80"`,
+      `"press LeftCtrl+LeftShift+T"` - so an assertion reads like the flow. `NotifyStepWorker` runs
+      against a real SQLite database in memory, built by the real migrations (`TestDatabase`).
+
+      `WaitStepWorker` takes a `TimeProvider` and uses `Random.Shared`, as planned: a five-second
+      wait is tested by moving a fake clock 4999ms and then 1ms. The two search workers needed no
+      change - their give-up clock is already the injected `TimeProvider`, and a fake one that
+      advances a second on every read ends a timed wait in a few polls.
+
+      **It found a bug that has been there since the wait modes were written:** `Wait Until No
+      Image` and `Wait Until No Text` returned **failure** when the thing went away. The loop
+      returned the search's own "nothing matched", which is a failure, so the step took its Failure
+      branch exactly when it should have succeeded - and when it timed out with the thing still
+      there, it failed too. Both workers now return a success when the thing is gone, keeping the
+      screenshot, score and last read. The docs said so all along.
+
+      Not tested: `SystemCommandStepWorker`, which takes an `IMapper` to turn the step into the dto
+      `ICommandRunner` wants - so its test would need the AutoMapper profile that lives in `App`.
+      In `TODO.md`, with the horizontal scroll gap the cursor tests pinned down.
 
 ### Layer 3 - the flow script
 

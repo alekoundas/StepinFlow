@@ -11,6 +11,10 @@ namespace Business.Tests.Fakes
         public WindowHandle Window { get; set; } = WindowHandle.None;
         public Rectangle Bounds { get; set; }
         public List<WindowQuery> Queries { get; } = new List<WindowQuery>();
+        public List<string> Actions { get; } = new List<string>();
+
+        // What focus, resize and move report: false is a window that refused.
+        public bool Obeys { get; set; } = true;
 
         public WindowHandle FindWindow(WindowQuery query)
         {
@@ -45,17 +49,20 @@ namespace Business.Tests.Fakes
 
         public bool FocusWindow(WindowHandle handle)
         {
-            throw new NotImplementedException();
+            Actions.Add("focus");
+            return Obeys;
         }
 
         public bool ResizeWindow(WindowHandle handle, int width, int height)
         {
-            throw new NotImplementedException();
+            Actions.Add($"resize {width}x{height}");
+            return Obeys;
         }
 
         public bool MoveWindow(WindowHandle handle, int x, int y)
         {
-            throw new NotImplementedException();
+            Actions.Add($"move {x},{y}");
+            return Obeys;
         }
 
         public bool CloseWindow(WindowHandle handle)
