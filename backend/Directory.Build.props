@@ -8,6 +8,8 @@
     
   -->
   <PropertyGroup>
+    
+    <!-- Analyzers -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
 
@@ -23,6 +25,10 @@
           NU1903 - High
           NU1904 - Critical-->
     <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+
+    <!-- Required for the IDE0005(dead usings) rule to work, by setting it to "true" you tell the compiler: 
+         "I want to generate a complete metadata map of my public code to expose to external systems."-->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <!-- BannedApiAnalyzers -->
@@ -39,6 +45,36 @@
   <!-- Platform.Windows ONLY. -->
   <ItemGroup Condition="$(MSBuildProjectName) == 'Platform.Windows'">
     <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <!-- Test projects ONLY -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <!-- xUnit v3: every test project is its own executable. -->
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- xUnit generates Main and blocks on a Task in it - right there, since nothing above Main can
+         await. This switch silences warnings in that generated file and nowhere else. -->
+    <DefineConstants>$(DefineConstants);XUNIT_GENERATED_DISABLE_WARNINGS</DefineConstants>
+
+    <!-- Exit code 8 is "no tests ran". A project with none yet, or one whose tests are all filtered
+         out - the desktop-only ones in a headless run - is not a failure. -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" PrivateAssets="all" />
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <!-- coverlet.collector is VSTest only; this is coverlet for the test platform dotnet test uses now. -->
+    <PackageReference Include="coverlet.MTP" Version="10.0.1" PrivateAssets="all" />
+
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
   </ItemGroup>
 
 </Project>

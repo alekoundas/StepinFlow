@@ -1406,9 +1406,44 @@ Groundwork already in: `FlowValidationService` with its rules, `FlowCheckHelper`
 
 ## Tests
 
-There is no test project yet. The order below is what makes one cheap, and the first two layers
-need no production change at all. Do it after phase 5.6, so nothing is written against a namespace
-that is about to move.
+**Started 2026-09-25**, after phase 5.6 as planned. The order below is what makes it cheap, and
+the first two layers need no production change at all.
+
+#### Decided 2026-09-25
+
+- **xUnit v3 and Shouldly.** TUnit was weighed and passed over: everything here works with it, but
+  Stryker's runner for it is in preview and Fine Code Coverage cannot drive it from Test Explorer,
+  in exchange for a start-up speed this suite would not notice. FluentAssertions 7 pinned was ruled
+  out - a routine upgrade to v8 would put a paid licence into a GPL repository.
+- **One `.Tests` project per production project, all six, plus `Architecture.Tests`**, in
+  `backend/Tests/` and the solution folder `/Tests/`, capital T in both.
+- **Test names are sentences**: `A_missing_required_template_fails_the_search_even_when_others_match`,
+  the class naming the subject.
+- **Stop before layer 5.** The engine's production changes wait; `WaitStepWorker`'s does not.
+- **Promoted probes are deleted.**
+- **CI waits for phase 12.**
+
+#### What the scaffolding turned out to need
+
+- **`dotnet test` on the .NET 10 SDK runs xUnit v3 through Microsoft.Testing.Platform**, and refuses
+  the old VSTest mode outright. `backend/global.json` opts in -
+  `"test": { "runner": "Microsoft.Testing.Platform" }`. It is read by the `dotnet` CLI before
+  anything builds, so it cannot live in code; the npm scripts and Visual Studio both start in
+  `backend/`, where it is found. The switches changed with it: `dotnet test --solution backend.slnx`,
+  `--project`, and test-app options after `--`.
+- **Coverage is `coverlet.MTP`, not `coverlet.collector`**, which is VSTest only.
+  `npm run test:backend` and `npm run coverage:backend`; the second clears `backend/TestResults`,
+  collects cobertura with Shouldly and xUnit excluded, and writes `backend/coveragereport/` through
+  ReportGenerator pinned as a local tool in `backend/dotnet-tools.json`. Both JSON files are
+  solution items; both output folders are gitignored.
+- **xUnit's generated `Main` blocks on a Task**, which the banned-API list refuses.
+  `XUNIT_GENERATED_DISABLE_WARNINGS` silences warnings in that generated file and nowhere else - an
+  `.editorconfig` section on the path did not take.
+- **Exit code 8 - no tests ran - is ignored**, so an empty project, or one whose tests a filter
+  removes, is not a failure.
+- **One `Directory.Build.props`.** The test settings sit in the backend one under
+  `Condition="$(MSBuildProjectName.EndsWith('.Tests'))"` rather than in a second file under
+  `Tests/`. No analyzer rule needed relaxing for test code so far.
 
 ### The shape
 
@@ -1473,12 +1508,19 @@ that is about to move.
 
 ### Layer 0 - `Core/Helpers` and the four pure ones
 
-- [ ] Pure static functions, no fakes, no fixtures, nothing to arrange but an argument.
+- [x] Pure static functions, no fakes, no fixtures, nothing to arrange but an argument.
       `ConditionEvaluatorHelper`, `VariableTranslator`, `KeyCombinationHelper`, `FlowNameHelper`,
       `TreeStepHelper`, `FlowStructureHasher`, `WindowMatcherHelper`, `TextExtractHelper`, and the
       150 lines of drag-and-drop rules in `TreeStepMoveHelper`. An afternoon, and it gets the
       solution wired, `dotnet test` green and the `Directory.Build.props` question settled before
       anything harder starts.
+
+      **Done 2026-09-25: 107 tests**, 69 in `Core.Tests`, 38 in `Business.Tests` for the four that
+      moved there in 5.6. **It found a bug on the first run:** `KeyCombinationHelper` parsed the key
+      with `Enum.TryParse`, which reads `"1"` as the member at position 1 and `"A,B"` as both OR'd
+      together - so `Press Ctrl+1`, written by hand or by the AI, pressed **Ctrl+B**. The recorder
+      writes `Num1`, which is why nobody saw it. Rewritten as two lookup tables - modifier names,
+      and every key name plus the digits as number keys - so nothing outside a table is a key.
 
 ### Layer 1 - architecture tests
 
@@ -1487,9 +1529,11 @@ that is about to move.
       nothing outside `Platform.Windows` names OpenCvSharp or SharpHook; `Core` depends on nothing
       but the framework; `Business` does not reference MediatR.
 
-      **Two of those fail today** - `Core` carries MediatR and protobuf-net - which is the point.
       They turn PROJECT.md section 2 from a claim into a build failure, and they are what stops
-      phase 5.6's boundary from quietly eroding afterwards.
+      phase 5.6's boundary from quietly eroding afterwards. **They all pass now** - MediatR went
+      and protobuf-net moved to `Transport` in 5.6 - so they are guards from the first run rather
+      than failures to fix. Add: `Transport` does not reference `Platform.Windows`, `Business` does
+      not reference `Transport`, and no `Business.Services` namespace comes back.
 
 ### Layer 2 - the workers
 

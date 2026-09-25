@@ -5,10 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <!-- Required for the IDE0005(dead usings) rule to work, by setting it to "true" you tell the compiler: 
-         "I want to generate a complete metadata map of my public code to expose to external systems."-->
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
     <!-- The [LibraryImport] attribute causes the source generator to emit unsafe code (marshalling C# -> c++ data mapping and back). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     

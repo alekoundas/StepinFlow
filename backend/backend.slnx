@@ -1,8 +1,19 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
     <File Path="BannedSymbols.txt" />
+    <File Path="global.json" />
+    <File Path="dotnet-tools.json" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/App.Tests/App.Tests.csproj" />
+    <Project Path="Tests/Architecture.Tests/Architecture.Tests.csproj" />
+    <Project Path="Tests/Business.Tests/Business.Tests.csproj" />
+    <Project Path="Tests/Core.Tests/Core.Tests.csproj" />
+    <Project Path="Tests/DataAccess.Tests/DataAccess.Tests.csproj" />
+    <Project Path="Tests/Platform.Windows.Tests/Platform.Windows.Tests.csproj" />
+    <Project Path="Tests/Transport.Tests/Transport.Tests.csproj" />
   </Folder>
   <Project Path="App/App.csproj" />
   <Project Path="Business/Business.csproj" />

@@ -1,17 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- net10.0, not net10.0-windows. The domain does not know what it is running on: everything
-       that touches the machine lives in Platform.Windows, which this project does not reference.
-       If a change here needs a Windows target framework back, it belongs on the other side of a
-       port instead. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
-    <!-- Required for the IDE0005(dead usings) rule to work, by setting it to "true" you tell the compiler: 
-         "I want to generate a complete metadata map of my public code to expose to external systems."-->
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     
   </PropertyGroup>
 

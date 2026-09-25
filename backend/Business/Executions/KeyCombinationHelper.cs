@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Core.Enums.Business;
 
 namespace Business.Executions
@@ -14,37 +16,41 @@ namespace Business.Executions
     /// </summary>
     public static class KeyCombinationHelper
     {
+        // Left and right are one shortcut to a reader, and the left one is what a keyboard sends
+        // when nobody said which.
+        private static readonly Dictionary<string, KeyCodeEnum> Modifiers = new Dictionary<string, KeyCodeEnum>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ctrl"] = KeyCodeEnum.LeftCtrl,
+            ["control"] = KeyCodeEnum.LeftCtrl,
+            ["alt"] = KeyCodeEnum.LeftAlt,
+            ["shift"] = KeyCodeEnum.LeftShift,
+            ["win"] = KeyCodeEnum.LeftMeta,
+            ["meta"] = KeyCodeEnum.LeftMeta,
+            ["cmd"] = KeyCodeEnum.LeftMeta,
+        };
+
+        // Every key by the name the recorder writes, and a digit as the number key. Nothing outside
+        // this table is a key.
+        private static readonly Dictionary<string, KeyCodeEnum> Keys = BuildKeys();
+
         public static bool TryParse(string text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key)
         {
             modifiers = new List<KeyCodeEnum>();
             key = KeyCodeEnum.Unknown;
 
-            if (string.IsNullOrWhiteSpace(text))
+            string[] parts = (text ?? string.Empty).Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0)
                 return false;
 
-            List<string> parts = text
-                .Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-
-            if (parts.Count == 0)
-                return false;
-
-            for (int i = 0; i < parts.Count - 1; i++)
+            foreach (string part in parts[..^1])
             {
-                KeyCodeEnum? modifier = Modifier(parts[i]);
-                if (modifier == null)
+                if (!Modifiers.TryGetValue(part, out KeyCodeEnum modifier))
                     return false;
 
-                modifiers.Add(modifier.Value);
+                modifiers.Add(modifier);
             }
 
-            KeyCodeEnum? pressed = Key(parts[^1]);
-            if (pressed == null)
-                return false;
-
-            key = pressed.Value;
-
-            return true;
+            return Keys.TryGetValue(parts[^1], out key);
         }
 
 
@@ -52,39 +58,16 @@ namespace Business.Executions
         // Private methods
         // ================================================================
 
-        // Left and right are one shortcut to a reader, and the left one is what a keyboard sends
-        // when nobody said which.
-        private static KeyCodeEnum? Modifier(string name)
+        private static Dictionary<string, KeyCodeEnum> BuildKeys()
         {
-            switch (name.ToLowerInvariant())
-            {
-                case "ctrl":
-                case "control":
-                    return KeyCodeEnum.LeftCtrl;
+            Dictionary<string, KeyCodeEnum> keys = Enum.GetValues<KeyCodeEnum>()
+                .Where(x => x != KeyCodeEnum.Unknown)
+                .ToDictionary(x => x.ToString(), StringComparer.OrdinalIgnoreCase);
 
-                case "alt":
-                    return KeyCodeEnum.LeftAlt;
+            for (int digit = 0; digit <= 9; digit++)
+                keys[digit.ToString(CultureInfo.InvariantCulture)] = KeyCodeEnum.Num0 + digit;
 
-                case "shift":
-                    return KeyCodeEnum.LeftShift;
-
-                case "win":
-                case "meta":
-                case "cmd":
-                    return KeyCodeEnum.LeftMeta;
-
-                default:
-                    return null;
-            }
-        }
-
-        // Named the way the recorder wrote it, which is the KeyCodeEnum member.
-        private static KeyCodeEnum? Key(string name)
-        {
-            if (!Enum.TryParse(name, true, out KeyCodeEnum parsed))
-                return null;
-
-            return parsed == KeyCodeEnum.Unknown ? null : parsed;
+            return keys;
         }
     }
 }

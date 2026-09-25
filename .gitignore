@@ -29,3 +29,7 @@ backend/Core/AiModels/
 # Probes
 probes/**/bin/
 probes/**/obj/
+
+# Test output: results and coverage reports are produced per run, never committed.
+TestResults/
+coveragereport/

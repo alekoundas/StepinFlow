@@ -131,3 +131,4 @@ dotnet_diagnostic.IDE0005.severity = none
 [Business/Command/**.cs]
 dotnet_diagnostic.RS0030.severity = none
 
+
