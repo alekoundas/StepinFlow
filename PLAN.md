@@ -1524,7 +1524,7 @@ the first two layers need no production change at all.
 
 ### Layer 1 - architecture tests
 
-- [ ] Highest value per line in the whole suite **for this repository specifically**, because
+- [x] Highest value per line in the whole suite **for this repository specifically**, because
       separation of concerns is the thesis. `Business` does not reference `Platform.Windows`;
       nothing outside `Platform.Windows` names OpenCvSharp or SharpHook; `Core` depends on nothing
       but the framework; `Business` does not reference MediatR.
@@ -1534,6 +1534,45 @@ the first two layers need no production change at all.
       and protobuf-net moved to `Transport` in 5.6 - so they are guards from the first run rather
       than failures to fix. Add: `Transport` does not reference `Platform.Windows`, `Business` does
       not reference `Transport`, and no `Business.Services` namespace comes back.
+
+      **Done 2026-09-25: 9 tests** in `Architecture.Tests/LayerTests.cs`. Five layer rules with
+      ArchUnitNET, one per project, each naming what it may not depend on; the two native
+      libraries and "Core uses nothing but the framework" as plain reflection over each assembly's
+      references, because ArchUnitNET only sees types in the assemblies it loads; and no `Services`
+      namespace in `Business`.
+
+      **Found while checking they can fail:** today no forbidden edge can even be written. Every
+      one between the `net10.0` projects would be a reference cycle, and every one into
+      `Platform.Windows` or `App` is a target framework `net10.0` cannot reference. So the rules
+      first bite when someone gives a project a Windows framework to reach the machine - which is
+      how `Business` was before the split. A throwaway rule that is false today, Transport not
+      depending on Business, failed and named every handler that does, so the shape works. The
+      library rule lists `Platform.Windows` as well and expects exactly it, so a misspelt library
+      name cannot pass by finding nothing.
+
+### Layer 2a - the decision code phase 5.7 added
+
+- [x] **Done 2026-09-25: 62 tests in `Business.Tests`**, against four hand-written fakes in
+      `Business.Tests/Fakes/` - screen, window, screenshot and matcher. Each records what it was
+      asked and throws on anything a test did not expect, so an unplanned call fails loudly. This is
+      also the test 5.7 deferred.
+      - **`AreaPointResolver`, 24:** the primary monitor as an empty name, a named one matched
+        whatever the case, an unplugged one naming itself; the DPI of the monitor holding most of an
+        area, the primary's for an area on none, 96 with no monitors; `ScalesWith` default,
+        inherited and overridden; a pixel child scaled by its DPI inside a DPI parent and not inside
+        an AREA one; percent children, cropping, windows; points by their own DPI, in percent, and
+        brought to their area's edge.
+      - **`ImageSearcher`, 21:** the ratio in each kind of area, including that an AREA area does
+        not also apply DPI; what the matcher is asked; the required rule in each combination; where
+        a hit clicks; the closest score and template when nothing passes; errors.
+      - **`FlowValidationService`, 17:** through the public entry point, so each rule is tested with
+        the others running - required fields, reading a result across a branch, End Execution under
+        End Execution, unknown variables, duplicate names including area against point, checks that
+        decide nothing, and every screen-coordinate case.
+
+      **Checked that they bite:** two bugs planted in `ImageSearcher` - the required rule switched
+      off, and the larger size ratio taken instead of the smaller - each failed exactly the test
+      written for it, and nothing else.
 
 ### Layer 2 - the workers
 
