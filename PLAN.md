@@ -1717,6 +1717,19 @@ the first two layers need no production change at all.
 | timestamp interceptor | a `DataAccess` test - `CreatedOn` on insert, `UpdatedOn` on modify, neither re-stamped |
 | P/Invoke entry points | **stays a probe, or becomes a traited test** |
 
+- [x] **`DataAccess.Tests`, done 2026-09-25: 9 tests** against a real SQLite database per test,
+      and the timestamp probe deleted.
+      - The interceptor: a row is stamped when saved and not before; a change stamps `UpdatedOn`
+        and leaves `CreatedOn` alone. The clock is a `FakeTimeProvider` set to 2031.
+      - Every migration applies to an empty database, and **the model has no change without a
+        migration** - EF Core's `HasPendingModelChanges`. Checked by adding a column to
+        `FlowPoint` with no migration: every DataAccess test failed, because EF Core 10 refuses
+        `Migrate()` outright in that state - which means so would the app on startup.
+      - The deletes PROJECT.md and the AI docs promise, through `ExecuteDelete` so SQLite's own
+        foreign keys do the work: an area clears from its steps and detaches the regions inside it;
+        a point clears from both ends of a drag; a step takes its children and templates with it;
+        and its execution history survives with the name it ran under.
+
 - [ ] **`PInvokeEntryPoints` needs a live desktop session** - it reads the foreground window - so it
       can never run in headless CI. Give it `[Trait("Category", "Desktop")]` and filter it out of
       the default run **from day one**, rather than discovering it when CI first goes red. Real
