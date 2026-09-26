@@ -11,10 +11,17 @@ namespace Business.Tests.Executions.Workers
 {
     public sealed class InputWorkerTests
     {
+        // ================================================================
+        // Fakes
+        // ================================================================
         private readonly FakeInputService _input = new FakeInputService { Position = new Point(10, 20) };
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
         private readonly FakeWindowService _windows = new FakeWindowService { Window = new WindowHandle(42) };
 
+
+        // ================================================================
+        // Private methods
+        // ================================================================
         private static CancellationToken Ct
         {
             get { return TestContext.Current.CancellationToken; }
@@ -35,6 +42,7 @@ namespace Business.Tests.Executions.Workers
         {
             return await new WindowStepWorker(_resolver, _windows).ExecuteAsync(step, await WorkerCache.ForAsync(step), Ct);
         }
+
 
         // ================================================================
         // Cursor

@@ -100,8 +100,10 @@ namespace Business.Command
             },
         ];
 
-        public static CommandPresetDto Get(RunCommandPresetEnum preset) =>
-            All.First(x => x.Preset == preset);
+        public static CommandPresetDto Get(RunCommandPresetEnum preset)
+        {
+            return All.First(x => x.Preset == preset);
+        }
 
         /// <summary>The command a step would run, with its preset parameter filled in.</summary>
         public static string Resolve(RunCommandPresetEnum preset, string value)
@@ -111,9 +113,14 @@ namespace Business.Command
 
             CommandPresetDto definition = Get(preset);
 
-            return definition.HasParameter
-                ? definition.CommandTemplate.Replace("{0}", value)
-                : definition.CommandTemplate;
+            if (definition.HasParameter)
+            {
+                return definition.CommandTemplate.Replace("{0}", value);
+            }
+            else
+            {
+                return definition.CommandTemplate;
+            }
         }
     }
 }

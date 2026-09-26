@@ -11,9 +11,14 @@ namespace Business.Tests.Searching
     {
         private static readonly Rectangle Bounds = new Rectangle(100, 200, 1920, 1080);
 
+        // Fakes
         private readonly FakeScreenshotService _screenshots = new FakeScreenshotService();
         private readonly FakeOpenCvService _matcher = new FakeOpenCvService();
 
+
+        // ================================================================
+        // Private methods
+        // ================================================================
         private ImageSearchResult Search(AreaResolution area, IReadOnlyList<SearchTemplate> templates, bool stopAtFirstHit = true, SearchSettings? settings = null)
         {
             return new ImageSearcher(_screenshots, _matcher).Search(area, settings ?? new SearchSettings(), templates, stopAtFirstHit);
@@ -29,6 +34,10 @@ namespace Business.Tests.Searching
         {
             return new SearchTemplate { Image = [id], Accuracy = 0.8f, IsRequired = isRequired, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height };
         }
+
+
+
+
 
         // ================================================================
         // How much a template is scaled

@@ -6,12 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Tests.Fakes
 {
     /// <summary>
-    /// A real SQLite database in memory, one per test, built by the real migrations - so a broken
-    /// migration fails a test rather than a user.
-    ///
-    /// The database lives inside the connection, so the one connection is held open for the test
-    /// and handed to every context. Given a connection string instead, each context would open
-    /// its own empty database.
+    /// A real SQLite database in memory, one per test, built by the real migrations. 
+    /// The database lives inside the connection, so one connection is held open and handed to every context.
+    /// NO DISK FILE
     /// </summary>
     public sealed class TestDatabase : IDbContextFactory<AppDbContext>, IDisposable
     {

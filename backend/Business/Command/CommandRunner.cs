@@ -11,6 +11,7 @@ namespace Business.Command
     {
         public async Task<RunCommandTestResultDto> RunAsync(FlowStepDto step, CancellationToken ct = default)
         {
+            // Find command.
             string command = CommandPresetCatalog.Resolve(step.RunCommandPreset, step.RunCommandValue);
 
             RunCommandTestResultDto result = new RunCommandTestResultDto { ResolvedCommand = command };
@@ -21,12 +22,14 @@ namespace Business.Command
                 return result;
             }
 
+            // Start timeout timer.
             using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
             if (step.TimeoutMilliseconds > 0)
                 timeoutSource.CancelAfter(step.TimeoutMilliseconds);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
+            // Actual execution.
             try
             {
                 await ExecuteAsync(step, command, result, timeoutSource.Token);
@@ -57,14 +60,12 @@ namespace Business.Command
         // Private methods
         // ================================================================
 
-        private static async Task ExecuteAsync(
-            FlowStepDto step, string command, RunCommandTestResultDto result, CancellationToken ct)
+        private static async Task ExecuteAsync(FlowStepDto step, string command, RunCommandTestResultDto result, CancellationToken ct)
         {
             using Process process = new Process { StartInfo = BuildStartInfo(step, command) };
             process.Start();
 
-            // Read before waiting. The pipe buffer is a few KB and a command that fills it blocks
-            // on the write while we block on the exit, and neither side ever moves again.
+            // Read before waiting.
             Task<string> stdout = process.StandardOutput.ReadToEndAsync(ct);
             Task<string> stderr = process.StandardError.ReadToEndAsync(ct);
 
@@ -81,8 +82,9 @@ namespace Business.Command
             }
 
             result.ExitCode = process.ExitCode;
-            result.StandardOutput = Clean(await stdout);
-            result.StandardError = Clean(await stderr);
+
+            result.StandardOutput = (await stdout).TrimEnd('\r', '\n');
+            result.StandardError = (await stderr).TrimEnd('\r', '\n');
         }
 
         private static ProcessStartInfo BuildStartInfo(FlowStepDto step, string command)
@@ -121,12 +123,6 @@ namespace Business.Command
             }
 
             return startInfo;
-        }
-
-        /// <summary>ReadToEnd keeps the final newline, and every comparison downstream would fail on it.</summary>
-        private static string Clean(string output)
-        {
-            return output.TrimEnd('\r', '\n');
         }
 
         private static bool IsSuccessExitCode(string successExitCodes, int exitCode)
