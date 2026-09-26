@@ -1317,15 +1317,15 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-358 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+365 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 83 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
-| `Business.Tests` | 258 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 264 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
-| `Architecture.Tests` | 8 | the layering in §2 as failing tests |
+| `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
 
 ```bash
@@ -1359,7 +1359,7 @@ and the class names the subject. One class per subject, so
 class called `SimpleWorkerTests` or `InputWorkerTests` names a bucket, and the `// ====` banners
 inside it were doing the work a class name should do - the same mistake as `Parser.Steps.cs`, where
 the dot was the symptom and the partial was the thing. It also means a missing file is a visible
-gap: there is no `SystemCommandStepWorkerTests`, which is the `IMapper` item in `TODO.md`.
+gap - which is how the last untested worker got its tests.
 
 ### What the wiring needed
 
@@ -1435,7 +1435,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 358 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 365 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

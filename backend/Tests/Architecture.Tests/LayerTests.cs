@@ -86,6 +86,17 @@ namespace Architecture.Tests
         }
 
         [Fact]
+        public void Only_the_transport_and_the_composition_root_use_AutoMapper()
+        {
+            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformWindows, App }
+                .Where(x => x.GetReferencedAssemblies().Any(r => r.Name == "AutoMapper"))
+                .Select(x => x.GetName().Name ?? string.Empty)
+                .ToList();
+
+            users.ShouldBe(["Transport", "App"]);
+        }
+
+        [Fact]
         public void Core_uses_nothing_but_the_framework()
         {
             string framework = Path.GetDirectoryName(typeof(object).Assembly.Location) ?? string.Empty;

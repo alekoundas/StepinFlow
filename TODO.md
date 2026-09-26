@@ -97,11 +97,6 @@ the history.
       `IInputService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
       `left` and `right` turn the vertical wheel. Needs a horizontal wheel on the port and in the
       adapter. `InputWorkerTests` pins today's behaviour, so the test changes with the fix.
-- [ ] **`SystemCommandStepWorker` has no test because it takes an `IMapper`.** It maps the step to a
-      `FlowStepDto` only because `ICommandRunner.RunAsync` takes one; the runner needs a command,
-      a preset and the exit codes. Giving the runner what it needs removes the mapper, makes the
-      worker testable with a fake runner, and is one less AutoMapper use to decide on.
-
 - [ ] **Decide how long a step's result lives.** `ExecutionFlowWalker.Pop` writes the popped step's
       depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
       entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays
@@ -375,7 +370,12 @@ the history.
       Last freely licensed version: AutoMapper 13.x, Apache-2.0. Pinning is the cheap escape; the
       local NuGet cache still has `automapper/13.0.1`.
 
-      **Not decided.** 77 sites and one profile, so it is a real job. `Mapperly` is
+      **It is contained**, 2026-09-26: `Business` no longer references it at all, so every remaining
+      use is in `Transport` mapping entities onto dtos, plus the profile in `App`. Naming `IMapper`
+      in the domain is now a compile error rather than a habit, and an architecture test says which
+      two projects may hold it. Whatever replaces it is a change to one layer.
+
+      **Not decided.** 61 sites and one profile, so it is a real job. `Mapperly` is
       the replacement worth the effort rather than a like-for-like swap - MIT, source generated,
       and a missing property becomes a build error instead of a runtime surprise, which is the
       trade phase 4.6 made everywhere else.
