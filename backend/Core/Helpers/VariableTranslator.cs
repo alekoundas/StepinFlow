@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 using Core.Models.Business;
 using Core.Models.Database;
 
@@ -17,15 +15,12 @@ namespace Core.Helpers
         /// <summary>Reserved names, translated from the viewport rather than from the flow.</summary>
         public static readonly string[] ViewportNames = ["width", "height"];
 
-        private static readonly TimeSpan _patternTimeout = TimeSpan.FromMilliseconds(200);
-
         // Four braces are an escaped pair, the way string.Format escapes one. Anything else between
         // a pair of braces is a name: names hold spaces and punctuation, so the only thing ruled
         // out is another brace.
-        private static readonly Regex _variable = new Regex(
-            @"(\{\{\{\{)|\{\{\s*([^{}]+?)\s*\}\}",
-            RegexOptions.Compiled,
-            _patternTimeout);
+        private const string _variablePattern = @"(\{\{\{\{)|\{\{\s*([^{}]+?)\s*\}\}";
+        private const int _escapeGroup = 1;
+        private const int _nameGroup = 2;
 
         /// <summary>
         /// The fields a variable can be written into - the ones the workers translate.
@@ -61,12 +56,8 @@ namespace Core.Helpers
 
             List<string> names = new List<string>();
 
-            foreach (Match match in _variable.Matches(text))
+            foreach (string name in RegexHelper.Captures(text, _variablePattern, _nameGroup))
             {
-                if (!match.Groups[2].Success)
-                    continue;
-
-                string name = match.Groups[2].Value;
                 if (!names.Contains(name, StringComparer.OrdinalIgnoreCase))
                     names.Add(name);
             }
@@ -88,12 +79,13 @@ namespace Core.Helpers
 
             List<string> untranslated = new List<string>();
 
-            string translated = _variable.Replace(text, match =>
+            // The escape group can only ever hold "{{{{", so anything in it is a match on it.
+            string translated = RegexHelper.Replace(text, _variablePattern, groups =>
             {
-                if (match.Groups[1].Success)
+                if (groups[_escapeGroup].Length > 0)
                     return "{{";
 
-                string name = match.Groups[2].Value;
+                string name = groups[_nameGroup];
 
                 if (values.TryGetValue(name, out string? value))
                     return value;
@@ -101,7 +93,7 @@ namespace Core.Helpers
                 if (!untranslated.Contains(name, StringComparer.OrdinalIgnoreCase))
                     untranslated.Add(name);
 
-                return match.Value;
+                return groups[0];
             });
 
             return new VariableTranslationResult { Text = translated, Untranslated = untranslated };

@@ -11,6 +11,9 @@ P:System.DateTimeOffset.Now;Take a TimeProvider.
 # Ports
 T:System.Diagnostics.Process;Driving another program is touching the machine. Put it behind a port in Core/Ports.
 
+# Regex
+T:System.Text.RegularExpressions.Regex;Call Core.Helpers.RegexHelper. A pattern typed by a flow author must not throw when it is half written, and must give up rather than backtrack for ever.
+
 # DllImport and LibraryImport Attributes
 T:System.Runtime.InteropServices.DllImportAttribute;Native calls belong in Platform.Windows.
 T:System.Runtime.InteropServices.LibraryImportAttribute;Native calls belong in Platform.Windows.

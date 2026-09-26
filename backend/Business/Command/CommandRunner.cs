@@ -1,9 +1,9 @@
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Dtos;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Business.Command
 {
@@ -124,33 +124,29 @@ namespace Business.Command
         }
 
         /// <summary>ReadToEnd keeps the final newline, and every comparison downstream would fail on it.</summary>
-        private static string Clean(string output) => output.TrimEnd('\r', '\n');
+        private static string Clean(string output)
+        {
+            return output.TrimEnd('\r', '\n');
+        }
 
-        private static bool IsSuccessExitCode(string successExitCodes, int exitCode) =>
-            successExitCodes
+        private static bool IsSuccessExitCode(string successExitCodes, int exitCode)
+        {
+            return successExitCodes
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Any(x => int.TryParse(x, out int code) && code == exitCode);
+        }
 
         private static string Extract(FlowStepDto step, RunCommandTestResultDto result)
         {
             string source = step.ResultSource switch
             {
                 ResultSourceEnum.STDERR => result.StandardError,
-                ResultSourceEnum.COMBINED => string.Join(
-                    Environment.NewLine,
-                    new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
+                ResultSourceEnum.COMBINED => string.Join(Environment.NewLine, new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
                 ResultSourceEnum.EXIT_CODE => result.ExitCode.ToString(CultureInfo.InvariantCulture),
                 _ => result.StandardOutput,
             };
 
-            if (string.IsNullOrWhiteSpace(step.ResultExtractPattern))
-                return source;
-
-            Match match = Regex.Match(source, step.ResultExtractPattern);
-            if (!match.Success)
-                return string.Empty;
-
-            return match.Groups.Count > 1 ? match.Groups[1].Value : match.Value;
+            return RegexHelper.Extract(source, step.ResultExtractPattern);
         }
     }
 }

@@ -1,7 +1,6 @@
-using System.Text.RegularExpressions;
-
 using Core.Ports;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Dtos;
 
@@ -31,14 +30,9 @@ namespace Transport.Ipc.Handlers
 
             if (dto.TitleMatchMode == TitleMatchModeEnum.REGEX && !string.IsNullOrEmpty(dto.TitlePattern))
             {
-                try
-                {
-                    _ = Regex.Match(string.Empty, dto.TitlePattern);
-                }
-                catch (ArgumentException ex)
-                {
-                    return Task.FromResult(ResultDto<WindowMatchTestResultDto>.Failure($"That title pattern is not a valid regex: {ex.Message}"));
-                }
+                string patternError = RegexHelper.PatternError(dto.TitlePattern);
+                if (patternError.Length > 0)
+                    return Task.FromResult(ResultDto<WindowMatchTestResultDto>.Failure($"That title pattern is not a valid regex: {patternError}"));
             }
 
             List<WindowMatchDto> matches = _windowService.FindWindowMatches(query)

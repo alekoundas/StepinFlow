@@ -9,6 +9,9 @@ P:System.DateTime.Now;Take a TimeProvider. This project already does.
 P:System.DateTimeOffset.UtcNow;Take a TimeProvider.
 P:System.DateTimeOffset.Now;Take a TimeProvider.
 
+# Regex
+T:System.Text.RegularExpressions.Regex;Call Core.Helpers.RegexHelper. Matching a title is a decision, not the machine, so it belongs on the other side of the port anyway.
+
 
 # Never block an asynchronous thread synchronously.
 P:System.Threading.Tasks.Task`1.Result;Await it. Blocking on a task is how a deadlock gets built.

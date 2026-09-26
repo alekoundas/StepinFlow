@@ -1,6 +1,5 @@
 using Core.Enums;
 using Core.Models.Business;
-using System.Text.RegularExpressions;
 
 namespace Core.Helpers
 {
@@ -31,11 +30,6 @@ namespace Core.Helpers
             return true;
         }
 
-        public static bool Matches(SystemWindow window, WindowQuery query)
-        {
-            return Matches(window.Title, window.ProcessName, query);
-        }
-
         public static bool IsTitleMatch(string title, string pattern, TitleMatchModeEnum mode)
         {
             switch (mode)
@@ -47,18 +41,7 @@ namespace Core.Helpers
                     return title.StartsWith(pattern, StringComparison.OrdinalIgnoreCase);
 
                 case TitleMatchModeEnum.REGEX:
-                    try
-                    {
-                        return Regex.IsMatch(title, pattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
-                    }
-                    catch (ArgumentException)
-                    {
-                        return false; // User typed an invalid pattern.
-                    }
-                    catch (RegexMatchTimeoutException)
-                    {
-                        return false;
-                    }
+                    return RegexHelper.IsMatch(title, pattern);
 
                 case TitleMatchModeEnum.CONTAINS:
                 default:

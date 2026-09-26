@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.RegularExpressions;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -39,7 +38,7 @@ namespace Core.Helpers
                     return !actual.Contains(expected, StringComparison.OrdinalIgnoreCase);
 
                 case ConditionTypeEnum.MATCHES_REGEX:
-                    return IsRegexMatch(actual, expected);
+                    return RegexHelper.IsMatch(actual, expected);
 
                 case ConditionTypeEnum.IS_EMPTY:
                     return string.IsNullOrWhiteSpace(actual);
@@ -65,22 +64,6 @@ namespace Core.Helpers
         // ================================================================
         // Private methods
         // ================================================================
-
-        private static bool IsRegexMatch(string actual, string pattern)
-        {
-            try
-            {
-                return Regex.IsMatch(actual, pattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(200));
-            }
-            catch (ArgumentException)
-            {
-                return false;
-            }
-            catch (RegexMatchTimeoutException)
-            {
-                return false;
-            }
-        }
 
         private static bool Compare(string actual, string expected, out int comparison)
         {
