@@ -7,8 +7,8 @@ namespace Core.Ports
     public interface IInputRecordService
     {
         /// <summary>
-        /// Raised for every recorded input while any mode is active. Handlers run on the hook
-        /// thread and must return immediately.
+        /// Raised for every recorded input while any mode is active. 
+        /// Handlers run on the hook thread and must return immediately.
         /// </summary>
         public event Action<RecordedInput>? ActionRecorded;
 

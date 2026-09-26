@@ -150,7 +150,7 @@ namespace Platform.Windows.Windowing
                 if (!IsWindowVisible(hWnd))
                     return true;
 
-                if (WindowMatcherHelper.Matches(GetAppWindowText(hWnd), GetProcessName(hWnd), query))
+                if (WindowNameMatchHelper.Matches(GetAppWindowText(hWnd), GetProcessName(hWnd), query))
                     matches.Add(new WindowHandle(hWnd));
 
                 return true;

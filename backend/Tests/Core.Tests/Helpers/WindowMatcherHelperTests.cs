@@ -15,7 +15,7 @@ namespace Core.Tests.Helpers
         [InlineData("Swag Labs - Chrome", "(unclosed", TitleMatchModeEnum.REGEX, false)]
         public void A_title_is_matched_by_its_mode_ignoring_case(string title, string pattern, TitleMatchModeEnum mode, bool matches)
         {
-            WindowMatcherHelper.IsTitleMatch(title, pattern, mode).ShouldBe(matches);
+            WindowNameMatchHelper.IsTitleMatch(title, pattern, mode).ShouldBe(matches);
         }
 
         [Fact]
@@ -23,20 +23,20 @@ namespace Core.Tests.Helpers
         {
             WindowQuery query = new WindowQuery { ProcessName = "chrome", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.CONTAINS };
 
-            WindowMatcherHelper.Matches("Swag Labs", "CHROME", query).ShouldBeTrue();
-            WindowMatcherHelper.Matches("Swag Labs", "firefox", query).ShouldBeFalse();
+            WindowNameMatchHelper.Matches("Swag Labs", "CHROME", query).ShouldBeTrue();
+            WindowNameMatchHelper.Matches("Swag Labs", "firefox", query).ShouldBeFalse();
         }
 
         [Fact]
         public void An_empty_query_matches_any_window_with_a_title()
         {
-            WindowMatcherHelper.Matches("Anything", "any", new WindowQuery()).ShouldBeTrue();
+            WindowNameMatchHelper.Matches("Anything", "any", new WindowQuery()).ShouldBeTrue();
         }
 
         [Fact]
         public void A_window_with_no_title_never_matches()
         {
-            WindowMatcherHelper.Matches("  ", "chrome", new WindowQuery { ProcessName = "chrome" }).ShouldBeFalse();
+            WindowNameMatchHelper.Matches("  ", "chrome", new WindowQuery { ProcessName = "chrome" }).ShouldBeFalse();
         }
     }
 }

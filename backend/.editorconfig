@@ -105,6 +105,10 @@ dotnet_diagnostic.IDE0005.severity = none
 
 
 
+# RegexHelper is where the Regex ban points, so it is the one file allowed to name the type.
+[Core/Helpers/RegexHelper.cs]
+dotnet_diagnostic.RS0030.severity = none
+
 
 
 
@@ -123,12 +127,18 @@ dotnet_diagnostic.IDE0005.severity = none
 
 
 
-#RS0030 "The symbol is banned in this project" (backend/Rules/BannedSymbols.txt)
-# CommandRunner is the deviation, and a port would not fix it: BuildStartInfo launches cmd.exe or
-# powershell.exe and reads the console OEM code page, and every CommandPresetCatalog entry is a
-# Windows command. The question is whether the runner moves to Platform.Windows whole - see PLAN.md
-# phase 4.6. Until it is answered this is the one place Business may hold a Process.
-[Business/Command/**.cs]
-dotnet_diagnostic.RS0030.severity = none
+#RS0030 "The symbol is banned in this project" (backend/BannedSymbols.txt)
+# Two deviations. Both are whole-file, because every banned symbol shares the one diagnostic id -
+# there is no way to excuse one symbol in one place.
 
+# CommandRunner holds a Process, and a port would not fix it: BuildStartInfo launches cmd.exe or
+# powershell.exe and reads the console OEM code page, and every CommandPresetCatalog entry is a
+# Windows command. The question is whether the runner moves to Platform.Windows whole - see PLAN.md,
+# Commands and windows. Until it is answered this is the one place Business may hold a Process.
+#
+# Named file by file rather than as the folder, because every banned symbol shares this one
+# diagnostic id: switching it off excuses all of them wherever it reaches. So it reaches as little
+# as possible - the two other files here are back under the whole list, Regex included.
+[Business/Command/CommandRunner.cs]
+dotnet_diagnostic.RS0030.severity = none
 

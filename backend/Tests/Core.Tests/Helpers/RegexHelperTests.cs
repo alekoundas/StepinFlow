@@ -3,9 +3,7 @@ using Core.Helpers;
 namespace Core.Tests.Helpers
 {
     /// <summary>
-    /// The one place a regular expression runs. Most patterns are typed by a flow author, so what is
-    /// worth pinning is what happens to a pattern that is wrong rather than what happens to a good
-    /// one: nothing may throw at the caller, and nothing may run for ever.
+    /// Tests Regex Helper.
     /// </summary>
     public sealed class RegexHelperTests
     {

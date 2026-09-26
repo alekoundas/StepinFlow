@@ -194,19 +194,38 @@ backend/Platform.Windows/BannedSymbols.txt Platform.Windows, which inherits noth
 ```
 
 `Process`, `DllImport` and `LibraryImport` are banned in the first and legal in the second, which
-is the architecture stated as a build error rather than as a paragraph. Both ban the ambient clock,
-because nothing anywhere has a reason to read `DateTime.UtcNow` when a `TimeProvider` is injected -
-which is what lets a test of a ten-second timeout move a fake clock instead of waiting.
+is the architecture stated as a build error rather than as a paragraph. Both lists also ban what is
+not about layering at all:
+
+- **The ambient clock**, because nothing anywhere has a reason to read `DateTime.UtcNow` when a
+  `TimeProvider` is injected - which is what lets a test of a ten-second timeout move a fake clock
+  instead of waiting.
+- **Blocking on a task** - `Task.Result`, `Wait()`, `GetAwaiter()`.
+- **`Regex`**, which must be reached through `Core/Helpers/RegexHelper`. Most patterns in this app
+  are typed by whoever is authoring a flow, so two things have to hold everywhere and are easy to
+  forget once: a half-written pattern must not throw at the caller, and one that backtracks for ever
+  must give up rather than compete for CPU with the application being tested. Five call sites each
+  had their own answer, and two of them had neither.
 
 A property is banned as `P:System.DateTime.UtcNow`. Written `M:System.DateTime.get_UtcNow` it
 silently matches nothing, and a ban that matches nothing looks exactly like a ban nobody has
 broken. That was found by dropping a file that broke every ban into `Core` and checking each one
-fired.
+fired. A banned **type** is broad in a useful way: banning `Regex` also catches
+`[GeneratedRegex]`, whose generated member has to name the type.
 
-One deviation, recorded in `.editorconfig` beside every other: `Business/Command`,
+Worth knowing what a ban does not catch: a bare `using System.Text.RegularExpressions;` references
+no banned symbol, so it is reported as an unused `using` rather than as a ban.
+
+Two deviations, both `.editorconfig` sections beside every other. `CommandRunner` holds a `Process`,
 which a port would not fix — it launches `cmd.exe` and `powershell.exe` and every entry in its
 preset catalogue is a Windows command, so the question is whether the whole runner moves rather
-than whether the `Process` is hidden.
+than whether the `Process` is hidden. `RegexHelper` names `Regex`, because it is where the ban
+points.
+
+Each names **one file**, not its folder, because every banned symbol shares the one diagnostic id:
+switching it off excuses all of them wherever it reaches. Written as `Business/Command/**.cs` it
+quietly let the regex ban off in the one file most likely to break it — the runner is where the
+duplicated pattern matching used to live.
 
 **Platform internals can be `internal`.** `Direct3D11Interop`, `NativeCursor` and
 `OcrLanguageCatalog` are called only from inside Platform. They were `public static` solely
@@ -234,15 +253,20 @@ with Windows, and before the split it could not be tested without Chrome actuall
 
 ```
 Core/Ports/IWindowService                 FindWindows, GetWindowBounds, Focus, Move, Resize, Close
-Core/Helpers/WindowMatcherHelper          Matches(SystemWindow, WindowQuery) — pure
+Core/Helpers/WindowMatcherHelper          Matches(title, processName, WindowQuery) — pure
 Platform.Windows/Windowing/WindowService  the P/Invoke, and only that
 ```
 
-`WindowMatcherHelper` sits in `Core` rather than `Business` because the adapter needs it too — it
-is the filter inside the enumeration. That is the shape to expect: a rule both sides share
-belongs below both of them. It is checked against a hand built list of `SystemWindow` with
-nothing open, including the case this codebase documents as the reason process name exists at
-all: `CONTAINS "Notepad"` does match Notepad++, and adding the process name separates them.
+`WindowMatcherHelper` sits in `Core` rather than `Business` because it is part of what the port
+promises. `IWindowService.FindWindows(WindowQuery)` is declared in `Core`, so what makes a window
+match a query is the port's contract and not one adapter's opinion — otherwise `CONTAINS` could end
+up case-sensitive on one platform and not on another. Its only caller today is the Windows adapter,
+which is the usual argument for moving a helper to its consumer; it does not apply to something a
+second adapter would have to reimplement identically.
+
+Keeping it above the adapter is also what makes it testable with nothing open, including the case
+this codebase documents as the reason process name exists at all: `CONTAINS "Notepad"` does match
+Notepad++, and adding the process name separates them.
 
 Ask the same question of all nine: *what here is the machine, and what here is a decision?* The
 decisions go up, the machine stays down.
@@ -1254,6 +1278,8 @@ folder in `Business`.
 - `<summary>` on public members only; `//` on private ones.
 - Comments explain *why*, not *what*. Names and logic carry the meaning.
 - `//===` section banners inside long P/Invoke files.
+- A regular expression goes through `RegexHelper`, a clock through the injected `TimeProvider`, and
+  neither is a convention: both are build errors (§2).
 
 ### Rules a person has to remember are rules already broken
 
@@ -1278,8 +1304,10 @@ needed by an XML `cref` alone; that flag brings `CS1591`, missing XML comment, w
 EF migrations are exempt by path, because EF writes their usings from a template.
 
 A deviation is recorded three ways, and the width of the record matches the width of the exception:
-a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a folder, and a
-`[SuppressMessage]` with a `Justification` for a single call site.
+a severity in `.editorconfig` for a rule everywhere, a path-scoped section for one file or folder,
+and a `[SuppressMessage]` with a `Justification` for a single call site. Prefer the narrowest that
+does the job — `RS0030` is one diagnostic id for every banned symbol, so a section excuses the whole
+list wherever it reaches, and a folder glob reaches further than anyone remembers.
 
 ### Priorities
 
@@ -1289,15 +1317,15 @@ a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a
 
 ## 15. Tests
 
-345 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+358 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 69 | the pure helpers - conditions, variables, names, text extraction, the tree rules, window matching |
+| `Core.Tests` | 83 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
 | `Business.Tests` | 258 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
-| `Architecture.Tests` | 9 | the layering in §2 as failing tests |
+| `Architecture.Tests` | 8 | the layering in §2 as failing tests |
 | `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
 
 ```bash
@@ -1402,7 +1430,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 345 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 358 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

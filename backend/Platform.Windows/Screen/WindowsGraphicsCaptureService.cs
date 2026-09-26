@@ -103,39 +103,15 @@ namespace Platform.Windows.Screen
 
         private static GraphicsCaptureItem? CreateItemForMonitor(IntPtr hMonitor)
         {
-            //if (hMonitor == IntPtr.Zero) return null;
-            //try
-            //{
-            //    IGraphicsCaptureItemInterop interop = (IGraphicsCaptureItemInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(GraphicsCaptureItem));
-
-            //    // Must be a local variable — 'ref' on a static field is a C# error.
-            //    Guid iid = IID_GraphicsCaptureItem;
-            //    IntPtr ptr = interop.CreateForMonitor(hMonitor, ref iid);
-
-            //    var item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
-            //    Marshal.Release(ptr); // we have a managed ref now; release the extra one
-            //    return item;
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.Error.WriteLine($"[WGC] CreateItemForMonitor failed: {ex.Message}");
-            //    return null;
-            //}
-
             if (hMonitor == IntPtr.Zero) return null;
 
             try
             {
-                //IGraphicsCaptureItemInterop interop = (IGraphicsCaptureItemInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(GraphicsCaptureItem));
-                var interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
+                IGraphicsCaptureItemInterop interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
                 Guid iid = IID_GraphicsCaptureItem;
                 IntPtr ptr = interop.CreateForMonitor(hMonitor, ref iid);
 
-                //var item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
-                //Marshal.Release(ptr);
-                //return item;
-
-                var item = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
+                GraphicsCaptureItem? item = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
                 Marshal.Release(ptr); // FromAbi AddRef's internally, release your ref
                 return item;
 
@@ -155,13 +131,11 @@ namespace Platform.Windows.Screen
             if (hwnd == IntPtr.Zero) return null;
             try
             {
-                //IGraphicsCaptureItemInterop interop = (IGraphicsCaptureItemInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(GraphicsCaptureItem));
-                var interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
-                //var interop = (IGraphicsCaptureItemInterop)WinRT.Interop.GetActivationFactory(typeof(GraphicsCaptureItem));
+                IGraphicsCaptureItemInterop interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
                 Guid iid = IID_GraphicsCaptureItem;
                 IntPtr ptr = interop.CreateForWindow(hwnd, ref iid);
 
-                var item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
+                GraphicsCaptureItem? item = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
                 Marshal.Release(ptr);
                 return item;
             }
@@ -172,11 +146,11 @@ namespace Platform.Windows.Screen
             }
         }
 
+
+
         // ================================================================
         // Actual capture 
         // ================================================================
-
-
 
         private byte[]? CaptureItem(GraphicsCaptureItem item, out int width, out int height)
         {
@@ -229,62 +203,8 @@ namespace Platform.Windows.Screen
 
 
         // ================================================================
-        // Compression 
-        // ================================================================
-
-        /// <summary>
-        /// Convert raw BGRA bytes to JPEG or PNG without an extra heap copy.
-        /// We pin the byte array and create a Bitmap view over it — no pixel copy needed.
-        /// </summary>
-        //private static byte[] BgraToCompressed(byte[] bgra, int width, int height, ScreenshotFormatEnum format, int jpegQuality)
-        //{
-        //    var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
-        //    try
-        //    {
-        //        // Bitmap backed directly by 'bgra' — no allocation
-        //        using Bitmap bmp = new Bitmap(
-        //            width, height,
-        //            stride: width * 4,
-        //            PixelFormat.Format32bppArgb,
-        //            pin.AddrOfPinnedObject());
-
-        //        int pixelCount = width * height;
-        //        int initialCapacity = format == ScreenshotFormatEnum.JPEG
-        //            ? pixelCount / 4   // JPEG: ~2 bits/pixel → /4 bytes is generous
-        //            : pixelCount / 2;  // PNG:  harder to predict, raw/2 is a safe over-estimate
-
-        //        using var ms = new MemoryStream(initialCapacity);
-
-
-
-        //        if (format == ScreenshotFormatEnum.PNG)
-        //        {
-        //            bmp.Save(ms, ImageFormat.Png);
-        //        }
-        //        else
-        //        {
-        //            ImageCodecInfo codec = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
-        //            var ep = new EncoderParameters(1)
-        //            {
-        //                Param = { [0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality) }
-        //            };
-        //            bmp.Save(ms, codec, ep);
-        //        }
-
-        //        return ms.ToArray();
-        //    }
-        //    finally
-        //    {
-        //        pin.Free();
-        //    }
-        //}
-
-
-
-        // ================================================================
         // Dispose 
         // ================================================================
-
         public void Dispose()
         {
             if (_disposed) return;

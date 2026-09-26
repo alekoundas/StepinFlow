@@ -9,7 +9,7 @@ namespace Core.Ports
     /// Handles are opaque: see <see cref="WindowHandle"/>. Nothing outside the adapter may
     /// interpret one, which is why they are only ever passed straight back in.
     ///
-    /// Deciding whether a window matches is <see cref="Helpers.WindowMatcherHelper"/> rather than an
+    /// Deciding whether a window matches is <see cref="Helpers.WindowNameMatchHelper"/> rather than an
     /// implementation of this, because that is a rule and not a machine.
     /// </summary>
     public interface IWindowService

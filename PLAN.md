@@ -28,7 +28,7 @@ Everything here was finished by 2026-09-25.
 | 5, 5.5 | Parser, binder and a transactional importer, shaped like a compiler | §7 |
 | 5.6 | Feature folders, the `Transport` project, MediatR replaced by a switch | §2, §4 |
 | 5.7 | Portable search: `ScalesWith`, DPI on every captured pixel, two match modes | §8 |
-| Tests 0-4 | 345 tests over Core, Business, DataAccess and the architecture | §15 |
+| Tests 0-4 | 358 tests over Core, Business, DataAccess and the architecture | §15 |
 
 **Next:** the machine-only test bucket, then the two engine seams that layer 5 is waiting on, then
 phase 6. The open decision on how long a step's result lives (`TODO.md`, Execution) wants making

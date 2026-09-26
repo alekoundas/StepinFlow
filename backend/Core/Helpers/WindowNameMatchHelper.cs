@@ -10,11 +10,10 @@ namespace Core.Helpers
     /// rule. Kept here it can be checked against a hand built list instead of needing the real
     /// application open.
     /// </summary>
-    public static class WindowMatcherHelper
+    public static class WindowNameMatchHelper
     {
         /// <summary>
-        /// A blank process name or title pattern matches anything, so a query that fills in neither
-        /// matches every window rather than none.
+        /// A blank process name or title pattern matches anything, so a query that fills in neither matches every window rather than none.
         /// </summary>
         public static bool Matches(string title, string processName, WindowQuery query)
         {

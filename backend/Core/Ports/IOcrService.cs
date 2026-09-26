@@ -11,7 +11,7 @@ namespace Core.Ports
 
         Task<OcrLanguageInstallResultDto> InstallLanguageAsync(string languageTag, CancellationToken ct = default);
 
-        /// <summary>Opens Windows language settings, for when the install cannot run here.</summary>
+        /// <summary>Opens Windows language settings.</summary>
         void OpenWindowsLanguageSettings();
 
         /// <summary>

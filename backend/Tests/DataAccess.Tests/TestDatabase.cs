@@ -8,6 +8,7 @@ namespace DataAccess.Tests
     /// <summary>
     /// A real SQLite database in memory, one per test, built by the real migrations. 
     /// The database lives inside the connection, so one connection is held open and handed to every context.
+    /// NO DISK FILE
     /// </summary>
     public sealed class TestDatabase : IDisposable
     {

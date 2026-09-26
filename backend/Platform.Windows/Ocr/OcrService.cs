@@ -69,9 +69,10 @@ namespace Platform.Windows.Ocr
                     return new OcrLanguageInstallResultDto { IsRunning = true };
                 }
 
-                return process.ExitCode == 0
-                    ? new OcrLanguageInstallResultDto()
-                    : new OcrLanguageInstallResultDto { ErrorMessage = "Windows could not install the pack. Add the language from Windows settings instead." };
+                if (process.ExitCode == 0)
+                    return new OcrLanguageInstallResultDto();
+                else
+                    return new OcrLanguageInstallResultDto { ErrorMessage = "Windows could not install the pack. Add the language from Windows settings instead." };
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
             {
@@ -83,8 +84,10 @@ namespace Platform.Windows.Ocr
             }
         }
 
-        public void OpenWindowsLanguageSettings() =>
+        public void OpenWindowsLanguageSettings()
+        {
             Process.Start(new ProcessStartInfo("ms-settings:regionlanguage") { UseShellExecute = true });
+        }
 
         public async Task<string> ReadAsync(RawImage image, string language, CancellationToken ct = default)
         {

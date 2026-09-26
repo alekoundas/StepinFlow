@@ -296,10 +296,9 @@ namespace Platform.Windows.Screen
         private static byte[] Compress(byte[] bgra, int width, int height, ScreenshotFormatEnum format, int jpegQuality)
         {
             if (format == ScreenshotFormatEnum.RAW)
-                throw new NotSupportedException(
-                    "RAW is not an encoded format. Use CaptureRaw to get pixels, or ask for PNG or JPEG.");
+                throw new NotSupportedException("RAW is not an encoded format. Use CaptureRaw to get pixels, or ask for PNG or JPEG.");
 
-            var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
+            GCHandle pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
             try
             {
                 using Bitmap bmp = new Bitmap(width, height, width * 4, PixelFormat.Format32bppArgb, pin.AddrOfPinnedObject());
@@ -325,17 +324,5 @@ namespace Platform.Windows.Screen
                 pin.Free();
             }
         }
-
-
-
-        //public Mat CaptureAsMat(Rectangle rect)
-        //{
-        //    byte[] bytes = Capture(rect);
-        //    Mat matImage = new Mat();
-        //    Cv2.
-        //    matImage.
-
-        //    return new Mat(rect.Height, rect.Width, MatType.CV_8UC4, bytes);
-        //}
     }
 }

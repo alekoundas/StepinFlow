@@ -13,8 +13,8 @@ namespace Core.Helpers
     /// pattern that backtracks for ever has to give up, because it is competing for CPU with the
     /// application being tested.
     ///
-    /// <see cref="Captures"/> and <see cref="Replace"/> are the exception: their patterns are
-    /// written in this repository rather than typed by anybody, so a broken one is a bug and throws.
+    /// see Captures() and see Replace() are the exception: 
+    /// their patterns are written in this repository rather than typed by anybody, so a broken one is a bug and throws.
     /// </summary>
     public static class RegexHelper
     {
@@ -49,9 +49,7 @@ namespace Core.Helpers
         }
 
         /// <summary>
-        /// Whether the text matches, ignoring case. A pattern that does not compile matches nothing,
-        /// and so does one that gives up: the question asked was whether this text matches, and
-        /// neither answer is yes.
+        /// Whether the text matches, ignoring case. A pattern that does not compile matches nothing
         /// </summary>
         public static bool IsMatch(string text, string pattern)
         {

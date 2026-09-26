@@ -9,14 +9,14 @@ namespace Core.Ports
 
     /// <summary>
     /// Driving the real mouse and keyboard.
-    ///
+    /// Points are absolute.
+    /// 
     /// Will use the Platform.Windows or Platform.Linux depending the underlying OS
     /// </summary>
     public interface IInputService
     {
-        /// <summary>
-        /// Moves the cursor to an absolute point on the virtual desktop, in physical pixels.
-        /// </summary>
+        Point CursorPosition();
+
         bool MoveCursor(int x, int y);
 
         void SimulateMouseClick(int x, int y, CursorButtonTypeEnum button);
@@ -25,7 +25,6 @@ namespace Core.Ports
         void SimulateMouseUp(int x, int y, CursorButtonTypeEnum button);
         void SimulateMouseScroll(int x, int y, int delta);
         void SimulateMouseDrag(int fromX, int fromY, int toX, int toY, CursorButtonTypeEnum button);
-        Point CursorPosition();
 
         void SimulateKeyboard(string text);
         void SimulateKeyPress(KeyCodeEnum key);
