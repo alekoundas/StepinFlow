@@ -18,7 +18,7 @@ namespace Transport.Ipc.Handlers
 
         public async Task<ResultDto<RunCommandTestResultDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
-            RunCommandTestResultDto result = await _commandRunner.RunAsync(dto, ct);
+            RunCommandTestResultDto result = await _commandRunner.RunAsync(CommandRequest.From(dto), ct);
             return ResultDto<RunCommandTestResultDto>.Success(result);
         }
     }

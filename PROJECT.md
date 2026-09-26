@@ -1354,7 +1354,12 @@ rule in §5 unverified. The one trick: an in-memory SQLite database lives inside
 the test opens one, holds it, and hands EF the connection rather than a connection string.
 
 **Names are sentences** - `A_missing_required_template_fails_the_search_even_when_others_match` -
-and the class names the subject.
+and the class names the subject. One class per subject, so
+`Executions/Workers/` holds one file per worker rather than four files grouping them by kind. A
+class called `SimpleWorkerTests` or `InputWorkerTests` names a bucket, and the `// ====` banners
+inside it were doing the work a class name should do - the same mistake as `Parser.Steps.cs`, where
+the dot was the symptom and the partial was the thing. It also means a missing file is a visible
+gap: there is no `SystemCommandStepWorkerTests`, which is the `IMapper` item in `TODO.md`.
 
 ### What the wiring needed
 

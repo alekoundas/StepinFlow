@@ -9,10 +9,10 @@ namespace Business.Command
 {
     public sealed class CommandRunner : ICommandRunner
     {
-        public async Task<RunCommandTestResultDto> RunAsync(FlowStepDto step, CancellationToken ct = default)
+        public async Task<RunCommandTestResultDto> RunAsync(CommandRequest request, CancellationToken ct = default)
         {
             // Find command.
-            string command = CommandPresetCatalog.Resolve(step.RunCommandPreset, step.RunCommandValue);
+            string command = CommandPresetCatalog.Resolve(request.Preset, request.Value);
 
             RunCommandTestResultDto result = new RunCommandTestResultDto { ResolvedCommand = command };
 
@@ -24,19 +24,19 @@ namespace Business.Command
 
             // Start timeout timer.
             using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            if (step.TimeoutMilliseconds > 0)
-                timeoutSource.CancelAfter(step.TimeoutMilliseconds);
+            if (request.TimeoutMilliseconds > 0)
+                timeoutSource.CancelAfter(request.TimeoutMilliseconds);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Actual execution.
             try
             {
-                await ExecuteAsync(step, command, result, timeoutSource.Token);
+                await ExecuteAsync(request, command, result, timeoutSource.Token);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                result.ErrorMessage = $"The command did not finish within {step.TimeoutMilliseconds} ms.";
+                result.ErrorMessage = $"The command did not finish within {request.TimeoutMilliseconds} ms.";
             }
             catch (Exception ex)
             {
@@ -48,8 +48,8 @@ namespace Business.Command
 
             if (result.ErrorMessage == null)
             {
-                result.IsSuccess = IsSuccessExitCode(step.SuccessExitCodes, result.ExitCode);
-                result.ResultValue = Extract(step, result);
+                result.IsSuccess = IsSuccessExitCode(request.SuccessExitCodes, result.ExitCode);
+                result.ResultValue = Extract(request, result);
             }
 
             return result;
@@ -60,9 +60,9 @@ namespace Business.Command
         // Private methods
         // ================================================================
 
-        private static async Task ExecuteAsync(FlowStepDto step, string command, RunCommandTestResultDto result, CancellationToken ct)
+        private static async Task ExecuteAsync(CommandRequest request, string command, RunCommandTestResultDto result, CancellationToken ct)
         {
-            using Process process = new Process { StartInfo = BuildStartInfo(step, command) };
+            using Process process = new Process { StartInfo = BuildStartInfo(request, command) };
             process.Start();
 
             // Read before waiting.
@@ -87,7 +87,7 @@ namespace Business.Command
             result.StandardError = (await stderr).TrimEnd('\r', '\n');
         }
 
-        private static ProcessStartInfo BuildStartInfo(FlowStepDto step, string command)
+        private static ProcessStartInfo BuildStartInfo(CommandRequest request, string command)
         {
             // cmd writes in the console's OEM code page, PowerShell 5.1 follows the console too.
             // Reading it as UTF-8 turns anything non ASCII into noise, which then silently fails
@@ -104,10 +104,10 @@ namespace Business.Command
                 StandardErrorEncoding = encoding,
             };
 
-            if (!string.IsNullOrWhiteSpace(step.RunCommandWorkingDirectory))
-                startInfo.WorkingDirectory = step.RunCommandWorkingDirectory;
+            if (!string.IsNullOrWhiteSpace(request.WorkingDirectory))
+                startInfo.WorkingDirectory = request.WorkingDirectory;
 
-            if (step.RunCommandShell == RunCommandShellEnum.POWERSHELL)
+            if (request.Shell == RunCommandShellEnum.POWERSHELL)
             {
                 startInfo.FileName = "powershell.exe";
                 startInfo.ArgumentList.Add("-NoProfile");
@@ -132,9 +132,9 @@ namespace Business.Command
                 .Any(x => int.TryParse(x, out int code) && code == exitCode);
         }
 
-        private static string Extract(FlowStepDto step, RunCommandTestResultDto result)
+        private static string Extract(CommandRequest request, RunCommandTestResultDto result)
         {
-            string source = step.ResultSource switch
+            string source = request.ResultSource switch
             {
                 ResultSourceEnum.STDERR => result.StandardError,
                 ResultSourceEnum.COMBINED => string.Join(Environment.NewLine, new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
@@ -142,7 +142,7 @@ namespace Business.Command
                 _ => result.StandardOutput,
             };
 
-            return RegexHelper.Extract(source, step.ResultExtractPattern);
+            return RegexHelper.Extract(source, request.ResultExtractPattern);
         }
     }
 }
