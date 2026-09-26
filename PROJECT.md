@@ -5,10 +5,12 @@
 > or pasted into a model as context.
 >
 > `FLOW-FORMAT.md` holds the flow script grammar and is kept separate on purpose — it is a
-> specification you read while writing a parser, not prose. `PLAN.md` is the build order.
-> `TODO.md` is everything deferred.
+> specification you read while writing a parser, not prose. `PLAN.md` is the build order and
+> holds only open work. `TODO.md` is everything deferred.
 >
-> Last synced with the repo: 2026-09-25.
+> Where a section describes something not built yet, it says so and names the `PLAN.md` phase.
+>
+> Last synced with the repo: 2026-09-26.
 
 ---
 
@@ -70,6 +72,9 @@ App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
 **`Transport` does not reference `Platform.Windows` either.** It is how a request gets in, not
 something that touches the machine. A command-line runner arrives in phase 12 as a folder beside
 `Ipc/`, not as another project.
+
+Seven test projects sit beside them in `backend/Tests/`, one per production project plus
+`Architecture.Tests`, which turns the arrows above into test failures - see §15.
 
 ### Inside Business
 
@@ -190,7 +195,13 @@ backend/Platform.Windows/BannedSymbols.txt Platform.Windows, which inherits noth
 
 `Process`, `DllImport` and `LibraryImport` are banned in the first and legal in the second, which
 is the architecture stated as a build error rather than as a paragraph. Both ban the ambient clock,
-because nothing anywhere has a reason to read `DateTime.UtcNow` when a `TimeProvider` is injected.
+because nothing anywhere has a reason to read `DateTime.UtcNow` when a `TimeProvider` is injected -
+which is what lets a test of a ten-second timeout move a fake clock instead of waiting.
+
+A property is banned as `P:System.DateTime.UtcNow`. Written `M:System.DateTime.get_UtcNow` it
+silently matches nothing, and a ban that matches nothing looks exactly like a ban nobody has
+broken. That was found by dropping a file that broke every ban into `Core` and checking each one
+fired.
 
 One deviation, recorded in `.editorconfig` beside every other: `Business/Command`,
 which a port would not fix — it launches `cmd.exe` and `powershell.exe` and every entry in its
@@ -305,13 +316,15 @@ columns it takes, and a tree of steps. Identified across machines by `PublicId`,
 anything and which worker executes it. Steps nest; a step that can fail has `Success` and `Failure`
 children so a flow handles its own problems rather than stopping.
 
-**FlowArea** — a named rectangle owned by a flow. Either fixed coordinates, a monitor, or a window
-matched by process name and title. Search steps look inside one.
+**FlowArea** — a named rectangle owned by a flow. A window matched by process name and title, a
+monitor, or a region inside another area - in pixels or as a fraction of it. Search steps look
+inside one. Each says what its contents **scale with**: the screen's DPI, or its own size (§8).
 
-**FlowPoint** — a named point owned by a flow. Cursor steps aim at one.
+**FlowPoint** — a named point owned by a flow, measured from an area. Cursor steps aim at one.
 
-**Template image** — the picture a `SEARCH_IMAGE` step looks for. Always called a template image or
-a screenshot; never a "frame" and never a "search image".
+**Template image** — the picture a `SEARCH_IMAGE` step looks for. Each carries its own accuracy, the
+point inside it to click, whether it is required, and the area size and DPI it was captured at.
+Always called a template image or a screenshot; never a "frame" and never a "search image".
 
 **Screenshot** — what the app captures off the screen. An output, per-execution, never checked into
 a repository.
@@ -354,10 +367,21 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, every handler registered by name in
-`Program.cs`. MediatR did the same job until its licence changed to one this GPL repository cannot
-ship under, and a switch is also the more readable of the two - every route is on one screen, and
-an unknown action is an explicit arm rather than a missing registration found at runtime.
+The dispatcher is written by hand: one switch arm per action, 98 handlers each registered by name
+in `Program.cs`.
+
+```
+"Flow.get" => await Handler<GetFlowHandler>().HandleAsync(Payload<int>(request), ct),
+```
+
+MediatR did this job until its licence changed to one this GPL repository cannot ship under. It
+turned out to be barely used - no pipeline behaviour, notification or stream anywhere - so all it
+did was resolve a handler from the container, behind 103 one-field message records built so it
+had something to match on. Two reflective route tables were built as replacements and both thrown
+away: the switch was never the problem, the wrapper types were. What the switch gives that neither
+did is the compiler's help - a duplicate action is `CS0152`, a handler whose signature changes
+breaks the arm that calls it, and F12 reaches the handler.
+
 **Adding a new DTO never touches the `.proto`.** Every response body is `ResultDto<T>`.
 
 Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated by `type`
@@ -376,22 +400,28 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 
 | Table | Purpose |
 |---|---|
-| `Flows` | The test. Name, `PublicId`, the app under test, what to do when it ends. |
-| `FlowAreas` | Named rectangle owned by a flow. |
-| `FlowPoints` | Named point owned by a flow. |
+| `Flows` | The test. Name, `PublicId`, the app under test. |
+| `FlowAreas` | Named rectangle owned by a flow, with what it scales with and its DPI. |
+| `FlowPoints` | Named point owned by a flow, with the DPI it was captured at. |
 | `FlowViewports` | One screen size to test at. |
 | `FlowCsvColumns` | One input column. `IsSecret` means the value never reaches a file. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
-| `FlowStepTemplates` | Template image + match settings. The blob lives here, off `FlowStep`. |
+| `FlowStepTemplates` | Template image, its accuracy, click point, required flag, and captured size and DPI. The blob lives here, off `FlowStep`. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
 | `Executions` | One walk of a flow, at one viewport, with one data row. |
 | `ExecutionSteps` | Per-step result within an execution. |
 | `AppSettings` | Key/value, defined by `AppSettingCatalog`. |
 | `DiscordBots` | Webhook targets for notifications. |
 
-`BaseDbModel` gives every row `Id` and `CreatedOn`. Enums are stored as strings
-(`HasConversion<string>()`) — which means a migration adding one needs a **parseable**
-`defaultValue`, not `""`.
+`BaseDbModel` gives every row `Id`, `CreatedOn` and `UpdatedOn`, stamped at save by
+`TimestampInterceptor` from the injected `TimeProvider` - an interceptor rather than a
+`SaveChanges` override because the context factory is pooled, and a pooled context may only have
+the one options constructor. Enums are stored as strings (`HasConversion<string>()`) — which means
+a migration adding one needs a **parseable** `defaultValue`, not `""`.
+
+A schema change is a migration, and existing data is not converted: the database is disposable
+until there is a release. `DataAccess.Tests` fails if an entity changes without one - EF Core 10
+refuses `Migrate()` in that state, so the app would refuse to start as well.
 
 ### Flow identity: `PublicId`
 
@@ -431,35 +461,50 @@ one `WHERE RootId = ?` instead of a recursive CTE.
 | `FlowAreaId` | FlowArea | SetNull |
 | `FlowPointId` / `FlowPointEndId` | FlowPoint | SetNull |
 | `FlowStepReferenceId` / `…EndId` | FlowStep | SetNull |
+| `FlowArea.ParentFlowAreaId` | FlowArea | SetNull |
+| `ExecutionStep.FlowStepId` | FlowStep | SetNull |
 | `Flow.AppUnderTestAreaId` | FlowArea | NoAction |
 
 The `SetNull` group is deliberate: areas, points and referenced steps are **reusable**, so deleting
-one must clear the reference rather than delete every step using it. `AppUnderTestAreaId` is
-`NoAction` to break a cascade cycle — Flow → FlowArea → Flow.
+one must clear the reference rather than delete every step using it. An execution step keeps the
+name it ran under, so deleting a step keeps its history. `AppUnderTestAreaId` is `NoAction` to
+break a cascade cycle — Flow → FlowArea → Flow. `DataAccess.Tests/SchemaTests` pins each of these
+against SQLite's own foreign keys, through `ExecuteDelete` rather than EF's change tracker.
 
 ---
 
 ## 6. Recording
 
-Before the first click is captured, the tester answers three questions in a setup form:
+### Today
 
-**What is this flow called.** It has to be unique.
+The global input hook records every click, drag, scroll and keystroke with the pause before it, and
+a screenshot at each click. Nothing becomes a step while recording. Afterwards a wizard walks
+through the recorded actions one at a time and asks what each one was for:
 
-**What does it test, and how is it opened.** An application, a browser, a new tab. A **Test** button
-tries the opening there and then, so a wrong command is found before a recording is wasted on it.
-Screen sizes are added here too, one dialog per size.
+| recorded | becomes |
+| --- | --- |
+| a click | click at this position, **find this image and then click it**, or only check it is on screen |
+| a pause | wait this long, or **wait until something appears** |
+| typing | type this text, or send it as key presses |
+| a drag, a scroll | the same, at the recorded points |
 
-**What should happen to that application when an execution ends** — leave it, close the window, kill
-the process.
+The template is cropped from the recording's own screenshot, so nothing is captured twice. The
+answers build a draft tree, which is saved as a flow and edited like any other.
 
-None of this is a step. It is configuration on the flow, so it stays editable afterwards and the
-recorder is not the only way to set it.
+### Planned - phase 7
 
-Then recording starts and the system tracks input. **Pausing is part of authoring**: the tester can
-pause, type a wrong value on purpose, resume, and record what the application does when it rejects
-it. That is how failure paths get written — by provoking them rather than imagining them.
+The questions move to where the answers are known.
 
-### The two gestures
+**A setup form before the first click.** What the flow is called, which has to be unique; what it
+tests and how it is opened - an application, a browser, a new tab - with a **Test** button that
+tries the opening there and then, so a wrong command is found before a recording is wasted on it;
+the screen sizes to test at; and what should happen when an execution ends, which becomes steps
+under `End Execution` because teardown is steps (§8). The first two are configuration on the flow,
+so they stay editable afterwards and the recorder is not the only way to set them.
+
+**Pausing is part of authoring**: the tester can pause, type a wrong value on purpose, resume, and
+record what the application does when it rejects it. That is how failure paths get written — by
+provoking them rather than imagining them.
 
 **Ctrl + left click** asks what should be checked at that spot. Does this text or image need to
 exist? Should the flow wait until it appears, or until it goes away? The click position matters,
@@ -471,18 +516,23 @@ why it is the right button. Choosing a column offers the ones this flow already 
 new one with the recorded value as its default — which is why the CSV is per-flow and its template
 is generated from the flow.
 
-### Search mode, timeout and poll rate
+### Search mode and timeout
 
-Every recorded click becomes a `SEARCH_IMAGE` step, and how it searches depends on how long the
-tester waited before clicking.
+**Every recorded check waits** - `WAIT_UNTIL_FOUND`, never `FIND_BEST`. Reading the tester's speed
+is the tempting shortcut and it is wrong both ways: a quick click only means the element was
+already on screen on the recording machine, and a slow one is as likely to be someone reading as
+the app being slow. Waiting costs nothing when the element is there - the first poll runs before
+any delay, so a wait that hits at once is exactly one capture and one match.
 
-A quick click becomes `FIND_BEST` — the element was already there. A click after a visible pause
-becomes `WAIT_UNTIL_FOUND`, because the pause is evidence the tester was waiting for something. The
-recorded wait plus headroom becomes the timeout, so a step that took 4.2 seconds gets a timeout
-derived from 4.2 seconds rather than a flat default. A flat ten-second default would make every
-failing branch on a slow viewport ten seconds slower, forever.
+The timeout is `max(10s, observed × 3)`, capped at 60 seconds. The observed pause is a sample of
+one; the floor covers the common case and the multiple catches the outlier. CI runners are
+routinely two to five times slower than the desktop that recorded the flow, and being generous
+costs time only on executions that were going to fail anyway. The step carries a code comment
+saying why: `# recorded after a 4.2s wait`.
 
-The step carries a code comment recording why: `# recorded after a 4.2s wait`.
+Today's wizard is not there yet - "find this image and then click it" searches once with
+`FIND_BEST`, and "wait until something appears" takes `max(observed × 3, 5s)` - and `TODO.md` has
+the gap.
 
 Polling is deliberately not as fast as possible. Screenshot plus template match is real CPU, and a
 tight loop on a tester's laptop competes with the application being tested.
@@ -542,7 +592,33 @@ same bytes. Branch order from `OrderNumber`, areas roots-then-children alphabeti
 `SyntaxFacts` holds every word the grammar knows **in both directions** — the keyword a step is
 written as and the step a keyword means, the words for a condition, a title match, a scroll
 direction and a button, and all of those read back. One file, because two is how a keyword comes to
-mean one thing on write and another on read.
+mean one thing on write and another on read. An enum is read by its **name** and nothing else:
+`Enum.TryParse` also accepts a number and comma-joined flags, which is how `Press Ctrl+1` once
+pressed Ctrl+B and `System 99` parsed as an action that does not exist.
+
+### Everything that makes a template portable travels in the file
+
+```
+Templates:
+  "login.png"           click 150,20   captured 922x648 at 120dpi
+
+Steps:
+Find Image  "Find login"   template "login.png" accuracy 0.97 required   match shape and brightness   in "Browser"
+```
+
+Facts about the picture go in the header - the click point, and the area size and DPI it was
+captured at. Decisions about the search go on the step - `accuracy` and `required` on each
+template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
+see that. The area line carries `scales with` and its DPI. The binder joins the header to the
+step's templates by file name. A template with no header line is centred on its picture by the
+importer, read from the PNG's header, so a hand-written flow clicks the middle of a button rather
+than its corner.
+
+Before this, export wrote the PNG and nothing else, and import filled the rest with defaults: every
+imported flow clicked the top-left corner of every button, and a step with three alternative
+templates came back needing all three on screen at once. The byte-identical round trip could not
+see it, because the printer never printed those fields - which is why the round trip now also
+compares rows.
 
 ### Import is transactional
 
@@ -571,6 +647,11 @@ the writer used the point-target fragment for its `in` clause and that falls thr
 a scroll names neither a point nor a step — while the format means an area. A line no parser could
 read, found the moment something tried to read one.
 
+A round trip proves `A == B`; it cannot prove either is right. So beside it sits
+`SampleFlow.approved.sflw` - a printed flow a person read once and approved, compared on every
+build. On a difference the new text is written beside it as `.received.sflw` and the failure names
+the first line that changed. It is also the most complete example of the format in the repository.
+
 ### Four grammar rules that only emerged from reading real output
 
 **Every name is quoted**, even when it would read fine without. The original spec had bare names in
@@ -594,10 +675,15 @@ and a heading followed by empty space reads as a section with nothing in it.
 A flow is walked with an **explicit stack**, not recursion. Infinite loops and `Go To` make
 recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
 
-Everything an execution needs sits in memory and is dropped as the walk leaves it behind, so a flow
-running for three weeks holds no more than one running for three seconds. History is written in
+`ExecutionFlowWalker` decides which step runs next and executes nothing - it is handed each step's
+result - which is what makes the most intricate code in the repository the cheapest to test.
+`ExecutionEngine` drives it: run the worker, place the result, ask for the next step.
+
+Everything an execution needs sits in memory rather than in the database. History is written in
 batches and only if it was asked for — turning history off changes what gets stored and never what a
-flow does.
+flow does. Results were meant to be dropped as the walk leaves a subtree; the walker's tests found
+they never are, and every result stays readable until its step runs again. Whether that is the bug
+or the rule is an open decision in `TODO.md`, because the language already leans on it.
 
 `StepWorkerFactory` maps `FlowStepTypeEnum` to an `IStepWorker`. The map is built in
 `App/DependencyInjection/ExecutionServiceRegistration.cs` rather than inside the factory, so the
@@ -622,7 +708,55 @@ Hidden     SUCCESS, FAILURE
 
 `SearchModeEnum` is one axis, not two: `FIND_BEST`, `FIND_ALL`, `WAIT_UNTIL_FOUND`,
 `WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking once, so it is a
-mode rather than a flag that would be dead in three cases out of four.
+mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
+screenshot, and its Success branch runs once per hit, each pass clicking its own.
+
+### Searching the screen
+
+`Business/Searching/ImageSearcher` is the whole look at the screen - the guards, the capture, the
+template loop, the click points and the closest score - and both the engine and the editor's
+**Test now** call it, so the two can no longer disagree. It knows the screen, OpenCV and templates,
+never an execution step, a DTO or the poll loop.
+
+**Two match modes, each with its own default accuracy.**
+
+| | `SHAPE` - default, 0.80 | `SHAPE_AND_BRIGHTNESS` - 0.95 |
+| --- | --- | --- |
+| the right template | 1.000 | 1.000 |
+| letter A, screen blank white | 0.000 | **0.893** |
+| letter A, only B on screen | 0.302 | **0.823** |
+| enabled button, disabled one on screen | **0.954** | 0.752 |
+
+Measured with the app's own OpenCV build and score formula. A UI crop is mostly background and
+background always agrees, so brightness-and-shape scores high whatever the foreground does - at
+0.80 it finds an "A" on an empty screen; at 0.95 it rejects all three wrong cases. And shape alone
+clicks a disabled button, which is the reason the second mode exists. The other four OpenCV methods
+are gone: the unnormalised ones return scores in the millions that no 0..1 threshold can judge, and
+`CCorrNormed` scores 0.95 against blank grey.
+
+**Accuracy belongs to each template**, because one variant of an icon can need a looser bar than
+another. A failure names the template that came closest - `no template matched, closest play hover
+at 0.78 - play at 0.80, play hover at 0.90` - because a score read against the wrong template's bar
+would pass a threshold it never had to clear.
+
+**Required templates.** With none required, the templates are alternatives: the first hit ends the
+search. With some required, every required one is looked for, and a missing one fails the step
+whatever else matched - `required login button not found`. The waits follow: `WAIT_UNTIL_FOUND`
+until all required are there, `WAIT_UNTIL_NOT_FOUND` until one is gone.
+
+**One computed scale, no sweep.** The area decides it (see Coordinates below), and a template
+scaled larger than the screenshot is an error rather than "not found". Nine attempts at one
+threshold would be nine chances at a false positive; one attempt fails legibly - "0.62 at 1.25"
+says the ratio was wrong.
+
+**Known limits, recorded rather than fixed.** Text does not survive a DPI change - a new DPI
+re-renders text rather than scaling it, so a word captured at 100% scores 0.67 at 125% where an
+icon scores 0.93: capture icons with Find Image, read words with Search Text. A single-colour
+template matches everywhere, because OpenCV defines a template with no variance as a perfect match.
+And colour is never compared - both modes match in grayscale.
+
+`SEARCH_TEXT` captures the area, reads it with Windows OCR, optionally keeps the part a regex
+captures, and evaluates the condition against it.
 
 ### The matrix
 
@@ -696,22 +830,63 @@ than at execution. The writer emits `{{username}}` either way, so the script rea
 ### Coordinates
 
 Everything persisted is in **physical pixels**, and every set of pixels carries the DPI it was
-captured at - a template, a child area's offset and size, a point. The process is
-Per-Monitor-DPI-V2 aware. `ScreenHelper.EnablePerMonitorDpiAwareness` must run before anything else
-touches a coordinate API — without it Windows virtualises every rect to 96 DPI and nothing lines up
-with the capture buffers or the low-level input hook, both of which are always physical.
+captured at - a template, a child area's offset and size, a point - because each is captured at its
+own moment, possibly on a different monitor. The process is Per-Monitor-DPI-V2 aware.
+`ScreenMetrics.EnablePerMonitorDpiAwareness` must run before anything else touches a coordinate API
+— without it Windows virtualises every rect to 96 DPI and nothing lines up with the capture buffers
+or the low-level input hook, both of which are always physical.
 
 What makes a flow authored at 150% work at 100% is the area. Each says what its contents scale
-with: **DPI** for a browser or a normal app, whose contents keep their size when the window changes,
-or **its own size** for a game, whose picture stretches. The DPI now is the monitor holding the
-largest part of the area - the rule Windows uses for a window. A template is scaled once, by that
-one ratio; there is no sweep of sizes. Anything placed in screen coordinates - a region with no
-parent, a point measured from nothing - gets a validation warning, because no ratio fixes it.
-`PLAN.md` phase 5.7 has the reasoning and the measurements.
+with, and everything inside it inherits the answer:
+
+| `ScalesWith` | for | ratio |
+| --- | --- | --- |
+| `DPI` | a browser, a native app, the OS | `dpiNow / authoredDpi` - the window's size does not matter |
+| `AREA` | a game | `min(widthNow / authoredWidth, heightNow / authoredHeight)` |
+
+One formula for both was the bug this replaced: a browser reflows rather than growing its
+contents, so scaling its templates by the window's size shrank them until nothing matched. It
+looked right in the demo because maximised 1080p at 100% to 4K at 200% makes both ratios 2.0.
+`AREA` takes the **smaller** ratio because a game whose window changes shape adds bars rather than
+stretching its art, and it never also applies DPI - the area is measured in device pixels, so a
+higher DPI already shows in its width.
+
+A browser tab and a monitor default to DPI. An application asks, because a native app and a game
+look identical from outside. A region inside another inherits and can override - the game inside a
+browser tab: the tab is `DPI`, the canvas inside it `AREA`. The DPI now is the monitor holding the
+largest part of the area - the rule Windows uses for a window - and an empty monitor name means the
+primary, which is the portable choice.
+
+Anything placed in screen coordinates - a region with no parent, a point measured from nothing -
+gets a `SCREEN_COORDINATES` warning, because no ratio fixes it.
 
 ---
 
 ## 9. Validation and the fix loop
+
+### Static validation
+
+`FlowValidationService` runs a set of rules in `Rules/` over a flow before it is executed - a flow
+tells you what is broken while you are still writing it. The flow list shows each flow's error and
+warning counts, and the editor names the step.
+
+| errors - the flow cannot be right | warnings - the flow works, but |
+| --- | --- |
+| a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
+| a step reading a result it does not sit under through Success | a check that decides nothing |
+| a sub-flow that does not exist | a step with no name |
+| an `End Execution` under another one, which reads as a decision and is not | anything positioned in screen coordinates |
+| `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
+| a `{{variable}}` nothing in the flow defines | |
+
+`NAME_DUPLICATE` is an error rather than a warning: the script refers to things by name, so a
+duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step picks
+a free name automatically, so only a manual rename can reach it.
+
+`FlowCheckHelper` and the `GetFlowChecks` AI tool expose the checks a flow contains, so a question
+about "what does this flow verify" is answerable without walking the tree by hand.
+
+### Planned - phase 9: a recording is not a test until it has validated
 
 **A freshly recorded flow is not allowed to run in CI.**
 
@@ -735,21 +910,48 @@ on from where validation stopped.
 This is the loop the whole product turns on: the difference between a recorder that produces a
 brittle script and a tool that produces a test somebody trusts.
 
-### Static validation
-
-`FlowValidationService` orchestrates rules in `Rules/` and runs before any of that — a flow tells
-you what is broken before you execute it. `FlowCheckProjection` and the `GetFlowChecks` AI tool
-expose the same information to a model: every check a flow contains, so a question about "what does
-this flow verify" is answerable without walking the tree by hand.
-
-`NAME_DUPLICATE` is an error rather than a warning: a duplicate name cannot round-trip through the
-script and makes two steps share one history trend.
-
 ---
 
 ## 10. AI
 
-### The local model is always on. The cloud is an addition, not an alternative.
+### Today
+
+One provider at a time - **Ollama** on the machine or **OpenAI** (or anything speaking its API) -
+behind `Microsoft.Extensions.AI`, or none, in which case every AI feature is switched off rather
+than failing. A model can be pulled into Ollama from the settings page.
+
+**Ask** is a chat about your own flows and executions. The model answers by calling tools rather
+than being handed a dump: `DbQueryTools` - search flows and steps, read a flow with its areas,
+points and templates, list executions and their steps, count outcomes and step types, list what a
+flow checks - and `AiDocumentTools`, which searches the app's own documentation. The loop - ask,
+call a tool, feed the result back, ask again - is `UseFunctionInvocation()` middleware with a cap on
+rounds, so there is no orchestration framework.
+
+**Explain** takes a failed execution - its steps, the closest scores, the screenshots when allowed -
+and says what went wrong and what to change.
+
+**The documentation index.** `backend/Core/AiDocuments/` is markdown written for the model - one
+file per step type and concept, troubleshooting, every validation message. `AiDocumentIndexService`
+splits it into chunks, embeds them locally with an ONNX model and `Microsoft.ML.Tokenizers`, and
+searches them with USearch. It is built on the first question and saved, so an app that never asks
+anything never loads the model. `OnnxEmbeddingService` runs on the machine, but `AiDocumentTools`
+returns raw chunk text — so **embedding is not a privacy layer** and must not be described as one.
+
+### The screen-data gate
+
+`AI_SEND_SCREEN_CONTENT` is a boolean, **default off**. `IAiProviderService.CanSendScreenDataAsync`
+is the single chokepoint — a local provider always may, a cloud provider only on the setting.
+`FlowQuestionService` resolves it once per question and hands the answer to both the screenshots and
+the tools, so the two cannot disagree. Typed text is redacted from every tool result unless it is
+allowed, and `DbQueryTools` never selects the `AppSetting` API key or `DiscordBot.WebhookUrl` in any
+projection: the webhook URL *is* the credential and is never logged.
+
+AI-generated flows go into the editor and never execute on their own, because a prompt injection in
+text read off the screen would otherwise be code execution.
+
+### Planned - phase 6: the local model is always on
+
+The cloud becomes an addition, not an alternative.
 
 | | local | cloud |
 |---|---|---|
@@ -766,18 +968,7 @@ means one component touches raw screen data and everything downstream gets deriv
 small CPU models read dense interfaces poorly. That cost is being taken for now rather than designed
 around.
 
-### The screen-data gate
-
-`AI_SEND_SCREEN_CONTENT` is a boolean, **default off**. `IAiProviderService.MaySendScreenDataAsync`
-is the single chokepoint — local always may, a cloud provider only on the setting. Typed text is
-redacted on three paths, and `DbQueryTools` never selects the `AppSetting` API key or
-`DiscordBot.WebhookUrl` in any projection: the webhook URL *is* the credential and is never logged.
-
-AI-generated flows go into the editor and never execute on their own.
-
-### Structured output, not prose
-
-The local model returns a schema:
+**Structured output, not prose.** The local model returns a schema:
 
 ```
 elements:    type, label, x, y, width, height, state     (OmniParser produces these)
@@ -790,17 +981,10 @@ screen, so a label can be `Welcome, alex@company.com`. The schema means there ar
 where screen text can appear rather than an unbounded paragraph, which is what makes review
 possible.
 
-### The payload is shown before it is sent
-
-Which is the actual guarantee. The cloud query is assembled from local findings and displayed first,
-with `label` and `notes` highlighted as the fields carrying screen text. Visibility rather than a
-promise: a filter that claims to catch everything is worse than a preview that admits it cannot.
-
-### Documents
-
-`AiDocumentIndexService` embeds markdown chunks locally with ONNX and searches them with USearch.
-`OnnxEmbeddingService` runs on the machine, but `AiDocumentTools` returns raw chunk text — so
-**embedding is not a privacy layer** and must not be described as one.
+**The payload is shown before it is sent**, which is the actual guarantee. The cloud query is
+assembled from local findings and displayed first, with `label` and `notes` highlighted as the
+fields carrying screen text. Visibility rather than a promise: a filter that claims to catch
+everything is worse than a preview that admits it cannot.
 
 ---
 
@@ -808,6 +992,10 @@ promise: a filter that claims to catch everything is worse than a preview that a
 
 How a flow gets out of the database, into a repository, through a pipeline, and back to whoever has
 to work out why it went red.
+
+**Mostly design, not yet built** - phases 8 and 12 to 14. What exists: the script and its
+transactional import and export (§7, reachable over IPC but with no button yet), `PublicId`, and
+the app under test as the flow's root area.
 
 ### The file is `.sflw`
 
@@ -918,25 +1106,35 @@ something, so a tester can see the edit before trusting it.
 
 ## 12. Reporting and notifications
 
-Every check that can fail an execution is a thing worth counting.
+**Discord notifications** are a `Notify` step, so they go wherever the flow puts one - usually under
+a failure branch or an `End Execution`. The message says what failed and why, with the template
+images it was looking for, and posts through one queue rate-limited per bot, so a flow in a retry
+loop cannot flood a channel. The webhook URL is the credential: it is never logged and never shown
+to a model.
 
-A flow that ran a hundred times — fifty at one viewport, fifty at another — with four failures is a
-sentence the product should be able to say. So is which checks those four fell into, and which checks
-have never failed at all. That is the difference between "the login test is flaky" and "the login
-test fails at 390x844 four times in fifty, always on the cart badge check".
+**Execution history** records every step's result, duration, location, closest score and message.
+**Screenshots**: nothing is written while a flow goes well. A failure writes out the last few
+screenshots leading up to it, each named after the step that took it, and the execution page shows
+them beside the step.
 
-**Discord notifications** post to a webhook when a step fails, with the reason and the template images
-it was looking for, rate-limited per bot so a flow in a retry loop cannot flood a channel.
-
-**Failure screenshots**: nothing is written while a flow goes well. A failure writes out the last few
-frames leading up to it, each named after the step that took it.
+**Planned - phase 15.** Every check that can fail an execution is a thing worth counting. A flow
+that ran a hundred times — fifty at one viewport, fifty at another — with four failures is a
+sentence the product should be able to say. So is which checks those four fell into, and which
+checks have never failed at all. That is the difference between "the login test is flaky" and "the
+login test fails at 390x844 four times in fifty, always on the cart badge check".
 
 ---
 
 ## 13. Frontend
 
+React 19 and TypeScript on Vite (the rolldown build), with the React Compiler; PrimeReact and
+PrimeFlex for components; React Router 7; TanStack Query for server state and Zustand for UI state;
+React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answers. ESLint 9 with
+`typescript-eslint` and the React hooks rules. Electron 40 is the shell, packaged by
+electron-builder, with `electron-updater` and `electron-log`.
+
 Feature-based: `features/<name>/{components,hooks,store}`, shared code in `shared/`, Electron-window
-pages in `windows/`.
+pages in `windows/`. The recorder's wizard is `features/wizard/`.
 
 Every entity form is a pair — `XFormComponent` (React Hook Form setup, header, footer, submit) and
 `XFormFieldsComponent` (fields only, reads `useFormContext`) — with a sibling `x.zod.ts`.
@@ -989,11 +1187,17 @@ rectangular and lasso crop, eraser to transparency, undo/redo with thumbnail his
 > dependency: everything it needs arrives as an argument, including a `DbContext` when it needs
 > one. Anything that owns something is a service.
 
-The line is ownership, not purity. `FlowNameLookupHelper.TakenAsync(dbContext, flowId, ct)` is
-async and touches the database, and it is still a helper — the caller owns the context and the
-transaction, and the helper just asks a question with it. `IAppSettingService` holds its own
-factory, so it is a service. That is the whole distinction, and it is what makes a helper safe to
-call from anywhere: there is nothing in it to share, configure or dispose.
+The line is ownership, not purity. `FlowNameLookup.TakenAsync(dbContext, flowId, ct)` is async
+and touches the database, and it still owns nothing — the caller owns the context and the
+transaction, and it just asks a question with it. It dropped the `Helper` suffix because it is a
+query, and the name should say which. `IAppSettingService` holds its own factory, so it is a
+service. That is the whole distinction, and it is what makes a static class safe to call from
+anywhere: there is nothing in it to share, configure or dispose.
+
+**Pure functions stay static; only what holds a dependency is injected.** A pure static function
+is the cheapest thing in the repository to test - no fake, no fixture, no container. Wrapping
+several in one injected orchestrator would turn a test that needs nothing into one that needs a
+fake of all of them.
 
 What `Helpers/` must not become is the folder where anything without a home lands. Native interop
 is the case that went wrong once: `AppWindowHelper` and `Direct3D11Helper` were the OS API
@@ -1008,15 +1212,16 @@ Two different things, two homes.
 
 **`Core/Catalogs/`** holds structured tables that answer a question: `AppSettingCatalog` (every
 setting's label, description, default, min and max — read by the loader *and* the settings page so
-the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type),
-`CommandPresetCatalog`. These are not constants; they are queried, and a `Constants.cs` full of
+the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type).
+`CommandPresetCatalog` is the same kind of thing and sits beside the runner in `Business/Command`,
+its only consumer. These are not constants; they are queried, and a `Constants.cs` full of
 `public const string` would describe them less accurately than `Catalog` does. The pattern has a
-well-known precedent in Roslyn's `SyntaxFacts`.
+well-known precedent in Roslyn's `SyntaxFacts`, which the flow script borrows by name.
 
-**`Constants/`** holds things that genuinely are constants — the OCR installable-tag list, `WM_CLOSE`,
-the DPI awareness handles, recorder poll rates.
-
-Neither belongs under `Helpers/`.
+**Things that genuinely are constants** live in the class that uses them — `WM_CLOSE` in
+`WindowService`, the DPI awareness handles in `ScreenMetrics`, the OCR language tags in the internal
+`OcrLanguageCatalog`. There is no `Constants/` folder, for the same reason there is no `Helpers/`
+folder in `Business`.
 
 ### Backend
 
@@ -1042,9 +1247,11 @@ Neither belongs under `Helpers/`.
 
 ### C# style
 
-- Explicit types over `var`.
+- Explicit types over `var`, and `new TypeName()` rather than a target-typed `new()`.
 - No expression-bodied `=>` members.
-- `<summary>` on public members; `//` on private ones.
+- An `if`, not a multi-line ternary, inside a block. A ternary is fine in a LINQ projection, an
+  object initializer, or when it is short enough to read at a glance.
+- `<summary>` on public members only; `//` on private ones.
 - Comments explain *why*, not *what*. Names and logic carry the meaning.
 - `//===` section banners inside long P/Invoke files.
 
@@ -1061,8 +1268,14 @@ arguing with a deliberate convention rather than finding a defect: `CA1707` want
 out of `KILL_PROCESS`, `CA1711` wanted the `Enum` suffix off `FlowStepTypeEnum`, and `CA1725`
 wanted MediatR's `cancellationToken` in place of the house `ct`. Each was turned off with the reason
 written beside it. The last was off only under the handlers, because elsewhere it caught six real
-ones, and it is on everywhere again now the handlers implement no MediatR interface. `IDE0005`
-reports an unused `using` as an error.
+ones, and it is on everywhere again now the handlers implement no MediatR interface.
+
+`IDE0005` reports an unused `using` as an error, because a dead `using` is how a project keeps a
+package it stopped using - one in `DiscordNotifier` alone would have kept protobuf-net on
+`Business`. It only runs at build when `GenerateDocumentationFile` is on, since a `using` can be
+needed by an XML `cref` alone; that flag brings `CS1591`, missing XML comment, which
+`.editorconfig` turns off.
+EF migrations are exempt by path, because EF writes their usings from a template.
 
 A deviation is recorded three ways, and the width of the record matches the width of the exception:
 a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a folder, and a
@@ -1074,24 +1287,134 @@ a severity in `.editorconfig` for a rule everywhere, a path-scoped section for a
 
 ---
 
-## 15. Status
+## 15. Tests
+
+345 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+per production project, plus `Architecture.Tests`.
+
+| project | tests | what it holds |
+| --- | --- | --- |
+| `Core.Tests` | 69 | the pure helpers - conditions, variables, names, text extraction, the tree rules, window matching |
+| `Business.Tests` | 258 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
+| `Architecture.Tests` | 9 | the layering in §2 as failing tests |
+| `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
+
+```bash
+npm run test:backend
+npm run coverage:backend
+```
+
+### The stack
+
+**xUnit v3 and Shouldly**, on Microsoft.Testing.Platform - each test project is its own executable
+rather than a dll in a shared runner, which matters with OpenCV, SharpHook and ONNX Runtime all
+carrying native bits. TUnit was weighed and passed over: its mutation-testing runner is in preview
+and Fine Code Coverage cannot drive it, in exchange for start-up speed this suite would not notice.
+FluentAssertions was ruled out because version 8 is a paid licence for commercial use, and a
+routine upgrade would put it into a GPL repository. **ArchUnitNET** for the layering;
+`FakeTimeProvider` for the clock.
+
+**Fakes are written by hand.** Each port's fake records what it was told as a readable line -
+`"move 200,80"`, `"press LeftCtrl+LeftShift+T"` - so an assertion reads like the flow, and throws on
+anything the test did not arrange, so an unplanned call fails loudly. A fake recording lines shows a
+reader what the ports bought; `Received()` shows them a mocking library.
+
+**The database is real SQLite in memory, one per test**, built by the real migrations - not EF's
+in-memory provider, which is not relational, enforces no foreign key, and would leave every delete
+rule in §5 unverified. The one trick: an in-memory SQLite database lives inside its connection, so
+the test opens one, holds it, and hands EF the connection rather than a connection string.
+
+**Names are sentences** - `A_missing_required_template_fails_the_search_even_when_others_match` -
+and the class names the subject.
+
+### What the wiring needed
+
+- **`backend/global.json` opts `dotnet test` into Microsoft.Testing.Platform**, which the .NET 10 SDK
+  requires for xUnit v3. It is read by the `dotnet` CLI before anything builds, so it cannot live in
+  code. The switches changed with it: `dotnet test --solution backend.slnx`, and test options after
+  `--`.
+- **One `Directory.Build.props`.** Test projects are recognised by the `.Tests` suffix and get their
+  packages and settings there, and inherit everything else - analyzers, warnings as errors and both
+  banned lists. A test reaching for `DateTime.UtcNow` fails like anything else, and no rule has
+  needed relaxing for test code.
+- **xUnit's generated `Main` blocks on a task**, which the banned list refuses.
+  `XUNIT_GENERATED_DISABLE_WARNINGS` silences warnings in that generated file and nowhere else.
+- **Exit code 8, "no tests ran", is not a failure**, so the three empty projects pass.
+- **The snapshot is twenty lines rather than Verify.** Verify 33 fails the build until a project
+  declares sponsorship, a licence or an exemption - a statement about the project that is not a
+  test suite's to make. `ApprovedFile.ShouldMatch` compares the printed sample flow with
+  `SampleFlow.approved.sflw`.
+
+### What they found
+
+Three layers found a bug on their first run, none of which anybody had reported, and a fourth found
+an open question:
+
+- **`Press Ctrl+1` pressed Ctrl+B.** The key parser used `Enum.TryParse`, which reads `"1"` as the
+  enum member at position 1. The recorder writes `Num1`, which is why nobody saw it; a hand- or
+  AI-written script did. Its twin was in the script parser: `System 99` was accepted as a system
+  action that does not exist.
+- **`Wait Until No Image` and `Wait Until No Text` took their Failure branch when the thing went
+  away** - exactly when they should succeed - and failed again when it timed out still there. Since
+  the wait modes were written.
+- **Results are never forgotten.** An open decision rather than a fix - see §8.
+
+Proving the tests bite: planting two bugs in `ImageSearcher` - the required rule off, the larger
+scale ratio instead of the smaller - each failed exactly the test written for it and nothing else.
+Adding a column to an entity without a migration failed every `DataAccess` test. A throwaway
+architecture rule that is false today failed and named every class that broke it.
+
+### The architecture tests
+
+Five layer rules, one per project, each naming what it may not depend on; no OpenCvSharp or
+SharpHook outside `Platform.Windows`; `Core` using nothing but the framework; and no `Services`
+namespace coming back into `Business`. Today no forbidden edge can even be written - each would be a
+reference cycle or a reference to a Windows framework - so they first bite when somebody gives a
+project a Windows target to reach the machine, which is exactly how `Business` was before the split.
+
+### Coverage, and why it is not one number
+
+**30.7% of lines overall.** Per project: DataAccess 82.5%, Business 50.9%, Core 38.6%, and App,
+Transport and Platform.Windows 0%. Measured over the six production assemblies only - libraries
+that ship debug information would otherwise be counted as ours - and without the generated
+migrations, which the tests run in full just by building a database and which alone took the total
+to 65%.
+
+The target is per project, and the table is the architecture diagram: `Core` near total, because
+it is pure decisions and has no excuse; `Business` decision code high - the walker, the script, the
+validators, the searcher; orchestration moderate and by integration test; `Platform.Windows` near
+zero **on purpose**, because it is the part that touches the machine, with the handful of tests that
+need a real screen labelled and kept out of CI. A blanket 100% buys tests for property getters and
+catches nothing. The number worth publishing is a mutation score over the walker and the script,
+because that is a claim about whether the tests detect defects rather than which lines ran.
+
+Not tested yet: the engine itself (it waits on two seams, `PLAN.md`), real OpenCV against real
+images, and the frontend. There is no Playwright and will not be: this product *is* a UI
+automation tool, and its end-to-end test is a flow script that tests StepinFlow.
+
+---
+
+## 16. Status
 
 In active development, not released.
 
-Working: the flow builder, the recorder, image search, OCR, sub-flows, notifications, the execution
-engine with breakpoints and step-into, execution history, validation, the flow script in both
-directions, and the AI assistant with local and cloud providers.
+Working: the flow builder, the recorder and its wizard, image search that survives another monitor
+and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
+step into and step over, execution history with failure screenshots, the flow script in both
+directions, and the AI assistant with Ollama or OpenAI. 345 backend tests.
 
-`PLAN.md` holds the build order and which phases have landed. `TODO.md` holds everything
-deferred.
+`PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
 ### Known gaps
 
-- The flow script round-trips: writer, parser, binder and a transactional importer, with the
-  byte-identical round trip verified both purely and through a database. Two gaps remain inside it -
-  a `Sub Flow` step imports with no target, and `FlowValidationService` does not yet run on import.
-- No CSV template is generated yet, and no `.gitignore` entry is written for the secrets file.
-- Export has no button. `Flow.export` is reachable over IPC but nothing in the UI calls it.
+- The flow script has no button: export and import are reachable over IPC and nothing in the UI
+  calls them. Inside it, a `Sub Flow` step imports with no target, and `FlowValidationService` does
+  not yet run on import.
+- No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
+- How long a step's result stays readable is undecided (§8).
+- The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build
+  and tests but have not been clicked through by hand.
 - `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the
   screen, so it is not currently redacted for AI. Flagged in `TODO.md` rather than folded in silently.
 

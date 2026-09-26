@@ -1,7 +1,9 @@
 # TODO
 
 Deferred work, to pick up near the end of the app. Add here rather than in conversation, so nothing
-is lost between sessions.
+is lost between sessions. `PLAN.md` is the build order and `PROJECT.md` is what the product does;
+this is everything open that is part of neither. A finished item is deleted, not ticked - git keeps
+the history.
 
 ## Execution
 
@@ -42,30 +44,15 @@ is lost between sessions.
       when it breaks rather than one you hope for.
 - [ ] **Keep-last-X-runs retention.** Nothing prunes `Executions` / `ExecutionSteps` today. Needs a
       setting and a sweep, or the history grows without bound.
-- [ ] **Hold the walk Task so shutdown can await it.** `_ = WalkToEndAsync(ct)` discards it, so on
-      app shutdown the run unwinds while the host tears down and the final history flush can fail
-      against a disposed context factory. Caught and logged, but the last batch is lost.
 - [ ] **Startup check that every `FlowStepTypeEnum` has a worker** or is on an explicit structural
       list (SUCCESS, FAILURE, LOOP, GO_TO, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
-- [ ] **The non-normalised match modes cannot honour an accuracy threshold.** SqDiff, CCorr and
-      CCoeff return unbounded numbers - measured against one real 70x71 template: SqDiff 27-32
-      million, CCorr 67-74 million, CCoeff -1.05 to +1.01 million. The threshold is a 0..1 accuracy,
-      so CCorr and CCoeff pass every position (matches everything, up to MaxMatches) and SqDiff
-      passes none (finds nothing, ever). Both are silent. The old app papered over this by
-      normalising against the min/max of that one result matrix, which makes the best match in any
-      image score 100% by construction - so the threshold could never reject anything there either.
-      There is no correct absolute mapping for an unbounded score. Either drop the three from
-      TemplateMatchModeEnum (stored as strings, so it is a data migration and a form change) or
-      keep them and hide the accuracy field when one is picked, which admits they are relative.
-      **Moved to `PLAN.md` phase 5.7 and decided**: `CCorrNormed` goes with them, leaving
-      `CCoeffNormed` and `SqDiffNormed`, renamed by intent.
 - [ ] **Colour matching.** Both match modes run in grayscale, so two states with the same
       lightness in a different hue look identical - rarity borders in a game are the likely case.
       Matching the three channels costs roughly three times a grayscale match, affordable now the
-      scale sweep is gone. A third mode when a flow needs it; the enum is being renamed in phase
-      5.7 anyway, so adding one later breaks nothing.
+      scale sweep is gone. A third mode when a flow needs it; the enum names intents rather than
+      OpenCV's methods, so adding one breaks nothing.
 - [ ] **A step that sets the browser tab's zoom.** Zoom is indistinguishable from DPI from outside
       the browser, so a tab at 110% breaks every template captured at 100%. Resetting it is a
       keystroke with side effects and needs focus, which is why it is a step and not something a
@@ -101,8 +88,6 @@ is lost between sessions.
       dialog) or an `ExecutionStepMatch` table (queryable, survives without screenshots, and adds
       rows a FIND_ALL run multiplies - retention is already unsolved). A json column is out; the
       `ResultJson` blob was deliberately removed.
-      The per-template loop is extracted - `Business/Searching/ImageSearcher`, shared by the worker
-      and `TestImageSearchHandler` since phase 5.6 - so the two paths can no longer drift.
 - [ ] **Remove the `Success` / `Failure` static factories from `ExecutionStep`.** They build an
       entity, which reads as though an execution step is something a worker mints rather than a row
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
@@ -150,9 +135,6 @@ is lost between sessions.
 
 ## AI
 
-- [x] **Orchestration framework: no.** Settled at feature 3. `Microsoft.Extensions.AI` already
-      ships `UseFunctionInvocation()`, which is the ask / call tool / feed back / ask again loop as
-      middleware, with `MaximumIterationsPerRequest` as the guard. Nothing left for a framework.
 - [ ] **See what actually goes to the model.** `.UseOpenTelemetry(configure: x => x.EnableSensitiveData = true)`
       in the same builder chain as `UseFunctionInvocation`, exported to the standalone Aspire
       Dashboard (`docker run mcr.microsoft.com/dotnet/aspire-dashboard`). Gives a trace per request
@@ -229,21 +211,26 @@ is lost between sessions.
       asked both ways and compared. Off by default. Only worth showing when the model reports the
       `thinking` capability, which `/api/show` already returns.
 - [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Use the same master
-      password scheme `REPO-AND-CI.md` settles for input secrets - key derivation plus `AesGcm`,
+      password scheme `PROJECT.md` section 11 settles for input secrets - key derivation plus `AesGcm`,
       not DPAPI, which is Windows only and would become a porting blocker. One mechanism for every
       secret the app holds, or there will be two half-solutions.
 - [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a
       spinner for 20+ seconds. Needs a broadcast type and partial-message plumbing.
 - [ ] **Anthropic as a native provider.** Only OpenAI-compatible endpoints work today, which
       covers OpenAI, Ollama and gateways like OpenRouter, but not Anthropic directly.
-- [ ] **Redact what tool results send to a cloud provider.** The screen-text rule has exactly one
-      chokepoint today, `ExecutionPromptHelper`. Tool calling returns rows from everywhere, and the
-      exposure is wider than OCR text: `FlowStep.KeyboardInputText` holds, in plaintext, whatever a
-      flow types - a password typed into a login form is in there. `RunCommand`, `ConditionText` and
-      `NotifyMessage` are the same shape. `AppSetting` holds the OpenAI key and `DiscordBot` holds
-      webhook urls, which is why those two columns are left unselected rather than redacted.
+- [ ] **Redact what tool results send to a cloud provider.** Typed text is covered:
+      `DbQueryTools` hides `KeyboardInputText` from both its projections and its search unless
+      `CanSendScreenDataAsync` allows it. Nothing else is. `RunCommand`, `ConditionText` and
+      `NotifyMessage` are the same shape - authored text that can hold a secret - and every new
+      tool has to remember the rule by hand. `AppSetting` holds the OpenAI key and `DiscordBot`
+      holds webhook urls, which is why those two columns are left unselected rather than redacted.
       Wants one pass every tool result goes through, keyed on provider exactly as the existing rule
       is, so a cloud model gets `(hidden)` where a local one gets the value.
+- [ ] **Decide whether `RunCommandValue` is screen data.** Phase 0 gated screenshots, OCR text and
+      typed text behind `CanSendScreenDataAsync`. A command line was left alone: it is authored
+      rather than read off the screen, and "which flows use curl" is a fair question. But
+      `curl -H "Authorization: Bearer ..."` is a credential sitting in a field the model reads
+      freely. Either gate it, or say plainly that command lines are not the place for secrets.
 - [ ] **`EnableSensitiveData` is hardcoded on.** `AiClientFactory.WithTelemetry` always tells the
       OpenTelemetry client to record raw content, so a trace carries the full prompt, every tool
       result and every screenshot - including `FlowStep.KeyboardInputText`, which is a typed
@@ -319,6 +306,11 @@ is lost between sessions.
       it is never scaled - searched at the size it was recorded on every screen. The capture form
       now records both from the step's area; the recorder should too, from the area the answer
       picks, once that area is resolved at the moment of recording.
+- [ ] **A recorded flow still cannot fail on its own.** The AI path adds `End Execution`, and the
+      recorder deliberately does not. So "record and execute right away" produces a flow that walks
+      to the end and reports INCONCLUSIVE whatever the application did. Fine while the AI pass is
+      the intended route; worth revisiting if recording alone is ever offered as a way to make a
+      test.
 
 ## Notify
 
@@ -347,42 +339,8 @@ is lost between sessions.
       fail on purpose until someone opens the editor afterwards. Ties into the recorder seeding
       `End Execution failed` into the failure branches it creates.
 
-- [ ] **A recorded template records no authored frame size.** `AuthoredFrameWidth` and
-      `AuthoredFrameHeight` are saved as 0 by the recorder, and `SearchImageStepWorker.ScaleRatio`
-      returns 1 for anything <= 0 - so multi-scale matching silently does nothing on a recorded
-      template, and a window at a different size than it was recorded at just fails to match. The
-      manual capture path fills both in; the wizard has the same numbers available and does not.
 - [ ] **Flow edit / view / clone routes are broken.** `FlowFormPage` reads a `formMode` route param
       that no route declares, and `const flow = null` means it never loads the flow it is editing.
-
-## The plan
-
-`PLAN.md` is the build order. `PROJECT.md` is what the product does and how it is put together.
-
-`BRD.md` and `REPO-AND-CI.md` no longer exist as separate documents. They were written, never
-committed, and lost in a revert on 2026-09-16; `REPO-AND-CI.md` survives in full as
-`PROJECT.md` section 11, and the product half of `BRD.md` is spread through sections 1, 6 and 9.
-`PLAN.md` was rebuilt from the code on the same day - the phase list and ordering are intact,
-and every finished item in it was checked against the repository rather than recalled.
-
-`TODO.md` stays what it has always been: deferred work that is not part of that plan.
-
-- [ ] **Decide whether `RunCommandValue` is screen data.** Phase 0 gated screenshots, OCR text and
-      typed text behind `MaySendScreenDataAsync`. A command line was left alone: it is authored
-      rather than read off the screen, and "which flows use curl" is a fair question. But
-      `curl -H "Authorization: Bearer ..."` is a credential sitting in a field the model reads
-      freely. Either gate it, or say plainly that command lines are not the place for secrets.
-
-- [ ] **`KeyboardInputText` is sent to the model.** `DbQueryTools` projects it (line 420) and
-      searches it (line 130), so a password recorded while typing into a login form reaches
-      whatever ai provider is configured, cloud included. `AppSetting.Value` and
-      `DiscordBot.WebhookUrl` are already excluded by hand; this needs the same. It has to land
-      before stored secrets move into the database, or the grid makes an existing leak wider.
-
-- [ ] **A recorded flow still cannot fail on its own.** The AI path adds `End Execution`, and the
-      recorder deliberately does not. So "record and execute right away" produces a flow that walks
-      to the end and reports COMPLETED whatever the application did. Fine while the AI pass is the
-      intended route; worth revisiting if recording alone is ever offered as a way to make a test.
 
 ## Documentation
 
@@ -405,28 +363,24 @@ and every finished item in it was checked against the repository rather than rec
 
 ## Licences
 
-- [ ] **MediatR 14.2.0 and AutoMapper 16.2.0 are not free, and this repository is GPL-3.0.** Both
-      ship a Lucky Penny Software `LICENSE.md` offering **RPL-1.5 or a paid commercial licence**.
-      The app is distributed as a built installer, so private-use arguments do not apply. RPL-1.5
-      carries reciprocal conditions GPL-3.0 does not allow a combined work to add, and the
-      commercial arm is proprietary, which a GPL work cannot link either. Verify properly rather
-      than taking this at face value - but it needs an answer before a release, and it arrived
-      through a version bump rather than a decision.
+- [ ] **AutoMapper 16.2.0 is not free, and this repository is GPL-3.0.** It ships a Lucky Penny
+      Software `LICENSE.md` offering **RPL-1.5 or a paid commercial licence**. The app is
+      distributed as a built installer, so private-use arguments do not apply. RPL-1.5 carries
+      reciprocal conditions GPL-3.0 does not allow a combined work to add, and the commercial arm
+      is proprietary, which a GPL work cannot link either. Verify properly rather than taking this
+      at face value - but it needs an answer before a release, and it arrived through a version
+      bump rather than a decision. MediatR had the same licence and is gone, replaced by a
+      hand-written dispatcher (`PROJECT.md` section 4).
 
-      Last freely licensed versions: MediatR 12.x and AutoMapper 13.x, both Apache-2.0. Pinning is
-      the cheap escape; the local NuGet cache still has `automapper/13.0.1`.
+      Last freely licensed version: AutoMapper 13.x, Apache-2.0. Pinning is the cheap escape; the
+      local NuGet cache still has `automapper/13.0.1`.
 
-      **MediatR is gone**, 2026-09-24 - a hand-rolled dispatcher, `PLAN.md` phase 5.6. Nothing
-      in the repository used a pipeline behaviour, notification or stream, and `IpcDispatcher`
-      already routed by hand, so the library was only resolving a handler out of the container.
-      103 message records went with it.
-
-      **AutoMapper is not decided.** 77 sites and one profile, so it is a real job. `Mapperly` is
+      **Not decided.** 77 sites and one profile, so it is a real job. `Mapperly` is
       the replacement worth the effort rather than a like-for-like swap - MIT, source generated,
       and a missing property becomes a build error instead of a runtime surprise, which is the
       trade phase 4.6 made everywhere else.
 
-- [ ] **Audit every NuGet licence across all five projects, once, and write the answer down.**
+- [ ] **Audit every NuGet licence across all thirteen projects, once, and write the answer down.**
       This one was found by reading a `LICENSE.md` in the local NuGet cache, not by anything in the
       build. `NuGetAudit` reports vulnerabilities, not licence changes, so a package going
       commercial between minor versions is completely silent - and `TreatWarningsAsErrors`,
@@ -434,8 +388,10 @@ and every finished item in it was checked against the repository rather than rec
 
       This repository is **GPL-3.0-or-later**, which makes it the strictest case: every dependency
       has to be GPL-compatible, and a permissive licence is not automatically one. Worth checking
-      the heavy ones by hand - OpenCvSharp, SharpHook, Tesseract, ONNX Runtime, OllamaSharp,
-      protobuf-net, USearch, EF Core - and recording the result somewhere it survives.
+      the heavy ones by hand - OpenCvSharp, SharpHook, ONNX Runtime, Microsoft.ML.Tokenizers,
+      OllamaSharp, protobuf-net, USearch, EF Core - and recording the result somewhere it survives.
+      The test packages count too: xUnit, Shouldly and ArchUnitNET ship inside no installer, but
+      they are in the repository.
 
       Worth knowing there is no tripwire for the next one. `dotnet-project-licenses` and
       `nuget-license` both dump every package's licence as a report and could run as a build step
@@ -443,59 +399,13 @@ and every finished item in it was checked against the repository rather than rec
 
 ## Transport
 
-- [ ] **Six handler files sit in a sub-namespace and the other 92 do not.** `Handlers.Ai`,
-      `Handlers.Execution` and `Handlers.Lookup` against `Transport.Ipc.Handlers` everywhere else.
-      It cost nothing while dispatch was reflective; now `IpcDispatcher.cs` and `Program.cs` each
-      carry three `using` lines that exist only for those six files. Flattening them deletes six
-      lines and the inconsistency - it is the IDE0130 argument, finally with a price attached.
+- [ ] **Thirteen handler files sit in a sub-namespace and the other 85 do not.** `Handlers.Ai`
+      (7), `Handlers.Execution` (4) and `Handlers.Lookup` (2) against `Transport.Ipc.Handlers`
+      everywhere else. It cost nothing while dispatch was reflective; now `IpcDispatcher.cs` and
+      `Program.cs` each carry three `using` lines that exist only for those files. Flattening them
+      deletes six lines and the inconsistency - it is the IDE0130 argument, finally with a price
+      attached.
 
 - [ ] **`Transport/Cli/` when phase 12 lands.** The project is one folder per transport by design;
       `Ipc/` is the only one so far. Anything a second transport would need lives in `Business`
       already, by the thin-handler rule.
-
-## Feature folders
-
-`Business/Services/` is a level that claims everything below it is a service, and most of it is
-not. `ExecutionService/` holds the engine, the walker, the workers and a factory; only one of
-those is a service. The folder is a feature wearing a service's name.
-
-**The folder suffix is the mistake, not the class suffix.** `ExecutionHistoryService` as a type is
-accurate and the suffix still earns its place by telling a reader it is not a model. It is
-`Business/Services/FlowScriptService/Syntax/Parser.cs` that is three words of ceremony claiming a
-parser is a service. The target is `Business/FlowScript/Syntax/Parser.cs`.
-
-- [x] **Move `FlowScriptService` out first, as the pilot.** Not because it is newest but because it
-      is the only feature with a real acceptance test: the round trip catches a botched namespace
-      move on the first run, which nothing else in the repository would. `Business/Services/
-      FlowScriptService/` becomes `Business/FlowScript/`, and the namespace
-      `Business.Services.FlowScriptService` becomes `Business.FlowScript`. The callers are two IPC
-      handlers and `Program.cs`.
-
-      **Done 2026-09-22**, together with the compiler restructure in `PLAN.md` phase 5.5 so the
-      files moved once rather than twice. The codebase is now inconsistent on purpose until the
-      rest follow, which is the cost of a pilot and is worth writing down rather than discovering.
-
-- [x] **Then the rest, one at a time:** `Execution`, `Recording`, `Ai`, `Notification`,
-      `AreaPoint`, `Command`, `AppSetting`, `FlowValidation`. Each is a namespace change and a
-      folder move with no behaviour in it, so each should be its own commit and nothing else.
-
-      **Planned in full as `PLAN.md` phase 5.6**, which grew three things around this move that it
-      turned out to need: where the helpers go, extracting the search both a worker and a handler
-      duplicate, and splitting the IPC contracts out of `Core`.
-
-      **Done 2026-09-25** as `PLAN.md` phase 5.6 step 3. `Business/Services/` is gone.
-
-- [x] **`Parser.Steps.cs` becomes its own class, not a renamed file.** The dot is the symptom; the
-      partial is the thing. `Parser` keeps the document - header, sections, indentation, building
-      the tree - and `StepParser` takes one line and returns one step. 475 lines and the largest
-      switch in the codebase, and as its own class it is testable against a single line of text
-      with no document, no sections and no indentation around it.
-
-- [x] **Do it before the compiler restructure in `PLAN.md`**, so the files are only moved once.
-      Both landed in the same pass. The two open phase 5 items - sub-flow resolution and running
-      the validator on import - now land inside `Binding/Binder.cs`, which is where they belong.
-
-- [x] **Promote the round trip probe into the solution before starting.** Done - `probes/`, and
-      it earned it: the move was verified by running it after each step rather than by reading the
-      diff. See the Tests section at the end of `PLAN.md` for turning the four probes into real
-      tests.
