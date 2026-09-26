@@ -117,6 +117,22 @@ is lost between sessions.
       a preset and the exit codes. Giving the runner what it needs removes the mapper, makes the
       worker testable with a fake runner, and is one less AutoMapper use to decide on.
 
+- [ ] **Decide how long a step's result lives.** `ExecutionFlowWalker.Pop` writes the popped step's
+      depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
+      entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays
+      readable until its step runs again - the opposite of its comment, and of the validator, which
+      rejects a check or a click reading a result it does not sit under through Success.
+      Some of the language leans on the accident: FLOW-FORMAT.md's own example is a `Check Value`
+      reading its earlier **sibling** `{{Read the total}}`, and `{{name}}` variables are only checked
+      for existence, not reachability. Two ways out:
+      1) **Results live under their step**, as the code intends - swap the two lines in `Pop`. Then
+         the example and any flow like it break, the validator has to check `{{name}}`
+         reachability too, and reading a value later means nesting under the step that read it.
+      2) **Results live until the step runs again**, as it behaves - delete `ForgetFrom` and
+         `_depthByStepId`, and let the validator allow an earlier sibling. Simpler to write flows
+         in; the cost is a stale result from an earlier loop pass or a branch not taken this time.
+      `ExecutionFlowWalkerTests` holds the test for option 1, skipped until this is decided.
+
 ## Flow script
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a

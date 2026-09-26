@@ -1667,12 +1667,27 @@ the first two layers need no production change at all.
 
 ### Layer 4 - `ExecutionFlowWalker`
 
-- [ ] 400 lines of pure decision - no database, no screen, no mouse. The most intricate code in the
+- [x] 400 lines of pure decision - no database, no screen, no mouse. The most intricate code in the
       repository and the cheapest to test, with nothing to refactor first. Build a tree in memory,
       feed results, assert the sequence of step names, and the assertion reads like the flow it
       describes. Loop pass counting, the `_maxSubFlowDepth` cap, `TakeMatchRepeats` handing out a
       FIND_ALL search's second and third hit, `_depthByStepId` dropping results as the walk leaves
       a subtree.
+
+- [x] **Done 2026-09-25: 18 tests, one skipped**, in `ExecutionFlowWalkerTests`. The walker is
+      driven exactly as the engine drives it - place, record, next, collect the FIND_ALL repeats -
+      against the real cache, and each test asserts the names in the order they were walked:
+      order, both branches, nesting and coming back out, depth and parent sequence, loops with their
+      pass numbers and nested loops, `for ever`, Go To and Go To with no target, End Execution
+      running only its own cleanup, sub-flows, the 50-deep cap on a flow calling itself, and a
+      FIND_ALL search's success branch once per hit with each click seeing its own hit.
+
+      **It found that results are never forgotten.** `Pop` records a step's depth and then forgets
+      that depth, which removes what it just recorded - so every result stays readable for the rest
+      of the execution, against `ForgetFrom`'s comment and the validator's rule. Not fixed, because
+      the language leans on it: FLOW-FORMAT.md's example reads an earlier sibling's
+      `{{Read the total}}`. A decision, in `TODO.md`; the test for the intended behaviour is skipped
+      with that reason until it is made.
 
 - [ ] **Property-based testing, optional, and worth a conversation before it is started.** The
       walker is the one place in the repository where random garbage is a legitimate input, because
@@ -1759,6 +1774,15 @@ the first two layers need no production change at all.
 
       Use `coverlet.collector`, not `coverlet.msbuild` - the older msbuild integration interacts
       badly with multi-targeting.
+
+- [x] **What `npm run coverage:backend` measures, settled 2026-09-25.** Only the six project
+      assemblies, by `--coverlet-include`: libraries that ship debug information - USearch,
+      protobuf-net, and DiffEngine through Shouldly - were being instrumented too, which flooded
+      ReportGenerator with "does not exist" for sources on their authors' build machines and counted
+      protobuf-net's lines as ours. And not `DataAccess.Migrations`: generated code the tests run
+      in full just by building a database, which took DataAccess to 98% and the total to 65%.
+      Without them, at the end of layer 4: **30.7% of lines overall** - Business 50.9%, Core 38.6%,
+      DataAccess 82.5%, and App, Transport and Platform.Windows at 0% because nothing tests them yet.
 
 - [ ] **Stryker occasionally, scoped, and never in the build.** It runs the suite once per mutant,
       so it is minutes to hours. Point it at the walker and `Business/FlowScript/` once their tests
