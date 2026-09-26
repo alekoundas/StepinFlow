@@ -9,6 +9,7 @@ using Core.Models.Database;
 using Core.Models.Dtos;
 
 using DataAccess;
+using static Business.Tests.TestToken;
 
 namespace Business.Tests.FlowScript
 {
@@ -21,11 +22,6 @@ namespace Business.Tests.FlowScript
     {
         private readonly TestDatabase _database = new TestDatabase();
         private readonly string _folder = Path.Combine(Path.GetTempPath(), "sflw-" + Guid.NewGuid().ToString("N")[..8]);
-
-        private static CancellationToken Ct
-        {
-            get { return TestContext.Current.CancellationToken; }
-        }
 
         public void Dispose()
         {

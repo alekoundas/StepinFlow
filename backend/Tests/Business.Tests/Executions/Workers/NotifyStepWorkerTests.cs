@@ -5,6 +5,7 @@ using Core.Enums;
 using Core.Models.Database;
 
 using DataAccess;
+using static Business.Tests.TestToken;
 
 namespace Business.Tests.Executions.Workers
 {
@@ -16,11 +17,6 @@ namespace Business.Tests.Executions.Workers
     {
         private readonly TestDatabase _database = new TestDatabase();
         private readonly FakeDiscordSendQueue _queue = new FakeDiscordSendQueue();
-
-        private static CancellationToken Ct
-        {
-            get { return TestContext.Current.CancellationToken; }
-        }
 
         public void Dispose()
         {
