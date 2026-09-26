@@ -108,7 +108,7 @@ namespace Business.Executions.Workers
             ExecutionScreenshot? screenshot = cache.EncodeForHistory(image, step);
 
             string text = await _ocrService.ReadAsync(image, step.OcrLanguage, ct);
-            string value = TextExtractHelper.Extract(text, step.ResultExtractPattern);
+            string value = RegexHelper.Extract(text, step.ResultExtractPattern);
 
             VariableTranslationResult expected = cache.TranslateVariables(step.ConditionText);
             VariableTranslationResult expectedEnd = cache.TranslateVariables(step.ConditionTextEnd);

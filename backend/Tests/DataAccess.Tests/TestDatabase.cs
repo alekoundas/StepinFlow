@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace DataAccess.Tests
 {
     /// <summary>
-    /// A real SQLite database in memory, one per test, built by the real migrations. The database
-    /// lives inside the connection, so one connection is held open and handed to every context.
+    /// A real SQLite database in memory, one per test, built by the real migrations. 
+    /// The database lives inside the connection, so one connection is held open and handed to every context.
     /// </summary>
     public sealed class TestDatabase : IDisposable
     {

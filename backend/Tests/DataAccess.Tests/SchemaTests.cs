@@ -6,9 +6,10 @@ using Microsoft.EntityFrameworkCore;
 namespace DataAccess.Tests
 {
     /// <summary>
-    /// What the database itself guarantees: the migrations build it, they match the model, and a
-    /// delete does what the docs promise. Deletes go through ExecuteDelete, straight to SQLite, so
-    /// it is the database's foreign keys doing the work and not EF's change tracker.
+    /// Test what the database itself guarantees: 
+    /// 1) the migrations are applied
+    /// 2) migrations match the model
+    /// 3) delete does whats expected.
     /// </summary>
     public sealed class SchemaTests : IDisposable
     {

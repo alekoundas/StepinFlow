@@ -54,7 +54,7 @@ namespace Transport.Ipc.Handlers
             // Narrowed first, then tested, so the two fields compose: keep only the part that
             // matters, then say what has to be true of it. Same order the worker uses, so what the
             // form previews is what the execution will do.
-            string value = TextExtractHelper.Extract(text, step.ResultExtractPattern);
+            string value = RegexHelper.Extract(text, step.ResultExtractPattern);
 
             return ResultDto<SearchTextTestResultDto>.Success(new SearchTextTestResultDto
             {

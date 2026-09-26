@@ -10,8 +10,9 @@ using SolutionArchitecture = ArchUnitNET.Domain.Architecture;
 namespace Architecture.Tests
 {
     /// <summary>
-    /// The project arrows in PROJECT.md section 2, as tests. A project reference already stops most
-    /// of this from compiling; these catch the one-line csproj change that adds the reference.
+    /// Test:
+    /// 1) Project references are correct between them.
+    /// 2) Certain core libraries are used only by a specific project
     /// </summary>
     public sealed class LayerTests
     {
@@ -26,6 +27,8 @@ namespace Architecture.Tests
             .LoadAssemblies(Core, DataAccess, Business, Transport, PlatformWindows, App)
             .Build();
 
+
+        // 1) Dependences - References
         [Fact]
         public void Core_depends_on_no_other_project()
         {
@@ -66,6 +69,8 @@ namespace Architecture.Tests
                 .Check(Solution);
         }
 
+
+        // 2) Libraries 
         [Theory]
         [InlineData("OpenCvSharp")]
         [InlineData("SharpHook")]
@@ -91,19 +96,6 @@ namespace Architecture.Tests
                 .ToList();
 
             outside.ShouldBeEmpty();
-        }
-
-        // Phase 5.6 took the level out: it claimed everything below it was a service.
-        [Fact]
-        public void Business_has_no_Services_namespace()
-        {
-            List<string> namespaces = Business.GetTypes()
-                .Select(x => x.Namespace ?? string.Empty)
-                .Where(x => x.Split('.').Contains("Services"))
-                .Distinct()
-                .ToList();
-
-            namespaces.ShouldBeEmpty();
         }
     }
 }

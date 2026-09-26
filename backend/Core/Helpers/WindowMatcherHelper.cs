@@ -22,12 +22,10 @@ namespace Core.Helpers
             if (string.IsNullOrWhiteSpace(title))
                 return false;
 
-            if (!string.IsNullOrWhiteSpace(query.ProcessName)
-                && !string.Equals(processName, query.ProcessName, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(query.ProcessName) && !string.Equals(processName, query.ProcessName, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (!string.IsNullOrWhiteSpace(query.TitlePattern)
-                && !IsTitleMatch(title, query.TitlePattern, query.TitleMatchMode))
+            if (!string.IsNullOrWhiteSpace(query.TitlePattern) && !IsTitleMatch(title, query.TitlePattern, query.TitleMatchMode))
                 return false;
 
             return true;

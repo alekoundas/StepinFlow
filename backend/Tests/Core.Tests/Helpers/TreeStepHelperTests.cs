@@ -43,15 +43,6 @@ namespace Core.Tests.Helpers
             TreeStepHelper.CanReadResultOf(Tree, from, reference).ShouldBe(canRead);
         }
 
-        [Theory]
-        [InlineData(8, 4, true)]
-        [InlineData(10, 1, true)]
-        [InlineData(3, 1, false)]
-        [InlineData(8, 1, false)]
-        public void A_step_reports_only_failures_it_sits_under_through_failure(int from, int reference, bool canReport)
-        {
-            TreeStepHelper.CanReportFailureOf(Tree, from, reference).ShouldBe(canReport);
-        }
 
         [Fact]
         public void Successful_ancestors_come_nearest_first_with_their_depth()

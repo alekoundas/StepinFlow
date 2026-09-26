@@ -274,7 +274,10 @@ namespace App
     {
         private readonly IpcRequestPipe _ipcRequestPipe;
         public HostedRequestPipeListener(IpcRequestPipe ipcRequestPipe) => _ipcRequestPipe = ipcRequestPipe;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcRequestPipe.StartBackgroundService(cancellationToken);
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            return _ipcRequestPipe.StartBackgroundService(cancellationToken);
+        }
     }
 
     // Broadcast Pipe
@@ -282,7 +285,10 @@ namespace App
     {
         private readonly IpcBroadcastPipe _ipcBroadcastPipe;
         public HostedBroadcastPipeListener(IpcBroadcastPipe ipcBroadcastPipe) => _ipcBroadcastPipe = ipcBroadcastPipe;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            return _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+        }
     }
 
 
@@ -291,7 +297,10 @@ namespace App
     {
         private readonly IInputRecordService _inputRecordService;
         public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
-        protected override Task ExecuteAsync(CancellationToken cancellationToken) => _inputRecordService.StartGlobalHookAsync();
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            return _inputRecordService.StartGlobalHookAsync();
+        }
     }
 
     // Embed the docs at startup.

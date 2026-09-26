@@ -6,9 +6,11 @@ using Microsoft.Extensions.Time.Testing;
 namespace DataAccess.Tests
 {
     /// <summary>
-    /// CreatedOn is stamped on the way to the database, not when the object is made. Without the
-    /// interceptor every row would silently be 0001-01-01. The clock is set to 2031 so a pass cannot
-    /// be the wall clock by coincidence.
+    /// CreatedOn is stamped on the way to the database, not when the object is made. 
+    /// Without the interceptor every row would silently be 0001-01-01. 
+    /// Test:
+    /// 1) CREATE statement sets the date on CreatedOn col
+    /// 2) UPDATE statement sets the date on UpdatedOn col
     /// </summary>
     public sealed class TimestampInterceptorTests : IDisposable
     {

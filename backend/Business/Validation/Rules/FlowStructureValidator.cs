@@ -229,8 +229,12 @@ namespace Business.Validation.Rules
 
         private static void ValidateNotify(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
-            if (step.FlowStepReferenceId is int referenceId && !TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE, "The step this reports on does not fail above it any more.");
+            if (step.FlowStepReferenceId is int referenceId)
+            {
+                bool isValid = TreeStepHelper.FailedAncestors(byId, step.Id).Any(x => x.Step.Id == referenceId);
+                if (isValid)
+                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE, "The step this reports on does not fail above it any more.");
+            }
         }
 
         private static bool IsEveryBranchEmpty(FlowStep step, ILookup<int?, FlowStep> childrenByParent)

@@ -3,12 +3,9 @@ using System.Text.RegularExpressions;
 namespace Core.Helpers
 {
     /// <summary>
-    /// Narrows what OCR read down to the part that matters.
-    ///
-    /// Shared because the engine and the form's test both extract before they check, and a preview
-    /// that narrowed differently from the execution would be worse than no preview.
+    /// Extract text from a Regex pattern.
     /// </summary>
-    public static class TextExtractHelper
+    public static class RegexHelper
     {
         private static readonly TimeSpan _patternTimeout = TimeSpan.FromMilliseconds(200);
 
