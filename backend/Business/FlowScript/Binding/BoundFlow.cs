@@ -7,8 +7,7 @@ namespace Business.FlowScript.Binding
     /// <summary>
     /// Everything the writer needs, arranged once.
     ///
-    /// Names rather than ids, because the script refers to a step, an area and a point by name -
-    /// which is why phase 1 made them unique.
+    /// Names rather than ids, because the script refers to a step, an area and a point by name
     /// </summary>
     public class BoundFlow
     {
@@ -19,21 +18,13 @@ namespace Business.FlowScript.Binding
         public IReadOnlyList<FlowCsvColumn> Inputs { get; set; } = [];
         public IReadOnlyList<FlowViewport> Viewports { get; set; } = [];
 
-        /// <summary>Every step including the branch rows, which the walk goes through.</summary>
         public IReadOnlyList<FlowStep> Steps { get; set; } = [];
 
         public IReadOnlyDictionary<int, string> AreaNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> PointNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> StepNamesById { get; set; } = new Dictionary<int, string>();
-
-        /// <summary>
-        /// The templates each step names: the file each was written to, what the step decides about
-        /// it, and the facts the header carries.
-        /// </summary>
-        public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplate>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplate>>();
-
-        /// <summary>A sub-flow's path relative to the repository root.</summary>
         public IReadOnlyDictionary<int, string> SubFlowPathsById { get; set; } = new Dictionary<int, string>();
+        public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplate>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplate>>();
 
         private ILookup<int?, FlowStep>? _childrenByParent;
 

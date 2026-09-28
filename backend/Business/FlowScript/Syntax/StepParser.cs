@@ -2,13 +2,14 @@
 using Core.Enums;
 using Core.Models.Database;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript.Syntax
 {
     /// <summary>
     /// One line of the Steps section into one step.
     ///
-    /// Its own class rather than half of <see cref="Parser"/>: the parser owns the shape of the
+    /// Its own class rather than half of <see cref="Scanner.Scanner"/>: the parser owns the shape of the
     /// document - sections, indentation, what is a parent of what - and this owns the grammar of
     /// a single line. The largest switch in the codebase, and separating it is what lets it be
     /// read, and tested, against one line of text with no document around it.
@@ -88,7 +89,7 @@ namespace Business.FlowScript.Syntax
             // One rule covers both shapes: a branch row sits one in from its step, a container's
             // children one in from the container, so the parent is whatever was last seen outside.
             int? parentIndex = null;
-            if (line.Indent > 0 && lastIndexAtIndent.TryGetValue(line.Indent - 1, out int found))
+            if (line.LeadingSpaces > 0 && lastIndexAtIndent.TryGetValue(line.LeadingSpaces - 1, out int found))
                 parentIndex = found;
 
             step.OrderNumber = order++;
@@ -97,10 +98,10 @@ namespace Business.FlowScript.Syntax
             document.Steps.Add(parsed);
 
             int index = document.Steps.Count - 1;
-            lastIndexAtIndent[line.Indent] = index;
+            lastIndexAtIndent[line.LeadingSpaces] = index;
 
             // Anything deeper belonged to a subtree this line has just closed.
-            foreach (int deeper in lastIndexAtIndent.Keys.Where(x => x > line.Indent).ToList())
+            foreach (int deeper in lastIndexAtIndent.Keys.Where(x => x > line.LeadingSpaces).ToList())
                 lastIndexAtIndent.Remove(deeper);
 
             return parsed;

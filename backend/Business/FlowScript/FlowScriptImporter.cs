@@ -10,28 +10,23 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Scanner;
 
 namespace Business.FlowScript
 {
     /// <summary>
-    /// A .sflw file into the database. The mirror of <see cref="FlowScriptExporter"/>.
-    ///
-    /// Parse, validate, then replace, and only then: everything before the transaction is pure, so
-    /// a file with a typo in it reports the line and leaves the flow exactly as it was. Half a
-    /// flow is worse than no import, and a person who hits an error is usually mid-edit.
-    ///
-    /// Deleting the old steps does not take their history with them: an execution step keeps the
-    /// name it ran under and its foreign key is set null rather than cascaded, so the trend for a
-    /// step survives a re-import as long as its name does.
+    /// Import .sflw file into the database. The mirror of FlowScriptExporter.cs />.
+    /// Parse, validate, then replace database Flow.
+    /// DOESNT delete the old Flow, just hides it as an older version of that flow.
     /// </summary>
     public sealed class FlowScriptImporter : IFlowScriptImporter
     {
         private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IParser _reader;
+        private readonly IScanner _reader;
 
-        public FlowScriptImporter(IDbContextFactory<AppDbContext> dbContextFactory, IParser reader)
+        public FlowScriptImporter(IDbContextFactory<AppDbContext> dbContextFactory, IScanner reader)
         {
             _dbContextFactory = dbContextFactory;
             _reader = reader;
@@ -50,11 +45,11 @@ namespace Business.FlowScript
             string script = await File.ReadAllTextAsync(scriptPath, ct);
 
             // Templates sit in a folder named after the file, beside it.
-            string folder = Path.Combine(
-                Path.GetDirectoryName(scriptPath) ?? string.Empty,
-                Path.GetFileNameWithoutExtension(scriptPath));
+            string folderName = string.Empty;
+            if (Path.GetDirectoryName(scriptPath) != null)
+                folderName = Path.GetFileNameWithoutExtension(scriptPath);
 
-            return await ImportTextAsync(script, folder, ct);
+            return await ImportTextAsync(script, folderName, ct);
         }
 
         public async Task<FlowImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default)

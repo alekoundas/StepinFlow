@@ -1,28 +1,12 @@
-namespace Business.FlowScript.Syntax
+namespace Business.FlowScript.Models
 {
-    /// <summary>
-    /// One word of a line, and where it started. The column is carried so an error can point at
-    /// the word that was wrong rather than at the line that contained it.
-    /// </summary>
-    public sealed record ScriptToken(string Text, bool WasQuoted, int Column);
-
-    /// <summary>
-    /// A line, split into words, with its indentation measured.
-    ///
-    /// Indent is in levels rather than spaces: the writer indents by two, and a parser that counts
-    /// spaces would accept a file no exporter could ever produce.
-    /// </summary>
-    public sealed class ScriptLine
+    internal sealed class ScriptLine
     {
         public int Number { get; init; }
-        public int Indent { get; init; }
+        public int LeadingSpaces { get; init; }
         public string Raw { get; init; } = string.Empty;
-        public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
+        public IReadOnlyList<ScriptLineToken> Tokens { get; init; } = [];
 
-        public bool IsBlank
-        {
-            get { return Tokens.Count == 0; }
-        }
 
         /// <summary>A section heading, which carries a verdict rather than doing anything.</summary>
         public bool IsSection
@@ -36,7 +20,6 @@ namespace Business.FlowScript.Syntax
             get
             {
                 string trimmed = Raw.TrimStart();
-
                 return trimmed.StartsWith('#') && !trimmed.StartsWith("## ", StringComparison.Ordinal);
             }
         }

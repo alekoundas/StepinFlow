@@ -1,5 +1,6 @@
 using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
 using Core.Enums;
 
@@ -48,7 +49,7 @@ namespace Business.Tests.FlowScript
 
         private static List<Diagnostic> Read(string script)
         {
-            FlowSyntax document = new Parser().Read(script);
+            FlowSyntax document = new Scanner().Read(script);
             List<Diagnostic> all = new List<Diagnostic>(document.Diagnostics);
 
             if (document.IsValid)
@@ -87,7 +88,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_command_preset_is_named_not_numbered()
         {
-            FlowSyntax document = new Parser().Read(Header + "Steps:\nRun 2 \"notepad\"");
+            FlowSyntax document = new Scanner().Read(Header + "Steps:\nRun 2 \"notepad\"");
 
             document.Steps.Single().Step.RunCommandPreset.ShouldBe(RunCommandPresetEnum.CUSTOM);
         }

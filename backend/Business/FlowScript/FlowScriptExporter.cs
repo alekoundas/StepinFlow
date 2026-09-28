@@ -84,6 +84,7 @@ namespace Business.FlowScript
             Flow flow = await dbContext.Flows.AsNoTracking().FirstOrDefaultAsync(x => x.Id == flowId, ct) 
                 ?? throw new InvalidOperationException($"There is no flow {flowId} to export.");
 
+            // Load Flow reference tables
             List<FlowArea> areas = await dbContext.FlowAreas.AsNoTracking()
                 .Where(x => x.FlowId == flowId).ToListAsync(ct);
 
@@ -96,12 +97,10 @@ namespace Business.FlowScript
             List<FlowViewport> viewports = await dbContext.FlowViewports.AsNoTracking()
                 .Where(x => x.FlowId == flowId).ToListAsync(ct);
 
-            // RootId rather than FlowId: it is denormalised onto every descendant, so the whole
-            // tree arrives in one query instead of a recursive walk.
             List<FlowStep> steps = await dbContext.FlowSteps.AsNoTracking()
                 .Where(x => x.RootId == flowId).ToListAsync(ct);
 
-            // Everything but the pixels. The images are megabytes and nothing here needs them.
+            // Load Templates but without the pixels. 
             List<FlowStepTemplate> templates = await dbContext.FlowStepTemplates.AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId)
                 .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)

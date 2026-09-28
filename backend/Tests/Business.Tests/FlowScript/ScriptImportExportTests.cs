@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 
 using Business.FlowScript;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
@@ -38,7 +39,7 @@ namespace Business.Tests.FlowScript
 
         private FlowScriptImporter Importer()
         {
-            return new FlowScriptImporter(_database, new Parser());
+            return new FlowScriptImporter(_database, new Scanner());
         }
 
         private sealed record RoundTrip(int FlowId, FlowImportResultDto Imported, string First, string Second, ScriptRows Before, ScriptRows After);

@@ -5,7 +5,6 @@
     Its imported into every .csproj beneath it.
     It runs at project evaluation — before the compiler is even invoked. 
     It sets project-level properties: whether analyzers run at all, which analysis level, whether warnings are errors, what packages get referenced.
-    
   -->
   <PropertyGroup>
     
@@ -31,6 +30,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  
+  
   <!-- BannedApiAnalyzers -->
   <!-- Closest to MISRA rules. Two lists, one rule for Platform.Windows and a global one for the others. -->
   <ItemGroup>

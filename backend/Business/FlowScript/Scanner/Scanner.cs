@@ -3,21 +3,22 @@ using System.Globalization;
 
 using Core.Enums;
 using Core.Models.Database;
-using Business.FlowScript.Diagnostics;
 
-namespace Business.FlowScript.Syntax
+using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Syntax;
+using Business.FlowScript.Models;
+
+namespace Business.FlowScript.Scanner
 {
     /// <summary>
-    /// A .sflw file back into a flow, as far as text alone can take it.
+    /// Read the .sflw and extract everything a Flow needs.
     ///
-    /// The mirror of <see cref="Text.Printer"/> and pure like it: no database, no files, no
-    /// ids. What the script says by name stays a name, and <see cref="FlowScriptImporter"/> is
-    /// what turns those into rows.
+    /// The mirror of Printer.cs.
     ///
-    /// An unreadable line is recorded and skipped rather than thrown, so one typo reports one
-    /// error instead of hiding the nine below it.
+    /// An unreadable line is recorded and skipped rather than thrown.
+    /// So one typo reports one error instead of hiding the rest of errors below it.
     /// </summary>
-    public sealed class Parser : IParser
+    public sealed class Scanner : IScanner
     {
         private enum Section
         {
@@ -41,7 +42,7 @@ namespace Business.FlowScript.Syntax
 
             foreach (ScriptLine line in lines)
             {
-                if (line.IsBlank)
+                if (line.Tokens.Count == 0)
                     continue;
 
                 if (line.IsComment)

@@ -1,5 +1,6 @@
 using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Core.Enums;
@@ -12,7 +13,7 @@ namespace Business.Tests.FlowScript
     {
         private static (FlowSyntax Document, List<Diagnostic> Errors) ReadAndBind(string script)
         {
-            FlowSyntax document = new Parser().Read(script);
+            FlowSyntax document = new Scanner().Read(script);
             List<Diagnostic> errors = new List<Diagnostic>();
             Binder.Resolve(document, errors);
             return (document, errors);
@@ -23,7 +24,7 @@ namespace Business.Tests.FlowScript
         {
             string first = new Printer().Write(SampleFlow.Build());
 
-            FlowSyntax document = new Parser().Read(first);
+            FlowSyntax document = new Scanner().Read(first);
             document.Diagnostics.ShouldBeEmpty();
 
             List<Diagnostic> errors = new List<Diagnostic>();

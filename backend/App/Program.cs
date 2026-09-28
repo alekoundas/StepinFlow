@@ -8,7 +8,7 @@ using Business.Command;
 using Business.Searching;
 using Business.AreaPoint;
 using Business.FlowScript;
-using Business.FlowScript.Syntax;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Validation;
 using Core.Ports;
@@ -82,7 +82,7 @@ namespace App
 
             // Flow script
             builder.Services.AddSingleton<IPrinter, Printer>();
-            builder.Services.AddSingleton<IParser, Parser>();
+            builder.Services.AddSingleton<IScanner, Scanner>();
             builder.Services.AddSingleton<IFlowScriptExporter, FlowScriptExporter>();
             builder.Services.AddSingleton<IFlowScriptImporter, FlowScriptImporter>();
 

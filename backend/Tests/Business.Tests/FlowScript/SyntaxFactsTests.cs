@@ -1,3 +1,4 @@
+using Business.FlowScript.Models;
 using Business.FlowScript.Syntax;
 using Core.Enums;
 using Core.Models.Database;
@@ -10,7 +11,7 @@ namespace Business.Tests.FlowScript
     /// </summary>
     public sealed class SyntaxFactsTests
     {
-        private static IReadOnlyList<ScriptToken> Tokens(string text)
+        private static IReadOnlyList<ScriptLineToken> Tokens(string text)
         {
             return Lexer.Read(text)[0].Tokens;
         }
