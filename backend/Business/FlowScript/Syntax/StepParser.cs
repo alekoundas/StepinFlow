@@ -367,14 +367,14 @@ namespace Business.FlowScript.Syntax
             pointName = null;
             referenceName = null;
 
-            if (line.Word(at) == "point" && !line.Tokens[at].WasQuoted)
+            if (line.Word(at) == "point" && !line.Tokens[at].IsQuoted)
             {
                 pointName = line.Word(at + 1);
                 return at + 2;
             }
 
             // "match" is the current item of a loop, and is neither a point nor a step.
-            if (line.Word(at) == "match" && !line.Tokens[at].WasQuoted)
+            if (line.Word(at) == "match" && !line.Tokens[at].IsQuoted)
                 return at + 1;
 
             referenceName = line.Word(at);
@@ -446,7 +446,7 @@ namespace Business.FlowScript.Syntax
         {
             // Launch already carries its preset from the keyword; Run may name one before the value.
             if (parsed.Step.RunCommandPreset == RunCommandPresetEnum.CUSTOM
-                && !line.Tokens[at].WasQuoted
+                && !line.Tokens[at].IsQuoted
                 && SyntaxFacts.TryReadName(line.Word(at), out RunCommandPresetEnum preset))
             {
                 parsed.Step.RunCommandPreset = preset;

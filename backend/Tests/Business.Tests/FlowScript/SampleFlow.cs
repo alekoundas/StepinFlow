@@ -1,7 +1,7 @@
 using System.Drawing;
 
 using Business.FlowScript.Binding;
-using Business.FlowScript.Syntax;
+using Business.FlowScript.Models;
 using Core.Enums;
 using Core.Models.Database;
 

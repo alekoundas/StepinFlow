@@ -4,9 +4,9 @@ using System.Text;
 namespace Business.FlowScript.Syntax
 {
     /// <summary>
-    /// Text to lines of words.
+    /// Text to lines of tokens.
     /// </summary>
-    public static class Lexer
+    public static class ScriptTokenizer
     {
         internal static IReadOnlyList<ScriptLine> Read(string script)
         {
@@ -60,17 +60,18 @@ namespace Business.FlowScript.Syntax
             List<ScriptToken> tokens = new List<ScriptToken>();
             StringBuilder word = new StringBuilder();
 
-            bool inQuotes = false;
-            bool wasQuoted = false;
-            int start = 0;
+            bool inQuotes = false;  // See if we are currently inside quotes
+            bool wasQuoted = false; // See if token was a quote
+            int quoteIndexStart = 0;// See what possition quote starts
 
             for (int i = 0; i < line.Length; i++)
             {
                 char c = line[i];
 
+                // Hanlde quotes.
                 if (inQuotes)
                 {
-                    // The Printer escapes a quote inside a name. ("He said "hello"" -> "He said \"hello\"")
+                    // The Printer escapes a quote inside a text. ("He said "hello"" -> "He said \"hello\"")
                     if (c == '\\' && i + 1 < line.Length && line[i + 1] == '"')
                     {
                         word.Append('"');
@@ -88,21 +89,23 @@ namespace Business.FlowScript.Syntax
                     continue;
                 }
 
+                // Flag inQuote is true.
                 if (c == '"')
                 {
                     if (word.Length == 0)
-                        start = i;
+                        quoteIndexStart = i;
 
                     inQuotes = true;
                     wasQuoted = true;
                     continue;
                 }
 
+                // Space splits tokens.
                 if (char.IsWhiteSpace(c))
                 {
                     if (word.Length > 0 || wasQuoted)
                     {
-                        tokens.Add(new ScriptToken(word.ToString(), wasQuoted, start + 1));
+                        tokens.Add(new ScriptToken(word.ToString(), wasQuoted, quoteIndexStart + 1));
                         word.Clear();
                         wasQuoted = false;
                     }
@@ -111,13 +114,13 @@ namespace Business.FlowScript.Syntax
                 }
 
                 if (word.Length == 0 && !wasQuoted)
-                    start = i;
+                    quoteIndexStart = i;
 
                 word.Append(c);
             }
 
             if (word.Length > 0 || wasQuoted)
-                tokens.Add(new ScriptToken(word.ToString(), wasQuoted, start + 1));
+                tokens.Add(new ScriptToken(word.ToString(), wasQuoted, quoteIndexStart + 1));
 
             return tokens;
         }

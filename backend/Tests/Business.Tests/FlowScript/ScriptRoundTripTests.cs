@@ -1,5 +1,6 @@
 using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;

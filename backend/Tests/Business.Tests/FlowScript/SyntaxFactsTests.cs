@@ -1,3 +1,4 @@
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models;
 using Business.FlowScript.Syntax;
 using Core.Enums;
@@ -13,7 +14,7 @@ namespace Business.Tests.FlowScript
     {
         private static IReadOnlyList<ScriptToken> Tokens(string text)
         {
-            return Lexer.Read(text)[0].Tokens;
+            return ScriptTokenizer.Read(text)[0].Tokens;
         }
 
         [Fact]
@@ -21,7 +22,7 @@ namespace Business.Tests.FlowScript
         {
             List<string> wrong = new List<string>();
 
-            foreach (ScriptKeyword keyword in SyntaxFacts.All)
+            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
             {
                 FlowStep step = new FlowStep { FlowStepType = keyword.Type };
                 if (keyword.SearchMode != null)

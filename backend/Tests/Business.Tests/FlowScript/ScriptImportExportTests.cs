@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 
 using Business.FlowScript;
+using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
 using Core.Enums;

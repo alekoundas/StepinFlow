@@ -1,8 +1,7 @@
- using System.Drawing;
-
+using System.Drawing;
 using Core.Enums;
 
-namespace Business.FlowScript.Syntax
+namespace Business.FlowScript.Models
 {
     /// <summary>
     /// A template a step names, with everything the file says about it.

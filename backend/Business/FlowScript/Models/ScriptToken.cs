@@ -3,13 +3,13 @@
     internal sealed class ScriptToken
     {
         public string Text { get; set; } = String.Empty;
-        public bool WasQuoted { get; set; }
+        public bool IsQuoted { get; set; }
         public int Column { get; set; }
 
-        public ScriptToken(string text, bool wasQuoted, int column)
+        public ScriptToken(string text, bool isQuoted, int column)
         {
             Text = text;
-            WasQuoted = wasQuoted;
+            IsQuoted = isQuoted;
             Column = column;
         }
     }

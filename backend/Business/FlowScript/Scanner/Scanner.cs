@@ -33,7 +33,7 @@ namespace Business.FlowScript.Scanner
         public FlowSyntax Read(string script)
         {
             FlowSyntax document = new FlowSyntax();
-            IReadOnlyList<ScriptLine> lines = Lexer.Read(script);
+            IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script);
 
             Section section = Section.None;
             Dictionary<int, int> lastIndexAtIndent = new Dictionary<int, int>();
@@ -173,7 +173,7 @@ namespace Business.FlowScript.Scanner
 
         private static void ReadArea(FlowSyntax document, ScriptLine line)
         {
-            if (line.Tokens.Count < 2 || !line.Tokens[0].WasQuoted)
+            if (line.Tokens.Count < 2 || !line.Tokens[0].IsQuoted)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_NAME_MISSING, line.Number, 1, "An area starts with its name in quotes."));
                 return;
@@ -248,13 +248,13 @@ namespace Business.FlowScript.Scanner
         // monitor primary, or monitor "\\.\DISPLAY2". Quoted, because a device could be called primary.
         private static int ReadMonitor(FlowSyntax document, ScriptLine line, FlowArea area)
         {
-            if (line.Word(2) == "primary" && !line.Tokens[2].WasQuoted)
+            if (line.Word(2) == "primary" && !line.Tokens[2].IsQuoted)
             {
                 area.MonitorDeviceName = string.Empty;
                 return 3;
             }
 
-            if (line.Tokens.Count > 2 && line.Tokens[2].WasQuoted)
+            if (line.Tokens.Count > 2 && line.Tokens[2].IsQuoted)
             {
                 area.MonitorDeviceName = line.Word(2);
                 return 3;
@@ -342,7 +342,7 @@ namespace Business.FlowScript.Scanner
 
         private static void ReadPoint(FlowSyntax document, ScriptLine line)
         {
-            if (line.Tokens.Count < 2 || !line.Tokens[0].WasQuoted)
+            if (line.Tokens.Count < 2 || !line.Tokens[0].IsQuoted)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.POINT_NAME_MISSING, line.Number, 1, "A point starts with its name in quotes."));
                 return;
@@ -412,7 +412,7 @@ namespace Business.FlowScript.Scanner
 
         private static void ReadInput(FlowSyntax document, ScriptLine line)
         {
-            if (!line.Tokens[0].WasQuoted)
+            if (!line.Tokens[0].IsQuoted)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.INPUT_MALFORMED, line.Number, 1, "An input is its name in quotes, optionally followed by \"secret\"."));
                 return;
@@ -429,7 +429,7 @@ namespace Business.FlowScript.Scanner
         // "a.png"   click 120,40   captured 800x600 at 120dpi. Every fact is optional.
         private static void ReadTemplate(FlowSyntax document, ScriptLine line)
         {
-            if (!line.Tokens[0].WasQuoted)
+            if (!line.Tokens[0].IsQuoted)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_MALFORMED, line.Number, 1, "A template starts with its file name in quotes."));
                 return;

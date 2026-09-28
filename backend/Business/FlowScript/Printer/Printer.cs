@@ -6,6 +6,7 @@ using Core.Helpers;
 using Core.Models.Database;
 using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript.Text
 {

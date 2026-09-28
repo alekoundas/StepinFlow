@@ -1,4 +1,5 @@
 using System.Globalization;
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models;
 using Core.Enums;
 using Core.Models.Database;
@@ -7,14 +8,6 @@ namespace Business.FlowScript.Syntax
 {
     /// <summary>A condition read back off a line, and how many words it took.</summary>
     public sealed record ConditionSyntax(ConditionTypeEnum Type, string Text, string TextEnd, int Words);
-
-    /// <summary>A keyword and everything about a step that the keyword alone decides.</summary>
-    public sealed record ScriptKeyword(
-        string Text,
-        FlowStepTypeEnum Type,
-        SearchModeEnum? SearchMode = null,
-        KeyboardInputTypeEnum? KeyboardInputType = null,
-        RunCommandPresetEnum? RunCommandPreset = null);
 
     /// <summary>
     /// Everything the grammar knows about a word, in both directions.
@@ -33,111 +26,20 @@ namespace Business.FlowScript.Syntax
     /// </summary>
     public static class SyntaxFacts
     {
+        /// <summary>
+        /// The words a step is written as, taken from the catalogue rather than spelled out again -
+        /// a second copy of the text is how a keyword comes to mean one thing on write and another
+        /// on read.
+        ///
+        /// A type with no keyword at all - SUCCESS, FAILURE, MARKER, which the tree carries rather
+        /// than the grammar - falls back to its own name, which no reader accepts. That is deliberate:
+        /// such a step is never printed as a line of its own.
+        /// </summary>
         public static string For(FlowStep step)
         {
-            switch (step.FlowStepType)
-            {
-                case FlowStepTypeEnum.SEARCH_IMAGE:
-                    return ImageKeyword(step.SearchMode);
-
-                case FlowStepTypeEnum.SEARCH_TEXT:
-                    return TextKeyword(step.SearchMode);
-
-                case FlowStepTypeEnum.CHECK_VALUE:
-                    return "Check Value";
-
-                case FlowStepTypeEnum.CURSOR_CLICK:
-                    return "Click";
-
-                case FlowStepTypeEnum.CURSOR_RELOCATE:
-                    return "Move";
-
-                case FlowStepTypeEnum.CURSOR_DRAG:
-                    return "Drag";
-
-                case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return "Scroll";
-
-                case FlowStepTypeEnum.KEYBOARD_INPUT:
-                    return step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION ? "Press" : "Type";
-
-                case FlowStepTypeEnum.WAIT:
-                    return "Wait";
-
-                case FlowStepTypeEnum.LOOP:
-                    return "Loop";
-
-                case FlowStepTypeEnum.GO_TO:
-                    return "Go To";
-
-                case FlowStepTypeEnum.SUB_FLOW:
-                    return "Sub Flow";
-
-                case FlowStepTypeEnum.NOTIFY:
-                    return "Notify";
-
-                case FlowStepTypeEnum.END_EXECUTION:
-                    return "End Execution";
-
-                case FlowStepTypeEnum.SYSTEM_ACTION:
-                    return "System";
-
-                case FlowStepTypeEnum.WINDOW_FOCUS:
-                    return "Focus Window";
-
-                case FlowStepTypeEnum.WINDOW_RESIZE:
-                    return "Resize Window";
-
-                case FlowStepTypeEnum.WINDOW_RELOCATE:
-                    return "Move Window";
-
-                // A launch is a command with a preset, and reads as what it does rather than as the
-                // machinery underneath.
-                case FlowStepTypeEnum.SYSTEM_COMMAND:
-                    return step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP ? "Launch" : "Run";
-
-                default:
-                    return step.FlowStepType.ToString();
-            }
+            return Keyword(step)?.Text ?? step.FlowStepType.ToString();
         }
 
-
-        /// <summary>
-        /// The same table read the other way. One list, so a keyword cannot mean one thing on write
-        /// and another on read - which is the only way a round trip can be relied on.
-        ///
-        /// Longest first: "Move Window" has to win over "Move", and "Wait Until No Image" over
-        /// "Wait For Image" over "Wait".
-        /// </summary>
-        public static IReadOnlyList<ScriptKeyword> All { get; } =
-        [
-            new ScriptKeyword("Wait Until No Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
-            new ScriptKeyword("Wait Until No Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
-            new ScriptKeyword("Find All Images", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.FIND_ALL),
-            new ScriptKeyword("Wait For Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.WAIT_UNTIL_FOUND),
-            new ScriptKeyword("Wait For Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.WAIT_UNTIL_FOUND),
-            new ScriptKeyword("End Execution", FlowStepTypeEnum.END_EXECUTION),
-            new ScriptKeyword("Resize Window", FlowStepTypeEnum.WINDOW_RESIZE),
-            new ScriptKeyword("Focus Window", FlowStepTypeEnum.WINDOW_FOCUS),
-            new ScriptKeyword("Move Window", FlowStepTypeEnum.WINDOW_RELOCATE),
-            new ScriptKeyword("Check Value", FlowStepTypeEnum.CHECK_VALUE),
-            new ScriptKeyword("Find Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchMode: SearchModeEnum.FIND_BEST),
-            new ScriptKeyword("Check Text", FlowStepTypeEnum.SEARCH_TEXT, SearchMode: SearchModeEnum.FIND_BEST),
-            new ScriptKeyword("Sub Flow", FlowStepTypeEnum.SUB_FLOW),
-            new ScriptKeyword("Go To", FlowStepTypeEnum.GO_TO),
-            new ScriptKeyword("Notify", FlowStepTypeEnum.NOTIFY),
-            new ScriptKeyword("Scroll", FlowStepTypeEnum.CURSOR_SCROLL),
-            new ScriptKeyword("System", FlowStepTypeEnum.SYSTEM_ACTION),
-            new ScriptKeyword("Launch", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset: RunCommandPresetEnum.LAUNCH_APP),
-            new ScriptKeyword("Click", FlowStepTypeEnum.CURSOR_CLICK),
-            new ScriptKeyword("Press", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType: KeyboardInputTypeEnum.COMBINATION),
-            new ScriptKeyword("Drag", FlowStepTypeEnum.CURSOR_DRAG),
-            new ScriptKeyword("Move", FlowStepTypeEnum.CURSOR_RELOCATE),
-            new ScriptKeyword("Loop", FlowStepTypeEnum.LOOP),
-            new ScriptKeyword("Type", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType: KeyboardInputTypeEnum.TEXT),
-            new ScriptKeyword("Wait", FlowStepTypeEnum.WAIT),
-            new ScriptKeyword("Run", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset: RunCommandPresetEnum.CUSTOM),
-        ];
 
         /// <summary>
         /// The keyword a line starts with, and how many words it took. Null when the first word is
@@ -145,7 +47,7 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         internal static ScriptKeyword? Match(IReadOnlyList<ScriptToken> tokens)
         {
-            foreach (ScriptKeyword keyword in All)
+            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
             {
                 string[] words = keyword.Text.Split(' ');
                 if (tokens.Count < words.Length)
@@ -155,7 +57,7 @@ namespace Business.FlowScript.Syntax
                 for (int i = 0; i < words.Length; i++)
                 {
                     // A quoted word is a name that happens to read like a keyword, not a keyword.
-                    if (tokens[i].WasQuoted || !string.Equals(tokens[i].Text, words[i], StringComparison.Ordinal))
+                    if (tokens[i].IsQuoted || !string.Equals(tokens[i].Text, words[i], StringComparison.Ordinal))
                     {
                         matched = false;
                         break;
@@ -173,39 +75,45 @@ namespace Business.FlowScript.Syntax
         // Private methods
         // ================================================================
 
-        private static string ImageKeyword(SearchModeEnum mode)
+        // Which row of the catalogue a step is written as. Two types cannot be found by matching
+        // their discriminator, and both read as what they do rather than as the machinery underneath:
+        // a keyboard step is Type unless it sends a combination, and a command is Run unless its
+        // preset is a launch - Run covers every other preset, so no row names them.
+        private static ScriptKeyword? Keyword(FlowStep step)
         {
-            switch (mode)
+            switch (step.FlowStepType)
             {
-                case SearchModeEnum.FIND_ALL:
-                    return "Find All Images";
+                case FlowStepTypeEnum.SEARCH_IMAGE:
+                case FlowStepTypeEnum.SEARCH_TEXT:
+                    // A mode with no keyword of its own reads as the plain search. FIND_ALL is not
+                    // offered for text, so a text step in that mode is a Check Text.
+                    return WithMode(step.FlowStepType, step.SearchMode)
+                        ?? WithMode(step.FlowStepType, SearchModeEnum.FIND_BEST);
 
-                case SearchModeEnum.WAIT_UNTIL_FOUND:
-                    return "Wait For Image";
+                case FlowStepTypeEnum.KEYBOARD_INPUT:
+                    KeyboardInputTypeEnum typed = KeyboardInputTypeEnum.TEXT;
+                    if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
+                        typed = KeyboardInputTypeEnum.COMBINATION;
 
-                case SearchModeEnum.WAIT_UNTIL_NOT_FOUND:
-                    return "Wait Until No Image";
+                    return ScriptKeywordCatalog.All.FirstOrDefault(x => x.KeyboardInputType == typed);
+
+                case FlowStepTypeEnum.SYSTEM_COMMAND:
+                    RunCommandPresetEnum preset = RunCommandPresetEnum.CUSTOM;
+                    if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+                        preset = RunCommandPresetEnum.LAUNCH_APP;
+
+                    return ScriptKeywordCatalog.All.FirstOrDefault(x => x.RunCommandPreset == preset);
 
                 default:
-                    return "Find Image";
+                    return ScriptKeywordCatalog.All.FirstOrDefault(x => x.Type == step.FlowStepType);
             }
         }
 
-        private static string TextKeyword(SearchModeEnum mode)
+        private static ScriptKeyword? WithMode(FlowStepTypeEnum type, SearchModeEnum mode)
         {
-            switch (mode)
-            {
-                case SearchModeEnum.WAIT_UNTIL_FOUND:
-                    return "Wait For Text";
-
-                case SearchModeEnum.WAIT_UNTIL_NOT_FOUND:
-                    return "Wait Until No Text";
-
-                // FIND_ALL is not offered for text, so anything that is not a wait reads as a check.
-                default:
-                    return "Check Text";
-            }
+            return ScriptKeywordCatalog.All.FirstOrDefault(x => x.Type == type && x.SearchMode == mode);
         }
+
         public static string Condition(FlowStep step)
         {
             string value = Quoted(step.ConditionText);
@@ -300,7 +208,7 @@ namespace Business.FlowScript.Syntax
         {
             string W(int i)
             {
-                if (at + i >= tokens.Count || tokens[at + i].WasQuoted)
+                if (at + i >= tokens.Count || tokens[at + i].IsQuoted)
                     return string.Empty;
 
                 return tokens[at + i].Text;
@@ -392,7 +300,7 @@ namespace Business.FlowScript.Syntax
         {
             string W(int i)
             {
-                if (at + i >= tokens.Count || tokens[at + i].WasQuoted)
+                if (at + i >= tokens.Count || tokens[at + i].IsQuoted)
                     return string.Empty;
 
                 return tokens[at + i].Text;

@@ -6,8 +6,8 @@ using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Business.FlowScript.Binding;
-using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript
 {

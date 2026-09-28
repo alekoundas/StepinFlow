@@ -11,6 +11,7 @@ using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript
 {
