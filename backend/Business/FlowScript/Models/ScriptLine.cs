@@ -5,7 +5,7 @@ namespace Business.FlowScript.Models
         public int Number { get; init; }
         public int LeadingSpaces { get; init; }
         public string Raw { get; init; } = string.Empty;
-        public IReadOnlyList<ScriptLineToken> Tokens { get; init; } = [];
+        public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
 
 
         /// <summary>A section heading, which carries a verdict rather than doing anything.</summary>

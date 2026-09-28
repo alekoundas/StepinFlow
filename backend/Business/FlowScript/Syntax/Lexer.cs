@@ -46,7 +46,7 @@ namespace Business.FlowScript.Syntax
                     spacesCount += 1;
 
                 else if (c == '\t')
-                    spacesCount += 4; // Tab width.
+                    spacesCount += 1; // Tab width always 1.
 
                 else
                     break; // Break on the very first actual character
@@ -55,9 +55,9 @@ namespace Business.FlowScript.Syntax
             return spacesCount;
         }
 
-        private static IReadOnlyList<ScriptLineToken> Tokenize(string line)
+        private static IReadOnlyList<ScriptToken> Tokenize(string line)
         {
-            List<ScriptLineToken> tokens = new List<ScriptLineToken>();
+            List<ScriptToken> tokens = new List<ScriptToken>();
             StringBuilder word = new StringBuilder();
 
             bool inQuotes = false;
@@ -70,7 +70,7 @@ namespace Business.FlowScript.Syntax
 
                 if (inQuotes)
                 {
-                    // The writer escapes a quote inside a name, and nothing else.
+                    // The Printer escapes a quote inside a name. ("He said "hello"" -> "He said \"hello\"")
                     if (c == '\\' && i + 1 < line.Length && line[i + 1] == '"')
                     {
                         word.Append('"');
@@ -102,7 +102,7 @@ namespace Business.FlowScript.Syntax
                 {
                     if (word.Length > 0 || wasQuoted)
                     {
-                        tokens.Add(new ScriptLineToken(word.ToString(), wasQuoted, start + 1));
+                        tokens.Add(new ScriptToken(word.ToString(), wasQuoted, start + 1));
                         word.Clear();
                         wasQuoted = false;
                     }
@@ -117,7 +117,7 @@ namespace Business.FlowScript.Syntax
             }
 
             if (word.Length > 0 || wasQuoted)
-                tokens.Add(new ScriptLineToken(word.ToString(), wasQuoted, start + 1));
+                tokens.Add(new ScriptToken(word.ToString(), wasQuoted, start + 1));
 
             return tokens;
         }

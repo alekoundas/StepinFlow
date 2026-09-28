@@ -11,7 +11,7 @@ namespace Business.Tests.FlowScript
     /// </summary>
     public sealed class SyntaxFactsTests
     {
-        private static IReadOnlyList<ScriptLineToken> Tokens(string text)
+        private static IReadOnlyList<ScriptToken> Tokens(string text)
         {
             return Lexer.Read(text)[0].Tokens;
         }

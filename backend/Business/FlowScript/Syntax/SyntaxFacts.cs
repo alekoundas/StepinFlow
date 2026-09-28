@@ -143,7 +143,7 @@ namespace Business.FlowScript.Syntax
         /// The keyword a line starts with, and how many words it took. Null when the first word is
         /// not a keyword at all, which is what the reader reports as an unknown step.
         /// </summary>
-        internal static ScriptKeyword? Match(IReadOnlyList<ScriptLineToken> tokens)
+        internal static ScriptKeyword? Match(IReadOnlyList<ScriptToken> tokens)
         {
             foreach (ScriptKeyword keyword in All)
             {
@@ -296,7 +296,7 @@ namespace Business.FlowScript.Syntax
         /// A condition from the words it was written as. Longest first again: "is not empty" has
         /// to beat "is not", which has to beat "is".
         /// </summary>
-        internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptLineToken> tokens, int at)
+        internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptToken> tokens, int at)
         {
             string W(int i)
             {
@@ -345,7 +345,7 @@ namespace Business.FlowScript.Syntax
         }
 
         /// <summary>How a window title is matched, and how many words that took.</summary>
-        internal static (TitleMatchModeEnum Mode, int Words)? ReadTitleMatch(IReadOnlyList<ScriptLineToken> tokens, int at)
+        internal static (TitleMatchModeEnum Mode, int Words)? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int at)
         {
             string first = at < tokens.Count ? tokens[at].Text : string.Empty;
             string second = at + 1 < tokens.Count ? tokens[at + 1].Text : string.Empty;
@@ -388,7 +388,7 @@ namespace Business.FlowScript.Syntax
         }
 
         /// <summary>How templates are compared, and how many words that took. Longest first again.</summary>
-        internal static (TemplateMatchModeEnum Mode, int Words)? ReadMatchMode(IReadOnlyList<ScriptLineToken> tokens, int at)
+        internal static (TemplateMatchModeEnum Mode, int Words)? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int at)
         {
             string W(int i)
             {
