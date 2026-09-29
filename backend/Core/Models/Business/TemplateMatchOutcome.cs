@@ -19,9 +19,19 @@ namespace Core.Models.Business
         /// </summary>
         public string? Error { get; set; }
 
-        public float? BestScore =>
-            Matches.Count > 0 ? Matches[0].Score :
-            Rejected.Count > 0 ? Rejected[0].Score :
-            null;
+        public float? BestScore
+        {
+            get
+            {
+                if (Matches.Count > 0)
+                {
+                    return Matches[0].Score;
+                }
+                else
+                {
+                    return Rejected.Count > 0 ? Rejected[0].Score :null;
+                }
+            }
+        }
     }
 }

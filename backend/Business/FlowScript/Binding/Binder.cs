@@ -15,7 +15,7 @@ namespace Business.FlowScript.Binding
     ///
     /// That also makes the round trip testable on its own: write, read, resolve, write, compare.
     /// </summary>
-    public static class Binder
+    internal static class Binder
     {
         public static BoundFlow Resolve(FlowSyntax document, IReadOnlyList<Diagnostic> errors)
         {

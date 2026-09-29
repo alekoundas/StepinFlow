@@ -33,7 +33,7 @@ namespace Business.FlowScript.Scanner
         public FlowSyntax Read(string script)
         {
             FlowSyntax document = new FlowSyntax();
-            IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script);
+            IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
 
             Section section = Section.None;
             Dictionary<int, int> lastIndexAtIndent = new Dictionary<int, int>();

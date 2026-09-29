@@ -24,13 +24,25 @@ namespace Business.Tests.FlowScript
 
             foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
             {
-                FlowStep step = new FlowStep { FlowStepType = keyword.Type };
-                if (keyword.SearchMode != null)
-                    step.SearchMode = keyword.SearchMode.Value;
-                if (keyword.KeyboardInputType != null)
-                    step.KeyboardInputType = keyword.KeyboardInputType.Value;
-                if (keyword.RunCommandPreset != null)
-                    step.RunCommandPreset = keyword.RunCommandPreset.Value;
+                // The catalogue also holds the smaller vocabularies - a title match, a scroll
+                // direction - which are not steps and have their own tests below.
+                FlowStepTypeEnum? type = keyword.As<FlowStepTypeEnum>();
+                if (type == null)
+                    continue;
+
+                FlowStep step = new FlowStep { FlowStepType = type.Value };
+
+                SearchModeEnum? searchMode = keyword.As<SearchModeEnum>();
+                if (searchMode != null)
+                    step.SearchMode = searchMode.Value;
+
+                KeyboardInputTypeEnum? keyboardInputType = keyword.As<KeyboardInputTypeEnum>();
+                if (keyboardInputType != null)
+                    step.KeyboardInputType = keyboardInputType.Value;
+
+                RunCommandPresetEnum? runCommandPreset = keyword.As<RunCommandPresetEnum>();
+                if (runCommandPreset != null)
+                    step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
                 ScriptKeyword? read = SyntaxFacts.Match(Tokens(written + " \"name\""));

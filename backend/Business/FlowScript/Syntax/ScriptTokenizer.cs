@@ -4,7 +4,7 @@ using System.Text;
 namespace Business.FlowScript.Syntax
 {
     /// <summary>
-    /// Text to lines of tokens.
+    /// Read the script and convert to lines and tokens.
     /// </summary>
     public static class ScriptTokenizer
     {

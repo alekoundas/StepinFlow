@@ -8,7 +8,7 @@ namespace Business.FlowScript.Models
         public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
 
 
-        /// <summary>A section heading, which carries a verdict rather than doing anything.</summary>
+        /// <summary>A section heading "## ", which carries a verdict rather than doing anything.</summary>
         public bool IsSection
         {
             get { return Raw.TrimStart().StartsWith("## ", StringComparison.Ordinal); }

@@ -58,18 +58,21 @@ namespace Business.FlowScript.Syntax
 
             FlowStep step = new FlowStep
             {
-                FlowStepType = keyword.Type,
+                FlowStepType = keyword.As<FlowStepTypeEnum>()!.Value,
                 CodeComment = string.Join("\n", pendingComments),
             };
 
-            if (keyword.SearchMode != null)
-                step.SearchMode = keyword.SearchMode.Value;
+            SearchModeEnum? searchMode = keyword.As<SearchModeEnum>();
+            if (searchMode != null)
+                step.SearchMode = searchMode.Value;
 
-            if (keyword.KeyboardInputType != null)
-                step.KeyboardInputType = keyword.KeyboardInputType.Value;
+            KeyboardInputTypeEnum? keyboardInputType = keyword.As<KeyboardInputTypeEnum>();
+            if (keyboardInputType != null)
+                step.KeyboardInputType = keyboardInputType.Value;
 
-            if (keyword.RunCommandPreset != null)
-                step.RunCommandPreset = keyword.RunCommandPreset.Value;
+            RunCommandPresetEnum? runCommandPreset = keyword.As<RunCommandPresetEnum>();
+            if (runCommandPreset != null)
+                step.RunCommandPreset = runCommandPreset.Value;
 
             pendingComments.Clear();
 
