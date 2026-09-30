@@ -40,6 +40,13 @@ before layer 5, because the engine tests would pin whichever answer is live.
 
 ### The script
 
+- [ ] **`Description:` in the header.** `Flow.Description` has been a column since the beginning and
+      the printer never writes it, so the one sentence saying what a flow is *meant to prove* is the
+      one thing the script leaves behind. That is the sentence phases 7 and 9 need most: a model given
+      the steps without it can see what the flow does and not what it was for. A line in the header
+      beside `Flow:` and `Id:`, a case in the scanner, and the flow form gets the collapsible
+      description its steps are getting - see `TODO.md` under Frontend. It changes the grammar, so
+      the approved sample and `FLOW-FORMAT.md` move with it.
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
 - [ ] **Buttons.** `Flow.export` and `Flow.import` are reachable over IPC; nothing in the UI calls
       them yet.
@@ -109,6 +116,11 @@ cannot depend on an api key a customer may never add.
 - [ ] **OmniParser** reads a screenshot and returns the interactive elements on it - type, label,
       position, state. That is what lets a flow find a button by what it says rather than by what it
       looks like, which is what phase 11 needs when text wraps at a smaller size.
+- [ ] **It is also what decides where a template is cut from a recording**, settled 2026-09-29: an
+      element's rectangle *is* the crop, which is why phase 7's "let the model prepare the recording"
+      waits on this phase rather than guessing a box around the click. Two things travel with the
+      crop or it is not portable - the area it was cut inside, and that area's size and DPI, which is
+      what phase 5.7 exists for. A model handing back bare pixels would undo it.
 - [ ] Structured output, not prose: `elements`, `screenState`, `notes`. Settled so it is not
       reopened at implementation time.
 - [ ] The cloud payload is shown before it is sent, with `label` and `notes` highlighted as the two
@@ -144,6 +156,17 @@ what each recorded action was for. This phase moves the questions to where the a
 - [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
       and a tight loop competes with the application being tested.
 
+- [ ] **The tester says what the flow is meant to prove, and the model prepares the recording**,
+      settled 2026-09-29. The recorder produces a draft; the model is given that draft **as a
+      script** plus what the tester wrote, and proposes where the sections go, which crop each
+      template should be, and what is missing. The tester reviews it in the editor, which is where
+      every generated flow lands - a model that could execute what it wrote would turn a prompt
+      injection in OCR'd screen text into a running mouse.
+
+      Both halves are gated: the crops need phase 6's vision model, and reading a draft as a script
+      needs the export button that phase 4 still owes. The script half is the same pipeline phase 9
+      uses, so it is one mechanism serving both ends of the product.
+
 `RecordingSummaryBuilder` is already written against `IOpenCvService.GroupSimilar` and has no caller
 yet. It is what turns "these twenty eight clicks were all the same icon" into something a model can
 read without being shown twenty eight pictures.
@@ -169,13 +192,40 @@ read without being shown twenty eight pictures.
 
 The feature the product turns on.
 
+**The script is what the model reads and writes, settled 2026-09-29.** Not database rows. Three
+reasons, and the third is the one that decides it: the script shows the structure, where rows make
+the model rebuild the tree out of `ParentFlowStepId` and `OrderNumber`; a script line names only what
+matters, where a step row is forty columns with most of them empty, and a tool result is re-sent on
+every round of the tool loop; and a fix handed back as a script goes through `FlowScriptImporter`,
+which parses, validates and replaces in one transaction and refuses a bad file outright. The model's
+output uses the same door as a human's, with the same safety, rather than the app applying a change
+field by field.
+
+`DbQueryTools` keeps the other half - what *happened*. Scores, outcomes, durations, the closest
+template and "which flows use curl" are history and cross-flow questions, none of which the script
+holds. Definition from the script, history from the rows.
+
 - [ ] **A freshly recorded flow may not run in CI.** A **Validate** button executes it and stops at
       the first `END_EXECUTION`. Pass marks it ready and unlocks viewports.
-- [ ] On failure, the model is given the flow as a script, the application's documentation, the
-      customer's own requirements, common issues and their solutions, and scripts of flows that
-      already validate.
+- [ ] On failure, the model is given the flow as a script - carrying the flow's own `Description:`
+      and each step's `#` comment, which is where the tester's intent lives - a text log of the
+      execution, the application's documentation, the customer's own requirements, common issues and
+      their solutions, and scripts of flows that already validate.
+- [ ] **The execution log is generated from the rows, not stored instead of them.** Phase 15 wants
+      "which checks have never failed", and that is a query. The log is a projection for the model.
+      It leaves markers out: they execute nothing, so a line saying so is noise.
 - [ ] The app applies the proposed fix and executes again, bounded at ten attempts, then asks the
       tester rather than editing forever.
+- [ ] **A script the importer refuses goes back to the model with the diagnostics.** `Diagnostic`
+      carries a code, a line, a column and a message saying what was *expected*, so the retry says
+      which line is wrong and what belonged there rather than "that did not work". Both kinds go
+      back: a parse error means the script will not read, a validation error means it reads and the
+      flow is wrong. The import is transactional, so a refused attempt leaves the flow exactly as it
+      was and the retries cannot corrupt anything.
+- [ ] **A question the model cannot answer ends its turn rather than blocking.**
+      `UseFunctionInvocation` runs the tool loop inside one request, so a tool that waits on a person
+      would hang it. The model returns a structured "I need to know X", the app shows it, and the
+      tester's answer goes back as the next message. A schema and a UI state, not new machinery.
 - [ ] When the tester answers, re-execute, take fresh screenshots where needed, regenerate
       templates, and carry on from where validation stopped.
 

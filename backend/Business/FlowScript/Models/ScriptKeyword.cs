@@ -28,7 +28,7 @@ namespace Business.FlowScript.Models
         /// <summary>Whether this keyword member matches the Modifier Enum.</summary>
         public bool ModifierIs<TEnum>(TEnum value) where TEnum : struct, Enum
         {
-            return Type.Equals(value);
+            return Modifier != null && Modifier.Equals(value);
         }
 
         /// <summary>

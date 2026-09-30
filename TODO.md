@@ -115,6 +115,15 @@ the history.
 
 ## Flow script
 
+- [ ] **Undecided: whether a marker's name has to be unique.** Raised 2026-09-29. `FlowNameLookup`
+      exempts only `SUCCESS` and `FAILURE`, so a marker is in the flow's one namespace and
+      `NAME_DUPLICATE` is an error - two sections both called "Retry" are refused, and there are
+      flows where that repetition is the honest description.
+      The cost of exempting them is one thing, and it has to be settled with it: the binder resolves
+      a step reference by name across every named step, and a marker is a named step, so `Go To to
+      "Retry"` can legitimately land on one. Duplicates make that lookup ambiguous. So either markers
+      stop being a legal `Go To` target, or the lookup takes the first and says so out loud.
+
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing
       for a drag. So a click stored as null returns as left, and a drag stored as left returns as
@@ -323,10 +332,53 @@ the history.
 
 ## Frontend
 
-- [ ] **`CodeComment` reaches the database but no form shows it.** The column, the dto and the
-      recorder's "recorded after a 4.2s wait" all exist; nothing renders or edits it. It is the
-      intent line that exports as a `#` comment above the step, so it wants a field on every step
-      form rather than one of them - probably beside Name, and optional everywhere.
+- [ ] **`CodeComment` reaches the database, the script and the model, but no form shows it.** The
+      column, the dto, the printer, the parser, `DbQueryTools` and `AiPromptHelper` all carry it -
+      the prompt even tells the model it is "why it is checked at all ... the one thing no screenshot
+      can show". The only missing piece is somewhere for a person to type one, so today a comment can
+      only arrive by importing a `.sflw` that has one.
+
+      **The shape, settled 2026-09-30.** An optional textarea under Name on every step form,
+      collapsed by default, and the flow form gets the same one over `Flow.Description`.
+      - **The placeholder does the work, not the label.** Whatever the field is called, the hint asks
+        for *why*: "Why this step is here - what you expect, and what it means if it fails." The
+        fields above it already say what the step does, and a restatement goes stale the first time
+        the step changes.
+      - **Do not tell the user it is for the AI.** It reads as a chore for the machine and undersells
+        it - the same text is read by whoever reviews the `.sflw` in a pull request and quoted back in
+        a failure explanation. Say who reads it, not what consumes it.
+      - **It renders expanded, or clearly badged, when it already has content.** Collapsed-and-empty
+        is fine; collapsed-and-full hides a note somebody wrote, and they will assume it was dropped.
+        That is the same failure mode as a field missing from a zod schema.
+      - A textarea rather than an input, because the column joins lines with `\n` and the printer
+        writes one `#` each - which round trips today.
+
+      **Extract a shared step schema first.** All 14 `*.zod.ts` files repeat
+      `name: z.string().min(1).max(120)` by hand, so this is otherwise 14 edits - and a schema
+      somebody forgets silently drops the field on submit, which is the trap `PROJECT.md` §13 warns
+      about. `FlowStepBaseSchema` with `name` and `codeComment`, then `.extend({ ... })` per type.
+      Note the order for the refining ones: `FlowStepBaseSchema.extend({ ... }).superRefine(...)`,
+      because `.extend()` is not available after `superRefine`.
+
+      **Undecided: the recorder writes into the same column.** `# recorded after a 4.2s wait` and a
+      human's note would share one field. One column with the recorder writing the first line is the
+      cheaper answer, and the script cannot tell them apart anyway; two columns is the alternative.
+
+- [x] **A marker is a section and nothing else. Settled 2026-09-30.** It was worth asking, because
+      one concept is cheaper than two and in a script a `##` above a step does read as an explanation
+      of it. Four things decided it against, and the first is the sharpest:
+      1) markers are what a CI report groups by - "it failed in Checkout" - so per-step prose in the
+         same namespace fills that report with sections called "the banner covers this at 390px";
+      2) a marker is a **sibling**, so dragging its step away leaves the explanation behind, pointing
+         at whatever step now follows, while `CodeComment` is a column and moves with it;
+      3) a marker's name is in the flow's one namespace and the binder resolves `Go To to "X"`
+         against every named step, so two markers sharing a name make that reference ambiguous;
+      4) the recorder writes a note per recorded step, which as markers doubles the tree.
+
+      A flag on the marker - section or comment - was considered and dropped: it fixes only the
+      first, still orphans on a drag, and needs two syntaxes in the file to be written at all, which
+      is the `##` / `#` grammar that already exists. So the marker form stays name-only. A note with
+      no step to attach to goes on the branch's first step, or on the flow itself.
 
 - [ ] **The wizard cannot author the three newest step types.** `action-to-steps.ts` maps recorded
       actions onto steps and has no case producing `END_EXECUTION` or `MARKER`. Correct for a

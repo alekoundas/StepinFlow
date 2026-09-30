@@ -210,7 +210,7 @@ namespace Business.FlowScript.Syntax
         {
             foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
             {
-                if (keyword.TypeIs(type) && keyword.Modifier != null && keyword.Modifier.Equals(modifier))
+                if (keyword.TypeIs(type) && keyword.ModifierIs(modifier))
                     return keyword;
             }
 
