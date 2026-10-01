@@ -19,8 +19,6 @@ namespace Business.FlowScript.Text
     /// </summary>
     public sealed class Printer : IPrinter
     {
-        private const int IndentWidth = 2;
-
         public string Write(BoundFlow source)
         {
             StringBuilder builder = new StringBuilder();
@@ -250,7 +248,7 @@ namespace Business.FlowScript.Text
 
         private static void WriteStep(StringBuilder builder, BoundFlow source, FlowStep step, int depth)
         {
-            string indent = new string(' ', depth * IndentWidth);
+            string indent = new string(' ', depth);
 
             // A marker is a section heading, not a step that does anything.
             if (step.FlowStepType == FlowStepTypeEnum.MARKER)
@@ -285,7 +283,7 @@ namespace Business.FlowScript.Text
             if (!TreeStepHelper.HasBranchChildren(step.FlowStepType))
                 return;
 
-            string indent = new string(' ', (depth + 1) * IndentWidth);
+            string indent = new string(' ', depth + 1);
 
             // Order comes from the rows, so two exports of one flow cannot differ. An empty branch
             // is left out entirely: "Success:" with nothing under it says nothing.

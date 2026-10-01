@@ -72,7 +72,7 @@ namespace Business.FlowScript.Syntax
             string? parentName = null;
             int next;
 
-            if (line.Word(1) == "window")
+            if (line.Word(1) == "window") // ex.   ""Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi"
             {
                 area.Type = FlowAreaTypeEnum.APPLICATION;
                 next = ReadWindow(document, line, area);
@@ -88,7 +88,7 @@ namespace Business.FlowScript.Syntax
                 area.Type = FlowAreaTypeEnum.CUSTOM;
                 next = ReadPlacement(document, line, 3, area);
             }
-            else if (line.Word(1) == "inside")
+            else if (line.Word(1) == "inside") // ex. ""Cart badge"    inside "Browser"   ratio 0.88 0.00  0.12 0.10"
             {
                 area.Type = FlowAreaTypeEnum.CUSTOM;
                 parentName = line.Word(2);
@@ -375,6 +375,7 @@ namespace Business.FlowScript.Syntax
         }
 
         // scales with dpi|area, at 120dpi. Both optional: no setting inherits, no DPI leaves pixels as they are.
+        // ex. " "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi"
         private static bool ReadAreaScaling(FlowScriptSchema document, ScriptLine line, int at, FlowArea area)
         {
             int i = at;

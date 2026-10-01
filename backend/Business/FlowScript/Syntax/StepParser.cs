@@ -1,4 +1,3 @@
-
 using Core.Enums;
 using Core.Models.Database;
 using Business.FlowScript.Diagnostics;
@@ -12,31 +11,31 @@ namespace Business.FlowScript.Syntax
     /// </summary>
     internal static class StepParser
     {
-        public static void Read(
-            FlowScriptSchema document,
-            ScriptLine line,
-            Dictionary<int, int> lastIndexAtIndent,
-            List<string> pendingComments,
-            ref int order)
+        public static void Read(FlowScriptSchema document, ScriptLine line, Dictionary<int, int> lastIndexAtIndent, List<string> pendingComments)
         {
-            // A branch is a row of its own in the database, and the steps under it hang off it.
-            if (line.Raw.Trim() == "Success:" || line.Raw.Trim() == "Failure:")
+            // Add Success step.
+            if (line.Raw.Trim() == "Success:")
             {
-                FlowStepTypeEnum branchType = FlowStepTypeEnum.FAILURE;
-                if (line.Raw.Trim() == "Success:")
-                    branchType = FlowStepTypeEnum.SUCCESS;
-
-                Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = branchType }, ref order);
+                Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS });
                 return;
             }
 
-            if (line.IsSection)
+            // Add Failure step.
+            if (line.Raw.Trim() == "Failure:")
             {
-                Add(document, line, lastIndexAtIndent, new FlowStep
+                Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE });
+                return;
+            }
+
+            // Add Stage marker step.
+            if (line.IsStageMarker)
+            {
+                FlowStep flowStep = new FlowStep
                 {
                     FlowStepType = FlowStepTypeEnum.MARKER,
                     Name = line.TextAfterHash,
-                }, ref order);
+                };
+                Add(document, line, lastIndexAtIndent, flowStep);
 
                 pendingComments.Clear();
                 return;
@@ -72,18 +71,13 @@ namespace Business.FlowScript.Syntax
 
             pendingComments.Clear();
 
-            FlowStepSchemaBindng parsed = Add(document, line, lastIndexAtIndent, step, ref order);
+            FlowStepSchemaBindng parsed = Add(document, line, lastIndexAtIndent, step);
             int at = keyword.Text.Split(' ').Length;
 
             ReadArguments(document, line, parsed, at);
         }
 
-        private static FlowStepSchemaBindng Add(
-            FlowScriptSchema document,
-            ScriptLine line,
-            Dictionary<int, int> lastIndexAtIndent,
-            FlowStep step,
-            ref int order)
+        private static FlowStepSchemaBindng Add(FlowScriptSchema document, ScriptLine line, Dictionary<int, int> lastIndexAtIndent, FlowStep step)
         {
             // One rule covers both shapes: a branch row sits one in from its step, a container's
             // children one in from the container, so the parent is whatever was last seen outside.
@@ -91,7 +85,7 @@ namespace Business.FlowScript.Syntax
             if (line.LeadingSpaces > 0 && lastIndexAtIndent.TryGetValue(line.LeadingSpaces - 1, out int found))
                 parentIndex = found;
 
-            step.OrderNumber = order++;
+            step.OrderNumber = document.Steps.Count;
 
             FlowStepSchemaBindng parsed = new FlowStepSchemaBindng { Step = step, Line = line.Number, ParentIndex = parentIndex };
             document.Steps.Add(parsed);

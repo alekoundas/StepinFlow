@@ -4,14 +4,8 @@ using Core.Enums;
 namespace Business.FlowScript.Catalogs
 {
     /// <summary>
-    /// Every word the grammar knows, once. <see cref="Syntax.SyntaxFacts"/> reads it in both
-    /// directions - the words a thing is written as, and the thing a set of words means - so nothing
-    /// can mean one thing on write and another on read. That is the only way the round trip can be
-    /// relied on, and it is why the text lives here and nowhere else.
+    /// Every word the grammar knows, once.
     ///
-    /// A row's enum type is its vocabulary, so the same word can appear in two of them without
-    /// ambiguity: "is" and "matches" are both a condition and a way to match a title, and a reader
-    /// asking for one never sees the other.
     ///
     /// Longest first within a vocabulary, because reading takes the first match: "Move Window" has to
     /// win over "Move", "Wait Until No Image" over "Wait For Image" over "Wait", "is not empty" over

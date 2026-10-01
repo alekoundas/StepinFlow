@@ -38,7 +38,6 @@ namespace Business.FlowScript.Scanner
             ScriptSection? currentSection = ScriptSection.Flow; // Script always starts with Flow fields.
             Dictionary<int, int> lastIndexAtIndent = new Dictionary<int, int>();
             List<string> pendingComments = new List<string>(); // CodeComment of the step bellow.
-            int order = 0;
 
             // Use the Parsers to parse each line.
             foreach (ScriptLine line in lines)
@@ -53,37 +52,41 @@ namespace Business.FlowScript.Scanner
                 }
 
 
-                // Current section.
-                switch (line.Raw.Trim())
+                // Extract section from script and skip this line.
+                string rawText = line.Raw.Trim();
+                if (rawText == "Areas:")
                 {
-                    case "Areas:":
-                        currentSection = ScriptSection.Areas;
-                        break;
-                    case "Points:":
-                        currentSection = ScriptSection.Points;
-                        break;
-                    case "Inputs:":
-                        currentSection = ScriptSection.Inputs;
-                        break;
-                    case "Templates:":
-                        currentSection = ScriptSection.Templates;
-                        break;
-                    case "Steps:":
-                        currentSection = ScriptSection.Steps;
-                        break;
-                    default:
-                        break;
+                    currentSection = ScriptSection.Areas;
+                    continue;
                 }
-
-
-                if (currentSection == ScriptSection.Flow)
+                else if (rawText == "Points:")
                 {
-                    FlowParser.ReadFlowField(document, line);
+                    currentSection = ScriptSection.Points;
+                    continue;
+                }
+                else if (rawText == "Inputs:")
+                {
+                    currentSection = ScriptSection.Inputs;
+                    continue;
+                }
+                else if (rawText == "Templates:")
+                {
+                    currentSection = ScriptSection.Templates;
+                    continue;
+                }
+                else if (rawText == "Steps:")
+                {
+                    currentSection = ScriptSection.Steps;
                     continue;
                 }
 
+                // Call the parsers.
                 switch (currentSection)
                 {
+                    case ScriptSection.Flow:
+                        FlowParser.ReadFlowField(document, line);
+                        break;
+
                     case ScriptSection.Areas:
                         FlowParser.ReadArea(document, line);
                         break;
@@ -101,7 +104,7 @@ namespace Business.FlowScript.Scanner
                         break;
 
                     case ScriptSection.Steps:
-                        StepParser.Read(document, line, lastIndexAtIndent, pendingComments, ref order);
+                        StepParser.Read(document, line, lastIndexAtIndent, pendingComments);
                         break;
 
                     default:

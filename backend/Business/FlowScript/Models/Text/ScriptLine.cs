@@ -9,7 +9,7 @@ namespace Business.FlowScript.Models.Text
 
 
         /// <summary>A section heading "## ", which carries a verdict rather than doing anything.</summary>
-        public bool IsSection
+        public bool IsStageMarker
         {
             get { return Raw.TrimStart().StartsWith("## ", StringComparison.Ordinal); }
         }
