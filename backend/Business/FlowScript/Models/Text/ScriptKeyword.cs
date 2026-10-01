@@ -11,21 +11,23 @@ namespace Business.FlowScript.Models.Text
         public string Text { get; }
         public Enum Type { get; }
         public Enum? Modifier { get; }
+        public int TokenCount { get; }
 
         public ScriptKeyword(string text, Enum type, Enum? modifier = null)
         {
             Text = text;
             Type = type;
             Modifier = modifier;
+            TokenCount = text.Split(' ').Length;
         }
 
-        /// <summary>Whether this keyword member matches the Type Enum.</summary>
+        // <summary>Whether this keyword member matches the Type Enum.</summary>
         //public bool TypeIs<TEnum>(TEnum value) where TEnum : struct, Enum
         //{
         //    return Type.Equals(value);
         //}
 
-        /// <summary>Whether this keyword member matches the Modifier Enum.</summary>
+        // <summary>Whether this keyword member matches the Modifier Enum.</summary>
         //public bool ModifierIs<TEnum>(TEnum value) where TEnum : struct, Enum
         //{
         //    return Modifier != null && Modifier.Equals(value);

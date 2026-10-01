@@ -41,7 +41,7 @@ namespace Business.FlowScript.Syntax
                 return;
             }
 
-            ScriptKeyword? keyword = SyntaxFacts.Match(line.Tokens);
+            ScriptKeyword? keyword = SyntaxFacts.ReadStepKeyword(line.Tokens);
             if (keyword == null)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.STEP_UNKNOWN, line.Number, line.Tokens[0].Column,
@@ -72,9 +72,9 @@ namespace Business.FlowScript.Syntax
             pendingComments.Clear();
 
             FlowStepSchemaBindng parsed = Add(document, line, step);
-            int at = keyword.Text.Split(' ').Length;
+            int tokenIndex = keyword.TokenCount;
 
-            ReadArguments(document, line, parsed, at);
+            ReadArguments(document, line, parsed, tokenIndex);
         }
 
         private static FlowStepSchemaBindng Add(FlowScriptSchema document, ScriptLine line, FlowStep step)
@@ -269,7 +269,7 @@ namespace Business.FlowScript.Syntax
                         break;
 
                     case "match":
-                        (TemplateMatchModeEnum Mode, int Words)? mode = null;
+                        ScriptKeyword? mode = null;
                         if (step.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE)
                             mode = SyntaxFacts.ReadMatchMode(line.Tokens, i + 1);
 
@@ -279,8 +279,8 @@ namespace Business.FlowScript.Syntax
                             return;
                         }
 
-                        step.TemplateMatchMode = mode.Value.Mode;
-                        i += 1 + mode.Value.Words;
+                        step.TemplateMatchMode = mode.As<TemplateMatchModeEnum>()!.Value;
+                        i += 1 + mode.TokenCount;
                         break;
 
                     case "keep":
@@ -482,16 +482,16 @@ namespace Business.FlowScript.Syntax
 
             if (line.Word(i) == "title")
             {
-                (TitleMatchModeEnum Mode, int Words)? match = SyntaxFacts.ReadTitleMatch(line.Tokens, i + 1);
+                ScriptKeyword? match = SyntaxFacts.ReadTitleMatch(line.Tokens, i + 1);
                 if (match == null)
                 {
                     document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, line.Number, line.ColumnOf(i + 1), "Expected is, contains, starts with or matches after \"title\"."));
                     return;
                 }
 
-                step.TitleMatchMode = match.Value.Mode;
-                step.TitlePattern = line.Word(i + 1 + match.Value.Words);
-                i += 2 + match.Value.Words;
+                step.TitleMatchMode = match.As<TitleMatchModeEnum>()!.Value;
+                step.TitlePattern = line.Word(i + 1 + match.TokenCount);
+                i += 2 + match.TokenCount;
             }
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && line.Word(i) == "size")

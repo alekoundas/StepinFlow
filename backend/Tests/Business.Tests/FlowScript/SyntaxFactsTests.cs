@@ -45,7 +45,7 @@ namespace Business.Tests.FlowScript
                     step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
-                ScriptKeyword? read = SyntaxFacts.Match(Tokens(written + " \"name\""));
+                ScriptKeyword? read = SyntaxFacts.ReadStepKeyword(Tokens(written + " \"name\""));
 
                 if (written != keyword.Text || read != keyword)
                     wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
@@ -61,13 +61,13 @@ namespace Business.Tests.FlowScript
         [InlineData("Wait 800ms", FlowStepTypeEnum.WAIT)]
         public void The_longest_keyword_wins(string line, FlowStepTypeEnum type)
         {
-            SyntaxFacts.Match(Tokens(line))!.Type.ShouldBe(type);
+            SyntaxFacts.ReadStepKeyword(Tokens(line))!.Type.ShouldBe(type);
         }
 
         [Fact]
         public void A_quoted_word_is_a_name_and_never_a_keyword()
         {
-            SyntaxFacts.Match(Tokens("\"Click\" at match")).ShouldBeNull();
+            SyntaxFacts.ReadStepKeyword(Tokens("\"Click\" at match")).ShouldBeNull();
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.TitleMatch(mode) + " \"x\""), 0)!.Value.Mode.ShouldBe(mode);
+            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.TitleMatch(mode) + " \"x\""), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]
@@ -141,7 +141,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            SyntaxFacts.ReadMatchMode(Tokens(SyntaxFacts.MatchMode(mode)), 0)!.Value.Mode.ShouldBe(mode);
+            SyntaxFacts.ReadMatchMode(Tokens(SyntaxFacts.MatchMode(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]

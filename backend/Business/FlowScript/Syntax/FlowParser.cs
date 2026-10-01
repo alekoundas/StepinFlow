@@ -309,17 +309,17 @@ namespace Business.FlowScript.Syntax
             if (line.Word(4) != "title")
                 return 4;
 
-            (TitleMatchModeEnum Mode, int Words)? match = SyntaxFacts.ReadTitleMatch(line.Tokens, 5);
+            ScriptKeyword? match = SyntaxFacts.ReadTitleMatch(line.Tokens, 5);
             if (match == null)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, line.Number, line.ColumnOf(4), "Expected is, contains, starts with or matches after \"title\"."));
                 return -1;
             }
 
-            area.TitleMatchMode = match.Value.Mode;
-            area.TitlePattern = line.Word(5 + match.Value.Words);
+            area.TitleMatchMode = match.As<TitleMatchModeEnum>()!.Value;
+            area.TitlePattern = line.Word(5 + match.TokenCount);
 
-            return 6 + match.Value.Words;
+            return 6 + match.TokenCount;
         }
 
         // monitor primary, or monitor "\\.\DISPLAY2". Quoted, because a device could be called primary.

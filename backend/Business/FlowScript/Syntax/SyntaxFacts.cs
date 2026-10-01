@@ -42,24 +42,24 @@ namespace Business.FlowScript.Syntax
 
 
         /// <summary>
-        /// The keyword a line starts with, and how many words it took. Null when the first word is
-        /// not a keyword at all, which is what the reader reports as an unknown step.
+        /// The step keyword a line starts with. Null when it starts with none, which the reader
+        /// reports as an unknown step.
         /// </summary>
-        internal static ScriptKeyword? Match(IReadOnlyList<ScriptToken> tokens)
+        internal static ScriptKeyword? ReadStepKeyword(IReadOnlyList<ScriptToken> tokens)
         {
-            return ReadWord<FlowStepTypeEnum>(tokens, 0);
+            return ReadKeyword<FlowStepTypeEnum>(tokens, 0);
         }
 
-        /// <summary>How a window title is matched, and how many words that took.</summary>
-        internal static (TitleMatchModeEnum Mode, int Words)? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int at)
+        /// <summary>How a window title is matched.</summary>
+        internal static ScriptKeyword? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int at)
         {
-            return Read<TitleMatchModeEnum>(tokens, at);
+            return ReadKeyword<TitleMatchModeEnum>(tokens, at);
         }
 
-        /// <summary>How templates are compared, and how many words that took. Longest first again.</summary>
-        internal static (TemplateMatchModeEnum Mode, int Words)? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int at)
+        /// <summary>How templates are compared.</summary>
+        internal static ScriptKeyword? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int at)
         {
-            return Read<TemplateMatchModeEnum>(tokens, at);
+            return ReadKeyword<TemplateMatchModeEnum>(tokens, at);
         }
 
         public static ScalesWithEnum? ReadScalesWith(string word)
@@ -97,43 +97,26 @@ namespace Business.FlowScript.Syntax
         // Private methods
         // ================================================================
 
-        // The member the tokens from "at" spell out, with how many words it took. The count comes from
-        // the phrase, so a two-word form cannot disagree with the number its reader returns.
-        private static (TEnum Mode, int Words)? Read<TEnum>(IReadOnlyList<ScriptToken> tokens, int at) where TEnum : struct, Enum
+        // Find the longest keyword the tokens can generate starting from "tokenIndex".
+        // ex "Wait Until No Image" = 4 tokens but 1 command.
+        private static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
         {
-            ScriptKeyword? keyword = ReadWord<TEnum>(tokens, at);
-            if (keyword == null)
-                return null;
+            ScriptKeyword? longest = null;
+            string phrase = string.Empty;
 
-            return (keyword.As<TEnum>()!.Value, keyword.Text.Split(' ').Length);
-        }
-
-        private static ScriptKeyword? ReadWord<TEnum>(IReadOnlyList<ScriptToken> tokens, int at) where TEnum : struct, Enum
-        {
-            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
+            for (int i = tokenIndex; i < tokens.Count && !tokens[i].IsQuoted; i++)
             {
-                if (keyword.Type is TEnum && LeadsWith(tokens, at, keyword.Text))
-                    return keyword;
+                if (i > tokenIndex) // Dont add space on first loop.
+                    phrase += " ";
+
+                phrase += tokens[i].Text;
+
+                ScriptKeyword? keyword = ScriptKeywordCatalog.Get<TEnum>(phrase);
+                if (keyword != null)
+                    longest = keyword;
             }
 
-            return null;
-        }
-
-        // Whether the tokens from "at" are exactly these words, unquoted. A quoted word is a name
-        // that happens to read like a keyword, never the keyword itself.
-        private static bool LeadsWith(IReadOnlyList<ScriptToken> tokens, int at, string text)
-        {
-            string[] words = text.Split(' ');
-            if (at + words.Length > tokens.Count)
-                return false;
-
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (tokens[at + i].IsQuoted || !string.Equals(tokens[at + i].Text, words[i], StringComparison.Ordinal))
-                    return false;
-            }
-
-            return true;
+            return longest;
         }
 
         // Which row of the catalogue a step is written as. Two types cannot be found by matching
