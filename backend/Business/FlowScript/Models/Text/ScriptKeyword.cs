@@ -20,16 +20,16 @@ namespace Business.FlowScript.Models.Text
         }
 
         /// <summary>Whether this keyword member matches the Type Enum.</summary>
-        public bool TypeIs<TEnum>(TEnum value) where TEnum : struct, Enum
-        {
-            return Type.Equals(value);
-        }
+        //public bool TypeIs<TEnum>(TEnum value) where TEnum : struct, Enum
+        //{
+        //    return Type.Equals(value);
+        //}
 
         /// <summary>Whether this keyword member matches the Modifier Enum.</summary>
-        public bool ModifierIs<TEnum>(TEnum value) where TEnum : struct, Enum
-        {
-            return Modifier != null && Modifier.Equals(value);
-        }
+        //public bool ModifierIs<TEnum>(TEnum value) where TEnum : struct, Enum
+        //{
+        //    return Modifier != null && Modifier.Equals(value);
+        //}
 
         /// <summary>
         /// Get typed Enum value of "Type" or "Modifier" or null.

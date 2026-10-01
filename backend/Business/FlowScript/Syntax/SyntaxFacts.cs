@@ -64,66 +64,38 @@ namespace Business.FlowScript.Syntax
 
         public static ScalesWithEnum? ReadScalesWith(string word)
         {
-            return Member<ScalesWithEnum>(word);
+            return ScriptKeywordCatalog.Get<ScalesWithEnum>(word)?.As<ScalesWithEnum>();
         }
 
         public static CursorScrollDirectionTypeEnum? ReadScrollDirection(string word)
         {
-            return Member<CursorScrollDirectionTypeEnum>(word);
+            return ScriptKeywordCatalog.Get<CursorScrollDirectionTypeEnum>(word)?.As<CursorScrollDirectionTypeEnum>();
         }
 
         public static string TitleMatch(TitleMatchModeEnum mode)
         {
-            return Word(mode);
+            return ScriptKeywordCatalog.Get(mode)?.Text ?? string.Empty;
         }
 
         public static string ScalesWith(ScalesWithEnum scalesWith)
         {
-            return Word(scalesWith);
+            return ScriptKeywordCatalog.Get(scalesWith)?.Text ?? string.Empty;
         }
 
         public static string MatchMode(TemplateMatchModeEnum mode)
         {
-            return Word(mode);
+            return ScriptKeywordCatalog.Get(mode)?.Text ?? string.Empty;
         }
 
         /// <summary>A scroll with no direction goes down, which is what it did before there was one.</summary>
         public static string ScrollDirection(CursorScrollDirectionTypeEnum? direction)
         {
-            return Word(direction ?? CursorScrollDirectionTypeEnum.DOWN);
+            return ScriptKeywordCatalog.Get(direction ?? CursorScrollDirectionTypeEnum.DOWN)?.Text ?? string.Empty;
         }
 
         // ================================================================
         // Private methods
         // ================================================================
-
-        // The four below are the whole of reading and writing a one-to-one vocabulary, and they are
-        // generic because the row's enum type is what says which vocabulary it belongs to. TEnum is
-        // the filter, so "is" as a title match and "is" as a condition never reach each other.
-
-        // The words a member is written as.
-        private static string Word<TEnum>(TEnum value) where TEnum : struct, Enum
-        {
-            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
-            {
-                if (keyword.TypeIs(value))
-                    return keyword.Text;
-            }
-
-            return string.Empty;
-        }
-
-        // The member a single word means, or null when that vocabulary has no such word.
-        private static TEnum? Member<TEnum>(string word) where TEnum : struct, Enum
-        {
-            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
-            {
-                if (keyword.Type is TEnum && string.Equals(keyword.Text, word, StringComparison.Ordinal))
-                    return keyword.As<TEnum>();
-            }
-
-            return null;
-        }
 
         // The member the tokens from "at" spell out, with how many words it took. The count comes from
         // the phrase, so a two-word form cannot disagree with the number its reader returns.
@@ -176,45 +148,26 @@ namespace Business.FlowScript.Syntax
                 case FlowStepTypeEnum.SEARCH_TEXT:
                     // A mode with no keyword of its own reads as the plain search. FIND_ALL is not
                     // offered for text, so a text step in that mode is a Check Text.
-                    return WithModifier(step.FlowStepType, step.SearchMode)
-                        ?? WithModifier(step.FlowStepType, SearchModeEnum.FIND_BEST);
+                    return ScriptKeywordCatalog.Get(step.FlowStepType, step.SearchMode)
+                        ?? ScriptKeywordCatalog.Get(step.FlowStepType, SearchModeEnum.FIND_BEST);
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     KeyboardInputTypeEnum typed = KeyboardInputTypeEnum.TEXT;
                     if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
                         typed = KeyboardInputTypeEnum.COMBINATION;
 
-                    return WithModifier(step.FlowStepType, typed);
+                    return ScriptKeywordCatalog.Get(step.FlowStepType, typed);
 
                 case FlowStepTypeEnum.SYSTEM_COMMAND:
                     RunCommandPresetEnum preset = RunCommandPresetEnum.CUSTOM;
                     if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
                         preset = RunCommandPresetEnum.LAUNCH_APP;
 
-                    return WithModifier(step.FlowStepType, preset);
+                    return ScriptKeywordCatalog.Get(step.FlowStepType, preset);
 
                 default:
-                    foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
-                    {
-                        if (keyword.TypeIs(step.FlowStepType))
-                            return keyword;
-                    }
-
-                    return null;
+                    return ScriptKeywordCatalog.Get(step.FlowStepType);
             }
-        }
-
-        // A row whose type is this step's and whose modifier is that member. Equals, never ==: both
-        // slots are typed Enum, so == would compare the boxes rather than the members.
-        private static ScriptKeyword? WithModifier<TEnum>(FlowStepTypeEnum type, TEnum modifier) where TEnum : struct, Enum
-        {
-            foreach (ScriptKeyword keyword in ScriptKeywordCatalog.All)
-            {
-                if (keyword.TypeIs(type) && keyword.ModifierIs(modifier))
-                    return keyword;
-            }
-
-            return null;
         }
 
         public static string Condition(FlowStep step)

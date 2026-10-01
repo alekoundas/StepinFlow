@@ -5,20 +5,13 @@ namespace Business.FlowScript.Catalogs
 {
     /// <summary>
     /// Every word the grammar knows, once.
-    ///
-    ///
-    /// Longest first within a vocabulary, because reading takes the first match: "Move Window" has to
-    /// win over "Move", "Wait Until No Image" over "Wait For Image" over "Wait", "is not empty" over
-    /// "is not" over "is", and "shape and brightness" over "shape".
+ 
     /// </summary>
     internal static class ScriptKeywordCatalog
     {
-        internal static IReadOnlyList<ScriptKeyword> All { get; } =
+        public static IReadOnlyList<ScriptKeyword> All { get; } =
         [
-            // Steps. The keyword says what a check looks at and how at once - "Wait For Image"
-            // rather than "Search Image ... wait until found" - which is what makes an impossible
-            // combination unwriteable: there is no "Find All Texts" to mistype, because reading an
-            // area gives one block of text and nothing to act on each of.
+            // Steps.
             new ScriptKeyword("Wait Until No Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
             new ScriptKeyword("Wait Until No Text", FlowStepTypeEnum.SEARCH_TEXT, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
             new ScriptKeyword("Find All Images", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.FIND_ALL),
@@ -67,5 +60,44 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("left", CursorScrollDirectionTypeEnum.LEFT),
             new ScriptKeyword("right", CursorScrollDirectionTypeEnum.RIGHT),
         ];
+
+        /// <summary>
+        /// TEnum picks the vocabulary, so a word shared by two of them never finds the wrong one.
+        /// </summary>
+        public static ScriptKeyword? Get<TEnum>(string text) where TEnum : struct, Enum
+        {
+            foreach (ScriptKeyword keyword in All)
+            {
+                if (keyword.Type is TEnum && string.Equals(keyword.Text, text, StringComparison.Ordinal))
+                    return keyword;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The first row of this type, whatever its modifier.
+        /// </summary>
+        public static ScriptKeyword? Get(Enum type)
+        {
+            foreach (ScriptKeyword keyword in All)
+            {
+                if (keyword.Type.Equals(type))
+                    return keyword;
+            }
+
+            return null;
+        }
+
+        public static ScriptKeyword? Get(Enum type, Enum modifier)
+        {
+            foreach (ScriptKeyword keyword in All)
+            {
+                if (keyword.Type.Equals(type) && modifier.Equals(keyword.Modifier))
+                    return keyword;
+            }
+
+            return null;
+        }
     }
 }
