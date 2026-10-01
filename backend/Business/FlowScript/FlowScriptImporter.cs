@@ -8,10 +8,10 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Business.FlowScript.Binding;
-using Business.FlowScript.Syntax;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
+using Business.FlowScript.Models.Binding;
 
 namespace Business.FlowScript
 {
@@ -55,7 +55,7 @@ namespace Business.FlowScript
 
         public async Task<FlowImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default)
         {
-            FlowSyntax document = _reader.Read(script);
+            FlowScriptSchema document = _reader.Read(script);
             if (!document.IsValid)
                 return Failed(document.Diagnostics);
 
@@ -117,7 +117,7 @@ namespace Business.FlowScript
         private static async Task<FlowImportResultDto> WriteAsync(
             AppDbContext dbContext,
             Flow flow,
-            FlowSyntax document,
+            FlowScriptSchema document,
             BoundFlow source,
             string? templateFolderPath,
             CancellationToken ct)
@@ -156,12 +156,12 @@ namespace Business.FlowScript
         }
 
         private static async Task<Dictionary<int, int>> WriteAreasAsync(
-            AppDbContext dbContext, Flow flow, FlowSyntax document, CancellationToken ct)
+            AppDbContext dbContext, Flow flow, FlowScriptSchema document, CancellationToken ct)
         {
             Dictionary<int, int> ids = new Dictionary<int, int>();
 
             // Two passes so a child can be given a parent that already has a row.
-            foreach (AreaSyntax parsed in document.Areas.OrderBy(x => x.ParentName == null ? 0 : 1))
+            foreach (FlowAreaSchemaBindng parsed in document.Areas.OrderBy(x => x.ParentName == null ? 0 : 1))
             {
                 int documentId = parsed.Area.Id;
                 int? parentDocumentId = parsed.Area.ParentFlowAreaId;
@@ -180,11 +180,11 @@ namespace Business.FlowScript
         }
 
         private static async Task<Dictionary<int, int>> WritePointsAsync(
-            AppDbContext dbContext, Flow flow, FlowSyntax document, IReadOnlyDictionary<int, int> areaIds, CancellationToken ct)
+            AppDbContext dbContext, Flow flow, FlowScriptSchema document, IReadOnlyDictionary<int, int> areaIds, CancellationToken ct)
         {
             Dictionary<int, int> ids = new Dictionary<int, int>();
 
-            foreach (PointSyntax parsed in document.Points)
+            foreach (FlowPointSchemaBindng parsed in document.Points)
             {
                 int documentId = parsed.Point.Id;
                 int? areaDocumentId = parsed.Point.FlowAreaId;
@@ -205,7 +205,7 @@ namespace Business.FlowScript
         private static async Task WriteStepsAsync(
             AppDbContext dbContext,
             Flow flow,
-            FlowSyntax document,
+            FlowScriptSchema document,
             IReadOnlyDictionary<int, int> areaIds,
             IReadOnlyDictionary<int, int> pointIds,
             string? templateFolderPath,
@@ -216,7 +216,7 @@ namespace Business.FlowScript
 
             // Parents first, in document order, so a child always has a real parent id. The reader
             // emits a parent before any of its children, which is what makes one pass enough.
-            foreach (StepSyntax parsed in document.Steps)
+            foreach (FlowStepSchemaBindng parsed in document.Steps)
             {
                 FlowStep step = parsed.Step;
 
@@ -252,14 +252,14 @@ namespace Business.FlowScript
         }
 
         // The forward references, once every step has a row.
-        private static void ResolveReferences(FlowSyntax document, IReadOnlyDictionary<int, int> stepIds)
+        private static void ResolveReferences(FlowScriptSchema document, IReadOnlyDictionary<int, int> stepIds)
         {
             Dictionary<string, int> byName = new Dictionary<string, int>(StringComparer.Ordinal);
 
-            foreach (StepSyntax parsed in document.Steps.Where(x => !string.IsNullOrEmpty(x.Step.Name)))
+            foreach (FlowStepSchemaBindng parsed in document.Steps.Where(x => !string.IsNullOrEmpty(x.Step.Name)))
                 byName[parsed.Step.Name] = parsed.Step.Id;
 
-            foreach (StepSyntax parsed in document.Steps)
+            foreach (FlowStepSchemaBindng parsed in document.Steps)
             {
                 if (parsed.ReferenceName != null && byName.TryGetValue(parsed.ReferenceName, out int reference))
                     parsed.Step.FlowStepReferenceId = reference;
@@ -272,7 +272,7 @@ namespace Business.FlowScript
         private static async Task<int> WriteTemplatesAsync(
             AppDbContext dbContext,
             FlowStep step,
-            StepSyntax parsed,
+            FlowStepSchemaBindng parsed,
             string? templateFolderPath,
             FlowImportResultDto result,
             CancellationToken ct)
@@ -281,7 +281,7 @@ namespace Business.FlowScript
 
             for (int i = 0; i < parsed.Templates.Count; i++)
             {
-                ScriptTemplate template = parsed.Templates[i];
+                ScriptTemplateImage template = parsed.Templates[i];
 
                 // A missing image is reported rather than fatal: the step is still the step, and a
                 // flow whose pictures did not come over is more use than no flow at all.

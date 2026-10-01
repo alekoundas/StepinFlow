@@ -1,7 +1,7 @@
 using Core.Models.Database;
-using Business.FlowScript.Syntax;
 using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
+using Business.FlowScript.Models.Binding;
 
 namespace Business.FlowScript.Binding
 {
@@ -17,7 +17,7 @@ namespace Business.FlowScript.Binding
     /// </summary>
     internal static class Binder
     {
-        public static BoundFlow Resolve(FlowSyntax document, IReadOnlyList<Diagnostic> errors)
+        public static BoundFlow Resolve(FlowScriptSchema document, IReadOnlyList<Diagnostic> errors)
         {
             List<Diagnostic> problems = (List<Diagnostic>)errors;
 
@@ -29,21 +29,21 @@ namespace Business.FlowScript.Binding
 
             int next = 1;
 
-            foreach (AreaSyntax parsed in document.Areas)
+            foreach (FlowAreaSchemaBindng parsed in document.Areas)
             {
                 parsed.Area.Id = next++;
                 parsed.Area.FlowId = flow.Id;
                 areaIds[parsed.Area.Name] = parsed.Area.Id;
             }
 
-            foreach (PointSyntax parsed in document.Points)
+            foreach (FlowPointSchemaBindng parsed in document.Points)
             {
                 parsed.Point.Id = next++;
                 parsed.Point.FlowId = flow.Id;
                 pointIds[parsed.Point.Name] = parsed.Point.Id;
             }
 
-            foreach (StepSyntax parsed in document.Steps)
+            foreach (FlowStepSchemaBindng parsed in document.Steps)
             {
                 parsed.Step.Id = next++;
                 parsed.Step.RootId = flow.Id;
@@ -54,7 +54,7 @@ namespace Business.FlowScript.Binding
             }
 
             // Second pass: everything written as a name becomes the id it names.
-            foreach (AreaSyntax parsed in document.Areas)
+            foreach (FlowAreaSchemaBindng parsed in document.Areas)
             {
                 if (parsed.ParentName == null)
                     continue;
@@ -62,7 +62,7 @@ namespace Business.FlowScript.Binding
                 parsed.Area.ParentFlowAreaId = Lookup(areaIds, parsed.ParentName, parsed.Line, "area", problems);
             }
 
-            foreach (PointSyntax parsed in document.Points)
+            foreach (FlowPointSchemaBindng parsed in document.Points)
             {
                 if (parsed.AreaName == null)
                     continue;
@@ -72,7 +72,7 @@ namespace Business.FlowScript.Binding
 
             for (int i = 0; i < document.Steps.Count; i++)
             {
-                StepSyntax parsed = document.Steps[i];
+                FlowStepSchemaBindng parsed = document.Steps[i];
                 FlowStep step = parsed.Step;
 
                 if (parsed.ParentIndex == null)
@@ -124,13 +124,13 @@ namespace Business.FlowScript.Binding
 
         // A template with no line in the header keeps a null click, and the importer centres it on
         // the picture - the file was written by hand, and the middle is what a person would mean.
-        private static void JoinTemplateFacts(FlowSyntax document)
+        private static void JoinTemplateFacts(FlowScriptSchema document)
         {
-            Dictionary<string, TemplateSyntax> facts = document.Templates.ToDictionary(x => x.FileName, StringComparer.Ordinal);
+            Dictionary<string, FlowStepTemplateSchemaBindng> facts = document.Templates.ToDictionary(x => x.FileName, StringComparer.Ordinal);
 
-            foreach (ScriptTemplate template in document.Steps.SelectMany(x => x.Templates))
+            foreach (ScriptTemplateImage template in document.Steps.SelectMany(x => x.Templates))
             {
-                if (!facts.TryGetValue(template.FileName, out TemplateSyntax? fact))
+                if (!facts.TryGetValue(template.FileName, out FlowStepTemplateSchemaBindng? fact))
                     continue;
 
                 template.ClickOffset = fact.ClickOffset;
@@ -140,17 +140,17 @@ namespace Business.FlowScript.Binding
             }
         }
 
-        private static BoundFlow Build(FlowSyntax document, Flow flow)
+        private static BoundFlow Build(FlowScriptSchema document, Flow flow)
         {
             List<FlowStep> steps = document.Steps.Select(x => x.Step).ToList();
 
-            Dictionary<int, IReadOnlyList<ScriptTemplate>> templates = document.Steps
+            Dictionary<int, IReadOnlyList<ScriptTemplateImage>> templates = document.Steps
                 .Where(x => x.Templates.Count > 0)
-                .ToDictionary(x => x.Step.Id, x => (IReadOnlyList<ScriptTemplate>)x.Templates);
+                .ToDictionary(x => x.Step.Id, x => (IReadOnlyList<ScriptTemplateImage>)x.Templates);
 
             // A sub-flow is named by the path it lives at; the importer is what finds the flow.
             Dictionary<int, string> subFlowPaths = new Dictionary<int, string>();
-            foreach (StepSyntax parsed in document.Steps.Where(x => x.SubFlowPath != null))
+            foreach (FlowStepSchemaBindng parsed in document.Steps.Where(x => x.SubFlowPath != null))
             {
                 parsed.Step.SubFlowId = parsed.Step.Id;
                 subFlowPaths[parsed.Step.Id] = parsed.SubFlowPath!;

@@ -2,22 +2,18 @@
 using Core.Enums;
 using Core.Models.Database;
 using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
+using Business.FlowScript.Models.Binding;
 
 namespace Business.FlowScript.Syntax
 {
     /// <summary>
-    /// One line of the Steps section into one step.
-    ///
-    /// Its own class rather than half of <see cref="Scanner.Scanner"/>: the parser owns the shape of the
-    /// document - sections, indentation, what is a parent of what - and this owns the grammar of
-    /// a single line. The largest switch in the codebase, and separating it is what lets it be
-    /// read, and tested, against one line of text with no document around it.
+    /// Every Script line that contains a Step information is parsed here.
     /// </summary>
     internal static class StepParser
     {
         public static void Read(
-            FlowSyntax document,
+            FlowScriptSchema document,
             ScriptLine line,
             Dictionary<int, int> lastIndexAtIndent,
             List<string> pendingComments,
@@ -76,14 +72,14 @@ namespace Business.FlowScript.Syntax
 
             pendingComments.Clear();
 
-            StepSyntax parsed = Add(document, line, lastIndexAtIndent, step, ref order);
+            FlowStepSchemaBindng parsed = Add(document, line, lastIndexAtIndent, step, ref order);
             int at = keyword.Text.Split(' ').Length;
 
             ReadArguments(document, line, parsed, at);
         }
 
-        private static StepSyntax Add(
-            FlowSyntax document,
+        private static FlowStepSchemaBindng Add(
+            FlowScriptSchema document,
             ScriptLine line,
             Dictionary<int, int> lastIndexAtIndent,
             FlowStep step,
@@ -97,7 +93,7 @@ namespace Business.FlowScript.Syntax
 
             step.OrderNumber = order++;
 
-            StepSyntax parsed = new StepSyntax { Step = step, Line = line.Number, ParentIndex = parentIndex };
+            FlowStepSchemaBindng parsed = new FlowStepSchemaBindng { Step = step, Line = line.Number, ParentIndex = parentIndex };
             document.Steps.Add(parsed);
 
             int index = document.Steps.Count - 1;
@@ -115,7 +111,7 @@ namespace Business.FlowScript.Syntax
         // Private methods - arguments
         // ================================================================
 
-        private static void ReadArguments(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadArguments(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             FlowStep step = parsed.Step;
 
@@ -191,13 +187,13 @@ namespace Business.FlowScript.Syntax
 
         // The search steps take their clauses in any order, so they are read as clauses rather
         // than by position: template, accuracy, required, match, in, keep, timeout.
-        private static void ReadSearch(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadSearch(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             FlowStep step = parsed.Step;
             step.Name = line.Word(at);
 
             // A template with no accuracy starts on its mode's default, and "match" may come after it.
-            List<ScriptTemplate> withoutAccuracy = new List<ScriptTemplate>();
+            List<ScriptTemplateImage> withoutAccuracy = new List<ScriptTemplateImage>();
 
             int i = at + 1;
 
@@ -223,7 +219,7 @@ namespace Business.FlowScript.Syntax
                 switch (word)
                 {
                     case "template":
-                        ScriptTemplate template = new ScriptTemplate { FileName = line.Word(i + 1) };
+                        ScriptTemplateImage template = new ScriptTemplateImage { FileName = line.Word(i + 1) };
                         parsed.Templates.Add(template);
                         withoutAccuracy.Add(template);
                         i += 2;
@@ -297,11 +293,11 @@ namespace Business.FlowScript.Syntax
                 }
             }
 
-            foreach (ScriptTemplate template in withoutAccuracy)
-                template.Accuracy = ScriptTemplate.DefaultAccuracy(step.TemplateMatchMode);
+            foreach (ScriptTemplateImage template in withoutAccuracy)
+                template.Accuracy = ScriptTemplateImage.DefaultAccuracy(step.TemplateMatchMode);
         }
 
-        private static void ReadCheckValue(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadCheckValue(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             FlowStep step = parsed.Step;
             step.Name = line.Word(at);
@@ -324,7 +320,7 @@ namespace Business.FlowScript.Syntax
             step.ConditionTextEnd = condition.TextEnd;
         }
 
-        private static void ReadCursor(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadCursor(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             FlowStep step = parsed.Step;
 
@@ -384,7 +380,7 @@ namespace Business.FlowScript.Syntax
             return at + 1;
         }
 
-        private static void ReadScroll(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadScroll(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             CursorScrollDirectionTypeEnum? direction = SyntaxFacts.ReadScrollDirection(line.Word(at));
             if (direction == null)
@@ -400,7 +396,7 @@ namespace Business.FlowScript.Syntax
                 parsed.AreaName = line.Word(at + 3);
         }
 
-        private static void ReadWait(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadWait(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             parsed.Step.WaitForMilliseconds = SyntaxFacts.Milliseconds(line.Word(at));
 
@@ -411,7 +407,7 @@ namespace Business.FlowScript.Syntax
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.DURATION_MALFORMED, line.Number, line.ColumnOf(at), $"\"{line.Word(at)}\" is not a duration. Expected something like 800ms."));
         }
 
-        private static void ReadLoop(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadLoop(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             if (line.Word(at) == "forever")
             {
@@ -434,7 +430,7 @@ namespace Business.FlowScript.Syntax
             document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.LOOP_MALFORMED, line.Number, line.ColumnOf(at), "Expected \"5 times\", \"forever\", or \"each match in\" a search."));
         }
 
-        private static void ReadSystemAction(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadSystemAction(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             if (SyntaxFacts.TryReadName(line.Word(at), out SystemActionTypeEnum action))
             {
@@ -445,7 +441,7 @@ namespace Business.FlowScript.Syntax
             document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.SYSTEM_ACTION_UNKNOWN, line.Number, line.ColumnOf(at), $"\"{line.Word(at)}\" is not a system action."));
         }
 
-        private static void ReadCommand(ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadCommand(ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             // Launch already carries its preset from the keyword; Run may name one before the value.
             if (parsed.Step.RunCommandPreset == RunCommandPresetEnum.CUSTOM
@@ -459,7 +455,7 @@ namespace Business.FlowScript.Syntax
             parsed.Step.RunCommandValue = line.Word(at);
         }
 
-        private static void ReadWindow(FlowSyntax document, ScriptLine line, StepSyntax parsed, int at)
+        private static void ReadWindow(FlowScriptSchema document, ScriptLine line, FlowStepSchemaBindng parsed, int at)
         {
             FlowStep step = parsed.Step;
 

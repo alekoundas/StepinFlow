@@ -104,6 +104,61 @@ before layer 5, because the engine tests would pin whichever answer is live.
 
 ---
 
+## Structure, again
+
+### 5.8. A marker becomes a stage marker
+
+Settled 2026-09-30, not yet built. A `MARKER` divides a flow into parts, and everything that reads a
+flow afterwards wants to know which part a step was in: the CI report says "failed in Checkout", the
+assistant is told it is "the part of the journey it tests", and a reviewer reads it as a heading.
+The name and the shape both undersell that - "marker" alone says a point is marked without saying
+what, which is why `FlowCheckHelper.MarkerOf` has to walk backwards to work out which one a step is
+under.
+
+**`MARKER` becomes `STAGE_MARKER`**: the node that marks where a stage begins and carries its name.
+Rejected: `SECTION`, because `Scanner.Section` is already the enum of header blocks and
+`ScriptLine.IsSection` already means "a `##` line" - one word, two meanings, inside one parser; and
+`CHECKPOINT`, because it promises resumable state this holds none of, and sits one letter from
+`CHECK_VALUE`, `FlowCheck` and `GetFlowChecks`, where a check is specifically a step that can fail
+the test.
+
+The thing it names is a **stage**, so everything derived from it says stage rather than marker:
+`FlowCheck.StageName`, and the stage stamped onto an execution step below.
+
+- [ ] **It becomes a container.** One entry in `TreeStepHelper.ContainerTypes`, which
+      `FlowStepTreeNodeProjection` already reads to decide `Droppable` and `Leaf` - when
+      `END_EXECUTION` joined that list in 4.7 the frontend needed no change at all. The tree then
+      shows what a stage contains, which is what a user expects the word to mean, and dropping a step
+      into a stage becomes an ordinary move rather than "somewhere after the divider".
+- [ ] **Which stage a step is in stops being a walk.** `MarkerOf` becomes `ParentFlowStepId`, and
+      `FlowCheck.MarkerName` becomes `StageName`.
+- [ ] **A stage sits at the root of a flow and nowhere else.** A stage divides the whole test, not
+      one branch of it - and it is what makes the file below unambiguous.
+- [ ] **The file does not change.** Still `## Sign in`, still flat, with the steps after it at column
+      zero. Rejected `#STAGE#:`: `##` is markdown, so a `.sflw` renders as a document in a pull
+      request, one hash against two is a convention every reviewer already knows, and every other
+      line of this format reads like English where that reads like a template placeholder.
+
+      So the printer flattens a stage's children by one level and the parser re-parents every
+      root-level step under the stage above it - "a heading owns what follows until the next
+      heading", which is how a document already behaves. That pair is the only new code, and the
+      byte-identical round trip is what proves it. Indenting instead would be honest to the model and
+      cost two spaces on nearly every line of every flow; the root-only rule is what buys the
+      alternative.
+- [ ] **Stage names stay unique.** Settled with the rest: the binder resolves `Go To to "X"` against
+      every named step, so a duplicate makes that reference ambiguous.
+- [ ] **Stamp the stage onto `ExecutionStep`**, so a failure report and the execution log given to a
+      model say "failed in Checkout" without re-deriving it from the flow. This is the gap that
+      leaving stages out of the execution log would otherwise open.
+- [ ] One migration. Enums are stored as strings, so it needs a parseable `defaultValue`; there is
+      no data to convert, because the database is disposable until there is a release.
+
+Touched: the enum, `TreeStepHelper`, `FlowStepFieldCatalog`, the printer and parser, `DbQueryTools`,
+`AiPromptHelper`, `FlowCheck`, `FlowCheckHelper`, the worker registration, four frontend files, two
+AI documents, `PROJECT.md` and `FLOW-FORMAT.md`. All mechanical apart from the flatten/re-parent pair.
+
+---
+
 ## Turning a recording into a test
 
 ### 6. The local model

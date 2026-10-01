@@ -1,7 +1,7 @@
 using System.Drawing;
 
 using Business.FlowScript.Binding;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -104,12 +104,12 @@ namespace Business.Tests.FlowScript
                 AreaNamesById = areas.ToDictionary(x => x.Id, x => x.Name),
                 PointNamesById = points.ToDictionary(x => x.Id, x => x.Name),
                 StepNamesById = steps.Where(x => !string.IsNullOrEmpty(x.Name)).ToDictionary(x => x.Id, x => x.Name),
-                TemplatesByStepId = new Dictionary<int, IReadOnlyList<ScriptTemplate>>
+                TemplatesByStepId = new Dictionary<int, IReadOnlyList<ScriptTemplateImage>>
                 {
                     [102] =
                     [
-                        new ScriptTemplate { FileName = "username-field.png", Accuracy = 0.97f, IsRequired = true, ClickOffset = new Point(60, 12), AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
-                        new ScriptTemplate { FileName = "username-alt.png", Accuracy = 0.9f, ClickOffset = new Point(-4, 10), AuthoredDpi = 96 },
+                        new ScriptTemplateImage { FileName = "username-field.png", Accuracy = 0.97f, IsRequired = true, ClickOffset = new Point(60, 12), AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
+                        new ScriptTemplateImage { FileName = "username-alt.png", Accuracy = 0.9f, ClickOffset = new Point(-4, 10), AuthoredDpi = 96 },
                     ],
                 },
                 SubFlowPathsById = new Dictionary<int, string>(),

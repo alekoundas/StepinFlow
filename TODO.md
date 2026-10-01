@@ -115,14 +115,12 @@ the history.
 
 ## Flow script
 
-- [ ] **Undecided: whether a marker's name has to be unique.** Raised 2026-09-29. `FlowNameLookup`
-      exempts only `SUCCESS` and `FAILURE`, so a marker is in the flow's one namespace and
-      `NAME_DUPLICATE` is an error - two sections both called "Retry" are refused, and there are
-      flows where that repetition is the honest description.
-      The cost of exempting them is one thing, and it has to be settled with it: the binder resolves
-      a step reference by name across every named step, and a marker is a named step, so `Go To to
-      "Retry"` can legitimately land on one. Duplicates make that lookup ambiguous. So either markers
-      stop being a legal `Go To` target, or the lookup takes the first and says so out loud.
+- [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
+      both called "Retry" is a fair description of some flows - until the cost showed up: the binder
+      resolves a step reference by name across every named step, and a stage is a named step, so
+      `Go To to "Retry"` can legitimately land on one and a duplicate makes that ambiguous. Keeping
+      the rule costs a rename; dropping it would have cost either the `Go To` target or a silent
+      first-match.
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing
@@ -364,13 +362,17 @@ the history.
       human's note would share one field. One column with the recorder writing the first line is the
       cheaper answer, and the script cannot tell them apart anyway; two columns is the alternative.
 
-- [x] **A marker is a section and nothing else. Settled 2026-09-30.** It was worth asking, because
+- [x] **A stage is a stage and nothing else. Settled 2026-09-30.** The step type is being renamed
+      from `MARKER` to `STAGE_MARKER` and made a container - `PLAN.md` 5.8 - but the question here was whether it
+      should also carry a step's explanation. It should not. It was worth asking, because
       one concept is cheaper than two and in a script a `##` above a step does read as an explanation
       of it. Four things decided it against, and the first is the sharpest:
       1) markers are what a CI report groups by - "it failed in Checkout" - so per-step prose in the
          same namespace fills that report with sections called "the banner covers this at 390px";
-      2) a marker is a **sibling**, so dragging its step away leaves the explanation behind, pointing
-         at whatever step now follows, while `CodeComment` is a column and moves with it;
+      2) a stage divides a flow by **position**, so text put there describes a place rather than a
+         step - drag the step away and the explanation stays behind, while `CodeComment` is a column
+         and travels with it. That difference is the principle: a stage should change when a step
+         moves, a comment should not;
       3) a marker's name is in the flow's one namespace and the binder resolves `Go To to "X"`
          against every named step, so two markers sharing a name make that reference ambiguous;
       4) the recorder writes a note per recorded step, which as markers doubles the tree.

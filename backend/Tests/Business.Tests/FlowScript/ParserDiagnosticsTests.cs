@@ -1,7 +1,7 @@
 using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Syntax;
 using Core.Enums;
 
 namespace Business.Tests.FlowScript
@@ -18,7 +18,7 @@ namespace Business.Tests.FlowScript
         {
             { DiagnosticCodeEnum.HEADER_MALFORMED, "not a header" },
             { DiagnosticCodeEnum.HEADER_UNKNOWN, "Colour: red" },
-            { DiagnosticCodeEnum.ID_MALFORMED, "Id: nope" },
+            { DiagnosticCodeEnum.PUBLIC_ID_MALFORMED, "Id: nope" },
             { DiagnosticCodeEnum.SIZE_MALFORMED, "Sizes: 1920by1080" },
             { DiagnosticCodeEnum.AREA_NAME_MISSING, "Areas:\n  Browser window process \"chrome.exe\"" },
             { DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, "Areas:\n  \"Browser\" window chrome" },
@@ -29,7 +29,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.POINT_NAME_MISSING, "Points:\n  Origin on screen offset 1 2" },
             { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  \"Origin\" somewhere offset 1 2" },
             { DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, "Points:\n  \"Origin\" on screen offset 1 2 at nope" },
-            { DiagnosticCodeEnum.INPUT_MALFORMED, "Inputs:\n  username" },
+            { DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, "Inputs:\n  username" },
             { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  \"a.png\" click here" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  \"a.png\" click 1,2\n  \"a.png\" click 3,4" },
             { DiagnosticCodeEnum.STEP_UNKNOWN, "Steps:\nFnid Image \"x\"" },
@@ -49,7 +49,7 @@ namespace Business.Tests.FlowScript
 
         private static List<Diagnostic> Read(string script)
         {
-            FlowSyntax document = new Scanner().Read(script);
+            FlowScriptSchema document = new Scanner().Read(script);
             List<Diagnostic> all = new List<Diagnostic>(document.Diagnostics);
 
             if (document.IsValid)
@@ -88,7 +88,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_command_preset_is_named_not_numbered()
         {
-            FlowSyntax document = new Scanner().Read(Header + "Steps:\nRun 2 \"notepad\"");
+            FlowScriptSchema document = new Scanner().Read(Header + "Steps:\nRun 2 \"notepad\"");
 
             document.Steps.Single().Step.RunCommandPreset.ShouldBe(RunCommandPresetEnum.CUSTOM);
         }

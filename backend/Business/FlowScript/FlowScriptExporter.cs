@@ -7,7 +7,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Business.FlowScript.Binding;
 using Business.FlowScript.Text;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript
 {
@@ -157,9 +157,9 @@ namespace Business.FlowScript
         /// and an add instead of a modification - losing the one thing putting templates in a
         /// repository is for.
         /// </summary>
-        private static Dictionary<int, IReadOnlyList<ScriptTemplate>> Templates(IReadOnlyList<FlowStepTemplate> templates, IReadOnlyDictionary<int, string> stepNames)
+        private static Dictionary<int, IReadOnlyList<ScriptTemplateImage>> Templates(IReadOnlyList<FlowStepTemplate> templates, IReadOnlyDictionary<int, string> stepNames)
         {
-            Dictionary<int, List<ScriptTemplate>> byStep = new Dictionary<int, List<ScriptTemplate>>();
+            Dictionary<int, List<ScriptTemplateImage>> byStep = new Dictionary<int, List<ScriptTemplateImage>>();
             HashSet<string> taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (FlowStepTemplate template in templates)
@@ -171,13 +171,13 @@ namespace Business.FlowScript
                 string fileName = FlowNameHelper.MakeUnique(FileNameOf(desired, "template"), taken);
                 taken.Add(fileName);
 
-                if (!byStep.TryGetValue(template.FlowStepId, out List<ScriptTemplate>? names))
+                if (!byStep.TryGetValue(template.FlowStepId, out List<ScriptTemplateImage>? names))
                 {
-                    names = new List<ScriptTemplate>();
+                    names = new List<ScriptTemplateImage>();
                     byStep[template.FlowStepId] = names;
                 }
 
-                names.Add(new ScriptTemplate
+                names.Add(new ScriptTemplateImage
                 {
                     FileName = fileName + ".png",
                     Accuracy = template.Accuracy,
@@ -189,7 +189,7 @@ namespace Business.FlowScript
                 });
             }
 
-            return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<ScriptTemplate>)x.Value);
+            return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<ScriptTemplateImage>)x.Value);
         }
 
         private static async Task<int> WriteTemplatesAsync(AppDbContext dbContext, int flowId, BoundFlow source, string templateFolder, CancellationToken ct)
@@ -210,7 +210,7 @@ namespace Business.FlowScript
 
             foreach (FlowStepTemplate image in images)
             {
-                IReadOnlyList<ScriptTemplate> names = source.TemplatesByStepId.GetValueOrDefault(image.FlowStepId, []);
+                IReadOnlyList<ScriptTemplateImage> names = source.TemplatesByStepId.GetValueOrDefault(image.FlowStepId, []);
 
                 int index = nextIndex.GetValueOrDefault(image.FlowStepId);
                 nextIndex[image.FlowStepId] = index + 1;

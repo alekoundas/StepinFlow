@@ -1,8 +1,8 @@
 using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Binding;
+using Business.FlowScript.Models.Text;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Syntax;
 using Business.FlowScript.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,9 +12,9 @@ namespace Business.Tests.FlowScript
 {
     public sealed class ScriptRoundTripTests
     {
-        private static (FlowSyntax Document, List<Diagnostic> Errors) ReadAndBind(string script)
+        private static (FlowScriptSchema Document, List<Diagnostic> Errors) ReadAndBind(string script)
         {
-            FlowSyntax document = new Scanner().Read(script);
+            FlowScriptSchema document = new Scanner().Read(script);
             List<Diagnostic> errors = new List<Diagnostic>();
             Binder.Resolve(document, errors);
             return (document, errors);
@@ -25,7 +25,7 @@ namespace Business.Tests.FlowScript
         {
             string first = new Printer().Write(SampleFlow.Build());
 
-            FlowSyntax document = new Scanner().Read(first);
+            FlowScriptSchema document = new Scanner().Read(first);
             document.Diagnostics.ShouldBeEmpty();
 
             List<Diagnostic> errors = new List<Diagnostic>();
@@ -65,7 +65,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_hand_written_script_reads_without_complaint()
         {
-            (FlowSyntax document, List<Diagnostic> errors) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, List<Diagnostic> errors) = ReadAndBind(HandWritten);
 
             document.Diagnostics.ShouldBeEmpty();
             errors.ShouldBeEmpty();
@@ -74,7 +74,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void The_mode_can_come_after_the_templates_it_governs()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
 
             document.Steps[0].Step.TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS);
             document.Steps[1].Step.TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE);
@@ -83,7 +83,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_template_with_no_accuracy_takes_its_modes_default()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
 
             document.Steps[0].Templates[0].Accuracy.ShouldBe(0.95f);
             document.Steps[0].Templates[1].Accuracy.ShouldBe(0.9f);
@@ -93,7 +93,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void Required_belongs_to_the_template_it_follows()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
 
             document.Steps[0].Templates.Select(x => x.IsRequired).ShouldBe([true, false]);
         }
@@ -101,8 +101,8 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void The_header_facts_reach_the_steps_that_name_the_file()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
-            ScriptTemplate described = document.Steps[1].Templates[0];
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
+            ScriptTemplateImage described = document.Steps[1].Templates[0];
 
             (described.AuthoredFlowAreaWidth, described.AuthoredFlowAreaHeight, described.AuthoredDpi).ShouldBe((800, 600, 144));
         }
@@ -111,7 +111,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_template_the_header_gives_no_click_leaves_it_to_the_importer()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
 
             document.Steps[0].Templates[0].ClickOffset.ShouldBeNull();
             document.Steps[1].Templates[0].ClickOffset.ShouldBeNull();
@@ -120,7 +120,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void Monitor_primary_is_the_empty_device_name()
         {
-            (FlowSyntax document, _) = ReadAndBind(HandWritten);
+            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
             FlowArea screen = document.Areas[0].Area;
 
             screen.Type.ShouldBe(FlowAreaTypeEnum.MONITOR);

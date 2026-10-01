@@ -6,7 +6,7 @@ using Core.Helpers;
 using Core.Models.Database;
 using Business.FlowScript.Binding;
 using Business.FlowScript.Syntax;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Text
 {
@@ -202,7 +202,7 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        private static string TemplateLine(ScriptTemplate template)
+        private static string TemplateLine(ScriptTemplateImage template)
         {
             string click = string.Empty;
             if (template.ClickOffset != null)
@@ -398,7 +398,7 @@ namespace Business.FlowScript.Text
         }
 
         // Straight after its template, so it reads as that template's and not the step's.
-        private static string TemplateClause(ScriptTemplate template)
+        private static string TemplateClause(ScriptTemplateImage template)
         {
             string required = string.Empty;
             if (template.IsRequired)

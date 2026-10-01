@@ -1,5 +1,5 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 using Business.FlowScript.Syntax;
 using Core.Enums;
 using Core.Models.Database;

@@ -1,6 +1,6 @@
 using System.Globalization;
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
 

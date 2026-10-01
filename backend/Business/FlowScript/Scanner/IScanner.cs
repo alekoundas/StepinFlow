@@ -1,4 +1,4 @@
-using Business.FlowScript.Syntax;
+using Business.FlowScript.Models.Binding;
 
 namespace Business.FlowScript.Scanner
 {
@@ -7,6 +7,6 @@ namespace Business.FlowScript.Scanner
         /// <summary>
         /// Convert a .sflw file
         /// </summary>
-        FlowSyntax Read(string script);
+        FlowScriptSchema Read(string script);
     }
 }

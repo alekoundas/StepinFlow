@@ -1,4 +1,4 @@
-﻿namespace Business.FlowScript.Models
+﻿namespace Business.FlowScript.Models.Text
 {
     internal sealed class ScriptToken
     {

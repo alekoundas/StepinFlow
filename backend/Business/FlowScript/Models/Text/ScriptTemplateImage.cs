@@ -1,7 +1,7 @@
 using System.Drawing;
 using Core.Enums;
 
-namespace Business.FlowScript.Models
+namespace Business.FlowScript.Models.Text
 {
     /// <summary>
     /// A template a step names, with everything the file says about it.
@@ -10,7 +10,7 @@ namespace Business.FlowScript.Models
     /// whether the template is required - and the <c>Templates:</c> header carries the facts about
     /// the picture: where to click, and the size and DPI of the area it was captured in.
     /// </summary>
-    public sealed class ScriptTemplate
+    public sealed class ScriptTemplateImage
     {
         public string FileName { get; init; } = string.Empty;
 

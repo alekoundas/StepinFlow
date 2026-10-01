@@ -1,4 +1,4 @@
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 using Core.Models.Database;
 
 namespace Business.FlowScript.Binding
@@ -23,7 +23,7 @@ namespace Business.FlowScript.Binding
         public IReadOnlyDictionary<int, string> PointNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> StepNamesById { get; set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> SubFlowPathsById { get; set; } = new Dictionary<int, string>();
-        public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplate>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplate>>();
+        public IReadOnlyDictionary<int, IReadOnlyList<ScriptTemplateImage>> TemplatesByStepId { get; set; } = new Dictionary<int, IReadOnlyList<ScriptTemplateImage>>();
 
         private ILookup<int?, FlowStep>? _childrenByParent;
 

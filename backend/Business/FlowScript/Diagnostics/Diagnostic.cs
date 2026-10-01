@@ -22,7 +22,7 @@ namespace Business.FlowScript.Diagnostics
         FLOW_LINE_MISSING,
         HEADER_MALFORMED,
         HEADER_UNKNOWN,
-        ID_MALFORMED,
+        PUBLIC_ID_MALFORMED,
         SIZE_MALFORMED,
 
         // Areas, points and inputs
@@ -32,7 +32,7 @@ namespace Business.FlowScript.Diagnostics
         PLACEMENT_MALFORMED,
         POINT_NAME_MISSING,
         POINT_PLACEMENT_UNKNOWN,
-        INPUT_MALFORMED,
+        CSV_COLUMN_MALFORMED,
         TITLE_MATCH_UNKNOWN,
         AREA_ARGUMENT_UNKNOWN,
         POINT_ARGUMENT_UNKNOWN,

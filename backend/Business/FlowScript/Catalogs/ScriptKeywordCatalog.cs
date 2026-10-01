@@ -1,4 +1,4 @@
-using Business.FlowScript.Models;
+using Business.FlowScript.Models.Text;
 using Core.Enums;
 
 namespace Business.FlowScript.Catalogs
