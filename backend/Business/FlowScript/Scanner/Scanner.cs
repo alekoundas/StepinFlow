@@ -36,7 +36,6 @@ namespace Business.FlowScript.Scanner
             IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
 
             ScriptSection? currentSection = ScriptSection.Flow; // Script always starts with Flow fields.
-            Dictionary<int, int> lastIndexAtIndent = new Dictionary<int, int>();
             List<string> pendingComments = new List<string>(); // CodeComment of the step bellow.
 
             // Use the Parsers to parse each line.
@@ -104,7 +103,7 @@ namespace Business.FlowScript.Scanner
                         break;
 
                     case ScriptSection.Steps:
-                        StepParser.Read(document, line, lastIndexAtIndent, pendingComments);
+                        StepParser.Read(document, line, pendingComments);
                         break;
 
                     default:

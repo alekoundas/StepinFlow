@@ -42,6 +42,7 @@ namespace Business.FlowScript.Diagnostics
         TEMPLATE_DUPLICATE,
 
         // Steps
+        INDENT_UNEXPECTED,
         STEP_UNKNOWN,
         CONDITION_MISSING,
         SEARCH_ARGUMENT_UNKNOWN,

@@ -5,7 +5,6 @@ namespace Business.FlowScript.Catalogs
 {
     /// <summary>
     /// Every word the grammar knows, once.
- 
     /// </summary>
     internal static class ScriptKeywordCatalog
     {

@@ -11,19 +11,19 @@ namespace Business.FlowScript.Syntax
     /// </summary>
     internal static class StepParser
     {
-        public static void Read(FlowScriptSchema document, ScriptLine line, Dictionary<int, int> lastIndexAtIndent, List<string> pendingComments)
+        public static void Read(FlowScriptSchema document, ScriptLine line, List<string> pendingComments)
         {
             // Add Success step.
             if (line.Raw.Trim() == "Success:")
             {
-                Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS });
+                Add(document, line, new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS });
                 return;
             }
 
             // Add Failure step.
             if (line.Raw.Trim() == "Failure:")
             {
-                Add(document, line, lastIndexAtIndent, new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE });
+                Add(document, line, new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE });
                 return;
             }
 
@@ -35,7 +35,7 @@ namespace Business.FlowScript.Syntax
                     FlowStepType = FlowStepTypeEnum.MARKER,
                     Name = line.TextAfterHash,
                 };
-                Add(document, line, lastIndexAtIndent, flowStep);
+                Add(document, line, flowStep);
 
                 pendingComments.Clear();
                 return;
@@ -71,33 +71,51 @@ namespace Business.FlowScript.Syntax
 
             pendingComments.Clear();
 
-            FlowStepSchemaBindng parsed = Add(document, line, lastIndexAtIndent, step);
+            FlowStepSchemaBindng parsed = Add(document, line, step);
             int at = keyword.Text.Split(' ').Length;
 
             ReadArguments(document, line, parsed, at);
         }
 
-        private static FlowStepSchemaBindng Add(FlowScriptSchema document, ScriptLine line, Dictionary<int, int> lastIndexAtIndent, FlowStep step)
+        private static FlowStepSchemaBindng Add(FlowScriptSchema document, ScriptLine line, FlowStep step)
         {
-            // One rule covers both shapes: a branch row sits one in from its step, a container's
-            // children one in from the container, so the parent is whatever was last seen outside.
-            int? parentIndex = null;
-            if (line.LeadingSpaces > 0 && lastIndexAtIndent.TryGetValue(line.LeadingSpaces - 1, out int found))
-                parentIndex = found;
+            int? parentIndex = FindParentStepIndex(document, line.LeadingSpaces);
+
+            int deepest;
+            if (parentIndex == null)
+                deepest = 0;
+            else
+                deepest = document.Steps[parentIndex.Value].LeadingSpaces + 1;
+
+            if (line.LeadingSpaces > deepest)
+            {
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.INDENT_UNEXPECTED, line.Number, line.Tokens[0].Column,
+                    $"Indented too far. Each level is one space, so this line can have at most {deepest}."));
+            }
 
             step.OrderNumber = document.Steps.Count;
 
-            FlowStepSchemaBindng parsed = new FlowStepSchemaBindng { Step = step, Line = line.Number, ParentIndex = parentIndex };
+            FlowStepSchemaBindng parsed = new FlowStepSchemaBindng { Step = step, Line = line.Number, LeadingSpaces = line.LeadingSpaces, ParentIndex = parentIndex };
             document.Steps.Add(parsed);
 
-            int index = document.Steps.Count - 1;
-            lastIndexAtIndent[line.LeadingSpaces] = index;
-
-            // Anything deeper belonged to a subtree this line has just closed.
-            foreach (int deeper in lastIndexAtIndent.Keys.Where(x => x > line.LeadingSpaces).ToList())
-                lastIndexAtIndent.Remove(deeper);
-
             return parsed;
+        }
+
+        // The steps still open are the previous one and its ancestors, so the parent is the first of them shallower than this line.
+        private static int? FindParentStepIndex(FlowScriptSchema document, int indent)
+        {
+            int? stepIndex;
+            if (document.Steps.Count > 0)
+                stepIndex = document.Steps.Count - 1;
+            else
+                return null;
+
+            while (stepIndex != null && document.Steps[stepIndex.Value].LeadingSpaces >= indent)
+            {
+                stepIndex = document.Steps[stepIndex.Value].ParentIndex;
+            }
+
+            return stepIndex;
         }
 
 
