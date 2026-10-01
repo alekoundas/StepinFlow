@@ -32,6 +32,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, "Inputs:\n  username" },
             { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  \"a.png\" click here" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  \"a.png\" click 1,2\n  \"a.png\" click 3,4" },
+            { DiagnosticCodeEnum.INDENT_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.STEP_UNKNOWN, "Steps:\nFnid Image \"x\"" },
             { DiagnosticCodeEnum.CONDITION_MISSING, "Steps:\nCheck Text \"x\" nearly \"y\"" },
             { DiagnosticCodeEnum.SEARCH_ARGUMENT_UNKNOWN, "Steps:\nFind Image \"x\" template \"a.png\" quickly" },

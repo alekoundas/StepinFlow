@@ -46,11 +46,12 @@ namespace Business.FlowScript
             string script = await File.ReadAllTextAsync(scriptPath, ct);
 
             // Templates sit in a folder named after the file, beside it.
-            string folderName = string.Empty;
-            if (Path.GetDirectoryName(scriptPath) != null)
-                folderName = Path.GetFileNameWithoutExtension(scriptPath);
+            string folderPath = string.Empty;
+            string? directory = Path.GetDirectoryName(scriptPath);
+            if (directory != null)
+                folderPath = Path.Combine(directory, Path.GetFileNameWithoutExtension(scriptPath));
 
-            return await ImportTextAsync(script, folderName, ct);
+            return await ImportTextAsync(script, folderPath, ct);
         }
 
         public async Task<FlowImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default)

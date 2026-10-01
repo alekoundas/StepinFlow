@@ -32,11 +32,11 @@ Steps:
 Launch          "chrome.exe https://www.saucedemo.com"
 
 Find Image      "Find username field"   template "username-field.png" accuracy 0.97 required  template "username-alt.png" accuracy 0.9   match shape and brightness   in "Browser"
-  Success:
-    Click           at "Find username field"
-    Type            "{{username}}"
-  Failure:
-    Click           at point "Hamburger"   right double
+ Success:
+  Click           at "Find username field"
+  Type            "{{username}}"
+ Failure:
+  Click           at point "Hamburger"   right double
 
 Wait For Text   "Read the total"   matches "total: (\d+)"   in "Cart badge"   keep "(\d+)"   timeout 10s
 
@@ -69,7 +69,7 @@ Notify          "done"
 Go To           to "Read the total"
 
 Loop            5 times
-  Click           at "Find username field"
+ Click           at "Find username field"
 
 End Execution   failed  "did not reach the products page"
-  Run             KILL_PROCESS "chrome.exe"
+ Run             KILL_PROCESS "chrome.exe"

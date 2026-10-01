@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Globalization;
 
 using Core.Enums;
 using Core.Models.Database;
@@ -281,17 +280,14 @@ namespace Business.FlowScript.Syntax
             string[] sizes = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             foreach (string size in sizes)
             {
-                string[] parts = size.Split('x');
-                bool isWidthValid = int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int width);
-                bool isHeightValid = int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int height);
-
-                if (parts.Length != 2 || !isWidthValid|| !isHeightValid)
+                (int Width, int Height)? pair = SyntaxFacts.ReadPair(size, 'x');
+                if (pair == null)
                 {
                     document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.SIZE_MALFORMED, line.Number, column, $"\"{size}\" is not a size. Expected something like 1920x1080."));
                     continue;
                 }
 
-                document.Viewports.Add(new FlowViewport { Width = width, Height = height, OrderNumber = order++ });
+                document.Viewports.Add(new FlowViewport { Width = pair.Value.Width, Height = pair.Value.Height, OrderNumber = order++ });
             }
         }
 
