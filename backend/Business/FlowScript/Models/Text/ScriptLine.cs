@@ -8,9 +8,10 @@ namespace Business.FlowScript.Models.Text
         public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
 
 
-        public string TextAfterHash
+        /// <summary>The rest of the line after a prefix it starts with - a comment's text, a stage's name.</summary>
+        public string TextAfter(string prefix)
         {
-            get { return Raw.TrimStart().TrimStart('#').Trim(); }
+            return Raw.TrimStart()[prefix.Length..].Trim();
         }
 
         /// <summary>Where a word starts, or just past the end when there is no such word.</summary>

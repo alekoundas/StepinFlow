@@ -39,7 +39,7 @@ namespace Business.FlowScript.Syntax
                 FlowStep flowStep = new FlowStep
                 {
                     FlowStepType = FlowStepTypeEnum.MARKER,
-                    Name = line.TextAfterHash,
+                    Name = line.TextAfter(keyword.Text),
                 };
                 AddToSchemaBindng(document, line, flowStep);
 

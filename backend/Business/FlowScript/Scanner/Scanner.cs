@@ -1,3 +1,4 @@
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Syntax;
 using Business.FlowScript.Models.Text;
@@ -15,17 +16,6 @@ namespace Business.FlowScript.Scanner
     /// </summary>
     public sealed class Scanner : IScanner
     {
-        private enum ScriptSection
-        {
-            Flow,
-            Areas,
-            Points,
-            Inputs,
-            Templates,
-            Steps,
-        }
-
-
         // ================================================================
         // Public methods
         // ================================================================
@@ -35,7 +25,7 @@ namespace Business.FlowScript.Scanner
             FlowScriptSchema document = new FlowScriptSchema();
             IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
 
-            ScriptSection? currentSection = ScriptSection.Flow; // Script always starts with Flow fields.
+            ScriptLineTypeEnum? currentSection = null; // Null until the first header: the Flow fields come before any.
             List<string> pendingComments = new List<string>(); // CodeComment of the step bellow.
 
             // Use the Parsers to parse each line.
@@ -46,63 +36,42 @@ namespace Business.FlowScript.Scanner
 
                 if (SyntaxFacts.IsComment(line))
                 {
-                    pendingComments.Add(line.TextAfterHash);
+                    pendingComments.Add(line.TextAfter(SyntaxFacts.LineType(ScriptLineTypeEnum.COMMENT)));
                     continue;
                 }
-
 
                 // Extract section from script and skip this line.
-                string rawText = line.Raw.Trim();
-                if (rawText == "Areas:")
+                ScriptLineTypeEnum? header = SyntaxFacts.ReadSectionHeader(line);
+                if (header != null)
                 {
-                    currentSection = ScriptSection.Areas;
-                    continue;
-                }
-                else if (rawText == "Points:")
-                {
-                    currentSection = ScriptSection.Points;
-                    continue;
-                }
-                else if (rawText == "Inputs:")
-                {
-                    currentSection = ScriptSection.Inputs;
-                    continue;
-                }
-                else if (rawText == "Templates:")
-                {
-                    currentSection = ScriptSection.Templates;
-                    continue;
-                }
-                else if (rawText == "Steps:")
-                {
-                    currentSection = ScriptSection.Steps;
+                    currentSection = header;
                     continue;
                 }
 
                 // Call the parsers.
                 switch (currentSection)
                 {
-                    case ScriptSection.Flow:
+                    case null:
                         FlowParser.ReadFlowField(document, line);
                         break;
 
-                    case ScriptSection.Areas:
+                    case ScriptLineTypeEnum.AREAS:
                         FlowParser.ReadArea(document, line);
                         break;
 
-                    case ScriptSection.Points:
+                    case ScriptLineTypeEnum.POINTS:
                         FlowParser.ReadPoint(document, line);
                         break;
 
-                    case ScriptSection.Inputs:
+                    case ScriptLineTypeEnum.INPUTS:
                         FlowParser.ReadCsvColumns(document, line);
                         break;
 
-                    case ScriptSection.Templates:
+                    case ScriptLineTypeEnum.TEMPLATES:
                         FlowParser.ReadTemplate(document, line);
                         break;
 
-                    case ScriptSection.Steps:
+                    case ScriptLineTypeEnum.STEPS:
                         StepParser.Read(document, line, pendingComments);
                         break;
 
@@ -112,7 +81,7 @@ namespace Business.FlowScript.Scanner
             }
 
             if (string.IsNullOrWhiteSpace(document.FlowName))
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, "The file has no \"Flow:\" line, so there is no flow to import."));
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.LineType(ScriptLineTypeEnum.FLOW)}\" line, so there is no flow to import."));
 
             return document;
         }

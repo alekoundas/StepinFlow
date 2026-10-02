@@ -79,10 +79,38 @@ namespace Business.FlowScript.Syntax
         /// <summary>A "#" line is intent for the step below it, unless the catalog says otherwise - "##" is a stage heading.</summary>
         internal static bool IsComment(ScriptLine line)
         {
-            if (!line.Raw.TrimStart().StartsWith('#'))
+            if (!line.Raw.TrimStart().StartsWith(LineType(ScriptLineTypeEnum.COMMENT), StringComparison.Ordinal))
                 return false;
 
             return ReadFirstKeyword(line.Tokens) == null;
+        }
+
+        /// <summary>The section a header line opens. Null when the line is not a header.</summary>
+        internal static ScriptLineTypeEnum? ReadSectionHeader(ScriptLine line)
+        {
+            ScriptLineTypeEnum? type = ReadLineType(line.Raw.Trim());
+            switch (type)
+            {
+                case ScriptLineTypeEnum.AREAS:
+                case ScriptLineTypeEnum.POINTS:
+                case ScriptLineTypeEnum.INPUTS:
+                case ScriptLineTypeEnum.TEMPLATES:
+                case ScriptLineTypeEnum.STEPS:
+                    return type;
+
+                default:
+                    return null;
+            }
+        }
+
+        internal static ScriptLineTypeEnum? ReadLineType(string text)
+        {
+            return ScriptKeywordCatalog.Get<ScriptLineTypeEnum>(text)?.As<ScriptLineTypeEnum>();
+        }
+
+        internal static string LineType(ScriptLineTypeEnum type)
+        {
+            return ScriptKeywordCatalog.Get(type)!.Text;
         }
 
         /// <summary>How a window title is matched.</summary>

@@ -46,50 +46,50 @@ Steps:
 Launch   "chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
 
 Wait For Image  "Login form appears"   template "login-form.png"   in "Browser"   timeout 15s
-  Failure:
-    End Execution  failed  "the site never loaded"
+ Failure:
+  End Execution  failed  "the site never loaded"
 
 ## Sign in
 
 Find Image  "Find username field"   template "username-field.png" accuracy 0.85   in "Login form"
-  Failure:
-    End Execution  failed  "no username field on the login page"
-  Success:
-    Click  at "Find username field"
-    Type   "{{username}}"
+ Failure:
+  End Execution  failed  "no username field on the login page"
+ Success:
+  Click  at "Find username field"
+  Type   "{{username}}"
 
 Find Image  "Find password field"   template "password-field.png" accuracy 0.85   in "Login form"
-  Failure:
-    End Execution  failed  "no password field on the login page"
-  Success:
-    Click  at "Find password field"
-    Type   "{{password}}"
+ Failure:
+  End Execution  failed  "no password field on the login page"
+ Success:
+  Click  at "Find password field"
+  Type   "{{password}}"
 
 Find Image  "Find login button"   template "login-button.png"   in "Login form"
-  Failure:
-    End Execution  failed  "no login button"
-  Success:
-    Click  at "Find login button"
+ Failure:
+  End Execution  failed  "no login button"
+ Success:
+  Click  at "Find login button"
 
 # The assertion: this is what makes the recording a test.
 Wait For Text  "Products page loaded"   contains "Products"   in "Inventory"   timeout 10s
-  Failure:
-    Check Text   "Login error"   is not empty   in "Login form"
-    Notify       "Login failed: {{Login error}}"
-    End Execution  failed  "did not reach the products page"
+ Failure:
+  Check Text   "Login error"   is not empty   in "Login form"
+  Notify       "Login failed: {{Login error}}"
+  End Execution  failed  "did not reach the products page"
 
 ## Add everything on the page to the cart
 
 Find All Images  "Find add buttons"   template "add-to-cart.png" accuracy 0.9   in "Inventory"
-  Failure:
-    End Execution  failed  "no products to add"
-  Success:
-    Loop  each match in "Find add buttons"
-      Click  at match
-      # Give the badge a moment to update before the next click.
-      Wait For Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"  timeout 3s
-        Failure:
-          End Execution  failed  "the cart did not update after adding an item"
+ Failure:
+  End Execution  failed  "no products to add"
+ Success:
+  Loop  each match in "Find add buttons"
+   Click  at match
+   # Give the badge a moment to update before the next click.
+   Wait For Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"  timeout 3s
+    Failure:
+     End Execution  failed  "the cart did not update after adding an item"
 
 ## Check out
 
@@ -207,7 +207,9 @@ nothing - is undecided, and gets settled when csv binding is built rather than g
 
 ## Steps
 
-One step per line. Long steps wrap with continuation lines indented under the first.
+One step per line. Nesting is one space per level: a branch sits one space in from its check, and
+the steps under it one space in from the branch. A line indented further than one level past the
+line above it is an error.
 
 ### Names are references
 
@@ -255,12 +257,11 @@ A check takes its own screenshot, looks at it, decides, and produces a result. C
 a recording into a test — a flow holding none of them proves nothing.
 
 ```
-Find Image  "Find login button"   template "login-button.png" accuracy 0.85
-            in "Login form"
-  Success:
-    Click  at "Find login button"
-  Failure:
-    End Execution  failed  "no login button"
+Find Image  "Find login button"   template "login-button.png" accuracy 0.85   in "Login form"
+ Success:
+  Click  at "Find login button"
+ Failure:
+  End Execution  failed  "no login button"
 ```
 
 There are three things to check and four ways to look, and the keyword says both at once:
@@ -316,14 +317,14 @@ So wait once, on something that is always present, then branch instantly:
 
 ```
 Wait For Image  "Page loaded"   template "logo.png"   in "Browser"   timeout 15s
-  Failure:
-    End Execution  failed  "the page never loaded"
+ Failure:
+  End Execution  failed  "the page never loaded"
 
 Find Image  "Desktop nav present?"   template "nav-bar.png"   in "Browser"
-  Failure:
-    Click  at point "Hamburger menu"
-  Success:
-    Click  at "Desktop nav present?"
+ Failure:
+  Click  at point "Hamburger menu"
+ Success:
+  Click  at "Desktop nav present?"
 ```
 
 The anchor absorbs the patience once per page. Every layout question after it is free and still
@@ -375,10 +376,10 @@ verdict comes from whether every check passed.
 Cleanup belongs above it, which is why it is a step and not a flag:
 
 ```
-  Failure:
-    Click    at point "Log out"
-    Notify   "checkout failed"
-    End Execution  failed  "could not complete the order"
+ Failure:
+  Click    at point "Log out"
+  Notify   "checkout failed"
+  End Execution  failed  "could not complete the order"
 ```
 
 ### Sub-flows
@@ -395,8 +396,8 @@ do a teardown can do:
 
 ```
 End Execution  failed  "did not reach the products page"
-  Run     KILL_PROCESS  "chrome.exe"
-  Notify  "login smoke failed at {{width}}x{{height}}"
+ Run     KILL_PROCESS  "chrome.exe"
+ Notify  "login smoke failed at {{width}}x{{height}}"
 ```
 
 The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes

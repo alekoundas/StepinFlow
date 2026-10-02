@@ -3,6 +3,7 @@ using System.Drawing;
 using Core.Enums;
 using Core.Models.Database;
 
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Models.Binding;
@@ -23,35 +24,39 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static void ReadFlowField(FlowScriptSchema document, ScriptLine line)
         {
+            string flowLabel = SyntaxFacts.LineType(ScriptLineTypeEnum.FLOW);
+
             int colon = line.Raw.IndexOf(':', StringComparison.Ordinal); // Find the first colon possition in the line.
             if (colon < 0)
             {
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.HEADER_MALFORMED, line.Number, 1, $"Expected a header line such as \"Flow:\", found \"{line.Raw.Trim()}\"."));
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.HEADER_MALFORMED, line.Number, 1, $"Expected a header line such as \"{flowLabel}\", found \"{line.Raw.Trim()}\"."));
                 return;
             }
 
-            string key = line.Raw[..colon].Trim();
+            string key = line.Raw[..(colon + 1)].Trim();
             string value = line.Raw[(colon + 1)..].Trim();
 
-            switch (key)
+            switch (SyntaxFacts.ReadLineType(key))
             {
-                case "Flow": // ex. "Flow:    Test: Login and add to cart"
+                case ScriptLineTypeEnum.FLOW: // ex. "Flow:    Test: Login and add to cart"
                     document.FlowName = value;
                     break;
 
-                case "Id":  // ex. "Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111"
+                case ScriptLineTypeEnum.ID:  // ex. "Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111"
                     if (Guid.TryParse(value, out Guid id))
                         document.PublicId = id;
                     else
                         document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.PUBLIC_ID_MALFORMED, line.Number, colon + 2, $"\"{value}\" is not an id. It should look like 8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111."));
                     break;
 
-                case "Sizes": // ex. "Sizes:   1920x1080, 1024x768, 390x844"
+                case ScriptLineTypeEnum.SIZES: // ex. "Sizes:   1920x1080, 1024x768, 390x844"
                     ReadSizes(document, line, value, colon + 2);
                     break;
 
                 default:
-                    document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.HEADER_UNKNOWN, line.Number, 1, $"\"{key}\" is not something the header holds. Expected Flow, Id or Sizes."));
+                    string idLabel = SyntaxFacts.LineType(ScriptLineTypeEnum.ID);
+                    string sizesLabel = SyntaxFacts.LineType(ScriptLineTypeEnum.SIZES);
+                    document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.HEADER_UNKNOWN, line.Number, 1, $"\"{key}\" is not something the header holds. Expected \"{flowLabel}\", \"{idLabel}\" or \"{sizesLabel}\"."));
                     break;
             }
         }
