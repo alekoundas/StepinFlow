@@ -254,7 +254,7 @@ namespace Business.FlowScript.Text
             if (step.FlowStepType == FlowStepTypeEnum.MARKER)
             {
                 builder.AppendLine();
-                builder.Append(indent).Append("## ").AppendLine(step.Name);
+                builder.Append(indent).Append(SyntaxFacts.For(step)).Append(' ').AppendLine(step.Name);
                 builder.AppendLine();
                 return;
             }
@@ -293,11 +293,7 @@ namespace Business.FlowScript.Text
                 if (children.Count == 0)
                     continue;
 
-                string label = "Failure";
-                if (branch.FlowStepType == FlowStepTypeEnum.SUCCESS)
-                    label = "Success";
-
-                builder.Append(indent).Append(label).AppendLine(":");
+                builder.Append(indent).AppendLine(SyntaxFacts.For(branch));
 
                 foreach (FlowStep child in children)
                     WriteStep(builder, source, child, depth + 2);
@@ -570,7 +566,14 @@ namespace Business.FlowScript.Text
 
         private static string Pad(string text, int width)
         {
-            return text.Length >= width ? text + "  " : text.PadRight(width);
+            if (text.Length >= width)
+            {
+                return text + "  ";
+            }
+            else
+            {
+                return text.PadRight(width);
+            }
         }
 
         // Always quoted, even when a name would read fine without. One rule is easier to parse back

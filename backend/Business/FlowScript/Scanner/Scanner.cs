@@ -44,7 +44,7 @@ namespace Business.FlowScript.Scanner
                 if (line.Tokens.Count == 0)
                     continue;
 
-                if (line.IsComment)
+                if (SyntaxFacts.IsComment(line))
                 {
                     pendingComments.Add(line.TextAfterHash);
                     continue;

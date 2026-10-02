@@ -27,17 +27,43 @@ namespace Business.FlowScript.Syntax
     public static class SyntaxFacts
     {
         /// <summary>
-        /// The words a step is written as, taken from the catalogue rather than spelled out again -
-        /// a second copy of the text is how a keyword comes to mean one thing on write and another
-        /// on read.
-        ///
-        /// A type with no keyword at all - SUCCESS, FAILURE, MARKER, which the tree carries rather
-        /// than the grammar - falls back to its own name, which no reader accepts. That is deliberate:
-        /// such a step is never printed as a line of its own.
+        /// The keyword a step is written as. A step with none is a gap in the catalog, so it throws
+        /// rather than writing a line no reader accepts.
         /// </summary>
         public static string For(FlowStep step)
         {
-            return Keyword(step)?.Text ?? step.FlowStepType.ToString();
+            ScriptKeyword? keyword;
+            switch (step.FlowStepType)
+            {
+                case FlowStepTypeEnum.SEARCH_IMAGE:
+                case FlowStepTypeEnum.SEARCH_TEXT:
+                    keyword = ScriptKeywordCatalog.Get(step.FlowStepType, step.SearchMode);
+                    break;
+
+                case FlowStepTypeEnum.KEYBOARD_INPUT:
+                    KeyboardInputTypeEnum type = KeyboardInputTypeEnum.TEXT;
+                    if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
+                        type = KeyboardInputTypeEnum.COMBINATION;
+
+                    keyword = ScriptKeywordCatalog.Get(step.FlowStepType, type);
+                    break;
+
+                case FlowStepTypeEnum.SYSTEM_COMMAND:
+                    RunCommandPresetEnum commandType = RunCommandPresetEnum.CUSTOM;
+                    if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+                        commandType = RunCommandPresetEnum.LAUNCH_APP;
+
+                    keyword = ScriptKeywordCatalog.Get(step.FlowStepType, commandType);
+                    break;
+
+                default:
+                    keyword = ScriptKeywordCatalog.Get(step.FlowStepType);
+                    break;
+            }
+            if (keyword == null)
+                throw new InvalidOperationException($"No keyword in the catalog writes this {step.FlowStepType} step.");
+
+            return keyword.Text;
         }
 
 
@@ -45,21 +71,30 @@ namespace Business.FlowScript.Syntax
         /// The step keyword a line starts with. Null when it starts with none, which the reader
         /// reports as an unknown step.
         /// </summary>
-        internal static ScriptKeyword? ReadStepKeyword(IReadOnlyList<ScriptToken> tokens)
+        internal static ScriptKeyword? ReadFirstKeyword(IReadOnlyList<ScriptToken> tokens)
         {
             return ReadKeyword<FlowStepTypeEnum>(tokens, 0);
         }
 
-        /// <summary>How a window title is matched.</summary>
-        internal static ScriptKeyword? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int at)
+        /// <summary>A "#" line is intent for the step below it, unless the catalog says otherwise - "##" is a stage heading.</summary>
+        internal static bool IsComment(ScriptLine line)
         {
-            return ReadKeyword<TitleMatchModeEnum>(tokens, at);
+            if (!line.Raw.TrimStart().StartsWith('#'))
+                return false;
+
+            return ReadFirstKeyword(line.Tokens) == null;
+        }
+
+        /// <summary>How a window title is matched.</summary>
+        internal static ScriptKeyword? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int tokenIndex)
+        {
+            return ReadKeyword<TitleMatchModeEnum>(tokens, tokenIndex);
         }
 
         /// <summary>How templates are compared.</summary>
-        internal static ScriptKeyword? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int at)
+        internal static ScriptKeyword? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int tokenIndex)
         {
-            return ReadKeyword<TemplateMatchModeEnum>(tokens, at);
+            return ReadKeyword<TemplateMatchModeEnum>(tokens, tokenIndex);
         }
 
         public static ScalesWithEnum? ReadScalesWith(string word)
@@ -93,66 +128,6 @@ namespace Business.FlowScript.Syntax
             return ScriptKeywordCatalog.Get(direction ?? CursorScrollDirectionTypeEnum.DOWN)?.Text ?? string.Empty;
         }
 
-        // ================================================================
-        // Private methods
-        // ================================================================
-
-        // Find the longest keyword the tokens can generate starting from "tokenIndex".
-        // ex "Wait Until No Image" = 4 tokens but 1 command.
-        private static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
-        {
-            ScriptKeyword? longest = null;
-            string phrase = string.Empty;
-
-            for (int i = tokenIndex; i < tokens.Count && !tokens[i].IsQuoted; i++)
-            {
-                if (i > tokenIndex) // Dont add space on first loop.
-                    phrase += " ";
-
-                phrase += tokens[i].Text;
-
-                ScriptKeyword? keyword = ScriptKeywordCatalog.Get<TEnum>(phrase);
-                if (keyword != null)
-                    longest = keyword;
-            }
-
-            return longest;
-        }
-
-        // Which row of the catalogue a step is written as. Two types cannot be found by matching
-        // their discriminator, and both read as what they do rather than as the machinery underneath:
-        // a keyboard step is Type unless it sends a combination, and a command is Run unless its
-        // preset is a launch - Run covers every other preset, so no row names them.
-        private static ScriptKeyword? Keyword(FlowStep step)
-        {
-            switch (step.FlowStepType)
-            {
-                case FlowStepTypeEnum.SEARCH_IMAGE:
-                case FlowStepTypeEnum.SEARCH_TEXT:
-                    // A mode with no keyword of its own reads as the plain search. FIND_ALL is not
-                    // offered for text, so a text step in that mode is a Check Text.
-                    return ScriptKeywordCatalog.Get(step.FlowStepType, step.SearchMode)
-                        ?? ScriptKeywordCatalog.Get(step.FlowStepType, SearchModeEnum.FIND_BEST);
-
-                case FlowStepTypeEnum.KEYBOARD_INPUT:
-                    KeyboardInputTypeEnum typed = KeyboardInputTypeEnum.TEXT;
-                    if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
-                        typed = KeyboardInputTypeEnum.COMBINATION;
-
-                    return ScriptKeywordCatalog.Get(step.FlowStepType, typed);
-
-                case FlowStepTypeEnum.SYSTEM_COMMAND:
-                    RunCommandPresetEnum preset = RunCommandPresetEnum.CUSTOM;
-                    if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
-                        preset = RunCommandPresetEnum.LAUNCH_APP;
-
-                    return ScriptKeywordCatalog.Get(step.FlowStepType, preset);
-
-                default:
-                    return ScriptKeywordCatalog.Get(step.FlowStepType);
-            }
-        }
-
         public static string Condition(FlowStep step)
         {
             string value = Quoted(step.ConditionText);
@@ -172,6 +147,7 @@ namespace Business.FlowScript.Syntax
                 default: return string.Empty;
             }
         }
+
 
         /// <summary>
         /// The button and what it does, left out entirely when it is a plain left click - which is
@@ -197,9 +173,6 @@ namespace Business.FlowScript.Syntax
             return $"{side} {kind}".Trim();
         }
 
-        // ================================================================
-        // Public methods - the same tables, read backwards
-        // ================================================================
 
         /// <summary>
         /// A condition from the words it was written as. Longest first again: "is not empty" has
@@ -293,11 +266,6 @@ namespace Business.FlowScript.Syntax
             return (button, action);
         }
 
-        private static string Quoted(string? text)
-        {
-            return "\"" + (text ?? string.Empty).Replace("\"", "\\\"") + "\"";
-        }
-
         // ================================================================
         // Public methods - how the grammar writes a number
         // ================================================================
@@ -354,5 +322,39 @@ namespace Business.FlowScript.Syntax
 
             return (first, second);
         }
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        // Find the longest keyword the tokens can generate starting from "tokenIndex".
+        // ex "Wait Until No Image" = 4 tokens but 1 command.
+        private static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
+        {
+            ScriptKeyword? longest = null;
+            string phrase = string.Empty;
+
+            for (int i = tokenIndex; i < tokens.Count && !tokens[i].IsQuoted; i++)
+            {
+                if (i > tokenIndex) // Dont add space on first loop.
+                    phrase += " ";
+
+                phrase += tokens[i].Text;
+
+                ScriptKeyword? keyword = ScriptKeywordCatalog.Get<TEnum>(phrase);
+                if (keyword != null)
+                    longest = keyword;
+            }
+
+            return longest;
+        }
+
+
+        private static string Quoted(string? text)
+        {
+            return "\"" + (text ?? string.Empty).Replace("\"", "\\\"") + "\"";
+        }
+
+      
     }
 }

@@ -8,22 +8,6 @@ namespace Business.FlowScript.Models.Text
         public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
 
 
-        /// <summary>A section heading "## ", which carries a verdict rather than doing anything.</summary>
-        public bool IsStageMarker
-        {
-            get { return Raw.TrimStart().StartsWith("## ", StringComparison.Ordinal); }
-        }
-
-        /// <summary>Intent, attached to the step below it.</summary>
-        public bool IsComment
-        {
-            get
-            {
-                string trimmed = Raw.TrimStart();
-                return trimmed.StartsWith('#') && !trimmed.StartsWith("## ", StringComparison.Ordinal);
-            }
-        }
-
         public string TextAfterHash
         {
             get { return Raw.TrimStart().TrimStart('#').Trim(); }

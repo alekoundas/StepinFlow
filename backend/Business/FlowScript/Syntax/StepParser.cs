@@ -13,35 +13,8 @@ namespace Business.FlowScript.Syntax
     {
         public static void Read(FlowScriptSchema document, ScriptLine line, List<string> pendingComments)
         {
-            // Add Success step.
-            if (line.Raw.Trim() == "Success:")
-            {
-                Add(document, line, new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS });
-                return;
-            }
-
-            // Add Failure step.
-            if (line.Raw.Trim() == "Failure:")
-            {
-                Add(document, line, new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE });
-                return;
-            }
-
-            // Add Stage marker step.
-            if (line.IsStageMarker)
-            {
-                FlowStep flowStep = new FlowStep
-                {
-                    FlowStepType = FlowStepTypeEnum.MARKER,
-                    Name = line.TextAfterHash,
-                };
-                Add(document, line, flowStep);
-
-                pendingComments.Clear();
-                return;
-            }
-
-            ScriptKeyword? keyword = SyntaxFacts.ReadStepKeyword(line.Tokens);
+            // Get first keyword of the line.
+            ScriptKeyword? keyword = SyntaxFacts.ReadFirstKeyword(line.Tokens);
             if (keyword == null)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.STEP_UNKNOWN, line.Number, line.Tokens[0].Column,
@@ -51,12 +24,36 @@ namespace Business.FlowScript.Syntax
                 return;
             }
 
+            FlowStepTypeEnum type = keyword.As<FlowStepTypeEnum>()!.Value;
+
+            // Add Success or Failure step.
+            if (type == FlowStepTypeEnum.SUCCESS || type == FlowStepTypeEnum.FAILURE)
+            {
+                AddToSchemaBindng(document, line, new FlowStep { FlowStepType = type });
+                return;
+            }
+
+            // Add Stage marker step.
+            if (type == FlowStepTypeEnum.MARKER)
+            {
+                FlowStep flowStep = new FlowStep
+                {
+                    FlowStepType = FlowStepTypeEnum.MARKER,
+                    Name = line.TextAfterHash,
+                };
+                AddToSchemaBindng(document, line, flowStep);
+
+                pendingComments.Clear();
+                return;
+            }
+
             FlowStep step = new FlowStep
             {
-                FlowStepType = keyword.As<FlowStepTypeEnum>()!.Value,
+                FlowStepType = type,
                 CodeComment = string.Join("\n", pendingComments),
             };
 
+            // See the "Modifier" property of the keyword.
             SearchModeEnum? searchMode = keyword.As<SearchModeEnum>();
             if (searchMode != null)
                 step.SearchMode = searchMode.Value;
@@ -71,13 +68,17 @@ namespace Business.FlowScript.Syntax
 
             pendingComments.Clear();
 
-            FlowStepSchemaBindng parsed = Add(document, line, step);
+            FlowStepSchemaBindng parsed = AddToSchemaBindng(document, line, step);
             int tokenIndex = keyword.TokenCount;
 
             ReadArguments(document, line, parsed, tokenIndex);
         }
 
-        private static FlowStepSchemaBindng Add(FlowScriptSchema document, ScriptLine line, FlowStep step)
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private static FlowStepSchemaBindng AddToSchemaBindng(FlowScriptSchema document, ScriptLine line, FlowStep step)
         {
             int? parentIndex = FindParentStepIndex(document, line.LeadingSpaces);
 

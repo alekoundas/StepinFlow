@@ -45,7 +45,7 @@ namespace Business.Tests.FlowScript
                     step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
-                ScriptKeyword? read = SyntaxFacts.ReadStepKeyword(Tokens(written + " \"name\""));
+                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Tokens(written + " \"name\""));
 
                 if (written != keyword.Text || read != keyword)
                     wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
@@ -61,13 +61,13 @@ namespace Business.Tests.FlowScript
         [InlineData("Wait 800ms", FlowStepTypeEnum.WAIT)]
         public void The_longest_keyword_wins(string line, FlowStepTypeEnum type)
         {
-            SyntaxFacts.ReadStepKeyword(Tokens(line))!.Type.ShouldBe(type);
+            SyntaxFacts.ReadFirstKeyword(Tokens(line))!.Type.ShouldBe(type);
         }
 
         [Fact]
         public void A_quoted_word_is_a_name_and_never_a_keyword()
         {
-            SyntaxFacts.ReadStepKeyword(Tokens("\"Click\" at match")).ShouldBeNull();
+            SyntaxFacts.ReadFirstKeyword(Tokens("\"Click\" at match")).ShouldBeNull();
         }
 
         [Fact]

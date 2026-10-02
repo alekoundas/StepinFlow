@@ -38,6 +38,11 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Wait", FlowStepTypeEnum.WAIT),
             new ScriptKeyword("Run", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM),
 
+            // The rows the tree carries: a check's two branches, and a stage heading.
+            new ScriptKeyword("Success:", FlowStepTypeEnum.SUCCESS),
+            new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
+            new ScriptKeyword("##", FlowStepTypeEnum.MARKER),
+
             // How a window title is matched. "is" and "matches" are also conditions; the vocabulary
             // is the enum type, so a reader asking for one never finds the other.
             new ScriptKeyword("starts with", TitleMatchModeEnum.STARTS_WITH),
