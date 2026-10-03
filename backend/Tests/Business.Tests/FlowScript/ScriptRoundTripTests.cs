@@ -43,6 +43,30 @@ namespace Business.Tests.FlowScript
             ApprovedFile.ShouldMatch(new Printer().Write(SampleFlow.Build()), "SampleFlow");
         }
 
+        // A backslash is only an escape right before a quote, so a path or a regex is written as it
+        // is - and text ending in a backslash still closes.
+        [Theory]
+        [InlineData("Login failed: \"bad password\"")]
+        [InlineData(@"C:\temp\")]
+        [InlineData(@"total: (\d+)")]
+        [InlineData(@"\\server\share")]
+        [InlineData("a\\\"b")]
+        [InlineData(@"\")]
+        public void Quoted_text_comes_back_as_it_was_written(string message)
+        {
+            FlowStep notify = new FlowStep { Id = 1, RootId = 1, FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message };
+            BoundFlow source = new BoundFlow
+            {
+                Flow = new Flow { Id = 1, Name = "Quotes", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b113") },
+                Steps = [notify],
+            };
+
+            FlowScriptSchema document = new Scanner().Read(new Printer().Write(source));
+
+            document.Diagnostics.ShouldBeEmpty();
+            document.Steps.Single().Step.Message.ShouldBe(message);
+        }
+
         // ================================================================
         // What a person writing one by hand gets for what they leave out
         // ================================================================

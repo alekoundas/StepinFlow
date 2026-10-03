@@ -63,6 +63,19 @@ before layer 5, because the engine tests would pin whichever answer is live.
       it would not remove the id mapping in the importer - inserting with generated keys needs that
       whatever the model looks like. Not obviously worth it at this size; a decision to take
       deliberately rather than slip into a rename.
+- [ ] **A flow's name is a valid file name on Windows, macOS and Linux.** The name becomes the
+      `.sflw` file and its template folder, and a repository is cloned onto all three. Today three
+      places - `FlowScriptExporter.FileNameOf`, `PathHelper` and the failure screenshots in
+      `ExecutionHistoryService` - strip whatever `Path.GetInvalidFileNameChars()` returns, and that
+      list belongs to the machine running it: on Linux it is only `/` and the null character, so a
+      CI export can write `Login: smoke.sflw`, which a Windows clone cannot check out. Validate
+      rather than clean, against one list: none of `< > : " / \ | ? *` or the control characters,
+      no trailing space or dot, none of the Windows reserved names (`CON`, `PRN`, `AUX`, `NUL`,
+      `COM1`-`COM9`, `LPT1`-`LPT9`, with or without an extension), and unique ignoring case, because
+      the Windows and macOS file systems are. One helper in `Core`, read by the validator, the
+      importer's `Flow:` line as a diagnostic, and the flow create and update handlers, with the same
+      rule in `flow.zod.ts`. Step names stay free text - `"Desktop nav present?"` is a fair name - and
+      the screenshot keeps cleaning, from the same list rather than the machine's.
 
 ### The engine
 

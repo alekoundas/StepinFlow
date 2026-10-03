@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
@@ -158,7 +159,7 @@ namespace Business.FlowScript.Syntax
 
         public static string Condition(FlowStep step)
         {
-            string value = Quoted(step.ConditionText);
+            string value = Quote(step.ConditionText);
 
             switch (step.ConditionType)
             {
@@ -171,7 +172,7 @@ namespace Business.FlowScript.Syntax
                 case ConditionTypeEnum.IS_NOT_EMPTY: return "is not empty";
                 case ConditionTypeEnum.GREATER_THAN: return $"> {value}";
                 case ConditionTypeEnum.LESS_THAN: return $"< {value}";
-                case ConditionTypeEnum.BETWEEN: return $"between {value} and {Quoted(step.ConditionTextEnd)}";
+                case ConditionTypeEnum.BETWEEN: return $"between {value} and {Quote(step.ConditionTextEnd)}";
                 default: return string.Empty;
             }
         }
@@ -378,9 +379,35 @@ namespace Business.FlowScript.Syntax
         }
 
 
-        private static string Quoted(string? text)
+        /// <summary>
+        /// Text in quotes. A quote inside it is written \", and since a backslash is only an escape
+        /// right before a quote, only the backslashes there - the closing quote's included - are
+        /// doubled. Paths and regexes are written as they are.
+        /// </summary>
+        public static string Quote(string? text)
         {
-            return "\"" + (text ?? string.Empty).Replace("\"", "\\\"") + "\"";
+            StringBuilder quoted = new StringBuilder("\"");
+            int backslashes = 0;
+
+            foreach (char c in text ?? string.Empty)
+            {
+                if (c == '\\')
+                {
+                    backslashes++;
+                    continue;
+                }
+
+                if (c == '"')
+                    quoted.Append('\\', backslashes * 2 + 1);
+                else
+                    quoted.Append('\\', backslashes);
+
+                quoted.Append(c);
+                backslashes = 0;
+            }
+
+            quoted.Append('\\', backslashes * 2).Append('"');
+            return quoted.ToString();
         }
 
       

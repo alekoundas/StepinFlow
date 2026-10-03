@@ -73,7 +73,7 @@ namespace Business.FlowScript.Text
 
         private static string AreaLine(FlowArea area, BoundFlow source)
         {
-            string name = Pad(Quote(area.Name), 16);
+            string name = Pad(SyntaxFacts.Quote(area.Name), 16);
 
             return $"{name}{AreaPlacement(area, source)}{AreaScaling(area)}";
         }
@@ -82,7 +82,7 @@ namespace Business.FlowScript.Text
         {
             if (area.ParentFlowAreaId != null)
             {
-                string parent = Quote(source.AreaNamesById.GetValueOrDefault(area.ParentFlowAreaId.Value, string.Empty));
+                string parent = SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(area.ParentFlowAreaId.Value, string.Empty));
 
                 return $"inside {parent}   {AreaSize(area)}";
             }
@@ -94,7 +94,7 @@ namespace Business.FlowScript.Text
                     if (area.MonitorDeviceName.Length == 0)
                         return "monitor primary";
 
-                    return $"monitor {Quote(area.MonitorDeviceName)}";
+                    return $"monitor {SyntaxFacts.Quote(area.MonitorDeviceName)}";
 
                 case FlowAreaTypeEnum.CUSTOM:
                     return $"on screen   {AreaSize(area)}";
@@ -102,9 +102,9 @@ namespace Business.FlowScript.Text
                 default:
                     string title = string.Empty;
                     if (!string.IsNullOrWhiteSpace(area.TitlePattern))
-                        title = $" title {SyntaxFacts.TitleMatch(area.TitleMatchMode)} {Quote(area.TitlePattern)}";
+                        title = $" title {SyntaxFacts.TitleMatch(area.TitleMatchMode)} {SyntaxFacts.Quote(area.TitlePattern)}";
 
-                    return $"window process {Quote(area.ProcessName)}{title}";
+                    return $"window process {SyntaxFacts.Quote(area.ProcessName)}{title}";
             }
         }
 
@@ -139,7 +139,7 @@ namespace Business.FlowScript.Text
 
             foreach (FlowPoint point in source.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
-                string name = Pad(Quote(point.Name), 16);
+                string name = Pad(SyntaxFacts.Quote(point.Name), 16);
 
                 string placement = $"offset {Integer(point.LocationX)} {Integer(point.LocationY)}";
                 if (point.OffsetMode == AreaSizingModeEnum.RATIO)
@@ -147,7 +147,7 @@ namespace Business.FlowScript.Text
 
                 string inside = "on screen";
                 if (point.FlowAreaId != null)
-                    inside = $"inside {Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
+                    inside = $"inside {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
 
                 string dpi = string.Empty;
                 if (point.AuthoredDpi > 0)
@@ -172,7 +172,7 @@ namespace Business.FlowScript.Text
                 // file, and a default in the script would be the one nobody remembers to change.
                 string secret = input.IsSecret ? "secret" : string.Empty;
 
-                builder.Append("  ").AppendLine($"{Pad(Quote(input.Name), 16)}{secret}".TrimEnd());
+                builder.Append("  ").AppendLine($"{Pad(SyntaxFacts.Quote(input.Name), 16)}{secret}".TrimEnd());
             }
 
             builder.AppendLine();
@@ -221,7 +221,7 @@ namespace Business.FlowScript.Text
             if (facts.Length == 0)
                 return string.Empty;
 
-            return $"{Pad(Quote(template.FileName), 24)}{facts}";
+            return $"{Pad(SyntaxFacts.Quote(template.FileName), 24)}{facts}";
         }
 
 
@@ -320,7 +320,7 @@ namespace Business.FlowScript.Text
                     return SearchTextArguments(step, source);
 
                 case FlowStepTypeEnum.CHECK_VALUE:
-                    return $"{Quote(step.Name)}   {Variable(step.FlowStepReferenceId, source)} {SyntaxFacts.Condition(step)}";
+                    return $"{SyntaxFacts.Quote(step.Name)}   {Variable(step.FlowStepReferenceId, source)} {SyntaxFacts.Condition(step)}";
 
                 case FlowStepTypeEnum.CURSOR_CLICK:
                 case FlowStepTypeEnum.CURSOR_RELOCATE:
@@ -336,7 +336,7 @@ namespace Business.FlowScript.Text
                     if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
                         return step.KeyboardInputText;
 
-                    return Quote(step.KeyboardInputText);
+                    return SyntaxFacts.Quote(step.KeyboardInputText);
 
                 case FlowStepTypeEnum.WAIT:
                     if (step.WaitForMillisecondsMax > step.WaitForMilliseconds)
@@ -348,19 +348,19 @@ namespace Business.FlowScript.Text
                     return LoopArguments(step, source);
 
                 case FlowStepTypeEnum.GO_TO:
-                    return $"to {Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
+                    return $"to {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    return Quote(source.SubFlowPathsById.GetValueOrDefault(step.SubFlowId ?? 0, string.Empty));
+                    return SyntaxFacts.Quote(source.SubFlowPathsById.GetValueOrDefault(step.SubFlowId ?? 0, string.Empty));
 
                 case FlowStepTypeEnum.NOTIFY:
-                    return Quote(step.Message);
+                    return SyntaxFacts.Quote(step.Message);
 
                 case FlowStepTypeEnum.END_EXECUTION:
                     if (step.EndExecutionAsSuccess)
                         return "passed";
 
-                    return $"failed  {Quote(step.Message)}";
+                    return $"failed  {SyntaxFacts.Quote(step.Message)}";
 
                 case FlowStepTypeEnum.SYSTEM_ACTION:
                     return step.SystemActionType.ToString();
@@ -374,7 +374,7 @@ namespace Business.FlowScript.Text
                     return WindowArguments(step, source);
 
                 default:
-                    return Quote(step.Name);
+                    return SyntaxFacts.Quote(step.Name);
             }
         }
 
@@ -389,7 +389,7 @@ namespace Business.FlowScript.Text
             if (step.TemplateMatchMode != TemplateMatchModeEnum.SHAPE)
                 match = $"   match {SyntaxFacts.MatchMode(step.TemplateMatchMode)}";
 
-            return $"{Quote(step.Name)}   {string.Join("  ", templates)}{match}{Area(step, source)}{Waiting(step)}";
+            return $"{SyntaxFacts.Quote(step.Name)}   {string.Join("  ", templates)}{match}{Area(step, source)}{Waiting(step)}";
         }
 
         // Straight after its template, so it reads as that template's and not the step's.
@@ -399,16 +399,16 @@ namespace Business.FlowScript.Text
             if (template.IsRequired)
                 required = " required";
 
-            return $"template {Quote(template.FileName)} accuracy {Number(template.Accuracy)}{required}";
+            return $"template {SyntaxFacts.Quote(template.FileName)} accuracy {Number(template.Accuracy)}{required}";
         }
 
         private static string SearchTextArguments(FlowStep step, BoundFlow source)
         {
             string extract = string.Empty;
             if (!string.IsNullOrWhiteSpace(step.ResultExtractPattern))
-                extract = $"   keep {Quote(step.ResultExtractPattern)}";
+                extract = $"   keep {SyntaxFacts.Quote(step.ResultExtractPattern)}";
 
-            return $"{Quote(step.Name)}   {SyntaxFacts.Condition(step)}{Area(step, source)}{extract}{Waiting(step)}";
+            return $"{SyntaxFacts.Quote(step.Name)}   {SyntaxFacts.Condition(step)}{Area(step, source)}{extract}{Waiting(step)}";
         }
 
         private static string CursorArguments(FlowStep step, BoundFlow source)
@@ -433,7 +433,7 @@ namespace Business.FlowScript.Text
             // Three sources, and which one is in play is readable from the row rather than stored:
             // a reference means each match, no count means forever.
             if (step.FlowStepReferenceId != null)
-                return $"each match in {Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId.Value, string.Empty))}";
+                return $"each match in {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId.Value, string.Empty))}";
 
             return step.IsLoopInfinite ? "forever" : $"{step.LoopCount} times";
         }
@@ -441,22 +441,22 @@ namespace Business.FlowScript.Text
         private static string CommandArguments(FlowStep step)
         {
             if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
-                return Quote(step.RunCommandValue);
+                return SyntaxFacts.Quote(step.RunCommandValue);
 
             string preset = string.Empty;
             if (step.RunCommandPreset != RunCommandPresetEnum.CUSTOM)
                 preset = $"{step.RunCommandPreset} ";
 
-            return $"{preset}{Quote(step.RunCommandValue)}";
+            return $"{preset}{SyntaxFacts.Quote(step.RunCommandValue)}";
         }
 
         private static string WindowArguments(FlowStep step, BoundFlow source)
         {
             string title = string.Empty;
             if (!string.IsNullOrWhiteSpace(step.TitlePattern))
-                title = $" title {SyntaxFacts.TitleMatch(step.TitleMatchMode)} {Quote(step.TitlePattern)}";
+                title = $" title {SyntaxFacts.TitleMatch(step.TitleMatchMode)} {SyntaxFacts.Quote(step.TitlePattern)}";
 
-            string what = $"process {Quote(step.ProcessName)}{title}";
+            string what = $"process {SyntaxFacts.Quote(step.ProcessName)}{title}";
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE)
                 return $"{what}   size {step.WindowWidth} {step.WindowHeight}";
@@ -477,7 +477,7 @@ namespace Business.FlowScript.Text
             if (step.FlowAreaId == null)
                 return string.Empty;
 
-            return $"   in {Quote(source.AreaNamesById.GetValueOrDefault(step.FlowAreaId.Value, string.Empty))}";
+            return $"   in {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(step.FlowAreaId.Value, string.Empty))}";
         }
 
         private static string Waiting(FlowStep step)
@@ -503,10 +503,10 @@ namespace Business.FlowScript.Text
         private static string PointName(int? flowPointId, int? referenceId, BoundFlow source)
         {
             if (flowPointId != null)
-                return $"point {Quote(source.PointNamesById.GetValueOrDefault(flowPointId.Value, string.Empty))}";
+                return $"point {SyntaxFacts.Quote(source.PointNamesById.GetValueOrDefault(flowPointId.Value, string.Empty))}";
 
             if (referenceId != null)
-                return Quote(source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty));
+                return SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty));
 
             return "match";
         }
@@ -516,7 +516,7 @@ namespace Business.FlowScript.Text
             if (referenceId == null)
                 return "\"\"";
 
-            return Quote("{{" + source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty) + "}}");
+            return SyntaxFacts.Quote("{{" + source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty) + "}}");
         }
 
         private static IEnumerable<FlowArea> Ordered(IReadOnlyList<FlowArea> areas)
@@ -572,17 +572,6 @@ namespace Business.FlowScript.Text
                 return text + "  ";
             else
                 return text.PadRight(width);
-        }
-
-        // Quote the text. 
-        private static string Quote(string? text)
-        {
-            if (text == null)
-                text = string.Empty;
-
-            text = text.Replace("\"", "\\\""); // Escape text quotes: " => \"
-
-            return "\"" + text + "\"";
         }
     }
 }
