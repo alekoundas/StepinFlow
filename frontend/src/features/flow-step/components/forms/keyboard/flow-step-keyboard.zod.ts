@@ -2,14 +2,19 @@ import { z } from "zod";
 
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { KEYBOARD_MODE_VALUES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepKeyboardSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     keyboardInputType: z.enum(KEYBOARD_MODE_VALUES),
-    keyboardInputText: scriptText(),
+    keyboardInputText: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
     if (data.keyboardInputText.length > 0) return;

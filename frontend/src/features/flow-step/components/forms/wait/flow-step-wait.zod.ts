@@ -1,9 +1,12 @@
 import { z } from "zod";
-import { scriptName } from "@/shared/utils/script-text";
 
 export const FlowStepWaitSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     waitForMilliseconds: z
       .number()

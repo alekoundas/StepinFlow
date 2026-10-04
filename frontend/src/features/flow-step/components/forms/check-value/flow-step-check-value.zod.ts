@@ -4,16 +4,23 @@ import {
   needsSecondValue,
   needsValue,
 } from "@/features/flow-step/components/forms/shared/condition-types";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepCheckValueSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     flowStepReferenceId: z.number().int().nullish(),
     conditionType: z.enum(ConditionTypeEnum),
-    conditionText: scriptText(),
-    conditionTextEnd: scriptText(),
+    conditionText: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
+    conditionTextEnd: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
     if (!data.flowStepReferenceId) {

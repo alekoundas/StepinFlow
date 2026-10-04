@@ -1,13 +1,19 @@
 import { z } from "zod";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepNotifySchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     discordBotId: z.number().int().nullish(),
 
     /** Optional, always. A message with only the flow name is still a message. */
-    message: scriptText(z.string().max(1500, "Discord will not take a message this long")),
+    message: z
+      .string()
+      .max(1500, "Discord will not take a message this long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     /** Which failed step to describe. Unset means "just send my message". */
     flowStepReferenceId: z.number().int().nullish(),

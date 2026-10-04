@@ -5,24 +5,33 @@ import {
   SEARCH_TEXT_CONDITION_TYPES,
 } from "@/features/flow-step/components/forms/shared/condition-types";
 import { SEARCH_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepSearchTextSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     flowAreaId: z.number().int().nullish(),
     ocrLanguage: z.string().min(1, "Pick the language the text is written in"),
 
-    conditionText: scriptText(),
-    conditionTextEnd: scriptText(),
+    conditionText: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
+    conditionTextEnd: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     conditionType: z.enum(SEARCH_TEXT_CONDITION_TYPES),
 
     searchMode: z.enum(SEARCH_TEXT_MODE_VALUES),
     pollIntervalMilliseconds: z.number().int().min(50),
     timeoutMilliseconds: z.number().int().min(0),
 
-    resultExtractPattern: scriptText(),
+    resultExtractPattern: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
     if (!data.flowAreaId) {

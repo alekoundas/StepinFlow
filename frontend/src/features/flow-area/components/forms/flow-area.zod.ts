@@ -4,7 +4,6 @@ import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowAreaZod = z
   .object({
@@ -12,7 +11,11 @@ export const FlowAreaZod = z
     // the flow save an area with no id, which reads as new - the old row was deleted
     // and every step pointing at it had its FlowAreaId nulled.
     id: z.number().int(),
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     type: z.enum(FlowAreaTypeEnum),
 
     scalesWith: z.enum(ScalesWithEnum).nullish(),
@@ -38,15 +41,23 @@ export const FlowAreaZod = z
       .min(0, "Height must be 0% to 100%")
       .max(1, "Height must be 0% to 100%"),
 
-    processName: scriptText(),
-    titlePattern: scriptText(),
+    processName: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
+    titlePattern: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     titleMatchMode: z.enum(TitleMatchModeEnum),
     useClientArea: z.boolean(),
 
-    tabMatchValue: scriptText(),
+    tabMatchValue: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     tabMatchOn: z.enum(TabMatchOnEnum),
 
-    monitorDeviceName: scriptText(),
+    monitorDeviceName: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
     if (data.type === FlowAreaTypeEnum.CUSTOM) {

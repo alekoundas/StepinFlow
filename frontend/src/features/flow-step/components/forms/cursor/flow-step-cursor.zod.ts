@@ -3,7 +3,6 @@ import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
-import { scriptName } from "@/shared/utils/script-text";
 
 // The four cursor modes are separate FlowStepTypes so the tree, the icons and the executor keep a
 // flat dispatch. Only the form merges them, and the mode buttons rewrite flowStepType.
@@ -23,7 +22,11 @@ export const isCursorFlowStepType = (
 
 export const FlowStepCursorSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     flowStepType: z.enum(CURSOR_FLOW_STEP_TYPES),
 
     // Start point

@@ -2,11 +2,14 @@ import { z } from "zod";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
-import { scriptName } from "@/shared/utils/script-text";
 
 export const FlowStepSearchImageSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     searchMode: z.enum(SearchModeEnum),
     flowAreaId: z.number().int().nullish(),

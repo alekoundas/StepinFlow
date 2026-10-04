@@ -1,12 +1,18 @@
 import { z } from "zod";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepEndExecutionSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     endExecutionAsSuccess: z.boolean(),
-    message: scriptText(z.string().max(1500, "Too long to be a useful reason")),
+    message: z
+      .string()
+      .max(1500, "Too long to be a useful reason")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
     // A pass needs no explanation. A failure is the line that lands in the report, and "it failed"

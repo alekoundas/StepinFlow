@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const WINDOW_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.WINDOW_FOCUS,
@@ -18,13 +17,21 @@ export const isWindowFlowStepType = (
 
 export const FlowStepWindowSchema = z
   .object({
-    name: scriptName(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
 
     // The window itself. Named here rather than borrowed from an APPLICATION area: a matcher is
     // the same on every machine, so it has no reason to be a separate tunable record.
-    processName: scriptText(),
-    titlePattern: scriptText(),
+    processName: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
+    titlePattern: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     titleMatchMode: z.enum(TitleMatchModeEnum),
 
     // WINDOW_RESIZE
