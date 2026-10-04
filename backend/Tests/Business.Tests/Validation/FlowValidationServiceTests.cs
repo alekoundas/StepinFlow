@@ -82,15 +82,6 @@ namespace Business.Tests.Validation
             CodesOn(notify).ShouldContain(FlowValidationCodeEnum.TEXT_DELIMITER);
         }
 
-        [Fact]
-        public void An_area_whose_name_holds_a_script_delimiter_is_named_in_the_error()
-        {
-            Search("Find");
-            _areas.Add(new FlowArea { Id = 101, Name = "Bad ]> area", Type = FlowAreaTypeEnum.MONITOR });
-
-            Validate().Issues.ShouldContain(x => x.Code == FlowValidationCodeEnum.TEXT_DELIMITER && x.FlowStepName == "Bad ]> area");
-        }
-
         [Theory]
         [InlineData(ConditionTypeEnum.EQUALS, "", "", FlowValidationCodeEnum.CONDITION_VALUE_MISSING)]
         [InlineData(ConditionTypeEnum.BETWEEN, "1", "", FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE)]

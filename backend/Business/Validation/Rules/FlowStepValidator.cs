@@ -1,4 +1,6 @@
 using Business.Command;
+using Business.FlowScript.Catalogs;
+using Business.FlowScript.Syntax;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -26,6 +28,8 @@ namespace Business.Validation.Rules
             {
                 if (string.IsNullOrWhiteSpace(step.Name))
                     result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.NAME_MISSING, "This step has no name.");
+
+                ValidateScriptText(result, step);
 
                 if (WindowTypes.Contains(step.FlowStepType))
                     ValidateWindow(result, step);
@@ -85,6 +89,32 @@ namespace Business.Validation.Rules
         // ================================================================
         // Private methods
         // ================================================================
+
+        // The flow script writes text between <[ and ]> and escapes nothing, so a step whose text holds
+        // either one could not be exported. The comment is written as it is rather than between them,
+        // and the exit codes and OCR language are never typed freely.
+        private static void ValidateScriptText(FlowValidationResultDto result, FlowStep step)
+        {
+            bool hasDelimiter = SyntaxFacts.HasTextDelimiter(step.Name)
+                || SyntaxFacts.HasTextDelimiter(step.Message)
+                || SyntaxFacts.HasTextDelimiter(step.KeyboardInputText)
+                || SyntaxFacts.HasTextDelimiter(step.RunCommandValue)
+                || SyntaxFacts.HasTextDelimiter(step.RunCommandWorkingDirectory)
+                || SyntaxFacts.HasTextDelimiter(step.ResultExtractPattern)
+                || SyntaxFacts.HasTextDelimiter(step.ConditionText)
+                || SyntaxFacts.HasTextDelimiter(step.ConditionTextEnd)
+                || SyntaxFacts.HasTextDelimiter(step.ProcessName)
+                || SyntaxFacts.HasTextDelimiter(step.TitlePattern);
+
+            if (!hasDelimiter)
+                return;
+
+            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
+            string textEnd = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END);
+
+            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.TEXT_DELIMITER,
+                $"Text in this step can't contain \"{textStart}\" or \"{textEnd}\".");
+        }
 
         private static void ValidateWindow(FlowValidationResultDto result, FlowStep step)
         {
