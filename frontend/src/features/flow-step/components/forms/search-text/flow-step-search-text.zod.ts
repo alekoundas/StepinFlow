@@ -5,23 +5,24 @@ import {
   SEARCH_TEXT_CONDITION_TYPES,
 } from "@/features/flow-step/components/forms/shared/condition-types";
 import { SEARCH_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
+import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepSearchTextSchema = z
   .object({
-    name: z.string().min(1, "Name is required").max(120, "Name too long"),
+    name: scriptName(),
 
     flowAreaId: z.number().int().nullish(),
     ocrLanguage: z.string().min(1, "Pick the language the text is written in"),
 
-    conditionText: z.string(),
-    conditionTextEnd: z.string(),
+    conditionText: scriptText(),
+    conditionTextEnd: scriptText(),
     conditionType: z.enum(SEARCH_TEXT_CONDITION_TYPES),
 
     searchMode: z.enum(SEARCH_TEXT_MODE_VALUES),
     pollIntervalMilliseconds: z.number().int().min(50),
     timeoutMilliseconds: z.number().int().min(0),
 
-    resultExtractPattern: z.string(),
+    resultExtractPattern: scriptText(),
   })
   .superRefine((data, ctx) => {
     if (!data.flowAreaId) {

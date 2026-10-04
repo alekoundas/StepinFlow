@@ -117,7 +117,7 @@ namespace Business.Validation.Rules
         }
 
         // Steps, areas and points are one namespace, because the script refers to all three by
-        // name. A duplicate makes "Click at \"Find button\"" ambiguous, and makes execution history
+        // name. A duplicate makes "Click at <[ Find button ]>" ambiguous, and makes execution history
         // correlate two different steps into one trend.
         private static void ValidateNamesAreUnique(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
         {

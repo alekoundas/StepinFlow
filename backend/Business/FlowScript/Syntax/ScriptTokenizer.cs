@@ -1,5 +1,5 @@
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
-using System.Text;
 
 namespace Business.FlowScript.Syntax
 {
@@ -57,6 +57,8 @@ namespace Business.FlowScript.Syntax
 
         private static IReadOnlyList<ScriptToken> Tokenize(string line)
         {
+            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
+
             List<ScriptToken> tokens = new List<ScriptToken>();
             int i = 0;
 
@@ -69,8 +71,8 @@ namespace Business.FlowScript.Syntax
                 }
 
                 int column = i + 1;
-                if (line[i] == '"')
-                    tokens.Add(new ScriptToken(ReadQuoted(line, ref i), true, column));
+                if (line.AsSpan(i).StartsWith(textStart, StringComparison.Ordinal))
+                    tokens.Add(ReadText(line, ref i, column));
                 else
                     tokens.Add(new ScriptToken(ReadWord(line, ref i), false, column));
             }
@@ -78,49 +80,24 @@ namespace Business.FlowScript.Syntax
             return tokens;
         }
 
-        // From an opening quote to its closing one. Backslashes are plain text unless they come right
-        // before a quote: there each pair is one backslash, and an odd one left over makes the quote
-        // part of the text rather than its end. SyntaxFacts.Quote writes them that way.
-        private static string ReadQuoted(string line, ref int i)
+        // From "<[" to the first "]>", trimmed. Nothing between them is special, so text cannot hold
+        // "]>" - and one that never closes runs to the end of the line, for the parser to report.
+        private static ScriptToken ReadText(string line, ref int i, int column)
         {
-            StringBuilder text = new StringBuilder();
-            i++;
+            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
+            string textEnd = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END);
 
-            while (i < line.Length && line[i] != '"')
+            int from = i + textStart.Length;
+            int to = line.IndexOf(textEnd, from, StringComparison.Ordinal);
+
+            if (to < 0)
             {
-                if (line[i] != '\\')
-                {
-                    text.Append(line[i]);
-                    i++;
-                    continue;
-                }
-
-                int runEnd = i;
-                while (runEnd < line.Length && line[runEnd] == '\\')
-                    runEnd++;
-
-                int backslashes = runEnd - i;
-                i = runEnd;
-
-                bool beforeQuote = i < line.Length && line[i] == '"';
-                if (!beforeQuote)
-                {
-                    text.Append('\\', backslashes);
-                    continue;
-                }
-
-                text.Append('\\', backslashes / 2);
-
-                // Odd: the quote is text. Even: it closes the text, which the loop sees next.
-                if (backslashes % 2 == 1)
-                {
-                    text.Append('"');
-                    i++;
-                }
+                i = line.Length;
+                return new ScriptToken(line[from..].Trim(), true, column) { IsUnclosed = true };
             }
 
-            i++;
-            return text.ToString();
+            i = to + textEnd.Length;
+            return new ScriptToken(line[from..to].Trim(), true, column);
         }
 
         // Up to the next whitespace.

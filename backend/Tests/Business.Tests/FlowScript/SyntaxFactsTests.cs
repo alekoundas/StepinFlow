@@ -45,7 +45,7 @@ namespace Business.Tests.FlowScript
                     step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
-                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Tokens(written + " \"name\""));
+                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Tokens(written + " <[ name ]>"));
 
                 if (written != keyword.Text || read != keyword)
                     wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
@@ -55,9 +55,9 @@ namespace Business.Tests.FlowScript
         }
 
         [Theory]
-        [InlineData("Move Window process \"x\"", FlowStepTypeEnum.WINDOW_RELOCATE)]
-        [InlineData("Wait Until No Image \"x\"", FlowStepTypeEnum.SEARCH_IMAGE)]
-        [InlineData("Wait For Text \"x\"", FlowStepTypeEnum.SEARCH_TEXT)]
+        [InlineData("Move Window process <[ x ]>", FlowStepTypeEnum.WINDOW_RELOCATE)]
+        [InlineData("Wait Until No Image <[ x ]>", FlowStepTypeEnum.SEARCH_IMAGE)]
+        [InlineData("Wait For Text <[ x ]>", FlowStepTypeEnum.SEARCH_TEXT)]
         [InlineData("Wait 800ms", FlowStepTypeEnum.WAIT)]
         public void The_longest_keyword_wins(string line, FlowStepTypeEnum type)
         {
@@ -65,9 +65,33 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void A_quoted_word_is_a_name_and_never_a_keyword()
+        public void Text_is_a_name_and_never_a_keyword()
         {
-            SyntaxFacts.ReadFirstKeyword(Tokens("\"Click\" at match")).ShouldBeNull();
+            SyntaxFacts.ReadFirstKeyword(Tokens("<[ Click ]> at match")).ShouldBeNull();
+        }
+
+        // Nothing inside is special, and the spaces at its edges are layout rather than text.
+        [Theory]
+        [InlineData("<[ He said \"hi\" ]>", "He said \"hi\"")]
+        [InlineData(@"<[ C:\temp\ ]>", @"C:\temp\")]
+        [InlineData("<[This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
+        [InlineData("<[                  This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
+        [InlineData("<[]>", "")]
+        public void Text_is_everything_between_the_delimiters_trimmed(string line, string text)
+        {
+            ScriptToken token = Tokens(line).ShouldHaveSingleItem();
+
+            token.IsQuoted.ShouldBeTrue();
+            token.Text.ShouldBe(text);
+        }
+
+        [Fact]
+        public void Text_that_never_closes_runs_to_the_end_of_the_line_and_says_so()
+        {
+            ScriptToken token = Tokens("<[ no end").ShouldHaveSingleItem();
+
+            token.IsUnclosed.ShouldBeTrue();
+            token.Text.ShouldBe("no end");
         }
 
         [Fact]
@@ -77,7 +101,7 @@ namespace Business.Tests.FlowScript
 
             foreach (ConditionTypeEnum condition in Enum.GetValues<ConditionTypeEnum>())
             {
-                FlowStep step = new FlowStep { ConditionType = condition, ConditionText = "a \"quoted\" value", ConditionTextEnd = "9" };
+                FlowStep step = new FlowStep { ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
                 string written = SyntaxFacts.Condition(step);
                 ConditionSyntax? read = SyntaxFacts.ReadCondition(Tokens(written), 0);
 
@@ -103,7 +127,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.TitleMatch(mode) + " \"x\""), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
+            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.TitleMatch(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]
@@ -125,7 +149,15 @@ namespace Business.Tests.FlowScript
                 {
                     string written = SyntaxFacts.Button(button, action);
 
-                    SyntaxFacts.ReadButton(written.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ShouldBe((button, action), written);
+                    CursorButtonTypeEnum readButton = CursorButtonTypeEnum.LEFT_BUTTON;
+                    CursorButtonActionTypeEnum readAction = CursorButtonActionTypeEnum.SINGLE_CLICK;
+                    foreach (string word in written.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        readButton = SyntaxFacts.ReadButtonSide(word) ?? readButton;
+                        readAction = SyntaxFacts.ReadButtonAction(word) ?? readAction;
+                    }
+
+                    (readButton, readAction).ShouldBe((button, action), written);
                 }
             }
         }

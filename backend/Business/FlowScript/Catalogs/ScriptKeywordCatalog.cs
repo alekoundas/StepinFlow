@@ -43,17 +43,21 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
             new ScriptKeyword("##", FlowStepTypeEnum.MARKER),
 
+            // Where text starts and ends. Nothing between them is special, so text cannot hold either.
+            new ScriptKeyword("<[", ScriptSymbolEnum.TEXT_START),
+            new ScriptKeyword("]>", ScriptSymbolEnum.TEXT_END),
+
             // Lines that are not steps: intent for the step below, the flow's own fields, and the
             // header opening each section.
-            new ScriptKeyword("#", ScriptLineTypeEnum.COMMENT),
-            new ScriptKeyword("Flow:", ScriptLineTypeEnum.FLOW),
-            new ScriptKeyword("Id:", ScriptLineTypeEnum.ID),
-            new ScriptKeyword("Sizes:", ScriptLineTypeEnum.SIZES),
-            new ScriptKeyword("Areas:", ScriptLineTypeEnum.AREAS),
-            new ScriptKeyword("Points:", ScriptLineTypeEnum.POINTS),
-            new ScriptKeyword("Inputs:", ScriptLineTypeEnum.INPUTS),
-            new ScriptKeyword("Templates:", ScriptLineTypeEnum.TEMPLATES),
-            new ScriptKeyword("Steps:", ScriptLineTypeEnum.STEPS),
+            new ScriptKeyword("#", ScriptSymbolEnum.COMMENT),
+            new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOW),
+            new ScriptKeyword("Id:", ScriptSymbolEnum.ID),
+            new ScriptKeyword("Sizes:", ScriptSymbolEnum.SIZES),
+            new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
+            new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),
+            new ScriptKeyword("Inputs:", ScriptSymbolEnum.INPUTS),
+            new ScriptKeyword("Templates:", ScriptSymbolEnum.TEMPLATES),
+            new ScriptKeyword("Steps:", ScriptSymbolEnum.STEPS),
 
             // How a window title is matched. "is" and "matches" are also conditions; the vocabulary
             // is the enum type, so a reader asking for one never finds the other.

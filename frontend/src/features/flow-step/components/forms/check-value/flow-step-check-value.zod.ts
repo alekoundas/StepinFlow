@@ -4,15 +4,16 @@ import {
   needsSecondValue,
   needsValue,
 } from "@/features/flow-step/components/forms/shared/condition-types";
+import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowStepCheckValueSchema = z
   .object({
-    name: z.string().min(1, "Name is required").max(120, "Name too long"),
+    name: scriptName(),
 
     flowStepReferenceId: z.number().int().nullish(),
     conditionType: z.enum(ConditionTypeEnum),
-    conditionText: z.string(),
-    conditionTextEnd: z.string(),
+    conditionText: scriptText(),
+    conditionTextEnd: scriptText(),
   })
   .superRefine((data, ctx) => {
     if (!data.flowStepReferenceId) {

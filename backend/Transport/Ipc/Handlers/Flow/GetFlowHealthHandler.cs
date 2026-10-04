@@ -68,7 +68,18 @@ namespace Transport.Ipc.Handlers
             List<FlowArea> areas = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Where(x => all || flowIds.Contains(x.FlowId))
-                .Select(x => new FlowArea { Id = x.Id, FlowId = x.FlowId, Name = x.Name, Type = x.Type, ParentFlowAreaId = x.ParentFlowAreaId })
+                .Select(x => new FlowArea
+                {
+                    Id = x.Id,
+                    FlowId = x.FlowId,
+                    Name = x.Name,
+                    Type = x.Type,
+                    ParentFlowAreaId = x.ParentFlowAreaId,
+                    ProcessName = x.ProcessName,
+                    TitlePattern = x.TitlePattern,
+                    TabMatchValue = x.TabMatchValue,
+                    MonitorDeviceName = x.MonitorDeviceName,
+                })
                 .ToListAsync(ct);
 
             List<FlowPoint> points = await dbContext.FlowPoints

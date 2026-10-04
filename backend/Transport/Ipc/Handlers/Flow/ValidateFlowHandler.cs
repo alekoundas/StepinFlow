@@ -40,11 +40,21 @@ namespace Transport.Ipc.Handlers
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
 
-            // Only what the rules read: the name, and what each one sits in.
+            // Only what the rules read: the name, what each one sits in, and the text the script writes.
             List<FlowArea> areas = await dbContext.FlowAreas
                 .AsNoTracking()
                 .Where(x => x.FlowId == id)
-                .Select(x => new FlowArea { Id = x.Id, Name = x.Name, Type = x.Type, ParentFlowAreaId = x.ParentFlowAreaId })
+                .Select(x => new FlowArea
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Type = x.Type,
+                    ParentFlowAreaId = x.ParentFlowAreaId,
+                    ProcessName = x.ProcessName,
+                    TitlePattern = x.TitlePattern,
+                    TabMatchValue = x.TabMatchValue,
+                    MonitorDeviceName = x.MonitorDeviceName,
+                })
                 .ToListAsync(ct);
 
             List<FlowPoint> points = await dbContext.FlowPoints

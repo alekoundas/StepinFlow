@@ -37,8 +37,8 @@ namespace Business.FlowScript.Text
 
         private static void WriteHeader(StringBuilder builder, BoundFlow source)
         {
-            builder.Append(Pad(SyntaxFacts.LineType(ScriptLineTypeEnum.FLOW), 9)).AppendLine(source.Flow.Name);
-            builder.Append(Pad(SyntaxFacts.LineType(ScriptLineTypeEnum.ID), 9)).AppendLine(source.Flow.PublicId.ToString());
+            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOW), 9)).AppendLine(source.Flow.Name);
+            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.ID), 9)).AppendLine(source.Flow.PublicId.ToString());
 
             if (source.Viewports.Count > 0)
             {
@@ -46,7 +46,7 @@ namespace Business.FlowScript.Text
                     .OrderBy(x => x.OrderNumber)
                     .Select(x => $"{x.Width}x{x.Height}");
 
-                builder.Append(Pad(SyntaxFacts.LineType(ScriptLineTypeEnum.SIZES), 9)).AppendLine(string.Join(", ", sizes));
+                builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.SIZES), 9)).AppendLine(string.Join(", ", sizes));
             }
 
             builder.AppendLine();
@@ -62,7 +62,7 @@ namespace Business.FlowScript.Text
             if (source.Areas.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.LineType(ScriptLineTypeEnum.AREAS));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.AREAS));
 
             // Parents before children, so a child's "inside X" always names something already read.
             foreach (FlowArea area in Ordered(source.Areas))
@@ -73,7 +73,7 @@ namespace Business.FlowScript.Text
 
         private static string AreaLine(FlowArea area, BoundFlow source)
         {
-            string name = Pad(SyntaxFacts.Quote(area.Name), 16);
+            string name = Pad(SyntaxFacts.Quote(area.Name), 20);
 
             return $"{name}{AreaPlacement(area, source)}{AreaScaling(area)}";
         }
@@ -89,7 +89,7 @@ namespace Business.FlowScript.Text
 
             switch (area.Type)
             {
-                // Empty is the primary monitor, and "primary" is unQuote so a device cannot be mistaken for it.
+                // Empty is the primary monitor, and "primary" is a bare word so a device cannot be mistaken for it.
                 case FlowAreaTypeEnum.MONITOR:
                     if (area.MonitorDeviceName.Length == 0)
                         return "monitor primary";
@@ -135,11 +135,11 @@ namespace Business.FlowScript.Text
             if (source.Points.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.LineType(ScriptLineTypeEnum.POINTS));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.POINTS));
 
             foreach (FlowPoint point in source.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
-                string name = Pad(SyntaxFacts.Quote(point.Name), 16);
+                string name = Pad(SyntaxFacts.Quote(point.Name), 20);
 
                 string placement = $"offset {Integer(point.LocationX)} {Integer(point.LocationY)}";
                 if (point.OffsetMode == AreaSizingModeEnum.RATIO)
@@ -164,7 +164,7 @@ namespace Business.FlowScript.Text
             if (source.Inputs.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.LineType(ScriptLineTypeEnum.INPUTS));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.INPUTS));
 
             foreach (FlowCsvColumn input in source.Inputs.OrderBy(x => x.OrderNumber))
             {
@@ -172,7 +172,7 @@ namespace Business.FlowScript.Text
                 // file, and a default in the script would be the one nobody remembers to change.
                 string secret = input.IsSecret ? "secret" : string.Empty;
 
-                builder.Append("  ").AppendLine($"{Pad(SyntaxFacts.Quote(input.Name), 16)}{secret}".TrimEnd());
+                builder.Append("  ").AppendLine($"{Pad(SyntaxFacts.Quote(input.Name), 20)}{secret}".TrimEnd());
             }
 
             builder.AppendLine();
@@ -193,7 +193,7 @@ namespace Business.FlowScript.Text
             if (lines.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.LineType(ScriptLineTypeEnum.TEMPLATES));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.TEMPLATES));
 
             foreach (string line in lines)
                 builder.Append("  ").AppendLine(line);
@@ -221,7 +221,7 @@ namespace Business.FlowScript.Text
             if (facts.Length == 0)
                 return string.Empty;
 
-            return $"{Pad(SyntaxFacts.Quote(template.FileName), 24)}{facts}";
+            return $"{Pad(SyntaxFacts.Quote(template.FileName), 28)}{facts}";
         }
 
 
@@ -231,7 +231,7 @@ namespace Business.FlowScript.Text
 
         private static void WriteSteps(StringBuilder builder, BoundFlow source)
         {
-            builder.AppendLine(SyntaxFacts.LineType(ScriptLineTypeEnum.STEPS));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.STEPS));
 
             // A gap between top level steps, but never two: a marker already leaves one behind it,
             // and a heading followed by empty space reads as a section with nothing in it.
@@ -264,7 +264,7 @@ namespace Business.FlowScript.Text
             if (!string.IsNullOrWhiteSpace(step.CodeComment))
             {
                 foreach (string line in step.CodeComment.Split('\n'))
-                    builder.Append(indent).Append(SyntaxFacts.LineType(ScriptLineTypeEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
+                    builder.Append(indent).Append(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
             }
 
             builder.Append(indent).AppendLine(StepLine(step, source));
@@ -514,7 +514,7 @@ namespace Business.FlowScript.Text
         private static string Variable(int? referenceId, BoundFlow source)
         {
             if (referenceId == null)
-                return "\"\"";
+                return SyntaxFacts.Quote(string.Empty);
 
             return SyntaxFacts.Quote("{{" + source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty) + "}}");
         }

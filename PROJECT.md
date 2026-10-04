@@ -574,22 +574,22 @@ Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080, 390x844
 
 Areas:
-  "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi
-  "Login form"    inside "Browser"   ratio 0.30 0.18  0.40 0.40
+  <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  0.40 0.40
 
 Templates:
-  "username-field.png"    click 150,18   captured 922x648 at 120dpi
+  <[ username-field.png ]>    click 150,18   captured 922x648 at 120dpi
 
 Steps:
 
 ## Sign in
 
-Find Image      "Find username field"   template "username-field.png" accuracy 0.85   in "Login form"
-  Success:
-    Click           at "Find username field"
-    Type            "{{username}}"
-  Failure:
-    End Execution   failed  "no username field on the login page"
+Find Image      <[ Find username field ]>   template <[ username-field.png ]> accuracy 0.85   in <[ Login form ]>
+ Success:
+  Click           at <[ Find username field ]>
+  Type            <[ {{username}} ]>
+ Failure:
+  End Execution   failed  <[ no username field on the login page ]>
 ```
 
 ### Shaped like a compiler
@@ -624,10 +624,10 @@ pressed Ctrl+B and `System 99` parsed as an action that does not exist.
 
 ```
 Templates:
-  "login.png"           click 150,20   captured 922x648 at 120dpi
+  <[ login.png ]>           click 150,20   captured 922x648 at 120dpi
 
 Steps:
-Find Image  "Find login"   template "login.png" accuracy 0.97 required   match shape and brightness   in "Browser"
+Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required   match shape and brightness   in <[ Browser ]>
 ```
 
 Facts about the picture go in the header - the click point, and the area size and DPI it was
@@ -676,11 +676,20 @@ A round trip proves `A == B`; it cannot prove either is right. So beside it sits
 build. On a difference the new text is written beside it as `.received.sflw` and the failure names
 the first line that changed. It is also the most complete example of the format in the repository.
 
-### Four grammar rules that only emerged from reading real output
+### Grammar rules that only emerged from reading real output
 
-**Every name is quoted**, even when it would read fine without. The original spec had bare names in
-aligned columns — a parser cannot tell where such a name stops. One rule is easier to parse back
-than a rule about which names need it.
+**Every piece of text is marked, between `<[` and `]>`**, even when it would read fine without.
+The original spec had bare names in aligned columns — a parser cannot tell where such a name stops.
+Quotes came first and needed escaping, and a stray quote typed by hand cut a message short without
+a word; marks no text uses mean nothing is escaped, quotes and backslashes are ordinary text, and the
+only rule is that text cannot hold the marks themselves. The forms refuse them as they are typed,
+`FlowValidationService` flags them on anything that arrived another way, and the importer refuses a
+script holding one.
+
+**Every word is read.** Each line goes through a cursor - `ScriptLineReader` - whose reads take a
+token or report what belonged there, and which reports whatever is left at the end of the line. A
+word too many and a word missing are both errors with a column, so a hand edit that goes wrong is
+named rather than quietly dropped.
 
 **`Launch` takes one command string**, not an executable plus arguments. The model stores one
 string; inventing a split it does not have would fail the round trip on the first export.
@@ -902,6 +911,7 @@ warning counts, and the editor names the step.
 | an `End Execution` under another one, which reads as a decision and is not | anything positioned in screen coordinates |
 | `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
 | a `{{variable}}` nothing in the flow defines | |
+| text holding `<[` or `]>`, which the script could not write | |
 
 `NAME_DUPLICATE` is an error rather than a warning: the script refers to things by name, so a
 duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step picks

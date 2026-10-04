@@ -118,7 +118,7 @@ the history.
 - [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
       both called "Retry" is a fair description of some flows - until the cost showed up: the binder
       resolves a step reference by name across every named step, and a stage is a named step, so
-      `Go To to "Retry"` can legitimately land on one and a duplicate makes that ambiguous. Keeping
+      `Go To to <[ Retry ]>` can legitimately land on one and a duplicate makes that ambiguous. Keeping
       the rule costs a rename; dropping it would have cost either the `Go To` target or a silent
       first-match.
 
@@ -128,7 +128,7 @@ the history.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
-- [ ] **`Go To to "Step"`.** The keyword is `Go To` and the parser then skips a `to`, so every
+- [ ] **`Go To to <[ Step ]>`.** The keyword is `Go To` and the parser then skips a `to`, so every
       go-to reads with the word twice. Either the keyword becomes `Go` or the extra word goes. A
       grammar change, so the approved sample file and FLOW-FORMAT.md change with it.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
@@ -373,7 +373,7 @@ the history.
          step - drag the step away and the explanation stays behind, while `CodeComment` is a column
          and travels with it. That difference is the principle: a stage should change when a step
          moves, a comment should not;
-      3) a marker's name is in the flow's one namespace and the binder resolves `Go To to "X"`
+      3) a marker's name is in the flow's one namespace and the binder resolves `Go To to <[ X ]>`
          against every named step, so two markers sharing a name make that reference ambiguous;
       4) the recorder writes a note per recorded step, which as markers doubles the tree.
 

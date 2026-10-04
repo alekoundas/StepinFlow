@@ -70,6 +70,27 @@ namespace Business.Tests.Validation
             codes.ShouldContain(FlowValidationCodeEnum.NO_TEMPLATES);
         }
 
+        // The script writes text between <[ and ]>, so text holding either one could not be exported.
+        [Theory]
+        [InlineData("Login <[ failed")]
+        [InlineData("Login ]> failed")]
+        public void Text_holding_a_script_delimiter_is_an_error(string message)
+        {
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell");
+            notify.Message = message;
+
+            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.TEXT_DELIMITER);
+        }
+
+        [Fact]
+        public void An_area_whose_name_holds_a_script_delimiter_is_named_in_the_error()
+        {
+            Search("Find");
+            _areas.Add(new FlowArea { Id = 101, Name = "Bad ]> area", Type = FlowAreaTypeEnum.MONITOR });
+
+            Validate().Issues.ShouldContain(x => x.Code == FlowValidationCodeEnum.TEXT_DELIMITER && x.FlowStepName == "Bad ]> area");
+        }
+
         [Theory]
         [InlineData(ConditionTypeEnum.EQUALS, "", "", FlowValidationCodeEnum.CONDITION_VALUE_MISSING)]
         [InlineData(ConditionTypeEnum.BETWEEN, "1", "", FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE)]

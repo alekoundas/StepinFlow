@@ -2,6 +2,7 @@ using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Scanner;
+using Business.FlowScript.Text;
 using Core.Enums;
 
 namespace Business.Tests.FlowScript
@@ -16,36 +17,41 @@ namespace Business.Tests.FlowScript
 
         public static TheoryData<DiagnosticCodeEnum, string> Cases { get; } = new TheoryData<DiagnosticCodeEnum, string>
         {
+            { DiagnosticCodeEnum.TEXT_UNCLOSED, "Steps:\nNotify <[ never closes" },
+            { DiagnosticCodeEnum.TEXT_DELIMITER, "Steps:\nNotify <[ a <[ b ]>" },
+            { DiagnosticCodeEnum.ARGUMENT_EXPECTED, "Steps:\nNotify" },
+            { DiagnosticCodeEnum.NUMBER_MALFORMED, "Steps:\nLoop many times" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nNotify <[ hi ]> there" },
             { DiagnosticCodeEnum.HEADER_MALFORMED, "not a header" },
             { DiagnosticCodeEnum.HEADER_UNKNOWN, "Colour: red" },
             { DiagnosticCodeEnum.PUBLIC_ID_MALFORMED, "Id: nope" },
             { DiagnosticCodeEnum.SIZE_MALFORMED, "Sizes: 1920by1080" },
-            { DiagnosticCodeEnum.AREA_NAME_MISSING, "Areas:\n  Browser window process \"chrome.exe\"" },
-            { DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, "Areas:\n  \"Browser\" window chrome" },
-            { DiagnosticCodeEnum.AREA_PLACEMENT_UNKNOWN, "Areas:\n  \"Browser\" floating" },
-            { DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Areas:\n  \"A\" monitor primary\n  \"B\" inside \"A\" somewhere" },
-            { DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, "Areas:\n  \"A\" monitor primary sideways" },
-            { DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, "Areas:\n  \"A\" window process \"x\" title resembles \"y\"" },
+            { DiagnosticCodeEnum.AREA_NAME_MISSING, "Areas:\n  Browser window process <[ chrome.exe ]>" },
+            { DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, "Areas:\n  <[ Browser ]> window chrome" },
+            { DiagnosticCodeEnum.AREA_PLACEMENT_UNKNOWN, "Areas:\n  <[ Browser ]> floating" },
+            { DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> somewhere" },
+            { DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, "Areas:\n  <[ A ]> monitor primary sideways" },
+            { DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, "Areas:\n  <[ A ]> window process <[ x ]> title resembles <[ y ]>" },
             { DiagnosticCodeEnum.POINT_NAME_MISSING, "Points:\n  Origin on screen offset 1 2" },
-            { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  \"Origin\" somewhere offset 1 2" },
-            { DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, "Points:\n  \"Origin\" on screen offset 1 2 at nope" },
+            { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  <[ Origin ]> somewhere offset 1 2" },
+            { DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, "Points:\n  <[ Origin ]> on screen offset 1 2 at nope" },
             { DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, "Inputs:\n  username" },
-            { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  \"a.png\" click here" },
-            { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  \"a.png\" click 1,2\n  \"a.png\" click 3,4" },
+            { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  <[ a.png ]> click here" },
+            { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1,2\n  <[ a.png ]> click 3,4" },
             { DiagnosticCodeEnum.INDENT_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
-            { DiagnosticCodeEnum.STEP_UNKNOWN, "Steps:\nFnid Image \"x\"" },
-            { DiagnosticCodeEnum.CONDITION_MISSING, "Steps:\nCheck Text \"x\" nearly \"y\"" },
-            { DiagnosticCodeEnum.SEARCH_ARGUMENT_UNKNOWN, "Steps:\nFind Image \"x\" template \"a.png\" quickly" },
-            { DiagnosticCodeEnum.CLAUSE_WITHOUT_TEMPLATE, "Steps:\nFind Image \"x\" accuracy 0.9" },
-            { DiagnosticCodeEnum.MATCH_MODE_UNKNOWN, "Steps:\nFind Image \"x\" template \"a.png\" match colour" },
-            { DiagnosticCodeEnum.TARGET_MISSING, "Steps:\nClick point \"Origin\"" },
+            { DiagnosticCodeEnum.STEP_UNKNOWN, "Steps:\nFnid Image <[ x ]>" },
+            { DiagnosticCodeEnum.CONDITION_MISSING, "Steps:\nCheck Text <[ x ]> nearly <[ y ]>" },
+            { DiagnosticCodeEnum.SEARCH_ARGUMENT_UNKNOWN, "Steps:\nFind Image <[ x ]> template <[ a.png ]> quickly" },
+            { DiagnosticCodeEnum.CLAUSE_WITHOUT_TEMPLATE, "Steps:\nFind Image <[ x ]> accuracy 0.9" },
+            { DiagnosticCodeEnum.MATCH_MODE_UNKNOWN, "Steps:\nFind Image <[ x ]> template <[ a.png ]> match colour" },
+            { DiagnosticCodeEnum.TARGET_MISSING, "Steps:\nClick point <[ Origin ]>" },
             { DiagnosticCodeEnum.DRAG_TARGET_MISSING, "Steps:\nDrag at match" },
             { DiagnosticCodeEnum.SCROLL_DIRECTION_UNKNOWN, "Steps:\nScroll sideways 3" },
             { DiagnosticCodeEnum.DURATION_MALFORMED, "Steps:\nWait soon" },
             { DiagnosticCodeEnum.LOOP_MALFORMED, "Steps:\nLoop often" },
             { DiagnosticCodeEnum.SYSTEM_ACTION_UNKNOWN, "Steps:\nSystem EXPLODE" },
-            { DiagnosticCodeEnum.PROCESS_MISSING, "Steps:\nFocus Window \"chrome\"" },
-            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at \"Nobody\"" },
+            { DiagnosticCodeEnum.PROCESS_MISSING, "Steps:\nFocus Window <[ chrome ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at <[ Nobody ]>" },
         };
 
         private static List<Diagnostic> Read(string script)
@@ -70,6 +76,39 @@ namespace Business.Tests.FlowScript
             diagnostic.Line.ShouldBe(Header.Split('\n').Length - 1 + body.Split('\n').Length);
         }
 
+        // Every line the printer writes, with one word too many: whatever the line is, the word is
+        // reported rather than dropped. Comments, stage headings and the flow's name are free text.
+        [Fact]
+        public void A_word_left_over_on_any_line_is_reported()
+        {
+            string[] lines = new Printer().Write(SampleFlow.Build()).Split('\n');
+            List<string> silent = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i].TrimEnd();
+                if (line.Length == 0 || line.TrimStart().StartsWith('#') || line.StartsWith("Flow:", StringComparison.Ordinal))
+                    continue;
+
+                string[] changed = (string[])lines.Clone();
+                changed[i] = line + " extra";
+
+                if (!new Scanner().Read(string.Join('\n', changed)).Diagnostics.Any(x => x.Line == i + 1))
+                    silent.Add(line);
+            }
+
+            silent.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void Text_cut_short_by_its_closing_mark_says_why()
+        {
+            Diagnostic diagnostic = Read(Header + "Steps:\nNotify <[ a ]> b ]>").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+            diagnostic.Message.ShouldContain("can't contain");
+        }
+
         [Fact]
         public void A_file_with_no_flow_line_is_refused()
         {
@@ -89,7 +128,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_command_preset_is_named_not_numbered()
         {
-            FlowScriptSchema document = new Scanner().Read(Header + "Steps:\nRun 2 \"notepad\"");
+            FlowScriptSchema document = new Scanner().Read(Header + "Steps:\nRun 2 <[ notepad ]>");
 
             document.Steps.Single().Step.RunCommandPreset.ShouldBe(RunCommandPresetEnum.CUSTOM);
         }

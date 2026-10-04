@@ -18,6 +18,13 @@ namespace Business.FlowScript.Diagnostics
     /// </summary>
     public enum DiagnosticCodeEnum
     {
+        // Any line
+        TEXT_UNCLOSED,
+        TEXT_DELIMITER,
+        ARGUMENT_EXPECTED,
+        NUMBER_MALFORMED,
+        TOKEN_UNEXPECTED,
+
         // Header
         FLOW_LINE_MISSING,
         HEADER_MALFORMED,

@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { scriptName } from "@/shared/utils/script-text";
 
 export const FlowStepSubFlowSchema = z
   .object({
-    name: z.string().min(1, "Name is required").max(120, "Name too long"),
+    name: scriptName(),
     subFlowId: z.number().int().nullish(),
   })
   .superRefine((data, ctx) => {

@@ -158,7 +158,7 @@ The thing it names is a **stage**, so everything derived from it says stage rath
       byte-identical round trip is what proves it. Indenting instead would be honest to the model and
       cost two spaces on nearly every line of every flow; the root-only rule is what buys the
       alternative.
-- [ ] **Stage names stay unique.** Settled with the rest: the binder resolves `Go To to "X"` against
+- [ ] **Stage names stay unique.** Settled with the rest: the binder resolves `Go To to <[ X ]>` against
       every named step, so a duplicate makes that reference ambiguous.
 - [ ] **Stamp the stage onto `ExecutionStep`**, so a failure report and the execution log given to a
       model say "failed in Checkout" without re-deriving it from the flow. This is the gap that

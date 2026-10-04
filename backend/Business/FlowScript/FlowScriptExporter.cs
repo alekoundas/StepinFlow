@@ -232,7 +232,9 @@ namespace Business.FlowScript
             if (trimmed.Length == 0)
                 return fallback;
 
-            char[] invalid = Path.GetInvalidFileNameChars();
+            // < and > on every machine, not only the ones that ban them: a template is named by its
+            // file name inside <[ ]>, which cannot hold either delimiter.
+            char[] invalid = Path.GetInvalidFileNameChars().Concat(['<', '>']).ToArray();
             IEnumerable<char> mapped = trimmed.Select(x => invalid.Contains(x) || char.IsWhiteSpace(x) ? '-' : x);
 
             string cleaned = string.Join('-', new string(mapped.ToArray())

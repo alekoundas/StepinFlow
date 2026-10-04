@@ -59,6 +59,9 @@ namespace Core.Enums
         /// <summary>A step writes a name nothing in the flow defines, so it can never resolve.</summary>
         VARIABLE_UNKNOWN,
 
+        /// <summary>Text holding "&lt;[" or "]&gt;", which the flow script uses to mark where text starts and ends.</summary>
+        TEXT_DELIMITER,
+
         // Warnings
         BRANCHES_EMPTY,
         CHECK_DECIDES_NOTHING,

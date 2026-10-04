@@ -4,6 +4,7 @@ import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
+import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 export const FlowAreaZod = z
   .object({
@@ -11,7 +12,7 @@ export const FlowAreaZod = z
     // the flow save an area with no id, which reads as new - the old row was deleted
     // and every step pointing at it had its FlowAreaId nulled.
     id: z.number().int(),
-    name: z.string().min(1, "Name is required").max(120, "Name too long"),
+    name: scriptName(),
     type: z.enum(FlowAreaTypeEnum),
 
     scalesWith: z.enum(ScalesWithEnum).nullish(),
@@ -37,15 +38,15 @@ export const FlowAreaZod = z
       .min(0, "Height must be 0% to 100%")
       .max(1, "Height must be 0% to 100%"),
 
-    processName: z.string(),
-    titlePattern: z.string(),
+    processName: scriptText(),
+    titlePattern: scriptText(),
     titleMatchMode: z.enum(TitleMatchModeEnum),
     useClientArea: z.boolean(),
 
-    tabMatchValue: z.string(),
+    tabMatchValue: scriptText(),
     tabMatchOn: z.enum(TabMatchOnEnum),
 
-    monitorDeviceName: z.string(),
+    monitorDeviceName: scriptText(),
   })
   .superRefine((data, ctx) => {
     if (data.type === FlowAreaTypeEnum.CUSTOM) {

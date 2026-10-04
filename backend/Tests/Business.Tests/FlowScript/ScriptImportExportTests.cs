@@ -157,7 +157,7 @@ namespace Business.Tests.FlowScript
                 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b112
 
                 Steps:
-                Find Image  "Find the button"   template "button.png"
+                Find Image  <[ Find the button ]>   template <[ button.png ]>
                 """;
 
             FlowImportResultDto imported = await Importer().ImportTextAsync(script, _folder, Ct);

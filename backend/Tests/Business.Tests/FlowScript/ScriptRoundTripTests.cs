@@ -43,8 +43,7 @@ namespace Business.Tests.FlowScript
             ApprovedFile.ShouldMatch(new Printer().Write(SampleFlow.Build()), "SampleFlow");
         }
 
-        // A backslash is only an escape right before a quote, so a path or a regex is written as it
-        // is - and text ending in a backslash still closes.
+        // Nothing inside <[ ]> is escaped, so quotes, backslashes and paths come back as they went out.
         [Theory]
         [InlineData("Login failed: \"bad password\"")]
         [InlineData(@"C:\temp\")]
@@ -76,14 +75,14 @@ namespace Business.Tests.FlowScript
             Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b112
 
             Areas:
-              "Screen"   monitor primary   scales with dpi
+              <[ Screen ]>   monitor primary   scales with dpi
 
             Templates:
-              "described.png"   captured 800x600 at 144dpi
+              <[ described.png ]>   captured 800x600 at 144dpi
 
             Steps:
-            Find Image  "Strict"   template "a.png" required  template "b.png" accuracy 0.9   match shape and brightness   in "Screen"
-            Find Image  "Loose"    template "described.png"
+            Find Image  <[ Strict ]>   template <[ a.png ]> required  template <[ b.png ]> accuracy 0.9   match shape and brightness   in <[ Screen ]>
+            Find Image  <[Loose]>    template <[described.png]>
             """;
 
         [Fact]

@@ -21,79 +21,79 @@ Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080, 1024x768, 390x844
 
 Areas:
-  "Browser"       window process "chrome.exe" title contains "Swag Labs"   scales with dpi   at 120dpi
-  "Cart badge"    inside "Browser"   ratio 0.88 0.00  0.12 0.10
-  "Inventory"     inside "Browser"   ratio 0.00 0.15  1.00 0.85
-  "Login form"    inside "Browser"   ratio 0.30 0.18  0.40 0.40
+  <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  0.12 0.10
+  <[ Inventory ]>     inside <[ Browser ]>   ratio 0.00 0.15  1.00 0.85
+  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  0.40 0.40
 
 Inputs:
-  "username"
-  "password"      secret
+  <[ username ]>
+  <[ password ]>      secret
 
 Templates:
-  "add-to-cart.png"       click 48,16   captured 2304x1377 at 120dpi
-  "cart-badge.png"        click 12,12   captured 276x162 at 120dpi
-  "login-button.png"      click 150,20   captured 922x648 at 120dpi
-  "login-form.png"        click 200,150   captured 2304x1620 at 120dpi
-  "password-field.png"    click 150,18   captured 922x648 at 120dpi
-  "username-field.png"    click 150,18   captured 922x648 at 120dpi
+  <[ add-to-cart.png ]>       click 48,16   captured 2304x1377 at 120dpi
+  <[ cart-badge.png ]>        click 12,12   captured 276x162 at 120dpi
+  <[ login-button.png ]>      click 150,20   captured 922x648 at 120dpi
+  <[ login-form.png ]>        click 200,150   captured 2304x1620 at 120dpi
+  <[ password-field.png ]>    click 150,18   captured 922x648 at 120dpi
+  <[ username-field.png ]>    click 150,18   captured 922x648 at 120dpi
 
 Steps:
 
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   "chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com"
+Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
 
-Wait For Image  "Login form appears"   template "login-form.png"   in "Browser"   timeout 15s
+Wait For Image  <[ Login form appears ]>   template <[ login-form.png ]>   in <[ Browser ]>   timeout 15s
  Failure:
-  End Execution  failed  "the site never loaded"
+  End Execution  failed  <[ the site never loaded ]>
 
 ## Sign in
 
-Find Image  "Find username field"   template "username-field.png" accuracy 0.85   in "Login form"
+Find Image  <[ Find username field ]>   template <[ username-field.png ]> accuracy 0.85   in <[ Login form ]>
  Failure:
-  End Execution  failed  "no username field on the login page"
+  End Execution  failed  <[ no username field on the login page ]>
  Success:
-  Click  at "Find username field"
-  Type   "{{username}}"
+  Click  at <[ Find username field ]>
+  Type   <[ {{username}} ]>
 
-Find Image  "Find password field"   template "password-field.png" accuracy 0.85   in "Login form"
+Find Image  <[ Find password field ]>   template <[ password-field.png ]> accuracy 0.85   in <[ Login form ]>
  Failure:
-  End Execution  failed  "no password field on the login page"
+  End Execution  failed  <[ no password field on the login page ]>
  Success:
-  Click  at "Find password field"
-  Type   "{{password}}"
+  Click  at <[ Find password field ]>
+  Type   <[ {{password}} ]>
 
-Find Image  "Find login button"   template "login-button.png"   in "Login form"
+Find Image  <[ Find login button ]>   template <[ login-button.png ]>   in <[ Login form ]>
  Failure:
-  End Execution  failed  "no login button"
+  End Execution  failed  <[ no login button ]>
  Success:
-  Click  at "Find login button"
+  Click  at <[ Find login button ]>
 
 # The assertion: this is what makes the recording a test.
-Wait For Text  "Products page loaded"   contains "Products"   in "Inventory"   timeout 10s
+Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inventory ]>   timeout 10s
  Failure:
-  Check Text   "Login error"   is not empty   in "Login form"
-  Notify       "Login failed: {{Login error}}"
-  End Execution  failed  "did not reach the products page"
+  Check Text   <[ Login error ]>   is not empty   in <[ Login form ]>
+  Notify       <[ Login failed: {{Login error}} ]>
+  End Execution  failed  <[ did not reach the products page ]>
 
 ## Add everything on the page to the cart
 
-Find All Images  "Find add buttons"   template "add-to-cart.png" accuracy 0.9   in "Inventory"
+Find All Images  <[ Find add buttons ]>   template <[ add-to-cart.png ]> accuracy 0.9   in <[ Inventory ]>
  Failure:
-  End Execution  failed  "no products to add"
+  End Execution  failed  <[ no products to add ]>
  Success:
-  Loop  each match in "Find add buttons"
+  Loop  each match in <[ Find add buttons ]>
    Click  at match
    # Give the badge a moment to update before the next click.
-   Wait For Image  "Badge updated"  template "cart-badge.png"  in "Cart badge"  timeout 3s
+   Wait For Image  <[ Badge updated ]>  template <[ cart-badge.png ]>  in <[ Cart badge ]>  timeout 3s
     Failure:
-     End Execution  failed  "the cart did not update after adding an item"
+     End Execution  failed  <[ the cart did not update after adding an item ]>
 
 ## Check out
 
-Sub Flow  "flows/checkout.sflw"
+Sub Flow  <[ flows/checkout.sflw ]>
 ```
 
 ---
@@ -115,11 +115,30 @@ one machine's database, and a repository is cloned into many. Without it a fresh
 
 It is generated once and travels with every copy and export of that flow from then on.
 
-### Names are always quoted
+### Text is written between `<[` and `]>`
 
-Every name is written in quotes, in the header and in the steps, whether or not it contains a
-space. One rule reads back unambiguously; a rule about which names need quoting means a parser has
-to guess where `Login form inside Browser` stops being a name.
+Every name and every piece of text - a message, a command, a pattern, the text to type - sits
+between `<[` and `]>`, in the header and in the steps, whether or not it contains a space. One rule
+reads back unambiguously; a rule about which names need marking means a parser has to guess where
+`Login form inside Browser` stops being a name.
+
+```
+Notify   <[ Login failed: "bad password" ]>
+Run      <[ dir C:\temp\ ]>
+```
+
+Nothing between them is special. Quotes and backslashes are text like any other, so nothing is ever
+escaped, and what is written is what is read. The price is that text cannot contain `<[` or `]>`
+itself: the forms refuse both as they are typed, and a script holding one is refused on import.
+
+The spaces just inside the marks are layout, not text. The printer writes one on each side, and the
+reader trims whatever is there, so `<[This text]>` and `<[    This text ]>` are the same text.
+
+### Every word means something
+
+A line is read to its end. A word nothing on that line expects is an error, and so is one the line
+needs and does not have - a `Notify` with no message, a `Click at` with no target. Either way the
+error names the line and the column, rather than a step quietly losing part of what was written.
 
 ### Sizes
 
@@ -136,15 +155,15 @@ Overridable from the command line, so CI can narrow or widen the matrix without 
 ### Areas
 
 An area is a rectangle to look inside. Areas are the vocabulary of _where_, which is why steps say
-`in "Inventory"` rather than carrying coordinates.
+`in <[ Inventory ]>` rather than carrying coordinates.
 
 ```
 Areas:
-  "Browser"     window process "chrome.exe" title contains "Swag Labs"   scales with dpi
-  "Game"        inside "Browser"   ratio 0.10 0.20  0.80 0.70   scales with area
-  "Header"      inside "Browser"   offset 0 0  size 1920 90   at 120dpi
-  "Inventory"   inside "Browser"   ratio 0.00 0.15  1.00 0.85
-  "Screen"      monitor primary
+  <[ Browser ]>     window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi
+  <[ Game ]>        inside <[ Browser ]>   ratio 0.10 0.20  0.80 0.70   scales with area
+  <[ Header ]>      inside <[ Browser ]>   offset 0 0  size 1920 90   at 120dpi
+  <[ Inventory ]>   inside <[ Browser ]>   ratio 0.00 0.15  1.00 0.85
+  <[ Screen ]>      monitor primary
 ```
 
 Roots first, then their children, each group alphabetical - so a child's `inside` always names
@@ -154,8 +173,8 @@ A root area is one of three things:
 
 | form | what it is |
 | --- | --- |
-| `window process "chrome.exe" title contains "Swag"` | a window, by process and optionally title |
-| `monitor primary`, `monitor "\\.\DISPLAY2"` | a whole monitor; `primary` is the one that means the same thing on another PC |
+| `window process <[ chrome.exe ]> title contains <[ Swag ]>` | a window, by process and optionally title |
+| `monitor primary`, `monitor <[ \\.\DISPLAY2 ]>` | a whole monitor; `primary` is the one that means the same thing on another PC |
 | `on screen   offset 10 20  size 300 200` | fixed screen coordinates - right on the machine it was made on and nowhere else |
 
 A child area is placed inside its parent, either by **ratio** (`x y width height`, each 0–1) or by
@@ -179,8 +198,8 @@ A fixed position to click, for the cases where nothing is worth searching for.
 
 ```
 Points:
-  "Menu toggle"   inside "Browser"   ratio 0.95 0.05
-  "Origin"        inside "Browser"   offset 12 12   at 120dpi
+  <[ Menu toggle ]>   inside <[ Browser ]>   ratio 0.95 0.05
+  <[ Origin ]>        inside <[ Browser ]>   offset 12 12   at 120dpi
 ```
 
 A point carries its own `at 120dpi`, the DPI its `offset` was captured at, for the same reason an
@@ -194,8 +213,8 @@ flow configuration, and a password in a repository is a leak.
 
 ```
 Inputs:
-  "username"
-  "password"    secret
+  <[ username ]>
+  <[ password ]>    secret
 ```
 
 `secret` means the value is never written to any file and resolves from the environment.
@@ -215,7 +234,7 @@ line above it is an error.
 
 Every step has a name, and **names are unique within a flow** — as are area, point and input names,
 because they share one namespace. That single rule is what lets a step be referenced by name rather
-than by position, so a later step reads `Click at "Find login button"` and an edit somewhere above
+than by position, so a later step reads `Click at <[ Find login button ]>` and an edit somewhere above
 it changes nothing.
 
 The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
@@ -257,11 +276,11 @@ A check takes its own screenshot, looks at it, decides, and produces a result. C
 a recording into a test — a flow holding none of them proves nothing.
 
 ```
-Find Image  "Find login button"   template "login-button.png" accuracy 0.85   in "Login form"
+Find Image  <[ Find login button ]>   template <[ login-button.png ]> accuracy 0.85   in <[ Login form ]>
  Success:
-  Click  at "Find login button"
+  Click  at <[ Find login button ]>
  Failure:
-  End Execution  failed  "no login button"
+  End Execution  failed  <[ no login button ]>
 ```
 
 There are three things to check and four ways to look, and the keyword says both at once:
@@ -289,14 +308,14 @@ not for text, so there is no `Find All Texts` to mistype.
 `Wait Until No …` is not "wait until gone": nothing verifies the thing was ever there, so it
 succeeds immediately when the screen never matched at all.
 
-The text forms narrow before they judge — `matches "total: (\d+)"` keeps the captured group, and the
+The text forms narrow before they judge — `matches <[ total: (\d+) ]>` keeps the captured group, and the
 condition is then tested against that. What is kept is what later steps read as `{{Name}}`, whether
 the check passed or failed, because a failure that says what was actually on screen is worth far
 more than one that only says it failed.
 
 ```
-Check Text   "Read the total"        matches "total: (\d+)"   in "Cart badge"
-Check Value  "Order is large"        "{{Read the total}}" > 100
+Check Text   <[ Read the total ]>        matches <[ total: (\d+) ]>   in <[ Cart badge ]>
+Check Value  <[ Order is large ]>        <[ {{Read the total}} ]> > 100
 ```
 
 **A check's result must be read.** One that nothing branches on and nothing references was never
@@ -316,15 +335,15 @@ costs its full length on every execution that takes the fallback.
 So wait once, on something that is always present, then branch instantly:
 
 ```
-Wait For Image  "Page loaded"   template "logo.png"   in "Browser"   timeout 15s
+Wait For Image  <[ Page loaded ]>   template <[ logo.png ]>   in <[ Browser ]>   timeout 15s
  Failure:
-  End Execution  failed  "the page never loaded"
+  End Execution  failed  <[ the page never loaded ]>
 
-Find Image  "Desktop nav present?"   template "nav-bar.png"   in "Browser"
+Find Image  <[ Desktop nav present? ]>   template <[ nav-bar.png ]>   in <[ Browser ]>
  Failure:
-  Click  at point "Hamburger menu"
+  Click  at point <[ Hamburger menu ]>
  Success:
-  Click  at "Desktop nav present?"
+  Click  at <[ Desktop nav present? ]>
 ```
 
 The anchor absorbs the patience once per page. Every layout question after it is free and still
@@ -338,12 +357,12 @@ just paying for patience it cannot use.
 ### Actions
 
 ```
-Click       at "Find login button"          left double
-Click       at point "Menu toggle"
-Move        to "Find username field"
-Type        "{{username}}"
+Click       at <[ Find login button ]>          left double
+Click       at point <[ Menu toggle ]>
+Move        to <[ Find username field ]>
+Type        <[ {{username}} ]>
 Press       Ctrl+C
-Scroll      down 3   in "Results panel"
+Scroll      down 3   in <[ Results panel ]>
 Wait        800ms
 ```
 
@@ -355,7 +374,7 @@ Wait        800ms
 ```
 Loop  5 times
 Loop  forever
-Loop  each match in "Find add buttons"
+Loop  each match in <[ Find add buttons ]>
 ```
 
 One step, three sources. Inside `each match`, the keyword `match` refers to the current item, so
@@ -366,7 +385,7 @@ can run between passes.
 ### Ending an execution
 
 ```
-End Execution  failed   "did not reach the products page"
+End Execution  failed   <[ did not reach the products page ]>
 End Execution  passed
 ```
 
@@ -377,15 +396,15 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 
 ```
  Failure:
-  Click    at point "Log out"
-  Notify   "checkout failed"
-  End Execution  failed  "could not complete the order"
+  Click    at point <[ Log out ]>
+  Notify   <[ checkout failed ]>
+  End Execution  failed  <[ could not complete the order ]>
 ```
 
 ### Sub-flows
 
 ```
-Sub Flow  "flows/checkout.sflw"
+Sub Flow  <[ flows/checkout.sflw ]>
 ```
 
 ### Cleanup under End Execution
@@ -395,9 +414,9 @@ closing the application, a notification, a webhook. They are ordinary steps, so 
 do a teardown can do:
 
 ```
-End Execution  failed  "did not reach the products page"
- Run     KILL_PROCESS  "chrome.exe"
- Notify  "login smoke failed at {{width}}x{{height}}"
+End Execution  failed  <[ did not reach the products page ]>
+ Run     KILL_PROCESS  <[ chrome.exe ]>
+ Notify  <[ login smoke failed at {{width}}x{{height}} ]>
 ```
 
 The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes
@@ -413,7 +432,7 @@ A path relative to the repository root, because names are only unique within a f
 
 ## Templates
 
-`template "login-button.png"` names a file in a folder beside the flow:
+`template <[ login-button.png ]>` names a file in a folder beside the flow:
 
 ```
 flows/
@@ -435,7 +454,7 @@ throws away the one thing this layout is for.
 ### On the step: how it is searched for
 
 ```
-Find Image  "Find login"   template "login.png" accuracy 0.97 required  template "login-alt.png" accuracy 0.9   match shape and brightness   in "Login form"
+Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required  template <[ login-alt.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
 ```
 
 `accuracy` and `required` follow the template they belong to, so neither can be read as the
@@ -458,7 +477,7 @@ step's.
 
 ```
 Templates:
-  "login.png"           click 150,20   captured 922x648 at 120dpi
+  <[ login.png ]>           click 150,20   captured 922x648 at 120dpi
 ```
 
 Facts about the picture rather than the search, once per file:
@@ -482,6 +501,9 @@ the size it was captured.
 transaction is pure, so a typo reports its line and leaves the existing flow untouched rather than
 half-replaced.
 
+**Every word is accounted for.** A word left over on a line, and a word a line needs but does not
+have, are both errors with a line and a column - nothing is dropped and nothing is guessed.
+
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps
 the trend for every step whose name did not change. Renaming a step starts its history over —
@@ -497,7 +519,7 @@ with template bytes written to disk and read back.
 Two things it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
 means reading the `Id:` out of the file it names and deciding what a missing one does; and the
 semantic validator does not run on import, so what is checked is structural — is that a keyword, is
-that a condition, does that name exist.
+that a condition, does that name exist, does every word belong.
 
 ---
 

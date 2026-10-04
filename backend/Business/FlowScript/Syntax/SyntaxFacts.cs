@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
@@ -80,38 +79,52 @@ namespace Business.FlowScript.Syntax
         /// <summary>A "#" line is intent for the step below it, unless the catalog says otherwise - "##" is a stage heading.</summary>
         internal static bool IsComment(ScriptLine line)
         {
-            if (!line.Raw.TrimStart().StartsWith(LineType(ScriptLineTypeEnum.COMMENT), StringComparison.Ordinal))
+            if (!line.Raw.TrimStart().StartsWith(Symbol(ScriptSymbolEnum.COMMENT), StringComparison.Ordinal))
                 return false;
 
             return ReadFirstKeyword(line.Tokens) == null;
         }
 
         /// <summary>The section a header line opens. Null when the line is not a header.</summary>
-        internal static ScriptLineTypeEnum? ReadSectionHeader(ScriptLine line)
+        internal static ScriptSymbolEnum? ReadSectionHeader(ScriptLine line)
         {
-            ScriptLineTypeEnum? type = ReadLineType(line.Raw.Trim());
-            switch (type)
+            ScriptSymbolEnum? symbol = ReadSymbol(line.Raw.Trim());
+            switch (symbol)
             {
-                case ScriptLineTypeEnum.AREAS:
-                case ScriptLineTypeEnum.POINTS:
-                case ScriptLineTypeEnum.INPUTS:
-                case ScriptLineTypeEnum.TEMPLATES:
-                case ScriptLineTypeEnum.STEPS:
-                    return type;
+                case ScriptSymbolEnum.AREAS:
+                case ScriptSymbolEnum.POINTS:
+                case ScriptSymbolEnum.INPUTS:
+                case ScriptSymbolEnum.TEMPLATES:
+                case ScriptSymbolEnum.STEPS:
+                    return symbol;
 
                 default:
                     return null;
             }
         }
 
-        internal static ScriptLineTypeEnum? ReadLineType(string text)
+        internal static ScriptSymbolEnum? ReadSymbol(string text)
         {
-            return ScriptKeywordCatalog.Get<ScriptLineTypeEnum>(text)?.As<ScriptLineTypeEnum>();
+            return ScriptKeywordCatalog.Get<ScriptSymbolEnum>(text)?.As<ScriptSymbolEnum>();
         }
 
-        internal static string LineType(ScriptLineTypeEnum type)
+        internal static string Symbol(ScriptSymbolEnum symbol)
         {
-            return ScriptKeywordCatalog.Get(type)!.Text;
+            return ScriptKeywordCatalog.Get(symbol)!.Text;
+        }
+
+        /// <summary>
+        /// Text in the script sits between <c>&lt;[</c> and <c>]&gt;</c> with nothing inside it
+        /// escaped, so text holding either one cannot be written there - a form or a script that
+        /// tries is refused.
+        /// </summary>
+        public static bool HasTextDelimiter(string? text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return false;
+
+            return text.Contains(Symbol(ScriptSymbolEnum.TEXT_START), StringComparison.Ordinal)
+                || text.Contains(Symbol(ScriptSymbolEnum.TEXT_END), StringComparison.Ordinal);
         }
 
         /// <summary>How a window title is matched.</summary>
@@ -204,8 +217,9 @@ namespace Business.FlowScript.Syntax
 
 
         /// <summary>
-        /// A condition from the words it was written as. Longest first again: "is not empty" has
-        /// to beat "is not", which has to beat "is".
+        /// A condition from the words it was written as, its values in <c>&lt;[ ]&gt;</c>. Null when
+        /// the words name no condition or a value is missing. Longest first again: "is not empty"
+        /// has to beat "is not", which has to beat "is".
         /// </summary>
         internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptToken> tokens, int at)
         {
@@ -217,9 +231,12 @@ namespace Business.FlowScript.Syntax
                 return tokens[at + i].Text;
             }
 
-            string V(int i)
+            string? V(int i)
             {
-                return at + i < tokens.Count ? tokens[at + i].Text : string.Empty;
+                if (at + i >= tokens.Count || !tokens[at + i].IsQuoted)
+                    return null;
+
+                return tokens[at + i].Text;
             }
 
             if (W(0) == "is" && W(1) == "empty")
@@ -229,28 +246,35 @@ namespace Business.FlowScript.Syntax
                 return new ConditionSyntax(ConditionTypeEnum.IS_NOT_EMPTY, string.Empty, string.Empty, 3);
 
             if (W(0) == "is" && W(1) == "not")
-                return new ConditionSyntax(ConditionTypeEnum.NOT_EQUALS, V(2), string.Empty, 3);
+                return WithValue(ConditionTypeEnum.NOT_EQUALS, V(2), 3);
 
             if (W(0) == "is")
-                return new ConditionSyntax(ConditionTypeEnum.EQUALS, V(1), string.Empty, 2);
+                return WithValue(ConditionTypeEnum.EQUALS, V(1), 2);
 
             if (W(0) == "does" && W(1) == "not" && W(2) == "contain")
-                return new ConditionSyntax(ConditionTypeEnum.NOT_CONTAINS, V(3), string.Empty, 4);
+                return WithValue(ConditionTypeEnum.NOT_CONTAINS, V(3), 4);
 
             if (W(0) == "contains")
-                return new ConditionSyntax(ConditionTypeEnum.CONTAINS, V(1), string.Empty, 2);
+                return WithValue(ConditionTypeEnum.CONTAINS, V(1), 2);
 
             if (W(0) == "matches")
-                return new ConditionSyntax(ConditionTypeEnum.MATCHES_REGEX, V(1), string.Empty, 2);
+                return WithValue(ConditionTypeEnum.MATCHES_REGEX, V(1), 2);
 
             if (W(0) == "between" && W(2) == "and")
-                return new ConditionSyntax(ConditionTypeEnum.BETWEEN, V(1), V(3), 4);
+            {
+                string? from = V(1);
+                string? to = V(3);
+                if (from == null || to == null)
+                    return null;
+
+                return new ConditionSyntax(ConditionTypeEnum.BETWEEN, from, to, 4);
+            }
 
             if (W(0) == ">")
-                return new ConditionSyntax(ConditionTypeEnum.GREATER_THAN, V(1), string.Empty, 2);
+                return WithValue(ConditionTypeEnum.GREATER_THAN, V(1), 2);
 
             if (W(0) == "<")
-                return new ConditionSyntax(ConditionTypeEnum.LESS_THAN, V(1), string.Empty, 2);
+                return WithValue(ConditionTypeEnum.LESS_THAN, V(1), 2);
 
             return null;
         }
@@ -271,57 +295,72 @@ namespace Business.FlowScript.Syntax
         }
 
         /// <summary>
-        /// The button and what it does. Both halves are optional and either order is unambiguous,
-        /// because "right" is never an action and "double" is never a side.
+        /// The side of a click - "right" or "middle" - or null when the word is not one. Either
+        /// order of side and action is unambiguous, because "right" is never an action and
+        /// "double" is never a side.
         /// </summary>
-        public static (CursorButtonTypeEnum Button, CursorButtonActionTypeEnum Action) ReadButton(IEnumerable<string> words)
+        public static CursorButtonTypeEnum? ReadButtonSide(string word)
         {
-            CursorButtonTypeEnum button = CursorButtonTypeEnum.LEFT_BUTTON;
-            CursorButtonActionTypeEnum action = CursorButtonActionTypeEnum.SINGLE_CLICK;
-
-            foreach (string word in words)
+            switch (word)
             {
-                switch (word)
-                {
-                    case "right": button = CursorButtonTypeEnum.RIGHT_BUTTON; break;
-                    case "middle": button = CursorButtonTypeEnum.MIDDLE_BUTTON; break;
-                    case "double": action = CursorButtonActionTypeEnum.DOUBLE_CLICK; break;
-                    case "hold": action = CursorButtonActionTypeEnum.HOLD_CLICK; break;
-                    case "release": action = CursorButtonActionTypeEnum.RELEASE_CLICK; break;
-                    default: break;
-                }
+                case "right": return CursorButtonTypeEnum.RIGHT_BUTTON;
+                case "middle": return CursorButtonTypeEnum.MIDDLE_BUTTON;
+                default: return null;
             }
+        }
 
-            return (button, action);
+        /// <summary>What a click does - "double", "hold" or "release" - or null when the word is not one.</summary>
+        public static CursorButtonActionTypeEnum? ReadButtonAction(string word)
+        {
+            switch (word)
+            {
+                case "double": return CursorButtonActionTypeEnum.DOUBLE_CLICK;
+                case "hold": return CursorButtonActionTypeEnum.HOLD_CLICK;
+                case "release": return CursorButtonActionTypeEnum.RELEASE_CLICK;
+                default: return null;
+            }
         }
 
         // ================================================================
         // Public methods - how the grammar writes a number
         // ================================================================
 
-        /// <summary>Invariant, because the file is machine written and machine read.</summary>
-        public static float Float(string text)
+        /// <summary>Invariant, because the file is machine written and machine read. Null when it is not a number.</summary>
+        public static float? Float(string text)
         {
-            return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) ? value : 0f;
+            if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value))
+                return null;
+
+            return value;
         }
 
         /// <inheritdoc cref="Float"/>
-        public static int Integer(string text)
+        public static int? Integer(string text)
         {
-            return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ? value : 0;
+            if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
+                return null;
+
+            return value;
         }
 
         /// <summary>
         /// A duration. The printer writes seconds for a timeout and milliseconds for a wait, so
-        /// "15s", "1.5s" and "800ms" all arrive here and all read the same way.
+        /// "15s", "1.5s" and "800ms" all arrive here and all read the same way. Null when it is
+        /// not a duration.
         /// </summary>
-        public static int Milliseconds(string text)
+        public static int? Milliseconds(string text)
         {
             if (text.EndsWith("ms", StringComparison.Ordinal))
                 return Integer(text[..^2]);
 
             if (text.EndsWith('s'))
-                return (int)Math.Round(Float(text[..^1]) * 1000f);
+            {
+                float? seconds = Float(text[..^1]);
+                if (seconds == null)
+                    return null;
+
+                return (int)Math.Round(seconds.Value * 1000f);
+            }
 
             return Integer(text);
         }
@@ -358,7 +397,7 @@ namespace Business.FlowScript.Syntax
 
         // Find the longest keyword the tokens can generate starting from "tokenIndex".
         // ex "Wait Until No Image" = 4 tokens but 1 command.
-        private static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
+        internal static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
         {
             ScriptKeyword? longest = null;
             string phrase = string.Empty;
@@ -380,36 +419,20 @@ namespace Business.FlowScript.Syntax
 
 
         /// <summary>
-        /// Text in quotes. A quote inside it is written \", and since a backslash is only an escape
-        /// right before a quote, only the backslashes there - the closing quote's included - are
-        /// doubled. Paths and regexes are written as they are.
+        /// Text between <c>&lt;[</c> and <c>]&gt;</c>, one space inside each for reading. Nothing
+        /// is escaped: quotes and backslashes are text like anything else.
         /// </summary>
         public static string Quote(string? text)
         {
-            StringBuilder quoted = new StringBuilder("\"");
-            int backslashes = 0;
-
-            foreach (char c in text ?? string.Empty)
-            {
-                if (c == '\\')
-                {
-                    backslashes++;
-                    continue;
-                }
-
-                if (c == '"')
-                    quoted.Append('\\', backslashes * 2 + 1);
-                else
-                    quoted.Append('\\', backslashes);
-
-                quoted.Append(c);
-                backslashes = 0;
-            }
-
-            quoted.Append('\\', backslashes * 2).Append('"');
-            return quoted.ToString();
+            return $"{Symbol(ScriptSymbolEnum.TEXT_START)} {text} {Symbol(ScriptSymbolEnum.TEXT_END)}";
         }
 
-      
+        private static ConditionSyntax? WithValue(ConditionTypeEnum type, string? value, int words)
+        {
+            if (value == null)
+                return null;
+
+            return new ConditionSyntax(type, value, string.Empty, words);
+        }
     }
 }

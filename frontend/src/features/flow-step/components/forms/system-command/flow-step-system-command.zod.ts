@@ -2,6 +2,7 @@ import { z } from "zod";
 import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
+import { scriptName, scriptText } from "@/shared/utils/script-text";
 
 // The backend catalog decides which presets take a parameter. The schema cannot read it, so the
 // handful that take none are listed here; anything new defaults to requiring one, which shows up
@@ -13,12 +14,12 @@ const PRESETS_WITHOUT_PARAMETER: RunCommandPresetEnum[] = [
 
 export const FlowStepSystemCommandSchema = z
   .object({
-    name: z.string().min(1, "Name is required").max(120, "Name too long"),
+    name: scriptName(),
 
     runCommandShell: z.enum(RunCommandShellEnum),
     runCommandPreset: z.enum(RunCommandPresetEnum),
-    runCommandValue: z.string(),
-    runCommandWorkingDirectory: z.string(),
+    runCommandValue: scriptText(),
+    runCommandWorkingDirectory: scriptText(),
 
     successExitCodes: z
       .string()
@@ -26,7 +27,7 @@ export const FlowStepSystemCommandSchema = z
     resultSource: z.enum(ResultSourceEnum),
     timeoutMilliseconds: z.number().int().min(0),
 
-    resultExtractPattern: z.string(),
+    resultExtractPattern: scriptText(),
   })
   .superRefine((data, ctx) => {
     if (data.runCommandPreset === RunCommandPresetEnum.CUSTOM) {

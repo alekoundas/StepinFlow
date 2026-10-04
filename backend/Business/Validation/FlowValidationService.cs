@@ -46,6 +46,7 @@ namespace Business.Validation
             FlowStepValidator.Validate(authored, templateCountByStepId, result);
             FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, checks, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
+            ScriptTextValidator.Validate(authored, areas, flowNames, result);
 
             return Finish(result);
         }

@@ -25,7 +25,7 @@ namespace Business.FlowScript.Scanner
             FlowScriptSchema document = new FlowScriptSchema();
             IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
 
-            ScriptLineTypeEnum? currentSection = null; // Null until the first header: the Flow fields come before any.
+            ScriptSymbolEnum? currentSection = null; // Null until the first header: the Flow fields come before any.
             List<string> pendingComments = new List<string>(); // CodeComment of the step bellow.
 
             // Use the Parsers to parse each line.
@@ -36,12 +36,12 @@ namespace Business.FlowScript.Scanner
 
                 if (SyntaxFacts.IsComment(line))
                 {
-                    pendingComments.Add(line.TextAfter(SyntaxFacts.LineType(ScriptLineTypeEnum.COMMENT)));
+                    pendingComments.Add(line.TextAfter(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)));
                     continue;
                 }
 
                 // Extract section from script and skip this line.
-                ScriptLineTypeEnum? header = SyntaxFacts.ReadSectionHeader(line);
+                ScriptSymbolEnum? header = SyntaxFacts.ReadSectionHeader(line);
                 if (header != null)
                 {
                     currentSection = header;
@@ -55,23 +55,23 @@ namespace Business.FlowScript.Scanner
                         FlowParser.ReadFlowField(document, line);
                         break;
 
-                    case ScriptLineTypeEnum.AREAS:
+                    case ScriptSymbolEnum.AREAS:
                         FlowParser.ReadArea(document, line);
                         break;
 
-                    case ScriptLineTypeEnum.POINTS:
+                    case ScriptSymbolEnum.POINTS:
                         FlowParser.ReadPoint(document, line);
                         break;
 
-                    case ScriptLineTypeEnum.INPUTS:
+                    case ScriptSymbolEnum.INPUTS:
                         FlowParser.ReadCsvColumns(document, line);
                         break;
 
-                    case ScriptLineTypeEnum.TEMPLATES:
+                    case ScriptSymbolEnum.TEMPLATES:
                         FlowParser.ReadTemplate(document, line);
                         break;
 
-                    case ScriptLineTypeEnum.STEPS:
+                    case ScriptSymbolEnum.STEPS:
                         StepParser.Read(document, line, pendingComments);
                         break;
 
@@ -81,7 +81,7 @@ namespace Business.FlowScript.Scanner
             }
 
             if (string.IsNullOrWhiteSpace(document.FlowName))
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.LineType(ScriptLineTypeEnum.FLOW)}\" line, so there is no flow to import."));
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Symbol(ScriptSymbolEnum.FLOW)}\" line, so there is no flow to import."));
 
             return document;
         }
