@@ -47,7 +47,7 @@ namespace Business.FlowScript.Syntax
                 AddToSchemaBindng(document, line, flowStep);
 
                 if (SyntaxFacts.HasQuote(flowStep.Name))
-                    reader.Fail(DiagnosticCodeEnum.QUOTE_INSIDE, $"A stage's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}\".");
+                    reader.Fail(DiagnosticCodeEnum.QUOTE_INSIDE, $"A stage's name can't contain \"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}\".");
 
                 pendingComments.Clear();
                 return;

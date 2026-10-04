@@ -37,16 +37,16 @@ namespace Business.FlowScript.Text
 
         private static void WriteHeader(StringBuilder builder, BoundFlow source)
         {
-            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_NAME), 9)).AppendLine(source.Flow.Name);
-            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_ID), 9)).AppendLine(source.Flow.PublicId.ToString());
+            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME), 9)).AppendLine(source.Flow.Name);
+            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_ID), 9)).AppendLine(source.Flow.PublicId.ToString());
 
             if (source.Viewports.Count > 0)
             {
                 IEnumerable<string> sizes = source.Viewports
                     .OrderBy(x => x.OrderNumber)
-                    .Select(x => $"{x.Width}x{x.Height}");
+                    .Select(x => Size(x.Width, x.Height));
 
-                builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_SIZES), 9)).AppendLine(string.Join(", ", sizes));
+                builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_SIZES), 9)).AppendLine(string.Join(", ", sizes));
             }
 
             builder.AppendLine();
@@ -62,7 +62,7 @@ namespace Business.FlowScript.Text
             if (source.Areas.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.AREAS));
+            builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.AREAS));
 
             // Parents before children, so a child's "inside X" always names something already read.
             foreach (FlowArea area in Ordered(source.Areas))
@@ -84,7 +84,7 @@ namespace Business.FlowScript.Text
             {
                 string parent = SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(area.ParentFlowAreaId.Value, string.Empty));
 
-                return $"inside {parent}   {AreaSize(area)}";
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {parent}   {AreaSize(area)}";
             }
 
             switch (area.Type)
@@ -92,28 +92,24 @@ namespace Business.FlowScript.Text
                 // Empty is the primary monitor, and "primary" is a bare word so a device cannot be mistaken for it.
                 case FlowAreaTypeEnum.MONITOR:
                     if (area.MonitorDeviceName.Length == 0)
-                        return "monitor primary";
+                        return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.MONITOR)} {SyntaxFacts.Keyword(ScriptSymbolEnum.PRIMARY)}";
 
-                    return $"monitor {SyntaxFacts.Quote(area.MonitorDeviceName)}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.MONITOR)} {SyntaxFacts.Quote(area.MonitorDeviceName)}";
 
                 case FlowAreaTypeEnum.CUSTOM:
-                    return $"on screen   {AreaSize(area)}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.ON_SCREEN)}   {AreaSize(area)}";
 
                 default:
-                    string title = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(area.TitlePattern))
-                        title = $" title {SyntaxFacts.TitleMatch(area.TitleMatchMode)} {SyntaxFacts.Quote(area.TitlePattern)}";
-
-                    return $"window process {SyntaxFacts.Quote(area.ProcessName)}{title}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.WINDOW)} {Process(area.ProcessName, area.TitleMatchMode, area.TitlePattern)}";
             }
         }
 
         private static string AreaSize(FlowArea area)
         {
             if (area.SizingMode == AreaSizingModeEnum.RATIO)
-                return $"ratio {Ratio(area.RatioX)} {Ratio(area.RatioY)}  {Ratio(area.RatioWidth)} {Ratio(area.RatioHeight)}";
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.RATIO)} {Ratio(area.RatioX)} {Ratio(area.RatioY)}  {Ratio(area.RatioWidth)} {Ratio(area.RatioHeight)}";
 
-            return $"offset {Integer(area.LocationX)} {Integer(area.LocationY)}  size {Integer(area.Width)} {Integer(area.Height)}";
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.OFFSET)} {Integer(area.LocationX)} {Integer(area.LocationY)}  {SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE)} {Integer(area.Width)} {Integer(area.Height)}";
         }
 
         // Left out when unset: no setting inherits the parent's, and no DPI leaves pixels as they are.
@@ -122,10 +118,10 @@ namespace Business.FlowScript.Text
             string text = string.Empty;
 
             if (area.ScalesWith != null)
-                text += $"   scales with {SyntaxFacts.ScalesWith(area.ScalesWith.Value)}";
+                text += $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.SCALES_WITH)} {SyntaxFacts.Keyword(area.ScalesWith.Value)}";
 
             if (area.AuthoredDpi > 0)
-                text += $"   at {Dpi(area.AuthoredDpi)}";
+                text += $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.AT)} {Dpi(area.AuthoredDpi)}";
 
             return text;
         }
@@ -135,23 +131,23 @@ namespace Business.FlowScript.Text
             if (source.Points.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.POINTS));
+            builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.POINTS));
 
             foreach (FlowPoint point in source.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
                 string name = Pad(SyntaxFacts.Quote(point.Name), 20);
 
-                string placement = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.OFFSET)} {Integer(point.LocationX)} {Integer(point.LocationY)}";
+                string placement = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.OFFSET)} {Integer(point.LocationX)} {Integer(point.LocationY)}";
                 if (point.OffsetMode == AreaSizingModeEnum.RATIO)
-                    placement = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.RATIO)} {Ratio(point.RatioX)} {Ratio(point.RatioY)}";
+                    placement = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.RATIO)} {Ratio(point.RatioX)} {Ratio(point.RatioY)}";
 
-                string inside = SyntaxFacts.Symbol(ScriptSymbolEnum.ON_SCREEN);
+                string inside = SyntaxFacts.Keyword(ScriptSymbolEnum.ON_SCREEN);
                 if (point.FlowAreaId != null)
-                    inside = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
+                    inside = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
 
                 string dpi = string.Empty;
                 if (point.AuthoredDpi > 0)
-                    dpi = $"   {SyntaxFacts.Symbol(ScriptSymbolEnum.AT)} {Dpi(point.AuthoredDpi)}";
+                    dpi = $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.AT)} {Dpi(point.AuthoredDpi)}";
 
                 builder.Append("  ").AppendLine(CultureInfo.InvariantCulture, $"{name}{inside}   {placement}{dpi}");
             }
@@ -164,13 +160,15 @@ namespace Business.FlowScript.Text
             if (source.Inputs.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.CSV_COLUMNS));
+            builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.CSV_COLUMNS));
 
             foreach (FlowCsvColumn input in source.Inputs.OrderBy(x => x.OrderNumber))
             {
                 // The value is never written, secret or not: data belongs in the csv beside the
                 // file, and a default in the script would be the one nobody remembers to change.
-                string secret = input.IsSecret ? "secret" : string.Empty;
+                string secret = string.Empty;
+                if (input.IsSecret)
+                    secret = SyntaxFacts.Keyword(ScriptSymbolEnum.SECRET);
 
                 builder.Append("  ").AppendLine($"{Pad(SyntaxFacts.Quote(input.Name), 20)}{secret}".TrimEnd());
             }
@@ -193,7 +191,7 @@ namespace Business.FlowScript.Text
             if (lines.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.TEMPLATES));
+            builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.TEMPLATES));
 
             foreach (string line in lines)
                 builder.Append("  ").AppendLine(line);
@@ -205,15 +203,15 @@ namespace Business.FlowScript.Text
         {
             string click = string.Empty;
             if (template.ClickOffset != null)
-                click = $"click {Integer(template.ClickOffset.Value.X)},{Integer(template.ClickOffset.Value.Y)}";
+                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffset.Value.X)},{Integer(template.ClickOffset.Value.Y)}";
 
             string captured = string.Empty;
             if (template.AuthoredFlowAreaWidth > 0 && template.AuthoredFlowAreaHeight > 0)
-                captured = $"captured {Integer(template.AuthoredFlowAreaWidth)}x{Integer(template.AuthoredFlowAreaHeight)}";
+                captured = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CAPTURED)} {Size(template.AuthoredFlowAreaWidth, template.AuthoredFlowAreaHeight)}";
 
             string dpi = string.Empty;
             if (template.AuthoredDpi > 0)
-                dpi = $"at {Dpi(template.AuthoredDpi)}";
+                dpi = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.AT)} {Dpi(template.AuthoredDpi)}";
 
             // "captured 800x600 at 120dpi" reads as one phrase, so it is one clause apart from the click.
             string capture = $"{captured} {dpi}".Trim();
@@ -231,7 +229,7 @@ namespace Business.FlowScript.Text
 
         private static void WriteSteps(StringBuilder builder, BoundFlow source)
         {
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.STEPS));
+            builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.STEPS));
 
             // A gap between top level steps, but never two: a marker already leaves one behind it,
             // and a heading followed by empty space reads as a section with nothing in it.
@@ -264,7 +262,7 @@ namespace Business.FlowScript.Text
             if (!string.IsNullOrWhiteSpace(step.CodeComment))
             {
                 foreach (string line in step.CodeComment.Split('\n'))
-                    builder.Append(indent).Append(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
+                    builder.Append(indent).Append(SyntaxFacts.Keyword(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
             }
 
             builder.Append(indent).AppendLine(StepLine(step, source));
@@ -329,8 +327,9 @@ namespace Business.FlowScript.Text
 
                 // The area to scroll inside, not a point: Target would fall through to "match"
                 // for a scroll that names neither, which is a line the parser cannot read back.
+                // No direction goes down, which is what a scroll did before there was one.
                 case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return $"{SyntaxFacts.ScrollDirection(step.CursorScrollDirectionType)} {step.LoopCount}{Area(step, source)}";
+                    return $"{SyntaxFacts.Keyword(step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN)} {step.LoopCount}{Area(step, source)}";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
@@ -340,15 +339,15 @@ namespace Business.FlowScript.Text
 
                 case FlowStepTypeEnum.WAIT:
                     if (step.WaitForMillisecondsMax > step.WaitForMilliseconds)
-                        return $"{step.WaitForMilliseconds}ms to {step.WaitForMillisecondsMax}ms";
+                        return $"{Milliseconds(step.WaitForMilliseconds)} {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {Milliseconds(step.WaitForMillisecondsMax)}";
 
-                    return $"{step.WaitForMilliseconds}ms";
+                    return Milliseconds(step.WaitForMilliseconds);
 
                 case FlowStepTypeEnum.LOOP:
                     return LoopArguments(step, source);
 
                 case FlowStepTypeEnum.GO_TO:
-                    return $"to {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
 
                 case FlowStepTypeEnum.SUB_FLOW:
                     return SyntaxFacts.Quote(source.SubFlowPathsById.GetValueOrDefault(step.SubFlowId ?? 0, string.Empty));
@@ -358,12 +357,12 @@ namespace Business.FlowScript.Text
 
                 case FlowStepTypeEnum.END_EXECUTION:
                     if (step.EndExecutionAsSuccess)
-                        return "passed";
+                        return SyntaxFacts.Keyword(ScriptSymbolEnum.PASSED);
 
-                    return $"failed  {SyntaxFacts.Quote(step.Message)}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.FAILED)}  {SyntaxFacts.Quote(step.Message)}";
 
                 case FlowStepTypeEnum.SYSTEM_ACTION:
-                    return step.SystemActionType.ToString();
+                    return SyntaxFacts.Keyword(step.SystemActionType);
 
                 case FlowStepTypeEnum.SYSTEM_COMMAND:
                     return CommandArguments(step);
@@ -387,7 +386,7 @@ namespace Business.FlowScript.Text
             // Only when it is not the default, which is nearly every step.
             string match = string.Empty;
             if (step.TemplateMatchMode != TemplateMatchModeEnum.SHAPE)
-                match = $"   match {SyntaxFacts.MatchMode(step.TemplateMatchMode)}";
+                match = $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH)} {SyntaxFacts.Keyword(step.TemplateMatchMode)}";
 
             return $"{SyntaxFacts.Quote(step.Name)}   {string.Join("  ", templates)}{match}{Area(step, source)}{Waiting(step)}";
         }
@@ -397,35 +396,37 @@ namespace Business.FlowScript.Text
         {
             string required = string.Empty;
             if (template.IsRequired)
-                required = " required";
+                required = $" {SyntaxFacts.Keyword(ScriptSymbolEnum.REQUIRED)}";
 
-            return $"template {SyntaxFacts.Quote(template.FileName)} accuracy {Number(template.Accuracy)}{required}";
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TEMPLATE)} {SyntaxFacts.Quote(template.FileName)} {SyntaxFacts.Keyword(ScriptSymbolEnum.ACCURACY)} {Number(template.Accuracy)}{required}";
         }
 
         private static string SearchTextArguments(FlowStep step, BoundFlow source)
         {
             string extract = string.Empty;
             if (!string.IsNullOrWhiteSpace(step.ResultExtractPattern))
-                extract = $"   keep {SyntaxFacts.Quote(step.ResultExtractPattern)}";
+                extract = $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.KEEP)} {SyntaxFacts.Quote(step.ResultExtractPattern)}";
 
             return $"{SyntaxFacts.Quote(step.Name)}   {SyntaxFacts.Condition(step)}{Area(step, source)}{extract}{Waiting(step)}";
         }
 
         private static string CursorArguments(FlowStep step, BoundFlow source)
         {
-            string target = Target(step, source, "at ");
+            string target = PointName(step.FlowPointId, step.FlowStepReferenceId, source);
 
             if (step.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE)
-                return $"to {target.TrimStart()}".Replace("to at ", "to ");
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {target}";
+
+            string at = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.AT)} {target}";
 
             if (step.FlowStepType == FlowStepTypeEnum.CURSOR_DRAG)
-                return $"{target.TrimStart()} to {PointName(step.FlowPointEndId, step.FlowStepReferenceEndId, source)}";
+                return $"{at} {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {PointName(step.FlowPointEndId, step.FlowStepReferenceEndId, source)}";
 
             string button = SyntaxFacts.Button(step.CursorButtonType, step.CursorButtonActionType);
             if (button.Length == 0)
-                return target.TrimStart();
+                return at;
 
-            return $"{target.TrimStart()}   {button}";
+            return $"{at}   {button}";
         }
 
         private static string LoopArguments(FlowStep step, BoundFlow source)
@@ -433,9 +434,15 @@ namespace Business.FlowScript.Text
             // Three sources, and which one is in play is readable from the row rather than stored:
             // a reference means each match, no count means forever.
             if (step.FlowStepReferenceId != null)
-                return $"each match in {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId.Value, string.Empty))}";
+            {
+                string each = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.EACH)} {SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH)} {SyntaxFacts.Keyword(ScriptSymbolEnum.IN)}";
+                return $"{each} {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId.Value, string.Empty))}";
+            }
 
-            return step.IsLoopInfinite ? "forever" : $"{step.LoopCount} times";
+            if (step.IsLoopInfinite)
+                return SyntaxFacts.Keyword(ScriptSymbolEnum.FOREVER);
+
+            return $"{step.LoopCount} {SyntaxFacts.Keyword(ScriptSymbolEnum.TIMES)}";
         }
 
         private static string CommandArguments(FlowStep step)
@@ -445,24 +452,20 @@ namespace Business.FlowScript.Text
 
             string preset = string.Empty;
             if (step.RunCommandPreset != RunCommandPresetEnum.CUSTOM)
-                preset = $"{step.RunCommandPreset} ";
+                preset = $"{SyntaxFacts.Keyword(step.RunCommandPreset)} ";
 
             return $"{preset}{SyntaxFacts.Quote(step.RunCommandValue)}";
         }
 
         private static string WindowArguments(FlowStep step, BoundFlow source)
         {
-            string title = string.Empty;
-            if (!string.IsNullOrWhiteSpace(step.TitlePattern))
-                title = $" title {SyntaxFacts.TitleMatch(step.TitleMatchMode)} {SyntaxFacts.Quote(step.TitlePattern)}";
-
-            string what = $"process {SyntaxFacts.Quote(step.ProcessName)}{title}";
+            string what = Process(step.ProcessName, step.TitleMatchMode, step.TitlePattern);
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE)
-                return $"{what}   size {step.WindowWidth} {step.WindowHeight}";
+                return $"{what}   {SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE)} {step.WindowWidth} {step.WindowHeight}";
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RELOCATE)
-                return $"{what}   to {PointName(step.FlowPointId, null, source)}";
+                return $"{what}   {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {PointName(step.FlowPointId, null, source)}";
 
             return what;
         }
@@ -477,7 +480,17 @@ namespace Business.FlowScript.Text
             if (step.FlowAreaId == null)
                 return string.Empty;
 
-            return $"   in {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(step.FlowAreaId.Value, string.Empty))}";
+            return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.IN)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(step.FlowAreaId.Value, string.Empty))}";
+        }
+
+        // The window an area or a step is about: the process, and optionally its title.
+        private static string Process(string processName, TitleMatchModeEnum titleMatchMode, string titlePattern)
+        {
+            string title = string.Empty;
+            if (!string.IsNullOrWhiteSpace(titlePattern))
+                title = $" {SyntaxFacts.Keyword(ScriptSymbolEnum.TITLE)} {SyntaxFacts.Keyword(titleMatchMode)} {SyntaxFacts.Quote(titlePattern)}";
+
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.PROCESS)} {SyntaxFacts.Quote(processName)}{title}";
         }
 
         private static string Waiting(FlowStep step)
@@ -490,25 +503,20 @@ namespace Business.FlowScript.Text
 
             // Zero is "for ever", and writing "timeout 0s" would read as "give up at once".
             if (step.TimeoutMilliseconds > 0)
-                return $"   timeout {Seconds(step.TimeoutMilliseconds)}";
+                return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.TIMEOUT)} {Seconds(step.TimeoutMilliseconds)}";
 
-            return "   no timeout";
-        }
-
-        private static string Target(FlowStep step, BoundFlow source, string lead)
-        {
-            return $"{lead}{PointName(step.FlowPointId, step.FlowStepReferenceId, source)}";
+            return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.NO_TIMEOUT)}";
         }
 
         private static string PointName(int? flowPointId, int? referenceId, BoundFlow source)
         {
             if (flowPointId != null)
-                return $"point {SyntaxFacts.Quote(source.PointNamesById.GetValueOrDefault(flowPointId.Value, string.Empty))}";
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.POINT)} {SyntaxFacts.Quote(source.PointNamesById.GetValueOrDefault(flowPointId.Value, string.Empty))}";
 
             if (referenceId != null)
                 return SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty));
 
-            return "match";
+            return SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH);
         }
 
         private static string Variable(int? referenceId, BoundFlow source)
@@ -543,9 +551,19 @@ namespace Business.FlowScript.Text
             return $"{Number(milliseconds / 1000f)}s";
         }
 
+        private static string Milliseconds(int milliseconds)
+        {
+            return $"{Integer(milliseconds)}{SyntaxFacts.Keyword(ScriptSymbolEnum.MILLISECONDS)}";
+        }
+
         private static string Dpi(int dpi)
         {
-            return $"{Integer(dpi)}dpi";
+            return $"{Integer(dpi)}{SyntaxFacts.Keyword(ScriptSymbolEnum.DPI)}";
+        }
+
+        private static string Size(int width, int height)
+        {
+            return $"{Integer(width)}{SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE_SEPARATOR)}{Integer(height)}";
         }
 
         private static string Ratio(float value)

@@ -54,6 +54,28 @@ namespace Business.Tests.FlowScript
             wrong.ShouldBeEmpty();
         }
 
+        // Keyword throws on a gap, so a value added to one of these enums without a row fails here
+        // rather than on somebody's export.
+        [Fact]
+        public void Every_value_the_printer_writes_has_a_keyword()
+        {
+            List<Enum> values = new List<Enum>();
+            values.AddRange(Enum.GetValues<ScriptSymbolEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<ConditionTypeEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<TitleMatchModeEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<TemplateMatchModeEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<ScalesWithEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<CursorScrollDirectionTypeEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<SystemActionTypeEnum>().Cast<Enum>());
+
+            // A plain left click is never written, and Run and Launch are steps of their own.
+            values.AddRange(Enum.GetValues<CursorButtonTypeEnum>().Where(x => x != CursorButtonTypeEnum.LEFT_BUTTON).Cast<Enum>());
+            values.AddRange(Enum.GetValues<CursorButtonActionTypeEnum>().Where(x => x != CursorButtonActionTypeEnum.SINGLE_CLICK).Cast<Enum>());
+            values.AddRange(Enum.GetValues<RunCommandPresetEnum>().Where(x => x != RunCommandPresetEnum.CUSTOM && x != RunCommandPresetEnum.LAUNCH_APP).Cast<Enum>());
+
+            values.Where(x => ScriptKeywordCatalog.Get(x) == null).ShouldBeEmpty();
+        }
+
         [Theory]
         [InlineData("Move Window process <[ x ]>", FlowStepTypeEnum.WINDOW_RELOCATE)]
         [InlineData("Wait Until No Image <[ x ]>", FlowStepTypeEnum.SEARCH_IMAGE)]
@@ -127,7 +149,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.TitleMatch(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
+            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.Keyword(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]
@@ -137,7 +159,7 @@ namespace Business.Tests.FlowScript
         [InlineData(CursorScrollDirectionTypeEnum.RIGHT)]
         public void A_scroll_direction_is_read_back_as_written(CursorScrollDirectionTypeEnum direction)
         {
-            SyntaxFacts.ReadScrollDirection(SyntaxFacts.ScrollDirection(direction)).ShouldBe(direction);
+            SyntaxFacts.ReadScrollDirection(SyntaxFacts.Keyword(direction)).ShouldBe(direction);
         }
 
         [Fact]
@@ -173,7 +195,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            SyntaxFacts.ReadMatchMode(Tokens(SyntaxFacts.MatchMode(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
+            SyntaxFacts.ReadMatchMode(Tokens(SyntaxFacts.Keyword(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]
@@ -181,7 +203,7 @@ namespace Business.Tests.FlowScript
         [InlineData(ScalesWithEnum.AREA)]
         public void What_an_area_scales_with_is_read_back_as_written(ScalesWithEnum scalesWith)
         {
-            SyntaxFacts.ReadScalesWith(SyntaxFacts.ScalesWith(scalesWith)).ShouldBe(scalesWith);
+            SyntaxFacts.ReadScalesWith(SyntaxFacts.Keyword(scalesWith)).ShouldBe(scalesWith);
         }
 
         // ================================================================

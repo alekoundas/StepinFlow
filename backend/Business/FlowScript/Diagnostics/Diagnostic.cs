@@ -37,12 +37,9 @@ namespace Business.FlowScript.Diagnostics
         AREA_WINDOW_MALFORMED,
         AREA_PLACEMENT_UNKNOWN,
         PLACEMENT_MALFORMED,
-        POINT_NAME_MISSING,
-        POINT_PLACEMENT_UNKNOWN,
         CSV_COLUMN_MALFORMED,
         TITLE_MATCH_UNKNOWN,
         AREA_ARGUMENT_UNKNOWN,
-        POINT_ARGUMENT_UNKNOWN,
 
         // Templates
         TEMPLATE_MALFORMED,

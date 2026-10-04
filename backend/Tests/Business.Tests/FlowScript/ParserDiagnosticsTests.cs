@@ -32,9 +32,6 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> somewhere" },
             { DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, "Areas:\n  <[ A ]> monitor primary sideways" },
             { DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, "Areas:\n  <[ A ]> window process <[ x ]> title resembles <[ y ]>" },
-            { DiagnosticCodeEnum.POINT_NAME_MISSING, "Points:\n  Origin on screen offset 1 2" },
-            { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  <[ Origin ]> offset 1 2" },
-            { DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, "Points:\n  <[ Origin ]> on screen offset 1 2 at nope" },
             { DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, "Inputs:\n  username" },
             { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  <[ a.png ]> click here" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1,2\n  <[ a.png ]> click 3,4" },
@@ -107,6 +104,23 @@ namespace Business.Tests.FlowScript
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
             diagnostic.Message.ShouldContain("can't contain");
+        }
+
+        // A point is read in the order the grammar gives it, so a mistake is reported at the token
+        // where it went wrong - past the end of the line when something is missing.
+        [Theory]
+        [InlineData("Origin on screen offset 1 2", 3)]
+        [InlineData("<[ Origin ]> offset 1 2", 16)]
+        [InlineData("<[ Origin ]> offset 1 2 inside <[ B ]>", 16)]
+        [InlineData("<[ Origin ]> on screen ratio 0.5", 35)]
+        [InlineData("<[ Origin ]> on screen offset 1 2 at nope", 40)]
+        [InlineData("<[ Origin ]> on screen offset 1 2 offset 3 4", 37)]
+        public void A_point_stops_at_the_first_token_out_of_place(string point, int column)
+        {
+            Diagnostic diagnostic = Read(Header + "Points:\n  " + point).ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+            diagnostic.Column.ShouldBe(column);
         }
 
         [Fact]

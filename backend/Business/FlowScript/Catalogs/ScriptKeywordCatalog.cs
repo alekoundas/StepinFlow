@@ -66,6 +66,77 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("ratio", ScriptSymbolEnum.RATIO),
             new ScriptKeyword("offset", ScriptSymbolEnum.OFFSET),
             new ScriptKeyword("at", ScriptSymbolEnum.AT),
+            new ScriptKeyword("window", ScriptSymbolEnum.WINDOW),
+            new ScriptKeyword("monitor", ScriptSymbolEnum.MONITOR),
+            new ScriptKeyword("primary", ScriptSymbolEnum.PRIMARY),
+            new ScriptKeyword("process", ScriptSymbolEnum.PROCESS),
+            new ScriptKeyword("title", ScriptSymbolEnum.TITLE),
+            new ScriptKeyword("size", ScriptSymbolEnum.SIZE),
+            new ScriptKeyword("scales with", ScriptSymbolEnum.SCALES_WITH),
+
+            // FlowCsvColumn
+            new ScriptKeyword("secret", ScriptSymbolEnum.SECRET),
+
+            // FlowStepTemplate
+            new ScriptKeyword("click", ScriptSymbolEnum.CLICK),
+            new ScriptKeyword("captured", ScriptSymbolEnum.CAPTURED),
+
+            // FlowStep
+            new ScriptKeyword("to", ScriptSymbolEnum.TO),
+            new ScriptKeyword("point", ScriptSymbolEnum.POINT),
+            new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
+            new ScriptKeyword("template", ScriptSymbolEnum.TEMPLATE),
+            new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),
+            new ScriptKeyword("required", ScriptSymbolEnum.REQUIRED),
+            new ScriptKeyword("in", ScriptSymbolEnum.IN),
+            new ScriptKeyword("keep", ScriptSymbolEnum.KEEP),
+            new ScriptKeyword("timeout", ScriptSymbolEnum.TIMEOUT),
+            new ScriptKeyword("no timeout", ScriptSymbolEnum.NO_TIMEOUT),
+            new ScriptKeyword("and", ScriptSymbolEnum.AND),
+            new ScriptKeyword("times", ScriptSymbolEnum.TIMES),
+            new ScriptKeyword("forever", ScriptSymbolEnum.FOREVER),
+            new ScriptKeyword("each", ScriptSymbolEnum.EACH),
+            new ScriptKeyword("passed", ScriptSymbolEnum.PASSED),
+            new ScriptKeyword("failed", ScriptSymbolEnum.FAILED),
+
+            // Written onto a number: 800ms, 120dpi, 1920x1080.
+            new ScriptKeyword("ms", ScriptSymbolEnum.MILLISECONDS),
+            new ScriptKeyword("dpi", ScriptSymbolEnum.DPI),
+            new ScriptKeyword("x", ScriptSymbolEnum.SIZE_SEPARATOR),
+
+            // What a text or a value is checked against.
+            new ScriptKeyword("is not empty", ConditionTypeEnum.IS_NOT_EMPTY),
+            new ScriptKeyword("is empty", ConditionTypeEnum.IS_EMPTY),
+            new ScriptKeyword("is not", ConditionTypeEnum.NOT_EQUALS),
+            new ScriptKeyword("is", ConditionTypeEnum.EQUALS),
+            new ScriptKeyword("does not contain", ConditionTypeEnum.NOT_CONTAINS),
+            new ScriptKeyword("contains", ConditionTypeEnum.CONTAINS),
+            new ScriptKeyword("matches", ConditionTypeEnum.MATCHES_REGEX),
+            new ScriptKeyword("between", ConditionTypeEnum.BETWEEN),
+            new ScriptKeyword(">", ConditionTypeEnum.GREATER_THAN),
+            new ScriptKeyword("<", ConditionTypeEnum.LESS_THAN),
+
+            // A click's button and what it does. Left and single are never written.
+            new ScriptKeyword("right", CursorButtonTypeEnum.RIGHT_BUTTON),
+            new ScriptKeyword("middle", CursorButtonTypeEnum.MIDDLE_BUTTON),
+            new ScriptKeyword("double", CursorButtonActionTypeEnum.DOUBLE_CLICK),
+            new ScriptKeyword("hold", CursorButtonActionTypeEnum.HOLD_CLICK),
+            new ScriptKeyword("release", CursorButtonActionTypeEnum.RELEASE_CLICK),
+
+            // What System does.
+            new ScriptKeyword("LOCK_WORKSTATION", SystemActionTypeEnum.LOCK_WORKSTATION),
+            new ScriptKeyword("SLEEP_PC", SystemActionTypeEnum.SLEEP_PC),
+            new ScriptKeyword("MONITOR_OFF", SystemActionTypeEnum.MONITOR_OFF),
+            new ScriptKeyword("MONITOR_ON", SystemActionTypeEnum.MONITOR_ON),
+
+            // The command Run carries out. Custom and Launch are the steps themselves.
+            new ScriptKeyword("KILL_PROCESS", RunCommandPresetEnum.KILL_PROCESS),
+            new ScriptKeyword("IS_PROCESS_RUNNING", RunCommandPresetEnum.IS_PROCESS_RUNNING),
+            new ScriptKeyword("READ_CLIPBOARD", RunCommandPresetEnum.READ_CLIPBOARD),
+            new ScriptKeyword("WRITE_CLIPBOARD", RunCommandPresetEnum.WRITE_CLIPBOARD),
+            new ScriptKeyword("CHECK_INTERNET", RunCommandPresetEnum.CHECK_INTERNET),
+            new ScriptKeyword("SHUTDOWN_IN", RunCommandPresetEnum.SHUTDOWN_IN),
+            new ScriptKeyword("CANCEL_SHUTDOWN", RunCommandPresetEnum.CANCEL_SHUTDOWN),
 
             // How a window title is matched. "is" and "matches" are also conditions; the vocabulary
             // is the enum type, so a reader asking for one never finds the other.

@@ -24,7 +24,7 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static void ReadFlowField(FlowScriptSchema flowScriptSchema, ScriptLine line)
         {
-            string flowLabel = SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_NAME);
+            string flowLabel = SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME);
 
             int colon = line.Raw.IndexOf(':', StringComparison.Ordinal); // Find the first colon possition in the line.
             if (colon < 0)
@@ -42,7 +42,7 @@ namespace Business.FlowScript.Syntax
                     if (SyntaxFacts.HasQuote(value))
                     {
                         flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.QUOTE_INSIDE, line.Number, colon + 2,
-                            $"A flow's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}\"."));
+                            $"A flow's name can't contain \"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}\"."));
                         break;
                     }
 
@@ -61,8 +61,8 @@ namespace Business.FlowScript.Syntax
                     break;
 
                 default:
-                    string idLabel = SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_ID);
-                    string sizesLabel = SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_SIZES);
+                    string idLabel = SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_ID);
+                    string sizesLabel = SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_SIZES);
                     flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.HEADER_UNKNOWN, line.Number, 1, $"\"{key}\" is not something the header holds. Expected \"{flowLabel}\", \"{idLabel}\" or \"{sizesLabel}\"."));
                     break;
             }
@@ -126,129 +126,109 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static void ReadPoint(FlowScriptSchema flowScriptSchema, ScriptLine line)
         {
-            // ex. <[ Origin ]>        inside <[ Browser ]>   offset 12 12   at 120dpi
-            if (!line.Tokens[0].IsQuoted)
+            // <[ name ]>   inside <[ area ]> | on screen   ratio x y | offset x y   [at 120dpi]
+            IReadOnlyList<ScriptToken> tokens = line.Tokens;
+
+            if (!tokens[0].IsQuoted)
             {
-                AddError(flowScriptSchema, line, 0, DiagnosticCodeEnum.POINT_NAME_MISSING, $"A point starts with its name in {Quotes()}.");
+                AddUnexpected(flowScriptSchema, line, 0);
                 return;
             }
 
             FlowPointSchemaBindng result = new FlowPointSchemaBindng()
             {
-                Point = new FlowPoint { Name = line.Tokens[0].Value },
+                Point = new FlowPoint { Name = tokens[0].Value },
                 Line = line.Number
             };
 
-            bool isPlaced = false;
-            bool isMeasured = false;
+            int i = 1;
 
-            // Loop until all tokens are consumed.
-            int tokenIndex = 1;
-            while (tokenIndex < line.Tokens.Count)
+            // Measured from an area, or from the screen's corner - right here and nowhere else.
+            ScriptKeyword? placement = SyntaxFacts.ReadKeyword<ScriptSymbolEnum>(tokens, i);
+            if (placement?.As<ScriptSymbolEnum>() == ScriptSymbolEnum.INSIDE)
             {
-                // Find keyword and change token index
-                ScriptKeyword? scriptKeyword = SyntaxFacts.ReadKeyword<ScriptSymbolEnum>(line.Tokens, tokenIndex);
-                if (scriptKeyword == null)
+                i += placement.TokenCount;
+                if (tokens.ElementAtOrDefault(i)?.IsQuoted != true)
                 {
-                    AddError(flowScriptSchema, line, tokenIndex, DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, $"\"{line.ValueAt(tokenIndex)}\" is not something a point takes.");
+                    AddUnexpected(flowScriptSchema, line, i);
                     return;
                 }
 
-                int next = tokenIndex + scriptKeyword.TokenCount;
+                result.AreaName = tokens[i].Value;
+                i++;
+            }
+            else if (placement?.As<ScriptSymbolEnum>() == ScriptSymbolEnum.ON_SCREEN)
+            {
+                i += placement.TokenCount;
+            }
+            else
+            {
+                AddUnexpected(flowScriptSchema, line, i);
+                return;
+            }
 
-                switch (scriptKeyword.As<ScriptSymbolEnum>())
+            // A fraction of the area, or pixels from its corner.
+            ScriptKeyword? measure = SyntaxFacts.ReadKeyword<ScriptSymbolEnum>(tokens, i);
+            if (measure?.As<ScriptSymbolEnum>() == ScriptSymbolEnum.RATIO)
+            {
+                i += measure.TokenCount;
+                float? ratioX = SyntaxFacts.Float(line.ValueAt(i));
+                float? ratioY = SyntaxFacts.Float(line.ValueAt(i + 1));
+                if (ratioX == null || ratioY == null)
                 {
-                    // inside <[ Browser ]> - measured from an area.
-                    case ScriptSymbolEnum.INSIDE:
-                        if (isPlaced || line.Tokens.ElementAtOrDefault(next)?.IsQuoted != true)
-                        {
-                            AddError(flowScriptSchema, line, next, DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, $"Expected \"inside\" and the area's name in {Quotes()}, once.");
-                            return;
-                        }
-
-                        result.AreaName = line.ValueAt(next);
-                        isPlaced = true;
-                        tokenIndex = next + 1;
-                        break;
-
-                    // on screen - measured from the screen's corner: right here and nowhere else.
-                    case ScriptSymbolEnum.ON_SCREEN:
-                        if (isPlaced)
-                        {
-                            AddError(flowScriptSchema, line, tokenIndex, DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "A point is inside an area or on screen, not both.");
-                            return;
-                        }
-
-                        isPlaced = true;
-                        tokenIndex = next;
-                        break;
-
-                    // ratio 0.95 0.05 - a fraction of the area.
-                    case ScriptSymbolEnum.RATIO:
-                        float? ratioX = SyntaxFacts.Float(line.ValueAt(next));
-                        float? ratioY = SyntaxFacts.Float(line.ValueAt(next + 1));
-                        if (isMeasured || ratioX == null || ratioY == null)
-                        {
-                            AddError(flowScriptSchema, line, next, DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Expected \"ratio x y\" once, such as ratio 0.95 0.05.");
-                            return;
-                        }
-
-                        result.Point.OffsetMode = AreaSizingModeEnum.RATIO;
-                        result.Point.RatioX = ratioX.Value;
-                        result.Point.RatioY = ratioY.Value;
-                        isMeasured = true;
-                        tokenIndex = next + 2;
-                        break;
-
-                    // offset 12 12 - pixels from the area's corner.
-                    case ScriptSymbolEnum.OFFSET:
-                        int? locationX = SyntaxFacts.Integer(line.ValueAt(next));
-                        int? locationY = SyntaxFacts.Integer(line.ValueAt(next + 1));
-                        if (isMeasured || locationX == null || locationY == null)
-                        {
-                            AddError(flowScriptSchema, line, next, DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Expected \"offset x y\" once, such as offset 12 12.");
-                            return;
-                        }
-
-                        result.Point.OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX;
-                        result.Point.LocationX = locationX.Value;
-                        result.Point.LocationY = locationY.Value;
-                        isMeasured = true;
-                        tokenIndex = next + 2;
-                        break;
-
-                    // at 120dpi - the DPI the offset was captured at. Without it the pixels stay as written.
-                    case ScriptSymbolEnum.AT:
-                        int? dpi = SyntaxFacts.ReadDpi(line.ValueAt(next));
-                        if (dpi == null)
-                        {
-                            AddError(flowScriptSchema, line, next, DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, $"\"{line.ValueAt(next)}\" is not a DPI. Expected something like 120dpi.");
-                            return;
-                        }
-
-                        result.Point.AuthoredDpi = dpi.Value;
-                        tokenIndex = next + 1;
-                        break;
-
-                    // A symbol that belongs to another kind of line.
-                    default:
-                        AddError(flowScriptSchema, line, tokenIndex, DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, $"\"{scriptKeyword.Text}\" is not something a point takes.");
-                        return;
+                    AddUnexpected(flowScriptSchema, line, ratioX == null ? i : i + 1);
+                    return;
                 }
-            }
 
-            if (!isPlaced)
+                result.Point.OffsetMode = AreaSizingModeEnum.RATIO;
+                result.Point.RatioX = ratioX.Value;
+                result.Point.RatioY = ratioY.Value;
+                i += 2;
+            }
+            else if (measure?.As<ScriptSymbolEnum>() == ScriptSymbolEnum.OFFSET)
             {
-                AddError(flowScriptSchema, line, tokenIndex, DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Expected \"inside\" or \"on screen\".");
+                i += measure.TokenCount;
+                int? locationX = SyntaxFacts.Integer(line.ValueAt(i));
+                int? locationY = SyntaxFacts.Integer(line.ValueAt(i + 1));
+                if (locationX == null || locationY == null)
+                {
+                    AddUnexpected(flowScriptSchema, line, locationX == null ? i : i + 1);
+                    return;
+                }
+
+                result.Point.OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX;
+                result.Point.LocationX = locationX.Value;
+                result.Point.LocationY = locationY.Value;
+                i += 2;
+            }
+            else
+            {
+                AddUnexpected(flowScriptSchema, line, i);
                 return;
             }
 
-            if (!isMeasured)
+            // The DPI the offset was captured at. Optional: without it the pixels stay as written.
+            ScriptKeyword? at = SyntaxFacts.ReadKeyword<ScriptSymbolEnum>(tokens, i);
+            if (at?.As<ScriptSymbolEnum>() == ScriptSymbolEnum.AT)
             {
-                AddError(flowScriptSchema, line, tokenIndex, DiagnosticCodeEnum.PLACEMENT_MALFORMED, "Expected \"ratio x y\" or \"offset x y\".");
-                return;
+                i += at.TokenCount;
+                int? dpi = SyntaxFacts.ReadDpi(line.ValueAt(i));
+                if (dpi == null)
+                {
+                    AddUnexpected(flowScriptSchema, line, i);
+                    return;
+                }
+
+                result.Point.AuthoredDpi = dpi.Value;
+                i++;
             }
 
+            // The line ends where the grammar does.
+            if (i < tokens.Count)
+            {
+                AddUnexpected(flowScriptSchema, line, i);
+                return;
+            }
 
             flowScriptSchema.Points.Add(result);
         }
@@ -492,13 +472,17 @@ namespace Business.FlowScript.Syntax
 
         private static string Quotes()
         {
-            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
 
-        // At the token's column, or just past the end of the line when the token is missing.
-        private static void AddError(FlowScriptSchema flowScriptSchema, ScriptLine line, int index, DiagnosticCodeEnum code, string message)
+        // Unexpected "offset" - at that token, or just past the end of the line when nothing is there.
+        private static void AddUnexpected(FlowScriptSchema flowScriptSchema, ScriptLine line, int index)
         {
-            flowScriptSchema.Diagnostics.Add(Diagnostic.Error(code, line.Number, line.ColumnOf(index), message));
+            string message = "Unexpected end of the line.";
+            if (index < line.Tokens.Count)
+                message = $"Unexpected \"{line.ValueAt(index)}\".";
+
+            flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TOKEN_UNEXPECTED, line.Number, line.ColumnOf(index), message));
         }
     }
 }

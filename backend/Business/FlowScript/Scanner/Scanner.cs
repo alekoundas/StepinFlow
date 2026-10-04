@@ -22,7 +22,7 @@ namespace Business.FlowScript.Scanner
 
         public FlowScriptSchema Read(string script)
         {
-            FlowScriptSchema document = new FlowScriptSchema();
+            FlowScriptSchema flowScriptSchema = new FlowScriptSchema();
             IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
 
             ScriptSymbolEnum? currentSection = null; // Null until the first header: the Flow fields come before any.
@@ -37,7 +37,7 @@ namespace Business.FlowScript.Scanner
                 // Extract CodeComment.
                 if (SyntaxFacts.IsComment(line))
                 {
-                    pendingComments.Add(line.RawAfter(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)));
+                    pendingComments.Add(line.RawAfter(SyntaxFacts.Keyword(ScriptSymbolEnum.COMMENT)));
                     continue;
                 }
 
@@ -50,41 +50,49 @@ namespace Business.FlowScript.Scanner
                 }
 
                 // Call the parsers.
-                switch (currentSection)
+                // A line that stops making sense throws at that token, and the rest of the file is still read.
+                try
                 {
-                    case null:
-                        FlowParser.ReadFlowField(document, line);
-                        break;
+                    switch (currentSection)
+                    {
+                        case null:
+                            FlowParser.ReadFlowField(flowScriptSchema, line);
+                            break;
 
-                    case ScriptSymbolEnum.AREAS:
-                        FlowParser.ReadArea(document, line);
-                        break;
+                        case ScriptSymbolEnum.AREAS:
+                            FlowParser.ReadArea(flowScriptSchema, line);
+                            break;
 
-                    case ScriptSymbolEnum.POINTS:
-                        FlowParser.ReadPoint(document, line);
-                        break;
+                        case ScriptSymbolEnum.POINTS:
+                            FlowParser.ReadPoint(flowScriptSchema, line);
+                            break;
 
-                    case ScriptSymbolEnum.CSV_COLUMNS:
-                        FlowParser.ReadCsvColumns(document, line);
-                        break;
+                        case ScriptSymbolEnum.CSV_COLUMNS:
+                            FlowParser.ReadCsvColumns(flowScriptSchema, line);
+                            break;
 
-                    case ScriptSymbolEnum.TEMPLATES:
-                        FlowParser.ReadTemplate(document, line);
-                        break;
+                        case ScriptSymbolEnum.TEMPLATES:
+                            FlowParser.ReadTemplate(flowScriptSchema, line);
+                            break;
 
-                    case ScriptSymbolEnum.STEPS:
-                        StepParser.Read(document, line, pendingComments);
-                        break;
+                        case ScriptSymbolEnum.STEPS:
+                            StepParser.Read(flowScriptSchema, line, pendingComments);
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
+                }
+                catch (ScriptSyntaxException error)
+                {
+                    flowScriptSchema.Diagnostics.Add(error.Diagnostic);
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(document.FlowName))
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_NAME)}\" line, so there is no flow to import."));
+            if (string.IsNullOrWhiteSpace(flowScriptSchema.FlowName))
+                flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME)}\" line, so there is no flow to import."));
 
-            return document;
+            return flowScriptSchema;
         }
 
 

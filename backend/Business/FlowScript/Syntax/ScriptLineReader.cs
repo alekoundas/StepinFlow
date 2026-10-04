@@ -235,7 +235,7 @@ namespace Business.FlowScript.Syntax
             if (HasFailed || IsAtEnd)
                 return;
 
-            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
             string message = $"{Current} was not expected here.";
 
             // A stray "]>" further on means a quote closed at the first one, earlier than it was meant to.
@@ -256,8 +256,8 @@ namespace Business.FlowScript.Syntax
             if (!token.IsQuoted)
                 return true;
 
-            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
-            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             if (token.IsQuoteUnclosed)
             {
@@ -276,7 +276,7 @@ namespace Business.FlowScript.Syntax
 
         private static string Quotes()
         {
-            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
     }
 }

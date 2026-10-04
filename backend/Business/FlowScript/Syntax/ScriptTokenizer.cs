@@ -57,7 +57,7 @@ namespace Business.FlowScript.Syntax
 
         private static IReadOnlyList<ScriptToken> Tokenize(string line)
         {
-            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
 
             List<ScriptToken> tokens = new List<ScriptToken>();
             int i = 0;
@@ -84,8 +84,8 @@ namespace Business.FlowScript.Syntax
         // cannot hold "]>" - and one that never closes runs to the end of the line, for the parser to report.
         private static ScriptToken ReadQuoted(string line, ref int i, int column)
         {
-            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
-            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             int from = i + quoteOpen.Length;
             int to = line.IndexOf(quoteClose, from, StringComparison.Ordinal);

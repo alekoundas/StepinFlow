@@ -79,7 +79,7 @@ namespace Business.FlowScript.Syntax
         /// <summary>A "#" line is intent for the step below it, unless the catalog says otherwise - "##" is a stage heading.</summary>
         internal static bool IsComment(ScriptLine line)
         {
-            if (!line.Raw.TrimStart().StartsWith(Symbol(ScriptSymbolEnum.COMMENT), StringComparison.Ordinal))
+            if (!line.Raw.TrimStart().StartsWith(Keyword(ScriptSymbolEnum.COMMENT), StringComparison.Ordinal))
                 return false;
 
             return ReadFirstKeyword(line.Tokens) == null;
@@ -108,9 +108,17 @@ namespace Business.FlowScript.Syntax
             return ScriptKeywordCatalog.Get<ScriptSymbolEnum>(text)?.As<ScriptSymbolEnum>();
         }
 
-        internal static string Symbol(ScriptSymbolEnum symbol)
+        /// <summary>
+        /// The word a value is written as, from any vocabulary. A value with none is a gap in the
+        /// catalog, so it throws rather than writing a line no reader accepts.
+        /// </summary>
+        internal static string Keyword(Enum value)
         {
-            return ScriptKeywordCatalog.Get(symbol)!.Text;
+            ScriptKeyword? keyword = ScriptKeywordCatalog.Get(value);
+            if (keyword == null)
+                throw new InvalidOperationException($"No keyword in the catalog writes {value.GetType().Name}.{value}.");
+
+            return keyword.Text;
         }
 
         /// <summary>
@@ -122,8 +130,8 @@ namespace Business.FlowScript.Syntax
             if (string.IsNullOrEmpty(text))
                 return false;
 
-            return text.Contains(Symbol(ScriptSymbolEnum.QUOTE_OPEN), StringComparison.Ordinal)
-                || text.Contains(Symbol(ScriptSymbolEnum.QUOTE_CLOSE), StringComparison.Ordinal);
+            return text.Contains(Keyword(ScriptSymbolEnum.QUOTE_OPEN), StringComparison.Ordinal)
+                || text.Contains(Keyword(ScriptSymbolEnum.QUOTE_CLOSE), StringComparison.Ordinal);
         }
 
         /// <summary>How a window title is matched.</summary>
@@ -148,44 +156,24 @@ namespace Business.FlowScript.Syntax
             return ScriptKeywordCatalog.Get<CursorScrollDirectionTypeEnum>(word)?.As<CursorScrollDirectionTypeEnum>();
         }
 
-        public static string TitleMatch(TitleMatchModeEnum mode)
-        {
-            return ScriptKeywordCatalog.Get(mode)?.Text ?? string.Empty;
-        }
-
-        public static string ScalesWith(ScalesWithEnum scalesWith)
-        {
-            return ScriptKeywordCatalog.Get(scalesWith)?.Text ?? string.Empty;
-        }
-
-        public static string MatchMode(TemplateMatchModeEnum mode)
-        {
-            return ScriptKeywordCatalog.Get(mode)?.Text ?? string.Empty;
-        }
-
-        /// <summary>A scroll with no direction goes down, which is what it did before there was one.</summary>
-        public static string ScrollDirection(CursorScrollDirectionTypeEnum? direction)
-        {
-            return ScriptKeywordCatalog.Get(direction ?? CursorScrollDirectionTypeEnum.DOWN)?.Text ?? string.Empty;
-        }
-
         public static string Condition(FlowStep step)
         {
-            string value = Quote(step.ConditionText);
+            if (step.ConditionType == null)
+                return string.Empty;
+
+            string keyword = Keyword(step.ConditionType.Value);
 
             switch (step.ConditionType)
             {
-                case ConditionTypeEnum.EQUALS: return $"is {value}";
-                case ConditionTypeEnum.NOT_EQUALS: return $"is not {value}";
-                case ConditionTypeEnum.CONTAINS: return $"contains {value}";
-                case ConditionTypeEnum.NOT_CONTAINS: return $"does not contain {value}";
-                case ConditionTypeEnum.MATCHES_REGEX: return $"matches {value}";
-                case ConditionTypeEnum.IS_EMPTY: return "is empty";
-                case ConditionTypeEnum.IS_NOT_EMPTY: return "is not empty";
-                case ConditionTypeEnum.GREATER_THAN: return $"> {value}";
-                case ConditionTypeEnum.LESS_THAN: return $"< {value}";
-                case ConditionTypeEnum.BETWEEN: return $"between {value} and {Quote(step.ConditionTextEnd)}";
-                default: return string.Empty;
+                case ConditionTypeEnum.IS_EMPTY:
+                case ConditionTypeEnum.IS_NOT_EMPTY:
+                    return keyword;
+
+                case ConditionTypeEnum.BETWEEN:
+                    return $"{keyword} {Quote(step.ConditionText)} {Keyword(ScriptSymbolEnum.AND)} {Quote(step.ConditionTextEnd)}";
+
+                default:
+                    return $"{keyword} {Quote(step.ConditionText)}";
             }
         }
 
@@ -196,20 +184,13 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static string Button(CursorButtonTypeEnum? button, CursorButtonActionTypeEnum? action)
         {
-            string side = button switch
-            {
-                CursorButtonTypeEnum.RIGHT_BUTTON => "right",
-                CursorButtonTypeEnum.MIDDLE_BUTTON => "middle",
-                _ => string.Empty,
-            };
+            string side = string.Empty;
+            if (button != null && button != CursorButtonTypeEnum.LEFT_BUTTON)
+                side = Keyword(button.Value);
 
-            string kind = action switch
-            {
-                CursorButtonActionTypeEnum.DOUBLE_CLICK => "double",
-                CursorButtonActionTypeEnum.HOLD_CLICK => "hold",
-                CursorButtonActionTypeEnum.RELEASE_CLICK => "release",
-                _ => string.Empty,
-            };
+            string kind = string.Empty;
+            if (action != null && action != CursorButtonActionTypeEnum.SINGLE_CLICK)
+                kind = Keyword(action.Value);
 
             return $"{side} {kind}".Trim();
         }
@@ -423,7 +404,7 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static string Quote(string? text)
         {
-            return $"{Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {text} {Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
+            return $"{Keyword(ScriptSymbolEnum.QUOTE_OPEN)} {text} {Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
 
         private static ConditionSyntax? WithValue(ConditionTypeEnum type, string? value, int words)

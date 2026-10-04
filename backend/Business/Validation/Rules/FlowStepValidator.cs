@@ -109,8 +109,8 @@ namespace Business.Validation.Rules
             if (!hasQuote)
                 return;
 
-            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
-            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.QUOTE_INSIDE,
                 $"Text in this step can't contain \"{quoteOpen}\" or \"{quoteClose}\".");

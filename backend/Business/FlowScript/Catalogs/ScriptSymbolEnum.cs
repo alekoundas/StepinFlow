@@ -28,5 +28,42 @@ namespace Business.FlowScript.Catalogs
         RATIO,
         OFFSET,
         AT,
+        WINDOW,
+        MONITOR,
+        PRIMARY,
+        PROCESS,
+        TITLE,
+        SIZE,
+        SCALES_WITH,
+
+        // FlowCsvColumn
+        SECRET,
+
+        // FlowStepTemplate
+        CLICK,
+        CAPTURED,
+
+        // FlowStep
+        TO,
+        POINT,
+        MATCH,
+        TEMPLATE,
+        ACCURACY,
+        REQUIRED,
+        IN,
+        KEEP,
+        TIMEOUT,
+        NO_TIMEOUT,
+        AND,
+        TIMES,
+        FOREVER,
+        EACH,
+        PASSED,
+        FAILED,
+
+        // Written onto a number: 800ms, 120dpi, 1920x1080
+        MILLISECONDS,
+        DPI,
+        SIZE_SEPARATOR,
     }
 }
