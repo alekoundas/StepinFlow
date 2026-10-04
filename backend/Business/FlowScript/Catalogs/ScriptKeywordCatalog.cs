@@ -43,9 +43,10 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
             new ScriptKeyword("##", FlowStepTypeEnum.MARKER),
 
-            // Where text starts and ends. Nothing between them is special, so text cannot hold either.
-            new ScriptKeyword("<[", ScriptSymbolEnum.TEXT_START),
-            new ScriptKeyword("]>", ScriptSymbolEnum.TEXT_END),
+            // The quotes around a name or any other text. Nothing between them is special, so quoted
+            // text cannot hold either one.
+            new ScriptKeyword("<[", ScriptSymbolEnum.QUOTE_OPEN),
+            new ScriptKeyword("]>", ScriptSymbolEnum.QUOTE_CLOSE),
 
             // Lines that are not steps: intent for the step below, the flow's own fields, and the
             // header opening each section.

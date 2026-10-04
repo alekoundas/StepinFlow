@@ -19,7 +19,7 @@ namespace Business.FlowScript.Syntax
             if (keyword == null)
             {
                 document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.STEP_UNKNOWN, line.Number, line.Tokens[0].Column,
-                    $"\"{line.Word(0)}\" is not a step. See FLOW-FORMAT.md for the keywords."));
+                    $"\"{line.ValueAt(0)}\" is not a step. See FLOW-FORMAT.md for the keywords."));
 
                 pendingComments.Clear();
                 return;
@@ -42,12 +42,12 @@ namespace Business.FlowScript.Syntax
                 FlowStep flowStep = new FlowStep
                 {
                     FlowStepType = FlowStepTypeEnum.MARKER,
-                    Name = line.TextAfter(keyword.Text),
+                    Name = line.RawAfter(keyword.Text),
                 };
                 AddToSchemaBindng(document, line, flowStep);
 
-                if (SyntaxFacts.HasTextDelimiter(flowStep.Name))
-                    reader.Fail(DiagnosticCodeEnum.TEXT_DELIMITER, $"A stage's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END)}\".");
+                if (SyntaxFacts.HasQuote(flowStep.Name))
+                    reader.Fail(DiagnosticCodeEnum.QUOTE_INSIDE, $"A stage's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}\".");
 
                 pendingComments.Clear();
                 return;
@@ -169,15 +169,15 @@ namespace Business.FlowScript.Syntax
 
                 case FlowStepTypeEnum.GO_TO:
                     if (reader.Expect("to", DiagnosticCodeEnum.TARGET_MISSING, "Expected \"to\" and the step to go to."))
-                        parsed.ReferenceName = reader.Text("the step to go to");
+                        parsed.ReferenceName = reader.Quoted("the step to go to");
                     break;
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    parsed.SubFlowPath = reader.Text("the sub-flow's path");
+                    parsed.SubFlowPath = reader.Quoted("the sub-flow's path");
                     break;
 
                 case FlowStepTypeEnum.NOTIFY:
-                    if (reader.Text("the message") is string message)
+                    if (reader.Quoted("the message") is string message)
                         step.Message = message;
                     break;
 
@@ -200,7 +200,7 @@ namespace Business.FlowScript.Syntax
                     break;
 
                 default:
-                    if (reader.Text("the step's name") is string name)
+                    if (reader.Quoted("the step's name") is string name)
                         step.Name = name;
                     break;
             }
@@ -211,7 +211,7 @@ namespace Business.FlowScript.Syntax
         private static void ReadSearch(ScriptLineReader reader, FlowStepSchemaBindng parsed)
         {
             FlowStep step = parsed.Step;
-            if (reader.Text("the step's name") is string name)
+            if (reader.Quoted("the step's name") is string name)
                 step.Name = name;
 
             if (step.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT && !ReadCondition(reader, step, SyntaxFacts.Quote("text"), "contains"))
@@ -224,7 +224,7 @@ namespace Business.FlowScript.Syntax
             {
                 if (reader.Take("template"))
                 {
-                    if (reader.Text("the template's file name") is not string fileName)
+                    if (reader.Quoted("the template's file name") is not string fileName)
                         return;
 
                     ScriptTemplateImage template = new ScriptTemplateImage { FileName = fileName };
@@ -233,7 +233,7 @@ namespace Business.FlowScript.Syntax
                 }
                 else if (reader.Take("in"))
                 {
-                    parsed.AreaName = reader.Text("the area's name");
+                    parsed.AreaName = reader.Quoted("the area's name");
                 }
                 // Belongs to the template written just before it.
                 else if (reader.Is("accuracy"))
@@ -280,7 +280,7 @@ namespace Business.FlowScript.Syntax
                 }
                 else if (reader.Take("keep"))
                 {
-                    if (reader.Text("the pattern to keep") is string pattern)
+                    if (reader.Quoted("the pattern to keep") is string pattern)
                         step.ResultExtractPattern = pattern;
                 }
                 else if (reader.Take("timeout"))
@@ -308,14 +308,14 @@ namespace Business.FlowScript.Syntax
         private static void ReadCheckValue(ScriptLineReader reader, FlowStepSchemaBindng parsed)
         {
             FlowStep step = parsed.Step;
-            if (reader.Text("the step's name") is string name)
+            if (reader.Quoted("the step's name") is string name)
                 step.Name = name;
 
             // The value is written as "{{Step name}}", because at the point of use a step result
             // and an input are the same thing. Empty is a check with nothing chosen yet.
             int column = reader.Column;
             string example = SyntaxFacts.Quote("{{Step name}}");
-            if (reader.Text(DiagnosticCodeEnum.ARGUMENT_EXPECTED, $"Expected the value to check, such as {example}.") is not string variable)
+            if (reader.Quoted(DiagnosticCodeEnum.ARGUMENT_EXPECTED, $"Expected the value to check, such as {example}.") is not string variable)
                 return;
 
             if (variable.Length > 0)
@@ -390,8 +390,8 @@ namespace Business.FlowScript.Syntax
 
             while (reader.HasMore)
             {
-                CursorButtonTypeEnum? side = SyntaxFacts.ReadButtonSide(reader.Peek());
-                CursorButtonActionTypeEnum? kind = SyntaxFacts.ReadButtonAction(reader.Peek());
+                CursorButtonTypeEnum? side = SyntaxFacts.ReadButtonSide(reader.PeekUnquoted());
+                CursorButtonActionTypeEnum? kind = SyntaxFacts.ReadButtonAction(reader.PeekUnquoted());
 
                 if (side != null)
                     button = side.Value;
@@ -415,7 +415,7 @@ namespace Business.FlowScript.Syntax
 
             if (reader.Take("point"))
             {
-                pointName = reader.Text("the point's name");
+                pointName = reader.Quoted("the point's name");
                 return pointName != null;
             }
 
@@ -424,13 +424,13 @@ namespace Business.FlowScript.Syntax
                 return true;
 
             string example = SyntaxFacts.Quote("a step");
-            referenceName = reader.Text(DiagnosticCodeEnum.TARGET_MISSING, $"Expected what to aim at: {example}, point and its name, or match.");
+            referenceName = reader.Quoted(DiagnosticCodeEnum.TARGET_MISSING, $"Expected what to aim at: {example}, point and its name, or match.");
             return referenceName != null;
         }
 
         private static void ReadScroll(ScriptLineReader reader, FlowStepSchemaBindng parsed)
         {
-            CursorScrollDirectionTypeEnum? direction = SyntaxFacts.ReadScrollDirection(reader.Peek());
+            CursorScrollDirectionTypeEnum? direction = SyntaxFacts.ReadScrollDirection(reader.PeekUnquoted());
             if (direction == null)
             {
                 reader.Fail(DiagnosticCodeEnum.SCROLL_DIRECTION_UNKNOWN, "Expected up, down, left or right.");
@@ -446,17 +446,17 @@ namespace Business.FlowScript.Syntax
             parsed.Step.LoopCount = count;
 
             if (reader.Take("in"))
-                parsed.AreaName = reader.Text("the area's name");
+                parsed.AreaName = reader.Quoted("the area's name");
         }
 
         private static void ReadKeyboard(ScriptLineReader reader, FlowStep step)
         {
-            // A combination is written bare - Ctrl+C - and text in delimiters.
+            // A combination is unquoted - Ctrl+C - and text to type is quoted.
             string? keys;
             if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
-                keys = reader.Word("the keys to press, such as Ctrl+C");
+                keys = reader.Unquoted("the keys to press, such as Ctrl+C");
             else
-                keys = reader.Text("the text to type");
+                keys = reader.Quoted("the text to type");
 
             if (keys != null)
                 step.KeyboardInputText = keys;
@@ -486,11 +486,11 @@ namespace Business.FlowScript.Syntax
             if (reader.Take("each"))
             {
                 if (reader.Expect("match", DiagnosticCodeEnum.LOOP_MALFORMED, malformed) && reader.Expect("in", DiagnosticCodeEnum.LOOP_MALFORMED, malformed))
-                    parsed.ReferenceName = reader.Text("the search whose matches to loop over");
+                    parsed.ReferenceName = reader.Quoted("the search whose matches to loop over");
                 return;
             }
 
-            if (reader.Peek(1) == "times")
+            if (reader.PeekUnquoted(1) == "times")
             {
                 if (reader.Integer("how many times to loop") is int count)
                     parsed.Step.LoopCount = count;
@@ -513,7 +513,7 @@ namespace Business.FlowScript.Syntax
             if (reader.Take("failed"))
             {
                 step.EndExecutionAsSuccess = false;
-                if (reader.Text("the reason it failed") is string reason)
+                if (reader.Quoted("the reason it failed") is string reason)
                     step.Message = reason;
                 return;
             }
@@ -523,7 +523,7 @@ namespace Business.FlowScript.Syntax
 
         private static void ReadSystemAction(ScriptLineReader reader, FlowStep step)
         {
-            if (SyntaxFacts.TryReadName(reader.Peek(), out SystemActionTypeEnum action))
+            if (SyntaxFacts.TryReadName(reader.PeekUnquoted(), out SystemActionTypeEnum action))
             {
                 step.SystemActionType = action;
                 reader.Skip();
@@ -536,13 +536,13 @@ namespace Business.FlowScript.Syntax
         private static void ReadCommand(ScriptLineReader reader, FlowStep step)
         {
             // Launch already carries its preset from the keyword; Run may name one before the value.
-            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM && SyntaxFacts.TryReadName(reader.Peek(), out RunCommandPresetEnum preset))
+            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM && SyntaxFacts.TryReadName(reader.PeekUnquoted(), out RunCommandPresetEnum preset))
             {
                 step.RunCommandPreset = preset;
                 reader.Skip();
             }
 
-            if (reader.Text("the command") is string command)
+            if (reader.Quoted("the command") is string command)
                 step.RunCommandValue = command;
         }
 
@@ -553,7 +553,7 @@ namespace Business.FlowScript.Syntax
             if (!reader.Expect("process", DiagnosticCodeEnum.PROCESS_MISSING, "Expected \"process\" and the process name."))
                 return;
 
-            if (reader.Text("the process name") is not string process)
+            if (reader.Quoted("the process name") is not string process)
                 return;
 
             step.ProcessName = process;
@@ -568,7 +568,7 @@ namespace Business.FlowScript.Syntax
                 }
 
                 step.TitleMatchMode = match.As<TitleMatchModeEnum>()!.Value;
-                if (reader.Text("the title to match") is not string title)
+                if (reader.Quoted("the title to match") is not string title)
                     return;
 
                 step.TitlePattern = title;

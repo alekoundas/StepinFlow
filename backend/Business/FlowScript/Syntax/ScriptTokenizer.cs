@@ -57,7 +57,7 @@ namespace Business.FlowScript.Syntax
 
         private static IReadOnlyList<ScriptToken> Tokenize(string line)
         {
-            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
+            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
 
             List<ScriptToken> tokens = new List<ScriptToken>();
             int i = 0;
@@ -71,37 +71,37 @@ namespace Business.FlowScript.Syntax
                 }
 
                 int column = i + 1;
-                if (line.AsSpan(i).StartsWith(textStart, StringComparison.Ordinal))
-                    tokens.Add(ReadText(line, ref i, column));
+                if (line.AsSpan(i).StartsWith(quoteOpen, StringComparison.Ordinal))
+                    tokens.Add(ReadQuoted(line, ref i, column));
                 else
-                    tokens.Add(new ScriptToken(ReadWord(line, ref i), false, column));
+                    tokens.Add(new ScriptToken(ReadUnquoted(line, ref i), false, column));
             }
 
             return tokens;
         }
 
-        // From "<[" to the first "]>", trimmed. Nothing between them is special, so text cannot hold
-        // "]>" - and one that never closes runs to the end of the line, for the parser to report.
-        private static ScriptToken ReadText(string line, ref int i, int column)
+        // From "<[" to the first "]>", trimmed. Nothing between the quotes is special, so a quoted value
+        // cannot hold "]>" - and one that never closes runs to the end of the line, for the parser to report.
+        private static ScriptToken ReadQuoted(string line, ref int i, int column)
         {
-            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
-            string textEnd = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END);
+            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            int from = i + textStart.Length;
-            int to = line.IndexOf(textEnd, from, StringComparison.Ordinal);
+            int from = i + quoteOpen.Length;
+            int to = line.IndexOf(quoteClose, from, StringComparison.Ordinal);
 
             if (to < 0)
             {
                 i = line.Length;
-                return new ScriptToken(line[from..].Trim(), true, column) { IsUnclosed = true };
+                return new ScriptToken(line[from..].Trim(), true, column) { IsQuoteUnclosed = true };
             }
 
-            i = to + textEnd.Length;
+            i = to + quoteClose.Length;
             return new ScriptToken(line[from..to].Trim(), true, column);
         }
 
         // Up to the next whitespace.
-        private static string ReadWord(string line, ref int i)
+        private static string ReadUnquoted(string line, ref int i)
         {
             int start = i;
             while (i < line.Length && !char.IsWhiteSpace(line[i]))

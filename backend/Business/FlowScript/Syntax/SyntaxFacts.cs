@@ -114,17 +114,16 @@ namespace Business.FlowScript.Syntax
         }
 
         /// <summary>
-        /// Text in the script sits between <c>&lt;[</c> and <c>]&gt;</c> with nothing inside it
-        /// escaped, so text holding either one cannot be written there - a form or a script that
-        /// tries is refused.
+        /// Whether the text holds one of the quotes, <c>&lt;[</c> or <c>]&gt;</c>. Nothing between them
+        /// is escaped, so text holding either cannot be quoted - a form or a script that tries is refused.
         /// </summary>
-        public static bool HasTextDelimiter(string? text)
+        public static bool HasQuote(string? text)
         {
             if (string.IsNullOrEmpty(text))
                 return false;
 
-            return text.Contains(Symbol(ScriptSymbolEnum.TEXT_START), StringComparison.Ordinal)
-                || text.Contains(Symbol(ScriptSymbolEnum.TEXT_END), StringComparison.Ordinal);
+            return text.Contains(Symbol(ScriptSymbolEnum.QUOTE_OPEN), StringComparison.Ordinal)
+                || text.Contains(Symbol(ScriptSymbolEnum.QUOTE_CLOSE), StringComparison.Ordinal);
         }
 
         /// <summary>How a window title is matched.</summary>
@@ -217,64 +216,64 @@ namespace Business.FlowScript.Syntax
 
 
         /// <summary>
-        /// A condition from the words it was written as, its values in <c>&lt;[ ]&gt;</c>. Null when
-        /// the words name no condition or a value is missing. Longest first again: "is not empty"
-        /// has to beat "is not", which has to beat "is".
+        /// A condition from the words it was written as, its values quoted. Null when the words name
+        /// no condition or a value is missing. Longest first again: "is not empty" has to beat
+        /// "is not", which has to beat "is".
         /// </summary>
         internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptToken> tokens, int at)
         {
-            string W(int i)
+            string Unquoted(int i)
             {
                 if (at + i >= tokens.Count || tokens[at + i].IsQuoted)
                     return string.Empty;
 
-                return tokens[at + i].Text;
+                return tokens[at + i].Value;
             }
 
-            string? V(int i)
+            string? Quoted(int i)
             {
                 if (at + i >= tokens.Count || !tokens[at + i].IsQuoted)
                     return null;
 
-                return tokens[at + i].Text;
+                return tokens[at + i].Value;
             }
 
-            if (W(0) == "is" && W(1) == "empty")
+            if (Unquoted(0) == "is" && Unquoted(1) == "empty")
                 return new ConditionSyntax(ConditionTypeEnum.IS_EMPTY, string.Empty, string.Empty, 2);
 
-            if (W(0) == "is" && W(1) == "not" && W(2) == "empty")
+            if (Unquoted(0) == "is" && Unquoted(1) == "not" && Unquoted(2) == "empty")
                 return new ConditionSyntax(ConditionTypeEnum.IS_NOT_EMPTY, string.Empty, string.Empty, 3);
 
-            if (W(0) == "is" && W(1) == "not")
-                return WithValue(ConditionTypeEnum.NOT_EQUALS, V(2), 3);
+            if (Unquoted(0) == "is" && Unquoted(1) == "not")
+                return WithValue(ConditionTypeEnum.NOT_EQUALS, Quoted(2), 3);
 
-            if (W(0) == "is")
-                return WithValue(ConditionTypeEnum.EQUALS, V(1), 2);
+            if (Unquoted(0) == "is")
+                return WithValue(ConditionTypeEnum.EQUALS, Quoted(1), 2);
 
-            if (W(0) == "does" && W(1) == "not" && W(2) == "contain")
-                return WithValue(ConditionTypeEnum.NOT_CONTAINS, V(3), 4);
+            if (Unquoted(0) == "does" && Unquoted(1) == "not" && Unquoted(2) == "contain")
+                return WithValue(ConditionTypeEnum.NOT_CONTAINS, Quoted(3), 4);
 
-            if (W(0) == "contains")
-                return WithValue(ConditionTypeEnum.CONTAINS, V(1), 2);
+            if (Unquoted(0) == "contains")
+                return WithValue(ConditionTypeEnum.CONTAINS, Quoted(1), 2);
 
-            if (W(0) == "matches")
-                return WithValue(ConditionTypeEnum.MATCHES_REGEX, V(1), 2);
+            if (Unquoted(0) == "matches")
+                return WithValue(ConditionTypeEnum.MATCHES_REGEX, Quoted(1), 2);
 
-            if (W(0) == "between" && W(2) == "and")
+            if (Unquoted(0) == "between" && Unquoted(2) == "and")
             {
-                string? from = V(1);
-                string? to = V(3);
+                string? from = Quoted(1);
+                string? to = Quoted(3);
                 if (from == null || to == null)
                     return null;
 
                 return new ConditionSyntax(ConditionTypeEnum.BETWEEN, from, to, 4);
             }
 
-            if (W(0) == ">")
-                return WithValue(ConditionTypeEnum.GREATER_THAN, V(1), 2);
+            if (Unquoted(0) == ">")
+                return WithValue(ConditionTypeEnum.GREATER_THAN, Quoted(1), 2);
 
-            if (W(0) == "<")
-                return WithValue(ConditionTypeEnum.LESS_THAN, V(1), 2);
+            if (Unquoted(0) == "<")
+                return WithValue(ConditionTypeEnum.LESS_THAN, Quoted(1), 2);
 
             return null;
         }
@@ -407,7 +406,7 @@ namespace Business.FlowScript.Syntax
                 if (i > tokenIndex) // Dont add space on first loop.
                     phrase += " ";
 
-                phrase += tokens[i].Text;
+                phrase += tokens[i].Value;
 
                 ScriptKeyword? keyword = ScriptKeywordCatalog.Get<TEnum>(phrase);
                 if (keyword != null)
@@ -419,12 +418,12 @@ namespace Business.FlowScript.Syntax
 
 
         /// <summary>
-        /// Text between <c>&lt;[</c> and <c>]&gt;</c>, one space inside each for reading. Nothing
-        /// is escaped: quotes and backslashes are text like anything else.
+        /// The text quoted: between <c>&lt;[</c> and <c>]&gt;</c>, one space inside each for reading.
+        /// Nothing is escaped - double quotes and backslashes are text like anything else.
         /// </summary>
         public static string Quote(string? text)
         {
-            return $"{Symbol(ScriptSymbolEnum.TEXT_START)} {text} {Symbol(ScriptSymbolEnum.TEXT_END)}";
+            return $"{Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {text} {Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
 
         private static ConditionSyntax? WithValue(ConditionTypeEnum type, string? value, int words)

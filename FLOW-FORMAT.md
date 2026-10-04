@@ -115,23 +115,24 @@ one machine's database, and a repository is cloned into many. Without it a fresh
 
 It is generated once and travels with every copy and export of that flow from then on.
 
-### Text is written between `<[` and `]>`
+### Text is quoted with `<[` and `]>`
 
-Every name and every piece of text - a message, a command, a pattern, the text to type - sits
-between `<[` and `]>`, in the header and in the steps, whether or not it contains a space. One rule
-reads back unambiguously; a rule about which names need marking means a parser has to guess where
-`Login form inside Browser` stops being a name.
+The quotes in this format are `<[` and `]>`. Every name and every piece of text - a message, a
+command, a pattern, the text to type - is quoted, in the header and in the steps, whether or not it
+contains a space. One rule reads back unambiguously; a rule about which names need quoting means a
+parser has to guess where `Login form inside Browser` stops being a name.
 
 ```
 Notify   <[ Login failed: "bad password" ]>
 Run      <[ dir C:\temp\ ]>
 ```
 
-Nothing between them is special. Quotes and backslashes are text like any other, so nothing is ever
-escaped, and what is written is what is read. The price is that text cannot contain `<[` or `]>`
-itself: the forms refuse both as they are typed, and a script holding one is refused on import.
+Nothing between the quotes is special. Double quotes and backslashes are text like any other, so
+nothing is ever escaped, and what is written is what is read. The price is that quoted text cannot
+contain `<[` or `]>` itself: the forms refuse both as they are typed, and a script holding one is
+refused on import.
 
-The spaces just inside the marks are layout, not text. The printer writes one on each side, and the
+The spaces just inside the quotes are layout, not text. The printer writes one on each side, and the
 reader trims whatever is there, so `<[This text]>` and `<[    This text ]>` are the same text.
 
 ### Every word means something

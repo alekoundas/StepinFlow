@@ -39,10 +39,10 @@ namespace Business.FlowScript.Syntax
             switch (SyntaxFacts.ReadSymbol(key))
             {
                 case ScriptSymbolEnum.FLOW: // ex. "Flow:    Test: Login and add to cart"
-                    if (SyntaxFacts.HasTextDelimiter(value))
+                    if (SyntaxFacts.HasQuote(value))
                     {
-                        document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEXT_DELIMITER, line.Number, colon + 2,
-                            $"A flow's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END)}\"."));
+                        document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.QUOTE_INSIDE, line.Number, colon + 2,
+                            $"A flow's name can't contain \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)}\" or \"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}\"."));
                         break;
                     }
 
@@ -76,7 +76,7 @@ namespace Business.FlowScript.Syntax
             // ex. <[ Browser ]>   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
             ScriptLineReader reader = new ScriptLineReader(document, line, 0);
 
-            if (reader.Text(DiagnosticCodeEnum.AREA_NAME_MISSING, $"An area starts with its name in {Delimiters()}.") is not string name)
+            if (reader.Quoted(DiagnosticCodeEnum.AREA_NAME_MISSING, $"An area starts with its name in {Quotes()}.") is not string name)
                 return;
 
             FlowArea area = new FlowArea { Name = name };
@@ -92,7 +92,7 @@ namespace Business.FlowScript.Syntax
                 area.Type = FlowAreaTypeEnum.MONITOR;
                 ReadMonitor(reader, area);
             }
-            else if (reader.Is("on") && reader.Peek(1) == "screen")
+            else if (reader.Is("on") && reader.PeekUnquoted(1) == "screen")
             {
                 // Screen coordinates: correct on the machine it was made on and nowhere else.
                 reader.Skip();
@@ -103,7 +103,7 @@ namespace Business.FlowScript.Syntax
             else if (reader.Take("inside")) // ex. <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  0.12 0.10
             {
                 area.Type = FlowAreaTypeEnum.CUSTOM;
-                parentName = reader.Text("the area it is inside");
+                parentName = reader.Quoted("the area it is inside");
                 ReadPlacement(reader, area);
             }
             else
@@ -129,7 +129,7 @@ namespace Business.FlowScript.Syntax
             // ex. <[ Origin ]>        inside <[ Browser ]>   offset 12 12   at 120dpi
             ScriptLineReader reader = new ScriptLineReader(document, line, 0);
 
-            if (reader.Text(DiagnosticCodeEnum.POINT_NAME_MISSING, $"A point starts with its name in {Delimiters()}.") is not string name)
+            if (reader.Quoted(DiagnosticCodeEnum.POINT_NAME_MISSING, $"A point starts with its name in {Quotes()}.") is not string name)
                 return;
 
             FlowPoint point = new FlowPoint { Name = name };
@@ -137,9 +137,9 @@ namespace Business.FlowScript.Syntax
 
             if (reader.Take("inside"))
             {
-                areaName = reader.Text("the area it is measured from");
+                areaName = reader.Quoted("the area it is measured from");
             }
-            else if (reader.Is("on") && reader.Peek(1) == "screen")
+            else if (reader.Is("on") && reader.PeekUnquoted(1) == "screen")
             {
                 reader.Skip();
                 reader.Skip();
@@ -175,7 +175,7 @@ namespace Business.FlowScript.Syntax
             // at 120dpi: optional, and without it the pixels stay as written.
             if (reader.Take("at"))
             {
-                int? dpi = SyntaxFacts.ReadDpi(reader.Peek());
+                int? dpi = SyntaxFacts.ReadDpi(reader.PeekUnquoted());
                 if (dpi == null)
                     reader.Fail(DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, $"{reader.Current} is not a DPI. Expected something like 120dpi.");
                 else
@@ -201,7 +201,7 @@ namespace Business.FlowScript.Syntax
             // ex. <[ password ]>    secret
             ScriptLineReader reader = new ScriptLineReader(document, line, 0);
 
-            if (reader.Text(DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, $"An input is its name in {Delimiters()}, optionally followed by \"secret\".") is not string name)
+            if (reader.Quoted(DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, $"An input is its name in {Quotes()}, optionally followed by \"secret\".") is not string name)
                 return;
 
             bool isSecret = reader.Take("secret");
@@ -226,7 +226,7 @@ namespace Business.FlowScript.Syntax
             // ex. <[ a.png ]>   click 120,40   captured 800x600 at 120dpi
             ScriptLineReader reader = new ScriptLineReader(document, line, 0);
 
-            if (reader.Text(DiagnosticCodeEnum.TEMPLATE_MALFORMED, $"A template starts with its file name in {Delimiters()}.") is not string fileName)
+            if (reader.Quoted(DiagnosticCodeEnum.TEMPLATE_MALFORMED, $"A template starts with its file name in {Quotes()}.") is not string fileName)
                 return;
 
             if (document.Templates.Any(x => string.Equals(x.FileName, fileName, StringComparison.Ordinal)))
@@ -241,7 +241,7 @@ namespace Business.FlowScript.Syntax
             {
                 if (reader.Take("click"))
                 {
-                    (int X, int Y)? click = SyntaxFacts.ReadPair(reader.Peek(), ',');
+                    (int X, int Y)? click = SyntaxFacts.ReadPair(reader.PeekUnquoted(), ',');
                     if (click == null)
                     {
                         reader.Fail(DiagnosticCodeEnum.TEMPLATE_MALFORMED, $"{reader.Current} is not a click point. Expected something like 120,40.");
@@ -252,7 +252,7 @@ namespace Business.FlowScript.Syntax
                 }
                 else if (reader.Take("captured"))
                 {
-                    (int Width, int Height)? size = SyntaxFacts.ReadPair(reader.Peek(), 'x');
+                    (int Width, int Height)? size = SyntaxFacts.ReadPair(reader.PeekUnquoted(), 'x');
                     if (size == null)
                     {
                         reader.Fail(DiagnosticCodeEnum.TEMPLATE_MALFORMED, $"{reader.Current} is not a size. Expected something like 800x600.");
@@ -264,7 +264,7 @@ namespace Business.FlowScript.Syntax
                 }
                 else if (reader.Take("at"))
                 {
-                    int? dpi = SyntaxFacts.ReadDpi(reader.Peek());
+                    int? dpi = SyntaxFacts.ReadDpi(reader.PeekUnquoted());
                     if (dpi == null)
                     {
                         reader.Fail(DiagnosticCodeEnum.TEMPLATE_MALFORMED, $"{reader.Current} is not a DPI. Expected something like 120dpi.");
@@ -316,7 +316,7 @@ namespace Business.FlowScript.Syntax
             if (!reader.Expect("process", DiagnosticCodeEnum.AREA_WINDOW_MALFORMED, "Expected \"window process\" followed by the process name."))
                 return;
 
-            if (reader.Text("the process name") is not string process)
+            if (reader.Quoted("the process name") is not string process)
                 return;
 
             area.ProcessName = process;
@@ -332,11 +332,11 @@ namespace Business.FlowScript.Syntax
             }
 
             area.TitleMatchMode = match.As<TitleMatchModeEnum>()!.Value;
-            if (reader.Text("the title to match") is string title)
+            if (reader.Quoted("the title to match") is string title)
                 area.TitlePattern = title;
         }
 
-        // monitor primary, or monitor <[ \\.\DISPLAY2 ]>. In delimiters, because a device could be called primary.
+        // monitor primary, or monitor <[ \\.\DISPLAY2 ]>. Quoted, because a device could be called primary.
         private static void ReadMonitor(ScriptLineReader reader, FlowArea area)
         {
             if (reader.Take("primary"))
@@ -345,7 +345,7 @@ namespace Business.FlowScript.Syntax
                 return;
             }
 
-            if (reader.Text(DiagnosticCodeEnum.PLACEMENT_MALFORMED, $"Expected \"monitor primary\" or \"monitor\" and the device name in {Delimiters()}.") is string device)
+            if (reader.Quoted(DiagnosticCodeEnum.PLACEMENT_MALFORMED, $"Expected \"monitor primary\" or \"monitor\" and the device name in {Quotes()}.") is string device)
                 area.MonitorDeviceName = device;
         }
 
@@ -399,7 +399,7 @@ namespace Business.FlowScript.Syntax
                 {
                     ScalesWithEnum? scalesWith = null;
                     if (reader.Take("with"))
-                        scalesWith = SyntaxFacts.ReadScalesWith(reader.Peek());
+                        scalesWith = SyntaxFacts.ReadScalesWith(reader.PeekUnquoted());
 
                     if (scalesWith == null)
                     {
@@ -412,7 +412,7 @@ namespace Business.FlowScript.Syntax
                 }
                 else if (reader.Take("at"))
                 {
-                    int? dpi = SyntaxFacts.ReadDpi(reader.Peek());
+                    int? dpi = SyntaxFacts.ReadDpi(reader.PeekUnquoted());
                     if (dpi == null)
                     {
                         reader.Fail(DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, $"{reader.Current} is not a DPI. Expected something like 120dpi.");
@@ -430,9 +430,9 @@ namespace Business.FlowScript.Syntax
             }
         }
 
-        private static string Delimiters()
+        private static string Quotes()
         {
-            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START)} {SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END)}";
+            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
     }
 }

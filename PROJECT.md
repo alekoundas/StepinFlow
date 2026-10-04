@@ -678,13 +678,17 @@ the first line that changed. It is also the most complete example of the format 
 
 ### Grammar rules that only emerged from reading real output
 
-**Every piece of text is marked, between `<[` and `]>`**, even when it would read fine without.
-The original spec had bare names in aligned columns — a parser cannot tell where such a name stops.
-Quotes came first and needed escaping, and a stray quote typed by hand cut a message short without
-a word; marks no text uses mean nothing is escaped, quotes and backslashes are ordinary text, and the
-only rule is that text cannot hold the marks themselves. The forms refuse them as they are typed,
-`FlowValidationService` flags them on anything that arrived another way, and the importer refuses a
-script holding one.
+**Every piece of text is quoted, and the quotes are `<[` and `]>`**, even when it would read fine
+without. The original spec had bare names in aligned columns — a parser cannot tell where such a
+name stops. Double quotes came first and needed escaping, and a stray one typed by hand cut a
+message short without a word; quotes no text uses mean nothing is escaped, double quotes and
+backslashes are ordinary text, and the only rule is that quoted text cannot hold the quotes
+themselves. The forms refuse them as they are typed, `FlowValidationService` flags them on any step
+that arrived another way, and the importer refuses a script holding one.
+
+In the code the words follow from that: a token between the quotes is *quoted* and any other is
+*unquoted* - `ScriptToken.IsQuoted`, `ScriptLineReader.Quoted()` and `Unquoted()`, `QUOTE_OPEN` and
+`QUOTE_CLOSE` in the catalog - and what a token holds is its `Value`.
 
 **Every word is read.** Each line goes through a cursor - `ScriptLineReader` - whose reads take a
 token or report what belonged there, and which reports whatever is left at the end of the line. A

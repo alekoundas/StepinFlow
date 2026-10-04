@@ -53,30 +53,30 @@ namespace Business.FlowScript.Syntax
 
                 ScriptToken token = _line.Tokens[_index];
                 if (token.IsQuoted)
-                    return SyntaxFacts.Quote(token.Text);
+                    return SyntaxFacts.Quote(token.Value);
 
-                return $"\"{token.Text}\"";
+                return $"\"{token.Value}\"";
             }
         }
 
-        /// <summary>The bare word that many tokens ahead, or empty when it is text or past the end.</summary>
-        public string Peek(int ahead)
+        /// <summary>The unquoted value that many tokens ahead, or empty when that token is quoted or past the end.</summary>
+        public string PeekUnquoted(int ahead)
         {
             int index = _index + ahead;
             if (HasFailed || index >= _line.Tokens.Count || _line.Tokens[index].IsQuoted)
                 return string.Empty;
 
-            return _line.Tokens[index].Text;
+            return _line.Tokens[index].Value;
         }
 
-        public string Peek()
+        public string PeekUnquoted()
         {
-            return Peek(0);
+            return PeekUnquoted(0);
         }
 
         public bool Is(string word)
         {
-            return Peek() == word;
+            return PeekUnquoted() == word;
         }
 
         public bool Take(string word)
@@ -88,7 +88,7 @@ namespace Business.FlowScript.Syntax
             return true;
         }
 
-        /// <summary>Moves past the next token, once Peek has said what it is.</summary>
+        /// <summary>Moves past the next token, once PeekUnquoted has said what it is.</summary>
         public void Skip()
         {
             _index++;
@@ -103,12 +103,12 @@ namespace Business.FlowScript.Syntax
             return false;
         }
 
-        public string? Text(string what)
+        public string? Quoted(string what)
         {
-            return Text(DiagnosticCodeEnum.ARGUMENT_EXPECTED, $"Expected {what} in {Delimiters()}.");
+            return Quoted(DiagnosticCodeEnum.ARGUMENT_EXPECTED, $"Expected {what} in {Quotes()}.");
         }
 
-        public string? Text(DiagnosticCodeEnum code, string message)
+        public string? Quoted(DiagnosticCodeEnum code, string message)
         {
             if (HasFailed)
                 return null;
@@ -120,66 +120,66 @@ namespace Business.FlowScript.Syntax
             }
 
             ScriptToken token = _line.Tokens[_index];
-            if (!IsSound(token))
+            if (!IsWellQuoted(token))
                 return null;
 
             _index++;
-            return token.Text;
+            return token.Value;
         }
 
-        public string? Word(string what)
+        public string? Unquoted(string what)
         {
-            string word = Peek();
-            if (word.Length == 0)
+            string value = PeekUnquoted();
+            if (value.Length == 0)
             {
                 Fail(DiagnosticCodeEnum.ARGUMENT_EXPECTED, $"Expected {what}.");
                 return null;
             }
 
             _index++;
-            return word;
+            return value;
         }
 
         public int? Integer(string what)
         {
             int column = Column;
-            string? word = Word(what);
-            if (word == null)
+            string? value = Unquoted(what);
+            if (value == null)
                 return null;
 
-            int? value = SyntaxFacts.Integer(word);
-            if (value == null)
-                Fail(DiagnosticCodeEnum.NUMBER_MALFORMED, $"\"{word}\" is not a whole number. Expected {what}.", column);
+            int? number = SyntaxFacts.Integer(value);
+            if (number == null)
+                Fail(DiagnosticCodeEnum.NUMBER_MALFORMED, $"\"{value}\" is not a whole number. Expected {what}.", column);
 
-            return value;
+            return number;
         }
 
         public float? Float(string what)
         {
             int column = Column;
-            string? word = Word(what);
-            if (word == null)
+            string? value = Unquoted(what);
+            if (value == null)
                 return null;
 
-            float? value = SyntaxFacts.Float(word);
-            if (value == null)
-                Fail(DiagnosticCodeEnum.NUMBER_MALFORMED, $"\"{word}\" is not a number. Expected {what}.", column);
+            float? number = SyntaxFacts.Float(value);
+            if (number == null)
+                Fail(DiagnosticCodeEnum.NUMBER_MALFORMED, $"\"{value}\" is not a number. Expected {what}.", column);
 
-            return value;
+            return number;
         }
 
         public int? Milliseconds(string what)
         {
             int column = Column;
-            string? word = Word($"{what}, such as 800ms");
-            if (word == null)
+            string? value = Unquoted($"{what}, such as 800ms");
+            if (value == null)
                 return null;
 
-            int? value = SyntaxFacts.Milliseconds(word);
-            if (value == null)
-                Fail(DiagnosticCodeEnum.DURATION_MALFORMED, $"\"{word}\" is not a duration. Expected {what}, such as 800ms.", column);
+            int? milliseconds = SyntaxFacts.Milliseconds(value);
+            if (milliseconds == null)
+                Fail(DiagnosticCodeEnum.DURATION_MALFORMED, $"\"{value}\" is not a duration. Expected {what}, such as 800ms.", column);
 
-            return value;
+            return milliseconds;
         }
 
         /// <summary>The longest keyword of that vocabulary starting here, or null without reporting - the caller knows what belonged.</summary>
@@ -207,7 +207,7 @@ namespace Business.FlowScript.Syntax
 
             for (int i = _index; i < _index + condition.Words; i++)
             {
-                if (!IsSound(_line.Tokens[i]))
+                if (!IsWellQuoted(_line.Tokens[i]))
                     return null;
             }
 
@@ -235,12 +235,12 @@ namespace Business.FlowScript.Syntax
             if (HasFailed || IsAtEnd)
                 return;
 
-            string textEnd = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END);
+            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
             string message = $"{Current} was not expected here.";
 
-            // A stray "]>" further on means text ended at the first one, earlier than it was meant to.
-            if (_line.Tokens.Skip(_index).Any(x => !x.IsQuoted && x.Text.Contains(textEnd, StringComparison.Ordinal)))
-                message += $" Text can't contain \"{textEnd}\", so the text before it ended there.";
+            // A stray "]>" further on means a quote closed at the first one, earlier than it was meant to.
+            if (_line.Tokens.Skip(_index).Any(x => !x.IsQuoted && x.Value.Contains(quoteClose, StringComparison.Ordinal)))
+                message += $" Quoted text can't contain \"{quoteClose}\", so the quote before it closed there.";
 
             Fail(DiagnosticCodeEnum.TOKEN_UNEXPECTED, message);
         }
@@ -250,33 +250,33 @@ namespace Business.FlowScript.Syntax
         // Private methods
         // ================================================================
 
-        // A text token that closed, and holds no delimiter of its own.
-        private bool IsSound(ScriptToken token)
+        // An unquoted token, or a quoted one that closed and holds no quote of its own.
+        private bool IsWellQuoted(ScriptToken token)
         {
             if (!token.IsQuoted)
                 return true;
 
-            string textStart = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START);
-            string textEnd = SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END);
+            string quoteOpen = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            if (token.IsUnclosed)
+            if (token.IsQuoteUnclosed)
             {
-                Fail(DiagnosticCodeEnum.TEXT_UNCLOSED, $"This text never closes: expected \"{textEnd}\" before the end of the line.", token.Column);
+                Fail(DiagnosticCodeEnum.QUOTE_UNCLOSED, $"This quote never closes: expected \"{quoteClose}\" before the end of the line.", token.Column);
                 return false;
             }
 
-            if (SyntaxFacts.HasTextDelimiter(token.Text))
+            if (SyntaxFacts.HasQuote(token.Value))
             {
-                Fail(DiagnosticCodeEnum.TEXT_DELIMITER, $"Text can't contain \"{textStart}\" or \"{textEnd}\".", token.Column);
+                Fail(DiagnosticCodeEnum.QUOTE_INSIDE, $"Quoted text can't contain \"{quoteOpen}\" or \"{quoteClose}\".", token.Column);
                 return false;
             }
 
             return true;
         }
 
-        private static string Delimiters()
+        private static string Quotes()
         {
-            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_START)} {SyntaxFacts.Symbol(ScriptSymbolEnum.TEXT_END)}";
+            return $"{SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_OPEN)} {SyntaxFacts.Symbol(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
     }
 }

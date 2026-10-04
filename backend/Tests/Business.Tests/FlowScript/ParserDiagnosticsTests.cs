@@ -17,8 +17,8 @@ namespace Business.Tests.FlowScript
 
         public static TheoryData<DiagnosticCodeEnum, string> Cases { get; } = new TheoryData<DiagnosticCodeEnum, string>
         {
-            { DiagnosticCodeEnum.TEXT_UNCLOSED, "Steps:\nNotify <[ never closes" },
-            { DiagnosticCodeEnum.TEXT_DELIMITER, "Steps:\nNotify <[ a <[ b ]>" },
+            { DiagnosticCodeEnum.QUOTE_UNCLOSED, "Steps:\nNotify <[ never closes" },
+            { DiagnosticCodeEnum.QUOTE_INSIDE, "Steps:\nNotify <[ a <[ b ]>" },
             { DiagnosticCodeEnum.ARGUMENT_EXPECTED, "Steps:\nNotify" },
             { DiagnosticCodeEnum.NUMBER_MALFORMED, "Steps:\nLoop many times" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nNotify <[ hi ]> there" },
@@ -101,7 +101,7 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void Text_cut_short_by_its_closing_mark_says_why()
+        public void A_quote_closed_early_by_a_stray_close_says_why()
         {
             Diagnostic diagnostic = Read(Header + "Steps:\nNotify <[ a ]> b ]>").ShouldHaveSingleItem();
 

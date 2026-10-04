@@ -65,33 +65,33 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void Text_is_a_name_and_never_a_keyword()
+        public void A_quoted_name_is_never_a_keyword()
         {
             SyntaxFacts.ReadFirstKeyword(Tokens("<[ Click ]> at match")).ShouldBeNull();
         }
 
-        // Nothing inside is special, and the spaces at its edges are layout rather than text.
+        // Nothing inside the quotes is special, and the spaces just inside them are layout rather than text.
         [Theory]
         [InlineData("<[ He said \"hi\" ]>", "He said \"hi\"")]
         [InlineData(@"<[ C:\temp\ ]>", @"C:\temp\")]
         [InlineData("<[This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
         [InlineData("<[                  This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
         [InlineData("<[]>", "")]
-        public void Text_is_everything_between_the_delimiters_trimmed(string line, string text)
+        public void A_quoted_value_is_everything_between_the_quotes_trimmed(string line, string value)
         {
             ScriptToken token = Tokens(line).ShouldHaveSingleItem();
 
             token.IsQuoted.ShouldBeTrue();
-            token.Text.ShouldBe(text);
+            token.Value.ShouldBe(value);
         }
 
         [Fact]
-        public void Text_that_never_closes_runs_to_the_end_of_the_line_and_says_so()
+        public void A_quote_that_never_closes_runs_to_the_end_of_the_line_and_says_so()
         {
             ScriptToken token = Tokens("<[ no end").ShouldHaveSingleItem();
 
-            token.IsUnclosed.ShouldBeTrue();
-            token.Text.ShouldBe("no end");
+            token.IsQuoteUnclosed.ShouldBeTrue();
+            token.Value.ShouldBe("no end");
         }
 
         [Fact]

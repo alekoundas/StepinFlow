@@ -19,8 +19,8 @@ namespace Business.FlowScript.Diagnostics
     public enum DiagnosticCodeEnum
     {
         // Any line
-        TEXT_UNCLOSED,
-        TEXT_DELIMITER,
+        QUOTE_UNCLOSED,
+        QUOTE_INSIDE,
         ARGUMENT_EXPECTED,
         NUMBER_MALFORMED,
         TOKEN_UNEXPECTED,

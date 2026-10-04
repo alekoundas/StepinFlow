@@ -74,12 +74,12 @@ namespace Business.Tests.Validation
         [Theory]
         [InlineData("Login <[ failed")]
         [InlineData("Login ]> failed")]
-        public void Text_holding_a_script_delimiter_is_an_error(string message)
+        public void Text_holding_a_script_quote_is_an_error(string message)
         {
             FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell");
             notify.Message = message;
 
-            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.TEXT_DELIMITER);
+            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.QUOTE_INSIDE);
         }
 
         [Theory]

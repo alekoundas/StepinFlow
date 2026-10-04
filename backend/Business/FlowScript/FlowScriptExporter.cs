@@ -233,7 +233,7 @@ namespace Business.FlowScript
                 return fallback;
 
             // < and > on every machine, not only the ones that ban them: a template is named by its
-            // file name inside <[ ]>, which cannot hold either delimiter.
+            // file name inside <[ ]>, which cannot hold either quote.
             char[] invalid = Path.GetInvalidFileNameChars().Concat(['<', '>']).ToArray();
             IEnumerable<char> mapped = trimmed.Select(x => invalid.Contains(x) || char.IsWhiteSpace(x) ? '-' : x);
 

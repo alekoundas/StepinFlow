@@ -36,7 +36,7 @@ namespace Business.FlowScript.Scanner
 
                 if (SyntaxFacts.IsComment(line))
                 {
-                    pendingComments.Add(line.TextAfter(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)));
+                    pendingComments.Add(line.RawAfter(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)));
                     continue;
                 }
 
