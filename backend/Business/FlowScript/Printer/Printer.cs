@@ -37,8 +37,8 @@ namespace Business.FlowScript.Text
 
         private static void WriteHeader(StringBuilder builder, BoundFlow source)
         {
-            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOW), 9)).AppendLine(source.Flow.Name);
-            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.ID), 9)).AppendLine(source.Flow.PublicId.ToString());
+            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_NAME), 9)).AppendLine(source.Flow.Name);
+            builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_ID), 9)).AppendLine(source.Flow.PublicId.ToString());
 
             if (source.Viewports.Count > 0)
             {
@@ -46,7 +46,7 @@ namespace Business.FlowScript.Text
                     .OrderBy(x => x.OrderNumber)
                     .Select(x => $"{x.Width}x{x.Height}");
 
-                builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.SIZES), 9)).AppendLine(string.Join(", ", sizes));
+                builder.Append(Pad(SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_SIZES), 9)).AppendLine(string.Join(", ", sizes));
             }
 
             builder.AppendLine();
@@ -141,17 +141,17 @@ namespace Business.FlowScript.Text
             {
                 string name = Pad(SyntaxFacts.Quote(point.Name), 20);
 
-                string placement = $"offset {Integer(point.LocationX)} {Integer(point.LocationY)}";
+                string placement = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.OFFSET)} {Integer(point.LocationX)} {Integer(point.LocationY)}";
                 if (point.OffsetMode == AreaSizingModeEnum.RATIO)
-                    placement = $"ratio {Ratio(point.RatioX)} {Ratio(point.RatioY)}";
+                    placement = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.RATIO)} {Ratio(point.RatioX)} {Ratio(point.RatioY)}";
 
-                string inside = "on screen";
+                string inside = SyntaxFacts.Symbol(ScriptSymbolEnum.ON_SCREEN);
                 if (point.FlowAreaId != null)
-                    inside = $"inside {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
+                    inside = $"{SyntaxFacts.Symbol(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
 
                 string dpi = string.Empty;
                 if (point.AuthoredDpi > 0)
-                    dpi = $"   at {Dpi(point.AuthoredDpi)}";
+                    dpi = $"   {SyntaxFacts.Symbol(ScriptSymbolEnum.AT)} {Dpi(point.AuthoredDpi)}";
 
                 builder.Append("  ").AppendLine(CultureInfo.InvariantCulture, $"{name}{inside}   {placement}{dpi}");
             }
@@ -164,7 +164,7 @@ namespace Business.FlowScript.Text
             if (source.Inputs.Count == 0)
                 return;
 
-            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.INPUTS));
+            builder.AppendLine(SyntaxFacts.Symbol(ScriptSymbolEnum.CSV_COLUMNS));
 
             foreach (FlowCsvColumn input in source.Inputs.OrderBy(x => x.OrderNumber))
             {

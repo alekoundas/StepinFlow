@@ -10,9 +10,9 @@ namespace Business.Searching
     /// </summary>
     public sealed record SearchSettings
     {
-        public TemplateMatchModeEnum Mode { get; init; }
-        public SearchModeEnum SearchMode { get; init; }
-        public int MaxMatches { get; init; }
+        public TemplateMatchModeEnum Mode { get; set; }
+        public SearchModeEnum SearchMode { get; set; }
+        public int MaxMatches { get; set; }
 
         public static SearchSettings From(FlowStep step)
         {

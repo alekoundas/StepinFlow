@@ -16,36 +16,36 @@ namespace Business.Searching
         /// The screenshot that was matched against, not one taken a moment later that could show
         /// something else. The caller keeps it or encodes it; the search is done with it.
         /// </summary>
-        public RawImage Haystack { get; init; } = new RawImage();
+        public RawImage Haystack { get; set; } = new RawImage();
 
         /// <summary>
         /// One per template, in the order they were given - and a prefix of them when the search
         /// was told to stop at the first hit and did.
         /// </summary>
-        public IReadOnlyList<TemplateMatchOutcome> Outcomes { get; init; } = [];
+        public IReadOnlyList<TemplateMatchOutcome> Outcomes { get; set; } = [];
 
         /// <summary>Where a click would land, relative to the search area.</summary>
-        public IReadOnlyList<Point> Hits { get; init; } = [];
+        public IReadOnlyList<Point> Hits { get; set; } = [];
 
         /// <summary>
         /// The closest anything came across every template, whether it passed or not. "It peaked
         /// at 0.78" and "it never passed 0.40" want different fixes.
         /// </summary>
-        public float? BestScore { get; init; }
+        public float? BestScore { get; set; }
 
         /// <summary>Which of the templates given produced <see cref="BestScore"/>, by position.</summary>
-        public int? BestTemplateIndex { get; init; }
+        public int? BestTemplateIndex { get; set; }
 
         /// <summary>
         /// Required templates that were not found, by position. Any at all and there are no hits,
         /// whatever else matched.
         /// </summary>
-        public IReadOnlyList<int> MissingRequired { get; init; } = [];
+        public IReadOnlyList<int> MissingRequired { get; set; } = [];
 
         /// <summary>
         /// Set when the search could not be made: nothing to search, or a template that cannot fit
         /// at the ratio it scales to.
         /// </summary>
-        public string? Error { get; init; }
+        public string? Error { get; set; }
     }
 }

@@ -1,6 +1,5 @@
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
-import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 

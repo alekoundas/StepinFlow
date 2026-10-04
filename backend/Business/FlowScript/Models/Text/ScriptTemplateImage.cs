@@ -12,7 +12,7 @@ namespace Business.FlowScript.Models.Text
     /// </summary>
     public sealed class ScriptTemplateImage
     {
-        public string FileName { get; init; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
 
         public float Accuracy { get; set; }
 

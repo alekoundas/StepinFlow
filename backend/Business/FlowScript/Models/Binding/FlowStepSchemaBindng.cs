@@ -5,9 +5,9 @@ namespace Business.FlowScript.Models.Binding
 {
     public sealed class FlowStepSchemaBindng
     {
-        public FlowStep Step { get; init; } = null!;
-        public int Line { get; init; }
-        public int LeadingSpaces { get; init; }
+        public FlowStep Step { get; set; } = null!;
+        public int Line { get; set; }
+        public int LeadingSpaces { get; set; }
 
         /// <summary>Index into the document's flat step list. Null for a top level step.</summary>
         public int? ParentIndex { get; set; }

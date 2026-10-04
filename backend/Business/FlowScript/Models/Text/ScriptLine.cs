@@ -2,10 +2,10 @@ namespace Business.FlowScript.Models.Text
 {
     internal sealed class ScriptLine
     {
-        public int Number { get; init; }
-        public int LeadingSpaces { get; init; }
-        public string Raw { get; init; } = string.Empty;
-        public IReadOnlyList<ScriptToken> Tokens { get; init; } = [];
+        public int Number { get; set; }
+        public int LeadingSpaces { get; set; }
+        public string Raw { get; set; } = string.Empty;
+        public IReadOnlyList<ScriptToken> Tokens { get; set; } = [];
 
 
         /// <summary>The rest of the raw line after a prefix it starts with - a comment, a stage's name.</summary>

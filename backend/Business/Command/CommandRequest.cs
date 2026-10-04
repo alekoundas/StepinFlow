@@ -14,24 +14,24 @@ namespace Business.Command
     /// </summary>
     public sealed record CommandRequest
     {
-        public RunCommandPresetEnum Preset { get; init; }
+        public RunCommandPresetEnum Preset { get; set; }
 
         /// <summary>The command, or the preset's parameter. Variables are already resolved.</summary>
-        public string Value { get; init; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
 
-        public RunCommandShellEnum Shell { get; init; }
-        public string WorkingDirectory { get; init; } = string.Empty;
+        public RunCommandShellEnum Shell { get; set; }
+        public string WorkingDirectory { get; set; } = string.Empty;
 
         /// <summary>Zero waits for ever.</summary>
-        public int TimeoutMilliseconds { get; init; }
+        public int TimeoutMilliseconds { get; set; }
 
         /// <summary>Comma separated. Anything else is a failure rather than an error.</summary>
-        public string SuccessExitCodes { get; init; } = "0";
+        public string SuccessExitCodes { get; set; } = "0";
 
-        public ResultSourceEnum ResultSource { get; init; }
+        public ResultSourceEnum ResultSource { get; set; }
 
         /// <summary>Regex, first capture group. Empty keeps the whole output.</summary>
-        public string ResultExtractPattern { get; init; } = string.Empty;
+        public string ResultExtractPattern { get; set; } = string.Empty;
 
         public static CommandRequest From(FlowStep step)
         {

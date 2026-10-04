@@ -4,8 +4,8 @@ namespace Business.FlowScript.Models.Binding
 {
     public sealed class FlowPointSchemaBindng
     {
-        public FlowPoint Point { get; init; } = null!;
-        public string? AreaName { get; init; }
-        public int Line { get; init; }
+        public FlowPoint Point { get; set; } = null!;
+        public string? AreaName { get; set; }
+        public int Line { get; set; }
     }
 }

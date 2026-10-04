@@ -51,14 +51,21 @@ namespace Business.FlowScript.Catalogs
             // Lines that are not steps: intent for the step below, the flow's own fields, and the
             // header opening each section.
             new ScriptKeyword("#", ScriptSymbolEnum.COMMENT),
-            new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOW),
-            new ScriptKeyword("Id:", ScriptSymbolEnum.ID),
-            new ScriptKeyword("Sizes:", ScriptSymbolEnum.SIZES),
+            new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME),
+            new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID),
+            new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),
-            new ScriptKeyword("Inputs:", ScriptSymbolEnum.INPUTS),
+            new ScriptKeyword("Inputs:", ScriptSymbolEnum.CSV_COLUMNS),
             new ScriptKeyword("Templates:", ScriptSymbolEnum.TEMPLATES),
             new ScriptKeyword("Steps:", ScriptSymbolEnum.STEPS),
+
+            // FlowArea
+            new ScriptKeyword("inside", ScriptSymbolEnum.INSIDE),
+            new ScriptKeyword("on screen", ScriptSymbolEnum.ON_SCREEN),
+            new ScriptKeyword("ratio", ScriptSymbolEnum.RATIO),
+            new ScriptKeyword("offset", ScriptSymbolEnum.OFFSET),
+            new ScriptKeyword("at", ScriptSymbolEnum.AT),
 
             // How a window title is matched. "is" and "matches" are also conditions; the vocabulary
             // is the enum type, so a reader asking for one never finds the other.

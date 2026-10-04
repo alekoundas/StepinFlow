@@ -21,10 +21,10 @@ namespace Business.Tests.FlowScript
             "ParentFlowStepId", "FlowPointId", "FlowPointEndId", "FlowStepReferenceId", "FlowStepReferenceEndId", "SubFlowId",
         ];
 
-        public List<FlowArea> Areas { get; init; } = [];
-        public List<FlowPoint> Points { get; init; } = [];
-        public List<FlowStep> Steps { get; init; } = [];
-        public List<FlowStepTemplate> Templates { get; init; } = [];
+        public List<FlowArea> Areas { get; set; } = [];
+        public List<FlowPoint> Points { get; set; } = [];
+        public List<FlowStep> Steps { get; set; } = [];
+        public List<FlowStepTemplate> Templates { get; set; } = [];
 
         public static async Task<ScriptRows> LoadAsync(IDbContextFactory<AppDbContext> factory, int flowId)
         {

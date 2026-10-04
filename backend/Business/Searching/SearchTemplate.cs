@@ -15,14 +15,14 @@ namespace Business.Searching
     /// </summary>
     public sealed record SearchTemplate
     {
-        public byte[] Image { get; init; } = [];
-        public float Accuracy { get; init; }
-        public bool IsRequired { get; init; }
-        public int AuthoredFlowAreaWidth { get; init; }
-        public int AuthoredFlowAreaHeight { get; init; }
-        public int AuthoredDpi { get; init; }
-        public int ClickOffsetX { get; init; }
-        public int ClickOffsetY { get; init; }
+        public byte[] Image { get; set; } = [];
+        public float Accuracy { get; set; }
+        public bool IsRequired { get; set; }
+        public int AuthoredFlowAreaWidth { get; set; }
+        public int AuthoredFlowAreaHeight { get; set; }
+        public int AuthoredDpi { get; set; }
+        public int ClickOffsetX { get; set; }
+        public int ClickOffsetY { get; set; }
 
         public static SearchTemplate From(FlowStepTemplate template)
         {

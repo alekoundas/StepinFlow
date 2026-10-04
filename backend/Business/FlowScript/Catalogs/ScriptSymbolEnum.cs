@@ -1,19 +1,32 @@
 namespace Business.FlowScript.Catalogs
 {
-    // What the grammar reads that is not a step: the quotes and the comment mark, and the labels of
-    // the header and its sections.
     internal enum ScriptSymbolEnum
     {
+
+        // <[ ]>
         QUOTE_OPEN,
         QUOTE_CLOSE,
+
+        // #
         COMMENT,
-        FLOW,
-        ID,
-        SIZES,
+
+        // Flow
+        FLOWFIELD_NAME,
+        FLOWFIELD_ID,
+        FLOWFIELD_SIZES,
+
+        // Flow references
         AREAS,
         POINTS,
-        INPUTS,
+        CSV_COLUMNS,
         TEMPLATES,
         STEPS,
+
+        // FlowArea
+        INSIDE,
+        ON_SCREEN,
+        RATIO,
+        OFFSET,
+        AT,
     }
 }

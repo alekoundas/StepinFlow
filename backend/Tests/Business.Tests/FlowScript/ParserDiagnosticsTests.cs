@@ -33,7 +33,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.AREA_ARGUMENT_UNKNOWN, "Areas:\n  <[ A ]> monitor primary sideways" },
             { DiagnosticCodeEnum.TITLE_MATCH_UNKNOWN, "Areas:\n  <[ A ]> window process <[ x ]> title resembles <[ y ]>" },
             { DiagnosticCodeEnum.POINT_NAME_MISSING, "Points:\n  Origin on screen offset 1 2" },
-            { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  <[ Origin ]> somewhere offset 1 2" },
+            { DiagnosticCodeEnum.POINT_PLACEMENT_UNKNOWN, "Points:\n  <[ Origin ]> offset 1 2" },
             { DiagnosticCodeEnum.POINT_ARGUMENT_UNKNOWN, "Points:\n  <[ Origin ]> on screen offset 1 2 at nope" },
             { DiagnosticCodeEnum.CSV_COLUMN_MALFORMED, "Inputs:\n  username" },
             { DiagnosticCodeEnum.TEMPLATE_MALFORMED, "Templates:\n  <[ a.png ]> click here" },

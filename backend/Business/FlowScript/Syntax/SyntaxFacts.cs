@@ -93,7 +93,7 @@ namespace Business.FlowScript.Syntax
             {
                 case ScriptSymbolEnum.AREAS:
                 case ScriptSymbolEnum.POINTS:
-                case ScriptSymbolEnum.INPUTS:
+                case ScriptSymbolEnum.CSV_COLUMNS:
                 case ScriptSymbolEnum.TEMPLATES:
                 case ScriptSymbolEnum.STEPS:
                     return symbol;

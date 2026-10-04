@@ -34,6 +34,7 @@ namespace Business.FlowScript.Scanner
                 if (line.Tokens.Count == 0)
                     continue;
 
+                // Extract CodeComment.
                 if (SyntaxFacts.IsComment(line))
                 {
                     pendingComments.Add(line.RawAfter(SyntaxFacts.Symbol(ScriptSymbolEnum.COMMENT)));
@@ -63,7 +64,7 @@ namespace Business.FlowScript.Scanner
                         FlowParser.ReadPoint(document, line);
                         break;
 
-                    case ScriptSymbolEnum.INPUTS:
+                    case ScriptSymbolEnum.CSV_COLUMNS:
                         FlowParser.ReadCsvColumns(document, line);
                         break;
 
@@ -81,7 +82,7 @@ namespace Business.FlowScript.Scanner
             }
 
             if (string.IsNullOrWhiteSpace(document.FlowName))
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Symbol(ScriptSymbolEnum.FLOW)}\" line, so there is no flow to import."));
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Symbol(ScriptSymbolEnum.FLOWFIELD_NAME)}\" line, so there is no flow to import."));
 
             return document;
         }
