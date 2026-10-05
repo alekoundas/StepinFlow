@@ -1,32 +1,20 @@
 using Business.FlowScript.Catalogs;
+using Business.FlowScript.Lexing;
 using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Syntax
 {
     /// <summary>
-    /// Read the script and convert to lines and tokens.
+    /// The lines and the words on them, for the parsers that read words. Goes when they do.
     /// </summary>
-    public static class ScriptTokenizer
+    public static class ScriptWordReader
     {
         internal static IReadOnlyList<ScriptLine> Read(string script)
         {
-            List<ScriptLine> lines = new List<ScriptLine>();
+            IReadOnlyList<ScriptLine> lines = ScriptLineSplitter.Split(script);
 
-            // Splits natively on Windows, Linux, or Mac line endings in a single pass
-            string[] raw = script.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
-
-            for (int i = 0; i < raw.Length; i++)
-            {
-                string line = raw[i].TrimEnd();
-
-                lines.Add(new ScriptLine
-                {
-                    Number = i + 1,
-                    LeadingSpaces = LeadingSpacesOf(line),
-                    Raw = line,
-                    Tokens = Tokenize(line),
-                });
-            }
+            foreach (ScriptLine line in lines)
+                line.Words = Tokenize(line.Raw);
 
             return lines;
         }
@@ -36,30 +24,11 @@ namespace Business.FlowScript.Syntax
         // Private methods
         // ================================================================
 
-        private static int LeadingSpacesOf(string line)
-        {
-            int spacesCount = 0;
-
-            foreach (char c in line)
-            {
-                if (c == ' ')
-                    spacesCount += 1;
-
-                else if (c == '\t')
-                    spacesCount += 1; // Tab width always 1.
-
-                else
-                    break; // Break on the very first actual character
-            }
-
-            return spacesCount;
-        }
-
-        private static IReadOnlyList<ScriptToken> Tokenize(string line)
+        private static IReadOnlyList<ScriptWord> Tokenize(string line)
         {
             string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
 
-            List<ScriptToken> tokens = new List<ScriptToken>();
+            List<ScriptWord> tokens = new List<ScriptWord>();
             int i = 0;
 
             while (i < line.Length)
@@ -74,7 +43,7 @@ namespace Business.FlowScript.Syntax
                 if (line.AsSpan(i).StartsWith(quoteOpen, StringComparison.Ordinal))
                     tokens.Add(ReadQuoted(line, ref i, column));
                 else
-                    tokens.Add(new ScriptToken(ReadUnquoted(line, ref i), false, column));
+                    tokens.Add(new ScriptWord(ReadUnquoted(line, ref i), false, column));
             }
 
             return tokens;
@@ -82,7 +51,7 @@ namespace Business.FlowScript.Syntax
 
         // From "<[" to the first "]>", trimmed. Nothing between the quotes is special, so a quoted value
         // cannot hold "]>" - and one that never closes runs to the end of the line, for the parser to report.
-        private static ScriptToken ReadQuoted(string line, ref int i, int column)
+        private static ScriptWord ReadQuoted(string line, ref int i, int column)
         {
             string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
             string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
@@ -93,11 +62,11 @@ namespace Business.FlowScript.Syntax
             if (to < 0)
             {
                 i = line.Length;
-                return new ScriptToken(line[from..].Trim(), true, column) { IsQuoteUnclosed = true };
+                return new ScriptWord(line[from..].Trim(), true, column) { IsQuoteUnclosed = true };
             }
 
             i = to + quoteClose.Length;
-            return new ScriptToken(line[from..to].Trim(), true, column);
+            return new ScriptWord(line[from..to].Trim(), true, column);
         }
 
         // Up to the next whitespace.
@@ -110,9 +79,9 @@ namespace Business.FlowScript.Syntax
             return line[start..i];
         }
 
-        //private static IReadOnlyList<ScriptToken> Tokenize(string line)
+        //private static IReadOnlyList<ScriptWord> Tokenize(string line)
         //{
-        //    List<ScriptToken> tokens = new List<ScriptToken>();
+        //    List<ScriptWord> tokens = new List<ScriptWord>();
         //    StringBuilder word = new StringBuilder();
 
         //    bool inQuotes = false;  // See if we are currently inside quotes
@@ -160,7 +129,7 @@ namespace Business.FlowScript.Syntax
         //        {
         //            if (word.Length > 0 || wasQuoted)
         //            {
-        //                tokens.Add(new ScriptToken(word.ToString(), wasQuoted, tokenIndexStart + 1));
+        //                tokens.Add(new ScriptWord(word.ToString(), wasQuoted, tokenIndexStart + 1));
         //                word.Clear();
         //                wasQuoted = false;
         //            }
@@ -175,7 +144,7 @@ namespace Business.FlowScript.Syntax
         //    }
 
         //    if (word.Length > 0 || wasQuoted)
-        //        tokens.Add(new ScriptToken(word.ToString(), wasQuoted, tokenIndexStart + 1));
+        //        tokens.Add(new ScriptWord(word.ToString(), wasQuoted, tokenIndexStart + 1));
 
         //    return tokens;
         //}

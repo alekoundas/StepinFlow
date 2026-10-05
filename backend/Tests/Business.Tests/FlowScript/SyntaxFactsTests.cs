@@ -12,9 +12,9 @@ namespace Business.Tests.FlowScript
     /// </summary>
     public sealed class SyntaxFactsTests
     {
-        private static IReadOnlyList<ScriptToken> Tokens(string text)
+        private static IReadOnlyList<ScriptWord> Words(string text)
         {
-            return ScriptTokenizer.Read(text)[0].Tokens;
+            return ScriptWordReader.Read(text)[0].Words;
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace Business.Tests.FlowScript
                     step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
-                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Tokens(written + " <[ name ]>"));
+                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Words(written + " <[ name ]>"));
 
                 if (written != keyword.Text || read != keyword)
                     wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
@@ -83,13 +83,13 @@ namespace Business.Tests.FlowScript
         [InlineData("Wait 800ms", FlowStepTypeEnum.WAIT)]
         public void The_longest_keyword_wins(string line, FlowStepTypeEnum type)
         {
-            SyntaxFacts.ReadFirstKeyword(Tokens(line))!.Type.ShouldBe(type);
+            SyntaxFacts.ReadFirstKeyword(Words(line))!.Type.ShouldBe(type);
         }
 
         [Fact]
         public void A_quoted_name_is_never_a_keyword()
         {
-            SyntaxFacts.ReadFirstKeyword(Tokens("<[ Click ]> at match")).ShouldBeNull();
+            SyntaxFacts.ReadFirstKeyword(Words("<[ Click ]> at match")).ShouldBeNull();
         }
 
         // Nothing inside the quotes is special, and the spaces just inside them are layout rather than text.
@@ -101,7 +101,7 @@ namespace Business.Tests.FlowScript
         [InlineData("<[]>", "")]
         public void A_quoted_value_is_everything_between_the_quotes_trimmed(string line, string value)
         {
-            ScriptToken token = Tokens(line).ShouldHaveSingleItem();
+            ScriptWord token = Words(line).ShouldHaveSingleItem();
 
             token.IsQuoted.ShouldBeTrue();
             token.Value.ShouldBe(value);
@@ -110,7 +110,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_quote_that_never_closes_runs_to_the_end_of_the_line_and_says_so()
         {
-            ScriptToken token = Tokens("<[ no end").ShouldHaveSingleItem();
+            ScriptWord token = Words("<[ no end").ShouldHaveSingleItem();
 
             token.IsQuoteUnclosed.ShouldBeTrue();
             token.Value.ShouldBe("no end");
@@ -125,7 +125,7 @@ namespace Business.Tests.FlowScript
             {
                 FlowStep step = new FlowStep { ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
                 string written = SyntaxFacts.Condition(step);
-                ConditionSyntax? read = SyntaxFacts.ReadCondition(Tokens(written), 0);
+                ConditionSyntax? read = SyntaxFacts.ReadCondition(Words(written), 0);
 
                 string expectedText = string.Empty;
                 if (condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY)
@@ -149,7 +149,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            SyntaxFacts.ReadTitleMatch(Tokens(SyntaxFacts.Keyword(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
+            SyntaxFacts.ReadTitleMatch(Words(SyntaxFacts.Keyword(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]
@@ -195,7 +195,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            SyntaxFacts.ReadMatchMode(Tokens(SyntaxFacts.Keyword(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
+            SyntaxFacts.ReadMatchMode(Words(SyntaxFacts.Keyword(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
         }
 
         [Theory]

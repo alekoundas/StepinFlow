@@ -1,18 +1,21 @@
 namespace Business.FlowScript.Models.Text
 {
+    /// <summary>
+    /// One piece of a line, and where it starts. A keyword's value is its catalog text, so the
+    /// parser looks it up as is.
+    /// </summary>
     internal sealed class ScriptToken
     {
-        public string Value { get; set; } = String.Empty;
-        public bool IsQuoted { get; set; }
-        public int Column { get; set; }
+        public ScriptTokenKindEnum Kind { get; }
+        public string Value { get; }
+        public int Line { get; }
+        public int Column { get; }
 
-        /// <summary>Quoted, but its <c>&lt;[</c> never found its <c>]&gt;</c>, so it ran to the end of the line.</summary>
-        public bool IsQuoteUnclosed { get; set; }
-
-        public ScriptToken(string value, bool isQuoted, int column)
+        public ScriptToken(ScriptTokenKindEnum kind, string value, int line, int column)
         {
+            Kind = kind;
             Value = value;
-            IsQuoted = isQuoted;
+            Line = line;
             Column = column;
         }
     }

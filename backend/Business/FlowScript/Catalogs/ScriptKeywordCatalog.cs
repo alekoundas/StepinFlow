@@ -41,7 +41,7 @@ namespace Business.FlowScript.Catalogs
             // The rows the tree carries: a check's two branches, and a stage heading.
             new ScriptKeyword("Success:", FlowStepTypeEnum.SUCCESS),
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
-            new ScriptKeyword("##", FlowStepTypeEnum.MARKER),
+            new ScriptKeyword("##", FlowStepTypeEnum.MARKER) { TakesRestOfLine = true },
 
             // The quotes around a name or any other text. Nothing between them is special, so quoted
             // text cannot hold either one.
@@ -50,9 +50,9 @@ namespace Business.FlowScript.Catalogs
 
             // Lines that are not steps: intent for the step below, the flow's own fields, and the
             // header opening each section.
-            new ScriptKeyword("#", ScriptSymbolEnum.COMMENT),
-            new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME),
-            new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID),
+            new ScriptKeyword("#", ScriptSymbolEnum.COMMENT) { TakesRestOfLine = true },
+            new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
+            new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
             new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),

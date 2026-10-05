@@ -23,7 +23,7 @@ namespace Business.FlowScript.Scanner
         public FlowScriptSchema Read(string script)
         {
             FlowScriptSchema flowScriptSchema = new FlowScriptSchema();
-            IReadOnlyList<ScriptLine> lines = ScriptTokenizer.Read(script); // Script -> Lines + tokens.
+            IReadOnlyList<ScriptLine> lines = ScriptWordReader.Read(script); // Script -> Lines + tokens.
 
             ScriptSymbolEnum? currentSection = null; // Null until the first header: the Flow fields come before any.
             List<string> pendingComments = new List<string>(); // CodeComment of the step bellow.
@@ -31,7 +31,7 @@ namespace Business.FlowScript.Scanner
             // Use the Parsers to parse each line.
             foreach (ScriptLine line in lines)
             {
-                if (line.Tokens.Count == 0)
+                if (line.Words.Count == 0)
                     continue;
 
                 // Extract CodeComment.

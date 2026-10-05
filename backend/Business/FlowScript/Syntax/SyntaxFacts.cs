@@ -71,7 +71,7 @@ namespace Business.FlowScript.Syntax
         /// The step keyword a line starts with. Null when it starts with none, which the reader
         /// reports as an unknown step.
         /// </summary>
-        internal static ScriptKeyword? ReadFirstKeyword(IReadOnlyList<ScriptToken> tokens)
+        internal static ScriptKeyword? ReadFirstKeyword(IReadOnlyList<ScriptWord> tokens)
         {
             return ReadKeyword<FlowStepTypeEnum>(tokens, 0);
         }
@@ -82,7 +82,7 @@ namespace Business.FlowScript.Syntax
             if (!line.Raw.TrimStart().StartsWith(Keyword(ScriptSymbolEnum.COMMENT), StringComparison.Ordinal))
                 return false;
 
-            return ReadFirstKeyword(line.Tokens) == null;
+            return ReadFirstKeyword(line.Words) == null;
         }
 
         /// <summary>The section a header line opens. Null when the line is not a header.</summary>
@@ -135,13 +135,13 @@ namespace Business.FlowScript.Syntax
         }
 
         /// <summary>How a window title is matched.</summary>
-        internal static ScriptKeyword? ReadTitleMatch(IReadOnlyList<ScriptToken> tokens, int tokenIndex)
+        internal static ScriptKeyword? ReadTitleMatch(IReadOnlyList<ScriptWord> tokens, int tokenIndex)
         {
             return ReadKeyword<TitleMatchModeEnum>(tokens, tokenIndex);
         }
 
         /// <summary>How templates are compared.</summary>
-        internal static ScriptKeyword? ReadMatchMode(IReadOnlyList<ScriptToken> tokens, int tokenIndex)
+        internal static ScriptKeyword? ReadMatchMode(IReadOnlyList<ScriptWord> tokens, int tokenIndex)
         {
             return ReadKeyword<TemplateMatchModeEnum>(tokens, tokenIndex);
         }
@@ -201,7 +201,7 @@ namespace Business.FlowScript.Syntax
         /// no condition or a value is missing. Longest first again: "is not empty" has to beat
         /// "is not", which has to beat "is".
         /// </summary>
-        internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptToken> tokens, int at)
+        internal static ConditionSyntax? ReadCondition(IReadOnlyList<ScriptWord> tokens, int at)
         {
             string Unquoted(int i)
             {
@@ -377,7 +377,7 @@ namespace Business.FlowScript.Syntax
 
         // Find the longest keyword the tokens can generate starting from "tokenIndex".
         // ex "Wait Until No Image" = 4 tokens but 1 command.
-        internal static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptToken> tokens, int tokenIndex) where TEnum : struct, Enum
+        internal static ScriptKeyword? ReadKeyword<TEnum>(IReadOnlyList<ScriptWord> tokens, int tokenIndex) where TEnum : struct, Enum
         {
             ScriptKeyword? longest = null;
             string phrase = string.Empty;

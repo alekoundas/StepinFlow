@@ -127,7 +127,7 @@ namespace Business.FlowScript.Syntax
         public static void ReadPoint(FlowScriptSchema flowScriptSchema, ScriptLine line)
         {
             // <[ name ]>   inside <[ area ]> | on screen   ratio x y | offset x y   [at 120dpi]
-            IReadOnlyList<ScriptToken> tokens = line.Tokens;
+            IReadOnlyList<ScriptWord> tokens = line.Words;
 
             if (!tokens[0].IsQuoted)
             {
@@ -479,7 +479,7 @@ namespace Business.FlowScript.Syntax
         private static void AddUnexpected(FlowScriptSchema flowScriptSchema, ScriptLine line, int index)
         {
             string message = "Unexpected end of the line.";
-            if (index < line.Tokens.Count)
+            if (index < line.Words.Count)
                 message = $"Unexpected \"{line.ValueAt(index)}\".";
 
             flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TOKEN_UNEXPECTED, line.Number, line.ColumnOf(index), message));

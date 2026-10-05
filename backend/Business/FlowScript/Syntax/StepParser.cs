@@ -15,10 +15,10 @@ namespace Business.FlowScript.Syntax
         public static void Read(FlowScriptSchema document, ScriptLine line, List<string> pendingComments)
         {
             // Get first keyword of the line.
-            ScriptKeyword? keyword = SyntaxFacts.ReadFirstKeyword(line.Tokens);
+            ScriptKeyword? keyword = SyntaxFacts.ReadFirstKeyword(line.Words);
             if (keyword == null)
             {
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.STEP_UNKNOWN, line.Number, line.Tokens[0].Column,
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.STEP_UNKNOWN, line.Number, line.Words[0].Column,
                     $"\"{line.ValueAt(0)}\" is not a step. See FLOW-FORMAT.md for the keywords."));
 
                 pendingComments.Clear();
@@ -96,7 +96,7 @@ namespace Business.FlowScript.Syntax
 
             if (line.LeadingSpaces > deepest)
             {
-                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.INDENT_UNEXPECTED, line.Number, line.Tokens[0].Column,
+                document.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.INDENT_UNEXPECTED, line.Number, line.Words[0].Column,
                     $"Indented too far. Each level is one space, so this line can have at most {deepest}."));
             }
 

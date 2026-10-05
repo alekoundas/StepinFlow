@@ -28,10 +28,10 @@ namespace Business.FlowScript.Syntax
 
         public bool IsAtEnd
         {
-            get { return _index >= _line.Tokens.Count; }
+            get { return _index >= _line.Words.Count; }
         }
 
-        /// <summary>Tokens are left and nothing has failed, so a loop over clauses goes on.</summary>
+        /// <summary>Words are left and nothing has failed, so a loop over clauses goes on.</summary>
         public bool HasMore
         {
             get { return !HasFailed && !IsAtEnd; }
@@ -51,7 +51,7 @@ namespace Business.FlowScript.Syntax
                 if (IsAtEnd)
                     return "the end of the line";
 
-                ScriptToken token = _line.Tokens[_index];
+                ScriptWord token = _line.Words[_index];
                 if (token.IsQuoted)
                     return SyntaxFacts.Quote(token.Value);
 
@@ -63,10 +63,10 @@ namespace Business.FlowScript.Syntax
         public string PeekUnquoted(int ahead)
         {
             int index = _index + ahead;
-            if (HasFailed || index >= _line.Tokens.Count || _line.Tokens[index].IsQuoted)
+            if (HasFailed || index >= _line.Words.Count || _line.Words[index].IsQuoted)
                 return string.Empty;
 
-            return _line.Tokens[index].Value;
+            return _line.Words[index].Value;
         }
 
         public string PeekUnquoted()
@@ -113,13 +113,13 @@ namespace Business.FlowScript.Syntax
             if (HasFailed)
                 return null;
 
-            if (IsAtEnd || !_line.Tokens[_index].IsQuoted)
+            if (IsAtEnd || !_line.Words[_index].IsQuoted)
             {
                 Fail(code, message);
                 return null;
             }
 
-            ScriptToken token = _line.Tokens[_index];
+            ScriptWord token = _line.Words[_index];
             if (!IsWellQuoted(token))
                 return null;
 
@@ -188,7 +188,7 @@ namespace Business.FlowScript.Syntax
             if (HasFailed)
                 return null;
 
-            ScriptKeyword? keyword = SyntaxFacts.ReadKeyword<TEnum>(_line.Tokens, _index);
+            ScriptKeyword? keyword = SyntaxFacts.ReadKeyword<TEnum>(_line.Words, _index);
             if (keyword != null)
                 _index += keyword.TokenCount;
 
@@ -201,13 +201,13 @@ namespace Business.FlowScript.Syntax
             if (HasFailed)
                 return null;
 
-            ConditionSyntax? condition = SyntaxFacts.ReadCondition(_line.Tokens, _index);
+            ConditionSyntax? condition = SyntaxFacts.ReadCondition(_line.Words, _index);
             if (condition == null)
                 return null;
 
             for (int i = _index; i < _index + condition.Words; i++)
             {
-                if (!IsWellQuoted(_line.Tokens[i]))
+                if (!IsWellQuoted(_line.Words[i]))
                     return null;
             }
 
@@ -239,7 +239,7 @@ namespace Business.FlowScript.Syntax
             string message = $"{Current} was not expected here.";
 
             // A stray "]>" further on means a quote closed at the first one, earlier than it was meant to.
-            if (_line.Tokens.Skip(_index).Any(x => !x.IsQuoted && x.Value.Contains(quoteClose, StringComparison.Ordinal)))
+            if (_line.Words.Skip(_index).Any(x => !x.IsQuoted && x.Value.Contains(quoteClose, StringComparison.Ordinal)))
                 message += $" Quoted text can't contain \"{quoteClose}\", so the quote before it closed there.";
 
             Fail(DiagnosticCodeEnum.TOKEN_UNEXPECTED, message);
@@ -251,7 +251,7 @@ namespace Business.FlowScript.Syntax
         // ================================================================
 
         // An unquoted token, or a quoted one that closed and holds no quote of its own.
-        private bool IsWellQuoted(ScriptToken token)
+        private bool IsWellQuoted(ScriptWord token)
         {
             if (!token.IsQuoted)
                 return true;

@@ -13,6 +13,9 @@ namespace Business.FlowScript.Models.Text
         public Enum? Modifier { get; }
         public int TokenCount { get; }
 
+        /// <summary>Opens a line whose rest is its text, as written: a comment, a stage, the flow's name and id.</summary>
+        public bool TakesRestOfLine { get; init; }
+
         public ScriptKeyword(string text, Enum type, Enum? modifier = null)
         {
             Text = text;
