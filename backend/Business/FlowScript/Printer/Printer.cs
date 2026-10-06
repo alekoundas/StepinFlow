@@ -46,7 +46,7 @@ namespace Business.FlowScript.Text
                     .OrderBy(x => x.OrderNumber)
                     .Select(x => Size(x.Width, x.Height));
 
-                builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_SIZES), 9)).AppendLine(string.Join(", ", sizes));
+                builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_SIZES), 9)).AppendLine(string.Join(" ", sizes));
             }
 
             builder.AppendLine();
@@ -107,7 +107,7 @@ namespace Business.FlowScript.Text
         private static string AreaSize(FlowArea area)
         {
             if (area.SizingMode == AreaSizingModeEnum.RATIO)
-                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.RATIO)} {Ratio(area.RatioX)} {Ratio(area.RatioY)}  {Ratio(area.RatioWidth)} {Ratio(area.RatioHeight)}";
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.RATIO)} {Ratio(area.RatioX)} {Ratio(area.RatioY)}  {SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE)} {Ratio(area.RatioWidth)} {Ratio(area.RatioHeight)}";
 
             return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.OFFSET)} {Integer(area.LocationX)} {Integer(area.LocationY)}  {SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE)} {Integer(area.Width)} {Integer(area.Height)}";
         }
@@ -203,7 +203,7 @@ namespace Business.FlowScript.Text
         {
             string click = string.Empty;
             if (template.ClickOffset != null)
-                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffset.Value.X)},{Integer(template.ClickOffset.Value.Y)}";
+                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffset.Value.X)} {Integer(template.ClickOffset.Value.Y)}";
 
             string captured = string.Empty;
             if (template.AuthoredFlowAreaWidth > 0 && template.AuthoredFlowAreaHeight > 0)
@@ -253,18 +253,13 @@ namespace Business.FlowScript.Text
             if (step.FlowStepType == FlowStepTypeEnum.MARKER)
             {
                 builder.AppendLine();
+                WriteComment(builder, step, indent);
                 builder.Append(indent).Append(SyntaxFacts.For(step)).Append(' ').AppendLine(step.Name);
                 builder.AppendLine();
                 return;
             }
 
-            // Intent, which is the one thing a screenshot cannot carry.
-            if (!string.IsNullOrWhiteSpace(step.CodeComment))
-            {
-                foreach (string line in step.CodeComment.Split('\n'))
-                    builder.Append(indent).Append(SyntaxFacts.Keyword(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
-            }
-
+            WriteComment(builder, step, indent);
             builder.Append(indent).AppendLine(StepLine(step, source));
 
             WriteBranches(builder, source, step, depth);
@@ -285,18 +280,29 @@ namespace Business.FlowScript.Text
             string indent = new string(' ', depth + 1);
 
             // Order comes from the rows, so two exports of one flow cannot differ. An empty branch
-            // is left out entirely: "Success:" with nothing under it says nothing.
+            // is left out entirely - "Success:" with nothing under it says nothing - unless its comment does.
             foreach (FlowStep branch in source.ChildrenOf(step.Id))
             {
                 List<FlowStep> children = source.ChildrenOf(branch.Id).ToList();
-                if (children.Count == 0)
+                if (children.Count == 0 && string.IsNullOrWhiteSpace(branch.CodeComment))
                     continue;
 
+                WriteComment(builder, branch, indent);
                 builder.Append(indent).AppendLine(SyntaxFacts.For(branch));
 
                 foreach (FlowStep child in children)
                     WriteStep(builder, source, child, depth + 2);
             }
+        }
+
+        // Intent, which is the one thing a screenshot cannot carry, above the line it is for.
+        private static void WriteComment(StringBuilder builder, FlowStep step, string indent)
+        {
+            if (string.IsNullOrWhiteSpace(step.CodeComment))
+                return;
+
+            foreach (string line in step.CodeComment.Split('\n'))
+                builder.Append(indent).Append(SyntaxFacts.Keyword(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
         }
 
         private static string StepLine(FlowStep step, BoundFlow source)
@@ -332,9 +338,6 @@ namespace Business.FlowScript.Text
                     return $"{SyntaxFacts.Keyword(step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN)} {step.LoopCount}{Area(step, source)}";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
-                    if (step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION)
-                        return step.KeyboardInputText;
-
                     return SyntaxFacts.Quote(step.KeyboardInputText);
 
                 case FlowStepTypeEnum.WAIT:
@@ -503,7 +506,7 @@ namespace Business.FlowScript.Text
 
             // Zero is "for ever", and writing "timeout 0s" would read as "give up at once".
             if (step.TimeoutMilliseconds > 0)
-                return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.TIMEOUT)} {Seconds(step.TimeoutMilliseconds)}";
+                return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.TIMEOUT)} {Milliseconds(step.TimeoutMilliseconds)}";
 
             return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.NO_TIMEOUT)}";
         }
@@ -541,14 +544,6 @@ namespace Business.FlowScript.Text
                 foreach (FlowArea child in areas.Where(x => x.ParentFlowAreaId == root.Id).OrderBy(x => x.Name, StringComparer.Ordinal))
                     yield return child;
             }
-        }
-
-        private static string Seconds(int milliseconds)
-        {
-            if (milliseconds % 1000 == 0)
-                return $"{milliseconds / 1000}s";
-
-            return $"{Number(milliseconds / 1000f)}s";
         }
 
         private static string Milliseconds(int milliseconds)

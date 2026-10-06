@@ -11,7 +11,6 @@ namespace Business.FlowScript.Models.Text
         public string Text { get; }
         public Enum Type { get; }
         public Enum? Modifier { get; }
-        public int TokenCount { get; }
 
         /// <summary>Opens a line whose rest is its text, as written: a comment, a stage, the flow's name and id.</summary>
         public bool TakesRestOfLine { get; init; }
@@ -21,7 +20,6 @@ namespace Business.FlowScript.Models.Text
             Text = text;
             Type = type;
             Modifier = modifier;
-            TokenCount = text.Split(' ').Length;
         }
 
         // <summary>Whether this keyword member matches the Type Enum.</summary>

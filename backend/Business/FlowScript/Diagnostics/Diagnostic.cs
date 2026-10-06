@@ -18,47 +18,17 @@ namespace Business.FlowScript.Diagnostics
     /// </summary>
     public enum DiagnosticCodeEnum
     {
-        // Any line
-        QUOTE_UNCLOSED,
-        QUOTE_INSIDE,
-        ARGUMENT_EXPECTED,
-        NUMBER_MALFORMED,
+        // Any line: the message and the column say which token and what could have stood there.
         TOKEN_UNEXPECTED,
 
         // Header
         FLOW_LINE_MISSING,
-        HEADER_MALFORMED,
-        HEADER_UNKNOWN,
-        PUBLIC_ID_MALFORMED,
-        SIZE_MALFORMED,
-
-        // Areas, points and inputs
-        AREA_NAME_MISSING,
-        AREA_WINDOW_MALFORMED,
-        AREA_PLACEMENT_UNKNOWN,
-        PLACEMENT_MALFORMED,
-        CSV_COLUMN_MALFORMED,
-        TITLE_MATCH_UNKNOWN,
-        AREA_ARGUMENT_UNKNOWN,
 
         // Templates
-        TEMPLATE_MALFORMED,
         TEMPLATE_DUPLICATE,
 
         // Steps
         INDENT_UNEXPECTED,
-        STEP_UNKNOWN,
-        CONDITION_MISSING,
-        SEARCH_ARGUMENT_UNKNOWN,
-        TARGET_MISSING,
-        DRAG_TARGET_MISSING,
-        SCROLL_DIRECTION_UNKNOWN,
-        DURATION_MALFORMED,
-        LOOP_MALFORMED,
-        SYSTEM_ACTION_UNKNOWN,
-        PROCESS_MISSING,
-        CLAUSE_WITHOUT_TEMPLATE,
-        MATCH_MODE_UNKNOWN,
 
         // Binding
         NAME_UNKNOWN,

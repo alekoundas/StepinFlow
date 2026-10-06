@@ -180,7 +180,7 @@ namespace Business.Tests.FlowScript
             FlowImportResultDto refused = await Importer().ImportTextAsync(script.Replace("Find Image", "Fnid Image", StringComparison.Ordinal), _folder, Ct);
 
             refused.IsSuccess.ShouldBeFalse();
-            refused.Errors[0].Message.ShouldStartWith(@"""Fnid"" is not a step");
+            refused.Errors[0].Message.ShouldBe(@"Unexpected ""Fnid"".");
             FlowExportResultDto after = await Exporter().ExportAsync(flowId, _folder, Ct);
             (await File.ReadAllTextAsync(after.ScriptPath, Ct)).ShouldBe(script);
         }

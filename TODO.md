@@ -362,6 +362,13 @@ the history.
       human's note would share one field. One column with the recorder writing the first line is the
       cheaper answer, and the script cannot tell them apart anyway; two columns is the alternative.
 
+      **Every step type, stages and branches included. Decided 2026-10-06.** The script already
+      reads and writes a comment above any line - a `##` stage and a `Success:`/`Failure:` branch
+      too, and an empty branch is still written when it has one - so only the forms are missing:
+      - The marker form gets the field like every other step form.
+      - Success and Failure have no form today, being hidden types. Each gets one that holds only
+        this field. It is the one form `FlowStepBaseSchema` does not fit, since a branch has no name.
+
 - [x] **A stage is a stage and nothing else. Settled 2026-09-30.** The step type is being renamed
       from `MARKER` to `STAGE_MARKER` and made a container - `PLAN.md` 5.8 - but the question here was whether it
       should also carry a step's explanation. It should not. It was worth asking, because
@@ -379,8 +386,13 @@ the history.
 
       A flag on the marker - section or comment - was considered and dropped: it fixes only the
       first, still orphans on a drag, and needs two syntaxes in the file to be written at all, which
-      is the `##` / `#` grammar that already exists. So the marker form stays name-only. A note with
-      no step to attach to goes on the branch's first step, or on the flow itself.
+      is the `##` / `#` grammar that already exists.
+
+      **The rule since 2026-10-06: every step carries its own comment, a stage and a branch
+      included.** Not in its name - everything above still holds - but in `CodeComment`, like any
+      other step: a `#` line above `##` or `Success:` belongs to that line. So the marker form gets
+      the comment field, a branch gets a form holding only that field, and a note about a branch
+      goes on the branch rather than on its first step.
 
 - [ ] **The wizard cannot author the three newest step types.** `action-to-steps.ts` maps recorded
       actions onto steps and has no case producing `END_EXECUTION` or `MARKER`. Correct for a

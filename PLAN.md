@@ -129,8 +129,8 @@ what, which is why `FlowCheckHelper.MarkerOf` has to walk backwards to work out 
 under.
 
 **`MARKER` becomes `STAGE_MARKER`**: the node that marks where a stage begins and carries its name.
-Rejected: `SECTION`, because `Scanner.Section` is already the enum of header blocks and
-`ScriptLine.IsSection` already means "a `##` line" - one word, two meanings, inside one parser; and
+Rejected: `SECTION`, because a section is already a header block - `Areas:`, `Steps:` - to
+`ScriptLineParser.IsSection` and `SectionHeaderParser`: one word, two meanings, inside one parser; and
 `CHECKPOINT`, because it promises resumable state this holds none of, and sits one letter from
 `CHECK_VALUE`, `FlowCheck` and `GetFlowChecks`, where a check is specifically a step that can fail
 the test.
@@ -158,6 +158,9 @@ The thing it names is a **stage**, so everything derived from it says stage rath
       byte-identical round trip is what proves it. Indenting instead would be honest to the model and
       cost two spaces on nearly every line of every flow; the root-only rule is what buys the
       alternative.
+- [ ] **A stage keeps its own comment.** Every step carries one since 2026-10-06, a stage included
+      (`TODO.md`, Frontend): the `#` lines above `##` are the stage's, and the printer writes them
+      there. The re-parenting above must leave them on the stage rather than on the step before it.
 - [ ] **Stage names stay unique.** Settled with the rest: the binder resolves `Go To to <[ X ]>` against
       every named step, so a duplicate makes that reference ambiguous.
 - [ ] **Stamp the stage onto `ExecutionStep`**, so a failure report and the execution log given to a

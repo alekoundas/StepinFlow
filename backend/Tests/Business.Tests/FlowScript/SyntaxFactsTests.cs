@@ -1,5 +1,11 @@
+using System.Drawing;
+
 using Business.FlowScript.Catalogs;
+using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Lexing;
+using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,9 +18,9 @@ namespace Business.Tests.FlowScript
     /// </summary>
     public sealed class SyntaxFactsTests
     {
-        private static IReadOnlyList<ScriptWord> Words(string text)
+        private static FlowScriptSchema Read(string body)
         {
-            return ScriptWordReader.Read(text)[0].Words;
+            return new Scanner().Read("Flow: Test\n" + body);
         }
 
         [Fact]
@@ -45,7 +51,8 @@ namespace Business.Tests.FlowScript
                     step.RunCommandPreset = runCommandPreset.Value;
 
                 string written = SyntaxFacts.For(step);
-                ScriptKeyword? read = SyntaxFacts.ReadFirstKeyword(Words(written + " <[ name ]>"));
+                ScriptToken first = ScriptTokenizer.Tokenize(ScriptLineSplitter.Split(written).Single())[0];
+                ScriptKeyword? read = ScriptKeywordCatalog.Get<FlowStepTypeEnum>(first.Value);
 
                 if (written != keyword.Text || read != keyword)
                     wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
@@ -76,46 +83,6 @@ namespace Business.Tests.FlowScript
             values.Where(x => ScriptKeywordCatalog.Get(x) == null).ShouldBeEmpty();
         }
 
-        [Theory]
-        [InlineData("Move Window process <[ x ]>", FlowStepTypeEnum.WINDOW_RELOCATE)]
-        [InlineData("Wait Until No Image <[ x ]>", FlowStepTypeEnum.SEARCH_IMAGE)]
-        [InlineData("Wait For Text <[ x ]>", FlowStepTypeEnum.SEARCH_TEXT)]
-        [InlineData("Wait 800ms", FlowStepTypeEnum.WAIT)]
-        public void The_longest_keyword_wins(string line, FlowStepTypeEnum type)
-        {
-            SyntaxFacts.ReadFirstKeyword(Words(line))!.Type.ShouldBe(type);
-        }
-
-        [Fact]
-        public void A_quoted_name_is_never_a_keyword()
-        {
-            SyntaxFacts.ReadFirstKeyword(Words("<[ Click ]> at match")).ShouldBeNull();
-        }
-
-        // Nothing inside the quotes is special, and the spaces just inside them are layout rather than text.
-        [Theory]
-        [InlineData("<[ He said \"hi\" ]>", "He said \"hi\"")]
-        [InlineData(@"<[ C:\temp\ ]>", @"C:\temp\")]
-        [InlineData("<[This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
-        [InlineData("<[                  This text:\"Bruh\" ]>", "This text:\"Bruh\"")]
-        [InlineData("<[]>", "")]
-        public void A_quoted_value_is_everything_between_the_quotes_trimmed(string line, string value)
-        {
-            ScriptWord token = Words(line).ShouldHaveSingleItem();
-
-            token.IsQuoted.ShouldBeTrue();
-            token.Value.ShouldBe(value);
-        }
-
-        [Fact]
-        public void A_quote_that_never_closes_runs_to_the_end_of_the_line_and_says_so()
-        {
-            ScriptWord token = Words("<[ no end").ShouldHaveSingleItem();
-
-            token.IsQuoteUnclosed.ShouldBeTrue();
-            token.Value.ShouldBe("no end");
-        }
-
         [Fact]
         public void Every_condition_is_written_and_read_back_the_same()
         {
@@ -125,7 +92,7 @@ namespace Business.Tests.FlowScript
             {
                 FlowStep step = new FlowStep { ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
                 string written = SyntaxFacts.Condition(step);
-                ConditionSyntax? read = SyntaxFacts.ReadCondition(Words(written), 0);
+                FlowStep read = Read("Steps:\nCheck Text <[ x ]> " + written).Steps.Single().Step;
 
                 string expectedText = string.Empty;
                 if (condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY)
@@ -135,8 +102,8 @@ namespace Business.Tests.FlowScript
                 if (condition == ConditionTypeEnum.BETWEEN)
                     expectedEnd = step.ConditionTextEnd;
 
-                if (read == null || read.Type != condition || read.Text != expectedText || read.TextEnd != expectedEnd)
-                    wrong.Add($"{condition}: written \"{written}\", read back as {read}");
+                if (read.ConditionType != condition || read.ConditionText != expectedText || read.ConditionTextEnd != expectedEnd)
+                    wrong.Add($"{condition}: written \"{written}\", read back as {read.ConditionType} \"{read.ConditionText}\" \"{read.ConditionTextEnd}\"");
             }
 
             wrong.ShouldBeEmpty();
@@ -149,7 +116,9 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            SyntaxFacts.ReadTitleMatch(Words(SyntaxFacts.Keyword(mode) + " <[ x ]>"), 0)!.As<TitleMatchModeEnum>().ShouldBe(mode);
+            FlowScriptSchema schema = Read($"Steps:\nFocus Window process <[ p ]> title {SyntaxFacts.Keyword(mode)} <[ x ]>");
+
+            schema.Steps.Single().Step.TitleMatchMode.ShouldBe(mode);
         }
 
         [Theory]
@@ -159,7 +128,9 @@ namespace Business.Tests.FlowScript
         [InlineData(CursorScrollDirectionTypeEnum.RIGHT)]
         public void A_scroll_direction_is_read_back_as_written(CursorScrollDirectionTypeEnum direction)
         {
-            SyntaxFacts.ReadScrollDirection(SyntaxFacts.Keyword(direction)).ShouldBe(direction);
+            FlowScriptSchema schema = Read($"Steps:\nScroll {SyntaxFacts.Keyword(direction)} 3");
+
+            schema.Steps.Single().Step.CursorScrollDirectionType.ShouldBe(direction);
         }
 
         [Fact]
@@ -170,16 +141,9 @@ namespace Business.Tests.FlowScript
                 foreach (CursorButtonActionTypeEnum action in Enum.GetValues<CursorButtonActionTypeEnum>())
                 {
                     string written = SyntaxFacts.Button(button, action);
+                    FlowStep read = Read("Steps:\nClick at match " + written).Steps.Single().Step;
 
-                    CursorButtonTypeEnum readButton = CursorButtonTypeEnum.LEFT_BUTTON;
-                    CursorButtonActionTypeEnum readAction = CursorButtonActionTypeEnum.SINGLE_CLICK;
-                    foreach (string word in written.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        readButton = SyntaxFacts.ReadButtonSide(word) ?? readButton;
-                        readAction = SyntaxFacts.ReadButtonAction(word) ?? readAction;
-                    }
-
-                    (readButton, readAction).ShouldBe((button, action), written);
+                    (read.CursorButtonType, read.CursorButtonActionType).ShouldBe((button, action), written);
                 }
             }
         }
@@ -195,7 +159,9 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            SyntaxFacts.ReadMatchMode(Words(SyntaxFacts.Keyword(mode)), 0)!.As<TemplateMatchModeEnum>().ShouldBe(mode);
+            FlowScriptSchema schema = Read($"Steps:\nFind Image <[ x ]> template <[ a.png ]> match {SyntaxFacts.Keyword(mode)}");
+
+            schema.Steps.Single().Step.TemplateMatchMode.ShouldBe(mode);
         }
 
         [Theory]
@@ -203,21 +169,30 @@ namespace Business.Tests.FlowScript
         [InlineData(ScalesWithEnum.AREA)]
         public void What_an_area_scales_with_is_read_back_as_written(ScalesWithEnum scalesWith)
         {
-            SyntaxFacts.ReadScalesWith(SyntaxFacts.Keyword(scalesWith)).ShouldBe(scalesWith);
+            FlowScriptSchema schema = Read($"Areas:\n  <[ A ]> monitor primary   scales with {SyntaxFacts.Keyword(scalesWith)}");
+
+            schema.Areas.Single().Area.ScalesWith.ShouldBe(scalesWith);
         }
 
         // ================================================================
-        // Numbers
+        // Numbers - each with its unit, or not a number the grammar takes
         // ================================================================
 
         [Theory]
-        [InlineData("15s", 15000)]
-        [InlineData("1.5s", 1500)]
         [InlineData("800ms", 800)]
-        [InlineData("250", 250)]
-        public void A_duration_reads_in_whatever_unit_it_was_written(string text, int milliseconds)
+        [InlineData("0ms", 0)]
+        [InlineData("800", null)]
+        [InlineData("15s", null)]
+        [InlineData("1.5ms", null)]
+        [InlineData("ms", null)]
+        public void A_duration_is_a_whole_number_of_milliseconds(string text, int? milliseconds)
         {
-            SyntaxFacts.Milliseconds(text).ShouldBe(milliseconds);
+            FlowScriptSchema schema = Read("Steps:\nWait " + text);
+
+            if (milliseconds == null)
+                schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+            else
+                schema.Steps.Single().Step.WaitForMilliseconds.ShouldBe(milliseconds.Value);
         }
 
         [Theory]
@@ -228,25 +203,41 @@ namespace Business.Tests.FlowScript
         [InlineData("dpi", null)]
         public void A_DPI_is_a_positive_number_ending_in_dpi(string text, int? dpi)
         {
-            SyntaxFacts.ReadDpi(text).ShouldBe(dpi);
+            FlowScriptSchema schema = Read("Points:\n  <[ P ]> on screen offset 1 2 at " + text);
+
+            if (dpi == null)
+                schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+            else
+                schema.Points.Single().Point.AuthoredDpi.ShouldBe(dpi.Value);
         }
 
         [Theory]
-        [InlineData("120,40", ',', 120, 40)]
-        [InlineData("-4,10", ',', -4, 10)]
-        [InlineData("800x600", 'x', 800, 600)]
-        public void A_pair_is_two_integers_joined_by_its_character(string text, char separator, int first, int second)
+        [InlineData("800x600", 800, 600)]
+        [InlineData("800x", 0, 0)]
+        [InlineData("800", 0, 0)]
+        [InlineData("1x2x3", 0, 0)]
+        public void A_size_is_two_whole_numbers_joined_by_x(string text, int width, int height)
         {
-            SyntaxFacts.ReadPair(text, separator).ShouldBe((first, second));
+            FlowScriptSchema schema = Read("Sizes: " + text);
+
+            if (width == 0)
+            {
+                schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+                return;
+            }
+
+            FlowViewport viewport = schema.Viewports.Single();
+            (viewport.Width, viewport.Height).ShouldBe((width, height));
         }
 
         [Theory]
-        [InlineData("1,2,3")]
-        [InlineData("1.5,2")]
-        [InlineData("120")]
-        public void Anything_else_is_not_a_pair(string text)
+        [InlineData("120 40", 120, 40)]
+        [InlineData("-4 10", -4, 10)]
+        public void A_click_is_two_whole_numbers(string text, int x, int y)
         {
-            SyntaxFacts.ReadPair(text, ',').ShouldBeNull();
+            FlowScriptSchema schema = Read("Templates:\n  <[ a.png ]> click " + text);
+
+            schema.Templates.Single().ClickOffset.ShouldBe(new Point(x, y));
         }
     }
 }

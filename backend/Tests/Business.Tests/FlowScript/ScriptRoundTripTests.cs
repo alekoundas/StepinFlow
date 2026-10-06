@@ -66,6 +66,26 @@ namespace Business.Tests.FlowScript
             document.Steps.Single().Step.Message.ShouldBe(message);
         }
 
+        // An empty branch says nothing and is left out - unless its comment says why it is empty.
+        [Fact]
+        public void An_empty_branch_with_a_comment_is_kept()
+        {
+            FlowStep check = new FlowStep { Id = 1, RootId = 1, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, SearchMode = SearchModeEnum.FIND_BEST, Name = "Banner" };
+            FlowStep success = new FlowStep { Id = 2, RootId = 1, ParentFlowStepId = 1, OrderNumber = 0, FlowStepType = FlowStepTypeEnum.SUCCESS, CodeComment = "Nothing to do, it is already open." };
+            FlowStep failure = new FlowStep { Id = 3, RootId = 1, ParentFlowStepId = 1, OrderNumber = 1, FlowStepType = FlowStepTypeEnum.FAILURE };
+            BoundFlow source = new BoundFlow
+            {
+                Flow = new Flow { Id = 1, Name = "Branches", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b114") },
+                Steps = [check, success, failure],
+            };
+
+            FlowScriptSchema document = new Scanner().Read(new Printer().Write(source));
+
+            document.Diagnostics.ShouldBeEmpty();
+            document.Steps.Select(x => x.Step.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_IMAGE, FlowStepTypeEnum.SUCCESS]);
+            document.Steps[1].Step.CodeComment.ShouldBe("Nothing to do, it is already open.");
+        }
+
         // ================================================================
         // What a person writing one by hand gets for what they leave out
         // ================================================================

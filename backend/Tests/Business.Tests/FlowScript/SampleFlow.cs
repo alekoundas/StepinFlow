@@ -60,14 +60,14 @@ namespace Business.Tests.FlowScript
                 return step;
             }
 
-            Step(new FlowStep { Id = 100, FlowStepType = FlowStepTypeEnum.MARKER, Name = "Sign in" }, null);
+            Step(new FlowStep { Id = 100, FlowStepType = FlowStepTypeEnum.MARKER, Name = "Sign in", CodeComment = "Everything before the products page." }, null);
             Step(new FlowStep { Id = 101, FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", CodeComment = "A fresh profile every time." }, null);
 
             Step(new FlowStep { Id = 102, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = 10, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
             FlowStep found = Step(new FlowStep { Id = 103, FlowStepType = FlowStepTypeEnum.SUCCESS }, 102);
             Step(new FlowStep { Id = 104, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = 102, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK }, found.Id);
             Step(new FlowStep { Id = 105, FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.TEXT, KeyboardInputText = "{{username}}" }, found.Id);
-            FlowStep missed = Step(new FlowStep { Id = 106, FlowStepType = FlowStepTypeEnum.FAILURE }, 102);
+            FlowStep missed = Step(new FlowStep { Id = 106, FlowStepType = FlowStepTypeEnum.FAILURE, CodeComment = "The field is behind the menu on a narrow window." }, 102);
             Step(new FlowStep { Id = 107, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowPointId = 20, CursorButtonType = CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.DOUBLE_CLICK }, missed.Id);
 
             Step(new FlowStep { Id = 110, FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "Read the total", SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND, ConditionType = ConditionTypeEnum.MATCHES_REGEX, ConditionText = @"total: (\d+)", FlowAreaId = 11, ResultExtractPattern = @"(\d+)", TimeoutMilliseconds = 10000 }, null);
