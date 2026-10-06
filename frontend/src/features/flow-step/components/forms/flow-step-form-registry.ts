@@ -20,6 +20,7 @@ import FlowStepNotifyFormComponent from "@/features/flow-step/components/forms/n
 import FlowStepKeyboardFormComponent from "@/features/flow-step/components/forms/keyboard/FlowStepKeyboardFormComponent";
 import FlowStepEndExecutionFormComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormComponent";
 import FlowStepMarkerFormComponent from "@/features/flow-step/components/forms/marker/FlowStepMarkerFormComponent";
+import FlowStepGoBackFormComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormComponent";
 
 import {
   CURSOR_FLOW_STEP_TYPES,
@@ -96,6 +97,11 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   [FlowStepTypeEnum.LOOP]: {
     component: FlowStepLoopFormComponent,
     newStepValues: () => ({ name: "Loop" }),
+  },
+
+  [FlowStepTypeEnum.GO_BACK]: {
+    component: FlowStepGoBackFormComponent,
+    newStepValues: () => ({ name: "Go Back" }),
   },
 
   [FlowStepTypeEnum.SEARCH_IMAGE]: {

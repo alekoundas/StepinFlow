@@ -108,6 +108,20 @@ namespace Core.Tests.Helpers
             TreeStepHelper.GoBackTargets(GoBackTree, 8).Select(x => x.Id).ShouldBe([7, 5, 2, 1]);
         }
 
+        // How Lookup.goBack asks for a step not saved yet: a stand-in at the end of its parent.
+        [Theory]
+        [InlineData(6, 2, new[] { 8, 7, 5, 2, 1 })]
+        [InlineData(null, 4, new[] { 11, 5, 2, 1 })]
+        public void A_step_not_saved_yet_goes_back_by_its_position(int? parentId, int orderNumber, int[] expected)
+        {
+            Dictionary<int, StepChainNode> withNew = new Dictionary<int, StepChainNode>(GoBackTree)
+            {
+                [0] = new StepChainNode(0, parentId, FlowStepTypeEnum.GO_BACK, string.Empty, orderNumber),
+            };
+
+            TreeStepHelper.GoBackTargets(withNew, 0).Select(x => x.Id).ShouldBe(expected);
+        }
+
         [Theory]
         [InlineData(8, 7, true)]
         [InlineData(8, 5, true)]

@@ -13,7 +13,7 @@ in `PROJECT.md`, and why it was built that way is in the git history of this fil
 
 ## Landed
 
-Everything here was finished by 2026-09-25.
+Everything here was finished by 2026-10-07.
 
 | phase | what it gave | where it is described |
 | --- | --- | --- |
@@ -28,6 +28,7 @@ Everything here was finished by 2026-09-25.
 | 5, 5.5 | Parser, binder and a transactional importer, shaped like a compiler | §7 |
 | 5.6 | Feature folders, the `Transport` project, MediatR replaced by a switch | §2, §4 |
 | 5.7 | Portable search: `ScalesWith`, DPI on every captured pixel, two match modes | §8 |
+| 5.9 | `Go Back` returns only to a step it passed; validator, form lookup and moves agree | §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
 **Next:** the machine-only test bucket, then the two engine seams that layer 5 is waiting on, then
@@ -164,19 +165,10 @@ Touched: the enum, `TreeStepHelper`, `FlowStepFieldCatalog`, the printer and par
 `AiPromptHelper`, `FlowCheck`, `FlowCheckHelper`, the worker registration, four frontend files, two
 AI documents, `PROJECT.md` and `FLOW-FORMAT.md`. All mechanical apart from the flatten/re-parent pair.
 
-### 5.9. Go Back only goes back
-
-Settled 2026-10-06, built 2026-10-07 apart from the form. `TreeStepHelper.GoBackTargets` is the
-rule, and the validator and `TreeStepMoveHelper.FindBrokenReferences` both enforce it.
-
-- [ ] **The form offers only the chain.** There is no Go Back form, so today one can only come from
-      a script. Its dropdown lists `GoBackTargets` nearest first, through a lookup handler of its
-      own beside `GetLookupFlowStepHandler`.
-
 ### 5.10. The script reads straight into linked rows
 
 Settled 2026-10-06, not yet built. It relies on every name being declared above its first use, which
-5.9 made the rule. Today the parser builds rows that refer to each other by name, the binder hands out
+5.9 (landed) made the rule. Today the parser builds rows that refer to each other by name, the binder hands out
 positions as ids and swaps the names for them, the importer swaps those for real ids one table at a
 time, and the exporter builds a `BoundFlow` with id-to-name dictionaries so the printer can turn the
 ids back into names. Four translations of one thing.

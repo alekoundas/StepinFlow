@@ -172,6 +172,10 @@ export const backendApiService = {
     failedStep: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.failedStep", dto),
 
+    /** Steps a Go Back can return to, by position: flowId, parent flowStepId and orderNumber. */
+    goBack: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.goBack", dto),
+
     /** Runs a window matcher against this machine and returns every window it hits. */
     testWindowMatch: (dto: WindowMatchTestRequestDto) =>
       call<WindowMatchTestResultDto>("Lookup.testWindowMatch", dto),

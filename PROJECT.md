@@ -946,8 +946,10 @@ warning counts, and the editor names the step.
 | --- | --- |
 | a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
 | a step reading a result it does not sit under through Success | a check that decides nothing |
-| a sub-flow that does not exist | a step with no name |
-| an `End Execution` under another one, which reads as a decision and is not | anything positioned in screen coordinates |
+| a `Notify` reporting a step it does not sit under through Failure | a step with no name |
+| a `Go Back` to a step it did not pass on the way here | anything positioned in screen coordinates |
+| a sub-flow that does not exist | |
+| an `End Execution` under another one, which reads as a decision and is not | |
 | `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
 | a `{{variable}}` nothing in the flow defines | |
 | text holding `<[` or `]>`, which the script could not write | |
@@ -955,6 +957,12 @@ warning counts, and the editor names the step.
 `NAME_DUPLICATE` is an error rather than a warning: the script refers to things by name, so a
 duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step picks
 a free name automatically, so only a manual rename can reach it.
+
+The rules that relate two steps live once, in `TreeStepHelper`, and three places ask them: the
+validator, the form's dropdown, which offers only what the validator accepts, and a drag and drop,
+which clears a reference the move would break. A `Go Back` may return to its earlier siblings, its
+parent, the parent's earlier siblings and so on up to the root - never forward, never into the
+other branch of a check, never inside a block that already finished.
 
 `FlowCheckHelper` and the `GetFlowChecks` AI tool expose the checks a flow contains, so a question
 about "what does this flow verify" is answerable without walking the tree by hand.

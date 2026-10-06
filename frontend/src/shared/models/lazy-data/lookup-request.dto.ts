@@ -14,4 +14,7 @@ export interface LookupRequestDto {
 
   // Lookup.flowStep only: a cursor step wants a location, a condition wants a value.
   resultKind?: StepResultKindEnum;
+
+  // Lookup.goBack only: where the step sits among its siblings, saved or not.
+  orderNumber?: number;
 }

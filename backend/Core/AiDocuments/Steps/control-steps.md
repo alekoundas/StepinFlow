@@ -27,8 +27,9 @@ Each pass is labelled in the execution view, so a failure on pass 40 is distingu
 The steps it can go back to are its earlier siblings, its parent, the parent's earlier siblings,
 and so on up to the top of the flow. Never a step below it, never one in the other branch of a
 check above it, and never one inside an earlier block: a loop or a check that already finished is
-gone back to as a whole, not into. The validator reports anything else, and moving a step so its
-target falls off that chain clears the target.
+gone back to as a whole, not into. The form's **Go back to** dropdown offers only those steps,
+nearest first, the validator reports anything else, and moving a step so its target falls off that
+chain clears the target.
 
 Going back repeatedly does not accumulate anything, so a Go Back can run indefinitely without
 growing.

@@ -18,5 +18,8 @@ namespace Core.Models.Dtos
 
         // Lookup.flowStep only: a cursor step wants a location, a condition wants a value.
         public StepResultKindEnum? ResultKind { get; set; }
+
+        // Lookup.goBack only: where the step sits among its siblings, saved or not.
+        public int? OrderNumber { get; set; }
     }
 }
