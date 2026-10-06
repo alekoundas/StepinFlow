@@ -18,25 +18,25 @@ every step of the flow, and the file wins.
 ```
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
-Sizes:   1920x1080, 1024x768, 390x844
+Sizes:   1920x1080 1024x768 390x844
 
 Areas:
   <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
-  <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  0.12 0.10
-  <[ Inventory ]>     inside <[ Browser ]>   ratio 0.00 0.15  1.00 0.85
-  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  0.40 0.40
+  <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  size 0.12 0.10
+  <[ Inventory ]>     inside <[ Browser ]>   ratio 0.00 0.15  size 1.00 0.85
+  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
 
 Inputs:
   <[ username ]>
   <[ password ]>      secret
 
 Templates:
-  <[ add-to-cart.png ]>       click 48,16   captured 2304x1377 at 120dpi
-  <[ cart-badge.png ]>        click 12,12   captured 276x162 at 120dpi
-  <[ login-button.png ]>      click 150,20   captured 922x648 at 120dpi
-  <[ login-form.png ]>        click 200,150   captured 2304x1620 at 120dpi
-  <[ password-field.png ]>    click 150,18   captured 922x648 at 120dpi
-  <[ username-field.png ]>    click 150,18   captured 922x648 at 120dpi
+  <[ add-to-cart.png ]>       click 48 16   captured 2304x1377 at 120dpi
+  <[ cart-badge.png ]>        click 12 12   captured 276x162 at 120dpi
+  <[ login-button.png ]>      click 150 20   captured 922x648 at 120dpi
+  <[ login-form.png ]>        click 200 150   captured 2304x1620 at 120dpi
+  <[ password-field.png ]>    click 150 18   captured 922x648 at 120dpi
+  <[ username-field.png ]>    click 150 18   captured 922x648 at 120dpi
 
 Steps:
 
@@ -45,7 +45,7 @@ Steps:
 # A fresh profile every time, so the second execution never inherits the first one's session.
 Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
 
-Wait For Image  <[ Login form appears ]>   template <[ login-form.png ]>   in <[ Browser ]>   timeout 15s
+Wait For Image  <[ Login form appears ]>   template <[ login-form.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the site never loaded ]>
 
@@ -72,7 +72,7 @@ Find Image  <[ Find login button ]>   template <[ login-button.png ]>   in <[ Lo
   Click  at <[ Find login button ]>
 
 # The assertion: this is what makes the recording a test.
-Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inventory ]>   timeout 10s
+Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inventory ]>   timeout 10000ms
  Failure:
   Check Text   <[ Login error ]>   is not empty   in <[ Login form ]>
   Notify       <[ Login failed: {{Login error}} ]>
@@ -87,7 +87,7 @@ Find All Images  <[ Find add buttons ]>   template <[ add-to-cart.png ]> accurac
   Loop  each match in <[ Find add buttons ]>
    Click  at match
    # Give the badge a moment to update before the next click.
-   Wait For Image  <[ Badge updated ]>  template <[ cart-badge.png ]>  in <[ Cart badge ]>  timeout 3s
+   Wait For Image  <[ Badge updated ]>  template <[ cart-badge.png ]>  in <[ Cart badge ]>  timeout 3000ms
     Failure:
      End Execution  failed  <[ the cart did not update after adding an item ]>
 
@@ -128,23 +128,36 @@ Run      <[ dir C:\temp\ ]>
 ```
 
 Nothing between the quotes is special. Double quotes and backslashes are text like any other, so
-nothing is ever escaped, and what is written is what is read. The price is that quoted text cannot
-contain `<[` or `]>` itself: the forms refuse both as they are typed, and a script holding one is
-refused on import.
+nothing is ever escaped, and what is written is what is read. The price is that a quote ends at its
+first `]>`, so quoted text cannot hold one. The forms refuse `<[` and `]>` as they are typed, so
+whatever they save can always be quoted.
 
 The spaces just inside the quotes are layout, not text. The printer writes one on each side, and the
 reader trims whatever is there, so `<[This text]>` and `<[    This text ]>` are the same text.
 
+Four keywords take the rest of their line as written, without quotes, because nothing can follow
+them: `Flow:`, `Id:`, a `#` comment and a `##` section.
+
 ### Every word means something
 
-A line is read to its end. A word nothing on that line expects is an error, and so is one the line
-needs and does not have - a `Notify` with no message, a `Click at` with no target. Either way the
-error names the line and the column, rather than a step quietly losing part of what was written.
+Unquoted, a word is either a keyword or a number - `0.85`, `-10`, `800ms`, `120dpi`, `1920x1080`.
+Anything else is an error.
+
+A line is read in the order its parts are written here, to its end. A word nothing on that line
+expects is an error, and so is one the line needs and does not have - a `Notify` with no message, a
+`Click at` with no target. Either way the error names the line and the column, and what could have
+stood there:
+
+```
+Unexpected "offset", expected "inside" or "on screen".
+```
+
+rather than a step quietly losing part of what was written.
 
 ### Sizes
 
 ```
-Sizes:  1920x1080, 1024x768, 390x844
+Sizes:  1920x1080 1024x768 390x844
 ```
 
 The viewports this flow is expected to pass at. The engine executes the whole flow once per size
@@ -161,9 +174,9 @@ An area is a rectangle to look inside. Areas are the vocabulary of _where_, whic
 ```
 Areas:
   <[ Browser ]>     window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi
-  <[ Game ]>        inside <[ Browser ]>   ratio 0.10 0.20  0.80 0.70   scales with area
+  <[ Game ]>        inside <[ Browser ]>   ratio 0.10 0.20  size 0.80 0.70   scales with area
   <[ Header ]>      inside <[ Browser ]>   offset 0 0  size 1920 90   at 120dpi
-  <[ Inventory ]>   inside <[ Browser ]>   ratio 0.00 0.15  1.00 0.85
+  <[ Inventory ]>   inside <[ Browser ]>   ratio 0.00 0.15  size 1.00 0.85
   <[ Screen ]>      monitor primary
 ```
 
@@ -178,13 +191,14 @@ A root area is one of three things:
 | `monitor primary`, `monitor <[ \\.\DISPLAY2 ]>` | a whole monitor; `primary` is the one that means the same thing on another PC |
 | `on screen   offset 10 20  size 300 200` | fixed screen coordinates - right on the machine it was made on and nowhere else |
 
-A child area is placed inside its parent, either by **ratio** (`x y width height`, each 0–1) or by
-fixed **offset and size** in pixels.
+A child area is placed inside its parent, either by **ratio** (`ratio x y size width height`, each
+0–1) or by fixed **offset and size** in pixels (`offset x y size width height`). Both say where the
+area starts and how big it is, so both are written the same way.
 
 Ratios are what make one flow work at several sizes: a region defined as the bottom 85% of the
 window is the bottom 85% at every width.
 
-Two optional clauses end the line:
+Two optional clauses end the line, in this order:
 
 - **`scales with dpi`** or **`scales with area`** - what makes the things inside bigger or smaller
   on another screen. A browser or a native app keeps its contents' size when the window changes and
@@ -268,8 +282,10 @@ So a CI dashboard shows _"Sign in has failed 4 of the last 20 builds, only at 39
 one flow flapping. Name sections after what a person would say they were doing, because those names
 end up in front of everyone.
 
-`#` is a **comment**, attached to the step below it. This is where intent lives — the thing a
-screenshot can never show, and the first thing a model reads when diagnosing a failure.
+`#` is a **comment**, attached to the line below it, whatever that line is - a step, a `##` section
+or a `Success:`/`Failure:` branch. This is where intent lives — the thing a screenshot can never
+show, and the first thing a model reads when diagnosing a failure. A branch with nothing under it is
+left out of the file, unless it has a comment saying why it is empty.
 
 ### Checks
 
@@ -297,10 +313,10 @@ There are three things to check and four ways to look, and the keyword says both
 | `Wait Until No Text`  | nothing       | the error message has cleared               |
 | `Check Value`         | nothing       | tests a value an earlier step produced      |
 
-The waiting forms take `timeout 10s` and poll, taking a fresh screenshot each time until the answer
-comes out right or the timeout expires. That replaces every recorded sleep, and recorded sleeps are
-the largest single source of flakiness in any record-and-replay tool. A timeout of `0` waits for
-ever.
+The waiting forms take `timeout 10000ms` and poll, taking a fresh screenshot each time until the
+answer comes out right or the timeout expires. That replaces every recorded sleep, and recorded
+sleeps are the largest single source of flakiness in any record-and-replay tool. `no timeout` waits
+for ever. A duration is always written in milliseconds, so it has one spelling.
 
 Making the mode part of the keyword means an impossible combination cannot be written down.
 `Find All` reads a single screenshot and hands back every hit, which is meaningful for templates and
@@ -316,7 +332,7 @@ more than one that only says it failed.
 
 ```
 Check Text   <[ Read the total ]>        matches <[ total: (\d+) ]>   in <[ Cart badge ]>
-Check Value  <[ Order is large ]>        <[ {{Read the total}} ]> > 100
+Check Value  <[ Order is large ]>        <[ {{Read the total}} ]> > <[ 100 ]>
 ```
 
 **A check's result must be read.** One that nothing branches on and nothing references was never
@@ -336,7 +352,7 @@ costs its full length on every execution that takes the fallback.
 So wait once, on something that is always present, then branch instantly:
 
 ```
-Wait For Image  <[ Page loaded ]>   template <[ logo.png ]>   in <[ Browser ]>   timeout 15s
+Wait For Image  <[ Page loaded ]>   template <[ logo.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the page never loaded ]>
 
@@ -358,17 +374,19 @@ just paying for patience it cannot use.
 ### Actions
 
 ```
-Click       at <[ Find login button ]>          left double
+Click       at <[ Find login button ]>          right double
 Click       at point <[ Menu toggle ]>
 Move        to <[ Find username field ]>
 Type        <[ {{username}} ]>
-Press       Ctrl+C
+Press       <[ Ctrl+C ]>
 Scroll      down 3   in <[ Results panel ]>
 Wait        800ms
 ```
 
 `at` takes a name from the one namespace — a check's result, a point, or `match` inside a loop.
-`Wait` is a fixed sleep and a last resort; prefer a `Wait For` check.
+A click is left and single unless it says otherwise: the button (`right`, `middle`) comes first,
+then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort; prefer
+a `Wait For` check.
 
 ### Loops
 
@@ -478,13 +496,13 @@ step's.
 
 ```
 Templates:
-  <[ login.png ]>           click 150,20   captured 922x648 at 120dpi
+  <[ login.png ]>           click 150 20   captured 922x648 at 120dpi
 ```
 
 Facts about the picture rather than the search, once per file:
 
-- **`click 150,20`** - where a match is clicked, from the template's top left. It scales with the
-  template.
+- **`click 150 20`** - where a match is clicked, x and y from the template's top left. It scales
+  with the template.
 - **`captured 922x648`** - the size of the area the template was captured in. What an area that
   `scales with area` measures against.
 - **`at 120dpi`** - the DPI it was captured at. What an area that `scales with dpi` measures
@@ -503,7 +521,10 @@ transaction is pure, so a typo reports its line and leaves the existing flow unt
 half-replaced.
 
 **Every word is accounted for.** A word left over on a line, and a word a line needs but does not
-have, are both errors with a line and a column - nothing is dropped and nothing is guessed.
+have, are both errors with a line and a column - nothing is dropped and nothing is guessed. Every
+such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
+could have stood there. The other codes are kinds of problem rather than places in the grammar: a
+line indented too far, a template described twice, no `Flow:` line, a name that resolves to nothing.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps

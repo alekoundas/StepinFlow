@@ -571,14 +571,14 @@ decisions behind it.
 ```
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
-Sizes:   1920x1080, 390x844
+Sizes:   1920x1080 390x844
 
 Areas:
   <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
-  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  0.40 0.40
+  <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
 
 Templates:
-  <[ username-field.png ]>    click 150,18   captured 922x648 at 120dpi
+  <[ username-field.png ]>    click 150 18   captured 922x648 at 120dpi
 
 Steps:
 
@@ -597,10 +597,13 @@ Find Image      <[ Find username field ]>   template <[ username-field.png ]> ac
 `Business/FlowScript/` is a pipeline, and the folders are its stages:
 
 ```
-Syntax/       Lexer → Parser → StepParser        text, and nothing but text
-Binding/      Binder → BoundFlow                 names become ids
-Text/         Printer                            the model back to text
-Diagnostics/  Diagnostic                         what went wrong, and whether it is fatal
+Scanner/      Scanner                                  the stages below, one line at a time
+Lexing/       ScriptLineSplitter → ScriptTokenizer     text into lines, a line into tokens
+Parsers/      ScriptLineParser → a parser per line     tokens into the schema
+Binding/      Binder → BoundFlow                       names become ids
+Printer/      Printer                                  the model back to text
+Catalogs/     ScriptKeywordCatalog                     every word the grammar knows, once
+Diagnostics/  Diagnostic, ScriptSyntaxException        what went wrong, and whether it is fatal
               FlowScriptImporter, FlowScriptExporter
 ```
 
@@ -609,22 +612,38 @@ and the binder never touches text.** A cursor step can aim at a check written be
 can be resolved until everything has been read — and because binding needs no database, the round
 trip is testable without one.
 
+**The tokenizer cuts and never fails.** It splits a line at spaces, keeps a quote whole, and joins
+neighbouring words into the longest keyword the catalog has, so `Wait Until No Image` is one token.
+A token is a `KEYWORD`, a `QUOTE`, a `NUMBER`, `UNKNOWN`, or the `END_OF_LINE` every line ends with,
+and each knows its line and column. Whatever does not belong is still a token, so every error comes
+from one place: the parser.
+
+**One parser per kind of line.** `ScriptLineParser` picks it from the section the line is in and
+the keyword it opens with - one for each header line, one for each step type - and is the only class
+that writes the schema. The grammar of a line is its parser's. What the lines mean together is the
+orchestrator's: the tree the indentation draws, a template described twice, a comment belonging to
+the line below. The parsers share `TokenParser`: `Expect` takes a token that must be there, `Extract`
+takes one and returns its value, an `Optional` one never throws, and the index moves in one place.
+A line that stops making sense throws `ScriptSyntaxException` at that token, and the Scanner records
+it and reads on from the next line, so one typo is one error rather than the end of the report.
+
 `Printer.Write(BoundFlow) → string` is a pure function, and deterministic: the same flow writes the
 same bytes. Branch order from `OrderNumber`, areas roots-then-children alphabetically, and
 `BoundFlow` builds its own child lookup so a caller cannot hand it steps ordered by chance.
 
-`SyntaxFacts` holds every word the grammar knows **in both directions** — the keyword a step is
-written as and the step a keyword means, the words for a condition, a title match, a scroll
-direction and a button, and all of those read back. One file, because two is how a keyword comes to
-mean one thing on write and another on read. An enum is read by its **name** and nothing else:
-`Enum.TryParse` also accepts a number and comma-joined flags, which is how `Press Ctrl+1` once
+`ScriptKeywordCatalog` holds every word the grammar knows **for both directions** - each row a text
+and the value it means: a step type, a condition, a title match, a section header, a clause word
+like `inside` or `timeout`, a unit like `ms`. The printer writes from it through
+`SyntaxFacts.Keyword`, and the parsers read from it, so a keyword cannot mean one thing on write and
+another on read. A value is read as a catalog word and nothing else: the first reader used
+`Enum.TryParse`, which also accepts a number and comma-joined flags, which is how `Press Ctrl+1` once
 pressed Ctrl+B and `System 99` parsed as an action that does not exist.
 
 ### Everything that makes a template portable travels in the file
 
 ```
 Templates:
-  <[ login.png ]>           click 150,20   captured 922x648 at 120dpi
+  <[ login.png ]>           click 150 20   captured 922x648 at 120dpi
 
 Steps:
 Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required   match shape and brightness   in <[ Browser ]>
@@ -682,18 +701,32 @@ the first line that changed. It is also the most complete example of the format 
 without. The original spec had bare names in aligned columns — a parser cannot tell where such a
 name stops. Double quotes came first and needed escaping, and a stray one typed by hand cut a
 message short without a word; quotes no text uses mean nothing is escaped, double quotes and
-backslashes are ordinary text, and the only rule is that quoted text cannot hold the quotes
-themselves. The forms refuse them as they are typed, `FlowValidationService` flags them on any step
-that arrived another way, and the importer refuses a script holding one.
+backslashes are ordinary text, and the only rule is that a quote ends at its first `]>`. The forms
+refuse `<[` and `]>` as they are typed, and `FlowValidationService` flags them on any step that
+arrived another way.
 
-In the code the words follow from that: a token between the quotes is *quoted* and any other is
-*unquoted* - `ScriptToken.IsQuoted`, `ScriptLineReader.Quoted()` and `Unquoted()`, `QUOTE_OPEN` and
-`QUOTE_CLOSE` in the catalog - and what a token holds is its `Value`.
+In the code a quote is three tokens - `<[`, the text, `]>` - and every parser reads them as written:
+`ExpectKeyword(QUOTE_OPEN)`, `ExtractText()`, `ExpectKeyword(QUOTE_CLOSE)`. A quote that never
+closes is then simply a missing `]>` at the end of the line, reported like any other missing word.
+Four keywords take the rest of their line as text without quotes, because nothing can follow them:
+`Flow:`, `Id:`, `#` and `##`.
 
-**Every word is read.** Each line goes through a cursor - `ScriptLineReader` - whose reads take a
-token or report what belonged there, and which reports whatever is left at the end of the line. A
-word too many and a word missing are both errors with a column, so a hand edit that goes wrong is
-named rather than quietly dropped.
+**Every word is read, in order.** A line is read in the order the printer writes it and stops at the
+first token out of place: `Unexpected "offset", expected "inside" or "on screen".` The expected half
+is collected from the catalog as the parser goes, the optional clauses it passed over included, so
+no parser writes a message. A word too many and a word missing are both that error, with a column,
+so a hand edit that goes wrong is named rather than quietly dropped. Every syntax error is one code,
+`TOKEN_UNEXPECTED`: a code per place in the grammar would only repeat what the message says, and
+nothing branches on it. The codes left are kinds of problem - an indent, a template described twice,
+a missing `Flow:` line, a name that resolves to nothing.
+
+**Unquoted, a word is a keyword or a number**, and a number carries its unit: `800ms`, `120dpi`,
+`1920x1080`. A duration is always milliseconds, so it has one spelling. Pairs read like the rest of
+the line - `offset 40 8`, `click 60 12`, `ratio 0.30 0.18 size 0.40 0.40` - so no value hides a comma.
+
+**A comment belongs to the line below it**, whatever that line is - a step, a `##` stage or a
+`Success:`/`Failure:` branch - because every step type carries `CodeComment`. A branch with nothing
+under it is left out of the file unless its comment says why it is empty.
 
 **`Launch` takes one command string**, not an executable plus arguments. The model stores one
 string; inventing a split it does not have would fail the round trip on the first export.
@@ -1331,13 +1364,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-365 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+435 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 83 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
-| `Business.Tests` | 264 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 334 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
@@ -1449,7 +1482,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 365 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 435 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
