@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class FlowSizesParser : TokenParser<List<FlowViewport>>
+    internal sealed class FlowSizesParser : BaseParser<List<FlowViewport>>
     {
         public FlowSizesParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

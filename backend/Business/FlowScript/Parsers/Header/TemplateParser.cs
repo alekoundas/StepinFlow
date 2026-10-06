@@ -6,7 +6,7 @@ using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class TemplateParser : TokenParser<FlowStepTemplateSchemaBindng>
+    internal sealed class TemplateParser : BaseParser<FlowStepTemplateSchemaBindng>
     {
         public TemplateParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

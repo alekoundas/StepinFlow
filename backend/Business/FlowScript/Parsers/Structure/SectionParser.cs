@@ -3,7 +3,7 @@ using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Parsers.Structure
 {
-    internal sealed class SectionParser : TokenParser<ScriptSymbolEnum>
+    internal sealed class SectionParser : BaseParser<ScriptSymbolEnum>
     {
         public SectionParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

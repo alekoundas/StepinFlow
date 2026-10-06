@@ -5,14 +5,14 @@ using Business.Validation;
 using Core.Enums;
 using Core.Models.Database;
 
-namespace Business.FlowScript.Parsers.Steps
+namespace Business.FlowScript.Parsers
 {
     /// <summary>
     /// The clauses more than one step takes, each read the one way the printer writes it.
     /// </summary>
-    internal abstract class StepParser : TokenParser<FlowStepSchemaBindng>
+    internal abstract class BaseStepParser : BaseParser<FlowStepSchemaBindng>
     {
-        protected StepParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        protected BaseStepParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 

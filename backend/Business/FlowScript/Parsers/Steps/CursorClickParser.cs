@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class CursorClickParser : StepParser
+    internal sealed class CursorClickParser : BaseStepParser
     {
         public CursorClickParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

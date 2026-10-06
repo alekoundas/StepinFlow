@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class KeyboardInputParser : StepParser
+    internal sealed class KeyboardInputParser : BaseStepParser
     {
         public KeyboardInputParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

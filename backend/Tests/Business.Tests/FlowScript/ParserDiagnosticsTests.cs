@@ -144,15 +144,15 @@ namespace Business.Tests.FlowScript
         // A comment belongs to the step below it. Above anything else it belongs to nothing, and is
         // reported where it was written rather than handed to a step further down.
         [Theory]
-        [InlineData("Areas:\n# the browser\n  <[ A ]> monitor primary\nSteps:\nWait 800ms", 5)]
-        [InlineData("# before the steps\nSteps:\nWait 800ms", 4)]
-        [InlineData("Steps:\nWait 800ms\n# nothing below", 6)]
-        public void A_comment_with_no_step_below_it_is_reported_where_it_was_written(string body, int line)
+        [InlineData("Areas:\n  # the browser\n  <[ A ]> monitor primary\nSteps:\nWait 800ms", 5, 3)]
+        [InlineData("# before the steps\nSteps:\nWait 800ms", 4, 1)]
+        [InlineData("Steps:\nWait 800ms\n# nothing below", 6, 1)]
+        public void A_comment_with_no_step_below_it_is_reported_where_it_was_written(string body, int line, int column)
         {
             Diagnostic diagnostic = Read(Header + body).ShouldHaveSingleItem();
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.COMMENT_UNATTACHED);
-            diagnostic.Line.ShouldBe(line);
+            (diagnostic.Line, diagnostic.Column).ShouldBe((line, column));
         }
 
         [Fact]

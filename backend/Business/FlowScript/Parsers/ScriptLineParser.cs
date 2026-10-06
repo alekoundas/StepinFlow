@@ -20,7 +20,7 @@ namespace Business.FlowScript.Parsers
     internal sealed class ScriptLineParser
     {
         private readonly FlowScriptSchema _flowScriptSchema;
-        private readonly Dictionary<int, string> _comments = new Dictionary<int, string>(); // Comments for the step below, by line number.
+        private readonly Dictionary<ScriptToken, string> _comments = new Dictionary<ScriptToken, string>(); // Comments for the step below, by their # token.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
 
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
@@ -44,7 +44,7 @@ namespace Business.FlowScript.Parsers
             // Read and keep CodeComments to be consumed by the next FlowStep
             if (symbol == ScriptSymbolEnum.COMMENT)
             {
-                _comments.Add(line.Number, new CommentParser(line.Tokens).Parse());
+                _comments.Add(line.Tokens[0], new CommentParser(line.Tokens).Parse());
                 return;
             }
 
@@ -109,7 +109,8 @@ namespace Business.FlowScript.Parsers
             if (_comments.Count == 0)
                 return;
 
-            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.COMMENT_UNATTACHED, _comments.Keys.First(), 1,
+            ScriptToken first = _comments.Keys.First();
+            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.COMMENT_UNATTACHED, first.Line, first.Column,
                 "A comment belongs to the step below it, and nothing below this one is a step."));
 
             _comments.Clear();

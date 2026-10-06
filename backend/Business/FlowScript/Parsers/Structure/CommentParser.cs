@@ -3,7 +3,7 @@ using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Parsers.Structure
 {
-    internal sealed class CommentParser : TokenParser<string>
+    internal sealed class CommentParser : BaseParser<string>
     {
         public CommentParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

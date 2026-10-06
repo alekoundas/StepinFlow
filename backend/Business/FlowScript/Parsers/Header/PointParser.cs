@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class PointParser : TokenParser<FlowPointSchemaBindng>
+    internal sealed class PointParser : BaseParser<FlowPointSchemaBindng>
     {
         public PointParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

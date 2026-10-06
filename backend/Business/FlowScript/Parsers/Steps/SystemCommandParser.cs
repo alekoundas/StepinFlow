@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class SystemCommandParser : StepParser
+    internal sealed class SystemCommandParser : BaseStepParser
     {
         public SystemCommandParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

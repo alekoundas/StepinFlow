@@ -5,7 +5,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class WindowFocusParser : StepParser
+    internal sealed class WindowFocusParser : BaseStepParser
     {
         public WindowFocusParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

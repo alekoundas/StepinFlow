@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class AreaParser : TokenParser<FlowAreaSchemaBindng>
+    internal sealed class AreaParser : BaseParser<FlowAreaSchemaBindng>
     {
         public AreaParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

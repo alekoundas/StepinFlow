@@ -3,7 +3,7 @@ using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class FlowIdParser : TokenParser<Guid>
+    internal sealed class FlowIdParser : BaseParser<Guid>
     {
         public FlowIdParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

@@ -5,7 +5,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class MarkerParser : StepParser
+    internal sealed class MarkerParser : BaseStepParser
     {
         public MarkerParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

@@ -17,7 +17,7 @@ namespace Business.FlowScript.Parsers
     /// Extract methods takes a token that must be there and returns its value. 
     /// Either throws at the token when it is not what was wanted (an Optional method never throws).
     /// </summary>
-    internal abstract class TokenParser<TResult>
+    internal abstract class BaseParser<TResult>
     {
         private int _index; // current Index of the token list.
         private readonly IReadOnlyList<ScriptToken> _tokens; // All Tokens of the script line.
@@ -26,7 +26,7 @@ namespace Business.FlowScript.Parsers
         private ScriptToken CurrentToken { get { return _tokens[_index]; } }
 
 
-        protected TokenParser(IReadOnlyList<ScriptToken> tokens)
+        protected BaseParser(IReadOnlyList<ScriptToken> tokens)
         {
             _tokens = tokens;
         }

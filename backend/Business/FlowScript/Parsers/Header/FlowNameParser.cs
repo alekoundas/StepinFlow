@@ -3,7 +3,7 @@ using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class FlowNameParser : TokenParser<string>
+    internal sealed class FlowNameParser : BaseParser<string>
     {
         public FlowNameParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {

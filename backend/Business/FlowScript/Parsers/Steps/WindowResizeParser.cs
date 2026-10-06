@@ -6,7 +6,7 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class WindowResizeParser : StepParser
+    internal sealed class WindowResizeParser : BaseStepParser
     {
         public WindowResizeParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
