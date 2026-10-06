@@ -1,7 +1,7 @@
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
 
-namespace Business.FlowScript.Parsers
+namespace Business.FlowScript.Parsers.Structure
 {
     internal sealed class CommentParser : TokenParser<string>
     {

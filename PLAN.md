@@ -130,7 +130,7 @@ under.
 
 **`MARKER` becomes `STAGE_MARKER`**: the node that marks where a stage begins and carries its name.
 Rejected: `SECTION`, because a section is already a header block - `Areas:`, `Steps:` - to
-`ScriptLineParser.IsSection` and `SectionHeaderParser`: one word, two meanings, inside one parser; and
+`ScriptLineParser.IsSection` and `SectionParser`: one word, two meanings, inside one parser; and
 `CHECKPOINT`, because it promises resumable state this holds none of, and sits one letter from
 `CHECK_VALUE`, `FlowCheck` and `GetFlowChecks`, where a check is specifically a step that can fail
 the test.

@@ -49,6 +49,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFocus Window <[ chrome ]>" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ a.png ]> click 3 4" },
             { DiagnosticCodeEnum.INDENT_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
+            { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at <[ Nobody ]>" },
         };
 
@@ -138,6 +139,20 @@ namespace Business.Tests.FlowScript
             string body = "Steps:\nFind Image <[ x ]> quickly\n Success:\n  Wait 800ms";
 
             Read(Header + body).ShouldHaveSingleItem().Line.ShouldBe(5);
+        }
+
+        // A comment belongs to the step below it. Above anything else it belongs to nothing, and is
+        // reported where it was written rather than handed to a step further down.
+        [Theory]
+        [InlineData("Areas:\n# the browser\n  <[ A ]> monitor primary\nSteps:\nWait 800ms", 5)]
+        [InlineData("# before the steps\nSteps:\nWait 800ms", 4)]
+        [InlineData("Steps:\nWait 800ms\n# nothing below", 6)]
+        public void A_comment_with_no_step_below_it_is_reported_where_it_was_written(string body, int line)
+        {
+            Diagnostic diagnostic = Read(Header + body).ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.COMMENT_UNATTACHED);
+            diagnostic.Line.ShouldBe(line);
         }
 
         [Fact]

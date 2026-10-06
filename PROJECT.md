@@ -718,7 +718,7 @@ no parser writes a message. A word too many and a word missing are both that err
 so a hand edit that goes wrong is named rather than quietly dropped. Every syntax error is one code,
 `TOKEN_UNEXPECTED`: a code per place in the grammar would only repeat what the message says, and
 nothing branches on it. The codes left are kinds of problem - an indent, a template described twice,
-a missing `Flow:` line, a name that resolves to nothing.
+a comment with no step below it, a missing `Flow:` line, a name that resolves to nothing.
 
 **Unquoted, a word is a keyword or a number**, and a number carries its unit: `800ms`, `120dpi`,
 `1920x1080`. A duration is always milliseconds, so it has one spelling. Pairs read like the rest of
@@ -726,7 +726,9 @@ the line - `offset 40 8`, `click 60 12`, `ratio 0.30 0.18 size 0.40 0.40` - so n
 
 **A comment belongs to the line below it**, whatever that line is - a step, a `##` stage or a
 `Success:`/`Failure:` branch - because every step type carries `CodeComment`. A branch with nothing
-under it is left out of the file unless its comment says why it is empty.
+under it is left out of the file unless its comment says why it is empty. A comment above anything
+that is not a step is `COMMENT_UNATTACHED`, reported at the comment: handing it to the next step
+down would attach a note to a line it was never written above.
 
 **`Launch` takes one command string**, not an executable plus arguments. The model stores one
 string; inventing a split it does not have would fail the round trip on the first export.
@@ -1364,13 +1366,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-435 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+439 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 83 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
-| `Business.Tests` | 334 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 338 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
@@ -1482,7 +1484,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 435 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 439 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

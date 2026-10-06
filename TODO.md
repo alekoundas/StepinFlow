@@ -134,6 +134,13 @@ the history.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.
+- [ ] **A successful import cannot report a warning.** `Diagnostic` has a severity and `IsValid`
+      only stops on errors, but `FlowImportResultDto` carries `Errors` alone, filled when the import
+      fails - so a warning on a file that imports goes nowhere. Nothing produces one yet, which is why
+      `COMMENT_UNATTACHED` is an error: a comment above something that cannot carry it does not break
+      the flow, but as a warning today it would be dropped without a word, which is what the error
+      exists to prevent. Add `Warnings` to the dto and show them after an import that succeeded; then
+      `COMMENT_UNATTACHED` becomes the first warning.
 
 ## AI
 

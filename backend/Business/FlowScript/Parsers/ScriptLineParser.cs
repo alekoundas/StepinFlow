@@ -4,6 +4,7 @@ using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Parsers.Header;
 using Business.FlowScript.Parsers.Steps;
+using Business.FlowScript.Parsers.Structure;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -19,7 +20,7 @@ namespace Business.FlowScript.Parsers
     internal sealed class ScriptLineParser
     {
         private readonly FlowScriptSchema _flowScriptSchema;
-        private readonly List<string> _comments = new List<string>(); // Comments for the step below.
+        private readonly Dictionary<int, string> _comments = new Dictionary<int, string>(); // Comments for the step below, by line number.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
 
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
@@ -36,20 +37,25 @@ namespace Business.FlowScript.Parsers
             if (line.Tokens[0].Kind == ScriptTokenKindEnum.END_OF_LINE)
                 return;
 
-            // Read first token to decide the parsers, null if FLOWFIELD_XXXX (header fields).
+            // Read first token to decide the parsers: a comment, a section or a flow field (FLOWFIELD_XXXX).
+            // null if FLOWFIELD_XXXX.
             ScriptSymbolEnum? symbol = SymbolOf(line.Tokens[0]);
 
             // Read and keep CodeComments to be consumed by the next FlowStep
             if (symbol == ScriptSymbolEnum.COMMENT)
             {
-                _comments.Add(new CommentParser(line.Tokens).Parse());
+                _comments.Add(line.Number, new CommentParser(line.Tokens).Parse());
                 return;
             }
+
+            // Only a step takes a comment.
+            if (_section != ScriptSymbolEnum.STEPS || IsSection(symbol))
+                ReportUnattachedComments();
 
             // Change section if symbol == AREAS,POINTS,CSV_COLUMNS,TEMPLATES,STEPS
             if (IsSection(symbol))
             {
-                _section = new SectionHeaderParser(line.Tokens).Parse();
+                _section = new SectionParser(line.Tokens).Parse();
                 return;
             }
 
@@ -80,6 +86,33 @@ namespace Business.FlowScript.Parsers
                     AddStep(line);
                     break;
             }
+        }
+
+
+        /// <summary>
+        /// The end of the file. Check for any leftover comments.
+        /// </summary>
+        public void Finish()
+        {
+            ReportUnattachedComments();
+        }
+
+
+        // ================================================================
+        // Private methods - comments
+        // ================================================================
+
+        // Comments no step came to take. They belong to nothing, so they are reported rather than
+        // handed to a step further down that they were not written above.
+        private void ReportUnattachedComments()
+        {
+            if (_comments.Count == 0)
+                return;
+
+            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.COMMENT_UNATTACHED, _comments.Keys.First(), 1,
+                "A comment belongs to the step below it, and nothing below this one is a step."));
+
+            _comments.Clear();
         }
 
 
@@ -173,8 +206,8 @@ namespace Business.FlowScript.Parsers
                 throw;
             }
 
-            // Intent is for the line below it, whatever that line is.
-            parsed.Step.CodeComment = string.Join("\n", _comments);
+            // Attach any comments.
+            parsed.Step.CodeComment = string.Join("\n", _comments.Values);
             _comments.Clear();
 
             AddToSchemaBindng(line, parsed);

@@ -1,11 +1,11 @@
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
 
-namespace Business.FlowScript.Parsers
+namespace Business.FlowScript.Parsers.Structure
 {
-    internal sealed class SectionHeaderParser : TokenParser<ScriptSymbolEnum>
+    internal sealed class SectionParser : TokenParser<ScriptSymbolEnum>
     {
-        public SectionHeaderParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public SectionParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 

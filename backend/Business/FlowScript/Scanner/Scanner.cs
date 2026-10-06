@@ -42,6 +42,8 @@ namespace Business.FlowScript.Scanner
                 }
             }
 
+            parser.Finish();
+
             if (string.IsNullOrWhiteSpace(flowScriptSchema.FlowName))
                 flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME)}\" line, so there is no flow to import."));
 

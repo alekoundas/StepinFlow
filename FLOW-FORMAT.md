@@ -287,6 +287,10 @@ or a `Success:`/`Failure:` branch. This is where intent lives — the thing a sc
 show, and the first thing a model reads when diagnosing a failure. A branch with nothing under it is
 left out of the file, unless it has a comment saying why it is empty.
 
+Only a step can carry a comment. One written above anything else - an area, a template, a header
+line, or nothing at the end of the file - is an error at the comment, rather than a note that
+quietly moves onto a step further down.
+
 ### Checks
 
 A check takes its own screenshot, looks at it, decides, and produces a result. Checks are what turn
@@ -524,7 +528,8 @@ half-replaced.
 have, are both errors with a line and a column - nothing is dropped and nothing is guessed. Every
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
-line indented too far, a template described twice, no `Flow:` line, a name that resolves to nothing.
+line indented too far, a template described twice, a comment with no step below it, no `Flow:` line,
+a name that resolves to nothing.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps

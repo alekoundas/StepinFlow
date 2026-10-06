@@ -30,6 +30,9 @@ namespace Business.FlowScript.Diagnostics
         // Steps
         INDENT_UNEXPECTED,
 
+        // Comments: one with no step below it.
+        COMMENT_UNATTACHED,
+
         // Binding
         NAME_UNKNOWN,
 
