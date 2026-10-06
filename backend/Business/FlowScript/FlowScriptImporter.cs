@@ -25,12 +25,12 @@ namespace Business.FlowScript
         private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IScanner _reader;
+        private readonly IScanner _scanner;
 
         public FlowScriptImporter(IDbContextFactory<AppDbContext> dbContextFactory, IScanner reader)
         {
             _dbContextFactory = dbContextFactory;
-            _reader = reader;
+            _scanner = reader;
         }
 
 
@@ -56,7 +56,8 @@ namespace Business.FlowScript
 
         public async Task<FlowImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default)
         {
-            FlowScriptSchema document = _reader.Read(script);
+            // Script -> ScriptLines -> LineTokens -> Parse LineTokens -> Schema
+            FlowScriptSchema document = _scanner.Read(script);
             if (!document.IsValid)
                 return Failed(document.Diagnostics);
 
@@ -67,9 +68,10 @@ namespace Business.FlowScript
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            Flow? existing = await dbContext.Flows
-                .FirstOrDefaultAsync(x => x.PublicId == document.PublicId, ct);
+            // Find existing Flow (if any), so all relation rows are droped. Only Flow stays for Execution history.
+            Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == document.PublicId, ct);
 
+            // Begin DB Transaction.
             await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
 
             try
@@ -82,8 +84,15 @@ namespace Business.FlowScript
 
                 await dbContext.SaveChangesAsync(ct);
 
+                // Delete relations.
                 if (existing != null)
-                    await ClearAsync(dbContext, flow.Id, ct);
+                {
+                    await dbContext.FlowSteps.Where(x => x.RootId == flow.Id).ExecuteDeleteAsync(ct);
+                    await dbContext.FlowPoints.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
+                    await dbContext.FlowAreas.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
+                    await dbContext.FlowCsvColumns.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
+                    await dbContext.FlowViewports.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
+                }
 
                 FlowImportResultDto result = await WriteAsync(dbContext, flow, document, source, templateFolderPath, ct);
 
@@ -104,24 +113,7 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        // The flow's own rows only. Executions are left alone: they are what the file is measured
-        // against, and an import is a new version of the test rather than a new test.
-        private static async Task ClearAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
-        {
-            await dbContext.FlowSteps.Where(x => x.RootId == flowId).ExecuteDeleteAsync(ct);
-            await dbContext.FlowPoints.Where(x => x.FlowId == flowId).ExecuteDeleteAsync(ct);
-            await dbContext.FlowAreas.Where(x => x.FlowId == flowId).ExecuteDeleteAsync(ct);
-            await dbContext.FlowCsvColumns.Where(x => x.FlowId == flowId).ExecuteDeleteAsync(ct);
-            await dbContext.FlowViewports.Where(x => x.FlowId == flowId).ExecuteDeleteAsync(ct);
-        }
-
-        private static async Task<FlowImportResultDto> WriteAsync(
-            AppDbContext dbContext,
-            Flow flow,
-            FlowScriptSchema document,
-            BoundFlow source,
-            string? templateFolderPath,
-            CancellationToken ct)
+        private static async Task<FlowImportResultDto> WriteAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, BoundFlow source, string? templateFolderPath, CancellationToken ct)
         {
             FlowImportResultDto result = new FlowImportResultDto
             {
@@ -156,8 +148,7 @@ namespace Business.FlowScript
             return result;
         }
 
-        private static async Task<Dictionary<int, int>> WriteAreasAsync(
-            AppDbContext dbContext, Flow flow, FlowScriptSchema document, CancellationToken ct)
+        private static async Task<Dictionary<int, int>> WriteAreasAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, CancellationToken ct)
         {
             Dictionary<int, int> ids = new Dictionary<int, int>();
 
@@ -180,8 +171,7 @@ namespace Business.FlowScript
             return ids;
         }
 
-        private static async Task<Dictionary<int, int>> WritePointsAsync(
-            AppDbContext dbContext, Flow flow, FlowScriptSchema document, IReadOnlyDictionary<int, int> areaIds, CancellationToken ct)
+        private static async Task<Dictionary<int, int>> WritePointsAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, IReadOnlyDictionary<int, int> areaIds, CancellationToken ct)
         {
             Dictionary<int, int> ids = new Dictionary<int, int>();
 

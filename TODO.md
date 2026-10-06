@@ -45,7 +45,7 @@ the history.
 - [ ] **Keep-last-X-runs retention.** Nothing prunes `Executions` / `ExecutionSteps` today. Needs a
       setting and a sweep, or the history grows without bound.
 - [ ] **Startup check that every `FlowStepTypeEnum` has a worker** or is on an explicit structural
-      list (SUCCESS, FAILURE, LOOP, GO_TO, SUB_FLOW). Today an unmapped type silently falls through
+      list (SUCCESS, FAILURE, LOOP, GO_BACK, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
 - [ ] **Colour matching.** Both match modes run in grayscale, so two states with the same
@@ -118,8 +118,8 @@ the history.
 - [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
       both called "Retry" is a fair description of some flows - until the cost showed up: the binder
       resolves a step reference by name across every named step, and a stage is a named step, so
-      `Go To to <[ Retry ]>` can legitimately land on one and a duplicate makes that ambiguous. Keeping
-      the rule costs a rename; dropping it would have cost either the `Go To` target or a silent
+      `Go Back to <[ Retry ]>` can legitimately land on one and a duplicate makes that ambiguous. Keeping
+      the rule costs a rename; dropping it would have cost either the `Go Back` target or a silent
       first-match.
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
@@ -128,9 +128,6 @@ the history.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
-- [ ] **`Go To to <[ Step ]>`.** The keyword is `Go To` and the parser then skips a `to`, so every
-      go-to reads with the word twice. Either the keyword becomes `Go` or the extra word goes. A
-      grammar change, so the approved sample file and FLOW-FORMAT.md change with it.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.
@@ -387,7 +384,7 @@ the history.
          step - drag the step away and the explanation stays behind, while `CodeComment` is a column
          and travels with it. That difference is the principle: a stage should change when a step
          moves, a comment should not;
-      3) a marker's name is in the flow's one namespace and the binder resolves `Go To to <[ X ]>`
+      3) a marker's name is in the flow's one namespace and the binder resolves `Go Back to <[ X ]>`
          against every named step, so two markers sharing a name make that reference ambiguous;
       4) the recorder writes a note per recorded step, which as markers doubles the tree.
 

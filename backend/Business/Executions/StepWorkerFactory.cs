@@ -23,7 +23,7 @@ namespace Business.Executions
         {
             // Get instance by type.
             if (!_workersByType.TryGetValue(flowStepType, out IStepWorker? worker))
-                return _passThrough;// Success, Failure, Loop, Go To and Sub-Flow 
+                return _passThrough;// Success, Failure, Loop, Go Back and Sub-Flow 
 
             return worker;
         }

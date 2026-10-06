@@ -103,9 +103,9 @@ namespace Business.Executions
 
         private void PushContinuation(FlowStep step, ExecutionStep result)
         {
-            if (step.FlowStepType == FlowStepTypeEnum.GO_TO)
+            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
             {
-                bool isPushed = GetGoToTargetStep(step);
+                bool isPushed = GetGoBackTargetStep(step);
                 if (isPushed)
                     return;
             }
@@ -135,7 +135,7 @@ namespace Business.Executions
                 return;
             }
 
-            if (step.FlowStepType == FlowStepTypeEnum.GO_TO)
+            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
                 return;
 
             FlowStep? first = FirstChildOf(step, result);
@@ -143,7 +143,7 @@ namespace Business.Executions
                 _executionStack.Push(new PendingStep(first, Depth + 1, _subFlowDepth));
         }
 
-        private bool GetGoToTargetStep(FlowStep step)
+        private bool GetGoBackTargetStep(FlowStep step)
         {
             if (step.FlowStepReferenceId == null)
                 return false;

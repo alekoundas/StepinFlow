@@ -150,6 +150,46 @@ namespace Business.Tests.Validation
             CodesOn(first).ShouldNotContain(FlowValidationCodeEnum.END_EXECUTION_UNREACHABLE);
         }
 
+        [Fact]
+        public void A_go_back_needs_a_target()
+        {
+            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
+
+            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_MISSING);
+        }
+
+        [Fact]
+        public void A_go_back_can_return_to_a_step_above_it()
+        {
+            FlowStep wait = Add(FlowStepTypeEnum.WAIT, "Wait");
+            wait.WaitForMilliseconds = 100;
+            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
+            goBack.FlowStepReferenceId = wait.Id;
+
+            CodesOn(goBack).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_go_back_cannot_return_into_the_other_branch()
+        {
+            FlowStep search = Search("Find");
+            FlowStep retry = Add(FlowStepTypeEnum.WAIT, "Retry", Branch(search, FlowStepTypeEnum.FAILURE));
+            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back", Branch(search, FlowStepTypeEnum.SUCCESS));
+            goBack.FlowStepReferenceId = retry.Id;
+
+            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE);
+        }
+
+        [Fact]
+        public void A_go_back_cannot_jump_forward()
+        {
+            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
+            FlowStep later = Add(FlowStepTypeEnum.WAIT, "Later");
+            goBack.FlowStepReferenceId = later.Id;
+
+            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE);
+        }
+
         // ================================================================
         // Names
         // ================================================================

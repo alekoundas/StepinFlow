@@ -199,28 +199,29 @@ namespace Business.Tests.Executions
         }
 
         // ================================================================
-        // Go To, End Execution and sub-flows
+        // Go Back, End Execution and sub-flows
         // ================================================================
 
+        // Back to A and on from there, so nothing after the Go Back runs while it keeps going back.
         [Fact]
-        public async Task Go_to_carries_on_from_the_step_it_names()
+        public async Task Go_back_carries_on_from_the_step_it_names()
         {
-            Add("A");
-            FlowStep goTo = Add("Go to D", FlowStepTypeEnum.GO_TO);
+            FlowStep a = Add("A");
+            Add("B");
+            FlowStep goBack = Add("Go back to A", FlowStepTypeEnum.GO_BACK);
             Add("C");
-            FlowStep d = Add("D");
-            goTo.FlowStepReferenceId = d.Id;
+            goBack.FlowStepReferenceId = a.Id;
 
-            (await WalkAsync()).ShouldBe(["A", "Go to D", "D"]);
+            (await WalkAsync(maxSteps: 6)).ShouldBe(["A", "B", "Go back to A", "A", "B", "Go back to A"]);
         }
 
         [Fact]
-        public async Task Go_to_with_nowhere_to_go_carries_on_to_the_next_step()
+        public async Task Go_back_with_nowhere_to_go_carries_on_to_the_next_step()
         {
-            Add("Go to nowhere", FlowStepTypeEnum.GO_TO);
+            Add("Go back to nowhere", FlowStepTypeEnum.GO_BACK);
             Add("B");
 
-            (await WalkAsync()).ShouldBe(["Go to nowhere", "B"]);
+            (await WalkAsync()).ShouldBe(["Go back to nowhere", "B"]);
         }
 
         [Fact]

@@ -39,7 +39,7 @@ namespace Business.Validation
                 return Finish(result);
             }
 
-            Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name));
+            Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
             IReadOnlyList<FlowCheck> checks = GetChecks(steps.Select(ToCheckNode).ToList());
 

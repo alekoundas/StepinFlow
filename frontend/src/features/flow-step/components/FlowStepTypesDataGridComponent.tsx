@@ -37,9 +37,9 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "refresh",
     },
     {
-      flowStepType: FlowStepTypeEnum.GO_TO,
-      name: "Go To",
-      description: "Jump execution to another step within the current flow.",
+      flowStepType: FlowStepTypeEnum.GO_BACK,
+      name: "Go Back",
+      description: "Go back to a step already passed on the way here and carry on from there.",
       iconName: "arrow-right-arrow-left",
     },
     {

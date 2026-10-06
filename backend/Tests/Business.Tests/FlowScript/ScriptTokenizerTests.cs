@@ -38,7 +38,7 @@ namespace Business.Tests.FlowScript
 
         [Theory]
         [InlineData("Wait Until No Image <[ x ]>", "KEYWORD Wait Until No Image | KEYWORD <[ | QUOTE x | KEYWORD ]> | END_OF_LINE")]
-        [InlineData("Go To to <[ x ]>", "KEYWORD Go To | KEYWORD to | KEYWORD <[ | QUOTE x | KEYWORD ]> | END_OF_LINE")]
+        [InlineData("Go Back to <[ x ]>", "KEYWORD Go Back | KEYWORD to | KEYWORD <[ | QUOTE x | KEYWORD ]> | END_OF_LINE")]
         [InlineData("on   screen   offset 1 2", "KEYWORD on screen | KEYWORD offset | NUMBER 1 | NUMBER 2 | END_OF_LINE")]
         [InlineData("is not empty", "KEYWORD is not empty | END_OF_LINE")]
         [InlineData("is not <[ x ]>", "KEYWORD is not | KEYWORD <[ | QUOTE x | KEYWORD ]> | END_OF_LINE")]

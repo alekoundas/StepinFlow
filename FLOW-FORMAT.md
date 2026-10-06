@@ -405,6 +405,22 @@ One step, three sources. Inside `each match`, the keyword `match` refers to the 
 silently re-entered its own success branch — the repetition is now visible in the file, and steps
 can run between passes.
 
+### Going back
+
+```
+## Sign in
+Click           at point <[ Sign in button ]>
+Wait For Image  <[ Signed in ]>   template <[ avatar.png ]>   in <[ Browser ]>   timeout 5000ms
+ Failure:
+  Go Back  to <[ Sign in ]>
+```
+
+`Go Back` returns to a step the execution already passed on the way here, and carries on from there:
+an earlier step beside it, the step it sits under, or one beside those, up to the top of the flow.
+Never a step further down, never one in the other branch of a check, and never one inside a loop or
+check that already finished - that block is gone back to as a whole. So the name a `Go Back` uses
+is always written above it.
+
 ### Ending an execution
 
 ```

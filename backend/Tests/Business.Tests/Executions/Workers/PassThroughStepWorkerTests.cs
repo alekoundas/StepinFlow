@@ -6,7 +6,7 @@ using static Business.Tests.TestToken;
 namespace Business.Tests.Executions.Workers
 {
     /// <summary>
-    /// The worker for the step types the walker handles itself - LOOP, GO_TO, SUB_FLOW, SUCCESS,
+    /// The worker for the step types the walker handles itself - LOOP, GO_BACK, SUB_FLOW, SUCCESS,
     /// FAILURE, MARKER. It exists so those types have something to execute, and it does nothing.
     ///
     /// It is also the fallback for a type nobody mapped, which is the hazard: a new step type with a

@@ -65,6 +65,12 @@ window.
 
 **SUB_FLOW_MISSING** — the flow this step ran has been deleted, or was never picked.
 
+**GO_BACK_TARGET_MISSING** — a Go Back has no step picked to go back to.
+
+**GO_BACK_TARGET_UNREACHABLE** — a Go Back points at a step it did not pass on the way here: one
+below it, one in the other branch of a check, or one inside an earlier block. Usually the result of
+a move. Pick one of its earlier siblings or one of its parents.
+
 ## Notifications
 
 **DISCORD_BOT_MISSING** — a notify step has no bot picked.

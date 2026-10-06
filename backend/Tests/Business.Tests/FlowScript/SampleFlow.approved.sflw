@@ -68,7 +68,7 @@ Focus Window    process <[ chrome.exe ]>
 
 Notify          <[ done ]>
 
-Go To           to <[ Read the total ]>
+Go Back         to <[ Read the total ]>
 
 Loop            5 times
  Click           at <[ Find username field ]>

@@ -10,5 +10,6 @@ namespace Core.Models.Business
         int Id,
         int? ParentFlowStepId,
         FlowStepTypeEnum FlowStepType,
-        string Name);
+        string Name,
+        int OrderNumber);
 }

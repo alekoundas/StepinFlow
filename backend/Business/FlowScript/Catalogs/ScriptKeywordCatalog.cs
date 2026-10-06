@@ -24,7 +24,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Find Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.FIND_BEST),
             new ScriptKeyword("Check Text", FlowStepTypeEnum.SEARCH_TEXT, SearchModeEnum.FIND_BEST),
             new ScriptKeyword("Sub Flow", FlowStepTypeEnum.SUB_FLOW),
-            new ScriptKeyword("Go To", FlowStepTypeEnum.GO_TO),
+            new ScriptKeyword("Go Back", FlowStepTypeEnum.GO_BACK),
             new ScriptKeyword("Notify", FlowStepTypeEnum.NOTIFY),
             new ScriptKeyword("Scroll", FlowStepTypeEnum.CURSOR_SCROLL),
             new ScriptKeyword("System", FlowStepTypeEnum.SYSTEM_ACTION),

@@ -744,7 +744,7 @@ and a heading followed by empty space reads as a section with nothing in it.
 
 ### The engine
 
-A flow is walked with an **explicit stack**, not recursion. Infinite loops and `Go To` make
+A flow is walked with an **explicit stack**, not recursion. Infinite loops and `Go Back` make
 recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
 
 `ExecutionFlowWalker` decides which step runs next and executes nothing - it is handed each step's
@@ -765,7 +765,7 @@ singletons because they hold no state.
 ### The step types
 
 ```
-System     WAIT, LOOP, GO_TO, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
+System     WAIT, LOOP, GO_BACK, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
            NOTIFY, END_EXECUTION, MARKER
 Input      CURSOR_CLICK, CURSOR_DRAG, CURSOR_SCROLL, CURSOR_RELOCATE,
            WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, KEYBOARD_INPUT

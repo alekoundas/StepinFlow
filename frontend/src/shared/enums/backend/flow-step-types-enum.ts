@@ -2,7 +2,7 @@ export const FlowStepTypeEnum = {
   // System Steps
   WAIT: "WAIT",
   LOOP: "LOOP",
-  GO_TO: "GO_TO",
+  GO_BACK: "GO_BACK",
   SYSTEM_COMMAND: "SYSTEM_COMMAND",
   SYSTEM_ACTION: "SYSTEM_ACTION",
   SUB_FLOW: "SUB_FLOW",

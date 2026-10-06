@@ -349,7 +349,7 @@ namespace Business.FlowScript.Text
                 case FlowStepTypeEnum.LOOP:
                     return LoopArguments(step, source);
 
-                case FlowStepTypeEnum.GO_TO:
+                case FlowStepTypeEnum.GO_BACK:
                     return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
 
                 case FlowStepTypeEnum.SUB_FLOW:

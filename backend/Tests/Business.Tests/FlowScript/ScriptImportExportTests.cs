@@ -259,7 +259,7 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3, FlowAreaId = browser.Id }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.GO_TO, FlowStepReferenceId = total.Id }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.GO_BACK, FlowStepReferenceId = total.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 5 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = find.Id }, loop.Id);

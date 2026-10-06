@@ -150,5 +150,45 @@ namespace Core.Helpers
         {
             return SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
+
+        /// <summary>
+        /// Where a Go Back may return to, nearest first: the one chain of steps that ran on the way to
+        /// it - its previous siblings, its parent.
+        /// </summary>
+        public static IEnumerable<StepChainNode> GoBackTargets(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
+        {
+            if (!byId.TryGetValue(fromStepId, out StepChainNode current))
+                yield break;
+
+            // Bounded by the step count, so a corrupt parent chain cannot spin forever.
+            int guard = byId.Count + 1;
+
+            while (guard-- > 0)
+            {
+                // A branch row's siblings are the other branch, which this way never ran through.
+                if (!IsBranchChild(current.FlowStepType))
+                {
+                    IEnumerable<StepChainNode> earlier = byId.Values
+                        .Where(x => x.ParentFlowStepId == current.ParentFlowStepId && x.OrderNumber < current.OrderNumber)
+                        .OrderByDescending(x => x.OrderNumber);
+
+                    foreach (StepChainNode sibling in earlier)
+                        yield return sibling;
+                }
+
+                if (current.ParentFlowStepId == null || !byId.TryGetValue(current.ParentFlowStepId.Value, out StepChainNode parent))
+                    yield break;
+
+                if (!IsBranchChild(parent.FlowStepType))
+                    yield return parent;
+
+                current = parent;
+            }
+        }
+
+        public static bool CanGoBackTo(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int targetId)
+        {
+            return GoBackTargets(byId, fromStepId).Any(x => x.Id == targetId);
+        }
     }
 }

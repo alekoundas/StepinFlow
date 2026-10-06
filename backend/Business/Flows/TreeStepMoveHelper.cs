@@ -1,3 +1,4 @@
+using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -83,7 +84,8 @@ namespace Business.Flows
         /// user is told before the move commits.
         ///
         /// The same rule on purpose: a weaker one here would let a step be dropped into a Failure
-        /// branch without warning and only fail validation afterwards.
+        /// branch without warning and only fail validation afterwards. A Go Back is held to its own
+        /// rule the same way: its target has to stay behind it.
         ///
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.
@@ -92,36 +94,35 @@ namespace Business.Flows
         {
             Dictionary<int, StepChainNode> before = steps.ToDictionary(
                 x => x.Id,
-                x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name));
+                x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber));
 
-            Dictionary<int, StepChainNode> after = new Dictionary<int, StepChainNode>(before);
-            after[dto.FlowStepId] = after[dto.FlowStepId] with { ParentFlowStepId = dto.TargetParentFlowStepId };
+            Dictionary<int, StepChainNode> after = AfterMove(before, dto);
 
             List<FlowStepBrokenReferenceDto> broken = new List<FlowStepBrokenReferenceDto>();
 
             foreach (FlowStep step in steps)
             {
-                AddIfBroken(step.Id, step.FlowStepReferenceId, isEndReference: false);
-                AddIfBroken(step.Id, step.FlowStepReferenceEndId, isEndReference: true);
+                AddIfBroken(step, step.FlowStepReferenceId, isEndReference: false);
+                AddIfBroken(step, step.FlowStepReferenceEndId, isEndReference: true);
             }
 
             return broken;
 
-            void AddIfBroken(int stepId, int? referenceId, bool isEndReference)
+            void AddIfBroken(FlowStep step, int? referenceId, bool isEndReference)
             {
                 if (referenceId == null)
                     return;
 
-                bool wasValid = TreeStepHelper.CanReadResultOf(before, stepId, referenceId.Value);
-                bool isValid = TreeStepHelper.CanReadResultOf(after, stepId, referenceId.Value);
+                bool wasValid = CanReach(before, step, referenceId.Value);
+                bool isValid = CanReach(after, step, referenceId.Value);
 
                 if (!wasValid || isValid)
                     return;
 
                 broken.Add(new FlowStepBrokenReferenceDto
                 {
-                    FlowStepId = stepId,
-                    FlowStepName = before.TryGetValue(stepId, out StepChainNode s) ? s.Name : string.Empty,
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
                     ReferencedStepName = before.TryGetValue(referenceId.Value, out StepChainNode r) ? r.Name : string.Empty,
                     IsEndReference = isEndReference,
                 });
@@ -146,5 +147,37 @@ namespace Business.Flows
                 ordered[index].OrderNumber = index;
         }
 
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private static bool CanReach(IReadOnlyDictionary<int, StepChainNode> byId, FlowStep step, int referenceId)
+        {
+            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
+                return TreeStepHelper.CanGoBackTo(byId, step.Id, referenceId);
+
+            return TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId);
+        }
+
+        // The new parent, and the destination renumbered the way ApplyOrder will, because a Go Back
+        // cares which siblings end up above it.
+        private static Dictionary<int, StepChainNode> AfterMove(Dictionary<int, StepChainNode> before, FlowStepMoveDto dto)
+        {
+            StepChainNode moved = before[dto.FlowStepId] with { ParentFlowStepId = dto.TargetParentFlowStepId };
+
+            List<StepChainNode> siblings = before.Values
+                .Where(x => x.ParentFlowStepId == dto.TargetParentFlowStepId && x.Id != dto.FlowStepId)
+                .OrderBy(x => x.OrderNumber)
+                .ToList();
+
+            siblings.Insert(Math.Clamp(dto.TargetIndex, 0, siblings.Count), moved);
+
+            Dictionary<int, StepChainNode> after = new Dictionary<int, StepChainNode>(before);
+            for (int index = 0; index < siblings.Count; index++)
+                after[siblings[index].Id] = siblings[index] with { OrderNumber = index };
+
+            return after;
+        }
     }
 }

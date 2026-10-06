@@ -1,4 +1,4 @@
-# Wait, Loop, Go To, Sub-Flow, End Execution and Marker
+# Wait, Loop, Go Back, Sub-Flow, End Execution and Marker
 
 ## Wait
 
@@ -20,14 +20,20 @@ step inside it that ends the execution.
 
 Each pass is labelled in the execution view, so a failure on pass 40 is distinguishable from one on pass 1.
 
-## Go To
+## Go Back
 
-`GO_TO` jumps to another step and continues from there.
+`GO_BACK` returns to a step that already ran on the way here and carries on from there.
 
-Jumping backwards is the normal use, and it does not accumulate anything as it repeats — a backward
-jump can run indefinitely without growing.
+The steps it can go back to are its earlier siblings, its parent, the parent's earlier siblings,
+and so on up to the top of the flow. Never a step below it, never one in the other branch of a
+check above it, and never one inside an earlier block: a loop or a check that already finished is
+gone back to as a whole, not into. The validator reports anything else, and moving a step so its
+target falls off that chain clears the target.
 
-`GO_TO` is a leaf. Anything after it in the same branch never runs.
+Going back repeatedly does not accumulate anything, so a Go Back can run indefinitely without
+growing.
+
+`GO_BACK` is a leaf. Anything after it in the same branch never runs.
 
 ## Sub-Flow
 

@@ -46,7 +46,7 @@ namespace Transport.Ipc.Handlers
             Dictionary<int, StepChainNode> byId = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.RootId == rootId)
-                .Select(x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name))
+                .Select(x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber))
                 .ToDictionaryAsync(x => x.Id, ct);
 
             List<LookupItemDto> items = TreeStepHelper

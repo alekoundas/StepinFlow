@@ -6,16 +6,16 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Steps
 {
-    internal sealed class GoToParser : BaseStepParser
+    internal sealed class GoBackParser : BaseStepParser
     {
-        public GoToParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public GoBackParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 
         public override FlowStepSchemaBindng Parse()
         {
-            // Go To  to <[ step ]>
-            ExpectKeyword(FlowStepTypeEnum.GO_TO);
+            // Go Back  to <[ step ]>
+            ExpectKeyword(FlowStepTypeEnum.GO_BACK);
             ExpectKeyword(ScriptSymbolEnum.TO);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
@@ -26,7 +26,7 @@ namespace Business.FlowScript.Parsers.Steps
 
             return new FlowStepSchemaBindng()
             {
-                Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.GO_TO },
+                Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.GO_BACK },
                 ReferenceName = reference,
             };
         }

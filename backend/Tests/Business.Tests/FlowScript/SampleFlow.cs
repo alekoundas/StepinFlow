@@ -85,7 +85,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { Id = 127, FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, ProcessName = "chrome.exe", FlowPointId = 21 }, null);
             Step(new FlowStep { Id = 128, FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, ProcessName = "chrome.exe" }, null);
             Step(new FlowStep { Id = 129, FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
-            Step(new FlowStep { Id = 130, FlowStepType = FlowStepTypeEnum.GO_TO, FlowStepReferenceId = 110 }, null);
+            Step(new FlowStep { Id = 130, FlowStepType = FlowStepTypeEnum.GO_BACK, FlowStepReferenceId = 110 }, null);
 
             FlowStep loop = Step(new FlowStep { Id = 140, FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 5 }, null);
             Step(new FlowStep { Id = 141, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = 102 }, loop.Id);

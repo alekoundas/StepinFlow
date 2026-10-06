@@ -88,6 +88,33 @@ namespace Business.Tests.Flows
             TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 5, TargetFlowId = 1 }).ShouldBeEmpty();
         }
 
+        // A, B, Go back to A, all at the root.
+        private static List<FlowStep> GoBackRow()
+        {
+            return
+            [
+                new FlowStep { Id = 1, FlowId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "A", OrderNumber = 0 },
+                new FlowStep { Id = 2, FlowId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "B", OrderNumber = 1 },
+                new FlowStep { Id = 3, FlowId = 1, FlowStepType = FlowStepTypeEnum.GO_BACK, Name = "Go back", FlowStepReferenceId = 1, OrderNumber = 2 },
+            ];
+        }
+
+        [Fact]
+        public void Moving_a_go_back_target_below_it_reports_the_reference_it_breaks()
+        {
+            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(GoBackRow(), new FlowStepMoveDto { FlowStepId = 1, TargetFlowId = 1, TargetIndex = 2 });
+
+            broken.Count.ShouldBe(1);
+            broken[0].FlowStepName.ShouldBe("Go back");
+            broken[0].ReferencedStepName.ShouldBe("A");
+        }
+
+        [Fact]
+        public void Reordering_steps_that_stay_above_a_go_back_breaks_nothing()
+        {
+            TreeStepMoveHelper.FindBrokenReferences(GoBackRow(), new FlowStepMoveDto { FlowStepId = 2, TargetFlowId = 1, TargetIndex = 0 }).ShouldBeEmpty();
+        }
+
         [Fact]
         public void The_moved_step_is_inserted_at_its_index_and_the_siblings_renumbered()
         {

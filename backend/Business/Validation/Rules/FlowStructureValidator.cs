@@ -47,6 +47,9 @@ namespace Business.Validation.Rules
                 if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
                     ValidateEndExecution(result, step, byStepId);
 
+                if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
+                    ValidateGoBack(result, step, byStepId);
+
                 // A step that branches and has nothing in.
                 if (TreeStepHelper.HasBranchChildren(step.FlowStepType) && IsEveryBranchEmpty(step, childrenByParentId))
                     result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
@@ -167,6 +170,24 @@ namespace Business.Validation.Rules
                     FlowValidationCodeEnum.CHECK_DECIDES_NOTHING,
                     "Failing this changes nothing: no End Execution below it, and no step reads its result.");
             }
+        }
+
+        private static void ValidateGoBack(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
+        {
+            if (step.FlowStepReferenceId == null)
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.GO_BACK_TARGET_MISSING, "Pick the step to go back to.");
+                return;
+            }
+
+            if (TreeStepHelper.CanGoBackTo(byId, step.Id, step.FlowStepReferenceId.Value))
+                return;
+
+            string name = "that step";
+            if (byId.TryGetValue(step.FlowStepReferenceId.Value, out StepChainNode target))
+                name = target.Name;
+
+            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE, $"\"{name}\" is not a step this one passed on the way here, so it cannot go back to it.");
         }
 
         private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)

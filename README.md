@@ -116,7 +116,7 @@ a flow handles its own problems rather than stopping.
 |---|---|---|
 | **Control** | Wait | Pause, for a fixed time or a random range |
 | | Loop | Repeat its children a number of times, or forever |
-| | Go To | Jump to another step |
+| | Go Back | Return to a step it already passed and carry on from there |
 | | Sub-Flow | Execute another flow and come back |
 | | End Execution | Finish, passed or failed, with a reason — and run the cleanup written under it |
 | | Marker | A named divider — becomes a heading in the script |
@@ -160,7 +160,7 @@ the handler.
 
 ### The execution engine
 
-A flow is walked with an **explicit stack**, not recursion — infinite loops and `Go To` make
+A flow is walked with an **explicit stack**, not recursion — infinite loops and `Go Back` make
 recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
 
 The walker that decides which step comes next executes nothing: it is handed each step's result. So

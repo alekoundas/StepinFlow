@@ -63,7 +63,7 @@ namespace Core.Catalogs
             ],
 
             // The step it jumps to.
-            [FlowStepTypeEnum.GO_TO] = [nameof(FlowStep.FlowStepReferenceId)],
+            [FlowStepTypeEnum.GO_BACK] = [nameof(FlowStep.FlowStepReferenceId)],
 
             [FlowStepTypeEnum.SUB_FLOW] = [nameof(FlowStep.SubFlowId)],
 
