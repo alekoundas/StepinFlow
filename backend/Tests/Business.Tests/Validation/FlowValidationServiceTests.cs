@@ -151,6 +151,26 @@ namespace Business.Tests.Validation
         }
 
         [Fact]
+        public void A_notify_can_report_a_search_it_sits_under_on_the_failure_side()
+        {
+            FlowStep search = Search("Find");
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(search, FlowStepTypeEnum.FAILURE));
+            notify.FlowStepReferenceId = search.Id;
+
+            CodesOn(notify).ShouldNotContain(FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE);
+        }
+
+        [Fact]
+        public void A_notify_cannot_report_a_search_from_its_success_side()
+        {
+            FlowStep search = Search("Find");
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(search, FlowStepTypeEnum.SUCCESS));
+            notify.FlowStepReferenceId = search.Id;
+
+            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE);
+        }
+
+        [Fact]
         public void A_go_back_needs_a_target()
         {
             FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");

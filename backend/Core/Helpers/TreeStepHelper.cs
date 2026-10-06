@@ -151,6 +151,11 @@ namespace Core.Helpers
             return SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
 
+        public static bool CanReportFailureOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
+        {
+            return FailedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+        }
+
         /// <summary>
         /// Where a Go Back may return to, nearest first: the one chain of steps that ran on the way to
         /// it - its previous siblings, its parent.

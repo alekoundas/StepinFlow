@@ -88,6 +88,19 @@ namespace Business.Tests.Flows
             TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 5, TargetFlowId = 1 }).ShouldBeEmpty();
         }
 
+        [Fact]
+        public void Moving_a_notify_out_of_the_failure_branch_reports_the_reference_it_breaks()
+        {
+            List<FlowStep> steps = Tree();
+            steps.Add(new FlowStep { Id = 8, ParentFlowStepId = 6, FlowStepType = FlowStepTypeEnum.NOTIFY, Name = "Tell", FlowStepReferenceId = 1 });
+
+            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 8, TargetParentFlowStepId = 2 });
+
+            broken.Count.ShouldBe(1);
+            broken[0].FlowStepName.ShouldBe("Tell");
+            broken[0].ReferencedStepName.ShouldBe("Find image");
+        }
+
         // A, B, Go back to A, all at the root.
         private static List<FlowStep> GoBackRow()
         {

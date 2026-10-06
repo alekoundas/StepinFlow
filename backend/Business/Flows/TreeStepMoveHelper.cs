@@ -84,8 +84,9 @@ namespace Business.Flows
         /// user is told before the move commits.
         ///
         /// The same rule on purpose: a weaker one here would let a step be dropped into a Failure
-        /// branch without warning and only fail validation afterwards. A Go Back is held to its own
-        /// rule the same way: its target has to stay behind it.
+        /// branch without warning and only fail validation afterwards. A Go Back and a Notify are
+        /// held to their own rules the same way: a Go Back's target has to stay behind it, and a
+        /// Notify has to stay under the Failure branch of the step it reports on.
         ///
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.
@@ -156,6 +157,9 @@ namespace Business.Flows
         {
             if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
                 return TreeStepHelper.CanGoBackTo(byId, step.Id, referenceId);
+
+            if (step.FlowStepType == FlowStepTypeEnum.NOTIFY)
+                return TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId);
 
             return TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId);
         }

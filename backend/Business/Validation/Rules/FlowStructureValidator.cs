@@ -252,8 +252,7 @@ namespace Business.Validation.Rules
         {
             if (step.FlowStepReferenceId is int referenceId)
             {
-                bool isValid = TreeStepHelper.FailedAncestors(byId, step.Id).Any(x => x.Step.Id == referenceId);
-                if (isValid)
+                if (!TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId))
                     result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE, "The step this reports on does not fail above it any more.");
             }
         }
