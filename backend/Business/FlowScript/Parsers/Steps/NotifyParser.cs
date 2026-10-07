@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,7 +11,7 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Notify  <[ message ]>
             ExpectKeyword(FlowStepTypeEnum.NOTIFY);
@@ -23,14 +22,7 @@ namespace Business.FlowScript.Parsers.Steps
 
             ExpectEnd();
 
-            return new FlowStepSchemaBindng()
-            {
-                Step = new FlowStep()
-                {
-                    FlowStepType = FlowStepTypeEnum.NOTIFY,
-                    Message = message
-                },
-            };
+            return new FlowStep() { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message };
         }
     }
 }

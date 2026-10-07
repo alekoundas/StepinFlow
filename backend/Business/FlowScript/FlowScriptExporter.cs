@@ -1,23 +1,18 @@
-using System.Drawing;
-
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
-using Business.FlowScript.Binding;
+using Business.FlowScript.Models;
 using Business.FlowScript.Text;
-using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript
 {
     /// <summary>
-    /// Loads a flow out of the database and hands it to the writer.
+    /// Loads a flow out of the database and hands it to the printer.
     ///
-    /// The writer is a pure function over <see cref="BoundFlow"/>; this is the part that
-    /// knows about EF, files and paths, which is why they are separate classes. Everything is
-    /// loaded in one pass and ordered here, because the writer's determinism is only worth anything
-    /// if what reaches it is deterministic too.
+    /// The printer is a pure function over <see cref="FlowScriptSchema"/>; this is the part that
+    /// knows about EF, files and paths, which is why they are separate classes.
     /// </summary>
     public sealed class FlowScriptExporter : IFlowScriptExporter
     {
@@ -39,28 +34,28 @@ namespace Business.FlowScript
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            BoundFlow source = await BuildSourceAsync(dbContext, flowId, ct);
+            FlowScriptSchema schema = await LoadAsync(dbContext, flowId, ct);
 
-            return _writer.Write(source);
+            return _writer.Write(schema);
         }
 
         public async Task<FlowExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            BoundFlow source = await BuildSourceAsync(dbContext, flowId, ct);
-            string script = _writer.Write(source);
+            FlowScriptSchema schema = await LoadAsync(dbContext, flowId, ct);
+            string script = _writer.Write(schema);
 
             string folder = string.IsNullOrWhiteSpace(folderPath) ? PathHelper.GetExportDataPath() : folderPath;
             Directory.CreateDirectory(folder);
 
-            string flowFileName = FileNameOf(source.Flow.Name, "flow");
+            string flowFileName = FileNameOf(schema.Flow.Name, "flow");
             string scriptPath = Path.Combine(folder, flowFileName + ".sflw");
 
             // Templates go in a folder named after the flow, beside the script, so git can show
             // which image changed rather than that an archive did.
             string templateFolder = Path.Combine(folder, flowFileName);
-            int written = await WriteTemplatesAsync(dbContext, flowId, source, templateFolder, ct);
+            int written = await WriteTemplatesAsync(dbContext, schema, templateFolder, ct);
 
             await File.WriteAllTextAsync(scriptPath, script.ReplaceLineEndings("\n"), ct);
 
@@ -78,36 +73,30 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        // Load EVERYTHING!
-        private static async Task<BoundFlow> BuildSourceAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        // Every row of the flow into one context, tracked: EF links each one to the rows it names
+        // as they load, so what comes back already is the schema the printer reads.
+        private static async Task<FlowScriptSchema> LoadAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {
-            Flow flow = await dbContext.Flows.AsNoTracking().FirstOrDefaultAsync(x => x.Id == flowId, ct) 
+            Flow flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == flowId, ct)
                 ?? throw new InvalidOperationException($"There is no flow {flowId} to export.");
 
-            // Load Flow reference tables
-            List<FlowArea> areas = await dbContext.FlowAreas.AsNoTracking()
-                .Where(x => x.FlowId == flowId).ToListAsync(ct);
+            FlowScriptSchema schema = new FlowScriptSchema() { Flow = flow };
+            schema.Areas.AddRange(await dbContext.FlowAreas.Where(x => x.FlowId == flowId).ToListAsync(ct));
+            schema.Points.AddRange(await dbContext.FlowPoints.Where(x => x.FlowId == flowId).ToListAsync(ct));
+            schema.Inputs.AddRange(await dbContext.FlowCsvColumns.Where(x => x.FlowId == flowId).ToListAsync(ct));
+            schema.Viewports.AddRange(await dbContext.FlowViewports.Where(x => x.FlowId == flowId).ToListAsync(ct));
+            schema.Steps.AddRange(await dbContext.FlowSteps.Where(x => x.RootId == flowId).ToListAsync(ct));
 
-            List<FlowPoint> points = await dbContext.FlowPoints.AsNoTracking()
-                .Where(x => x.FlowId == flowId).ToListAsync(ct);
-
-            List<FlowCsvColumn> inputs = await dbContext.FlowCsvColumns.AsNoTracking()
-                .Where(x => x.FlowId == flowId).ToListAsync(ct);
-
-            List<FlowViewport> viewports = await dbContext.FlowViewports.AsNoTracking()
-                .Where(x => x.FlowId == flowId).ToListAsync(ct);
-
-            List<FlowStep> steps = await dbContext.FlowSteps.AsNoTracking()
-                .Where(x => x.RootId == flowId).ToListAsync(ct);
-
-            // Load Templates but without the pixels. 
+            // Without their pixels, which are megabytes. Not tracked, so linked to their steps here.
             List<FlowStepTemplate> templates = await dbContext.FlowStepTemplates.AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId)
                 .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
                 .Select(x => new FlowStepTemplate
                 {
+                    Id = x.Id,
                     FlowStepId = x.FlowStepId,
                     Name = x.Name,
+                    OrderNumber = x.OrderNumber,
                     Accuracy = x.Accuracy,
                     IsRequired = x.IsRequired,
                     ClickOffsetX = x.ClickOffsetX,
@@ -118,48 +107,27 @@ namespace Business.FlowScript
                 })
                 .ToListAsync(ct);
 
-            Dictionary<int, string> stepNames = steps.ToDictionary(x => x.Id, x => x.Name);
+            foreach (FlowStep step in schema.Steps)
+                step.FlowStepTemplates = templates.Where(x => x.FlowStepId == step.Id).ToList();
 
-            // A sub-flow step names a file the parser has to find, and it sits beside this one.
-            List<int> subFlowIds = steps
-                .Where(x => x.SubFlowId != null)
-                .Select(x => x.SubFlowId!.Value)
-                .Distinct()
-                .ToList();
+            NameTemplateFiles(schema, templates);
+            await AddSubFlowPathsAsync(dbContext, schema, ct);
 
-            Dictionary<int, string> subFlowPaths = await dbContext.Flows.AsNoTracking()
-                .Where(x => subFlowIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.Name })
-                .ToDictionaryAsync(x => x.Id, x => FileNameOf(x.Name, "sub-flow") + ".sflw", ct);
-
-            return new BoundFlow
-            {
-                Flow = flow,
-                Areas = areas,
-                Points = points,
-                Inputs = inputs,
-                Viewports = viewports,
-                Steps = steps,
-                AreaNamesById = areas.ToDictionary(x => x.Id, x => x.Name),
-                PointNamesById = points.ToDictionary(x => x.Id, x => x.Name),
-                StepNamesById = stepNames,
-                SubFlowPathsById = subFlowPaths,
-                TemplatesByStepId = Templates(templates, stepNames),
-            };
+            return schema;
         }
 
-
         /// <summary>
-        /// One file name per template, unique within the flow.
+        /// One file name per template, unique within the flow, written over the template's name -
+        /// in a script a template is named by its file.
         ///
         /// Named after the template rather than by content hash. A hash would dedupe identical
         /// images, but it also changes whenever the image is edited, so git would record a delete
         /// and an add instead of a modification - losing the one thing putting templates in a
         /// repository is for.
         /// </summary>
-        private static Dictionary<int, IReadOnlyList<ScriptTemplateImage>> Templates(IReadOnlyList<FlowStepTemplate> templates, IReadOnlyDictionary<int, string> stepNames)
+        private static void NameTemplateFiles(FlowScriptSchema schema, IReadOnlyList<FlowStepTemplate> templates)
         {
-            Dictionary<int, List<ScriptTemplateImage>> byStep = new Dictionary<int, List<ScriptTemplateImage>>();
+            Dictionary<int, string> stepNames = schema.Steps.ToDictionary(x => x.Id, x => x.Name);
             HashSet<string> taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (FlowStepTemplate template in templates)
@@ -171,34 +139,40 @@ namespace Business.FlowScript
                 string fileName = FlowNameHelper.MakeUnique(FileNameOf(desired, "template"), taken);
                 taken.Add(fileName);
 
-                if (!byStep.TryGetValue(template.FlowStepId, out List<ScriptTemplateImage>? names))
-                {
-                    names = new List<ScriptTemplateImage>();
-                    byStep[template.FlowStepId] = names;
-                }
-
-                names.Add(new ScriptTemplateImage
-                {
-                    FileName = fileName + ".png",
-                    Accuracy = template.Accuracy,
-                    IsRequired = template.IsRequired,
-                    ClickOffset = new Point(template.ClickOffsetX, template.ClickOffsetY),
-                    AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
-                    AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
-                    AuthoredDpi = template.AuthoredDpi,
-                });
+                template.Name = fileName + ".png";
             }
-
-            return byStep.ToDictionary(x => x.Key, x => (IReadOnlyList<ScriptTemplateImage>)x.Value);
         }
 
-        private static async Task<int> WriteTemplatesAsync(AppDbContext dbContext, int flowId, BoundFlow source, string templateFolder, CancellationToken ct)
+        // A sub-flow step names a file the parser has to find, and it sits beside this one.
+        private static async Task AddSubFlowPathsAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
         {
-            List<FlowStepTemplate> images = await dbContext.FlowStepTemplates.AsNoTracking()
-                .Where(x => x.FlowStep.RootId == flowId && x.TemplateImage != null)
-                .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
-                .Select(x => new FlowStepTemplate { FlowStepId = x.FlowStepId, TemplateImage = x.TemplateImage })
-                .ToListAsync(ct);
+            List<int> subFlowIds = schema.Steps
+                .Where(x => x.SubFlowId != null)
+                .Select(x => x.SubFlowId!.Value)
+                .Distinct()
+                .ToList();
+
+            Dictionary<int, string> paths = await dbContext.Flows.AsNoTracking()
+                .Where(x => subFlowIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.Name })
+                .ToDictionaryAsync(x => x.Id, x => FileNameOf(x.Name, "sub-flow") + ".sflw", ct);
+
+            foreach (FlowStep step in schema.Steps.Where(x => x.SubFlowId != null))
+            {
+                if (paths.TryGetValue(step.SubFlowId!.Value, out string? path))
+                    schema.SubFlowPaths[step] = path;
+            }
+        }
+
+        private static async Task<int> WriteTemplatesAsync(AppDbContext dbContext, FlowScriptSchema schema, string templateFolder, CancellationToken ct)
+        {
+            List<FlowStepTemplate> templates = schema.Steps.SelectMany(x => x.FlowStepTemplates).ToList();
+            List<int> ids = templates.Select(x => x.Id).ToList();
+
+            Dictionary<int, byte[]> images = await dbContext.FlowStepTemplates.AsNoTracking()
+                .Where(x => ids.Contains(x.Id) && x.TemplateImage != null)
+                .Select(x => new { x.Id, x.TemplateImage })
+                .ToDictionaryAsync(x => x.Id, x => x.TemplateImage!, ct);
 
             if (images.Count == 0)
                 return 0;
@@ -206,19 +180,12 @@ namespace Business.FlowScript
             Directory.CreateDirectory(templateFolder);
 
             int written = 0;
-            Dictionary<int, int> nextIndex = new Dictionary<int, int>();
-
-            foreach (FlowStepTemplate image in images)
+            foreach (FlowStepTemplate template in templates)
             {
-                IReadOnlyList<ScriptTemplateImage> names = source.TemplatesByStepId.GetValueOrDefault(image.FlowStepId, []);
-
-                int index = nextIndex.GetValueOrDefault(image.FlowStepId);
-                nextIndex[image.FlowStepId] = index + 1;
-
-                if (index >= names.Count)
+                if (!images.TryGetValue(template.Id, out byte[]? image))
                     continue;
 
-                await File.WriteAllBytesAsync(Path.Combine(templateFolder, names[index].FileName), image.TemplateImage!, ct);
+                await File.WriteAllBytesAsync(Path.Combine(templateFolder, template.Name), image, ct);
                 written++;
             }
 

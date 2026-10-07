@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,22 +11,18 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Move  to point <[ X ]> | to <[ step ]> | to match
             ExpectKeyword(FlowStepTypeEnum.CURSOR_RELOCATE);
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE };
 
             ExpectKeyword(ScriptSymbolEnum.TO);
-            (string? pointName, string? referenceName) = ExtractTarget();
-            
+            (step.FlowPoint, step.FlowStepReference) = ExtractTarget();
+
             ExpectEnd();
 
-            return new FlowStepSchemaBindng()
-            {
-                Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE },
-                PointName = pointName,
-                ReferenceName = referenceName,
-            };
+            return step;
         }
     }
 }

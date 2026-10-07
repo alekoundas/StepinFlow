@@ -1,9 +1,7 @@
-using System.Drawing;
-
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Lexing;
-using Business.FlowScript.Models.Binding;
+using Business.FlowScript.Models;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Syntax;
@@ -92,7 +90,7 @@ namespace Business.Tests.FlowScript
             {
                 FlowStep step = new FlowStep { ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
                 string written = SyntaxFacts.Condition(step);
-                FlowStep read = Read("Steps:\nCheck Text <[ x ]> " + written).Steps.Single().Step;
+                FlowStep read = Read("Steps:\nCheck Text <[ x ]> " + written).Steps.Single();
 
                 string expectedText = string.Empty;
                 if (condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY)
@@ -118,7 +116,7 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = Read($"Steps:\nFocus Window process <[ p ]> title {SyntaxFacts.Keyword(mode)} <[ x ]>");
 
-            schema.Steps.Single().Step.TitleMatchMode.ShouldBe(mode);
+            schema.Steps.Single().TitleMatchMode.ShouldBe(mode);
         }
 
         [Theory]
@@ -130,7 +128,7 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = Read($"Steps:\nScroll {SyntaxFacts.Keyword(direction)} 3");
 
-            schema.Steps.Single().Step.CursorScrollDirectionType.ShouldBe(direction);
+            schema.Steps.Single().CursorScrollDirectionType.ShouldBe(direction);
         }
 
         [Fact]
@@ -141,7 +139,7 @@ namespace Business.Tests.FlowScript
                 foreach (CursorButtonActionTypeEnum action in Enum.GetValues<CursorButtonActionTypeEnum>())
                 {
                     string written = SyntaxFacts.Button(button, action);
-                    FlowStep read = Read("Steps:\nClick at match " + written).Steps.Single().Step;
+                    FlowStep read = Read("Steps:\nClick at match " + written).Steps.Single();
 
                     (read.CursorButtonType, read.CursorButtonActionType).ShouldBe((button, action), written);
                 }
@@ -161,7 +159,7 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = Read($"Steps:\nFind Image <[ x ]> template <[ a.png ]> match {SyntaxFacts.Keyword(mode)}");
 
-            schema.Steps.Single().Step.TemplateMatchMode.ShouldBe(mode);
+            schema.Steps.Single().TemplateMatchMode.ShouldBe(mode);
         }
 
         [Theory]
@@ -171,7 +169,7 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = Read($"Areas:\n  <[ A ]> monitor primary   scales with {SyntaxFacts.Keyword(scalesWith)}");
 
-            schema.Areas.Single().Area.ScalesWith.ShouldBe(scalesWith);
+            schema.Areas.Single().ScalesWith.ShouldBe(scalesWith);
         }
 
         // ================================================================
@@ -192,7 +190,7 @@ namespace Business.Tests.FlowScript
             if (milliseconds == null)
                 schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
             else
-                schema.Steps.Single().Step.WaitForMilliseconds.ShouldBe(milliseconds.Value);
+                schema.Steps.Single().WaitForMilliseconds.ShouldBe(milliseconds.Value);
         }
 
         [Theory]
@@ -208,7 +206,7 @@ namespace Business.Tests.FlowScript
             if (dpi == null)
                 schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
             else
-                schema.Points.Single().Point.AuthoredDpi.ShouldBe(dpi.Value);
+                schema.Points.Single().AuthoredDpi.ShouldBe(dpi.Value);
         }
 
         [Theory]
@@ -235,9 +233,11 @@ namespace Business.Tests.FlowScript
         [InlineData("-4 10", -4, 10)]
         public void A_click_is_two_whole_numbers(string text, int x, int y)
         {
-            FlowScriptSchema schema = Read("Templates:\n  <[ a.png ]> click " + text);
+            FlowScriptSchema schema = Read("Templates:\n  <[ a.png ]> click " + text + "\nSteps:\nFind Image <[ Find ]> template <[ a.png ]>");
+            FlowStepTemplate template = schema.Steps.Single().FlowStepTemplates.Single();
 
-            schema.Templates.Single().ClickOffset.ShouldBe(new Point(x, y));
+            (template.ClickOffsetX, template.ClickOffsetY).ShouldBe((x, y));
+            schema.TemplatesWithoutClick.ShouldBeEmpty();
         }
     }
 }

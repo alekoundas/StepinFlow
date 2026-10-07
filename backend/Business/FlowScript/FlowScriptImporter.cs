@@ -7,18 +7,16 @@ using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Business.FlowScript.Binding;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Models.Text;
-using Business.FlowScript.Models.Binding;
 
 namespace Business.FlowScript
 {
     /// <summary>
-    /// Import .sflw file into the database. The mirror of FlowScriptExporter.cs />.
-    /// Parse, validate, then replace database Flow.
-    /// DOESNT delete the old Flow, just hides it as an older version of that flow.
+    /// Import .sflw file into the database. The mirror of FlowScriptExporter.cs.
+    /// Parse, then replace the flow's rows with the ones the file reads into.
+    /// DOESNT delete the old Flow, just its rows: the Flow stays for its execution history.
     /// </summary>
     public sealed class FlowScriptImporter : IFlowScriptImporter
     {
@@ -57,27 +55,23 @@ namespace Business.FlowScript
         public async Task<FlowImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default)
         {
             // Script -> ScriptLines -> LineTokens -> Parse LineTokens -> Schema
-            FlowScriptSchema document = _scanner.Read(script);
-            if (!document.IsValid)
-                return Failed(document.Diagnostics);
-
-            List<Diagnostic> errors = new List<Diagnostic>();
-            BoundFlow source = Binder.Resolve(document, errors);
-            if (errors.Count > 0)
-                return Failed(errors);
+            FlowScriptSchema schema = _scanner.Read(script);
+            if (!schema.IsValid)
+                return Failed(schema.Diagnostics);
 
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             // Find existing Flow (if any), so all relation rows are droped. Only Flow stays for Execution history.
-            Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == document.PublicId, ct);
+            Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == schema.Flow.PublicId, ct);
 
             // Begin DB Transaction.
             await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
 
             try
             {
-                Flow flow = existing ?? new Flow { PublicId = document.PublicId };
-                flow.Name = document.FlowName;
+                // Saved on its own first: RootId names the flow by id, with no link EF could fill it from.
+                Flow flow = existing ?? schema.Flow;
+                flow.Name = schema.Flow.Name;
 
                 if (existing == null)
                     dbContext.Flows.Add(flow);
@@ -94,8 +88,10 @@ namespace Business.FlowScript
                     await dbContext.FlowViewports.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 }
 
-                FlowImportResultDto result = await WriteAsync(dbContext, flow, document, source, templateFolderPath, ct);
+                FlowImportResultDto result = await AddAsync(dbContext, flow, schema, templateFolderPath, ct);
 
+                // One save for the whole graph: EF inserts in dependency order and fills every key
+                // from the links.
                 await dbContext.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
 
@@ -113,201 +109,79 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        private static async Task<FlowImportResultDto> WriteAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, BoundFlow source, string? templateFolderPath, CancellationToken ct)
+        private static async Task<FlowImportResultDto> AddAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema schema, string? templateFolderPath, CancellationToken ct)
         {
             FlowImportResultDto result = new FlowImportResultDto
             {
                 IsSuccess = true,
                 FlowId = flow.Id,
                 FlowName = flow.Name,
+                StepCount = schema.Steps.Count,
             };
 
-            // Areas before points and steps, and roots before children: a parent needs its real id
-            // before anything can point at it. The document's ids are positions, not rows.
-            Dictionary<int, int> areaIds = await WriteAreasAsync(dbContext, flow, document, ct);
-            Dictionary<int, int> pointIds = await WritePointsAsync(dbContext, flow, document, areaIds, ct);
+            foreach (FlowArea area in schema.Areas)
+                area.FlowId = flow.Id;
 
-            foreach (FlowViewport viewport in document.Viewports)
-            {
-                viewport.Id = 0;
-                viewport.FlowId = flow.Id;
-                dbContext.FlowViewports.Add(viewport);
-            }
+            foreach (FlowPoint point in schema.Points)
+                point.FlowId = flow.Id;
 
-            foreach (FlowCsvColumn input in document.Inputs)
-            {
-                input.Id = 0;
+            foreach (FlowCsvColumn input in schema.Inputs)
                 input.FlowId = flow.Id;
-                dbContext.FlowCsvColumns.Add(input);
+
+            foreach (FlowViewport viewport in schema.Viewports)
+                viewport.FlowId = flow.Id;
+
+            // A step is either a root step of the Flow or the child of another step, never both.
+            // A sub-flow is another file and is not resolved yet (FLOW-FORMAT.md).
+            foreach (FlowStep step in schema.Steps)
+            {
+                step.RootId = flow.Id;
+                if (step.ParentFlowStep == null)
+                    step.FlowId = flow.Id;
+
+                foreach (FlowStepTemplate template in step.FlowStepTemplates)
+                    await ReadTemplateAsync(template, schema, templateFolderPath, result, ct);
             }
 
-            await WriteStepsAsync(dbContext, flow, document, areaIds, pointIds, templateFolderPath, result, ct);
-
-            result.StepCount = document.Steps.Count;
+            dbContext.FlowAreas.AddRange(schema.Areas);
+            dbContext.FlowPoints.AddRange(schema.Points);
+            dbContext.FlowCsvColumns.AddRange(schema.Inputs);
+            dbContext.FlowViewports.AddRange(schema.Viewports);
+            dbContext.FlowSteps.AddRange(schema.Steps);
 
             return result;
         }
 
-        private static async Task<Dictionary<int, int>> WriteAreasAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, CancellationToken ct)
+        // What only the png knows: its bytes, and where its middle is for a click the header left
+        // out. The script names a template by its file, and the row by the file without its extension.
+        private static async Task ReadTemplateAsync(FlowStepTemplate template, FlowScriptSchema schema, string? templateFolderPath, FlowImportResultDto result, CancellationToken ct)
         {
-            Dictionary<int, int> ids = new Dictionary<int, int>();
+            string fileName = template.Name;
 
-            // Two passes so a child can be given a parent that already has a row.
-            foreach (FlowAreaSchemaBindng parsed in document.Areas.OrderBy(x => x.ParentName == null ? 0 : 1))
+            // A missing image is reported rather than fatal: the step is still the step, and a
+            // flow whose pictures did not come over is more use than no flow at all.
+            byte[]? image = null;
+            if (templateFolderPath != null)
             {
-                int documentId = parsed.Area.Id;
-                int? parentDocumentId = parsed.Area.ParentFlowAreaId;
-
-                parsed.Area.Id = 0;
-                parsed.Area.FlowId = flow.Id;
-                parsed.Area.ParentFlowAreaId = parentDocumentId == null ? null : ids[parentDocumentId.Value];
-
-                dbContext.FlowAreas.Add(parsed.Area);
-                await dbContext.SaveChangesAsync(ct);
-
-                ids[documentId] = parsed.Area.Id;
+                string path = Path.Combine(templateFolderPath, fileName);
+                if (File.Exists(path))
+                    image = await File.ReadAllBytesAsync(path, ct);
             }
 
-            return ids;
-        }
+            if (image == null)
+                result.MissingTemplates.Add(fileName);
 
-        private static async Task<Dictionary<int, int>> WritePointsAsync(AppDbContext dbContext, Flow flow, FlowScriptSchema document, IReadOnlyDictionary<int, int> areaIds, CancellationToken ct)
-        {
-            Dictionary<int, int> ids = new Dictionary<int, int>();
-
-            foreach (FlowPointSchemaBindng parsed in document.Points)
+            if (schema.TemplatesWithoutClick.Contains(fileName))
             {
-                int documentId = parsed.Point.Id;
-                int? areaDocumentId = parsed.Point.FlowAreaId;
-
-                parsed.Point.Id = 0;
-                parsed.Point.FlowId = flow.Id;
-                parsed.Point.FlowAreaId = areaDocumentId == null ? null : areaIds.GetValueOrDefault(areaDocumentId.Value);
-
-                dbContext.FlowPoints.Add(parsed.Point);
-                await dbContext.SaveChangesAsync(ct);
-
-                ids[documentId] = parsed.Point.Id;
+                Point click = Centre(image);
+                template.ClickOffsetX = click.X;
+                template.ClickOffsetY = click.Y;
             }
 
-            return ids;
-        }
+            template.Name = Path.GetFileNameWithoutExtension(fileName);
+            template.TemplateImage = image;
 
-        private static async Task WriteStepsAsync(
-            AppDbContext dbContext,
-            Flow flow,
-            FlowScriptSchema document,
-            IReadOnlyDictionary<int, int> areaIds,
-            IReadOnlyDictionary<int, int> pointIds,
-            string? templateFolderPath,
-            FlowImportResultDto result,
-            CancellationToken ct)
-        {
-            Dictionary<int, int> stepIds = new Dictionary<int, int>();
-
-            // Parents first, in document order, so a child always has a real parent id. The reader
-            // emits a parent before any of its children, which is what makes one pass enough.
-            foreach (FlowStepSchemaBindng parsed in document.Steps)
-            {
-                FlowStep step = parsed.Step;
-
-                int documentId = step.Id;
-                int? areaDocumentId = step.FlowAreaId;
-                int? pointDocumentId = step.FlowPointId;
-                int? pointEndDocumentId = step.FlowPointEndId;
-                int? parentDocumentId = step.ParentFlowStepId;
-
-                step.Id = 0;
-                step.RootId = flow.Id;
-                step.FlowId = parentDocumentId == null ? flow.Id : null;
-                step.ParentFlowStepId = parentDocumentId == null ? null : stepIds[parentDocumentId.Value];
-                step.FlowAreaId = areaDocumentId == null ? null : areaIds.GetValueOrDefault(areaDocumentId.Value);
-                step.FlowPointId = pointDocumentId == null ? null : pointIds.GetValueOrDefault(pointDocumentId.Value);
-                step.FlowPointEndId = pointEndDocumentId == null ? null : pointIds.GetValueOrDefault(pointEndDocumentId.Value);
-
-                // A reference can point at a step written below this one, so it is left for the
-                // pass after every row exists.
-                step.FlowStepReferenceId = null;
-                step.FlowStepReferenceEndId = null;
-                step.SubFlowId = null;
-
-                dbContext.FlowSteps.Add(step);
-                await dbContext.SaveChangesAsync(ct);
-
-                stepIds[documentId] = step.Id;
-
-                result.TemplateCount += await WriteTemplatesAsync(dbContext, step, parsed, templateFolderPath, result, ct);
-            }
-
-            ResolveReferences(document, stepIds);
-        }
-
-        // The forward references, once every step has a row.
-        private static void ResolveReferences(FlowScriptSchema document, IReadOnlyDictionary<int, int> stepIds)
-        {
-            Dictionary<string, int> byName = new Dictionary<string, int>(StringComparer.Ordinal);
-
-            foreach (FlowStepSchemaBindng parsed in document.Steps.Where(x => !string.IsNullOrEmpty(x.Step.Name)))
-                byName[parsed.Step.Name] = parsed.Step.Id;
-
-            foreach (FlowStepSchemaBindng parsed in document.Steps)
-            {
-                if (parsed.ReferenceName != null && byName.TryGetValue(parsed.ReferenceName, out int reference))
-                    parsed.Step.FlowStepReferenceId = reference;
-
-                if (parsed.ReferenceEndName != null && byName.TryGetValue(parsed.ReferenceEndName, out int referenceEnd))
-                    parsed.Step.FlowStepReferenceEndId = referenceEnd;
-            }
-        }
-
-        private static async Task<int> WriteTemplatesAsync(
-            AppDbContext dbContext,
-            FlowStep step,
-            FlowStepSchemaBindng parsed,
-            string? templateFolderPath,
-            FlowImportResultDto result,
-            CancellationToken ct)
-        {
-            int written = 0;
-
-            for (int i = 0; i < parsed.Templates.Count; i++)
-            {
-                ScriptTemplateImage template = parsed.Templates[i];
-
-                // A missing image is reported rather than fatal: the step is still the step, and a
-                // flow whose pictures did not come over is more use than no flow at all.
-                byte[]? image = null;
-                if (templateFolderPath != null)
-                {
-                    string path = Path.Combine(templateFolderPath, template.FileName);
-                    if (File.Exists(path))
-                        image = await File.ReadAllBytesAsync(path, ct);
-                }
-
-                if (image == null)
-                    result.MissingTemplates.Add(template.FileName);
-
-                Point click = template.ClickOffset ?? Centre(image);
-
-                dbContext.FlowStepTemplates.Add(new FlowStepTemplate
-                {
-                    FlowStepId = step.Id,
-                    Name = Path.GetFileNameWithoutExtension(template.FileName),
-                    OrderNumber = i,
-                    TemplateImage = image,
-                    IsRequired = template.IsRequired,
-                    Accuracy = template.Accuracy,
-                    ClickOffsetX = click.X,
-                    ClickOffsetY = click.Y,
-                    AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
-                    AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
-                    AuthoredDpi = template.AuthoredDpi,
-                });
-
-                written++;
-            }
-
-            return written;
+            result.TemplateCount++;
         }
 
         // Where the capture form puts a new template's click. A png says its size in the IHDR chunk

@@ -1,4 +1,4 @@
-using Business.FlowScript.Binding;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript.Text
 {
@@ -8,6 +8,6 @@ namespace Business.FlowScript.Text
         /// A flow as the text that goes in a repository. Deterministic: the same flow writes the
         /// same bytes, which is what makes a round trip testable.
         /// </summary>
-        string Write(BoundFlow source);
+        string Write(FlowScriptSchema schema);
     }
 }

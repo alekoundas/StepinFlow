@@ -1,4 +1,3 @@
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -11,16 +10,13 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Success: | Failure:
             FlowStepTypeEnum type = ExtractKeyword(FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE);
             ExpectEnd();
 
-            return new FlowStepSchemaBindng()
-            {
-                Step = new FlowStep() { FlowStepType = type },
-            };
+            return new FlowStep() { FlowStepType = type };
         }
     }
 }

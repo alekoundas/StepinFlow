@@ -1,33 +1,31 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class PointParser : BaseParser<FlowPointSchemaBindng>
+    internal sealed class PointParser : BaseParser<FlowPoint>
     {
         public PointParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 
-        public override FlowPointSchemaBindng Parse()
+        public override FlowPoint Parse()
         {
             // <[ name ]>   inside <[ area ]> | on screen   ratio x y | offset x y   [at 120dpi]
-            FlowPointSchemaBindng result = new FlowPointSchemaBindng();
-
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            result.Point = new FlowPoint() { Name = name };
+            FlowPoint point = new FlowPoint() { Name = name };
 
-            // Measured from an area, or from the screen's corner - right here and nowhere else.
+            // Measured from an area, or from the screen's corner - right here and nowhere else. The
+            // area is named, and linked by ScriptLineParser to the one declared above.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.INSIDE))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                result.AreaName = ExtractText();
+                point.FlowArea = new FlowArea() { Name = ExtractText() };
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
             }
             else
@@ -38,25 +36,25 @@ namespace Business.FlowScript.Parsers.Header
             // A fraction of the area, or pixels from its corner.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.RATIO))
             {
-                result.Point.OffsetMode = AreaSizingModeEnum.RATIO;
-                result.Point.RatioX = ExtractFloat();
-                result.Point.RatioY = ExtractFloat();
+                point.OffsetMode = AreaSizingModeEnum.RATIO;
+                point.RatioX = ExtractFloat();
+                point.RatioY = ExtractFloat();
             }
             else
             {
                 ExpectKeyword(ScriptSymbolEnum.OFFSET);
-                result.Point.OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX;
-                result.Point.LocationX = ExtractInteger();
-                result.Point.LocationY = ExtractInteger();
+                point.OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX;
+                point.LocationX = ExtractInteger();
+                point.LocationY = ExtractInteger();
             }
 
             // The DPI the offset was captured at. Without it the pixels stay as written.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.AT))
-                result.Point.AuthoredDpi = ExtractDpi();
+                point.AuthoredDpi = ExtractDpi();
 
             ExpectEnd();
 
-            return result;
+            return point;
         }
     }
 }

@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,7 +11,7 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Press  <[ Ctrl+C ]> | Type  <[ text ]>
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.KEYBOARD_INPUT);
@@ -23,14 +22,11 @@ namespace Business.FlowScript.Parsers.Steps
 
             ExpectEnd();
 
-            return new FlowStepSchemaBindng()
+            return new FlowStep()
             {
-                Step = new FlowStep()
-                {
-                    FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
-                    KeyboardInputType = keyword.As<KeyboardInputTypeEnum>()!.Value,
-                    KeyboardInputText = text
-                },
+                FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
+                KeyboardInputType = keyword.As<KeyboardInputTypeEnum>()!.Value,
+                KeyboardInputText = text
             };
         }
     }

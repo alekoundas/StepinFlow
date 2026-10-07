@@ -599,18 +599,28 @@ Find Image      <[ Find username field ]>   template <[ username-field.png ]> ac
 ```
 Scanner/      Scanner                                  the stages below, one line at a time
 Lexing/       ScriptLineSplitter → ScriptTokenizer     text into lines, a line into tokens
-Parsers/      ScriptLineParser → a parser per line     tokens into the schema
-Binding/      Binder → BoundFlow                       names become ids
+Parsers/      ScriptLineParser → a parser per line     tokens into linked rows
+Models/       FlowScriptSchema                         the flow as linked rows, both directions
 Printer/      Printer                                  the model back to text
 Catalogs/     ScriptKeywordCatalog                     every word the grammar knows, once
 Diagnostics/  Diagnostic, ScriptSyntaxException        what went wrong, and whether it is fatal
               FlowScriptImporter, FlowScriptExporter
 ```
 
-The split that matters is the one a compiler is built around: **the parser never resolves a name
-and the binder never touches text.** A cursor step can aim at a check written below it, so nothing
-can be resolved until everything has been read — and because binding needs no database, the round
-trip is testable without one.
+**One model, both directions.** `FlowScriptSchema` is the flow as the rows the database holds,
+linked: a step's area is `step.FlowArea`, its parent `step.ParentFlowStep`, never an id or a name.
+The scanner reads a file into it, the exporter loads one out of the database into it - EF links the
+rows as they load into one context - and the printer writes it. So the scanner and the printer are
+exact mirrors, and the round trip needs no database.
+
+**Every name is declared above its first use**, which a `Go Back` that only goes back made true of
+every reference. So a line is linked the moment it is read: `ScriptLineParser` keeps the names the
+lines above declared and swaps each name a parser returns for that row. A name nothing above
+declares is `NAME_UNKNOWN`, and one declared twice is `NAME_DUPLICATE` at the second, both at the
+name itself. The grammar parsers stay pure - they return a name as a row holding only that name.
+This replaced a binder that handed out positions as ids, an importer that swapped those for real
+ids one table at a time, and an exporter that built id-to-name dictionaries for the printer: four
+translations of one thing, one of which let the last of two duplicate names silently win.
 
 **The tokenizer cuts and never fails.** It splits a line at spaces, keeps a quote whole, and joins
 neighbouring words into the longest keyword the catalog has, so `Wait Until No Image` is one token.
@@ -622,14 +632,14 @@ from one place: the parser.
 the keyword it opens with - one for each header line, one for each step type - and is the only class
 that writes the schema. The grammar of a line is its parser's. What the lines mean together is the
 orchestrator's: the tree the indentation draws, a template described twice, a comment belonging to
-the line below. The parsers share `TokenParser`: `Expect` takes a token that must be there, `Extract`
+the line below. The parsers share `BaseParser`: `Expect` takes a token that must be there, `Extract`
 takes one and returns its value, an `Optional` one never throws, and the index moves in one place.
 A line that stops making sense throws `ScriptSyntaxException` at that token, and the Scanner records
 it and reads on from the next line, so one typo is one error rather than the end of the report.
 
-`Printer.Write(BoundFlow) → string` is a pure function, and deterministic: the same flow writes the
-same bytes. Branch order from `OrderNumber`, areas roots-then-children alphabetically, and
-`BoundFlow` builds its own child lookup so a caller cannot hand it steps ordered by chance.
+`Printer.Write(FlowScriptSchema) → string` is a pure function, and deterministic: the same flow
+writes the same bytes. Children in `OrderNumber` order through their `ParentFlowStep` link, and
+areas roots-then-children alphabetically, so a caller cannot hand it rows ordered by chance.
 
 `ScriptKeywordCatalog` holds every word the grammar knows **for both directions** - each row a text
 and the value it means: a step type, a condition, a title match, a section header, a clause word
@@ -652,10 +662,10 @@ Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required  
 Facts about the picture go in the header - the click point, and the area size and DPI it was
 captured at. Decisions about the search go on the step - `accuracy` and `required` on each
 template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
-see that. The area line carries `scales with` and its DPI. The binder joins the header to the
-step's templates by file name. A template with no header line is centred on its picture by the
-importer, read from the PNG's header, so a hand-written flow clicks the middle of a button rather
-than its corner.
+see that. The area line carries `scales with` and its DPI. In a script a template is named by its
+file, and `ScriptLineParser` joins the header's facts onto a step's templates as its line is read.
+A template the header gives no click is centred on its picture by the importer, read from the PNG's
+header, so a hand-written flow clicks the middle of a button rather than its corner.
 
 Before this, export wrote the PNG and nothing else, and import filled the rest with defaults: every
 imported flow clicked the top-left corner of every button, and a step with three alternative
@@ -665,9 +675,14 @@ compares rows.
 
 ### Import is transactional
 
-Parse, bind, then replace. Everything before the transaction is pure, so a file with a typo reports
+Parse, then replace. Everything before the transaction is pure, so a file with a typo reports
 the line and leaves the flow exactly as it was — half a flow is worse than no import, and whoever
 hit the error is usually mid-edit.
+
+The rows are added as one graph and saved once: EF inserts them in dependency order and fills every
+key from the links. Only the flow row is saved ahead of them, because `RootId` names it by id with
+no link to follow. The semantic validator runs on the saved flow, as it does after a save from a
+form, so a flow it finds errors in is imported and shows them.
 
 Deleting the old steps does not take their history: an execution step keeps the name it ran under
 and its foreign key is `SetNull` rather than cascaded, so the trend for a step survives a re-import
@@ -718,7 +733,8 @@ no parser writes a message. A word too many and a word missing are both that err
 so a hand edit that goes wrong is named rather than quietly dropped. Every syntax error is one code,
 `TOKEN_UNEXPECTED`: a code per place in the grammar would only repeat what the message says, and
 nothing branches on it. The codes left are kinds of problem - an indent, a template described twice,
-a comment with no step below it, a missing `Flow:` line, a name that resolves to nothing.
+a comment with no step below it, a missing `Flow:` line, a name nothing above declares, a name
+declared twice.
 
 **Unquoted, a word is a keyword or a number**, and a number carries its unit: `800ms`, `120dpi`,
 `1920x1080`. A duration is always milliseconds, so it has one spelling. Pairs read like the rest of

@@ -1,7 +1,5 @@
-using Business.FlowScript.Binding;
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
@@ -51,17 +49,15 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.INDENT_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at <[ Nobody ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nGo Back to <[ Itself ]>" },
+            { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
+            { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
         };
 
         private static List<Diagnostic> Read(string script)
         {
-            FlowScriptSchema document = new Scanner().Read(script);
-            List<Diagnostic> all = new List<Diagnostic>(document.Diagnostics);
-
-            if (document.IsValid)
-                Binder.Resolve(document, all);
-
-            return all;
+            return new Scanner().Read(script).Diagnostics;
         }
 
         [Theory]
@@ -153,6 +149,27 @@ namespace Business.Tests.FlowScript
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.COMMENT_UNATTACHED);
             (diagnostic.Line, diagnostic.Column).ShouldBe((line, column));
+        }
+
+        // Every name is declared above its first use, so a name is checked on the line that uses it,
+        // at the name, and one declared further down does not count.
+        [Fact]
+        public void A_name_declared_only_below_is_unknown_where_it_is_used()
+        {
+            Diagnostic diagnostic = Read(Header + "Steps:\nGo Back to <[ Retry ]>\n## Retry").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_UNKNOWN);
+            (diagnostic.Line, diagnostic.Column).ShouldBe((5, 15));
+        }
+
+        // The first one keeps the name, so the second is the one reported.
+        [Fact]
+        public void A_name_declared_twice_is_reported_at_the_second()
+        {
+            Diagnostic diagnostic = Read(Header + "Steps:\n## Sign in\nWait 800ms\n## Sign in").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_DUPLICATE);
+            (diagnostic.Line, diagnostic.Column).ShouldBe((7, 4));
         }
 
         [Fact]

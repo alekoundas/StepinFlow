@@ -29,6 +29,7 @@ Everything here was finished by 2026-10-07.
 | 5.6 | Feature folders, the `Transport` project, MediatR replaced by a switch | §2, §4 |
 | 5.7 | Portable search: `ScalesWith`, DPI on every captured pixel, two match modes | §8 |
 | 5.9 | `Go Back` returns only to a step it passed; validator, form lookup and moves agree | §9 |
+| 5.10 | The script reads straight into linked rows; one model for scanner, printer, import and export | §7 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
 **Next:** the machine-only test bucket, then the two engine seams that layer 5 is waiting on, then
@@ -51,10 +52,10 @@ before layer 5, because the engine tests would pin whichever answer is live.
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
 - [ ] **Buttons.** `Flow.export` and `Flow.import` are reachable over IPC; nothing in the UI calls
       them yet.
-- [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer,
-      which then writes the step with a null `SubFlowId` - resolving it means reading the `Id:` out
-      of the file it names and matching that, and deciding what a missing file does. It lands in
-      `Binding/Binder.cs`.
+- [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
+      (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
+      means reading the `Id:` out of the file it names and matching that, and deciding what a missing
+      file does. It lands in the importer, which has the files and the database.
 - [ ] **A flow's name is a valid file name on Windows, macOS and Linux.** The name becomes the
       `.sflw` file and its template folder, and a repository is cloned onto all three. Today three
       places - `FlowScriptExporter.FileNameOf`, `PathHelper` and the failure screenshots in
@@ -153,8 +154,8 @@ The thing it names is a **stage**, so everything derived from it says stage rath
 - [ ] **A stage keeps its own comment.** Every step carries one since 2026-10-06, a stage included
       (`TODO.md`, Frontend): the `#` lines above `##` are the stage's, and the printer writes them
       there. The re-parenting above must leave them on the stage rather than on the step before it.
-- [ ] **Stage names stay unique.** Settled with the rest: the binder resolves `Go Back to <[ X ]>` against
-      every named step, so a duplicate makes that reference ambiguous.
+- [ ] **Stage names stay unique.** Settled with the rest: `Go Back to <[ X ]>` is linked by name
+      against every named step, so a duplicate makes that reference ambiguous.
 - [ ] **Stamp the stage onto `ExecutionStep`**, so a failure report and the execution log given to a
       model say "failed in Checkout" without re-deriving it from the flow. This is the gap that
       leaving stages out of the execution log would otherwise open.
@@ -165,51 +166,13 @@ Touched: the enum, `TreeStepHelper`, `FlowStepFieldCatalog`, the printer and par
 `AiPromptHelper`, `FlowCheck`, `FlowCheckHelper`, the worker registration, four frontend files, two
 AI documents, `PROJECT.md` and `FLOW-FORMAT.md`. All mechanical apart from the flatten/re-parent pair.
 
-### 5.10. The script reads straight into linked rows
-
-Settled 2026-10-06, not yet built. It relies on every name being declared above its first use, which
-5.9 (landed) made the rule. Today the parser builds rows that refer to each other by name, the binder hands out
-positions as ids and swaps the names for them, the importer swaps those for real ids one table at a
-time, and the exporter builds a `BoundFlow` with id-to-name dictionaries so the printer can turn the
-ids back into names. Four translations of one thing.
-
-- [ ] **One pass, linked as it reads.** The grammar parsers stay pure and return names as written.
-      `ScriptLineParser`, which already owns what the lines mean together, keeps a name-to-row map of
-      what it has added and links each new row the moment its line is read - `step.FlowArea`,
-      `step.FlowStepReference`, `step.ParentFlowStep`, `area.ParentFlowArea`, `point.FlowArea`. The
-      rows already have every one of those navigations.
-- [ ] **Names are checked where they are written.** A name nothing above defines is `NAME_UNKNOWN`
-      at its token, with a column. A name declared twice is `NAME_DUPLICATE` at the second one -
-      today `Binder` fills `stepIds[name]` without looking, so the last duplicate silently wins every
-      reference to it.
-- [ ] **`FlowScriptSchema` is the linked rows**: the flow, its areas, points, inputs, sizes, steps
-      and their templates, and the diagnostics. No ids and no reference names. A template becomes a
-      `FlowStepTemplate` on its step, with the header's facts joined in as the line is read; the
-      importer still fills what only the PNG knows - its bytes, and a click point the header left out.
-- [ ] **The printer reads the same model**, and names through the links (`step.FlowArea.Name`).
-      The scanner and the printer become exact mirrors over one model, and the round trip needs no
-      database: `Parse(Print(schema))` equals `schema`.
-- [ ] **Import adds the graph and saves once.** EF inserts in dependency order and fills every key
-      from the links, so the importer's three id maps, and its `SaveChanges` per area, go.
-- [ ] **Export loads the flow's rows into one context.** EF links them as they load, so the result
-      already is a `FlowScriptSchema`.
-- [ ] **`BoundFlow`, `Binder` and the id-to-name dictionaries are deleted.** So are
-      `FlowStepSchemaBindng` and its siblings once their names have moved onto the links.
-- [ ] **Validation runs once the import has saved**, the same as after a save from a form.
-      `FlowValidationService` works on ids, which rows only have once saved. A flow with errors stays
-      saved, shows them, and cannot be executed until they are fixed (5.11). This replaces the old
-      "`FlowValidationService` does not run on import".
-
-This also settles "Decide whether `StepSyntax` stays a `FlowStep`": it does, and the id mapping that
-was the argument for splitting goes away instead.
-
 ### 5.11. Every change to a flow goes through its data services
 
-Settled 2026-10-07, not yet built, and after 5.10: the import's write path becomes one of these.
-Today the create, update, move and delete handlers live in `Transport` and each applies the rules
-itself - `FlowNameHelper.MakeUnique`, `TreeStepHelper.CreateBranchChildren`,
-`FlowStepTemplateSync` - while the importer writes rows its own way and applies none of them. That
-is how two steps with one name import without a word, and why the validator does not run on import.
+Settled 2026-10-07, not yet built; the import's write path becomes one of these. Today the create,
+update, move and delete handlers live in `Transport` and each applies the rules itself -
+`FlowNameHelper.MakeUnique`, `TreeStepHelper.CreateBranchChildren`, `FlowStepTemplateSync` - while
+the importer adds the linked rows its own way and applies none of them. That is how a check whose
+empty branches the file left out imports with no `Success:` or `Failure:` row to add steps under.
 
 ```
 Business/Flows/DataServices/
@@ -238,8 +201,8 @@ Business/Flows/DataServices/
 - [ ] **A handler is given `DataService`**, which groups the four and does nothing else, so a call
       reads `_data.FlowPoint.UpdateAsync(dto, ct)`. Chosen over injecting the one service a handler
       uses: one more class, for a call that names the table it changes.
-- [ ] **`FlowDataService.ReplaceAsync` is the import's write path**: clear, add the linked rows from
-      5.10, save, then validate. One set of rules whether a change came from a form or a file.
+- [ ] **`FlowDataService.ReplaceAsync` is the import's write path**: clear, add the linked rows the
+      scanner reads, save, then validate. One set of rules whether a change came from a form or a file.
 - [ ] **A flow with errors is refused at Run.** Validating after the save is safe only because of
       this, and nothing does it yet: `use-flow-validation.ts` says the execution page "will block
       Run", and the engine starts any flow it is given. The refusal belongs in the engine, so an

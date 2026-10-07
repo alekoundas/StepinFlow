@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,14 +11,11 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Loop  5 times | forever | each match in <[ search ]>
-            FlowStepSchemaBindng result = new FlowStepSchemaBindng();
-
             ExpectKeyword(FlowStepTypeEnum.LOOP);
-            result.Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.LOOP };
-
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.LOOP };
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.EACH))
             {
@@ -27,22 +23,22 @@ namespace Business.FlowScript.Parsers.Steps
                 ExpectKeyword(ScriptSymbolEnum.IN);
 
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                result.ReferenceName = ExtractText();
+                step.FlowStepReference = new FlowStep() { Name = ExtractText() };
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
             }
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.FOREVER))
             {
-                result.Step.IsLoopInfinite = true;
+                step.IsLoopInfinite = true;
             }
             else
             {
-                result.Step.LoopCount = ExtractInteger();
+                step.LoopCount = ExtractInteger();
                 ExpectKeyword(ScriptSymbolEnum.TIMES);
             }
 
             ExpectEnd();
 
-            return result;
+            return step;
         }
     }
 }

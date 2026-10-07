@@ -1,7 +1,4 @@
-using Business.FlowScript.Binding;
-using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models.Binding;
-using Business.FlowScript.Models.Text;
+using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Core.Enums;
@@ -12,27 +9,16 @@ namespace Business.Tests.FlowScript
 {
     public sealed class ScriptRoundTripTests
     {
-        private static (FlowScriptSchema Document, List<Diagnostic> Errors) ReadAndBind(string script)
-        {
-            FlowScriptSchema document = new Scanner().Read(script);
-            List<Diagnostic> errors = new List<Diagnostic>();
-            Binder.Resolve(document, errors);
-            return (document, errors);
-        }
-
+        // The scanner and the printer are mirrors over one model, so the round trip needs no database.
         [Fact]
         public void Printing_what_was_read_gives_back_the_same_bytes()
         {
             string first = new Printer().Write(SampleFlow.Build());
 
-            FlowScriptSchema document = new Scanner().Read(first);
-            document.Diagnostics.ShouldBeEmpty();
+            FlowScriptSchema schema = new Scanner().Read(first);
+            schema.Diagnostics.ShouldBeEmpty();
 
-            List<Diagnostic> errors = new List<Diagnostic>();
-            BoundFlow bound = Binder.Resolve(document, errors);
-            errors.ShouldBeEmpty();
-
-            new Printer().Write(bound).ShouldBe(first);
+            new Printer().Write(schema).ShouldBe(first);
         }
 
         // The round trip proves the printer and the parser agree, not that either is right: a line
@@ -53,37 +39,68 @@ namespace Business.Tests.FlowScript
         [InlineData(@"\")]
         public void Quoted_text_comes_back_as_it_was_written(string message)
         {
-            FlowStep notify = new FlowStep { Id = 1, RootId = 1, FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message };
-            BoundFlow source = new BoundFlow
+            FlowScriptSchema source = new FlowScriptSchema
             {
-                Flow = new Flow { Id = 1, Name = "Quotes", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b113") },
-                Steps = [notify],
+                Flow = new Flow { Name = "Quotes", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b113") },
             };
+            source.Steps.Add(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message });
 
-            FlowScriptSchema document = new Scanner().Read(new Printer().Write(source));
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(source));
 
-            document.Diagnostics.ShouldBeEmpty();
-            document.Steps.Single().Step.Message.ShouldBe(message);
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().Message.ShouldBe(message);
         }
 
         // An empty branch says nothing and is left out - unless its comment says why it is empty.
         [Fact]
         public void An_empty_branch_with_a_comment_is_kept()
         {
-            FlowStep check = new FlowStep { Id = 1, RootId = 1, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, SearchMode = SearchModeEnum.FIND_BEST, Name = "Banner" };
-            FlowStep success = new FlowStep { Id = 2, RootId = 1, ParentFlowStepId = 1, OrderNumber = 0, FlowStepType = FlowStepTypeEnum.SUCCESS, CodeComment = "Nothing to do, it is already open." };
-            FlowStep failure = new FlowStep { Id = 3, RootId = 1, ParentFlowStepId = 1, OrderNumber = 1, FlowStepType = FlowStepTypeEnum.FAILURE };
-            BoundFlow source = new BoundFlow
+            FlowStep check = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, SearchMode = SearchModeEnum.FIND_BEST, Name = "Banner" };
+            FlowStep success = new FlowStep { ParentFlowStep = check, OrderNumber = 0, FlowStepType = FlowStepTypeEnum.SUCCESS, CodeComment = "Nothing to do, it is already open." };
+            FlowStep failure = new FlowStep { ParentFlowStep = check, OrderNumber = 1, FlowStepType = FlowStepTypeEnum.FAILURE };
+            FlowScriptSchema source = new FlowScriptSchema
             {
-                Flow = new Flow { Id = 1, Name = "Branches", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b114") },
-                Steps = [check, success, failure],
+                Flow = new Flow { Name = "Branches", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b114") },
             };
+            source.Steps.AddRange([check, success, failure]);
 
-            FlowScriptSchema document = new Scanner().Read(new Printer().Write(source));
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(source));
 
-            document.Diagnostics.ShouldBeEmpty();
-            document.Steps.Select(x => x.Step.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_IMAGE, FlowStepTypeEnum.SUCCESS]);
-            document.Steps[1].Step.CodeComment.ShouldBe("Nothing to do, it is already open.");
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_IMAGE, FlowStepTypeEnum.SUCCESS]);
+            schema.Steps[1].CodeComment.ShouldBe("Nothing to do, it is already open.");
+        }
+
+        // ================================================================
+        // Linked as it reads
+        // ================================================================
+
+        [Fact]
+        public void Every_name_is_linked_to_the_row_declared_above()
+        {
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(SampleFlow.Build()));
+
+            FlowStep find = schema.Steps.Single(x => x.Name == "Find username field");
+            FlowStep total = schema.Steps.Single(x => x.Name == "Read the total");
+
+            find.FlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
+            schema.Areas.Single(x => x.Name == "Cart badge").ParentFlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
+            schema.Points.Single(x => x.Name == "Hamburger").FlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.GO_BACK).FlowStepReference.ShouldBeSameAs(total);
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CHECK_VALUE).FlowStepReference.ShouldBeSameAs(total);
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_DRAG).FlowPointEnd.ShouldBeSameAs(schema.Points.Single(x => x.Name == "Origin"));
+        }
+
+        [Fact]
+        public void A_step_is_linked_to_the_step_it_sits_under()
+        {
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(SampleFlow.Build()));
+
+            FlowStep find = schema.Steps.Single(x => x.Name == "Find username field");
+            FlowStep success = schema.Steps.Single(x => x.ParentFlowStep == find && x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+
+            schema.Steps.Where(x => x.ParentFlowStep == success).Select(x => (x.FlowStepType, x.OrderNumber))
+                .ShouldBe([(FlowStepTypeEnum.CURSOR_CLICK, 0), (FlowStepTypeEnum.KEYBOARD_INPUT, 1)]);
         }
 
         // ================================================================
@@ -108,44 +125,40 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_hand_written_script_reads_without_complaint()
         {
-            (FlowScriptSchema document, List<Diagnostic> errors) = ReadAndBind(HandWritten);
-
-            document.Diagnostics.ShouldBeEmpty();
-            errors.ShouldBeEmpty();
+            new Scanner().Read(HandWritten).Diagnostics.ShouldBeEmpty();
         }
 
         [Fact]
         public void The_mode_can_come_after_the_templates_it_governs()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            document.Steps[0].Step.TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS);
-            document.Steps[1].Step.TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE);
+            schema.Steps[0].TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS);
+            schema.Steps[1].TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE);
         }
 
         [Fact]
         public void A_template_with_no_accuracy_takes_its_modes_default()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            document.Steps[0].Templates[0].Accuracy.ShouldBe(0.95f);
-            document.Steps[0].Templates[1].Accuracy.ShouldBe(0.9f);
-            document.Steps[1].Templates[0].Accuracy.ShouldBe(0.8f);
+            schema.Steps[0].FlowStepTemplates.Select(x => x.Accuracy).ShouldBe([0.95f, 0.9f]);
+            schema.Steps[1].FlowStepTemplates.Single().Accuracy.ShouldBe(0.8f);
         }
 
         [Fact]
         public void Required_belongs_to_the_template_it_follows()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            document.Steps[0].Templates.Select(x => x.IsRequired).ShouldBe([true, false]);
+            schema.Steps[0].FlowStepTemplates.Select(x => x.IsRequired).ShouldBe([true, false]);
         }
 
         [Fact]
         public void The_header_facts_reach_the_steps_that_name_the_file()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
-            ScriptTemplateImage described = document.Steps[1].Templates[0];
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
+            FlowStepTemplate described = schema.Steps[1].FlowStepTemplates.Single();
 
             (described.AuthoredFlowAreaWidth, described.AuthoredFlowAreaHeight, described.AuthoredDpi).ShouldBe((800, 600, 144));
         }
@@ -154,17 +167,16 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_template_the_header_gives_no_click_leaves_it_to_the_importer()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            document.Steps[0].Templates[0].ClickOffset.ShouldBeNull();
-            document.Steps[1].Templates[0].ClickOffset.ShouldBeNull();
+            schema.TemplatesWithoutClick.OrderBy(x => x, StringComparer.Ordinal).ShouldBe(["a.png", "b.png", "described.png"]);
         }
 
         [Fact]
         public void Monitor_primary_is_the_empty_device_name()
         {
-            (FlowScriptSchema document, _) = ReadAndBind(HandWritten);
-            FlowArea screen = document.Areas[0].Area;
+            FlowScriptSchema schema = new Scanner().Read(HandWritten);
+            FlowArea screen = schema.Areas[0];
 
             screen.Type.ShouldBe(FlowAreaTypeEnum.MONITOR);
             screen.MonitorDeviceName.ShouldBeEmpty();

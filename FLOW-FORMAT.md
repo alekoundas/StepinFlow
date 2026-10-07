@@ -252,6 +252,11 @@ because they share one namespace. That single rule is what lets a step be refere
 than by position, so a later step reads `Click at <[ Find login button ]>` and an edit somewhere above
 it changes nothing.
 
+**A name is declared above its first use.** An area is inside one written above it, a point in an
+area from the header, and a step only ever names one it passed on the way down. So a file reads top
+to bottom in one pass: a name nothing above declares is an error on the line that uses it, and a
+name declared twice is an error at the second.
+
 The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
 to a number only on a collision.
 
@@ -536,8 +541,8 @@ the size it was captured.
 
 ## What the parser guarantees
 
-**Import is transactional.** Parse the whole file, bind it, then replace. Everything before the
-transaction is pure, so a typo reports its line and leaves the existing flow untouched rather than
+**Import is transactional.** Parse the whole file, then replace. Everything before the transaction
+is pure, so a typo reports its line and leaves the existing flow untouched rather than
 half-replaced.
 
 **Every word is accounted for.** A word left over on a line, and a word a line needs but does not
@@ -545,7 +550,7 @@ have, are both errors with a line and a column - nothing is dropped and nothing 
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
 line indented too far, a template described twice, a comment with no step below it, no `Flow:` line,
-a name that resolves to nothing.
+a name nothing above declares, a name declared twice.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps
@@ -559,10 +564,12 @@ imported areas, points and templates equal to the originals field by field, beca
 cannot see a field the printer never prints. Verified two ways: purely, and through a real database
 with template bytes written to disk and read back.
 
-Two things it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
-means reading the `Id:` out of the file it names and deciding what a missing one does; and the
-semantic validator does not run on import, so what is checked is structural — is that a keyword, is
-that a condition, does that name exist, does every word belong.
+What the parser checks is structural — is that a keyword, is that a condition, does that name exist
+above, does every word belong. The semantic validator runs on the saved flow, as it does after a
+save from a form, so a flow it finds errors in is imported and shows them.
+
+One thing it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
+means reading the `Id:` out of the file it names and deciding what a missing one does.
 
 ---
 

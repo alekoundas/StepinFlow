@@ -4,15 +4,15 @@ using System.Text;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
-using Business.FlowScript.Binding;
 using Business.FlowScript.Catalogs;
+using Business.FlowScript.Models;
 using Business.FlowScript.Syntax;
-using Business.FlowScript.Models.Text;
 
 namespace Business.FlowScript.Text
 {
     /// <summary>
-    /// A flow as the text that goes in a repository.
+    /// A flow as the text that goes in a repository. The mirror of Scanner.cs over the same model,
+    /// so a name is written through its link (<c>step.FlowArea.Name</c>).
     ///
     /// See FLOW-FORMAT.md
     ///
@@ -20,12 +20,12 @@ namespace Business.FlowScript.Text
     /// </summary>
     public sealed class Printer : IPrinter
     {
-        public string Write(BoundFlow source)
+        public string Write(FlowScriptSchema schema)
         {
             StringBuilder builder = new StringBuilder();
 
-            WriteHeader(builder, source);
-            WriteSteps(builder, source);
+            WriteHeader(builder, schema);
+            WriteSteps(builder, schema);
 
             return builder.ToString();
         }
@@ -35,14 +35,14 @@ namespace Business.FlowScript.Text
         // Private methods - header
         // ================================================================
 
-        private static void WriteHeader(StringBuilder builder, BoundFlow source)
+        private static void WriteHeader(StringBuilder builder, FlowScriptSchema schema)
         {
-            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME), 9)).AppendLine(source.Flow.Name);
-            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_ID), 9)).AppendLine(source.Flow.PublicId.ToString());
+            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_NAME), 9)).AppendLine(schema.Flow.Name);
+            builder.Append(Pad(SyntaxFacts.Keyword(ScriptSymbolEnum.FLOWFIELD_ID), 9)).AppendLine(schema.Flow.PublicId.ToString());
 
-            if (source.Viewports.Count > 0)
+            if (schema.Viewports.Count > 0)
             {
-                IEnumerable<string> sizes = source.Viewports
+                IEnumerable<string> sizes = schema.Viewports
                     .OrderBy(x => x.OrderNumber)
                     .Select(x => Size(x.Width, x.Height));
 
@@ -51,41 +51,37 @@ namespace Business.FlowScript.Text
 
             builder.AppendLine();
 
-            WriteAreas(builder, source);
-            WritePoints(builder, source);
-            WriteInputs(builder, source);
-            WriteTemplates(builder, source);
+            WriteAreas(builder, schema);
+            WritePoints(builder, schema);
+            WriteInputs(builder, schema);
+            WriteTemplates(builder, schema);
         }
 
-        private static void WriteAreas(StringBuilder builder, BoundFlow source)
+        private static void WriteAreas(StringBuilder builder, FlowScriptSchema schema)
         {
-            if (source.Areas.Count == 0)
+            if (schema.Areas.Count == 0)
                 return;
 
             builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.AREAS));
 
             // Parents before children, so a child's "inside X" always names something already read.
-            foreach (FlowArea area in Ordered(source.Areas))
-                builder.Append("  ").AppendLine(AreaLine(area, source));
+            foreach (FlowArea area in Ordered(schema.Areas))
+                builder.Append("  ").AppendLine(AreaLine(area));
 
             builder.AppendLine();
         }
 
-        private static string AreaLine(FlowArea area, BoundFlow source)
+        private static string AreaLine(FlowArea area)
         {
             string name = Pad(SyntaxFacts.Quote(area.Name), 20);
 
-            return $"{name}{AreaPlacement(area, source)}{AreaScaling(area)}";
+            return $"{name}{AreaPlacement(area)}{AreaScaling(area)}";
         }
 
-        private static string AreaPlacement(FlowArea area, BoundFlow source)
+        private static string AreaPlacement(FlowArea area)
         {
-            if (area.ParentFlowAreaId != null)
-            {
-                string parent = SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(area.ParentFlowAreaId.Value, string.Empty));
-
-                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {parent}   {AreaSize(area)}";
-            }
+            if (area.ParentFlowArea != null)
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(area.ParentFlowArea.Name)}   {AreaSize(area)}";
 
             switch (area.Type)
             {
@@ -126,14 +122,14 @@ namespace Business.FlowScript.Text
             return text;
         }
 
-        private static void WritePoints(StringBuilder builder, BoundFlow source)
+        private static void WritePoints(StringBuilder builder, FlowScriptSchema schema)
         {
-            if (source.Points.Count == 0)
+            if (schema.Points.Count == 0)
                 return;
 
             builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.POINTS));
 
-            foreach (FlowPoint point in source.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
+            foreach (FlowPoint point in schema.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
                 string name = Pad(SyntaxFacts.Quote(point.Name), 20);
 
@@ -142,8 +138,8 @@ namespace Business.FlowScript.Text
                     placement = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.RATIO)} {Ratio(point.RatioX)} {Ratio(point.RatioY)}";
 
                 string inside = SyntaxFacts.Keyword(ScriptSymbolEnum.ON_SCREEN);
-                if (point.FlowAreaId != null)
-                    inside = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(point.FlowAreaId.Value, string.Empty))}";
+                if (point.FlowArea != null)
+                    inside = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.INSIDE)} {SyntaxFacts.Quote(point.FlowArea.Name)}";
 
                 string dpi = string.Empty;
                 if (point.AuthoredDpi > 0)
@@ -155,14 +151,14 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        private static void WriteInputs(StringBuilder builder, BoundFlow source)
+        private static void WriteInputs(StringBuilder builder, FlowScriptSchema schema)
         {
-            if (source.Inputs.Count == 0)
+            if (schema.Inputs.Count == 0)
                 return;
 
             builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.CSV_COLUMNS));
 
-            foreach (FlowCsvColumn input in source.Inputs.OrderBy(x => x.OrderNumber))
+            foreach (FlowCsvColumn input in schema.Inputs.OrderBy(x => x.OrderNumber))
             {
                 // The value is never written, secret or not: data belongs in the csv beside the
                 // file, and a default in the script would be the one nobody remembers to change.
@@ -178,13 +174,13 @@ namespace Business.FlowScript.Text
 
         // The facts about each picture, once per file. The step says how it is searched for; this
         // says where it clicks and what size of area it was captured in, which is what lets it scale.
-        private static void WriteTemplates(StringBuilder builder, BoundFlow source)
+        private static void WriteTemplates(StringBuilder builder, FlowScriptSchema schema)
         {
-            List<string> lines = source.TemplatesByStepId.Values
-                .SelectMany(x => x)
-                .DistinctBy(x => x.FileName, StringComparer.Ordinal)
-                .OrderBy(x => x.FileName, StringComparer.Ordinal)
-                .Select(TemplateLine)
+            List<string> lines = schema.Steps
+                .SelectMany(x => x.FlowStepTemplates)
+                .DistinctBy(x => x.Name, StringComparer.Ordinal)
+                .OrderBy(x => x.Name, StringComparer.Ordinal)
+                .Select(x => TemplateLine(x, schema))
                 .Where(x => x.Length > 0)
                 .ToList();
 
@@ -199,11 +195,12 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        private static string TemplateLine(ScriptTemplateImage template)
+        // A template is named by its file.
+        private static string TemplateLine(FlowStepTemplate template, FlowScriptSchema schema)
         {
             string click = string.Empty;
-            if (template.ClickOffset != null)
-                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffset.Value.X)} {Integer(template.ClickOffset.Value.Y)}";
+            if (!schema.TemplatesWithoutClick.Contains(template.Name))
+                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffsetX)} {Integer(template.ClickOffsetY)}";
 
             string captured = string.Empty;
             if (template.AuthoredFlowAreaWidth > 0 && template.AuthoredFlowAreaHeight > 0)
@@ -219,7 +216,7 @@ namespace Business.FlowScript.Text
             if (facts.Length == 0)
                 return string.Empty;
 
-            return $"{Pad(SyntaxFacts.Quote(template.FileName), 28)}{facts}";
+            return $"{Pad(SyntaxFacts.Quote(template.Name), 28)}{facts}";
         }
 
 
@@ -227,7 +224,7 @@ namespace Business.FlowScript.Text
         // Private methods - steps
         // ================================================================
 
-        private static void WriteSteps(StringBuilder builder, BoundFlow source)
+        private static void WriteSteps(StringBuilder builder, FlowScriptSchema schema)
         {
             builder.AppendLine(SyntaxFacts.Keyword(ScriptSymbolEnum.STEPS));
 
@@ -235,17 +232,17 @@ namespace Business.FlowScript.Text
             // and a heading followed by empty space reads as a section with nothing in it.
             bool needsGap = false;
 
-            foreach (FlowStep step in source.ChildrenOf(null))
+            foreach (FlowStep step in ChildrenOf(schema, null))
             {
                 if (needsGap && step.FlowStepType != FlowStepTypeEnum.MARKER)
                     builder.AppendLine();
 
-                WriteStep(builder, source, step, depth: 0);
+                WriteStep(builder, schema, step, depth: 0);
                 needsGap = step.FlowStepType != FlowStepTypeEnum.MARKER;
             }
         }
 
-        private static void WriteStep(StringBuilder builder, BoundFlow source, FlowStep step, int depth)
+        private static void WriteStep(StringBuilder builder, FlowScriptSchema schema, FlowStep step, int depth)
         {
             string indent = new string(' ', depth);
 
@@ -260,19 +257,19 @@ namespace Business.FlowScript.Text
             }
 
             WriteComment(builder, step, indent);
-            builder.Append(indent).AppendLine(StepLine(step, source));
+            builder.Append(indent).AppendLine(StepLine(step, schema));
 
-            WriteBranches(builder, source, step, depth);
+            WriteBranches(builder, schema, step, depth);
 
             // A container holds its steps directly - a loop's body, not a branch.
             if (TreeStepHelper.CanContainChildren(step.FlowStepType))
             {
-                foreach (FlowStep child in source.ChildrenOf(step.Id))
-                    WriteStep(builder, source, child, depth + 1);
+                foreach (FlowStep child in ChildrenOf(schema, step))
+                    WriteStep(builder, schema, child, depth + 1);
             }
         }
 
-        private static void WriteBranches(StringBuilder builder, BoundFlow source, FlowStep step, int depth)
+        private static void WriteBranches(StringBuilder builder, FlowScriptSchema schema, FlowStep step, int depth)
         {
             if (!TreeStepHelper.HasBranchChildren(step.FlowStepType))
                 return;
@@ -281,9 +278,9 @@ namespace Business.FlowScript.Text
 
             // Order comes from the rows, so two exports of one flow cannot differ. An empty branch
             // is left out entirely - "Success:" with nothing under it says nothing - unless its comment does.
-            foreach (FlowStep branch in source.ChildrenOf(step.Id))
+            foreach (FlowStep branch in ChildrenOf(schema, step))
             {
-                List<FlowStep> children = source.ChildrenOf(branch.Id).ToList();
+                List<FlowStep> children = ChildrenOf(schema, branch).ToList();
                 if (children.Count == 0 && string.IsNullOrWhiteSpace(branch.CodeComment))
                     continue;
 
@@ -291,7 +288,7 @@ namespace Business.FlowScript.Text
                 builder.Append(indent).AppendLine(SyntaxFacts.For(branch));
 
                 foreach (FlowStep child in children)
-                    WriteStep(builder, source, child, depth + 2);
+                    WriteStep(builder, schema, child, depth + 2);
             }
         }
 
@@ -305,37 +302,37 @@ namespace Business.FlowScript.Text
                 builder.Append(indent).Append(SyntaxFacts.Keyword(ScriptSymbolEnum.COMMENT)).Append(' ').AppendLine(line.TrimEnd('\r').Trim());
         }
 
-        private static string StepLine(FlowStep step, BoundFlow source)
+        private static string StepLine(FlowStep step, FlowScriptSchema schema)
         {
             string keyword = Pad(SyntaxFacts.For(step), 16);
-            string arguments = Arguments(step, source);
+            string arguments = Arguments(step, schema);
 
             return $"{keyword}{arguments}".TrimEnd();
         }
 
-        private static string Arguments(FlowStep step, BoundFlow source)
+        private static string Arguments(FlowStep step, FlowScriptSchema schema)
         {
             switch (step.FlowStepType)
             {
                 case FlowStepTypeEnum.SEARCH_IMAGE:
-                    return SearchImageArguments(step, source);
+                    return SearchImageArguments(step);
 
                 case FlowStepTypeEnum.SEARCH_TEXT:
-                    return SearchTextArguments(step, source);
+                    return SearchTextArguments(step);
 
                 case FlowStepTypeEnum.CHECK_VALUE:
-                    return $"{SyntaxFacts.Quote(step.Name)}   {Variable(step.FlowStepReferenceId, source)} {SyntaxFacts.Condition(step)}";
+                    return $"{SyntaxFacts.Quote(step.Name)}   {Variable(step.FlowStepReference)} {SyntaxFacts.Condition(step)}";
 
                 case FlowStepTypeEnum.CURSOR_CLICK:
                 case FlowStepTypeEnum.CURSOR_RELOCATE:
                 case FlowStepTypeEnum.CURSOR_DRAG:
-                    return CursorArguments(step, source);
+                    return CursorArguments(step);
 
                 // The area to scroll inside, not a point: Target would fall through to "match"
                 // for a scroll that names neither, which is a line the parser cannot read back.
                 // No direction goes down, which is what a scroll did before there was one.
                 case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return $"{SyntaxFacts.Keyword(step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN)} {step.LoopCount}{Area(step, source)}";
+                    return $"{SyntaxFacts.Keyword(step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN)} {step.LoopCount}{Area(step)}";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     return SyntaxFacts.Quote(step.KeyboardInputText);
@@ -347,13 +344,13 @@ namespace Business.FlowScript.Text
                     return Milliseconds(step.WaitForMilliseconds);
 
                 case FlowStepTypeEnum.LOOP:
-                    return LoopArguments(step, source);
+                    return LoopArguments(step);
 
                 case FlowStepTypeEnum.GO_BACK:
-                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId ?? 0, string.Empty))}";
+                    return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {SyntaxFacts.Quote(step.FlowStepReference?.Name ?? string.Empty)}";
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    return SyntaxFacts.Quote(source.SubFlowPathsById.GetValueOrDefault(step.SubFlowId ?? 0, string.Empty));
+                    return SyntaxFacts.Quote(schema.SubFlowPaths.GetValueOrDefault(step, string.Empty));
 
                 case FlowStepTypeEnum.NOTIFY:
                     return SyntaxFacts.Quote(step.Message);
@@ -373,17 +370,17 @@ namespace Business.FlowScript.Text
                 case FlowStepTypeEnum.WINDOW_FOCUS:
                 case FlowStepTypeEnum.WINDOW_RESIZE:
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
-                    return WindowArguments(step, source);
+                    return WindowArguments(step);
 
                 default:
                     return SyntaxFacts.Quote(step.Name);
             }
         }
 
-        private static string SearchImageArguments(FlowStep step, BoundFlow source)
+        private static string SearchImageArguments(FlowStep step)
         {
-            IEnumerable<string> templates = source.TemplatesByStepId
-                .GetValueOrDefault(step.Id, [])
+            IEnumerable<string> templates = step.FlowStepTemplates
+                .OrderBy(x => x.OrderNumber)
                 .Select(TemplateClause);
 
             // Only when it is not the default, which is nearly every step.
@@ -391,31 +388,31 @@ namespace Business.FlowScript.Text
             if (step.TemplateMatchMode != TemplateMatchModeEnum.SHAPE)
                 match = $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH)} {SyntaxFacts.Keyword(step.TemplateMatchMode)}";
 
-            return $"{SyntaxFacts.Quote(step.Name)}   {string.Join("  ", templates)}{match}{Area(step, source)}{Waiting(step)}";
+            return $"{SyntaxFacts.Quote(step.Name)}   {string.Join("  ", templates)}{match}{Area(step)}{Waiting(step)}";
         }
 
         // Straight after its template, so it reads as that template's and not the step's.
-        private static string TemplateClause(ScriptTemplateImage template)
+        private static string TemplateClause(FlowStepTemplate template)
         {
             string required = string.Empty;
             if (template.IsRequired)
                 required = $" {SyntaxFacts.Keyword(ScriptSymbolEnum.REQUIRED)}";
 
-            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TEMPLATE)} {SyntaxFacts.Quote(template.FileName)} {SyntaxFacts.Keyword(ScriptSymbolEnum.ACCURACY)} {Number(template.Accuracy)}{required}";
+            return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TEMPLATE)} {SyntaxFacts.Quote(template.Name)} {SyntaxFacts.Keyword(ScriptSymbolEnum.ACCURACY)} {Number(template.Accuracy)}{required}";
         }
 
-        private static string SearchTextArguments(FlowStep step, BoundFlow source)
+        private static string SearchTextArguments(FlowStep step)
         {
             string extract = string.Empty;
             if (!string.IsNullOrWhiteSpace(step.ResultExtractPattern))
                 extract = $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.KEEP)} {SyntaxFacts.Quote(step.ResultExtractPattern)}";
 
-            return $"{SyntaxFacts.Quote(step.Name)}   {SyntaxFacts.Condition(step)}{Area(step, source)}{extract}{Waiting(step)}";
+            return $"{SyntaxFacts.Quote(step.Name)}   {SyntaxFacts.Condition(step)}{Area(step)}{extract}{Waiting(step)}";
         }
 
-        private static string CursorArguments(FlowStep step, BoundFlow source)
+        private static string CursorArguments(FlowStep step)
         {
-            string target = PointName(step.FlowPointId, step.FlowStepReferenceId, source);
+            string target = Target(step.FlowPoint, step.FlowStepReference);
 
             if (step.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE)
                 return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {target}";
@@ -423,7 +420,7 @@ namespace Business.FlowScript.Text
             string at = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.AT)} {target}";
 
             if (step.FlowStepType == FlowStepTypeEnum.CURSOR_DRAG)
-                return $"{at} {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {PointName(step.FlowPointEndId, step.FlowStepReferenceEndId, source)}";
+                return $"{at} {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {Target(step.FlowPointEnd, step.FlowStepReferenceEnd)}";
 
             string button = SyntaxFacts.Button(step.CursorButtonType, step.CursorButtonActionType);
             if (button.Length == 0)
@@ -432,14 +429,14 @@ namespace Business.FlowScript.Text
             return $"{at}   {button}";
         }
 
-        private static string LoopArguments(FlowStep step, BoundFlow source)
+        private static string LoopArguments(FlowStep step)
         {
             // Three sources, and which one is in play is readable from the row rather than stored:
             // a reference means each match, no count means forever.
-            if (step.FlowStepReferenceId != null)
+            if (step.FlowStepReference != null)
             {
                 string each = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.EACH)} {SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH)} {SyntaxFacts.Keyword(ScriptSymbolEnum.IN)}";
-                return $"{each} {SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(step.FlowStepReferenceId.Value, string.Empty))}";
+                return $"{each} {SyntaxFacts.Quote(step.FlowStepReference.Name)}";
             }
 
             if (step.IsLoopInfinite)
@@ -460,7 +457,7 @@ namespace Business.FlowScript.Text
             return $"{preset}{SyntaxFacts.Quote(step.RunCommandValue)}";
         }
 
-        private static string WindowArguments(FlowStep step, BoundFlow source)
+        private static string WindowArguments(FlowStep step)
         {
             string what = Process(step.ProcessName, step.TitleMatchMode, step.TitlePattern);
 
@@ -468,7 +465,7 @@ namespace Business.FlowScript.Text
                 return $"{what}   {SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE)} {step.WindowWidth} {step.WindowHeight}";
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RELOCATE)
-                return $"{what}   {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {PointName(step.FlowPointId, null, source)}";
+                return $"{what}   {SyntaxFacts.Keyword(ScriptSymbolEnum.TO)} {Target(step.FlowPoint, null)}";
 
             return what;
         }
@@ -478,12 +475,20 @@ namespace Business.FlowScript.Text
         // Private methods - fragments
         // ================================================================
 
-        private static string Area(FlowStep step, BoundFlow source)
+        // A step's children in running order: a loop's body, or what sits under a branch.
+        private static IEnumerable<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)
         {
-            if (step.FlowAreaId == null)
+            return schema.Steps
+                .Where(x => x.ParentFlowStep == parent)
+                .OrderBy(x => x.OrderNumber);
+        }
+
+        private static string Area(FlowStep step)
+        {
+            if (step.FlowArea == null)
                 return string.Empty;
 
-            return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.IN)} {SyntaxFacts.Quote(source.AreaNamesById.GetValueOrDefault(step.FlowAreaId.Value, string.Empty))}";
+            return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.IN)} {SyntaxFacts.Quote(step.FlowArea.Name)}";
         }
 
         // The window an area or a step is about: the process, and optionally its title.
@@ -511,29 +516,29 @@ namespace Business.FlowScript.Text
             return $"   {SyntaxFacts.Keyword(ScriptSymbolEnum.NO_TIMEOUT)}";
         }
 
-        private static string PointName(int? flowPointId, int? referenceId, BoundFlow source)
+        private static string Target(FlowPoint? point, FlowStep? reference)
         {
-            if (flowPointId != null)
-                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.POINT)} {SyntaxFacts.Quote(source.PointNamesById.GetValueOrDefault(flowPointId.Value, string.Empty))}";
+            if (point != null)
+                return $"{SyntaxFacts.Keyword(ScriptSymbolEnum.POINT)} {SyntaxFacts.Quote(point.Name)}";
 
-            if (referenceId != null)
-                return SyntaxFacts.Quote(source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty));
+            if (reference != null)
+                return SyntaxFacts.Quote(reference.Name);
 
             return SyntaxFacts.Keyword(ScriptSymbolEnum.MATCH);
         }
 
-        private static string Variable(int? referenceId, BoundFlow source)
+        private static string Variable(FlowStep? reference)
         {
-            if (referenceId == null)
+            if (reference == null)
                 return SyntaxFacts.Quote(string.Empty);
 
-            return SyntaxFacts.Quote("{{" + source.StepNamesById.GetValueOrDefault(referenceId.Value, string.Empty) + "}}");
+            return SyntaxFacts.Quote("{{" + reference.Name + "}}");
         }
 
         private static IEnumerable<FlowArea> Ordered(IReadOnlyList<FlowArea> areas)
         {
             List<FlowArea> roots = areas
-                .Where(x => x.ParentFlowAreaId == null)
+                .Where(x => x.ParentFlowArea == null)
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
                 .ToList();
 
@@ -541,7 +546,7 @@ namespace Business.FlowScript.Text
             {
                 yield return root;
 
-                foreach (FlowArea child in areas.Where(x => x.ParentFlowAreaId == root.Id).OrderBy(x => x.Name, StringComparer.Ordinal))
+                foreach (FlowArea child in areas.Where(x => x.ParentFlowArea == root).OrderBy(x => x.Name, StringComparer.Ordinal))
                     yield return child;
             }
         }

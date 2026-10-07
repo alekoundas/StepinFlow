@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 
 using Business.FlowScript;
-using Business.FlowScript.Models.Text;
+using Business.FlowScript.Parsers.Steps;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
@@ -166,7 +166,7 @@ namespace Business.Tests.FlowScript
             FlowStepTemplate button = (await ScriptRows.LoadAsync(_database, imported.FlowId)).Templates.Single();
             (button.ClickOffsetX, button.ClickOffsetY).ShouldBe((21, 10));
             button.IsRequired.ShouldBeFalse();
-            button.Accuracy.ShouldBe(ScriptTemplateImage.DefaultAccuracy(TemplateMatchModeEnum.SHAPE));
+            button.Accuracy.ShouldBe(SearchImageParser.DefaultAccuracy(TemplateMatchModeEnum.SHAPE));
         }
 
         // Parse and bind before the transaction, so half a flow is never written.

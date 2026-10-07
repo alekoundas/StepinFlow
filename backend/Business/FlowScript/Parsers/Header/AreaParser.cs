@@ -1,85 +1,83 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class AreaParser : BaseParser<FlowAreaSchemaBindng>
+    internal sealed class AreaParser : BaseParser<FlowArea>
     {
         public AreaParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 
-        public override FlowAreaSchemaBindng Parse()
+        public override FlowArea Parse()
         {
             // <[ name ]>   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
-            FlowAreaSchemaBindng result = new FlowAreaSchemaBindng();
-
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            result.Area = new FlowArea() { Name = name };
+            FlowArea area = new FlowArea() { Name = name };
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.WINDOW))
             {
-                result.Area.Type = FlowAreaTypeEnum.APPLICATION;
+                area.Type = FlowAreaTypeEnum.APPLICATION;
 
                 ExpectKeyword(ScriptSymbolEnum.PROCESS);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                result.Area.ProcessName = ExtractText();
+                area.ProcessName = ExtractText();
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.TITLE))
                 {
-                    result.Area.TitleMatchMode = ExtractKeyword<TitleMatchModeEnum>();
+                    area.TitleMatchMode = ExtractKeyword<TitleMatchModeEnum>();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                    result.Area.TitlePattern = ExtractText();
+                    area.TitlePattern = ExtractText();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                 }
             }
             // Empty is the primary monitor. A device is quoted, so one called primary is not mistaken for it.
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.MONITOR))
             {
-                result.Area.Type = FlowAreaTypeEnum.MONITOR;
+                area.Type = FlowAreaTypeEnum.MONITOR;
 
                 if (!ExpectOptionalKeyword(ScriptSymbolEnum.PRIMARY))
                 {
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                    result.Area.MonitorDeviceName = ExtractText();
+                    area.MonitorDeviceName = ExtractText();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                 }
             }
             // Screen coordinates: right on the machine it was made on and nowhere else.
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.ON_SCREEN))
             {
-                result.Area.Type = FlowAreaTypeEnum.CUSTOM;
-                ExpectPlacement(result.Area);
+                area.Type = FlowAreaTypeEnum.CUSTOM;
+                ExpectPlacement(area);
             }
             else
             {
                 ExpectKeyword(ScriptSymbolEnum.INSIDE);
-                result.Area.Type = FlowAreaTypeEnum.CUSTOM;
+                area.Type = FlowAreaTypeEnum.CUSTOM;
 
+                // Named, and linked by ScriptLineParser to the area declared above.
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                result.ParentName = ExtractText();
+                area.ParentFlowArea = new FlowArea() { Name = ExtractText() };
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-                ExpectPlacement(result.Area);
+                ExpectPlacement(area);
             }
 
             // Both optional: no setting inherits the parent's, and no DPI leaves pixels as they are.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.SCALES_WITH))
-                result.Area.ScalesWith = ExtractKeyword<ScalesWithEnum>();
+                area.ScalesWith = ExtractKeyword<ScalesWithEnum>();
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.AT))
-                result.Area.AuthoredDpi = ExtractDpi();
+                area.AuthoredDpi = ExtractDpi();
 
             ExpectEnd();
 
-            return result;
+            return area;
         }
 
 

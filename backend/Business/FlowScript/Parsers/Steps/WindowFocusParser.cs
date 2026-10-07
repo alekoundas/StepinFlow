@@ -1,4 +1,3 @@
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -11,19 +10,17 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Focus Window  process <[ chrome.exe ]>   [title starts with <[ Swag ]>]
-            FlowStepSchemaBindng result = new FlowStepSchemaBindng();
-
             ExpectKeyword(FlowStepTypeEnum.WINDOW_FOCUS);
-            result.Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS };
-            
-            ExpectWindow(result.Step);
-            
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS };
+
+            ExpectWindow(step);
+
             ExpectEnd();
 
-            return result;
+            return step;
         }
     }
 }

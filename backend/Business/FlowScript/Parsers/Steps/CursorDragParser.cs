@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -12,27 +11,21 @@ namespace Business.FlowScript.Parsers.Steps
         {
         }
 
-        public override FlowStepSchemaBindng Parse()
+        public override FlowStep Parse()
         {
             // Drag  at point <[ A ]> to point <[ B ]>
             ExpectKeyword(FlowStepTypeEnum.CURSOR_DRAG);
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG };
 
             ExpectKeyword(ScriptSymbolEnum.AT);
-            (string? startPoint, string? startReference) = ExtractTarget();
+            (step.FlowPoint, step.FlowStepReference) = ExtractTarget();
 
             ExpectKeyword(ScriptSymbolEnum.TO);
-            (string? endPoint, string? endReference) = ExtractTarget();
+            (step.FlowPointEnd, step.FlowStepReferenceEnd) = ExtractTarget();
 
             ExpectEnd();
 
-            return new FlowStepSchemaBindng()
-            {
-                Step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG },
-                PointName = startPoint,
-                ReferenceName = startReference,
-                PointEndName = endPoint,
-                ReferenceEndName = endReference,
-            };
+            return step;
         }
     }
 }

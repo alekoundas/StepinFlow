@@ -1,4 +1,4 @@
-using Business.FlowScript.Models.Binding;
+using Business.FlowScript.Models;
 
 namespace Business.FlowScript.Scanner
 {

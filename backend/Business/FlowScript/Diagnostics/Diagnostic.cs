@@ -33,8 +33,9 @@ namespace Business.FlowScript.Diagnostics
         // Comments: one with no step below it.
         COMMENT_UNATTACHED,
 
-        // Binding
+        // Names: one used before anything above declares it, one declared twice.
         NAME_UNKNOWN,
+        NAME_DUPLICATE,
 
         // Outside the file
         FILE_MISSING,

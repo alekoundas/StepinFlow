@@ -1,6 +1,6 @@
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
-using Business.FlowScript.Models.Binding;
+using Business.FlowScript.Models;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Parsers.Header;
 using Business.FlowScript.Parsers.Steps;
@@ -15,13 +15,24 @@ namespace Business.FlowScript.Parsers
     /// one place the schema is written.
     ///
     /// A line's grammar is its parser's. What the lines mean together is here: the tree the
-    /// indentation draws, a template described twice, a comment belonging to the step below.
+    /// indentation draws, a template described twice, a comment belonging to the step below, and
+    /// every name linked to the row declared above it the moment its line is read.
     /// </summary>
     internal sealed class ScriptLineParser
     {
         private readonly FlowScriptSchema _flowScriptSchema;
         private readonly Dictionary<ScriptToken, string> _comments = new Dictionary<ScriptToken, string>(); // Comments for the step below, by their # token.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
+
+        // What the lines above declared. Steps, areas, points and inputs share one set of names.
+        private readonly HashSet<string> _names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, (FlowStepTemplate Facts, bool HasClick)> _templates = new Dictionary<string, (FlowStepTemplate Facts, bool HasClick)>(StringComparer.Ordinal);
+
+        // The last step and the steps it sits in, innermost last, with the indent each was written at.
+        private readonly List<(FlowStep Step, int Indent)> _openSteps = new List<(FlowStep Step, int Indent)>();
 
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
         {
@@ -126,11 +137,11 @@ namespace Business.FlowScript.Parsers
             switch (symbol)
             {
                 case ScriptSymbolEnum.FLOWFIELD_NAME:
-                    _flowScriptSchema.FlowName = new FlowNameParser(line.Tokens).Parse();
+                    _flowScriptSchema.Flow.Name = new FlowNameParser(line.Tokens).Parse();
                     break;
 
                 case ScriptSymbolEnum.FLOWFIELD_ID:
-                    _flowScriptSchema.PublicId = new FlowIdParser(line.Tokens).Parse();
+                    _flowScriptSchema.Flow.PublicId = new FlowIdParser(line.Tokens).Parse();
                     break;
 
                 case ScriptSymbolEnum.FLOWFIELD_SIZES:
@@ -144,18 +155,24 @@ namespace Business.FlowScript.Parsers
 
         private void AddArea(ScriptLine line)
         {
-            FlowAreaSchemaBindng area = new AreaParser(line.Tokens).Parse();
-            area.Line = line.Number;
+            FlowArea area = new AreaParser(line.Tokens).Parse();
+            area.ParentFlowArea = Link(_areas, area.ParentFlowArea?.Name, "area", line.Tokens);
 
             _flowScriptSchema.Areas.Add(area);
+
+            if (Declare(area.Name, line.Tokens))
+                _areas[area.Name] = area;
         }
 
         private void AddPoint(ScriptLine line)
         {
-            FlowPointSchemaBindng point = new PointParser(line.Tokens).Parse();
-            point.Line = line.Number;
+            FlowPoint point = new PointParser(line.Tokens).Parse();
+            point.FlowArea = Link(_areas, point.FlowArea?.Name, "area", line.Tokens);
 
             _flowScriptSchema.Points.Add(point);
+
+            if (Declare(point.Name, line.Tokens))
+                _points[point.Name] = point;
         }
 
         private void AddInput(ScriptLine line)
@@ -164,20 +181,15 @@ namespace Business.FlowScript.Parsers
             input.OrderNumber = _flowScriptSchema.Inputs.Count;
 
             _flowScriptSchema.Inputs.Add(input);
+            Declare(input.Name, line.Tokens);
         }
 
         private void AddTemplate(ScriptLine line)
         {
-            FlowStepTemplateSchemaBindng template = new TemplateParser(line.Tokens).Parse();
+            (FlowStepTemplate Facts, bool HasClick) template = new TemplateParser(line.Tokens).Parse();
 
-            if (_flowScriptSchema.Templates.Any(x => string.Equals(x.FileName, template.FileName, StringComparison.Ordinal)))
-            {
-                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, line.Tokens[0].Column, $"\"{template.FileName}\" is already described above."));
-                return;
-            }
-
-            template.Line = line.Number;
-            _flowScriptSchema.Templates.Add(template);
+            if (!_templates.TryAdd(template.Facts.Name, template))
+                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, line.Tokens[0].Column, $"\"{template.Facts.Name}\" is already described above."));
         }
 
 
@@ -195,26 +207,33 @@ namespace Business.FlowScript.Parsers
             if (type == null)
                 throw ScriptSyntaxException.Unexpected(line.Tokens[0], []);
 
-            FlowStepSchemaBindng parsed;
+            FlowStep step;
             try
             {
-                parsed = ParseStep(type.Value, line.Tokens);
+                step = ParseStep(type.Value, line.Tokens);
             }
             catch (ScriptSyntaxException)
             {
                 // Still add in tree, so the lines under it find their parent.
-                AddToSchemaBindng(line, new FlowStepSchemaBindng() { Step = new FlowStep() { FlowStepType = type.Value } });
+                AddToTree(line, new FlowStep() { FlowStepType = type.Value });
                 throw;
             }
 
+            // Linked before its own name is declared, so a step cannot name itself.
+            Link(step, line.Tokens);
+            JoinTemplateFacts(step);
+
             // Attach any comments.
-            parsed.Step.CodeComment = string.Join("\n", _comments.Values);
+            step.CodeComment = string.Join("\n", _comments.Values);
             _comments.Clear();
 
-            AddToSchemaBindng(line, parsed);
+            AddToTree(line, step);
+
+            if (Declare(step.Name, line.Tokens))
+                _steps[step.Name] = step;
         }
 
-        private static FlowStepSchemaBindng ParseStep(FlowStepTypeEnum type, IReadOnlyList<ScriptToken> tokens)
+        private static FlowStep ParseStep(FlowStepTypeEnum type, IReadOnlyList<ScriptToken> tokens)
         {
             switch (type)
             {
@@ -287,16 +306,20 @@ namespace Business.FlowScript.Parsers
             }
         }
 
-        // Too deep is reported but the step is kept, so the lines below still find their parent.
-        private void AddToSchemaBindng(ScriptLine line, FlowStepSchemaBindng parsed)
+        // The parent is the nearest open step written less deep than this line. Too deep is
+        // reported but the step is kept, so the lines below still find their parent.
+        private void AddToTree(ScriptLine line, FlowStep step)
         {
-            int? parentIndex = FindParentStepIndex(line.LeadingSpaces);
+            while (_openSteps.Count > 0 && _openSteps[^1].Indent >= line.LeadingSpaces)
+                _openSteps.RemoveAt(_openSteps.Count - 1);
 
-            int deepest;
-            if (parentIndex == null)
-                deepest = 0;
-            else
-                deepest = _flowScriptSchema.Steps[parentIndex.Value].LeadingSpaces + 1;
+            FlowStep? parent = null;
+            int deepest = 0;
+            if (_openSteps.Count > 0)
+            {
+                parent = _openSteps[^1].Step;
+                deepest = _openSteps[^1].Indent + 1;
+            }
 
             if (line.LeadingSpaces > deepest)
             {
@@ -304,29 +327,95 @@ namespace Business.FlowScript.Parsers
                     $"Indented too far. Each level is one space, so this line can have at most {deepest}."));
             }
 
-            parsed.Step.OrderNumber = _flowScriptSchema.Steps.Count;
-            parsed.Line = line.Number;
-            parsed.LeadingSpaces = line.LeadingSpaces;
-            parsed.ParentIndex = parentIndex;
+            step.ParentFlowStep = parent;
+            step.OrderNumber = _flowScriptSchema.Steps.Count(x => x.ParentFlowStep == parent);
 
-            _flowScriptSchema.Steps.Add(parsed);
+            _flowScriptSchema.Steps.Add(step);
+            _openSteps.Add((step, line.LeadingSpaces));
         }
 
-        // The steps still open are the previous one and its ancestors, so the parent is the first of them shallower than this line.
-        private int? FindParentStepIndex(int indent)
+
+        // ================================================================
+        // Private methods - names
+        // ================================================================
+
+        // Every row the step names, swapped for the one declared above. A sub-flow is another file,
+        // so its path is kept as written instead.
+        private void Link(FlowStep step, IReadOnlyList<ScriptToken> tokens)
         {
-            int? stepIndex;
-            if (_flowScriptSchema.Steps.Count > 0)
-                stepIndex = _flowScriptSchema.Steps.Count - 1;
-            else
+            step.FlowArea = Link(_areas, step.FlowArea?.Name, "area", tokens);
+            step.FlowPoint = Link(_points, step.FlowPoint?.Name, "point", tokens);
+            step.FlowPointEnd = Link(_points, step.FlowPointEnd?.Name, "point", tokens);
+            step.FlowStepReference = Link(_steps, step.FlowStepReference?.Name, "step", tokens);
+            step.FlowStepReferenceEnd = Link(_steps, step.FlowStepReferenceEnd?.Name, "step", tokens);
+
+            if (step.SubFlow != null)
+            {
+                _flowScriptSchema.SubFlowPaths[step] = step.SubFlow.Name;
+                step.SubFlow = null;
+            }
+        }
+
+        private T? Link<T>(Dictionary<string, T> declared, string? name, string what, IReadOnlyList<ScriptToken> tokens) where T : class
+        {
+            if (name == null)
                 return null;
 
-            while (stepIndex != null && _flowScriptSchema.Steps[stepIndex.Value].LeadingSpaces >= indent)
-            {
-                stepIndex = _flowScriptSchema.Steps[stepIndex.Value].ParentIndex;
-            }
+            if (declared.TryGetValue(name, out T? row))
+                return row;
 
-            return stepIndex;
+            ScriptToken token = TokenOf(name, tokens);
+            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.NAME_UNKNOWN, token.Line, token.Column,
+                $"Nothing above this line is called \"{name}\", so there is no {what} to point at."));
+
+            return null;
+        }
+
+        // False when the name is taken, which is reported at the second one.
+        private bool Declare(string name, IReadOnlyList<ScriptToken> tokens)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return false;
+
+            if (_names.Add(name))
+                return true;
+
+            ScriptToken token = TokenOf(name, tokens);
+            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.NAME_DUPLICATE, token.Line, token.Column,
+                $"\"{name}\" is already used above. Steps, areas, points and inputs share one set of names, because the script refers to them by name."));
+
+            return false;
+        }
+
+        // The header's facts about each picture a step names. A template the header gives no click
+        // is left for the importer to centre.
+        private void JoinTemplateFacts(FlowStep step)
+        {
+            foreach (FlowStepTemplate template in step.FlowStepTemplates)
+            {
+                if (!_templates.TryGetValue(template.Name, out (FlowStepTemplate Facts, bool HasClick) header))
+                {
+                    _flowScriptSchema.TemplatesWithoutClick.Add(template.Name);
+                    continue;
+                }
+
+                if (!header.HasClick)
+                    _flowScriptSchema.TemplatesWithoutClick.Add(template.Name);
+
+                template.ClickOffsetX = header.Facts.ClickOffsetX;
+                template.ClickOffsetY = header.Facts.ClickOffsetY;
+                template.AuthoredFlowAreaWidth = header.Facts.AuthoredFlowAreaWidth;
+                template.AuthoredFlowAreaHeight = header.Facts.AuthoredFlowAreaHeight;
+                template.AuthoredDpi = header.Facts.AuthoredDpi;
+            }
+        }
+
+        // Where a name was written, for the message to point at. A step's result is written {{name}}.
+        private static ScriptToken TokenOf(string name, IReadOnlyList<ScriptToken> tokens)
+        {
+            ScriptToken? token = tokens.FirstOrDefault(x => x.Kind == ScriptTokenKindEnum.QUOTE && (x.Value == name || x.Value == "{{" + name + "}}"));
+
+            return token ?? tokens[0];
         }
 
 

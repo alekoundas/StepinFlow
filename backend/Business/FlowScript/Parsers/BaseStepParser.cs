@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Models.Binding;
 using Business.FlowScript.Models.Text;
 using Business.Validation;
 using Core.Enums;
@@ -9,8 +8,11 @@ namespace Business.FlowScript.Parsers
 {
     /// <summary>
     /// The clauses more than one step takes, each read the one way the printer writes it.
+    ///
+    /// A name is returned as written, as a row holding only that name. ScriptLineParser swaps it
+    /// for the row declared above.
     /// </summary>
-    internal abstract class BaseStepParser : BaseParser<FlowStepSchemaBindng>
+    internal abstract class BaseStepParser : BaseParser<FlowStep>
     {
         protected BaseStepParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
@@ -22,12 +24,12 @@ namespace Business.FlowScript.Parsers
         // ================================================================
 
         // point <[ X ]> | <[ a step ]> | match - the current item of a loop, neither a point nor a step, so both null.
-        protected (string? PointName, string? ReferenceName) ExtractTarget()
+        protected (FlowPoint? Point, FlowStep? Reference) ExtractTarget()
         {
             if (ExpectOptionalKeyword(ScriptSymbolEnum.POINT))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                string point = ExtractText();
+                FlowPoint point = new FlowPoint() { Name = ExtractText() };
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 return (point, null);
@@ -37,7 +39,7 @@ namespace Business.FlowScript.Parsers
                 return (null, null);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            string reference = ExtractText();
+            FlowStep reference = new FlowStep() { Name = ExtractText() };
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             return (null, reference);
@@ -86,13 +88,13 @@ namespace Business.FlowScript.Parsers
         }
 
         // in <[ area ]>, or null.
-        protected string? ExtractOptionalArea()
+        protected FlowArea? ExtractOptionalArea()
         {
             if (!ExpectOptionalKeyword(ScriptSymbolEnum.IN))
                 return null;
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            string area = ExtractText();
+            FlowArea area = new FlowArea() { Name = ExtractText() };
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             return area;
