@@ -1,6 +1,5 @@
 using Business.Command;
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Syntax;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -93,8 +92,8 @@ namespace Business.Validation.Rules
         // A FlowStep column cant contain <[ and ]> 
         private static void ValidateQuotes(FlowValidationResultDto result, FlowStep step)
         {
-            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
-            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteOpen = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             // A line each, so the end of one field and the start of the next never make a quote between them.
             string text = string.Join("\n",

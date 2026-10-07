@@ -198,5 +198,18 @@ namespace Business.FlowScript.Catalogs
 
             return null;
         }
+
+        /// <summary>
+        /// The word a value is written as, from any vocabulary. A value with none is a gap in the
+        /// catalog, so it throws rather than writing a line no reader accepts.
+        /// </summary>
+        public static string GetTextOfKeyword(Enum value)
+        {
+            ScriptKeyword? keyword = Get(value);
+            if (keyword == null)
+                throw new InvalidOperationException($"No keyword in the catalog writes {value.GetType().Name}.{value}.");
+
+            return keyword.Text;
+        }
     }
 }

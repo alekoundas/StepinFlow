@@ -4,7 +4,6 @@ using System.Globalization;
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Text;
-using Business.FlowScript.Syntax;
 
 using Core.Enums;
 
@@ -51,7 +50,7 @@ namespace Business.FlowScript.Parsers
         protected void ExpectKeyword<TEnum>(TEnum keyword) where TEnum : struct, Enum
         {
             if (CheckKeywordAt([keyword]) == null)
-                throw Unexpected(Quoted(SyntaxFacts.Keyword(keyword)));
+                throw Unexpected(Quoted(ScriptKeywordCatalog.GetTextOfKeyword(keyword)));
 
             IncreaseIndex();
         }
@@ -64,7 +63,7 @@ namespace Business.FlowScript.Parsers
         {
             if (CheckKeywordAt([keyword]) == null)
             {
-                _expected.Add(Quoted(SyntaxFacts.Keyword(keyword)));
+                _expected.Add(Quoted(ScriptKeywordCatalog.GetTextOfKeyword(keyword)));
                 return false;
             }
 
@@ -84,7 +83,7 @@ namespace Business.FlowScript.Parsers
             {
                 // The words named, or every word of TEnum when none are.
                 if (allowed.Length > 0)
-                    throw Unexpected(allowed.Select(x => Quoted(SyntaxFacts.Keyword(x))));
+                    throw Unexpected(allowed.Select(x => Quoted(ScriptKeywordCatalog.GetTextOfKeyword(x))));
 
                 throw Unexpected(ScriptKeywordCatalog.All.Where(x => x.Type is TEnum).Select(x => Quoted(x.Text)));
             }
@@ -201,7 +200,7 @@ namespace Business.FlowScript.Parsers
         /// </summary>
         protected int ExtractMilliseconds()
         {
-            string unit = SyntaxFacts.Keyword(ScriptSymbolEnum.MILLISECONDS);
+            string unit = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.MILLISECONDS);
 
             int? value = Integer(WithoutUnit(unit));
             if (value == null)
@@ -216,7 +215,7 @@ namespace Business.FlowScript.Parsers
         /// </summary>
         protected int ExtractDpi()
         {
-            string unit = SyntaxFacts.Keyword(ScriptSymbolEnum.DPI);
+            string unit = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.DPI);
 
             int? dpi = Integer(WithoutUnit(unit));
             if (dpi == null || dpi <= 0)
@@ -231,7 +230,7 @@ namespace Business.FlowScript.Parsers
         /// </summary>
         protected Size ExtractSize()
         {
-            string separator = SyntaxFacts.Keyword(ScriptSymbolEnum.SIZE_SEPARATOR);
+            string separator = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.SIZE_SEPARATOR);
 
             if (CurrentToken.Kind != ScriptTokenKindEnum.NUMBER)
                 throw Unexpected($"a width and a height joined by {Quoted(separator)}");

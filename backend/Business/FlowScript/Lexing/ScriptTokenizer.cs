@@ -1,6 +1,5 @@
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
-using Business.FlowScript.Syntax;
 
 namespace Business.FlowScript.Lexing
 {
@@ -38,8 +37,8 @@ namespace Business.FlowScript.Lexing
         // which leave as UNKNOWN for Join to sort out.
         private static List<ScriptToken> Cut(ScriptLine line)
         {
-            string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
-            string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
+            string quoteOpen = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string quoteClose = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             List<ScriptToken> pieces = new List<ScriptToken>();
             int i = line.LeadingSpaces;

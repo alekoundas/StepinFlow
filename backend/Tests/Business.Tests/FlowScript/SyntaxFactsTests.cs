@@ -114,7 +114,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            FlowScriptSchema schema = Read($"Steps:\nFocus Window process <[ p ]> title {SyntaxFacts.Keyword(mode)} <[ x ]>");
+            FlowScriptSchema schema = Read($"Steps:\nFocus Window process <[ p ]> title {ScriptKeywordCatalog.GetTextOfKeyword(mode)} <[ x ]>");
 
             schema.Steps.Single().TitleMatchMode.ShouldBe(mode);
         }
@@ -126,7 +126,7 @@ namespace Business.Tests.FlowScript
         [InlineData(CursorScrollDirectionTypeEnum.RIGHT)]
         public void A_scroll_direction_is_read_back_as_written(CursorScrollDirectionTypeEnum direction)
         {
-            FlowScriptSchema schema = Read($"Steps:\nScroll {SyntaxFacts.Keyword(direction)} 3");
+            FlowScriptSchema schema = Read($"Steps:\nScroll {ScriptKeywordCatalog.GetTextOfKeyword(direction)} 3");
 
             schema.Steps.Single().CursorScrollDirectionType.ShouldBe(direction);
         }
@@ -157,7 +157,7 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            FlowScriptSchema schema = Read($"Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match {SyntaxFacts.Keyword(mode)}");
+            FlowScriptSchema schema = Read($"Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match {ScriptKeywordCatalog.GetTextOfKeyword(mode)}");
 
             schema.Diagnostics.ShouldBeEmpty();
             schema.Steps.Single().TemplateMatchMode.ShouldBe(mode);
@@ -168,7 +168,7 @@ namespace Business.Tests.FlowScript
         [InlineData(ScalesWithEnum.AREA)]
         public void What_an_area_scales_with_is_read_back_as_written(ScalesWithEnum scalesWith)
         {
-            FlowScriptSchema schema = Read($"Areas:\n  <[ A ]> monitor primary   scales with {SyntaxFacts.Keyword(scalesWith)}");
+            FlowScriptSchema schema = Read($"Areas:\n  <[ A ]> monitor primary   scales with {ScriptKeywordCatalog.GetTextOfKeyword(scalesWith)}");
 
             schema.Areas.Single().ScalesWith.ShouldBe(scalesWith);
         }

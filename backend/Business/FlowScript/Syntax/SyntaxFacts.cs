@@ -56,25 +56,12 @@ namespace Business.FlowScript.Syntax
             return keyword.Text;
         }
 
-        /// <summary>
-        /// The word a value is written as, from any vocabulary. A value with none is a gap in the
-        /// catalog, so it throws rather than writing a line no reader accepts.
-        /// </summary>
-        internal static string Keyword(Enum value)
-        {
-            ScriptKeyword? keyword = ScriptKeywordCatalog.Get(value);
-            if (keyword == null)
-                throw new InvalidOperationException($"No keyword in the catalog writes {value.GetType().Name}.{value}.");
-
-            return keyword.Text;
-        }
-
         public static string Condition(FlowStep step)
         {
             if (step.ConditionType == null)
                 return string.Empty;
 
-            string keyword = Keyword(step.ConditionType.Value);
+            string keyword = ScriptKeywordCatalog.GetTextOfKeyword(step.ConditionType.Value);
 
             switch (step.ConditionType)
             {
@@ -83,7 +70,7 @@ namespace Business.FlowScript.Syntax
                     return keyword;
 
                 case ConditionTypeEnum.BETWEEN:
-                    return $"{keyword} {Quote(step.ConditionText)} {Keyword(ScriptSymbolEnum.AND)} {Quote(step.ConditionTextEnd)}";
+                    return $"{keyword} {Quote(step.ConditionText)} {ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.AND)} {Quote(step.ConditionTextEnd)}";
 
                 default:
                     return $"{keyword} {Quote(step.ConditionText)}";
@@ -99,11 +86,11 @@ namespace Business.FlowScript.Syntax
         {
             string side = string.Empty;
             if (button != null && button != CursorButtonTypeEnum.LEFT_BUTTON)
-                side = Keyword(button.Value);
+                side = ScriptKeywordCatalog.GetTextOfKeyword(button.Value);
 
             string kind = string.Empty;
             if (action != null && action != CursorButtonActionTypeEnum.SINGLE_CLICK)
-                kind = Keyword(action.Value);
+                kind = ScriptKeywordCatalog.GetTextOfKeyword(action.Value);
 
             return $"{side} {kind}".Trim();
         }
@@ -114,7 +101,7 @@ namespace Business.FlowScript.Syntax
         /// </summary>
         public static string Quote(string? text)
         {
-            return $"{Keyword(ScriptSymbolEnum.QUOTE_OPEN)} {text} {Keyword(ScriptSymbolEnum.QUOTE_CLOSE)}";
+            return $"{ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_OPEN)} {text} {ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_CLOSE)}";
         }
     }
 }

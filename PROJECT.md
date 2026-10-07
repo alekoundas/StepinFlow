@@ -644,9 +644,10 @@ areas roots-then-children alphabetically, so a caller cannot hand it rows ordere
 
 `ScriptKeywordCatalog` holds every word the grammar knows **for both directions** - each row a text
 and the value it means: a step type, a condition, a title match, a section header, a clause word
-like `inside` or `timeout`, a unit like `ms`. The printer writes from it through
-`SyntaxFacts.Keyword`, and the parsers read from it, so a keyword cannot mean one thing on write and
-another on read. A value is read as a catalog word and nothing else: the first reader used
+like `inside` or `timeout`, a unit like `ms`. It answers both ways - `Get<TEnum>(text)` for the
+value a word means, `GetTextOfKeyword(value)` for the word a value is written as - and the printer,
+the parsers and the validator all ask it, so a keyword cannot mean one thing on write and another on
+read. A value is read as a catalog word and nothing else: the first reader used
 `Enum.TryParse`, which also accepts a number and comma-joined flags, which is how `Press Ctrl+1` once
 pressed Ctrl+B and `System 99` parsed as an action that does not exist.
 
