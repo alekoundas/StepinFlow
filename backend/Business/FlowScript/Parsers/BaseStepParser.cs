@@ -1,6 +1,5 @@
 using Business.FlowScript.Catalogs;
 using Business.FlowScript.Models.Text;
-using Business.Validation;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -65,14 +64,15 @@ namespace Business.FlowScript.Parsers
             step.ConditionText = string.Empty;
             step.ConditionTextEnd = string.Empty;
 
-            if (ConditionHelper.NeedsValue(condition))
+            // Empty and not empty compare against nothing, and only between takes a second value.
+            if (condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY)
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
                 step.ConditionText = ExtractText();
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
             }
 
-            if (ConditionHelper.NeedsSecondValue(condition))
+            if (condition == ConditionTypeEnum.BETWEEN)
             {
                 ExpectKeyword(ScriptSymbolEnum.AND);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);

@@ -1,4 +1,4 @@
-namespace Core.Models.Business
+namespace Core.Models.Business.OpenCV
 {
     /// <summary>One hit, in coordinates relative to the searched area.</summary>
     public sealed class TemplateMatchResult

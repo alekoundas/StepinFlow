@@ -1,4 +1,4 @@
-using Core.Models.Business;
+using Core.Models.Business.OpenCV;
 using Core.Ports;
 
 namespace Business.Tests.Fakes

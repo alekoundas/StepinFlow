@@ -6,6 +6,7 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
+using Core.Models.Business.OpenCV;
 
 namespace Transport.Ipc.Handlers
 {

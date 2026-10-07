@@ -1,6 +1,5 @@
 using System.Drawing;
-
-using Core.Models.Business;
+using Core.Models.Business.OpenCV;
 using Core.Models.Database;
 using Core.Models.Dtos;
 

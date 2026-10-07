@@ -2,6 +2,7 @@ using System.Drawing;
 
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Business.OpenCV;
 using Core.Ports;
 
 namespace Business.Searching

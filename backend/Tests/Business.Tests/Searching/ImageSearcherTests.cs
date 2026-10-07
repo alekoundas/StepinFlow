@@ -4,6 +4,7 @@ using Business.Searching;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Business.OpenCV;
 
 namespace Business.Tests.Searching
 {

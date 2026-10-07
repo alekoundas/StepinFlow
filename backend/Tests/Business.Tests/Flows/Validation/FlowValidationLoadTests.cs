@@ -1,12 +1,12 @@
 using Business.Tests.Fakes;
-using Business.Validation;
+using Business.Flows.FlowValidationService;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using static Business.Tests.TestToken;
 
-namespace Business.Tests.Validation
+namespace Business.Tests.Flows.Validation
 {
     /// <summary>
     /// Saved flows validated from the database, one at a time and in a batch. The flow list badges

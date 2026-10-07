@@ -4,7 +4,7 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Validation.Rules
+namespace Business.Flows.FlowValidationService.Rules
 {
     /// <summary>
     /// Whether each step is configured well enough to run, judged on its own fields.
@@ -141,10 +141,12 @@ namespace Business.Validation.Rules
                 return;
             }
 
-            if (ConditionHelper.NeedsValue(step.ConditionType.Value) && string.IsNullOrWhiteSpace(step.ConditionText))
+            // Empty and not empty compare against nothing, and only between takes a second value.
+            bool needsValue = step.ConditionType != ConditionTypeEnum.IS_EMPTY && step.ConditionType != ConditionTypeEnum.IS_NOT_EMPTY;
+            if (needsValue && string.IsNullOrWhiteSpace(step.ConditionText))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_VALUE_MISSING, "There is nothing to check the result against.");
 
-            if (ConditionHelper.NeedsSecondValue(step.ConditionType.Value) && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
+            if (step.ConditionType == ConditionTypeEnum.BETWEEN && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
         }
 

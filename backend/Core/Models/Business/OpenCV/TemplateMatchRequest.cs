@@ -1,6 +1,6 @@
 using Core.Enums;
 
-namespace Core.Models.Business
+namespace Core.Models.Business.OpenCV
 {
     public sealed class TemplateMatchRequest
     {

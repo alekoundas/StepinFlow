@@ -4,7 +4,7 @@ using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Validation.Rules
+namespace Business.Flows.FlowValidationService.Rules
 {
     /// <summary>
     /// Whether the steps still agree with each other 

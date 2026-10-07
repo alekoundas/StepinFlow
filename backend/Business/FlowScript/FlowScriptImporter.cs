@@ -71,7 +71,7 @@ namespace Business.FlowScript
             foreach (FlowStepTemplate template in schema.Steps.SelectMany(x => x.FlowStepTemplates))
                 await ReadTemplateBytesAsync(template, templateFolderPath, result, ct);
 
-            // A sub-flow is another file and is not resolved yet (FLOW-FORMAT.md).
+            // Save to Database.
             ResultDto<(int FlowId, FlowValidationResultDto Validation)> replaced = await _dataService.Flow.ReplaceAsync(schema, ct);
 
             result.FlowId = replaced.Data.FlowId;

@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Validation.Rules
+namespace Business.Flows.FlowValidationService.Rules
 {
     /// <summary>Adding an issue, shared so every rule reports one the same way.</summary>
     public static class ValidationResultExtensions

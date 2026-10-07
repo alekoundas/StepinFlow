@@ -1,4 +1,4 @@
-using Business.Validation.Rules;
+using Business.Flows.FlowValidationService.Rules;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
@@ -7,7 +7,7 @@ using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Business.Validation
+namespace Business.Flows.FlowValidationService
 {
     /// <summary>
     /// Per flow validate references and form fields validity.

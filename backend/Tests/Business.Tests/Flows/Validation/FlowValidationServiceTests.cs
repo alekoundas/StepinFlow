@@ -1,9 +1,9 @@
-using Business.Validation;
+using Business.Flows.FlowValidationService;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Tests.Validation
+namespace Business.Tests.Flows.Validation
 {
     public sealed class FlowValidationServiceTests
     {

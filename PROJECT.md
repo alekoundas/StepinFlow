@@ -85,8 +85,8 @@ Business/
   Executions/    engine, walker, cache, history, Workers/
   Searching/     ImageSearcher - shared by the engine and the editor's Test now
   FlowScript/    Scanner/ Lexing/ Parsers/ Models/ Printer/ Diagnostics/, importer and exporter
-  Flows/         DataService/ - every write to a flow - and the tree maths a move uses
-  Validation/    FlowValidationService, Rules/
+  Flows/         DataService/ - every write to a flow - FlowValidationService/ with its Rules/ -
+                 what every write is checked against - and the tree maths a move uses
   Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
 ```
 

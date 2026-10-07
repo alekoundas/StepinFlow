@@ -6,6 +6,7 @@ using Business.Searching;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Business.OpenCV;
 using Core.Models.Database;
 
 using Microsoft.Extensions.Time.Testing;

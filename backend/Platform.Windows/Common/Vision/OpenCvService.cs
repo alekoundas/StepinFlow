@@ -2,6 +2,7 @@
 using Core.Enums;
 using Core.Models.Business;
 using OpenCvSharp;
+using Core.Models.Business.OpenCV;
 
 namespace Platform.Windows.Vision
 {

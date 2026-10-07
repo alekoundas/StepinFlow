@@ -60,9 +60,7 @@ namespace Business.FlowScript.Catalogs
         EACH,
         PASSED,
         FAILED,
-
-        // Written onto a number: 800ms, 120dpi, 1920x1080
-        MILLISECONDS,
+        MILLISECONDS, // Written onto a number: 800ms, 120dpi, 1920x1080
         DPI,
         SIZE_SEPARATOR,
     }
