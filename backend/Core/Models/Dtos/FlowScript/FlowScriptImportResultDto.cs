@@ -6,7 +6,7 @@ namespace Core.Models.Dtos.FlowScript
     /// What an import did, or why it did nothing. A failed import leaves the flow exactly as it
     /// was, so an error list and an untouched flow are the same outcome.
     /// </summary>
-    public class FlowImportResultDto
+    public class FlowScriptImportResultDto
     {
         public bool IsSuccess { get; set; }
 

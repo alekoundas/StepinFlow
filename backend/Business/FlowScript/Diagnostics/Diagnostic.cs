@@ -24,7 +24,8 @@ namespace Business.FlowScript.Diagnostics
         // Header
         FLOW_LINE_MISSING,
 
-        // Templates
+        // Templates: one a step names with no line above it, one described twice.
+        TEMPLATE_UNKNOWN,
         TEMPLATE_DUPLICATE,
 
         // Steps

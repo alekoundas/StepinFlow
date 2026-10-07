@@ -1,13 +1,11 @@
 using System.Buffers.Binary;
 
 using Business.FlowScript;
-using Business.FlowScript.Parsers.Steps;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
-using Core.Models.Dtos;
 using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using static Business.Tests.TestToken;
@@ -42,21 +40,21 @@ namespace Business.Tests.FlowScript
             return new FlowScriptImporter(new Scanner(), TestDataService.For(_database));
         }
 
-        private sealed record RoundTrip(int FlowId, FlowImportResultDto Imported, string First, string Second, ScriptRows Before, ScriptRows After);
+        private sealed record RoundTrip(int FlowId, FlowScriptImportResultDto Imported, string First, string Second, ScriptRows Before, ScriptRows After);
 
         private async Task<RoundTrip> ExportImportExportAsync()
         {
             int flowId = Seed();
 
-            FlowExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
             string first = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
             ScriptRows before = await ScriptRows.LoadAsync(_database, flowId);
 
-            FlowImportResultDto imported = await Importer().ImportAsync(exported.ScriptPath, Ct);
+            FlowScriptImportResultDto imported = await Importer().ImportAsync(exported.ScriptPath, Ct);
             imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => $"line {x.Line}: {x.Message}")));
 
             ScriptRows after = await ScriptRows.LoadAsync(_database, imported.FlowId);
-            FlowExportResultDto again = await Exporter().ExportAsync(imported.FlowId, _folder, Ct);
+            FlowScriptExportResultDto again = await Exporter().ExportAsync(imported.FlowId, _folder, Ct);
             string second = await File.ReadAllTextAsync(again.ScriptPath, Ct);
 
             return new RoundTrip(flowId, imported, first, second, before, after);
@@ -147,41 +145,19 @@ namespace Business.Tests.FlowScript
         // Importing
         // ================================================================
 
-        [Fact]
-        public async Task A_template_with_no_header_line_is_clicked_in_its_middle()
-        {
-            Directory.CreateDirectory(_folder);
-            await File.WriteAllBytesAsync(Path.Combine(_folder, "button.png"), Png(41, 20), Ct);
-            string script = """
-                Flow:    Hand written
-                Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b112
-
-                Steps:
-                Find Image  <[ Find the button ]>   template <[ button.png ]>
-                """;
-
-            FlowImportResultDto imported = await Importer().ImportTextAsync(script, _folder, Ct);
-
-            imported.IsSuccess.ShouldBeTrue();
-            FlowStepTemplate button = (await ScriptRows.LoadAsync(_database, imported.FlowId)).Templates.Single();
-            (button.ClickOffsetX, button.ClickOffsetY).ShouldBe((21, 10));
-            button.IsRequired.ShouldBeFalse();
-            button.Accuracy.ShouldBe(SearchImageParser.DefaultAccuracy(TemplateMatchModeEnum.SHAPE));
-        }
-
         // Parse and bind before the transaction, so half a flow is never written.
         [Fact]
         public async Task A_script_with_a_typo_is_refused_and_leaves_the_flow_untouched()
         {
             int flowId = Seed();
-            FlowExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
             string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
 
-            FlowImportResultDto refused = await Importer().ImportTextAsync(script.Replace("Find Image", "Fnid Image", StringComparison.Ordinal), _folder, Ct);
+            FlowScriptImportResultDto refused = await Importer().ImportTextAsync(script.Replace("Find Image", "Fnid Image", StringComparison.Ordinal), _folder, Ct);
 
             refused.IsSuccess.ShouldBeFalse();
             refused.Errors[0].Message.ShouldBe(@"Unexpected ""Fnid"".");
-            FlowExportResultDto after = await Exporter().ExportAsync(flowId, _folder, Ct);
+            FlowScriptExportResultDto after = await Exporter().ExportAsync(flowId, _folder, Ct);
             (await File.ReadAllTextAsync(after.ScriptPath, Ct)).ShouldBe(script);
         }
 

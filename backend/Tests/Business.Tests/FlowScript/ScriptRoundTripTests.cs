@@ -115,7 +115,9 @@ namespace Business.Tests.FlowScript
               <[ Screen ]>   monitor primary   scales with dpi
 
             Templates:
-              <[ described.png ]>   captured 800x600 at 144dpi
+              <[ a.png ]>           click 1 2
+              <[ b.png ]>           click 3 4
+              <[ described.png ]>   click 5 6   captured 800x600 at 144dpi
 
             Steps:
             Find Image  <[ Strict ]>   template <[ a.png ]> required  template <[ b.png ]> accuracy 0.9   match shape and brightness   in <[ Screen ]>
@@ -160,16 +162,8 @@ namespace Business.Tests.FlowScript
             FlowScriptSchema schema = new Scanner().Read(HandWritten);
             FlowStepTemplate described = schema.Steps[1].FlowStepTemplates.Single();
 
+            (described.ClickOffsetX, described.ClickOffsetY).ShouldBe((5, 6));
             (described.AuthoredFlowAreaWidth, described.AuthoredFlowAreaHeight, described.AuthoredDpi).ShouldBe((800, 600, 144));
-        }
-
-        // The importer centres it on the picture, which needs the png - so the syntax leaves it open.
-        [Fact]
-        public void A_template_the_header_gives_no_click_leaves_it_to_the_importer()
-        {
-            FlowScriptSchema schema = new Scanner().Read(HandWritten);
-
-            schema.TemplatesWithoutClick.OrderBy(x => x, StringComparer.Ordinal).ShouldBe(["a.png", "b.png", "described.png"]);
         }
 
         [Fact]

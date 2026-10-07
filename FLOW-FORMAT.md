@@ -533,9 +533,10 @@ Facts about the picture rather than the search, once per file:
 - **`at 120dpi`** - the DPI it was captured at. What an area that `scales with dpi` measures
   against.
 
-Every fact is optional, and so is the line. A template with no `click` clicks the middle of the
-picture, which is what a person writing one by hand means. One with no size or DPI is searched at
-the size it was captured.
+Every template a step names has a line here, and every line has a `click`: a template always says
+where it is clicked. A step naming a file with no line is `TEMPLATE_UNKNOWN`, and a line with no
+`click` is a syntax error. The size and DPI are optional; one with neither is searched at the size
+it was captured.
 
 ---
 

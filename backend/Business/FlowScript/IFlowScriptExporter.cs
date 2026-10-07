@@ -1,4 +1,4 @@
-using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
 
 namespace Business.FlowScript
 {
@@ -8,6 +8,6 @@ namespace Business.FlowScript
         Task<string> RenderAsync(int flowId, CancellationToken ct = default);
 
         /// <summary> Writes the script and its template images in the app's export path.</summary>
-        Task<FlowExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default);
+        Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default);
     }
 }

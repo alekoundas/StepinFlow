@@ -42,7 +42,7 @@ namespace Business.Tests.Flows
             return db.FlowSteps.Where(x => x.RootId == flowId).ToList();
         }
 
-        private Task<FlowImportResultDto> ImportAsync(string steps)
+        private Task<FlowScriptImportResultDto> ImportAsync(string steps)
         {
             string script = "Flow:    Imported\nId:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b121\n\nSteps:\n" + steps;
             return new FlowScriptImporter(new Scanner(), _dataService).ImportTextAsync(script, null, Ct);
@@ -147,7 +147,7 @@ namespace Business.Tests.Flows
         [Fact]
         public async Task An_import_gives_a_check_the_branch_its_file_left_out()
         {
-            FlowImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>   template <[ a.png ]>\n Failure:\n  Wait  800ms\n");
+            FlowScriptImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>\n Failure:\n  Wait  800ms\n");
 
             List<FlowStep> steps = Steps(imported.FlowId);
             FlowStep find = steps.Single(x => x.Name == "Find");
@@ -161,7 +161,7 @@ namespace Business.Tests.Flows
         [Fact]
         public async Task An_import_with_errors_is_saved_and_says_what_they_are()
         {
-            FlowImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>\n");
+            FlowScriptImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>\n");
 
             imported.IsSuccess.ShouldBeTrue();
             imported.Validation.ShouldNotBeNull();

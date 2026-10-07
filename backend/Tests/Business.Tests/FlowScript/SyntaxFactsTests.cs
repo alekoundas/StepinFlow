@@ -157,8 +157,9 @@ namespace Business.Tests.FlowScript
         [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
-            FlowScriptSchema schema = Read($"Steps:\nFind Image <[ x ]> template <[ a.png ]> match {SyntaxFacts.Keyword(mode)}");
+            FlowScriptSchema schema = Read($"Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match {SyntaxFacts.Keyword(mode)}");
 
+            schema.Diagnostics.ShouldBeEmpty();
             schema.Steps.Single().TemplateMatchMode.ShouldBe(mode);
         }
 
@@ -237,7 +238,6 @@ namespace Business.Tests.FlowScript
             FlowStepTemplate template = schema.Steps.Single().FlowStepTemplates.Single();
 
             (template.ClickOffsetX, template.ClickOffsetY).ShouldBe((x, y));
-            schema.TemplatesWithoutClick.ShouldBeEmpty();
         }
     }
 }

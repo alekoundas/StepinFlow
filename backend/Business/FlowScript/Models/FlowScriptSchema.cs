@@ -27,12 +27,6 @@ namespace Business.FlowScript.Models
         /// </summary>
         public Dictionary<FlowStep, string> SubFlowPaths { get; } = new Dictionary<FlowStep, string>();
 
-        /// <summary>
-        /// Template files the header gives no click. The importer centres those on the picture,
-        /// which is the one fact only the png knows.
-        /// </summary>
-        public HashSet<string> TemplatesWithoutClick { get; } = new HashSet<string>(StringComparer.Ordinal);
-
         public List<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();
 
         /// <summary>Nothing fatal. A warning is not a reason to refuse a file.</summary>

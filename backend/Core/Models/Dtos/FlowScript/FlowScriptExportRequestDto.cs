@@ -1,6 +1,6 @@
-namespace Core.Models.Dtos
+namespace Core.Models.Dtos.FlowScript
 {
-    public class FlowExportRequestDto
+    public class FlowScriptExportRequestDto
     {
         public int FlowId { get; set; }
 

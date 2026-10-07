@@ -1,6 +1,6 @@
-namespace Core.Models.Dtos
+namespace Core.Models.Dtos.FlowScript
 {
-    public class FlowImportRequestDto
+    public class FlowScriptImportRequestDto
     {
         /// <summary>The .sflw file to read. Templates come from the folder named after it, beside it.</summary>
         public string ScriptPath { get; set; } = string.Empty;

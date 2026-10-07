@@ -1,9 +1,9 @@
-namespace Core.Models.Dtos
+namespace Core.Models.Dtos.FlowScript
 {
     /// <summary>
     /// Where an export landed, so the app can say it and open the folder.
     /// </summary>
-    public class FlowExportResultDto
+    public class FlowScriptExportResultDto
     {
         public string ScriptPath { get; set; } = string.Empty;
 

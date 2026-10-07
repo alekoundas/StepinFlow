@@ -1,6 +1,6 @@
 using Core.Helpers;
 using Core.Models.Database;
-using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Business.FlowScript.Models;
@@ -39,7 +39,7 @@ namespace Business.FlowScript
             return _writer.Write(schema);
         }
 
-        public async Task<FlowExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default)
+        public async Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
@@ -59,7 +59,7 @@ namespace Business.FlowScript
 
             await File.WriteAllTextAsync(scriptPath, script.ReplaceLineEndings("\n"), ct);
 
-            return new FlowExportResultDto
+            return new FlowScriptExportResultDto
             {
                 ScriptPath = scriptPath,
                 TemplateFolderPath = written > 0 ? templateFolder : string.Empty,

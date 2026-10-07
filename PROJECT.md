@@ -664,8 +664,8 @@ captured at. Decisions about the search go on the step - `accuracy` and `require
 template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
 see that. The area line carries `scales with` and its DPI. In a script a template is named by its
 file, and `ScriptLineParser` joins the header's facts onto a step's templates as its line is read.
-A template the header gives no click is centred on its picture by the importer, read from the PNG's
-header, so a hand-written flow clicks the middle of a button rather than its corner.
+Every template has a click, so the printer always writes it and the parser always requires it. A
+step naming a template with no line in the header is `TEMPLATE_UNKNOWN`, reported at the name.
 
 Before this, export wrote the PNG and nothing else, and import filled the rest with defaults: every
 imported flow clicked the top-left corner of every button, and a step with three alternative

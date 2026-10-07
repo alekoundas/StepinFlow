@@ -180,8 +180,7 @@ namespace Business.FlowScript.Text
                 .SelectMany(x => x.FlowStepTemplates)
                 .DistinctBy(x => x.Name, StringComparer.Ordinal)
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
-                .Select(x => TemplateLine(x, schema))
-                .Where(x => x.Length > 0)
+                .Select(TemplateLine)
                 .ToList();
 
             if (lines.Count == 0)
@@ -195,12 +194,10 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        // A template is named by its file.
-        private static string TemplateLine(FlowStepTemplate template, FlowScriptSchema schema)
+        // A template is named by its file, and every one says where it is clicked.
+        private static string TemplateLine(FlowStepTemplate template)
         {
-            string click = string.Empty;
-            if (!schema.TemplatesWithoutClick.Contains(template.Name))
-                click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffsetX)} {Integer(template.ClickOffsetY)}";
+            string click = $"{SyntaxFacts.Keyword(ScriptSymbolEnum.CLICK)} {Integer(template.ClickOffsetX)} {Integer(template.ClickOffsetY)}";
 
             string captured = string.Empty;
             if (template.AuthoredFlowAreaWidth > 0 && template.AuthoredFlowAreaHeight > 0)
@@ -213,8 +210,6 @@ namespace Business.FlowScript.Text
             // "captured 800x600 at 120dpi" reads as one phrase, so it is one clause apart from the click.
             string capture = $"{captured} {dpi}".Trim();
             string facts = $"{click}   {capture}".Trim();
-            if (facts.Length == 0)
-                return string.Empty;
 
             return $"{Pad(SyntaxFacts.Quote(template.Name), 28)}{facts}";
         }

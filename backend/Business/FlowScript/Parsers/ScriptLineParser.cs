@@ -11,12 +11,9 @@ using Core.Models.Database;
 namespace Business.FlowScript.Parsers
 {
     /// <summary>
-    /// Which parser reads a line - from the section it is in and the keyword it opens with - and the
-    /// one place the schema is written.
-    ///
-    /// A line's grammar is its parser's. What the lines mean together is here: the tree the
-    /// indentation draws, a template described twice, a comment belonging to the step below, and
-    /// every name linked to the row declared above it the moment its line is read.
+    /// Which parser choosen to read a line is based on
+    /// the current section of the script(header,steps,etc) 
+    /// and the first token of the line
     /// </summary>
     internal sealed class ScriptLineParser
     {
@@ -29,7 +26,7 @@ namespace Business.FlowScript.Parsers
         private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, (FlowStepTemplate Facts, bool HasClick)> _templates = new Dictionary<string, (FlowStepTemplate Facts, bool HasClick)>(StringComparer.Ordinal);
+        private readonly Dictionary<string, FlowStepTemplate> _templates = new Dictionary<string, FlowStepTemplate>(StringComparer.Ordinal);
 
         // The last step and the steps it sits in, innermost last, with the indent each was written at.
         private readonly List<(FlowStep Step, int Indent)> _openSteps = new List<(FlowStep Step, int Indent)>();
@@ -186,10 +183,10 @@ namespace Business.FlowScript.Parsers
 
         private void AddTemplate(ScriptLine line)
         {
-            (FlowStepTemplate Facts, bool HasClick) template = new TemplateParser(line.Tokens).Parse();
+            FlowStepTemplate template = new TemplateParser(line.Tokens).Parse();
 
-            if (!_templates.TryAdd(template.Facts.Name, template))
-                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, line.Tokens[0].Column, $"\"{template.Facts.Name}\" is already described above."));
+            if (!_templates.TryAdd(template.Name, template))
+                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, line.Tokens[0].Column, $"\"{template.Name}\" is already described above."));
         }
 
 
@@ -221,7 +218,7 @@ namespace Business.FlowScript.Parsers
 
             // Linked before its own name is declared, so a step cannot name itself.
             Link(step, line.Tokens);
-            JoinTemplateFacts(step);
+            JoinTemplateFacts(step, line.Tokens);
 
             // Attach any comments.
             step.CodeComment = string.Join("\n", _comments.Values);
@@ -387,26 +384,25 @@ namespace Business.FlowScript.Parsers
             return false;
         }
 
-        // The header's facts about each picture a step names. A template the header gives no click
-        // is left for the importer to centre.
-        private void JoinTemplateFacts(FlowStep step)
+        // The header's facts about each picture a step names. A picture with no line there has no
+        // click, so it is reported at the step that names it, like any name nothing declares.
+        private void JoinTemplateFacts(FlowStep step, IReadOnlyList<ScriptToken> tokens)
         {
             foreach (FlowStepTemplate template in step.FlowStepTemplates)
             {
-                if (!_templates.TryGetValue(template.Name, out (FlowStepTemplate Facts, bool HasClick) header))
+                if (!_templates.TryGetValue(template.Name, out FlowStepTemplate? header))
                 {
-                    _flowScriptSchema.TemplatesWithoutClick.Add(template.Name);
+                    ScriptToken token = TokenOf(template.Name, tokens);
+                    _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_UNKNOWN, token.Line, token.Column,
+                        $"\"{template.Name}\" has no line under Templates above, so nothing says where it is clicked."));
                     continue;
                 }
 
-                if (!header.HasClick)
-                    _flowScriptSchema.TemplatesWithoutClick.Add(template.Name);
-
-                template.ClickOffsetX = header.Facts.ClickOffsetX;
-                template.ClickOffsetY = header.Facts.ClickOffsetY;
-                template.AuthoredFlowAreaWidth = header.Facts.AuthoredFlowAreaWidth;
-                template.AuthoredFlowAreaHeight = header.Facts.AuthoredFlowAreaHeight;
-                template.AuthoredDpi = header.Facts.AuthoredDpi;
+                template.ClickOffsetX = header.ClickOffsetX;
+                template.ClickOffsetY = header.ClickOffsetY;
+                template.AuthoredFlowAreaWidth = header.AuthoredFlowAreaWidth;
+                template.AuthoredFlowAreaHeight = header.AuthoredFlowAreaHeight;
+                template.AuthoredDpi = header.AuthoredDpi;
             }
         }
 

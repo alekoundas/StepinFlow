@@ -160,8 +160,8 @@ namespace App
             builder.Services.AddTransient<PromoteFlowToSubFlowHandler>();
             builder.Services.AddTransient<ExtractSubFlowHandler>();
             builder.Services.AddTransient<GetFlowTreeNodeHandler>();
-            builder.Services.AddTransient<ExportFlowHandler>();
-            builder.Services.AddTransient<ImportFlowHandler>();
+            builder.Services.AddTransient<ExportFlowScriptHandler>();
+            builder.Services.AddTransient<ImportFlowScriptHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();

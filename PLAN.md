@@ -51,7 +51,7 @@ before layer 5, because the engine tests would pin whichever answer is live.
       description its steps are getting - see `TODO.md` under Frontend. It changes the grammar, so
       the approved sample and `FLOW-FORMAT.md` move with it.
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
-- [ ] **Buttons.** `Flow.export` and `Flow.import` are reachable over IPC; nothing in the UI calls
+- [ ] **Buttons.** `FlowScript.export` and `FlowScript.import` are reachable over IPC; nothing in the UI calls
       them yet.
 - [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it

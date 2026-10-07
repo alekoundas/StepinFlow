@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -65,8 +66,10 @@ namespace Transport.Ipc
                     "Flow.promoteToSubFlow" => await Handler<PromoteFlowToSubFlowHandler>().HandleAsync(Payload<int>(request), ct),
                     "Flow.extractSubFlow" => await Handler<ExtractSubFlowHandler>().HandleAsync(Payload<ExtractSubFlowDto>(request), ct),
                     "Flow.getTreeNodes" => await Handler<GetFlowTreeNodeHandler>().HandleAsync(Payload<int>(request), ct),
-                    "Flow.export" => await Handler<ExportFlowHandler>().HandleAsync(Payload<FlowExportRequestDto>(request), ct),
-                    "Flow.import" => await Handler<ImportFlowHandler>().HandleAsync(Payload<FlowImportRequestDto>(request), ct),
+
+                    // FlowScript
+                    "FlowScript.export" => await Handler<ExportFlowScriptHandler>().HandleAsync(Payload<FlowScriptExportRequestDto>(request), ct),
+                    "FlowScript.import" => await Handler<ImportFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),
