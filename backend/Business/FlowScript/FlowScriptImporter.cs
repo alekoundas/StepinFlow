@@ -73,6 +73,8 @@ namespace Business.FlowScript
 
             // Save to Database.
             ResultDto<(int FlowId, FlowValidationResultDto Validation)> replaced = await _dataService.Flow.ReplaceAsync(schema, ct);
+            if (!replaced.IsSuccess)
+                return Failed(Diagnostic.Error(DiagnosticCodeEnum.FLOW_NAME_TAKEN, 1, 1, replaced.ErrorMessage ?? string.Empty));
 
             result.FlowId = replaced.Data.FlowId;
             result.Validation = replaced.Data.Validation;

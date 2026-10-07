@@ -19,8 +19,11 @@ export const validateFileName = (name: string): string | null => {
   if ([...name].some(isInvalid))
     return 'The name becomes a file name, so it can\'t contain < > : " / \\ | ? * or control characters.';
 
-  if (name.endsWith(".") || name.endsWith(" "))
-    return "The name becomes a file name, so it can't end in a dot or a space.";
+  if (name.startsWith(" ") || name.startsWith("."))
+    return "The name becomes a file name, so it can't start with a space or a dot.";
+
+  if (name.endsWith(" ") || name.endsWith("."))
+    return "The name becomes a file name, so it can't end in a space or a dot.";
 
   // Windows reads a device name up to the first dot, so NUL.txt is NUL too.
   if (reservedName.test(name.split(".")[0].trimEnd()))

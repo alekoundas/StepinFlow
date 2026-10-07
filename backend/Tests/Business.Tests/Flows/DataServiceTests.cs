@@ -1,5 +1,6 @@
 using Business.Flows.DataService;
 using Business.FlowScript;
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
 using Business.Tests.Fakes;
 using Business.Tests.FlowScript;
@@ -92,6 +93,43 @@ namespace Business.Tests.Flows
         }
 
         // ================================================================
+        // A flow's name
+        // ================================================================
+
+        // The name is the file it exports to, and on Windows and macOS these would be one file.
+        [Fact]
+        public async Task A_new_flow_cannot_take_another_flows_name_whatever_the_case()
+        {
+            await _dataService.Flow.CreateAsync(new Flow { Name = "Login" }, Ct);
+
+            ResultDto<int> created = await _dataService.Flow.CreateAsync(new Flow { Name = "login" }, Ct);
+
+            created.IsSuccess.ShouldBeFalse();
+            created.ErrorMessage.ShouldNotBeNull().ShouldContain("\"Login\"");
+        }
+
+        [Fact]
+        public async Task A_flow_cannot_be_renamed_to_another_flows_name()
+        {
+            await _dataService.Flow.CreateAsync(new Flow { Name = "Login" }, Ct);
+            int flowId = (await _dataService.Flow.CreateAsync(new Flow { Name = "Checkout" }, Ct)).Data;
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(new FlowDto { Id = flowId, Name = "LOGIN" }, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task A_flow_is_not_a_clash_with_itself()
+        {
+            int flowId = (await _dataService.Flow.CreateAsync(new Flow { Name = "Login" }, Ct)).Data;
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(new FlowDto { Id = flowId, Name = "LOGIN" }, Ct);
+
+            updated.IsSuccess.ShouldBeTrue(updated.ErrorMessage);
+        }
+
+        // ================================================================
         // A tree of new steps - a recording
         // ================================================================
 
@@ -169,6 +207,18 @@ namespace Business.Tests.Flows
             Steps(imported.FlowId).ShouldContain(x => x.Name == "Find");
         }
 
+        // A different flow, by its Id, so the import would leave two flows exporting to one file.
+        [Fact]
+        public async Task An_import_cannot_take_another_flows_name()
+        {
+            await _dataService.Flow.CreateAsync(new Flow { Name = "imported" }, Ct);
+
+            FlowScriptImportResultDto imported = await ImportAsync("Wait  800ms\n");
+
+            imported.IsSuccess.ShouldBeFalse();
+            imported.Errors.ShouldHaveSingleItem().Code.ShouldBe(nameof(DiagnosticCodeEnum.FLOW_NAME_TAKEN));
+        }
+
         // ================================================================
         // Extracting a sub-flow
         // ================================================================
@@ -196,6 +246,19 @@ namespace Business.Tests.Flows
 
             extracted.IsSuccess.ShouldBeTrue(extracted.ErrorMessage);
             return (flowId, extracted.Data!.SubFlowId, clickId);
+        }
+
+        [Fact]
+        public async Task An_extraction_cannot_take_another_flows_name()
+        {
+            int flowId = await NewFlowAsync();
+            int waitId = (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait" }, [], Ct)).Data;
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await _dataService.Flow.ExtractSubFlowAsync(
+                new ExtractSubFlowDto { FlowStepId = waitId, Name = "FLOW", SourceRootId = flowId, SourceFlowId = flowId, SourceOrderNumber = 0 }, Ct);
+
+            extracted.IsSuccess.ShouldBeFalse();
+            Steps(flowId).ShouldHaveSingleItem().Id.ShouldBe(waitId);
         }
 
         // The point's own area and every area above it come along, or the copy would be measured

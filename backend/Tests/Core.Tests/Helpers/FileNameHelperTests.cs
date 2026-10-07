@@ -23,6 +23,8 @@ namespace Core.Tests.Helpers
         [InlineData("tab\there")]
         [InlineData("Login.")]
         [InlineData("Login ")]
+        [InlineData(" Login")]
+        [InlineData(".Login")]
         [InlineData("CON")]
         [InlineData("nul.txt")]
         [InlineData("Lpt1.tar.gz")]
@@ -41,6 +43,16 @@ namespace Core.Tests.Helpers
         public void Clean_makes_each_refused_character_a_space_and_trims_the_ends(string name, string expected)
         {
             FileNameHelper.Clean(name, "flow").ShouldBe(expected);
+        }
+
+        // Flow names are checked unique as names, so a valid one has to be its own file name.
+        [Theory]
+        [InlineData("Login and add to cart")]
+        [InlineData("v1.2 smoke")]
+        public void Clean_leaves_a_valid_name_as_it_is(string name)
+        {
+            FileNameHelper.Validate(name).ShouldBeNull();
+            FileNameHelper.Clean(name, "flow").ShouldBe(name);
         }
 
         [Theory]

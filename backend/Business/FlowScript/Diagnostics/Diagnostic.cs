@@ -34,8 +34,9 @@ namespace Business.FlowScript.Diagnostics
         NAME_UNKNOWN,
         NAME_DUPLICATE,
 
-        // Outside the file
+        // Outside the file: no file at the path, or another flow already has its name.
         FILE_MISSING,
+        FLOW_NAME_TAKEN,
     }
 
     /// <summary>

@@ -43,7 +43,9 @@ namespace Business.FlowScript.Scanner
 
             parser.Finish();
 
-            if (string.IsNullOrWhiteSpace(flowScriptSchema.Flow.Name))
+            // A name already refused is not also missing.
+            bool isNameRefused = flowScriptSchema.Diagnostics.Any(x => x.Code == DiagnosticCodeEnum.FLOW_NAME_INVALID);
+            if (string.IsNullOrWhiteSpace(flowScriptSchema.Flow.Name) && !isNameRefused)
                 flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.FLOW_LINE_MISSING, 1, 1, $"The file has no \"{ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.FLOWFIELD_NAME)}\" line, so there is no flow to import."));
 
             return flowScriptSchema;

@@ -31,8 +31,11 @@ namespace Core.Helpers
             if (name.Any(IsInvalid))
                 return "The name becomes a file name, so it can't contain < > : \" / \\ | ? * or control characters.";
 
-            if (name.EndsWith('.') || name.EndsWith(' '))
-                return "The name becomes a file name, so it can't end in a dot or a space.";
+            if (name.StartsWith(' ') || name.StartsWith('.'))
+                return "The name becomes a file name, so it can't start with a space or a dot.";
+
+            if (name.EndsWith(' ') || name.EndsWith('.'))
+                return "The name becomes a file name, so it can't end in a space or a dot.";
 
             if (IsReserved(name))
                 return $"\"{name}\" is a device name on Windows, so it can't be a file name.";

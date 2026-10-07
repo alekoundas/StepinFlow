@@ -1119,12 +1119,18 @@ test compares bytes.
 The name becomes the `.sflw` file and its template folder, and a repository is cloned onto Windows,
 macOS and Linux. `Core/Helpers/FileNameHelper` keeps one fixed list, Windows', the strictest, rather
 than `Path.GetInvalidFileNameChars()`, which is the running machine's and on Linux only `/` and the
-null character: none of `< > : " / \ | ? *` or the control characters, no trailing dot or space, and
-none of the device names (`CON`, `NUL`, `COM1`...) with or without an extension. A flow's name is
-validated against it - by the create, update and extract handlers, by `flow.zod.ts` with the same
-rules, and on the script's `Flow:` line as `FLOW_NAME_INVALID`. A name that stays free text, a
+null character: none of `< > : " / \ | ? *` or the control characters, no space or dot at either
+end, and none of the device names (`CON`, `NUL`, `COM1`...) with or without an extension. A flow's
+name is validated against it - by the create, update and extract handlers, by `flow.zod.ts` with the
+same rules, and on the script's `Flow:` line as `FLOW_NAME_INVALID`. A name that stays free text, a
 step's or a template's, is cleaned with the same list instead: each refused character becomes a
-space and the ends lose dots and spaces.
+space and the ends lose dots and spaces. A valid name comes out of that unchanged, so a flow's name
+is exactly its file name.
+
+That makes two flows with one name two flows with one file, and on Windows and macOS `Login` and
+`login` are one file too. `FlowDataService` refuses a name another flow has, whatever its case, on
+every write that names a flow - create, update, extract, and the import as `FLOW_NAME_TAKEN`. It
+compares in C# rather than in SQL, because SQLite folds only A to Z.
 
 ### Git is the version history. The execution carries what ran.
 

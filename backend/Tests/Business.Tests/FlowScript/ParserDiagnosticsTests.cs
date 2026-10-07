@@ -202,6 +202,7 @@ namespace Business.Tests.FlowScript
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.FLOW_NAME_INVALID);
             diagnostic.Line.ShouldBe(1);
+            diagnostic.Column.ShouldBe(7);
         }
 
         // A system action and a command preset are catalog words, so a number is never one.
@@ -229,8 +230,9 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.FLOW_LINE_MISSING);
             covered.Add(DiagnosticCodeEnum.FLOW_NAME_INVALID);
 
-            // Raised by the importer when the file is not there, not by anything in a script.
+            // Raised by the importer, for a file that is not there or a name another flow has, not by anything in a script.
             covered.Add(DiagnosticCodeEnum.FILE_MISSING);
+            covered.Add(DiagnosticCodeEnum.FLOW_NAME_TAKEN);
 
             Enum.GetValues<DiagnosticCodeEnum>().Except(covered).ShouldBeEmpty();
         }

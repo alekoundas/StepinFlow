@@ -57,10 +57,6 @@ before layer 5, because the engine tests would pin whichever answer is live.
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
       means reading the `Id:` out of the file it names and matching that, and deciding what a missing
       file does. It lands in the importer, which has the files and the database.
-- [ ] **A flow's name is unique ignoring case.** Two flows called `Login` and `login` export to one
-      file on Windows and macOS, whose file systems ignore case, and a sub-flow is found by its file
-      name. `FileNameHelper` holds every other file name rule (`PROJECT.md` §11); this one needs the
-      database, so it goes in the create, update and extract handlers and in the importer.
 
 ### The engine
 

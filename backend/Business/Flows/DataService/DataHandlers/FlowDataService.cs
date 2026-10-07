@@ -31,6 +31,10 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
+            string? taken = await ValidateNameIsFreeAsync(dbContext, flow.Name, 0, ct);
+            if (taken != null)
+                return ResultDto<int>.Failure(taken);
+
             flow.Id = 0;
 
             dbContext.Flows.Add(flow);
@@ -55,6 +59,10 @@ namespace Business.Flows.DataService.DataHandlers
 
             if (flow == null)
                 return ResultDto<Flow>.Failure("Flow not found");
+
+            string? taken = await ValidateNameIsFreeAsync(dbContext, dto.Name, dto.Id, ct);
+            if (taken != null)
+                return ResultDto<Flow>.Failure(taken);
 
             flow.Name = dto.Name;
             flow.Description = dto.Description;
@@ -119,6 +127,10 @@ namespace Business.Flows.DataService.DataHandlers
         public async Task<ResultDto<(int FlowId, FlowValidationResultDto Validation)>> ReplaceAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
         {
             Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == schema.Flow.PublicId, ct);
+
+            string? taken = await ValidateNameIsFreeAsync(dbContext, schema.Flow.Name, existing?.Id ?? 0, ct);
+            if (taken != null)
+                return ResultDto<(int FlowId, FlowValidationResultDto Validation)>.Failure(taken);
 
             // Saved on its own first: RootId names the flow by id, with no link EF could fill it from.
             Flow flow = existing ?? schema.Flow;
@@ -199,6 +211,10 @@ namespace Business.Flows.DataService.DataHandlers
             if (crossing != null)
                 return ResultDto<ExtractSubFlowResultDto>.Failure(crossing);
 
+            string? taken = await ValidateNameIsFreeAsync(dbContext, dto.Name.Trim(), 0, ct);
+            if (taken != null)
+                return ResultDto<ExtractSubFlowResultDto>.Failure(taken);
+
             string sourceName = await dbContext.Flows
                 .Where(x => x.Id == dto.SourceRootId)
                 .Select(x => x.Name)
@@ -254,6 +270,27 @@ namespace Business.Flows.DataService.DataHandlers
                 FlowStepId = placeholder.Id,
                 MovedCount = moved.Count,
             });
+        }
+
+
+        // ================================================================
+        // Private methods - the name
+        // ================================================================
+
+        // The name is the flow's file name, and Windows and macOS ignore case, so "Login" and
+        // "login" would be one file. Compared here rather than in SQL, which folds only A to Z.
+        private static async Task<string?> ValidateNameIsFreeAsync(AppDbContext dbContext, string name, int flowId, CancellationToken ct)
+        {
+            List<string> names = await dbContext.Flows
+                .Where(x => x.Id != flowId)
+                .Select(x => x.Name)
+                .ToListAsync(ct);
+
+            string? taken = names.FirstOrDefault(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
+            if (taken == null)
+                return null;
+
+            return $"Another flow is already called \"{taken}\". A flow's name is its file name, and Windows and macOS ignore case.";
         }
 
 
