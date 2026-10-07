@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class SearchTextParser : BaseStepParser
     {
-        public SearchTextParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public SearchTextParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

@@ -6,7 +6,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class MarkerParser : BaseStepParser
     {
-        public MarkerParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public MarkerParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

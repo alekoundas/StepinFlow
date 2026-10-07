@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class KeyboardInputParser : BaseStepParser
     {
-        public KeyboardInputParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public KeyboardInputParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class GoBackParser : BaseStepParser
     {
-        public GoBackParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public GoBackParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 
@@ -17,9 +17,7 @@ namespace Business.FlowScript.Parsers.Steps
             ExpectKeyword(FlowStepTypeEnum.GO_BACK);
             ExpectKeyword(ScriptSymbolEnum.TO);
 
-            ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            FlowStep reference = new FlowStep() { Name = ExtractText() };
-            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+            FlowStep? reference = ExtractStepReference();
 
             ExpectEnd();
 

@@ -36,9 +36,9 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> captured 800x600" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFnid Image <[ x ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nCheck Text <[ x ]> nearly <[ y ]>" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFind Image <[ x ]> template <[ a.png ]> quickly" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> quickly" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFind Image <[ x ]> accuracy 0.9" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFind Image <[ x ]> template <[ a.png ]> match colour" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match colour" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nClick point <[ Origin ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nDrag at match" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nScroll sideways 3" },
@@ -162,6 +162,17 @@ namespace Business.Tests.FlowScript
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_UNKNOWN);
             (diagnostic.Line, diagnostic.Column).ShouldBe((5, 15));
+        }
+
+        // Reported at the quote the name was read from, not at the first quote on the line with the
+        // same text - here the step's own name.
+        [Fact]
+        public void An_unknown_name_is_reported_at_its_own_quote()
+        {
+            Diagnostic diagnostic = Read(Header + "Steps:\nFind Image <[ Login ]> in <[ Login ]>").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_UNKNOWN);
+            (diagnostic.Line, diagnostic.Column).ShouldBe((5, 30));
         }
 
         // The first one keeps the name, so the second is the one reported.

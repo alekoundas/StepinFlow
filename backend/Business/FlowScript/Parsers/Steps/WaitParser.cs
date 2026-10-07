@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class WaitParser : BaseStepParser
     {
-        public WaitParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public WaitParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

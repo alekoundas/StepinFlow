@@ -9,14 +9,17 @@ namespace Business.FlowScript.Parsers
     /// <summary>
     /// The clauses more than one step takes, each read the one way the printer writes it.
     ///
-    /// A name is returned as written, as a row holding only that name. ScriptLineParser swaps it
-    /// for the row declared above.
+    /// A name is resolved against the scope as it is read, so the step comes back linked to the
+    /// rows the lines above declared.
     /// </summary>
     internal abstract class BaseStepParser : BaseParser<FlowStep>
     {
-        protected BaseStepParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        protected BaseStepParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens)
         {
+            Scope = scope;
         }
+
+        protected ScriptScope Scope { get; }
 
 
         // ================================================================
@@ -29,7 +32,8 @@ namespace Business.FlowScript.Parsers
             if (ExpectOptionalKeyword(ScriptSymbolEnum.POINT))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                FlowPoint point = new FlowPoint() { Name = ExtractText() };
+                ScriptToken pointAt = CurrentToken;
+                FlowPoint? point = Scope.Point(ExtractText(), pointAt);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 return (point, null);
@@ -38,11 +42,18 @@ namespace Business.FlowScript.Parsers
             if (ExpectOptionalKeyword(ScriptSymbolEnum.MATCH))
                 return (null, null);
 
+            return (null, ExtractStepReference());
+        }
+
+        // <[ a step ]>
+        protected FlowStep? ExtractStepReference()
+        {
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            FlowStep reference = new FlowStep() { Name = ExtractText() };
+            ScriptToken at = CurrentToken;
+            FlowStep? reference = Scope.Step(ExtractText(), at);
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            return (null, reference);
+            return reference;
         }
 
         // is <[ x ]>, between <[ 1 ]> and <[ 9 ]>, is empty, ...
@@ -94,7 +105,8 @@ namespace Business.FlowScript.Parsers
                 return null;
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            FlowArea area = new FlowArea() { Name = ExtractText() };
+            ScriptToken at = CurrentToken;
+            FlowArea? area = Scope.Area(ExtractText(), at);
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             return area;

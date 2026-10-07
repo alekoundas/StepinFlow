@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class SubFlowParser : BaseStepParser
     {
-        public SubFlowParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public SubFlowParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

@@ -7,8 +7,11 @@ namespace Business.FlowScript.Parsers.Header
 {
     internal sealed class PointParser : BaseParser<FlowPoint>
     {
-        public PointParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        private readonly ScriptScope _scope;
+
+        public PointParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens)
         {
+            _scope = scope;
         }
 
         public override FlowPoint Parse()
@@ -20,12 +23,12 @@ namespace Business.FlowScript.Parsers.Header
 
             FlowPoint point = new FlowPoint() { Name = name };
 
-            // Measured from an area, or from the screen's corner - right here and nowhere else. The
-            // area is named, and linked by ScriptLineParser to the one declared above.
+            // Measured from an area, or from the screen's corner - right here and nowhere else.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.INSIDE))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                point.FlowArea = new FlowArea() { Name = ExtractText() };
+                ScriptToken at = CurrentToken;
+                point.FlowArea = _scope.Area(ExtractText(), at);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
             }
             else

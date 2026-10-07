@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class SearchImageParser : BaseStepParser
     {
-        public SearchImageParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public SearchImageParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 
@@ -27,15 +27,30 @@ namespace Business.FlowScript.Parsers.Steps
                 Name = name
             };
 
-            // A template is named by its file. A template with no accuracy takes its mode's default,
-            // and the mode comes after the templates.
+            // A template is named by its file, and comes with what the Templates lines say about it.
+            // A template with no accuracy takes its mode's default, and the mode comes after the templates.
             List<FlowStepTemplate> templates = new List<FlowStepTemplate>();
             List<FlowStepTemplate> withoutAccuracy = new List<FlowStepTemplate>();
             while (ExpectOptionalKeyword(ScriptSymbolEnum.TEMPLATE))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                FlowStepTemplate template = new FlowStepTemplate() { Name = ExtractText(), OrderNumber = templates.Count };
+                ScriptToken at = CurrentToken;
+                string fileName = ExtractText();
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+                // The step's own row: accuracy and required are the step's, so the picture's facts
+                // are copied onto it rather than the Templates line's row being shared.
+                FlowStepTemplate template = new FlowStepTemplate() { Name = fileName, OrderNumber = templates.Count };
+
+                FlowStepTemplate? described = Scope.Template(fileName, at);
+                if (described != null)
+                {
+                    template.ClickOffsetX = described.ClickOffsetX;
+                    template.ClickOffsetY = described.ClickOffsetY;
+                    template.AuthoredFlowAreaWidth = described.AuthoredFlowAreaWidth;
+                    template.AuthoredFlowAreaHeight = described.AuthoredFlowAreaHeight;
+                    template.AuthoredDpi = described.AuthoredDpi;
+                }
 
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.ACCURACY))
                     template.Accuracy = ExtractFloat();

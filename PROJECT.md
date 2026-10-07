@@ -614,11 +614,12 @@ rows as they load into one context - and the printer writes it. So the scanner a
 exact mirrors, and the round trip needs no database.
 
 **Every name is declared above its first use**, which a `Go Back` that only goes back made true of
-every reference. So a line is linked the moment it is read: `ScriptLineParser` keeps the names the
-lines above declared and swaps each name a parser returns for that row. A name nothing above
-declares is `NAME_UNKNOWN`, and one declared twice is `NAME_DUPLICATE` at the second, both at the
-name itself. The grammar parsers stay pure - they return a name as a row holding only that name.
-This replaced a binder that handed out positions as ids, an importer that swapped those for real
+every reference. So a line is linked the moment it is read: `ScriptScope` holds what the lines above
+declared, every parser is handed it, and a parser resolves a name as it reads the quote - a step
+comes back already pointing at its area, its point, the step it reads. A name nothing above
+declares is `NAME_UNKNOWN` at that quote, and the line reads on, so every unknown name in a file is
+reported in one pass. A line is declared only after it is read, so nothing can name itself, and a
+name declared twice is `NAME_DUPLICATE` at the second. This replaced a binder that handed out positions as ids, an importer that swapped those for real
 ids one table at a time, and an exporter that built id-to-name dictionaries for the printer: four
 translations of one thing, one of which let the last of two duplicate names silently win.
 
@@ -630,9 +631,9 @@ from one place: the parser.
 
 **One parser per kind of line.** `ScriptLineParser` picks it from the section the line is in and
 the keyword it opens with - one for each header line, one for each step type - and is the only class
-that writes the schema. The grammar of a line is its parser's. What the lines mean together is the
-orchestrator's: the tree the indentation draws, a template described twice, a comment belonging to
-the line below. The parsers share `BaseParser`: `Expect` takes a token that must be there, `Extract`
+that writes the schema. The grammar of a line is its parser's, and so are the names on it. What the
+lines mean together is the orchestrator's: the tree the indentation draws, the names each line
+declares, a comment belonging to the line below. The parsers share `BaseParser`: `Expect` takes a token that must be there, `Extract`
 takes one and returns its value, an `Optional` one never throws, and the index moves in one place.
 A line that stops making sense throws `ScriptSyntaxException` at that token, and the Scanner records
 it and reads on from the next line, so one typo is one error rather than the end of the report.
@@ -663,7 +664,8 @@ Facts about the picture go in the header - the click point, and the area size an
 captured at. Decisions about the search go on the step - `accuracy` and `required` on each
 template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
 see that. The area line carries `scales with` and its DPI. In a script a template is named by its
-file, and `ScriptLineParser` joins the header's facts onto a step's templates as its line is read.
+file, and the step's parser takes the header's facts from the scope as it reads each template: every
+step gets its own row for the picture, because accuracy and required are the step's.
 Every template has a click, so the printer always writes it and the parser always requires it. A
 step naming a template with no line in the header is `TEMPLATE_UNKNOWN`, reported at the name.
 

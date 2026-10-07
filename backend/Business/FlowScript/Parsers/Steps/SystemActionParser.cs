@@ -6,7 +6,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class SystemActionParser : BaseStepParser
     {
-        public SystemActionParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public SystemActionParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

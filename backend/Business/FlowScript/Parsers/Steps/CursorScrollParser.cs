@@ -6,7 +6,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class CursorScrollParser : BaseStepParser
     {
-        public CursorScrollParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public CursorScrollParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

@@ -7,8 +7,11 @@ namespace Business.FlowScript.Parsers.Header
 {
     internal sealed class AreaParser : BaseParser<FlowArea>
     {
-        public AreaParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        private readonly ScriptScope _scope;
+
+        public AreaParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens)
         {
+            _scope = scope;
         }
 
         public override FlowArea Parse()
@@ -60,9 +63,9 @@ namespace Business.FlowScript.Parsers.Header
                 ExpectKeyword(ScriptSymbolEnum.INSIDE);
                 area.Type = FlowAreaTypeEnum.CUSTOM;
 
-                // Named, and linked by ScriptLineParser to the area declared above.
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                area.ParentFlowArea = new FlowArea() { Name = ExtractText() };
+                ScriptToken at = CurrentToken;
+                area.ParentFlowArea = _scope.Area(ExtractText(), at);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 ExpectPlacement(area);

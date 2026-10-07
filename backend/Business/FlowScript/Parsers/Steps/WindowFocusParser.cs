@@ -6,7 +6,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class WindowFocusParser : BaseStepParser
     {
-        public WindowFocusParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public WindowFocusParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

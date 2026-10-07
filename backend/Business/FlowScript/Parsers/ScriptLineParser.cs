@@ -18,15 +18,9 @@ namespace Business.FlowScript.Parsers
     internal sealed class ScriptLineParser
     {
         private readonly FlowScriptSchema _flowScriptSchema;
+        private readonly ScriptScope _scope; // What the lines above declared, for the parsers to resolve names against.
         private readonly Dictionary<ScriptToken, string> _comments = new Dictionary<ScriptToken, string>(); // Comments for the step below, by their # token.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
-
-        // What the lines above declared. Steps, areas, points and inputs share one set of names.
-        private readonly HashSet<string> _names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowStepTemplate> _templates = new Dictionary<string, FlowStepTemplate>(StringComparer.Ordinal);
 
         // The last step and the steps it sits in, innermost last, with the indent each was written at.
         private readonly List<(FlowStep Step, int Indent)> _openSteps = new List<(FlowStep Step, int Indent)>();
@@ -34,6 +28,7 @@ namespace Business.FlowScript.Parsers
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
         {
             _flowScriptSchema = flowScriptSchema;
+            _scope = new ScriptScope(flowScriptSchema.Diagnostics);
         }
 
         /// <summary>
@@ -152,24 +147,18 @@ namespace Business.FlowScript.Parsers
 
         private void AddArea(ScriptLine line)
         {
-            FlowArea area = new AreaParser(line.Tokens).Parse();
-            area.ParentFlowArea = Link(_areas, area.ParentFlowArea?.Name, "area", line.Tokens);
+            FlowArea area = new AreaParser(line.Tokens, _scope).Parse();
 
             _flowScriptSchema.Areas.Add(area);
-
-            if (Declare(area.Name, line.Tokens))
-                _areas[area.Name] = area;
+            _scope.Declare(area, TokenOf(area.Name, line.Tokens));
         }
 
         private void AddPoint(ScriptLine line)
         {
-            FlowPoint point = new PointParser(line.Tokens).Parse();
-            point.FlowArea = Link(_areas, point.FlowArea?.Name, "area", line.Tokens);
+            FlowPoint point = new PointParser(line.Tokens, _scope).Parse();
 
             _flowScriptSchema.Points.Add(point);
-
-            if (Declare(point.Name, line.Tokens))
-                _points[point.Name] = point;
+            _scope.Declare(point, TokenOf(point.Name, line.Tokens));
         }
 
         private void AddInput(ScriptLine line)
@@ -178,15 +167,14 @@ namespace Business.FlowScript.Parsers
             input.OrderNumber = _flowScriptSchema.Inputs.Count;
 
             _flowScriptSchema.Inputs.Add(input);
-            Declare(input.Name, line.Tokens);
+            _scope.Declare(input, TokenOf(input.Name, line.Tokens));
         }
 
         private void AddTemplate(ScriptLine line)
         {
             FlowStepTemplate template = new TemplateParser(line.Tokens).Parse();
 
-            if (!_templates.TryAdd(template.Name, template))
-                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, line.Number, line.Tokens[0].Column, $"\"{template.Name}\" is already described above."));
+            _scope.Declare(template, line.Tokens[0]);
         }
 
 
@@ -216,9 +204,13 @@ namespace Business.FlowScript.Parsers
                 throw;
             }
 
-            // Linked before its own name is declared, so a step cannot name itself.
-            Link(step, line.Tokens);
-            JoinTemplateFacts(step, line.Tokens);
+            // A sub-flow is another file, which nothing in this one declares, so its path is kept as
+            // written instead of resolved.
+            if (step.SubFlow != null)
+            {
+                _flowScriptSchema.SubFlowPaths[step] = step.SubFlow.Name;
+                step.SubFlow = null;
+            }
 
             // Attach any comments.
             step.CodeComment = string.Join("\n", _comments.Values);
@@ -226,77 +218,77 @@ namespace Business.FlowScript.Parsers
 
             AddToTree(line, step);
 
-            if (Declare(step.Name, line.Tokens))
-                _steps[step.Name] = step;
+            // Declared after its line is read, so a step cannot name itself.
+            _scope.Declare(step, TokenOf(step.Name, line.Tokens));
         }
 
-        private static FlowStep ParseStep(FlowStepTypeEnum type, IReadOnlyList<ScriptToken> tokens)
+        private FlowStep ParseStep(FlowStepTypeEnum type, IReadOnlyList<ScriptToken> tokens)
         {
             switch (type)
             {
                 case FlowStepTypeEnum.SEARCH_IMAGE:
-                    return new SearchImageParser(tokens).Parse();
+                    return new SearchImageParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SEARCH_TEXT:
-                    return new SearchTextParser(tokens).Parse();
+                    return new SearchTextParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.CHECK_VALUE:
-                    return new CheckValueParser(tokens).Parse();
+                    return new CheckValueParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.CURSOR_CLICK:
-                    return new CursorClickParser(tokens).Parse();
+                    return new CursorClickParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.CURSOR_RELOCATE:
-                    return new CursorRelocateParser(tokens).Parse();
+                    return new CursorRelocateParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.CURSOR_DRAG:
-                    return new CursorDragParser(tokens).Parse();
+                    return new CursorDragParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return new CursorScrollParser(tokens).Parse();
+                    return new CursorScrollParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
-                    return new KeyboardInputParser(tokens).Parse();
+                    return new KeyboardInputParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.WAIT:
-                    return new WaitParser(tokens).Parse();
+                    return new WaitParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.LOOP:
-                    return new LoopParser(tokens).Parse();
+                    return new LoopParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.GO_BACK:
-                    return new GoBackParser(tokens).Parse();
+                    return new GoBackParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    return new SubFlowParser(tokens).Parse();
+                    return new SubFlowParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.NOTIFY:
-                    return new NotifyParser(tokens).Parse();
+                    return new NotifyParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.END_EXECUTION:
-                    return new EndExecutionParser(tokens).Parse();
+                    return new EndExecutionParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SYSTEM_ACTION:
-                    return new SystemActionParser(tokens).Parse();
+                    return new SystemActionParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SYSTEM_COMMAND:
-                    return new SystemCommandParser(tokens).Parse();
+                    return new SystemCommandParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.WINDOW_FOCUS:
-                    return new WindowFocusParser(tokens).Parse();
+                    return new WindowFocusParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.WINDOW_RESIZE:
-                    return new WindowResizeParser(tokens).Parse();
+                    return new WindowResizeParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
-                    return new WindowRelocateParser(tokens).Parse();
+                    return new WindowRelocateParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.MARKER:
-                    return new MarkerParser(tokens).Parse();
+                    return new MarkerParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SUCCESS:
                 case FlowStepTypeEnum.FAILURE:
-                    return new BranchParser(tokens).Parse();
+                    return new BranchParser(tokens, _scope).Parse();
 
                 default:
                     throw new InvalidOperationException($"No parser reads a {type} step.");
@@ -336,80 +328,10 @@ namespace Business.FlowScript.Parsers
         // Private methods - names
         // ================================================================
 
-        // Every row the step names, swapped for the one declared above. A sub-flow is another file,
-        // so its path is kept as written instead.
-        private void Link(FlowStep step, IReadOnlyList<ScriptToken> tokens)
-        {
-            step.FlowArea = Link(_areas, step.FlowArea?.Name, "area", tokens);
-            step.FlowPoint = Link(_points, step.FlowPoint?.Name, "point", tokens);
-            step.FlowPointEnd = Link(_points, step.FlowPointEnd?.Name, "point", tokens);
-            step.FlowStepReference = Link(_steps, step.FlowStepReference?.Name, "step", tokens);
-            step.FlowStepReferenceEnd = Link(_steps, step.FlowStepReferenceEnd?.Name, "step", tokens);
-
-            if (step.SubFlow != null)
-            {
-                _flowScriptSchema.SubFlowPaths[step] = step.SubFlow.Name;
-                step.SubFlow = null;
-            }
-        }
-
-        private T? Link<T>(Dictionary<string, T> declared, string? name, string what, IReadOnlyList<ScriptToken> tokens) where T : class
-        {
-            if (name == null)
-                return null;
-
-            if (declared.TryGetValue(name, out T? row))
-                return row;
-
-            ScriptToken token = TokenOf(name, tokens);
-            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.NAME_UNKNOWN, token.Line, token.Column,
-                $"Nothing above this line is called \"{name}\", so there is no {what} to point at."));
-
-            return null;
-        }
-
-        // False when the name is taken, which is reported at the second one.
-        private bool Declare(string name, IReadOnlyList<ScriptToken> tokens)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return false;
-
-            if (_names.Add(name))
-                return true;
-
-            ScriptToken token = TokenOf(name, tokens);
-            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.NAME_DUPLICATE, token.Line, token.Column,
-                $"\"{name}\" is already used above. Steps, areas, points and inputs share one set of names, because the script refers to them by name."));
-
-            return false;
-        }
-
-        // The header's facts about each picture a step names. A picture with no line there has no
-        // click, so it is reported at the step that names it, like any name nothing declares.
-        private void JoinTemplateFacts(FlowStep step, IReadOnlyList<ScriptToken> tokens)
-        {
-            foreach (FlowStepTemplate template in step.FlowStepTemplates)
-            {
-                if (!_templates.TryGetValue(template.Name, out FlowStepTemplate? header))
-                {
-                    ScriptToken token = TokenOf(template.Name, tokens);
-                    _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_UNKNOWN, token.Line, token.Column,
-                        $"\"{template.Name}\" has no line under Templates above, so nothing says where it is clicked."));
-                    continue;
-                }
-
-                template.ClickOffsetX = header.ClickOffsetX;
-                template.ClickOffsetY = header.ClickOffsetY;
-                template.AuthoredFlowAreaWidth = header.AuthoredFlowAreaWidth;
-                template.AuthoredFlowAreaHeight = header.AuthoredFlowAreaHeight;
-                template.AuthoredDpi = header.AuthoredDpi;
-            }
-        }
-
-        // Where a name was written, for the message to point at. A step's result is written {{name}}.
+        // Where a line's own name was written, for a duplicate to be reported at.
         private static ScriptToken TokenOf(string name, IReadOnlyList<ScriptToken> tokens)
         {
-            ScriptToken? token = tokens.FirstOrDefault(x => x.Kind == ScriptTokenKindEnum.QUOTE && (x.Value == name || x.Value == "{{" + name + "}}"));
+            ScriptToken? token = tokens.FirstOrDefault(x => x.Kind == ScriptTokenKindEnum.QUOTE && x.Value == name);
 
             return token ?? tokens[0];
         }

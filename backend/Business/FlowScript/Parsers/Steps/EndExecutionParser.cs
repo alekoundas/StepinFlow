@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class EndExecutionParser : BaseStepParser
     {
-        public EndExecutionParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public EndExecutionParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

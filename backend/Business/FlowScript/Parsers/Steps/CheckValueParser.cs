@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class CheckValueParser : BaseStepParser
     {
-        public CheckValueParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public CheckValueParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 
@@ -24,11 +24,12 @@ namespace Business.FlowScript.Parsers.Steps
 
             // At the point of use a step's result and an input are the same thing, so both are {{name}}.
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            ScriptToken at = CurrentToken;
             string? reference = ExtractVariable();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             if (reference != null)
-                step.FlowStepReference = new FlowStep() { Name = reference };
+                step.FlowStepReference = Scope.Step(reference, at);
 
             ExpectCondition(step);
             ExpectEnd();

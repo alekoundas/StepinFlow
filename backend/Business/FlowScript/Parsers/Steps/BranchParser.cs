@@ -6,7 +6,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class BranchParser : BaseStepParser
     {
-        public BranchParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public BranchParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class LoopParser : BaseStepParser
     {
-        public LoopParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public LoopParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 
@@ -21,10 +21,7 @@ namespace Business.FlowScript.Parsers.Steps
             {
                 ExpectKeyword(ScriptSymbolEnum.MATCH);
                 ExpectKeyword(ScriptSymbolEnum.IN);
-
-                ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                step.FlowStepReference = new FlowStep() { Name = ExtractText() };
-                ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+                step.FlowStepReference = ExtractStepReference();
             }
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.FOREVER))
             {

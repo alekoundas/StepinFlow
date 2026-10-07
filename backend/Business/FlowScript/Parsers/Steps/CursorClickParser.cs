@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class CursorClickParser : BaseStepParser
     {
-        public CursorClickParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public CursorClickParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

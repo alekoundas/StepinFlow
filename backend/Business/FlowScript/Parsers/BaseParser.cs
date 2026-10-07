@@ -23,7 +23,10 @@ namespace Business.FlowScript.Parsers
         private readonly IReadOnlyList<ScriptToken> _tokens; // All Tokens of the script line.
         private readonly List<string> _expected = new List<string>(); // Used by Diagnosticts to generate the error.
 
-        private ScriptToken CurrentToken { get { return _tokens[_index]; } }
+        /// <summary>
+        /// The token being read. A parser keeps it where a name was written, for the scope to report at.
+        /// </summary>
+        protected ScriptToken CurrentToken { get { return _tokens[_index]; } }
 
 
         protected BaseParser(IReadOnlyList<ScriptToken> tokens)

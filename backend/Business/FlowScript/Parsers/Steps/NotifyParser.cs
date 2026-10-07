@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class NotifyParser : BaseStepParser
     {
-        public NotifyParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public NotifyParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 

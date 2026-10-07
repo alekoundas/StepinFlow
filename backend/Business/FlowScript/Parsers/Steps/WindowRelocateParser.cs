@@ -7,7 +7,7 @@ namespace Business.FlowScript.Parsers.Steps
 {
     internal sealed class WindowRelocateParser : BaseStepParser
     {
-        public WindowRelocateParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public WindowRelocateParser(IReadOnlyList<ScriptToken> tokens, ScriptScope scope) : base(tokens, scope)
         {
         }
 
