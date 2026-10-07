@@ -1114,6 +1114,18 @@ correctly with no configuration. What does want configuring is line endings: `*.
 `.gitattributes`, because flows are authored on Windows and CI runs on Linux, and the round-trip
 test compares bytes.
 
+### A flow's name is a file name on all three systems
+
+The name becomes the `.sflw` file and its template folder, and a repository is cloned onto Windows,
+macOS and Linux. `Core/Helpers/FileNameHelper` keeps one fixed list, Windows', the strictest, rather
+than `Path.GetInvalidFileNameChars()`, which is the running machine's and on Linux only `/` and the
+null character: none of `< > : " / \ | ? *` or the control characters, no trailing dot or space, and
+none of the device names (`CON`, `NUL`, `COM1`...) with or without an extension. A flow's name is
+validated against it - by the create, update and extract handlers, by `flow.zod.ts` with the same
+rules, and on the script's `Flow:` line as `FLOW_NAME_INVALID`. A name that stays free text, a
+step's or a template's, is cleaned with the same list instead: each refused character becomes a
+space and the ends lose dots and spaces.
+
 ### Git is the version history. The execution carries what ran.
 
 Once a flow is a text file, `git log`, `git blame` and `git show HEAD~20:...` are the version

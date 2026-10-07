@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Flows.FlowValidationService
 {
     /// <summary>
-    /// Per flow validate references and form fields validity.
+    /// Per flow validate tree structre, flow step field validity and flow portability.
     /// </summary>
     public sealed class FlowValidationService : IFlowValidationService
     {
@@ -19,7 +19,32 @@ namespace Business.Flows.FlowValidationService
         // ================================================================
 
         /// <summary>
-        /// Per flow check references and form fields validity 
+        /// Load the whole flow tree and do the actual validation by calling "Validate()".
+        /// </summary>
+        public async Task<FlowValidationResultDto> ValidateAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        {
+            LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
+            Flow flow = loaded.Flows[flowId];
+
+            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+        }
+
+        /// <summary>
+        /// Load the whole flow tree for all FlowIds and do the actual validation by calling "Validate()".
+        /// </summary>
+        public async Task<IReadOnlyDictionary<int, FlowValidationResultDto>> ValidateAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
+        {
+            LoadedFlows loaded = await LoadAsync(dbContext, flowIds, ct);
+            Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
+
+            foreach (Flow flow in loaded.Flows.Values)
+                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+
+            return results;
+        }
+
+        /// <summary>
+        /// Validate flow against tree structre, flow step field validity and flow portability
         /// </summary>
         public FlowValidationResultDto Validate(
             IReadOnlyList<FlowStep> steps,
@@ -54,30 +79,7 @@ namespace Business.Flows.FlowValidationService
             return result;
         }
 
-        /// <summary>
-        /// Load the whole flow tree and do the actual validation by calling "Validate()".
-        /// </summary>
-        public async Task<FlowValidationResultDto> ValidateAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
-        {
-            LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
-            Flow flow = loaded.Flows[flowId];
-
-            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
-        }
-
-        /// <summary>
-        /// Load the whole flow tree for all FlowIds and do the actual validation by calling "Validate()".
-        /// </summary>
-        public async Task<IReadOnlyDictionary<int, FlowValidationResultDto>> ValidateAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
-        {
-            LoadedFlows loaded = await LoadAsync(dbContext, flowIds, ct);
-            Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
-
-            foreach (Flow flow in loaded.Flows.Values)
-                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
-
-            return results;
-        }
+     
 
 
         // ================================================================

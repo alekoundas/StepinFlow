@@ -10,19 +10,20 @@ namespace Business.FlowScript
 {
     /// <summary>
     /// Loads a flow out of the database and hands it to the printer.
-    ///
-    /// The printer is a pure function over <see cref="FlowScriptSchema"/>; this is the part that
-    /// knows about EF, files and paths, which is why they are separate classes.
+    /// 
+    /// Exporting a flow means a new flowscript file named after the flow name + .sflw is added to disk.
+    /// Also all FlowStepTemplates are added in the folder named after the flow and contains all the 
+    /// png images named after the FlowStepTemplate name.
     /// </summary>
     public sealed class FlowScriptExporter : IFlowScriptExporter
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IPrinter _writer;
+        private readonly IPrinter _printer;
 
-        public FlowScriptExporter(IDbContextFactory<AppDbContext> dbContextFactory, IPrinter writer)
+        public FlowScriptExporter(IDbContextFactory<AppDbContext> dbContextFactory, IPrinter printer)
         {
             _dbContextFactory = dbContextFactory;
-            _writer = writer;
+            _printer = printer;
         }
 
 
@@ -30,26 +31,41 @@ namespace Business.FlowScript
         // Public methods
         // ================================================================
 
+
+        /// <summary>
+        /// Get the script text only. Nothing toches the disk.
+        /// </summary>
         public async Task<string> RenderAsync(int flowId, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             FlowScriptSchema schema = await LoadAsync(dbContext, flowId, ct);
+            string script = _printer.Write(schema);
 
-            return _writer.Write(schema);
+            return script;
         }
 
+        /// <summary>
+        /// Save to Disk the flowscript along with a folder with png immages from templates.
+        /// Png name used is the FlowStepTemplate name
+        /// </summary>
         public async Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
+            // Load data.
             FlowScriptSchema schema = await LoadAsync(dbContext, flowId, ct);
-            string script = _writer.Write(schema);
+            string script = _printer.Write(schema);
 
-            string folder = string.IsNullOrWhiteSpace(folderPath) ? PathHelper.GetExportDataPath() : folderPath;
+            // Create export folder to disk.
+            string folder;
+            if (string.IsNullOrWhiteSpace(folderPath))
+                folder = PathHelper.GetExportDataPath();
+            else
+                folder = folderPath;
             Directory.CreateDirectory(folder);
 
-            string flowFileName = FileNameOf(schema.Flow.Name, "flow");
+            string flowFileName = FileNameHelper.Clean(schema.Flow.Name, "flow");
             string scriptPath = Path.Combine(folder, flowFileName + ".sflw");
 
             // Templates go in a folder named after the flow, beside the script, so git can show
@@ -136,7 +152,7 @@ namespace Business.FlowScript
                 if (string.IsNullOrWhiteSpace(desired))
                     desired = stepNames.GetValueOrDefault(template.FlowStepId, "template");
 
-                string fileName = FlowNameHelper.MakeUnique(FileNameOf(desired, "template"), taken);
+                string fileName = FlowNameHelper.MakeUnique(FileNameHelper.Clean(desired, "template"), taken);
                 taken.Add(fileName);
 
                 template.Name = fileName + ".png";
@@ -155,7 +171,7 @@ namespace Business.FlowScript
             Dictionary<int, string> paths = await dbContext.Flows.AsNoTracking()
                 .Where(x => subFlowIds.Contains(x.Id))
                 .Select(x => new { x.Id, x.Name })
-                .ToDictionaryAsync(x => x.Id, x => FileNameOf(x.Name, "sub-flow") + ".sflw", ct);
+                .ToDictionaryAsync(x => x.Id, x => FileNameHelper.Clean(x.Name, "sub-flow") + ".sflw", ct);
 
             foreach (FlowStep step in schema.Steps.Where(x => x.SubFlowId != null))
             {
@@ -190,25 +206,6 @@ namespace Business.FlowScript
             }
 
             return written;
-        }
-
-        // A name a file system will accept, and never empty. Whitespace becomes a hyphen
-        private static string FileNameOf(string name, string fallback)
-        {
-            string trimmed = (name ?? string.Empty).Trim();
-            if (trimmed.Length == 0)
-                return fallback;
-
-            // < and > on every machine, not only the ones that ban them: a template is named by its
-            // file name inside <[ ]>, which cannot hold either quote.
-            char[] invalid = Path.GetInvalidFileNameChars().Concat(['<', '>']).ToArray();
-            IEnumerable<char> mapped = trimmed.Select(x => invalid.Contains(x) || char.IsWhiteSpace(x) ? '-' : x);
-
-            string cleaned = string.Join('-', new string(mapped.ToArray())
-                .Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                .Trim('.', '-');
-
-            return cleaned.Length == 0 ? fallback : cleaned;
         }
     }
 }

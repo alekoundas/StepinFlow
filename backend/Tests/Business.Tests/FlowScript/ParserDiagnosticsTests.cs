@@ -191,6 +191,19 @@ namespace Business.Tests.FlowScript
             Read("Steps:\nWait 800ms").Single().Code.ShouldBe(DiagnosticCodeEnum.FLOW_LINE_MISSING);
         }
 
+        // The name is the file the flow exports to, and the repository it lands in is cloned onto Windows too.
+        [Theory]
+        [InlineData("Login: smoke")]
+        [InlineData("Is it up?")]
+        [InlineData("CON")]
+        public void A_flow_name_that_cannot_be_a_file_name_is_refused_on_its_line(string name)
+        {
+            Diagnostic diagnostic = Read($"Flow: {name}\nSteps:\nWait 800ms").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.FLOW_NAME_INVALID);
+            diagnostic.Line.ShouldBe(1);
+        }
+
         // A system action and a command preset are catalog words, so a number is never one.
         [Theory]
         [InlineData("System 1")]
@@ -214,6 +227,7 @@ namespace Business.Tests.FlowScript
         {
             HashSet<DiagnosticCodeEnum> covered = Cases.Select(x => (DiagnosticCodeEnum)x.Data.Item1).ToHashSet();
             covered.Add(DiagnosticCodeEnum.FLOW_LINE_MISSING);
+            covered.Add(DiagnosticCodeEnum.FLOW_NAME_INVALID);
 
             // Raised by the importer when the file is not there, not by anything in a script.
             covered.Add(DiagnosticCodeEnum.FILE_MISSING);

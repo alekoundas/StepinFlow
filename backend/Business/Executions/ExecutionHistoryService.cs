@@ -189,7 +189,7 @@ namespace Business.Executions
                 if (_runFolder.Length == 0)
                     _runFolder = PathHelper.GetExecutionRunPath(_flowName, _timeProvider.GetLocalNow().DateTime);
 
-                string fileName = $"{string.Concat($"{executionStep.Sequence} {executionStep.Name}".Split(Path.GetInvalidFileNameChars())).Trim()}.jpg";
+                string fileName = FileNameHelper.Clean($"{executionStep.Sequence} {executionStep.Name}", "screenshot") + ".jpg";
 
                 File.WriteAllBytes(Path.Combine(_runFolder, fileName), executionStep.Screenshot.Image);
 

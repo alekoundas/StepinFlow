@@ -57,19 +57,10 @@ before layer 5, because the engine tests would pin whichever answer is live.
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
       means reading the `Id:` out of the file it names and matching that, and deciding what a missing
       file does. It lands in the importer, which has the files and the database.
-- [ ] **A flow's name is a valid file name on Windows, macOS and Linux.** The name becomes the
-      `.sflw` file and its template folder, and a repository is cloned onto all three. Today three
-      places - `FlowScriptExporter.FileNameOf`, `PathHelper` and the failure screenshots in
-      `ExecutionHistoryService` - strip whatever `Path.GetInvalidFileNameChars()` returns, and that
-      list belongs to the machine running it: on Linux it is only `/` and the null character, so a
-      CI export can write `Login: smoke.sflw`, which a Windows clone cannot check out. Validate
-      rather than clean, against one list: none of `< > : " / \ | ? *` or the control characters,
-      no trailing space or dot, none of the Windows reserved names (`CON`, `PRN`, `AUX`, `NUL`,
-      `COM1`-`COM9`, `LPT1`-`LPT9`, with or without an extension), and unique ignoring case, because
-      the Windows and macOS file systems are. One helper in `Core`, read by the validator, the
-      importer's `Flow:` line as a diagnostic, and the flow create and update handlers, with the same
-      rule in `flow.zod.ts`. Step names stay free text - `"Desktop nav present?"` is a fair name - and
-      the screenshot keeps cleaning, from the same list rather than the machine's.
+- [ ] **A flow's name is unique ignoring case.** Two flows called `Login` and `login` export to one
+      file on Windows and macOS, whose file systems ignore case, and a sub-flow is found by its file
+      name. `FileNameHelper` holds every other file name rule (`PROJECT.md` §11); this one needs the
+      database, so it goes in the create, update and extract handlers and in the importer.
 
 ### The engine
 

@@ -1,4 +1,5 @@
 using Business.Flows.DataService;
+using Core.Helpers;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
@@ -29,6 +30,10 @@ namespace Transport.Ipc.Handlers
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return ResultDto<ExtractSubFlowResultDto>.Failure("Give the sub-flow a name.");
+
+            string? invalidName = FileNameHelper.Validate(dto.Name.Trim());
+            if (invalidName != null)
+                return ResultDto<ExtractSubFlowResultDto>.Failure(invalidName);
 
             try
             {
