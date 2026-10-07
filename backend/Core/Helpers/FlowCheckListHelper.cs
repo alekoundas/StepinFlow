@@ -1,13 +1,13 @@
 using Core.Enums;
-using Core.Helpers;
 using Core.Models.Business;
 
-namespace Business.Validation
+namespace Core.Helpers
 {
     /// <summary>
-    /// What a flow verifies, calculated by walking the tree.
+    /// What a flow verifies, calculated by walking the tree: every check, the section it sits in,
+    /// and whether failing it ends the execution. A description of the flow, not a verdict on it.
     /// </summary>
-    public static class FlowCheckHelper
+    public static class FlowCheckListHelper
     {
         public static IReadOnlyList<FlowCheck> Build(IReadOnlyList<FlowCheckNode> steps)
         {

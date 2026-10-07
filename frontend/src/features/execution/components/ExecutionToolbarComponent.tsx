@@ -1,13 +1,16 @@
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 
+import LabelComponent from "@/shared/components/LabelComponent";
 import StatusPillComponent, {
   type StatusPillSeverity,
 } from "@/shared/components/StatusPillComponent";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
 
 interface Props {
@@ -46,6 +49,12 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
     stepOverExecutionMutation,
   } = useExecutionMutations();
 
+  const { openConfirm } = useDialogStore();
+
+  // The same answer Start is refused on, so the button and the backend cannot disagree.
+  const { data: validation } = useFlowValidation(flowId);
+  const hasErrors = validation?.hasErrors ?? false;
+
   const isRunning = runState !== RunStateEnum.FINISHED;
   const isPaused = runState === RunStateEnum.PAUSED;
 
@@ -60,8 +69,18 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
 
     setRunState(RunStateEnum.RUNNING);
 
-    const executionId = await startExecutionMutation.mutateAsync(dto);
-    setExecutionId(executionId);
+    try {
+      const executionId = await startExecutionMutation.mutateAsync(dto);
+      setExecutionId(executionId);
+    } catch (err) {
+      setRunState(RunStateEnum.FINISHED);
+      openConfirm("execution-start-error", {
+        headerText: "The flow did not start",
+        hideConfirm: true,
+        cancelLabel: "Close",
+        children: <LabelComponent text={err instanceof Error ? err.message : String(err)} />,
+      });
+    }
   };
 
   return (
@@ -81,8 +100,10 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
           label="Start"
           icon="pi pi-play"
           size="small"
-          disabled={isRunning}
+          disabled={isRunning || hasErrors}
           onClick={handleStart}
+          tooltip={hasErrors ? "Fix the errors in this flow before running it" : undefined}
+          tooltipOptions={{ position: "bottom", showOnDisabled: true }}
         />
       )}
 

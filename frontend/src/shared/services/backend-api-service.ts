@@ -96,8 +96,8 @@ export const backendApiService = {
 
   FlowStep: {
     create: (dto: FlowStepDto) => call<number>("FlowStep.create", dto),
-    createMany: (dto: FlowDraftDto) =>
-      call<FlowDraftResultDto>("FlowStep.createMany", dto),
+    createFromRecording: (dto: FlowDraftDto) =>
+      call<FlowDraftResultDto>("FlowStep.createFromRecording", dto),
     update: (dto: FlowStepDto) => call<FlowStepDto>("FlowStep.update", dto),
     delete: (id: number) => call<boolean>("FlowStep.delete", id),
     getDeleteImpact: (id: number) =>
@@ -124,8 +124,6 @@ export const backendApiService = {
   },
 
   FlowStepTemplate: {
-    create: (dto: FlowStepTemplateDto) =>
-      call<number>("FlowStepTemplate.create", dto),
     get: (id: number) => call<FlowStepTemplateDto>("FlowStepTemplate.get", id),
   },
 

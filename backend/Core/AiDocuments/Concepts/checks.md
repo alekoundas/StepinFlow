@@ -29,9 +29,11 @@ The same step type covers both. Only the shape below it says which one it is.
 
 ## A check that decides nothing
 
-A check that is neither fatal nor referenced by any later step was never really made. The flow
-passes with the application broken, which is the exact failure this model exists to prevent. The
-validator raises `CHECK_DECIDES_NOTHING` for it.
+A check that is not fatal, whose Failure branch does nothing, and whose result no later step reads
+was never really made. The flow passes with the application broken, which is the exact failure this
+model exists to prevent. The validator does not flag it - telling it apart from a handled check is
+a judgement, not a rule. `GetFlowChecks` shows which checks are not fatal, and the tree shows what
+their Failure branch does.
 
 Look for this first when asked why a flow passes but the application is wrong.
 

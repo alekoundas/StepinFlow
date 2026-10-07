@@ -1,33 +1,26 @@
 using AutoMapper;
+using Business.Flows.DataService;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
     public class CreateFlowHandler
     {
         private readonly IMapper _mapper;
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly DataService _dataService;
 
-        public CreateFlowHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
+        public CreateFlowHandler(IMapper mapper, DataService dataService)
         {
             _mapper = mapper;
-            _dbContextFactory = dbContextFactory;
+            _dataService = dataService;
         }
 
-        public async Task<ResultDto<int>> HandleAsync(FlowDto dto, CancellationToken ct)
+        public Task<ResultDto<int>> HandleAsync(FlowDto dto, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-
             Flow flow = _mapper.Map<Flow>(dto);
-            flow.Id = 0;
 
-            dbContext.Flows.Add(flow);
-            await dbContext.SaveChangesAsync(ct);
-
-            return ResultDto<int>.Success(flow.Id);
+            return _dataService.Flow.CreateAsync(flow, ct);
         }
     }
 }

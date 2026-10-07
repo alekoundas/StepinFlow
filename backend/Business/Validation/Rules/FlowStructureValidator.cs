@@ -7,8 +7,8 @@ using Core.Models.Dtos;
 namespace Business.Validation.Rules
 {
     /// <summary>
-    /// Whether the steps still agree with each other - the search a cursor step reads, the branch
-    /// it now sits in, whether a check changes anything. What a drag and drop quietly breaks.
+    /// Whether the steps still agree with each other 
+    /// ex. the search a cursor step reads, the branch it now sits in. What a drag and drop quietly breaks.
     /// </summary>
     public static class FlowStructureValidator
     {
@@ -29,7 +29,6 @@ namespace Business.Validation.Rules
             IReadOnlyList<FlowStep> authoredSteps,
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             ILookup<int?, FlowStep> childrenByParentId,
-            IReadOnlyList<FlowCheck> checks,
             IReadOnlyList<string> flowNames,
             FlowValidationResultDto result)
         {
@@ -55,7 +54,6 @@ namespace Business.Validation.Rules
                     result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
             }
 
-            ValidateChecksDecideSomething(authoredSteps, checks, result);
             ValidateNamesAreUnique(authoredSteps, flowNames, result);
             ValidateVariables(authoredSteps, flowNames, result);
         }
@@ -144,31 +142,6 @@ namespace Business.Validation.Rules
             {
                 result.Add(null, name, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NAME_DUPLICATE,
                     $"\"{name}\" is used by more than one area or point.");
-            }
-        }
-
-        // A check whose failure stops nothing and whose result nothing reads is a check that was
-        // never really made. The flow still passes with the application broken, which is the exact
-        // failure the check model exists to prevent.
-        private static void ValidateChecksDecideSomething(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<FlowCheck> checks, FlowValidationResultDto result)
-        {
-            HashSet<int> referenced = authoredSteps
-                .SelectMany(x => new[] { x.FlowStepReferenceId, x.FlowStepReferenceEndId })
-                .Where(x => x != null)
-                .Select(x => x!.Value)
-                .ToHashSet();
-
-            foreach (FlowCheck check in checks)
-            {
-                if (check.IsFatal || referenced.Contains(check.FlowStepId))
-                    continue;
-
-                result.Add(
-                    check.FlowStepId,
-                    check.Name,
-                    ValidationSeverityEnum.WARNING,
-                    FlowValidationCodeEnum.CHECK_DECIDES_NOTHING,
-                    "Failing this changes nothing: no End Execution below it, and no step reads its result.");
             }
         }
 

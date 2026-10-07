@@ -8,7 +8,7 @@ using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
-
+using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using static Business.Tests.TestToken;
 
@@ -39,7 +39,7 @@ namespace Business.Tests.FlowScript
 
         private FlowScriptImporter Importer()
         {
-            return new FlowScriptImporter(_database, new Scanner());
+            return new FlowScriptImporter(new Scanner(), TestDataService.For(_database));
         }
 
         private sealed record RoundTrip(int FlowId, FlowImportResultDto Imported, string First, string Second, ScriptRows Before, ScriptRows After);

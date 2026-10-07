@@ -1,31 +1,39 @@
-using App.AutoMapper;
-using Transport.Ipc;
-using Transport.Ipc.Handlers;
-using Transport.Ipc.Handlers.Ai;
-using Transport.Ipc.Handlers.Execution;
-using Transport.Ipc.Handlers.Lookup;
-using Business.Command;
-using Business.Searching;
-using Business.AreaPoint;
-using Business.FlowScript;
-using Business.FlowScript.Scanner;
-using Business.FlowScript.Text;
-using Business.Validation;
-using Core.Ports;
-using Business.Ai;
-using Business.AppSettings;
-using Business.Recording;
-using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Business.Notification;
+
 using App.DependencyInjection;
-using Core.Enums;
+using App.AutoMapper;
+
+using Transport.Ipc;
+using Transport.Ipc.Handlers;
+using Transport.Ipc.Handlers.Ai;
+using Transport.Ipc.Handlers.Execution;
+using Transport.Ipc.Handlers.Lookup;
+
+using Business.Command;
+using Business.Searching;
+using Business.AreaPoint;
+using Business.Flows.DataService;
+using Business.Flows.DataService.DataHandlers;
+using Business.FlowScript;
+using Business.FlowScript.Scanner;
+using Business.FlowScript.Text;
+using Business.Validation;
+using Business.Ai;
+using Business.AppSettings;
+using Business.Recording;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
+
+using DataAccess;
+
+using Core.Ports;
+using Core.Enums;
+
 using Platform.Windows.Input;
 using Platform.Windows.Native;
 using Platform.Windows.Ocr;
@@ -51,7 +59,7 @@ namespace App
             builder.Logging.AddConsole();
 
 
-            // DB context factory. Handlers own their DbContext and their own write statements.
+            // DB context factory. 
             builder.Services.AddCustomDbContextFactory();
 
 
@@ -79,6 +87,13 @@ namespace App
 
             // Validation
             builder.Services.AddSingleton<IFlowValidationService, FlowValidationService>();
+
+            // Data services
+            builder.Services.AddSingleton<FlowDataService>();
+            builder.Services.AddSingleton<FlowStepDataService>();
+            builder.Services.AddSingleton<FlowAreaDataService>();
+            builder.Services.AddSingleton<FlowPointDataService>();
+            builder.Services.AddSingleton<DataService>();
 
             // Flow script
             builder.Services.AddSingleton<IPrinter, Printer>();
@@ -154,7 +169,7 @@ namespace App
             builder.Services.AddTransient<GetLazyDiscordBotHandler>();
             builder.Services.AddTransient<TestDiscordBotHandler>();
             builder.Services.AddTransient<CreateFlowStepHandler>();
-            builder.Services.AddTransient<CreateFlowStepsHandler>();
+            builder.Services.AddTransient<CreateFlowStepsFromRecordingHandler>();
             builder.Services.AddTransient<UpdateFlowStepHandler>();
             builder.Services.AddTransient<DeleteFlowStepHandler>();
             builder.Services.AddTransient<GetFlowStepHandler>();
@@ -178,7 +193,6 @@ namespace App
             builder.Services.AddTransient<DeleteFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointPreviewHandler>();
-            builder.Services.AddTransient<CreateFlowStepTemplateHandler>();
             builder.Services.AddTransient<GetFlowStepTemplateHandler>();
             builder.Services.AddTransient<GetLookupWindowHandler>();
             builder.Services.AddTransient<GetLookupMonitorHandler>();
@@ -268,7 +282,6 @@ namespace App
     }
 
 
-    // TODO: move them from here
 
     // Main Pipe
     internal sealed class HostedRequestPipeListener : BackgroundService

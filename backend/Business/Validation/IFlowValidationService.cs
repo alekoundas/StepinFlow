@@ -1,18 +1,23 @@
-using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using DataAccess;
 
 namespace Business.Validation
 {
     public interface IFlowValidationService
     {
         /// <summary>
-        /// The semantic rules, over the steps and the names around them.
-        ///
-        /// <c>flowNames</c> is every name the flow defines that is not a step - areas, points and
-        /// csv columns. They share one namespace with step names, so neither uniqueness nor
-        /// whether a {{name}} can resolve is answerable from the steps alone. <c>areas</c> and
-        /// <c>points</c> need only their id, name and what they sit in.
+        /// Load the whole flow tree and do the actual validation by calling "Validate()".
+        /// </summary>
+        Task<FlowValidationResultDto> ValidateAsync(AppDbContext dbContext, int flowId, CancellationToken ct);
+
+        /// <summary>
+        /// Load the whole flow tree for all FlowIds and do the actual validation by calling "Validate()".
+        /// </summary>
+        Task<IReadOnlyDictionary<int, FlowValidationResultDto>> ValidateAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct);
+
+        /// <summary>
+        /// Per flow check references and form fields validity 
         /// </summary>
         FlowValidationResultDto Validate(
             IReadOnlyList<FlowStep> steps,
@@ -20,6 +25,5 @@ namespace Business.Validation
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
             IReadOnlyList<string> flowNames);
-        IReadOnlyList<FlowCheck> GetChecks(IReadOnlyList<FlowCheckNode> steps);
     }
 }

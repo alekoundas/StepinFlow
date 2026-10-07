@@ -1,16 +1,6 @@
-namespace Core.Models.Dtos
+namespace Core.Models.Dtos.FlowScript
 {
-    /// <summary>Where a file stopped making sense, for the editor to point at.</summary>
-    public class FlowScriptErrorDto
-    {
-        public int Line { get; set; }
-        public int Column { get; set; }
-        public string Message { get; set; } = string.Empty;
-
-        /// <summary>The message is for reading; these are for deciding what to do about it.</summary>
-        public string Code { get; set; } = string.Empty;
-        public string Severity { get; set; } = string.Empty;
-    }
+    
 
     /// <summary>
     /// What an import did, or why it did nothing. A failed import leaves the flow exactly as it
@@ -30,5 +20,11 @@ namespace Core.Models.Dtos
         public List<string> MissingTemplates { get; set; } = new List<string>();
 
         public List<FlowScriptErrorDto> Errors { get; set; } = new List<FlowScriptErrorDto>();
+
+        /// <summary>
+        /// The imported flow as the validator sees it once saved. Errors here do not undo the
+        /// import: the flow is saved, shows them, and will not run until they are fixed.
+        /// </summary>
+        public FlowValidationResultDto? Validation { get; set; }
     }
 }

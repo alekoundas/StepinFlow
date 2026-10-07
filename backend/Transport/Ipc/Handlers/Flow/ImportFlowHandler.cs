@@ -1,5 +1,6 @@
 using Business.FlowScript;
 using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
 
 namespace Transport.Ipc.Handlers
 {

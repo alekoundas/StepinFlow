@@ -1,30 +1,20 @@
+using Business.Flows.DataService;
 using Core.Models.Dtos;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
     public class DeleteFlowStepHandler
     {
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly DataService _dataService;
 
-        public DeleteFlowStepHandler(IDbContextFactory<AppDbContext> dbContextFactory)
+        public DeleteFlowStepHandler(DataService dataService)
         {
-            _dbContextFactory = dbContextFactory;
+            _dataService = dataService;
         }
 
-        public async Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
+        public Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-
-            int count = await dbContext.FlowSteps
-                .Where(x => x.Id == id)
-                .ExecuteDeleteAsync(ct);
-
-            if (count <= 0)
-                return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
-
-            return ResultDto<bool>.Success(true);
+            return _dataService.FlowStep.DeleteAsync(id, ct);
         }
     }
 }

@@ -1,6 +1,5 @@
 using Business.Validation;
 using Core.Enums;
-using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +20,8 @@ namespace Transport.Ipc.Handlers
     /// are currently on a page, and one cached answer serves paging and both views. It reads
     /// every step in the database to do it, which is nothing at this size but is the first thing
     /// to page if a install ever holds hundreds of flows.
+    ///
+    /// Validated the way one flow is, in one batch, so a badge and a refused Start cannot disagree.
     /// </summary>
     public class GetFlowHealthHandler
     {
@@ -37,86 +38,23 @@ namespace Transport.Ipc.Handlers
 
         public async Task<ResultDto<IReadOnlyList<FlowHealthDto>>> HandleAsync(FlowHealthRequestDto dto, CancellationToken ct)
         {
-            List<int> requested = dto.FlowIds;
-            bool all = requested.Count == 0;
-
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            List<int> flowIds = requested;
-            if (all)
+            List<int> flowIds = dto.FlowIds;
+            if (flowIds.Count == 0)
                 flowIds = await dbContext.Flows.Select(x => x.Id).ToListAsync(ct);
 
             if (flowIds.Count == 0)
                 return ResultDto<IReadOnlyList<FlowHealthDto>>.Success([]);
 
-            // Every step of every flow asked about in one query, then split in memory. One round
-            // trip whatever the page size.
-            List<FlowStep> steps = await dbContext.FlowSteps
-                .AsNoTracking()
-                .Where(x => all || flowIds.Contains(x.RootId))
-                .ToListAsync(ct);
-
-            Dictionary<int, int> templateCounts = await dbContext.FlowStepTemplates
-                .AsNoTracking()
-                .Where(x => all || flowIds.Contains(x.FlowStep.RootId))
-                .GroupBy(x => x.FlowStepId)
-                .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
-                .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
-
-            // One query each for every flow asked about, split in memory, so the shape matches the
-            // steps above rather than adding a round trip per flow. Only what the rules read.
-            List<FlowArea> areas = await dbContext.FlowAreas
-                .AsNoTracking()
-                .Where(x => all || flowIds.Contains(x.FlowId))
-                .Select(x => new FlowArea
-                {
-                    Id = x.Id,
-                    FlowId = x.FlowId,
-                    Name = x.Name,
-                    Type = x.Type,
-                    ParentFlowAreaId = x.ParentFlowAreaId,
-                    ProcessName = x.ProcessName,
-                    TitlePattern = x.TitlePattern,
-                    TabMatchValue = x.TabMatchValue,
-                    MonitorDeviceName = x.MonitorDeviceName,
-                })
-                .ToListAsync(ct);
-
-            List<FlowPoint> points = await dbContext.FlowPoints
-                .AsNoTracking()
-                .Where(x => all || flowIds.Contains(x.FlowId))
-                .Select(x => new FlowPoint { Id = x.Id, FlowId = x.FlowId, Name = x.Name, FlowAreaId = x.FlowAreaId })
-                .ToListAsync(ct);
-
-            List<FlowCsvColumn> inputs = await dbContext.FlowCsvColumns
-                .AsNoTracking()
-                .Where(x => all || flowIds.Contains(x.FlowId))
-                .Select(x => new FlowCsvColumn { FlowId = x.FlowId, Name = x.Name })
-                .ToListAsync(ct);
-
-            ILookup<int, FlowArea> areasByFlow = areas.ToLookup(x => x.FlowId);
-            ILookup<int, FlowPoint> pointsByFlow = points.ToLookup(x => x.FlowId);
-            ILookup<int, string> inputNamesByFlow = inputs.ToLookup(x => x.FlowId, x => x.Name);
-            ILookup<int, FlowStep> stepsByRoot = steps.ToLookup(x => x.RootId);
+            IReadOnlyDictionary<int, FlowValidationResultDto> results = await _flowValidationService.ValidateAsync(dbContext, flowIds, ct);
 
             List<FlowHealthDto> health = flowIds
-                .Select(flowId =>
+                .Select(flowId => new FlowHealthDto
                 {
-                    List<FlowArea> flowAreas = areasByFlow[flowId].ToList();
-                    List<FlowPoint> flowPoints = pointsByFlow[flowId].ToList();
-                    List<string> flowNames = flowAreas.Select(x => x.Name)
-                        .Concat(flowPoints.Select(x => x.Name))
-                        .Concat(inputNamesByFlow[flowId])
-                        .ToList();
-
-                    FlowValidationResultDto result = _flowValidationService.Validate(stepsByRoot[flowId].ToList(), templateCounts, flowAreas, flowPoints, flowNames);
-
-                    return new FlowHealthDto
-                    {
-                        FlowId = flowId,
-                        ErrorCount = result.Issues.Count(x => x.Severity == ValidationSeverityEnum.ERROR),
-                        WarningCount = result.Issues.Count(x => x.Severity != ValidationSeverityEnum.ERROR),
-                    };
+                    FlowId = flowId,
+                    ErrorCount = results[flowId].Issues.Count(x => x.Severity == ValidationSeverityEnum.ERROR),
+                    WarningCount = results[flowId].Issues.Count(x => x.Severity != ValidationSeverityEnum.ERROR),
                 })
                 .ToList();
 

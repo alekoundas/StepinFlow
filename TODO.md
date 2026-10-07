@@ -7,6 +7,14 @@ the history.
 
 ## Execution
 
+- [ ] **A `Launch` step throws when it runs. To talk about.** `RunCommandPresetEnum.LAUNCH_APP` is
+      what the script's `Launch <[ chrome.exe https://... ]>` reads into, but it has no entry in
+      `CommandPresetCatalog.All`, so `CommandPresetCatalog.Resolve` - which `CommandRunner` calls -
+      throws "Sequence contains no matching element". The validator was patched to treat it like a
+      custom `Run`, so only the execution is broken. To decide: how a launch runs (a catalog entry
+      that starts the target without waiting, or a branch in `Resolve`), whether the system
+      command form offers it, and a test over every `RunCommandPresetEnum` value so a preset
+      without an entry cannot happen again.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
       test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
@@ -333,6 +341,38 @@ the history.
       combination to Continue / Step Into / Step Over / Pause / Stop at runtime.
 
 ## Frontend
+
+- [ ] **What the user is shown when the backend refuses something. Open - to talk about, with
+      toasts in mind.** A refusal comes back as `ResultDto.Failure(message)`, and `call()` in
+      `backend-api-service.ts` throws it as an `Error`. What happens next depends on the caller:
+      - A refused Start opens a dialog (`ExecutionToolbarComponent`), as a failed "Make this a
+        sub-flow" does (`use-promote-flow.tsx`). The text is built by `StartExecutionHandler`:
+        `"Broken" has errors to fix before it can run. "Click": There is no point to act on. Pick a
+        saved point, or a search whose result gives one.`
+      - Most other mutations show nothing: the error reaches the console, and the `onError` in
+        `use-flow-step.ts` and `use-flow-area.ts` is commented out.
+      - `ToastContext.tsx` exists, entirely commented out.
+
+      To decide: which refusals are a toast (gone in a few seconds) and which a dialog (has to be
+      read or acted on); one place for them - a `MutationCache` `onError` on the `QueryClient` in
+      `main.tsx` - or each mutation choosing; whether the backend's sentence is shown as written or
+      the UI words a code (`ResultDto` carries no code today); whether Start's refusal names only
+      the first error or lists them and links to the step; and whether successes get a toast too.
+
+- [ ] **"What this flow verifies" - a button on the flow form opening a dialog that says it in
+      words.** Replaces the `CHECK_DECIDES_NOTHING` warning, removed 2026-10-07: a check whose
+      Failure branch ends nothing is often a question the flow asks itself, and a flow may be
+      executed whether it verifies anything or not, so this informs rather than warns.
+      - The data exists: `FlowCheckListHelper.Build` gives each check's name, code comment, section
+        (marker), whether failing it ends the execution, and the End Execution's message. The AI's
+        `GetFlowChecks` reads the same list. Missing: an IPC handler (`Flow.getChecks`) and the
+        dialog.
+      - Grouped by section, a sentence per check, e.g. "Sign in: finds 'Login button'. If it is not
+        there, the execution ends - 'Login page missing'." A check that is not fatal: "If not, it
+        takes the Failure branch." A flow with no checks says so plainly.
+
+      To decide: the wording; whether the code comment shows under each sentence; whether a step
+      in the dialog links to it in the tree.
 
 - [ ] **`CodeComment` reaches the database, the script and the model, but no form shows it.** The
       column, the dto, the printer, the parser, `DbQueryTools` and `AiPromptHelper` all carry it -

@@ -30,6 +30,7 @@ Everything here was finished by 2026-10-07.
 | 5.7 | Portable search: `ScalesWith`, DPI on every captured pixel, two match modes | §8 |
 | 5.9 | `Go Back` returns only to a step it passed; validator, form lookup and moves agree | §9 |
 | 5.10 | The script reads straight into linked rows; one model for scanner, printer, import and export | §7 |
+| 5.11 | Every write to a flow goes through its data service; a flow with errors is refused at Run | §9, §14 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
 **Next:** the machine-only test bucket, then the two engine seams that layer 5 is waiting on, then
@@ -118,7 +119,7 @@ Settled 2026-09-30, not yet built. A `MARKER` divides a flow into parts, and eve
 flow afterwards wants to know which part a step was in: the CI report says "failed in Checkout", the
 assistant is told it is "the part of the journey it tests", and a reviewer reads it as a heading.
 The name and the shape both undersell that - "marker" alone says a point is marked without saying
-what, which is why `FlowCheckHelper.MarkerOf` has to walk backwards to work out which one a step is
+what, which is why `FlowCheckListHelper.MarkerOf` has to walk backwards to work out which one a step is
 under.
 
 **`MARKER` becomes `STAGE_MARKER`**: the node that marks where a stage begins and carries its name.
@@ -163,56 +164,8 @@ The thing it names is a **stage**, so everything derived from it says stage rath
       no data to convert, because the database is disposable until there is a release.
 
 Touched: the enum, `TreeStepHelper`, `FlowStepFieldCatalog`, the printer and parser, `DbQueryTools`,
-`AiPromptHelper`, `FlowCheck`, `FlowCheckHelper`, the worker registration, four frontend files, two
+`AiPromptHelper`, `FlowCheck`, `FlowCheckListHelper`, the worker registration, four frontend files, two
 AI documents, `PROJECT.md` and `FLOW-FORMAT.md`. All mechanical apart from the flatten/re-parent pair.
-
-### 5.11. Every change to a flow goes through its data services
-
-Settled 2026-10-07, not yet built; the import's write path becomes one of these. Today the create,
-update, move and delete handlers live in `Transport` and each applies the rules itself -
-`FlowNameHelper.MakeUnique`, `TreeStepHelper.CreateBranchChildren`, `FlowStepTemplateSync` - while
-the importer adds the linked rows its own way and applies none of them. That is how a check whose
-empty branches the file left out imports with no `Success:` or `Failure:` row to add steps under.
-
-```
-Business/Flows/DataServices/
-  DataService.cs            .Flow, .FlowStep, .FlowArea, .FlowPoint - the one thing a handler is given
-  BaseDataService.cs        the unit of work, and the rules that span the flow's tables
-  FlowDataService.cs        Create, Update, Delete, Replace (the import), ExtractSubFlow, PromoteToSubFlow
-  FlowStepDataService.cs    Create, CreateMany (the recording), Update, Move, Delete
-  FlowAreaDataService.cs    Create, Update, Delete
-  FlowPointDataService.cs   Create, Update, Delete
-```
-
-- [ ] **Writes only.** Every change to a flow's rows and nothing that reads them; reads stay where
-      they are used. The base class's summary says so, so a `GetAsync` does not drift in.
-- [ ] **Rules as base methods, not helpers** - the same split as `BaseParser` and `BaseStepParser`.
-      The base holds only what spans the flow's tables: steps, areas and points are one name
-      namespace; a change can break a reference another row holds; validation once saved. A rule
-      only one table has is private to its service: a check's branch rows, a step's templates, a
-      parent area before its children. The helpers above move in as far as nothing else uses them.
-- [ ] **A method that opens its own context is one unit of work** - its own context and
-      transaction - and is what a handler calls. A method that takes the caller's context runs inside
-      someone else's, so `Replace` and `ExtractSubFlow` can compose several tables in one transaction.
-      Both are public; the parameter is what tells them apart. No optional context parameter: who
-      owns the transaction is never a question.
-- [ ] **The IPC handlers stay**, thin: map the dto, call the data service, map the result. The
-      switch keeps calling handlers, and the handlers stop touching `DbContext` for writes.
-- [ ] **A handler is given `DataService`**, which groups the four and does nothing else, so a call
-      reads `_data.FlowPoint.UpdateAsync(dto, ct)`. Chosen over injecting the one service a handler
-      uses: one more class, for a call that names the table it changes.
-- [ ] **`FlowDataService.ReplaceAsync` is the import's write path**: clear, add the linked rows the
-      scanner reads, save, then validate. One set of rules whether a change came from a form or a file.
-- [ ] **A flow with errors is refused at Run.** Validating after the save is safe only because of
-      this, and nothing does it yet: `use-flow-validation.ts` says the execution page "will block
-      Run", and the engine starts any flow it is given. The refusal belongs in the engine, so an
-      execution from CI is held to it too, and the button follows the same validation result.
-
-Rejected: one class for every write - the handlers it replaces are about a thousand lines; a class
-per operation - its shared rules end up as helpers a new path can skip, and `Command` already means
-a shell command here; a generic repository - `DbContext` already is one, and the rules are the point.
-Named "data service" over "editor" (already the UI where flows are edited), "write service",
-"manager" and "repository".
 
 ---
 
@@ -341,7 +294,7 @@ holds. Definition from the script, history from the rows.
 - [ ] When the tester answers, re-execute, take fresh screenshots where needed, regenerate
       templates, and carry on from where validation stopped.
 
-Groundwork already in: `FlowValidationService` with its rules, `FlowCheckHelper`, and the
+Groundwork already in: `FlowValidationService` with its rules, `FlowCheckListHelper`, and the
 `GetFlowChecks` tool so a model can ask what a flow verifies without walking the tree by hand.
 
 ---
@@ -374,6 +327,9 @@ Groundwork already in: `FlowValidationService` with its rules, `FlowCheckHelper`
 - [ ] The backend is already a .NET console application, so CI can execute it directly. A pipeline
       needs the execution engine, the flow, the data and somewhere to write results - not the
       editor, the recorder or the overlay. It arrives as `Transport/Cli/`, a folder beside `Ipc/`.
+- [ ] **Refuse a flow with validation errors, as `StartExecutionHandler` does.** The engine runs
+      whatever it is given, so the check is the entry point's job, and the CLI is a second entry
+      point. A second caller is the cue to move the check out of the handler into `Business`.
 - [ ] **JUnit XML**, because every CI system already renders it. `<failure>` means the product is
       broken; `<error>` means the harness is.
 - [ ] **CI for the repository itself** - build, the analyzers, and the backend tests with the

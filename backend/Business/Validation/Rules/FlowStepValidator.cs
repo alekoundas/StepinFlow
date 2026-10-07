@@ -151,7 +151,8 @@ namespace Business.Validation.Rules
 
         private static void ValidateCommand(FlowValidationResultDto result, FlowStep step)
         {
-            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
+            // Launch carries its whole command, the same as Run, and has no preset to look up.
+            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM || step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
             {
                 if (string.IsNullOrWhiteSpace(step.RunCommandValue))
                     result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");

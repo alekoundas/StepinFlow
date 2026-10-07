@@ -1,8 +1,8 @@
 using Core.Catalogs;
 using System.ComponentModel;
 using Business.Ai.Helpers;
-using Business.Validation;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Business;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -29,13 +29,11 @@ namespace Business.Ai.Tools
         private const string _redacted = "(hidden)";
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IFlowValidationService _flowValidationService;
         private readonly bool _canSendScreenData;
 
-        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, bool canSendScreenData)
+        public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, bool canSendScreenData)
         {
             _dbContextFactory = dbContextFactory;
-            _flowValidationService = flowValidationService;
             _canSendScreenData = canSendScreenData;
         }
 
@@ -344,7 +342,7 @@ namespace Business.Ai.Tools
                 })
                 .ToListAsync();
 
-            return _flowValidationService.GetChecks(steps)
+            return FlowCheckListHelper.Build(steps)
                 .Take(_maxRows)
                 .Select(x => new FlowCheckSummary(
                     x.FlowStepId,

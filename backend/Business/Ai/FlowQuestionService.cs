@@ -3,7 +3,6 @@ using Business.Ai.Helpers;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.Tools;
-using Business.Validation;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -35,7 +34,6 @@ namespace Business.Ai
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
         private readonly IExecutionScreenshotReader _executionScreenshotReader;
-        private readonly IFlowValidationService _flowValidationService;
         private readonly ILogger<FlowQuestionService> _logger;
 
         public FlowQuestionService(
@@ -45,7 +43,6 @@ namespace Business.Ai
             IDbContextFactory<AppDbContext> dbContextFactory,
             IAiDocumentIndexService aiDocumentIndexService,
             IExecutionScreenshotReader executionScreenshotReader,
-            IFlowValidationService flowValidationService,
             ILogger<FlowQuestionService> logger)
         {
             _providerService = providerService;
@@ -54,7 +51,6 @@ namespace Business.Ai
             _dbContextFactory = dbContextFactory;
             _aiDocumentIndexService = aiDocumentIndexService;
             _executionScreenshotReader = executionScreenshotReader;
-            _flowValidationService = flowValidationService;
             _logger = logger;
         }
 
@@ -200,7 +196,7 @@ namespace Business.Ai
 
         private IList<AITool> BuildDbTools(bool canSendScreenData)
         {
-            DbQueryTools tools = new DbQueryTools(_dbContextFactory, _flowValidationService, canSendScreenData);
+            DbQueryTools tools = new DbQueryTools(_dbContextFactory, canSendScreenData);
             AiDocumentTools helpTools = new AiDocumentTools(_aiDocumentIndexService);
 
             return

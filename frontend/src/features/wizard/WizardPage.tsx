@@ -185,7 +185,7 @@ export default function WizardPage() {
     setError(null);
 
     try {
-      const result = await backendApiService.FlowStep.createMany({ target, steps });
+      const result = await backendApiService.FlowStep.createFromRecording({ target, steps });
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["flow"] }),

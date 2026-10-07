@@ -1,37 +1,29 @@
 using AutoMapper;
+using Business.Flows.DataService;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
     public class UpdateFlowAreaHandler
     {
         private readonly IMapper _mapper;
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly DataService _dataService;
 
-        public UpdateFlowAreaHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
+        public UpdateFlowAreaHandler(IMapper mapper, DataService dataService)
         {
             _mapper = mapper;
-            _dbContextFactory = dbContextFactory;
+            _dataService = dataService;
         }
 
         public async Task<ResultDto<FlowAreaDto>> HandleAsync(FlowAreaDto dto, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            ResultDto<FlowArea> updated = await _dataService.FlowArea.UpdateAsync(dto, ct);
+            if (!updated.IsSuccess)
+                return ResultDto<FlowAreaDto>.Failure(updated.ErrorMessage ?? string.Empty);
 
-            FlowArea? existingFlowArea = await dbContext.FlowAreas
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+            FlowAreaDto flowAreaDto = _mapper.Map<FlowAreaDto>(updated.Data);
 
-            if (existingFlowArea == null)
-                return ResultDto<FlowAreaDto>.Failure("Entity doesnt exist in the Database!");
-
-            dbContext.Entry(existingFlowArea).CurrentValues.SetValues(dto);
-
-            await dbContext.SaveChangesAsync(ct);
-
-            FlowAreaDto flowAreaDto = _mapper.Map<FlowAreaDto>(existingFlowArea);
             return ResultDto<FlowAreaDto>.Success(flowAreaDto);
         }
     }

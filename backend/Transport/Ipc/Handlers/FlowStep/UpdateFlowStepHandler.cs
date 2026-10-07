@@ -1,44 +1,29 @@
 using AutoMapper;
-using Business.Flows;
+using Business.Flows.DataService;
 using Core.Models.Database;
 using Core.Models.Dtos;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
 
 namespace Transport.Ipc.Handlers
 {
     public class UpdateFlowStepHandler
     {
         private readonly IMapper _mapper;
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly DataService _dataService;
 
-        public UpdateFlowStepHandler(IMapper mapper, IDbContextFactory<AppDbContext> dbContextFactory)
+        public UpdateFlowStepHandler(IMapper mapper, DataService dataService)
         {
             _mapper = mapper;
-            _dbContextFactory = dbContextFactory;
+            _dataService = dataService;
         }
 
         public async Task<ResultDto<FlowStepDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            ResultDto<FlowStep> updated = await _dataService.FlowStep.UpdateAsync(dto, ct);
+            if (!updated.IsSuccess)
+                return ResultDto<FlowStepDto>.Failure(updated.ErrorMessage ?? string.Empty);
 
-            FlowStep? existingFlowStep = await dbContext.FlowSteps
-                .Include(x => x.FlowStepTemplates)
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+            FlowStepDto flowStepDto = _mapper.Map<FlowStepDto>(updated.Data);
 
-            if (existingFlowStep == null)
-                return ResultDto<FlowStepDto>.Failure("Entity doesnt exist in the Database!");
-
-            // SetValues copies scalars and foreign keys only, so the navigations the client
-            // round-tripped back to us cannot re-insert or overwrite anything, and CreatedOn
-            // (absent from the dto) keeps its original value.
-            dbContext.Entry(existingFlowStep).CurrentValues.SetValues(dto);
-
-            FlowStepTemplateSync.Sync(dbContext, existingFlowStep, dto.FlowStepTemplates);
-
-            await dbContext.SaveChangesAsync(ct);
-
-            FlowStepDto flowStepDto = _mapper.Map<FlowStepDto>(existingFlowStep);
             return ResultDto<FlowStepDto>.Success(flowStepDto);
         }
     }

@@ -4,12 +4,13 @@ using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Validation
 {
     /// <summary>
-    /// 1) Per flow validate references and form fields validity 
-    /// 2) Per flow checks during execution - used in the Ai and reporting.
+    /// Per flow validate references and form fields validity.
     /// </summary>
     public sealed class FlowValidationService : IFlowValidationService
     {
@@ -18,7 +19,7 @@ namespace Business.Validation
         // ================================================================
 
         /// <summary>
-        /// Per flow validate references and form fields validity 
+        /// Per flow check references and form fields validity 
         /// </summary>
         public FlowValidationResultDto Validate(
             IReadOnlyList<FlowStep> steps,
@@ -33,29 +34,49 @@ namespace Business.Validation
                 .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType))
                 .ToList();
 
+            // Validate step count.
             if (authored.Count == 0)
             {
                 result.Add(null, string.Empty, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FLOW_HAS_NO_STEPS, "This flow has no steps yet.");
-                return Finish(result);
+                result.HasErrors = true;
+                return result;
             }
+
 
             Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
-            IReadOnlyList<FlowCheck> checks = GetChecks(steps.Select(ToCheckNode).ToList());
 
             FlowStepValidator.Validate(authored, templateCountByStepId, result);
-            FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, checks, flowNames, result);
+            FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
 
-            return Finish(result);
+            result.HasErrors = result.Issues.Any(x => x.Severity == ValidationSeverityEnum.ERROR);
+            return result;
         }
 
         /// <summary>
-        /// Per flow checks during execution - used in the Ai and reporting.
+        /// Load the whole flow tree and do the actual validation by calling "Validate()".
         /// </summary>
-        public IReadOnlyList<FlowCheck> GetChecks(IReadOnlyList<FlowCheckNode> steps)
+        public async Task<FlowValidationResultDto> ValidateAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {
-            return FlowCheckHelper.Build(steps);
+            LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
+            Flow flow = loaded.Flows[flowId];
+
+            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+        }
+
+        /// <summary>
+        /// Load the whole flow tree for all FlowIds and do the actual validation by calling "Validate()".
+        /// </summary>
+        public async Task<IReadOnlyDictionary<int, FlowValidationResultDto>> ValidateAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
+        {
+            LoadedFlows loaded = await LoadAsync(dbContext, flowIds, ct);
+            Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
+
+            foreach (Flow flow in loaded.Flows.Values)
+                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+
+            return results;
         }
 
 
@@ -63,25 +84,67 @@ namespace Business.Validation
         // Private methods
         // ================================================================
 
-        private static FlowCheckNode ToCheckNode(FlowStep step)
+        // Load Flow with its relations.(areas, points and csvColumns).
+        private static async Task<LoadedFlows> LoadAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
         {
-            return new FlowCheckNode
-            {
-                Id = step.Id,
-                ParentFlowStepId = step.ParentFlowStepId,
-                FlowStepType = step.FlowStepType,
-                OrderNumber = step.OrderNumber,
-                Name = step.Name,
-                CodeComment = step.CodeComment,
-                Message = step.Message,
-                EndExecutionAsSuccess = step.EndExecutionAsSuccess,
-            };
+            List<FlowStep> steps = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => flowIds.Contains(x.RootId))
+                .ToListAsync(ct);
+
+            // Counted NOT Included! the templates are megabytes, only count matters here.
+            Dictionary<int, int> templateCounts = await dbContext.FlowStepTemplates
+                .AsNoTracking()
+                .Where(x => flowIds.Contains(x.FlowStep.RootId))
+                .GroupBy(x => x.FlowStepId)
+                .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
+                .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
+
+            // Load Flow with its relations.(areas, points and csvColumns).
+            Dictionary<int, Flow> flows = await dbContext.Flows
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Where(x => flowIds.Contains(x.Id))
+                .Select(x => new Flow
+                {
+                    Id = x.Id,
+                    FlowAreas = x.FlowAreas.Select(area => new FlowArea
+                    {
+                        Id = area.Id,
+                        Name = area.Name,
+                        Type = area.Type,
+                        ParentFlowAreaId = area.ParentFlowAreaId,
+                        ProcessName = area.ProcessName,
+                        TitlePattern = area.TitlePattern,
+                        TabMatchValue = area.TabMatchValue,
+                        MonitorDeviceName = area.MonitorDeviceName,
+                    }).ToList(),
+                    FlowPoints = x.FlowPoints.Select(point => new FlowPoint { Id = point.Id, Name = point.Name, FlowAreaId = point.FlowAreaId }).ToList(),
+                    FlowCsvColumns = x.FlowCsvColumns.Select(column => new FlowCsvColumn { Name = column.Name }).ToList(),
+                })
+                .ToDictionaryAsync(x => x.Id, ct);
+
+            foreach (int flowId in flowIds.Where(x => !flows.ContainsKey(x)))
+                flows[flowId] = new Flow { Id = flowId };
+
+            return new LoadedFlows(flows, steps.ToLookup(x => x.RootId), templateCounts);
         }
 
-        private static FlowValidationResultDto Finish(FlowValidationResultDto result)
+        // Areas, points and csv columns need to be unique between them.
+        private static List<string> FlowNames(Flow flow)
         {
-            result.HasErrors = result.Issues.Any(x => x.Severity == ValidationSeverityEnum.ERROR);
-            return result;
+            return flow.FlowAreas.Select(x => x.Name)
+                .Concat(flow.FlowPoints.Select(x => x.Name))
+                .Concat(flow.FlowCsvColumns.Select(x => x.Name))
+                .ToList();
         }
+
+
+
+        // ================================================================
+        // Private records
+        // ================================================================
+
+        private sealed record LoadedFlows(Dictionary<int, Flow> Flows, ILookup<int, FlowStep> StepsByFlow, Dictionary<int, int> TemplateCounts);
     }
 }

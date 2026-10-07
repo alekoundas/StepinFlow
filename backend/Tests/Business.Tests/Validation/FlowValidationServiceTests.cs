@@ -254,25 +254,8 @@ namespace Business.Tests.Validation
         }
 
         // ================================================================
-        // Checks that decide nothing
+        // Warnings
         // ================================================================
-
-        [Fact]
-        public void A_check_nothing_reads_and_nothing_fails_on_decides_nothing()
-        {
-            FlowStep search = Search("Find");
-
-            CodesOn(search).ShouldContain(FlowValidationCodeEnum.CHECK_DECIDES_NOTHING);
-        }
-
-        [Fact]
-        public void A_check_that_ends_the_execution_on_failure_decides_something()
-        {
-            FlowStep search = Search("Find");
-            Add(FlowStepTypeEnum.END_EXECUTION, "Stop", Branch(search, FlowStepTypeEnum.FAILURE));
-
-            CodesOn(search).ShouldNotContain(FlowValidationCodeEnum.CHECK_DECIDES_NOTHING);
-        }
 
         [Fact]
         public void A_warning_alone_is_not_an_error()

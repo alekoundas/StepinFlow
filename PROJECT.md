@@ -84,8 +84,8 @@ Feature folders, each named for what it does rather than for what its classes ar
 Business/
   Executions/    engine, walker, cache, history, Workers/
   Searching/     ImageSearcher - shared by the engine and the editor's Test now
-  FlowScript/    Syntax/ Binding/ Text/ Diagnostics/, importer and exporter
-  Flows/         editing a flow's tree: moves, template sync, name lookup
+  FlowScript/    Scanner/ Lexing/ Parsers/ Models/ Printer/ Diagnostics/, importer and exporter
+  Flows/         DataService/ - every write to a flow - and the tree maths a move uses
   Validation/    FlowValidationService, Rules/
   Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
 ```
@@ -391,8 +391,8 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 98 handlers each registered by name
-in `Program.cs`.
+The dispatcher is written by hand: one switch arm per action, 97 of them, and each handler
+registered by name in `Program.cs`.
 
 ```
 "Flow.get" => await Handler<GetFlowHandler>().HandleAsync(Payload<int>(request), ct),
@@ -961,9 +961,9 @@ warning counts, and the editor names the step.
 | errors - the flow cannot be right | warnings - the flow works, but |
 | --- | --- |
 | a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
-| a step reading a result it does not sit under through Success | a check that decides nothing |
-| a `Notify` reporting a step it does not sit under through Failure | a step with no name |
-| a `Go Back` to a step it did not pass on the way here | anything positioned in screen coordinates |
+| a step reading a result it does not sit under through Success | a step with no name |
+| a `Notify` reporting a step it does not sit under through Failure | anything positioned in screen coordinates |
+| a `Go Back` to a step it did not pass on the way here | |
 | a sub-flow that does not exist | |
 | an `End Execution` under another one, which reads as a decision and is not | |
 | `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
@@ -971,8 +971,16 @@ warning counts, and the editor names the step.
 | text holding `<[` or `]>`, which the script could not write | |
 
 `NAME_DUPLICATE` is an error rather than a warning: the script refers to things by name, so a
-duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step picks
-a free name automatically, so only a manual rename can reach it.
+duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step, an
+area or a point picks a free name automatically, so only a manual rename can reach it.
+
+**An error stops a run, not a save.** A flow is validated once it is saved - after a form, and
+after an import, whose result carries the issues - and a flow with errors stays saved and shows
+them. One loader serves every caller: `FlowValidationService.ValidateAsync` takes a flow or a batch,
+the flow list's badges come from the batch, and the editor, an import and Start from the same code,
+so a badge and a refusal cannot disagree. `StartExecutionHandler` refuses to start it, or any flow that calls it as a sub-flow, before
+the engine is asked - the engine runs whatever it is given - and the refusal names the flow, the
+step and what is wrong. The Start button reads the same answer, so the two cannot disagree.
 
 The rules that relate two steps live once, in `TreeStepHelper`, and three places ask them: the
 validator, the form's dropdown, which offers only what the validator accepts, and a drag and drop,
@@ -980,8 +988,10 @@ which clears a reference the move would break. A `Go Back` may return to its ear
 parent, the parent's earlier siblings and so on up to the root - never forward, never into the
 other branch of a check, never inside a block that already finished.
 
-`FlowCheckHelper` and the `GetFlowChecks` AI tool expose the checks a flow contains, so a question
-about "what does this flow verify" is answerable without walking the tree by hand.
+`FlowCheckListHelper` and the `GetFlowChecks` AI tool expose the checks a flow contains, so a
+question about "what does this flow verify" is answerable without walking the tree by hand. The
+validator does not judge them: a check whose failure ends nothing may be a question the flow asks
+itself, and a flow may be executed whether it verifies anything or not.
 
 ### Planned - phase 9: a recording is not a test until it has validated
 
@@ -1284,12 +1294,12 @@ rectangular and lasso crop, eraser to transparency, undo/redo with thumbnail his
 > dependency: everything it needs arrives as an argument, including a `DbContext` when it needs
 > one. Anything that owns something is a service.
 
-The line is ownership, not purity. `FlowNameLookup.TakenAsync(dbContext, flowId, ct)` is async
-and touches the database, and it still owns nothing — the caller owns the context and the
-transaction, and it just asks a question with it. It dropped the `Helper` suffix because it is a
-query, and the name should say which. `IAppSettingService` holds its own factory, so it is a
-service. That is the whole distinction, and it is what makes a static class safe to call from
-anywhere: there is nothing in it to share, configure or dispose.
+The line is ownership, not purity. `FlowStepDataService.CreateAsync(dbContext, step, templates, ct)`
+is async and writes to the database, and it still owns nothing — the caller owns the context and
+the transaction — so it is static, while the overload that opens its own context needs the factory
+and is not. `IAppSettingService` holds its own factory, so it is a service. That is the whole
+distinction, and it is what makes a static method safe to call from anywhere: there is nothing in
+it to share, configure or dispose.
 
 **Pure functions stay static; only what holds a dependency is injected.** A pure static function
 is the cheapest thing in the repository to test - no fake, no fixture, no container. Wrapping
@@ -1326,11 +1336,30 @@ folder in `Business`.
   folder is the part of the action before the dot. A plain class with `HandleAsync`, no base type.
 - **As thin as the second caller makes it.** Logic with one caller stays in its handler; a second
   caller, or one that is not a handler, and it moves into its `Business` feature.
-- Handlers take `IDbContextFactory<AppDbContext>` and own their `DbContext`. **There is no generic
-  repository.** A handler *is* the transaction boundary and EF's `DbSet` *is* the
-  repository; a repository layer over `DbContext` would add indirection and remove LINQ. An earlier
-  `IDataService` was removed because it rented a context per call and its `SaveChangesAsync()` row
-  count was misread as success.
+- **Every write to a flow goes through its data service**, in `Business/Flows/DataService/`. A
+  handler is given `DataService`, which groups `Flow`, `FlowStep`, `FlowArea` and `FlowPoint`, so a
+  call names the table it changes: `_dataService.FlowPoint.UpdateAsync(dto, ct)`. The handler maps the dto,
+  calls it and maps the result. The rules live there once - names unique across steps, areas and
+  points, a check's branch rows, a step's templates, the references a move breaks, validation after
+  an import - so a form, the recorder and a file go through the same ones. The rules that span the
+  tables are base methods on `BaseDataService`; a rule one table has is private to its service.
+- **A data service method opens its own context and saves once**, which EF already makes atomic.
+  Only one that saves more than once - an import, an extraction - opens a transaction, written out
+  in the method, and every failure returns before its commit so the transaction rolls back as it is
+  disposed. One that takes an `AppDbContext` runs inside the caller's, which is how an import or an
+  extraction composes several tables in one transaction.
+- **A data service speaks rows**: an entity, a row's own DTO for an update, linked rows, or the ids
+  of an operation on rows that exist. Never instructions for building rows - the recorder's draft,
+  with its temp ids and "under this step's Success branch", is turned into linked rows by its
+  handler, and the data service saves them as a tree, the same rules an import's steps get.
+- **A check that needs only the request belongs to the handler** - nothing to save, no name given.
+  A check that protects stored data stays in the data service even when it needs no database,
+  because every caller has to obey it: a step cannot be dropped into itself.
+- **Reads stay in the handlers**, which take `IDbContextFactory<AppDbContext>` and own their
+  `DbContext`. **There is no generic repository**: EF's `DbSet` *is* the repository, and a layer over
+  it would add indirection and remove LINQ. An earlier `IDataService` was removed because it rented a
+  context per call and its `SaveChangesAsync()` row count was misread as success; a data service
+  returns a result, not a row count.
 - **Reads** use `AsNoTracking()` and project straight into the DTO when the shape is known, so counts
   and joins happen in SQLite in one round trip.
 - **Updates** load the tracked entity then `Entry(entity).CurrentValues.SetValues(dto)` — scalars and

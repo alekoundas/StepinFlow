@@ -12,8 +12,8 @@ export const flowValidationKeys = {
 
 /**
  * One answer for the whole flow, shared by everything that shows it. The tree badges its rows
- * from this and the execution page will block Run from the same list, so the two cannot end up
- * disagreeing about whether a flow is runnable.
+ * from this and the execution page blocks Start from the same list - the list the backend refuses
+ * Start on - so they cannot end up disagreeing about whether a flow is runnable.
  */
 export function useFlowValidation(flowId: number | null) {
   return useQuery({
