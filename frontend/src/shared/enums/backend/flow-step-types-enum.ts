@@ -8,7 +8,7 @@ export const FlowStepTypeEnum = {
   SUB_FLOW: "SUB_FLOW",
   NOTIFY: "NOTIFY",
   END_EXECUTION: "END_EXECUTION",
-  MARKER: "MARKER",
+  STAGE_MARKER: "STAGE_MARKER",
 
   // Input Steps
   CURSOR_DRAG: "CURSOR_DRAG",

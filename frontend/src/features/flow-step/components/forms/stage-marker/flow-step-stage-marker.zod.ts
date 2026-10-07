@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const FlowStepMarkerSchema = z.object({
+export const FlowStepStageMarkerSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")

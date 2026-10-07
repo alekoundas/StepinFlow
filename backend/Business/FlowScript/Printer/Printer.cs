@@ -229,11 +229,11 @@ namespace Business.FlowScript.Text
 
             foreach (FlowStep step in ChildrenOf(schema, null))
             {
-                if (needsGap && step.FlowStepType != FlowStepTypeEnum.MARKER)
+                if (needsGap && step.FlowStepType != FlowStepTypeEnum.STAGE_MARKER)
                     builder.AppendLine();
 
                 WriteStep(builder, schema, step, depth: 0);
-                needsGap = step.FlowStepType != FlowStepTypeEnum.MARKER;
+                needsGap = step.FlowStepType != FlowStepTypeEnum.STAGE_MARKER;
             }
         }
 
@@ -242,7 +242,7 @@ namespace Business.FlowScript.Text
             string indent = new string(' ', depth);
 
             // A marker is a section heading, not a step that does anything.
-            if (step.FlowStepType == FlowStepTypeEnum.MARKER)
+            if (step.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
             {
                 builder.AppendLine();
                 WriteComment(builder, step, indent);

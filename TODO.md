@@ -439,7 +439,7 @@ the history.
       goes on the branch rather than on its first step.
 
 - [ ] **The wizard cannot author the three newest step types.** `action-to-steps.ts` maps recorded
-      actions onto steps and has no case producing `END_EXECUTION` or `MARKER`. Correct for a
+      actions onto steps and has no case producing `END_EXECUTION` or `STAGE_MARKER`. Correct for a
       recording - neither has a recorded action behind it - but it means a recorded flow can never
       fail on purpose until someone opens the editor afterwards. Ties into the recorder seeding
       `End Execution failed` into the failure branches it creates.

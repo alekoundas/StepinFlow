@@ -66,9 +66,9 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     iconName: "stop-circle",
   },
   {
-    flowStepType: FlowStepTypeEnum.MARKER,
+    flowStepType: FlowStepTypeEnum.STAGE_MARKER,
     group: FlowStepGroupEnum.CONTROL,
-    label: "Marker",
+    label: "Stage Marker",
     iconName: "bookmark",
   },
 

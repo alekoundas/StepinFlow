@@ -78,8 +78,8 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "stop-circle",
     },
     {
-      flowStepType: FlowStepTypeEnum.MARKER,
-      name: "Marker",
+      flowStepType: FlowStepTypeEnum.STAGE_MARKER,
+      name: "Stage Marker",
       description:
         "Name the section that follows. Each one becomes a test case in the report.",
       iconName: "bookmark",

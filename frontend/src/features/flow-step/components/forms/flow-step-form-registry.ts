@@ -19,7 +19,7 @@ import FlowStepSubFlowFormComponent from "@/features/flow-step/components/forms/
 import FlowStepNotifyFormComponent from "@/features/flow-step/components/forms/notify/FlowStepNotifyFormComponent";
 import FlowStepKeyboardFormComponent from "@/features/flow-step/components/forms/keyboard/FlowStepKeyboardFormComponent";
 import FlowStepEndExecutionFormComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormComponent";
-import FlowStepMarkerFormComponent from "@/features/flow-step/components/forms/marker/FlowStepMarkerFormComponent";
+import FlowStepStageMarkerFormComponent from "@/features/flow-step/components/forms/stage-marker/FlowStepStageMarkerFormComponent";
 import FlowStepGoBackFormComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormComponent";
 
 import {
@@ -165,9 +165,9 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     }),
   },
 
-  [FlowStepTypeEnum.MARKER]: {
-    component: FlowStepMarkerFormComponent,
-    newStepValues: () => ({ name: "Marker" }),
+  [FlowStepTypeEnum.STAGE_MARKER]: {
+    component: FlowStepStageMarkerFormComponent,
+    newStepValues: () => ({ name: "Stage" }),
   },
 };
 

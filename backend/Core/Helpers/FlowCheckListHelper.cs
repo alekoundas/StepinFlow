@@ -20,7 +20,7 @@ namespace Core.Helpers
                 .ToDictionary(x => x.Key, x => x.OrderBy(c => c.OrderNumber).ToList());
 
             List<FlowCheckNode> markers = steps
-                .Where(x => x.ParentFlowStepId == null && x.FlowStepType == FlowStepTypeEnum.MARKER)
+                .Where(x => x.ParentFlowStepId == null && x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
                 .OrderBy(x => x.OrderNumber)
                 .ToList();
 

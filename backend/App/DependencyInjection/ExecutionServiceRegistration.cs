@@ -54,7 +54,7 @@ namespace App.DependencyInjection
                     [FlowStepTypeEnum.SEARCH_TEXT] = x.GetRequiredService<SearchTextStepWorker>(),
                     [FlowStepTypeEnum.CHECK_VALUE] = x.GetRequiredService<CheckValueStepWorker>(),
 
-                    [FlowStepTypeEnum.MARKER] = x.GetRequiredService<PassThroughStepWorker>(),
+                    [FlowStepTypeEnum.STAGE_MARKER] = x.GetRequiredService<PassThroughStepWorker>(),
                     [FlowStepTypeEnum.END_EXECUTION] = x.GetRequiredService<EndExecutionStepWorker>(),
 
                     [FlowStepTypeEnum.SYSTEM_COMMAND] = x.GetRequiredService<SystemCommandStepWorker>(),

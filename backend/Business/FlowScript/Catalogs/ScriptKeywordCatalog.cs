@@ -41,7 +41,7 @@ namespace Business.FlowScript.Catalogs
             // The rows the tree carries: a check's two branches, and a stage heading.
             new ScriptKeyword("Success:", FlowStepTypeEnum.SUCCESS),
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
-            new ScriptKeyword("##", FlowStepTypeEnum.MARKER) { TakesRestOfLine = true },
+            new ScriptKeyword("##", FlowStepTypeEnum.STAGE_MARKER) { TakesRestOfLine = true },
 
             // The quotes around a name or any other text. Nothing between them is special, so quoted
             // text cannot hold either one.

@@ -39,7 +39,7 @@ Look for this first when asked why a flow passes but the application is wrong.
 
 ## Markers group checks into test cases
 
-A `MARKER` names the section that follows it. A section fails if any step beneath it failed, and
+A `STAGE_MARKER` names the section that follows it. A section fails if any step beneath it failed, and
 each one becomes a test case in the report — so markers turn one pass or fail for a whole flow into
 "Sign in is what broke".
 

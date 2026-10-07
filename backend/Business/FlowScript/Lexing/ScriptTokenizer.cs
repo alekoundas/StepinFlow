@@ -15,10 +15,13 @@ namespace Business.FlowScript.Lexing
     {
         private static readonly HashSet<string> KeywordTexts = ScriptKeywordCatalog.All.Select(x => x.Text).ToHashSet(StringComparer.Ordinal);
 
+        /// <summary>
+        /// Generate tokens by spliting the line on whitespace (except quoted body) and then translate pieces to keywords
+        /// </summary>
         public static IReadOnlyList<ScriptToken> Tokenize(ScriptLine line)
         {
-            List<ScriptToken> pieces = Cut(line);
-            List<ScriptToken> tokens = Join(pieces);
+            List<ScriptToken> pieces = Cut(line); 
+            List<ScriptToken> tokens = Join(pieces); 
 
             // Add last token.
             tokens.Add(new ScriptToken(ScriptTokenKindEnum.END_OF_LINE, string.Empty, line.Number, line.Raw.Length + 1));

@@ -8,7 +8,7 @@ import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
-import { FlowStepMarkerSchema } from "@/features/flow-step/components/forms/marker/flow-step-marker.zod";
+import { FlowStepStageMarkerSchema } from "@/features/flow-step/components/forms/stage-marker/flow-step-stage-marker.zod";
 
 interface Props {
   formMode: FormMode;
@@ -18,15 +18,15 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function FlowStepMarkerFormComponent({
+export default function FlowStepStageMarkerFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepMarkerSchema>>({
-    resolver: zodResolver(FlowStepMarkerSchema),
+  const form = useForm<z.infer<typeof FlowStepStageMarkerSchema>>({
+    resolver: zodResolver(FlowStepStageMarkerSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -43,13 +43,13 @@ export default function FlowStepMarkerFormComponent({
     return () => clearTimeout(timer);
   }, [trigger]);
 
-  const handleSubmit = (data: z.infer<typeof FlowStepMarkerSchema>) =>
+  const handleSubmit = (data: z.infer<typeof FlowStepStageMarkerSchema>) =>
     onSubmit(new FlowStepDto({ ...defaultValues, ...data }));
 
   return (
     <>
       <FormHeaderComponent
-        title="Marker Step Configuration"
+        title="Stage Marker Step Configuration"
         description="Names the section that follows. Each one becomes a test case in the report, so name it after what a person would say they were doing."
         formMode={formMode}
         onEdit={onEdit}

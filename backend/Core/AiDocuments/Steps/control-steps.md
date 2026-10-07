@@ -73,7 +73,7 @@ Failure:
 
 ## Marker
 
-`MARKER` names the section that follows it. It does nothing at execution time.
+`STAGE_MARKER` names the section that follows it. It does nothing at execution time.
 
 A section runs from one marker to the next. It fails if any step beneath it failed and passes
 otherwise, and each one becomes a test case in the report — so markers are what turn a single

@@ -11,7 +11,7 @@ namespace Core.Enums
         SUB_FLOW,
         NOTIFY,
         END_EXECUTION,
-        MARKER,
+        STAGE_MARKER,
 
         // Input Steps
         CURSOR_DRAG,

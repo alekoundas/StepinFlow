@@ -149,7 +149,7 @@ namespace Core.Catalogs
                 nameof(FlowStep.Message),
             ],
 
-            [FlowStepTypeEnum.MARKER] = [],
+            [FlowStepTypeEnum.STAGE_MARKER] = [],
 
             [FlowStepTypeEnum.SYSTEM_COMMAND] =
             [
