@@ -9,7 +9,7 @@ namespace Core.Models.Business
 
         public string Name { get; set; } = string.Empty;
         public string CodeComment { get; set; } = string.Empty;
-        public string? MarkerName { get; set; }
+        public string? StageName { get; set; }
         public bool IsFatal { get; set; }
         public string? FailureMessage { get; set; }
     }

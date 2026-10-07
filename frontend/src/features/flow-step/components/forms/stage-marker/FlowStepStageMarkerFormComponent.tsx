@@ -50,7 +50,7 @@ export default function FlowStepStageMarkerFormComponent({
     <>
       <FormHeaderComponent
         title="Stage Marker Step Configuration"
-        description="Names the section that follows. Each one becomes a test case in the report, so name it after what a person would say they were doing."
+        description="Names the stage that follows. Each stage becomes a test case in the report, so name it after what a person would say they were doing."
         formMode={formMode}
         onEdit={onEdit}
       />
@@ -67,7 +67,7 @@ export default function FlowStepStageMarkerFormComponent({
             isRequired={true}
             isDisabled={formMode === "VIEW"}
             className="mt-5"
-            hintText="It fails if any step beneath it failed, and passes otherwise."
+            hintText="The stage fails if any step in it failed, and passes otherwise."
           />
 
           <FormFooterComponent

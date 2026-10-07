@@ -349,7 +349,7 @@ namespace Business.Ai.Tools
                     x.Name,
                     x.CodeComment,
                     x.FlowStepType.ToString(),
-                    x.MarkerName,
+                    x.StageName,
                     x.IsFatal,
                     x.FailureMessage))
                 .ToList();
@@ -557,7 +557,7 @@ namespace Business.Ai.Tools
 
         public record StepTypeCount(string Type, int Count);
 
-        public record FlowCheckSummary(int FlowStepId, string Name, string CodeComment, string Type, string? MarkerName, bool IsFatal, string? FailureMessage);
+        public record FlowCheckSummary(int FlowStepId, string Name, string CodeComment, string Type, string? StageName, bool IsFatal, string? FailureMessage);
 
         public record RunOutcomeCount(string Status, int Count);
 

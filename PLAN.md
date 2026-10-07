@@ -113,59 +113,39 @@ before layer 5, because the engine tests would pin whichever answer is live.
 
 ## Structure, again
 
-### 5.8. A marker becomes a stage marker
+### 5.8. A stage marker is a label
 
-Settled 2026-09-30, not yet built. A `MARKER` divides a flow into parts, and everything that reads a
-flow afterwards wants to know which part a step was in: the CI report says "failed in Checkout", the
-assistant is told it is "the part of the journey it tests", and a reviewer reads it as a heading.
-The name and the shape both undersell that - "marker" alone says a point is marked without saying
-what, which is why `FlowCheckListHelper.MarkerOf` has to walk backwards to work out which one a step is
-under.
+A stage marker divides a flow into parts, and everything that reads a flow afterwards wants to know
+which part a step was in: the CI report says "failed in Checkout", the assistant is told it is "the
+part of the journey it tests", and a reviewer reads it as a heading.
 
-**`MARKER` becomes `STAGE_MARKER`**: the node that marks where a stage begins and carries its name.
-Rejected: `SECTION`, because a section is already a header block - `Areas:`, `Steps:` - to
-`ScriptLineParser.IsSection` and `SectionParser`: one word, two meanings, inside one parser; and
-`CHECKPOINT`, because it promises resumable state this holds none of, and sits one letter from
-`CHECK_VALUE`, `FlowCheck` and `GetFlowChecks`, where a check is specifically a step that can fail
-the test.
+**Renamed 2026-10-07: `MARKER` is `STAGE_MARKER`**, `MarkerParser` is `StageMarkerParser`, and the
+form says "Stage Marker". Rejected names: `SECTION`, because a section is already a header block -
+`Areas:`, `Steps:` - to `ScriptLineParser.IsSection` and `SectionParser`: one word, two meanings,
+inside one parser; and `CHECKPOINT`, because it promises resumable state this holds none of, and sits
+one letter from `CHECK_VALUE`, `FlowCheck` and `GetFlowChecks`, where a check is specifically a step
+that can fail the test.
 
-The thing it names is a **stage**, so everything derived from it says stage rather than marker:
-`FlowCheck.StageName`, and the stage stamped onto an execution step below.
+**It stays a label.** A named divider in the tree, `## Sign in` in the script, nothing at execution
+time. Which stage a step is in comes from position: the last stage marker above the top-level step
+it sits under (`FlowCheckListHelper.StageMarkerOf`), given to the model as `FlowCheck.StageName`.
 
-- [ ] **It becomes a container.** One entry in `TreeStepHelper.ContainerTypes`, which
-      `FlowStepTreeNodeProjection` already reads to decide `Droppable` and `Leaf` - when
-      `END_EXECUTION` joined that list in 4.7 the frontend needed no change at all. The tree then
-      shows what a stage contains, which is what a user expects the word to mean, and dropping a step
-      into a stage becomes an ordinary move rather than "somewhere after the divider".
-- [ ] **Which stage a step is in stops being a walk.** `MarkerOf` becomes `ParentFlowStepId`, and
-      `FlowCheck.MarkerName` becomes `StageName`.
-- [ ] **A stage sits at the root of a flow and nowhere else.** A stage divides the whole test, not
-      one branch of it - and it is what makes the file below unambiguous.
-- [ ] **The file does not change.** Still `## Sign in`, still flat, with the steps after it at column
-      zero. Rejected `#STAGE#:`: `##` is markdown, so a `.sflw` renders as a document in a pull
-      request, one hash against two is a convention every reviewer already knows, and every other
-      line of this format reads like English where that reads like a template placeholder.
+Rejected 2026-10-07, after it was built and reverted: **making it a container.** The tree would
+have shown what a stage holds, at the price of a root-only rule, a printer that flattens and a
+parser that re-parents to keep the file flat, two new validation codes, a refused drag and drop, and
+a `Go Back` that could no longer reach into an earlier stage - and a container at the root rules out
+sub-stages, which is what the reporting wants. Also rejected: **stamping the stage onto
+`ExecutionStep`.** The model is given the script, where the markers are, and every execution step
+carries its `FlowStepId`, so the stage is already there. The one case a stamp covered, a flow edited
+after the execution, is answered by storing the script with the execution (`PROJECT.md`, "what
+exactly ran in execution 37").
 
-      So the printer flattens a stage's children by one level and the parser re-parents every
-      root-level step under the stage above it - "a heading owns what follows until the next
-      heading", which is how a document already behaves. That pair is the only new code, and the
-      byte-identical round trip is what proves it. Indenting instead would be honest to the model and
-      cost two spaces on nearly every line of every flow; the root-only rule is what buys the
-      alternative.
-- [ ] **A stage keeps its own comment.** Every step carries one since 2026-10-06, a stage included
-      (`TODO.md`, Frontend): the `#` lines above `##` are the stage's, and the printer writes them
-      there. The re-parenting above must leave them on the stage rather than on the step before it.
-- [ ] **Stage names stay unique.** Settled with the rest: `Go Back to <[ X ]>` is linked by name
-      against every named step, so a duplicate makes that reference ambiguous.
-- [ ] **Stamp the stage onto `ExecutionStep`**, so a failure report and the execution log given to a
-      model say "failed in Checkout" without re-deriving it from the flow. This is the gap that
-      leaving stages out of the execution log would otherwise open.
-- [ ] One migration. Enums are stored as strings, so it needs a parseable `defaultValue`; there is
-      no data to convert, because the database is disposable until there is a release.
-
-Touched: the enum, `TreeStepHelper`, `FlowStepFieldCatalog`, the printer and parser, `DbQueryTools`,
-`AiPromptHelper`, `FlowCheck`, `FlowCheckListHelper`, the worker registration, four frontend files, two
-AI documents, `PROJECT.md` and `FLOW-FORMAT.md`. All mechanical apart from the flatten/re-parent pair.
+- [ ] **Sub-stages.** A stage holds stages - "Checkout › Payment" - and the CI report groups by
+      them. As a label that is heading levels, the way markdown does it: `##` a stage, `###` a stage
+      inside it, the file still flat. Open: where the level lives (a column on the step, or a step
+      type per level), the rule for which stage a step is in (the nearest marker above at each
+      level), how deep levels go, and how a sub-stage appears in the report - most CI dashboards
+      flatten nested test suites, so probably as a test case named "Checkout › Payment".
 
 ---
 

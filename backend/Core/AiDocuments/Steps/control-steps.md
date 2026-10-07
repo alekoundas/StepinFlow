@@ -1,4 +1,4 @@
-# Wait, Loop, Go Back, Sub-Flow, End Execution and Marker
+# Wait, Loop, Go Back, Sub-Flow, End Execution and Stage Marker
 
 ## Wait
 
@@ -71,13 +71,13 @@ Failure:
   End Execution, as success = false, "could not complete the order"
 ```
 
-## Marker
+## Stage Marker
 
-`STAGE_MARKER` names the section that follows it. It does nothing at execution time.
+`STAGE_MARKER` names the stage that follows it. It does nothing at execution time.
 
-A section runs from one marker to the next. It fails if any step beneath it failed and passes
-otherwise, and each one becomes a test case in the report — so markers are what turn a single
+A stage is everything from one stage marker to the next. It fails if any step in it failed and
+passes otherwise, and each one becomes a test case in the report — so stages are what turn a single
 pass or fail for a whole flow into "Sign in is what broke".
 
-Sections do not nest and do not indent the steps under them. Name them after what a person would
-say they were doing, because those names end up in front of everyone reading the report.
+Stages do not nest and do not indent the steps in them. Name them after what a person would say
+they were doing, because those names end up in front of everyone reading the report.

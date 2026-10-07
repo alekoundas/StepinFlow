@@ -69,19 +69,6 @@ namespace Business.FlowScript.Syntax
             return keyword.Text;
         }
 
-        /// <summary>
-        /// Whether the text holds one of the quotes, <c>&lt;[</c> or <c>]&gt;</c>. Nothing between them
-        /// is escaped, so text holding either cannot be quoted - a form or a script that tries is refused.
-        /// </summary>
-        public static bool HasQuote(string? text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return false;
-
-            return text.Contains(Keyword(ScriptSymbolEnum.QUOTE_OPEN), StringComparison.Ordinal)
-                || text.Contains(Keyword(ScriptSymbolEnum.QUOTE_CLOSE), StringComparison.Ordinal);
-        }
-
         public static string Condition(FlowStep step)
         {
             if (step.ConditionType == null)

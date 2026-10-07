@@ -37,16 +37,16 @@ their Failure branch does.
 
 Look for this first when asked why a flow passes but the application is wrong.
 
-## Markers group checks into test cases
+## Stages group checks into test cases
 
-A `STAGE_MARKER` names the section that follows it. A section fails if any step beneath it failed, and
-each one becomes a test case in the report — so markers turn one pass or fail for a whole flow into
+A `STAGE_MARKER` names the stage that follows it. A stage fails if any step in it failed, and each
+one becomes a test case in the report — so stages turn one pass or fail for a whole flow into
 "Sign in is what broke".
 
 ## Finding out what a flow verifies
 
 `GetFlowChecks` answers this in one call. For each check it gives the name, the code comment
-explaining why it is checked, the marker it falls under, whether it is fatal, and the End Execution
+explaining why it is checked, the stage it is in, whether it is fatal, and the End Execution
 message that says what failing it means.
 
 Use it for "what does this flow test", and before proposing a fix — a fix that removes or weakens a

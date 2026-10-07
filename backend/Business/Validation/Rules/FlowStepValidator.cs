@@ -90,27 +90,27 @@ namespace Business.Validation.Rules
         // Private methods
         // ================================================================
 
-        // The flow script quotes text with <[ and ]> and escapes nothing, so a step whose text holds
-        // either one could not be exported. The comment is written as it is rather than quoted, and
-        // the exit codes and OCR language are never typed freely.
+        // A FlowStep column cant contain <[ and ]> 
         private static void ValidateQuotes(FlowValidationResultDto result, FlowStep step)
         {
-            bool hasQuote = SyntaxFacts.HasQuote(step.Name)
-                || SyntaxFacts.HasQuote(step.Message)
-                || SyntaxFacts.HasQuote(step.KeyboardInputText)
-                || SyntaxFacts.HasQuote(step.RunCommandValue)
-                || SyntaxFacts.HasQuote(step.RunCommandWorkingDirectory)
-                || SyntaxFacts.HasQuote(step.ResultExtractPattern)
-                || SyntaxFacts.HasQuote(step.ConditionText)
-                || SyntaxFacts.HasQuote(step.ConditionTextEnd)
-                || SyntaxFacts.HasQuote(step.ProcessName)
-                || SyntaxFacts.HasQuote(step.TitlePattern);
-
-            if (!hasQuote)
-                return;
-
             string quoteOpen = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_OPEN);
             string quoteClose = SyntaxFacts.Keyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            // A line each, so the end of one field and the start of the next never make a quote between them.
+            string text = string.Join("\n",
+                step.Name,
+                step.Message,
+                step.KeyboardInputText,
+                step.RunCommandValue,
+                step.RunCommandWorkingDirectory,
+                step.ResultExtractPattern,
+                step.ConditionText,
+                step.ConditionTextEnd,
+                step.ProcessName,
+                step.TitlePattern);
+
+            if (!text.Contains(quoteOpen, StringComparison.Ordinal) && !text.Contains(quoteClose, StringComparison.Ordinal))
+                return;
 
             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.QUOTE_INSIDE,
                 $"Text in this step can't contain \"{quoteOpen}\" or \"{quoteClose}\".");

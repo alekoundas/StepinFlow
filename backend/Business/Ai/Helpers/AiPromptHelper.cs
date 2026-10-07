@@ -96,7 +96,7 @@ namespace Business.Ai.Helpers
               IsFatal false -> its Failure branch handles the miss and the flow carries on. It is a
               question the flow asks itself, like which layout it is looking at, and failing is a
               normal path rather than a problem.
-              MarkerName is the section it belongs to, which is the part of the journey it tests.
+              StageName is the stage it belongs to, which is the part of the journey it tests.
               CodeComment is why it is checked at all - say it back to the user, because it is the
               one thing no screenshot can show.
               A flow with no checks at all proves nothing, however many steps it has. Say that

@@ -82,6 +82,16 @@ namespace Business.Tests.Validation
             CodesOn(notify).ShouldContain(FlowValidationCodeEnum.QUOTE_INSIDE);
         }
 
+        // The fields are checked together, but the end of one and the start of the next are not a quote.
+        [Fact]
+        public void Two_fields_that_meet_at_a_quote_are_not_one()
+        {
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell <");
+            notify.Message = "[ done";
+
+            CodesOn(notify).ShouldNotContain(FlowValidationCodeEnum.QUOTE_INSIDE);
+        }
+
         [Theory]
         [InlineData(ConditionTypeEnum.EQUALS, "", "", FlowValidationCodeEnum.CONDITION_VALUE_MISSING)]
         [InlineData(ConditionTypeEnum.BETWEEN, "1", "", FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE)]

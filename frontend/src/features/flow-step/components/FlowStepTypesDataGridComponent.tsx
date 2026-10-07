@@ -81,7 +81,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.STAGE_MARKER,
       name: "Stage Marker",
       description:
-        "Name the section that follows. Each one becomes a test case in the report.",
+        "Name the stage that follows. Each stage becomes a test case in the report.",
       iconName: "bookmark",
     },
     {

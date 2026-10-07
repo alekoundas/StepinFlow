@@ -35,7 +35,7 @@ namespace Core.Helpers
                     FlowStepType = step.FlowStepType,
                     Name = step.Name,
                     CodeComment = step.CodeComment,
-                    MarkerName = MarkerOf(step, byId, markers),
+                    StageName = StageMarkerOf(step, byId, markers),
                     IsFatal = ending != null,
                     FailureMessage = ending?.Message,
                 });
@@ -90,7 +90,7 @@ namespace Core.Helpers
         // Sections do not nest and do not indent, so the marker that owns a step is the last one
         // above the top level step this one sits under - not above the step itself, which may be
         // several branches deep.
-        private static string? MarkerOf(FlowCheckNode step, IReadOnlyDictionary<int, FlowCheckNode> byId, IReadOnlyList<FlowCheckNode> markers)
+        private static string? StageMarkerOf(FlowCheckNode step, IReadOnlyDictionary<int, FlowCheckNode> byId, IReadOnlyList<FlowCheckNode> markers)
         {
             if (markers.Count == 0)
                 return null;

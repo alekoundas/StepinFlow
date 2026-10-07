@@ -413,8 +413,8 @@ the history.
       - Success and Failure have no form today, being hidden types. Each gets one that holds only
         this field. It is the one form `FlowStepBaseSchema` does not fit, since a branch has no name.
 
-- [x] **A stage is a stage and nothing else. Settled 2026-09-30.** The step type is being renamed
-      from `MARKER` to `STAGE_MARKER` and made a container - `PLAN.md` 5.8 - but the question here was whether it
+- [x] **A stage is a stage and nothing else. Settled 2026-09-30.** The step type was renamed
+      from `MARKER` to `STAGE_MARKER` and stays a label - `PLAN.md` 5.8 - but the question here was whether it
       should also carry a step's explanation. It should not. It was worth asking, because
       one concept is cheaper than two and in a script a `##` above a step does read as an explanation
       of it. Four things decided it against, and the first is the sharpest:
