@@ -619,7 +619,9 @@ declared, every parser is handed it, and a parser resolves a name as it reads th
 comes back already pointing at its area, its point, the step it reads. A name nothing above
 declares is `NAME_UNKNOWN` at that quote, and the line reads on, so every unknown name in a file is
 reported in one pass. A line is declared only after it is read, so nothing can name itself, and a
-name declared twice is `NAME_DUPLICATE` at the second. This replaced a binder that handed out positions as ids, an importer that swapped those for real
+name declared twice is `NAME_DUPLICATE` at the second. Areas go one level deep, so an `inside`
+naming an area that is itself inside another is `AREA_TOO_DEEP`; the forms refuse the same thing
+on save. This replaced a binder that handed out positions as ids, an importer that swapped those for real
 ids one table at a time, and an exporter that built id-to-name dictionaries for the printer: four
 translations of one thing, one of which let the last of two duplicate names silently win.
 

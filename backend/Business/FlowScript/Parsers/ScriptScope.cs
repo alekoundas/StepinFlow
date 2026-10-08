@@ -76,6 +76,18 @@ namespace Business.FlowScript.Parsers
             return null;
         }
 
+        // Areas go one level deep, so the one an area sits inside sits inside nothing.
+        public FlowArea? ParentArea(string name, ScriptToken at)
+        {
+            FlowArea? parent = Area(name, at);
+            if (parent?.ParentFlowArea == null)
+                return parent;
+
+            Report(DiagnosticCodeEnum.AREA_TOO_DEEP, at, $"\"{parent.Name}\" is already inside \"{parent.ParentFlowArea.Name}\", and areas go one level deep.");
+
+            return null;
+        }
+
         public FlowPoint? Point(string name, ScriptToken at)
         {
             if (_points.TryGetValue(name, out FlowPoint? row))

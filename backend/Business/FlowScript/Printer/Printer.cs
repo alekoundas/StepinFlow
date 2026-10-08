@@ -150,20 +150,18 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        private static IEnumerable<FlowArea> Ordered(IReadOnlyList<FlowArea> areas)
+        // Each root, then the areas inside it. Areas go one level deep, so that is all of them.
+        private static List<FlowArea> Ordered(IReadOnlyList<FlowArea> areas)
         {
-            List<FlowArea> roots = areas
-                .Where(x => x.ParentFlowArea == null)
-                .OrderBy(x => x.Name, StringComparer.Ordinal)
-                .ToList();
+            List<FlowArea> ordered = new List<FlowArea>();
 
-            foreach (FlowArea root in roots)
+            foreach (FlowArea root in areas.Where(x => x.ParentFlowArea == null).OrderBy(x => x.Name, StringComparer.Ordinal))
             {
-                yield return root;
-
-                foreach (FlowArea child in areas.Where(x => x.ParentFlowArea == root).OrderBy(x => x.Name, StringComparer.Ordinal))
-                    yield return child;
+                ordered.Add(root);
+                ordered.AddRange(areas.Where(x => x.ParentFlowArea == root).OrderBy(x => x.Name, StringComparer.Ordinal));
             }
+
+            return ordered;
         }
 
 

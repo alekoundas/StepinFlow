@@ -34,6 +34,9 @@ namespace Business.FlowScript.Diagnostics
         NAME_UNKNOWN,
         NAME_DUPLICATE,
 
+        // Areas: one inside an area that is already inside another.
+        AREA_TOO_DEEP,
+
         // Outside the file: no file at the path, or another flow already has its name.
         FILE_MISSING,
         FLOW_NAME_TAKEN,

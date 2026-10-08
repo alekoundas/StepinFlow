@@ -203,6 +203,8 @@ A child area is placed inside its parent, either by **ratio** (`ratio x y size w
 0–1) or by fixed **offset and size** in pixels (`offset x y size width height`). Both say where the
 area starts and how big it is, so both are written the same way.
 
+Areas go one level deep: a child is inside a root, and an area inside a child is `AREA_TOO_DEEP`.
+
 Ratios are what make one flow work at several sizes: a region defined as the bottom 85% of the
 window is the bottom 85% at every width.
 

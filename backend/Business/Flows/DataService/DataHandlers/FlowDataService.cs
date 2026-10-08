@@ -68,6 +68,11 @@ namespace Business.Flows.DataService.DataHandlers
             flow.Description = dto.Description;
 
             Dictionary<int, FlowArea> areasByDtoId = SyncAreas(dbContext, flow, dto.FlowAreas);
+
+            string? tooDeep = ValidateAreaDepth(areasByDtoId.Values);
+            if (tooDeep != null)
+                return ResultDto<Flow>.Failure(tooDeep);
+
             SyncPoints(dbContext, flow, dto.FlowPoints, areasByDtoId);
             SyncViewports(dbContext, flow, dto.FlowViewports);
 
@@ -391,6 +396,18 @@ namespace Business.Flows.DataService.DataHandlers
             }
 
             return byDtoId;
+        }
+
+        // Areas go one level deep, so the one an area sits inside sits inside nothing.
+        private static string? ValidateAreaDepth(IEnumerable<FlowArea> areas)
+        {
+            FlowArea? tooDeep = areas.FirstOrDefault(x => x.ParentFlowArea?.ParentFlowArea != null);
+            if (tooDeep == null)
+                return null;
+
+            FlowArea parent = tooDeep.ParentFlowArea!;
+
+            return $"\"{tooDeep.Name}\" cannot go inside \"{parent.Name}\", which is already inside \"{parent.ParentFlowArea!.Name}\". Areas go one level deep.";
         }
 
         private static void SyncPoints(AppDbContext dbContext, Flow flow, IEnumerable<FlowPointDto> dtos, Dictionary<int, FlowArea> areasByDtoId)

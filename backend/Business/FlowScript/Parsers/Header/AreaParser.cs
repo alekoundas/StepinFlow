@@ -65,7 +65,7 @@ namespace Business.FlowScript.Parsers.Header
 
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
                 ScriptToken at = CurrentToken;
-                area.ParentFlowArea = _scope.Area(ExtractText(), at);
+                area.ParentFlowArea = _scope.ParentArea(ExtractText(), at);
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 ExpectPlacement(area);

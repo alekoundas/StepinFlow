@@ -47,11 +47,12 @@ export default function FlowStepSearchAreaFieldComponent({
         })),
     );
 
-  // Areas a new region could sit inside. Only id and name are used by the picker.
+  // Areas a new region could sit inside: only roots, since areas go one level deep. Only id and
+  // name are used by the picker.
   const { data: parentOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", "parents", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
+      backendApiService.Lookup.flowArea({ flowId, onlyRoots: true }).then((res) =>
         res.data.map(
           (item) =>
             new FlowAreaDto({

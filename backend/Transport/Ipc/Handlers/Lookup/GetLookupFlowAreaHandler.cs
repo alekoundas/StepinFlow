@@ -25,6 +25,7 @@ namespace Transport.Ipc.Handlers
                 .AsNoTracking()
                 .Where(x => x.FlowId == dto.FlowId)
                 .Where(x => dto.FlowAreaType == null || x.Type == dto.FlowAreaType)
+                .Where(x => !dto.OnlyRoots || x.ParentFlowAreaId == null)
                 .Where(x => dto.SearchText == null || x.Name.Contains(dto.SearchText))
                 .Where(x => !dto.ExcludedIds.Contains(x.Id))
                 .OrderBy(x => x.Name)

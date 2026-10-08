@@ -95,6 +95,58 @@ namespace Business.Tests.Flows
             db.FlowAreas.Single(x => x.Id == areaId).Name.ShouldBe("Browser 2");
         }
 
+        // Areas go one level deep, from every form that gives an area a parent.
+        [Fact]
+        public async Task The_flow_form_refuses_an_area_inside_one_already_inside_another()
+        {
+            int flowId = await NewFlowAsync();
+
+            FlowDto dto = new FlowDto
+            {
+                Id = flowId,
+                Name = "Flow",
+                FlowAreas =
+                [
+                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.MONITOR },
+                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1 },
+                    new FlowAreaDto { Id = -3, Name = "Logo", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -2 },
+                ],
+            };
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowAreas.Count(x => x.FlowId == flowId).ShouldBe(0);
+        }
+
+        [Fact]
+        public async Task A_new_area_cannot_go_inside_one_already_inside_another()
+        {
+            int flowId = await NewFlowAsync();
+            int browserId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.MONITOR }, Ct)).Data;
+            int headerId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browserId }, Ct)).Data;
+
+            ResultDto<int> created = await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Logo", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = headerId }, Ct);
+
+            created.IsSuccess.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task An_area_with_areas_inside_it_cannot_go_inside_another()
+        {
+            int flowId = await NewFlowAsync();
+            int screenId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Screen", Type = FlowAreaTypeEnum.MONITOR }, Ct)).Data;
+            int boxId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Box", Type = FlowAreaTypeEnum.CUSTOM }, Ct)).Data;
+            await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Inner", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = boxId }, Ct);
+
+            ResultDto<FlowArea> updated = await _dataService.FlowArea.UpdateAsync(new FlowAreaDto { Id = boxId, FlowId = flowId, Name = "Box", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = screenId }, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowAreas.Single(x => x.Id == boxId).ParentFlowAreaId.ShouldBeNull();
+        }
+
         // Nobody names a template: a new one gets a name no template in the flow has, and keeps it
         // through every save, though the form sends none.
         [Fact]

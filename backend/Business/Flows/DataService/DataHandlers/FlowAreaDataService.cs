@@ -28,6 +28,10 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
+            string? tooDeep = await ValidateDepthAsync(dbContext, 0, area.ParentFlowAreaId, ct);
+            if (tooDeep != null)
+                return ResultDto<int>.Failure(tooDeep);
+
             area.Id = 0;
             area.Name = FlowNameHelper.MakeUnique(area.Name, await TakenNamesAsync(dbContext, area.FlowId, ct));
 
@@ -44,6 +48,10 @@ namespace Business.Flows.DataService.DataHandlers
             FlowArea? area = await dbContext.FlowAreas.FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (area == null)
                 return ResultDto<FlowArea>.Failure("Entity doesnt exist in the Database!");
+
+            string? tooDeep = await ValidateDepthAsync(dbContext, area.Id, dto.ParentFlowAreaId, ct);
+            if (tooDeep != null)
+                return ResultDto<FlowArea>.Failure(tooDeep);
 
             dbContext.Entry(area).CurrentValues.SetValues(dto);
             await dbContext.SaveChangesAsync(ct);
@@ -72,6 +80,32 @@ namespace Business.Flows.DataService.DataHandlers
                 area.FlowId = flow.Id;
 
             dbContext.FlowAreas.AddRange(areas);
+        }
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        // Areas go one level deep: the parent sits inside nothing, and an area with areas inside it
+        // stays a root.
+        private static async Task<string?> ValidateDepthAsync(AppDbContext dbContext, int areaId, int? parentId, CancellationToken ct)
+        {
+            if (parentId == null)
+                return null;
+
+            FlowArea? parent = await dbContext.FlowAreas
+                .Include(x => x.ParentFlowArea)
+                .FirstOrDefaultAsync(x => x.Id == parentId, ct);
+
+            if (parent?.ParentFlowArea != null)
+                return $"\"{parent.Name}\" is already inside \"{parent.ParentFlowArea.Name}\". Areas go one level deep.";
+
+            bool hasChildren = await dbContext.FlowAreas.AnyAsync(x => x.ParentFlowAreaId == areaId, ct);
+            if (hasChildren)
+                return "Other areas sit inside this one, so it cannot go inside another. Areas go one level deep.";
+
+            return null;
         }
     }
 }

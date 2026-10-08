@@ -56,6 +56,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nGo Back to <[ Itself ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
+            { DiagnosticCodeEnum.AREA_TOO_DEEP, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> ratio 0.10 0.10 size 0.50 0.50\n  <[ C ]> inside <[ B ]> ratio 0.10 0.10 size 0.50 0.50" },
         };
 
         private static List<Diagnostic> Read(string script)

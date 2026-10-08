@@ -11,6 +11,7 @@ export interface LookupRequestDto {
 
   // Lookup.flowArea only.
   flowAreaType?: FlowAreaTypeEnum;
+  onlyRoots?: boolean;
 
   // Lookup.flowStep only: a cursor step wants a location, a condition wants a value.
   resultKind?: StepResultKindEnum;
