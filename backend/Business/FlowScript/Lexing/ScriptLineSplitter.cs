@@ -3,7 +3,7 @@ using Business.FlowScript.Models.Text;
 namespace Business.FlowScript.Lexing
 {
     /// <summary>
-    /// The script as numbered lines, each with how deep it is indented.
+    /// The script as numbered lines, each with its leading spaces.
     /// </summary>
     internal static class ScriptLineSplitter
     {

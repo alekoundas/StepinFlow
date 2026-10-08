@@ -634,7 +634,7 @@ from one place: the parser.
 **One parser per kind of line.** `ScriptLineParser` picks it from the section the line is in and
 the keyword it opens with - one for each header line, one for each step type - and is the only class
 that writes the schema. The grammar of a line is its parser's, and so are the names on it. What the
-lines mean together is the orchestrator's: the tree the indentation draws, the names each line
+lines mean together is the orchestrator's: the tree the leading spaces draw, the names each line
 declares, a comment belonging to the line below. The parsers share `BaseParser`: `Expect` takes a token that must be there, `Extract`
 takes one and returns its value, an `Optional` one never throws, and the index moves in one place.
 A line that stops making sense throws `ScriptSyntaxException` at that token, and the Scanner records
@@ -653,8 +653,8 @@ format wants more than one. They share `BaseWriter` - the
 pieces, the gaps and the columns the file is laid out in - and the steps' writers `BaseStepWriter`,
 with the clauses more than one step writes (`in <[ area ]>`, a target, a condition, a timeout), as
 the parsers share `BaseParser` and `BaseStepParser`. `Printer` is the orchestrator, as
-`ScriptLineParser` is: the sections, their order, the indentation, the gap between steps, comments
-above the line they belong to, and which writer writes a step.
+`ScriptLineParser` is: the sections, their order, the leading spaces, the blank line above each
+top-level step, comments above the line they belong to, and which writer writes a step.
 
 `Printer.Write(FlowScriptSchema) → string` is a pure function, and deterministic: the same flow
 writes the same bytes. Children in `OrderNumber` order through their `ParentFlowStep` link, and
@@ -757,9 +757,10 @@ is collected from the catalog as the parser goes, the optional clauses it passed
 no parser writes a message. A word too many and a word missing are both that error, with a column,
 so a hand edit that goes wrong is named rather than quietly dropped. Every syntax error is one code,
 `TOKEN_UNEXPECTED`: a code per place in the grammar would only repeat what the message says, and
-nothing branches on it. The codes left are kinds of problem - an indent, a template described twice,
-a comment with no step below it, a missing `Flow:` line, a name nothing above declares, a name
-declared twice.
+nothing branches on it. The codes left are kinds of problem - too many leading spaces, a template
+described twice, a comment with no step below it, a missing `Flow:` line, a flow name that cannot be
+a file name, a name nothing above declares, a name declared twice, an area inside one that is
+already inside another.
 
 **Unquoted, a word is a keyword or a number**, and a number carries its unit: `800ms`, `120dpi`,
 `1920x1080`. A duration is always milliseconds, so it has one spelling. Pairs read like the rest of

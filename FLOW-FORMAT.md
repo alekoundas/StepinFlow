@@ -567,7 +567,8 @@ have, are both errors with a line and a column - nothing is dropped and nothing 
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
 line indented too far, a template described twice, a comment with no step below it, no `Flow:` line,
-a flow name that cannot be a file name, a name nothing above declares, a name declared twice.
+a flow name that cannot be a file name, a name nothing above declares, a name declared twice, an
+area inside one that is already inside another.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps

@@ -49,7 +49,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TEMPLATE_UNKNOWN, "Steps:\nFind Image <[ x ]> template <[ a.png ]>" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ a.png ]> click 3 4" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ A.png ]> click 3 4" },
-            { DiagnosticCodeEnum.INDENT_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
+            { DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },

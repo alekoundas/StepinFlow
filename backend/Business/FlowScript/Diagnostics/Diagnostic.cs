@@ -25,7 +25,7 @@ namespace Business.FlowScript.Diagnostics
         TEMPLATE_DUPLICATE,
 
         // Steps
-        INDENT_UNEXPECTED,
+        LEADING_SPACES_UNEXPECTED,
 
         // Comments: one with no step below it.
         COMMENT_UNATTACHED,

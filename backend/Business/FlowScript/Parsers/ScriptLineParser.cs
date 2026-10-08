@@ -21,9 +21,7 @@ namespace Business.FlowScript.Parsers
         private readonly ScriptScope _scope; // What the lines above declared, for the parsers to resolve names against.
         private readonly Dictionary<ScriptToken, string> _comments = new Dictionary<ScriptToken, string>(); // Comments for the step below, by their # token.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
-
-        // The last step and the steps it sits in, innermost last, with the indent each was written at.
-        private readonly List<(FlowStep Step, int Indent)> _openSteps = new List<(FlowStep Step, int Indent)>();
+        private readonly List<(FlowStep Step, int LeadingSpaces)> _openSteps = new List<(FlowStep Step, int LeadingSpaces)>(); // Keep parents and last step by indent.
 
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
         {
@@ -295,28 +293,30 @@ namespace Business.FlowScript.Parsers
             }
         }
 
-        // The parent is the nearest open step written less deep than this line. Too deep is
-        // reported but the step is kept, so the lines below still find their parent.
+        // Places a step in the tree using only its leading spaces
+        // The parent is the nearest open step written less deep than this line.
+        // Too deep is reported but the step is kept, so the lines below still find their parent.
         private void AddToTree(ScriptLine line, FlowStep step)
         {
-            while (_openSteps.Count > 0 && _openSteps[^1].Indent >= line.LeadingSpaces)
+            // Remove the last step if last steo was deeper.
+            while (_openSteps.Count > 0 && _openSteps[^1].LeadingSpaces >= line.LeadingSpaces)
                 _openSteps.RemoveAt(_openSteps.Count - 1);
 
             FlowStep? parent = null;
-            int deepest = 0;
+            int maxLeadingSpaces = 0;
             if (_openSteps.Count > 0)
             {
                 parent = _openSteps[^1].Step;
-                deepest = _openSteps[^1].Indent + 1;
+                maxLeadingSpaces = _openSteps[^1].LeadingSpaces + 1;
             }
 
-            if (line.LeadingSpaces > deepest)
+            if (line.LeadingSpaces > maxLeadingSpaces)
             {
-                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.INDENT_UNEXPECTED, line.Number, line.Tokens[0].Column,
-                    $"Indented too far. Each level is one space, so this line can have at most {deepest}."));
+                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, line.Number, line.Tokens[0].Column,
+                    $"Indented too far. Each level is one space, so this line can have at most {maxLeadingSpaces}."));
             }
 
-            step.ParentFlowStep = parent;
+            step.ParentFlowStep = parent; // Null for the first children of the flow.
             step.OrderNumber = _flowScriptSchema.Steps.Count(x => x.ParentFlowStep == parent);
 
             _flowScriptSchema.Steps.Add(step);
