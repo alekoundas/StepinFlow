@@ -64,8 +64,8 @@ namespace Business.Tests.FlowScript
                 TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS,
                 FlowStepTemplates =
                 [
-                    new FlowStepTemplate { Name = "username-field.png", OrderNumber = 0, Accuracy = 0.97f, IsRequired = true, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
-                    new FlowStepTemplate { Name = "username-alt.png", OrderNumber = 1, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 10, AuthoredDpi = 96 },
+                    new FlowStepTemplate { Name = "template-u9d3n.png", OrderNumber = 0, Accuracy = 0.97f, IsRequired = true, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
+                    new FlowStepTemplate { Name = "template-w2h6r.png", OrderNumber = 1, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 10, AuthoredDpi = 96 },
                 ],
             }, null);
             FlowStep found = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find);

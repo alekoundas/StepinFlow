@@ -161,6 +161,45 @@ namespace Business.Tests.FlowScript
             (await File.ReadAllTextAsync(after.ScriptPath, Ct)).ShouldBe(script);
         }
 
+        // Only a template made in the app is given a name. One written by hand keeps its own,
+        // extension and all, in the database and in the next export.
+        [Fact]
+        public async Task A_hand_written_template_name_is_kept_through_import_and_export()
+        {
+            byte[] button = Png(40, 12);
+            byte[] logo = [0xFF, 0xD8, 0xFF, 0xE0];
+
+            string templateFolder = Path.Combine(_folder, "Hand written");
+            Directory.CreateDirectory(templateFolder);
+            await File.WriteAllBytesAsync(Path.Combine(templateFolder, "login-button.png"), button, Ct);
+            await File.WriteAllBytesAsync(Path.Combine(templateFolder, "logo.jpg"), logo, Ct);
+
+            string scriptPath = Path.Combine(_folder, "Hand written.sflw");
+            await File.WriteAllTextAsync(scriptPath,
+                "Flow:    Hand written\n" +
+                "Id:      3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d\n\n" +
+                "Templates:\n" +
+                "  <[ login-button.png ]>    click 20 6\n" +
+                "  <[ logo.jpg ]>            click 2 2\n\n" +
+                "Steps:\n\n" +
+                "Find Image  <[ Find login ]>   template <[ login-button.png ]>  template <[ logo.jpg ]>\n", Ct);
+
+            FlowScriptImportResultDto imported = await Importer().ImportAsync(scriptPath, Ct);
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => $"line {x.Line}: {x.Message}")));
+            imported.MissingTemplates.ShouldBeEmpty();
+
+            ScriptRows rows = await ScriptRows.LoadAsync(_database, imported.FlowId);
+            rows.Templates.Select(x => x.Name).ShouldBe(["login-button.png", "logo.jpg"], ignoreOrder: true);
+
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(imported.FlowId, Path.Combine(_folder, "out"), Ct);
+            string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
+
+            script.ShouldContain("<[ login-button.png ]>");
+            script.ShouldContain("<[ logo.jpg ]>");
+            (await File.ReadAllBytesAsync(Path.Combine(exported.TemplateFolderPath, "login-button.png"), Ct)).ShouldBe(button);
+            (await File.ReadAllBytesAsync(Path.Combine(exported.TemplateFolderPath, "logo.jpg"), Ct)).ShouldBe(logo);
+        }
+
         // ================================================================
         // The flow
         // ================================================================
@@ -217,8 +256,8 @@ namespace Business.Tests.FlowScript
             // which this one did - shows up as a changed row.
             FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
             db.FlowStepTemplates.AddRange(
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "username-field.png", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "username-alt.png", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
+                new FlowStepTemplate { FlowStepId = find.Id, Name = "template-u9d3n.png", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
+                new FlowStepTemplate { FlowStepId = find.Id, Name = "template-w2h6r.png", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
             db.SaveChanges();
 
             FlowStep found = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);

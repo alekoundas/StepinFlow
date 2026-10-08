@@ -21,8 +21,8 @@ Inputs:
   <[ password ]>      secret
 
 Templates:
-  <[ username-alt.png ]>      click -4 10   at 96dpi
-  <[ username-field.png ]>    click 60 12   captured 1920x1080 at 120dpi
+  <[ template-u9d3n.png ]>    click 60 12   captured 1920x1080 at 120dpi
+  <[ template-w2h6r.png ]>    click -4 10   at 96dpi
 
 Steps:
 
@@ -32,7 +32,7 @@ Steps:
 # A fresh profile every time.
 Launch          <[ chrome.exe https://www.saucedemo.com ]>
 
-Find Image      <[ Find username field ]>   template <[ username-field.png ]> accuracy 0.97 required  template <[ username-alt.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
+Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97 required  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
  Success:
   Click           at <[ Find username field ]>
   Type            <[ {{username}} ]>

@@ -90,8 +90,6 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        // Every row of the flow into one context, tracked: EF links each one to the rows it names
-        // as they load, so what comes back already is the schema the printer reads.
         private static async Task<FlowScriptSchema> LoadAsync(AppDbContext dbContext, int flowId, bool includeImages, CancellationToken ct)
         {
             Flow flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == flowId, ct)
@@ -157,6 +155,7 @@ namespace Business.FlowScript
         // Write all PNGs to the disk.
         private static async Task<int> WriteTemplatesAsync(FlowScriptSchema schema, string templateFolder, CancellationToken ct)
         {
+            // Gather templates.
             List<FlowStepTemplate> templates = schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
                 .Where(x => x.TemplateImage != null)
@@ -165,8 +164,10 @@ namespace Business.FlowScript
             if (templates.Count == 0)
                 return 0;
 
+            // Create template folder in disk.
             Directory.CreateDirectory(templateFolder);
 
+            // Write to disk.
             foreach (FlowStepTemplate template in templates)
                 await File.WriteAllBytesAsync(Path.Combine(templateFolder, template.Name), template.TemplateImage!, ct);
 

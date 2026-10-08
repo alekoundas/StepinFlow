@@ -703,6 +703,10 @@ to disk and read back - where the imported rows are also compared with the origi
 field, because identical bytes cannot see a field the printer never prints. See
 `backend/Tests/Business.Tests/FlowScript/`.
 
+The round trip starts from rows the app wrote, so every template in it has a generated name. A file
+written by hand is tested on its own: `login-button.png` and `logo.jpg`, imported from disk and
+exported again, keep their names - extension included - and their bytes.
+
 It earned that status on its first run by finding a writer bug: `Scroll` emitted `in match`, because
 the writer used the point-target fragment for its `in` clause and that falls through to "match" when
 a scroll names neither a point nor a step — while the format means an area. A line no parser could

@@ -576,7 +576,8 @@ accepted, because renames should be rare.
 **The round trip is the acceptance test.** Export, import, export again, byte identical - and the
 imported areas, points and templates equal to the originals field by field, because identical bytes
 cannot see a field the printer never prints. Verified two ways: purely, and through a real database
-with template bytes written to disk and read back.
+with template bytes written to disk and read back. A file written by hand is checked as well: its
+template names come back out as they went in, extension included.
 
 What the parser checks is structural — is that a keyword, is that a condition, does that name exist
 above, does every word belong. The semantic validator runs on the saved flow, as it does after a
