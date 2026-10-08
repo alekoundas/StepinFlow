@@ -42,7 +42,8 @@ namespace Business.Flows.DataService.DataHandlers
             step.Name = FlowNameHelper.MakeUnique(step.Name, await TakenNamesAsync(dbContext, step.RootId, ct));
 
             dbContext.FlowSteps.Add(step);
-            SyncTemplates(dbContext, step, templates);
+            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
+            SyncTemplates(dbContext, step, templates, takenTemplates);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(step));
 
             await dbContext.SaveChangesAsync(ct);
@@ -65,7 +66,9 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<FlowStep>.Failure("Entity doesnt exist in the Database!");
 
             dbContext.Entry(step).CurrentValues.SetValues(dto);
-            SyncTemplates(dbContext, step, dto.FlowStepTemplates);
+            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
+
+            SyncTemplates(dbContext, step, dto.FlowStepTemplates, takenTemplates);
 
             await dbContext.SaveChangesAsync(ct);
 
@@ -117,9 +120,10 @@ namespace Business.Flows.DataService.DataHandlers
             // Grows as the steps add to it, so the twelfth is unique against the eleven before it as
             // well as against what was already saved.
             HashSet<string> taken = await TakenNamesAsync(dbContext, rootId.Value, ct);
+            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, rootId.Value, ct);
 
             foreach (FlowStep step in rows)
-                PrepareNewStep(step, rootId.Value, taken);
+                PrepareNewStep(step, rootId.Value, taken, takenTemplates);
 
             // The children of each new step in the order given, a check's branches Success then Failure.
             foreach (IGrouping<FlowStep, FlowStep> children in rows.Where(x => x.ParentFlowStep != null).GroupBy(x => x.ParentFlowStep!))
@@ -185,7 +189,7 @@ namespace Business.Flows.DataService.DataHandlers
             return ResultDto<bool>.Success(true);
         }
 
- 
+
 
         /// <summary>
         /// Steps read from a script, linked to their parents, references, areas, points and
@@ -231,8 +235,8 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         // Templates are edited as part of their step, so they are matched by id and updated in
-        // place rather than replaced.
-        private static void SyncTemplates(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos)
+        // place rather than replaced. Nobody names a template: a new one is given its name here.
+        private static void SyncTemplates(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos, HashSet<string> takenTemplates)
         {
             List<FlowStepTemplate> existing = step.FlowStepTemplates.ToList();
             HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
@@ -249,11 +253,15 @@ namespace Business.Flows.DataService.DataHandlers
 
                 if (image == null)
                 {
-                    image = new FlowStepTemplate { FlowStep = step };
+                    // Gennerate unique Template name!
+                    string name = FileNameHelper.GenerateTemplateFileName();
+                    while (!takenTemplates.Add(name))
+                        name = FileNameHelper.GenerateTemplateFileName();
+
+                    image = new FlowStepTemplate { FlowStep = step, Name = name };
                     dbContext.FlowStepTemplates.Add(image);
                 }
 
-                image.Name = dto.Name;
                 image.OrderNumber = order++;
                 image.IsRequired = dto.IsRequired;
 
@@ -273,6 +281,18 @@ namespace Business.Flows.DataService.DataHandlers
             }
         }
 
+        // A template's name is its file name, and a flow keeps its templates in one folder.
+        private static async Task<HashSet<string>> TakenTemplateNamesAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        {
+            List<string> names = await dbContext.FlowStepTemplates
+                .AsNoTracking()
+                .Where(x => x.FlowStep.RootId == flowId)
+                .Select(x => x.Name)
+                .ToListAsync(ct);
+
+            return new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+        }
+
 
         // ================================================================
         // Private methods - a tree of new steps
@@ -280,7 +300,7 @@ namespace Business.Flows.DataService.DataHandlers
 
         // A new row in the flow, named apart from everything in it, with the points it creates and
         // its templates in the order given. A branch row keeps its name: two Success rows are no clash.
-        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken)
+        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken, HashSet<string> takenTemplates)
         {
             step.Id = 0;
             step.RootId = rootId;
@@ -304,7 +324,13 @@ namespace Business.Flows.DataService.DataHandlers
             int order = 0;
             foreach (FlowStepTemplate template in step.FlowStepTemplates)
             {
+                // Gennerate unique Template name!
+                string name = FileNameHelper.GenerateTemplateFileName();
+                while (!takenTemplates.Add(name))
+                    name = FileNameHelper.GenerateTemplateFileName();
+
                 template.Id = 0;
+                template.Name = name;
                 template.OrderNumber = order++;
             }
         }

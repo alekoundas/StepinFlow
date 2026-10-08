@@ -1,10 +1,13 @@
+using System.Security.Cryptography;
+
 namespace Core.Helpers
 {
     /// <summary>
-    /// A file name Windows, macOS and Linux will accept. 
+    /// A file name Windows, macOS and Linux will accept.
     /// </summary>
     public static class FileNameHelper
     {
+        private const string TemplateNameCharacters = "0123456789abcdefghijklmnopqrstuvwxyz";
         private static readonly char[] InvalidCharacters = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
 
         // RESERVED and cannot be used! (Devices on Windows).
@@ -65,6 +68,15 @@ namespace Core.Helpers
                 return $"{fallback} {cleaned}";
 
             return cleaned;
+        }
+
+        /// <summary>
+        /// A template's file name, template-k3x9q.png: five random characters from 0-9a-z. Unique
+        /// only by chance - the caller draws again while its flow already has the name.
+        /// </summary>
+        public static string GenerateTemplateFileName()
+        {
+            return $"template-{RandomNumberGenerator.GetString(TemplateNameCharacters, 5)}.png";
         }
 
 

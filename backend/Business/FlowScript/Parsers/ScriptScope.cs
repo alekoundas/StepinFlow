@@ -17,7 +17,7 @@ namespace Business.FlowScript.Parsers
         private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowStepTemplate> _templates = new Dictionary<string, FlowStepTemplate>(StringComparer.Ordinal);
+        private readonly Dictionary<string, FlowStepTemplate> _templates = new Dictionary<string, FlowStepTemplate>(StringComparer.OrdinalIgnoreCase);
 
         public ScriptScope(List<Diagnostic> diagnostics)
         {

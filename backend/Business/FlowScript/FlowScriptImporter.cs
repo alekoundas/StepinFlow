@@ -89,22 +89,19 @@ namespace Business.FlowScript
 
         private static async Task ReadTemplateBytesAsync(FlowStepTemplate template, string? templateFolderPath, FlowScriptImportResultDto result, CancellationToken ct)
         {
-            string fileName = template.Name;
-
             // A missing image is reported.
             byte[]? image = null;
             if (templateFolderPath != null)
             {
-                string path = Path.Combine(templateFolderPath, fileName);
+                string path = Path.Combine(templateFolderPath, template.Name);
                 if (File.Exists(path))
                     image = await File.ReadAllBytesAsync(path, ct);
             }
 
             // Add missing .png file names to report.
             if (image == null)
-                result.MissingTemplates.Add(fileName);
+                result.MissingTemplates.Add(template.Name);
 
-            template.Name = Path.GetFileNameWithoutExtension(fileName);
             template.TemplateImage = image;
 
             result.TemplateCount++;

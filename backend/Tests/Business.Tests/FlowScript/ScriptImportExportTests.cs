@@ -117,7 +117,7 @@ namespace Business.Tests.FlowScript
             }
         }
 
-        // Named after the file it went out as, so the name is the one field allowed to change.
+        // The name too: it is the file the template went out as, and comes back as it was.
         [Fact]
         public async Task Every_template_comes_back_field_for_field_with_its_picture()
         {
@@ -129,7 +129,7 @@ namespace Business.Tests.FlowScript
                 FlowStepTemplate? match = trip.After.Templates.FirstOrDefault(x =>
                     trip.After.StepName(x.FlowStepId) == trip.Before.StepName(template.FlowStepId) && x.OrderNumber == template.OrderNumber);
 
-                ScriptRows.Differences(template, match, "Name").ShouldBeEmpty(template.Name);
+                ScriptRows.Differences(template, match).ShouldBeEmpty(template.Name);
             }
         }
 
@@ -217,8 +217,8 @@ namespace Business.Tests.FlowScript
             // which this one did - shows up as a changed row.
             FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
             db.FlowStepTemplates.AddRange(
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "username field", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "username alt", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
+                new FlowStepTemplate { FlowStepId = find.Id, Name = "username-field.png", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
+                new FlowStepTemplate { FlowStepId = find.Id, Name = "username-alt.png", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
             db.SaveChanges();
 
             FlowStep found = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);

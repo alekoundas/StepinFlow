@@ -65,6 +65,17 @@ namespace Core.Tests.Helpers
             FileNameHelper.Clean(name, "template").ShouldBe("template");
         }
 
+        [Fact]
+        public void A_generated_template_name_is_a_png_every_system_accepts()
+        {
+            string name = FileNameHelper.GenerateTemplateFileName();
+
+            name.ShouldStartWith("template-");
+            name.ShouldEndWith(".png");
+            name.Length.ShouldBe(18);
+            FileNameHelper.Validate(name).ShouldBeNull();
+        }
+
         [Theory]
         [InlineData("con", "template con")]
         [InlineData("NUL.x", "template NUL.x")]

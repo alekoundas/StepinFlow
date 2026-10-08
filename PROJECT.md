@@ -1122,9 +1122,9 @@ than `Path.GetInvalidFileNameChars()`, which is the running machine's and on Lin
 null character: none of `< > : " / \ | ? *` or the control characters, no space or dot at either
 end, and none of the device names (`CON`, `NUL`, `COM1`...) with or without an extension. A flow's
 name is validated against it - by the create, update and extract handlers, by `flow.zod.ts` with the
-same rules, and on the script's `Flow:` line as `FLOW_NAME_INVALID`. A name that stays free text, a
-step's or a template's, is cleaned with the same list instead: each refused character becomes a
-space and the ends lose dots and spaces. A valid name comes out of that unchanged, so a flow's name
+same rules, and on the script's `Flow:` line as `FLOW_NAME_INVALID`. A step's name stays free text,
+so its failure screenshot's file name is cleaned with the same list instead: each refused character
+becomes a space and the ends lose dots and spaces. A valid name comes out of that unchanged, so a flow's name
 is exactly its file name.
 
 That makes two flows with one name two flows with one file, and on Windows and macOS `Login` and
@@ -1146,10 +1146,15 @@ exactly, renders read-only in the app, and works whether or not the customer use
 
 A template is part of the test definition, like a snapshot in a unit test: a flow from three months
 ago cannot execute without the images it was written against. They sit in the folder beside the flow
-and they are small. They are named after the template, hyphenated, with a number appended on a
-collision - **not** by content hash. A hash would dedupe identical images, but it also changes
-whenever one is edited, so git would record a delete and an add instead of a modification, and
-the point of a folder of loose images is that a reviewer can see which one changed.
+and they are small. Nobody names a template, so each is given its file name when it is created -
+`template-k3x9q.png`, five random characters from `0-9a-z`, drawn again while the flow already has
+it - and keeps it for good: the database, the script and the folder all hold that one string, an
+import takes it from the file and an export writes it back unchanged.
+Not the database id, which every import renumbers, and **not** a content hash. A hash would dedupe
+identical images, but it also changes whenever one is edited, so git would record a delete and an
+add instead of a modification, and the point of a folder of loose images is that a reviewer can
+see which one changed. Two git branches drawing the same name for one flow is a merge conflict,
+never a silent duplicate.
 
 Screenshots are per-execution, large, and grow without bound. They travel as build artifacts.
 

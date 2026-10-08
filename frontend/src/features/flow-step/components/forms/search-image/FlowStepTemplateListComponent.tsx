@@ -101,7 +101,7 @@ export function FlowStepTemplateListComponent({
               {image.templateImage ? (
                 <img
                   src={`data:image/png;base64,${image.templateImage}`}
-                  alt={image.name}
+                  alt={`Template ${index + 1}`}
                   style={{
                     width: 48,
                     height: 48,
@@ -115,7 +115,7 @@ export function FlowStepTemplateListComponent({
 
               <div className="flex flex-column flex-1">
                 <LabelComponent
-                  text={image.name || `Template ${index + 1}`}
+                  text={`Template ${index + 1}`}
                   weight="semibold"
                   size="sm"
                 />

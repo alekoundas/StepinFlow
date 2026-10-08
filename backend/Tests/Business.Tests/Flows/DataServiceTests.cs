@@ -43,6 +43,21 @@ namespace Business.Tests.Flows
             return db.FlowSteps.Where(x => x.RootId == flowId).ToList();
         }
 
+        private List<FlowStepTemplate> Templates(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+            return db.FlowStepTemplates.Where(x => x.FlowStep.RootId == flowId).ToList();
+        }
+
+        // template-, five of 0-9a-z, then .png.
+        private static bool IsTemplateName(string name)
+        {
+            return name.StartsWith("template-", StringComparison.Ordinal)
+                && name.EndsWith(".png", StringComparison.Ordinal)
+                && name.Length == 18
+                && name[9..14].All(x => char.IsAsciiDigit(x) || char.IsAsciiLetterLower(x));
+        }
+
         private Task<FlowScriptImportResultDto> ImportAsync(string steps)
         {
             string script = "Flow:    Imported\nId:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b121\n\nSteps:\n" + steps;
@@ -78,6 +93,35 @@ namespace Business.Tests.Flows
 
             using AppDbContext db = _database.CreateDbContext();
             db.FlowAreas.Single(x => x.Id == areaId).Name.ShouldBe("Browser 2");
+        }
+
+        // Nobody names a template: a new one gets a name no template in the flow has, and keeps it
+        // through every save, though the form sends none.
+        [Fact]
+        public async Task A_new_template_is_named_and_a_save_keeps_the_name()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep find = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
+            int stepId = (await _dataService.FlowStep.CreateAsync(find, [new FlowStepTemplateDto(), new FlowStepTemplateDto()], Ct)).Data;
+
+            List<FlowStepTemplate> created = Templates(flowId);
+            created.ShouldAllBe(x => IsTemplateName(x.Name));
+            created.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(2);
+
+            FlowStepDto dto = new FlowStepDto
+            {
+                Id = stepId,
+                RootId = flowId,
+                FlowId = flowId,
+                FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
+                Name = "Find",
+                FlowStepTemplates = created.Select(x => new FlowStepTemplateDto { Id = x.Id }).Append(new FlowStepTemplateDto()).ToList(),
+            };
+            (await _dataService.FlowStep.UpdateAsync(dto, Ct)).IsSuccess.ShouldBeTrue();
+
+            List<FlowStepTemplate> saved = Templates(flowId);
+            saved.Where(x => created.Any(y => y.Id == x.Id)).Select(x => x.Name).ShouldBe(created.Select(x => x.Name), ignoreOrder: true);
+            saved.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
         }
 
         [Fact]
@@ -162,6 +206,22 @@ namespace Business.Tests.Flows
             savedClick.ParentFlowStepId.ShouldBe(steps.Single(x => x.ParentFlowStepId == savedFind.Id && x.FlowStepType == FlowStepTypeEnum.SUCCESS).Id);
 
             steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find 2", "Find"]);
+        }
+
+        // A recorded template comes with no name, a pasted one with the name of the one it copies.
+        [Fact]
+        public async Task A_tree_of_new_steps_names_its_templates_apart_from_the_flows()
+        {
+            int flowId = await NewFlowAsync();
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" }, [new FlowStepTemplateDto()], Ct);
+            string existing = Templates(flowId).Single().Name;
+
+            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", FlowStepTemplates = [new FlowStepTemplate { Name = existing }, new FlowStepTemplate()] };
+            (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 1, [find], Ct)).IsSuccess.ShouldBeTrue();
+
+            List<FlowStepTemplate> templates = Templates(flowId);
+            templates.ShouldAllBe(x => IsTemplateName(x.Name));
+            templates.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
         }
 
         [Fact]

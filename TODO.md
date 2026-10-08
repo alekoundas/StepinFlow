@@ -136,6 +136,11 @@ the history.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
+- [ ] **An export leaves the images of deleted templates behind.** `WriteTemplatesAsync` writes
+      each template's image into the flow's folder and removes nothing, so a template deleted since
+      the last export keeps its PNG there for good - committed with the rest, and named by nothing.
+      Delete every `.png` in the folder the export did not write; only `.png`, so anything else
+      someone put there survives.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.
@@ -352,6 +357,13 @@ the history.
       - Most other mutations show nothing: the error reaches the console, and the `onError` in
         `use-flow-step.ts` and `use-flow-area.ts` is commented out.
       - `ToastContext.tsx` exists, entirely commented out.
+      - A refused flow save shows nothing either: `FlowFormPage` (create and update) and
+        `WorkflowContentComponent` (update) await the mutation with no `catch`, and the save just
+        does not happen. Since 2026-10-08 a flow's name has to be unique whatever its case, so this
+        is the refusal people will hit first - `flow.zod.ts` catches a name that cannot be a file
+        name, nothing catches one another flow has. The recording page and the extract dialog
+        already show the message (`setError` into a `Message`), the pattern to copy if this lands
+        before the decision below.
 
       To decide: which refusals are a toast (gone in a few seconds) and which a dialog (has to be
       read or acted on); one place for them - a `MutationCache` `onError` on the `QueryClient` in
