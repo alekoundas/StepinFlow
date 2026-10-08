@@ -21,7 +21,7 @@ namespace Business.FlowScript.Text
         private readonly StringBuilder _line = new StringBuilder();
 
         /// <summary>
-        /// The line, without its indentation.
+        /// The line, without its leading spaces.
         /// </summary>
         public string Write()
         {

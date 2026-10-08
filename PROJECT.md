@@ -620,8 +620,8 @@ comes back already pointing at its area, its point, the step it reads. A name no
 declares is `NAME_UNKNOWN` at that quote, and the line reads on, so every unknown name in a file is
 reported in one pass. A line is declared only after it is read, so nothing can name itself, and a
 name declared twice is `NAME_DUPLICATE` at the second. Areas go one level deep, so an `inside`
-naming an area that is itself inside another is `AREA_TOO_DEEP`; the forms refuse the same thing
-on save. This replaced a binder that handed out positions as ids, an importer that swapped those for real
+naming an area that is itself inside another is `AREA_TOO_DEEP`. The forms offer only a root as a
+parent, hide the choice on an area with regions inside it, and refuse the rest on save. This replaced a binder that handed out positions as ids, an importer that swapped those for real
 ids one table at a time, and an exporter that built id-to-name dictionaries for the printer: four
 translations of one thing, one of which let the last of two duplicate names silently win.
 
@@ -776,8 +776,9 @@ string; inventing a split it does not have would fail the round trip on the firs
 
 **`Id:` is in the header.** Identity travels in the file or a clone cannot recognise a flow.
 
-**A blank line separates top-level steps, but never two.** A marker already leaves one behind it,
-and a heading followed by empty space reads as a section with nothing in it.
+**A blank line goes above each top-level step, and nowhere else.** A marker is written like any
+other step, so it gets the same one gap, and none goes inside a loop or a branch, where the leading
+spaces already group the lines.
 
 ---
 

@@ -242,17 +242,20 @@ export default function FlowAreaFormFieldsComponent({
       {/* CUSTOM */}
       {type === FlowAreaTypeEnum.CUSTOM && (
         <>
-          <FormDropdownComponent<FlowAreaDto, { label: string; value: number }>
-            fieldName="parentFlowAreaId"
-            labelText="Inside"
-            mode="local"
-            options={parentDropdownOptions}
-            optionLabel="label"
-            optionValue="value"
-            placeholderText="Nothing — positioned on screen"
-            isDisabled={isDisabled}
-            hintText="Put it inside a window and the flow keeps working on another machine."
-          />
+          {/* Areas go one level deep, so one with regions inside it stays on top. */}
+          {childAreas.length === 0 && (
+            <FormDropdownComponent<FlowAreaDto, { label: string; value: number }>
+              fieldName="parentFlowAreaId"
+              labelText="Inside"
+              mode="local"
+              options={parentDropdownOptions}
+              optionLabel="label"
+              optionValue="value"
+              placeholderText="Nothing — positioned on screen"
+              isDisabled={isDisabled}
+              hintText="Put it inside a window and the flow keeps working on another machine."
+            />
+          )}
 
           <FormSelectButtonComponent
             fieldName="sizingMode"

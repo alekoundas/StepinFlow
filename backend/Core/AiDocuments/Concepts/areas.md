@@ -33,7 +33,8 @@ A `CUSTOM` area can sit inside another area, one level deep. The parent can be a
 is always `CUSTOM`, because the other types find their own rectangle and ignore a parent.
 
 One level deep means the parent sits inside nothing, and an area with areas inside it cannot go
-inside another. A save or an import that breaks this is refused.
+inside another. The form only offers areas that sit inside nothing, and hides **Inside** on an area
+that has regions inside it. A save or an import that breaks this is refused.
 
 The child is stored as an offset from the parent, either in pixels or as a percentage. When the
 flow runs, the parent is resolved first and the child is placed relative to wherever the parent

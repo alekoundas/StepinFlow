@@ -12,13 +12,8 @@ using Business.FlowScript.Text.Structure;
 namespace Business.FlowScript.Text
 {
     /// <summary>
-    /// A flow as the text that goes in a repository. The mirror of Scanner.cs over the same model:
-    /// this decides which line goes where - the sections, the order, the indentation - and a
-    /// writer per kind of line writes each one, as a parser per kind of line reads it.
-    ///
-    /// See FLOW-FORMAT.md
-    ///
-    /// Deterministic.
+    /// A flow converted to text. Uses a different writer per line. 
+    /// The mirror of Scanner.cs 
     /// </summary>
     public sealed class Printer : IPrinter
     {
@@ -26,11 +21,23 @@ namespace Business.FlowScript.Text
         {
             StringBuilder builder = new StringBuilder();
 
-            WriteHeader(builder, schema);
+            // Header - Flow fields
+            WriteFlowFields(schema, builder);
+            builder.AppendLine();
+
+            // Header - Flow relations
+            WriteAreas(builder, schema);
+            WritePoints(builder, schema);
+            WriteCsvColumns(builder, schema);
+            WriteTemplates(builder, schema);
+
+            // FlowSteps
             WriteSteps(builder, schema);
 
             return builder.ToString();
         }
+
+ 
 
         // The writer for a step's line, by its type - the mirror of ScriptLineParser choosing a
         // parser. A type with none throws rather than writing a line no reader accepts.
@@ -72,7 +79,8 @@ namespace Business.FlowScript.Text
                     return new GoBackWriter(step);
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    return new SubFlowWriter(step, schema.SubFlowPaths.GetValueOrDefault(step, string.Empty));
+                    string subFlowPath = schema.SubFlowPaths.GetValueOrDefault(step, string.Empty);
+                    return new SubFlowWriter(step, subFlowPath);
 
                 case FlowStepTypeEnum.NOTIFY:
                     return new NotifyWriter(step);
@@ -109,60 +117,106 @@ namespace Business.FlowScript.Text
 
 
         // ================================================================
-        // Private methods - header
+        // Private methods - header sections
         // ================================================================
 
-        private static void WriteHeader(StringBuilder builder, FlowScriptSchema schema)
+        private static void WriteFlowFields(FlowScriptSchema schema, StringBuilder builder)
         {
-            builder.AppendLine(new FlowNameWriter(schema.Flow).Write());
-            builder.AppendLine(new FlowIdWriter(schema.Flow).Write());
-            builder.AppendLine(new FlowSizesWriter(schema.Viewports).Write());
+            string flowName = new FlowNameWriter(schema.Flow).Write();
+            builder.AppendLine(flowName);
 
-            builder.AppendLine();
+            string flowId = new FlowIdWriter(schema.Flow).Write();
+            builder.AppendLine(flowId);
 
-            // Parents before children, so a child's "inside X" always names something already read.
-            WriteSection(builder, ScriptSymbolEnum.AREAS, Ordered(schema.Areas).Select(x => new AreaWriter(x)));
-            WriteSection(builder, ScriptSymbolEnum.POINTS, schema.Points.OrderBy(x => x.Name, StringComparer.Ordinal).Select(x => new PointWriter(x)));
-            WriteSection(builder, ScriptSymbolEnum.CSV_COLUMNS, schema.Inputs.OrderBy(x => x.OrderNumber).Select(x => new CsvColumnWriter(x)));
-
-            // The facts about each picture, once per file. The step says how it is searched for; this
-            // says where it clicks and what size of area it was captured in, which is what lets it scale.
-            IEnumerable<FlowStepTemplate> templates = schema.Steps
-                .SelectMany(x => x.FlowStepTemplates)
-                .DistinctBy(x => x.Name, StringComparer.Ordinal)
-                .OrderBy(x => x.Name, StringComparer.Ordinal);
-
-            WriteSection(builder, ScriptSymbolEnum.TEMPLATES, templates.Select(x => new TemplateWriter(x)));
+            if (schema.Viewports.Count > 0)
+            {
+                string flowSizes = new FlowSizesWriter(schema.Viewports).Write();
+                builder.AppendLine(flowSizes);
+            }
         }
 
-        // The heading and its lines indented under it, or nothing for a section with no lines.
-        private static void WriteSection(StringBuilder builder, ScriptSymbolEnum section, IEnumerable<BaseWriter> writers)
+        private static void WriteAreas(StringBuilder builder, FlowScriptSchema schema)
         {
-            List<string> lines = writers.Select(x => x.Write()).ToList();
-            if (lines.Count == 0)
+            if (schema.Areas.Count == 0)
                 return;
 
-            builder.AppendLine(new SectionWriter(section).Write());
+            string heading = new SectionWriter(ScriptSymbolEnum.AREAS).Write();
+            builder.AppendLine(heading);
 
-            foreach (string line in lines)
-                builder.Append("  ").AppendLine(line);
+            // Parents before children, so a child's "inside X" always names something already read.
+            foreach (FlowArea root in schema.Areas.Where(x => x.ParentFlowArea == null).OrderBy(x => x.Name, StringComparer.Ordinal))
+            {
+                string rootLine = new AreaWriter(root).Write();
+                builder.Append("  ").AppendLine(rootLine);
+
+                foreach (FlowArea child in schema.Areas.Where(x => x.ParentFlowArea == root).OrderBy(x => x.Name, StringComparer.Ordinal))
+                {
+                    string childLine = new AreaWriter(child).Write();
+                    builder.Append("  ").AppendLine(childLine);
+                }
+            }
 
             builder.AppendLine();
         }
 
-        // Each root, then the areas inside it. Areas go one level deep, so that is all of them.
-        private static List<FlowArea> Ordered(IReadOnlyList<FlowArea> areas)
+        private static void WritePoints(StringBuilder builder, FlowScriptSchema schema)
         {
-            List<FlowArea> ordered = new List<FlowArea>();
+            if (schema.Points.Count == 0)
+                return;
 
-            foreach (FlowArea root in areas.Where(x => x.ParentFlowArea == null).OrderBy(x => x.Name, StringComparer.Ordinal))
+            string heading = new SectionWriter(ScriptSymbolEnum.POINTS).Write();
+            builder.AppendLine(heading);
+
+            foreach (FlowPoint point in schema.Points.OrderBy(x => x.Name, StringComparer.Ordinal))
             {
-                ordered.Add(root);
-                ordered.AddRange(areas.Where(x => x.ParentFlowArea == root).OrderBy(x => x.Name, StringComparer.Ordinal));
+                string line = new PointWriter(point).Write();
+                builder.Append("  ").AppendLine(line);
             }
 
-            return ordered;
+            builder.AppendLine();
         }
+
+        private static void WriteCsvColumns(StringBuilder builder, FlowScriptSchema schema)
+        {
+            if (schema.Inputs.Count == 0)
+                return;
+
+            string heading = new SectionWriter(ScriptSymbolEnum.CSV_COLUMNS).Write();
+            builder.AppendLine(heading);
+
+            foreach (FlowCsvColumn input in schema.Inputs.OrderBy(x => x.OrderNumber))
+            {
+                string line = new CsvColumnWriter(input).Write();
+                builder.Append("  ").AppendLine(line);
+            }
+
+            builder.AppendLine();
+        }
+
+        private static void WriteTemplates(StringBuilder builder, FlowScriptSchema schema)
+        {
+            List<FlowStepTemplate> templates = schema.Steps
+                .SelectMany(x => x.FlowStepTemplates)
+                .DistinctBy(x => x.Name, StringComparer.Ordinal)
+                .OrderBy(x => x.Name, StringComparer.Ordinal)
+                .ToList();
+
+            if (templates.Count == 0)
+                return;
+
+            string heading = new SectionWriter(ScriptSymbolEnum.TEMPLATES).Write();
+            builder.AppendLine(heading);
+
+            foreach (FlowStepTemplate template in templates)
+            {
+                string line = new TemplateWriter(template).Write();
+                builder.Append("  ").AppendLine(line);
+            }
+
+            builder.AppendLine();
+        }
+
+       
 
 
         // ================================================================
@@ -171,83 +225,46 @@ namespace Business.FlowScript.Text
 
         private static void WriteSteps(StringBuilder builder, FlowScriptSchema schema)
         {
-            builder.AppendLine(new SectionWriter(ScriptSymbolEnum.STEPS).Write());
-
-            // A gap between top level steps, but never two: a marker already leaves one behind it,
-            // and a heading followed by empty space reads as a section with nothing in it.
-            bool needsGap = false;
+            string heading = new SectionWriter(ScriptSymbolEnum.STEPS).Write();
+            builder.AppendLine(heading);
 
             foreach (FlowStep step in ChildrenOf(schema, null))
             {
-                if (needsGap && step.FlowStepType != FlowStepTypeEnum.STAGE_MARKER)
-                    builder.AppendLine();
-
-                WriteStep(builder, schema, step, depth: 0);
-                needsGap = step.FlowStepType != FlowStepTypeEnum.STAGE_MARKER;
+                builder.AppendLine();
+                WriteStep(builder, schema, step, 0);
             }
         }
 
-        private static void WriteStep(StringBuilder builder, FlowScriptSchema schema, FlowStep step, int depth)
+        private static void WriteStep(StringBuilder builder, FlowScriptSchema schema, FlowStep step, int leadingSpaces)
         {
-            string indent = new string(' ', depth);
+            List<FlowStep> children = ChildrenOf(schema, step).ToList();
 
-            // A marker is a section heading, not a step that does anything.
-            if (step.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
-            {
-                builder.AppendLine();
-                WriteComment(builder, step, indent);
-                builder.Append(indent).AppendLine(StepWriter(step, schema).Write());
-                builder.AppendLine();
-                return;
-            }
-
-            WriteComment(builder, step, indent);
-            builder.Append(indent).AppendLine(StepWriter(step, schema).Write());
-
-            WriteBranches(builder, schema, step, depth);
-
-            // A container holds its steps directly - a loop's body, not a branch.
-            if (TreeStepHelper.CanContainChildren(step.FlowStepType))
-            {
-                foreach (FlowStep child in ChildrenOf(schema, step))
-                    WriteStep(builder, schema, child, depth + 1);
-            }
-        }
-
-        private static void WriteBranches(StringBuilder builder, FlowScriptSchema schema, FlowStep step, int depth)
-        {
-            if (!TreeStepHelper.HasBranchChildren(step.FlowStepType))
+            // Add branch only when the branch contains a step.
+            if (TreeStepHelper.IsBranchChild(step.FlowStepType) && children.Count == 0 && string.IsNullOrWhiteSpace(step.CodeComment))
                 return;
 
-            string indent = new string(' ', depth + 1);
+            // Get FlowStep line.
+            string line = StepWriter(step, schema).Write();
 
-            // Order comes from the rows, so two exports of one flow cannot differ. An empty branch
-            // is left out entirely - "Success:" with nothing under it says nothing - unless its comment does.
-            foreach (FlowStep branch in ChildrenOf(schema, step))
-            {
-                List<FlowStep> children = ChildrenOf(schema, branch).ToList();
-                if (children.Count == 0 && string.IsNullOrWhiteSpace(branch.CodeComment))
-                    continue;
+            WriteComment(builder, step, leadingSpaces);
+            builder.Append(' ', leadingSpaces).AppendLine(line);
 
-                WriteComment(builder, branch, indent);
-                builder.Append(indent).AppendLine(StepWriter(branch, schema).Write());
-
-                foreach (FlowStep child in children)
-                    WriteStep(builder, schema, child, depth + 2);
-            }
+            foreach (FlowStep child in children)
+                WriteStep(builder, schema, child, leadingSpaces + 1);
         }
 
-        // Intent, which is the one thing a screenshot cannot carry, above the line it is for.
-        private static void WriteComment(StringBuilder builder, FlowStep step, string indent)
+        private static void WriteComment(StringBuilder builder, FlowStep step, int leadingSpaces)
         {
             if (string.IsNullOrWhiteSpace(step.CodeComment))
                 return;
 
-            foreach (string line in step.CodeComment.Split('\n'))
-                builder.Append(indent).AppendLine(new CommentWriter(line).Write());
+            foreach (string text in step.CodeComment.Split('\n'))
+            {
+                string line = new CommentWriter(text).Write();
+                builder.Append(' ', leadingSpaces).AppendLine(line);
+            }
         }
 
-        // A step's children in running order: a loop's body, or what sits under a branch.
         private static IEnumerable<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)
         {
             return schema.Steps

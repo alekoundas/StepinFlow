@@ -170,7 +170,8 @@ Sizes:  1920x1080 1024x768 390x844
 
 The viewports this flow is expected to pass at. The engine executes the whole flow once per size
 and reports one result per size. `{{width}}` and `{{height}}` resolve to the current pass, which is
-how the launch line above sizes the browser without a resize step.
+how the launch line above sizes the browser without a resize step. A flow with no sizes leaves the
+line out.
 
 Overridable from the command line, so CI can narrow or widen the matrix without editing the file.
 
