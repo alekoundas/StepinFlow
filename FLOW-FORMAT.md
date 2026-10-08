@@ -31,12 +31,12 @@ Inputs:
   <[ password ]>      secret
 
 Templates:
-  <[ add-to-cart.png ]>       click 48 16   captured 2304x1377 at 120dpi
-  <[ cart-badge.png ]>        click 12 12   captured 276x162 at 120dpi
-  <[ login-button.png ]>      click 150 20   captured 922x648 at 120dpi
-  <[ login-form.png ]>        click 200 150   captured 2304x1620 at 120dpi
-  <[ password-field.png ]>    click 150 18   captured 922x648 at 120dpi
-  <[ username-field.png ]>    click 150 18   captured 922x648 at 120dpi
+  <[ template-a7k2m.png ]>    click 48 16   captured 2304x1377 at 120dpi
+  <[ template-c3x9w.png ]>    click 12 12   captured 276x162 at 120dpi
+  <[ template-l8p4w.png ]>    click 150 20   captured 922x648 at 120dpi
+  <[ template-f2r6t.png ]>    click 200 150   captured 2304x1620 at 120dpi
+  <[ template-p5z1h.png ]>    click 150 18   captured 922x648 at 120dpi
+  <[ template-u9d3n.png ]>    click 150 18   captured 922x648 at 120dpi
 
 Steps:
 
@@ -45,27 +45,27 @@ Steps:
 # A fresh profile every time, so the second execution never inherits the first one's session.
 Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
 
-Wait For Image  <[ Login form appears ]>   template <[ login-form.png ]>   in <[ Browser ]>   timeout 15000ms
+Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the site never loaded ]>
 
 ## Sign in
 
-Find Image  <[ Find username field ]>   template <[ username-field.png ]> accuracy 0.85   in <[ Login form ]>
+Find Image  <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.85   in <[ Login form ]>
  Failure:
   End Execution  failed  <[ no username field on the login page ]>
  Success:
   Click  at <[ Find username field ]>
   Type   <[ {{username}} ]>
 
-Find Image  <[ Find password field ]>   template <[ password-field.png ]> accuracy 0.85   in <[ Login form ]>
+Find Image  <[ Find password field ]>   template <[ template-p5z1h.png ]> accuracy 0.85   in <[ Login form ]>
  Failure:
   End Execution  failed  <[ no password field on the login page ]>
  Success:
   Click  at <[ Find password field ]>
   Type   <[ {{password}} ]>
 
-Find Image  <[ Find login button ]>   template <[ login-button.png ]>   in <[ Login form ]>
+Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]>   in <[ Login form ]>
  Failure:
   End Execution  failed  <[ no login button ]>
  Success:
@@ -80,14 +80,14 @@ Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inve
 
 ## Add everything on the page to the cart
 
-Find All Images  <[ Find add buttons ]>   template <[ add-to-cart.png ]> accuracy 0.9   in <[ Inventory ]>
+Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accuracy 0.9   in <[ Inventory ]>
  Failure:
   End Execution  failed  <[ no products to add ]>
  Success:
   Loop  each match in <[ Find add buttons ]>
    Click  at match
    # Give the badge a moment to update before the next click.
-   Wait For Image  <[ Badge updated ]>  template <[ cart-badge.png ]>  in <[ Cart badge ]>  timeout 3000ms
+   Wait For Image  <[ Badge updated ]>  template <[ template-c3x9w.png ]>  in <[ Cart badge ]>  timeout 3000ms
     Failure:
      End Execution  failed  <[ the cart did not update after adding an item ]>
 
@@ -114,6 +114,14 @@ one machine's database, and a repository is cloned into many. Without it a fresh
 "a new version of the login flow" from "a second flow that happens to be called login".
 
 It is generated once and travels with every copy and export of that flow from then on.
+
+`Flow` is also a file name: the flow exports to `<Flow>.sflw` with its templates in a folder of the
+same name, and a repository is cloned onto Windows, macOS and Linux. So the name keeps the
+strictest of their rules - none of `< > : " / \ | ? *` or the control characters, no space or dot
+at either end, and not a Windows device name such as `CON` or `NUL.txt` - or the line is
+`FLOW_NAME_INVALID`. No two flows share a name, whatever its case, because Windows and macOS would
+make them one file: importing a file whose name a flow with another `Id` already has is refused as
+`FLOW_NAME_TAKEN`.
 
 ### Text is quoted with `<[` and `]>`
 
@@ -302,7 +310,7 @@ A check takes its own screenshot, looks at it, decides, and produces a result. C
 a recording into a test — a flow holding none of them proves nothing.
 
 ```
-Find Image  <[ Find login button ]>   template <[ login-button.png ]> accuracy 0.85   in <[ Login form ]>
+Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]> accuracy 0.85   in <[ Login form ]>
  Success:
   Click  at <[ Find login button ]>
  Failure:
@@ -361,11 +369,11 @@ costs its full length on every execution that takes the fallback.
 So wait once, on something that is always present, then branch instantly:
 
 ```
-Wait For Image  <[ Page loaded ]>   template <[ logo.png ]>   in <[ Browser ]>   timeout 15000ms
+Wait For Image  <[ Page loaded ]>   template <[ template-o4j7b.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the page never loaded ]>
 
-Find Image  <[ Desktop nav present? ]>   template <[ nav-bar.png ]>   in <[ Browser ]>
+Find Image  <[ Desktop nav present? ]>   template <[ template-n6v2e.png ]>   in <[ Browser ]>
  Failure:
   Click  at point <[ Hamburger menu ]>
  Success:
@@ -415,7 +423,7 @@ can run between passes.
 ```
 ## Sign in
 Click           at point <[ Sign in button ]>
-Wait For Image  <[ Signed in ]>   template <[ avatar.png ]>   in <[ Browser ]>   timeout 5000ms
+Wait For Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
  Failure:
   Go Back  to <[ Sign in ]>
 ```
@@ -476,29 +484,34 @@ A path relative to the repository root, because names are only unique within a f
 
 ## Templates
 
-`template <[ login-button.png ]>` names a file in a folder beside the flow:
+`template <[ template-l8p4w.png ]>` names a file in a folder beside the flow:
 
 ```
 flows/
   login.sflw
   login.csv            ← values, gitignored
   login/
-    login-button.png
-    username-field.png
+    template-l8p4w.png
+    template-u9d3n.png
 ```
 
 A folder, not an archive: git can then show _which_ image changed, which is the whole point of
 putting tests in a repository.
 
-The file is named after the template, with whitespace hyphenated and a number appended if two
-templates in one flow want the same name. **Not** a content hash: a hash changes whenever the
-image is edited, so git would record a delete and an add rather than a modification, which
-throws away the one thing this layout is for.
+A template made in the app is named once, when it is created: `template-k3x9q.png`, five random
+characters from `0-9a-z`, drawn again if the flow already has it. A file written by hand can use any
+name a file can have, such as `login-button.png`. Either way the name is kept exactly as it is
+through every import and export. Two names that differ only in case are one file on Windows and
+macOS, so they are `TEMPLATE_DUPLICATE`.
+
+**Not** a content hash, and not the database id: a hash changes whenever the image is edited and an
+id whenever the flow is imported, and either way git would record a delete and an add rather than a
+modification, which throws away the one thing this layout is for.
 
 ### On the step: how it is searched for
 
 ```
-Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required  template <[ login-alt.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97 required  template <[ template-q7m5c.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
 ```
 
 `accuracy` and `required` follow the template they belong to, so neither can be read as the
@@ -521,7 +534,7 @@ step's.
 
 ```
 Templates:
-  <[ login.png ]>           click 150 20   captured 922x648 at 120dpi
+  <[ template-k3x9q.png ]>    click 150 20   captured 922x648 at 120dpi
 ```
 
 Facts about the picture rather than the search, once per file:
@@ -551,7 +564,7 @@ have, are both errors with a line and a column - nothing is dropped and nothing 
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
 line indented too far, a template described twice, a comment with no step below it, no `Flow:` line,
-a name nothing above declares, a name declared twice.
+a flow name that cannot be a file name, a name nothing above declares, a name declared twice.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps

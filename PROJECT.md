@@ -578,13 +578,13 @@ Areas:
   <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
 
 Templates:
-  <[ username-field.png ]>    click 150 18   captured 922x648 at 120dpi
+  <[ template-u9d3n.png ]>    click 150 18   captured 922x648 at 120dpi
 
 Steps:
 
 ## Sign in
 
-Find Image      <[ Find username field ]>   template <[ username-field.png ]> accuracy 0.85   in <[ Login form ]>
+Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.85   in <[ Login form ]>
  Success:
   Click           at <[ Find username field ]>
   Type            <[ {{username}} ]>
@@ -655,10 +655,10 @@ pressed Ctrl+B and `System 99` parsed as an action that does not exist.
 
 ```
 Templates:
-  <[ login.png ]>           click 150 20   captured 922x648 at 120dpi
+  <[ template-k3x9q.png ]>    click 150 20   captured 922x648 at 120dpi
 
 Steps:
-Find Image  <[ Find login ]>   template <[ login.png ]> accuracy 0.97 required   match shape and brightness   in <[ Browser ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97 required   match shape and brightness   in <[ Browser ]>
 ```
 
 Facts about the picture go in the header - the click point, and the area size and DPI it was
@@ -1146,11 +1146,12 @@ exactly, renders read-only in the app, and works whether or not the customer use
 
 A template is part of the test definition, like a snapshot in a unit test: a flow from three months
 ago cannot execute without the images it was written against. They sit in the folder beside the flow
-and they are small. Nobody names a template, so each is given its file name when it is created -
-`template-k3x9q.png`, five random characters from `0-9a-z`, drawn again while the flow already has
-it - and keeps it for good: the database, the script and the folder all hold that one string, an
-import takes it from the file and an export writes it back unchanged.
-Not the database id, which every import renumbers, and **not** a content hash. A hash would dedupe
+and they are small. Nobody names a template, so each is given its file name when it is created:
+`FileNameHelper.GenerateTemplateFileName` draws `template-k3x9q.png`, five random characters from
+`0-9a-z`, and `FlowStepDataService` draws again while the flow already has it, ignoring case as
+Windows and macOS do. It keeps that name for good: the database, the script and the folder all hold
+the one string, an import takes it from the file and an export writes it back unchanged. Not the
+database id, which every import renumbers, and **not** a content hash. A hash would dedupe
 identical images, but it also changes whenever one is edited, so git would record a delete and an
 add instead of a modification, and the point of a folder of loose images is that a reviewer can
 see which one changed. Two git branches drawing the same name for one flow is a merge conflict,

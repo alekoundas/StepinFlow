@@ -8,6 +8,17 @@ walks the tree from the top and does what each step says.
 Everything a flow needs travels with it: its steps, its areas, its points, and the template images
 its searches look for. Nothing is stored globally, so two flows never interfere with each other.
 
+## A flow's name
+
+A flow's name is also the name of the file it exports to, and that file can be opened on Windows,
+macOS or Linux. So a name cannot contain `< > : " / \ | ? *`, cannot start or end with a space or a
+dot, and cannot be a name Windows keeps for a device, such as `CON`, `PRN`, `AUX`, `NUL`, `COM1` or
+`LPT1`. No two flows can share a name either, even one that differs only in capital letters:
+`Login` and `login` would be the same file on Windows and macOS. The same rules apply when a step is
+extracted into a sub-flow and when a flow is imported from a file.
+
+Step names have none of these rules. They only have to be unique within their flow.
+
 ## What a sub-flow is
 
 A sub-flow is a flow meant to be called by another flow rather than started on its own. It has the
