@@ -10,6 +10,14 @@ namespace Business.FlowScript.Catalogs
     {
         public static IReadOnlyList<ScriptKeyword> All { get; } =
         [
+            // Quotes - The quotes around a name or any other text. 
+            new ScriptKeyword("<[", ScriptSymbolEnum.QUOTE_OPEN),
+            new ScriptKeyword("]>", ScriptSymbolEnum.QUOTE_CLOSE),
+
+            // CodeComment and StageMarker
+            new ScriptKeyword("#", ScriptSymbolEnum.COMMENT) { TakesRestOfLine = true },
+            new ScriptKeyword("##", FlowStepTypeEnum.STAGE_MARKER) { TakesRestOfLine = true },
+
             // Steps.
             new ScriptKeyword("Wait Until No Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
             new ScriptKeyword("Wait Until No Text", FlowStepTypeEnum.SEARCH_TEXT, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
@@ -37,20 +45,10 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Type", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputTypeEnum.TEXT),
             new ScriptKeyword("Wait", FlowStepTypeEnum.WAIT),
             new ScriptKeyword("Run", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM),
-
-            // The rows the tree carries: a check's two branches, and a stage heading.
             new ScriptKeyword("Success:", FlowStepTypeEnum.SUCCESS),
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
-            new ScriptKeyword("##", FlowStepTypeEnum.STAGE_MARKER) { TakesRestOfLine = true },
 
-            // The quotes around a name or any other text. Nothing between them is special, so quoted
-            // text cannot hold either one.
-            new ScriptKeyword("<[", ScriptSymbolEnum.QUOTE_OPEN),
-            new ScriptKeyword("]>", ScriptSymbolEnum.QUOTE_CLOSE),
-
-            // Lines that are not steps: intent for the step below, the flow's own fields, and the
-            // header opening each section.
-            new ScriptKeyword("#", ScriptSymbolEnum.COMMENT) { TakesRestOfLine = true },
+            // Flow
             new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
             new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
             new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
@@ -81,7 +79,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("click", ScriptSymbolEnum.CLICK),
             new ScriptKeyword("captured", ScriptSymbolEnum.CAPTURED),
 
-            // FlowStep
+            // FlowStep - 
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
             new ScriptKeyword("point", ScriptSymbolEnum.POINT),
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
@@ -99,12 +97,12 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("passed", ScriptSymbolEnum.PASSED),
             new ScriptKeyword("failed", ScriptSymbolEnum.FAILED),
 
-            // Written onto a number: 800ms, 120dpi, 1920x1080.
+            // Numbers
             new ScriptKeyword("ms", ScriptSymbolEnum.MILLISECONDS),
             new ScriptKeyword("dpi", ScriptSymbolEnum.DPI),
             new ScriptKeyword("x", ScriptSymbolEnum.SIZE_SEPARATOR),
 
-            // What a text or a value is checked against.
+            // Condition
             new ScriptKeyword("is not empty", ConditionTypeEnum.IS_NOT_EMPTY),
             new ScriptKeyword("is empty", ConditionTypeEnum.IS_EMPTY),
             new ScriptKeyword("is not", ConditionTypeEnum.NOT_EQUALS),
@@ -116,20 +114,34 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword(">", ConditionTypeEnum.GREATER_THAN),
             new ScriptKeyword("<", ConditionTypeEnum.LESS_THAN),
 
-            // A click's button and what it does. Left and single are never written.
+            // Window title Condition
+            new ScriptKeyword("starts with", TitleMatchModeEnum.STARTS_WITH),
+            new ScriptKeyword("contains", TitleMatchModeEnum.CONTAINS),
+            new ScriptKeyword("matches", TitleMatchModeEnum.REGEX),
+            new ScriptKeyword("is", TitleMatchModeEnum.EQUALS),
+
+            // FlowStepTemplate condition.
+            new ScriptKeyword("shape and brightness", TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS),
+            new ScriptKeyword("shape", TemplateMatchModeEnum.SHAPE),
+
+            // Cursor
             new ScriptKeyword("right", CursorButtonTypeEnum.RIGHT_BUTTON),
             new ScriptKeyword("middle", CursorButtonTypeEnum.MIDDLE_BUTTON),
             new ScriptKeyword("double", CursorButtonActionTypeEnum.DOUBLE_CLICK),
             new ScriptKeyword("hold", CursorButtonActionTypeEnum.HOLD_CLICK),
             new ScriptKeyword("release", CursorButtonActionTypeEnum.RELEASE_CLICK),
+            new ScriptKeyword("up", CursorScrollDirectionTypeEnum.UP),
+            new ScriptKeyword("down", CursorScrollDirectionTypeEnum.DOWN),
+            new ScriptKeyword("left", CursorScrollDirectionTypeEnum.LEFT),
+            new ScriptKeyword("right", CursorScrollDirectionTypeEnum.RIGHT),
 
-            // What System does.
+            // System
             new ScriptKeyword("LOCK_WORKSTATION", SystemActionTypeEnum.LOCK_WORKSTATION),
             new ScriptKeyword("SLEEP_PC", SystemActionTypeEnum.SLEEP_PC),
             new ScriptKeyword("MONITOR_OFF", SystemActionTypeEnum.MONITOR_OFF),
             new ScriptKeyword("MONITOR_ON", SystemActionTypeEnum.MONITOR_ON),
 
-            // The command Run carries out. Custom and Launch are the steps themselves.
+            // Command 
             new ScriptKeyword("KILL_PROCESS", RunCommandPresetEnum.KILL_PROCESS),
             new ScriptKeyword("IS_PROCESS_RUNNING", RunCommandPresetEnum.IS_PROCESS_RUNNING),
             new ScriptKeyword("READ_CLIPBOARD", RunCommandPresetEnum.READ_CLIPBOARD),
@@ -138,30 +150,13 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("SHUTDOWN_IN", RunCommandPresetEnum.SHUTDOWN_IN),
             new ScriptKeyword("CANCEL_SHUTDOWN", RunCommandPresetEnum.CANCEL_SHUTDOWN),
 
-            // How a window title is matched. "is" and "matches" are also conditions; the vocabulary
-            // is the enum type, so a reader asking for one never finds the other.
-            new ScriptKeyword("starts with", TitleMatchModeEnum.STARTS_WITH),
-            new ScriptKeyword("contains", TitleMatchModeEnum.CONTAINS),
-            new ScriptKeyword("matches", TitleMatchModeEnum.REGEX),
-            new ScriptKeyword("is", TitleMatchModeEnum.EQUALS),
-
-            // How templates are compared.
-            new ScriptKeyword("shape and brightness", TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS),
-            new ScriptKeyword("shape", TemplateMatchModeEnum.SHAPE),
-
-            // What an area's contents follow.
+            // FlowArea
             new ScriptKeyword("dpi", ScalesWithEnum.DPI),
             new ScriptKeyword("area", ScalesWithEnum.AREA),
-
-            // Which way a scroll goes.
-            new ScriptKeyword("up", CursorScrollDirectionTypeEnum.UP),
-            new ScriptKeyword("down", CursorScrollDirectionTypeEnum.DOWN),
-            new ScriptKeyword("left", CursorScrollDirectionTypeEnum.LEFT),
-            new ScriptKeyword("right", CursorScrollDirectionTypeEnum.RIGHT),
         ];
 
         /// <summary>
-        /// TEnum picks the vocabulary, so a word shared by two of them never finds the wrong one.
+        /// Get the Keyword based on the Type and text given.
         /// </summary>
         public static ScriptKeyword? Get<TEnum>(string text) where TEnum : struct, Enum
         {
@@ -175,7 +170,7 @@ namespace Business.FlowScript.Catalogs
         }
 
         /// <summary>
-        /// The first row of this type, whatever its modifier.
+        /// Get the Keyword based on the Type given.
         /// </summary>
         public static ScriptKeyword? Get(Enum type)
         {
@@ -188,6 +183,10 @@ namespace Business.FlowScript.Catalogs
             return null;
         }
 
+
+        /// <summary>
+        /// Get the Keyword based on the Type and Modifier given.
+        /// </summary>
         public static ScriptKeyword? Get(Enum type, Enum modifier)
         {
             foreach (ScriptKeyword keyword in All)
@@ -200,14 +199,25 @@ namespace Business.FlowScript.Catalogs
         }
 
         /// <summary>
-        /// The word a value is written as, from any vocabulary. A value with none is a gap in the
-        /// catalog, so it throws rather than writing a line no reader accepts.
+        /// Get the Keyword Text value based on the Type given.
         /// </summary>
         public static string GetTextOfKeyword(Enum value)
         {
             ScriptKeyword? keyword = Get(value);
             if (keyword == null)
                 throw new InvalidOperationException($"No keyword in the catalog writes {value.GetType().Name}.{value}.");
+
+            return keyword.Text;
+        }
+
+        /// <summary>
+        /// Get the Keyword Text value based on the Type and Modifier given.
+        /// </summary>
+        public static string GetTextOfKeyword(Enum value, Enum modifier)
+        {
+            ScriptKeyword? keyword = Get(value, modifier);
+            if (keyword == null)
+                throw new InvalidOperationException($"No keyword in the catalog writes {value.GetType().Name}.{value} with {modifier.GetType().Name}.{modifier}.");
 
             return keyword.Text;
         }

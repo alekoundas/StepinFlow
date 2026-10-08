@@ -84,7 +84,7 @@ Feature folders, each named for what it does rather than for what its classes ar
 Business/
   Executions/    engine, walker, cache, history, Workers/
   Searching/     ImageSearcher - shared by the engine and the editor's Test now
-  FlowScript/    Scanner/ Lexing/ Parsers/ Models/ Printer/ Diagnostics/, importer and exporter
+  FlowScript/    Scanner/ Lexing/ Parsers/ Models/ Printer/ Catalogs/ Diagnostics/, importer and exporter
   Flows/         DataService/ - every write to a flow - FlowValidationService/ with its Rules/ -
                  what every write is checked against - and the tree maths a move uses
   Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
@@ -123,7 +123,7 @@ Core/Ports/IIpcBroadcastService      →  Transport/Ipc/IpcBroadcastService
 
 **The rule for `Core/Ports`: it holds only interfaces that Core and Business cannot implement
 themselves.** `IFlowValidationService`, `IExecutionEngine`, `IAppSettingService` and the script's
-`IParser` and `IPrinter` are declared and implemented inside `Business`, so they stay beside their
+`IScanner` and `IPrinter` are declared and implemented inside `Business`, so they stay beside their
 implementations. Sweeping every interface into `Ports` would make the folder mean "interfaces"
 again and the name would stop carrying information.
 
@@ -601,7 +601,7 @@ Scanner/      Scanner                                  the stages below, one lin
 Lexing/       ScriptLineSplitter → ScriptTokenizer     text into lines, a line into tokens
 Parsers/      ScriptLineParser → a parser per line     tokens into linked rows
 Models/       FlowScriptSchema                         the flow as linked rows, both directions
-Printer/      Printer                                  the model back to text
+Printer/      Printer → a writer per line              the model back to text
 Catalogs/     ScriptKeywordCatalog                     every word the grammar knows, once
 Diagnostics/  Diagnostic, ScriptSyntaxException        what went wrong, and whether it is fatal
               FlowScriptImporter, FlowScriptExporter
@@ -637,6 +637,22 @@ declares, a comment belonging to the line below. The parsers share `BaseParser`:
 takes one and returns its value, an `Optional` one never throws, and the index moves in one place.
 A line that stops making sense throws `ScriptSyntaxException` at that token, and the Scanner records
 it and reads on from the next line, so one typo is one error rather than the end of the report.
+
+**One writer per kind of line, the mirror of the parsers.** `Printer/Header`, `Printer/Steps` and
+`Printer/Structure` hold a writer for each parser in the same place under `Parsers/`, so
+`AreaParser` reads what `AreaWriter` writes, and changing a line's grammar means two files with the
+same stem and a catalog row. Each writer takes its row and writes its line a piece at a time, in
+the order it reads - one `WriteKeyword`, `WriteQuote` or `WriteInteger` per piece, as its parser
+expects and extracts one token at a time - keyword choice included: a search picks its word by
+mode, `Type` or `Press` by input type, `Run` or `Launch` by preset. Pieces are a space apart unless
+a gap (`WriteGap`: three spaces between clauses, two in a few places) or a column
+(`WriteGapUntil(KEYWORD_GAP_UNTIL)`) already parts them, so a separator is only written where the
+format wants more than one. They share `BaseWriter` - the
+pieces, the gaps and the columns the file is laid out in - and the steps' writers `BaseStepWriter`,
+with the clauses more than one step writes (`in <[ area ]>`, a target, a condition, a timeout), as
+the parsers share `BaseParser` and `BaseStepParser`. `Printer` is the orchestrator, as
+`ScriptLineParser` is: the sections, their order, the indentation, the gap between steps, comments
+above the line they belong to, and which writer writes a step.
 
 `Printer.Write(FlowScriptSchema) → string` is a pure function, and deterministic: the same flow
 writes the same bytes. Children in `OrderNumber` order through their `ParentFlowStep` link, and
@@ -703,14 +719,14 @@ to disk and read back - where the imported rows are also compared with the origi
 field, because identical bytes cannot see a field the printer never prints. See
 `backend/Tests/Business.Tests/FlowScript/`.
 
-The round trip starts from rows the app wrote, so every template in it has a generated name. A file
-written by hand is tested on its own: `login-button.png` and `logo.jpg`, imported from disk and
-exported again, keep their names - extension included - and their bytes.
-
 It earned that status on its first run by finding a writer bug: `Scroll` emitted `in match`, because
 the writer used the point-target fragment for its `in` clause and that falls through to "match" when
 a scroll names neither a point nor a step — while the format means an area. A line no parser could
 read, found the moment something tried to read one.
+
+The round trip starts from rows the app wrote, so every template in it has a generated name. A file
+written by hand is tested on its own: `login-button.png` and `logo.jpg`, imported from disk and
+exported again, keep their names - extension included - and their bytes.
 
 A round trip proves `A == B`; it cannot prove either is right. So beside it sits
 `SampleFlow.approved.sflw` - a printed flow a person read once and approved, compared on every
@@ -1354,7 +1370,7 @@ the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything fo
 `CommandPresetCatalog` is the same kind of thing and sits beside the runner in `Business/Command`,
 its only consumer. These are not constants; they are queried, and a `Constants.cs` full of
 `public const string` would describe them less accurately than `Catalog` does. The pattern has a
-well-known precedent in Roslyn's `SyntaxFacts`, which the flow script borrows by name.
+well-known precedent in Roslyn's `SyntaxFacts`.
 
 **Things that genuinely are constants** live in the class that uses them — `WM_CLOSE` in
 `WindowService`, the DPI awareness handles in `ScreenMetrics`, the OCR language tags in the internal
@@ -1409,6 +1425,7 @@ folder in `Business`.
 - An `if`, not a multi-line ternary, inside a block. A ternary is fine in a LINQ projection, an
   object initializer, or when it is short enough to read at a glance.
 - `<summary>` on public members only; `//` on private ones.
+- Constants are all capitals with underscores: `KEYWORD_GAP_UNTIL`, `WM_CLOSE`.
 - Comments explain *why*, not *what*. Names and logic carry the meaning.
 - `//===` section banners inside long P/Invoke files.
 - A regular expression goes through `RegexHelper`, a clock through the injected `TimeProvider`, and

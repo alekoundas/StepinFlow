@@ -4,7 +4,8 @@ using Business.FlowScript.Lexing;
 using Business.FlowScript.Models;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Scanner;
-using Business.FlowScript.Syntax;
+using Business.FlowScript.Text;
+using Business.FlowScript.Text.Steps;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -14,7 +15,7 @@ namespace Business.Tests.FlowScript
     /// Every word the grammar writes, read back. A word that meant one thing on the way out and
     /// another on the way in is a round trip that cannot be relied on.
     /// </summary>
-    public sealed class SyntaxFactsTests
+    public sealed class VocabularyTests
     {
         private static FlowScriptSchema Read(string body)
         {
@@ -48,12 +49,12 @@ namespace Business.Tests.FlowScript
                 if (runCommandPreset != null)
                     step.RunCommandPreset = runCommandPreset.Value;
 
-                string written = SyntaxFacts.For(step);
-                ScriptToken first = ScriptTokenizer.Tokenize(ScriptLineSplitter.Split(written).Single())[0];
+                string line = Printer.StepWriter(step, new FlowScriptSchema()).Write();
+                ScriptToken first = ScriptTokenizer.Tokenize(ScriptLineSplitter.Split(line).Single())[0];
                 ScriptKeyword? read = ScriptKeywordCatalog.Get<FlowStepTypeEnum>(first.Value);
 
-                if (written != keyword.Text || read != keyword)
-                    wrong.Add($"{keyword.Text}: written \"{written}\", read back as \"{read?.Text}\"");
+                if (first.Value != keyword.Text || read != keyword)
+                    wrong.Add($"{keyword.Text}: written \"{line}\", read back as \"{read?.Text}\"");
             }
 
             wrong.ShouldBeEmpty();
@@ -88,9 +89,9 @@ namespace Business.Tests.FlowScript
 
             foreach (ConditionTypeEnum condition in Enum.GetValues<ConditionTypeEnum>())
             {
-                FlowStep step = new FlowStep { ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
-                string written = SyntaxFacts.Condition(step);
-                FlowStep read = Read("Steps:\nCheck Text <[ x ]> " + written).Steps.Single();
+                FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "x", ConditionType = condition, ConditionText = @"a ""quoted"" \value\", ConditionTextEnd = "9" };
+                string written = new SearchTextWriter(step).Write();
+                FlowStep read = Read("Steps:\n" + written).Steps.Single();
 
                 string expectedText = string.Empty;
                 if (condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY)
@@ -138,8 +139,9 @@ namespace Business.Tests.FlowScript
             {
                 foreach (CursorButtonActionTypeEnum action in Enum.GetValues<CursorButtonActionTypeEnum>())
                 {
-                    string written = SyntaxFacts.Button(button, action);
-                    FlowStep read = Read("Steps:\nClick at match " + written).Steps.Single();
+                    FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = button, CursorButtonActionType = action };
+                    string written = new CursorClickWriter(step).Write();
+                    FlowStep read = Read("Steps:\n" + written).Steps.Single();
 
                     (read.CursorButtonType, read.CursorButtonActionType).ShouldBe((button, action), written);
                 }
@@ -147,9 +149,11 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void A_plain_left_click_writes_nothing()
+        public void A_plain_left_click_writes_no_button()
         {
-            SyntaxFacts.Button(CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionTypeEnum.SINGLE_CLICK).ShouldBeEmpty();
+            FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK };
+
+            new CursorClickWriter(step).Write().ShouldEndWith("at match");
         }
 
         [Theory]

@@ -136,11 +136,24 @@ the history.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
-- [ ] **An export leaves the images of deleted templates behind.** `WriteTemplatesAsync` writes
-      each template's image into the flow's folder and removes nothing, so a template deleted since
-      the last export keeps its PNG there for good - committed with the rest, and named by nothing.
-      Delete every `.png` in the folder the export did not write; only `.png`, so anything else
-      someone put there survives.
+- [ ] **An export leaves the images of deleted templates behind. Open - to decide whether an export
+      should clean up at all.** `WriteTemplatesAsync` writes each template's image into the flow's
+      folder and removes nothing, so a template deleted since the last export keeps its image there
+      for good - committed with the rest, and named by nothing. Today the person removes it, and
+      `git status` is where they would notice. If the export is to do it, what it has to get right:
+      - Keep every name the flow has, not only the files this export wrote: a template imported with
+        its image missing has no bytes to write, and a file put back since is then the only copy.
+      - Compare ignoring case - writing `login.png` over `Login.png` on Windows keeps the old casing.
+      - Only the folder's top level, and only image files (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`,
+        `.webp`, `.tif`, `.tiff`): a hand-written template can be any of them, and a README or
+        `.gitkeep` someone put there has to survive.
+      - Remove the folder once it is empty; git does not track it anyway.
+      - Say what it deleted: a `RemovedTemplates` list on `FlowScriptExportResultDto`, as an import
+        reports `MissingTemplates`.
+
+      A renamed flow leaves the same kind of leftover one level up: the old `.sflw` and its folder.
+      The export does not know the old name, so that cleanup means finding the file by the `Id:`
+      inside it - a separate decision.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.
@@ -477,6 +490,11 @@ the history.
 
 - [ ] **Target-typed `new()`.** Pre-existing uses were left in files not authored during the
       execution-engine work. House style is the full `new TypeName()`.
+- [ ] **Constants in capitals.** House style since 2026-10-08 is `ALL_CAPS_WITH_UNDERSCORES`; only
+      the printer's four `*_GAP_UNTIL` columns and the Win32 ones (`WM_CLOSE`, `SWP_NOSIZE`) follow
+      it. The rest are `PascalCase` (`ScoreCeiling`, `MoveSettleMilliseconds`) or `_camelCase`
+      (`_maxEdge`, `_maxRows`). Rename them, then make it a build error with a naming rule for
+      `const` in `backend/.editorconfig`, so the rule stops depending on anyone remembering it.
 
 ## Licences
 
