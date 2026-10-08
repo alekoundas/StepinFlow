@@ -86,6 +86,12 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
       return { text: detail.subFlowName ?? "no flow picked", chips: [] };
 
     case FlowStepTypeEnum.CURSOR_CLICK:
+      return {
+        chips: detail.cursorButtonActionType
+          ? [{ text: readable(detail.cursorButtonActionType) }]
+          : [],
+      };
+
     case FlowStepTypeEnum.CURSOR_RELOCATE:
       return {
         text: pointName(
@@ -93,9 +99,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
           detail.pointName,
           detail.referenceStepName,
         ),
-        chips: detail.cursorButtonActionType
-          ? [{ text: readable(detail.cursorButtonActionType) }]
-          : [],
+        chips: [],
       };
 
     case FlowStepTypeEnum.CURSOR_DRAG:

@@ -13,7 +13,7 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Move  to point <[ X ]> | to <[ step ]> | to match
+            // Move  to point <[ X ]> | to <[ step ]> | to nowhere
             ExpectKeyword(FlowStepTypeEnum.CURSOR_RELOCATE);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE };
 

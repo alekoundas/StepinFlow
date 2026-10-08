@@ -18,7 +18,7 @@ export const CURSOR_MODES: CursorMode[] = [
     iconName: "bullseye",
     defaultName: "Cursor Click",
     description:
-      "Press a mouse button at the resolved location. Single, double, hold or release.",
+      "Press a mouse button where the cursor is. Single, double, hold or release. A Move above it says where.",
   },
   {
     flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
@@ -40,7 +40,7 @@ export const CURSOR_MODES: CursorMode[] = [
     label: "Scroll",
     iconName: "sort-alt",
     defaultName: "Cursor Scroll",
-    description: "Turn the mouse wheel a number of notches in one direction.",
+    description: "Turn the mouse wheel where the cursor is, a number of notches in one direction.",
   },
 ];
 

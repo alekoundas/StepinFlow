@@ -1,4 +1,3 @@
-using Business.FlowScript.Catalogs;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -12,11 +11,9 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Click  at <[ step ]> | at point <[ X ]> | at match   [right | middle] [double | hold | release]
+            // Click   [right | middle] [double | hold | release]
+            // Where the cursor is: a Move on the line above says where that is.
             WriteKeyword(FlowStepTypeEnum.CURSOR_CLICK);
-            WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteKeyword(ScriptSymbolEnum.AT);
-            WriteTarget(Step.FlowPoint, Step.FlowStepReference);
 
             // The button and what it does, left out entirely when it is a plain left click - which is
             // nearly every click, and saying so on every line would bury the ones that differ.
@@ -24,7 +21,7 @@ namespace Business.FlowScript.Text.Steps
             CursorButtonActionTypeEnum action = Step.CursorButtonActionType ?? CursorButtonActionTypeEnum.SINGLE_CLICK;
 
             if (button != CursorButtonTypeEnum.LEFT_BUTTON || action != CursorButtonActionTypeEnum.SINGLE_CLICK)
-                WriteGap();
+                WriteGapUntil(KEYWORD_GAP_UNTIL);
 
             if (button != CursorButtonTypeEnum.LEFT_BUTTON)
                 WriteKeyword(button);

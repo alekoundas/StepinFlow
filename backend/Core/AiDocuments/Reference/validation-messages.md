@@ -16,8 +16,9 @@ Errors are shown as badges on the tree and as messages on each step.
 
 ## Points and step results
 
-**POINT_MISSING** — a cursor step has nowhere to act. Pick a saved point, or an earlier search
-whose result gives one.
+**POINT_MISSING** — a move or a drag has nowhere to go. Pick a saved point, or an earlier search
+whose result gives one. A click and a scroll never need one: they act where the cursor is, so a
+move goes on the step above them.
 
 **STEP_RESULT_MISSING** — the step reads another step's result but none is picked.
 

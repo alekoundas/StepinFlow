@@ -60,6 +60,11 @@ because they are served from the screenshot the first search already took.
 This matters if the screen changes while you work through the hits — the positions come from the
 moment of the first search, not from now.
 
+Its Success branch executes once per hit, and inside that branch the search's own name is the hit
+of the current pass. So a `CURSOR_RELOCATE` to the search, then a `CURSOR_CLICK`, clicks every hit
+in turn. There is no separate loop for it; a step that should happen once after all the hits goes
+after the search, not inside it.
+
 **Max matches** limits how many hits are worked through, and only appears in this mode.
 
 ## Templates and IsRequired

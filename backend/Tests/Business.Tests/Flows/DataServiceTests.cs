@@ -229,7 +229,7 @@ namespace Business.Tests.Flows
         // A tree of new steps - a recording
         // ================================================================
 
-        // Linked the way the draft handler links them: a click under the search's Success row, reading
+        // Linked the way the draft handler links them: a move under the search's Success row, reading
         // the search, with a point it creates. Every name is already taken once.
         [Fact]
         public async Task A_tree_of_new_steps_is_linked_named_apart_and_placed_at_its_index()
@@ -239,23 +239,23 @@ namespace Business.Tests.Flows
 
             FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
             FlowStep success = TreeStepHelper.CreateBranchChildren(find).First(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
-            FlowStep click = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click", ParentFlowStep = success, FlowStepReference = find, FlowPoint = new FlowPoint { Name = "Find" } };
+            FlowStep move = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", ParentFlowStep = success, FlowStepReference = find, FlowPoint = new FlowPoint { Name = "Find" } };
 
-            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, click], Ct);
+            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, move], Ct);
 
             created.Data.ShouldBe(flowId);
             using AppDbContext db = _database.CreateDbContext();
             List<FlowStep> steps = db.FlowSteps.Where(x => x.RootId == flowId).ToList();
             FlowStep savedFind = steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
-            FlowStep savedClick = steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_CLICK);
+            FlowStep savedMove = steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE);
 
             savedFind.Name.ShouldBe("Find 2");
-            db.FlowPoints.Single(x => x.Id == savedClick.FlowPointId).Name.ShouldBe("Find 3");
-            savedClick.FlowStepReferenceId.ShouldBe(savedFind.Id);
+            db.FlowPoints.Single(x => x.Id == savedMove.FlowPointId).Name.ShouldBe("Find 3");
+            savedMove.FlowStepReferenceId.ShouldBe(savedFind.Id);
 
             steps.Where(x => x.ParentFlowStepId == savedFind.Id).OrderBy(x => x.OrderNumber).Select(x => x.FlowStepType)
                 .ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE]);
-            savedClick.ParentFlowStepId.ShouldBe(steps.Single(x => x.ParentFlowStepId == savedFind.Id && x.FlowStepType == FlowStepTypeEnum.SUCCESS).Id);
+            savedMove.ParentFlowStepId.ShouldBe(steps.Single(x => x.ParentFlowStepId == savedFind.Id && x.FlowStepType == FlowStepTypeEnum.SUCCESS).Id);
 
             steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find 2", "Find"]);
         }
@@ -335,29 +335,29 @@ namespace Business.Tests.Flows
         // Extracting a sub-flow
         // ================================================================
 
-        // A click on a point measured from Header, inside Browser - an area no step searches in.
-        private async Task<(int FlowId, int SubFlowId, int ClickId)> ExtractClickAsync()
+        // A move to a point measured from Header, inside Browser - an area no step searches in.
+        private async Task<(int FlowId, int SubFlowId, int MoveId)> ExtractMoveAsync()
         {
             int flowId = await NewFlowAsync();
-            int clickId;
+            int moveId;
 
             using (AppDbContext db = _database.CreateDbContext())
             {
                 FlowArea browser = new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag", UseClientArea = false, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
                 FlowArea header = new FlowArea { FlowId = flowId, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.RATIO, RatioWidth = 1f, RatioHeight = 0.1f };
                 FlowPoint button = new FlowPoint { FlowId = flowId, Name = "Button", FlowArea = header, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.9f, RatioY = 0.5f, AuthoredDpi = 120 };
-                FlowStep click = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click", FlowPoint = button };
+                FlowStep move = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", FlowPoint = button };
 
-                db.AddRange(browser, header, button, click);
+                db.AddRange(browser, header, button, move);
                 db.SaveChanges();
-                clickId = click.Id;
+                moveId = move.Id;
             }
 
             ResultDto<ExtractSubFlowResultDto> extracted = await _dataService.Flow.ExtractSubFlowAsync(
-                new ExtractSubFlowDto { FlowStepId = clickId, Name = "Press the button", SourceRootId = flowId, SourceFlowId = flowId, SourceOrderNumber = 0 }, Ct);
+                new ExtractSubFlowDto { FlowStepId = moveId, Name = "Press the button", SourceRootId = flowId, SourceFlowId = flowId, SourceOrderNumber = 0 }, Ct);
 
             extracted.IsSuccess.ShouldBeTrue(extracted.ErrorMessage);
-            return (flowId, extracted.Data!.SubFlowId, clickId);
+            return (flowId, extracted.Data!.SubFlowId, moveId);
         }
 
         [Fact]
@@ -378,13 +378,13 @@ namespace Business.Tests.Flows
         [Fact]
         public async Task An_extracted_step_takes_copies_of_its_point_and_every_area_above_it()
         {
-            (int flowId, int subFlowId, int clickId) = await ExtractClickAsync();
+            (int flowId, int subFlowId, int moveId) = await ExtractMoveAsync();
 
             using AppDbContext db = _database.CreateDbContext();
             List<FlowArea> areas = db.FlowAreas.Where(x => x.FlowId == subFlowId).ToList();
             FlowPoint button = db.FlowPoints.Single(x => x.FlowId == subFlowId);
 
-            db.FlowSteps.Single(x => x.Id == clickId).FlowPointId.ShouldBe(button.Id);
+            db.FlowSteps.Single(x => x.Id == moveId).FlowPointId.ShouldBe(button.Id);
             button.FlowAreaId.ShouldBe(areas.Single(x => x.Name == "Header").Id);
             areas.Single(x => x.Name == "Header").ParentFlowAreaId.ShouldBe(areas.Single(x => x.Name == "Browser").Id);
 
@@ -396,7 +396,7 @@ namespace Business.Tests.Flows
         [Fact]
         public async Task An_extracted_area_and_point_keep_every_column()
         {
-            (int flowId, int subFlowId, _) = await ExtractClickAsync();
+            (int flowId, int subFlowId, _) = await ExtractMoveAsync();
 
             using AppDbContext db = _database.CreateDbContext();
 

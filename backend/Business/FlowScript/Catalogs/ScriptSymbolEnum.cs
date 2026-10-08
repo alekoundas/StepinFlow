@@ -46,6 +46,7 @@ namespace Business.FlowScript.Catalogs
         // FlowStep
         TO,
         POINT,
+        NOWHERE,
         MATCH,
         TEMPLATE,
         ACCURACY,
@@ -57,7 +58,6 @@ namespace Business.FlowScript.Catalogs
         AND,
         TIMES,
         FOREVER,
-        EACH,
         PASSED,
         FAILED,
         MILLISECONDS, // Written onto a number: 800ms, 120dpi, 1920x1080

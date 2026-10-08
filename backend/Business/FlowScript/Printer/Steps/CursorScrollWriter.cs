@@ -11,7 +11,8 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Scroll  down 3   in <[ area ]>
+            // Scroll  down 3
+            // Where the cursor is, like a click.
 
             WriteKeyword(FlowStepTypeEnum.CURSOR_SCROLL);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
@@ -19,10 +20,6 @@ namespace Business.FlowScript.Text.Steps
             // No direction goes down, which is what a scroll did before there was one.
             WriteKeyword(Step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN);
             WriteNumber(Step.LoopCount);
-
-            // The area to scroll inside, not a point: a target would fall through to "match" for a
-            // scroll that names neither, which is a line the parser cannot read back.
-            WriteArea();
         }
     }
 }

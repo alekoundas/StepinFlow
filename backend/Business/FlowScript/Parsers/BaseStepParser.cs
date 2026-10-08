@@ -25,7 +25,7 @@ namespace Business.FlowScript.Parsers
         // Protected methods
         // ================================================================
 
-        // point <[ X ]> | <[ a step ]> | match - the current item of a loop, neither a point nor a step, so both null.
+        // point <[ X ]> | <[ a step ]> | nowhere - a step saved with neither, so both null.
         protected (FlowPoint? Point, FlowStep? Reference) ExtractTarget()
         {
             if (ExpectOptionalKeyword(ScriptSymbolEnum.POINT))
@@ -38,7 +38,7 @@ namespace Business.FlowScript.Parsers
                 return (point, null);
             }
 
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.MATCH))
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.NOWHERE))
                 return (null, null);
 
             return (null, ExtractStepReference());

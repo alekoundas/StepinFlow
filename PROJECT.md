@@ -515,30 +515,61 @@ through the recorded actions one at a time and asks what each one was for:
 The template is cropped from the recording's own screenshot, so nothing is captured twice. The
 answers build a draft tree, which is saved as a flow and edited like any other.
 
-### Planned - phase 7
+What it keeps is less than a portable flow needs. The screenshot is a fixed square around the
+cursor, taken a moment after the press reached the application, so it can show the pressed button
+or the menu the press opened, and it carries no window size or DPI. A point it creates is a screen
+coordinate. Every press on StepinFlow's own windows is recorded too, except the last one, Stop.
 
-The questions move to where the answers are known.
+### Planned - phase 7: a recording and a description become a flow
 
-**A setup form before the first click.** What the flow is called, which has to be unique; what it
-tests and how it is opened - an application, a browser, a new tab - with a **Test** button that
-tries the opening there and then, so a wrong command is found before a recording is wasted on it;
-the screen sizes to test at; and what should happen when an execution ends, which becomes steps
-under `End Execution` because teardown is steps (§8). The first two are configuration on the flow,
-so they stay editable afterwards and the recorder is not the only way to set them.
+The questions go. The tester describes the flow and records it once, and reviews the result rather
+than answering for each action. Automation flows come first; a QA test is the same path with more
+added. The build order is `PLAN.md` phase 7.
 
-**Pausing is part of authoring**: the tester can pause, type a wrong value on purpose, resume, and
-record what the application does when it rejects it. That is how failure paths get written — by
-provoking them rather than imagining them.
+**The main area.** Before the first click the tester names the flow, describes it, and picks the
+window it works in from the windows open at the time: the flow's main area (`FlowArea.IsMain`,
+written `main` in the script). Everything the recorder keeps is relative to it - where a click
+landed, the template cut there, the area's size and DPI - which is what makes a recording portable
+(§8, Coordinates). A main area placed in screen coordinates says the flow is not portable.
 
-**Ctrl + left click** asks what should be checked at that spot. Does this text or image need to
-exist? Should the flow wait until it appears, or until it goes away? The click position matters,
-which is why it is the left button.
+**What the recorder keeps.** At each press, the window under the cursor, read at the press itself:
+inside the main area, another window of the same application such as a Save As dialog, or anything
+else, which is left out. And the screenshot from just before the press: the session captures the
+main area a few times a second, so a template never shows what the press itself changed. Input on
+StepinFlow's own windows, the floating recording bar included, is never recorded, and the bar never
+appears in a screenshot. Pausing stops the recording without ending it.
 
-**Ctrl + right click** asks what should happen there instead of a click: run a command, open another
-application, or take a value from a CSV column. Position does not matter for any of those, which is
-why it is the right button. Choosing a column offers the ones this flow already has, or defines a
-new one with the recorded value as its default — which is why the CSV is per-flow and its template
-is generated from the flow.
+**The draft is built without a model.** Each action becomes steps by a rule rather than a question.
+A click is three lines - a wait for the element, a move onto it, a click - because every step is a
+line and a click acts where the cursor is. Typing becomes an input with the recorded value as its
+default. A pause becomes no step at all: it sizes the next wait. The element's rectangle comes from
+OmniParser's detection model (phase 6) and is the template; its label comes from Windows OCR and
+names the step. The draft is a flow on its own, so with no model configured it goes straight to the
+editor.
+
+**A model shapes it as a script.** It is given the draft as a script with the description, names
+the steps, groups repeated clicks - four clicks on one download icon become one Find All - and writes
+the reason each wait fails. Its answer goes through the scanner and the importer like any file, and
+when it does not read cleanly the diagnostics go back to it, three attempts at most. The guard rails
+are code rather than prompt: the flow's name and id, its templates and its inputs cannot be
+invented. What it wrote lands in the editor and never executes on its own (§10).
+
+**A QA test adds to it.** The screen sizes to test at, and what should happen when an execution
+ends, which becomes steps under `End Execution` because teardown is steps (§8). Stage markers and
+`End Execution` checks for what the description says the flow is meant to prove. And three gestures
+while recording:
+
+- **Ctrl + left click** asks what should be checked at that spot. Does this text or image need to
+  exist? Should the flow wait until it appears, or until it goes away? The click position matters,
+  which is why it is the left button.
+- **Ctrl + right click** asks what should happen there instead of a click: a command, another
+  application, or a value from a CSV column. Position does not matter for any of those, which is why
+  it is the right button. Choosing a column offers the ones this flow already has, or defines a new
+  one with the recorded value as its default — which is why the CSV is per-flow and its template is
+  generated from the flow.
+- **Pausing to provoke a failure**: the tester pauses, types a wrong value on purpose, resumes, and
+  records what the application does when it rejects it. That is how failure paths get written — by
+  provoking them rather than imagining them.
 
 ### Search mode and timeout
 
@@ -548,15 +579,18 @@ already on screen on the recording machine, and a slow one is as likely to be so
 the app being slow. Waiting costs nothing when the element is there - the first poll runs before
 any delay, so a wait that hits at once is exactly one capture and one match.
 
-The timeout is `max(10s, observed × 3)`, capped at 60 seconds. The observed pause is a sample of
-one; the floor covers the common case and the multiple catches the outlier. CI runners are
-routinely two to five times slower than the desktop that recorded the flow, and being generous
-costs time only on executions that were going to fail anyway. The step carries a code comment
-saying why: `# recorded after a 4.2s wait`.
+The timeout is `max(10s, observed × 3)`, capped at 60 seconds, and always written: a timeout of 0
+waits for ever, which in CI eats the whole job. The observed pause is a sample of one; the floor
+covers the common case and the multiple catches the outlier. The timeout answers how long before
+the step is called failed, not how long the application should take, and CI runners are routinely
+two to five times slower than the desktop that recorded the flow, so being generous costs time only
+on executions that were going to fail anyway. The step carries a code comment saying why:
+`# recorded after a 4.2s wait`. Even where it does not drive the timeout, that is intent a screenshot
+cannot carry, and the first thing a model reads when working out why a step got slow.
 
 Today's wizard is not there yet - "find this image and then click it" searches once with
-`FIND_BEST`, and "wait until something appears" takes `max(observed × 3, 5s)` - and `TODO.md` has
-the gap.
+`FIND_BEST`, and "wait until something appears" takes `max(observed × 3, 5s)`. Phase 7's draft is
+where the rule is written.
 
 Polling is deliberately not as fast as possible. Screenshot plus template match is real CPU, and a
 tight loop on a tester's laptop competes with the application being tested.
@@ -586,7 +620,8 @@ Steps:
 
 Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.85   in <[ Login form ]>
  Success:
-  Click           at <[ Find username field ]>
+  Move            to <[ Find username field ]>
+  Click
   Type            <[ {{username}} ]>
  Failure:
   End Execution   failed  <[ no username field on the login page ]>
@@ -772,6 +807,24 @@ under it is left out of the file unless its comment says why it is empty. A comm
 that is not a step is `COMMENT_UNATTACHED`, reported at the comment: handing it to the next step
 down would attach a note to a line it was never written above.
 
+**Every step is a line, and the line says everything the step does.** A click and a scroll act
+where the cursor is, so the script writes the position as a step of its own: `Move to <[ X ]>`, then
+`Click`. The script once wrote `Click at <[ X ]>` and `Scroll down 3 in <[ area ]>`, and the
+validator wanted a point on both, while the worker and the form had always acted at the cursor - so
+every click made in the editor was an error and Start refused the flow. Drag stays one line: it is
+one gesture, and both its ends are written on it.
+
+**A `Find All Images` works through its hits in its own Success branch**, once per hit, and inside
+that branch the search's own name is the hit of the current pass: `Move to <[ Find add buttons ]>`.
+The grammar used to promise a `Loop each match in` with a `match` keyword the engine never had - a
+loop naming a search has no count, so the validator refused it and it made one pass. Building that
+loop was rejected: it would have touched the walker, the cache, the worker, two validator rules and
+the history to say one more thing, "once, when something was found, before the hits".
+
+**A move with no point is written `to nowhere`.** It is a step with an error, which the validator
+reports and Start refuses, but an import keeps a flow with errors - so the line has to read back as
+what it was, and the next import shows the same unfinished step.
+
 **`Launch` takes one command string**, not an executable plus arguments. The model stores one
 string; inventing a split it does not have would fail the round trip on the first export.
 
@@ -824,7 +877,8 @@ Hidden     SUCCESS, FAILURE
 `SearchModeEnum` is one axis, not two: `FIND_BEST`, `FIND_ALL`, `WAIT_UNTIL_FOUND`,
 `WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking once, so it is a
 mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
-screenshot, and its Success branch runs once per hit, each pass clicking its own.
+screenshot, and its Success branch executes once per hit; inside it the search's own result is the
+hit of that pass, so a move to the search followed by a click clicks each one.
 
 ### Searching the screen
 

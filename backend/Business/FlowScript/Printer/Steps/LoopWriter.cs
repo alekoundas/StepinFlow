@@ -12,20 +12,10 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Loop  5 times | forever | each match in <[ search ]>
+            // Loop  5 times | forever
+            // Working through every hit of a search is the search's own Success branch, not a loop.
             WriteKeyword(FlowStepTypeEnum.LOOP);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-
-            // Three sources, and which one is in play is readable from the row rather than stored:
-            // a reference means each match, no count means forever.
-            if (Step.FlowStepReference != null)
-            {
-                WriteKeyword(ScriptSymbolEnum.EACH);
-                WriteKeyword(ScriptSymbolEnum.MATCH);
-                WriteKeyword(ScriptSymbolEnum.IN);
-                WriteQuote(Step.FlowStepReference.Name);
-                return;
-            }
 
             if (Step.IsLoopInfinite)
             {

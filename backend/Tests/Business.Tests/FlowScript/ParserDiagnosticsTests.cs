@@ -39,9 +39,11 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> quickly" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFind Image <[ x ]> accuracy 0.9" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match colour" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nClick point <[ Origin ]>" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nDrag at match" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nClick at <[ Origin ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nDrag at match to nowhere" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nScroll sideways 3" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\nScroll down 3 in <[ Browser ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop each match in <[ Find ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nWait soon" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop often" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nSystem EXPLODE" },
@@ -51,7 +53,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ A.png ]> click 3 4" },
             { DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
-            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nClick at <[ Nobody ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nGo Back to <[ Itself ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
@@ -105,7 +107,7 @@ namespace Business.Tests.FlowScript
         [InlineData("Steps:\nNotify <[ never closes", "Unexpected end of the line, expected \"]>\".")]
         [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected the end of the line.")]
         [InlineData("Steps:\nFnid Image <[ x ]>", "Unexpected \"Fnid\".")]
-        [InlineData("Steps:\nLoop often", "Unexpected \"often\", expected \"each\", \"forever\" or a whole number.")]
+        [InlineData("Steps:\nLoop often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]
         [InlineData("Points:\n  <[ Origin ]> offset 1 2", "Unexpected \"offset\", expected \"inside\" or \"on screen\".")]
         [InlineData("Points:\n  <[ Origin ]> on screen offset 1 2 offset 3 4", "Unexpected \"offset\", expected \"at\" or the end of the line.")]

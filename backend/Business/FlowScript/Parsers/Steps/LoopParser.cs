@@ -13,17 +13,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Loop  5 times | forever | each match in <[ search ]>
+            // Loop  5 times | forever
             ExpectKeyword(FlowStepTypeEnum.LOOP);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.LOOP };
 
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.EACH))
-            {
-                ExpectKeyword(ScriptSymbolEnum.MATCH);
-                ExpectKeyword(ScriptSymbolEnum.IN);
-                step.FlowStepReference = ExtractStepReference();
-            }
-            else if (ExpectOptionalKeyword(ScriptSymbolEnum.FOREVER))
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.FOREVER))
             {
                 step.IsLoopInfinite = true;
             }

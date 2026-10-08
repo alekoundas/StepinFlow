@@ -15,6 +15,14 @@ the history.
       that starts the target without waiting, or a branch in `Resolve`), whether the system
       command form offers it, and a test over every `RunCommandPresetEnum` value so a preset
       without an entry cannot happen again.
+      **On every system, talked about after the recording update (2026-10-09).** Starting a
+      program works on all three through `Process.Start` with shell execute - the shell on Windows,
+      `open` on macOS, `xdg-open` on Linux - but the command text does not carry over: `chrome.exe`
+      is `google-chrome` on Linux and `open -a "Google Chrome"` on macOS, the problem every preset
+      in `CommandPresetCatalog` already has. A launch also must not wait for the program to exit,
+      which `CommandRunner` does. So it wants a port in `Platform.Windows` rather than a catalog
+      entry - `IProcessService` has no caller and would gain one - with the per-system command text
+      decided alongside the Linux work.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
       test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
@@ -105,6 +113,10 @@ the history.
       `IInputService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
       `left` and `right` turn the vertical wheel. Needs a horizontal wheel on the port and in the
       adapter. `InputWorkerTests` pins today's behaviour, so the test changes with the fix.
+      The recorder has the same gap from the other side, talked about after the recording update
+      (2026-10-09): `InputRecordService.OnMouseWheel` reads only the sign of the rotation and
+      ignores SharpHook's vertical or horizontal direction, so tilting the wheel sideways, or
+      swiping sideways on a touchpad, is recorded as up or down.
 - [ ] **Decide how long a step's result lives.** `ExecutionFlowWalker.Pop` writes the popped step's
       depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
       entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays
@@ -157,13 +169,6 @@ the history.
 - [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
       imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
       resolver supporting tabs at all; the second wants a word such as `with frame`.
-- [ ] **A successful import cannot report a warning.** `Diagnostic` has a severity and `IsValid`
-      only stops on errors, but `FlowScriptImportResultDto` carries `Errors` alone, filled when the import
-      fails - so a warning on a file that imports goes nowhere. Nothing produces one yet, which is why
-      `COMMENT_UNATTACHED` is an error: a comment above something that cannot carry it does not break
-      the flow, but as a warning today it would be dropped without a word, which is what the error
-      exists to prevent. Add `Warnings` to the dto and show them after an import that succeeded; then
-      `COMMENT_UNATTACHED` becomes the first warning.
 
 ## AI
 
@@ -289,32 +294,6 @@ the history.
       somebody meant to. Either every mouse move during a recording crosses the IPC boundary and
       that is fine, or it is the same 16ms gate as the drag. Decide which.
 
-- [ ] **Every recorded click becomes a `SEARCH_IMAGE` in `WAIT_UNTIL_FOUND`, never `FIND_BEST`.**
-      The tempting shortcut is to read the human's speed - a quick click means the element was fast,
-      a slow one means it was slow - and it is wrong in both directions. A quick click means the
-      element was *already on screen* when the human arrived, which is evidence of nothing except
-      the recording machine's speed; baking that in is the recorded-sleep problem wearing a
-      different hat. A slow click is just as likely to be someone reading, thinking or alt-tabbing
-      as it is the app being slow.
-      There is also no speed argument for `FIND_BEST`: `LoopSearchAsync` runs its first search
-      before any delay, so a `WAIT_UNTIL_FOUND` that hits on the first poll does exactly the same
-      one capture and one match. It is never slower when the element is there, and it is correct
-      when it is not.
-
-- [ ] **`TimeoutMilliseconds` defaults to 0, which means wait for ever.** The property has no
-      initializer and `LoopSearchAsync` only checks the clock when it is `> 0`. A recorder that
-      creates waiting steps without setting one hangs the execution indefinitely on the first
-      failure - survivable interactively, fatal in CI where it eats the whole job budget. The
-      recorder must always write a timeout explicitly, or the default has to stop being "for ever".
-
-- [ ] **Size the recorded timeout as `max(10s, observed × 3)`, capped at 60s.** The human's delay
-      is a sample of one and a poor estimate of anything, so it should not set the timeout on its
-      own - but a 20 second wait is real signal that something slow happened, and no flat default
-      survives that. The floor covers the common case, the multiple catches the outlier. Not
-      `+10%`: the timeout answers "how long before we call this failed", not "how long the app
-      should take", and CI runners are routinely 2-5x slower than the desktop that recorded it.
-      Being generous costs time only on executions that were going to fail anyway.
-
 - [ ] **Back the poll interval off as a wait drags on.** The default is now 200ms, which is right
       for the first second or two. Most elements appear early, so polling five times a second at
       second 25 is burning a core on something about to time out anyway - 100ms for the first
@@ -323,26 +302,23 @@ the history.
       waited on, so past a point it slows down the very thing it is timing. The screenshot is a
       GPU copy and cheap; the match is the cost, and it scales with search area × template area.
 
-- [ ] **Write the observed delay into `CodeComment`** - `recorded after a 4.2s wait`. Even where it
-      does not drive the timeout it is exactly the intent a screenshot cannot carry, and it is the
-      first thing a model reads when working out why a step got slow. Exports as a `#` comment
-      above the step.
-
 - [ ] **Warn on a step with both a populated Failure branch and a long timeout.** That combination
       is almost always a branch point written as a wait - "which layout am I in" asked with ten
       seconds of patience it cannot use, paid on every execution that takes the fallback. The fix
       is the anchor pattern in FLOW-FORMAT.md: wait once on something always present, then branch
       instantly with `FIND_BEST`. A warning, not an error - the flow still works, it is just slow.
-- [ ] **A recorded template carries no captured size or DPI.** The wizard's `recordedTemplate`
-      (`action-to-steps.ts`) builds it from the recording's screenshot with only a click point, so
-      it is never scaled - searched at the size it was recorded on every screen. The capture form
-      now records both from the step's area; the recorder should too, from the area the answer
-      picks, once that area is resolved at the moment of recording.
-- [ ] **A recorded flow still cannot fail on its own.** The AI path adds `End Execution`, and the
-      recorder deliberately does not. So "record and execute right away" produces a flow that walks
-      to the end and reports INCONCLUSIVE whatever the application did. Fine while the AI pass is
-      the intended route; worth revisiting if recording alone is ever offered as a way to make a
-      test.
+- [ ] **Typed text is recorded by physical key, not by what the layout produced.** Talked about
+      after the recording update (2026-10-09). `RecordingActionBuilder.PrintableCharacter` maps a
+      key code to a US character, so Shift+1 is recorded as "1" rather than "!", and on a Greek
+      layout the Latin letter on the same key is recorded instead of the Greek one. Once input
+      defaults are written into the script (`PLAN.md` 5.13), the wrong text lands in the file. SharpHook raises a
+      typed-character event carrying what the layout produced; typing should be built from that,
+      with the key-down events kept for shortcuts and held keys.
+- [ ] **Whether a recording outlives the app. To decide.** A session lives in memory, and its
+      screenshots go when it is discarded. A `Recording` table, with the screenshots in a folder
+      beside the database, would let a flow be generated again later from the same recording, and
+      give the phase 9 fix loop the original screenshots to cut a new template from. Not part of
+      the recording update.
 
 ## Notify
 

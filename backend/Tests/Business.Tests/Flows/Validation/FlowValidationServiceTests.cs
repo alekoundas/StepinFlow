@@ -123,31 +123,43 @@ namespace Business.Tests.Flows.Validation
         // ================================================================
 
         [Fact]
-        public void A_click_needs_a_point_or_a_result()
+        public void A_move_needs_a_point_or_a_result()
         {
-            FlowStep click = Add(FlowStepTypeEnum.CURSOR_CLICK, "Click");
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move");
 
-            CodesOn(click).ShouldContain(FlowValidationCodeEnum.POINT_MISSING);
+            CodesOn(move).ShouldContain(FlowValidationCodeEnum.POINT_MISSING);
+        }
+
+        // A click and a scroll act where the cursor is; the move above them says where.
+        [Theory]
+        [InlineData(FlowStepTypeEnum.CURSOR_CLICK)]
+        [InlineData(FlowStepTypeEnum.CURSOR_SCROLL)]
+        public void A_click_or_a_scroll_needs_no_point(FlowStepTypeEnum type)
+        {
+            FlowStep step = Add(type, "Act");
+            step.LoopCount = 1;
+
+            CodesOn(step).ShouldNotContain(FlowValidationCodeEnum.POINT_MISSING);
         }
 
         [Fact]
-        public void A_click_can_read_a_search_it_sits_under_on_the_success_side()
+        public void A_move_can_read_a_search_it_sits_under_on_the_success_side()
         {
             FlowStep search = Search("Find");
-            FlowStep click = Add(FlowStepTypeEnum.CURSOR_CLICK, "Click", Branch(search, FlowStepTypeEnum.SUCCESS));
-            click.FlowStepReferenceId = search.Id;
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move", Branch(search, FlowStepTypeEnum.SUCCESS));
+            move.FlowStepReferenceId = search.Id;
 
-            CodesOn(click).ShouldBeEmpty();
+            CodesOn(move).ShouldBeEmpty();
         }
 
         [Fact]
-        public void A_click_cannot_read_a_search_from_its_failure_side()
+        public void A_move_cannot_read_a_search_from_its_failure_side()
         {
             FlowStep search = Search("Find");
-            FlowStep click = Add(FlowStepTypeEnum.CURSOR_CLICK, "Click", Branch(search, FlowStepTypeEnum.FAILURE));
-            click.FlowStepReferenceId = search.Id;
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move", Branch(search, FlowStepTypeEnum.FAILURE));
+            move.FlowStepReferenceId = search.Id;
 
-            CodesOn(click).ShouldContain(FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE);
+            CodesOn(move).ShouldContain(FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE);
         }
 
         [Fact]
@@ -302,15 +314,15 @@ namespace Business.Tests.Flows.Validation
             FlowStep drag = Add(FlowStepTypeEnum.CURSOR_DRAG, "Drag");
             drag.FlowPointId = 10;
             drag.FlowPointEndId = 11;
-            FlowStep click = Add(FlowStepTypeEnum.CURSOR_CLICK, "Click");
-            click.FlowPointId = 12;
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move");
+            move.FlowPointId = 12;
 
             List<int?> warned = Validate().Issues
                 .Where(x => x.Code == FlowValidationCodeEnum.SCREEN_COORDINATES)
                 .Select(x => x.FlowStepId)
                 .ToList();
 
-            warned.ShouldBe([box.Id, insideBox.Id, drag.Id, click.Id], ignoreOrder: true);
+            warned.ShouldBe([box.Id, insideBox.Id, drag.Id, move.Id], ignoreOrder: true);
         }
     }
 }

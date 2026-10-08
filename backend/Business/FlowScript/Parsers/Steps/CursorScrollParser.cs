@@ -12,13 +12,12 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Scroll  down 3   in <[ area ]>
+            // Scroll  down 3
             ExpectKeyword(FlowStepTypeEnum.CURSOR_SCROLL);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL };
 
             step.CursorScrollDirectionType = ExtractKeyword<CursorScrollDirectionTypeEnum>();
             step.LoopCount = ExtractInteger();
-            step.FlowArea = ExtractOptionalArea();
 
             ExpectEnd();
 

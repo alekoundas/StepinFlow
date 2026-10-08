@@ -100,7 +100,27 @@ namespace Business.Tests.FlowScript
             FlowStep success = schema.Steps.Single(x => x.ParentFlowStep == find && x.FlowStepType == FlowStepTypeEnum.SUCCESS);
 
             schema.Steps.Where(x => x.ParentFlowStep == success).Select(x => (x.FlowStepType, x.OrderNumber))
-                .ShouldBe([(FlowStepTypeEnum.CURSOR_CLICK, 0), (FlowStepTypeEnum.KEYBOARD_INPUT, 1)]);
+                .ShouldBe([(FlowStepTypeEnum.CURSOR_RELOCATE, 0), (FlowStepTypeEnum.CURSOR_CLICK, 1), (FlowStepTypeEnum.KEYBOARD_INPUT, 2)]);
+        }
+
+        // A move saved with no point is an error the validator reports, and an import keeps a flow
+        // with errors - so the line still has to read back.
+        [Fact]
+        public void A_move_with_no_point_comes_back_with_no_point()
+        {
+            FlowScriptSchema source = new FlowScriptSchema
+            {
+                Flow = new Flow { Name = "Nowhere", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b115") },
+            };
+            source.Steps.Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE });
+
+            string script = new Printer().Write(source);
+            FlowScriptSchema schema = new Scanner().Read(script);
+
+            script.ShouldContain("to nowhere");
+            schema.Diagnostics.ShouldBeEmpty();
+            FlowStep move = schema.Steps.Single();
+            (move.FlowPoint, move.FlowStepReference).ShouldBe((null, null));
         }
 
         // ================================================================

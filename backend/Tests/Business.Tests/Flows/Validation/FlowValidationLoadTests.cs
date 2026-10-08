@@ -50,7 +50,7 @@ namespace Business.Tests.Flows.Validation
         [Fact]
         public async Task A_batch_gives_each_flow_the_answer_it_gets_alone()
         {
-            int broken = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click" });
+            int broken = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move" });
             int fine = Seed("Fine", new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", WaitForMilliseconds = 100 });
             int empty = Seed("Empty");
             FlowValidationService validation = new FlowValidationService();

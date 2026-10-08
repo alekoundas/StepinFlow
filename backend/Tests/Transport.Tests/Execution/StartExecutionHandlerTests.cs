@@ -59,19 +59,19 @@ namespace Transport.Tests.Execution
         [Fact]
         public async Task A_flow_with_errors_is_refused_and_says_why()
         {
-            int flowId = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click" });
+            int flowId = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move" });
 
             ResultDto<int> started = await StartAsync(flowId);
 
             started.IsSuccess.ShouldBeFalse();
-            started.ErrorMessage.ShouldBe("\"Broken\" has errors to fix before it can run. \"Click\": There is no point to act on. Pick a saved point, or a search whose result gives one.");
+            started.ErrorMessage.ShouldBe("\"Broken\" has errors to fix before it can run. \"Move\": There is no point to act on. Pick a saved point, or a search whose result gives one.");
             _engine.WasStarted.ShouldBeFalse();
         }
 
         [Fact]
         public async Task A_flow_that_calls_a_sub_flow_with_errors_is_refused_too()
         {
-            int brokenId = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click" });
+            int brokenId = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move" });
             int callerId = Seed("Caller", new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW, Name = "Call it", SubFlowId = brokenId });
 
             ResultDto<int> started = await StartAsync(callerId);

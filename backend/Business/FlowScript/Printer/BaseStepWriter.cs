@@ -26,7 +26,7 @@ namespace Business.FlowScript.Text
         /// </summary>
         protected void WriteTarget(FlowPoint? point, FlowStep? reference)
         {
-            // point <[ X ]> | <[ a step ]> | match - the current item of a loop, neither a point nor a step.
+            // point <[ X ]> | <[ a step ]> | nowhere - neither, so a flow saved with that error still round-trips.
 
             if (point != null)
             {
@@ -41,7 +41,7 @@ namespace Business.FlowScript.Text
                 return;
             }
 
-            WriteKeyword(ScriptSymbolEnum.MATCH);
+            WriteKeyword(ScriptSymbolEnum.NOWHERE);
         }
 
         /// <summary>

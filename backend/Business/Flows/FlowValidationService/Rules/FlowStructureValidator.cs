@@ -12,12 +12,11 @@ namespace Business.Flows.FlowValidationService.Rules
     /// </summary>
     public static class FlowStructureValidator
     {
-        private static readonly FlowStepTypeEnum[] CursorTypes =
+        // Click and scroll act where the cursor already is, so only these carry a position.
+        private static readonly FlowStepTypeEnum[] PositionedCursorTypes =
         [
-            FlowStepTypeEnum.CURSOR_CLICK,
-            FlowStepTypeEnum.CURSOR_DRAG,
-            FlowStepTypeEnum.CURSOR_SCROLL,
             FlowStepTypeEnum.CURSOR_RELOCATE,
+            FlowStepTypeEnum.CURSOR_DRAG,
         ];
 
 
@@ -34,7 +33,7 @@ namespace Business.Flows.FlowValidationService.Rules
         {
             foreach (FlowStep step in authoredSteps)
             {
-                if (CursorTypes.Contains(step.FlowStepType))
+                if (PositionedCursorTypes.Contains(step.FlowStepType))
                     ValidateCursor(result, step, byStepId);
 
                 if (step.FlowStepType == FlowStepTypeEnum.CHECK_VALUE)
@@ -118,7 +117,7 @@ namespace Business.Flows.FlowValidationService.Rules
         }
 
         // Steps, areas and points are one namespace, because the script refers to all three by
-        // name. A duplicate makes "Click at <[ Find button ]>" ambiguous, and makes execution history
+        // name. A duplicate makes "Move to <[ Find button ]>" ambiguous, and makes execution history
         // correlate two different steps into one trend.
         private static void ValidateNamesAreUnique(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
         {

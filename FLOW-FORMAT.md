@@ -55,21 +55,24 @@ Find Image  <[ Find username field ]>   template <[ template-u9d3n.png ]> accura
  Failure:
   End Execution  failed  <[ no username field on the login page ]>
  Success:
-  Click  at <[ Find username field ]>
+  Move   to <[ Find username field ]>
+  Click
   Type   <[ {{username}} ]>
 
 Find Image  <[ Find password field ]>   template <[ template-p5z1h.png ]> accuracy 0.85   in <[ Login form ]>
  Failure:
   End Execution  failed  <[ no password field on the login page ]>
  Success:
-  Click  at <[ Find password field ]>
+  Move   to <[ Find password field ]>
+  Click
   Type   <[ {{password}} ]>
 
 Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]>   in <[ Login form ]>
  Failure:
   End Execution  failed  <[ no login button ]>
  Success:
-  Click  at <[ Find login button ]>
+  Move   to <[ Find login button ]>
+  Click
 
 # The assertion: this is what makes the recording a test.
 Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inventory ]>   timeout 10000ms
@@ -84,12 +87,13 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accu
  Failure:
   End Execution  failed  <[ no products to add ]>
  Success:
-  Loop  each match in <[ Find add buttons ]>
-   Click  at match
-   # Give the badge a moment to update before the next click.
-   Wait For Image  <[ Badge updated ]>  template <[ template-c3x9w.png ]>  in <[ Cart badge ]>  timeout 3000ms
-    Failure:
-     End Execution  failed  <[ the cart did not update after adding an item ]>
+  # Once per button found: inside here, the search's name is this pass's button.
+  Move   to <[ Find add buttons ]>
+  Click
+  # Give the badge a moment to update before the next click.
+  Wait For Image  <[ Badge updated ]>  template <[ template-c3x9w.png ]>  in <[ Cart badge ]>  timeout 3000ms
+   Failure:
+    End Execution  failed  <[ the cart did not update after adding an item ]>
 
 ## Check out
 
@@ -153,7 +157,7 @@ Anything else is an error.
 
 A line is read in the order its parts are written here, to its end. A word nothing on that line
 expects is an error, and so is one the line needs and does not have - a `Notify` with no message, a
-`Click at` with no target. Either way the error names the line and the column, and what could have
+`Move to` with no target. Either way the error names the line and the column, and what could have
 stood there:
 
 ```
@@ -260,7 +264,7 @@ line above it is an error.
 
 Every step has a name, and **names are unique within a flow** — as are area, point and input names,
 because they share one namespace. That single rule is what lets a step be referenced by name rather
-than by position, so a later step reads `Click at <[ Find login button ]>` and an edit somewhere above
+than by position, so a later step reads `Move to <[ Find login button ]>` and an edit somewhere above
 it changes nothing.
 
 **A name is declared above its first use.** An area is inside one written above it, a point in an
@@ -315,7 +319,8 @@ a recording into a test — a flow holding none of them proves nothing.
 ```
 Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]> accuracy 0.85   in <[ Login form ]>
  Success:
-  Click  at <[ Find login button ]>
+  Move   to <[ Find login button ]>
+  Click
  Failure:
   End Execution  failed  <[ no login button ]>
 ```
@@ -325,7 +330,7 @@ There are three things to check and four ways to look, and the keyword says both
 | Keyword               | Produces      | Use                                         |
 | --------------------- | ------------- | ------------------------------------------- |
 | `Find Image`          | one location  | the default                                 |
-| `Find All Images`     | a list        | feeds `Loop each match`                     |
+| `Find All Images`     | a list        | Success executes once per hit               |
 | `Wait For Image`      | one location  | polls until it appears                      |
 | `Wait Until No Image` | nothing       | the spinner is gone; the banner has cleared |
 | `Check Text`          | the text read | assert what the screen says                 |
@@ -378,9 +383,11 @@ Wait For Image  <[ Page loaded ]>   template <[ template-o4j7b.png ]>   in <[ Br
 
 Find Image  <[ Desktop nav present? ]>   template <[ template-n6v2e.png ]>   in <[ Browser ]>
  Failure:
-  Click  at point <[ Hamburger menu ]>
+  Move   to point <[ Hamburger menu ]>
+  Click
  Success:
-  Click  at <[ Desktop nav present? ]>
+  Move   to <[ Desktop nav present? ]>
+  Click
 ```
 
 The anchor absorbs the patience once per page. Every layout question after it is free and still
@@ -394,38 +401,49 @@ just paying for patience it cannot use.
 ### Actions
 
 ```
-Click       at <[ Find login button ]>          right double
-Click       at point <[ Menu toggle ]>
-Move        to <[ Find username field ]>
+Move        to <[ Find login button ]>
+Click       right double
+Move        to point <[ Menu toggle ]>
+Click
 Type        <[ {{username}} ]>
 Press       <[ Ctrl+C ]>
-Scroll      down 3   in <[ Results panel ]>
+Scroll      down 3
 Wait        800ms
 ```
 
-`at` takes a name from the one namespace — a check's result, a point, or `match` inside a loop.
-A click is left and single unless it says otherwise: the button (`right`, `middle`) comes first,
-then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort; prefer
-a `Wait For` check.
+**Every step is a line.** A click and a scroll act where the cursor is, so the `Move` above them
+says where and the line itself says only what. `to` takes a name from the one namespace - a check's
+result or a point - and a move saved with neither is written `to nowhere`, which the validator
+reports. A click is left and single unless it says otherwise: the button (`right`, `middle`) comes
+first, then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort;
+prefer a `Wait For` check.
 
 ### Loops
 
 ```
 Loop  5 times
 Loop  forever
-Loop  each match in <[ Find add buttons ]>
 ```
 
-One step, three sources. Inside `each match`, the keyword `match` refers to the current item, so
-`Click at match` clicks each result in turn. This replaces the old behaviour where a find-all search
-silently re-entered its own success branch — the repetition is now visible in the file, and steps
-can run between passes.
+Working through every hit of a search is not a loop. A `Find All Images` takes one screenshot and
+executes its Success branch once per hit, and inside that branch the search's own name is the hit
+of the current pass:
+
+```
+Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]>   in <[ Inventory ]>
+ Success:
+  Move   to <[ Find add buttons ]>
+  Click
+```
+
+A step after all the hits is the next step after the search.
 
 ### Going back
 
 ```
 ## Sign in
-Click           at point <[ Sign in button ]>
+Move            to point <[ Sign in button ]>
+Click
 Wait For Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
  Failure:
   Go Back  to <[ Sign in ]>
@@ -451,7 +469,8 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 
 ```
  Failure:
-  Click    at point <[ Log out ]>
+  Move     to point <[ Log out ]>
+  Click
   Notify   <[ checkout failed ]>
   End Execution  failed  <[ could not complete the order ]>
 ```
@@ -542,8 +561,8 @@ Templates:
 
 Facts about the picture rather than the search, once per file:
 
-- **`click 150 20`** - where a match is clicked, x and y from the template's top left. It scales
-  with the template.
+- **`click 150 20`** - the point a match gives, so where a `Move to` the search lands: x and y from
+  the template's top left. It scales with the template.
 - **`captured 922x648`** - the size of the area the template was captured in. What an area that
   `scales with area` measures against.
 - **`at 120dpi`** - the DPI it was captured at. What an area that `scales with dpi` measures

@@ -34,11 +34,13 @@ Launch          <[ chrome.exe https://www.saucedemo.com ]>
 
 Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97 required  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
  Success:
-  Click           at <[ Find username field ]>
+  Move            to <[ Find username field ]>
+  Click
   Type            <[ {{username}} ]>
  # The field is behind the menu on a narrow window.
  Failure:
-  Click           at point <[ Hamburger ]>   right double
+  Move            to point <[ Hamburger ]>
+  Click           right double
 
 Wait For Text   <[ Read the total ]>   matches <[ total: (\d+) ]>   in <[ Cart badge ]>   keep <[ (\d+) ]>   timeout 10000ms
 
@@ -52,7 +54,7 @@ Move            to point <[ Origin ]>
 
 Drag            at point <[ Hamburger ]> to point <[ Origin ]>
 
-Scroll          down 3   in <[ Browser ]>
+Scroll          down 3
 
 Press           <[ Ctrl+C ]>
 
@@ -71,7 +73,8 @@ Notify          <[ done ]>
 Go Back         to <[ Read the total ]>
 
 Loop            5 times
- Click           at <[ Find username field ]>
+ Move            to <[ Find username field ]>
+ Click
 
 End Execution   failed  <[ did not reach the products page ]>
  Run             KILL_PROCESS <[ chrome.exe ]>

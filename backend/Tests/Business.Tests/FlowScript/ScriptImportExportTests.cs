@@ -261,23 +261,26 @@ namespace Business.Tests.FlowScript
             db.SaveChanges();
 
             FlowStep found = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = find.Id, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK }, found.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReferenceId = find.Id }, found.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK }, found.Id);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.TEXT, KeyboardInputText = "{{username}}" }, found.Id);
 
             FlowStep missed = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE }, find.Id);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowPointId = hamburger.Id, CursorButtonType = CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.DOUBLE_CLICK }, missed.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowPointId = hamburger.Id }, missed.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.DOUBLE_CLICK }, missed.Id);
 
             FlowStep total = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "Read the total", SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND, ConditionType = ConditionTypeEnum.MATCHES_REGEX, ConditionText = @"total: (\d+)", FlowAreaId = badge.Id, ResultExtractPattern = @"(\d+)", TimeoutMilliseconds = 10000 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CHECK_VALUE, Name = "Order is large", FlowStepReferenceId = total.Id, ConditionType = ConditionTypeEnum.GREATER_THAN, ConditionText = "100" }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "Banner cleared", SearchMode = SearchModeEnum.WAIT_UNTIL_NOT_FOUND, ConditionType = ConditionTypeEnum.IS_NOT_EMPTY, FlowAreaId = header.Id }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG, FlowPointId = hamburger.Id, FlowPointEndId = origin.Id, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3, FlowAreaId = browser.Id }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.GO_BACK, FlowStepReferenceId = total.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 5 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowStepReferenceId = find.Id }, loop.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReferenceId = find.Id }, loop.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, loop.Id);
 
             FlowStep end = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end.Id);

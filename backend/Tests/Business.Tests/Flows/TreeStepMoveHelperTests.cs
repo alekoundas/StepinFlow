@@ -9,7 +9,7 @@ namespace Business.Tests.Flows
     {
         // 1 Find image                 (root)
         //   2 Success
-        //     3 Click at "Find image"
+        //     3 Move to "Find image"
         //     4 Loop
         //       5 Wait
         //   6 Failure
@@ -20,7 +20,7 @@ namespace Business.Tests.Flows
             [
                 new FlowStep { Id = 1, FlowId = 1, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find image" },
                 new FlowStep { Id = 2, ParentFlowStepId = 1, FlowStepType = FlowStepTypeEnum.SUCCESS, Name = "Success" },
-                new FlowStep { Id = 3, ParentFlowStepId = 2, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, Name = "Click", FlowStepReferenceId = 1, OrderNumber = 0 },
+                new FlowStep { Id = 3, ParentFlowStepId = 2, FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", FlowStepReferenceId = 1, OrderNumber = 0 },
                 new FlowStep { Id = 4, ParentFlowStepId = 2, FlowStepType = FlowStepTypeEnum.LOOP, Name = "Loop", OrderNumber = 1 },
                 new FlowStep { Id = 5, ParentFlowStepId = 4, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait inside" },
                 new FlowStep { Id = 6, ParentFlowStepId = 1, FlowStepType = FlowStepTypeEnum.FAILURE, Name = "Failure" },
@@ -68,7 +68,7 @@ namespace Business.Tests.Flows
             List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(Tree(), new FlowStepMoveDto { FlowStepId = 3, TargetParentFlowStepId = 6 });
 
             broken.Count.ShouldBe(1);
-            broken[0].FlowStepName.ShouldBe("Click");
+            broken[0].FlowStepName.ShouldBe("Move");
             broken[0].ReferencedStepName.ShouldBe("Find image");
             broken[0].IsEndReference.ShouldBeFalse();
         }

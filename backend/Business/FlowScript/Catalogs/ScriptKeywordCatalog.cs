@@ -82,6 +82,7 @@ namespace Business.FlowScript.Catalogs
             // FlowStep - 
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
             new ScriptKeyword("point", ScriptSymbolEnum.POINT),
+            new ScriptKeyword("nowhere", ScriptSymbolEnum.NOWHERE),
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
             new ScriptKeyword("template", ScriptSymbolEnum.TEMPLATE),
             new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),
@@ -93,7 +94,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("and", ScriptSymbolEnum.AND),
             new ScriptKeyword("times", ScriptSymbolEnum.TIMES),
             new ScriptKeyword("forever", ScriptSymbolEnum.FOREVER),
-            new ScriptKeyword("each", ScriptSymbolEnum.EACH),
             new ScriptKeyword("passed", ScriptSymbolEnum.PASSED),
             new ScriptKeyword("failed", ScriptSymbolEnum.FAILED),
 

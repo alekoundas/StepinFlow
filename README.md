@@ -120,10 +120,10 @@ a flow handles its own problems rather than stopping.
 | | Sub-Flow | Execute another flow and come back |
 | | End Execution | Finish, passed or failed, with a reason — and run the cleanup written under it |
 | | Marker | A named divider — becomes a heading in the script |
-| **Input** | Cursor Click | Click at a point, a found image, or an earlier step's result |
+| **Input** | Cursor Relocate | Move the cursor to a point, a found image, or an earlier step's result |
+| | Cursor Click | Click where the cursor is |
 | | Cursor Drag | Drag between two locations |
-| | Cursor Scroll | Scroll at a location |
-| | Cursor Relocate | Move the cursor without clicking |
+| | Cursor Scroll | Scroll where the cursor is |
 | | Keyboard Input | Type text, a CSV column, or send key combinations |
 | **Window** | Window Focus | Bring an application window to the front |
 | | Window Resize | Resize a window |
@@ -135,8 +135,9 @@ a flow handles its own problems rather than stopping.
 | | System Action | Sleep, lock, shut down and similar |
 | | Notify | Post a message to Discord |
 
-Every step can be positioned from a **named point**, a **found image**, or **another step's result**
-— which is what makes a flow survive the window moving.
+A move or a drag can be positioned from a **named point**, a **found image**, or **another step's
+result** — which is what makes a flow survive the window moving. A click and a scroll act where the
+cursor is, so every step in the script is one line saying one thing.
 
 ---
 

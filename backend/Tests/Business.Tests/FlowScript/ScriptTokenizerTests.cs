@@ -106,7 +106,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void Each_token_starts_where_it_was_written_and_the_end_is_just_past_the_text()
         {
-            Tokenize(" Click at <[ Find ]>").Select(x => x.Column).ShouldBe([2, 8, 11, 14, 19, 21]);
+            Tokenize(" Move to <[ Find ]>").Select(x => x.Column).ShouldBe([2, 7, 10, 13, 18, 20]);
         }
 
         [Fact]

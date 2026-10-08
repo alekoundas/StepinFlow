@@ -153,7 +153,7 @@ namespace Business.Tests.FlowScript
         {
             FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.SINGLE_CLICK };
 
-            new CursorClickWriter(step).Write().ShouldEndWith("at match");
+            new CursorClickWriter(step).Write().ShouldBe("Click");
         }
 
         [Theory]
