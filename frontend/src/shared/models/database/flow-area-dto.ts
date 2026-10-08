@@ -11,6 +11,10 @@ export class FlowAreaDto {
   name: string = "";
   type: FlowAreaTypeEnum = FlowAreaTypeEnum.CUSTOM;
 
+  // The window the flow works in: at most one, and never inside another. A recording is stored
+  // relative to it, and a viewport resizes it.
+  isMain: boolean = false;
+
   // What makes its contents bigger or smaller on another screen. Null inherits the parent's, and
   // an area with no parent is DPI.
   scalesWith?: ScalesWithEnum | null;

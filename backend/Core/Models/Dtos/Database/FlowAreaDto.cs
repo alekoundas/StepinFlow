@@ -9,6 +9,7 @@ namespace Core.Models.Dtos
 
         public string Name { get; set; } = string.Empty;
         public FlowAreaTypeEnum Type { get; set; }
+        public bool IsMain { get; set; }
 
         public ScalesWithEnum? ScalesWith { get; set; }
         public int AuthoredDpi { get; set; }

@@ -11,8 +11,8 @@ namespace Business.FlowScript.Parsers.Structure
 
         public override ScriptSymbolEnum Parse()
         {
-            // Areas: | Points: | Inputs: | Templates: | Steps:
-            ScriptSymbolEnum section = ExtractKeyword(ScriptSymbolEnum.AREAS, ScriptSymbolEnum.POINTS, ScriptSymbolEnum.CSV_COLUMNS, ScriptSymbolEnum.TEMPLATES, ScriptSymbolEnum.STEPS);
+            // Description: | Areas: | Points: | Inputs: | Templates: | Steps:
+            ScriptSymbolEnum section = ExtractKeyword(ScriptSymbolEnum.FLOWFIELD_DESCRIPTION, ScriptSymbolEnum.AREAS, ScriptSymbolEnum.POINTS, ScriptSymbolEnum.CSV_COLUMNS, ScriptSymbolEnum.TEMPLATES, ScriptSymbolEnum.STEPS);
             ExpectEnd();
 
             return section;

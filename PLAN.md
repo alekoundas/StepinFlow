@@ -13,7 +13,7 @@ in `PROJECT.md`, and why it was built that way is in the git history of this fil
 
 ## Landed
 
-Everything here was finished by 2026-10-07.
+Everything here was finished by 2026-10-09.
 
 | phase | what it gave | where it is described |
 | --- | --- | --- |
@@ -31,11 +31,15 @@ Everything here was finished by 2026-10-07.
 | 5.9 | `Go Back` returns only to a step it passed; validator, form lookup and moves agree | §9 |
 | 5.10 | The script reads straight into linked rows; one model for scanner, printer, import and export | §7 |
 | 5.11 | Every write to a flow goes through its data service; a flow with errors is refused at Run | §9, §14 |
+| 5.12 | Every step is a line: Click and Scroll act where the cursor is, Find All's Success once per hit, `nowhere` | §7 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** the machine-only test bucket, then the two engine seams that layer 5 is waiting on, then
-phase 6. The open decision on how long a step's result lives (`TODO.md`, Execution) wants making
-before layer 5, because the engine tests would pin whichever answer is live.
+**Next:** the recording update - 5.13, then phase 7 for automation flows, with phase 6's
+detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
+question per action, and QA tests come after. The machine-only test bucket and the two engine seams
+layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
+Execution) still wants making before layer 5, because the engine tests would pin whichever answer is
+live.
 
 ---
 
@@ -43,16 +47,9 @@ before layer 5, because the engine tests would pin whichever answer is live.
 
 ### The script
 
-- [ ] **`Description:` in the header.** `Flow.Description` has been a column since the beginning and
-      the printer never writes it, so the one sentence saying what a flow is *meant to prove* is the
-      one thing the script leaves behind. That is the sentence phases 7 and 9 need most: a model given
-      the steps without it can see what the flow does and not what it was for. A line in the header
-      beside `Flow:` and `Id:`, a case in the scanner, and the flow form gets the collapsible
-      description its steps are getting - see `TODO.md` under Frontend. It changes the grammar, so
-      the approved sample and `FLOW-FORMAT.md` move with it.
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
 - [ ] **Buttons.** `FlowScript.export` and `FlowScript.import` are reachable over IPC; nothing in the UI calls
-      them yet.
+      them yet. They share phase 7's script view, and an import lists its errors and warnings (5.13).
 - [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
       means reading the `Id:` out of the file it names and matching that, and deciding what a missing
@@ -85,8 +82,9 @@ before layer 5, because the engine tests would pin whichever answer is live.
       a kill, not a close. Removing the close mode without adding the step lost the graceful option,
       so this is a gap rather than a nice to have. It wants a `WINDOW_CLOSE` type beside
       `WINDOW_FOCUS`, `WINDOW_RESIZE` and `WINDOW_RELOCATE`.
-- [ ] **`IProcessService` has no caller.** Teardown as steps removed the only one. Keep the port for
-      `Close Window` above, or delete it - but do not leave it unreferenced.
+- [ ] **`IProcessService` has no caller.** Teardown as steps removed the only one. `Close Window`
+      above would give it one, and so would the launch port in `TODO.md` (Execution) - but do not
+      leave it unreferenced.
 
 ### Portable search
 
@@ -134,6 +132,47 @@ exactly ran in execution 37").
       level), how deep levels go, and how a sub-stage appears in the report - most CI dashboards
       flatten nested test suites, so probably as a test case named "Checkout › Payment".
 
+### 5.13. The script header and the main area
+
+- [ ] **The main area replaces the application under test**, settled 2026-10-08.
+      `Flow.AppUnderTestAreaId` goes: the flow form's update never saved it, nothing read it, and its
+      `NoAction` key would have made an import fail once it was set. `FlowArea.IsMain` marks the
+      window the flow works in, written `main` on its area line:
+      `<[ Billing portal ]>   main   window process <[ chrome.exe ]> …`. At most one, and it is a
+      root. Every recorded flow has one, picked before recording, and what the recorder stores is
+      relative to it, which is what makes a recording portable. A `CUSTOM` main area is screen
+      coordinates, so the flow is not portable and is told so. The viewport matrix sizes the same
+      area. Named `main` because `IsRoot` already means an area with no parent, "target" already
+      means a cursor's point or a `Go Back`'s step, and "primary" is the monitor's keyword.
+- [ ] **`Description:` in the header**, under `Sizes:`, as many lines as it has, one `#` per line
+      the way a code comment is written, and left out when empty. Settled 2026-10-09:
+
+      ```
+      Sizes:        1920x1080
+      Description:
+        # Signs in to the billing portal and downloads every invoice from last month as a PDF.
+        # The portal signs out after 15 minutes without input.
+      ```
+
+      A `#` directly under `Description:` is its text, and a blank line inside it is a bare `#`;
+      anywhere else in the header a `#` stays `COMMENT_UNATTACHED`. The form gets a text area of up
+      to 5000 characters, because the model will likely keep there what it needs to remember about
+      the flow. It is the sentence phases 7 and 9 need most: a model given the steps without it can
+      see what the flow does and not what it was for.
+- [ ] **Inputs carry their default value**: `<[ email ]>   default <[ ops@example.com ]>`. A clone
+      and a model's round trip keep the recorded value, and a CSV row still overrides it - which
+      changes `FLOW-FORMAT.md`'s rule that values live only in the CSV. A secret keeps no value in
+      the file: a hash cannot be typed back, and an encrypted value needs its key wherever the flow
+      executes and stays in git history for good. Its value resolves as phase 8 says.
+- [ ] **An import reports its warnings.** `FlowScriptImportResultDto` gets `Warnings` beside
+      `Errors`, filled when the import succeeds too, and the UI lists both with their line and
+      column after an import and on phase 7's Check page. `COMMENT_UNATTACHED` can then become the
+      warning it was meant to be: a comment above something that cannot carry it breaks nothing,
+      and it is an error today only because a warning on a file that imports had nowhere to go.
+- [ ] **Template bytes from a dictionary.** `ImportTextAsync` takes the images by name instead of a
+      folder path, and the folder overload reads the folder into one, so phase 7 imports its crops
+      from memory.
+
 ---
 
 ## Turning a recording into a test
@@ -149,10 +188,20 @@ cannot depend on an api key a customer may never add.
       position, state. That is what lets a flow find a button by what it says rather than by what it
       looks like, which is what phase 11 needs when text wraps at a smaller size.
 - [ ] **It is also what decides where a template is cut from a recording**, settled 2026-09-29: an
-      element's rectangle *is* the crop, which is why phase 7's "let the model prepare the recording"
-      waits on this phase rather than guessing a box around the click. Two things travel with the
-      crop or it is not portable - the area it was cut inside, and that area's size and DPI, which is
-      what phase 5.7 exists for. A model handing back bare pixels would undo it.
+      element's rectangle *is* the crop. Two things travel with the crop or it is not portable - the
+      area it was cut inside, and that area's size and DPI, which is what phase 5.7 exists for. A
+      model handing back bare pixels would undo it.
+- [ ] **Its detection model lands inside phase 7**, settled 2026-10-09: after the recorder's session
+      work, because it reads a screenshot of the whole main area, which the session does not take
+      yet, and before the draft, which cuts its templates from it. The caption model comes later -
+      Windows OCR already names anything with text. Behind one seam,
+      `Business/Ai/Vision/ElementLocator`, with a box around the click as the fallback when the model
+      file is missing, said out loud when it is, as the docs index should be (`TODO.md`, AI).
+- [ ] **ONNX, and the licence before it ships.** OmniParser is a Python project, so it comes in as
+      ONNX models on the ONNX Runtime the docs search already ships. Its detection weights are AGPL,
+      inherited from YOLO, and its caption weights MIT. GPL-3.0 allows combining with AGPL-3.0, but
+      it goes on the licence audit in `TODO.md`, read from the LICENSE file in each weight folder of
+      Microsoft's own release.
 - [ ] Structured output, not prose: `elements`, `screenState`, `notes`. Settled so it is not
       reopened at implementation time.
 - [ ] The cloud payload is shown before it is sent, with `label` and `notes` highlighted as the two
@@ -161,47 +210,140 @@ cannot depend on an api key a customer may never add.
 Accepted limitation: a good vision model wants a GPU, and a tester's laptop may not have one.
 Taking that cost for now rather than designing around it.
 
-### 7. The recorder: the setup form and the gestures
+### 7. The recorder: a recording and a description become a flow
 
-Today a recording is taken with a hotkey and turned into steps afterwards by a wizard that asks
-what each recorded action was for. This phase moves the questions to where the answers are known.
+Today a recording is turned into steps by a wizard that asks what each recorded action was for.
+Settled 2026-10-08, with the details on 2026-10-09: a recording and the tester's description become
+a flow with no question per action. The draft is built without a model and is a flow on its own. A
+model, when there is one, is given that draft **as a script** with the description and shapes it,
+through the same scanner and importer a file goes through. Every result lands in the editor and
+never executes on its own - a model that could execute what it wrote would turn a prompt injection
+in OCR'd screen text into a moving mouse. Automation flows first; a QA test is the same path with
+more added, at the end of this phase.
 
-- [ ] **A setup dialog before the first click is captured.** Section 1, the flow name, which must be
-      unique. Section 2, what to test: application, browser or new tab, with a **Test** button that
-      tries the opening there and then, plus the viewports, added one dialog at a time. Section 3,
-      what to do when an execution ends - which becomes steps under `End Execution`, because
-      teardown is steps.
-- [ ] None of it is a step. Sections 1 and 2 write `Flow` fields that phase 3 already stores, so
-      they stay editable afterwards and the recorder is not the only way to set them.
+```
+Setup -> Record -> Review -> Draft ---------------------------> Import -> Check -> Editor
+                              \-> Model -> Scanner --(clean)--/
+                                    ^---- diagnostics, at most 3 attempts
+```
+
+`Business/Recording` becomes a pipeline whose folders are its stages, the way `Business/FlowScript`
+is:
+
+```
+Business/Recording/
+  Session/      RecordingSessionService   start, pause, resume, stop; the main area; the screenshot buffer
+  Actions/      RecordingActionBuilder    events into actions (exists, moves here)
+  Evidence/     ClickEvidenceBuilder      per click: place in the main area, the element's rectangle,
+                                          the text on it, the clicks that hit the same picture
+  Draft/        RecordingDraftBuilder     actions and evidence into a FlowScriptSchema
+  Generation/   FlowGenerationService     draft, script, model, scanner, import
+Business/Ai/ScriptRevision/
+                ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
+Business/Ai/Vision/
+                ElementLocator            phase 6's detection model, with a fallback box
+```
+
+In this order:
+
+- [ ] **Setup before the first click.** A unique name, the description (5.13), and the main area,
+      picked from the windows open now with the one in front listed first, plus a **Test** button
+      that finds it and brings it forward. A "this is a QA test" switch, off. The flow and its main
+      area are saved in one write, so the name is reserved; Discard deletes it while it has no steps.
+- [ ] **The session knows its main area.** At each press it keeps the area's bounds and DPI, and
+      the window under the cursor, read in the hook handler itself. That window sorts the click:
+      inside the main area, another window of the same application such as a Save As dialog, or
+      anything else, which starts left out. Its title is only what Review shows. Today the session
+      reads the foreground window's title later, on the drain side, which is wrong whenever the click
+      changes the window in front.
+- [ ] **The screenshot comes from just before the press.** While recording, the session captures the
+      main area's rectangle a few times a second and keeps the last two or three; a press takes the
+      newest one captured before it. Today the capture happens after the press reached the
+      application, so a template can show the pressed button or the menu the press opened; the hover
+      look stays either way, since the cursor was already there. The rectangle rather than the window
+      by its handle, because menus, dropdowns and dialogs are often windows of their own.
+- [ ] **Nothing done on StepinFlow's own windows is recorded.** Electron sends its process id once,
+      when it connects. A press whose window belongs to that process is dropped before anything sees
+      it, keys are dropped while one of its windows is in front, and the bar's hotkeys always. Today
+      only the last click, Stop, is trimmed.
+- [ ] **Pause and resume, hotkeys, a folded live list, and the recording bar.** Hotkeys are
+      matched at runtime (`TODO.md`, Hotkeys), with two settings of the bar's own. The live list
+      shows actions as they fold - "Typed 15 characters", "Clicked “Invoices”" - rather than every
+      key-down and key-up. The bar is an Electron window of its own: frameless, always on top, and
+      `setContentProtection(true)`, so it never appears in a screenshot.
+- [ ] **Phase 6's detection model**, behind `ElementLocator`, gives each click's element rectangle,
+      and Windows OCR reads the text on it. Read text is screen data, so a cloud model gets it only
+      through `CanSendScreenDataAsync`.
+- [ ] **Review.** Every action with the screen at that moment, the element's rectangle to adjust,
+      and what it becomes: kept or left out, typed text as an input. The clicks that hit the same
+      picture are grouped - what `RecordingSummaryBuilder` already measures against
+      `IOpenCvService.GroupSimilar`, with no caller until now.
+- [ ] **The draft, without a model.** `RecordingDraftBuilder` turns actions and evidence into a
+      `FlowScriptSchema` - linked rows, the shape a script reads into - with one builder per kind of
+      action, as there is a parser per kind of line. A click is three lines: a wait for the element,
+      `Move to` it, `Click`. Every wait is `WAIT_UNTIL_FOUND`, never `FIND_BEST`, with a timeout of
+      `max(10s, observed × 3)` capped at 60s, always written, and a comment saying why:
+      `# recorded after a 4.2s wait` (the reasoning is in `PROJECT.md` §6). A pause is not
+      a step. Everything after a search, up to the next search, sits in that search's Success branch.
+      Names come from the text on the element, through `FlowNameHelper.MakeUnique`. Every typed run
+      is an input with its default (5.13). Templates are the element rectangles, cut inside the main
+      area with its size and DPI.
+- [ ] **The plain draft ships first**, imported straight into the editor: with no model at all, a
+      recording becomes a flow with no questions.
+- [ ] **The model shapes the script.** `ScriptRevisionService` is phase 9's loop, built once: it
+      sends the script and the instruction, reads the answer with `Scanner.Read`, and sends the
+      diagnostics back, three attempts at most, after which the plain draft is saved and the last
+      diagnostics shown. The answer is structured - `{ script, notes[], inputRenames }` - and needs
+      no tool calling, so any model that returns JSON works. Guard rails sit in code rather than the
+      prompt: `Flow:` and `Id:` match the draft, every template the answer names is one the draft
+      cut, and inputs are renamed only through the map, so their values and secrets follow.
+- [ ] **The Check page.** The script with what the model changed marked, the tree, the model's
+      notes, the import's errors and warnings (5.13), and "ask for changes", which sends the script
+      back with what the tester wrote.
+- [ ] **The screens, and the app around them.** A new shell, built with PrimeReact components and
+      PrimeFlex classes first, CSS only where they cannot get there (settled 2026-10-09).
+      `features/recording/` replaces `features/wizard/`, and its script view is the one the export
+      and import buttons use.
+- [ ] **Tests that guard the work come with it**, settled 2026-10-09: `RecordingActionBuilder`
+      before the session is rewritten around it, every draft printing and reading back with no
+      diagnostics, an import reporting warnings. Everything else is tested once the update is done.
+- [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
+      and a tight loop competes with the application being tested.
+
+Open, each with a recommendation:
+
+- **Keep the per-action wizard?** Retire it: Review, the plain draft and the editor cover what it
+  does, and it builds steps in TypeScript, which the draft now does in `Business`.
+- **Is "QA test" stored on the flow?** A `Flow.Kind`, automation or test: an inconclusive automation
+  is a strange verdict, the CI runner should take tests only, and screen sizes belong to tests.
+- **A generated automation's waits** end the execution, failed, with a reason, when they time out.
+  An empty Failure branch carries on and clicks blind. With `Flow.Kind`, the end of an automation is
+  COMPLETED rather than INCONCLUSIVE.
+- **Opening the application** is a `Launch` step the setup writes first, rather than a field on the
+  main area. How a launch works on every system is in `TODO.md` (Execution).
+- **Typed text** is always an input, named from the field's label, and secret when the label reads
+  as a password.
+- **The pressed screenshots** go to a temp folder per session, deleted when the tester leaves the
+  Check page. Whether a recording outlives the app is in `TODO.md` (Recording).
+- **The model's answer** is a whole script; questions back to the tester wait for phase 9.
+- **A cloud model without screen content** gets no read text, so it names steps from the description
+  and the order alone. Allowed, and the setup page says so.
+- **Window steps name an area** rather than repeating a process and title the main area already
+  holds - once the main area exists.
+
+**QA tests, after the automation path.** The setup's switch turns them on.
+
+- [ ] The screen sizes, and what happens when an execution ends - which becomes steps under
+      `End Execution`, because teardown is steps.
+- [ ] The model adds stage markers, and `End Execution` checks for what the description says the
+      flow is meant to prove.
 - [ ] **Ctrl + left click** asks what should be checked at that spot - must this exist, wait until
       it appears, wait until it goes. The position matters, which is why it is the left button.
 - [ ] **Ctrl + right click** asks what should happen there instead of a click: run a command, open
       another application, or take the value from a csv column. Position does not matter for any of
       those, which is why it is the right button.
-- [ ] **Pause and resume mid recording**, so a tester can type a wrong value on purpose and capture
-      how the application rejects it. That is how failure paths get written.
-- [ ] **Search mode and timeout from the recording.** Every recorded check waits -
-      `WAIT_UNTIL_FOUND`, never `FIND_BEST` - with a timeout of `max(10s, observed × 3)` capped at
-      60s, and the step carries a code comment saying why: `# recorded after a 4.2s wait`. The
-      reasoning, and why a quick click is not evidence of anything, is under Recording in
-      `TODO.md`.
-- [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
-      and a tight loop competes with the application being tested.
-
-- [ ] **The tester says what the flow is meant to prove, and the model prepares the recording**,
-      settled 2026-09-29. The recorder produces a draft; the model is given that draft **as a
-      script** plus what the tester wrote, and proposes where the sections go, which crop each
-      template should be, and what is missing. The tester reviews it in the editor, which is where
-      every generated flow lands - a model that could execute what it wrote would turn a prompt
-      injection in OCR'd screen text into a running mouse.
-
-      Both halves are gated: the crops need phase 6's vision model, and reading a draft as a script
-      needs the export button that phase 4 still owes. The script half is the same pipeline phase 9
-      uses, so it is one mechanism serving both ends of the product.
-
-`RecordingSummaryBuilder` is already written against `IOpenCvService.GroupSimilar` and has no caller
-yet. It is what turns "these twenty eight clicks were all the same icon" into something a model can
-read without being shown twenty eight pictures.
+- [ ] **Pause to provoke a failure**: a tester pauses, types a wrong value on purpose, resumes, and
+      captures how the application rejects it. That is how failure paths get written.
 
 ### 8. Inputs, secrets and the CSV round trip
 
@@ -262,7 +404,9 @@ holds. Definition from the script, history from the rows.
       templates, and carry on from where validation stopped.
 
 Groundwork already in: `FlowValidationService` with its rules, `FlowCheckListHelper`, and the
-`GetFlowChecks` tool so a model can ask what a flow verifies without walking the tree by hand.
+`GetFlowChecks` tool so a model can ask what a flow verifies without walking the tree by hand. Phase
+7 builds the loop itself: `ScriptRevisionService` sends a script, reads the answer back and returns
+the diagnostics.
 
 ---
 

@@ -15,6 +15,10 @@ namespace Core.Models.Database
         public string Name { get; set; } = string.Empty;
         public FlowAreaTypeEnum Type { get; set; }
 
+        // The window the flow works in: at most one, and always a root. A recording is stored
+        // relative to it, and a viewport resizes it.
+        public bool IsMain { get; set; }
+
         // What makes its contents bigger or smaller on another screen. Null inherits: a CUSTOM
         // child takes its parent's, and an area with no parent is DPI.
         public ScalesWithEnum? ScalesWith { get; set; }

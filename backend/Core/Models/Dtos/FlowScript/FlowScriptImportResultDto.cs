@@ -21,6 +21,9 @@ namespace Core.Models.Dtos.FlowScript
 
         public List<FlowScriptErrorDto> Errors { get; set; } = new List<FlowScriptErrorDto>();
 
+        /// <summary>What the file got away with, on an import that worked as well as one that did not.</summary>
+        public List<FlowScriptErrorDto> Warnings { get; set; } = new List<FlowScriptErrorDto>();
+
         /// <summary>
         /// The imported flow as the validator sees it once saved. Errors here do not undo the
         /// import: the flow is saved, shows them, and will not run until they are fixed.

@@ -102,10 +102,7 @@ export function FlowFormComponent({
           )}
           className="flex flex-column h-full"
         >
-          <FlowFormFieldsComponent
-            flowId={defaultValues.id}
-            isDisabled={formMode === "VIEW"}
-          />
+          <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
 
           <div className="grid">
             <div className="col-12 lg:col-6">

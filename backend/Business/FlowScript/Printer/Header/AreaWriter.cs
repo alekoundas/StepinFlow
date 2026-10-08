@@ -15,9 +15,15 @@ namespace Business.FlowScript.Text.Header
 
         protected override void Compose()
         {
-            // <[ name ]>   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             WriteQuote(_area.Name);
             WriteGapUntil(NAME_GAP_UNTIL);
+
+            if (_area.IsMain)
+            {
+                WriteKeyword(ScriptSymbolEnum.MAIN);
+                WriteGap();
+            }
 
             WriteLocation();
 

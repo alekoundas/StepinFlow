@@ -13,9 +13,12 @@ namespace Business.FlowScript.Text.Structure
 
         protected override void Compose()
         {
-            // # A fresh profile every time.
+            // # A fresh profile every time.   A blank line is a bare #.
             WriteKeyword(ScriptSymbolEnum.COMMENT);
-            WriteText(_comment.Trim());
+
+            string text = _comment.Trim();
+            if (text.Length > 0)
+                WriteText(text);
         }
     }
 }

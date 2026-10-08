@@ -17,6 +17,7 @@ export const FlowAreaZod = z
       .max(120, "Name too long")
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     type: z.enum(FlowAreaTypeEnum),
+    isMain: z.boolean(),
 
     scalesWith: z.enum(ScalesWithEnum).nullish(),
     authoredDpi: z.number().int(),
@@ -60,6 +61,14 @@ export const FlowAreaZod = z
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
   })
   .superRefine((data, ctx) => {
+    if (data.isMain && data.parentFlowAreaId) {
+      ctx.addIssue({
+        code: "custom",
+        message: "The main area is the window itself, not a part of one",
+        path: ["isMain"],
+      });
+    }
+
     if (data.type === FlowAreaTypeEnum.CUSTOM) {
       if (data.sizingMode === AreaSizingModeEnum.RATIO) {
         if (data.ratioWidth <= 0 || data.ratioHeight <= 0) {

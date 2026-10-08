@@ -1,10 +1,14 @@
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080 390x844
+Description:
+  # Logs in to Swag Labs and adds the backpack to the cart.
+  #
+  # The cart badge shows the count.
 
 Areas:
   <[ Box ]>           on screen   offset -10 20  size 300 200
-  <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
   <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  size 0.12 0.10
   <[ Game ]>          inside <[ Browser ]>   ratio 0.10 0.20  size 0.80 0.70   scales with area
   <[ Header ]>        inside <[ Browser ]>   offset 0 0  size 1920 90   at 120dpi
@@ -17,7 +21,7 @@ Points:
   <[ Origin ]>        on screen   offset 12 -12
 
 Inputs:
-  <[ username ]>
+  <[ username ]>      default <[ standard_user ]>
   <[ password ]>      secret
 
 Templates:

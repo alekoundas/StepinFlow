@@ -73,6 +73,10 @@ namespace Business.Flows.DataService.DataHandlers
             if (tooDeep != null)
                 return ResultDto<Flow>.Failure(tooDeep);
 
+            string? notMain = ValidateMainArea(areasByDtoId.Values);
+            if (notMain != null)
+                return ResultDto<Flow>.Failure(notMain);
+
             SyncPoints(dbContext, flow, dto.FlowPoints, areasByDtoId);
             SyncViewports(dbContext, flow, dto.FlowViewports);
 
@@ -140,6 +144,7 @@ namespace Business.Flows.DataService.DataHandlers
             // Saved on its own first: RootId names the flow by id, with no link EF could fill it from.
             Flow flow = existing ?? schema.Flow;
             flow.Name = schema.Flow.Name;
+            flow.Description = schema.Flow.Description;
 
             if (existing == null)
                 dbContext.Flows.Add(flow);
@@ -356,6 +361,7 @@ namespace Business.Flows.DataService.DataHandlers
 
                 area.Name = dto.Name;
                 area.Type = dto.Type;
+                area.IsMain = dto.IsMain;
 
                 area.SizingMode = dto.SizingMode;
                 area.LocationX = dto.LocationX;
@@ -408,6 +414,21 @@ namespace Business.Flows.DataService.DataHandlers
             FlowArea parent = tooDeep.ParentFlowArea!;
 
             return $"\"{tooDeep.Name}\" cannot go inside \"{parent.Name}\", which is already inside \"{parent.ParentFlowArea!.Name}\". Areas go one level deep.";
+        }
+
+        // The main area is the window the flow works in: one of them, and never a region inside another.
+        private static string? ValidateMainArea(IEnumerable<FlowArea> areas)
+        {
+            List<FlowArea> main = areas.Where(x => x.IsMain).ToList();
+
+            if (main.Count > 1)
+                return $"\"{main[0].Name}\" and \"{main[1].Name}\" are both marked main. A flow works in one window.";
+
+            FlowArea? inside = main.FirstOrDefault(x => x.ParentFlowArea != null);
+            if (inside != null)
+                return $"\"{inside.Name}\" is inside \"{inside.ParentFlowArea!.Name}\", so it cannot be the main area. The main area is the window itself.";
+
+            return null;
         }
 
         private static void SyncPoints(AppDbContext dbContext, Flow flow, IEnumerable<FlowPointDto> dtos, Dictionary<int, FlowArea> areasByDtoId)

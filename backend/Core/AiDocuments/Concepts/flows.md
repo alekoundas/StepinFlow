@@ -19,6 +19,22 @@ extracted into a sub-flow and when a flow is imported from a file.
 
 Step names have none of these rules. They only have to be unique within their flow.
 
+## A flow's description
+
+What the flow is for, in up to 5000 characters and as many lines as it takes. The list of flows
+shows its first line, so that line should be the one that tells two flows apart. The rest is room
+for what someone - or a model - needs to know to fix it later: what the flow proves, what the
+application does that is easy to forget, what a failure usually means.
+
+In the script it sits under `Sizes:` as `Description:`, one `#` per line, a blank line a bare `#`.
+Each line is trimmed, so indentation does not survive an export.
+
+## Inputs
+
+An input is a named value the flow types, such as `{{username}}`. It keeps the value it was
+recorded with as its default, and a row of the CSV beside the flow overrides it. A **secret** input
+keeps no value anywhere in the flow or its file, so it has no default.
+
 ## What a sub-flow is
 
 A sub-flow is a flow meant to be called by another flow rather than started on its own. It has the

@@ -11,9 +11,9 @@ namespace Business.FlowScript
         Task<FlowScriptImportResultDto> ImportAsync(string scriptPath, CancellationToken ct = default);
 
         /// <summary>
-        /// The same, from text that is not on disk yet - what the fix loop hands back after editing
-        /// a script. Templates are read from <paramref name="templateFolderPath"/> when given.
+        /// The same, from text that is not on disk yet - what a model hands back after editing a
+        /// script. Each template's image is taken from <paramref name="templates"/> by its name.
         /// </summary>
-        Task<FlowScriptImportResultDto> ImportTextAsync(string script, string? templateFolderPath, CancellationToken ct = default);
+        Task<FlowScriptImportResultDto> ImportTextAsync(string script, IReadOnlyDictionary<string, byte[]> templates, CancellationToken ct = default);
     }
 }

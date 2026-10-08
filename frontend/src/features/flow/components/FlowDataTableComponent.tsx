@@ -39,7 +39,7 @@ export function FlowDataTableComponent({ className, isSubFlow }: Props) {
           <LabelComponent text={row.name} />
           {row.description && (
             <LabelComponent
-              text={row.description}
+              text={row.description.split("\n")[0]}
               size="xs"
               color="secondary"
             />

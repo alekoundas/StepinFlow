@@ -7,14 +7,11 @@ export class FlowDto {
   id: number = 0;
   name: string = "";
 
-  /** One line saying what it does. The only field that makes a list of flows readable. */
+  /** What it does, in as many lines as it takes. The list shows the first. */
   description: string = "";
 
   /** A flow meant to be called by another rather than started on its own. One way, never unset. */
   isSubFlow: boolean = false;
-
-  /** The area bound to the application this flow tests. What a viewport resizes. */
-  appUnderTestAreaId?: number;
 
   createdOn?: string;
   updatedOn?: string | null;

@@ -107,8 +107,18 @@ export function FlowAreaDataTableComponent({
       });
   };
 
+  // A flow works in one window, so marking another main unmarks the one before.
+  const unmarkOtherMain = (main: FlowAreaDto) => {
+    areas.forEach((x, otherIndex) => {
+      if (x.isMain && x.id !== main.id)
+        update(otherIndex, new FlowAreaDto({ ...x, isMain: false }));
+    });
+  };
+
   const handleSave = (data: FlowAreaDto, index?: number) => {
     closeAll();
+    if (data.isMain) unmarkOtherMain(data);
+
     if (index !== undefined) {
       update(index, data);
       detachRegionsLeftOutside(data);
@@ -166,7 +176,22 @@ export function FlowAreaDataTableComponent({
   const buildColumns = (
     isChildTable: boolean,
   ): DataTableColumnDto<FlowAreaDto>[] => [
-    { field: "name", header: "Name", sortable: !isChildTable },
+    {
+      field: "name",
+      header: "Name",
+      sortable: !isChildTable,
+      body: (row) => (
+        <span className="flex align-items-center gap-2">
+          {row.name}
+          {row.isMain && (
+            <Tag
+              value="Main"
+              icon="pi pi-star-fill"
+            />
+          )}
+        </span>
+      ),
+    },
     { field: "type", header: "Type", body: typeBodyTemplate },
     { field: "details", header: "Details", body: detailsBodyTemplate },
     {

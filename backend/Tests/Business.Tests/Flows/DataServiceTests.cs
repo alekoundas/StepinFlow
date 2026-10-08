@@ -61,7 +61,7 @@ namespace Business.Tests.Flows
         private Task<FlowScriptImportResultDto> ImportAsync(string steps)
         {
             string script = "Flow:    Imported\nId:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b121\n\nSteps:\n" + steps;
-            return new FlowScriptImporter(new Scanner(), _dataService).ImportTextAsync(script, null, Ct);
+            return new FlowScriptImporter(new Scanner(), _dataService).ImportTextAsync(script, new Dictionary<string, byte[]>(), Ct);
         }
 
         // ================================================================
@@ -145,6 +145,110 @@ namespace Business.Tests.Flows
             updated.IsSuccess.ShouldBeFalse();
             using AppDbContext db = _database.CreateDbContext();
             db.FlowAreas.Single(x => x.Id == boxId).ParentFlowAreaId.ShouldBeNull();
+        }
+
+        // A flow works in one window, and the main area is that window, never a part of one.
+        [Fact]
+        public async Task The_flow_form_refuses_two_main_areas()
+        {
+            int flowId = await NewFlowAsync();
+
+            FlowDto dto = new FlowDto
+            {
+                Id = flowId,
+                Name = "Flow",
+                FlowAreas =
+                [
+                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
+                    new FlowAreaDto { Id = -2, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
+                ],
+            };
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowAreas.Count(x => x.FlowId == flowId).ShouldBe(0);
+        }
+
+        [Fact]
+        public async Task The_flow_form_refuses_a_main_area_inside_another()
+        {
+            int flowId = await NewFlowAsync();
+
+            FlowDto dto = new FlowDto
+            {
+                Id = flowId,
+                Name = "Flow",
+                FlowAreas =
+                [
+                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION },
+                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1, IsMain = true },
+                ],
+            };
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task The_flow_form_keeps_one_main_area()
+        {
+            int flowId = await NewFlowAsync();
+
+            FlowDto dto = new FlowDto
+            {
+                Id = flowId,
+                Name = "Flow",
+                FlowAreas =
+                [
+                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
+                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1 },
+                ],
+            };
+
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
+
+            updated.IsSuccess.ShouldBeTrue();
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowAreas.Single(x => x.FlowId == flowId && x.IsMain).Name.ShouldBe("Browser");
+        }
+
+        [Fact]
+        public async Task A_new_area_cannot_be_main_when_another_is()
+        {
+            int flowId = await NewFlowAsync();
+            await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true }, Ct);
+
+            ResultDto<int> created = await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true }, Ct);
+
+            created.IsSuccess.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task An_area_inside_another_cannot_be_made_main()
+        {
+            int flowId = await NewFlowAsync();
+            int browserId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION }, Ct)).Data;
+            int headerId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browserId }, Ct)).Data;
+
+            ResultDto<FlowArea> updated = await _dataService.FlowArea.UpdateAsync(new FlowAreaDto { Id = headerId, FlowId = flowId, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = browserId, IsMain = true }, Ct);
+
+            updated.IsSuccess.ShouldBeFalse();
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowAreas.Single(x => x.Id == headerId).IsMain.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task The_main_area_can_be_saved_again_as_main()
+        {
+            int flowId = await NewFlowAsync();
+            int browserId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true }, Ct)).Data;
+
+            ResultDto<FlowArea> updated = await _dataService.FlowArea.UpdateAsync(new FlowAreaDto { Id = browserId, FlowId = flowId, Name = "Browser 2", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true }, Ct);
+
+            updated.IsSuccess.ShouldBeTrue();
         }
 
         // Nobody names a template: a new one gets a name no template in the flow has, and keeps it

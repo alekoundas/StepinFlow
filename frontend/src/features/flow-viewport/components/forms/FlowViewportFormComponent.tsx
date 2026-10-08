@@ -45,7 +45,7 @@ export default function FlowViewportFormComponent({
       <FormHeaderComponent
         formMode={formMode}
         title="Screen size"
-        description="A size the flow is expected to pass at. The whole flow runs once per size, against the application under test, and each size reports its own result."
+        description="A size the flow is expected to pass at. The whole flow runs once per size, with the main area resized to it, and each size reports its own result."
         onEdit={onEdit}
       />
 

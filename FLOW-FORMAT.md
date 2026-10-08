@@ -19,15 +19,19 @@ every step of the flow, and the file wins.
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080 1024x768 390x844
+Description:
+  # Signs in to Swag Labs, adds every product on the first page to the cart, and checks out.
+  #
+  # The site keeps the cart per user, so a failed execution can leave items behind for the next.
 
 Areas:
-  <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
   <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  size 0.12 0.10
   <[ Inventory ]>     inside <[ Browser ]>   ratio 0.00 0.15  size 1.00 0.85
   <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
 
 Inputs:
-  <[ username ]>
+  <[ username ]>      default <[ standard_user ]>
   <[ password ]>      secret
 
 Templates:
@@ -179,6 +183,23 @@ line out.
 
 Overridable from the command line, so CI can narrow or widen the matrix without editing the file.
 
+### Description
+
+```
+Description:
+  # Signs in to the billing portal and downloads every invoice from last month as a PDF.
+  #
+  # The portal signs out after 15 minutes without input.
+```
+
+What the flow is for, in as many lines as it takes, under `Sizes:`. Each line is written the way a
+comment is - one `#`, then the text, trimmed - and a blank line is a bare `#`. A `#` directly under
+`Description:` is its text; the first line that is not one ends it. A flow with no description
+leaves the block out.
+
+It is the sentence a model needs most: given the steps alone it can see what a flow does, and not
+what it was for. The list of flows shows its first line.
+
 ### Areas
 
 An area is a rectangle to look inside. Areas are the vocabulary of _where_, which is why steps say
@@ -210,6 +231,17 @@ area starts and how big it is, so both are written the same way.
 
 Areas go one level deep: a child is inside a root, and an area inside a child is `AREA_TOO_DEEP`.
 
+**`main`**, right after the name, marks the window the flow works in:
+
+```
+  <[ Billing portal ]>   main   window process <[ chrome.exe ]> title contains <[ Billing ]>
+```
+
+A recording is stored relative to it, which is what lets the flow work on another machine, and a
+viewport resizes it. There is at most one - a second is `AREA_MAIN_DUPLICATE` - and it is always a
+root, so `main inside` is an error. A main area `on screen` is screen coordinates, so the flow it
+belongs to works on this machine only.
+
 Ratios are what make one flow work at several sizes: a region defined as the bottom 85% of the
 window is the bottom 85% at every width.
 
@@ -238,16 +270,21 @@ validator warns about.
 
 ### Inputs
 
-The values a flow needs, declared by name only. Values live in a CSV beside the file — data is not
-flow configuration, and a password in a repository is a leak.
+The values a flow needs, by name, each with the value it was recorded with. A row of the CSV beside
+the file overrides it, so the file is a flow that executes on its own and the CSV is the data set.
 
 ```
 Inputs:
-  <[ username ]>
+  <[ username ]>    default <[ standard_user ]>
   <[ password ]>    secret
 ```
 
-`secret` means the value is never written to any file and resolves from the environment.
+`default` is the recorded value, kept so a clone and a model's round trip still have it. A default is
+quoted text, so like any other it cannot hold `]>`.
+
+`secret` means the value is never written to any file and resolves from the environment. So a secret
+has no `default`, and writing both is an error: a hash cannot be typed back into a field, and an
+encrypted value would need its key wherever the flow executes and stay in git history for good.
 
 What happens when a row leaves a value empty - error, fall back to the recorded default, or type
 nothing - is undecided, and gets settled when csv binding is built rather than guessed at now.
@@ -308,8 +345,10 @@ show, and the first thing a model reads when diagnosing a failure. A branch with
 left out of the file, unless it has a comment saying why it is empty.
 
 Only a step can carry a comment. One written above anything else - an area, a template, a header
-line, or nothing at the end of the file - is an error at the comment, rather than a note that
-quietly moves onto a step further down.
+line, or nothing at the end of the file - is left out with a `COMMENT_UNATTACHED` warning at the
+comment, rather than a note that quietly moves onto a step further down. It breaks nothing, so the
+file still imports, and the import reports the warning beside its result. The exception is a `#`
+under `Description:`, which is the description's text.
 
 ### Checks
 
@@ -585,9 +624,13 @@ half-replaced.
 have, are both errors with a line and a column - nothing is dropped and nothing is guessed. Every
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
-line indented too far, a template described twice, a comment with no step below it, no `Flow:` line,
-a flow name that cannot be a file name, a name nothing above declares, a name declared twice, an
-area inside one that is already inside another.
+line indented too far, a template described twice, no `Flow:` line, a flow name that cannot be a
+file name, a name nothing above declares, a name declared twice, an area inside one that is already
+inside another, a second `main` area.
+
+**A warning does not stop an import.** A comment with no step below it is the one warning today.
+Errors and warnings come back as two lists, each with its line and column, and a file that imports
+still returns its warnings.
 
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps

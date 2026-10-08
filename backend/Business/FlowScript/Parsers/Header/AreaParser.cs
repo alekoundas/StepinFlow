@@ -16,12 +16,13 @@ namespace Business.FlowScript.Parsers.Header
 
         public override FlowArea Parse()
         {
-            // <[ name ]>   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             FlowArea area = new FlowArea() { Name = name };
+            area.IsMain = ExpectOptionalKeyword(ScriptSymbolEnum.MAIN);
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.WINDOW))
             {
@@ -57,6 +58,12 @@ namespace Business.FlowScript.Parsers.Header
             {
                 area.Type = FlowAreaTypeEnum.CUSTOM;
                 ExpectPlacement(area);
+            }
+            // The main area is the window itself, never a region inside another, so only the forms
+            // above can follow it - and this fails naming them.
+            else if (area.IsMain)
+            {
+                ExpectKeyword(ScriptSymbolEnum.WINDOW);
             }
             else
             {

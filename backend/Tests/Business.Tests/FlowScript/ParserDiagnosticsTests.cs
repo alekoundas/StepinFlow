@@ -31,7 +31,11 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> somewhere" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ A ]> monitor primary sideways" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ A ]> window process <[ x ]> title resembles <[ y ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> main inside <[ A ]> ratio 0.10 0.10 size 0.50 0.50" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Description:\n  # Logs in.\n  and adds to the cart" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Inputs:\n  username" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Inputs:\n  <[ password ]> secret default <[ hunter2 ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Inputs:\n  <[ password ]> default <[ hunter2 ]> secret" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click here" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> captured 800x600" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFnid Image <[ x ]>" },
@@ -58,7 +62,8 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nGo Back to <[ Itself ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
-            { DiagnosticCodeEnum.AREA_TOO_DEEP, "Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> ratio 0.10 0.10 size 0.50 0.50\n  <[ C ]> inside <[ B ]> ratio 0.10 0.10 size 0.50 0.50" },
+            { DiagnosticCodeEnum.AREA_MAIN_DUPLICATE, "Areas:\n  <[ A ]> main monitor primary\n  <[ B ]> main window process <[ chrome.exe ]>" },
+            { DiagnosticCodeEnum.AREA_TOO_DEEP,"Areas:\n  <[ A ]> monitor primary\n  <[ B ]> inside <[ A ]> ratio 0.10 0.10 size 0.50 0.50\n  <[ C ]> inside <[ B ]> ratio 0.10 0.10 size 0.50 0.50" },
         };
 
         private static List<Diagnostic> Read(string script)
@@ -144,7 +149,7 @@ namespace Business.Tests.FlowScript
         }
 
         // A comment belongs to the step below it. Above anything else it belongs to nothing, and is
-        // reported where it was written rather than handed to a step further down.
+        // left out with a warning where it was written rather than handed to a step further down.
         [Theory]
         [InlineData("Areas:\n  # the browser\n  <[ A ]> monitor primary\nSteps:\nWait 800ms", 5, 3)]
         [InlineData("# before the steps\nSteps:\nWait 800ms", 4, 1)]
@@ -154,6 +159,7 @@ namespace Business.Tests.FlowScript
             Diagnostic diagnostic = Read(Header + body).ShouldHaveSingleItem();
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.COMMENT_UNATTACHED);
+            diagnostic.Severity.ShouldBe(DiagnosticSeverityEnum.WARNING);
             (diagnostic.Line, diagnostic.Column).ShouldBe((line, column));
         }
 

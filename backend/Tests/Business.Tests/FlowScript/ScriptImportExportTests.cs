@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 
 using Business.FlowScript;
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
@@ -133,6 +134,29 @@ namespace Business.Tests.FlowScript
             }
         }
 
+        // The description's blank line too: it is a bare # in the file.
+        [Fact]
+        public async Task The_flow_comes_back_field_for_field()
+        {
+            RoundTrip trip = await ExportImportExportAsync();
+
+            ScriptRows.Differences(trip.Before.Flow, trip.After.Flow).ShouldBeEmpty();
+            trip.After.Flow.Description.ShouldContain("\n\n");
+        }
+
+        [Fact]
+        public async Task Every_input_comes_back_with_its_default()
+        {
+            RoundTrip trip = await ExportImportExportAsync();
+
+            trip.After.Inputs.Count.ShouldBe(trip.Before.Inputs.Count);
+            foreach (FlowCsvColumn input in trip.Before.Inputs)
+            {
+                FlowCsvColumn? match = trip.After.Inputs.FirstOrDefault(x => x.Name == input.Name);
+                ScriptRows.Differences(input, match).ShouldBeEmpty(input.Name);
+            }
+        }
+
         [Fact]
         public async Task A_steps_match_mode_comes_back()
         {
@@ -153,12 +177,31 @@ namespace Business.Tests.FlowScript
             FlowScriptExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
             string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
 
-            FlowScriptImportResultDto refused = await Importer().ImportTextAsync(script.Replace("Find Image", "Fnid Image", StringComparison.Ordinal), _folder, Ct);
+            FlowScriptImportResultDto refused = await Importer().ImportTextAsync(script.Replace("Find Image", "Fnid Image", StringComparison.Ordinal), new Dictionary<string, byte[]>(), Ct);
 
             refused.IsSuccess.ShouldBeFalse();
             refused.Errors[0].Message.ShouldBe(@"Unexpected ""Fnid"".");
             FlowScriptExportResultDto after = await Exporter().ExportAsync(flowId, _folder, Ct);
             (await File.ReadAllTextAsync(after.ScriptPath, Ct)).ShouldBe(script);
+        }
+
+        // A warning does not stop the import; it comes back beside the result for the form to show.
+        [Fact]
+        public async Task A_warning_is_reported_and_the_flow_is_still_imported()
+        {
+            string script =
+                "Flow:    Warned\n" +
+                "Id:      3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6e\n\n" +
+                "Steps:\n" +
+                "Wait 800ms\n" +
+                "# nothing below\n";
+
+            FlowScriptImportResultDto imported = await Importer().ImportTextAsync(script, new Dictionary<string, byte[]>(), Ct);
+
+            imported.IsSuccess.ShouldBeTrue();
+            imported.Errors.ShouldBeEmpty();
+            FlowScriptErrorDto warning = imported.Warnings.ShouldHaveSingleItem();
+            (warning.Code, warning.Line).ShouldBe((nameof(DiagnosticCodeEnum.COMMENT_UNATTACHED), 6));
         }
 
         // Only a template made in the app is given a name. One written by hand keeps its own,
@@ -208,11 +251,16 @@ namespace Business.Tests.FlowScript
         {
             using AppDbContext db = _database.CreateDbContext();
 
-            Flow flow = new Flow { Name = "Login and add to cart", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111") };
+            Flow flow = new Flow
+            {
+                Name = "Login and add to cart",
+                PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111"),
+                Description = "Logs in to Swag Labs and adds the backpack to the cart.\n\nThe cart badge shows the count.",
+            };
             db.Flows.Add(flow);
             db.SaveChanges();
 
-            FlowArea browser = new FlowArea { Name = "Browser", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
+            FlowArea browser = new FlowArea { Name = "Browser", FlowId = flow.Id, IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
             FlowArea screen = new FlowArea { Name = "Screen", FlowId = flow.Id, Type = FlowAreaTypeEnum.MONITOR, ScalesWith = ScalesWithEnum.DPI };
             FlowArea box = new FlowArea { Name = "Box", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 10, LocationY = 20, Width = 300, Height = 200, AuthoredDpi = 96 };
             db.FlowAreas.AddRange(browser, screen, box);
@@ -233,7 +281,7 @@ namespace Business.Tests.FlowScript
                 new FlowViewport { FlowId = flow.Id, Width = 390, Height = 844, OrderNumber = 1 });
 
             db.FlowCsvColumns.AddRange(
-                new FlowCsvColumn { FlowId = flow.Id, Name = "username", OrderNumber = 0 },
+                new FlowCsvColumn { FlowId = flow.Id, Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
                 new FlowCsvColumn { FlowId = flow.Id, Name = "password", OrderNumber = 1, IsSecret = true });
 
             db.SaveChanges();

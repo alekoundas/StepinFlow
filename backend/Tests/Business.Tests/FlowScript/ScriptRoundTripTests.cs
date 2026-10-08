@@ -123,6 +123,58 @@ namespace Business.Tests.FlowScript
             (move.FlowPoint, move.FlowStepReference).ShouldBe((null, null));
         }
 
+        // One # per line, and a blank line a bare #.
+        [Theory]
+        [InlineData("Logs in.")]
+        [InlineData("Logs in.\n\nThen adds the backpack.")]
+        [InlineData("Steps:\n1. open\n2. sign in")]
+        [InlineData("# not a heading\n## nor a stage")]
+        [InlineData("Opens <[ the menu ]> first")]
+        public void The_description_comes_back_line_for_line(string description)
+        {
+            FlowScriptSchema source = new FlowScriptSchema
+            {
+                Flow = new Flow { Name = "Described", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b116"), Description = description },
+            };
+            source.Steps.Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800 });
+
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(source));
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Flow.Description.ShouldBe(description);
+        }
+
+        // Each line is trimmed, as a comment is.
+        [Fact]
+        public void A_description_line_loses_its_indent()
+        {
+            FlowScriptSchema source = new FlowScriptSchema
+            {
+                Flow = new Flow { Name = "Indented", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b118"), Description = "Steps:\n  1. open  " },
+            };
+
+            new Scanner().Read(new Printer().Write(source)).Flow.Description.ShouldBe("Steps:\n1. open");
+        }
+
+        [Fact]
+        public void An_empty_description_is_left_out()
+        {
+            FlowScriptSchema source = new FlowScriptSchema
+            {
+                Flow = new Flow { Name = "Plain", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b117") },
+            };
+
+            new Printer().Write(source).ShouldNotContain("Description:");
+        }
+
+        [Fact]
+        public void The_main_area_comes_back_main()
+        {
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(SampleFlow.Build()));
+
+            schema.Areas.Where(x => x.IsMain).Select(x => x.Name).ShouldBe(["Browser"]);
+        }
+
         // ================================================================
         // What a person writing one by hand gets for what they leave out
         // ================================================================

@@ -25,6 +25,7 @@ namespace Transport.Ipc.Handlers
                     Id = x.Id,
                     Name = x.Name,
                     Type = x.Type,
+                    IsMain = x.IsMain,
 
                     ParentFlowAreaId = x.ParentFlowAreaId,
                     SizingMode = x.SizingMode,

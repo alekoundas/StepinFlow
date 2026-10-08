@@ -5,6 +5,9 @@ import { FlowViewportZod } from "@/features/flow-viewport/components/forms/flow-
 import { validateFileName } from "@/shared/utils/file-name";
 import { z } from "zod";
 
+// Room for what a model needs to remember about the flow, not only a line for the list.
+export const DESCRIPTION_MAX_LENGTH = 5000;
+
 export const FlowSchema = z.object({
   name: z
     .string()
@@ -14,13 +17,7 @@ export const FlowSchema = z.object({
       const problem = validateFileName(text);
       if (problem) ctx.addIssue({ code: "custom", message: problem });
     }),
-  description: z
-    .string()
-    .max(300, "Keep it to a line")
-    .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
-
-  /** The area bound to the application under test. Unset until a flow has one. */
-  appUnderTestAreaId: z.number().int().nullish(),
+  description: z.string().max(DESCRIPTION_MAX_LENGTH, `Keep it under ${DESCRIPTION_MAX_LENGTH} characters`),
 
   flowAreas: z.array(FlowAreaZod),
   flowPoints: z.array(FlowPointZod),

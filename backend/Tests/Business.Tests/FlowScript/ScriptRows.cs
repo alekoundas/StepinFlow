@@ -21,10 +21,12 @@ namespace Business.Tests.FlowScript
             "ParentFlowStepId", "FlowPointId", "FlowPointEndId", "FlowStepReferenceId", "FlowStepReferenceEndId", "SubFlowId",
         ];
 
+        public Flow Flow { get; set; } = null!;
         public List<FlowArea> Areas { get; set; } = [];
         public List<FlowPoint> Points { get; set; } = [];
         public List<FlowStep> Steps { get; set; } = [];
         public List<FlowStepTemplate> Templates { get; set; } = [];
+        public List<FlowCsvColumn> Inputs { get; set; } = [];
 
         public static async Task<ScriptRows> LoadAsync(IDbContextFactory<AppDbContext> factory, int flowId)
         {
@@ -33,10 +35,12 @@ namespace Business.Tests.FlowScript
 
             return new ScriptRows
             {
+                Flow = await db.Flows.AsNoTracking().SingleAsync(x => x.Id == flowId, ct),
                 Areas = await db.FlowAreas.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
                 Points = await db.FlowPoints.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
                 Steps = await db.FlowSteps.AsNoTracking().Where(x => x.RootId == flowId).ToListAsync(ct),
                 Templates = await db.FlowStepTemplates.AsNoTracking().Where(x => x.FlowStep.RootId == flowId).ToListAsync(ct),
+                Inputs = await db.FlowCsvColumns.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
             };
         }
 

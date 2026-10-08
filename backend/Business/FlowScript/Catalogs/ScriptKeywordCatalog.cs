@@ -52,6 +52,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
             new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
             new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
+            new ScriptKeyword("Description:", ScriptSymbolEnum.FLOWFIELD_DESCRIPTION),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),
             new ScriptKeyword("Inputs:", ScriptSymbolEnum.CSV_COLUMNS),
@@ -59,6 +60,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Steps:", ScriptSymbolEnum.STEPS),
 
             // FlowArea
+            new ScriptKeyword("main", ScriptSymbolEnum.MAIN),
             new ScriptKeyword("inside", ScriptSymbolEnum.INSIDE),
             new ScriptKeyword("on screen", ScriptSymbolEnum.ON_SCREEN),
             new ScriptKeyword("ratio", ScriptSymbolEnum.RATIO),
@@ -73,6 +75,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("scales with", ScriptSymbolEnum.SCALES_WITH),
 
             // FlowCsvColumn
+            new ScriptKeyword("default", ScriptSymbolEnum.DEFAULT),
             new ScriptKeyword("secret", ScriptSymbolEnum.SECRET),
 
             // FlowStepTemplate

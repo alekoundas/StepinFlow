@@ -55,6 +55,7 @@ export default function FlowAreaFormFieldsComponent({
   const type = useWatch({ control, name: "type" });
   const sizingMode = useWatch({ control, name: "sizingMode" });
   const parentId = useWatch({ control, name: "parentFlowAreaId" });
+  const isMain = useWatch({ control, name: "isMain" });
 
   // The test reports bounds the way the area will actually resolve them, so the numbers on screen
   // are the numbers the flow gets rather than a different measurement of the same window.
@@ -121,6 +122,18 @@ export default function FlowAreaFormFieldsComponent({
       });
     }
   }, [parentId, sizingMode, setValue]);
+
+  useEffect(() => {
+    if (parentId && isMain) {
+      setValue("isMain", false, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [parentId, isMain, setValue]);
+
+  let mainHint =
+    "The window the flow works in. A recording is stored relative to it, and a viewport resizes it.";
+  if (type === FlowAreaTypeEnum.CUSTOM)
+    mainHint =
+      "A region on screen is only where it is on this machine, so a flow working in it does not carry over to another.";
 
   // The capture window hands back an absolute rect. With a parent chosen it is stored as an
   // offset inside it, so the user drags a box and never sees a coordinate.
@@ -238,6 +251,15 @@ export default function FlowAreaFormFieldsComponent({
             : undefined
         }
       />
+
+      {!parentId && (
+        <FormInputCheckboxComponent
+          fieldName="isMain"
+          label="Main area"
+          isDisabled={isDisabled}
+          hintText={mainHint}
+        />
+      )}
 
       {/* CUSTOM */}
       {type === FlowAreaTypeEnum.CUSTOM && (

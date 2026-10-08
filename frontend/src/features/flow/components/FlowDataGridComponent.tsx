@@ -72,9 +72,9 @@ export function FlowDataGridComponent({ className, isSubFlow }: Props) {
           </div>
         </div>
 
-        {/* The one field that makes a list of flows readable, so it gets the room. */}
+        {/* The one field that makes a list of flows readable, so its first line gets the room. */}
         <LabelComponent
-          text={item.description || "No description yet."}
+          text={item.description.split("\n")[0] || "No description yet."}
           size="sm"
           color="secondary"
         />

@@ -15,10 +15,15 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = new FlowScriptSchema
             {
-                Flow = new Flow { Name = "Login and add to cart", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111") },
+                Flow = new Flow
+                {
+                    Name = "Login and add to cart",
+                    PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111"),
+                    Description = "Logs in to Swag Labs and adds the backpack to the cart.\n\nThe cart badge shows the count.",
+                },
             };
 
-            FlowArea browser = new FlowArea { Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
+            FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
             FlowArea badge = new FlowArea { Name = "Cart badge", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.88f, RatioY = 0f, RatioWidth = 0.12f, RatioHeight = 0.10f };
             FlowArea header = new FlowArea { Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 0, LocationY = 0, Width = 1920, Height = 90, AuthoredDpi = 120 };
             FlowArea game = new FlowArea { Name = "Game", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.1f, RatioY = 0.2f, RatioWidth = 0.8f, RatioHeight = 0.7f, ScalesWith = ScalesWithEnum.AREA };
@@ -34,7 +39,7 @@ namespace Business.Tests.FlowScript
 
             schema.Inputs.AddRange(
             [
-                new FlowCsvColumn { Name = "username", OrderNumber = 0 },
+                new FlowCsvColumn { Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
                 new FlowCsvColumn { Name = "password", OrderNumber = 1, IsSecret = true },
             ]);
 

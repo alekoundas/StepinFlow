@@ -13,7 +13,7 @@ namespace Business.FlowScript.Text.Structure
 
         protected override void Compose()
         {
-            // Areas: | Points: | Inputs: | Templates: | Steps:
+            // Description: | Areas: | Points: | Inputs: | Templates: | Steps:
             WriteKeyword(_section);
         }
     }

@@ -32,8 +32,6 @@ namespace Transport.Ipc.Handlers
                     CreatedOn = x.CreatedOn,
                     UpdatedOn = x.UpdatedOn,
 
-                    AppUnderTestAreaId = x.AppUnderTestAreaId,
-
                     FlowViewports = x.FlowViewports
                         .OrderBy(v => v.OrderNumber)
                         .Select(v => new FlowViewportDto
@@ -53,6 +51,7 @@ namespace Transport.Ipc.Handlers
                             Id = a.Id,
                             Name = a.Name,
                             Type = a.Type,
+                            IsMain = a.IsMain,
 
                             ParentFlowAreaId = a.ParentFlowAreaId,
                             SizingMode = a.SizingMode,

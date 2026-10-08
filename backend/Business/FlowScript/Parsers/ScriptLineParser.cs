@@ -21,6 +21,7 @@ namespace Business.FlowScript.Parsers
         private readonly ScriptScope _scope; // What the lines above declared, for the parsers to resolve names against.
         private readonly Dictionary<ScriptToken, string> _comments = new Dictionary<ScriptToken, string>(); // Comments for the step below, by their # token.
         private ScriptSymbolEnum? _section; // Null until the first header fields of flow are read.
+        private readonly List<string> _descriptionLines = new List<string>(); // The # lines under Description:.
         private readonly List<(FlowStep Step, int LeadingSpaces)> _openSteps = new List<(FlowStep Step, int LeadingSpaces)>(); // Keep parents and last step by indent.
 
         public ScriptLineParser(FlowScriptSchema flowScriptSchema)
@@ -42,10 +43,16 @@ namespace Business.FlowScript.Parsers
             // null if FLOWFIELD_XXXX.
             ScriptSymbolEnum? symbol = SymbolOf(line.Tokens[0]);
 
-            // Read and keep CodeComments to be consumed by the next FlowStep
+            // Under Description: a comment is a line of it. Anywhere else it waits for the next FlowStep.
             if (symbol == ScriptSymbolEnum.COMMENT)
             {
-                _comments.Add(line.Tokens[0], new CommentParser(line.Tokens).Parse());
+                string comment = new CommentParser(line.Tokens).Parse();
+
+                if (_section == ScriptSymbolEnum.FLOWFIELD_DESCRIPTION)
+                    AddDescriptionLine(comment);
+                else
+                    _comments.Add(line.Tokens[0], comment);
+
                 return;
             }
 
@@ -53,7 +60,7 @@ namespace Business.FlowScript.Parsers
             if (_section != ScriptSymbolEnum.STEPS || IsSection(symbol))
                 ReportUnattachedComments();
 
-            // Change section if symbol == AREAS,POINTS,CSV_COLUMNS,TEMPLATES,STEPS
+            // Change section if symbol == DESCRIPTION,AREAS,POINTS,CSV_COLUMNS,TEMPLATES,STEPS
             if (IsSection(symbol))
             {
                 _section = new SectionParser(line.Tokens).Parse();
@@ -66,6 +73,10 @@ namespace Business.FlowScript.Parsers
                 case null:
                     AddFlowField(symbol, line);
                     break;
+
+                // Only comments are read under Description: and they returned above.
+                case ScriptSymbolEnum.FLOWFIELD_DESCRIPTION:
+                    throw ScriptSyntaxException.Unexpected(line.Tokens[0], [$"\"{ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.COMMENT)}\""]);
 
                 case ScriptSymbolEnum.AREAS:
                     AddArea(line);
@@ -103,16 +114,16 @@ namespace Business.FlowScript.Parsers
         // Private methods - comments
         // ================================================================
 
-        // Comments no step came to take. They belong to nothing, so they are reported rather than
-        // handed to a step further down that they were not written above.
+        // Comments no step came to take. They belong to nothing, so they are dropped with a warning
+        // rather than handed to a step further down that they were not written above.
         private void ReportUnattachedComments()
         {
             if (_comments.Count == 0)
                 return;
 
             ScriptToken first = _comments.Keys.First();
-            _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.COMMENT_UNATTACHED, first.Line, first.Column,
-                "A comment belongs to the step below it, and nothing below this one is a step."));
+            _flowScriptSchema.Diagnostics.Add(Diagnostic.Warning(DiagnosticCodeEnum.COMMENT_UNATTACHED, first.Line, first.Column,
+                "A comment belongs to the step below it, and nothing below this one is a step, so it was left out."));
 
             _comments.Clear();
         }
@@ -143,9 +154,24 @@ namespace Business.FlowScript.Parsers
             }
         }
 
+        // One line of the description, the way a code comment of several lines is one # per line.
+        private void AddDescriptionLine(string text)
+        {
+            _descriptionLines.Add(text);
+            _flowScriptSchema.Flow.Description = string.Join("\n", _descriptionLines);
+        }
+
         private void AddArea(ScriptLine line)
         {
             FlowArea area = new AreaParser(line.Tokens, _scope).Parse();
+
+            FlowArea? main = _flowScriptSchema.Areas.FirstOrDefault(x => x.IsMain);
+            if (area.IsMain && main != null)
+            {
+                ScriptToken at = line.Tokens.First(x => x.Kind == ScriptTokenKindEnum.KEYWORD && x.Value == ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.MAIN));
+                _flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.AREA_MAIN_DUPLICATE, at.Line, at.Column,
+                    $"\"{main.Name}\" is already the main area, and a flow works in one window."));
+            }
 
             _flowScriptSchema.Areas.Add(area);
             _scope.Declare(area, TokenOf(area.Name, line.Tokens));
@@ -352,7 +378,8 @@ namespace Business.FlowScript.Parsers
 
         private static bool IsSection(ScriptSymbolEnum? symbol)
         {
-            return symbol == ScriptSymbolEnum.AREAS
+            return symbol == ScriptSymbolEnum.FLOWFIELD_DESCRIPTION
+                || symbol == ScriptSymbolEnum.AREAS
                 || symbol == ScriptSymbolEnum.POINTS
                 || symbol == ScriptSymbolEnum.CSV_COLUMNS
                 || symbol == ScriptSymbolEnum.TEMPLATES

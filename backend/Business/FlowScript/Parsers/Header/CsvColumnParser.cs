@@ -12,15 +12,28 @@ namespace Business.FlowScript.Parsers.Header
 
         public override FlowCsvColumn Parse()
         {
-            // <[ password ]>   [secret]
+            // <[ email ]>   [default <[ ops@example.com ]> | secret]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            bool isSecret = ExpectOptionalKeyword(ScriptSymbolEnum.SECRET);
+            FlowCsvColumn input = new FlowCsvColumn() { Name = name };
+
+            // A secret has no value in the file, so the two never stand together.
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.DEFAULT))
+            {
+                ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+                input.DefaultValue = ExtractText();
+                ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+            }
+            else
+            {
+                input.IsSecret = ExpectOptionalKeyword(ScriptSymbolEnum.SECRET);
+            }
+
             ExpectEnd();
 
-            return new FlowCsvColumn() { Name = name, IsSecret = isSecret };
+            return input;
         }
     }
 }

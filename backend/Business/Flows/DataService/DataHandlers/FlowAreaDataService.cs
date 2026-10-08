@@ -32,6 +32,10 @@ namespace Business.Flows.DataService.DataHandlers
             if (tooDeep != null)
                 return ResultDto<int>.Failure(tooDeep);
 
+            string? notMain = await ValidateMainAsync(dbContext, 0, area.FlowId, area.IsMain, area.ParentFlowAreaId, ct);
+            if (notMain != null)
+                return ResultDto<int>.Failure(notMain);
+
             area.Id = 0;
             area.Name = FlowNameHelper.MakeUnique(area.Name, await TakenNamesAsync(dbContext, area.FlowId, ct));
 
@@ -52,6 +56,10 @@ namespace Business.Flows.DataService.DataHandlers
             string? tooDeep = await ValidateDepthAsync(dbContext, area.Id, dto.ParentFlowAreaId, ct);
             if (tooDeep != null)
                 return ResultDto<FlowArea>.Failure(tooDeep);
+
+            string? notMain = await ValidateMainAsync(dbContext, area.Id, area.FlowId, dto.IsMain, dto.ParentFlowAreaId, ct);
+            if (notMain != null)
+                return ResultDto<FlowArea>.Failure(notMain);
 
             dbContext.Entry(area).CurrentValues.SetValues(dto);
             await dbContext.SaveChangesAsync(ct);
@@ -104,6 +112,26 @@ namespace Business.Flows.DataService.DataHandlers
             bool hasChildren = await dbContext.FlowAreas.AnyAsync(x => x.ParentFlowAreaId == areaId, ct);
             if (hasChildren)
                 return "Other areas sit inside this one, so it cannot go inside another. Areas go one level deep.";
+
+            return null;
+        }
+
+        // The main area is the window the flow works in: one of them, and never a region inside another.
+        private static async Task<string?> ValidateMainAsync(AppDbContext dbContext, int areaId, int flowId, bool isMain, int? parentId, CancellationToken ct)
+        {
+            if (!isMain)
+                return null;
+
+            if (parentId != null)
+                return "An area inside another cannot be the main area. The main area is the window itself.";
+
+            string? other = await dbContext.FlowAreas
+                .Where(x => x.FlowId == flowId && x.IsMain && x.Id != areaId)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync(ct);
+
+            if (other != null)
+                return $"\"{other}\" is already the main area. A flow works in one window.";
 
             return null;
         }

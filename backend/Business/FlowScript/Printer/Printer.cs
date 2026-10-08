@@ -133,6 +133,19 @@ namespace Business.FlowScript.Text
                 string flowSizes = new FlowSizesWriter(schema.Viewports).Write();
                 builder.AppendLine(flowSizes);
             }
+
+            // As many lines as it has, one # each, the way a code comment of several lines is written.
+            if (!string.IsNullOrWhiteSpace(schema.Flow.Description))
+            {
+                string heading = new SectionWriter(ScriptSymbolEnum.FLOWFIELD_DESCRIPTION).Write();
+                builder.AppendLine(heading);
+
+                foreach (string text in schema.Flow.Description.Split('\n'))
+                {
+                    string line = new CommentWriter(text).Write();
+                    builder.Append("  ").AppendLine(line);
+                }
+            }
         }
 
         private static void WriteAreas(StringBuilder builder, FlowScriptSchema schema)

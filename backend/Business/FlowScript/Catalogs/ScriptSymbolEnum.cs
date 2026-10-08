@@ -14,6 +14,7 @@ namespace Business.FlowScript.Catalogs
         FLOWFIELD_NAME,
         FLOWFIELD_ID,
         FLOWFIELD_SIZES,
+        FLOWFIELD_DESCRIPTION,
 
         // Flow references
         AREAS,
@@ -23,6 +24,7 @@ namespace Business.FlowScript.Catalogs
         STEPS,
 
         // FlowArea
+        MAIN,
         INSIDE,
         ON_SCREEN,
         RATIO,
@@ -37,6 +39,7 @@ namespace Business.FlowScript.Catalogs
         SCALES_WITH,
 
         // FlowCsvColumn
+        DEFAULT,
         SECRET,
 
         // FlowStepTemplate

@@ -11,9 +11,6 @@ namespace Core.Models.Dtos
         public string Description { get; set; } = string.Empty;
         public bool IsSubFlow { get; set; }
 
-        // The application this flow tests. Closing it is steps under End Execution, not a setting.
-        public int? AppUnderTestAreaId { get; set; }
-
         public DateTime CreatedOn { get; set; }
         public DateTime? UpdatedOn { get; set; }
 

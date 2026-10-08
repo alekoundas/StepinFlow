@@ -333,8 +333,8 @@ two thin entry projects over a shared host. That is a real cost and it is not be
 
 The words below mean exactly one thing in this codebase and in the UI.
 
-**Flow** — one test. A name, the application it tests, the screen sizes to test at, the data
-columns it takes, and a tree of steps. Identified across machines by `PublicId`, a GUID.
+**Flow** — one test. A name, a description of what it is for, the screen sizes to test at, the
+data columns it takes, and a tree of steps. Identified across machines by `PublicId`, a GUID.
 
 **FlowStep** — one node of the tree. Typed: the type decides which of the wide table's columns mean
 anything and which worker executes it. Steps nest; a step that can fail has `Success` and `Failure`
@@ -343,6 +343,9 @@ children so a flow handles its own problems rather than stopping.
 **FlowArea** — a named rectangle owned by a flow. A window matched by process name and title, a
 monitor, or a region inside another area - in pixels or as a fraction of it. Search steps look
 inside one. Each says what its contents **scale with**: the screen's DPI, or its own size (§8).
+
+**Main area** — the window a flow works in: the one `FlowArea` with `IsMain`, always a root. A
+recording is stored relative to it, and a viewport resizes it.
 
 **FlowPoint** — a named point owned by a flow, measured from an area. Cursor steps aim at one.
 
@@ -355,7 +358,8 @@ a repository.
 
 **FlowViewport** — one screen size the flow is tested at.
 
-**FlowCsvColumn** — one input to the flow. Ten rows of CSV means ten executions.
+**FlowCsvColumn** — one input to the flow, with the value it was recorded with. Ten rows of CSV
+means ten executions.
 
 **Execution** — one complete walk of a flow, at one viewport, with one row of data. The word is
 always "execution"; "run" is not used in this codebase.
@@ -424,11 +428,11 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 
 | Table | Purpose |
 |---|---|
-| `Flows` | The test. Name, `PublicId`, the app under test. |
-| `FlowAreas` | Named rectangle owned by a flow, with what it scales with and its DPI. |
+| `Flows` | The test. Name, `PublicId`, description. |
+| `FlowAreas` | Named rectangle owned by a flow, with what it scales with and its DPI. `IsMain` marks the window the flow works in. |
 | `FlowPoints` | Named point owned by a flow, with the DPI it was captured at. |
 | `FlowViewports` | One screen size to test at. |
-| `FlowCsvColumns` | One input column. `IsSecret` means the value never reaches a file. |
+| `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
 | `FlowStepTemplates` | Template image, its accuracy, click point, required flag, and captured size and DPI. The blob lives here, off `FlowStep`. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
@@ -487,12 +491,12 @@ one `WHERE RootId = ?` instead of a recursive CTE.
 | `FlowStepReferenceId` / `…EndId` | FlowStep | SetNull |
 | `FlowArea.ParentFlowAreaId` | FlowArea | SetNull |
 | `ExecutionStep.FlowStepId` | FlowStep | SetNull |
-| `Flow.AppUnderTestAreaId` | FlowArea | NoAction |
 
 The `SetNull` group is deliberate: areas, points and referenced steps are **reusable**, so deleting
 one must clear the reference rather than delete every step using it. An execution step keeps the
-name it ran under, so deleting a step keeps its history. `AppUnderTestAreaId` is `NoAction` to
-break a cascade cycle — Flow → FlowArea → Flow. `DataAccess.Tests/SchemaTests` pins each of these
+name it ran under, so deleting a step keeps its history. The main area is a flag on the area rather
+than a key on the flow, so there is no Flow → FlowArea → Flow cycle to break and deleting the main
+area simply leaves the flow without one. `DataAccess.Tests/SchemaTests` pins each of these
 against SQLite's own foreign keys, through `ExecuteDelete` rather than EF's change tracker.
 
 ---
@@ -606,10 +610,16 @@ decisions behind it.
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080 390x844
+Description:
+  # Signs in to Swag Labs with the account the CSV row names.
 
 Areas:
-  <[ Browser ]>       window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
   <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
+
+Inputs:
+  <[ username ]>      default <[ standard_user ]>
+  <[ password ]>      secret
 
 Templates:
   <[ template-u9d3n.png ]>    click 150 18   captured 922x648 at 120dpi
@@ -745,7 +755,12 @@ and its foreign key is `SetNull` rather than cascaded, so the trend for a step s
 as long as its name does.
 
 A diagnostic carries a code and a severity as well as a line, so a warning is something a flow can
-be imported with and an error is not.
+be imported with and an error is not. The import result returns them as two lists, `Errors` and
+`Warnings`, and fills `Warnings` on an import that worked too, so a warning reaches the UI rather
+than being dropped with the parse.
+
+The template images come in as a dictionary by name rather than a folder path. The folder overload
+reads the folder into one, so the recorder can import its crops straight from memory.
 
 ### The round trip is the acceptance test
 
@@ -804,8 +819,23 @@ the line - `offset 40 8`, `click 60 12`, `ratio 0.30 0.18 size 0.40 0.40` - so n
 **A comment belongs to the line below it**, whatever that line is - a step, a `##` stage or a
 `Success:`/`Failure:` branch - because every step type carries `CodeComment`. A branch with nothing
 under it is left out of the file unless its comment says why it is empty. A comment above anything
-that is not a step is `COMMENT_UNATTACHED`, reported at the comment: handing it to the next step
-down would attach a note to a line it was never written above.
+that is not a step is left out with a `COMMENT_UNATTACHED` warning at the comment: handing it to
+the next step down would attach a note to a line it was never written above, and failing the
+import over a note would refuse a flow that works.
+
+**The description is comments under a heading.** `Description:` sits under `Sizes:` and every `#`
+directly below it is a line of its text, a blank line a bare `#`. It reuses the comment's spelling
+rather than a quote, so it can run to many lines and hold `<[` and `]>` - a quote ends at its first
+`]>`. Each line is trimmed as a comment is, so indentation inside a description does not survive.
+
+**The main area is a word on its area line**, `main`, after the name. A flag on the area rather than
+a key on the flow: the key it replaced, `Flow.AppUnderTestAreaId`, was `NoAction` to break a cascade
+cycle, so an import that deleted the old areas would have failed the moment one was set. Two are
+`AREA_MAIN_DUPLICATE`; `main inside` is refused by the grammar, as the main area is a root.
+
+**An input carries its recorded value**, `default <[ v ]>`, and a CSV row overrides it. A secret
+writes none: a hash cannot be typed back, and an encrypted value would need its key wherever the
+flow executes. So `secret` and `default` never stand on one line.
 
 **Every step is a line, and the line says everything the step does.** A click and a scroll act
 where the cursor is, so the script writes the position as a step of its own: `Move to <[ X ]>`, then
@@ -1183,7 +1213,7 @@ to work out why it went red.
 
 **Mostly design, not yet built** - phases 8 and 12 to 14. What exists: the script and its
 transactional import and export (§7, reachable over IPC but with no button yet), `PublicId`, and
-the app under test as the flow's root area.
+the main area.
 
 ### The file is `.sflw`
 
@@ -1250,14 +1280,16 @@ Later the app can fetch that same bundle from the CI provider's API instead of t
 it. A central StepinFlow server that receives results directly is a product decision about becoming a
 service, not a technical one, and it should not get decided by accident.
 
-### The app under test is the flow's root area
+### The window a flow works in is its main area
 
 You cannot resize "a flow", only a window, so the viewport matrix needs a target — and guessing it
 from whichever window has focus is exactly the implicit behaviour that breaks on another machine.
 
 `FlowArea` already binds to a window by process name and title, so this needs no new concept: one
-field on `Flow` naming the root area that is the application under test, plus the command that
-launches it. Viewport sizing targets that window; every other `WINDOW_*` step is untouched.
+root area marked `IsMain`, written `main` in the script. Viewport sizing targets that window, and
+every other `WINDOW_*` step is untouched. The recorder stores what it keeps relative to the same
+area, which is what makes a recording portable; a main area in screen coordinates makes a flow that
+works on one machine only.
 
 ### Secrets live in the local database, never in the repository
 

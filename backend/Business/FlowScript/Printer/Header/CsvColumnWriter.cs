@@ -14,15 +14,23 @@ namespace Business.FlowScript.Text.Header
 
         protected override void Compose()
         {
-            // <[ password ]>   [secret]
-            // The value is never written, secret or not: data belongs in the csv beside the file,
-            // and a default in the script would be the one nobody remembers to change.
+            // <[ email ]>   [default <[ ops@example.com ]> | secret]
+            // A default travels with the flow, so a clone and an import keep it; a csv row still
+            // overrides it. A secret's value never reaches a file.
             WriteQuote(_input.Name);
 
             if (_input.IsSecret)
             {
                 WriteGapUntil(NAME_GAP_UNTIL);
                 WriteKeyword(ScriptSymbolEnum.SECRET);
+                return;
+            }
+
+            if (_input.DefaultValue.Length > 0)
+            {
+                WriteGapUntil(NAME_GAP_UNTIL);
+                WriteKeyword(ScriptSymbolEnum.DEFAULT);
+                WriteQuote(_input.DefaultValue);
             }
         }
     }
