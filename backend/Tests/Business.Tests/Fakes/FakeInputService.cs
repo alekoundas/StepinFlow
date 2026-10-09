@@ -74,5 +74,20 @@ namespace Business.Tests.Fakes
         {
             Actions.Add($"press {string.Join("+", modifiers.Append(key))}");
         }
+
+        public void SimulateKeysDown(IReadOnlyList<KeyCodeEnum> keys)
+        {
+            Actions.Add($"hold {string.Join("+", keys)}");
+        }
+
+        public void SimulateKeysUp(IReadOnlyList<KeyCodeEnum> keys)
+        {
+            Actions.Add($"release {string.Join("+", keys)}");
+        }
+
+        public void ReleaseHeld()
+        {
+            Actions.Add("release everything held");
+        }
     }
 }

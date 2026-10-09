@@ -4,6 +4,7 @@ using Business.Executions.Workers;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 using static Business.Tests.TestToken;
 

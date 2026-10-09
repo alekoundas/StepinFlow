@@ -49,6 +49,8 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\nScroll down 3 in <[ Browser ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop each match in <[ Find ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nWait soon" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nType <[ hello ]> hold" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nPress <[ Ctrl ]> double" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop often" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nSystem EXPLODE" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFocus Window <[ chrome ]>" },

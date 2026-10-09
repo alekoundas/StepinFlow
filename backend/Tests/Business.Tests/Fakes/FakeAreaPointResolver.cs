@@ -1,5 +1,5 @@
 using Business.AreaPoint;
-using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
 namespace Business.Tests.Fakes
@@ -23,9 +23,12 @@ namespace Business.Tests.Fakes
             return Task.FromResult(Points.GetValueOrDefault(flowPointId) ?? PointResolution.Fail("The point no longer exists."));
         }
 
+        // An area already loaded, by its name.
+        public Dictionary<string, AreaResolution> AreasByName { get; } = new Dictionary<string, AreaResolution>();
+
         public AreaResolution ResolveArea(FlowArea area)
         {
-            throw new NotImplementedException();
+            return AreasByName.GetValueOrDefault(area.Name) ?? AreaResolution.Fail($"No window matches \"{area.Name}\".");
         }
 
         public PointResolution ResolvePoint(FlowPoint point)

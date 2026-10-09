@@ -23,9 +23,15 @@ namespace Business.Tests.Fakes
             throw new NotImplementedException();
         }
 
+        // Not a picture: one byte, so a test can tell an encoded image from none.
+        public List<RawImage> Encoded { get; } = new List<RawImage>();
+
         public byte[] Encode(RawImage image, ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
-            throw new NotImplementedException();
+            lock (Encoded)
+                Encoded.Add(image);
+
+            return [1];
         }
 
         public byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality)

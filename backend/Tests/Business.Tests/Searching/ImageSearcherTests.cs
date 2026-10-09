@@ -3,7 +3,7 @@ using System.Drawing;
 using Business.Searching;
 using Business.Tests.Fakes;
 using Core.Enums;
-using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Business.OpenCV;
 
 namespace Business.Tests.Searching
@@ -27,13 +27,13 @@ namespace Business.Tests.Searching
 
         private static AreaResolution Area(ScalesWithEnum scalesWith, int dpi = 96)
         {
-            return AreaResolution.Ok(Bounds) with { ScalesWith = scalesWith, Dpi = dpi };
+            return AreaResolution.Ok(Bounds, scalesWith: scalesWith, dpi: dpi);
         }
 
         // The first byte of the image is which template it is, as far as the fake matcher knows.
-        private static SearchTemplate Template(byte id, bool isRequired = false, int authoredDpi = 0, int width = 0, int height = 0)
+        private static SearchTemplate Template(byte id, bool isRequired = false, int authoredDpi = 0, int width = 0, int height = 0, float accuracy = 0.8f, int clickOffsetX = 0, int clickOffsetY = 0)
         {
-            return new SearchTemplate { Image = [id], Accuracy = 0.8f, IsRequired = isRequired, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height };
+            return new SearchTemplate { Image = [id], Accuracy = accuracy, IsRequired = isRequired, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height, ClickOffsetX = clickOffsetX, ClickOffsetY = clickOffsetY };
         }
 
 
@@ -90,8 +90,8 @@ namespace Business.Tests.Searching
         [Fact]
         public void The_mode_is_the_steps_and_the_accuracy_is_each_templates_own()
         {
-            SearchTemplate strict = Template(1) with { Accuracy = 0.95f };
-            SearchTemplate loose = Template(2) with { Accuracy = 0.7f };
+            SearchTemplate strict = Template(1, accuracy: 0.95f);
+            SearchTemplate loose = Template(2, accuracy: 0.7f);
 
             Search(Area(ScalesWithEnum.DPI), [strict, loose], settings: new SearchSettings { Mode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS });
 
@@ -177,7 +177,7 @@ namespace Business.Tests.Searching
         public void A_hit_is_where_to_click_with_the_offset_scaled_like_the_template()
         {
             _matcher.Found(1, 0.9f, x: 5, y: 5, scale: 2f);
-            SearchTemplate template = Template(1) with { ClickOffsetX = 10, ClickOffsetY = 4 };
+            SearchTemplate template = Template(1, clickOffsetX: 10, clickOffsetY: 4);
 
             ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [template]);
 

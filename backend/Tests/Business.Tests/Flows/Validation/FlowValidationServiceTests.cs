@@ -324,5 +324,48 @@ namespace Business.Tests.Flows.Validation
 
             warned.ShouldBe([box.Id, insideBox.Id, drag.Id, move.Id], ignoreOrder: true);
         }
+
+        // ================================================================
+        // Held keys
+        // ================================================================
+
+        private FlowStep Keys(string name, string keys, KeyboardKeyActionTypeEnum keyAction, FlowStep? parent = null)
+        {
+            FlowStep step = Add(FlowStepTypeEnum.KEYBOARD_INPUT, name, parent);
+            step.KeyboardInputType = KeyboardInputTypeEnum.COMBINATION;
+            step.KeyboardInputText = keys;
+            step.KeyboardKeyActionType = keyAction;
+            return step;
+        }
+
+        [Fact]
+        public void Keys_held_with_nothing_letting_them_go_are_a_warning()
+        {
+            FlowStep hold = Keys("Hold", "Ctrl", KeyboardKeyActionTypeEnum.HOLD);
+
+            CodesOn(hold).ShouldBe([FlowValidationCodeEnum.KEYS_NOT_RELEASED]);
+        }
+
+        // Written the other way round, in other case, it lets go of the same keys.
+        [Fact]
+        public void Keys_let_go_of_further_down_are_fine()
+        {
+            FlowStep hold = Keys("Hold", "Ctrl+Shift", KeyboardKeyActionTypeEnum.HOLD);
+            FlowStep search = Search("Find");
+            FlowStep success = Branch(search, FlowStepTypeEnum.SUCCESS);
+            Keys("Release", "shift+ctrl", KeyboardKeyActionTypeEnum.RELEASE, success);
+
+            CodesOn(hold).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_release_above_the_hold_or_of_other_keys_does_not_count()
+        {
+            Keys("Release first", "Ctrl", KeyboardKeyActionTypeEnum.RELEASE);
+            FlowStep hold = Keys("Hold", "Ctrl", KeyboardKeyActionTypeEnum.HOLD);
+            Keys("Release Shift", "Shift", KeyboardKeyActionTypeEnum.RELEASE);
+
+            CodesOn(hold).ShouldBe([FlowValidationCodeEnum.KEYS_NOT_RELEASED]);
+        }
     }
 }

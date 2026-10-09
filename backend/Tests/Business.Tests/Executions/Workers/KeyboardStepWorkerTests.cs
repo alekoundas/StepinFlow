@@ -51,6 +51,26 @@ namespace Business.Tests.Executions.Workers
             _input.Actions.ShouldBe(["press LeftCtrl+LeftShift+T"]);
         }
 
+        // Two halves of one gesture: what runs between them runs with the keys down.
+        [Theory]
+        [InlineData(KeyboardKeyActionTypeEnum.HOLD, "hold LeftCtrl+LeftShift")]
+        [InlineData(KeyboardKeyActionTypeEnum.RELEASE, "release LeftCtrl+LeftShift")]
+        public async Task Keys_are_held_down_or_let_go_of(KeyboardKeyActionTypeEnum keyAction, string done)
+        {
+            await Keyboard(new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Ctrl+Shift", KeyboardKeyActionType = keyAction });
+
+            _input.Actions.ShouldBe([done]);
+        }
+
+        [Fact]
+        public async Task A_hold_that_names_no_key_fails_and_holds_nothing()
+        {
+            ExecutionStep result = await Keyboard(new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Ctrl+Nope", KeyboardKeyActionType = KeyboardKeyActionTypeEnum.HOLD });
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            _input.Actions.ShouldBeEmpty();
+        }
+
         [Fact]
         public async Task A_combination_that_is_not_one_fails_and_presses_nothing()
         {

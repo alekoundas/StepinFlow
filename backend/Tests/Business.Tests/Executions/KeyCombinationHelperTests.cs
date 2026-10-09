@@ -60,5 +60,23 @@ namespace Business.Tests.Executions
         {
             KeyCombinationHelper.TryParse("Ctrl+A,B", out _, out _).ShouldBeFalse();
         }
+
+        // What a hold puts down: a modifier on its own is a key here, where a press needs a key after it.
+        [Theory]
+        [InlineData("Ctrl", new[] { KeyCodeEnum.LeftCtrl })]
+        [InlineData("ctrl + shift", new[] { KeyCodeEnum.LeftCtrl, KeyCodeEnum.LeftShift })]
+        [InlineData("Shift+A", new[] { KeyCodeEnum.LeftShift, KeyCodeEnum.A })]
+        public void Every_key_a_hold_names_is_read_in_order(string text, KeyCodeEnum[] expected)
+        {
+            KeyCombinationHelper.TryParseKeys(text, out List<KeyCodeEnum> keys).ShouldBeTrue();
+
+            keys.ShouldBe(expected);
+        }
+
+        [Fact]
+        public void A_hold_naming_no_key_is_refused()
+        {
+            KeyCombinationHelper.TryParseKeys("Ctrl+Nope", out _).ShouldBeFalse();
+        }
     }
 }

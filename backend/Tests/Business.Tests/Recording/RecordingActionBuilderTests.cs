@@ -1,4 +1,4 @@
-using Business.Recording.Actions;
+using Business.Recording.ActionBuilder;
 using Core.Enums;
 using Core.Enums.Business;
 using Core.Models.Business;
@@ -17,7 +17,7 @@ namespace Business.Tests.Recording
 
         private List<RecordedActionDto> Build()
         {
-            return RecordingActionBuilder.Build(_events, TimeProvider.System);
+            return RecordingActionBuilder.Build(_events);
         }
 
         private RecordingActionBuilderTests Press(int ms, int x, int y, CursorButtonTypeEnum button = CursorButtonTypeEnum.LEFT_BUTTON)
@@ -43,9 +43,9 @@ namespace Business.Tests.Recording
             return this;
         }
 
-        private RecordingActionBuilderTests Down(int ms, KeyCodeEnum key)
+        private RecordingActionBuilderTests Down(int ms, KeyCodeEnum key, bool capsLock = false)
         {
-            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.KEY_DOWN, KeyCode = key, CreatedOn = START.AddMilliseconds(ms) });
+            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.KEY_DOWN, KeyCode = key, IsCapsLockOn = capsLock, CreatedOn = START.AddMilliseconds(ms) });
             return this;
         }
 
@@ -55,9 +55,9 @@ namespace Business.Tests.Recording
             return this;
         }
 
-        private RecordingActionBuilderTests Key(int ms, KeyCodeEnum key)
+        private RecordingActionBuilderTests Key(int ms, KeyCodeEnum key, bool capsLock = false)
         {
-            return Down(ms, key).Up(ms + 30, key);
+            return Down(ms, key, capsLock).Up(ms + 30, key);
         }
 
         // ================================================================
@@ -133,13 +133,23 @@ namespace Business.Tests.Recording
             Build()[0].ScreenshotIndex.ShouldBe(0);
         }
 
-        // The click that stopped the recording is part of stopping it, not part of the task.
+        // The click that stops the recording lands on StepinFlow, and the session never records
+        // it, so the last click here is one the tester meant.
         [Fact]
-        public void The_last_click_is_left_out()
+        public void The_last_click_is_kept()
         {
             Key(0, KeyCodeEnum.A).Click(100, 100, 200);
 
-            Build().ShouldAllBe(x => x.Kind != RecordedActionKindEnum.CLICK);
+            Build().Last().Kind.ShouldBe(RecordedActionKindEnum.CLICK);
+        }
+
+        [Fact]
+        public void A_click_carries_the_window_it_landed_on()
+        {
+            Click(0, 100, 200);
+            _events[0].Window = RecordedWindowEnum.SAME_APPLICATION;
+
+            Build()[0].Window.ShouldBe(RecordedWindowEnum.SAME_APPLICATION);
         }
 
         // ================================================================
@@ -173,6 +183,24 @@ namespace Business.Tests.Recording
 
             typed.Kind.ShouldBe(RecordedActionKindEnum.TYPING);
             typed.Text.ShouldBe("Hi 1");
+        }
+
+        // Caps Lock may have been on before the recording started, so it is read off each key
+        // rather than counted from presses.
+        [Fact]
+        public void Caps_Lock_raises_letters_and_leaves_numbers_alone()
+        {
+            Key(0, KeyCodeEnum.O, capsLock: true).Key(100, KeyCodeEnum.K, capsLock: true).Key(200, KeyCodeEnum.Num1, capsLock: true);
+
+            Build().ShouldHaveSingleItem().Text.ShouldBe("OK1");
+        }
+
+        [Fact]
+        public void Shift_with_Caps_Lock_on_types_a_small_letter()
+        {
+            Down(0, KeyCodeEnum.RightShift).Key(10, KeyCodeEnum.A, capsLock: true).Up(50, KeyCodeEnum.RightShift).Key(100, KeyCodeEnum.B, capsLock: true);
+
+            Build().ShouldHaveSingleItem().Text.ShouldBe("aB");
         }
 
         // A modifier is often let go a moment before the letter: read at the release, this would
@@ -230,6 +258,93 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Keys and clicks together
+        // ================================================================
+
+        [Fact]
+        public void A_modifier_held_over_a_click_is_a_hold_before_it_and_a_release_after()
+        {
+            Down(0, KeyCodeEnum.LeftCtrl).Click(50, 100, 200).Up(150, KeyCodeEnum.LeftCtrl);
+
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.KEY_HOLD, "Ctrl"),
+                (RecordedActionKindEnum.CLICK, null),
+                (RecordedActionKindEnum.KEY_RELEASE, "Ctrl"),
+            ]);
+        }
+
+        // Read with the click, a Ctrl let go before the button stayed held for every key after it.
+        [Fact]
+        public void A_modifier_let_go_during_a_click_is_let_go()
+        {
+            Down(0, KeyCodeEnum.LeftCtrl).Press(50, 100, 200).Up(80, KeyCodeEnum.LeftCtrl).Release(100, 100, 200).Key(300, KeyCodeEnum.H);
+
+            List<RecordedActionDto> actions = Build();
+
+            actions.Select(x => x.Kind).ShouldBe(
+            [
+                RecordedActionKindEnum.KEY_HOLD,
+                RecordedActionKindEnum.CLICK,
+                RecordedActionKindEnum.KEY_RELEASE,
+                RecordedActionKindEnum.TYPING,
+            ]);
+            actions[^1].Text.ShouldBe("h");
+        }
+
+        // Pressed again with Ctrl, the shortcut would let go of the Ctrl the click needs.
+        [Fact]
+        public void A_shortcut_under_a_held_modifier_leaves_the_modifier_to_the_hold()
+        {
+            Down(0, KeyCodeEnum.LeftCtrl).Key(50, KeyCodeEnum.C).Click(200, 100, 200).Up(300, KeyCodeEnum.LeftCtrl);
+
+            Build().Select(x => x.Text).ShouldBe(["Ctrl", "C", null, "Ctrl"]);
+        }
+
+        [Fact]
+        public void A_modifier_held_over_a_scroll_is_held_around_it()
+        {
+            Down(0, KeyCodeEnum.RightShift).Scroll(50, CursorScrollDirectionTypeEnum.DOWN).Up(100, KeyCodeEnum.RightShift);
+
+            Build().Select(x => x.Kind).ShouldBe(
+            [
+                RecordedActionKindEnum.KEY_HOLD,
+                RecordedActionKindEnum.SCROLL,
+                RecordedActionKindEnum.KEY_RELEASE,
+            ]);
+        }
+
+        [Fact]
+        public void A_modifier_still_down_when_the_recording_stops_has_no_release()
+        {
+            Down(0, KeyCodeEnum.LeftCtrl).Click(50, 100, 200);
+
+            Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.KEY_HOLD, RecordedActionKindEnum.CLICK]);
+        }
+
+        [Fact]
+        public void Typing_on_either_side_of_a_click_is_two_entries()
+        {
+            Key(0, KeyCodeEnum.A).Click(100, 100, 200).Key(250, KeyCodeEnum.B);
+
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.TYPING, "a"),
+                (RecordedActionKindEnum.CLICK, null),
+                (RecordedActionKindEnum.TYPING, "b"),
+            ]);
+        }
+
+        // An entry ends at its last character, so slow typing is not followed by a pause it never had.
+        [Fact]
+        public void A_long_entry_is_measured_from_its_last_character()
+        {
+            Key(0, KeyCodeEnum.A).Key(300, KeyCodeEnum.B).Key(600, KeyCodeEnum.C).Key(900, KeyCodeEnum.D).Key(1100, KeyCodeEnum.Enter);
+
+            Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.TYPING, RecordedActionKindEnum.KEY_COMBINATION]);
+        }
+
+        // ================================================================
         // Pauses and order
         // ================================================================
 
@@ -248,6 +363,17 @@ namespace Business.Tests.Recording
                 RecordedActionKindEnum.KEY_COMBINATION,
             ]);
             actions[2].PauseMilliseconds.ShouldBe(1000);
+        }
+
+        // The time spent paused is the tester's, not a wait the flow has to make.
+        [Fact]
+        public void A_pause_the_tester_took_is_not_a_wait()
+        {
+            Key(0, KeyCodeEnum.Enter);
+            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.RESUMED, CreatedOn = START.AddMinutes(5) });
+            Key(300_100, KeyCodeEnum.Tab);
+
+            Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.KEY_COMBINATION, RecordedActionKindEnum.KEY_COMBINATION]);
         }
 
         [Fact]

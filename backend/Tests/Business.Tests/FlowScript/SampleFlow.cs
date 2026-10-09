@@ -90,6 +90,9 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG, FlowPoint = hamburger, FlowPointEnd = origin, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Ctrl+C" }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Shift", KeyboardKeyActionType = KeyboardKeyActionTypeEnum.HOLD }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Shift", KeyboardKeyActionType = KeyboardKeyActionTypeEnum.RELEASE }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);

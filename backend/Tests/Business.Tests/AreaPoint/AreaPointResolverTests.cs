@@ -4,6 +4,7 @@ using Business.AreaPoint;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
 namespace Business.Tests.AreaPoint

@@ -42,9 +42,24 @@ namespace Business.Tests.Fakes
             throw new NotImplementedException();
         }
 
-        public string? GetForegroundWindowTitle()
+        // What a press lands on and what keys go to.
+        public TopLevelWindow Pointed { get; set; } = TopLevelWindow.None;
+        public TopLevelWindow InFront { get; set; } = TopLevelWindow.None;
+        public int WindowProcessId { get; set; }
+
+        public TopLevelWindow GetWindowAt(Point point)
         {
-            throw new NotImplementedException();
+            return Pointed;
+        }
+
+        public TopLevelWindow GetWindowInFront()
+        {
+            return InFront;
+        }
+
+        public int GetProcessId(WindowHandle handle)
+        {
+            return WindowProcessId;
         }
 
         public bool FocusWindow(WindowHandle handle)
