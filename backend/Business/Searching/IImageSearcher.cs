@@ -1,4 +1,4 @@
-using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 
 namespace Business.Searching
 {

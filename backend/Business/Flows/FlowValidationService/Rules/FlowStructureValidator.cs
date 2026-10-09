@@ -1,4 +1,6 @@
+using Business.Executions;
 using Core.Enums;
+using Core.Enums.Business;
 using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -55,6 +57,7 @@ namespace Business.Flows.FlowValidationService.Rules
 
             ValidateNamesAreUnique(authoredSteps, flowNames, result);
             ValidateVariables(authoredSteps, flowNames, result);
+            ValidateHeldKeys(childrenByParentId, result);
         }
 
 
@@ -232,6 +235,58 @@ namespace Business.Flows.FlowValidationService.Rules
         private static bool IsEveryBranchEmpty(FlowStep step, ILookup<int?, FlowStep> childrenByParent)
         {
             return childrenByParent[step.Id].All(branch => !childrenByParent[branch.Id].Any());
+        }
+
+        // Keys held with no release of them anywhere below stay down for the rest of the execution,
+        // and every key typed after them reads as a shortcut. The engine lets go when the execution
+        // ends; this says so while the flow is being written.
+        private static void ValidateHeldKeys(ILookup<int?, FlowStep> childrenByParentId, FlowValidationResultDto result)
+        {
+            List<FlowStep> inOrder = new List<FlowStep>();
+            AddInScriptOrder(null, childrenByParentId, inOrder);
+
+            for (int index = 0; index < inOrder.Count; index++)
+            {
+                FlowStep hold = inOrder[index];
+                if (!IsKeyAction(hold, KeyboardKeyActionTypeEnum.HOLD))
+                    continue;
+
+                bool isReleased = inOrder
+                    .Skip(index + 1)
+                    .Any(x => IsKeyAction(x, KeyboardKeyActionTypeEnum.RELEASE) && IsSameKeys(hold.KeyboardInputText, x.KeyboardInputText));
+
+                if (!isReleased)
+                {
+                    result.Add(hold, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.KEYS_NOT_RELEASED,
+                        $"Nothing below lets go of {hold.KeyboardInputText}, so it stays held until the execution ends.");
+                }
+            }
+        }
+
+        // The order the script writes them: each step, then what sits under it.
+        private static void AddInScriptOrder(int? parentId, ILookup<int?, FlowStep> childrenByParentId, List<FlowStep> inOrder)
+        {
+            foreach (FlowStep step in childrenByParentId[parentId].OrderBy(x => x.OrderNumber))
+            {
+                inOrder.Add(step);
+                AddInScriptOrder(step.Id, childrenByParentId, inOrder);
+            }
+        }
+
+        private static bool IsKeyAction(FlowStep step, KeyboardKeyActionTypeEnum keyAction)
+        {
+            return step.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT
+                && step.KeyboardInputType == KeyboardInputTypeEnum.COMBINATION
+                && step.KeyboardKeyActionType == keyAction;
+        }
+
+        // "ctrl+shift" lets go of what "Shift+Ctrl" held.
+        private static bool IsSameKeys(string held, string released)
+        {
+            if (!KeyCombinationHelper.TryParseKeys(held, out List<KeyCodeEnum> heldKeys) || !KeyCombinationHelper.TryParseKeys(released, out List<KeyCodeEnum> releasedKeys))
+                return string.Equals(held.Trim(), released.Trim(), StringComparison.OrdinalIgnoreCase);
+
+            return heldKeys.ToHashSet().SetEquals(releasedKeys);
         }
     }
 }

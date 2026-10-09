@@ -446,7 +446,19 @@ namespace Business.Ai.Tools
                 return steps;
 
             return steps
-                .Select(x => x.TypedText.Length == 0 ? x : x with { TypedText = _redacted })
+                .Select(x => x.TypedText.Length == 0 ? x : new StepSummary(
+                x.Id,
+                x.FlowId,
+                x.Name,
+                x.Type,
+                x.ProcessName,
+                x.TitlePattern,
+                _redacted,
+                x.Command,
+                x.ConditionText,
+                x.SubFlowId,
+                x.FlowAreaId,
+                x.FlowPointId))
                 .ToList();
         }
 

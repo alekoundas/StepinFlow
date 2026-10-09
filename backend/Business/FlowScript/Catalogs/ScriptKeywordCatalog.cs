@@ -138,6 +138,10 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("left", CursorScrollDirectionTypeEnum.LEFT),
             new ScriptKeyword("right", CursorScrollDirectionTypeEnum.RIGHT),
 
+            // Keyboard
+            new ScriptKeyword("hold", KeyboardKeyActionTypeEnum.HOLD),
+            new ScriptKeyword("release", KeyboardKeyActionTypeEnum.RELEASE),
+
             // System
             new ScriptKeyword("LOCK_WORKSTATION", SystemActionTypeEnum.LOCK_WORKSTATION),
             new ScriptKeyword("SLEEP_PC", SystemActionTypeEnum.SLEEP_PC),

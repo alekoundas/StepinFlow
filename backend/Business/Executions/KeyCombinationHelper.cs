@@ -53,6 +53,36 @@ namespace Business.Executions
             return Keys.TryGetValue(parts[^1], out key);
         }
 
+        /// <summary>
+        /// Every key the text names, in the order written - what a hold puts down and a release lets
+        /// up. A modifier may stand anywhere, alone included: "Ctrl" and "Ctrl+Shift" are both keys
+        /// to hold.
+        /// </summary>
+        public static bool TryParseKeys(string text, out List<KeyCodeEnum> keys)
+        {
+            keys = new List<KeyCodeEnum>();
+
+            string[] parts = text.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0)
+                return false;
+
+            foreach (string part in parts)
+            {
+                if (Modifiers.TryGetValue(part, out KeyCodeEnum modifier))
+                {
+                    keys.Add(modifier);
+                    continue;
+                }
+
+                if (!Keys.TryGetValue(part, out KeyCodeEnum key))
+                    return false;
+
+                keys.Add(key);
+            }
+
+            return true;
+        }
+
 
         // ================================================================
         // Private methods

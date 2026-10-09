@@ -1,6 +1,7 @@
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
+import type { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
@@ -80,6 +81,8 @@ export class FlowStepDto {
   // KEYBOARD_INPUT
   keyboardInputText: string = "";
   keyboardInputType?: KeyboardInputTypeEnum;
+  // Send keys only. Empty is a press.
+  keyboardKeyActionType?: KeyboardKeyActionTypeEnum | null;
 
   // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL
   //

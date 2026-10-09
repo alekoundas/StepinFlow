@@ -187,7 +187,10 @@ export const backendApiService = {
 
 
   Recording: {
-    start: () => call<boolean>("Recording.start"),
+    // With a flow, against its main area. Without one, as the wizard records.
+    start: (flowId?: number) => call<boolean>("Recording.start", { flowId }),
+    pause: () => call<boolean>("Recording.pause"),
+    resume: () => call<boolean>("Recording.resume"),
     stop: () => call<RecordedActionDto[]>("Recording.stop"),
     discard: () => call<boolean>("Recording.discard"),
     // .Net returns byte[], which arrives here as a base64 string

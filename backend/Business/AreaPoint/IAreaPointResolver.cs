@@ -1,4 +1,4 @@
-using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
 namespace Business.AreaPoint

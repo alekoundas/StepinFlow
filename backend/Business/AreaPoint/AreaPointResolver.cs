@@ -5,6 +5,7 @@ using Core.Models.Database;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
+using Core.Models.Business.AreaPointResolution;
 
 namespace Business.AreaPoint
 {
@@ -82,11 +83,7 @@ namespace Business.AreaPoint
             if (!placed.IsResolved)
                 return placed;
 
-            return placed with
-            {
-                ScalesWith = ScalesWithOf(area),
-                Dpi = DpiAt(placed.Bounds),
-            };
+            return AreaResolution.Ok(placed.Bounds, placed.Window, ScalesWithOf(area), DpiAt(placed.Bounds));
         }
 
         public PointResolution ResolvePoint(FlowPoint point)
@@ -169,7 +166,7 @@ namespace Business.AreaPoint
             if (bounds.Width <= 0 || bounds.Height <= 0)
                 return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.");
 
-            return AreaResolution.Ok(bounds);
+            return AreaResolution.Ok(bounds, hwnd);
         }
 
         private AreaResolution ResolveCustom(FlowArea area)

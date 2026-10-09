@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
@@ -6,7 +7,11 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
-import { KEYBOARD_MODES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
+import {
+  KEY_ACTIONS,
+  KEYBOARD_MODES,
+} from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 import {
   toDisplay,
   useCaptureCombination,
@@ -22,14 +27,25 @@ export default function FlowStepKeyboardFormFieldsComponent({
   const { control, setValue } = useFormContext();
   const mode = useWatch({ control, name: "keyboardInputType" });
   const combination = useWatch({ control, name: "keyboardInputText" }) as string;
+  const keyAction = useWatch({ control, name: "keyboardKeyActionType" });
 
   const { captureCombination, cancelCapture, isCapturing, heldKeys } =
     useCaptureCombination();
 
   const isCombination = mode === KeyboardInputTypeEnum.COMBINATION;
 
+  // A hold of Ctrl on its own is a hold; a press of Ctrl on its own is nothing the engine can send.
+  const isHoldOrRelease =
+    keyAction === KeyboardKeyActionTypeEnum.HOLD || keyAction === KeyboardKeyActionTypeEnum.RELEASE;
+
+  // Steps saved before Hold existed have no key action, and read as a press.
+  useEffect(() => {
+    if (isCombination && !keyAction)
+      setValue("keyboardKeyActionType", KeyboardKeyActionTypeEnum.PRESS);
+  }, [isCombination, keyAction, setValue]);
+
   const record = async () => {
-    const captured = await captureCombination();
+    const captured = await captureCombination(isHoldOrRelease);
     if (captured === null) return;
 
     setValue("keyboardInputText", captured, {
@@ -64,6 +80,17 @@ export default function FlowStepKeyboardFormFieldsComponent({
           isRequired={true}
           isDisabled={isDisabled}
           hintText="Typed literally. To press Enter or Tab, add a Send Keys step after this one."
+        />
+      )}
+
+      {isCombination && (
+        <FormSelectButtonComponent
+          fieldName="keyboardKeyActionType"
+          labelText="Keys"
+          options={KEY_ACTIONS.map((x) => ({ label: x.label, value: x.value }))}
+          isRequired={true}
+          isDisabled={isDisabled || isCapturing}
+          hintText={KEY_ACTIONS.find((x) => x.value === keyAction)?.description}
         />
       )}
 

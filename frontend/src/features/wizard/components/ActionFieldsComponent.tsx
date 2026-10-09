@@ -161,6 +161,13 @@ export default function ActionFieldsComponent({
           />
         )}
 
+        {(optionId === "hold-keys" || optionId === "release-keys") && (
+          <FormInputTextComponent
+            fieldName="keyboardInputText"
+            label={optionId === "hold-keys" ? "Keys to hold" : "Keys to let go of"}
+          />
+        )}
+
         {optionId === "wait" && (
           <FormInputNumberComponent
             fieldName="waitForMilliseconds"

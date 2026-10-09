@@ -114,6 +114,7 @@ namespace Core.Catalogs
             [
                 nameof(FlowStep.KeyboardInputText),
                 nameof(FlowStep.KeyboardInputType),
+                nameof(FlowStep.KeyboardKeyActionType),
             ],
 
             [FlowStepTypeEnum.SEARCH_IMAGE] =

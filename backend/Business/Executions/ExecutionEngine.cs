@@ -30,6 +30,7 @@ namespace Business.Executions
         private readonly IExecutionCacheService _cache;
         private readonly IExecutionHistoryService _history;
         private readonly IIpcBroadcastService _broadcastService;
+        private readonly IInputService _inputService;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<ExecutionEngine> _logger;
         private ExecutionFlowWalker _walker = null!;
@@ -58,6 +59,7 @@ namespace Business.Executions
             IExecutionCacheService cache,
             IExecutionHistoryService history,
             IIpcBroadcastService broadcastService,
+            IInputService inputService,
             TimeProvider timeProvider,
             ILogger<ExecutionEngine> logger)
         {
@@ -66,6 +68,7 @@ namespace Business.Executions
             _cache = cache;
             _history = history;
             _broadcastService = broadcastService;
+            _inputService = inputService;
             _timeProvider = timeProvider;
             _logger = logger;
         }
@@ -141,6 +144,18 @@ namespace Business.Executions
                     errorStepId = _currentStepId;
 
                     _logger.LogWarning(ex, "Execution {ExecutionId} stopped at step {FlowStepId}.", ExecutionId, _currentStepId);
+                }
+
+                // A step can leave a key or a mouse button down - a Hold whose Release never came,
+                // because the flow failed or was stopped between them. Nothing stays held on the
+                // machine once the execution is over.
+                try
+                {
+                    _inputService.ReleaseHeld();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Execution {ExecutionId} could not let go of what it held.", ExecutionId);
                 }
 
                 // Complete execution
@@ -304,7 +319,7 @@ namespace Business.Executions
             if (verdict == null)
                 return new WalkOutcome(stepCount, ExecutionStatusEnum.INCONCLUSIVE, string.Empty);
 
-            return verdict with { StepCount = stepCount };
+            return new WalkOutcome(stepCount, verdict.Status, verdict.Reason);
         }
 
         private async Task<ExecutionStep> ExecuteAsync(FlowStep step, CancellationToken ct)

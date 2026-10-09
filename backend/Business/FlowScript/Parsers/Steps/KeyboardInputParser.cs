@@ -13,21 +13,28 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Press  <[ Ctrl+C ]> | Type  <[ text ]>
+            // Press  <[ Ctrl+C ]>   [hold | release] | Type  <[ text ]>
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.KEYBOARD_INPUT);
+            KeyboardInputTypeEnum type = keyword.As<KeyboardInputTypeEnum>()!.Value;
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string text = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            ExpectEnd();
-
-            return new FlowStep()
+            FlowStep step = new FlowStep()
             {
                 FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
-                KeyboardInputType = keyword.As<KeyboardInputTypeEnum>()!.Value,
+                KeyboardInputType = type,
                 KeyboardInputText = text
             };
+
+            // Keys are held or released, never typed text. A press when left out.
+            if (type == KeyboardInputTypeEnum.COMBINATION)
+                step.KeyboardKeyActionType = ExtractOptionalKeyword<KeyboardKeyActionTypeEnum>() ?? KeyboardKeyActionTypeEnum.PRESS;
+
+            ExpectEnd();
+
+            return step;
         }
     }
 }

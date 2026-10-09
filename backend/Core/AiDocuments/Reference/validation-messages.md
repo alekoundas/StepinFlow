@@ -89,3 +89,8 @@ result changes nothing.
 with nothing around it, a point measured from nothing, or anything inside such a region. It works
 on this screen and lands somewhere else on any other. Put the region inside a window or a monitor,
 or measure the point from one.
+
+**KEYS_NOT_RELEASED** — a `KEYBOARD_INPUT` step holds keys and nothing below it lets go of the same
+keys, so they stay down for the rest of the execution and every key typed after them reads as a
+shortcut. Add a step that releases them after the steps they are held for. The engine lets go of
+anything still held when the execution ends, however it ends.

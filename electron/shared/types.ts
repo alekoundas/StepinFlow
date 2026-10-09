@@ -102,6 +102,7 @@ export interface RecordedInput {
   // Keyboard
   keyCode?: KeyCodeEnum;
   keyChar?: string; // Human readable
+  isCapsLockOn?: boolean; // As the hook saw it when the key went down
 
   // Scroll
   scrollDirection?: CursorScrollDirectionTypeEnum;
@@ -112,6 +113,9 @@ export interface RecordedInput {
   index: number;
   windowTitle?: string | null;
   hasScreenshot: boolean;
+
+  // Which window a press or a scroll landed on. Null with no main area to sort against.
+  window?: RecordedWindowEnum | null;
 
   createdOn: Date;
 }
@@ -141,9 +145,19 @@ export const RecordedInputTypeEnum = {
   // Keyboard
   KEY_UP: "KEY_UP",
   KEY_DOWN: "KEY_DOWN",
+  // Session: the tester resumed after a pause
+  RESUMED: "RESUMED",
 } as const;
 export type RecordedInputTypeEnum =
   (typeof RecordedInputTypeEnum)[keyof typeof RecordedInputTypeEnum];
+
+export const RecordedWindowEnum = {
+  MAIN_AREA: "MAIN_AREA",
+  SAME_APPLICATION: "SAME_APPLICATION",
+  OTHER: "OTHER",
+} as const;
+export type RecordedWindowEnum =
+  (typeof RecordedWindowEnum)[keyof typeof RecordedWindowEnum];
 
 export const CursorScrollDirectionTypeEnum = {
   UP: "UP",

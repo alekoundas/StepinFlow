@@ -30,6 +30,7 @@ namespace Core.Models.Dtos
         // KEYBOARD_INPUT
         public string? KeyboardInputText { get; set; }
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }
+        public KeyboardKeyActionTypeEnum? KeyboardKeyActionType { get; set; }
 
         // WINDOW_RESIZE
         public int WindowWidth { get; set; }

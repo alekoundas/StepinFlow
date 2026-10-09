@@ -55,6 +55,7 @@ namespace Business.Flows
 
                 KeyboardInputText = x.KeyboardInputText,
                 KeyboardInputType = x.KeyboardInputType,
+                KeyboardKeyActionType = x.KeyboardKeyActionType,
 
                 WindowWidth = x.WindowWidth,
                 WindowHeight = x.WindowHeight,

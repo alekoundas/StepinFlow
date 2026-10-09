@@ -208,6 +208,8 @@ namespace App
             builder.Services.AddTransient<GetLookupAiModelsHandler>();
             builder.Services.AddTransient<GetLookupAiModelSuggestionsHandler>();
             builder.Services.AddTransient<StartRecordingHandler>();
+            builder.Services.AddTransient<PauseRecordingHandler>();
+            builder.Services.AddTransient<ResumeRecordingHandler>();
             builder.Services.AddTransient<StopRecordingHandler>();
             builder.Services.AddTransient<DiscardRecordingHandler>();
             builder.Services.AddTransient<GetRecordingScreenshotHandler>();
@@ -218,6 +220,7 @@ namespace App
             builder.Services.AddTransient<SystemMoveCursorHandler>();
             builder.Services.AddTransient<SystemInstallOcrLanguageHandler>();
             builder.Services.AddTransient<SystemOpenWindowsLanguageSettingsHandler>();
+            builder.Services.AddTransient<SystemConnectHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStartHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStopHandler>();
             builder.Services.AddTransient<SystemInputRecordOverlayStartHandler>();

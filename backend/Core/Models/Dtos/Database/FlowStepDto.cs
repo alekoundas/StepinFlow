@@ -72,6 +72,7 @@ namespace Core.Models.Dtos
         // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }
+        public KeyboardKeyActionTypeEnum? KeyboardKeyActionType { get; set; }
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL

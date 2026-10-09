@@ -27,7 +27,7 @@ namespace Business.Executions.Workers
                 return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated(command.Untranslated));
 
             // The request is a copy, so resolving into it cannot change the step the cache holds.
-            CommandRequest request = CommandRequest.From(step) with { Value = command.Text };
+            CommandRequest request = CommandRequest.From(step, command.Text);
 
             RunCommandTestResultDto run = await _commandRunner.RunAsync(request, ct);
 

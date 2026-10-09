@@ -12,7 +12,7 @@ namespace Business.Command
     /// a profile that lives in the composition root, which is what made it the one worker with no
     /// test. Eight fields, named side by side, and the dependency is gone.
     /// </summary>
-    public sealed record CommandRequest
+    public sealed class CommandRequest
     {
         public RunCommandPresetEnum Preset { get; set; }
 
@@ -33,12 +33,18 @@ namespace Business.Command
         /// <summary>Regex, first capture group. Empty keeps the whole output.</summary>
         public string ResultExtractPattern { get; set; } = string.Empty;
 
-        public static CommandRequest From(FlowStep step)
+
+        // ================================================================
+        // Public methods
+        // ================================================================
+
+        /// <summary>The step's command with its variables already resolved, as an execution runs it.</summary>
+        public static CommandRequest From(FlowStep step, string value)
         {
             return new CommandRequest
             {
                 Preset = step.RunCommandPreset,
-                Value = step.RunCommandValue,
+                Value = value,
                 Shell = step.RunCommandShell,
                 WorkingDirectory = step.RunCommandWorkingDirectory,
                 TimeoutMilliseconds = step.TimeoutMilliseconds,

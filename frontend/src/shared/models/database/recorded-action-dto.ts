@@ -2,6 +2,7 @@ import type { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-act
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
+import type { RecordedWindowEnum } from "../../../../../electron/shared/types";
 
 /**
  * One thing the user did, after a press and a release have been folded into a click and a burst
@@ -14,6 +15,9 @@ export interface RecordedActionDto {
   kind: RecordedActionKindEnum;
   summary: string;
   windowTitle?: string | null;
+
+  /** Which window a click, drag or scroll landed on. Null with no main area. */
+  window?: RecordedWindowEnum | null;
 
   /** Key into the session screenshot store, when one was captured. */
   screenshotIndex?: number | null;

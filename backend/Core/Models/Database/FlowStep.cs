@@ -23,8 +23,6 @@ namespace Core.Models.Database
 
         // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum SearchMode { get; set; }
-
-        // Defaults for the step's templates, each of which may override them.
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.SHAPE;
 
         public int MaxMatches { get; set; } = 20;
@@ -38,7 +36,6 @@ namespace Core.Models.Database
         public RunCommandShellEnum RunCommandShell { get; set; }
         public RunCommandPresetEnum RunCommandPreset { get; set; }
 
-        /// <summary>The preset's single parameter, or the whole command when the preset is CUSTOM.</summary>
         public string RunCommandValue { get; set; } = string.Empty;
         public string RunCommandWorkingDirectory { get; set; } = string.Empty;
 
@@ -52,7 +49,6 @@ namespace Core.Models.Database
 
 
         // SYSTEM_COMMAND, SEARCH_TEXT
-        /// <summary>Regex, first capture group. Empty keeps the whole text.</summary>
         public string ResultExtractPattern { get; set; } = string.Empty;
 
 
@@ -62,10 +58,8 @@ namespace Core.Models.Database
 
         // SEARCH_TEXT, CHECK_VALUE (the text being looked for)
         public string ConditionText { get; set; } = string.Empty;
-        public ConditionTypeEnum? ConditionType { get; set; }
-
-        /// <summary>Upper bound of BETWEEN, unused by every other condition.</summary>
         public string ConditionTextEnd { get; set; } = string.Empty;
+        public ConditionTypeEnum? ConditionType { get; set; }
 
 
         // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
@@ -80,6 +74,7 @@ namespace Core.Models.Database
         // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }
+        public KeyboardKeyActionTypeEnum? KeyboardKeyActionType { get; set; }  
 
 
         // CURSOR_DRAG, CURSOR_CLICK, CURSOR_RELOCATE, CURSOR_SCROLL

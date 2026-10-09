@@ -1,5 +1,5 @@
 using Business.AreaPoint;
-using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers

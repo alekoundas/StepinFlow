@@ -1,6 +1,7 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
+import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import type { TreeNodeDetailDto, TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 export interface TreeNodeChip {
@@ -115,13 +116,20 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         ],
       };
 
-    case FlowStepTypeEnum.KEYBOARD_INPUT:
+    case FlowStepTypeEnum.KEYBOARD_INPUT: {
+      const chips = detail.keyboardInputType
+        ? [{ text: readable(detail.keyboardInputType), isMuted: true }]
+        : [];
+
+      // A press is nearly every one, so only a hold or a release says so.
+      if (detail.keyboardKeyActionType && detail.keyboardKeyActionType !== KeyboardKeyActionTypeEnum.PRESS)
+        chips.push({ text: readable(detail.keyboardKeyActionType), isMuted: false });
+
       return {
         text: detail.keyboardInputText ? truncate(detail.keyboardInputText) : undefined,
-        chips: detail.keyboardInputType
-          ? [{ text: readable(detail.keyboardInputType), isMuted: true }]
-          : [],
+        chips,
       };
+    }
 
     case FlowStepTypeEnum.WINDOW_FOCUS:
       return { text: detail.areaName ?? "no window picked", chips: [] };

@@ -26,18 +26,23 @@ const MODIFIER_NAMES: Record<string, string> = {
 const MODIFIER_ORDER = ["Ctrl", "Alt", "Shift", "Win"];
 
 /**
- * The text form of what was held, or null when nothing but modifiers was.
+ * The text form of what was held, or null when nothing but modifiers was - unless modifiers alone
+ * are wanted, as a Hold of Ctrl is.
  *
  * Key names are KeyCodeEnum members untranslated, because that is what the backend parses back
  * into keys. Anything invented here would be a combination the engine cannot press.
  */
-export const toCombination = (keyCodes: string[]): string | null => {
+export const toCombination = (keyCodes: string[], allowModifiersOnly = false): string | null => {
   const pressed = keyCodes.filter((x) => !(x in MODIFIER_NAMES));
-  if (pressed.length === 0) return null;
-
   const modifiers = MODIFIER_ORDER.filter((name) =>
     keyCodes.some((x) => MODIFIER_NAMES[x] === name),
   );
+
+  if (pressed.length === 0) {
+    if (allowModifiersOnly && modifiers.length > 0) return modifiers.join("+");
+
+    return null;
+  }
 
   // The last one, so rolling off a combination binds the key that finished it.
   return [...modifiers, pressed[pressed.length - 1]].join("+");
@@ -48,7 +53,7 @@ export const toDisplay = (keyCodes: string[]): string =>
   keyCodes.map((x) => MODIFIER_NAMES[x] ?? x).join("+");
 
 interface Props {
-  captureCombination: () => Promise<string | null>;
+  captureCombination: (allowModifiersOnly?: boolean) => Promise<string | null>;
   cancelCapture: () => void;
   isCapturing: boolean;
   heldKeys: string[];
@@ -74,7 +79,7 @@ export function useCaptureCombination(): Props {
   // the first key arrived.
   const heldRef = useRef<string[]>([]);
 
-  const captureCombination = useCallback((): Promise<string | null> => {
+  const captureCombination = useCallback((allowModifiersOnly = false): Promise<string | null> => {
     if (teardownRef.current) return Promise.resolve(null);
 
     setIsCapturing(true);
@@ -116,7 +121,7 @@ export function useCaptureCombination(): Props {
 
           if (event.payload.type !== "KEY_UP" || heldRef.current.length === 0) return;
 
-          const combination = toCombination(heldRef.current);
+          const combination = toCombination(heldRef.current, allowModifiersOnly);
 
           // Letting go of a modifier having pressed nothing else is not a combination the engine
           // can press, so it starts over rather than committing something that would fail.

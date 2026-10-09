@@ -2,6 +2,7 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import type { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import type { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
+import type { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
@@ -30,6 +31,7 @@ export interface TreeNodeDetailDto {
 
   keyboardInputText?: string | null;
   keyboardInputType?: KeyboardInputTypeEnum | null;
+  keyboardKeyActionType?: KeyboardKeyActionTypeEnum | null;
 
   windowWidth: number;
   windowHeight: number;

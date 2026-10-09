@@ -7,6 +7,7 @@ import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/curso
 import { centreClickOffset } from "@/shared/utils/image-size";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
+import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { DraftStepSourceEnum } from "@/shared/enums/backend/draft-step-source-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
@@ -100,6 +101,10 @@ const defaultName = (action: RecordedActionDto, optionId: string): string => {
       return "Type text";
     case "send-keys":
       return `Press ${action.text ?? ""}`.trim();
+    case "hold-keys":
+      return `Hold ${action.text ?? ""}`.trim();
+    case "release-keys":
+      return `Release ${action.text ?? ""}`.trim();
     default:
       return "Wait";
   }
@@ -148,6 +153,27 @@ const TYPING_OPTIONS: ActionOption[] = [
   },
 ];
 
+// A modifier held over a click or a scroll: a Ctrl+click is a hold, the click, and a release.
+const HOLD_OPTIONS: ActionOption[] = [
+  {
+    id: "hold-keys",
+    label: "Hold these keys",
+    description: "Keeps them down for the steps after it, until a Release lets go.",
+    iconName: "lock",
+    stepCount: 1,
+  },
+];
+
+const RELEASE_OPTIONS: ActionOption[] = [
+  {
+    id: "release-keys",
+    label: "Let go of these keys",
+    description: "Releases the keys a Hold put down.",
+    iconName: "lock-open",
+    stepCount: 1,
+  },
+];
+
 const PAUSE_OPTIONS: ActionOption[] = [
   {
     id: "wait",
@@ -177,6 +203,12 @@ export const optionsFor = (action: RecordedActionDto): ActionOption[] => {
 
     case RecordedActionKindEnum.KEY_COMBINATION:
       return [TYPING_OPTIONS[1], TYPING_OPTIONS[0]];
+
+    case RecordedActionKindEnum.KEY_HOLD:
+      return HOLD_OPTIONS;
+
+    case RecordedActionKindEnum.KEY_RELEASE:
+      return RELEASE_OPTIONS;
 
     case RecordedActionKindEnum.PAUSE:
       return PAUSE_OPTIONS;
@@ -250,6 +282,16 @@ export const buildSteps = (
       name: answers.name,
       cursorButtonType: answers.cursorButtonType,
       cursorButtonActionType: answers.cursorButtonActionType,
+    });
+
+  /** Send keys: pressed, held down, or let go of. */
+  const keys = (keyboardKeyActionType: KeyboardKeyActionTypeEnum): DraftStepDto =>
+    base({
+      flowStepType: FlowStepTypeEnum.KEYBOARD_INPUT,
+      name: answers.name,
+      keyboardInputType: KeyboardInputTypeEnum.COMBINATION,
+      keyboardInputText: answers.keyboardInputText,
+      keyboardKeyActionType,
     });
 
   /** The search half of every image option, which is where the template and area live. */
@@ -370,14 +412,13 @@ export const buildSteps = (
       ];
 
     case "send-keys":
-      return [
-        base({
-          flowStepType: FlowStepTypeEnum.KEYBOARD_INPUT,
-          name: answers.name,
-          keyboardInputType: KeyboardInputTypeEnum.COMBINATION,
-          keyboardInputText: answers.keyboardInputText,
-        }),
-      ];
+      return [keys(KeyboardKeyActionTypeEnum.PRESS)];
+
+    case "hold-keys":
+      return [keys(KeyboardKeyActionTypeEnum.HOLD)];
+
+    case "release-keys":
+      return [keys(KeyboardKeyActionTypeEnum.RELEASE)];
 
     case "wait":
       return [

@@ -3,6 +3,7 @@ using Core.Ports;
 using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
+using Core.Models.Business.AreaPointResolution;
 
 namespace Business.Executions.Workers
 {

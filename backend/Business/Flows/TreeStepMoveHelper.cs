@@ -168,7 +168,8 @@ namespace Business.Flows
         // cares which siblings end up above it.
         private static Dictionary<int, StepChainNode> AfterMove(Dictionary<int, StepChainNode> before, FlowStepMoveDto dto)
         {
-            StepChainNode moved = before[dto.FlowStepId] with { ParentFlowStepId = dto.TargetParentFlowStepId };
+            StepChainNode from = before[dto.FlowStepId];
+            StepChainNode moved = new StepChainNode(from.Id, dto.TargetParentFlowStepId, from.FlowStepType, from.Name, from.OrderNumber);
 
             List<StepChainNode> siblings = before.Values
                 .Where(x => x.ParentFlowStepId == dto.TargetParentFlowStepId && x.Id != dto.FlowStepId)
@@ -179,7 +180,10 @@ namespace Business.Flows
 
             Dictionary<int, StepChainNode> after = new Dictionary<int, StepChainNode>(before);
             for (int index = 0; index < siblings.Count; index++)
-                after[siblings[index].Id] = siblings[index] with { OrderNumber = index };
+            {
+                StepChainNode sibling = siblings[index];
+                after[sibling.Id] = new StepChainNode(sibling.Id, sibling.ParentFlowStepId, sibling.FlowStepType, sibling.Name, index);
+            }
 
             return after;
         }
