@@ -1,6 +1,6 @@
 using Core.Models.Business;
 
-namespace Business.Recording
+namespace Business.Recording.Session
 {
     public interface IRecordingSessionService
     {

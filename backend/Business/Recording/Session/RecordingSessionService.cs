@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Drawing;
 using System.Threading.Channels;
 
-namespace Business.Recording
+namespace Business.Recording.Session
 {
     /// <summary>
     /// Owns one recording at a time: the ordered actions, the screenshot taken for each click,

@@ -1557,16 +1557,17 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-439 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+558 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 83 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
-| `Business.Tests` | 338 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Core.Tests` | 131 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
+| `Business.Tests` | 405 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
-| `Transport.Tests`, `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
+| `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
+| `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
 
 ```bash
 npm run test:backend
@@ -1675,15 +1676,15 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 439 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 558 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
 ### Known gaps
 
 - The flow script has no button: export and import are reachable over IPC and nothing in the UI
-  calls them. Inside it, a `Sub Flow` step imports with no target, and `FlowValidationService` does
-  not yet run on import.
+  calls them, so an import's errors and warnings have no screen to show on yet. Inside it, a
+  `Sub Flow` step imports with no target.
 - No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
 - How long a step's result stays readable is undecided (§8).
 - The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build

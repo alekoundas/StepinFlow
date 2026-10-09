@@ -20,7 +20,7 @@ Everything here was finished by 2026-10-09.
 | 0 | One chokepoint for sending screen data to a model; screenshots gated, typed text redacted | `PROJECT.md` §10 |
 | 1 | Unique names across steps, areas, points and inputs; `NAME_DUPLICATE` | §9 |
 | 2 | `{{variables}}` from inputs, the viewport and earlier steps | §8 |
-| 3 | The app under test as the flow's root area; `FlowViewport` | §5, §11 |
+| 3 | `FlowViewport`, and an app under test on the flow that 5.13 replaced with the main area | §5, §11 |
 | 4 | The script writer and exporter | §7 |
 | 4.5 | `Platform.Windows` split out; `Business` on plain `net10.0` | §2 |
 | 4.6 | `TimeProvider`, analyzers as errors, banned APIs, `WindowHandle` | §2, §14 |
@@ -32,10 +32,11 @@ Everything here was finished by 2026-10-09.
 | 5.10 | The script reads straight into linked rows; one model for scanner, printer, import and export | §7 |
 | 5.11 | Every write to a flow goes through its data service; a flow with errors is refused at Run | §9, §14 |
 | 5.12 | Every step is a line: Click and Scroll act where the cursor is, Find All's Success once per hit, `nowhere` | §7 |
+| 5.13 | The header says what a flow is for and where it works: `Description:`, a `main` area, input defaults; an import returns its warnings and takes template images from memory | §3, §7, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** the recording update - 5.13, then phase 7 for automation flows, with phase 6's
-detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
+**Next:** the recording update - phase 7 for automation flows, with phase 6's detection model
+inside it. Settled 2026-10-08: a recording and a description become a flow with no
 question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
 Execution) still wants making before layer 5, because the engine tests would pin whichever answer is
@@ -50,6 +51,9 @@ live.
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
 - [ ] **Buttons.** `FlowScript.export` and `FlowScript.import` are reachable over IPC; nothing in the UI calls
       them yet. They share phase 7's script view, and an import lists its errors and warnings (5.13).
+- [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
+      one, imports it, and the flow form then refuses to save until it is cut. The data service
+      should hold the same limit, so a form and a file meet the same rule.
 - [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
       means reading the `Id:` out of the file it names and matching that, and deciding what a missing
@@ -131,47 +135,6 @@ exactly ran in execution 37").
       type per level), the rule for which stage a step is in (the nearest marker above at each
       level), how deep levels go, and how a sub-stage appears in the report - most CI dashboards
       flatten nested test suites, so probably as a test case named "Checkout › Payment".
-
-### 5.13. The script header and the main area
-
-- [ ] **The main area replaces the application under test**, settled 2026-10-08.
-      `Flow.AppUnderTestAreaId` goes: the flow form's update never saved it, nothing read it, and its
-      `NoAction` key would have made an import fail once it was set. `FlowArea.IsMain` marks the
-      window the flow works in, written `main` on its area line:
-      `<[ Billing portal ]>   main   window process <[ chrome.exe ]> …`. At most one, and it is a
-      root. Every recorded flow has one, picked before recording, and what the recorder stores is
-      relative to it, which is what makes a recording portable. A `CUSTOM` main area is screen
-      coordinates, so the flow is not portable and is told so. The viewport matrix sizes the same
-      area. Named `main` because `IsRoot` already means an area with no parent, "target" already
-      means a cursor's point or a `Go Back`'s step, and "primary" is the monitor's keyword.
-- [ ] **`Description:` in the header**, under `Sizes:`, as many lines as it has, one `#` per line
-      the way a code comment is written, and left out when empty. Settled 2026-10-09:
-
-      ```
-      Sizes:        1920x1080
-      Description:
-        # Signs in to the billing portal and downloads every invoice from last month as a PDF.
-        # The portal signs out after 15 minutes without input.
-      ```
-
-      A `#` directly under `Description:` is its text, and a blank line inside it is a bare `#`;
-      anywhere else in the header a `#` stays `COMMENT_UNATTACHED`. The form gets a text area of up
-      to 5000 characters, because the model will likely keep there what it needs to remember about
-      the flow. It is the sentence phases 7 and 9 need most: a model given the steps without it can
-      see what the flow does and not what it was for.
-- [ ] **Inputs carry their default value**: `<[ email ]>   default <[ ops@example.com ]>`. A clone
-      and a model's round trip keep the recorded value, and a CSV row still overrides it - which
-      changes `FLOW-FORMAT.md`'s rule that values live only in the CSV. A secret keeps no value in
-      the file: a hash cannot be typed back, and an encrypted value needs its key wherever the flow
-      executes and stays in git history for good. Its value resolves as phase 8 says.
-- [ ] **An import reports its warnings.** `FlowScriptImportResultDto` gets `Warnings` beside
-      `Errors`, filled when the import succeeds too, and the UI lists both with their line and
-      column after an import and on phase 7's Check page. `COMMENT_UNATTACHED` can then become the
-      warning it was meant to be: a comment above something that cannot carry it breaks nothing,
-      and it is an error today only because a warning on a file that imports had nowhere to go.
-- [ ] **Template bytes from a dictionary.** `ImportTextAsync` takes the images by name instead of a
-      folder path, and the folder overload reads the folder into one, so phase 7 imports its crops
-      from memory.
 
 ---
 
@@ -329,7 +292,7 @@ Open, each with a recommendation:
 - **A cloud model without screen content** gets no read text, so it names steps from the description
   and the order alone. Allowed, and the setup page says so.
 - **Window steps name an area** rather than repeating a process and title the main area already
-  holds - once the main area exists.
+  holds.
 
 **QA tests, after the automation path.** The setup's switch turns them on.
 
@@ -417,7 +380,7 @@ the diagnostics.
 - [ ] The loop **above** the walk that produces one execution per viewport per csv row.
       `Execution.ViewportWidth`, `ViewportHeight` and `CsvRowIndex` already exist, which is what
       settles it: the matrix cannot be a step.
-- [ ] Sizing targets the app under test window from phase 3, not "the screen".
+- [ ] Sizing targets the main area (5.13), not "the screen".
 - [ ] Each viewport passes happy-path validation of its own before it is worth running there.
 - [ ] **Sequential.** One mouse, one keyboard, one screen. Three sizes triples wall clock in CI and
       nobody should be surprised by that later.

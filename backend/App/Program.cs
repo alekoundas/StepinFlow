@@ -24,7 +24,7 @@ using Business.FlowScript.Text;
 using Business.Flows.FlowValidationService;
 using Business.Ai;
 using Business.AppSettings;
-using Business.Recording;
+using Business.Recording.Session;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;

@@ -1,4 +1,4 @@
-using Business.Recording;
+using Business.Recording.Session;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
