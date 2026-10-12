@@ -7,7 +7,7 @@ using Core.Ports;
 namespace Business.Tests.Fakes
 {
     /// <summary>The mouse and keyboard as a list of what they were told to do, one line each.</summary>
-    public sealed class FakeInputService : IInputService
+    public sealed class FakeInputSimulatorService : IInputSimulatorService
     {
         public List<string> Actions { get; } = new List<string>();
         public Point Position { get; set; }

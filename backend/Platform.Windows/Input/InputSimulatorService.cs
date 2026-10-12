@@ -8,18 +8,23 @@ using System.Drawing;
 
 namespace Platform.Windows.Input
 {
-    public sealed class InputService : IInputService
+    public sealed class InputSimulatorService : IInputSimulatorService
     {
         // SharpHook
         private readonly IEventSimulator _simulator = new EventSimulator();
 
+        // What steps put down and nothing has let go of yet, in the order it went down.
+        private readonly List<KeyCode> _heldKeys = new List<KeyCode>();
+        private readonly List<MouseButton> _heldButtons = new List<MouseButton>();
+        private readonly Lock _heldLock = new Lock();
+
         // Target apps process the move asynchronously, so pressing in the same tick can register
         // the click at the previous position.
-        private const int MoveSettleMilliseconds = 16;
+        private const int MOVE_SETTLE_MS = 16;
 
         // Well inside the Windows default of 500ms, and far enough apart that the two presses are
         // not swallowed as one.
-        private const int DoubleClickGapMilliseconds = 40;
+        private const int DOUBLE_CLICK_GAP_MS = 40;
 
         // Cursor movement does not go through SharpHook: its absolute coordinates are DPI
         // virtualized, and everything stored in the database is in physical pixels.
@@ -30,7 +35,7 @@ namespace Platform.Windows.Input
             MouseButton pressed = SharpHookMap.Button(button);
 
             MoveCursor(x, y);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMousePress(pressed);
             _simulator.SimulateMouseRelease(pressed);
@@ -41,14 +46,14 @@ namespace Platform.Windows.Input
             MouseButton pressed = SharpHookMap.Button(button);
 
             MoveCursor(x, y);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMousePress(pressed);
             _simulator.SimulateMouseRelease(pressed);
 
             // Two clicks, not one long one. Windows pairs them into a double click by the gap
             // between them, so this has to be short enough to count and long enough to be two.
-            Thread.Sleep(DoubleClickGapMilliseconds);
+            Thread.Sleep(DOUBLE_CLICK_GAP_MS);
 
             _simulator.SimulateMousePress(pressed);
             _simulator.SimulateMouseRelease(pressed);
@@ -59,9 +64,12 @@ namespace Platform.Windows.Input
             MouseButton pressed = SharpHookMap.Button(button);
 
             MoveCursor(x, y);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMousePress(pressed);
+
+            lock (_heldLock)
+                _heldButtons.Add(pressed);
         }
 
         public void SimulateMouseUp(int x, int y, CursorButtonTypeEnum button)
@@ -69,15 +77,18 @@ namespace Platform.Windows.Input
             MouseButton pressed = SharpHookMap.Button(button);
 
             MoveCursor(x, y);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMouseRelease(pressed);
+
+            lock (_heldLock)
+                _heldButtons.Remove(pressed);
         }
 
         public void SimulateMouseScroll(int x, int y, int delta)
         {
             MoveCursor(x, y);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMouseWheel((short)delta, 0);
         }
@@ -87,10 +98,10 @@ namespace Platform.Windows.Input
             MouseButton pressed = SharpHookMap.Button(button);
 
             MoveCursor(fromX, fromY);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             _simulator.SimulateMousePress(pressed);
-            Thread.Sleep(MoveSettleMilliseconds);
+            Thread.Sleep(MOVE_SETTLE_MS);
 
             // Applications that follow a drag need to see the cursor move while the button is down, so the jump is broken into steps rather than teleporting to the end.
             MoveInSteps(fromX, fromY, toX, toY);
@@ -103,7 +114,11 @@ namespace Platform.Windows.Input
             return NativeCursor.CurrentPosition();
         }
 
-        public void SimulateKeyboard(string text) => _simulator.SimulateTextEntry(text);
+        public void SimulateKeyboard(string text)
+        {
+            _simulator.SimulateTextEntry(text);
+        }
+
         public void SimulateKeyPress(KeyCodeEnum key)
         {
             KeyCode pressed = SharpHookMap.Key(key);
@@ -129,6 +144,49 @@ namespace Platform.Windows.Input
                 _simulator.SimulateKeyRelease(held[i]);
         }
 
+        public void SimulateKeysDown(IReadOnlyList<KeyCodeEnum> keys)
+        {
+            foreach (KeyCodeEnum key in keys)
+            {
+                KeyCode pressed = SharpHookMap.Key(key);
+                _simulator.SimulateKeyPress(pressed);
+
+                lock (_heldLock)
+                    _heldKeys.Add(pressed);
+            }
+        }
+
+        public void SimulateKeysUp(IReadOnlyList<KeyCodeEnum> keys)
+        {
+            for (int i = keys.Count - 1; i >= 0; i--)
+            {
+                KeyCode released = SharpHookMap.Key(keys[i]);
+                _simulator.SimulateKeyRelease(released);
+
+                lock (_heldLock)
+                    _heldKeys.Remove(released);
+            }
+        }
+
+        public void ReleaseHeld()
+        {
+            List<KeyCode> keys;
+            List<MouseButton> buttons;
+            lock (_heldLock)
+            {
+                keys = _heldKeys.ToList();
+                buttons = _heldButtons.ToList();
+                _heldKeys.Clear();
+                _heldButtons.Clear();
+            }
+
+            for (int i = keys.Count - 1; i >= 0; i--)
+                _simulator.SimulateKeyRelease(keys[i]);
+
+            foreach (MouseButton button in buttons)
+                _simulator.SimulateMouseRelease(button);
+        }
+
 
         // ================================================================
         // Private methods
@@ -144,7 +202,7 @@ namespace Platform.Windows.Input
                 int y = fromY + (toY - fromY) * i / steps;
 
                 MoveCursor(x, y);
-                Thread.Sleep(MoveSettleMilliseconds);
+                Thread.Sleep(MOVE_SETTLE_MS);
             }
         }
     }

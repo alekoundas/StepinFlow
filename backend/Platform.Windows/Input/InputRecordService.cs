@@ -7,10 +7,15 @@ using SharpHook.Data;
 
 namespace Platform.Windows.Input
 {
+    /// <summary>
+    /// SharpHook. Handlers run on one thread of their own, one at a time, in the order the
+    /// inputs were raised, so the hook is never held up and the recording keeps their order.
+    /// 
+    /// 
+    /// RecordedInput is raised on every event and published to broadcast.
+    /// </summary>
     public sealed class InputRecordService : IInputRecordService, IDisposable
     {
-        // SharpHook. Handlers run on one thread of their own, one at a time, in the order the
-        // inputs were raised, so the hook is never held up and the recording keeps their order.
         private readonly IGlobalHook _hook = new EventLoopGlobalHook();
 
         // The key the next typed character came from.

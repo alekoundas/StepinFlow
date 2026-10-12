@@ -68,7 +68,7 @@ namespace App
 
             // Ports
             builder.Services.AddSingleton<IOpenCvService, OpenCvService>();
-            builder.Services.AddSingleton<IInputService, InputService>();
+            builder.Services.AddSingleton<IInputSimulatorService, InputSimulatorService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();
             builder.Services.AddSingleton<IScreenService, ScreenService>();

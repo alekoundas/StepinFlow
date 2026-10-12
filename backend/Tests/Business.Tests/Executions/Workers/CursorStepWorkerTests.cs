@@ -19,7 +19,7 @@ namespace Business.Tests.Executions.Workers
     /// </summary>
     public sealed class CursorStepWorkerTests
     {
-        private readonly FakeInputService _input = new FakeInputService { Position = new Point(10, 20) };
+        private readonly FakeInputSimulatorService _input = new FakeInputSimulatorService { Position = new Point(10, 20) };
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
 
         private async Task<ExecutionStep> Cursor(FlowStep step, params FlowStep[] others)

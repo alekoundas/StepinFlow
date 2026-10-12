@@ -30,7 +30,7 @@ namespace Business.Executions
         private readonly IExecutionCacheService _cache;
         private readonly IExecutionHistoryService _history;
         private readonly IIpcBroadcastService _broadcastService;
-        private readonly IInputService _inputService;
+        private readonly IInputSimulatorService _inputSimulatorService;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<ExecutionEngine> _logger;
         private ExecutionFlowWalker _walker = null!;
@@ -59,7 +59,7 @@ namespace Business.Executions
             IExecutionCacheService cache,
             IExecutionHistoryService history,
             IIpcBroadcastService broadcastService,
-            IInputService inputService,
+            IInputSimulatorService inputSimulatorService,
             TimeProvider timeProvider,
             ILogger<ExecutionEngine> logger)
         {
@@ -68,7 +68,7 @@ namespace Business.Executions
             _cache = cache;
             _history = history;
             _broadcastService = broadcastService;
-            _inputService = inputService;
+            _inputSimulatorService = inputSimulatorService;
             _timeProvider = timeProvider;
             _logger = logger;
         }
@@ -151,7 +151,7 @@ namespace Business.Executions
                 // machine once the execution is over.
                 try
                 {
-                    _inputService.ReleaseHeld();
+                    _inputSimulatorService.ReleaseHeld();
                 }
                 catch (Exception ex)
                 {

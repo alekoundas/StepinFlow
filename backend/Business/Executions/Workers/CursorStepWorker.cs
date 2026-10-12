@@ -14,12 +14,12 @@ namespace Business.Executions.Workers
     /// </summary>
     public class CursorStepWorker : IStepWorker
     {
-        private readonly IInputService _inputService;
+        private readonly IInputSimulatorService _inputSimulatorService;
         private readonly IAreaPointResolver _areaPointResolver;
 
-        public CursorStepWorker(IInputService inputService, IAreaPointResolver areaPointResolver)
+        public CursorStepWorker(IInputSimulatorService inputSimulatorService, IAreaPointResolver areaPointResolver)
         {
-            _inputService = inputService;
+            _inputSimulatorService = inputSimulatorService;
             _areaPointResolver = areaPointResolver;
         }
 
@@ -55,7 +55,7 @@ namespace Business.Executions.Workers
             if (target == null)
                 return ExecutionStep.Failure("There is nowhere to move to.");
 
-            if (!_inputService.MoveCursor(target.Value.X, target.Value.Y))
+            if (!_inputSimulatorService.MoveCursor(target.Value.X, target.Value.Y))
                 return ExecutionStep.Failure("The cursor did not move. The window in front is probably running as administrator.");
 
             return ExecutionStep.Success(target.Value);
@@ -63,27 +63,27 @@ namespace Business.Executions.Workers
 
         private ExecutionStep Click(FlowStep step)
         {
-            Point at = _inputService.CursorPosition();
+            Point at = _inputSimulatorService.CursorPosition();
             CursorButtonTypeEnum button = step.CursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON;
 
             switch (step.CursorButtonActionType)
             {
                 case CursorButtonActionTypeEnum.DOUBLE_CLICK:
-                    _inputService.SimulateMouseDoubleClick(at.X, at.Y, button);
+                    _inputSimulatorService.SimulateMouseDoubleClick(at.X, at.Y, button);
                     break;
 
                 // Held and released are two halves of one gesture, so each is a step of its own and
                 // whatever runs between them happens with the button down.
                 case CursorButtonActionTypeEnum.HOLD_CLICK:
-                    _inputService.SimulateMouseDown(at.X, at.Y, button);
+                    _inputSimulatorService.SimulateMouseDown(at.X, at.Y, button);
                     break;
 
                 case CursorButtonActionTypeEnum.RELEASE_CLICK:
-                    _inputService.SimulateMouseUp(at.X, at.Y, button);
+                    _inputSimulatorService.SimulateMouseUp(at.X, at.Y, button);
                     break;
 
                 default:
-                    _inputService.SimulateMouseClick(at.X, at.Y, button);
+                    _inputSimulatorService.SimulateMouseClick(at.X, at.Y, button);
                     break;
             }
 
@@ -92,12 +92,12 @@ namespace Business.Executions.Workers
 
         private ExecutionStep Scroll(FlowStep step)
         {
-            Point at = _inputService.CursorPosition();
+            Point at = _inputSimulatorService.CursorPosition();
 
             int notches = Math.Max(step.LoopCount, 1);
             int delta = step.CursorScrollDirectionType == CursorScrollDirectionTypeEnum.DOWN ? -notches : notches;
 
-            _inputService.SimulateMouseScroll(at.X, at.Y, delta);
+            _inputSimulatorService.SimulateMouseScroll(at.X, at.Y, delta);
 
             return ExecutionStep.Success(at);
         }
@@ -112,10 +112,10 @@ namespace Business.Executions.Workers
             if (to == null)
                 return ExecutionStep.Failure("There is nowhere to drag to.");
 
-            if (!_inputService.MoveCursor(from.Value.X, from.Value.Y))
+            if (!_inputSimulatorService.MoveCursor(from.Value.X, from.Value.Y))
                 return ExecutionStep.Failure("The cursor did not move. The window in front is probably running as administrator.");
 
-            _inputService.SimulateMouseDrag(from.Value.X, from.Value.Y, to.Value.X, to.Value.Y, step.CursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON);
+            _inputSimulatorService.SimulateMouseDrag(from.Value.X, from.Value.Y, to.Value.X, to.Value.Y, step.CursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON);
 
             return ExecutionStep.Success(to.Value);
         }

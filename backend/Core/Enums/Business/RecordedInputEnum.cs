@@ -12,6 +12,7 @@
         // Keyboard
         KEY_UP,
         KEY_DOWN,
+        KEY_TYPED,  // What a key-down typed, as the layout made it, raised right after it
 
         // Session: the tester resumed after a pause, so the gap before this is not a wait
         RESUMED,

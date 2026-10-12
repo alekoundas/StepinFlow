@@ -13,7 +13,7 @@ namespace Business.Tests.Executions.Workers
     /// </summary>
     public sealed class KeyboardStepWorkerTests
     {
-        private readonly FakeInputService _input = new FakeInputService();
+        private readonly FakeInputSimulatorService _input = new FakeInputSimulatorService();
 
         private async Task<ExecutionStep> Keyboard(FlowStep step, ExecutionCacheService? cache = null)
         {

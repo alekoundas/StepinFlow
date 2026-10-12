@@ -17,11 +17,11 @@ namespace Business.Executions.Workers
     /// </summary>
     public class KeyboardStepWorker : IStepWorker
     {
-        private readonly IInputService _inputService;
+        private readonly IInputSimulatorService _inputSimulatorService;
 
-        public KeyboardStepWorker(IInputService inputService)
+        public KeyboardStepWorker(IInputSimulatorService inputSimulatorService)
         {
-            _inputService = inputService;
+            _inputSimulatorService = inputSimulatorService;
         }
 
         public Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
@@ -35,7 +35,7 @@ namespace Business.Executions.Workers
 
             if (step.KeyboardInputType != KeyboardInputTypeEnum.COMBINATION)
             {
-                _inputService.SimulateKeyboard(text.Text);
+                _inputSimulatorService.SimulateKeyboard(text.Text);
 
                 return Task.FromResult(ExecutionStep.Success());
             }
@@ -47,7 +47,7 @@ namespace Business.Executions.Workers
             if (!KeyCatalog.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
                 return Task.FromResult(ExecutionStep.Failure($"\"{text.Text}\" is not a key combination this can press."));
 
-            _inputService.SimulateKeyCombination(modifiers, key);
+            _inputSimulatorService.SimulateKeyCombination(modifiers, key);
 
             return Task.FromResult(ExecutionStep.Success(message: $"Pressed {text.Text}"));
         }
@@ -66,11 +66,11 @@ namespace Business.Executions.Workers
 
             if (keyAction == KeyboardKeyActionTypeEnum.HOLD)
             {
-                _inputService.SimulateKeysDown(keys);
+                _inputSimulatorService.SimulateKeysDown(keys);
                 return ExecutionStep.Success(message: $"Holding {combination}");
             }
 
-            _inputService.SimulateKeysUp(keys);
+            _inputSimulatorService.SimulateKeysUp(keys);
             return ExecutionStep.Success(message: $"Released {combination}");
         }
     }
