@@ -12,13 +12,9 @@ namespace Transport.Ipc.Handlers
             _recordingSessionService = recordingSessionService;
         }
 
-        public async Task<ResultDto<bool>> HandleAsync(CancellationToken ct)
+        public async Task<ResultDto<bool>> HandleAsync(RecordingStartDto dto, CancellationToken ct)
         {
-            bool started = await _recordingSessionService.StartAsync(ct);
-
-            return started
-                ? ResultDto<bool>.Success(true)
-                : ResultDto<bool>.Failure("A recording is already running.");
+            return await _recordingSessionService.StartAsync(dto.FlowId, dto.ElectronProcessId, ct);
         }
     }
 }

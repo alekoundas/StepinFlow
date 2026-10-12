@@ -1,4 +1,4 @@
-using Business.Recording.Actions;
+using Business.Recording.ActionBuilder;
 using Business.Recording.Session;
 using Core.Models.Business;
 using Core.Models.Dtos;
@@ -12,19 +12,18 @@ namespace Transport.Ipc.Handlers
     public class StopRecordingHandler
     {
         private readonly IRecordingSessionService _recordingSessionService;
-        private readonly TimeProvider _timeProvider;
 
-        public StopRecordingHandler(IRecordingSessionService recordingSessionService, TimeProvider timeProvider)
+        public StopRecordingHandler(IRecordingSessionService recordingSessionService)
         {
             _recordingSessionService = recordingSessionService;
-            _timeProvider = timeProvider;
         }
 
         public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> HandleAsync(CancellationToken ct)
         {
             IReadOnlyList<RecordedInput> events = await _recordingSessionService.StopAsync(ct);
+            List<RecordedActionDto> result = RecordingActionBuilder.Build(events);
 
-            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(RecordingActionBuilder.Build(events, _timeProvider));
+            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(result);
         }
     }
 }

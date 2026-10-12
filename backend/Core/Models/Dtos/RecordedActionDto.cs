@@ -5,10 +5,6 @@ namespace Core.Models.Dtos
     /// <summary>
     /// One thing the user did, after a press and a release have been folded into a click and a
     /// burst of typing into a single entry.
-    ///
-    /// Deliberately not a step. What a click should become is the wizard question, and answering
-    /// it here would be guessing on the user behalf. This carries the evidence and the raw facts
-    /// a step needs, and nothing about which step that is.
     /// </summary>
     public class RecordedActionDto
     {
@@ -20,6 +16,9 @@ namespace Core.Models.Dtos
 
         public string? WindowTitle { get; set; }
 
+        /// <summary>Which window a click, drag or scroll landed on. Null with no main area.</summary>
+        public RecordedWindowEnum? Window { get; set; }
+
         /// <summary>Key into the session screenshot store, when one was captured.</summary>
         public int? ScreenshotIndex { get; set; }
 
@@ -29,11 +28,6 @@ namespace Core.Models.Dtos
         public int LocationEndX { get; set; }
         public int LocationEndY { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
-
-        /// <summary>
-        /// Single or double, so a double click is offered as one rather than as two clicks the
-        /// flow would replay too slowly to register as one.
-        /// </summary>
         public CursorButtonActionTypeEnum? CursorButtonActionType { get; set; }
 
         // Scroll
