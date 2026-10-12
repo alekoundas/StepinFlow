@@ -131,7 +131,9 @@ namespace Transport.Ipc
                     "Lookup.aiModelSuggestions" => await Handler<GetLookupAiModelSuggestionsHandler>().HandleAsync(ct),
 
                     // Recording
-                    "Recording.start" => await Handler<StartRecordingHandler>().HandleAsync(ct),
+                    "Recording.start" => await Handler<StartRecordingHandler>().HandleAsync(Payload<RecordingStartDto>(request), ct),
+                    "Recording.pause" => await Handler<PauseRecordingHandler>().HandleAsync(ct),
+                    "Recording.resume" => await Handler<ResumeRecordingHandler>().HandleAsync(ct),
                     "Recording.stop" => await Handler<StopRecordingHandler>().HandleAsync(ct),
                     "Recording.discard" => await Handler<DiscardRecordingHandler>().HandleAsync(ct),
                     "Recording.getScreenshot" => await Handler<GetRecordingScreenshotHandler>().HandleAsync(Payload<int>(request), ct),

@@ -22,6 +22,11 @@ export interface ElectronApi {
     ) => () => void;
   };
 
+  // Electron's main process, which owns every StepinFlow window.
+  electronProcess: {
+    getId: () => Promise<number>;
+  };
+
   overlay: {
     // Physical-pixel bounds the selection must stay inside, and the name to show for them.
     openCaptureWindow: (

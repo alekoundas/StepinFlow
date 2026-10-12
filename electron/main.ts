@@ -8,6 +8,7 @@ import path from "path";
 //   REACT_DEVELOPER_TOOLS,
 // } from "electron-devtools-installer";
 
+import { registerElectronProcessHandler } from "./ipc/handlers/electron-process-handler.js";
 import { registerImageEditorHandler } from "./ipc/handlers/image-editor-handler.js";
 import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-handler.js";
 import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
@@ -92,6 +93,7 @@ app.whenReady().then(async () => {
   // One failure here used to leave every later handler unregistered while the window was
   // already open, which surfaces as "No handler registered for ..." on the first click.
   try {
+    registerElectronProcessHandler();
     const request = await registerBackendRequestHandler(mainWindow);
     await registerBroadcastHandler(mainWindow);
     await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);

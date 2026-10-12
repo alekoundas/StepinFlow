@@ -124,7 +124,7 @@ namespace Business.Tests.Recording
         }
 
         [Fact]
-        public void Before_Electron_says_which_process_is_its_own_nothing_is_left_out_as_its_own()
+        public void With_no_own_process_nothing_is_left_out_as_its_own()
         {
             _filter.OwnProcessId = 0;
             _windows.Pointed = STEPINFLOW;

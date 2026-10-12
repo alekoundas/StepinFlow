@@ -81,8 +81,8 @@ foreach (string name in new[] { "PostMessage", "SetForegroundWindow", "IsIconic"
 Console.WriteLine("SystemActionService (MONITOR_ON is the harmless one)");
 Check("SendMessageTimeoutW", () => new SystemActionService().Run(SystemActionTypeEnum.MONITOR_ON));
 
-Console.WriteLine("NativeCursor, through IInputService");
-IInputService input = new Platform.Windows.Input.InputService();
+Console.WriteLine("NativeCursor, through IInputSimulatorService");
+IInputSimulatorService input = new Platform.Windows.Input.InputSimulatorService();
 Check("GetCursorPos", () =>
 {
     Point at = input.CursorPosition();

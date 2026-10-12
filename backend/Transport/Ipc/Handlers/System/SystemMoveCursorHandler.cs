@@ -5,16 +5,16 @@ namespace Transport.Ipc.Handlers
 {
     public class SystemMoveCursorHandler
     {
-        private readonly IInputService _inputService;
+        private readonly IInputSimulatorService _inputSimulatorService;
 
-        public SystemMoveCursorHandler(IInputService inputService)
+        public SystemMoveCursorHandler(IInputSimulatorService inputSimulatorService)
         {
-            _inputService = inputService;
+            _inputSimulatorService = inputSimulatorService;
         }
 
         public async Task<ResultDto<bool>> HandleAsync(ScreenPointDto dto, CancellationToken ct)
         {
-            bool moved = _inputService.MoveCursor(dto.X, dto.Y);
+            bool moved = _inputSimulatorService.MoveCursor(dto.X, dto.Y);
 
             if (!moved)
                 return ResultDto<bool>.Failure("Could not move the cursor to the requested point.");

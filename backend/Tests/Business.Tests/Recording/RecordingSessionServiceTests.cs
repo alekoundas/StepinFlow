@@ -40,7 +40,6 @@ namespace Business.Tests.Recording
         public RecordingSessionServiceTests()
         {
             _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, _database, _clock);
-            _session.SetOwnProcess(OWN);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -85,10 +84,20 @@ namespace Business.Tests.Recording
         // Starting
         // ================================================================
 
+        // Otherwise the Stop click, and anything typed into StepinFlow, would be recorded.
+        [Fact]
+        public async Task Without_StepinFlow_s_own_process_nothing_is_recorded()
+        {
+            ResultDto<bool> started = await _session.StartAsync(null, 0, Ct);
+
+            started.IsSuccess.ShouldBeFalse();
+            _hook.IsRecording.ShouldBeFalse();
+        }
+
         [Fact]
         public async Task A_flow_with_no_main_area_is_not_recorded()
         {
-            ResultDto<bool> started = await _session.StartAsync(NewFlow(withMainArea: false), Ct);
+            ResultDto<bool> started = await _session.StartAsync(NewFlow(withMainArea: false), OWN, Ct);
 
             started.IsSuccess.ShouldBeFalse();
             _session.IsRecording.ShouldBeFalse();
@@ -100,7 +109,7 @@ namespace Business.Tests.Recording
         {
             _resolver.AreasByName.Clear();
 
-            ResultDto<bool> started = await _session.StartAsync(NewFlow(withMainArea: true), Ct);
+            ResultDto<bool> started = await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
 
             started.ErrorMessage.ShouldBe("No window matches \"Browser\".");
             _hook.IsRecording.ShouldBeFalse();
@@ -113,7 +122,7 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task A_press_keeps_the_main_area_and_the_screenshot_from_before_it()
         {
-            (await _session.StartAsync(NewFlow(withMainArea: true), Ct)).IsSuccess.ShouldBeTrue();
+            (await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct)).IsSuccess.ShouldBeTrue();
             _clock.Advance(TimeSpan.FromMilliseconds(10));
 
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
@@ -134,7 +143,7 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task A_press_on_StepinFlow_is_never_recorded()
         {
-            await _session.StartAsync(NewFlow(withMainArea: true), Ct);
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
             _windows.Pointed = STEPINFLOW;
 
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
@@ -151,7 +160,7 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task A_paused_recording_keeps_nothing_until_it_resumes()
         {
-            await _session.StartAsync(NewFlow(withMainArea: true), Ct);
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
 
             _session.Pause();
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
@@ -175,7 +184,7 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task Without_a_flow_a_press_is_neither_sorted_nor_kept_against_a_main_area()
         {
-            (await _session.StartAsync(null, Ct)).IsSuccess.ShouldBeTrue();
+            (await _session.StartAsync(null, OWN, Ct)).IsSuccess.ShouldBeTrue();
 
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
             Raise(RecordedInputTypeEnum.BUTTON_UP);

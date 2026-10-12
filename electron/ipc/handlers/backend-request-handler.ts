@@ -28,7 +28,7 @@ export async function registerBackendRequestHandler(
 
   const getClient = () => backendClient;
   const setClient = (socket: net.Socket | null) => (backendClient = socket);
-  const onConnected = (socket: net.Socket) =>
+  const onConnected = (socket: net.Socket) => 
     handleRequestPipeData(socket, mainWindow, pending);
 
   //============================================

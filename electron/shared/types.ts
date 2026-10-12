@@ -102,7 +102,7 @@ export interface RecordedInput {
   // Keyboard
   keyCode?: KeyCodeEnum;
   keyChar?: string; // Human readable
-  isCapsLockOn?: boolean; // As the hook saw it when the key went down
+  typedCharacter?: string | null; // On KEY_TYPED: what the key-down before it typed, as the layout made it
 
   // Scroll
   scrollDirection?: CursorScrollDirectionTypeEnum;
@@ -145,6 +145,7 @@ export const RecordedInputTypeEnum = {
   // Keyboard
   KEY_UP: "KEY_UP",
   KEY_DOWN: "KEY_DOWN",
+  KEY_TYPED: "KEY_TYPED", // What a key-down typed, raised right after it
   // Session: the tester resumed after a pause
   RESUMED: "RESUMED",
 } as const;

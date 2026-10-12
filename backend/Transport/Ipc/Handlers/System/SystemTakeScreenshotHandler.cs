@@ -1,11 +1,11 @@
 using Business.AreaPoint;
 using Core.Ports;
-using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
+using Core.Models.Business.AreaPointResolution;
 
 namespace Transport.Ipc.Handlers
 {

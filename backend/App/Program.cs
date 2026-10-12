@@ -220,7 +220,6 @@ namespace App
             builder.Services.AddTransient<SystemMoveCursorHandler>();
             builder.Services.AddTransient<SystemInstallOcrLanguageHandler>();
             builder.Services.AddTransient<SystemOpenWindowsLanguageSettingsHandler>();
-            builder.Services.AddTransient<SystemConnectHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStartHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStopHandler>();
             builder.Services.AddTransient<SystemInputRecordOverlayStartHandler>();

@@ -25,6 +25,9 @@ const IPC_CHANNELS = {
   BACKEND_BROADCAST: "BACKEND_BROADCAST",
   BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
 
+  // ========== Electron process channels ==========
+  ELECTRON_PROCESS_GET_ID: "ELECTRON_PROCESS_GET_ID",
+
   // ========== Overlay (Search-area)  channels ==========
   OVERLAY_OPEN_CAPTURE_WINDOW: "OVERLAY_OPEN_CAPTURE_WINDOW",
   OVERLAY_OPEN_PREVIEW_WINDOW: "OVERLAY_OPEN_PREVIEW_WINDOW",
@@ -60,6 +63,11 @@ const api: ElectronApi = {
         ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_BROADCAST, listener);
       };
     },
+  },
+
+  electronProcess: {
+    getId: (): Promise<number> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ELECTRON_PROCESS_GET_ID),
   },
 
   overlay: {

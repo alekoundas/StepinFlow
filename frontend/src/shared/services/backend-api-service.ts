@@ -188,7 +188,11 @@ export const backendApiService = {
 
   Recording: {
     // With a flow, against its main area. Without one, as the wizard records.
-    start: (flowId?: number) => call<boolean>("Recording.start", { flowId }),
+    // Electron's process owns every StepinFlow window, and nothing done on them is recorded.
+    start: async (flowId?: number) => {
+      const electronProcessId = await window.electronApi.electronProcess.getId();
+          return call<boolean>("Recording.start", { flowId, electronProcessId });
+    },
     pause: () => call<boolean>("Recording.pause"),
     resume: () => call<boolean>("Recording.resume"),
     stop: () => call<RecordedActionDto[]>("Recording.stop"),

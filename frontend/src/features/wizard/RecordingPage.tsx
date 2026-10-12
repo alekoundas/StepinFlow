@@ -288,6 +288,8 @@ const describe = (event: RecordedInput): string => {
       return `Key down ${event.keyCode ?? ""}`;
     case "KEY_UP":
       return `Key up ${event.keyCode ?? ""}`;
+    case "KEY_TYPED":
+      return `Typed ${event.typedCharacter ?? ""}`;
     default:
       return event.type;
   }
