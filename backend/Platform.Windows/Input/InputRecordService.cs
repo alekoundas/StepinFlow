@@ -9,8 +9,12 @@ namespace Platform.Windows.Input
 {
     public sealed class InputRecordService : IInputRecordService, IDisposable
     {
-        // SharpHook
-        private readonly IGlobalHook _hook = new TaskPoolGlobalHook();
+        // SharpHook. Handlers run on one thread of their own, one at a time, in the order the
+        // inputs were raised, so the hook is never held up and the recording keeps their order.
+        private readonly IGlobalHook _hook = new EventLoopGlobalHook();
+
+        // The key the next typed character came from.
+        private KeyCodeEnum? _lastPressedKey;
 
         /// <summary>
         /// Raised for every recorded input while any mode is active.
@@ -20,7 +24,8 @@ namespace Platform.Windows.Input
         /// backlog to whoever read it next. A subscriber that only exists for the length of a
         /// session cannot inherit anything.
         ///
-        /// Handlers run on the hook thread, so a subscriber must return immediately.
+        /// Handlers run on the hook's event thread, one at a time, so a subscriber must return
+        /// immediately: every input after it waits.
         /// </summary>
         public event Action<RecordedInput>? ActionRecorded;
 
@@ -34,7 +39,7 @@ namespace Platform.Windows.Input
         private const int ModeHotkey = 4;
         private int _recordingMode = ModeNone;
 
-        // Throttling events. Interlocked because TaskPoolGlobalHook dispatches on the thread pool.
+        // Throttling events.
         private long _lastDragBroadcastTicks;
         private static readonly long DragThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
 
@@ -52,6 +57,7 @@ namespace Platform.Windows.Input
             _hook.MouseMoved += OnMouseMoved;
             _hook.MouseWheel += OnMouseWheel;
             _hook.KeyPressed += OnKeyPressed;
+            _hook.KeyTyped += OnKeyTyped;
             _hook.KeyReleased += OnKeyReleased;
         }
 
@@ -91,19 +97,12 @@ namespace Platform.Windows.Input
         // Public methods
         // ================================================================
         public Task<bool> StartRecordingAllAsync() => Task.FromResult(StartRecording(ModeAll));
-
         public Task<bool> StopRecordingAllAsync() => Task.FromResult(StopRecording(ModeAll));
-
         public Task<bool> StartRecordingOverlayAsync() => Task.FromResult(StartRecording(ModeOverlay));
-
         public Task<bool> StopRecordingOverlayAsync() => Task.FromResult(StopRecording(ModeOverlay));
-
         public Task<bool> StartRecordingPointCaptureAsync() => Task.FromResult(StartRecording(ModePointCapture));
-
         public Task<bool> StopRecordingPointCaptureAsync() => Task.FromResult(StopRecording(ModePointCapture));
-
         public Task<bool> StartRecordingHotkeyAsync() => Task.FromResult(StartRecording(ModeHotkey));
-
         public Task<bool> StopRecordingHotkeyAsync() => Task.FromResult(StopRecording(ModeHotkey));
 
 
@@ -123,8 +122,10 @@ namespace Platform.Windows.Input
         // Only the mode that started a recording may stop it, so an overlay stop can never leave
         // an "all" recording half torn down.
 
-        private bool StopRecording(int mode) =>
-            Interlocked.CompareExchange(ref _recordingMode, ModeNone, mode) == mode;
+        private bool StopRecording(int mode)
+        {
+            return Interlocked.CompareExchange(ref _recordingMode, ModeNone, mode) == mode;
+        }
 
         private void Publish(RecordedInput recordedInput)
         {
@@ -269,15 +270,34 @@ namespace Platform.Windows.Input
 
         private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)
         {
+            _lastPressedKey = null;
+
             if (!IsRecording)
                 return;
+
+            KeyCodeEnum key = MapKeyCode(e.Data.KeyCode);
+            _lastPressedKey = key;
 
             Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.KEY_DOWN,
-                KeyCode = MapKeyCode(e.Data.KeyCode),
+                KeyCode = key,
                 KeyChar = e.Data.KeyCode.ToString(),   // SharpHook enum name is already readable
-                //Modifiers = MapModifiers(e.Data.RawModifiers),
+            });
+        }
+
+        // Raised right after the key-down it came from, and recorded as its own input with that key,
+        // so nothing already published changes. A character outside the basic range arrives as two.
+        private void OnKeyTyped(object? sender, KeyboardHookEventArgs e)
+        {
+            if (!IsRecording || _lastPressedKey == null)
+                return;
+
+            Publish(new RecordedInput
+            {
+                Type = RecordedInputTypeEnum.KEY_TYPED,
+                KeyCode = _lastPressedKey,
+                TypedCharacter = e.Data.KeyChar.ToString(),
             });
         }
 

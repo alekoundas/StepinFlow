@@ -45,12 +45,9 @@ namespace Business.Recording.ActionBuilder.Actions
                 RepeatCount = inputs.Count(x => x.Type == RecordedInputTypeEnum.KEY_DOWN) - 1,
             };
 
-            // Log how long was held.
-            if (last.Type == RecordedInputTypeEnum.KEY_UP)
-            {
-                TimeSpan heldFor = last.CreatedOn - down.CreatedOn;
-                press.HoldMilliseconds = (int)Math.Round(heldFor.TotalMilliseconds);
-            }
+            // Log how long was held: until its key-up, or its last repeat when the recording stopped first.
+            TimeSpan heldFor = last.CreatedOn - down.CreatedOn;
+            press.HoldMilliseconds = (int)Math.Round(heldFor.TotalMilliseconds);
 
             press.Summary = $"Pressed {press.Text}";
             if (press.RepeatCount > 0)

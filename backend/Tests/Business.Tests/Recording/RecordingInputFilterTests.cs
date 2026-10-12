@@ -55,6 +55,11 @@ namespace Business.Tests.Recording
             return new RecordedInput { Type = RecordedInputTypeEnum.KEY_UP, KeyCode = KeyCodeEnum.LeftCtrl };
         }
 
+        private static RecordedInput Typed()
+        {
+            return new RecordedInput { Type = RecordedInputTypeEnum.KEY_TYPED, KeyCode = KeyCodeEnum.LeftCtrl, TypedCharacter = "a" };
+        }
+
         // ================================================================
         // StepinFlow's own windows
         // ================================================================
@@ -98,6 +103,24 @@ namespace Business.Tests.Recording
 
             _windows.Pointed = STEPINFLOW;
             _filter.Keep(Release()).ShouldBeTrue();
+        }
+
+        [Fact]
+        public void What_a_key_typed_is_kept_with_its_key()
+        {
+            _windows.InFront = MAIN;
+
+            _filter.Keep(KeyDown()).ShouldBeTrue();
+            _filter.Keep(Typed()).ShouldBeTrue();
+        }
+
+        [Fact]
+        public void What_a_key_typed_into_StepinFlow_is_left_out_with_its_key()
+        {
+            _windows.InFront = STEPINFLOW;
+
+            _filter.Keep(KeyDown()).ShouldBeFalse();
+            _filter.Keep(Typed()).ShouldBeFalse();
         }
 
         [Fact]
