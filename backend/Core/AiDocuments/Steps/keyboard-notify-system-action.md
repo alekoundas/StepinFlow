@@ -22,15 +22,17 @@ A `COMBINATION` step does one of three things with its keys (`KeyboardKeyActionT
 
 Hold and Release are two halves of one gesture, the way a click's hold and release are. A
 Ctrl+click is three steps: hold `Ctrl`, click, release `Ctrl` - the click stays an ordinary click.
-A hold may name a modifier on its own (`Ctrl`, `Ctrl+Shift`), which a press may not.
+A hold may name a modifier on its own (`Ctrl`, `Ctrl+Shift`), and so may a press: `Win` on its own
+opens the Start menu.
 
 A hold with no release of the same keys below it is the `KEYS_NOT_RELEASED` warning. Whatever is
 still held when an execution ends, however it ends, is let go - so a flow that fails between the
 two does not leave Ctrl down on the machine.
 
-The recorder writes the same thing from what it saw: a modifier held over a click or a scroll is
-recorded as a hold before it and a release after it. A modifier held only while typing is already
-in the text, and one held for a shortcut is already in the shortcut, so neither becomes a step.
+The recorder writes the same thing from what it saw: every Ctrl, Alt or Win is a hold where it went
+down and a release where it came up, with the keys between pressed on their own - Ctrl+C is hold
+`Ctrl`, press `C`, release `Ctrl`. A Shift held only while typing is already in the text's capitals,
+so it is not a step.
 
 **The text is stored as plain text.** A flow that types a password holds that password in the
 database in readable form.

@@ -12,5 +12,8 @@
         // Keyboard
         KEY_UP,
         KEY_DOWN,
+
+        // Session: the tester resumed after a pause, so the gap before this is not a wait
+        RESUMED,
     }
 }

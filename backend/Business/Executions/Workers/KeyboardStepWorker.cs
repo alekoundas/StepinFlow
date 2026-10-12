@@ -1,4 +1,5 @@
-﻿using Core.Ports;
+﻿using Core.Catalogs;
+using Core.Ports;
 using Core.Enums;
 using Core.Enums.Business;
 using Core.Models.Business;
@@ -43,7 +44,7 @@ namespace Business.Executions.Workers
             if (keyAction != KeyboardKeyActionTypeEnum.PRESS)
                 return Task.FromResult(HoldOrRelease(keyAction, text.Text));
 
-            if (!KeyCombinationHelper.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
+            if (!KeyCatalog.TryParse(text.Text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key))
                 return Task.FromResult(ExecutionStep.Failure($"\"{text.Text}\" is not a key combination this can press."));
 
             _inputService.SimulateKeyCombination(modifiers, key);
@@ -60,7 +61,7 @@ namespace Business.Executions.Workers
         // keys down. The engine lets go of anything still held when the execution ends.
         private ExecutionStep HoldOrRelease(KeyboardKeyActionTypeEnum keyAction, string combination)
         {
-            if (!KeyCombinationHelper.TryParseKeys(combination, out List<KeyCodeEnum> keys))
+            if (!KeyCatalog.TryParseKeys(combination, out List<KeyCodeEnum> keys))
                 return ExecutionStep.Failure($"\"{combination}\" is not a key combination this can hold.");
 
             if (keyAction == KeyboardKeyActionTypeEnum.HOLD)

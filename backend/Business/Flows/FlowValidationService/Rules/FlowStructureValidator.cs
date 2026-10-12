@@ -1,4 +1,4 @@
-using Business.Executions;
+using Core.Catalogs;
 using Core.Enums;
 using Core.Enums.Business;
 using Core.Helpers;
@@ -283,7 +283,7 @@ namespace Business.Flows.FlowValidationService.Rules
         // "ctrl+shift" lets go of what "Shift+Ctrl" held.
         private static bool IsSameKeys(string held, string released)
         {
-            if (!KeyCombinationHelper.TryParseKeys(held, out List<KeyCodeEnum> heldKeys) || !KeyCombinationHelper.TryParseKeys(released, out List<KeyCodeEnum> releasedKeys))
+            if (!KeyCatalog.TryParseKeys(held, out List<KeyCodeEnum> heldKeys) || !KeyCatalog.TryParseKeys(released, out List<KeyCodeEnum> releasedKeys))
                 return string.Equals(held.Trim(), released.Trim(), StringComparison.OrdinalIgnoreCase);
 
             return heldKeys.ToHashSet().SetEquals(releasedKeys);

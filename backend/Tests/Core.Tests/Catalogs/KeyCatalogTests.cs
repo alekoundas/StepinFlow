@@ -36,6 +36,17 @@ namespace Business.Tests.Executions
         }
 
         [Theory]
+        [InlineData("Win", new KeyCodeEnum[0], KeyCodeEnum.LeftMeta)]
+        [InlineData("Ctrl+Shift", new[] { KeyCodeEnum.LeftCtrl }, KeyCodeEnum.LeftShift)]
+        public void A_modifier_on_its_own_is_a_key_to_press(string text, KeyCodeEnum[] expectedModifiers, KeyCodeEnum expectedKey)
+        {
+            KeyCombinationHelper.TryParse(text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
+
+            modifiers.ShouldBe(expectedModifiers);
+            key.ShouldBe(expectedKey);
+        }
+
+        [Theory]
         [InlineData("")]
         [InlineData("  ")]
         [InlineData("+")]
@@ -61,7 +72,7 @@ namespace Business.Tests.Executions
             KeyCombinationHelper.TryParse("Ctrl+A,B", out _, out _).ShouldBeFalse();
         }
 
-        // What a hold puts down: a modifier on its own is a key here, where a press needs a key after it.
+        // What a hold puts down, every key named in order.
         [Theory]
         [InlineData("Ctrl", new[] { KeyCodeEnum.LeftCtrl })]
         [InlineData("ctrl + shift", new[] { KeyCodeEnum.LeftCtrl, KeyCodeEnum.LeftShift })]

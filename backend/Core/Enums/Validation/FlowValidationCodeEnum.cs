@@ -75,5 +75,8 @@ namespace Core.Enums
         /// from nothing. Right on this screen, and somewhere else on every other.
         /// </summary>
         SCREEN_COORDINATES,
+
+        /// <summary>Keys held with nothing below letting them go, so they stay down until the execution ends.</summary>
+        KEYS_NOT_RELEASED,
     }
 }

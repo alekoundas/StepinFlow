@@ -188,6 +188,19 @@ namespace Business.Tests.Recording
             press.Window.ShouldBe(window);
         }
 
+        // A title can change as the typing goes in, so the merge tells windows apart by handle.
+        [Fact]
+        public void A_key_carries_the_window_it_went_to()
+        {
+            _windows.InFront = NOTEPAD;
+            RecordedInput down = KeyDown();
+
+            _filter.Keep(down);
+
+            down.WindowHandle.ShouldBe(new WindowHandle(3));
+            down.WindowTitle.ShouldBe("Notepad");
+        }
+
         [Fact]
         public void With_no_main_area_a_press_is_not_sorted()
         {

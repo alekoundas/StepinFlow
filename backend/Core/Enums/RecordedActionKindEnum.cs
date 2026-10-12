@@ -8,6 +8,8 @@ namespace Core.Enums
         SCROLL,
         TYPING,
         KEY_COMBINATION,
+        KEY_HOLD,       // A modifier going down and staying down over a click or a scroll
+        KEY_RELEASE,    // That modifier coming back up
         PAUSE,
     }
 }
