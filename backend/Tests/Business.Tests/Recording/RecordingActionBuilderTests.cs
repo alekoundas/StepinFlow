@@ -46,46 +46,41 @@ namespace Business.Tests.Recording
             return this;
         }
 
-        // The hook reads the modifiers down and the character typed onto every key, as these do: a
-        // US layout's, unless the test says what the key typed.
+        // The hook writes the character the layout typed onto every key, as these do: a US layout's,
+        // unless the test says what the key typed.
         private RecordingActionBuilderTests Down(int ms, KeyCodeEnum key, string? typed = null)
         {
             _keysDown.Add(key);
 
-            RecordedInput down = new RecordedInput
+            _events.Add(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.KEY_DOWN,
                 KeyCode = key,
-                IsShiftDown = IsDown(KeyCodeEnum.LeftShift, KeyCodeEnum.RightShift),
-                IsCtrlDown = IsDown(KeyCodeEnum.LeftCtrl, KeyCodeEnum.RightCtrl),
-                IsAltDown = IsDown(KeyCodeEnum.LeftAlt, KeyCodeEnum.RightAlt),
-                IsWinDown = IsDown(KeyCodeEnum.LeftMeta, KeyCodeEnum.RightMeta),
+                TypedCharacter = typed ?? UsCharacter(key),
                 CreatedOn = START.AddMilliseconds(ms),
-            };
-
-            down.TypedCharacter = typed ?? UsCharacter(down);
-            _events.Add(down);
+            });
             return this;
         }
 
         // What a US layout types for the letters, digits and space these tests press.
-        private static string? UsCharacter(RecordedInput down)
+        private string? UsCharacter(KeyCodeEnum key)
         {
-            if (down.KeyCode == null || down.IsCtrlDown || down.IsAltDown || down.IsWinDown)
+            bool isShifted = IsDown(KeyCodeEnum.LeftShift, KeyCodeEnum.RightShift);
+
+            if (IsDown(KeyCodeEnum.LeftCtrl, KeyCodeEnum.RightCtrl) || IsDown(KeyCodeEnum.LeftAlt, KeyCodeEnum.RightAlt) || IsDown(KeyCodeEnum.LeftMeta, KeyCodeEnum.RightMeta))
                 return null;
 
-            KeyCodeEnum key = down.KeyCode.Value;
             if (key == KeyCodeEnum.Space)
                 return " ";
 
-            if (key >= KeyCodeEnum.Num0 && key <= KeyCodeEnum.Num9 && !down.IsShiftDown)
+            if (key >= KeyCodeEnum.Num0 && key <= KeyCodeEnum.Num9 && !isShifted)
                 return (key - KeyCodeEnum.Num0).ToString(CultureInfo.InvariantCulture);
 
             string name = key.ToString();
             if (name.Length != 1)
                 return null;
 
-            if (down.IsShiftDown)
+            if (isShifted)
                 return name;
 
             return name.ToLowerInvariant();
@@ -281,25 +276,30 @@ namespace Business.Tests.Recording
             Build().ShouldHaveSingleItem().Text.ShouldBe("Hi!");
         }
 
-        // Ctrl and Alt together are AltGr: "@" on a German keyboard.
+        // Ctrl and Alt together are AltGr - "@" on a German keyboard - and replayed as the keys, for
+        // the layout to make the "@" again.
         [Fact]
-        public void AltGr_types_what_the_layout_puts_there()
+        public void AltGr_is_held_around_its_key()
         {
             Down(0, KeyCodeEnum.LeftCtrl).Down(5, KeyCodeEnum.RightAlt).Key(50, KeyCodeEnum.Q, "@").Up(100, KeyCodeEnum.RightAlt).Up(110, KeyCodeEnum.LeftCtrl);
 
-            RecordedActionDto typed = Build().ShouldHaveSingleItem();
-
-            typed.Kind.ShouldBe(RecordedActionKindEnum.TYPING);
-            typed.Text.ShouldBe("@");
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.KEY_HOLD, "Ctrl"),
+                (RecordedActionKindEnum.KEY_HOLD, "Alt"),
+                (RecordedActionKindEnum.KEY_COMBINATION, "Q"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Alt"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Ctrl"),
+            ]);
         }
 
-        // Alt on its own is a menu's shortcut, whatever the layout says the key typed.
+        // Alt opens a menu, whatever the layout says the key typed.
         [Fact]
-        public void Alt_and_a_letter_is_a_press_even_with_a_character()
+        public void A_letter_under_Alt_is_pressed_even_with_a_character()
         {
             Down(0, KeyCodeEnum.LeftAlt).Key(50, KeyCodeEnum.F, "f").Up(150, KeyCodeEnum.LeftAlt);
 
-            Build().ShouldHaveSingleItem().Text.ShouldBe("Alt+F");
+            Build().Select(x => x.Text).ShouldBe(["Alt", "F", "Alt"]);
         }
 
         [Fact]
@@ -313,25 +313,27 @@ namespace Business.Tests.Recording
             press.Text.ShouldBe("Enter");
         }
 
-        // A modifier is often let go a moment before the letter: read at the release, this would
-        // find no Ctrl and type a c.
+        // Every modifier is a hold of its own, and the key goes between: replayed, that is Ctrl+C.
+        // A modifier is often let go a moment before the letter, and the release still comes after it.
         [Fact]
-        public void Ctrl_and_a_letter_is_a_shortcut_even_when_ctrl_comes_up_first()
+        public void Ctrl_and_a_letter_is_a_hold_around_the_key_even_when_ctrl_comes_up_first()
         {
             Down(0, KeyCodeEnum.LeftCtrl).Down(50, KeyCodeEnum.C).Up(80, KeyCodeEnum.LeftCtrl).Up(100, KeyCodeEnum.C);
 
-            RecordedActionDto shortcut = Build().ShouldHaveSingleItem();
-
-            shortcut.Kind.ShouldBe(RecordedActionKindEnum.KEY_COMBINATION);
-            shortcut.Text.ShouldBe("Ctrl+C");
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.KEY_HOLD, "Ctrl"),
+                (RecordedActionKindEnum.KEY_COMBINATION, "C"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Ctrl"),
+            ]);
         }
 
         [Fact]
-        public void A_shortcut_is_named_in_the_order_it_is_written()
+        public void Modifiers_are_held_in_the_order_they_went_down()
         {
             Down(0, KeyCodeEnum.LeftShift).Down(10, KeyCodeEnum.RightCtrl).Key(50, KeyCodeEnum.S);
 
-            Build().ShouldHaveSingleItem().Text.ShouldBe("Ctrl+Shift+S");
+            Build().Select(x => x.Text).ShouldBe(["Shift", "Ctrl", "S"]);
         }
 
         [Fact]
@@ -361,22 +363,15 @@ namespace Business.Tests.Recording
 
         // Win on its own opens the Start menu.
         [Fact]
-        public void A_modifier_pressed_on_its_own_is_a_press()
+        public void A_modifier_pressed_on_its_own_is_held_and_released()
         {
             Key(0, KeyCodeEnum.LeftMeta);
 
-            RecordedActionDto press = Build().ShouldHaveSingleItem();
-
-            press.Kind.ShouldBe(RecordedActionKindEnum.KEY_COMBINATION);
-            press.Text.ShouldBe("Win");
-        }
-
-        [Fact]
-        public void Modifiers_pressed_together_on_their_own_are_one_press()
-        {
-            Down(0, KeyCodeEnum.LeftCtrl).Key(50, KeyCodeEnum.LeftShift).Up(150, KeyCodeEnum.LeftCtrl);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("Ctrl+Shift");
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.KEY_HOLD, "Win"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Win"),
+            ]);
         }
 
         [Fact]
@@ -385,16 +380,6 @@ namespace Business.Tests.Recording
             Down(0, KeyCodeEnum.LeftShift).Key(10, KeyCodeEnum.I).Key(60, KeyCodeEnum.Space).Up(100, KeyCodeEnum.LeftShift).Key(150, KeyCodeEnum.A);
 
             Build().ShouldHaveSingleItem().Text.ShouldBe("I a");
-        }
-
-        // Ctrl held from before the recording is on the key, with no Ctrl going down to read.
-        [Fact]
-        public void A_modifier_down_before_the_recording_is_read_off_the_key()
-        {
-            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.KEY_DOWN, KeyCode = KeyCodeEnum.V, IsCtrlDown = true, CreatedOn = START });
-            Up(30, KeyCodeEnum.V);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("Ctrl+V");
         }
 
         // Fast typing overlaps keys: the next goes down before the last comes up.
@@ -407,35 +392,39 @@ namespace Business.Tests.Recording
         }
 
         [Fact]
-        public void A_shortcut_after_typing_ends_the_entry_and_keeps_its_modifier()
+        public void A_modifier_after_typing_ends_the_entry()
         {
             Key(0, KeyCodeEnum.A).Key(100, KeyCodeEnum.B).Down(200, KeyCodeEnum.LeftCtrl).Key(250, KeyCodeEnum.A).Up(300, KeyCodeEnum.LeftCtrl);
 
             Build().Select(x => (x.Kind, x.Text)).ShouldBe(
             [
                 (RecordedActionKindEnum.TYPING, "ab"),
-                (RecordedActionKindEnum.KEY_COMBINATION, "Ctrl+A"),
+                (RecordedActionKindEnum.KEY_HOLD, "Ctrl"),
+                (RecordedActionKindEnum.KEY_COMBINATION, "A"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Ctrl"),
             ]);
         }
 
         [Fact]
-        public void Ctrl_held_over_two_letters_is_two_shortcuts()
+        public void Ctrl_held_over_two_letters_is_one_hold_around_both()
         {
             Down(0, KeyCodeEnum.LeftCtrl).Key(50, KeyCodeEnum.C).Key(150, KeyCodeEnum.V).Up(250, KeyCodeEnum.LeftCtrl);
 
-            Build().Select(x => x.Text).ShouldBe(["Ctrl+C", "Ctrl+V"]);
+            Build().Select(x => x.Text).ShouldBe(["Ctrl", "C", "V", "Ctrl"]);
         }
 
-        // Shift raises a character, and is part of a key that types none.
+        // Shift is in a capital, but Shift+Tab is not a character: Shift is held around it.
         [Fact]
-        public void Shift_and_a_key_that_types_nothing_is_a_shortcut()
+        public void Shift_over_a_key_that_types_nothing_is_held_around_it()
         {
             Down(0, KeyCodeEnum.LeftShift).Key(50, KeyCodeEnum.Tab).Up(150, KeyCodeEnum.LeftShift);
 
-            RecordedActionDto shortcut = Build().ShouldHaveSingleItem();
-
-            shortcut.Kind.ShouldBe(RecordedActionKindEnum.KEY_COMBINATION);
-            shortcut.Text.ShouldBe("Shift+Tab");
+            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
+            [
+                (RecordedActionKindEnum.KEY_HOLD, "Shift"),
+                (RecordedActionKindEnum.KEY_COMBINATION, "Tab"),
+                (RecordedActionKindEnum.KEY_RELEASE, "Shift"),
+            ]);
         }
 
         // ================================================================

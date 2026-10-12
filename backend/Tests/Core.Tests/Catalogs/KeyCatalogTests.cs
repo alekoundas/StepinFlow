@@ -1,14 +1,14 @@
-using Business.Executions;
+using Core.Catalogs;
 using Core.Enums.Business;
 
-namespace Business.Tests.Executions
+namespace Core.Tests.Catalogs
 {
-    public sealed class KeyCombinationHelperTests
+    public sealed class KeyCatalogTests
     {
         [Fact]
         public void Modifiers_come_before_the_key_and_ignore_case()
         {
-            KeyCombinationHelper.TryParse("ctrl + SHIFT + c", out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
+            KeyCatalog.TryParse("ctrl + SHIFT + c", out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
 
             modifiers.ShouldBe([KeyCodeEnum.LeftCtrl, KeyCodeEnum.LeftShift]);
             key.ShouldBe(KeyCodeEnum.C);
@@ -21,7 +21,7 @@ namespace Business.Tests.Executions
         [InlineData("Alt+F4", KeyCodeEnum.LeftAlt)]
         public void Each_modifier_has_its_other_names(string text, KeyCodeEnum modifier)
         {
-            KeyCombinationHelper.TryParse(text, out List<KeyCodeEnum> modifiers, out _).ShouldBeTrue();
+            KeyCatalog.TryParse(text, out List<KeyCodeEnum> modifiers, out _).ShouldBeTrue();
 
             modifiers.ShouldBe([modifier]);
         }
@@ -29,7 +29,7 @@ namespace Business.Tests.Executions
         [Fact]
         public void A_key_alone_has_no_modifiers()
         {
-            KeyCombinationHelper.TryParse("Escape", out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
+            KeyCatalog.TryParse("Escape", out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
 
             modifiers.ShouldBeEmpty();
             key.ShouldBe(KeyCodeEnum.Escape);
@@ -40,7 +40,7 @@ namespace Business.Tests.Executions
         [InlineData("Ctrl+Shift", new[] { KeyCodeEnum.LeftCtrl }, KeyCodeEnum.LeftShift)]
         public void A_modifier_on_its_own_is_a_key_to_press(string text, KeyCodeEnum[] expectedModifiers, KeyCodeEnum expectedKey)
         {
-            KeyCombinationHelper.TryParse(text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
+            KeyCatalog.TryParse(text, out List<KeyCodeEnum> modifiers, out KeyCodeEnum key).ShouldBeTrue();
 
             modifiers.ShouldBe(expectedModifiers);
             key.ShouldBe(expectedKey);
@@ -55,13 +55,13 @@ namespace Business.Tests.Executions
         [InlineData("Ctrl+Unknown")]
         public void Anything_else_is_refused(string text)
         {
-            KeyCombinationHelper.TryParse(text, out _, out _).ShouldBeFalse();
+            KeyCatalog.TryParse(text, out _, out _).ShouldBeFalse();
         }
 
         [Fact]
         public void A_digit_is_the_number_key()
         {
-            KeyCombinationHelper.TryParse("Ctrl+1", out _, out KeyCodeEnum key).ShouldBeTrue();
+            KeyCatalog.TryParse("Ctrl+1", out _, out KeyCodeEnum key).ShouldBeTrue();
 
             key.ShouldBe(KeyCodeEnum.Num1);
         }
@@ -69,7 +69,7 @@ namespace Business.Tests.Executions
         [Fact]
         public void Two_keys_joined_by_a_comma_are_refused_not_combined()
         {
-            KeyCombinationHelper.TryParse("Ctrl+A,B", out _, out _).ShouldBeFalse();
+            KeyCatalog.TryParse("Ctrl+A,B", out _, out _).ShouldBeFalse();
         }
 
         // What a hold puts down, every key named in order.
@@ -79,7 +79,7 @@ namespace Business.Tests.Executions
         [InlineData("Shift+A", new[] { KeyCodeEnum.LeftShift, KeyCodeEnum.A })]
         public void Every_key_a_hold_names_is_read_in_order(string text, KeyCodeEnum[] expected)
         {
-            KeyCombinationHelper.TryParseKeys(text, out List<KeyCodeEnum> keys).ShouldBeTrue();
+            KeyCatalog.TryParseKeys(text, out List<KeyCodeEnum> keys).ShouldBeTrue();
 
             keys.ShouldBe(expected);
         }
@@ -87,7 +87,7 @@ namespace Business.Tests.Executions
         [Fact]
         public void A_hold_naming_no_key_is_refused()
         {
-            KeyCombinationHelper.TryParseKeys("Ctrl+Nope", out _).ShouldBeFalse();
+            KeyCatalog.TryParseKeys("Ctrl+Nope", out _).ShouldBeFalse();
         }
     }
 }

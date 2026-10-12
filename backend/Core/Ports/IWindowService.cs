@@ -26,7 +26,14 @@ namespace Core.Ports
         /// <summary>Every visible window with a title, for a picker.</summary>
         IReadOnlyList<SystemWindow> GetApplicationWindows();
 
-        string? GetForegroundWindowTitle();
+        /// <summary>The top-level window under a screen point, or <see cref="TopLevelWindow.None"/>.</summary>
+        TopLevelWindow GetWindowAt(Point point);
+
+        /// <summary>The window in front, the one keys go to, or <see cref="TopLevelWindow.None"/>.</summary>
+        TopLevelWindow GetWindowInFront();
+
+        /// <summary>The process that owns the window. Zero when the handle is not a live window.</summary>
+        int GetProcessId(WindowHandle handle);
 
         /// <summary>
         /// Bounds in physical pixels. The client area excludes the title bar and borders, so a

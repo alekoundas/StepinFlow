@@ -65,15 +65,15 @@ namespace Platform.Windows.Windowing
         private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
 
 
-        public string? GetForegroundWindowTitle()
-        {
-            IntPtr hWnd = GetForegroundWindow();
-            if (hWnd == IntPtr.Zero)
-                return null;
+        //==================================================
+        // P/Invoke The window under a point
+        //==================================================
+        [LibraryImport("user32.dll")]
+        private static partial IntPtr WindowFromPoint(POINT point);
 
-            string title = GetAppWindowText(hWnd);
-            return string.IsNullOrWhiteSpace(title) ? null : title;
-        }
+        [LibraryImport("user32.dll")]
+        private static partial IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
+        private const uint GA_ROOT = 2;
 
 
         //==================================================
@@ -255,6 +255,30 @@ namespace Platform.Windows.Windowing
             return PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
+        // A point lands on the deepest control under it. The window a person sees is its root.
+        public TopLevelWindow GetWindowAt(Point point)
+        {
+            IntPtr hWnd = WindowFromPoint(new POINT { X = point.X, Y = point.Y });
+            if (hWnd == IntPtr.Zero)
+                return TopLevelWindow.None;
+
+            return Describe(GetAncestor(hWnd, GA_ROOT));
+        }
+
+        public TopLevelWindow GetWindowInFront()
+        {
+            return Describe(GetForegroundWindow());
+        }
+
+        public int GetProcessId(WindowHandle handle)
+        {
+            if (handle.Value == IntPtr.Zero)
+                return 0;
+
+            _ = GetWindowThreadProcessId(handle.Value, out uint processId);
+            return (int)processId;
+        }
+
         public IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query)
         {
             return FindWindows(query)
@@ -301,6 +325,15 @@ namespace Platform.Windows.Windowing
         // ================================================================
         // Private methods
         // ================================================================
+
+        private static TopLevelWindow Describe(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero)
+                return TopLevelWindow.None;
+
+            _ = GetWindowThreadProcessId(hWnd, out uint processId);
+            return new TopLevelWindow(new WindowHandle(hWnd), (int)processId, GetAppWindowText(hWnd));
+        }
 
         private static string GetProcessName(IntPtr hWnd)
         {
