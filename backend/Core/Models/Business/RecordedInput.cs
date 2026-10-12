@@ -1,4 +1,6 @@
-﻿using Core.Enums;
+﻿using System.Text.Json.Serialization;
+
+using Core.Enums;
 using Core.Enums.Business;
 
 namespace Core.Models.Business
@@ -7,8 +9,8 @@ namespace Core.Models.Business
     {
         public RecordedInputTypeEnum Type { get; set; }
         public DateTime CreatedOn { get; set; }
-        
-        
+
+
         // Cursor
         public int PhysicalX { get; set; }
         public int PhysicalY { get; set; }
@@ -40,9 +42,12 @@ namespace Core.Models.Business
         public int Index { get; set; }
         public string? WindowTitle { get; set; }
         public bool HasScreenshot { get; set; }
-        //public KeyModifierEnum? Modifiers { get; set; }  // Ctrl, Shift, Alt, Meta
 
+        /// <summary> Which window a press or a scroll landed on. Null with no main area to sort against. </summary>
+        public RecordedWindowEnum? Window { get; set; }
 
-        public DateTime CreatedOn { get; set; }
+        /// <summary> The window pointed at, or the one keys went to. Its title can change while typing; this cannot. </summary>
+        [JsonIgnore]
+        public WindowHandle WindowHandle { get; set; }
     }
 }
