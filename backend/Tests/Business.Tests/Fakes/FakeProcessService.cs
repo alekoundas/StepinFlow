@@ -16,5 +16,21 @@ namespace Business.Tests.Fakes
         {
             return ExecutablePaths.GetValueOrDefault(processId);
         }
+
+        // Each launch as "program | arguments", why the next one fails when it should, and what the
+        // program does once started - open its window, say.
+        public List<string> Launched { get; } = new List<string>();
+        public string? LaunchError { get; set; }
+        public Action? OnLaunch { get; set; }
+
+        public string? Launch(string program, string arguments, string workingDirectory)
+        {
+            if (LaunchError != null)
+                return LaunchError;
+
+            Launched.Add($"{program} | {arguments}");
+            OnLaunch?.Invoke();
+            return null;
+        }
     }
 }

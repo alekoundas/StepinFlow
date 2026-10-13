@@ -298,7 +298,7 @@ namespace Business.Tests.FlowScript
             }
 
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in" }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", CodeComment = "A fresh profile every time." }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", FlowAreaId = browser.Id, CodeComment = "A fresh profile every time." }, null);
 
             // Two variants and only one required, so an importer forcing every template required -
             // which this one did - shows up as a changed row.

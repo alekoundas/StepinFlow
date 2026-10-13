@@ -1,7 +1,11 @@
+using System.Drawing;
+
 using Business.Executions;
 using Business.Executions.Workers;
 using Business.Tests.Fakes;
 using Core.Enums;
+using Core.Models.Business;
+using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using static Business.Tests.TestToken;
@@ -18,7 +22,14 @@ namespace Business.Tests.Executions.Workers
     /// </summary>
     public sealed class SystemCommandStepWorkerTests
     {
+        private const int APP_WINDOW_AREA = 5;
+        private const string APP = @"C:\Program Files\App\app.exe";
+
+        private static readonly AreaResolution OPEN = AreaResolution.Ok(new Rectangle(0, 0, 800, 600), new WindowHandle(7));
+
         private readonly FakeCommandRunner _runner = new FakeCommandRunner();
+        private readonly FakeProcessService _processes = new FakeProcessService();
+        private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
 
         private static FlowStep Command(string value, string successExitCodes = "0")
         {
@@ -37,9 +48,24 @@ namespace Business.Tests.Executions.Workers
             };
         }
 
+        private static FlowStep Launch(int? flowAreaId = APP_WINDOW_AREA, int timeoutMilliseconds = 0)
+        {
+            return new FlowStep
+            {
+                Id = 1,
+                Name = "Launch",
+                FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
+                RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
+                RunCommandValue = $"\"{APP}\" --profile test",
+                FlowAreaId = flowAreaId,
+                TimeoutMilliseconds = timeoutMilliseconds,
+            };
+        }
+
         private async Task<ExecutionStep> Run(FlowStep step, ExecutionCacheService? cache = null)
         {
-            return await new SystemCommandStepWorker(_runner).ExecuteAsync(step, cache ?? await WorkerCache.ForAsync(step), Ct);
+            SystemCommandStepWorker worker = new SystemCommandStepWorker(_runner, _processes, _resolver, TimeProvider.System);
+            return await worker.ExecuteAsync(step, cache ?? await WorkerCache.ForAsync(step), Ct);
         }
 
         [Fact]
@@ -122,6 +148,77 @@ namespace Business.Tests.Executions.Workers
             await Run(command, cache);
 
             command.RunCommandValue.ShouldBe("serve --port {{port}}");
+        }
+
+        // ================================================================
+        // Launch
+        // ================================================================
+
+        // A run waits for the program to close, which an application never does on its own.
+        [Fact]
+        public async Task A_launch_starts_the_program_with_its_arguments_rather_than_running_it_as_a_command()
+        {
+            ExecutionStep result = await Run(Launch(flowAreaId: null));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _processes.Launched.ShouldBe([$"{APP} | --profile test"]);
+            _runner.Requests.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task An_application_already_open_is_not_launched_again()
+        {
+            _resolver.Areas[APP_WINDOW_AREA] = OPEN;
+
+            ExecutionStep result = await Run(Launch());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Message.ShouldBe("Already open, so not launched again.");
+            _processes.Launched.ShouldBeEmpty();
+        }
+
+        // So the next step does not act on a screen that is still loading.
+        [Fact]
+        public async Task After_launching_it_waits_for_its_window()
+        {
+            _processes.OnLaunch = () => _resolver.Areas[APP_WINDOW_AREA] = OPEN;
+
+            ExecutionStep result = await Run(Launch());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _processes.Launched.ShouldHaveSingleItem();
+        }
+
+        [Fact]
+        public async Task A_window_that_never_appears_fails_once_the_timeout_runs_out()
+        {
+            ExecutionStep result = await Run(Launch(timeoutMilliseconds: 1));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message!.ShouldStartWith("Launched, but its window did not appear within 0s.");
+        }
+
+        [Fact]
+        public async Task A_program_that_will_not_start_fails_saying_why()
+        {
+            _processes.LaunchError = "The system cannot find the file specified.";
+
+            ExecutionStep result = await Run(Launch());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe($"Could not launch {APP}: The system cannot find the file specified.");
+        }
+
+        // A monitor is always there, so it would never be launched.
+        [Fact]
+        public async Task An_area_that_is_not_a_window_cannot_be_waited_for()
+        {
+            _resolver.Areas[APP_WINDOW_AREA] = AreaResolution.Ok(new Rectangle(0, 0, 1920, 1080));
+
+            ExecutionStep result = await Run(Launch());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            _processes.Launched.ShouldBeEmpty();
         }
     }
 }

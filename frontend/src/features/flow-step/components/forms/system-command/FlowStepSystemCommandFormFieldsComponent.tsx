@@ -13,6 +13,9 @@ import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
+import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
 
@@ -23,10 +26,19 @@ interface EnumOption {
   value: string;
 }
 
+interface IdOption {
+  label: string;
+  value: number;
+}
+
 interface Props {
   presets: CommandPresetDto[];
+  flowId: number | undefined;
   isDisabled?: boolean;
 }
+
+// A launch waits for a window, and a monitor or a region is always there.
+const WINDOW_AREA_TYPES: string[] = [FlowAreaTypeEnum.APPLICATION, FlowAreaTypeEnum.BROWSER_TAB];
 
 const RESULT_SOURCE_OPTIONS: EnumOption[] = [
   { label: "Output", value: ResultSourceEnum.STDOUT },
@@ -37,6 +49,7 @@ const RESULT_SOURCE_OPTIONS: EnumOption[] = [
 
 export default function FlowStepSystemCommandFormFieldsComponent({
   presets,
+  flowId,
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
@@ -46,6 +59,14 @@ export default function FlowStepSystemCommandFormFieldsComponent({
 
   const activePreset = presets.find((x) => x.preset === preset);
   const isCustom = preset === RunCommandPresetEnum.CUSTOM;
+  const isLaunch = preset === RunCommandPresetEnum.LAUNCH_APP;
+
+  const loadWindowAreas = (filter?: string): Promise<IdOption[]> =>
+    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
+      res.data
+        .filter((item) => WINDOW_AREA_TYPES.includes(item.description ?? ""))
+        .map((item) => ({ label: item.label, value: Number(item.value) })),
+    );
 
   // A preset owns its shell, so picking one has to bring its shell with it. Its default parameter
   // comes along too, otherwise the previewed command shows a hole where the value belongs.
@@ -154,7 +175,22 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         )
       )}
 
-      {!isCustom && resolvedCommand.length > 0 && (
+      {isLaunch && (
+        <FormDropdownComponent<FlowStepDto, IdOption>
+          fieldName="flowAreaId"
+          labelText="Its window"
+          mode="remote"
+          queryKey={["lookup", "flowArea", "windows", flowId]}
+          queryFn={loadWindowAreas}
+          optionLabel="label"
+          optionValue="value"
+          placeholderText="Select an area..."
+          isDisabled={isDisabled}
+          hintText="Optional. Left alone when it is already open, and waited for when it is not, so the next step finds it loaded."
+        />
+      )}
+
+      {!isCustom && !isLaunch && resolvedCommand.length > 0 && (
         <div className="mb-3">
           <LabelComponent
             text="Runs"
@@ -175,42 +211,57 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         hintText="Optional. The command runs here instead of wherever the app happens to be."
       />
 
-      <div className="flex gap-3">
-        <FormInputTextComponent
-          fieldName="successExitCodes"
-          label="Succeeds on exit code"
-          isRequired={true}
-          isDisabled={isDisabled}
-          className="flex-1"
-          hintText="Anything else runs the Failure children."
-        />
-
+      {isLaunch && (
         <FormInputNumberComponent
           fieldName="timeoutMilliseconds"
-          label="Give up after (ms)"
+          label="Wait for its window up to (ms)"
           min={0}
           max={2147483647}
           isDisabled={isDisabled}
-          className="flex-1"
-          hintText="0 waits forever."
+          hintText="0 waits 30 seconds."
         />
-      </div>
+      )}
 
-      <FormDropdownComponent<SystemCommandForm, EnumOption>
-        fieldName="resultSource"
-        labelText="Result comes from"
-        mode="local"
-        options={RESULT_SOURCE_OPTIONS}
-        optionLabel="label"
-        optionValue="value"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
+      {!isLaunch && (
+        <>
+          <div className="flex gap-3">
+            <FormInputTextComponent
+              fieldName="successExitCodes"
+              label="Succeeds on exit code"
+              isRequired={true}
+              isDisabled={isDisabled}
+              className="flex-1"
+              hintText="Anything else runs the Failure children."
+            />
 
-      <FlowStepResultExtractFieldComponent
-        resultDescription="Narrows the output this step hands to a Check Value step."
-        isDisabled={isDisabled}
-      />
+            <FormInputNumberComponent
+              fieldName="timeoutMilliseconds"
+              label="Give up after (ms)"
+              min={0}
+              max={2147483647}
+              isDisabled={isDisabled}
+              className="flex-1"
+              hintText="0 waits forever."
+            />
+          </div>
+
+          <FormDropdownComponent<SystemCommandForm, EnumOption>
+            fieldName="resultSource"
+            labelText="Result comes from"
+            mode="local"
+            options={RESULT_SOURCE_OPTIONS}
+            optionLabel="label"
+            optionValue="value"
+            isRequired={true}
+            isDisabled={isDisabled}
+          />
+
+          <FlowStepResultExtractFieldComponent
+            resultDescription="Narrows the output this step hands to a Check Value step."
+            isDisabled={isDisabled}
+          />
+        </>
+      )}
     </>
   );
 }

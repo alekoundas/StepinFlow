@@ -18,5 +18,11 @@ namespace Core.Ports
         /// say, which is usually an elevated process refusing a caller that is not.
         /// </summary>
         string? GetExecutablePath(int processId);
+
+        /// <summary>
+        /// Starts a program, a document or a URL the way the desktop opens one, and returns at once
+        /// rather than waiting for it to close. Never throws: null when it started, else why not.
+        /// </summary>
+        string? Launch(string program, string arguments, string workingDirectory);
     }
 }

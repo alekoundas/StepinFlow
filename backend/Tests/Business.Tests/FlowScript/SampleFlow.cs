@@ -58,7 +58,7 @@ namespace Business.Tests.FlowScript
             }
 
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in", CodeComment = "Everything before the products page." }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", CodeComment = "A fresh profile every time." }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
 
             FlowStep find = Step(new FlowStep
             {

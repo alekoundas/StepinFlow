@@ -41,6 +41,30 @@ namespace Platform.Windows.SystemActions
             return allGone;
         }
 
+        public string? Launch(string program, string arguments, string workingDirectory)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = program,
+                Arguments = arguments,
+                UseShellExecute = true,
+            };
+
+            if (!string.IsNullOrWhiteSpace(workingDirectory))
+                startInfo.WorkingDirectory = workingDirectory;
+
+            try
+            {
+                // Null when the shell handed it to an instance already running, which still started it.
+                Process.Start(startInfo)?.Dispose();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
         public string? GetExecutablePath(int processId)
         {
             try

@@ -101,7 +101,13 @@ namespace Business.FlowScript.Parsers
         // in <[ area ]>, or null.
         protected FlowArea? ExtractOptionalArea()
         {
-            if (!ExpectOptionalKeyword(ScriptSymbolEnum.IN))
+            return ExtractOptionalArea(ScriptSymbolEnum.IN);
+        }
+
+        // The keyword then <[ area ]>, or null.
+        protected FlowArea? ExtractOptionalArea(ScriptSymbolEnum keyword)
+        {
+            if (!ExpectOptionalKeyword(keyword))
                 return null;
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);

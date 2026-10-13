@@ -85,6 +85,7 @@ namespace Business.Tests.Recording
 
             FlowStep launch = flow.FlowSteps.Single(x => x.FlowStepType == FlowStepTypeEnum.SYSTEM_COMMAND);
             (launch.RunCommandPreset, launch.RunCommandValue, launch.OrderNumber).ShouldBe((RunCommandPresetEnum.LAUNCH_APP, $"\"{CHROME_PATH}\"", 0));
+            launch.FlowAreaId.ShouldBe(main.Id);
             flow.FlowSteps.Count(x => x.ParentFlowStepId == launch.Id).ShouldBe(2);
         }
 

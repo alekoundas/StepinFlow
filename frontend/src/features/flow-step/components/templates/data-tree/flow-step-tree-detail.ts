@@ -169,6 +169,13 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
     case FlowStepTypeEnum.SYSTEM_COMMAND: {
       const isCustom = detail.runCommandPreset === RunCommandPresetEnum.CUSTOM;
+      const isLaunch = detail.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP;
+
+      if (isLaunch)
+        return {
+          text: truncate(detail.runCommandValue ?? ""),
+          chips: detail.areaName ? [{ text: detail.areaName, isMuted: true }] : [],
+        };
 
       return {
         text: isCustom

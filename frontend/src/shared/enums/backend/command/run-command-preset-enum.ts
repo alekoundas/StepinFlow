@@ -7,6 +7,7 @@ export const RunCommandPresetEnum = {
   CHECK_INTERNET: "CHECK_INTERNET",
   SHUTDOWN_IN: "SHUTDOWN_IN",
   CANCEL_SHUTDOWN: "CANCEL_SHUTDOWN",
+  LAUNCH_APP: "LAUNCH_APP",
 } as const;
 
 export type RunCommandPresetEnum =

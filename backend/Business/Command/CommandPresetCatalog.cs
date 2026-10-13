@@ -98,6 +98,18 @@ namespace Business.Command
                 Shell = RunCommandShellEnum.CMD,
                 CommandTemplate = "shutdown /a",
             },
+            // Started by its step rather than run here: see SystemCommandStepWorker.
+            new CommandPresetDto
+            {
+                Preset = RunCommandPresetEnum.LAUNCH_APP,
+                Label = "Launch an app",
+                Description = "Starts a program, a file or a URL and carries on without waiting for it to close. Given its window, it is left alone when already open, and waited for when not.",
+                Shell = RunCommandShellEnum.CMD,
+                CommandTemplate = "{0}",
+                HasParameter = true,
+                ParameterLabel = "Program and arguments",
+                ParameterPlaceholder = "\"C:\\Program Files\\App\\app.exe\" --flag",
+            },
         ];
 
         public static CommandPresetDto Get(RunCommandPresetEnum preset)

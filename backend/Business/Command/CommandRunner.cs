@@ -11,6 +11,10 @@ namespace Business.Command
     {
         public async Task<RunCommandTestResultDto> RunAsync(CommandRequest request, CancellationToken ct = default)
         {
+            // Run waits for the program to close, which an application never does on its own.
+            if (request.Preset == RunCommandPresetEnum.LAUNCH_APP)
+                return new RunCommandTestResultDto { ErrorMessage = "A launch is started by its step, not run as a command." };
+
             // Find command.
             string command = CommandPresetCatalog.Resolve(request.Preset, request.Value);
 

@@ -83,6 +83,7 @@ namespace Business.Recording.Setup
                     FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
                     RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
                     RunCommandValue = program,
+                    FlowArea = mainArea,
                 };
             }
 

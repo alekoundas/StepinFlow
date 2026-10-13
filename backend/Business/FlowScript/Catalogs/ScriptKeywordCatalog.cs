@@ -91,6 +91,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),
             new ScriptKeyword("required", ScriptSymbolEnum.REQUIRED),
             new ScriptKeyword("in", ScriptSymbolEnum.IN),
+            new ScriptKeyword("opens", ScriptSymbolEnum.OPENS),
             new ScriptKeyword("keep", ScriptSymbolEnum.KEEP),
             new ScriptKeyword("timeout", ScriptSymbolEnum.TIMEOUT),
             new ScriptKeyword("no timeout", ScriptSymbolEnum.NO_TIMEOUT),

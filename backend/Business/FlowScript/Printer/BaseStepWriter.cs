@@ -50,12 +50,17 @@ namespace Business.FlowScript.Text
         protected void WriteArea()
         {
             //    in <[ area ]>, or nothing.
+            WriteArea(ScriptSymbolEnum.IN);
+        }
 
+        // The keyword then <[ area ]>, or nothing.
+        protected void WriteArea(ScriptSymbolEnum keyword)
+        {
             if (Step.FlowArea == null)
                 return;
 
             WriteGap();
-            WriteKeyword(ScriptSymbolEnum.IN);
+            WriteKeyword(keyword);
             WriteQuote(Step.FlowArea.Name);
         }
 

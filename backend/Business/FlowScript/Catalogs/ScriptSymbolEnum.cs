@@ -55,6 +55,7 @@ namespace Business.FlowScript.Catalogs
         ACCURACY,
         REQUIRED,
         IN,
+        OPENS,
         KEEP,
         TIMEOUT,
         NO_TIMEOUT,

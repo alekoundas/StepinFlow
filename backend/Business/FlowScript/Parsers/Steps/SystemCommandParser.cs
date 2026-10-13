@@ -13,7 +13,7 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Launch  <[ command ]> | Run  [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ command ]>   [opens <[ area ]>] | Run  [KILL_PROCESS ...] <[ command ]>
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.SYSTEM_COMMAND);
 
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = keyword.As<RunCommandPresetEnum>()!.Value };
@@ -25,6 +25,10 @@ namespace Business.FlowScript.Parsers.Steps
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             step.RunCommandValue = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            // The window it opens: left alone when it is open already, waited for when it is not.
+            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+                step.FlowArea = ExtractOptionalArea(ScriptSymbolEnum.OPENS);
 
             ExpectEnd();
 

@@ -1,3 +1,4 @@
+using Business.FlowScript.Catalogs;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -11,12 +12,13 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Launch  <[ command ]> | Run  [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ command ]>   [opens <[ area ]>] | Run  [KILL_PROCESS ...] <[ command ]>
             if (Step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
             {
                 WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP);
                 WriteGapUntil(KEYWORD_GAP_UNTIL);
                 WriteQuote(Step.RunCommandValue);
+                WriteArea(ScriptSymbolEnum.OPENS);
                 return;
             }
 

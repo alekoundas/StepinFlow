@@ -15,6 +15,7 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
 import { useCommandPresets } from "@/features/flow-step/hooks/use-command-presets";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
+import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
 import FlowStepSystemCommandFormFieldsComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormFieldsComponent";
 import FlowStepSystemCommandTestPanelComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandTestPanelComponent";
 
@@ -57,6 +58,9 @@ export default function FlowStepSystemCommandFormComponent({
   const timeoutMilliseconds = useWatch({ control, name: "timeoutMilliseconds" });
   const activePreset = presets.find((x) => x.preset === preset);
 
+  // Testing would start the application, and a launch has no output to show.
+  const isLaunch = preset === RunCommandPresetEnum.LAUNCH_APP;
+
   useEffect(() => {
     const timer = setTimeout(() => {
       trigger();
@@ -67,7 +71,12 @@ export default function FlowStepSystemCommandFormComponent({
   const runTest = async () => {
     setIsTesting(true);
     try {
-      const dto = new FlowStepDto({ ...defaultValues, ...form.getValues() });
+      const values = form.getValues();
+      const dto = new FlowStepDto({
+        ...defaultValues,
+        ...values,
+        flowAreaId: values.flowAreaId ?? undefined,
+      });
       setTestResult(await backendApiService.FlowStep.testRunCommand(dto));
     } catch (err) {
       console.error(err);
@@ -102,7 +111,13 @@ export default function FlowStepSystemCommandFormComponent({
   };
 
   const handleSubmit = (data: z.infer<typeof FlowStepSystemCommandSchema>) =>
-    onSubmit(new FlowStepDto({ ...defaultValues, ...data }));
+    onSubmit(
+      new FlowStepDto({
+        ...defaultValues,
+        ...data,
+        flowAreaId: data.flowAreaId ?? undefined,
+      }),
+    );
 
   return (
     <>
@@ -120,32 +135,35 @@ export default function FlowStepSystemCommandFormComponent({
         >
           <FlowStepSystemCommandFormFieldsComponent
             presets={presets}
+            flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />
 
-          <div className="flex align-items-center gap-3">
-            <Button
-              type="button"
-              label={isTesting ? "Running..." : "Test"}
-              icon="pi pi-play"
-              loading={isTesting}
-              disabled={!isValid || isTesting}
-              onClick={handleTest}
-              className="p-button-outlined"
-              tooltip="Runs the command now so you can see what it returns"
-              tooltipOptions={{ position: "top" }}
-            />
-
-            {timeoutMilliseconds === 0 && (
-              <LabelComponent
-                text="Give up after is 0, so a command that never finishes keeps this running."
-                color="secondary"
-                size="sm"
+          {!isLaunch && (
+            <div className="flex align-items-center gap-3">
+              <Button
+                type="button"
+                label={isTesting ? "Running..." : "Test"}
+                icon="pi pi-play"
+                loading={isTesting}
+                disabled={!isValid || isTesting}
+                onClick={handleTest}
+                className="p-button-outlined"
+                tooltip="Runs the command now so you can see what it returns"
+                tooltipOptions={{ position: "top" }}
               />
-            )}
-          </div>
 
-          {testResult && <FlowStepSystemCommandTestPanelComponent result={testResult} />}
+              {timeoutMilliseconds === 0 && (
+                <LabelComponent
+                  text="Give up after is 0, so a command that never finishes keeps this running."
+                  color="secondary"
+                  size="sm"
+                />
+              )}
+            </div>
+          )}
+
+          {!isLaunch && testResult && <FlowStepSystemCommandTestPanelComponent result={testResult} />}
 
           <FormFooterComponent
             formMode={formMode}

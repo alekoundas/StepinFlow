@@ -24,6 +24,8 @@ export const FlowStepSystemCommandSchema = z
     runCommandValue: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
+    // A launch's window, waited for once it is started.
+    flowAreaId: z.number().int().nullish(),
     runCommandWorkingDirectory: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),

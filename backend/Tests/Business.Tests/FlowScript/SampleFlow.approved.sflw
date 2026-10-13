@@ -34,7 +34,7 @@ Steps:
 ## Sign in
 
 # A fresh profile every time.
-Launch          <[ chrome.exe https://www.saucedemo.com ]>
+Launch          <[ chrome.exe https://www.saucedemo.com ]>   opens <[ Browser ]>
 
 Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97 required  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
  Success:
