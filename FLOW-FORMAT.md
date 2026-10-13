@@ -446,6 +446,9 @@ Move        to point <[ Menu toggle ]>
 Click
 Type        <[ {{username}} ]>
 Press       <[ Ctrl+C ]>
+Press       <[ Ctrl ]>   hold
+Click
+Press       <[ Ctrl ]>   release
 Scroll      down 3
 Wait        800ms
 ```
@@ -456,6 +459,20 @@ result or a point - and a move saved with neither is written `to nowhere`, which
 reports. A click is left and single unless it says otherwise: the button (`right`, `middle`) comes
 first, then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort;
 prefer a `Wait For` check.
+
+**A key held over a click is a line of its own, before and after.** `Press` presses its keys and
+lets them go; `hold` leaves them down for the lines that follow and `release` lets them up, the way
+a click's `hold` and `release` split a drag. So a Ctrl+click is the three lines above - the click
+stays a click, and knows nothing of the key. A hold names any keys, a modifier on its own included
+(`<[ Ctrl ]>`, `<[ Ctrl+Shift ]>`); typed text cannot be held. A hold with no release of the same
+keys anywhere below it is the `KEYS_NOT_RELEASED` warning, and whatever is still held when an
+execution ends - however it ends - is let go, so a flow that fails between the two lines does not
+leave Ctrl down on the machine. A press may name a modifier on its own too: `Press <[ Win ]>` opens
+the Start menu.
+
+**A key between a hold and its release is written without the held keys.** Under `Press <[ Ctrl ]>
+hold`, Ctrl+C is `Press <[ C ]>`: pressed as `Ctrl+C`, the press would let Ctrl go, and the click
+after it would arrive without it.
 
 ### Loops
 

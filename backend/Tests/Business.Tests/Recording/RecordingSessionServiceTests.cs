@@ -1,5 +1,5 @@
 using System.Drawing;
-
+using Business.Recording.Models.Session;
 using Business.Recording.Session;
 using Business.Tests.Fakes;
 using Core.Enums;

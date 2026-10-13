@@ -33,6 +33,7 @@ Everything here was finished by 2026-10-09.
 | 5.11 | Every write to a flow goes through its data service; a flow with errors is refused at Run | §9, §14 |
 | 5.12 | Every step is a line: Click and Scroll act where the cursor is, Find All's Success once per hit, `nowhere` | §7 |
 | 5.13 | The header says what a flow is for and where it works: `Description:`, a `main` area, input defaults; an import returns its warnings and takes template images from memory | §3, §7, §11 |
+| 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
 **Next:** the recording update - phase 7 for automation flows, with phase 6's detection model
@@ -190,13 +191,14 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
                                     ^---- diagnostics, at most 3 attempts
 ```
 
-`Business/Recording` becomes a pipeline whose folders are its stages, the way `Business/FlowScript`
-is:
+`Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
+`Session/` and `ActionBuilder/` are built; `Evidence/` holds `RecordingSummaryBuilder` until
+`ClickEvidenceBuilder` takes its grouping over:
 
 ```
 Business/Recording/
-  Session/      RecordingSessionService   start, pause, resume, stop; the main area; the screenshot buffer
-  Actions/      RecordingActionBuilder    events into actions (exists, moves here)
+  Session/      RecordingSessionService   start, pause, resume, stop; RecordingSessionCache holds what it remembers
+  ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
   Evidence/     ClickEvidenceBuilder      per click: place in the main area, the element's rectangle,
                                           the text on it, the clicks that hit the same picture
   Draft/        RecordingDraftBuilder     actions and evidence into a FlowScriptSchema
@@ -213,26 +215,13 @@ In this order:
       picked from the windows open now with the one in front listed first, plus a **Test** button
       that finds it and brings it forward. A "this is a QA test" switch, off. The flow and its main
       area are saved in one write, so the name is reserved; Discard deletes it while it has no steps.
-- [ ] **The session knows its main area.** At each press it keeps the area's bounds and DPI, and
-      the window under the cursor, read in the hook handler itself. That window sorts the click:
-      inside the main area, another window of the same application such as a Save As dialog, or
-      anything else, which starts left out. Its title is only what Review shows. Today the session
-      reads the foreground window's title later, on the drain side, which is wrong whenever the click
-      changes the window in front.
-- [ ] **The screenshot comes from just before the press.** While recording, the session captures the
-      main area's rectangle a few times a second and keeps the last two or three; a press takes the
-      newest one captured before it. Today the capture happens after the press reached the
-      application, so a template can show the pressed button or the menu the press opened; the hover
-      look stays either way, since the cursor was already there. The rectangle rather than the window
-      by its handle, because menus, dropdowns and dialogs are often windows of their own.
-- [ ] **Nothing done on StepinFlow's own windows is recorded.** Electron sends its process id once,
-      when it connects. A press whose window belongs to that process is dropped before anything sees
-      it, keys are dropped while one of its windows is in front, and the bar's hotkeys always. Today
-      only the last click, Stop, is trimmed.
-- [ ] **Pause and resume, hotkeys, a folded live list, and the recording bar.** Hotkeys are
-      matched at runtime (`TODO.md`, Hotkeys), with two settings of the bar's own. The live list
-      shows actions as they fold - "Typed 15 characters", "Clicked “Invoices”" - rather than every
-      key-down and key-up. The bar is an Electron window of its own: frameless, always on top, and
+- [ ] **Hotkeys, a folded live list, and the recording bar.** The session pauses, resumes and leaves
+      out StepinFlow's own windows already (`PROJECT.md` §6); the bar calls `Recording.pause` and
+      `Recording.resume`. Hotkeys are matched at runtime (`TODO.md`, Hotkeys), with two settings of
+      the bar's own, and the bar's hotkeys are never recorded - keys are left out only while one of
+      StepinFlow's windows is in front, and a hotkey works when one is not. The live list shows
+      actions as they fold - "Typed 15 characters", "Clicked “Invoices”" - rather than every key-down
+      and key-up. The bar is an Electron window of its own: frameless, always on top, and
       `setContentProtection(true)`, so it never appears in a screenshot.
 - [ ] **Phase 6's detection model**, behind `ElementLocator`, gives each click's element rectangle,
       and Windows OCR reads the text on it. Read text is screen data, so a cloud model gets it only
@@ -267,9 +256,8 @@ In this order:
       PrimeFlex classes first, CSS only where they cannot get there (settled 2026-10-09).
       `features/recording/` replaces `features/wizard/`, and its script view is the one the export
       and import buttons use.
-- [ ] **Tests that guard the work come with it**, settled 2026-10-09: `RecordingActionBuilder`
-      before the session is rewritten around it, every draft printing and reading back with no
-      diagnostics, an import reporting warnings. Everything else is tested once the update is done.
+- [ ] **Tests that guard the work come with it**, settled 2026-10-09: every draft printing and
+      reading back with no diagnostics. Everything else is tested once the update is done.
 - [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
       and a tight loop competes with the application being tested.
 
@@ -287,7 +275,8 @@ Open, each with a recommendation:
 - **Typed text** is always an input, named from the field's label, and secret when the label reads
   as a password.
 - **The pressed screenshots** go to a temp folder per session, deleted when the tester leaves the
-  Check page. Whether a recording outlives the app is in `TODO.md` (Recording).
+  Check page. Whether a recording outlives the app is in `TODO.md` (Recording). Today the session
+  holds each press's PNG of the whole main area in memory, a megabyte or two each.
 - **The model's answer** is a whole script; questions back to the tester wait for phase 9.
 - **A cloud model without screen content** gets no read text, so it names steps from the description
   and the order alone. Allowed, and the setup page says so.
@@ -302,6 +291,9 @@ Open, each with a recommendation:
       flow is meant to prove.
 - [ ] **Ctrl + left click** asks what should be checked at that spot - must this exist, wait until
       it appears, wait until it goes. The position matters, which is why it is the left button.
+      Both Ctrl gestures clash with recording a real Ctrl+click, which is Hold Ctrl, Click,
+      Release Ctrl today: decide which wins when they land - another modifier, or a mode on the
+      recording bar.
 - [ ] **Ctrl + right click** asks what should happen there instead of a click: run a command, open
       another application, or take the value from a csv column. Position does not matter for any of
       those, which is why it is the right button.

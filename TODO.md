@@ -110,7 +110,7 @@ the history.
       `Message` directly, or the shape should move to a type that is not the EF entity.
 
 - [ ] **Scrolling left or right scrolls up.** `CursorStepWorker.Scroll` only checks for `DOWN`, and
-      `IInputService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
+      `IInputSimulatorService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
       `left` and `right` turn the vertical wheel. Needs a horizontal wheel on the port and in the
       adapter. `InputWorkerTests` pins today's behaviour, so the test changes with the fix.
       The recorder has the same gap from the other side, talked about after the recording update
@@ -307,13 +307,31 @@ the history.
       seconds of patience it cannot use, paid on every execution that takes the fallback. The fix
       is the anchor pattern in FLOW-FORMAT.md: wait once on something always present, then branch
       instantly with `FIND_BEST`. A warning, not an error - the flow still works, it is just slow.
-- [ ] **Typed text is recorded by physical key, not by what the layout produced.** Talked about
-      after the recording update (2026-10-09). `RecordingActionBuilder.PrintableCharacter` maps a
-      key code to a US character, so Shift+1 is recorded as "1" rather than "!", and on a Greek
-      layout the Latin letter on the same key is recorded instead of the Greek one. Once input
-      defaults are written into the script (`PLAN.md` 5.13), the wrong text lands in the file. SharpHook raises a
-      typed-character event carrying what the layout produced; typing should be built from that,
-      with the key-down events kept for shortcuts and held keys.
+- [ ] **Check the typed character on real keyboards.** Since 2026-10-12 typing is built from
+      SharpHook's typed-character event, kept as its own `KEY_TYPED` input after its key-down.
+      Not yet tried by hand:
+      - Dead keys (´ then e). SharpHook warns the event has "subtle system-wide side effects"; it
+        was already on by default, so they are not new, but whether it reports "é" or "´" and "e"
+        is unknown.
+      - AltGr characters ("@" on a German keyboard) record as Hold Ctrl, Hold Alt, Press Q and the
+        releases, and replay as the keys - right on the same layout, not on another. Five steps for
+        a character; a typed "@" would need the hook to tell AltGr from a held Ctrl+Alt.
+      - A modifier already down when the recording started has no key-down to become a hold, so a
+        key pressed under it records without it.
+      - An input method (Chinese, Japanese, Korean) composes text the hook never sees, so it is
+        recorded as the keys typed into it. No hook can do better.
+      - macOS: Option alone types characters there (Option+2 is ™), and Option is a held Alt, so
+        those record as Hold Alt, Press 2, Release Alt - right on the same layout, as AltGr is.
+        Revisit with the macOS adapter.
+- [ ] **A held key on Linux may arrive as many short presses. Check with the Linux adapter.**
+      Talked about on 2026-10-11. `RecordingReader.GetKeyLongPressInputs` reads a held key as its key-down,
+      the key-downs the keyboard repeats before its key-up, and the key-up - the shape Windows
+      sends, and macOS as far as known. X11's auto-repeat is known to send a fake key-up before each
+      repeated key-down, with the same timestamp; whether libuiohook (under SharpHook) filters them
+      out is not verified. If it does not, a held Backspace or arrow records as many presses.
+      Check there too that each key carries its typed character (2026-10-12). The fix belongs in the Linux adapter, not in Business: drop a key-up
+      followed at the same timestamp by a key-down of the same key. Wayland is a separate limit - no
+      app may hook keys going to another, so only X11 applications under XWayland are seen at all.
 - [ ] **Whether a recording outlives the app. To decide.** A session lives in memory, and its
       screenshots go when it is discarded. A `Recording` table, with the screenshots in a folder
       beside the database, would let a flow be generated again later from the same recording, and

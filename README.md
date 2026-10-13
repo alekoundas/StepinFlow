@@ -176,7 +176,7 @@ App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
 
 `Business` holds the domain — validation, the flow script, the execution walker, the searcher — and
 **cannot reach native code**, because it does not reference `Platform.Windows`. The ports it calls
-(`IScreenshotService`, `IInputService`, `IWindowService` …) are declared in `Core` and bound to
+(`IScreenshotService`, `IInputSimulatorService`, `IWindowService` …) are declared in `Core` and bound to
 their Windows adapters in `App`, the composition root. `Transport` is how a request gets in and
 cannot reach the machine either. That boundary is what keeps the domain testable without a screen,
 and what a Linux port would slot into.
@@ -190,7 +190,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**558 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**664 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

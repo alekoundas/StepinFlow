@@ -111,7 +111,7 @@ The interfaces for anything outside the process live in `Core/Ports`. The implem
 ```
 Core/Ports/IScreenshotService        →  Platform.Windows/Screen/ScreenshotService
 Core/Ports/IScreenService            →  Platform.Windows/Screen/ScreenService
-Core/Ports/IInputService             →  Platform.Windows/Input/InputService
+Core/Ports/IInputSimulatorService    →  Platform.Windows/Input/InputSimulatorService
 Core/Ports/IInputRecordService       →  Platform.Windows/Input/InputRecordService
 Core/Ports/IWindowService            →  Platform.Windows/Windowing/WindowService
 Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
@@ -417,7 +417,9 @@ Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated 
 download progress.
 
 Hosted services started in `Program.cs`: the request pipe listener, the broadcast pipe listener, and
-the SharpHook global hook, which runs for the whole process lifetime.
+the SharpHook global hook, which runs for the whole process lifetime. It is an `EventLoopGlobalHook`:
+its handlers run on one thread of their own, one at a time and in the order the inputs came, so the
+hook itself is never held up and a recording keeps their order.
 
 ---
 
@@ -519,10 +521,65 @@ through the recorded actions one at a time and asks what each one was for:
 The template is cropped from the recording's own screenshot, so nothing is captured twice. The
 answers build a draft tree, which is saved as a flow and edited like any other.
 
-What it keeps is less than a portable flow needs. The screenshot is a fixed square around the
-cursor, taken a moment after the press reached the application, so it can show the pressed button
-or the menu the press opened, and it carries no window size or DPI. A point it creates is a screen
-coordinate. Every press on StepinFlow's own windows is recorded too, except the last one, Stop.
+What the wizard keeps is less than a portable flow needs. Its page starts a session with no main
+area, and then the screenshot is a fixed square around the cursor, taken a moment after the press
+reached the application, so it can show the pressed button or the menu the press opened, and it
+carries no window size or DPI. A point it creates is a screen coordinate.
+
+The session underneath already records the way phase 7 needs, though no screen asks it to yet.
+Given a flow, `Business/Recording/Session` records against the flow's main area:
+
+- **A screenshot from before each press.** It captures the main area four times a second and keeps
+  the last three, each stamped when its capture finished. A press takes the newest one stamped
+  before it, picked at the hook so a slow drain cannot lose it, and keeps the main area's bounds,
+  its DPI and the whole screenshot (`RecordedPress`) - what a click is stored relative to.
+- **Which window a press landed on**, read at the hook from the window under the cursor rather than
+  later from whatever is in front: the main window, another window of its application such as a
+  Save As dialog, or anything else. A main area that is a monitor or a region has no window, so it
+  sorts by where the press landed.
+- **Nothing done on StepinFlow's own windows.** Every recording starts with Electron's process id,
+  which the page asks Electron for (`electronProcess.getId`) and sends with `Recording.start`; a start
+  without one is refused. A press on its windows, or a key while one is in front, is left out. A
+  release goes with its press, so a key let go over StepinFlow, or during a pause, is not left held
+  for every letter after it to read as a shortcut.
+- **Pause and resume.** A paused session keeps nothing new, and the time paused is not read as a
+  wait.
+
+**Raw input folds into actions in one pass** (`Business/Recording/ActionBuilder`), in the order it
+was recorded, so replaying the actions does what the inputs did and only fewer lines say it. Each
+action is built from its first input and marks the rest of its own handled - a release, a key's
+repeats and key-up, the notches after - so the loop never reads them again and nothing between them
+is skipped.
+What a key typed is the character the layout made of it - Shift, Caps Lock and AltGr applied, in
+whatever language - which the hook raises right after the key-down and the recorder keeps as an
+input of its own (`KEY_TYPED`), so nothing already published changes. So Caps Lock is never a step,
+and the text is what appeared. The builders, one per kind:
+
+- **A press** is a click, a double click or a drag; **a notch** a scroll, with the notches after it.
+- **A modifier** is a hold where it went down and a release where it came up, with everything between
+  them a step of its own: Ctrl+C is Hold Ctrl, Press C, Release Ctrl, and Ctrl+click is Hold Ctrl,
+  Click, Release Ctrl. Nothing is worked out about what the modifier meant - the order replays it.
+  Shift held over typed text and nothing else is the one exception: its capitals already carry it,
+  so it is part of the text instead.
+- **A key that is pressed** - one that typed nothing or only a control character like Enter's, or
+  any key under a held Ctrl, Alt or Win - is a press of that one key, its repeats counted as the
+  time held. AltGr is Ctrl and Alt, so its characters are held and pressed too, for the layout to
+  make again.
+- **Characters** are read forward as one entry, which starts at the Shift of a first capital: a held
+  key types its repeats, a Shift held over text only is passed over, a Backspace takes back what the
+  entry typed while some is left, and anything else - a click, a pressed key, another window, a
+  resume - ends it. Time does not.
+
+Every action comes out the same shape, a `HumanAction`: the action and every input it was made of,
+whose first input places it in the recording and whose last says when it ended - which Review can
+later show - and the pauses between them are measured as they come. Each builder adds its own to one
+`RecordingReader`, which marks the action's inputs handled as it adds it, and is where every builder
+asks what it needs to know about the recording around an input - a key's repeats and key-up, whether
+it typed under a held Ctrl - so no builder calls another. What a Shift was held over is the typing
+builder's own question, the only one that asks it. The first version's click skipped every input
+until its release, a key let go mid-click among them, which left that key held for every letter
+after it; a later one folded the cursor and the keyboard apart and merged them back, which needed
+rules for what neither could see. Reading everything in one order needs neither.
 
 ### Planned - phase 7: a recording and a description become a flow
 
@@ -536,12 +593,9 @@ written `main` in the script). Everything the recorder keeps is relative to it -
 landed, the template cut there, the area's size and DPI - which is what makes a recording portable
 (§8, Coordinates). A main area placed in screen coordinates says the flow is not portable.
 
-**What the recorder keeps.** At each press, the window under the cursor, read at the press itself:
-inside the main area, another window of the same application such as a Save As dialog, or anything
-else, which is left out. And the screenshot from just before the press: the session captures the
-main area a few times a second, so a template never shows what the press itself changed. Input on
-StepinFlow's own windows, the floating recording bar included, is never recorded, and the bar never
-appears in a screenshot. Pausing stops the recording without ending it.
+**What the recorder keeps** is the session above. A press on anything outside the main area's
+application starts left out. The floating recording bar is one of StepinFlow's windows, so nothing
+done on it is recorded, and it never appears in a screenshot.
 
 **The draft is built without a model.** Each action becomes steps by a rule rather than a question.
 A click is three lines - a wait for the element, a move onto it, a click - because every step is a
@@ -844,6 +898,12 @@ validator wanted a point on both, while the worker and the form had always acted
 every click made in the editor was an error and Start refused the flow. Drag stays one line: it is
 one gesture, and both its ends are written on it.
 
+**A key held over a click is its own line before and after**, `Press <[ Ctrl ]> hold` and
+`Press <[ Ctrl ]> release`, rather than a modifier on the click. The click stays the cursor's, and
+a held key is one idea for every step between - a click, a scroll, a drag - the way `Click hold` and
+`Click release` already split a press around what happens between. A plain press writes neither
+word, so every existing script reads the same.
+
 **A `Find All Images` works through its hits in its own Success branch**, once per hit, and inside
 that branch the search's own name is the hit of the current pass: `Move to <[ Find add buttons ]>`.
 The grammar used to promise a `Loop each match in` with a `match` keyword the engine never had - a
@@ -909,6 +969,13 @@ Hidden     SUCCESS, FAILURE
 mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
 screenshot, and its Success branch executes once per hit; inside it the search's own result is the
 hit of that pass, so a move to the search followed by a click clicks each one.
+
+A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
+single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is
+hold Ctrl, click, release Ctrl - so the click never has to know about keys. The input adapter keeps
+what steps put down and nothing let go of, and the engine lets go of all of it as an execution ends,
+however it ends: a flow that fails between a hold and its release, or a `Click hold` with no
+`Click release`, does not leave a key or a button down on the machine.
 
 ### Searching the screen
 
@@ -1074,7 +1141,7 @@ warning counts, and the editor names the step.
 | a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
 | a step reading a result it does not sit under through Success | a step with no name |
 | a `Notify` reporting a step it does not sit under through Failure | anything positioned in screen coordinates |
-| a `Go Back` to a step it did not pass on the way here | |
+| a `Go Back` to a step it did not pass on the way here | keys held with nothing below letting them go |
 | a sub-flow that does not exist | |
 | an `End Execution` under another one, which reads as a decision and is not | |
 | `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
@@ -1456,7 +1523,9 @@ Two different things, two homes.
 
 **`Core/Catalogs/`** holds structured tables that answer a question: `AppSettingCatalog` (every
 setting's label, description, default, min and max — read by the loader *and* the settings page so
-the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type).
+the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type),
+`KeyCatalog` (how keys are named - what the recorder writes as "Ctrl+V" and the execution and the
+validation read back into keys, so the round trip cannot break).
 `CommandPresetCatalog` is the same kind of thing and sits beside the runner in `Business/Command`,
 its only consumer. These are not constants; they are queried, and a `Constants.cs` full of
 `public const string` would describe them less accurately than `Catalog` does. The pattern has a
@@ -1557,13 +1626,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-558 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+664 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 131 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching |
-| `Business.Tests` | 405 | the walker, the workers, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Core.Tests` | 154 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching - and the key names |
+| `Business.Tests` | 488 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1676,7 +1745,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 558 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 664 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
