@@ -40,6 +40,10 @@ namespace Business.AppSettings
                 .Select(x => x.Value)
                 .FirstOrDefaultAsync(ct);
 
+            // A hotkey cleared on the Settings page is unbound, as the page shows it, not back at its default.
+            if (definition.Kind == AppSettingKindEnum.HOTKEY && stored != null)
+                return stored;
+
             return string.IsNullOrWhiteSpace(stored) ? definition.DefaultAsText : stored;
         }
 

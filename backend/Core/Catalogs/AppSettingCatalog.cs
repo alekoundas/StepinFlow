@@ -26,6 +26,20 @@ namespace Core.Catalogs
             maximum: 4000);
 
 
+        // Recording bar hotkeys. Never recorded, whatever window is in front.
+        public static readonly HotkeyAppSettingDefinition RecordingHotkeyPause = new(
+            AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE,
+            "Pause or resume",
+            "Stop recording for a moment, or carry on. Nothing done while paused is recorded.",
+            "VcF9");
+
+        public static readonly HotkeyAppSettingDefinition RecordingHotkeyStop = new(
+            AppSettingKeyEnum.RECORDING_HOTKEY_STOP,
+            "Stop",
+            "End the recording and review what was recorded.",
+            "VcF10");
+
+
         // Debugger hotkeys.
         public static readonly HotkeyAppSettingDefinition HotkeyContinue = new(
             AppSettingKeyEnum.HOTKEY_CONTINUE,
@@ -113,6 +127,8 @@ namespace Core.Catalogs
         [
             RecordingCaptureWidth,
             RecordingCaptureHeight,
+            RecordingHotkeyPause,
+            RecordingHotkeyStop,
 
             HotkeyContinue,
             HotkeyStepInto,
@@ -133,6 +149,9 @@ namespace Core.Catalogs
         /// <summary>In the order the Settings page lists them.</summary>
         public static IReadOnlyList<HotkeyAppSettingDefinition> Hotkeys { get; } =
         [
+            RecordingHotkeyPause,
+            RecordingHotkeyStop,
+
             HotkeyContinue,
             HotkeyStepInto,
             HotkeyStepOver,

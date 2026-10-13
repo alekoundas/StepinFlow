@@ -15,7 +15,7 @@ namespace Business.Tests.Fakes
 
         public Task<string> GetTextAsync(AppSettingDefinition definition, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(definition.DefaultAsText);
         }
 
         public Task<IReadOnlyList<AppSettingDto>> GetAllAsync(CancellationToken ct = default)

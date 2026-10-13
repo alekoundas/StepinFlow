@@ -17,9 +17,21 @@ import {
   useAppSettingMutations,
   useAppSettings,
 } from "@/features/settings/hooks/use-app-settings";
+import { toHotkeyDisplay } from "@/shared/utils/hotkey";
+
+interface Props {
+  header: string;
+  description: string;
+
+  /**
+   * Which hotkeys belong to this panel. A panel is one context - recording, or debugging - so the
+   * same key may be bound once in each, never twice in one.
+   */
+  keyPrefix: string;
+}
 
 /**
- * The debugger's global key bindings.
+ * A group of global key bindings.
  *
  * Recorded through the same global hook that will later match them, because while a flow runs the
  * focused window belongs to the application being automated - a key handler in this window would
@@ -30,11 +42,17 @@ import {
  * The backend only reports keys. What counts as a combination, and when one is finished, is decided
  * here: keys accumulate while they are held, and the first release commits what was down.
  */
-export default function HotkeysPanelComponent() {
+export default function HotkeysPanelComponent({
+  header,
+  description,
+  keyPrefix,
+}: Props) {
   const { data: all = [] } = useAppSettings();
   const { setSettingMutation } = useAppSettingMutations();
 
-  const hotkeys = all.filter((x) => x.kind === AppSettingKindEnum.HOTKEY);
+  const hotkeys = all.filter(
+    (x) => x.kind === AppSettingKindEnum.HOTKEY && x.key.startsWith(keyPrefix),
+  );
 
   const [capturingKey, setCapturingKey] = useState<string | null>(null);
   const [heldKeys, setHeldKeys] = useState<string[]>([]);
@@ -70,7 +88,7 @@ export default function HotkeysPanelComponent() {
       );
 
       if (clash) {
-        setError(`${toDisplay(combination)} is already ${clash.label.toLowerCase()}.`);
+        setError(`${toHotkeyDisplay(combination)} is already ${clash.label.toLowerCase()}.`);
         return;
       }
 
@@ -127,9 +145,9 @@ export default function HotkeysPanelComponent() {
     setSettingMutation.mutate({ key: setting.key, value: "" });
 
   return (
-    <Panel header="Debugger keys">
+    <Panel header={header}>
       <LabelComponent
-        text="Pressed while you are looking at the application being automated, not at StepinFlow, so these are matched system wide. That also means they still do whatever they normally do in that application - rebind any that clash with what a flow drives."
+        text={description}
         size="sm"
         color="secondary"
       />
@@ -165,7 +183,7 @@ export default function HotkeysPanelComponent() {
                     style={{ minWidth: "9rem", textAlign: "right" }}
                   >
                     {heldKeys.length > 0 ? (
-                      toDisplay(heldKeys.join("+"))
+                      toHotkeyDisplay(heldKeys.join("+"))
                     ) : (
                       <span className="text-color-secondary">press the keys...</span>
                     )}
@@ -185,7 +203,7 @@ export default function HotkeysPanelComponent() {
                     style={{ minWidth: "9rem", textAlign: "right" }}
                   >
                     {setting.value ? (
-                      toDisplay(setting.value)
+                      toHotkeyDisplay(setting.value)
                     ) : (
                       <span className="text-color-secondary">not bound</span>
                     )}
@@ -223,13 +241,3 @@ export default function HotkeysPanelComponent() {
     </Panel>
   );
 }
-
-/**
- * Stored in the hook's vocabulary - "VcLeftControl+VcF10" - because that is what gets matched. The
- * Vc prefix is the hook's, not something a person should have to read.
- */
-const toDisplay = (combination: string): string =>
-  combination
-    .split("+")
-    .map((part) => (part.startsWith("Vc") ? part.slice(2) : part))
-    .join(" + ");

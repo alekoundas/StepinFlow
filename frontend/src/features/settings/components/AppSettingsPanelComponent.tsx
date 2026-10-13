@@ -36,7 +36,10 @@ export default function AppSettingsPanelComponent({
   const { data: all = [], isLoading } = useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
 
-  const settings = all.filter((x) => x.key.startsWith(keyPrefix));
+  // A hotkey is captured from the keyboard, which HotkeysPanelComponent does.
+  const settings = all.filter(
+    (x) => x.key.startsWith(keyPrefix) && x.kind !== AppSettingKindEnum.HOTKEY,
+  );
 
   const control = (setting: AppSettingDto) => {
     switch (setting.kind) {

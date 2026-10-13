@@ -8,6 +8,10 @@ namespace Core.Enums
         /// <summary>Height of the screenshot the recorder takes around the cursor.</summary>
         RECORDING_CAPTURE_HEIGHT,
 
+        // Recording bar hotkeys.
+        RECORDING_HOTKEY_PAUSE,
+        RECORDING_HOTKEY_STOP,
+
 
         // Debugger hotkeys.
         HOTKEY_CONTINUE,

@@ -37,6 +37,10 @@ language installer and asks for elevation.
 
 ## Hotkeys
 
+Recording keys — pause or resume, and stop, F9 and F10 by default. They work whatever window is in
+front and are never recorded, but still reach that window, so rebind any the recorded application
+uses.
+
 Debugger keys — continue, step into, step over, pause, stop. Defaults are single keys rather than
 combinations.
 
