@@ -44,6 +44,7 @@ export default function WizardPage() {
   const {
     target,
     lookupFlowId,
+    setupFlowId,
     actions,
     cursor,
     steps,
@@ -205,7 +206,8 @@ export default function WizardPage() {
 
   const handleDiscard = async () => {
     try {
-      await backendApiService.Recording.discard();
+      await backendApiService.Recording.discard(setupFlowId);
+      await queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
     } catch (err) {
       console.error(err);
     }

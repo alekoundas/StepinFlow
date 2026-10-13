@@ -232,6 +232,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsQaTest")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsSubFlow")
                         .HasColumnType("INTEGER");
 

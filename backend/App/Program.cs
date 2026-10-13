@@ -25,6 +25,7 @@ using Business.Flows.FlowValidationService;
 using Business.Ai;
 using Business.AppSettings;
 using Business.Recording.Session;
+using Business.Recording.Setup;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
@@ -84,6 +85,7 @@ namespace App
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
+            builder.Services.AddSingleton<IRecordingSetupService, RecordingSetupService>();
 
             // Validation
             builder.Services.AddSingleton<IFlowValidationService, FlowValidationService>();
@@ -207,6 +209,7 @@ namespace App
             builder.Services.AddTransient<GetLookupOcrLanguagesHandler>();
             builder.Services.AddTransient<GetLookupAiModelsHandler>();
             builder.Services.AddTransient<GetLookupAiModelSuggestionsHandler>();
+            builder.Services.AddTransient<SetupRecordingHandler>();
             builder.Services.AddTransient<StartRecordingHandler>();
             builder.Services.AddTransient<PauseRecordingHandler>();
             builder.Services.AddTransient<ResumeRecordingHandler>();

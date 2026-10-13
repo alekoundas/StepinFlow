@@ -21,6 +21,13 @@ interface Props {
   /** Whether the flow the recorder is about to create should be a sub-flow. */
   createAsSubFlow: boolean;
 
+  /**
+   * The flow the recording setup created. The recording is made against its main area, and a
+   * discard deletes it while nothing but the setup is in it. Undefined when recording into a flow
+   * that already existed.
+   */
+  setupFlowId: number | undefined;
+
   /** What the recorder captured, in order. Never mutated once set. */
   actions: RecordedActionDto[];
 
@@ -39,6 +46,7 @@ interface Props {
 
   setTarget: (target: FlowDraftTargetDto | undefined, lookupFlowId?: number) => void;
   setCreateAsSubFlow: (isSubFlow: boolean) => void;
+  setSetupFlowId: (flowId: number | undefined) => void;
   setActions: (actions: RecordedActionDto[]) => void;
 
   addSteps: (
@@ -64,6 +72,7 @@ const initial = {
   target: undefined,
   lookupFlowId: undefined,
   createAsSubFlow: false,
+  setupFlowId: undefined,
   actions: [],
   cursor: 0,
   steps: [],
@@ -79,6 +88,7 @@ export const useWizardStore = create<Props>()(
       set({ target, lookupFlowId: lookupFlowId ?? target?.targetFlowId ?? undefined }),
 
     setCreateAsSubFlow: (isSubFlow) => set({ createAsSubFlow: isSubFlow }),
+    setSetupFlowId: (flowId) => set({ setupFlowId: flowId }),
     setActions: (actions) =>
       set({ actions, cursor: 0, steps: [], openParentTempId: undefined, openParentBranch: undefined }),
 

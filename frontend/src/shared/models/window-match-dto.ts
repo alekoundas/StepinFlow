@@ -7,6 +7,9 @@ export interface WindowMatchTestRequestDto {
 
   /** So the reported bounds are the ones the area will actually resolve to. */
   useClientArea: boolean;
+
+  /** Brings the first match to the front, so the tester sees which window it is. */
+  bringsToFront?: boolean;
 }
 
 export interface WindowMatchDto {

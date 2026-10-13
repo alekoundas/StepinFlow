@@ -35,6 +35,13 @@ namespace Transport.Ipc.Handlers
                     return Task.FromResult(ResultDto<WindowMatchTestResultDto>.Failure($"That title pattern is not a valid regex: {patternError}"));
             }
 
+            if (dto.BringsToFront)
+            {
+                WindowHandle first = _windowService.FindWindow(query);
+                if (first.IsValid)
+                    _windowService.FocusWindow(first);
+            }
+
             List<WindowMatchDto> matches = _windowService.FindWindowMatches(query)
                 .Select(x => new WindowMatchDto
                 {

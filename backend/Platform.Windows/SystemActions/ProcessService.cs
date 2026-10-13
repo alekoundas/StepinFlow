@@ -40,5 +40,18 @@ namespace Platform.Windows.SystemActions
 
             return allGone;
         }
+
+        public string? GetExecutablePath(int processId)
+        {
+            try
+            {
+                using Process process = Process.GetProcessById(processId);
+                return process.MainModule?.FileName;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 }

@@ -13,6 +13,9 @@ export class FlowDto {
   /** A flow meant to be called by another rather than started on its own. One way, never unset. */
   isSubFlow: boolean = false;
 
+  /** A QA test rather than an automation, chosen at the recording setup. */
+  isQaTest: boolean = false;
+
   createdOn?: string;
   updatedOn?: string | null;
 

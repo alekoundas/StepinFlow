@@ -27,6 +27,7 @@ import type {
   FlowDraftResultDto,
 } from "@/shared/models/database/flow-draft-dto";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
+import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -187,6 +188,9 @@ export const backendApiService = {
 
 
   Recording: {
+    // Creates the flow the recording goes into, and returns its id.
+    setup: (dto: RecordingSetupDto) => call<number>("Recording.setup", dto),
+
     // With a flow, against its main area. Without one, as the wizard records.
     // Electron's process owns every StepinFlow window, and nothing done on them is recorded.
     start: async (flowId?: number) => {
@@ -196,7 +200,8 @@ export const backendApiService = {
     pause: () => call<boolean>("Recording.pause"),
     resume: () => call<boolean>("Recording.resume"),
     stop: () => call<RecordedActionDto[]>("Recording.stop"),
-    discard: () => call<boolean>("Recording.discard"),
+    // The flow the setup created goes with it while nothing but the setup is in it.
+    discard: (flowId?: number) => call<boolean>("Recording.discard", { flowId }),
     // .Net returns byte[], which arrives here as a base64 string
     getScreenshot: (index: number) =>
       call<string>("Recording.getScreenshot", index),

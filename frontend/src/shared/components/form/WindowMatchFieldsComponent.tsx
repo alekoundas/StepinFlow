@@ -39,6 +39,9 @@ interface Props {
    * this component has no idea what the record it lives in is called.
    */
   onWindowPicked?: (label: string) => void;
+
+  /** Testing also brings the window it found to the front, so the tester sees which one it is. */
+  bringsToFront?: boolean;
 }
 
 /**
@@ -59,6 +62,7 @@ export default function WindowMatchFieldsComponent({
   isDisabled = false,
   useClientArea = false,
   onWindowPicked,
+  bringsToFront = false,
 }: Props) {
   const { control, setValue, getValues } = useFormContext();
   const queryClient = useQueryClient();
@@ -71,14 +75,19 @@ export default function WindowMatchFieldsComponent({
   const [matches, setMatches] = useState<WindowMatchDto[] | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
 
-  const loadWindows = (filter?: string): Promise<WindowOption[]> =>
-    backendApiService.Lookup.window({ searchText: filter }).then((res) =>
-      res.data.map((item) => ({
+  // Front first, and never StepinFlow's own windows, which would otherwise top the list.
+  const loadWindows = async (filter?: string): Promise<WindowOption[]> => {
+    const electronProcessId = await window.electronApi.electronProcess.getId();
+    const res = await backendApiService.Lookup.window({ searchText: filter });
+
+    return res.data
+      .filter((item) => item.extraData?.processId !== electronProcessId)
+      .map((item) => ({
         label: item.label,
         value: String(item.value),
         description: item.description,
-      })),
-    );
+      }));
+  };
 
   // The list is of live windows, so it is stale the moment it is fetched. The query itself is set
   // not to cache; this is for when something opened while the form was already up.
@@ -100,6 +109,7 @@ export default function WindowMatchFieldsComponent({
         titlePattern: (getValues("titlePattern") as string) ?? "",
         titleMatchMode: getValues("titleMatchMode") as TitleMatchModeEnum,
         useClientArea,
+        bringsToFront,
       });
 
       setMatches(result.matches);

@@ -1,5 +1,6 @@
 using System.Drawing;
 
+using Business.Recording.Models.Session;
 using Business.Recording.Session;
 using Business.Tests.Fakes;
 using Core.Enums;
@@ -30,7 +31,7 @@ namespace Business.Tests.Recording
         {
             _filter = new RecordingInputFilter(_windows)
             {
-                OwnProcessId = OWN,
+                ElectronProcessId = OWN,
                 Target = new RecordingTarget(new Rectangle(0, 0, 800, 600), 96, BROWSER_WINDOW, BROWSER),
             };
         }
@@ -126,7 +127,7 @@ namespace Business.Tests.Recording
         [Fact]
         public void With_no_own_process_nothing_is_left_out_as_its_own()
         {
-            _filter.OwnProcessId = 0;
+            _filter.ElectronProcessId = 0;
             _windows.Pointed = STEPINFLOW;
 
             _filter.Keep(Press()).ShouldBeTrue();

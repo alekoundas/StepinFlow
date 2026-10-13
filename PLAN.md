@@ -192,11 +192,12 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
-`Session/` and `ActionBuilder/` are built; `Evidence/` holds `RecordingSummaryBuilder` until
+`Setup/`, `Session/` and `ActionBuilder/` are built; `Evidence/` holds `RecordingSummaryBuilder` until
 `ClickEvidenceBuilder` takes its grouping over:
 
 ```
 Business/Recording/
+  Setup/        RecordingSetupService     the flow, its main area and a Launch step, before the first click
   Session/      RecordingSessionService   start, pause, resume, stop; RecordingSessionCache holds what it remembers
   ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
   Evidence/     ClickEvidenceBuilder      per click: place in the main area, the element's rectangle,
@@ -211,10 +212,6 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **Setup before the first click.** A unique name, the description (5.13), and the main area,
-      picked from the windows open now with the one in front listed first, plus a **Test** button
-      that finds it and brings it forward. A "this is a QA test" switch, off. The flow and its main
-      area are saved in one write, so the name is reserved; Discard deletes it while it has no steps.
 - [ ] **Hotkeys, a folded live list, and the recording bar.** The session pauses, resumes and leaves
       out StepinFlow's own windows already (`PROJECT.md` §6); the bar calls `Recording.pause` and
       `Recording.resume`. Hotkeys are matched at runtime (`TODO.md`, Hotkeys), with two settings of
@@ -265,13 +262,9 @@ Open, each with a recommendation:
 
 - **Keep the per-action wizard?** Retire it: Review, the plain draft and the editor cover what it
   does, and it builds steps in TypeScript, which the draft now does in `Business`.
-- **Is "QA test" stored on the flow?** A `Flow.Kind`, automation or test: an inconclusive automation
-  is a strange verdict, the CI runner should take tests only, and screen sizes belong to tests.
 - **A generated automation's waits** end the execution, failed, with a reason, when they time out.
-  An empty Failure branch carries on and clicks blind. With `Flow.Kind`, the end of an automation is
-  COMPLETED rather than INCONCLUSIVE.
-- **Opening the application** is a `Launch` step the setup writes first, rather than a field on the
-  main area. How a launch works on every system is in `TODO.md` (Execution).
+  An empty Failure branch carries on and clicks blind. With `Flow.IsQaTest` (settled 2026-10-13, a
+  bool for now), the end of an automation is COMPLETED rather than INCONCLUSIVE.
 - **Typed text** is always an input, named from the field's label, and secret when the label reads
   as a password.
 - **The pressed screenshots** go to a temp folder per session, deleted when the tester leaves the

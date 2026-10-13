@@ -521,12 +521,20 @@ through the recorded actions one at a time and asks what each one was for:
 The template is cropped from the recording's own screenshot, so nothing is captured twice. The
 answers build a draft tree, which is saved as a flow and edited like any other.
 
-What the wizard keeps is less than a portable flow needs. Its page starts a session with no main
-area, and then the screenshot is a fixed square around the cursor, taken a moment after the press
+**A new flow is set up before the first click** (`Business/Recording/Setup`, `Recording.setup`):
+its name, description, whether it is a QA test (`Flow.IsQaTest`), and the window it works in,
+picked from the windows open now, front first and StepinFlow's own left out. Its Test finds the
+window and brings it to the front. The flow and that window as its main area are saved in one
+write, so the name is reserved, and when the tester asks, a first step that launches the
+application: `Launch` with the program file of the process that owns the window now, quoted when
+it has a space, so the window has to be open. The recorded steps go after it. Discard deletes the
+flow while nothing but the setup is in it.
+
+Recording steps into a flow that already exists starts a session with no main area, as the wizard
+always has: the screenshot is a fixed square around the cursor, taken a moment after the press
 reached the application, so it can show the pressed button or the menu the press opened, and it
 carries no window size or DPI. A point it creates is a screen coordinate.
 
-The session underneath already records the way phase 7 needs, though no screen asks it to yet.
 Given a flow, `Business/Recording/Session` records against the flow's main area:
 
 - **A screenshot from before each press.** It captures the main area four times a second and keeps
@@ -1626,13 +1634,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-664 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+670 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 154 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching - and the key names |
-| `Business.Tests` | 488 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 494 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1745,7 +1753,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 664 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 670 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

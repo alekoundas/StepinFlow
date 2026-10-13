@@ -14,6 +14,9 @@ namespace Core.Models.Dtos
         /// measured differently from the thing being configured would be worse than none.
         /// </summary>
         public bool UseClientArea { get; set; } = true;
+
+        /// <summary>Brings the first match to the front, so the tester sees which window it is.</summary>
+        public bool BringsToFront { get; set; }
     }
 
     public class WindowMatchTestResultDto

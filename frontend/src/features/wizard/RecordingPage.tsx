@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
-import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 
@@ -14,8 +14,7 @@ import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import { FlowDto } from "@/shared/models/database/flow-dto";
-import { useFlowMutations } from "@/features/flow/hooks/use-flow";
+import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
 /**
@@ -26,11 +25,17 @@ import { useWizardStore } from "@/features/wizard/store/wizard-store";
  */
 export default function RecordingPage() {
   const navigate = useNavigate();
-  const { target, createAsSubFlow, setTarget, setActions, reset } = useWizardStore();
-  const { createFlowMutation } = useFlowMutations();
+  const queryClient = useQueryClient();
+  const {
+    target,
+    createAsSubFlow,
+    setupFlowId,
+    setTarget,
+    setSetupFlowId,
+    setActions,
+    reset,
+  } = useWizardStore();
 
-  const [flowName, setFlowName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [events, setEvents] = useState<RecordedInput[]>([]);
@@ -57,7 +62,7 @@ export default function RecordingPage() {
     setEvents([]);
 
     try {
-      await backendApiService.Recording.start();
+      await backendApiService.Recording.start(setupFlowId);
       setIsRecording(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -66,24 +71,12 @@ export default function RecordingPage() {
 
   // The flow is created before anything is recorded, not on save. Every step form then has a
   // real flow to list search areas and points against, and to save a new one into, which is the
-  // difference between an image search step you can finish here and one you cannot.
-  const handleCreateFlow = async () => {
-    if (flowName.trim().length === 0) return;
-
-    setIsCreating(true);
-    setError(null);
-
-    try {
-      const flowId = await createFlowMutation.mutateAsync(
-        new FlowDto({ name: flowName.trim(), isSubFlow: createAsSubFlow }),
-      );
-
-      setTarget({ targetFlowId: flowId, targetIndex: 0 }, flowId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsCreating(false);
-    }
+  // difference between an image search step you can finish here and one you cannot. The recorded
+  // steps go after the launch step when there is one.
+  const handleSetupCreated = (flowId: number, addsLaunchStep: boolean) => {
+    setTarget({ targetFlowId: flowId, targetIndex: addsLaunchStep ? 1 : 0 }, flowId);
+    setSetupFlowId(flowId);
+    void queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
   };
 
   const handleStop = async () => {
@@ -110,7 +103,8 @@ export default function RecordingPage() {
 
   const handleCancel = async () => {
     try {
-      await backendApiService.Recording.discard();
+      await backendApiService.Recording.discard(setupFlowId);
+      await queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
     } catch (err) {
       console.error(err);
     }
@@ -136,24 +130,7 @@ export default function RecordingPage() {
         </div>
 
         <div className="flex gap-2">
-          {!target ? (
-            <>
-              <InputText
-                value={flowName}
-                onChange={(e) => setFlowName(e.target.value)}
-                placeholder="Name the flow"
-                className="w-14rem"
-              />
-              <Button
-                type="button"
-                label="Create and continue"
-                icon="pi pi-check"
-                loading={isCreating}
-                disabled={flowName.trim().length === 0 || isCreating}
-                onClick={handleCreateFlow}
-              />
-            </>
-          ) : !isRecording ? (
+          {!target ? null : !isRecording ? (
             <Button
               type="button"
               label="Start recording"
@@ -196,32 +173,41 @@ export default function RecordingPage() {
         />
       )}
 
-      <Panel header={`Actions (${events.length})`}>
-        <div
-          ref={feedRef}
-          className="flex flex-column gap-1 overflow-auto"
-          style={{ maxHeight: "26rem" }}
-        >
-          {events.length === 0 && (
-            <LabelComponent
-              text={
-                isRecording
-                  ? "Waiting for your first action..."
-                  : "Nothing recorded yet."
-              }
-              size="sm"
-              color="secondary"
-            />
-          )}
+      {!target && (
+        <RecordingSetupComponent
+          isSubFlow={createAsSubFlow}
+          onCreated={handleSetupCreated}
+        />
+      )}
 
-          {events.map((event) => (
-            <RecordedEventRow
-              key={event.index}
-              event={event}
-            />
-          ))}
-        </div>
-      </Panel>
+      {target && (
+        <Panel header={`Actions (${events.length})`}>
+          <div
+            ref={feedRef}
+            className="flex flex-column gap-1 overflow-auto"
+            style={{ maxHeight: "26rem" }}
+          >
+            {events.length === 0 && (
+              <LabelComponent
+                text={
+                  isRecording
+                    ? "Waiting for your first action..."
+                    : "Nothing recorded yet."
+                }
+                size="sm"
+                color="secondary"
+              />
+            )}
+
+            {events.map((event) => (
+              <RecordedEventRow
+                key={event.index}
+                event={event}
+              />
+            ))}
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

@@ -13,6 +13,9 @@ namespace Core.Models.Database
 
         public bool IsSubFlow { get; set; }
 
+        // A QA test rather than an automation, chosen at the recording setup.
+        public bool IsQaTest { get; set; }
+
 
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();

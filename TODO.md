@@ -23,6 +23,10 @@ the history.
       which `CommandRunner` does. So it wants a port in `Platform.Windows` rather than a catalog
       entry - `IProcessService` has no caller and would gain one - with the per-system command text
       decided alongside the Linux work.
+      **More pressing since 2026-10-13:** the recording setup writes a `Launch` as a new flow's
+      first step when the tester asks, with the full program file of the window's process, quoted
+      when it has a space (`"C:\Program Files\...\chrome.exe"`). That text is this machine's: on
+      macOS the program is inside an `.app` bundle, best started with `open -a`.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
       test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
@@ -141,6 +145,11 @@ the history.
       `Go Back to <[ Retry ]>` can legitimately land on one and a duplicate makes that ambiguous. Keeping
       the rule costs a rename; dropping it would have cost either the `Go Back` target or a silent
       first-match.
+
+- [ ] **`Flow.IsQaTest` is not in the script.** Added 2026-10-13, set by the recording setup. The
+      header has no line for it, so an export drops it and an import of a new flow leaves it false;
+      re-importing over an existing flow keeps it, because the import only replaces the name and
+      description. Add a header line when the name is settled (it is "a bool for now").
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing

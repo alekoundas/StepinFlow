@@ -44,6 +44,68 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
+        /// The recording setup's flow with its main area and, when there is one, the step that
+        /// launches the application, before the first click, so the name is reserved. Saves twice,
+        /// because the step names the flow by id, so in a transaction.
+        /// </summary>
+        public async Task<ResultDto<int>> CreateForRecordingAsync(Flow flow, FlowArea mainArea, FlowStep? launch, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+            await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
+
+            string? taken = await ValidateNameIsFreeAsync(dbContext, flow.Name, 0, ct);
+            if (taken != null)
+                return ResultDto<int>.Failure(taken);
+
+            flow.Id = 0;
+            mainArea.Id = 0;
+            mainArea.IsMain = true;
+            mainArea.Flow = flow;
+
+            dbContext.Flows.Add(flow);
+            dbContext.FlowAreas.Add(mainArea);
+            await dbContext.SaveChangesAsync(ct);
+
+            if (launch != null)
+            {
+                launch.RootId = flow.Id;
+                launch.FlowId = flow.Id;
+                launch.OrderNumber = 0;
+                await FlowStepDataService.CreateAsync(dbContext, launch, [], ct);
+            }
+
+            await transaction.CommitAsync(ct);
+
+            return ResultDto<int>.Success(flow.Id);
+        }
+
+        /// <summary>
+        /// Deletes a flow the recording setup created while it holds only what the setup wrote: no
+        /// steps but the one that launches the application. Anything more is work, and the flow is
+        /// kept. True when it was deleted.
+        /// </summary>
+        public async Task<ResultDto<bool>> DeleteRecordingSetupAsync(int id, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            List<FlowStep> steps = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => x.RootId == id)
+                .Where(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE)
+                .ToListAsync(ct);
+
+            if (steps.Count > 1)
+                return ResultDto<bool>.Success(false);
+
+            if (steps.Count == 1 && steps[0].RunCommandPreset != RunCommandPresetEnum.LAUNCH_APP)
+                return ResultDto<bool>.Success(false);
+
+            await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
+
+            return ResultDto<bool>.Success(true);
+        }
+
+        /// <summary>
         /// The flow form: the flow's own fields, and its areas, points and sizes as the form left
         /// them. Areas first, because a point can sit in an area created in this same save.
         /// </summary>

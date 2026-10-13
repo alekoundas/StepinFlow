@@ -17,7 +17,8 @@ namespace Transport.Ipc.Handlers
             string search = dto.SearchText ?? string.Empty;
 
             // Value is the process name: window titles change constantly, process names do not.
-            // The title comes along in ExtraData so the form can offer it as a starting pattern.
+            // The title comes along in ExtraData so the form can offer it as a starting pattern, and
+            // the process id so it can leave StepinFlow's own windows out. In z-order, front first.
             List<LookupItemDto> items = _windowService.GetApplicationWindows()
                 .Where(x => x.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
                     || x.ProcessName.Contains(search, StringComparison.OrdinalIgnoreCase))
@@ -30,6 +31,7 @@ namespace Transport.Ipc.Handlers
                     {
                         ProcessName = x.ProcessName,
                         Title = x.Title,
+                        ProcessId = x.ProcessId,
                     },
                 })
                 .ToList();

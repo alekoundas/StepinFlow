@@ -12,5 +12,11 @@ namespace Core.Ports
         /// process refusing a caller that is not.
         /// </summary>
         bool KillByName(string processName);
+
+        /// <summary>
+        /// The program file the process was started from. Null when it has exited, or will not
+        /// say, which is usually an elevated process refusing a caller that is not.
+        /// </summary>
+        string? GetExecutablePath(int processId);
     }
 }
