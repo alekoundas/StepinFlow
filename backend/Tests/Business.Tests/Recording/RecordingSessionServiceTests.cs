@@ -80,6 +80,35 @@ namespace Business.Tests.Recording
             });
         }
 
+        // A key as the hook names it, which is how a hotkey is stored.
+        private void RaiseKey(RecordedInputTypeEnum type, KeyCodeEnum key, string name)
+        {
+            _hook.Raise(new RecordedInput
+            {
+                Type = type,
+                KeyCode = key,
+                KeyChar = name,
+                CreatedOn = _clock.GetLocalNow().DateTime,
+            });
+        }
+
+        private void Type(KeyCodeEnum key, string name, string character)
+        {
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, key, name);
+            _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.KEY_TYPED, KeyCode = key, TypedCharacter = character, CreatedOn = _clock.GetLocalNow().DateTime });
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, key, name);
+        }
+
+        // The stop key stops on a thread of its own, so the hook is never held up.
+        private static async Task WaitUntilAsync(Func<bool> condition)
+        {
+            using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(5));
+
+            while (!condition())
+                await Task.Delay(10, timeout.Token);
+        }
+
         // ================================================================
         // Starting
         // ================================================================
@@ -150,7 +179,7 @@ namespace Business.Tests.Recording
             Raise(RecordedInputTypeEnum.BUTTON_UP);
 
             (await _session.StopAsync(Ct)).ShouldBeEmpty();
-            _broadcast.Sent.ShouldBeEmpty();
+            _session.GetActions().ShouldBeEmpty();
         }
 
         // ================================================================
@@ -175,6 +204,84 @@ namespace Business.Tests.Recording
                 RecordedInputTypeEnum.KEY_DOWN,
                 RecordedInputTypeEnum.KEY_UP,
             ]);
+        }
+
+        // ================================================================
+        // The recording bar's hotkeys
+        // ================================================================
+
+        [Fact]
+        public async Task The_pause_key_pauses_and_resumes_and_is_never_recorded()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F9, "VcF9");
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F9, "VcF9");
+            _session.IsPaused.ShouldBeTrue();
+            _session.GetProgress().State.ShouldBe(RecordingStateEnum.PAUSED);
+
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F9, "VcF9");
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F9, "VcF9");
+            _session.IsPaused.ShouldBeFalse();
+
+            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.RESUMED]);
+        }
+
+        [Fact]
+        public async Task The_stop_key_stops_the_recording()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F10, "VcF10");
+            await WaitUntilAsync(() => _session.GetProgress().State == RecordingStateEnum.STOPPED);
+
+            _session.IsRecording.ShouldBeFalse();
+            _hook.IsRecording.ShouldBeFalse();
+            _session.GetActions().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.CLICK]);
+        }
+
+        // ================================================================
+        // The live list
+        // ================================================================
+
+        // Typed text may be a password, so the live list counts it.
+        [Fact]
+        public async Task A_stop_folds_the_recording_and_counts_typed_text()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Type(KeyCodeEnum.H, "VcH", "h");
+            Type(KeyCodeEnum.I, "VcI", "i");
+            await _session.StopAsync(Ct);
+
+            RecordingProgressDto progress = _session.GetProgress();
+            progress.State.ShouldBe(RecordingStateEnum.STOPPED);
+            progress.ActionCount.ShouldBe(1);
+            progress.RecentActions.Single().Line.ShouldBe("Typed 2 characters");
+
+            (BroadcastTypeEnum type, object? payload) = _broadcast.Sent[^1];
+            type.ShouldBe(BroadcastTypeEnum.RECORDING_PROGRESS);
+            payload.ShouldBeOfType<RecordingProgressDto>().State.ShouldBe(RecordingStateEnum.STOPPED);
+        }
+
+        [Fact]
+        public async Task A_discarded_recording_keeps_nothing()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            await _session.DiscardAsync(Ct);
+
+            _session.IsRecording.ShouldBeFalse();
+            _session.GetActions().ShouldBeEmpty();
+            _session.GetPress(0).ShouldBeNull();
+            _session.GetProgress().State.ShouldBe(RecordingStateEnum.NONE);
         }
 
         // ================================================================

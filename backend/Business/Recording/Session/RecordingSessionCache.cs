@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Drawing;
 using Business.Recording.Models.Session;
+using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
+using Core.Models.Dtos;
 
 namespace Business.Recording.Session
 {
@@ -14,6 +16,7 @@ namespace Business.Recording.Session
     /// 3) the last few screenshots of the main area. A press takes the newest one from before it, so
     ///    a template shows the screen the tester decided on rather than what the press changed - the
     ///    pressed button, or the menu it opened.
+    /// 4) where the recording is, and its actions as last folded, for the live list.
     ///
     /// The inputs and the screenshots per press outlive the recording, so the review can still ask
     /// for them, until the next recording starts or the review discards it.
@@ -29,11 +32,39 @@ namespace Business.Recording.Session
         private readonly Lock _inputsLock = new Lock();
         private readonly Lock _recentScreenshotsLock = new Lock();
 
+        private volatile RecordingStateEnum _state;
+        private volatile IReadOnlyList<RecordedActionDto> _actions = [];
+
         /// <summary>The flow's main area. Null with no flow, as the wizard records.</summary>
         public FlowArea? MainArea { get; set; }
 
         /// <summary>The size of the screenshot around a press. Read once per recording, so they all match.</summary>
         public Size CaptureSize { get; set; } = new Size(400, 400);
+
+        public RecordingStateEnum State
+        {
+            get { return _state; }
+            set { _state = value; }
+        }
+
+        /// <summary>Set before the first input can arrive, and kept with the recording.</summary>
+        public DateTime StartedOn { get; set; }
+
+        /// <summary>The inputs as last folded into actions.</summary>
+        public IReadOnlyList<RecordedActionDto> Actions
+        {
+            get { return _actions; }
+            set { _actions = value; }
+        }
+
+        public int InputCount
+        {
+            get
+            {
+                lock (_inputsLock)
+                    return _inputs.Count;
+            }
+        }
 
 
         // ================================================================
@@ -49,6 +80,8 @@ namespace Business.Recording.Session
             _pressesByIndex.Clear();
             ClearRecentScreenshots();
             MainArea = null;
+            State = RecordingStateEnum.NONE;
+            Actions = [];
         }
 
 

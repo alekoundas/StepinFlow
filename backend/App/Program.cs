@@ -216,6 +216,7 @@ namespace App
             builder.Services.AddTransient<StopRecordingHandler>();
             builder.Services.AddTransient<DiscardRecordingHandler>();
             builder.Services.AddTransient<GetRecordingScreenshotHandler>();
+            builder.Services.AddTransient<GetRecordingProgressHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();
             builder.Services.AddTransient<SetAppSettingHandler>();
             builder.Services.AddTransient<SystemTakeScreenshotHandler>();

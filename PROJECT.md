@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 97 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 101 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -413,7 +413,7 @@ breaks the arm that calls it, and F12 reaches the handler.
 **Adding a new DTO never touches the `.proto`.** Every response body is `ResultDto<T>`.
 
 Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated by `type`
-(`BroadcastTypeEnum` as a string). They carry execution progress, recorded input events and model
+(`BroadcastTypeEnum` as a string). They carry execution progress, recording progress and model
 download progress.
 
 Hosted services started in `Program.cs`: the request pipe listener, the broadcast pipe listener, and
@@ -527,7 +527,8 @@ picked from the windows open now, front first and StepinFlow's own left out. Its
 window and brings it to the front. The flow and that window as its main area are saved in one
 write, so the name is reserved, and when the tester asks, a first step that launches the
 application: `Launch` with the program file of the process that owns the window now, quoted when
-it has a space, so the window has to be open. The recorded steps go after it. Discard deletes the
+it has a space, so the window has to be open, and `opens` the main area, so an execution waits for it.
+The recorded steps go after it. Discard deletes the
 flow while nothing but the setup is in it.
 
 Recording steps into a flow that already exists starts a session with no main area, as the wizard
@@ -550,8 +551,8 @@ Given a flow, `Business/Recording/Session` records against the flow's main area:
   without one is refused. A press on its windows, or a key while one is in front, is left out. A
   release goes with its press, so a key let go over StepinFlow, or during a pause, is not left held
   for every letter after it to read as a shortcut.
-- **Pause and resume.** A paused session keeps nothing new, and the time paused is not read as a
-  wait.
+- **Pause and resume**, from the recording bar or its hotkey. A paused session keeps nothing new,
+  and the time paused is not read as a wait.
 
 **Raw input folds into actions in one pass** (`Business/Recording/ActionBuilder`), in the order it
 was recorded, so replaying the actions does what the inputs did and only fewer lines say it. Each
@@ -589,6 +590,22 @@ until its release, a key let go mid-click among them, which left that key held f
 after it; a later one folded the cursor and the keyboard apart and merged them back, which needed
 rules for what neither could see. Reading everything in one order needs neither.
 
+**The recording bar** (`windows/recording-bar`) is a window of its own: frameless, always on top,
+never taking the focus, so a click on it leaves the keyboard with the application, and left out of
+every screenshot (`setContentProtection`). Starting a recording opens it at the top of the screen
+and minimises the main window. It shows REC or PAUSED with a clock, the action count and the last
+action, Pause and Stop with their keys, and the live list: the inputs folded a few times a second
+the way the stop folds them, "Typed 15 characters" rather than every key-down and key-up, typed
+text counted rather than shown. The bar only asks. Every change goes out whole as
+`RECORDING_PROGRESS`, and the recording page takes a stop or a discard from there, whichever of
+the bar, a hotkey or the page made it, and closes the bar.
+
+**Its hotkeys never reach the recording**, whatever window is in front. They are two settings of
+their own, F9 and F10 by default, and the same key may also be one of the debugger's, since the
+two are never live at once. `RecordingHotkeyReader` reads them at the hook before the filter. A
+combination's first keys are held back while they are down, so the Ctrl of Ctrl+F9 is not in the
+recording by the time F9 comes, and anything else lets them through first, in order.
+
 ### Planned - phase 7: a recording and a description become a flow
 
 The questions go. The tester describes the flow and records it once, and reviews the result rather
@@ -602,8 +619,7 @@ landed, the template cut there, the area's size and DPI - which is what makes a 
 (§8, Coordinates). A main area placed in screen coordinates says the flow is not portable.
 
 **What the recorder keeps** is the session above. A press on anything outside the main area's
-application starts left out. The floating recording bar is one of StepinFlow's windows, so nothing
-done on it is recorded, and it never appears in a screenshot.
+application starts left out.
 
 **The draft is built without a model.** Each action becomes steps by a rule rather than a question.
 A click is three lines - a wait for the element, a move onto it, a click - because every step is a
@@ -977,6 +993,13 @@ Hidden     SUCCESS, FAILURE
 mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
 screenshot, and its Success branch executes once per hit; inside it the search's own result is the
 hit of that pass, so a move to the search followed by a click clicks each one.
+
+A `Run` waits for its command to exit; a `Launch` starts its program through
+`IProcessService.Launch` and carries on, since an application never exits on its own. Given its
+window (`opens <[ area ]>`), a launch is skipped when that window is already open and otherwise waits
+for it - 30 seconds, or the step's timeout - so the next step does not act on a screen that is still
+loading. The runner refuses a launch outright, and every preset has a catalog entry, which a test
+holds to: Launch had none, and threw the first time one executed.
 
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is
@@ -1634,13 +1657,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-670 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+695 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 154 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching - and the key names |
-| `Business.Tests` | 494 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
+| `Business.Tests` | 513 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1753,7 +1776,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 670 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 695 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

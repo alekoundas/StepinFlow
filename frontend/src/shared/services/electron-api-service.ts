@@ -31,4 +31,12 @@ export const ElectronApiService = {
     signalCloseWindow: (result: ImageEditorResult) =>
       window.electronApi.imageEditor.signalCloseWindow(result),
   },
+
+  recordingBar: {
+    openWindow: (flowId?: number) =>
+      window.electronApi.recordingBar.openWindow(flowId ?? null),
+    closeWindow: () => window.electronApi.recordingBar.closeWindow(),
+    resizeWindow: (width: number, height: number) =>
+      window.electronApi.recordingBar.resizeWindow(width, height),
+  },
 };

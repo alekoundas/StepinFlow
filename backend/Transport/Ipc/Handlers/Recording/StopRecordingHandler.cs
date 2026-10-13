@@ -1,13 +1,12 @@
-using Business.Recording.ActionBuilder;
 using Business.Recording.Session;
-using Core.Models.Business;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
 {
     /// <summary>
-    /// Stops and coalesces in one call, so the wizard opens on actions rather than on raw input
-    /// it would have to fold a second way.
+    /// Stops and returns the actions in one call, so the wizard opens on actions rather than on
+    /// raw input it would have to fold a second way. A recording already stopped, by the bar or
+    /// its hotkey, returns the same actions again.
     /// </summary>
     public class StopRecordingHandler
     {
@@ -20,10 +19,10 @@ namespace Transport.Ipc.Handlers
 
         public async Task<ResultDto<IReadOnlyList<RecordedActionDto>>> HandleAsync(CancellationToken ct)
         {
-            IReadOnlyList<RecordedInput> events = await _recordingSessionService.StopAsync(ct);
-            List<RecordedActionDto> result = RecordingActionBuilder.Build(events);
+            await _recordingSessionService.StopAsync(ct);
+            IReadOnlyList<RecordedActionDto> actions = _recordingSessionService.GetActions();
 
-            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(result);
+            return ResultDto<IReadOnlyList<RecordedActionDto>>.Success(actions);
         }
     }
 }

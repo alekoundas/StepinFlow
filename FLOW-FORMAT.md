@@ -47,7 +47,7 @@ Steps:
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>   opens <[ Browser ]>
 
 Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
@@ -469,6 +469,18 @@ keys anywhere below it is the `KEYS_NOT_RELEASED` warning, and whatever is still
 execution ends - however it ends - is let go, so a flow that fails between the two lines does not
 leave Ctrl down on the machine. A press may name a modifier on its own too: `Press <[ Win ]>` opens
 the Start menu.
+
+**`Launch` starts a program and carries on.** Unlike `Run`, it does not wait for the program to
+close. Its text is one command line: the program first, quoted when its path has a space, then its
+arguments. `opens` names the window it opens, an application or a browser tab: when that window is
+already open the launch is skipped, and when it is not the step waits for it - 30 seconds, or the
+step's own timeout - so the next line does not act on a screen that is still loading. It moves
+nothing: placing the window is a `Move Window` or `Resize Window` line of its own. Not `in`, which on every
+other line means where a step works. Without `opens` it starts the program and moves straight on.
+
+```
+Launch   <[ "C:\Program Files\App\app.exe" --profile test ]>   opens <[ App ]>
+```
 
 **A key between a hold and its release is written without the held keys.** Under `Press <[ Ctrl ]>
 hold`, Ctrl+C is `Press <[ C ]>`: pressed as `Ctrl+C`, the press would let Ctrl go, and the click

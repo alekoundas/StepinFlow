@@ -35,6 +35,7 @@ import WizardPage from "@/features/wizard/WizardPage";
 import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
 import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
+import RecordingBarPage from "@/windows/recording-bar/RecordingBarPage";
 
 const router = createHashRouter([
   {
@@ -120,6 +121,10 @@ const router = createHashRouter([
   {
     path: "/image-editor",
     element: <ImageEditorPage />,
+  },
+  {
+    path: "/recording-bar",
+    element: <RecordingBarPage />,
   },
 ]);
 

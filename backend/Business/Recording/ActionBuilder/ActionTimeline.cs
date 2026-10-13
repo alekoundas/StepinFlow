@@ -35,9 +35,10 @@ namespace Business.Recording.ActionBuilder
             {
                 TimeSpan gap = startedOn - _lastEndedOn.Value;
                 if (gap >= PAUSE_THRESHOLD)
-                    Append(Pause(gap));
+                    Append(Pause(_lastEndedOn.Value, gap));
             }
 
+            humanAction.Action.StartedOn = startedOn;
             Append(humanAction.Action);
 
             // A key held down can end after the actions that came while it was held, and the gap
@@ -63,12 +64,13 @@ namespace Business.Recording.ActionBuilder
             _actions.Add(action);
         }
 
-        private static RecordedActionDto Pause(TimeSpan gap)
+        private static RecordedActionDto Pause(DateTime startedOn, TimeSpan gap)
         {
             return new RecordedActionDto
             {
                 Kind = RecordedActionKindEnum.PAUSE,
                 Summary = $"Paused for {Math.Round(gap.TotalSeconds, 1).ToString(CultureInfo.InvariantCulture)}s",
+                StartedOn = startedOn,
                 PauseMilliseconds = (int)Math.Round(gap.TotalMilliseconds),
             };
         }

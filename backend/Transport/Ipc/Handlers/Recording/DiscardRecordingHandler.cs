@@ -17,10 +17,7 @@ namespace Transport.Ipc.Handlers
 
         public async Task<ResultDto<bool>> HandleAsync(RecordingDiscardDto dto, CancellationToken ct)
         {
-            if (_recordingSessionService.IsRecording)
-                await _recordingSessionService.StopAsync(ct);
-
-            _recordingSessionService.Clear();
+            await _recordingSessionService.DiscardAsync(ct);
 
             if (dto.FlowId == null)
                 return ResultDto<bool>.Success(true);

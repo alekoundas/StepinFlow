@@ -15,6 +15,7 @@ import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handl
 
 import { BackendService } from "./ipc/services/backend-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
+import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
 
 const { autoUpdater } = pkg;
 
@@ -98,6 +99,7 @@ app.whenReady().then(async () => {
     await registerBroadcastHandler(mainWindow);
     await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);
     await registerImageEditorHandler(mainWindow, isDev);
+    registerRecordingBarHandler(mainWindow, isDev);
   } catch (err) {
     console.error("[Main]: Failed to register IPC handlers:", err);
   }

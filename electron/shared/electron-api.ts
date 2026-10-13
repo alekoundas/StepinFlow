@@ -44,4 +44,13 @@ export interface ElectronApi {
     signalReady: () => Promise<ImageEditorReadyResponse | null>;
     signalCloseWindow: (result: ImageEditorResult) => void;
   };
+
+  // The floating bar a recording is controlled from.
+  recordingBar: {
+    // The flow the setup created, which a discard from the bar deletes with the recording.
+    openWindow: (flowId?: number | null) => Promise<void>;
+    closeWindow: () => Promise<void>;
+    // What the page shows, in CSS pixels.
+    resizeWindow: (width: number, height: number) => void;
+  };
 }

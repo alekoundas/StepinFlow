@@ -87,9 +87,6 @@ live.
       a kill, not a close. Removing the close mode without adding the step lost the graceful option,
       so this is a gap rather than a nice to have. It wants a `WINDOW_CLOSE` type beside
       `WINDOW_FOCUS`, `WINDOW_RESIZE` and `WINDOW_RELOCATE`.
-- [ ] **`IProcessService` has no caller.** Teardown as steps removed the only one. `Close Window`
-      above would give it one, and so would the launch port in `TODO.md` (Execution) - but do not
-      leave it unreferenced.
 
 ### Portable search
 
@@ -198,7 +195,8 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 Business/Recording/
   Setup/        RecordingSetupService     the flow, its main area and a Launch step, before the first click
-  Session/      RecordingSessionService   start, pause, resume, stop; RecordingSessionCache holds what it remembers
+  Session/      RecordingSessionService   start, pause, resume, stop; the bar's hotkeys; the live list;
+                                          RecordingSessionCache holds what it remembers
   ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
   Evidence/     ClickEvidenceBuilder      per click: place in the main area, the element's rectangle,
                                           the text on it, the clicks that hit the same picture
@@ -212,17 +210,10 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **Hotkeys, a folded live list, and the recording bar.** The session pauses, resumes and leaves
-      out StepinFlow's own windows already (`PROJECT.md` §6); the bar calls `Recording.pause` and
-      `Recording.resume`. Hotkeys are matched at runtime (`TODO.md`, Hotkeys), with two settings of
-      the bar's own, and the bar's hotkeys are never recorded - keys are left out only while one of
-      StepinFlow's windows is in front, and a hotkey works when one is not. The live list shows
-      actions as they fold - "Typed 15 characters", "Clicked “Invoices”" - rather than every key-down
-      and key-up. The bar is an Electron window of its own: frameless, always on top, and
-      `setContentProtection(true)`, so it never appears in a screenshot.
 - [ ] **Phase 6's detection model**, behind `ElementLocator`, gives each click's element rectangle,
       and Windows OCR reads the text on it. Read text is screen data, so a cloud model gets it only
-      through `CanSendScreenDataAsync`.
+      through `CanSendScreenDataAsync`. The live list then names what was clicked - "Clicked
+      “Invoices”" - where today it says where.
 - [ ] **Review.** Every action with the screen at that moment, the element's rectangle to adjust,
       and what it becomes: kept or left out, typed text as an input. The clicks that hit the same
       picture are grouped - what `RecordingSummaryBuilder` already measures against

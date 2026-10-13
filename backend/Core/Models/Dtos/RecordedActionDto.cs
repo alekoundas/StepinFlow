@@ -14,6 +14,9 @@ namespace Core.Models.Dtos
         /// <summary>One line describing what happened, shown above the choices.</summary>
         public string Summary { get; set; } = string.Empty;
 
+        /// <summary>Its first input, or for a pause when the action before it ended.</summary>
+        public DateTime StartedOn { get; set; }
+
         public string? WindowTitle { get; set; }
 
         /// <summary>Which window a click, drag or scroll landed on. Null with no main area.</summary>

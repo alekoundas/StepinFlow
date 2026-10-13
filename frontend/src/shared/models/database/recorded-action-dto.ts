@@ -14,6 +14,10 @@ export interface RecordedActionDto {
   index: number;
   kind: RecordedActionKindEnum;
   summary: string;
+
+  /** Its first input, or for a pause when the action before it ended. */
+  startedOn: string;
+
   windowTitle?: string | null;
 
   /** Which window a click, drag or scroll landed on. Null with no main area. */

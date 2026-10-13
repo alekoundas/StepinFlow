@@ -7,26 +7,14 @@ the history.
 
 ## Execution
 
-- [ ] **A `Launch` step throws when it runs. To talk about.** `RunCommandPresetEnum.LAUNCH_APP` is
-      what the script's `Launch <[ chrome.exe https://... ]>` reads into, but it has no entry in
-      `CommandPresetCatalog.All`, so `CommandPresetCatalog.Resolve` - which `CommandRunner` calls -
-      throws "Sequence contains no matching element". The validator was patched to treat it like a
-      custom `Run`, so only the execution is broken. To decide: how a launch runs (a catalog entry
-      that starts the target without waiting, or a branch in `Resolve`), whether the system
-      command form offers it, and a test over every `RunCommandPresetEnum` value so a preset
-      without an entry cannot happen again.
-      **On every system, talked about after the recording update (2026-10-09).** Starting a
-      program works on all three through `Process.Start` with shell execute - the shell on Windows,
-      `open` on macOS, `xdg-open` on Linux - but the command text does not carry over: `chrome.exe`
-      is `google-chrome` on Linux and `open -a "Google Chrome"` on macOS, the problem every preset
-      in `CommandPresetCatalog` already has. A launch also must not wait for the program to exit,
-      which `CommandRunner` does. So it wants a port in `Platform.Windows` rather than a catalog
-      entry - `IProcessService` has no caller and would gain one - with the per-system command text
-      decided alongside the Linux work.
-      **More pressing since 2026-10-13:** the recording setup writes a `Launch` as a new flow's
-      first step when the tester asks, with the full program file of the window's process, quoted
-      when it has a space (`"C:\Program Files\...\chrome.exe"`). That text is this machine's: on
-      macOS the program is inside an `.app` bundle, best started with `open -a`.
+- [ ] **A `Launch` line is this machine's.** Since 2026-10-13 a launch starts through
+      `IProcessService.Launch` - `Process.Start` with shell execute, which is the shell on Windows,
+      `open` on macOS and `xdg-open` on Linux - so starting works on all three. The command text does
+      not carry over: `chrome.exe` is `google-chrome` on Linux and `open -a "Google Chrome"` on
+      macOS, and the recording setup writes the full program file of the window's process
+      (`"C:\Program Files\...\chrome.exe"`), where on macOS the program sits inside an `.app`
+      bundle. The problem every preset in `CommandPresetCatalog` already has; decide it with the
+      Linux work.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
       test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
@@ -346,6 +334,13 @@ the history.
       beside the database, would let a flow be generated again later from the same recording, and
       give the phase 9 fix loop the original screenshots to cut a new template from. Not part of
       the recording update.
+- [ ] **The recording bar on macOS and Linux. Check with those adapters.** It is kept out of
+      screenshots by `setContentProtection`, which Electron does not have on Linux, so there the bar
+      would be in every screenshot the recorder takes of a main area under it. On macOS it sets the
+      window's sharing type, which newer capture APIs are reported to ignore - check against
+      whatever the macOS adapter captures with. Always on top is not reliable under Wayland, and its
+      hotkeys there are subject to the same limit as every other key: only X11 applications under
+      XWayland are heard at all.
 
 ## Notify
 
@@ -358,8 +353,12 @@ the history.
 
 ## Hotkeys
 
-- [ ] **Hotkey-to-command matching.** The capture and the settings exist; nothing yet maps a stored
-      combination to Continue / Step Into / Step Over / Pause / Stop at runtime.
+- [ ] **The debugger's hotkeys are not matched.** The recording bar's are, since 2026-10-13
+      (`RecordingHotkeyReader`); Continue, Step Into, Step Over, Pause and Stop are captured and
+      stored and nothing acts on them. Two things stand between: the hook only listens while a
+      recording or a capture is on, and an execution presses keys itself, which the hook would
+      hear - its own presses have to be told apart from the tester's, or a flow that presses F9
+      would pause itself.
 
 ## Frontend
 

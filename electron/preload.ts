@@ -38,6 +38,11 @@ const IPC_CHANNELS = {
   EDITOR_OPEN_WINDOW: "EDITOR_OPEN_WINDOW",
   EDITOR_SIGNAL_READY: "EDITOR_SIGNAL_READY",
   EDITOR_SIGNAL_CLOSE_WINDOW: "EDITOR_SIGNAL_CLOSE_WINDOW",
+
+  // ========== Recording bar channels ==========
+  RECORDING_BAR_OPEN_WINDOW: "RECORDING_BAR_OPEN_WINDOW",
+  RECORDING_BAR_CLOSE_WINDOW: "RECORDING_BAR_CLOSE_WINDOW",
+  RECORDING_BAR_RESIZE_WINDOW: "RECORDING_BAR_RESIZE_WINDOW",
 } as const;
 
 // Typed against the contract so the renderer and this file cannot drift.
@@ -96,6 +101,15 @@ const api: ElectronApi = {
       ipcRenderer.invoke(IPC_CHANNELS.EDITOR_SIGNAL_READY),
     signalCloseWindow: (result: ImageEditorResult): void =>
       ipcRenderer.send(IPC_CHANNELS.EDITOR_SIGNAL_CLOSE_WINDOW, result),
+  },
+
+  recordingBar: {
+    openWindow: (flowId?: number | null): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_OPEN_WINDOW, flowId ?? null),
+    closeWindow: (): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_CLOSE_WINDOW),
+    resizeWindow: (width: number, height: number): void =>
+      ipcRenderer.send(IPC_CHANNELS.RECORDING_BAR_RESIZE_WINDOW, width, height),
   },
 };
 
