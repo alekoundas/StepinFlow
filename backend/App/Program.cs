@@ -88,6 +88,7 @@ namespace App
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
             builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
+            builder.Services.AddSingleton<IClickedElementGrouper, ClickedElementGrouper>();
             builder.Services.AddSingleton<IElementLocator, ElementLocator>();
             builder.Services.AddSingleton<IRecordingSetupService, RecordingSetupService>();
 
@@ -221,6 +222,8 @@ namespace App
             builder.Services.AddTransient<DiscardRecordingHandler>();
             builder.Services.AddTransient<GetRecordingScreenshotHandler>();
             builder.Services.AddTransient<GetRecordingResultHandler>();
+            builder.Services.AddTransient<GetRecordingScreenHandler>();
+            builder.Services.AddTransient<ReviewRecordingHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();
             builder.Services.AddTransient<SetAppSettingHandler>();
             builder.Services.AddTransient<SystemTakeScreenshotHandler>();

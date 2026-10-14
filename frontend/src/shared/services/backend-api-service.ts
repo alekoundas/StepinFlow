@@ -28,6 +28,8 @@ import type {
 } from "@/shared/models/database/flow-draft-dto";
 import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
+import type { RecordingScreenDto } from "@/shared/models/recording-screen-dto";
+import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -203,6 +205,11 @@ export const backendApiService = {
     // says how far, then READY, and getResult has it. Stopped already, it is left as it is.
     stop: () => call<boolean>("Recording.stop"),
     getResult: () => call<RecordingResultDto>("Recording.getResult"),
+    // An action's own press, or for a key or typed text the last click before it. Null with no main area.
+    getScreen: (actionIndex: number) =>
+      callNullable<RecordingScreenDto>("Recording.getScreen", actionIndex),
+    // Once, as the tester continues from Review.
+    review: (dto: ReviewedRecordingDto) => call<boolean>("Recording.review", dto),
     // The flow the setup created goes with it while nothing but the setup is in it.
     discard: (flowId?: number) => call<boolean>("Recording.discard", { flowId }),
     // .Net returns byte[], which arrives here as a base64 string

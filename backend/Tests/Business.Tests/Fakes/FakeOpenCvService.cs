@@ -45,9 +45,24 @@ namespace Business.Tests.Fakes
             return new TemplateMatchOutcome();
         }
 
-        public IReadOnlyList<IReadOnlyList<int>> GroupSimilar(IReadOnlyList<byte[]> images)
+        /// <summary>Every call's elements, in order.</summary>
+        public List<IReadOnlyList<ElementPicture>> Grouped { get; } = new List<IReadOnlyList<ElementPicture>>();
+
+        // Everything passed in at once is the same picture, unless a test says otherwise.
+        public Func<IReadOnlyList<ElementPicture>, IReadOnlyList<IReadOnlyList<int>>>? Groups { get; set; }
+
+        public IReadOnlyList<IReadOnlyList<int>> GroupSameElements(IReadOnlyList<ElementPicture> elements)
         {
-            throw new NotImplementedException();
+            Grouped.Add(elements);
+
+            if (Groups != null)
+                return Groups(elements);
+
+            if (elements.Count < 2)
+                return [];
+
+            List<int> all = Enumerable.Range(0, elements.Count).ToList();
+            return [all];
         }
 
         public byte[]? FlattenErasedPixels(byte[] png)

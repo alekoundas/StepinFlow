@@ -796,6 +796,17 @@ namespace Business.Tests.Recording
             actions[2].PauseMilliseconds.ShouldBe(1000);
         }
 
+        // What the draft sizes its wait from, whether or not the gap was long enough to be a pause.
+        [Fact]
+        public void Every_action_knows_how_long_the_tester_waited_before_it()
+        {
+            Key(0, KeyCodeEnum.Enter).Key(400, KeyCodeEnum.Tab).Key(1430, KeyCodeEnum.Escape);
+
+            List<RecordedActionDto> actions = Build().Where(x => x.Kind != RecordedActionKindEnum.PAUSE).ToList();
+
+            actions.Select(x => x.WaitedMilliseconds).ShouldBe([0, 370, 1000]);
+        }
+
         // The time spent paused is the tester's, not a wait the flow has to make.
         [Fact]
         public void A_pause_the_tester_took_is_not_a_wait()

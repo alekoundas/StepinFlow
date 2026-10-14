@@ -41,7 +41,8 @@ namespace Business.Tests.Recording
         public RecordingSessionServiceTests()
         {
             ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
-            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, finder, _database, _clock);
+            ClickedElementGrouper grouper = new ClickedElementGrouper(new FakeOpenCvService(), _screenshots);
+            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, finder, grouper, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -188,9 +189,11 @@ namespace Business.Tests.Recording
             (press.MainAreaBounds, press.Dpi).ShouldBe((BOUNDS, 120));
             press.Screenshot.ShouldNotBeEmpty();
 
-            // The crop around the press, the main area, and the element the stop found under it.
+            // The crop around the press and the main area, beside what the stop works out from them.
             _screenshots.Captured.ShouldBe([BOUNDS]);
-            _screenshots.Encoded.Select(x => (x.Width, x.Height)).ShouldBe([(400, 400), (800, 600), (40, 20)], ignoreOrder: true);
+            List<(int, int)> encoded = _screenshots.Encoded.Select(x => (x.Width, x.Height)).ToList();
+            encoded.ShouldContain((400, 400));
+            encoded.ShouldContain((800, 600));
         }
 
         [Fact]
@@ -322,12 +325,34 @@ namespace Business.Tests.Recording
             found.Text.ShouldBe("Checkout");
             (found.X, found.Y).ShouldBe((380, 290));
 
-            RecordingProgressDto lastClick = AllProgress().Last(x => x.State == RecordingStateEnum.PROCESSING);
-            (lastClick.Stage, lastClick.StageNumber, lastClick.StageCount).ShouldBe((RecordingStageEnum.FINDING_ELEMENTS, 1, 1));
+            RecordingProgressDto lastClick = AllProgress().Last(x => x.Stage == RecordingStageEnum.FINDING_ELEMENTS);
+            (lastClick.StageNumber, lastClick.StageCount).ShouldBe((1, 2));
             (lastClick.StageDone, lastClick.StageTotal).ShouldBe((1, 1));
+
+            RecordingProgressDto lastGrouped = AllProgress().Last(x => x.Stage == RecordingStageEnum.GROUPING_CLICKS);
+            (lastGrouped.StageNumber, lastGrouped.StageCount).ShouldBe((2, 2));
 
             RecordingProgressDto ready = LastProgress();
             (ready.Stage, ready.StageNumber, ready.ErrorMessage).ShouldBe((RecordingStageEnum.NONE, 0, null));
+        }
+
+        [Fact]
+        public async Task Clicks_on_the_same_picture_in_two_places_come_back_as_one_moving_group()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 300);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 300);
+            _clock.Advance(TimeSpan.FromSeconds(2));
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 400);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 400);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            List<int> clicks = recording.Actions.Where(x => x.Kind == RecordedActionKindEnum.CLICK).Select(x => x.Index).ToList();
+            ClickGroupDto group = recording.ClickGroups.ShouldHaveSingleItem();
+            group.ActionIndexes.ShouldBe(clicks);
+            group.IsMoving.ShouldBeTrue();
         }
 
         // The page, the bar and the stop key can all stop it at the same moment.
@@ -344,6 +369,51 @@ namespace Business.Tests.Recording
 
             AllProgress().Count(x => x.State == RecordingStateEnum.READY).ShouldBe(1);
             LastProgress().State.ShouldBe(RecordingStateEnum.READY);
+        }
+
+        // Typing keeps no screenshot of its own; the screen it went into is the last click's.
+        [Fact]
+        public async Task Typed_text_shows_the_screen_of_the_last_click_before_it()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            Type(KeyCodeEnum.H, "VcH", "h");
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+            RecordedActionDto click = recording.Actions.Single(x => x.Kind == RecordedActionKindEnum.CLICK);
+            RecordedActionDto typing = recording.Actions.Single(x => x.Kind == RecordedActionKindEnum.TYPING);
+
+            RecordingScreenDto screen = _session.GetScreen(typing.Index).ShouldNotBeNull();
+            screen.ActionIndex.ShouldBe(click.Index);
+            (screen.X, screen.Y, screen.Width, screen.Height, screen.Dpi).ShouldBe((100, 100, 800, 600, 120));
+            screen.Image.ShouldNotBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_review_is_kept_only_for_a_ready_recording_and_only_of_its_own_actions()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+
+            ReviewedRecordingDto early = new ReviewedRecordingDto { Actions = [new ReviewedActionDto { ActionIndex = 0, Choice = ReviewChoiceEnum.LEAVE_OUT }] };
+            _session.Review(early).IsSuccess.ShouldBeFalse();
+
+            await _session.StopAsync(Ct);
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+            int click = recording.Actions.Single(x => x.Kind == RecordedActionKindEnum.CLICK).Index;
+
+            ReviewedRecordingDto stranger = new ReviewedRecordingDto { Actions = [new ReviewedActionDto { ActionIndex = 99, Choice = ReviewChoiceEnum.KEEP }] };
+            _session.Review(stranger).IsSuccess.ShouldBeFalse();
+
+            ReviewedRecordingDto reviewed = new ReviewedRecordingDto { Actions = [new ReviewedActionDto { ActionIndex = click, Choice = ReviewChoiceEnum.WAIT_AND_CLICK }] };
+            _session.Review(reviewed).IsSuccess.ShouldBeTrue();
+            _session.GetReviewed().ShouldBeSameAs(reviewed);
+
+            await _session.DiscardAsync(Ct);
+            _session.GetReviewed().ShouldBeNull();
         }
 
         [Fact]

@@ -17,6 +17,12 @@ namespace Core.Models.Dtos
         /// <summary>Its first input, or for a pause when the action before it ended.</summary>
         public DateTime StartedOn { get; set; }
 
+        /// <summary>
+        /// From the end of the action before it to its start: how long the tester waited for the
+        /// screen, which the draft sizes its search from. 0 for the first, and after a resume.
+        /// </summary>
+        public int WaitedMilliseconds { get; set; }
+
         public string? WindowTitle { get; set; }
 
         /// <summary>Which window a click, drag or scroll landed on. Null with no main area.</summary>

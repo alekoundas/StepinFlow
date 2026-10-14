@@ -1,0 +1,217 @@
+import { useState } from "react";
+import type { CSSProperties } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "primereact/button";
+import { InputTextarea } from "primereact/inputtextarea";
+
+import { RecordedWindowEnum } from "../../../../../electron/shared/types";
+import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
+import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
+import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
+import { backendApiService } from "@/shared/services/backend-api-service";
+import { toClock } from "@/shared/utils/clock";
+import ReviewActionDetailComponent from "@/features/wizard/review/ReviewActionDetailComponent";
+import ReviewActionListComponent from "@/features/wizard/review/ReviewActionListComponent";
+import {
+  type ActionReview,
+  elementOf,
+  initialReviews,
+  keepingChoice,
+  listedActions,
+  optionsFor,
+} from "@/features/wizard/review/review";
+
+const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
+
+interface Props {
+  result: RecordingResultDto;
+  flowId: number | undefined;
+  elapsedMilliseconds: number;
+  isContinuing: boolean;
+  onRecordAgain: () => void;
+  onContinue: (reviews: Record<number, ActionReview>) => void;
+}
+
+/**
+ * A stopped recording, every action with the screen at that moment, before anything becomes a
+ * step: kept or left out, the template's rectangle, typed text as an input. What the tester
+ * decides stays here until Continue, which sends it in one go.
+ */
+export default function RecordingReviewComponent({
+  result,
+  flowId,
+  elapsedMilliseconds,
+  isContinuing,
+  onRecordAgain,
+  onContinue,
+}: Props) {
+  const listed = listedActions(result);
+
+  const [reviews, setReviews] = useState<Record<number, ActionReview>>(() => initialReviews(result));
+  const [selectedIndex, setSelectedIndex] = useState(listed[0]?.index ?? 0);
+
+  const selected = listed.find((x) => x.index === selectedIndex) ?? listed[0];
+  const recordingKey = result.actions[0]?.startedOn ?? "";
+
+  const change = (actionIndex: number, review: ActionReview) => setReviews({ ...reviews, [actionIndex]: review });
+
+  const toggle = (action: RecordedActionDto) => {
+    const review = reviews[action.index];
+    const options = optionsFor(action, elementOf(result, action));
+
+    let choice: ReviewChoiceEnum = ReviewChoiceEnum.LEAVE_OUT;
+    if (review.choice === ReviewChoiceEnum.LEAVE_OUT) choice = keepingChoice(options);
+
+    change(action.index, { ...review, choice });
+  };
+
+  const windowTitle = result.actions.find((x) => x.window === RecordedWindowEnum.MAIN_AREA)?.windowTitle;
+
+  let summary = `${listed.length} actions in ${toClock(elapsedMilliseconds)}`;
+  if (windowTitle) summary += `, in ${windowTitle}`;
+
+  return (
+    <div className="flex flex-column gap-4">
+      <div className="flex align-items-end justify-content-between flex-wrap gap-3">
+        <div className="flex flex-column gap-1">
+          <h2
+            className="m-0 text-2xl font-semibold"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            Review the recording
+          </h2>
+          <p
+            className="m-0"
+            style={MUTED}
+          >
+            {summary}.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            label="Record again"
+            onClick={onRecordAgain}
+            disabled={isContinuing}
+            severity="secondary"
+            text
+          />
+          <Button
+            type="button"
+            label="Continue"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            onClick={() => onContinue(reviews)}
+            loading={isContinuing}
+          />
+        </div>
+      </div>
+
+      {flowId !== undefined && <DescriptionComponent flowId={flowId} />}
+
+      {selected && (
+        <div className="flex align-items-start flex-wrap gap-4">
+          <ReviewActionListComponent
+            result={result}
+            reviews={reviews}
+            selectedIndex={selected.index}
+            onSelect={setSelectedIndex}
+            onToggle={toggle}
+          />
+          <ReviewActionDetailComponent
+            key={selected.index}
+            result={result}
+            action={selected}
+            review={reviews[selected.index]}
+            onChange={(review) => change(selected.index, review)}
+            recordingKey={recordingKey}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// What the flow is for, as the setup saved it, and editable here: Review is where it is reread.
+function DescriptionComponent({ flowId }: { flowId: number }) {
+  const queryClient = useQueryClient();
+  const { data: flow } = useQuery({
+    queryKey: ["flows", "recording-description", flowId],
+    queryFn: () => backendApiService.Flow.get(flowId),
+  });
+
+  const [draft, setDraft] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const save = async () => {
+    if (!flow || draft === null) return;
+
+    setIsSaving(true);
+    try {
+      await backendApiService.Flow.update({ ...flow, description: draft });
+      await queryClient.invalidateQueries({ queryKey: ["flows"] });
+      setDraft(null);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="flex align-items-start flex-wrap gap-3 px-3 py-3 border-1 border-round-xl"
+      style={{ background: "var(--surface-card)", borderColor: "var(--surface-border)" }}
+    >
+      <span
+        className="text-xs font-semibold uppercase flex-none pt-1"
+        style={{ ...MUTED, letterSpacing: "0.06em" }}
+      >
+        What it should do
+      </span>
+
+      {draft === null ? (
+        <>
+          <span style={{ flex: "1 1 360px" }}>{flow?.description || "Nothing written yet."}</span>
+          <Button
+            type="button"
+            label="Edit"
+            onClick={() => setDraft(flow?.description ?? "")}
+            disabled={!flow}
+            size="small"
+            outlined
+            severity="secondary"
+          />
+        </>
+      ) : (
+        <>
+          <InputTextarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={2}
+            autoResize
+            aria-label="What it should do"
+            style={{ flex: "1 1 360px" }}
+          />
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              label="Save"
+              onClick={() => void save()}
+              loading={isSaving}
+              size="small"
+            />
+            <Button
+              type="button"
+              label="Cancel"
+              onClick={() => setDraft(null)}
+              disabled={isSaving}
+              size="small"
+              severity="secondary"
+              text
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

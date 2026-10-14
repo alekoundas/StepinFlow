@@ -5,5 +5,6 @@ namespace Core.Enums
     {
         NONE,               // Not processing
         FINDING_ELEMENTS,   // What each click hit, by the detection model and OCR
+        GROUPING_CLICKS,    // Which clicks hit the same picture
     }
 }

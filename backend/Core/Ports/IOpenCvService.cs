@@ -17,16 +17,20 @@ namespace Core.Ports
         TemplateMatchOutcome Match(TemplateMatchRequest request);
 
         /// <summary>
-        /// Groups the images that show the same thing, as indices into what was passed in.
+        /// Groups the elements that are the same picture, as indices into what was passed in. Only
+        /// groups of two or more.
+        ///
+        /// Each element is looked for in the other's surroundings, both ways, so a box drawn a few
+        /// pixels off the other still matches, and neither carries background into the comparison.
         ///
         /// One call rather than a comparison the caller loops over, so the images are decoded once
-        /// instead of once per pair, and so the thresholds that decide "the same thing" stay with
+        /// instead of once per pair, and so the thresholds that decide "the same picture" stay with
         /// the matching rather than leaking into whatever is asking.
         ///
-        /// An image too flat to compare is left out entirely: flat colour matches all other flat
-        /// colour, and a group built on that is a coincidence.
+        /// An element too flat to compare is in no group: flat colour matches all other flat colour,
+        /// and a group built on that is a coincidence.
         /// </summary>
-        IReadOnlyList<IReadOnlyList<int>> GroupSimilar(IReadOnlyList<byte[]> images);
+        IReadOnlyList<IReadOnlyList<int>> GroupSameElements(IReadOnlyList<ElementPicture> elements);
 
         /// <summary>
         /// Fully erased pixels turned white, so a template image can be shown to a model that has

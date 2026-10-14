@@ -34,6 +34,18 @@ namespace Business.Recording.Session
         /// <summary>The actions, and what each click hit. Null until the recording is READY.</summary>
         RecordingResultDto? GetResult();
 
+        /// <summary>
+        /// The whole main area at an action: its own press's screenshot, or for a key or typed text
+        /// the last click's before it. Null when there is none, as with no main area.
+        /// </summary>
+        RecordingScreenDto? GetScreen(int actionIndex);
+
+        /// <summary>Keeps what the tester decided in Review, for the draft. Only for a READY recording.</summary>
+        ResultDto<bool> Review(ReviewedRecordingDto reviewed);
+
+        /// <summary>What the tester decided in Review. Null until they continue from it.</summary>
+        ReviewedRecordingDto? GetReviewed();
+
         /// <summary>The screenshot around a press, or null when it never had one.</summary>
         byte[]? GetScreenshot(int index);
 

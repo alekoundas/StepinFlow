@@ -1,5 +1,6 @@
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { ClickedElementDto } from "@/shared/models/clicked-element-dto";
+import type { ClickGroupDto } from "@/shared/models/click-group-dto";
 
 /** A stopped recording once worked through: what the review opens on. */
 export interface RecordingResultDto {
@@ -7,4 +8,7 @@ export interface RecordingResultDto {
 
   /** What each click and drag inside the main area hit. Empty with no main area, or when finding it failed. */
   clickedElements: ClickedElementDto[];
+
+  /** The clicks that hit the same picture. Empty when none did, or grouping failed. */
+  clickGroups: ClickGroupDto[];
 }

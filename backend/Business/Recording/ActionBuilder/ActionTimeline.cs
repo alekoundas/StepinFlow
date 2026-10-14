@@ -36,6 +36,8 @@ namespace Business.Recording.ActionBuilder
                 TimeSpan gap = startedOn - _lastEndedOn.Value;
                 if (gap >= PAUSE_THRESHOLD)
                     Append(Pause(_lastEndedOn.Value, gap));
+
+                humanAction.Action.WaitedMilliseconds = (int)Math.Max(0, Math.Round(gap.TotalMilliseconds));
             }
 
             humanAction.Action.StartedOn = startedOn;

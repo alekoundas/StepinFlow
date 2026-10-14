@@ -259,107 +259,93 @@ namespace Platform.Windows.Vision
 
 
         // ================================================================
-        // Grouping images that show the same thing
+        // Grouping clicked elements that are the same picture
         // ================================================================
-
-        // The centre of one crop, looked for anywhere in the other. Whole crops do not compare well:
-        // the same icon clicked in two places carries different background with it, and the score
-        // collapses on the background rather than the thing that was clicked.
-        private const double _centreFraction = 0.5;
 
         // Clear of the noise floor rather than near it. Measured against real templates, an
         // unrelated pair scores under 0.45 and a genuine match sits well above 0.8.
-        private const double _sameThing = 0.8;
+        private const double SAME_PICTURE = 0.8;
 
-        // A crop of flat colour matches every other crop of flat colour. Anything this featureless
-        // is background, and background is not a thing that was clicked.
-        private const double _minimumDetail = 12d;
+        // Flat colour matches every other flat colour. An element this featureless - a blank field,
+        // a plain panel - says nothing about what was clicked.
+        private const double MINIMUM_DETAIL = 12d;
 
-        public IReadOnlyList<IReadOnlyList<int>> GroupSimilar(IReadOnlyList<byte[]> images)
+        public IReadOnlyList<IReadOnlyList<int>> GroupSameElements(IReadOnlyList<ElementPicture> elements)
         {
-            List<(int Index, Mat Image)> usable = new List<(int, Mat)>();
+            List<DecodedElement> usable = new List<DecodedElement>();
 
             try
             {
-                for (int i = 0; i < images.Count; i++)
+                for (int i = 0; i < elements.Count; i++)
                 {
-                    Mat decoded = Cv2.ImDecode(images[i], ImreadModes.Color);
+                    Mat element = Cv2.ImDecode(elements[i].Element, ImreadModes.Color);
+                    Mat around = Cv2.ImDecode(elements[i].Around, ImreadModes.Color);
+                    DecodedElement decoded = new DecodedElement(i, element, around);
 
-                    if (decoded.Empty() || !HasDetail(decoded))
+                    if (decoded.Element.Empty() || decoded.Around.Empty() || !HasDetail(decoded.Element))
                     {
                         decoded.Dispose();
                         continue;
                     }
 
-                    usable.Add((i, decoded));
+                    usable.Add(decoded);
                 }
 
-                // Greedy: the first image of a group is what the rest are compared against, so a
+                // Greedy: the first element of a group is what the rest are compared against, so a
                 // group never drifts away from what started it.
                 List<List<int>> groups = new List<List<int>>();
-                List<Mat> leaders = new List<Mat>();
+                List<DecodedElement> leaders = new List<DecodedElement>();
 
-                foreach ((int index, Mat image) in usable)
+                foreach (DecodedElement element in usable)
                 {
-                    int found = leaders.FindIndex(x => IsSameThing(x, image));
+                    int found = leaders.FindIndex(x => IsSamePicture(x, element));
 
                     if (found >= 0)
                     {
-                        groups[found].Add(index);
+                        groups[found].Add(element.Index);
                     }
                     else
                     {
-                        groups.Add([index]);
-                        leaders.Add(image);
+                        groups.Add([element.Index]);
+                        leaders.Add(element);
                     }
                 }
 
-                return groups;
+                return groups.Where(x => x.Count >= 2).ToList();
             }
             finally
             {
-                foreach ((int _, Mat image) in usable)
-                    image.Dispose();
+                foreach (DecodedElement element in usable)
+                    element.Dispose();
             }
         }
 
-        // The middle of one, looked for anywhere in the other.
-        private static bool IsSameThing(Mat first, Mat second)
+        // Both ways, so a small element is never "found" inside a bigger one it is only part of.
+        private static bool IsSamePicture(DecodedElement first, DecodedElement second)
         {
-            if (first.Width != second.Width || first.Height != second.Height)
-                return false;
+            return IsFoundIn(first.Element, second.Around) && IsFoundIn(second.Element, first.Around);
+        }
 
-            using Mat centre = new Mat(first, CentreOf(first));
-            if (centre.Width < 8 || centre.Height < 8)
+        private static bool IsFoundIn(Mat element, Mat around)
+        {
+            if (element.Width > around.Width || element.Height > around.Height)
                 return false;
 
             using Mat result = new Mat();
-            Cv2.MatchTemplate(second, centre, result, TemplateMatchModes.CCoeffNormed);
+            Cv2.MatchTemplate(around, element, result, TemplateMatchModes.CCoeffNormed);
             Cv2.PatchNaNs(result, 0d);
 
             result.MinMaxLoc(out double _, out double best);
 
-            return best >= _sameThing;
+            return best >= SAME_PICTURE;
         }
 
-        private static Rect CentreOf(Mat image)
-        {
-            int width = (int)(image.Width * _centreFraction);
-            int height = (int)(image.Height * _centreFraction);
-
-            return new Rect((image.Width - width) / 2, (image.Height - height) / 2, width, height);
-        }
-
-        // Measured on the centre rather than the whole crop, because the centre is what gets
-        // compared. A click on a plain button in a busy window has a crop full of detail and a
-        // middle with none, and judging the whole thing lets it through to match everything.
         private static bool HasDetail(Mat image)
         {
-            using Mat centre = new Mat(image, CentreOf(image));
-            using Mat grey = centre.CvtColor(ColorConversionCodes.BGR2GRAY);
+            using Mat grey = image.CvtColor(ColorConversionCodes.BGR2GRAY);
             Cv2.MeanStdDev(grey, out Scalar _, out Scalar deviation);
 
-            return deviation.Val0 >= _minimumDetail;
+            return deviation.Val0 >= MINIMUM_DETAIL;
         }
 
 
@@ -414,6 +400,20 @@ namespace Platform.Windows.Vision
             Cv2.Resize(decoded, resized, new Size(0, 0), scale, scale, InterpolationFlags.Area);
 
             return resized.ImEncode(".jpg", [(int)ImwriteFlags.JpegQuality, quality]);
+        }
+
+
+        // ================================================================
+        // Private types
+        // ================================================================
+
+        private sealed record DecodedElement(int Index, Mat Element, Mat Around) : IDisposable
+        {
+            public void Dispose()
+            {
+                Element.Dispose();
+                Around.Dispose();
+            }
         }
     }
 }

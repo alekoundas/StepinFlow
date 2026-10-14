@@ -18,6 +18,9 @@ export interface RecordedActionDto {
   /** Its first input, or for a pause when the action before it ended. */
   startedOn: string;
 
+  /** From the end of the action before it to its start. 0 for the first, and after a resume. */
+  waitedMilliseconds: number;
+
   windowTitle?: string | null;
 
   /** Which window a click, drag or scroll landed on. Null with no main area. */

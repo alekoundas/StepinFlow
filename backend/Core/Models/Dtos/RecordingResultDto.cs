@@ -7,5 +7,8 @@ namespace Core.Models.Dtos
 
         /// <summary>What each click and drag inside the main area hit. Empty with no main area, or when finding it failed.</summary>
         public List<ClickedElementDto> ClickedElements { get; set; } = [];
+
+        /// <summary>The clicks that hit the same picture. Empty when none did, or grouping failed.</summary>
+        public List<ClickGroupDto> ClickGroups { get; set; } = [];
     }
 }

@@ -60,7 +60,7 @@ namespace Business.Recording.Session
         private static readonly TimeSpan FOLD_INTERVAL = TimeSpan.FromMilliseconds(250);
 
         // What a stopped recording is worked through, in order.
-        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS];
+        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS, RecordingStageEnum.GROUPING_CLICKS];
 
         private readonly IInputRecordService _inputRecordService;
         private readonly IScreenshotService _screenshotService;
@@ -70,6 +70,7 @@ namespace Business.Recording.Session
         private readonly IScreenService _screenService;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IClickedElementFinder _clickedElementFinder;
+        private readonly IClickedElementGrouper _clickedElementGrouper;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
 
@@ -98,6 +99,7 @@ namespace Business.Recording.Session
             IScreenService screenService,
             IAreaPointResolver areaPointResolver,
             IClickedElementFinder clickedElementFinder,
+            IClickedElementGrouper clickedElementGrouper,
             IDbContextFactory<AppDbContext> dbContextFactory,
             TimeProvider timeProvider)
         {
@@ -109,6 +111,7 @@ namespace Business.Recording.Session
             _screenService = screenService;
             _areaPointResolver = areaPointResolver;
             _clickedElementFinder = clickedElementFinder;
+            _clickedElementGrouper = clickedElementGrouper;
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
 
@@ -209,7 +212,55 @@ namespace Business.Recording.Session
             {
                 Actions = _cache.Actions.ToList(),
                 ClickedElements = _cache.ClickedElements.ToList(),
+                ClickGroups = _cache.ClickGroups.ToList(),
             };
+        }
+
+        public RecordingScreenDto? GetScreen(int actionIndex)
+        {
+            IReadOnlyList<RecordedActionDto> actions = _cache.Actions;
+
+            for (int i = actions.Count - 1; i >= 0; i--)
+            {
+                RecordedActionDto action = actions[i];
+                if (action.Index > actionIndex || action.ScreenshotIndex == null)
+                    continue;
+
+                RecordedPress? press = _cache.GetPress(action.ScreenshotIndex.Value);
+                if (press == null)
+                    continue;
+
+                return new RecordingScreenDto
+                {
+                    ActionIndex = action.Index,
+                    Image = press.Screenshot,
+                    X = press.MainAreaBounds.X,
+                    Y = press.MainAreaBounds.Y,
+                    Width = press.MainAreaBounds.Width,
+                    Height = press.MainAreaBounds.Height,
+                    Dpi = press.Dpi,
+                };
+            }
+
+            return null;
+        }
+
+        public ResultDto<bool> Review(ReviewedRecordingDto reviewed)
+        {
+            if (_cache.State != RecordingStateEnum.READY)
+                return ResultDto<bool>.Failure("The recording is not ready to review yet.");
+
+            HashSet<int> recorded = _cache.Actions.Select(x => x.Index).ToHashSet();
+            if (reviewed.Actions.Any(x => !recorded.Contains(x.ActionIndex)))
+                return ResultDto<bool>.Failure("The review names an action the recording does not have.");
+
+            _cache.Reviewed = reviewed;
+            return ResultDto<bool>.Success(true);
+        }
+
+        public ReviewedRecordingDto? GetReviewed()
+        {
+            return _cache.Reviewed;
         }
 
         public byte[]? GetScreenshot(int index)
@@ -564,17 +615,13 @@ namespace Business.Recording.Session
         {
             try
             {
-                _cache.ClickedElements = await FindElementsAsync(actions, ct);
+                await FindElementsAsync(actions, ct);
+                GroupClicks(actions, ct);
             }
             catch (OperationCanceledException)
             {
                 // Discarded, or a new recording started.
                 return;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[Recording] Could not find what the clicks hit: {ex.Message}");
-                _cache.ErrorMessage = "Could not find what the clicks hit.";
             }
 
             _cache.Stage = null;
@@ -582,13 +629,50 @@ namespace Business.Recording.Session
             await SendProgressAsync();
         }
 
-        private Task<IReadOnlyList<ClickedElementDto>> FindElementsAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
+        private async Task FindElementsAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
         {
-            return _clickedElementFinder.FindAsync(actions, _cache.GetPress, (done, total) =>
+            try
             {
-                _cache.Stage = StageProgress(RecordingStageEnum.FINDING_ELEMENTS, done, total);
-                _ = SendProgressAsync();
-            }, ct);
+                _cache.ClickedElements = await _clickedElementFinder.FindAsync(actions, _cache.GetPress, (done, total) =>
+                {
+                    ReportStage(RecordingStageEnum.FINDING_ELEMENTS, done, total);
+                }, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Fail("Could not find what the clicks hit.", ex);
+            }
+        }
+
+        // Compares the clicked elements, so it comes after finding them.
+        private void GroupClicks(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
+        {
+            ReportStage(RecordingStageEnum.GROUPING_CLICKS, 0, null);
+
+            try
+            {
+                _cache.ClickGroups = _clickedElementGrouper.Group(_cache.ClickedElements, actions, _cache.GetPress, (done, total) =>
+                {
+                    ReportStage(RecordingStageEnum.GROUPING_CLICKS, done, total);
+                }, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Fail("Could not group the clicks that hit the same picture.", ex);
+            }
+        }
+
+        private void ReportStage(RecordingStageEnum stage, int done, int? total)
+        {
+            _cache.Stage = StageProgress(stage, done, total);
+            _ = SendProgressAsync();
+        }
+
+        // The first failure is the one said: the ones after it are usually its consequence.
+        private void Fail(string message, Exception ex)
+        {
+            Console.Error.WriteLine($"[Recording] {message} {ex.Message}");
+            _cache.ErrorMessage ??= message;
         }
 
         private static RecordingStageProgress StageProgress(RecordingStageEnum stage, int done, int? total)

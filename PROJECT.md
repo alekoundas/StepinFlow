@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 101 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -632,15 +632,38 @@ About three quarters of a second per click on the CPU, and a second and a half t
 which is let go after: it is hundreds of megabytes the app has no use for between recordings.
 
 **A stop starts that work and returns** (§4). Whichever of the page, the bar or a hotkey stopped
-it, the backend works the recording through in stages - one today, finding what each click hit -
-and `RECORDING_PROGRESS` carries the stage, which of how many, and how far through it: "Finding
-what you clicked: 44 of 90". A stage that cannot be counted ahead has no total, and the page shows
+it, the backend works the recording through in stages - finding what each click hit, then which
+clicks hit the same picture - and `RECORDING_PROGRESS` carries the stage, which of how many, and
+how far through it: "1 of 2 · Finding what you clicked: 44 of 90". A stage that cannot be counted ahead has no total, and the page shows
 a bar that moves rather than one sitting at zero. Stages are never added into one percentage: a
 click and a model call are not the same unit, and the bar would jump or stall. A stage that fails
 costs the review what it would have added, never the recording, and the progress says why. Then
-READY, and the page asks `Recording.getResult` for the actions and what each click hit. The wizard
-shows each click's element, its text, and whether the model found it. The rectangle is what the
-draft will cut a template from, and the text what names the step.
+READY, and the page asks `Recording.getResult` for the actions, what each click hit and the
+groups.
+
+**Which clicks hit the same picture** (`Business/Recording/Elements/ClickedElementGrouper`) is what
+a list of coordinates cannot say - "these four clicks were the download icon on four rows" - and
+what lets the draft find them all with one template. It compares the clicked elements, never the
+crops around the clicks: the middle of a crop around a small icon is mostly what surrounds it, so
+the same icon on two rows did not match and two toolbar buttons side by side did. Each element is
+looked for inside the other's rectangle widened by six pixels at 96 dpi, from that press's
+screenshot, both ways (`IOpenCvService.GroupSameElements`), since the model's boxes shift a little
+between screenshots. It is shy on purpose, because an invented group becomes a loop that clicks the
+wrong thing and a missed one only a longer draft: only elements the model found, never a box around
+the click; never a flat one; never two whose read text differs. A group in different places is
+marked moving, the same place clicked again is not.
+
+**Review** comes before anything becomes a step (`features/wizard/review/`). Every action is listed
+with a checkbox to keep it, the main area at that moment (`Recording.getScreen`: the action's own
+press, or for typed text and keys the last click's before it) with where it was clicked, and the
+rectangle the template will be cut from, whose corners are dragged to change it. Each action says
+what it becomes - wait for the element then click it, click the exact spot, an input or the text
+as written, or left out; a click outside the main area starts left out - and typed text is named
+from the field clicked before it, secret when that field reads as a password. What was read under a
+click, how long the tester waited and the wait that becomes - three times that, at least ten
+seconds, at most sixty - and the clicks on the same picture are shown beside it. Nothing goes to the
+backend until Continue, which sends it all in one call (`Recording.review`) for the draft to be
+built from. Until the draft is built, Continue hands what was kept to the step-by-step wizard.
 
 ### Planned - phase 7: a recording and a description become a flow
 
@@ -1701,17 +1724,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-711 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+726 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 529 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 540 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
-| `Platform.Windows.Tests`, `App.Tests` | 0 | wired and empty |
+| `Platform.Windows.Tests` | 4 | grouping clicked elements, on drawn screenshots |
+| `App.Tests` | 0 | wired and empty |
 
 ```bash
 npm run test:backend
@@ -1820,7 +1844,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 711 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 726 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

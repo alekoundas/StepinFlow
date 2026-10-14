@@ -14,7 +14,10 @@ import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
+import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
+import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
+import { type ActionReview, keptActions, toReviewed } from "@/features/wizard/review/review";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
@@ -23,6 +26,7 @@ const RECORDING_STEPS = ["Describe", "Record", "Review"];
 const STAGE_LABELS: Record<RecordingStageEnum, string> = {
   NONE: "Getting the review ready",
   FINDING_ELEMENTS: "Finding what you clicked",
+  GROUPING_CLICKS: "Grouping the clicks that hit the same picture",
 };
 
 /**
@@ -33,7 +37,7 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
  *
  * The page only asks; the backend says what happened, as RECORDING_PROGRESS, and the page follows
  * it. A stop from here, the bar or its hotkey is the same stop: the backend works the recording
- * through, stage by stage, then says READY, and the page fetches the result and opens the wizard.
+ * through, stage by stage, then says READY, and the page fetches the result and shows Review.
  * A discard from anywhere comes back as NONE, and the page leaves. The bar closes once the
  * recording stops.
  *
@@ -56,6 +60,8 @@ export default function RecordingPage() {
   // The recording this page follows, null until one is underway, so the NONE of a discard made
   // before any recording - this page's own Cancel - is not taken for one.
   const [progress, setProgress] = useState<RecordingProgressDto | null>(null);
+  const [result, setResult] = useState<RecordingResultDto | null>(null);
+  const [isContinuing, setIsContinuing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,13 +102,36 @@ export default function RecordingPage() {
         return;
       }
 
-      setActions(recording.actions);
-      setClickedElements(recording.clickedElements);
-      navigate("/wizard");
+      setResult(recording);
     } catch (err) {
       setProgress(null);
       setError(err instanceof Error ? err.message : String(err));
     }
+  };
+
+  // Until the draft is built, the step-by-step wizard takes it from here, with what was left out gone.
+  const continueFromReview = async (reviews: Record<number, ActionReview>) => {
+    if (!result) return;
+
+    setIsContinuing(true);
+    setError(null);
+
+    try {
+      await backendApiService.Recording.review(toReviewed(result, reviews));
+      setActions(keptActions(result, reviews));
+      setClickedElements(result.clickedElements);
+      navigate("/wizard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsContinuing(false);
+    }
+  };
+
+  const recordAgain = () => {
+    setResult(null);
+    setProgress(null);
+    void openBar(setupFlowId);
   };
 
   // Stopped or discarded, from wherever it was.
@@ -190,10 +219,10 @@ export default function RecordingPage() {
           </p>
         </div>
 
-        <RecordingStepsComponent current={target ? 1 : 0} />
+        <RecordingStepsComponent current={stepOf(target !== null, result !== null)} />
       </div>
 
-      {target && (
+      {target && !result && (
         <div className="flex align-items-center justify-content-end flex-wrap gap-2">
           {!progress && (
             <Button
@@ -233,6 +262,17 @@ export default function RecordingPage() {
         />
       )}
 
+      {result && (
+        <RecordingReviewComponent
+          result={result}
+          flowId={setupFlowId}
+          elapsedMilliseconds={progress?.elapsedMilliseconds ?? 0}
+          isContinuing={isContinuing}
+          onRecordAgain={recordAgain}
+          onContinue={(reviews) => void continueFromReview(reviews)}
+        />
+      )}
+
       {isRecording && (
         <Message
           severity="info"
@@ -241,7 +281,7 @@ export default function RecordingPage() {
         />
       )}
 
-      {progress && isStopped && (
+      {progress && isStopped && !result && (
         <div className="flex flex-column gap-2">
           <LabelComponent
             text={describeStage(progress)}
@@ -266,7 +306,7 @@ export default function RecordingPage() {
         />
       )}
 
-      {target && (
+      {target && !result && (
         <Panel header={`Actions (${actionCount})`}>
           {recentActions.length === 0 ? (
             <LabelComponent
@@ -326,6 +366,12 @@ function RecordingStepsComponent({ current }: { current: number }) {
       })}
     </ol>
   );
+}
+
+function stepOf(isDescribed: boolean, isRecorded: boolean): number {
+  if (isRecorded) return 2;
+  if (isDescribed) return 1;
+  return 0;
 }
 
 function isLive(progress: RecordingProgressDto): boolean {

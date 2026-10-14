@@ -36,6 +36,7 @@ namespace Business.Recording.Session
         private volatile RecordingStateEnum _state;
         private volatile IReadOnlyList<RecordedActionDto> _actions = [];
         private volatile IReadOnlyList<ClickedElementDto> _clickedElements = [];
+        private volatile IReadOnlyList<ClickGroupDto> _clickGroups = [];
         private volatile RecordingStageProgress? _stage;
         private volatile string? _errorMessage;
 
@@ -69,6 +70,16 @@ namespace Business.Recording.Session
         {
             get { return _clickedElements; }
             set { _clickedElements = value; }
+        }
+
+        /// <summary>What the tester decided in Review, once they continued from it.</summary>
+        public ReviewedRecordingDto? Reviewed { get; set; }
+
+        /// <summary>The clicks that hit the same picture, once grouped.</summary>
+        public IReadOnlyList<ClickGroupDto> ClickGroups
+        {
+            get { return _clickGroups; }
+            set { _clickGroups = value; }
         }
 
         /// <summary>The stage a stopped recording is in. Null unless it is being worked through.</summary>
@@ -112,6 +123,8 @@ namespace Business.Recording.Session
             EndedOn = null;
             Actions = [];
             ClickedElements = [];
+            ClickGroups = [];
+            Reviewed = null;
             Stage = null;
             ErrorMessage = null;
         }
