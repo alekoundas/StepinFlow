@@ -392,6 +392,13 @@ the history.
 
 ## Frontend
 
+- [ ] **Two layouts of one window matcher.** Raised 2026-10-14, when the recording setup was laid
+      out as the mockup's: `RecordingWindowPickerComponent` lists the open windows as a radio list
+      with a Test row, while `WindowMatchFieldsComponent` (the area form, the window step) has a
+      dropdown and a "Test the match" button. Both call `Lookup.window` and
+      `Lookup.testWindowMatch`, so the matching cannot drift, but the look and the wording can.
+      Once the mockup's look is the app's (PLAN, "The screens, and the app around them"), the area
+      form and the window step take the picker's layout and one component goes.
 - [ ] **PrimeFlex 4's colour classes do nothing with this theme.** Found 2026-10-13, when the
       recording bar came out see-through. PrimeFlex is 4.x, and its `surface-*`, `text-color`,
       `text-color-secondary` and plain `border-round` classes read v4 design tokens (`--p-surface-0`

@@ -204,7 +204,16 @@ In this order:
 - [ ] **Review.** Every action with the screen at that moment, the element's rectangle to adjust,
       and what it becomes: kept or left out, typed text as an input. The clicks that hit the same
       picture are grouped - what `RecordingSummaryBuilder` already measures against
-      `IOpenCvService.GroupSimilar`, with no caller until now.
+      `IOpenCvService.GroupSimilar`, with no caller until now. Settled 2026-10-14:
+      - READY opens Review rather than the per-action wizard. Until the plain draft lands, Review's
+        Continue hands the kept actions to the wizard, so a recording still ends in a flow.
+      - The grouping is the stopped recording's second stage, after finding what each click hit:
+        CPU work like the first, reported the same way, "2 of 2 · Grouping the clicks".
+      - What the tester decides stays on the page until Continue, then goes to the backend in one
+        call, the reviewed recording, which is what `RecordingDraftBuilder` reads. Not a call per
+        change.
+      - Adjusting a rectangle needs the whole main area at that press, which the session keeps, so
+        one more read call; the cropping itself is the image editor window's, not a new one.
 - [ ] **The draft, without a model.** `RecordingDraftBuilder` turns actions and clicked elements into a
       `FlowScriptSchema` - linked rows, the shape a script reads into - with one builder per kind of
       action, as there is a parser per kind of line. A click is three lines: a wait for the element,

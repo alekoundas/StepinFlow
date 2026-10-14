@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "primereact/button";
@@ -16,6 +17,8 @@ import type { RecordingProgressDto } from "@/shared/models/recording-progress-dt
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
+
+const RECORDING_STEPS = ["Describe", "Record", "Review"];
 
 const STAGE_LABELS: Record<RecordingStageEnum, string> = {
   NONE: "Getting the review ready",
@@ -113,11 +116,11 @@ export default function RecordingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress?.state]);
 
-  const handleRecordNow = async () => {
+  const openBar = async (flowId: number | undefined) => {
     setError(null);
 
     try {
-      await ElectronApiService.recordingBar.openWindow(setupFlowId);
+      await ElectronApiService.recordingBar.openWindow(flowId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -131,6 +134,7 @@ export default function RecordingPage() {
     setTarget({ targetFlowId: flowId, targetIndex: addsLaunchStep ? 1 : 0 }, flowId);
     setSetupFlowId(flowId);
     void queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
+    void openBar(flowId);
   };
 
   const handleStop = async () => {
@@ -165,33 +169,43 @@ export default function RecordingPage() {
   const recentActions = progress?.recentActions ?? [];
 
   return (
-    <div className="m-4 flex flex-column gap-3">
-      <div className="flex align-items-center justify-content-between">
-        <div className="flex flex-column">
-          <LabelComponent
-            text="Record a flow"
-            size="lg"
-            weight="bold"
-          />
-          <LabelComponent
-            text="Do the task once. Every click and keystroke becomes a step you can correct before saving."
-            size="sm"
-            color="secondary"
-          />
+    <div
+      className="m-4 flex flex-column gap-4"
+      style={{ maxWidth: 1180 }}
+    >
+      <div className="flex align-items-start justify-content-between flex-wrap gap-3">
+        <div className="flex flex-column gap-1">
+          <h1
+            className="m-0 text-3xl font-semibold"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            Record a flow
+          </h1>
+          <p
+            className="m-0"
+            style={{ color: "var(--text-color-secondary)", maxWidth: 680 }}
+          >
+            Tell it what the flow is for and which window it works in. Then do the task once; nothing
+            you do becomes a step until you have reviewed it.
+          </p>
         </div>
 
-        <div className="flex gap-2">
-          {target && !progress && (
+        <RecordingStepsComponent current={target ? 1 : 0} />
+      </div>
+
+      {target && (
+        <div className="flex align-items-center justify-content-end flex-wrap gap-2">
+          {!progress && (
             <Button
               type="button"
               label="Record now"
               icon="pi pi-circle-fill"
-              onClick={handleRecordNow}
-              className="p-button-danger"
+              onClick={() => void openBar(setupFlowId)}
+              severity="danger"
             />
           )}
 
-          {target && progress && (
+          {progress && (
             <Button
               type="button"
               label={isRecording ? "Stop and review" : "Getting the review ready..."}
@@ -205,10 +219,11 @@ export default function RecordingPage() {
             type="button"
             label="Cancel"
             onClick={handleCancel}
-            className="p-button-text"
+            severity="secondary"
+            text
           />
         </div>
-      </div>
+      )}
 
       {error && (
         <Message
@@ -247,6 +262,7 @@ export default function RecordingPage() {
         <RecordingSetupComponent
           isSubFlow={createAsSubFlow}
           onCreated={handleSetupCreated}
+          onCancel={() => void handleCancel()}
         />
       )}
 
@@ -264,6 +280,51 @@ export default function RecordingPage() {
         </Panel>
       )}
     </div>
+  );
+}
+
+// The steps that exist so far. Generate and Check join when the draft and the model do.
+function RecordingStepsComponent({ current }: { current: number }) {
+  return (
+    <ol
+      aria-label="Progress"
+      className="flex align-items-center flex-wrap gap-2 list-none m-0 p-0 text-sm"
+    >
+      {RECORDING_STEPS.map((step, index) => {
+        const isCurrent = index === current;
+        const isDone = index < current;
+
+        let circle: CSSProperties = { border: "1px solid var(--surface-border)" };
+        if (isCurrent) circle = { background: "var(--primary-color)", color: "var(--primary-color-text)" };
+
+        let line = "var(--surface-border)";
+        if (isDone) line = "var(--primary-color)";
+
+        return (
+          <Fragment key={step}>
+            {index > 0 && (
+              <li
+                aria-hidden="true"
+                style={{ width: 20, height: 1, background: line }}
+              />
+            )}
+            <li
+              aria-current={isCurrent ? "step" : undefined}
+              className="flex align-items-center gap-2"
+              style={{ color: isCurrent || isDone ? "var(--text-color)" : "var(--text-color-secondary)" }}
+            >
+              <span
+                className="flex align-items-center justify-content-center border-circle text-xs font-semibold"
+                style={{ width: 22, height: 22, ...circle }}
+              >
+                {index + 1}
+              </span>
+              {step}
+            </li>
+          </Fragment>
+        );
+      })}
+    </ol>
   );
 }
 
