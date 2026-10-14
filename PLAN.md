@@ -152,17 +152,8 @@ cannot depend on an api key a customer may never add.
       element's rectangle *is* the crop. Two things travel with the crop or it is not portable - the
       area it was cut inside, and that area's size and DPI, which is what phase 5.7 exists for. A
       model handing back bare pixels would undo it.
-- [ ] **Its detection model lands inside phase 7**, settled 2026-10-09: after the recorder's session
-      work, because it reads a screenshot of the whole main area, which the session does not take
-      yet, and before the draft, which cuts its templates from it. The caption model comes later -
-      Windows OCR already names anything with text. Behind one seam,
-      `Business/Ai/Vision/ElementLocator`, with a box around the click as the fallback when the model
-      file is missing, said out loud when it is, as the docs index should be (`TODO.md`, AI).
-- [ ] **ONNX, and the licence before it ships.** OmniParser is a Python project, so it comes in as
-      ONNX models on the ONNX Runtime the docs search already ships. Its detection weights are AGPL,
-      inherited from YOLO, and its caption weights MIT. GPL-3.0 allows combining with AGPL-3.0, but
-      it goes on the licence audit in `TODO.md`, read from the LICENSE file in each weight folder of
-      Microsoft's own release.
+- [ ] **The caption model**, OmniParser's Florence-2 (MIT), for elements with no text on them - an
+      icon. The detector is in (`PROJECT.md` §6, §10); Windows OCR names anything with text.
 - [ ] Structured output, not prose: `elements`, `screenState`, `notes`. Settled so it is not
       reopened at implementation time.
 - [ ] The cloud payload is shown before it is sent, with `label` and `notes` highlighted as the two
@@ -189,8 +180,8 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
-`Setup/`, `Session/` and `ActionBuilder/` are built; `Evidence/` holds `RecordingSummaryBuilder` until
-`ClickEvidenceBuilder` takes its grouping over:
+`Setup/`, `Session/`, `ActionBuilder/` and `Elements/`'s `ClickedElementFinder` are built;
+`RecordingSummaryBuilder` stays in `Elements/` until Review takes its grouping over:
 
 ```
 Business/Recording/
@@ -198,9 +189,9 @@ Business/Recording/
   Session/      RecordingSessionService   start, pause, resume, stop; the bar's hotkeys; the live list;
                                           RecordingSessionCache holds what it remembers
   ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
-  Evidence/     ClickEvidenceBuilder      per click: place in the main area, the element's rectangle,
+  Elements/     ClickedElementFinder      per click: place in the main area, the element's rectangle,
                                           the text on it, the clicks that hit the same picture
-  Draft/        RecordingDraftBuilder     actions and evidence into a FlowScriptSchema
+  Draft/        RecordingDraftBuilder     actions and clicked elements into a FlowScriptSchema
   Generation/   FlowGenerationService     draft, script, model, scanner, import
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
@@ -210,15 +201,11 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **Phase 6's detection model**, behind `ElementLocator`, gives each click's element rectangle,
-      and Windows OCR reads the text on it. Read text is screen data, so a cloud model gets it only
-      through `CanSendScreenDataAsync`. The live list then names what was clicked - "Clicked
-      “Invoices”" - where today it says where.
 - [ ] **Review.** Every action with the screen at that moment, the element's rectangle to adjust,
       and what it becomes: kept or left out, typed text as an input. The clicks that hit the same
       picture are grouped - what `RecordingSummaryBuilder` already measures against
       `IOpenCvService.GroupSimilar`, with no caller until now.
-- [ ] **The draft, without a model.** `RecordingDraftBuilder` turns actions and evidence into a
+- [ ] **The draft, without a model.** `RecordingDraftBuilder` turns actions and clicked elements into a
       `FlowScriptSchema` - linked rows, the shape a script reads into - with one builder per kind of
       action, as there is a parser per kind of line. A click is three lines: a wait for the element,
       `Move to` it, `Click`. Every wait is `WAIT_UNTIL_FOUND`, never `FIND_BEST`, with a timeout of

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Business.Recording.Models.Session;
 using Core.Enums;
 using Core.Models.Dtos;
 
@@ -7,7 +8,7 @@ namespace Business.Recording.Session
     /// <summary>
     /// What the live list shows while recording: the actions as they fold, "Typed 15 characters"
     /// rather than every key-down and key-up. A pause is not something the tester did, so it is
-    /// neither listed nor counted.
+    /// neither listed nor counted. Once stopped, the stage it is being worked through.
     /// </summary>
     public static class RecordingProgressBuilder
     {
@@ -17,21 +18,36 @@ namespace Business.Recording.Session
         // Public methods
         // ================================================================
 
-        public static RecordingProgressDto Build(RecordingStateEnum state, DateTime startedOn, DateTime now, IReadOnlyList<RecordedActionDto> actions)
+        public static RecordingProgressDto Build(RecordingSessionCache cache, DateTime now)
         {
-            List<RecordedActionDto> done = actions.Where(x => x.Kind != RecordedActionKindEnum.PAUSE).ToList();
+            RecordingStateEnum state = cache.State;
+            DateTime startedOn = cache.StartedOn;
+            List<RecordedActionDto> done = cache.Actions.Where(x => x.Kind != RecordedActionKindEnum.PAUSE).ToList();
 
             int elapsed = 0;
             if (state != RecordingStateEnum.NONE)
-                elapsed = Milliseconds(now - startedOn);
+                elapsed = Milliseconds((cache.EndedOn ?? now) - startedOn);
 
-            return new RecordingProgressDto
+            RecordingProgressDto progress = new RecordingProgressDto
             {
                 State = state,
                 ElapsedMilliseconds = elapsed,
                 ActionCount = done.Count,
                 RecentActions = done.TakeLast(RECENT_ACTIONS).Select(x => LiveAction(x, startedOn)).ToList(),
+                ErrorMessage = cache.ErrorMessage,
             };
+
+            RecordingStageProgress? stage = cache.Stage;
+            if (stage != null)
+            {
+                progress.Stage = stage.Stage;
+                progress.StageNumber = stage.Number;
+                progress.StageCount = stage.Count;
+                progress.StageDone = stage.Done;
+                progress.StageTotal = stage.Total;
+            }
+
+            return progress;
         }
 
 

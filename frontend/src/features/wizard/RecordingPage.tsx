@@ -1,26 +1,38 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import { Panel } from "primereact/panel";
+import { ProgressBar } from "primereact/progressbar";
 
 import { BroadcastTypeEnum } from "../../../../electron/shared/types";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
+import { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
+const STAGE_LABELS: Record<RecordingStageEnum, string> = {
+  NONE: "Getting the review ready",
+  FINDING_ELEMENTS: "Finding what you clicked",
+};
+
 /**
  * Records what the user does and shows it arriving, folded into actions.
  *
- * While recording, this window is minimised and the recording bar controls it. A stop or a
- * discard can come from the bar, its hotkey or this page; whichever it was, the backend says so
- * and this page takes it from there - on to the wizard, or back out - and closes the bar.
+ * Record now opens the recording bar and minimises this window, and the bar's Start starts the
+ * recording, so the tester can arrange their windows first.
+ *
+ * The page only asks; the backend says what happened, as RECORDING_PROGRESS, and the page follows
+ * it. A stop from here, the bar or its hotkey is the same stop: the backend works the recording
+ * through, stage by stage, then says READY, and the page fetches the result and opens the wizard.
+ * A discard from anywhere comes back as NONE, and the page leaves. The bar closes once the
+ * recording stops.
  *
  * The live list is lines, never pixels; the wizard asks for an image when it draws that step.
  */
@@ -34,22 +46,21 @@ export default function RecordingPage() {
     setTarget,
     setSetupFlowId,
     setActions,
+    setClickedElements,
     reset,
   } = useWizardStore();
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
+  // The recording this page follows, null until one is underway, so the NONE of a discard made
+  // before any recording - this page's own Cancel - is not taken for one.
   const [progress, setProgress] = useState<RecordingProgressDto | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Whether a stop or a discard broadcast is this page's to act on. Cleared before the page
-  // stops or discards itself, so it does not act twice.
-  const isRecordingRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.RECORDING_PROGRESS) return;
-      setProgress(message.payload as RecordingProgressDto);
+
+      const received = message.payload as RecordingProgressDto;
+      setProgress((current) => (current || isUnderway(received) ? received : current));
     });
 
     return unsubscribe;
@@ -62,29 +73,6 @@ export default function RecordingPage() {
     };
   }, []);
 
-  const finish = async () => {
-    setIsStopping(true);
-    setError(null);
-
-    try {
-      await ElectronApiService.recordingBar.closeWindow();
-      const recorded = await backendApiService.Recording.stop();
-      setIsRecording(false);
-
-      if (recorded.length === 0) {
-        setError("Nothing was recorded. Start again and perform the task you want automated.");
-        return;
-      }
-
-      setActions(recorded);
-      navigate("/wizard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsStopping(false);
-    }
-  };
-
   const leave = async () => {
     await ElectronApiService.recordingBar.closeWindow();
     await queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
@@ -93,31 +81,42 @@ export default function RecordingPage() {
     navigate(-1);
   };
 
-  // Stopped or discarded from the bar or a hotkey.
-  useEffect(() => {
-    if (!progress || !isRecordingRef.current) return;
-
-    if (progress.state === RecordingStateEnum.STOPPED) {
-      isRecordingRef.current = false;
-      void finish();
-    }
-
-    if (progress.state === RecordingStateEnum.NONE) {
-      isRecordingRef.current = false;
-      void leave();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress]);
-
-  const handleStart = async () => {
-    setError(null);
-    setProgress(null);
+  const openReview = async (ready: RecordingProgressDto) => {
+    if (ready.errorMessage) console.error(ready.errorMessage);
 
     try {
-      await backendApiService.Recording.start(setupFlowId);
-      isRecordingRef.current = true;
-      setIsRecording(true);
+      const recording = await backendApiService.Recording.getResult();
 
+      if (recording.actions.length === 0) {
+        setProgress(null);
+        setError("Nothing was recorded. Start again and perform the task you want automated.");
+        return;
+      }
+
+      setActions(recording.actions);
+      setClickedElements(recording.clickedElements);
+      navigate("/wizard");
+    } catch (err) {
+      setProgress(null);
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Stopped or discarded, from wherever it was.
+  useEffect(() => {
+    if (!progress || isLive(progress)) return;
+
+    void ElectronApiService.recordingBar.closeWindow();
+
+    if (progress.state === RecordingStateEnum.READY) void openReview(progress);
+    if (progress.state === RecordingStateEnum.NONE) void leave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress?.state]);
+
+  const handleRecordNow = async () => {
+    setError(null);
+
+    try {
       await ElectronApiService.recordingBar.openWindow(setupFlowId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -135,25 +134,33 @@ export default function RecordingPage() {
   };
 
   const handleStop = async () => {
-    isRecordingRef.current = false;
-    await finish();
+    setError(null);
+
+    try {
+      await backendApiService.Recording.stop();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
   };
 
+  // Following a recording, the page leaves on the NONE the discard comes back as.
   const handleCancel = async () => {
-    isRecordingRef.current = false;
+    const isFollowing = progress !== null;
 
     try {
       await ElectronApiService.recordingBar.closeWindow();
       await backendApiService.Recording.discard(setupFlowId);
-      await queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
     } catch (err) {
       console.error(err);
+      await leave();
+      return;
     }
 
-    reset();
-    navigate(-1);
+    if (!isFollowing) await leave();
   };
 
+  const isRecording = progress !== null && isLive(progress);
+  const isStopped = progress !== null && !isLive(progress);
   const actionCount = progress?.actionCount ?? 0;
   const recentActions = progress?.recentActions ?? [];
 
@@ -174,20 +181,22 @@ export default function RecordingPage() {
         </div>
 
         <div className="flex gap-2">
-          {!target ? null : !isRecording ? (
+          {target && !progress && (
             <Button
               type="button"
-              label="Start recording"
+              label="Record now"
               icon="pi pi-circle-fill"
-              onClick={handleStart}
+              onClick={handleRecordNow}
               className="p-button-danger"
             />
-          ) : (
+          )}
+
+          {target && progress && (
             <Button
               type="button"
-              label={isStopping ? "Building steps..." : "Stop and review"}
+              label={isRecording ? "Stop and review" : "Getting the review ready..."}
               icon="pi pi-stop-circle"
-              loading={isStopping}
+              loading={isStopped}
               onClick={handleStop}
             />
           )}
@@ -217,6 +226,23 @@ export default function RecordingPage() {
         />
       )}
 
+      {progress && isStopped && (
+        <div className="flex flex-column gap-2">
+          <LabelComponent
+            text={describeStage(progress)}
+            size="sm"
+            color="secondary"
+          />
+          <ProgressBar
+            value={percentOf(progress)}
+            // A stage that cannot be counted ahead moves rather than sitting at zero.
+            mode={progress.stageTotal ? "determinate" : "indeterminate"}
+            showValue={false}
+            style={{ height: "0.5rem" }}
+          />
+        </div>
+      )}
+
       {!target && (
         <RecordingSetupComponent
           isSubFlow={createAsSubFlow}
@@ -239,4 +265,26 @@ export default function RecordingPage() {
       )}
     </div>
   );
+}
+
+function isLive(progress: RecordingProgressDto): boolean {
+  return progress.state === RecordingStateEnum.RECORDING || progress.state === RecordingStateEnum.PAUSED;
+}
+
+function isUnderway(progress: RecordingProgressDto): boolean {
+  return isLive(progress) || progress.state === RecordingStateEnum.PROCESSING;
+}
+
+// "Finding what you clicked: 44 of 90", and which stage of how many once there is more than one.
+function describeStage(progress: RecordingProgressDto): string {
+  let line = STAGE_LABELS[progress.stage];
+  if (progress.stageTotal) line += `: ${progress.stageDone} of ${progress.stageTotal}`;
+  if (progress.stageCount > 1) line = `${progress.stageNumber} of ${progress.stageCount} · ${line}`;
+
+  return line;
+}
+
+function percentOf(progress: RecordingProgressDto): number {
+  if (!progress.stageTotal) return 0;
+  return Math.round((progress.stageDone * 100) / progress.stageTotal);
 }

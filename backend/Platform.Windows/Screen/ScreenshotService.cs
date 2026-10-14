@@ -210,7 +210,22 @@ namespace Platform.Windows.Screen
                 return new RawImage();
 
             using Bitmap bmp = CaptureGraphics(rect, ScreenshotFormatEnum.RAW, 100);
+            return ToRawImage(bmp);
+        }
 
+        public RawImage Decode(byte[] encoded)
+        {
+            if (encoded.Length == 0)
+                return new RawImage();
+
+            using MemoryStream stream = new MemoryStream(encoded);
+            using Bitmap bmp = new Bitmap(stream);
+            return ToRawImage(bmp);
+        }
+
+        // Locked as 32bpp ARGB whatever the bitmap holds, so a decoded file comes out laid out as a capture does.
+        private static RawImage ToRawImage(Bitmap bmp)
+        {
             BitmapData data = bmp.LockBits(
                 new Rectangle(0, 0, bmp.Width, bmp.Height),
                 ImageLockMode.ReadOnly,

@@ -39,5 +39,32 @@ namespace Core.Helpers
 
             return cropped;
         }
+
+        /// <summary>Each pixel repeated factor times across and down, with nothing blended.</summary>
+        public static RawImage Enlarge(RawImage image, int factor)
+        {
+            int width = image.Width * factor;
+            int height = image.Height * factor;
+            int rowLength = width * BYTES_PER_PIXEL;
+
+            RawImage enlarged = new RawImage
+            {
+                Width = width,
+                Height = height,
+                Stride = rowLength,
+                Pixels = new byte[rowLength * height],
+            };
+
+            for (int y = 0; y < height; y++)
+            {
+                int from = y / factor * image.Stride;
+                int to = y * rowLength;
+
+                for (int x = 0; x < width; x++)
+                    Buffer.BlockCopy(image.Pixels, from + x / factor * BYTES_PER_PIXEL, enlarged.Pixels, to + x * BYTES_PER_PIXEL, BYTES_PER_PIXEL);
+            }
+
+            return enlarged;
+        }
     }
 }

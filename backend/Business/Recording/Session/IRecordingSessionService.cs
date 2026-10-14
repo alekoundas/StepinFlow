@@ -21,19 +21,18 @@ namespace Business.Recording.Session
 
         void Resume();
 
-        /// <summary>Stops and returns every input captured, in order. Stopped already, it returns them again.</summary>
+        /// <summary>
+        /// Stops, returns every input captured, in order, and starts working the recording through
+        /// in the background. RECORDING_PROGRESS says how far, then READY, and GetResult has it.
+        /// Stopped already, it returns the inputs again and starts nothing.
+        /// </summary>
         Task<IReadOnlyList<RecordedInput>> StopAsync(CancellationToken ct = default);
 
         /// <summary>Stops if it has to, and keeps nothing: the inputs and the screenshots go.</summary>
         Task DiscardAsync(CancellationToken ct = default);
 
-
-
-        /// <summary>The inputs folded into actions, as of the stop for a recording that has stopped.</summary>
-        IReadOnlyList<RecordedActionDto> GetActions();
-
-        /// <summary>Where the recording is, for a page that opens after it started.</summary>
-        RecordingProgressDto GetProgress();
+        /// <summary>The actions, and what each click hit. Null until the recording is READY.</summary>
+        RecordingResultDto? GetResult();
 
         /// <summary>The screenshot around a press, or null when it never had one.</summary>
         byte[]? GetScreenshot(int index);

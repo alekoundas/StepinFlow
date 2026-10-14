@@ -2,7 +2,8 @@ export const RecordingStateEnum = {
   NONE: "NONE", // Nothing started, or the last recording was discarded
   RECORDING: "RECORDING",
   PAUSED: "PAUSED",
-  STOPPED: "STOPPED", // Ended, and what it recorded is kept for the review
+  PROCESSING: "PROCESSING", // Stopped, and what it recorded is being worked through, stage by stage
+  READY: "READY", // Stopped and worked through, kept for the review
 } as const;
 
 export type RecordingStateEnum =

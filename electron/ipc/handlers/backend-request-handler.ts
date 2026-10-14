@@ -15,7 +15,7 @@ interface PendingResolver {
   reject: (reason: any) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 }
-const { IpcRequest, IpcResponse, IpcBroadcast } =
+const { IpcRequest, IpcResponse } =
   await ProtobufService().getMessageTypes();
 
 export async function registerBackendRequestHandler(
@@ -28,8 +28,8 @@ export async function registerBackendRequestHandler(
 
   const getClient = () => backendClient;
   const setClient = (socket: net.Socket | null) => (backendClient = socket);
-  const onConnected = (socket: net.Socket) => 
-    handleRequestPipeData(socket, mainWindow, pending);
+  const onConnected = (socket: net.Socket) =>
+    handleRequestPipeData(socket, pending);
 
   //============================================
   // Initial connection
@@ -107,10 +107,11 @@ export async function registerBackendRequestHandler(
   return { invokeBackend };
 }
 
-// Handles IpcResponse or IpcBroadcast messages from .Net
+// Reads every IpcResponse in a chunk. Broadcasts have a pipe of their own, so nothing else comes
+// here. A chunk can hold more than one response, and one left in the buffer would wait for the
+// next chunk to be read - for ever, when no other request follows - and time out.
 function handleRequestPipeData(
   socket: net.Socket,
-  mainWindow: BrowserWindow | null,
   pending: Map<string, PendingResolver>,
 ): void {
   let buffer = Buffer.alloc(0);
@@ -125,7 +126,6 @@ function handleRequestPipeData(
       const msgBuf = buffer.subarray(4, 4 + len);
       buffer = buffer.subarray(4 + len);
 
-      // Try decoding as IpcResponse first
       try {
         const response = IpcResponse.decode(msgBuf);
         const plain = IpcResponse.toObject(response, {
@@ -140,47 +140,31 @@ function handleRequestPipeData(
           plain.correlationId,
         );
 
-        // Push to renderer for unsolicited events (execution progress, etc.)
-        // mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_RECEIVE, plain);
-
         // Resolve the matching pending invoke
         const resolver = pending.get(plain.correlationId);
-        if (resolver) {
-          clearTimeout(resolver.timeoutId);
-          pending.delete(plain.correlationId);
+        if (!resolver) continue;
 
-          if (plain.error) {
-            resolver.reject(new Error(plain.error));
-            return;
-          }
+        clearTimeout(resolver.timeoutId);
+        pending.delete(plain.correlationId);
 
-          let payload = plain.payload;
-          if (Buffer.isBuffer(payload)) {
-            try {
-              payload = JSON.parse(payload.toString("utf-8"));
-            } catch {
-              // keep raw Buffer if not JSON
-            }
-          }
-
-          resolver.resolve(payload);
+        if (plain.error) {
+          resolver.reject(new Error(plain.error));
+          continue;
         }
+
+        let payload = plain.payload;
+        if (Buffer.isBuffer(payload)) {
+          try {
+            payload = JSON.parse(payload.toString("utf-8"));
+          } catch {
+            // keep raw Buffer if not JSON
+          }
+        }
+
+        resolver.resolve(payload);
       } catch (err) {
         console.error("[BackendHandler] Decode error:", err);
       }
-
-      // If not an IpcResponse, try decoding as IpcBroadcast
-      try {
-        const ipcBroadcast = IpcBroadcast.decode(msgBuf);
-        const plain = IpcBroadcast.toObject(ipcBroadcast);
-        // const payload = JSON.parse(plain.payload.toString("utf-8"));
-
-        mainWindow?.webContents.send(IPC_CHANNELS.BACKEND_BROADCAST, {
-          action: plain.action,
-          payload: JSON.parse(Buffer.from(plain.payload).toString()),
-        });
-        return; // important: don't treat as normal response
-      } catch {}
     }
   });
 }

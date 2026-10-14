@@ -17,6 +17,7 @@ namespace Business.Recording.Session
     ///    a template shows the screen the tester decided on rather than what the press changed - the
     ///    pressed button, or the menu it opened.
     /// 4) where the recording is, and its actions as last folded, for the live list.
+    /// 5) once it stopped, how far it has been worked through, and what each click hit.
     ///
     /// The inputs and the screenshots per press outlive the recording, so the review can still ask
     /// for them, until the next recording starts or the review discards it.
@@ -34,6 +35,9 @@ namespace Business.Recording.Session
 
         private volatile RecordingStateEnum _state;
         private volatile IReadOnlyList<RecordedActionDto> _actions = [];
+        private volatile IReadOnlyList<ClickedElementDto> _clickedElements = [];
+        private volatile RecordingStageProgress? _stage;
+        private volatile string? _errorMessage;
 
         /// <summary>The flow's main area. Null with no flow, as the wizard records.</summary>
         public FlowArea? MainArea { get; set; }
@@ -50,11 +54,35 @@ namespace Business.Recording.Session
         /// <summary>Set before the first input can arrive, and kept with the recording.</summary>
         public DateTime StartedOn { get; set; }
 
+        /// <summary>Set at the stop, so the clock stands still while the recording is worked through.</summary>
+        public DateTime? EndedOn { get; set; }
+
         /// <summary>The inputs as last folded into actions.</summary>
         public IReadOnlyList<RecordedActionDto> Actions
         {
             get { return _actions; }
             set { _actions = value; }
+        }
+
+        /// <summary>What each click hit, once it has been found.</summary>
+        public IReadOnlyList<ClickedElementDto> ClickedElements
+        {
+            get { return _clickedElements; }
+            set { _clickedElements = value; }
+        }
+
+        /// <summary>The stage a stopped recording is in. Null unless it is being worked through.</summary>
+        public RecordingStageProgress? Stage
+        {
+            get { return _stage; }
+            set { _stage = value; }
+        }
+
+        /// <summary>Why a stage failed, when one did.</summary>
+        public string? ErrorMessage
+        {
+            get { return _errorMessage; }
+            set { _errorMessage = value; }
         }
 
         public int InputCount
@@ -81,7 +109,11 @@ namespace Business.Recording.Session
             ClearRecentScreenshots();
             MainArea = null;
             State = RecordingStateEnum.NONE;
+            EndedOn = null;
             Actions = [];
+            ClickedElements = [];
+            Stage = null;
+            ErrorMessage = null;
         }
 
 

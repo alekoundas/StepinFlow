@@ -416,6 +416,13 @@ Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated 
 (`BroadcastTypeEnum` as a string). They carry execution progress, recording progress and model
 download progress.
 
+**Work longer than a request can wait for is started by the request and reported by broadcast.**
+The pipe answers one call at a time and Electron gives up on a call after 30 seconds, so the
+request starts the work and returns, the progress goes out as a broadcast, and the result is asked
+for once the progress says it is there - Google's long-running operations, Azure's 202 with a
+status URL. The result is a request rather than one more broadcast because it can be megabytes,
+which every window would be sent, and a window that missed it would never get it.
+
 Hosted services started in `Program.cs`: the request pipe listener, the broadcast pipe listener, and
 the SharpHook global hook, which runs for the whole process lifetime. It is an `EventLoopGlobalHook`:
 its handlers run on one thread of their own, one at a time and in the order the inputs came, so the
@@ -592,19 +599,48 @@ rules for what neither could see. Reading everything in one order needs neither.
 
 **The recording bar** (`windows/recording-bar`) is a window of its own: frameless, always on top,
 never taking the focus, so a click on it leaves the keyboard with the application, and left out of
-every screenshot (`setContentProtection`). Starting a recording opens it at the top of the screen
-and minimises the main window. It shows REC or PAUSED with a clock, the action count and the last
-action, Pause and Stop with their keys, and the live list: the inputs folded a few times a second
-the way the stop folds them, "Typed 15 characters" rather than every key-down and key-up, typed
-text counted rather than shown. The bar only asks. Every change goes out whole as
-`RECORDING_PROGRESS`, and the recording page takes a stop or a discard from there, whichever of
-the bar, a hotkey or the page made it, and closes the bar.
+every screenshot (`setContentProtection`). Record now opens it at the top of the screen and
+minimises the main window, and the recording starts from the bar's Start. The tester arranges their
+windows first, and the bar is subscribed before the first `RECORDING_PROGRESS` goes out: a bar
+opened after the start would hear nothing until the first click, since a broadcast is never sent
+twice. It shows READY, REC or PAUSED with a clock, the action count and the last action, Pause and
+Stop with their keys, and the live list: the inputs folded a few times a second the way the stop
+folds them, "Typed 15 characters" rather than every key-down and key-up, typed text counted rather
+than shown. The bar only asks. Every change goes out whole as `RECORDING_PROGRESS`, and the
+recording page follows a stop or a discard from there, whichever of the bar, a hotkey or the page
+made it, and closes the bar.
 
 **Its hotkeys never reach the recording**, whatever window is in front. They are two settings of
 their own, F9 and F10 by default, and the same key may also be one of the debugger's, since the
 two are never live at once. `RecordingHotkeyReader` reads them at the hook before the filter. A
 combination's first keys are held back while they are down, so the Ctrl of Ctrl+F9 is not in the
 recording by the time F9 comes, and anything else lets them through first, in order.
+
+**What each click hit is found once the recording stops**, never during it, where it would take the
+CPU from the application being recorded (`Business/Recording/Elements/ClickedElementFinder`). For
+every click and drag inside the main area, `Business/Ai/Vision/ElementLocator` runs OmniParser's
+detection model over the 640 by 640 pixels of the press's screenshot around the click, at their own
+size: the whole screen at full size is six times the work and gigabytes of memory, and shrunk to fit
+the model it makes a small icon a third of its size. The model scores every 8, 16 and 32 pixel cell
+for an element centred there; the boxes that clear 0.25 are thinned by non-maximum suppression, and
+the smallest the click is in is the element, so a click on an icon in a row is the icon. Windows OCR
+reads the text on it, and again at twice the size when faint text reads as nothing. When the model
+has nothing to say - no model file, nothing under the click, or an element that runs past what it
+looked at - a box around the click stands in, 64 pixels at 96 dpi, and its note says why.
+
+About three quarters of a second per click on the CPU, and a second and a half to load the model,
+which is let go after: it is hundreds of megabytes the app has no use for between recordings.
+
+**A stop starts that work and returns** (§4). Whichever of the page, the bar or a hotkey stopped
+it, the backend works the recording through in stages - one today, finding what each click hit -
+and `RECORDING_PROGRESS` carries the stage, which of how many, and how far through it: "Finding
+what you clicked: 44 of 90". A stage that cannot be counted ahead has no total, and the page shows
+a bar that moves rather than one sitting at zero. Stages are never added into one percentage: a
+click and a model call are not the same unit, and the bar would jump or stall. A stage that fails
+costs the review what it would have added, never the recording, and the progress says why. Then
+READY, and the page asks `Recording.getResult` for the actions and what each click hit. The wizard
+shows each click's element, its text, and whether the model found it. The rectangle is what the
+draft will cut a template from, and the text what names the step.
 
 ### Planned - phase 7: a recording and a description become a flow
 
@@ -1246,6 +1282,14 @@ rounds, so there is no orchestration framework.
 **Explain** takes a failed execution - its steps, the closest scores, the screenshots when allowed -
 and says what went wrong and what to change.
 
+**The element detector.** OmniParser v2's `icon_detect_v3`, a YOLOv9-E whose weights are MIT,
+Copyright Microsoft - the earlier `icon_detect` is AGPL-3.0, inherited from Ultralytics, and is not
+used. Microsoft ships it as TorchScript; it was exported once to ONNX (opset 17, with a height and
+width that can vary) and is hosted as the `vision-v1` release asset beside its licence, which
+`npm run model:download` fetches. The resize, the decoding of its three grids and the suppression are
+C# (`ElementDetector`), as OmniParser's `util/yolov9.py` does them in Python. It finds what a
+recorded click hit (§6) and reads nothing out of the machine.
+
 **The documentation index.** `backend/Core/AiDocuments/` is markdown written for the model - one
 file per step type and concept, troubleshooting, every validation message. `AiDocumentIndexService`
 splits it into chunks, embeds them locally with an ONNX model and `Microsoft.ML.Tokenizers`, and
@@ -1657,13 +1701,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-695 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+711 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 513 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 529 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1776,7 +1820,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 695 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 711 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

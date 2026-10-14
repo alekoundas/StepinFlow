@@ -281,6 +281,11 @@ the history.
       compares equal to what is saved and nothing is written. Switching provider is the only way
       to stop using a key, and the key stays in the table. Wants an explicit Clear next to the
       field rather than a rule about when an empty value counts as an edit.
+- [ ] **The model download asks every second instead of listening.** `useAiModelDownload` polls
+      `Ai.getDownloadState` once a second while a download is going, though every change already
+      goes out as `AI_MODEL_DOWNLOAD_EVENT`, a whole snapshot. Asked once as the page opens, for a
+      download that started before it, and then listening to the broadcast, the poll goes.
+      `clearDownloadState` stays, as the dismiss.
 
 ## Recording
 
@@ -334,6 +339,31 @@ the history.
       beside the database, would let a flow be generated again later from the same recording, and
       give the phase 9 fix loop the original screenshots to cut a new template from. Not part of
       the recording update.
+- [ ] **One OCR on every system: PaddleOCR's models on ONNX. To talk about.** Raised 2026-10-14.
+      `IOcrService` has one adapter, Windows OCR, so the Read Text step and the text on a clicked
+      element (`ClickedElementFinder`) are Windows only; on macOS or Linux a click keeps its
+      rectangle but no name. OmniParser does not read text itself - its detector only finds
+      rectangles, and it calls EasyOCR or PaddleOCR (Python) for the words. PaddleOCR's own models,
+      PP-OCR, are Apache-2.0 (GPL-3.0 compatible), cover 106 languages in v5, Greek included, and
+      exist as ONNX, so one adapter on the ONNX Runtime the detector already runs on would read the
+      same on all three systems.
+      - For: a flow's Read Text reads the same on a Linux CI runner as on the machine it was made on;
+        no Windows language packs, and no installer asking for elevation from the Settings page;
+        nothing new to ship.
+      - Against: two models per language family - one finds the lines (84 MB for v5), one reads a
+        line (7.4 MB for Greek) - and C# for what they leave: the detection map into boxes (OpenCV,
+        already in the app) and the recognition output decoded against a character list. Settings
+        downloads a recognition model instead of installing a language pack. The ONNX conversions
+        found (`monkt/paddleocr-onnx` on Hugging Face) are a third party's, so export our own as
+        with the detector, or vet them.
+      - For the clicked elements the detection model may not be needed: the detector already gives
+        the element, and a button's label is one line, which the recognition model reads alone.
+      - Measure it against Windows OCR on real screenshots first, the way the detector was checked.
+      - Meanwhile, macOS has Apple's Vision framework and Linux has Tesseract, as adapters of their own.
+- [ ] **Where the element detector comes from.** `icon_detect_v3.onnx` (232 MB) is copied beside
+      the backend like the docs model, so it ships inside the installer and nearly doubles it.
+      Downloading it on first use instead would keep the installer small, at the price of a first
+      recording that waits, or works with the box around the click until it has. To decide.
 - [ ] **The recording bar on macOS and Linux. Check with those adapters.** It is kept out of
       screenshots by `setContentProtection`, which Electron does not have on Linux, so there the bar
       would be in every screenshot the recorder takes of a main area under it. On macOS it sets the
@@ -362,6 +392,19 @@ the history.
 
 ## Frontend
 
+- [ ] **PrimeFlex 4's colour classes do nothing with this theme.** Found 2026-10-13, when the
+      recording bar came out see-through. PrimeFlex is 4.x, and its `surface-*`, `text-color`,
+      `text-color-secondary` and plain `border-round` classes read v4 design tokens (`--p-surface-0`
+      to `--p-surface-950`, `--p-text-muted-color`, `--p-content-border-radius`) that the legacy
+      soho-dark theme does not define - it has `--surface-overlay`, `--text-color-secondary`,
+      `--border-radius`. So backgrounds come out transparent, borders and secondary text inherit,
+      and corners stay square. About 80 uses in some 30 files, and every `LabelComponent` with
+      `color="secondary"`. Less visible in the main window, where the page behind is dark; the
+      recording bar uses the theme's variables inline instead. `border-round-lg`, `-xl` and
+      `border-circle` are fixed values and fine. To decide: define the `--p-*` tokens the classes
+      read in `app.css`, mapped onto the theme's variables (they go through `light-dark()`, so
+      `color-scheme: dark` too); pin PrimeFlex to 3.x, which reads the variables this theme has; or
+      replace the classes. Then check the pages by eye.
 - [ ] **What the user is shown when the backend refuses something. Open - to talk about, with
       toasts in mind.** A refusal comes back as `ResultDto.Failure(message)`, and `call()` in
       `backend-api-service.ts` throws it as an `Error`. What happens next depends on the caller:
@@ -532,6 +575,8 @@ the history.
       has to be GPL-compatible, and a permissive licence is not automatically one. Worth checking
       the heavy ones by hand - OpenCvSharp, SharpHook, ONNX Runtime, Microsoft.ML.Tokenizers,
       OllamaSharp, protobuf-net, USearch, EF Core - and recording the result somewhere it survives.
+      Model weights count as well: OmniParser's `icon_detect_v3` is MIT, checked 2026-10-14 from the
+      LICENSE in its folder of Microsoft's release, and its MIT notice ships beside the ONNX file.
       The test packages count too: xUnit, Shouldly and ArchUnitNET ship inside no installer, but
       they are in the repository.
 

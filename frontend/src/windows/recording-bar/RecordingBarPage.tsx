@@ -6,7 +6,6 @@ import { Message } from "primereact/message";
 import { classNames } from "primereact/utils";
 
 import { BroadcastTypeEnum } from "../../../../electron/shared/types";
-import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
@@ -23,14 +22,24 @@ const LISTED_ACTIONS = 6;
 // Where the window can be dragged from. Electron reads it from CSS; React has no type for it.
 const DRAG = { WebkitAppRegion: "drag" } as CSSProperties;
 
+// Solid, because the window is see-through. The theme's own variables: PrimeFlex 4's surface
+// classes read --p-* tokens this theme does not define, and come out transparent.
+const PANEL: CSSProperties = {
+  background: "var(--surface-overlay)",
+  borderColor: "var(--surface-border)",
+};
+
 /**
  * The floating bar a recording is controlled from: frameless, always on top, and left out of
  * every screenshot. Its own window, so nothing done on it is recorded, and it never takes the
  * focus, so the keyboard stays with the application being recorded.
  *
- * It only asks. Pause, resume and stop go to the backend, which tells every window what changed;
- * the recording page takes a stop or a discard from there, wherever it came from - here, a hotkey,
- * or the page itself - and closes this window.
+ * It opens before the recording, and its Start starts it: the tester arranges their windows first,
+ * and the bar is listening before the first RECORDING_PROGRESS goes out.
+ *
+ * It only asks. Start, pause, resume and stop go to the backend, which tells every window what
+ * changed; the recording page follows a stop or a discard from there, wherever it came from -
+ * here, a hotkey, or the page itself - and closes this window.
  *
  * The window is sized to what is drawn, so no see-through margin sits over the application
  * taking its clicks.
@@ -51,26 +60,14 @@ export default function RecordingBarPage() {
   const [error, setError] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const hasProgressRef = useRef(false);
 
-  // Asked once, because the bar opens after the recording started, then told of every change.
   useEffect(() => {
-    const receive = (received: RecordingProgressDto) => {
-      hasProgressRef.current = true;
-      setProgress(received);
-      setReceivedAt(Date.now());
-    };
-
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.RECORDING_PROGRESS) return;
-      receive(message.payload as RecordingProgressDto);
-    });
 
-    backendApiService.Recording.getProgress()
-      .then((received) => {
-        if (!hasProgressRef.current) receive(received);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      setProgress(message.payload as RecordingProgressDto);
+      setReceivedAt(Date.now());
+    });
 
     return unsubscribe;
   }, []);
@@ -101,14 +98,17 @@ export default function RecordingBarPage() {
     return () => window.clearTimeout(timer);
   }, [isConfirmingDiscard]);
 
-  const state = progress?.state ?? RecordingStateEnum.RECORDING;
-  const isPaused = state === RecordingStateEnum.PAUSED;
-  const isLive = state === RecordingStateEnum.RECORDING || isPaused;
+  // Nothing comes before Start, whose RECORDING is the first.
+  const isReady = progress === null;
+  const isPaused = progress?.state === RecordingStateEnum.PAUSED;
+  const isLive = progress?.state === RecordingStateEnum.RECORDING || isPaused;
 
   const elapsed = (progress?.elapsedMilliseconds ?? 0) + (isLive ? now - receivedAt : 0);
   const actionCount = progress?.actionCount ?? 0;
   const actions = (progress?.recentActions ?? []).slice(-LISTED_ACTIONS);
-  const lastLine = actions[actions.length - 1]?.line ?? "Waiting for your first action...";
+
+  let lastLine = actions[actions.length - 1]?.line ?? "Waiting for your first action...";
+  if (isReady) lastLine = "Arrange your windows, then press Start.";
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
@@ -126,6 +126,11 @@ export default function RecordingBarPage() {
     }
   };
 
+  const start = () => void ask(() => backendApiService.Recording.start(flowId));
+
+  // Before Start there is nothing to discard: the bar closes, and StepinFlow comes back.
+  const close = () => void ElectronApiService.recordingBar.closeWindow();
+
   const togglePause = () =>
     void ask(() => (isPaused ? backendApiService.Recording.resume() : backendApiService.Recording.pause()));
 
@@ -140,18 +145,28 @@ export default function RecordingBarPage() {
     void ask(() => backendApiService.Recording.discard(flowId));
   };
 
-  const accent = isPaused ? "var(--yellow-500)" : "var(--red-400)";
+  let accent = "var(--red-400)";
+  let pill = "REC";
+  if (isPaused) {
+    accent = "var(--yellow-500)";
+    pill = "PAUSED";
+  }
+  if (isReady) {
+    accent = "var(--text-color-secondary)";
+    pill = "READY";
+  }
 
   return (
     <div
       ref={rootRef}
-      className="flex flex-column gap-2 p-1 select-none"
-      style={{ width: "max-content" }}
+      className="flex flex-column gap-2 select-none"
+      style={{ width: "max-content", color: "var(--text-color)" }}
     >
       <div
         role="toolbar"
         aria-label="Recording"
-        className="flex align-items-center gap-1 p-1 border-round-xl surface-overlay border-1 surface-border"
+        className="flex align-items-center gap-1 p-1 border-1 border-round-xl"
+        style={PANEL}
       >
         <div
           className="flex align-items-center gap-2 px-3 border-round-lg"
@@ -162,14 +177,14 @@ export default function RecordingBarPage() {
           }}
         >
           <span
-            className={classNames("border-circle", !isPaused && "status-pill-pulse")}
+            className={classNames("border-circle", isLive && !isPaused && "status-pill-pulse")}
             style={{ width: 10, height: 10, background: accent }}
           />
           <span
             className="text-xs font-bold"
             style={{ color: accent, letterSpacing: "0.08em" }}
           >
-            {isPaused ? "PAUSED" : "REC"}
+            {pill}
           </span>
           <span
             className="text-sm"
@@ -183,11 +198,12 @@ export default function RecordingBarPage() {
           className="flex flex-column justify-content-center px-3"
           style={{ ...DRAG, height: 36, width: 260 }}
         >
-          <LabelComponent
-            text={actionCount === 1 ? "1 action" : `${actionCount} actions`}
-            size="xs"
-            color="secondary"
-          />
+          <span
+            className="text-xs"
+            style={{ color: "var(--text-color-secondary)" }}
+          >
+            {actionCount === 1 ? "1 action" : `${actionCount} actions`}
+          </span>
           <span className="text-sm white-space-nowrap overflow-hidden text-overflow-ellipsis">
             {lastLine}
           </span>
@@ -199,28 +215,47 @@ export default function RecordingBarPage() {
           style={{ width: 1, height: 24, background: "var(--surface-border)" }}
         />
 
-        <Button
-          type="button"
-          icon={isPaused ? "pi pi-play" : "pi pi-pause"}
-          label={isPaused ? "Resume" : "Pause"}
-          onClick={togglePause}
-          disabled={isBusy || !isLive}
-          className="p-button-sm p-button-secondary gap-1"
-          style={{ minWidth: "7.5rem" }}
-        >
-          {pauseKeys && <HotkeyComponent keys={pauseKeys} />}
-        </Button>
+        {isReady ? (
+          <Button
+            type="button"
+            icon="pi pi-circle-fill"
+            label="Start"
+            onClick={start}
+            loading={isBusy}
+            severity="danger"
+            size="small"
+            style={{ minWidth: "7.5rem" }}
+          />
+        ) : (
+          <>
+            <Button
+              type="button"
+              icon={isPaused ? "pi pi-play" : "pi pi-pause"}
+              label={isPaused ? "Resume" : "Pause"}
+              onClick={togglePause}
+              disabled={isBusy || !isLive}
+              severity="secondary"
+              size="small"
+              className="gap-1"
+              style={{ minWidth: "7.5rem" }}
+            >
+              {pauseKeys && <HotkeyComponent keys={pauseKeys} />}
+            </Button>
 
-        <Button
-          type="button"
-          icon="pi pi-stop"
-          label="Stop"
-          onClick={stop}
-          disabled={isBusy || !isLive}
-          className="p-button-sm gap-1"
-        >
-          {stopKeys && <HotkeyComponent keys={stopKeys} />}
-        </Button>
+            <Button
+              type="button"
+              icon="pi pi-stop"
+              label="Stop"
+              onClick={stop}
+              disabled={isBusy || !isLive}
+              severity="contrast"
+              size="small"
+              className="gap-1"
+            >
+              {stopKeys && <HotkeyComponent keys={stopKeys} />}
+            </Button>
+          </>
+        )}
 
         <Button
           type="button"
@@ -228,37 +263,55 @@ export default function RecordingBarPage() {
           aria-label={isListOpen ? "Hide the action list" : "Show the action list"}
           aria-expanded={isListOpen}
           onClick={() => setIsListOpen(!isListOpen)}
-          className="p-button-sm p-button-text p-button-plain"
+          severity="secondary"
+          size="small"
+          text
         />
 
-        <Button
-          type="button"
-          icon="pi pi-times"
-          label={isConfirmingDiscard ? "Discard?" : undefined}
-          aria-label="Discard the recording"
-          onClick={discard}
-          disabled={isBusy}
-          className={classNames(
-            "p-button-sm p-button-text",
-            isConfirmingDiscard ? "p-button-danger" : "p-button-plain",
-          )}
-        />
+        {isReady ? (
+          <Button
+            type="button"
+            icon="pi pi-times"
+            aria-label="Close without recording"
+            onClick={close}
+            disabled={isBusy}
+            severity="secondary"
+            size="small"
+            text
+          />
+        ) : (
+          <Button
+            type="button"
+            icon="pi pi-times"
+            label={isConfirmingDiscard ? "Discard?" : undefined}
+            aria-label="Discard the recording"
+            onClick={discard}
+            disabled={isBusy}
+            severity={isConfirmingDiscard ? "danger" : "secondary"}
+            size="small"
+            text
+          />
+        )}
       </div>
 
-      {isListOpen && (
-        <div className="flex flex-column gap-1 p-2 border-round-xl surface-overlay border-1 surface-border">
-          {actions.length === 0 ? (
-            <LabelComponent
-              text="Nothing recorded yet."
-              size="sm"
-              color="secondary"
-              className="px-2 py-1"
-            />
-          ) : (
-            <RecordingLiveListComponent actions={actions} />
+      {/* A failed start is said even with the list folded away. */}
+      {(isListOpen || error) && (
+        <div
+          className="flex flex-column gap-1 p-2 border-1 border-round-xl"
+          style={PANEL}
+        >
+          {isListOpen && actions.length === 0 && (
+            <span
+              className="text-sm px-2 py-1"
+              style={{ color: "var(--text-color-secondary)" }}
+            >
+              Nothing recorded yet.
+            </span>
           )}
 
-          {isPaused && (
+          {isListOpen && actions.length > 0 && <RecordingLiveListComponent actions={actions} />}
+
+          {isListOpen && isPaused && (
             <Message
               severity="warn"
               className="w-full justify-content-start"

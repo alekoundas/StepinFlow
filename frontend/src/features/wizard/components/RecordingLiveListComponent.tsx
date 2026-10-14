@@ -1,5 +1,3 @@
-import { classNames } from "primereact/utils";
-
 import { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-kind-enum";
 import type { RecordingLiveActionDto } from "@/shared/models/recording-live-action-dto";
 import { toClock } from "@/shared/utils/clock";
@@ -18,14 +16,19 @@ export default function RecordingLiveListComponent({ actions }: Props) {
       {actions.map((action, position) => (
         <div
           key={action.index}
-          className={classNames(
-            "flex align-items-center gap-2 px-2 py-1 border-round",
-            position === actions.length - 1 && "surface-hover",
-          )}
+          className="flex align-items-center gap-2 px-2 py-1 border-round-lg"
+          style={{
+            background: position === actions.length - 1 ? "var(--surface-hover)" : undefined,
+          }}
         >
           <span
-            className="flex align-items-center justify-content-center flex-shrink-0 border-round surface-ground text-xs font-bold"
-            style={{ width: 24, height: 24, color: tintOf(action.kind) }}
+            className="flex align-items-center justify-content-center flex-shrink-0 border-round-lg text-xs font-bold"
+            style={{
+              width: 24,
+              height: 24,
+              color: tintOf(action.kind),
+              background: "var(--surface-ground)",
+            }}
           >
             {glyphOf(action.kind)}
           </span>
@@ -35,8 +38,8 @@ export default function RecordingLiveListComponent({ actions }: Props) {
           </span>
 
           <span
-            className="text-xs text-color-secondary"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="text-xs"
+            style={{ color: "var(--text-color-secondary)", fontVariantNumeric: "tabular-nums" }}
           >
             {toClock(action.elapsedMilliseconds)}
           </span>

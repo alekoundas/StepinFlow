@@ -34,6 +34,14 @@ namespace Business.Tests.Fakes
             return [1];
         }
 
+        /// <summary>What every decode gives back: a blank image this size.</summary>
+        public Size DecodedSize { get; set; } = new Size(800, 600);
+
+        public RawImage Decode(byte[] encoded)
+        {
+            return new RawImage { Width = DecodedSize.Width, Height = DecodedSize.Height, Stride = DecodedSize.Width * 4, Pixels = new byte[DecodedSize.Width * DecodedSize.Height * 4] };
+        }
+
         public byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality)
         {
             throw new NotImplementedException();

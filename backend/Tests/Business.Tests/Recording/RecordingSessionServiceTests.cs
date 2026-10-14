@@ -1,4 +1,5 @@
 using System.Drawing;
+using Business.Recording.Elements;
 using Business.Recording.Models.Session;
 using Business.Recording.Session;
 using Business.Tests.Fakes;
@@ -39,7 +40,8 @@ namespace Business.Tests.Recording
 
         public RecordingSessionServiceTests()
         {
-            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, _database, _clock);
+            ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
+            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, finder, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -109,6 +111,26 @@ namespace Business.Tests.Recording
                 await Task.Delay(10, timeout.Token);
         }
 
+        // What every window was last told.
+        private RecordingProgressDto LastProgress()
+        {
+            lock (_broadcast.Sent)
+                return (RecordingProgressDto)_broadcast.Sent.Last(x => x.Payload is RecordingProgressDto).Payload!;
+        }
+
+        private List<RecordingProgressDto> AllProgress()
+        {
+            lock (_broadcast.Sent)
+                return _broadcast.Sent.Select(x => x.Payload).OfType<RecordingProgressDto>().ToList();
+        }
+
+        // A stop works the recording through in the background.
+        private async Task<RecordingResultDto> WaitUntilReadyAsync()
+        {
+            await WaitUntilAsync(() => LastProgress().State == RecordingStateEnum.READY);
+            return _session.GetResult().ShouldNotBeNull();
+        }
+
         // ================================================================
         // Starting
         // ================================================================
@@ -157,6 +179,7 @@ namespace Business.Tests.Recording
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
             Raise(RecordedInputTypeEnum.BUTTON_UP);
             IReadOnlyList<RecordedInput> events = await _session.StopAsync(Ct);
+            await WaitUntilReadyAsync();
 
             events[0].Window.ShouldBe(RecordedWindowEnum.MAIN_AREA);
             events[0].HasScreenshot.ShouldBeTrue();
@@ -165,8 +188,9 @@ namespace Business.Tests.Recording
             (press.MainAreaBounds, press.Dpi).ShouldBe((BOUNDS, 120));
             press.Screenshot.ShouldNotBeEmpty();
 
+            // The crop around the press, the main area, and the element the stop found under it.
             _screenshots.Captured.ShouldBe([BOUNDS]);
-            _screenshots.Encoded.Select(x => (x.Width, x.Height)).ShouldBe([(400, 400), (800, 600)], ignoreOrder: true);
+            _screenshots.Encoded.Select(x => (x.Width, x.Height)).ShouldBe([(400, 400), (800, 600), (40, 20)], ignoreOrder: true);
         }
 
         [Fact]
@@ -179,7 +203,7 @@ namespace Business.Tests.Recording
             Raise(RecordedInputTypeEnum.BUTTON_UP);
 
             (await _session.StopAsync(Ct)).ShouldBeEmpty();
-            _session.GetActions().ShouldBeEmpty();
+            (await WaitUntilReadyAsync()).Actions.ShouldBeEmpty();
         }
 
         // ================================================================
@@ -218,7 +242,7 @@ namespace Business.Tests.Recording
             RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F9, "VcF9");
             RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F9, "VcF9");
             _session.IsPaused.ShouldBeTrue();
-            _session.GetProgress().State.ShouldBe(RecordingStateEnum.PAUSED);
+            LastProgress().State.ShouldBe(RecordingStateEnum.PAUSED);
 
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
             Raise(RecordedInputTypeEnum.BUTTON_UP);
@@ -238,11 +262,11 @@ namespace Business.Tests.Recording
             Raise(RecordedInputTypeEnum.BUTTON_DOWN);
             Raise(RecordedInputTypeEnum.BUTTON_UP);
             RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F10, "VcF10");
-            await WaitUntilAsync(() => _session.GetProgress().State == RecordingStateEnum.STOPPED);
+            RecordingResultDto recording = await WaitUntilReadyAsync();
 
             _session.IsRecording.ShouldBeFalse();
             _hook.IsRecording.ShouldBeFalse();
-            _session.GetActions().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.CLICK]);
+            recording.Actions.Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.CLICK]);
         }
 
         // ================================================================
@@ -258,15 +282,11 @@ namespace Business.Tests.Recording
             Type(KeyCodeEnum.H, "VcH", "h");
             Type(KeyCodeEnum.I, "VcI", "i");
             await _session.StopAsync(Ct);
+            await WaitUntilReadyAsync();
 
-            RecordingProgressDto progress = _session.GetProgress();
-            progress.State.ShouldBe(RecordingStateEnum.STOPPED);
+            RecordingProgressDto progress = LastProgress();
             progress.ActionCount.ShouldBe(1);
             progress.RecentActions.Single().Line.ShouldBe("Typed 2 characters");
-
-            (BroadcastTypeEnum type, object? payload) = _broadcast.Sent[^1];
-            type.ShouldBe(BroadcastTypeEnum.RECORDING_PROGRESS);
-            payload.ShouldBeOfType<RecordingProgressDto>().State.ShouldBe(RecordingStateEnum.STOPPED);
         }
 
         [Fact]
@@ -279,9 +299,59 @@ namespace Business.Tests.Recording
             await _session.DiscardAsync(Ct);
 
             _session.IsRecording.ShouldBeFalse();
-            _session.GetActions().ShouldBeEmpty();
+            _session.GetResult().ShouldBeNull();
             _session.GetPress(0).ShouldBeNull();
-            _session.GetProgress().State.ShouldBe(RecordingStateEnum.NONE);
+            LastProgress().State.ShouldBe(RecordingStateEnum.NONE);
+        }
+
+        // ================================================================
+        // After the stop
+        // ================================================================
+
+        [Fact]
+        public async Task A_stop_finds_what_each_click_hit_and_says_how_far_it_has_got()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            ClickedElementDto found = recording.ClickedElements.ShouldHaveSingleItem();
+            found.Text.ShouldBe("Checkout");
+            (found.X, found.Y).ShouldBe((380, 290));
+
+            RecordingProgressDto lastClick = AllProgress().Last(x => x.State == RecordingStateEnum.PROCESSING);
+            (lastClick.Stage, lastClick.StageNumber, lastClick.StageCount).ShouldBe((RecordingStageEnum.FINDING_ELEMENTS, 1, 1));
+            (lastClick.StageDone, lastClick.StageTotal).ShouldBe((1, 1));
+
+            RecordingProgressDto ready = LastProgress();
+            (ready.Stage, ready.StageNumber, ready.ErrorMessage).ShouldBe((RecordingStageEnum.NONE, 0, null));
+        }
+
+        // The page, the bar and the stop key can all stop it at the same moment.
+        [Fact]
+        public async Task A_second_stop_works_nothing_through_again()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            await _session.StopAsync(Ct);
+            await WaitUntilReadyAsync();
+
+            await _session.StopAsync(Ct);
+
+            AllProgress().Count(x => x.State == RecordingStateEnum.READY).ShouldBe(1);
+            LastProgress().State.ShouldBe(RecordingStateEnum.READY);
+        }
+
+        [Fact]
+        public async Task There_is_no_result_until_the_recording_is_ready()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            _session.GetResult().ShouldBeNull();
         }
 
         // ================================================================

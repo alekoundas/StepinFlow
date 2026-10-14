@@ -1,6 +1,7 @@
 using Business.AppSettings;
 using Business.AreaPoint;
 using Business.Recording.ActionBuilder;
+using Business.Recording.Elements;
 using Business.Recording.Models.Session;
 using Core.Catalogs;
 using Core.Enums;
@@ -38,6 +39,12 @@ namespace Business.Recording.Session
     ///
     /// Every change, a fold or a pause, is broadcast whole as RECORDING_PROGRESS. Pixels never go
     /// on it: the review asks for an image when it draws that action.
+    ///
+    /// A stop, from the page, the bar or its hotkey, starts working the recording through in the
+    /// background, stage by stage, and returns: finding what each click hit is seconds per click,
+    /// and the request pipe answers one call at a time. Never while recording, where the
+    /// application being recorded would feel it. RECORDING_PROGRESS says which stage and how far,
+    /// then READY, and GetResult has it.
     /// </summary>
     public sealed class RecordingSessionService : IRecordingSessionService, IDisposable
     {
@@ -52,6 +59,9 @@ namespace Business.Recording.Session
         // Often enough that the live list keeps up, and no more: a fold reads the whole recording.
         private static readonly TimeSpan FOLD_INTERVAL = TimeSpan.FromMilliseconds(250);
 
+        // What a stopped recording is worked through, in order.
+        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS];
+
         private readonly IInputRecordService _inputRecordService;
         private readonly IScreenshotService _screenshotService;
         private readonly IAppSettingService _appSettingService;
@@ -59,6 +69,7 @@ namespace Business.Recording.Session
         private readonly IWindowService _windowService;
         private readonly IScreenService _screenService;
         private readonly IAreaPointResolver _areaPointResolver;
+        private readonly IClickedElementFinder _clickedElementFinder;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
 
@@ -75,6 +86,8 @@ namespace Business.Recording.Session
         private Task? _capture;
         private Task? _fold;
         private CancellationTokenSource? _loopsCts;
+        private Task? _processing;
+        private CancellationTokenSource? _processingCts;
 
         public RecordingSessionService(
             IInputRecordService inputRecordService,
@@ -84,6 +97,7 @@ namespace Business.Recording.Session
             IWindowService windowService,
             IScreenService screenService,
             IAreaPointResolver areaPointResolver,
+            IClickedElementFinder clickedElementFinder,
             IDbContextFactory<AppDbContext> dbContextFactory,
             TimeProvider timeProvider)
         {
@@ -94,6 +108,7 @@ namespace Business.Recording.Session
             _windowService = windowService;
             _screenService = screenService;
             _areaPointResolver = areaPointResolver;
+            _clickedElementFinder = clickedElementFinder;
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
 
@@ -158,10 +173,7 @@ namespace Business.Recording.Session
             try
             {
                 if (await EndAsync(ct))
-                {
-                    _cache.State = RecordingStateEnum.STOPPED;
-                    await SendProgressAsync();
-                }
+                    await BeginProcessingAsync();
 
                 return _cache.GetInputs();
             }
@@ -178,6 +190,7 @@ namespace Business.Recording.Session
             try
             {
                 await EndAsync(ct);
+                await StopProcessingAsync();
                 _cache.Clear();
                 await SendProgressAsync();
             }
@@ -187,15 +200,16 @@ namespace Business.Recording.Session
             }
         }
 
-        public IReadOnlyList<RecordedActionDto> GetActions()
+        public RecordingResultDto? GetResult()
         {
-            return _cache.Actions;
-        }
+            if (_cache.State != RecordingStateEnum.READY)
+                return null;
 
-        public RecordingProgressDto GetProgress()
-        {
-            DateTime now = _timeProvider.GetLocalNow().DateTime;
-            return RecordingProgressBuilder.Build(_cache.State, _cache.StartedOn, now, _cache.Actions);
+            return new RecordingResultDto
+            {
+                Actions = _cache.Actions.ToList(),
+                ClickedElements = _cache.ClickedElements.ToList(),
+            };
         }
 
         public byte[]? GetScreenshot(int index)
@@ -222,6 +236,7 @@ namespace Business.Recording.Session
             if (electronProcessId <= 0)
                 return ResultDto<bool>.Failure("StepinFlow could not tell which windows are its own.");
 
+            await StopProcessingAsync();
             _cache.Clear();
             _filter.Reset();
             _filter.ElectronProcessId = electronProcessId;
@@ -287,6 +302,7 @@ namespace Business.Recording.Session
 
             await _inputRecordService.StopRecordingAllAsync();
             _inputRecordService.ActionRecorded -= OnActionRecorded;
+            _cache.EndedOn = _timeProvider.GetLocalNow().DateTime;
 
             // The hook stops publishing immediately but may still be inside a handler, so the
             // queue stays open long enough for those to land.
@@ -523,9 +539,86 @@ namespace Business.Recording.Session
         {
             lock (_progressLock)
             {
-                RecordingProgressDto progress = GetProgress();
+                DateTime now = _timeProvider.GetLocalNow().DateTime;
+                RecordingProgressDto progress = RecordingProgressBuilder.Build(_cache, now);
                 return _broadcastService.SendAsync(BroadcastTypeEnum.RECORDING_PROGRESS, progress).AsTask();
             }
+        }
+
+        // Under the gate, straight after the stop, so nothing can start or discard in between.
+        private async Task BeginProcessingAsync()
+        {
+            IReadOnlyList<RecordedActionDto> actions = _cache.Actions;
+
+            _cache.State = RecordingStateEnum.PROCESSING;
+            _cache.Stage = StageProgress(STAGES[0], 0, null);
+            await SendProgressAsync();
+
+            CancellationTokenSource processingCts = new CancellationTokenSource();
+            _processingCts = processingCts;
+            _processing = Task.Run(() => ProcessAsync(actions, processingCts.Token), CancellationToken.None);
+        }
+
+        // A stage that fails costs the review what it would have added, never the recording.
+        private async Task ProcessAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
+        {
+            try
+            {
+                _cache.ClickedElements = await FindElementsAsync(actions, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Discarded, or a new recording started.
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[Recording] Could not find what the clicks hit: {ex.Message}");
+                _cache.ErrorMessage = "Could not find what the clicks hit.";
+            }
+
+            _cache.Stage = null;
+            _cache.State = RecordingStateEnum.READY;
+            await SendProgressAsync();
+        }
+
+        private Task<IReadOnlyList<ClickedElementDto>> FindElementsAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
+        {
+            return _clickedElementFinder.FindAsync(actions, _cache.GetPress, (done, total) =>
+            {
+                _cache.Stage = StageProgress(RecordingStageEnum.FINDING_ELEMENTS, done, total);
+                _ = SendProgressAsync();
+            }, ct);
+        }
+
+        private static RecordingStageProgress StageProgress(RecordingStageEnum stage, int done, int? total)
+        {
+            int number = Array.IndexOf(STAGES, stage) + 1;
+
+            return new RecordingStageProgress
+            {
+                Stage = stage,
+                Number = number,
+                Count = STAGES.Length,
+                Done = done,
+                Total = total,
+            };
+        }
+
+        private async Task StopProcessingAsync()
+        {
+            CancellationTokenSource? processingCts = _processingCts;
+            if (processingCts == null)
+                return;
+
+            await processingCts.CancelAsync();
+
+            if (_processing != null)
+                await _processing;
+
+            processingCts.Dispose();
+            _processingCts = null;
+            _processing = null;
         }
 
         private async Task StopLoopsAsync()
@@ -584,6 +677,7 @@ namespace Business.Recording.Session
             _queue?.Writer.TryComplete();
             _queue = null;
             _loopsCts?.Cancel();
+            _processingCts?.Cancel();
         }
 
 

@@ -24,11 +24,13 @@ using Business.FlowScript.Text;
 using Business.Flows.FlowValidationService;
 using Business.Ai;
 using Business.AppSettings;
+using Business.Recording.Elements;
 using Business.Recording.Session;
 using Business.Recording.Setup;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
+using Business.Ai.Vision;
 
 using DataAccess;
 
@@ -85,6 +87,8 @@ namespace App
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
+            builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
+            builder.Services.AddSingleton<IElementLocator, ElementLocator>();
             builder.Services.AddSingleton<IRecordingSetupService, RecordingSetupService>();
 
             // Validation
@@ -216,7 +220,7 @@ namespace App
             builder.Services.AddTransient<StopRecordingHandler>();
             builder.Services.AddTransient<DiscardRecordingHandler>();
             builder.Services.AddTransient<GetRecordingScreenshotHandler>();
-            builder.Services.AddTransient<GetRecordingProgressHandler>();
+            builder.Services.AddTransient<GetRecordingResultHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();
             builder.Services.AddTransient<SetAppSettingHandler>();
             builder.Services.AddTransient<SystemTakeScreenshotHandler>();

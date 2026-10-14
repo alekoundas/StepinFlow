@@ -20,6 +20,25 @@ When you press a mouse button, the screen around the pointer is captured — the
 looking at when you decided to click, rather than whatever the click then changed. How much is
 captured is a setting.
 
+## The recording bar
+
+Record now minimises StepinFlow and opens a small bar at the top of the screen. Arrange your windows,
+then press Start on the bar. While recording, the bar shows whether it is recording or paused, a
+clock, the last few actions, and Pause and Stop. Closing the bar before Start records nothing and
+brings StepinFlow back. Nothing you do on the bar is recorded, and it never appears in a
+screenshot. Pause and Stop also have keys, F9 and F10 by default, which work whatever window is in
+front and are never recorded; they are under Recording keys in Settings. Typed text shows in the
+bar as a count, "Typed 15 characters", never as the text.
+
+## What each click hit
+
+When the recording stops, StepinFlow looks at the screenshot from before each click and finds the
+element under it — the button, field or icon — and reads the text on it. It takes about a second
+per click, and the recording page shows how far it has got. Each click then shows that element and
+its text, marked "found by the model" or "box around the click". A box around the click means the
+model had nothing to say: no element was under the click, the element was bigger than the area it
+looked at, or the model file is not installed.
+
 ## Turning actions into steps
 
 For each recorded action the wizard asks two things:

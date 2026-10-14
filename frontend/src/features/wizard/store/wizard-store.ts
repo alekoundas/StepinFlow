@@ -7,6 +7,7 @@ import type {
   FlowDraftTargetDto,
 } from "@/shared/models/database/flow-draft-dto";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
+import type { ClickedElementDto } from "@/shared/models/clicked-element-dto";
 
 interface Props {
   /** Where the steps land. */
@@ -31,6 +32,9 @@ interface Props {
   /** What the recorder captured, in order. Never mutated once set. */
   actions: RecordedActionDto[];
 
+  /** What each click hit, by the action's index. Empty for a recording with no main area. */
+  clickedElements: ClickedElementDto[];
+
   /** How far through the actions the user has decided. */
   cursor: number;
 
@@ -48,6 +52,7 @@ interface Props {
   setCreateAsSubFlow: (isSubFlow: boolean) => void;
   setSetupFlowId: (flowId: number | undefined) => void;
   setActions: (actions: RecordedActionDto[]) => void;
+  setClickedElements: (clickedElements: ClickedElementDto[]) => void;
 
   addSteps: (
     steps: DraftStepDto[],
@@ -74,6 +79,7 @@ const initial = {
   createAsSubFlow: false,
   setupFlowId: undefined,
   actions: [],
+  clickedElements: [],
   cursor: 0,
   steps: [],
   openParentTempId: undefined,
@@ -91,6 +97,7 @@ export const useWizardStore = create<Props>()(
     setSetupFlowId: (flowId) => set({ setupFlowId: flowId }),
     setActions: (actions) =>
       set({ actions, cursor: 0, steps: [], openParentTempId: undefined, openParentBranch: undefined }),
+    setClickedElements: (clickedElements) => set({ clickedElements }),
 
     addSteps: (steps, open) =>
       set((state) => ({

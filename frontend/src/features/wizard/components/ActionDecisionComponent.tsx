@@ -17,6 +17,8 @@ import {
   type Placement,
 } from "@/features/wizard/action-to-steps";
 import ActionFieldsComponent from "@/features/wizard/components/ActionFieldsComponent";
+import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import { ElementFoundByEnum } from "@/shared/enums/backend/element-found-by-enum";
 
 /** One answer to "where does it go", worked out from the steps already added. */
 export interface PlacementOption {
@@ -54,6 +56,11 @@ export default function ActionDecisionComponent({
   onSkip,
 }: Props) {
   const options = useMemo(() => optionsFor(action), [action]);
+
+  // What the click hit, found after the recording stopped. None for a recording with no main area.
+  const element = useWizardStore((state) =>
+    state.clickedElements.find((x) => x.actionIndex === action.index),
+  );
 
   const [optionId, setOptionId] = useState(options[0]?.id ?? "");
   const [placementId, setPlacementId] = useState(placementOptions[0]?.id ?? "");
@@ -121,6 +128,36 @@ export default function ActionDecisionComponent({
           {action.windowTitle && (
             <LabelComponent
               text={`in ${action.windowTitle}`}
+              size="xs"
+              color="secondary"
+            />
+          )}
+
+          {element && (
+            <div className="flex align-items-center gap-2 mt-2">
+              <img
+                src={`data:image/png;base64,${element.image}`}
+                alt={element.text}
+                className="border-round-lg flex-shrink-0"
+                style={{ maxWidth: "10rem", maxHeight: "3rem", objectFit: "contain" }}
+              />
+
+              <div className="flex flex-column align-items-start gap-1">
+                <LabelComponent
+                  text={element.text ? `“${element.text}”` : "No text on it"}
+                  size="sm"
+                />
+                <Tag
+                  severity={element.foundBy === ElementFoundByEnum.MODEL ? "success" : "warning"}
+                  value={element.foundBy === ElementFoundByEnum.MODEL ? "found by the model" : "box around the click"}
+                />
+              </div>
+            </div>
+          )}
+
+          {element?.note && (
+            <LabelComponent
+              text={element.note}
               size="xs"
               color="secondary"
             />

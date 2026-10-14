@@ -138,7 +138,7 @@ namespace Transport.Ipc
                     "Recording.stop" => await Handler<StopRecordingHandler>().HandleAsync(ct),
                     "Recording.discard" => await Handler<DiscardRecordingHandler>().HandleAsync(Payload<RecordingDiscardDto>(request), ct),
                     "Recording.getScreenshot" => await Handler<GetRecordingScreenshotHandler>().HandleAsync(Payload<int>(request), ct),
-                    "Recording.getProgress" => await Handler<GetRecordingProgressHandler>().HandleAsync(ct),
+                    "Recording.getResult" => await Handler<GetRecordingResultHandler>().HandleAsync(ct),
 
                     // Settings
                     "Settings.getAll" => await Handler<GetAppSettingsHandler>().HandleAsync(ct),

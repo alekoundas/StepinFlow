@@ -16,6 +16,9 @@ namespace Core.Ports
         RawImage CaptureRaw(Rectangle rect);
 
         byte[] Encode(RawImage image, ScreenshotFormatEnum screenshotFormat, int jpegQuality);
+
+        /// <summary>A PNG or JPEG back to pixels, laid out as a capture is.</summary>
+        RawImage Decode(byte[] encoded);
         byte[] CaptureVirtualScreen(ScreenshotFormatEnum screenshotFormat, int jpegQuality);
 
         /// <summary>Bounds come from IAreaPointResolver, so nesting is already applied.</summary>
