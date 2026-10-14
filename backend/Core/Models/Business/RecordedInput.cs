@@ -29,10 +29,7 @@ namespace Core.Models.Business
         /// <summary> human-readable e.g. "A", "Enter" </summary>
         public string? KeyChar { get; set; }
 
-        /// <summary>
-        /// Applied only on  KEY_TYPED.
-        /// Some KEY_DOWN also emmit a KEY_TYPED used to see what was actually typed.
-        /// </summary>
+        /// <summary> On a KEY_TYPED input: what the key-down before it typed, as the layout made it - Shift, Caps Lock and AltGr applied. </summary>
         public string? TypedCharacter { get; set; }
 
 

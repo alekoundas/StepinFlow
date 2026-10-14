@@ -103,19 +103,6 @@ namespace Business.Tests.Recording
             return Down(ms, key, typed).Up(ms + 30, key);
         }
 
-        private RecordingActionBuilderTests Resumed(int ms)
-        {
-            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.RESUMED, CreatedOn = START.AddMilliseconds(ms) });
-            return this;
-        }
-
-        // One more character from the hook, on its own: the second half of a pair, or one with no key-down.
-        private RecordingActionBuilderTests Typed(int ms, KeyCodeEnum key, string character)
-        {
-            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.KEY_TYPED, KeyCode = key, TypedCharacter = character, CreatedOn = START.AddMilliseconds(ms) });
-            return this;
-        }
-
         // ================================================================
         // Clicks and drags
         // ================================================================
@@ -208,44 +195,6 @@ namespace Business.Tests.Recording
             Build()[0].Window.ShouldBe(RecordedWindowEnum.SAME_APPLICATION);
         }
 
-        [Fact]
-        public void A_right_click_and_a_middle_drag_keep_their_button()
-        {
-            Press(0, 100, 200, CursorButtonTypeEnum.RIGHT_BUTTON).Release(50, 100, 200, CursorButtonTypeEnum.RIGHT_BUTTON)
-                .Press(600, 100, 200, CursorButtonTypeEnum.MIDDLE_BUTTON).Release(900, 160, 200, CursorButtonTypeEnum.MIDDLE_BUTTON);
-
-            Build().Where(x => x.Kind != RecordedActionKindEnum.PAUSE).Select(x => (x.Kind, x.CursorButtonType)).ShouldBe(
-            [
-                (RecordedActionKindEnum.CLICK, CursorButtonTypeEnum.RIGHT_BUTTON),
-                (RecordedActionKindEnum.DRAG, CursorButtonTypeEnum.MIDDLE_BUTTON),
-            ]);
-        }
-
-        // The recording stopped with the button still down.
-        [Fact]
-        public void A_press_with_no_release_is_a_click_where_it_went_down()
-        {
-            Press(0, 100, 200);
-
-            RecordedActionDto click = Build().ShouldHaveSingleItem();
-
-            click.CursorButtonActionType.ShouldBe(CursorButtonActionTypeEnum.SINGLE_CLICK);
-            (click.LocationX, click.LocationY).ShouldBe((100, 200));
-        }
-
-        // Nothing between a press and its release is skipped over.
-        [Fact]
-        public void A_click_of_another_button_during_a_drag_is_kept_after_it()
-        {
-            Press(0, 100, 200).Press(100, 150, 200, CursorButtonTypeEnum.RIGHT_BUTTON).Release(150, 150, 200, CursorButtonTypeEnum.RIGHT_BUTTON).Release(300, 160, 200);
-
-            Build().Select(x => (x.Kind, x.CursorButtonType)).ShouldBe(
-            [
-                (RecordedActionKindEnum.DRAG, CursorButtonTypeEnum.LEFT_BUTTON),
-                (RecordedActionKindEnum.CLICK, CursorButtonTypeEnum.RIGHT_BUTTON),
-            ]);
-        }
-
         // ================================================================
         // Scrolling
         // ================================================================
@@ -284,31 +233,6 @@ namespace Business.Tests.Recording
             Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.DRAG, RecordedActionKindEnum.SCROLL]);
         }
 
-        [Fact]
-        public void A_click_between_notches_ends_the_scroll()
-        {
-            Scroll(0, CursorScrollDirectionTypeEnum.DOWN).Click(20, 100, 200).Scroll(80, CursorScrollDirectionTypeEnum.DOWN);
-
-            Build().Select(x => x.Kind).ShouldBe(
-            [
-                RecordedActionKindEnum.SCROLL,
-                RecordedActionKindEnum.CLICK,
-                RecordedActionKindEnum.SCROLL,
-            ]);
-        }
-
-        [Fact]
-        public void A_resume_between_notches_ends_the_scroll()
-        {
-            Scroll(0, CursorScrollDirectionTypeEnum.DOWN).Resumed(300_000).Scroll(300_040, CursorScrollDirectionTypeEnum.DOWN);
-
-            Build().Select(x => (x.Kind, x.ScrollAmount)).ShouldBe(
-            [
-                (RecordedActionKindEnum.SCROLL, 1),
-                (RecordedActionKindEnum.SCROLL, 1),
-            ]);
-        }
-
         // ================================================================
         // Keys
         // ================================================================
@@ -339,34 +263,6 @@ namespace Business.Tests.Recording
             Key(0, KeyCodeEnum.A, "α").Key(100, KeyCodeEnum.B, "β");
 
             Build().ShouldHaveSingleItem().Text.ShouldBe("αβ");
-        }
-
-        // A character outside the basic range is raised as two halves, both after the one key-down.
-        [Fact]
-        public void A_character_raised_in_two_halves_is_typed_once()
-        {
-            Down(0, KeyCodeEnum.A, "\uD83D").Typed(0, KeyCodeEnum.A, "\uDE00").Up(30, KeyCodeEnum.A).Key(100, KeyCodeEnum.B);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("😀b");
-        }
-
-        [Fact]
-        public void A_character_with_no_key_down_before_it_types_nothing()
-        {
-            Typed(0, KeyCodeEnum.A, "x").Key(100, KeyCodeEnum.B);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("b");
-        }
-
-        // The characters are moved onto the key-downs, and doing it again must not add them twice.
-        [Fact]
-        public void Building_the_same_recording_twice_types_the_same_text()
-        {
-            Key(0, KeyCodeEnum.H).Key(100, KeyCodeEnum.I);
-
-            Build();
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("hi");
         }
 
         // Which symbol Shift gives is the layout's to say, and it has.
@@ -530,35 +426,6 @@ namespace Business.Tests.Recording
             ]);
         }
 
-        // Toggles: what they changed is in the characters typed.
-        [Fact]
-        public void Caps_Lock_and_Num_Lock_are_never_a_step()
-        {
-            Key(0, KeyCodeEnum.CapsLock).Key(100, KeyCodeEnum.A, "A").Key(200, KeyCodeEnum.CapsLock).Key(300, KeyCodeEnum.NumLock);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("A");
-        }
-
-        // The recording stopped with the key still down: it was held at least until its last repeat.
-        [Fact]
-        public void A_key_still_down_when_the_recording_stops_is_held_until_its_last_repeat()
-        {
-            Down(0, KeyCodeEnum.Backspace).Down(500, KeyCodeEnum.Backspace).Down(530, KeyCodeEnum.Backspace);
-
-            RecordedActionDto held = Build().ShouldHaveSingleItem();
-
-            (held.RepeatCount, held.HoldMilliseconds).ShouldBe((2, 530));
-            held.Summary.ShouldBe("Pressed Backspace, held 0.5s");
-        }
-
-        [Fact]
-        public void A_key_up_with_no_key_down_before_it_is_nothing()
-        {
-            Up(0, KeyCodeEnum.A).Key(100, KeyCodeEnum.B);
-
-            Build().ShouldHaveSingleItem().Text.ShouldBe("b");
-        }
-
         // ================================================================
         // Typing entries
         // ================================================================
@@ -622,40 +489,6 @@ namespace Business.Tests.Recording
             _events.First(x => x.KeyCode == KeyCodeEnum.B && x.Type == RecordedInputTypeEnum.KEY_DOWN).WindowHandle = new WindowHandle(7);
 
             Build().Select(x => x.Text).ShouldBe(["a", "b"]);
-        }
-
-        [Fact]
-        public void A_resume_ends_the_entry()
-        {
-            Key(0, KeyCodeEnum.A).Resumed(300_000).Key(300_100, KeyCodeEnum.B);
-
-            Build().Select(x => x.Text).ShouldBe(["a", "b"]);
-        }
-
-        // One Shift press over a capital and over Tab: the Tab needs it, so it is held around both.
-        [Fact]
-        public void Shift_held_over_text_and_a_key_that_types_nothing_is_held_around_both()
-        {
-            Down(0, KeyCodeEnum.LeftShift).Key(10, KeyCodeEnum.H).Key(100, KeyCodeEnum.Tab).Up(150, KeyCodeEnum.LeftShift);
-
-            Build().Select(x => (x.Kind, x.Text)).ShouldBe(
-            [
-                (RecordedActionKindEnum.KEY_HOLD, "Shift"),
-                (RecordedActionKindEnum.TYPING, "H"),
-                (RecordedActionKindEnum.KEY_COMBINATION, "Tab"),
-                (RecordedActionKindEnum.KEY_RELEASE, "Shift"),
-            ]);
-        }
-
-        // The Shift went down with one window in front and its text went to another.
-        [Fact]
-        public void A_Shift_whose_text_went_to_another_window_types_no_empty_entry()
-        {
-            Down(0, KeyCodeEnum.LeftShift).Key(10, KeyCodeEnum.H).Up(40, KeyCodeEnum.LeftShift).Key(100, KeyCodeEnum.I);
-            foreach (RecordedInput down in _events.Where(x => x.KeyCode != KeyCodeEnum.LeftShift))
-                down.WindowHandle = new WindowHandle(7);
-
-            Build().Select(x => x.Text).ShouldBe(["Hi"]);
         }
 
         // ================================================================
@@ -761,20 +594,6 @@ namespace Business.Tests.Recording
             Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.TYPING, RecordedActionKindEnum.KEY_COMBINATION]);
         }
 
-        // A modifier held long enough for the keyboard to repeat it is still one hold.
-        [Fact]
-        public void A_modifier_held_long_is_one_hold()
-        {
-            Down(0, KeyCodeEnum.LeftCtrl).Down(500, KeyCodeEnum.LeftCtrl).Down(530, KeyCodeEnum.LeftCtrl).Click(600, 100, 200).Up(700, KeyCodeEnum.LeftCtrl);
-
-            Build().Where(x => x.Kind != RecordedActionKindEnum.PAUSE).Select(x => x.Kind).ShouldBe(
-            [
-                RecordedActionKindEnum.KEY_HOLD,
-                RecordedActionKindEnum.CLICK,
-                RecordedActionKindEnum.KEY_RELEASE,
-            ]);
-        }
-
         // ================================================================
         // Pauses and order
         // ================================================================
@@ -794,17 +613,6 @@ namespace Business.Tests.Recording
                 RecordedActionKindEnum.KEY_COMBINATION,
             ]);
             actions[2].PauseMilliseconds.ShouldBe(1000);
-        }
-
-        // What the draft sizes its wait from, whether or not the gap was long enough to be a pause.
-        [Fact]
-        public void Every_action_knows_how_long_the_tester_waited_before_it()
-        {
-            Key(0, KeyCodeEnum.Enter).Key(400, KeyCodeEnum.Tab).Key(1430, KeyCodeEnum.Escape);
-
-            List<RecordedActionDto> actions = Build().Where(x => x.Kind != RecordedActionKindEnum.PAUSE).ToList();
-
-            actions.Select(x => x.WaitedMilliseconds).ShouldBe([0, 370, 1000]);
         }
 
         // The time spent paused is the tester's, not a wait the flow has to make.

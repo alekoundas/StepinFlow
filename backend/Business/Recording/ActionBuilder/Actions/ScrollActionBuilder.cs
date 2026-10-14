@@ -39,7 +39,8 @@ namespace Business.Recording.ActionBuilder.Actions
         private static bool IsKey(RecordedInput input)
         {
             return input.Type == RecordedInputTypeEnum.KEY_DOWN
-                || input.Type == RecordedInputTypeEnum.KEY_UP;
+                || input.Type == RecordedInputTypeEnum.KEY_UP
+                || input.Type == RecordedInputTypeEnum.KEY_TYPED;
         }
 
         private static bool IsSameScroll(RecordedInput first, RecordedInput next)

@@ -50,7 +50,7 @@ namespace Business.Recording.ActionBuilder.Actions
                     ExtractShift(next, reader, inputs);
 
                 // Handle text.
-                else if (KeyCatalog.IsText(next.TypedCharacter))
+                else if (KeyCatalog.IsText(reader.GetTypedCharacter(next)))
                     text.Append(ExtractText(next, reader, inputs));
 
                 // Handle deletions
@@ -94,8 +94,8 @@ namespace Business.Recording.ActionBuilder.Actions
                     continue;
                 }
 
-                // The keys it was held over coming up.
-                if (input.Type == RecordedInputTypeEnum.KEY_UP)
+                // The keys it was held over coming up, and what they typed.
+                if (input.Type == RecordedInputTypeEnum.KEY_UP || input.Type == RecordedInputTypeEnum.KEY_TYPED)
                     continue;
 
                 // A click, a scroll, a key that typed nothing or typed under a held Ctrl.
@@ -129,7 +129,7 @@ namespace Business.Recording.ActionBuilder.Actions
             inputs.AddRange(key);
 
             List<string> textList = key
-                .Where(x => x.Type == RecordedInputTypeEnum.KEY_DOWN)
+                .Where(x => x.Type == RecordedInputTypeEnum.KEY_TYPED)
                 .Select(x => x.TypedCharacter ?? "")
                 .ToList();
 

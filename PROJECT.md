@@ -680,13 +680,34 @@ landed, the template cut there, the area's size and DPI - which is what makes a 
 **What the recorder keeps** is the session above. A press on anything outside the main area's
 application starts left out.
 
-**The draft is built without a model.** Each action becomes steps by a rule rather than a question.
-A click is three lines - a wait for the element, a move onto it, a click - because every step is a
-line and a click acts where the cursor is. Typing becomes an input with the recorded value as its
-default. A pause becomes no step at all: it sizes the next wait. The element's rectangle comes from
-OmniParser's detection model (phase 6) and is the template; its label comes from Windows OCR and
-names the step. The draft is a flow on its own, so with no model configured it goes straight to the
-editor.
+**The draft is built without a model** (`Business/Recording/Draft/RecordingDraftBuilder`, built;
+nothing in the UI reaches it yet). Each reviewed action becomes steps by a rule rather than a
+question, one builder per kind of action as there is a parser per kind of line, all adding through
+`RecordingDraft`, which holds what every step shares: a name unique in the flow, the order, and
+which branch a step goes in. The recording comes after the steps the flow already has - the
+setup's Launch step first.
+
+- A click waited for is three lines - `Find Image` waiting for the element, `Move to` it, `Click` -
+  because every step is a line and a click acts where the cursor is. At its exact spot it is a
+  `Move to point` and the click, the point inside the main area at that press, or `on screen` when
+  it fell outside it. A drag is one line from the element or its start to where it was let go; a
+  scroll a move and the scroll.
+- Everything after a search, up to the next search, sits in that search's Success branch, since it
+  only makes sense once the element was found. The Failure branch ends the execution, failed, with
+  the reason - `Find Invoices found nothing within 10.0s` - because an empty one carries on and
+  clicks blind.
+- The template is the element's rectangle as Review left it, cut from the main area at the press,
+  with where the click landed inside it and the area's size and DPI. Clicks that hit the same
+  picture share one template.
+- A search is named from the text read on the element - `Find Invoices`, `Find icon` when there was
+  none - through `FlowNameHelper.MakeUnique`.
+- Typed text is an input with what was typed as its default, and the step types `{{email}}`; a
+  secret keeps no value anywhere, to be supplied when the flow executes. Typed as written, the text
+  is on the line. A key is a `Press`, held and released around a click as it was recorded.
+- A pause is no step at all: it sizes the next wait. What was left out in Review is no step either.
+
+The draft is a flow on its own, so with no model configured it goes straight to the editor, and it
+prints and reads back with no diagnostics, which a test holds it to.
 
 **A model shapes it as a script.** It is given the draft as a script with the description, names
 the steps, groups repeated clicks - four clicks on one download icon become one Find All - and writes
@@ -729,9 +750,9 @@ on executions that were going to fail anyway. The step carries a code comment sa
 `# recorded after a 4.2s wait`. Even where it does not drive the timeout, that is intent a screenshot
 cannot carry, and the first thing a model reads when working out why a step got slow.
 
-Today's wizard is not there yet - "find this image and then click it" searches once with
-`FIND_BEST`, and "wait until something appears" takes `max(observed × 3, 5s)`. Phase 7's draft is
-where the rule is written.
+The recording draft writes it (`RecordingDraft.TimeoutFor`). The per-action wizard does not -
+"find this image and then click it" searches once with `FIND_BEST`, and "wait until something
+appears" takes `max(observed × 3, 5s)` - and goes when the plain draft replaces it.
 
 Polling is deliberately not as fast as possible. Screenshot plus template match is real CPU, and a
 tight loop on a tester's laptop competes with the application being tested.

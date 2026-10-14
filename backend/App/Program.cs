@@ -24,6 +24,7 @@ using Business.FlowScript.Text;
 using Business.Flows.FlowValidationService;
 using Business.Ai;
 using Business.AppSettings;
+using Business.Recording.Draft;
 using Business.Recording.Elements;
 using Business.Recording.Session;
 using Business.Recording.Setup;
@@ -89,6 +90,7 @@ namespace App
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
             builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
             builder.Services.AddSingleton<IClickedElementGrouper, ClickedElementGrouper>();
+            builder.Services.AddSingleton<IRecordingDraftBuilder, RecordingDraftBuilder>();
             builder.Services.AddSingleton<IElementLocator, ElementLocator>();
             builder.Services.AddSingleton<IRecordingSetupService, RecordingSetupService>();
 

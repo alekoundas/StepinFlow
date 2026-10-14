@@ -8,7 +8,7 @@ namespace Business.Recording.ActionBuilder
 {
     /// <summary>
     /// Folds raw input into the things a person would say they did.
-    /// 
+    ///
     /// A press and a release are one click.
     /// 2 quick clicks are a double click.
     /// press-drag-release as a cursor drag.
@@ -19,11 +19,6 @@ namespace Business.Recording.ActionBuilder
     /// (ex: Ctrl+C = Hold Ctrl, Press C, Release Ctrl).
     /// A long gap is a wait step.
     ///
-    /// The KEY_TYPED RecordedInputs are droped from the list to handle, 
-    /// also the TypedCharacter is assigned from the KEY_TYPED to KEY_DOWN.
-    /// The KEY_TYPED cant be resolve the result typed character, so a compinion KEY_TYPED is added.
-    /// 
-    /// 
     /// Each action is read from its first input, and takes the rest of its own so the loop never reads them again. Nothing is skipped!
     /// What came between them is read as what it was, so the actions come out in the order they happened.
     /// </summary>
@@ -38,7 +33,7 @@ namespace Business.Recording.ActionBuilder
         /// </summary>
         public static List<RecordedActionDto> Build(IReadOnlyList<RecordedInput> inputs)
         {
-            List<RecordedInput> readable = FilterAndUpdateRecordedInputs(inputs);
+            List<RecordedInput> readable = inputs.Where(ExcludeLockKeys).ToList();
             RecordingReader reader = new RecordingReader(readable);
 
             while (reader.HasNext)
@@ -68,10 +63,8 @@ namespace Business.Recording.ActionBuilder
                         break;
 
                     // Every other key-up is read with its key-down: this is a held modifier coming up.
-                    // One with no key-down before it is nothing.
                     case RecordedInputTypeEnum.KEY_UP:
-                        if (KeyCatalog.IsModifier(input))
-                            ModifierKeyActionBuilder.Release(input, reader);
+                        ModifierKeyActionBuilder.Release(input, reader);
                         break;
 
                     // The time spent paused was the tester's, not a wait.
@@ -88,39 +81,6 @@ namespace Business.Recording.ActionBuilder
         // ================================================================
         // Private methods
         // ================================================================
-
-        // Remove the KEY_TYPED types from list and extract the TypedCharacter to assign on the KEY_DOWN.
-        private static List<RecordedInput> FilterAndUpdateRecordedInputs(IReadOnlyList<RecordedInput> recordedInputs)
-        {
-            List<RecordedInput> readable = new List<RecordedInput>(recordedInputs.Count);
-            RecordedInput? lastKeyDown = null;
-
-            foreach (RecordedInput input in recordedInputs)
-            {
-                // Raised right after its key-down. A character outside the basic range arrives as two.
-                if (input.Type == RecordedInputTypeEnum.KEY_TYPED)
-                {
-                    if (lastKeyDown != null && lastKeyDown.KeyCode == input.KeyCode)
-                        lastKeyDown.TypedCharacter += input.TypedCharacter;
-
-                    continue;
-                }
-
-                if (input.Type == RecordedInputTypeEnum.KEY_DOWN)
-                    lastKeyDown = input;
-                else
-                    lastKeyDown = null;
-
-                // Made from its KEY_TYPEDs alone, so building the same recording twice types the same text.
-                if (lastKeyDown != null)
-                    lastKeyDown.TypedCharacter = null;
-
-                if (ExcludeLockKeys(input))
-                    readable.Add(input);
-            }
-
-            return readable;
-        }
 
         // Caps Lock and Num Lock are toggles, and what they changed is in the TypedCharacter.
         private static bool ExcludeLockKeys(RecordedInput input)

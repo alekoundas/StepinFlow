@@ -180,7 +180,7 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
-`Setup/`, `Session/`, `ActionBuilder/` and `Elements/` are built, and Review with them
+`Setup/`, `Session/`, `ActionBuilder/`, `Elements/` and `Draft/` are built, and Review with them
 (`PROJECT.md` §6):
 
 ```
@@ -192,7 +192,8 @@ Business/Recording/
   Elements/     ClickedElementFinder      per click: place in the main area, the element's rectangle,
                                           the text on it
                 ClickedElementGrouper     the clicks that hit the same picture
-  Draft/        RecordingDraftBuilder     actions and clicked elements into a FlowScriptSchema
+  Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
+                                          per kind of action; RecordingDraft holds what they share
   Generation/   FlowGenerationService     draft, script, model, scanner, import
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
@@ -202,21 +203,11 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The draft, without a model.** `RecordingDraftBuilder` turns the reviewed recording - the
-      actions, the clicked elements and their groups, and what Review decided (`GetReviewed`): what
-      was left out, the rectangles as adjusted, the inputs and which are secret - into a
-      `FlowScriptSchema` - linked rows, the shape a script reads into - with one builder per kind of
-      action, as there is a parser per kind of line. A click is three lines: a wait for the element,
-      `Move to` it, `Click`. Every wait is `WAIT_UNTIL_FOUND`, never `FIND_BEST`, with a timeout of
-      `max(10s, observed × 3)` capped at 60s, always written, and a comment saying why:
-      `# recorded after a 4.2s wait` (the reasoning is in `PROJECT.md` §6). A pause is not
-      a step. Everything after a search, up to the next search, sits in that search's Success branch.
-      Names come from the text on the element, through `FlowNameHelper.MakeUnique`. Typed text is an
-      input with its default (5.13), unless Review said to type it as written. Templates are the element rectangles, cut inside the main
-      area with its size and DPI.
 - [ ] **The plain draft ships first**, imported straight into the editor: with no model at all, a
       recording becomes a flow with no questions. Review's Continue goes to it then; until it does,
-      Continue hands the kept actions to the per-action wizard.
+      Continue hands the kept actions to the per-action wizard. `RecordingDraftBuilder` is built
+      (`PROJECT.md` §6); what is left is loading the flow's rows to build on - the exporter's
+      `LoadAsync`, made public - and importing the result with its template images.
 - [ ] **The model shapes the script.** `ScriptRevisionService` is phase 9's loop, built once: it
       sends the script and the instruction, reads the answer with `Scanner.Read`, and sends the
       diagnostics back, three attempts at most, after which the plain draft is saved and the last
@@ -246,9 +237,9 @@ Open, each with a recommendation:
 
 - **Keep the per-action wizard?** Retire it: Review, the plain draft and the editor cover what it
   does, and it builds steps in TypeScript, which the draft now does in `Business`.
-- **A generated automation's waits** end the execution, failed, with a reason, when they time out.
-  An empty Failure branch carries on and clicks blind. With `Flow.IsQaTest` (settled 2026-10-13, a
-  bool for now), the end of an automation is COMPLETED rather than INCONCLUSIVE.
+- **The end of a generated automation** is COMPLETED rather than INCONCLUSIVE, with
+  `Flow.IsQaTest` (settled 2026-10-13, a bool for now). Its waits end the execution, failed, with a
+  reason, when they time out: the draft writes that Failure branch (`PROJECT.md` §6).
 - **Typed text** is always an input, named from the field's label, and secret when the label reads
   as a password.
 - **The pressed screenshots** go to a temp folder per session, deleted when the tester leaves the

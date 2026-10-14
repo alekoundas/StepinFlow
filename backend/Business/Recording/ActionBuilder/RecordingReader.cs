@@ -114,11 +114,29 @@ namespace Business.Recording.ActionBuilder
         }
 
         /// <summary>
+        /// Get the characters raised right after press
+        /// (typing is different recording input and a coppy of the press - not all keys able to emit this - only text).
+        /// </summary>
+        public string? GetTypedCharacter(RecordedInput down)
+        {
+            List<string?> typed = After(down)
+                .TakeWhile(x => x.Type == RecordedInputTypeEnum.KEY_TYPED && x.KeyCode == down.KeyCode) // yeild 
+                .Select(x => x.TypedCharacter)
+                .ToList();
+
+            if (typed.Count == 0)
+                return null;
+
+            return string.Concat(typed);
+        }
+
+        /// <summary>
         /// Whether the key typed a character with no Ctrl, Alt or Win held over it.
         /// </summary>
         public bool IsTyped(RecordedInput down)
         {
-            if (!KeyCatalog.IsText(down.TypedCharacter))
+            string? typedCharacter = GetTypedCharacter(down);
+            if (!KeyCatalog.IsText(typedCharacter))
                 return false;
 
             // See from that RecordedInput and back if a Ctrl, Alt or Win went down and has not come up.
