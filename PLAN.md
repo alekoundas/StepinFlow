@@ -180,8 +180,8 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
-`Setup/`, `Session/`, `ActionBuilder/`, `Elements/` and `Draft/` are built, and Review with them
-(`PROJECT.md` §6):
+`Setup/`, `Session/`, `ActionBuilder/`, `Elements/` and `Draft/` are built, `Generation/` as far as
+the plain draft, and Review with them (`PROJECT.md` §6):
 
 ```
 Business/Recording/
@@ -194,7 +194,7 @@ Business/Recording/
                 ClickedElementGrouper     the clicks that hit the same picture
   Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
                                           per kind of action; RecordingDraft holds what they share
-  Generation/   FlowGenerationService     draft, script, model, scanner, import
+  Generation/   FlowGenerationService     draft, script, scanner, import; the model joins it next
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
 Business/Ai/Vision/
@@ -203,11 +203,6 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The plain draft ships first**, imported straight into the editor: with no model at all, a
-      recording becomes a flow with no questions. Review's Continue goes to it then; until it does,
-      Continue hands the kept actions to the per-action wizard. `RecordingDraftBuilder` is built
-      (`PROJECT.md` §6); what is left is loading the flow's rows to build on - the exporter's
-      `LoadAsync`, made public - and importing the result with its template images.
 - [ ] **The model shapes the script.** `ScriptRevisionService` is phase 9's loop, built once: it
       sends the script and the instruction, reads the answer with `Scanner.Read`, and sends the
       diagnostics back, three attempts at most, after which the plain draft is saved and the last
@@ -236,7 +231,8 @@ In this order:
 Open, each with a recommendation:
 
 - **Keep the per-action wizard?** Retire it: Review, the plain draft and the editor cover what it
-  does, and it builds steps in TypeScript, which the draft now does in `Business`.
+  does, and it builds steps in TypeScript, which the draft now does in `Business`. Since the plain
+  draft shipped nothing opens it; only its `/wizard` route is left.
 - **The end of a generated automation** is COMPLETED rather than INCONCLUSIVE, with
   `Flow.IsQaTest` (settled 2026-10-13, a bool for now). Its waits end the execution, failed, with a
   reason, when they time out: the draft writes that Failure branch (`PROJECT.md` §6).

@@ -45,6 +45,12 @@ namespace Business.FlowScript
             return script;
         }
 
+        public async Task<FlowScriptSchema> LoadAsync(int flowId, CancellationToken ct = default)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            return await LoadAsync(dbContext, flowId, includeImages: true, ct);
+        }
+
         /// <summary>
         /// Save to Disk the flowscript along with a folder with png immages from templates.
         /// Png name used is the FlowStepTemplate name

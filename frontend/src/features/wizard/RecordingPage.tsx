@@ -17,7 +17,7 @@ import type { RecordingProgressDto } from "@/shared/models/recording-progress-dt
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
 import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
-import { type ActionReview, keptActions, toReviewed } from "@/features/wizard/review/review";
+import { type ActionReview, toReviewed } from "@/features/wizard/review/review";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 
@@ -52,8 +52,6 @@ export default function RecordingPage() {
     setupFlowId,
     setTarget,
     setSetupFlowId,
-    setActions,
-    setClickedElements,
     reset,
   } = useWizardStore();
 
@@ -109,18 +107,33 @@ export default function RecordingPage() {
     }
   };
 
-  // Until the draft is built, the step-by-step wizard takes it from here, with what was left out gone.
+  // The plain draft, written into the flow the setup made, then the editor. A draft that does not
+  // read cleanly leaves the flow as it was and says where.
   const continueFromReview = async (reviews: Record<number, ActionReview>) => {
-    if (!result) return;
+    if (!result || setupFlowId === undefined) return;
 
     setIsContinuing(true);
     setError(null);
 
     try {
       await backendApiService.Recording.review(toReviewed(result, reviews));
-      setActions(keptActions(result, reviews));
-      setClickedElements(result.clickedElements);
-      navigate("/wizard");
+      const imported = await backendApiService.Recording.importDraft(setupFlowId);
+
+      if (!imported.isSuccess) {
+        const where = imported.errors.map((x) => `line ${x.line}: ${x.message}`).join(" ");
+        setError(`The draft could not be written into the flow. ${where}`);
+        return;
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["flow"] }),
+        queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+        queryClient.invalidateQueries({ queryKey: ["flows"] }),
+        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+      ]);
+
+      reset();
+      navigate(`/workflow/${imported.flowId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

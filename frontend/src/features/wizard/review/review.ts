@@ -206,8 +206,3 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
     }),
   };
 }
-
-/** What the step-by-step wizard is handed until the draft can be built: everything not left out. */
-export function keptActions(result: RecordingResultDto, reviews: Record<number, ActionReview>): RecordedActionDto[] {
-  return result.actions.filter((action) => reviews[action.index]?.choice !== ReviewChoiceEnum.LEAVE_OUT);
-}

@@ -1,3 +1,4 @@
+using Business.FlowScript.Models;
 using Core.Models.Dtos.FlowScript;
 
 namespace Business.FlowScript
@@ -6,6 +7,9 @@ namespace Business.FlowScript
     {
         /// <summary> A flow as script text, with nothing written to disk.</summary>
         Task<string> RenderAsync(int flowId, CancellationToken ct = default);
+
+        /// <summary>A flow as the linked rows a script reads into, template images included: what a draft is built on.</summary>
+        Task<FlowScriptSchema> LoadAsync(int flowId, CancellationToken ct = default);
 
         /// <summary> Writes the script and its template images in the app's export path.</summary>
         Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default);

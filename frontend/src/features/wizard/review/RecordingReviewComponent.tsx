@@ -35,7 +35,7 @@ interface Props {
 /**
  * A stopped recording, every action with the screen at that moment, before anything becomes a
  * step: kept or left out, the template's rectangle, typed text as an input. What the tester
- * decides stays here until Continue, which sends it in one go.
+ * decides stays here until the draft is asked for, which sends it in one go.
  */
 export default function RecordingReviewComponent({
   result,
@@ -99,7 +99,7 @@ export default function RecordingReviewComponent({
           />
           <Button
             type="button"
-            label="Continue"
+            label="Plain draft, no AI"
             icon="pi pi-arrow-right"
             iconPos="right"
             onClick={() => onContinue(reviews)}

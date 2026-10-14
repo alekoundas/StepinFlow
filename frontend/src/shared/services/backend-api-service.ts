@@ -30,6 +30,7 @@ import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { RecordingScreenDto } from "@/shared/models/recording-screen-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
+import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -210,6 +211,9 @@ export const backendApiService = {
       callNullable<RecordingScreenDto>("Recording.getScreen", actionIndex),
     // Once, as the tester continues from Review.
     review: (dto: ReviewedRecordingDto) => call<boolean>("Recording.review", dto),
+    // The reviewed recording written into its flow with no model, as an imported file would be.
+    importDraft: (flowId: number) =>
+      call<FlowScriptImportResultDto>("Recording.importDraft", flowId),
     // The flow the setup created goes with it while nothing but the setup is in it.
     discard: (flowId?: number) => call<boolean>("Recording.discard", { flowId }),
     // .Net returns byte[], which arrives here as a base64 string

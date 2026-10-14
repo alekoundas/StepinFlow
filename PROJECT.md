@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 104 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -662,8 +662,8 @@ as written, or left out; a click outside the main area starts left out - and typ
 from the field clicked before it, secret when that field reads as a password. What was read under a
 click, how long the tester waited and the wait that becomes - three times that, at least ten
 seconds, at most sixty - and the clicks on the same picture are shown beside it. Nothing goes to the
-backend until Continue, which sends it all in one call (`Recording.review`) for the draft to be
-built from. Until the draft is built, Continue hands what was kept to the step-by-step wizard.
+backend until the draft is asked for, which sends it all in one call (`Recording.review`) for the
+draft to be built from.
 
 ### Planned - phase 7: a recording and a description become a flow
 
@@ -680,8 +680,7 @@ landed, the template cut there, the area's size and DPI - which is what makes a 
 **What the recorder keeps** is the session above. A press on anything outside the main area's
 application starts left out.
 
-**The draft is built without a model** (`Business/Recording/Draft/RecordingDraftBuilder`, built;
-nothing in the UI reaches it yet). Each reviewed action becomes steps by a rule rather than a
+**The draft is built without a model** (`Business/Recording/Draft/RecordingDraftBuilder`). Each reviewed action becomes steps by a rule rather than a
 question, one builder per kind of action as there is a parser per kind of line, all adding through
 `RecordingDraft`, which holds what every step shares: a name unique in the flow, the order, and
 which branch a step goes in. The recording comes after the steps the flow already has - the
@@ -708,6 +707,15 @@ setup's Launch step first.
 
 The draft is a flow on its own, so with no model configured it goes straight to the editor, and it
 prints and reads back with no diagnostics, which a test holds it to.
+
+**The plain draft ships.** Review's "Plain draft, no AI" sends what was decided, then
+`Recording.importDraft`: `Business/Recording/Generation/FlowGenerationService` loads the flow's
+rows the setup made, builds the draft on them, prints it, and imports the script through the
+scanner like any file, with the templates it cut as the images. So a recorded flow, a file and a
+model's answer land the one way, and the plain draft is held to what a file is: one that does not
+read cleanly leaves the flow as it was and says on which line. Then the editor opens on the flow.
+The import replaces the flow's rows and keeps the row, so its name, description, QA switch and
+sub-flow setting stay as the setup left them.
 
 **A model shapes it as a script.** It is given the draft as a script with the description, names
 the steps, groups repeated clicks - four clicks on one download icon become one Find All - and writes
@@ -1745,13 +1753,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-726 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+728 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 540 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 542 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1865,7 +1873,7 @@ In active development, not released.
 Working: the flow builder, the recorder and its wizard, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 726 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 728 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

@@ -141,6 +141,7 @@ namespace Transport.Ipc
                     "Recording.getResult" => await Handler<GetRecordingResultHandler>().HandleAsync(ct),
                     "Recording.getScreen" => await Handler<GetRecordingScreenHandler>().HandleAsync(Payload<int>(request), ct),
                     "Recording.review" => await Handler<ReviewRecordingHandler>().HandleAsync(Payload<ReviewedRecordingDto>(request), ct),
+                    "Recording.importDraft" => await Handler<ImportRecordingDraftHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Settings
                     "Settings.getAll" => await Handler<GetAppSettingsHandler>().HandleAsync(ct),
