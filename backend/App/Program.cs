@@ -33,6 +33,7 @@ using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
 using Business.Ai.Vision;
+using Business.Ai.ScriptRevision;
 
 using DataAccess;
 
@@ -93,6 +94,7 @@ namespace App
             builder.Services.AddSingleton<IClickedElementGrouper, ClickedElementGrouper>();
             builder.Services.AddSingleton<IRecordingDraftBuilder, RecordingDraftBuilder>();
             builder.Services.AddSingleton<IFlowGenerationService, FlowGenerationService>();
+            builder.Services.AddSingleton<IFlowGenerationSessionService, FlowGenerationSessionService>();
             builder.Services.AddSingleton<IElementLocator, ElementLocator>();
             builder.Services.AddSingleton<IRecordingSetupService, RecordingSetupService>();
 
@@ -116,8 +118,10 @@ namespace App
 
             // AI.
             // Scoped per call rather than singleton: the client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
-            builder.Services.AddScoped<IAiProviderService, AiProviderService>();
-            builder.Services.AddScoped<IAiClientFactory, AiClientFactory>();
+            // Singletons: they hold nothing between calls, and the recording's generation, a singleton, asks them.
+            builder.Services.AddSingleton<IAiProviderService, AiProviderService>();
+            builder.Services.AddSingleton<IAiClientFactory, AiClientFactory>();
+            builder.Services.AddSingleton<IScriptRevisionService, ScriptRevisionService>();
             builder.Services.AddScoped<IAiModelService, AiModelService>();
             builder.Services.AddScoped<IExecutionRunExplainService, ExecutionRunExplainService>();
             builder.Services.AddScoped<IFlowQuestionService, FlowQuestionService>();
@@ -228,6 +232,9 @@ namespace App
             builder.Services.AddTransient<ReviewRecordingHandler>();
             builder.Services.AddTransient<ImportRecordingDraftHandler>();
             builder.Services.AddTransient<InsertRecordingDraftHandler>();
+            builder.Services.AddTransient<GenerateRecordingDraftHandler>();
+            builder.Services.AddTransient<GetGeneratedRecordingDraftHandler>();
+            builder.Services.AddTransient<CancelRecordingDraftGenerationHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();
             builder.Services.AddTransient<SetAppSettingHandler>();
             builder.Services.AddTransient<SystemTakeScreenshotHandler>();

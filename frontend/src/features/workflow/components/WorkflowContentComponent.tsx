@@ -161,14 +161,16 @@ export function WorkflowContentComponent() {
     return panel(
       <>
         <div className="flex justify-content-end mb-3">
+          {/* Off until how a model's draft lands in a flow that already exists is settled (TODO.md). */}
           <Button
             type="button"
             label="Record steps here"
             icon="pi pi-circle-fill"
             onClick={startRecording}
             className="p-button-outlined"
-            tooltip="Do the task once and let the steps be written into this position"
-            tooltipOptions={{ position: "left" }}
+            disabled
+            tooltip="Not yet: recording into a flow that already exists comes back once the AI draft can land there too"
+            tooltipOptions={{ position: "left", showOnDisabled: true }}
           />
         </div>
         <FlowStepTypesDataGridComponent />

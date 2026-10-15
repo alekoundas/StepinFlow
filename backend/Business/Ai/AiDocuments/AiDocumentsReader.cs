@@ -33,5 +33,22 @@ namespace Business.Ai.AiDocuments
 
             return chunks;
         }
+
+        /// <summary>One document whole, by its file name, wherever in the folders it sits.</summary>
+        public static string ReadDocument(string fileName)
+        {
+            Assembly assembly = typeof(AiDocumentChunk).Assembly;
+            string suffix = $".{fileName}";
+
+            string name = assembly.GetManifestResourceNames()
+                .FirstOrDefault(x => x.StartsWith(_prefix, StringComparison.Ordinal) && x.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                ?? throw new InvalidOperationException($"{fileName} is not among the AI documents.");
+
+            using Stream stream = assembly.GetManifestResourceStream(name)
+                ?? throw new InvalidOperationException($"{fileName} could not be read.");
+            using StreamReader reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
+        }
     }
 }

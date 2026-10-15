@@ -11,7 +11,8 @@ search the screen for an image, read text off it, run commands, and call other f
   [How execution works](concepts/how-execution-works.md)
 - **Step reference** — one page per family, in [steps/](steps/)
 - **Guides** — [Recording a flow](guides/recording-a-flow.md), [Debugging an execution](guides/debugging-an-execution.md)
-- **Reference** — [Validation messages](reference/validation-messages.md), [Settings](reference/settings.md)
+- **Reference** — [Validation messages](reference/validation-messages.md), [Settings](reference/settings.md),
+  [Flow format](reference/flow-format.md), the text form of a flow
 - **When something goes wrong** — [Troubleshooting](troubleshooting.md)
 
 ## What StepinFlow is not

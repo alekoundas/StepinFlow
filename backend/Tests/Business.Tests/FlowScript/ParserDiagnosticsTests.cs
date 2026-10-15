@@ -246,6 +246,12 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.FILE_MISSING);
             covered.Add(DiagnosticCodeEnum.FLOW_NAME_TAKEN);
 
+            // Raised by ScriptRevisionService, against the script the model was given (ScriptRevisionServiceTests).
+            covered.Add(DiagnosticCodeEnum.ANSWER_UNREADABLE);
+            covered.Add(DiagnosticCodeEnum.FLOW_CHANGED);
+            covered.Add(DiagnosticCodeEnum.TEMPLATE_NOT_CUT);
+            covered.Add(DiagnosticCodeEnum.INPUT_NOT_RENAMED);
+
             Enum.GetValues<DiagnosticCodeEnum>().Except(covered).ShouldBeEmpty();
         }
     }

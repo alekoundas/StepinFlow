@@ -41,6 +41,13 @@ namespace Business.FlowScript.Diagnostics
         // Outside the file: no file at the path, or another flow already has its name.
         FILE_MISSING,
         FLOW_NAME_TAKEN,
+
+        // A model's answer: not the JSON asked for, a flow line or id it changed, a template the
+        // draft did not cut, an input it did not rename through the map.
+        ANSWER_UNREADABLE,
+        FLOW_CHANGED,
+        TEMPLATE_NOT_CUT,
+        INPUT_NOT_RENAMED,
     }
 
     /// <summary>

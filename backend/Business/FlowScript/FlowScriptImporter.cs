@@ -118,7 +118,7 @@ namespace Business.FlowScript
             };
         }
 
-        private static List<FlowScriptErrorDto> ToDtos(IReadOnlyList<Diagnostic> diagnostics, DiagnosticSeverityEnum severity)
+        internal static List<FlowScriptErrorDto> ToDtos(IReadOnlyList<Diagnostic> diagnostics, DiagnosticSeverityEnum severity)
         {
             return diagnostics
                 .Where(x => x.Severity == severity)

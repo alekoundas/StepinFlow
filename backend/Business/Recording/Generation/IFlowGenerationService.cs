@@ -30,5 +30,20 @@ namespace Business.Recording.Generation
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             CancellationToken ct = default);
+
+        /// <summary>
+        /// The reviewed recording shaped by the model set up in Settings, and imported into its flow
+        /// the way a file is. The model is given the plain draft as a script, with the text read
+        /// under each click only where screen content may go to it, and never an input's value. When
+        /// no answer reads cleanly, or the model cannot be reached, the plain draft is saved instead,
+        /// and the result says why. onProgress is told each stage, and each attempt.
+        /// </summary>
+        Task<FlowGenerationResultDto> ImportModelDraftAsync(
+            int flowId,
+            RecordingResultDto recording,
+            ReviewedRecordingDto reviewed,
+            Func<int, RecordingScreenDto?> screenAt,
+            Action<FlowGenerationProgressDto>? onProgress,
+            CancellationToken ct = default);
     }
 }

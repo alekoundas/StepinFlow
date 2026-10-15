@@ -1,4 +1,6 @@
 using System.Drawing;
+using System.Text.Json;
+using Business.Ai.ScriptRevision;
 using Business.Flows.DataService;
 using Business.FlowScript;
 using Business.FlowScript.Scanner;
@@ -15,6 +17,8 @@ using Core.Models.Dtos;
 using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using static Business.Tests.TestToken;
 
 namespace Business.Tests.Recording
@@ -22,7 +26,8 @@ namespace Business.Tests.Recording
     /// <summary>
     /// The plain draft, end to end: a flow made by the recording setup, a reviewed recording added
     /// to it, written as a script and imported through a real database - or inserted at a position,
-    /// as the editor's "Record steps here" does.
+    /// as the editor's "Record steps here" does. Then the model's draft, with the model played by
+    /// the test.
     /// </summary>
     public sealed class FlowGenerationServiceTests : IDisposable
     {
@@ -34,6 +39,8 @@ namespace Business.Tests.Recording
         private readonly FakeProcessService _processes = new FakeProcessService();
         private readonly DataService _dataService;
         private readonly RecordingSetupService _setup;
+        private readonly FakeAiClientFactory _models = new FakeAiClientFactory();
+        private readonly FakeAiProviderService _provider = new FakeAiProviderService();
         private readonly FlowGenerationService _generation;
 
         private readonly RecordingResultDto _recording = new RecordingResultDto();
@@ -47,7 +54,8 @@ namespace Business.Tests.Recording
             FlowScriptExporter exporter = new FlowScriptExporter(_database, new Printer());
             FlowScriptImporter importer = new FlowScriptImporter(new Scanner(), _dataService);
             RecordingDraftBuilder draftBuilder = new RecordingDraftBuilder(new FakeScreenshotService());
-            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer(), new Scanner(), _dataService);
+            ScriptRevisionService revision = new ScriptRevisionService(_models, new Scanner(), new Printer(), NullLogger<ScriptRevisionService>.Instance);
+            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer(), new Scanner(), _dataService, revision, _provider);
 
             _resolver.AreasByName["chrome"] = AreaResolution.Ok(new Rectangle(0, 0, 800, 600), new WindowHandle(7));
             _windows.WindowProcessId = CHROME;
@@ -192,6 +200,96 @@ namespace Business.Tests.Recording
 
             inserted.ErrorMessage.ShouldBe("The step the recording goes under is no longer in the flow.");
             Steps(flowId).Count.ShouldBe(stepCount);
+        }
+
+        // ================================================================
+        // The model's draft
+        // ================================================================
+
+        // Answers with the script it was sent, changed as the test says.
+        private FakeChatClient Model(Func<string, string> change)
+        {
+            FakeChatClient model = new FakeChatClient(messages =>
+            {
+                string request = messages.First(x => x.Role == ChatRole.User).Text;
+                string script = request[(request.IndexOf("The script:", StringComparison.Ordinal) + "The script:".Length)..].Trim();
+
+                return JsonSerializer.Serialize(new { script = change(script), notes = new[] { "Check the email field." }, inputRenames = Array.Empty<object>() });
+            });
+
+            _models.Client = model;
+            return model;
+        }
+
+        private Task<FlowGenerationResultDto> GenerateAsync(int flowId, List<FlowGenerationProgressDto> progress)
+        {
+            return _generation.ImportModelDraftAsync(flowId, _recording, _reviewed, ScreenAt, progress.Add, Ct);
+        }
+
+        [Fact]
+        public async Task The_model_s_draft_is_imported_with_its_notes()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            Model(x => x.Replace("Find Email", "Find the email field"));
+            List<FlowGenerationProgressDto> progress = [];
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, progress);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            generated.Import.IsSuccess.ShouldBeTrue();
+            generated.Notes.ShouldBe(["Check the email field."]);
+            progress.Select(x => (x.Stage, x.Attempt)).ShouldBe(
+            [
+                (FlowGenerationStageEnum.WRITING_DRAFT, 0),
+                (FlowGenerationStageEnum.ASKING_MODEL, 1),
+                (FlowGenerationStageEnum.SAVING, 1),
+            ]);
+
+            List<FlowStep> roots = Steps(flowId).Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).ToList();
+            roots[1].Name.ShouldBe("Find the email field");
+
+            using AppDbContext db = _database.CreateDbContext();
+            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
+            template.TemplateImage.ShouldNotBeNull();
+            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            input.DefaultValue.ShouldBe("ops@example.com");
+        }
+
+        // The tester always gets a flow.
+        [Fact]
+        public async Task When_no_answer_reads_cleanly_the_plain_draft_is_saved_and_says_why()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            Model(x => x + "\nFnid Image  <[ Broken ]>\n");
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeFalse();
+            generated.Reason.ShouldBe($"No answer from the model read cleanly in {ScriptRevisionService.ATTEMPT_COUNT} attempts.");
+            generated.Refused.ShouldNotBeEmpty();
+            generated.Import.IsSuccess.ShouldBeTrue();
+            Steps(flowId).ShouldContain(x => x.Name == "Find Email");
+        }
+
+        // A cloud provider not allowed screen content names the steps from the description.
+        [Fact]
+        public async Task Without_screen_content_the_model_is_sent_no_read_text()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _provider.CanSendScreenData = false;
+            FakeChatClient model = Model(x => x);
+            List<FlowGenerationProgressDto> progress = [];
+
+            await GenerateAsync(flowId, progress);
+
+            string request = model.Requests[0].First(x => x.Role == ChatRole.User).Text;
+            request.ShouldNotContain("Find Email");
+            request.ShouldContain("Find icon");
+            request.ShouldContain("placeholders");
+            progress.ShouldAllBe(x => !x.IsReadTextSent);
         }
 
         private List<FlowStep> Steps(int flowId)

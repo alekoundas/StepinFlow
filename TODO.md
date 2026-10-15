@@ -114,7 +114,7 @@ the history.
       entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays
       readable until its step runs again - the opposite of its comment, and of the validator, which
       rejects a check or a click reading a result it does not sit under through Success.
-      Some of the language leans on the accident: FLOW-FORMAT.md's own example is a `Check Value`
+      Some of the language leans on the accident: flow-format.md's own example is a `Check Value`
       reading its earlier **sibling** `{{Read the total}}`, and `{{name}}` variables are only checked
       for existence, not reachability. Two ways out:
       1) **Results live under their step**, as the code intends - swap the two lines in `Pop`. Then
@@ -289,6 +289,16 @@ the history.
 
 ## Recording
 
+- [ ] **Recording into a flow that already exists, with a model: talk it through.** Raised
+      2026-10-15. The editor's "Record steps here" is disabled until this is decided. Its plain
+      draft works: `Recording.insertDraft` writes only the new rows at the position, so the steps
+      already there keep their last good screenshots and their link to past executions. A model
+      answers with a whole script, though, and the import that reads one replaces every row. The
+      recommendation on the table: give the model a script of only the recorded steps, with the
+      areas, templates and inputs they use and the flow's other steps as context it cannot change,
+      and insert its answer the way the plain draft is inserted. To decide before the button
+      comes back.
+
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
       nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were
@@ -307,7 +317,7 @@ the history.
 - [ ] **Warn on a step with both a populated Failure branch and a long timeout.** That combination
       is almost always a branch point written as a wait - "which layout am I in" asked with ten
       seconds of patience it cannot use, paid on every execution that takes the fallback. The fix
-      is the anchor pattern in FLOW-FORMAT.md: wait once on something always present, then branch
+      is the anchor pattern in flow-format.md: wait once on something always present, then branch
       instantly with `FIND_BEST`. A warning, not an error - the flow still works, it is just slow.
 - [ ] **Check the typed character on real keyboards.** Since 2026-10-12 typing is built from
       SharpHook's typed-character event, kept as its own `KEY_TYPED` input after its key-down.

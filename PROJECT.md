@@ -4,8 +4,9 @@
 > what is knowingly unfinished. Written to be read top to bottom by a person joining the project,
 > or pasted into a model as context.
 >
-> `FLOW-FORMAT.md` holds the flow script grammar and is kept separate on purpose — it is a
-> specification you read while writing a parser, not prose. `PLAN.md` is the build order and
+> `backend/Core/AiDocuments/Reference/flow-format.md` holds the flow script grammar and is kept separate on purpose — it
+> is a specification you read while writing a parser, not prose. It sits with the AI documents
+> because a model revising a script is given it whole, and the assistant searches it. `PLAN.md` is the build order and
 > holds only open work. `TODO.md` is everything deferred.
 >
 > Where a section describes something not built yet, it says so and names the `PLAN.md` phase.
@@ -772,7 +773,7 @@ tight loop on a tester's laptop competes with the application being tested.
 
 ## 7. The flow script
 
-A flow exports to a `.sflw` text file. `FLOW-FORMAT.md` is the grammar; this is the shape and the
+A flow exports to a `.sflw` text file. `flow-format.md` (with the AI documents) is the grammar; this is the shape and the
 decisions behind it.
 
 ```

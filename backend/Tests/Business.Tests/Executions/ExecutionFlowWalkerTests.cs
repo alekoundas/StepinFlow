@@ -293,7 +293,7 @@ namespace Business.Tests.Executions
 
         // What ForgetFrom says it does, and does not: it records the popped step's depth and then
         // forgets that depth, so nothing is ever forgotten and every result stays readable. A decision
-        // rather than a fix - FLOW-FORMAT.md reads an earlier sibling's result. See TODO.md.
+        // rather than a fix - flow-format.md reads an earlier sibling's result. See TODO.md.
         [Fact(Skip = "Results are never forgotten today; whether they should be is undecided. See TODO.md.")]
         public async Task A_result_is_readable_below_its_step_and_forgotten_once_the_walk_leaves_it()
         {

@@ -289,7 +289,7 @@ electron-builder into `release/`.
 | File | What is in it |
 |---|---|
 | [PROJECT.md](PROJECT.md) | The whole application — architecture, data model, execution, search, AI, tests |
-| [FLOW-FORMAT.md](FLOW-FORMAT.md) | The `.sflw` flow script grammar |
+| [flow-format.md](backend/Core/AiDocuments/Reference/flow-format.md) | The `.sflw` flow script grammar, with the AI documents a model is given |
 | [SampleFlow.approved.sflw](backend/Tests/Business.Tests/FlowScript/SampleFlow.approved.sflw) | A flow script using most of the grammar, checked by a test |
 | [PLAN.md](PLAN.md) | What is left to build, in order |
 | [TODO.md](TODO.md) | Everything deferred |
