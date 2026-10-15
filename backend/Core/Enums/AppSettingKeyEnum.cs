@@ -2,12 +2,6 @@ namespace Core.Enums
 {
     public enum AppSettingKeyEnum
     {
-        /// <summary>Width of the screenshot the recorder takes around the cursor.</summary>
-        RECORDING_CAPTURE_WIDTH,
-
-        /// <summary>Height of the screenshot the recorder takes around the cursor.</summary>
-        RECORDING_CAPTURE_HEIGHT,
-
         // Recording bar hotkeys.
         RECORDING_HOTKEY_PAUSE,
         RECORDING_HOTKEY_STOP,

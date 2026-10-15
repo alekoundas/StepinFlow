@@ -104,8 +104,8 @@ const api: ElectronApi = {
   },
 
   recordingBar: {
-    openWindow: (flowId?: number | null): Promise<void> =>
-      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_OPEN_WINDOW, flowId ?? null),
+    openWindow: (flowId: number, setupFlowId?: number | null): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_OPEN_WINDOW, flowId, setupFlowId ?? null),
     closeWindow: (): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_CLOSE_WINDOW),
     resizeWindow: (width: number, height: number): void =>

@@ -46,8 +46,11 @@ const PANEL: CSSProperties = {
  */
 export default function RecordingBarPage() {
   const [searchParams] = useSearchParams();
-  const flowIdParam = searchParams.get("flowId");
-  const flowId = flowIdParam ? Number(flowIdParam) : undefined;
+  const flowId = Number(searchParams.get("flowId"));
+
+  // Only the flow the setup created goes with a discard. One recorded into from the editor stays.
+  const setupFlowIdParam = searchParams.get("setupFlowId");
+  const setupFlowId = setupFlowIdParam ? Number(setupFlowIdParam) : undefined;
 
   const { data: settings = [] } = useAppSettings();
 
@@ -142,7 +145,7 @@ export default function RecordingBarPage() {
       return;
     }
 
-    void ask(() => backendApiService.Recording.discard(flowId));
+    void ask(() => backendApiService.Recording.discard(setupFlowId));
   };
 
   let accent = "var(--red-400)";

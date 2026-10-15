@@ -33,8 +33,8 @@ export const ElectronApiService = {
   },
 
   recordingBar: {
-    openWindow: (flowId?: number) =>
-      window.electronApi.recordingBar.openWindow(flowId ?? null),
+    openWindow: (flowId: number, setupFlowId?: number) =>
+      window.electronApi.recordingBar.openWindow(flowId, setupFlowId ?? null),
     closeWindow: () => window.electronApi.recordingBar.closeWindow(),
     resizeWindow: (width: number, height: number) =>
       window.electronApi.recordingBar.resizeWindow(width, height),

@@ -42,7 +42,7 @@ namespace Business.Tests.Recording
         {
             ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
             ClickedElementGrouper grouper = new ClickedElementGrouper(new FakeOpenCvService(), _screenshots);
-            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, new FakeScreenService(), _resolver, finder, grouper, _database, _clock);
+            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, _resolver, finder, grouper, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -140,7 +140,7 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task Without_StepinFlow_s_own_process_nothing_is_recorded()
         {
-            ResultDto<bool> started = await _session.StartAsync(null, 0, Ct);
+            ResultDto<bool> started = await _session.StartAsync(NewFlow(withMainArea: true), 0, Ct);
 
             started.IsSuccess.ShouldBeFalse();
             _hook.IsRecording.ShouldBeFalse();
@@ -189,11 +189,9 @@ namespace Business.Tests.Recording
             (press.MainAreaBounds, press.Dpi).ShouldBe((BOUNDS, 120));
             press.Screenshot.ShouldNotBeEmpty();
 
-            // The crop around the press and the main area, beside what the stop works out from them.
+            // The main area, beside what the stop works out from it.
             _screenshots.Captured.ShouldBe([BOUNDS]);
-            List<(int, int)> encoded = _screenshots.Encoded.Select(x => (x.Width, x.Height)).ToList();
-            encoded.ShouldContain((400, 400));
-            encoded.ShouldContain((800, 600));
+            _screenshots.Encoded.Select(x => (x.Width, x.Height)).ShouldContain((800, 600));
         }
 
         [Fact]
@@ -422,24 +420,6 @@ namespace Business.Tests.Recording
             await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
 
             _session.GetResult().ShouldBeNull();
-        }
-
-        // ================================================================
-        // Without a flow, as the wizard records
-        // ================================================================
-
-        [Fact]
-        public async Task Without_a_flow_a_press_is_neither_sorted_nor_kept_against_a_main_area()
-        {
-            (await _session.StartAsync(null, OWN, Ct)).IsSuccess.ShouldBeTrue();
-
-            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
-            Raise(RecordedInputTypeEnum.BUTTON_UP);
-            IReadOnlyList<RecordedInput> events = await _session.StopAsync(Ct);
-
-            events[0].Window.ShouldBeNull();
-            _session.GetPress(0).ShouldBeNull();
-            _screenshots.Captured.ShouldBeEmpty();
         }
     }
 }

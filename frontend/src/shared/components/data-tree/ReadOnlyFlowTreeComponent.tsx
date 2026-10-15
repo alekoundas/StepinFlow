@@ -22,8 +22,8 @@ interface Props {
 /**
  * A tree that only shows. No drag and drop, no workflow store, no selection written anywhere.
  *
- * Shared by the wizard result panel and the sub-flow preview so both draw a step exactly as the
- * real tree does. Deliberately separate from DataTreeComponent, which owns the refresh triggers
+ * Shared by the execution view and the sub-flow preview so both draw a step exactly as the real
+ * tree does. Deliberately separate from DataTreeComponent, which owns the refresh triggers
  * and the move machinery a preview must not touch.
  */
 export default function ReadOnlyFlowTreeComponent({

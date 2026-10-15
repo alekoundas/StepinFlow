@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 104 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -540,7 +540,7 @@ step. The recording is made against the flow's main area; a flow with none is fi
 window, in the setup's picker, which saves it as the main area. Review is the same, and the plain
 draft is inserted at that position (below).
 
-Given a flow, `Business/Recording/Session` records against the flow's main area:
+`Business/Recording/Session` records against the flow's main area, always - a start without a flow is refused:
 
 - **A screenshot from before each press.** It captures the main area four times a second and keeps
   the last three, each stamped when its capture finished. A press takes the newest one stamped
@@ -1757,13 +1757,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-733 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+732 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 547 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 546 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1877,7 +1877,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 733 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 732 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

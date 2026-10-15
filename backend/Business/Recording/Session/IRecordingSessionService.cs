@@ -10,11 +10,10 @@ namespace Business.Recording.Session
         bool IsPaused { get; }
 
         /// <summary>
-        /// Records against the flow's main area, which has to be on screen. With no flow it records
-        /// as the wizard always has: no main area, and each screenshot taken after its press.
-        /// Nothing done on the windows of electronProcessId, StepinFlow's own, is recorded.
+        /// Records against the flow's main area, which has to be on screen. Nothing done on the
+        /// windows of electronProcessId, StepinFlow's own, is recorded.
         /// </summary>
-        Task<ResultDto<bool>> StartAsync(int? flowId, int electronProcessId, CancellationToken ct = default);
+        Task<ResultDto<bool>> StartAsync(int flowId, int electronProcessId, CancellationToken ct = default);
 
         /// <summary>Stops recording without ending the session.</summary>
         void Pause();
@@ -36,7 +35,7 @@ namespace Business.Recording.Session
 
         /// <summary>
         /// The whole main area at an action: its own press's screenshot, or for a key or typed text
-        /// the last click's before it. Null when there is none, as with no main area.
+        /// the last click's before it. Null when there is none.
         /// </summary>
         RecordingScreenDto? GetScreen(int actionIndex);
 
@@ -46,10 +45,7 @@ namespace Business.Recording.Session
         /// <summary>What the tester decided in Review. Null until they continue from it.</summary>
         ReviewedRecordingDto? GetReviewed();
 
-        /// <summary>The screenshot around a press, or null when it never had one.</summary>
-        byte[]? GetScreenshot(int index);
-
-        /// <summary>The main area at a press, or null when the session had none.</summary>
+        /// <summary>The main area at a press, or null when it kept none.</summary>
         RecordedPress? GetPress(int index);
     }
 }

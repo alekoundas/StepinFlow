@@ -289,12 +289,6 @@ the history.
 
 ## Recording
 
-- [ ] **Remove what only the wizard read.** Raised 2026-10-14. Every recording is now made against
-      a main area - "Record steps here" asks for the flow's window when it has none - so recording
-      with none is never asked for: `Recording.start` without a flow, `TryCaptureAround`, and the
-      400 by 400 crop kept at each press, with its two capture-size settings and
-      `Recording.getScreenshot`. `RecordingStartDto.FlowId` then stops being optional.
-
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
       nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were

@@ -32,7 +32,7 @@ export function registerRecordingBarHandler(
 ): void {
   ipcMain.handle(
     IPC_CHANNELS.RECORDING_BAR_OPEN_WINDOW,
-    async (_event, flowId: number | null): Promise<void> => {
+    async (_event, flowId: number, setupFlowId: number | null): Promise<void> => {
       if (barWindow && !barWindow.isDestroyed()) return;
 
       const bar = createElectronWindow(isDev);
@@ -50,8 +50,11 @@ export function registerRecordingBarHandler(
         restore(mainWindow);
       });
 
-      // The flow the setup created goes with a discard made from the bar.
-      const hash = flowId ? `/recording-bar?flowId=${flowId}` : "/recording-bar";
+      // The flow to record against, and the one the setup created, which goes with a discard made
+      // from the bar. A flow recorded into from the editor stays.
+      const query = new URLSearchParams({ flowId: String(flowId) });
+      if (setupFlowId) query.set("setupFlowId", String(setupFlowId));
+      const hash = `/recording-bar?${query.toString()}`;
 
       try {
         if (isDev) {

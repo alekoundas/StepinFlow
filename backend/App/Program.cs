@@ -223,7 +223,6 @@ namespace App
             builder.Services.AddTransient<ResumeRecordingHandler>();
             builder.Services.AddTransient<StopRecordingHandler>();
             builder.Services.AddTransient<DiscardRecordingHandler>();
-            builder.Services.AddTransient<GetRecordingScreenshotHandler>();
             builder.Services.AddTransient<GetRecordingResultHandler>();
             builder.Services.AddTransient<GetRecordingScreenHandler>();
             builder.Services.AddTransient<ReviewRecordingHandler>();

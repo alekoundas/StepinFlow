@@ -156,9 +156,11 @@ export default function RecordingPage() {
   };
 
   const recordAgain = () => {
+    if (recordingFlowId === undefined) return;
+
     setResult(null);
     setProgress(null);
-    void openBar(recordingFlowId);
+    void openBar(recordingFlowId, setupFlowId);
   };
 
   // Stopped or discarded, from wherever it was.
@@ -172,11 +174,13 @@ export default function RecordingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress?.state]);
 
-  const openBar = async (flowId: number | undefined) => {
+  // A discard made from the bar deletes the flow the setup created. One recorded into from the
+  // editor stays.
+  const openBar = async (flowId: number, createdFlowId: number | undefined) => {
     setError(null);
 
     try {
-      await ElectronApiService.recordingBar.openWindow(flowId);
+      await ElectronApiService.recordingBar.openWindow(flowId, createdFlowId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -187,12 +191,12 @@ export default function RecordingPage() {
   const handleSetupCreated = (createdFlowId: number) => {
     setSetupFlowId(createdFlowId);
     void queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
-    void openBar(createdFlowId);
+    void openBar(createdFlowId, createdFlowId);
   };
 
   const handleMainAreaSaved = (intoFlowId: number) => {
     void queryClient.invalidateQueries({ queryKey: flowKeys.detail(intoFlowId) });
-    void openBar(intoFlowId);
+    void openBar(intoFlowId, undefined);
   };
 
   const handleStop = async () => {
@@ -259,7 +263,7 @@ export default function RecordingPage() {
               type="button"
               label="Record now"
               icon="pi pi-circle-fill"
-              onClick={() => void openBar(recordingFlowId)}
+              onClick={() => void openBar(recordingFlowId, setupFlowId)}
               severity="danger"
             />
           )}

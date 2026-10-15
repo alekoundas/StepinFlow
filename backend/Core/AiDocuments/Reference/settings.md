@@ -1,11 +1,5 @@
 # Settings
 
-## Recording
-
-**Capture width** and **Capture height** — how much of the screen is captured around the pointer
-each time you click while recording. Templates are cut from the whole window you picked, so these
-change nothing you see today.
-
 ## Execution
 
 **Screenshots kept before a failure** — how many screenshots of the lead-up are written out with a failed

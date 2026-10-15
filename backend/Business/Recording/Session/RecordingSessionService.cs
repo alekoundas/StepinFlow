@@ -5,7 +5,6 @@ using Business.Recording.Elements;
 using Business.Recording.Models.Session;
 using Core.Catalogs;
 using Core.Enums;
-using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
@@ -13,7 +12,6 @@ using Core.Models.Dtos;
 using Core.Ports;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing;
 using System.Threading.Channels;
 
 namespace Business.Recording.Session
@@ -67,7 +65,6 @@ namespace Business.Recording.Session
         private readonly IAppSettingService _appSettingService;
         private readonly IIpcBroadcastService _broadcastService;
         private readonly IWindowService _windowService;
-        private readonly IScreenService _screenService;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IClickedElementFinder _clickedElementFinder;
         private readonly IClickedElementGrouper _clickedElementGrouper;
@@ -96,7 +93,6 @@ namespace Business.Recording.Session
             IAppSettingService appSettingService,
             IIpcBroadcastService broadcastService,
             IWindowService windowService,
-            IScreenService screenService,
             IAreaPointResolver areaPointResolver,
             IClickedElementFinder clickedElementFinder,
             IClickedElementGrouper clickedElementGrouper,
@@ -108,7 +104,6 @@ namespace Business.Recording.Session
             _appSettingService = appSettingService;
             _broadcastService = broadcastService;
             _windowService = windowService;
-            _screenService = screenService;
             _areaPointResolver = areaPointResolver;
             _clickedElementFinder = clickedElementFinder;
             _clickedElementGrouper = clickedElementGrouper;
@@ -126,7 +121,7 @@ namespace Business.Recording.Session
         // Public methods
         // ================================================================
 
-        public async Task<ResultDto<bool>> StartAsync(int? flowId, int electronProcessId, CancellationToken ct = default)
+        public async Task<ResultDto<bool>> StartAsync(int flowId, int electronProcessId, CancellationToken ct = default)
         {
             await _gate.WaitAsync(ct);
 
@@ -263,11 +258,6 @@ namespace Business.Recording.Session
             return _cache.Reviewed;
         }
 
-        public byte[]? GetScreenshot(int index)
-        {
-            return _cache.GetScreenshot(index);
-        }
-
         public RecordedPress? GetPress(int index)
         {
             return _cache.GetPress(index);
@@ -278,7 +268,7 @@ namespace Business.Recording.Session
         // Private methods
         // ================================================================
 
-        private async Task<ResultDto<bool>> BeginAsync(int? flowId, int electronProcessId, CancellationToken ct)
+        private async Task<ResultDto<bool>> BeginAsync(int flowId, int electronProcessId, CancellationToken ct)
         {
             if (IsRecording)
                 return ResultDto<bool>.Failure("A recording is already running.");
@@ -293,37 +283,23 @@ namespace Business.Recording.Session
             _filter.ElectronProcessId = electronProcessId;
             _hotkeys.Reset();
 
-            // Read once per session. Changing the capture size midway would leave the screenshots
-            // inconsistent with each other for no benefit.
-            int captureWidth = await _appSettingService.GetAsync(AppSettingCatalog.RecordingCaptureWidth, ct);
-            int captureHeight = await _appSettingService.GetAsync(AppSettingCatalog.RecordingCaptureHeight, ct);
-            _cache.CaptureSize = new Size(captureWidth, captureHeight);
-
             string pauseKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyPause, ct);
             string stopKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyStop, ct);
             _hotkeys.Bind(RecordingHotkeyEnum.PAUSE, pauseKeys);
             _hotkeys.Bind(RecordingHotkeyEnum.STOP, stopKeys);
 
-            FlowArea? mainArea = null;
-            if (flowId != null)
-            {
-                await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            FlowArea? mainArea = await MainAreaOfAsync(flowId, ct);
+            if (mainArea == null)
+                return ResultDto<bool>.Failure("Pick the window the flow works in before recording.");
 
-                mainArea = await dbContext.FlowAreas.AsNoTracking().FirstOrDefaultAsync(x => x.FlowId == flowId && x.IsMain, ct);
-
-                if (mainArea == null)
-                    return ResultDto<bool>.Failure("Pick the window the flow works in before recording.");
-
-                // The first screenshot is taken before the first press can happen.
-                string? notOnScreen = CaptureScreenshot(mainArea);
-                if (notOnScreen != null)
-                    return ResultDto<bool>.Failure(notOnScreen);
-            }
+            // The first screenshot is taken before the first press can happen.
+            string? notOnScreen = CaptureScreenshot(mainArea);
+            if (notOnScreen != null)
+                return ResultDto<bool>.Failure(notOnScreen);
 
             if (!await _inputRecordService.StartRecordingAllAsync())
                 return ResultDto<bool>.Failure("Input is being captured for something else. Close it and start again.");
 
-            _cache.MainArea = mainArea;
             _cache.StartedOn = _timeProvider.GetLocalNow().DateTime;
             _cache.State = RecordingStateEnum.RECORDING;
 
@@ -336,12 +312,16 @@ namespace Business.Recording.Session
             CancellationTokenSource loopsCts = new CancellationTokenSource();
             _loopsCts = loopsCts;
             _fold = Task.Run(() => FoldLoopAsync(loopsCts.Token), CancellationToken.None);
-
-            if (mainArea != null)
-                _capture = Task.Run(() => CaptureLoopAsync(mainArea, loopsCts.Token), CancellationToken.None);
+            _capture = Task.Run(() => CaptureLoopAsync(mainArea, loopsCts.Token), CancellationToken.None);
 
             await SendProgressAsync();
             return ResultDto<bool>.Success(true);
+        }
+
+        private async Task<FlowArea?> MainAreaOfAsync(int flowId, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            return await dbContext.FlowAreas.AsNoTracking().FirstOrDefaultAsync(x => x.FlowId == flowId && x.IsMain, ct);
         }
 
         // Ends a recording that is running, and folds what it recorded. False when none was.
@@ -374,7 +354,6 @@ namespace Business.Recording.Session
             _filter.Reset();
             _hotkeys.Reset();
             _cache.ClearRecentScreenshots();
-            _cache.MainArea = null;
 
             Fold();
             return true;
@@ -456,35 +435,21 @@ namespace Business.Recording.Session
             }
         }
 
+        // Only a press carries a screenshot.
         private void Handle(PendingInput pending)
         {
-            RecordedInput input = pending.Input;
-            int index = _cache.AddInput(input);
-
-            if (input.Type != RecordedInputTypeEnum.BUTTON_DOWN)
-                return;
+            int index = _cache.AddInput(pending.Input);
 
             if (pending.Screenshot != null)
-                KeepPress(index, input, pending.Screenshot);
-            else if (_cache.MainArea == null)
-                input.HasScreenshot = TryCaptureAround(index, input.PhysicalX, input.PhysicalY);
+                KeepPress(index, pending.Input, pending.Screenshot);
         }
 
-        // The crop around the click the review shows, and the whole main area for the draft to
-        // cut its templates from. A failed encode costs the review a picture, never the recording.
+        // The whole main area, which Review shows and the draft cuts its templates from. A failed
+        // encode costs the review a picture, never the recording.
         private void KeepPress(int index, RecordedInput input, RecordingScreenshot screenshot)
         {
             try
             {
-                Rectangle around = AroundPress(input.PhysicalX, input.PhysicalY);
-                RawImage crop = RawImageHelper.Crop(screenshot.Image, screenshot.Target.Bounds, around);
-                if (!crop.IsEmpty)
-                {
-                    byte[] encodedCrop = _screenshotService.Encode(crop, ScreenshotFormatEnum.PNG, 100);
-                    _cache.AddScreenshot(index, encodedCrop);
-                    input.HasScreenshot = true;
-                }
-
                 byte[] encodedMainArea = _screenshotService.Encode(screenshot.Image, ScreenshotFormatEnum.PNG, 100);
                 _cache.AddPress(new RecordedPress
                 {
@@ -493,6 +458,8 @@ namespace Business.Recording.Session
                     Dpi = screenshot.Target.Dpi,
                     Screenshot = encodedMainArea,
                 });
+
+                input.HasScreenshot = true;
             }
             catch (Exception ex)
             {
@@ -723,36 +690,6 @@ namespace Business.Recording.Session
             _loopsCts = null;
             _capture = null;
             _fold = null;
-        }
-
-        // With no main area, the wizard's way: the screenshot around the click, taken once the
-        // press is already on its way to the application.
-        private bool TryCaptureAround(int index, int centreX, int centreY)
-        {
-            try
-            {
-                Rectangle around = AroundPress(centreX, centreY);
-                Rectangle screen = _screenService.GetVirtualScreenBounds();
-                Rectangle region = Rectangle.Intersect(around, screen);
-
-                if (region.Width <= 0 || region.Height <= 0)
-                    return false;
-
-                byte[] screenshot = _screenshotService.Capture(region, ScreenshotFormatEnum.PNG, 100);
-                _cache.AddScreenshot(index, screenshot);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // The capture size, centred on the press.
-        private Rectangle AroundPress(int x, int y)
-        {
-            Size size = _cache.CaptureSize;
-            return new Rectangle(x - size.Width / 2, y - size.Height / 2, size.Width, size.Height);
         }
 
         public void Dispose()

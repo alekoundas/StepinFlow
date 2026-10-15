@@ -9,23 +9,6 @@ namespace Core.Catalogs
     /// </summary>
     public static class AppSettingCatalog
     {
-        public static readonly IntAppSettingDefinition RecordingCaptureWidth = new(
-            AppSettingKeyEnum.RECORDING_CAPTURE_WIDTH,
-            "Capture width",
-            "How wide a screenshot the recorder takes around the pointer.",
-            defaultValue: 400,
-            minimum: 50,
-            maximum: 4000);
-
-        public static readonly IntAppSettingDefinition RecordingCaptureHeight = new(
-            AppSettingKeyEnum.RECORDING_CAPTURE_HEIGHT,
-            "Capture height",
-            "How tall a screenshot the recorder takes around the pointer.",
-            defaultValue: 400,
-            minimum: 50,
-            maximum: 4000);
-
-
         // Recording bar hotkeys. Never recorded, whatever window is in front.
         public static readonly HotkeyAppSettingDefinition RecordingHotkeyPause = new(
             AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE,
@@ -125,8 +108,6 @@ namespace Core.Catalogs
 
         public static IReadOnlyList<AppSettingDefinition> All { get; } =
         [
-            RecordingCaptureWidth,
-            RecordingCaptureHeight,
             RecordingHotkeyPause,
             RecordingHotkeyStop,
 

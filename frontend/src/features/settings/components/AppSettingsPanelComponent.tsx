@@ -17,9 +17,6 @@ interface Props {
 
   /** Which settings belong to this panel. The catalog decides what exists, this decides where. */
   keyPrefix: string;
-
-  /** Shown after a number, when the number has a unit worth saying. */
-  numberSuffix?: string;
 }
 
 /**
@@ -31,7 +28,6 @@ export default function AppSettingsPanelComponent({
   header,
   description,
   keyPrefix,
-  numberSuffix,
 }: Props) {
   const { data: all = [], isLoading } = useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
@@ -52,7 +48,6 @@ export default function AppSettingsPanelComponent({
             onValueChange={(e) => edit(setting.key, String(e.value ?? ""))}
             onBlur={() => commit(setting.key, setting.value)}
             showButtons
-            suffix={numberSuffix}
             inputClassName="w-6rem"
             className="flex-shrink-0"
           />

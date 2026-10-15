@@ -3,7 +3,6 @@ using Business.Recording.Models.Session;
 using Business.Recording.Session;
 using Core.Enums;
 using Core.Models.Business;
-using Core.Models.Database;
 
 namespace Business.Tests.Recording
 {
@@ -57,17 +56,13 @@ namespace Business.Tests.Recording
         [Fact]
         public void Clearing_forgets_the_whole_recording()
         {
-            _cache.MainArea = new FlowArea { Name = "Browser" };
             _cache.AddInput(new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_DOWN });
-            _cache.AddScreenshot(0, [1, 2, 3]);
             _cache.AddPress(new RecordedPress { Index = 0 });
             _cache.AddRecentScreenshot(Screenshot(0));
 
             _cache.Clear();
 
-            _cache.MainArea.ShouldBeNull();
             _cache.GetInputs().ShouldBeEmpty();
-            _cache.GetScreenshot(0).ShouldBeNull();
             _cache.GetPress(0).ShouldBeNull();
             _cache.GetRecentScreenshotBefore(START.AddSeconds(1)).ShouldBeNull();
         }

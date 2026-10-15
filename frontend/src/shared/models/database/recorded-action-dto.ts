@@ -8,7 +8,7 @@ import type { RecordedWindowEnum } from "../../../../../electron/shared/types";
  * One thing the user did, after a press and a release have been folded into a click and a burst
  * of typing into a single entry.
  *
- * Deliberately not a step. What a click should become is the wizard question.
+ * Deliberately not a step. What a click should become is decided in Review.
  */
 export interface RecordedActionDto {
   index: number;

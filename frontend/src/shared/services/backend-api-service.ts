@@ -191,7 +191,7 @@ export const backendApiService = {
 
     // With a flow, against its main area.
     // Electron's process owns every StepinFlow window, and nothing done on them is recorded.
-    start: async (flowId?: number) => {
+    start: async (flowId: number) => {
       const electronProcessId = await window.electronApi.electronProcess.getId();
           return call<boolean>("Recording.start", { flowId, electronProcessId });
     },
@@ -214,9 +214,6 @@ export const backendApiService = {
       call<FlowScriptImportResultDto>("Recording.insertDraft", dto),
     // The flow the setup created goes with it while nothing but the setup is in it.
     discard: (flowId?: number) => call<boolean>("Recording.discard", { flowId }),
-    // .Net returns byte[], which arrives here as a base64 string
-    getScreenshot: (index: number) =>
-      call<string>("Recording.getScreenshot", index),
   },
 
   Settings: {
