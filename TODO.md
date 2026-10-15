@@ -289,6 +289,16 @@ the history.
 
 ## Recording
 
+- [ ] **"Record steps here" has no way in since the wizard went.** Raised 2026-10-14. The editor's
+      button opens the recording page with a position in an existing flow, and only the per-action
+      wizard could insert steps at a position. Today it records with no main area, and Review's
+      draft button does nothing without a flow the setup made. Either it becomes Review and the
+      draft, inserted at that position - the flow needs a main area to record against, and
+      `FlowStepDataService.CreateTreeAsync` already inserts a tree at a position, with tests - or
+      the button goes. To decide. Either way what only the wizard read goes with it: the 400 by
+      400 crop kept at each press, with its two capture-size settings and `Recording.getScreenshot`,
+      and if the button goes, recording with no main area.
+
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
       nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were
@@ -514,12 +524,6 @@ the history.
       other step: a `#` line above `##` or `Success:` belongs to that line. So the marker form gets
       the comment field, a branch gets a form holding only that field, and a note about a branch
       goes on the branch rather than on its first step.
-
-- [ ] **The wizard cannot author the three newest step types.** `action-to-steps.ts` maps recorded
-      actions onto steps and has no case producing `END_EXECUTION` or `STAGE_MARKER`. Correct for a
-      recording - neither has a recorded action behind it - but it means a recorded flow can never
-      fail on purpose until someone opens the editor afterwards. Ties into the recorder seeding
-      `End Execution failed` into the failure branches it creates.
 
 - [ ] **Flow edit / view / clone routes are broken.** `FlowFormPage` reads a `formMode` route param
       that no route declares, and `const flow = null` means it never loads the flow it is editing.

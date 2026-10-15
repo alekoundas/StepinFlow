@@ -164,8 +164,8 @@ Taking that cost for now rather than designing around it.
 
 ### 7. The recorder: a recording and a description become a flow
 
-Today a recording is turned into steps by a wizard that asks what each recorded action was for.
-Settled 2026-10-08, with the details on 2026-10-09: a recording and the tester's description become
+A recording was turned into steps by a wizard that asked what each recorded action was for; Review
+and the plain draft replaced it on 2026-10-14. Settled 2026-10-08, with the details on 2026-10-09: a recording and the tester's description become
 a flow with no question per action. The draft is built without a model and is a flow on its own. A
 model, when there is one, is given that draft **as a script** with the description and shapes it,
 through the same scanner and importer a file goes through. Every result lands in the editor and
@@ -230,9 +230,6 @@ In this order:
 
 Open, each with a recommendation:
 
-- **Keep the per-action wizard?** Retire it: Review, the plain draft and the editor cover what it
-  does, and it builds steps in TypeScript, which the draft now does in `Business`. Since the plain
-  draft shipped nothing opens it; only its `/wizard` route is left.
 - **The end of a generated automation** is COMPLETED rather than INCONCLUSIVE, with
   `Flow.IsQaTest` (settled 2026-10-13, a bool for now). Its waits end the execution, failed, with a
   reason, when they time out: the draft writes that Failure branch (`PROJECT.md` §6).

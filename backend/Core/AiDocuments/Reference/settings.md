@@ -3,7 +3,8 @@
 ## Recording
 
 **Capture width** and **Capture height** — how much of the screen is captured around the pointer
-each time you click while recording. Bigger gives the wizard more to crop a template from.
+each time you click while recording. Templates are cut from the whole window you picked, so these
+change nothing you see today.
 
 ## Execution
 

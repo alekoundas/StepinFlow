@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 104 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -515,18 +515,14 @@ against SQLite's own foreign keys, through `ExecuteDelete` rather than EF's chan
 ### Today
 
 The global input hook records every click, drag, scroll and keystroke with the pause before it, and
-a screenshot at each click. Nothing becomes a step while recording. Afterwards a wizard walks
-through the recorded actions one at a time and asks what each one was for:
+the main area at each click. Nothing becomes a step while recording. After the stop, what each click
+hit is found and the clicks on the same picture grouped; the tester goes through it all in Review,
+and the plain draft writes it into the flow, which opens in the editor - all below. The template is
+cut from the recording's own screenshot, so nothing is captured twice.
 
-| recorded | becomes |
-| --- | --- |
-| a click | click at this position, **find this image and then click it**, or only check it is on screen |
-| a pause | wait this long, or **wait until something appears** |
-| typing | type this text, or send it as key presses |
-| a drag, a scroll | the same, at the recorded points |
-
-The template is cropped from the recording's own screenshot, so nothing is captured twice. The
-answers build a draft tree, which is saved as a flow and edited like any other.
+A per-action wizard did this until 2026-10-14, asking what each action was for, one at a time, and
+building steps in TypeScript. Review and the draft replaced it: the questions it asked are answered
+by a rule, and corrected in Review or the editor.
 
 **A new flow is set up before the first click** (`Business/Recording/Setup`, `Recording.setup`):
 its name, description, whether it is a QA test (`Flow.IsQaTest`), and the window it works in,
@@ -538,10 +534,11 @@ it has a space, so the window has to be open, and `opens` the main area, so an e
 The recorded steps go after it. Discard deletes the
 flow while nothing but the setup is in it.
 
-Recording steps into a flow that already exists starts a session with no main area, as the wizard
-always has: the screenshot is a fixed square around the cursor, taken a moment after the press
-reached the application, so it can show the pressed button or the menu the press opened, and it
-carries no window size or DPI. A point it creates is a screen coordinate.
+**Recording steps into a flow that already exists** - the editor's "Record steps here" - has no
+way in since the wizard went, which was the only thing that inserted steps at a position. It still
+records with no main area - a fixed square around the cursor, taken a moment after the press, with
+no window size or DPI - and Review's draft writes only a flow the setup made. What becomes of it is
+in `TODO.md` (Recording).
 
 Given a flow, `Business/Recording/Session` records against the flow's main area:
 
@@ -758,9 +755,7 @@ on executions that were going to fail anyway. The step carries a code comment sa
 `# recorded after a 4.2s wait`. Even where it does not drive the timeout, that is intent a screenshot
 cannot carry, and the first thing a model reads when working out why a step got slow.
 
-The recording draft writes it (`RecordingDraft.TimeoutFor`). The per-action wizard does not -
-"find this image and then click it" searches once with `FIND_BEST`, and "wait until something
-appears" takes `max(observed × 3, 5s)` - and goes when the plain draft replaces it.
+The recording draft writes it (`RecordingDraft.TimeoutFor`).
 
 Polling is deliberately not as fast as possible. Screenshot plus template match is real CPU, and a
 tight loop on a tester's laptop competes with the application being tested.
@@ -1572,7 +1567,8 @@ React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answe
 electron-builder, with `electron-updater` and `electron-log`.
 
 Feature-based: `features/<name>/{components,hooks,store}`, shared code in `shared/`, Electron-window
-pages in `windows/`. The recorder's wizard is `features/wizard/`.
+pages in `windows/`. The recorder is `features/wizard/`, a name left from the per-action wizard
+Review replaced; `features/recording/` takes it over (`PLAN.md`, phase 7).
 
 Every entity form is a pair — `XFormComponent` (React Hook Form setup, header, footer, submit) and
 `XFormFieldsComponent` (fields only, reads `useFormContext`) — with a sibling `x.zod.ts`.
@@ -1870,7 +1866,7 @@ automation tool, and its end-to-end test is a flow script that tests StepinFlow.
 
 In active development, not released.
 
-Working: the flow builder, the recorder and its wizard, image search that survives another monitor
+Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, and the AI assistant with Ollama or OpenAI. 728 backend tests.

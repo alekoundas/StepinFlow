@@ -173,7 +173,7 @@ export default function RecordingPage() {
   // difference between an image search step you can finish here and one you cannot. The recorded
   // steps go after the launch step when there is one.
   const handleSetupCreated = (flowId: number, addsLaunchStep: boolean) => {
-    setTarget({ targetFlowId: flowId, targetIndex: addsLaunchStep ? 1 : 0 }, flowId);
+    setTarget({ targetFlowId: flowId, targetIndex: addsLaunchStep ? 1 : 0 });
     setSetupFlowId(flowId);
     void queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
     void openBar(flowId);

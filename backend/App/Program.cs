@@ -180,7 +180,6 @@ namespace App
             builder.Services.AddTransient<GetLazyDiscordBotHandler>();
             builder.Services.AddTransient<TestDiscordBotHandler>();
             builder.Services.AddTransient<CreateFlowStepHandler>();
-            builder.Services.AddTransient<CreateFlowStepsFromRecordingHandler>();
             builder.Services.AddTransient<UpdateFlowStepHandler>();
             builder.Services.AddTransient<DeleteFlowStepHandler>();
             builder.Services.AddTransient<GetFlowStepHandler>();

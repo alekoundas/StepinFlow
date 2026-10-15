@@ -135,8 +135,8 @@ a sensible size says the setting is wrong rather than hiding it behind guesses.
 If the scaled template would be larger than the area, or under 2 pixels, the search fails with an
 error that gives the scale. It does not report "not found".
 
-A template with no recorded size or DPI - captured before they were recorded, or made by the
-recording wizard - is searched at the size it was captured, on every screen.
+A template with no recorded size or DPI - captured before they were recorded - is searched at the
+size it was captured, on every screen.
 
 ## Known limits
 

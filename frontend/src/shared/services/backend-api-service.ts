@@ -22,10 +22,6 @@ import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
 import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
 import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import type {
-  FlowDraftDto,
-  FlowDraftResultDto,
-} from "@/shared/models/database/flow-draft-dto";
 import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { RecordingScreenDto } from "@/shared/models/recording-screen-dto";
@@ -100,8 +96,6 @@ export const backendApiService = {
 
   FlowStep: {
     create: (dto: FlowStepDto) => call<number>("FlowStep.create", dto),
-    createFromRecording: (dto: FlowDraftDto) =>
-      call<FlowDraftResultDto>("FlowStep.createFromRecording", dto),
     update: (dto: FlowStepDto) => call<FlowStepDto>("FlowStep.update", dto),
     delete: (id: number) => call<boolean>("FlowStep.delete", id),
     getDeleteImpact: (id: number) =>

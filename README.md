@@ -51,8 +51,9 @@ answer that here:
 
 - **Record once, decide afterwards** — every click, drag, scroll and keystroke is captured with the
   pause before it and a screenshot at each click
-- **A wizard turns each action into steps**: click here, find this image and then click it, only check
-  it is on screen, wait until something appears, type text or send key presses
+- **Review, then a draft** - every action with the screen at that moment, kept or left out, its
+  template's rectangle adjusted, typed text an input; then written into the flow as steps that wait
+  for each element, with no question per action
 - **Templates cropped from the recording itself**, so nothing is captured twice
 
 ### Build

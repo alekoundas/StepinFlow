@@ -81,7 +81,6 @@ namespace Transport.Ipc
 
                     // FlowStep
                     "FlowStep.create" => await Handler<CreateFlowStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
-                    "FlowStep.createFromRecording" => await Handler<CreateFlowStepsFromRecordingHandler>().HandleAsync(Payload<FlowDraftDto>(request), ct),
                     "FlowStep.update" => await Handler<UpdateFlowStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
                     "FlowStep.delete" => await Handler<DeleteFlowStepHandler>().HandleAsync(Payload<int>(request), ct),
                     "FlowStep.get" => await Handler<GetFlowStepHandler>().HandleAsync(Payload<int>(request), ct),
