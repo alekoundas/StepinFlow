@@ -180,8 +180,8 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
-`Setup/`, `Session/`, `ActionBuilder/`, `Elements/` and `Draft/` are built, `Generation/` as far as
-the plain draft, and Review with them (`PROJECT.md` §6):
+`Setup/`, `Session/`, `ActionBuilder/`, `Elements/`, `Draft/` and `Generation/` are built, with
+Review, the plain draft and the model's draft (`PROJECT.md` §6):
 
 ```
 Business/Recording/
@@ -194,7 +194,8 @@ Business/Recording/
                 ClickedElementGrouper     the clicks that hit the same picture
   Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
                                           per kind of action; RecordingDraft holds what they share
-  Generation/   FlowGenerationService     draft, script, scanner, import; the model joins it next
+  Generation/   FlowGenerationService     draft, script, scanner, import; the model's draft too
+                FlowGenerationSessionService  the model's draft in the background, by broadcast
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
 Business/Ai/Vision/
@@ -203,16 +204,6 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The model shapes the script.** `ScriptRevisionService` is phase 9's loop, built once: it
-      sends the script and the instruction, reads the answer with `Scanner.Read`, and sends the
-      diagnostics back, three attempts at most, after which the plain draft is saved and the last
-      diagnostics shown. The answer is structured - `{ script, notes[], inputRenames }` - and needs
-      no tool calling, so any model that returns JSON works. Guard rails sit in code rather than the
-      prompt: `Flow:` and `Id:` match the draft, every template the answer names is one the draft
-      cut, and inputs are renamed only through the map, so their values and secrets follow.
-      A recording into a flow that already existed is inserted, writing only its new rows, so the
-      steps there keep their history: the model's answer has to land the same way, as new rows at
-      the position, rather than through the import that replaces them.
 - [ ] **The Check page.** The script with what the model changed marked, the tree, the model's
       notes, the import's errors and warnings (5.13), and "ask for changes", which sends the script
       back with what the tester wrote.
@@ -324,8 +315,8 @@ holds. Definition from the script, history from the rows.
 
 Groundwork already in: `FlowValidationService` with its rules, `FlowCheckListHelper`, and the
 `GetFlowChecks` tool so a model can ask what a flow verifies without walking the tree by hand. Phase
-7 builds the loop itself: `ScriptRevisionService` sends a script, reads the answer back and returns
-the diagnostics.
+7 built the loop itself: `ScriptRevisionService` sends a script, reads the answer back, and sends
+what was refused back to the model (`PROJECT.md` §6).
 
 ---
 

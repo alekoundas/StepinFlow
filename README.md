@@ -54,8 +54,10 @@ answer that here:
 - **Review, then a draft** - every action with the screen at that moment, kept or left out, its
   template's rectangle adjusted, typed text an input; then written into the flow as steps that wait
   for each element, with no question per action
-- **Record into a flow you already have**, at the spot picked in the editor, leaving its steps and
-  their history as they were
+- **Or let a model shape it** - Generate flow sends the draft as a script, with your description,
+  to Ollama or OpenAI; the answer is read back like an imported file, checked against what it may
+  not change, and sent back with the line numbers until it reads cleanly. Typed values never leave
+  the machine
 - **Templates cropped from the recording itself**, so nothing is captured twice
 
 ### Build
@@ -193,7 +195,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**732 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**750 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

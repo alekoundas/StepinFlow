@@ -13,18 +13,36 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum";
+import { FlowGenerationStageEnum } from "@/shared/enums/backend/flow-generation-stage-enum";
+import { FlowGenerationStateEnum } from "@/shared/enums/backend/flow-generation-state-enum";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
+import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
+import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
 import RecordingMainAreaComponent from "@/features/wizard/components/RecordingMainAreaComponent";
 import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
+import RecordingGeneratingComponent from "@/features/wizard/generate/RecordingGeneratingComponent";
 import { type ActionReview, toReviewed } from "@/features/wizard/review/review";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { flowKeys, useFlow } from "@/features/flow/hooks/use-flow";
+import { useAiStatus } from "@/features/ai/hooks/use-ai";
 
-const RECORDING_STEPS = ["Describe", "Record", "Review"];
+const RECORDING_STEPS = ["Describe", "Record", "Review", "Generate"];
+
+// Until the first stage says which model and what it is sent.
+const GENERATION_STARTING: FlowGenerationProgressDto = {
+  state: FlowGenerationStateEnum.GENERATING,
+  stage: FlowGenerationStageEnum.WRITING_DRAFT,
+  model: "",
+  isReadTextSent: true,
+  scriptLength: 0,
+  attempt: 0,
+  attemptCount: 0,
+  refused: [],
+};
 
 const STAGE_LABELS: Record<RecordingStageEnum, string> = {
   NONE: "Getting the review ready",
@@ -48,6 +66,10 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
  * "Record steps here" the flow already exists: it records against its main area, asking for the
  * window when it has none, and the draft is inserted at the editor's position.
  *
+ * Generate flow hands the reviewed recording to the model set up in Settings, in the background:
+ * FLOW_GENERATION_PROGRESS says how far, and once it says DONE the page fetches what was saved -
+ * the model's draft, or the plain one and why. The editor opens when the tester says so.
+ *
  * The live list is lines, never pixels; Review asks for an image when it draws that action.
  */
 export default function RecordingPage() {
@@ -55,6 +77,7 @@ export default function RecordingPage() {
   const queryClient = useQueryClient();
   const { target, createAsSubFlow, setupFlowId, setSetupFlowId, reset } = useWizardStore();
   const { setSelectedTreeNode } = useWorkflowStore();
+  const { data: isAiConfigured } = useAiStatus();
 
   const { data: targetFlow } = useFlow(target?.flowId ?? null);
   const mainArea = targetFlow?.flowAreas.find((x) => x.isMain);
@@ -70,12 +93,22 @@ export default function RecordingPage() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The generation this page started, null until it asks for one, and what Review said beside it.
+  const [generation, setGeneration] = useState<FlowGenerationProgressDto | null>(null);
+  const [generated, setGenerated] = useState<FlowGenerationResultDto | null>(null);
+  const [generatedFrom, setGeneratedFrom] = useState<Record<number, ActionReview> | null>(null);
+
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
-      if (message.type !== BroadcastTypeEnum.RECORDING_PROGRESS) return;
+      if (message.type === BroadcastTypeEnum.RECORDING_PROGRESS) {
+        const received = message.payload as RecordingProgressDto;
+        setProgress((current) => (current || isUnderway(received) ? received : current));
+      }
 
-      const received = message.payload as RecordingProgressDto;
-      setProgress((current) => (current || isUnderway(received) ? received : current));
+      if (message.type === BroadcastTypeEnum.FLOW_GENERATION_PROGRESS) {
+        const received = message.payload as FlowGenerationProgressDto;
+        setGeneration((current) => (current ? received : current));
+      }
     });
 
     return unsubscribe;
@@ -136,24 +169,80 @@ export default function RecordingPage() {
         return;
       }
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["flow"] }),
-        queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
-        queryClient.invalidateQueries({ queryKey: ["flows"] }),
-        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
-      ]);
-
-      // The placeholder it was recorded from is gone from the tree.
-      if (target) setSelectedTreeNode(undefined);
-
-      reset();
-      navigate(`/workflow/${imported.flowId}`);
+      await openFlow(imported.flowId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsContinuing(false);
     }
   };
+
+  const openFlow = async (flowId: number) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["flow"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+      queryClient.invalidateQueries({ queryKey: ["flows"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+    ]);
+
+    // The placeholder it was recorded from is gone from the tree.
+    if (target) setSelectedTreeNode(undefined);
+
+    reset();
+    navigate(`/workflow/${flowId}`);
+  };
+
+  // Started and followed: the request only starts it, as a model takes longer than one can wait.
+  const generateFromReview = async (reviews: Record<number, ActionReview>) => {
+    if (!result || recordingFlowId === undefined) return;
+
+    setIsContinuing(true);
+    setError(null);
+
+    try {
+      await backendApiService.Recording.review(toReviewed(result, reviews));
+
+      setGeneratedFrom(reviews);
+      setGenerated(null);
+      setGeneration(GENERATION_STARTING);
+
+      await backendApiService.Recording.generateDraft(recordingFlowId);
+    } catch (err) {
+      setGeneration(null);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsContinuing(false);
+    }
+  };
+
+  // Back to Review. Nothing is saved: the NONE the cancel comes back as says so.
+  const cancelGeneration = async () => {
+    try {
+      await backendApiService.Recording.cancelDraftGeneration();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+
+    setGeneration(null);
+  };
+
+  const fetchGenerated = async () => {
+    try {
+      setGenerated(await backendApiService.Recording.getGeneratedDraft());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Ended, from whichever stage it was in.
+  useEffect(() => {
+    if (generation?.state === FlowGenerationStateEnum.NONE) setGeneration(null);
+    if (generation?.state === FlowGenerationStateEnum.DONE) void fetchGenerated();
+  }, [generation?.state]);
+
+  let generateUnavailable: string | null = null;
+  if (!isAiConfigured) generateUnavailable = "Choose an AI provider and a model in Settings first.";
+  if (target) generateUnavailable = "A model's draft cannot go into a flow that already exists yet.";
 
   const recordAgain = () => {
     if (recordingFlowId === undefined) return;
@@ -253,7 +342,7 @@ export default function RecordingPage() {
           </p>
         </div>
 
-        <RecordingStepsComponent current={stepOf(recordingFlowId !== undefined, result !== null)} />
+        <RecordingStepsComponent current={stepOf(recordingFlowId !== undefined, result !== null, generation !== null)} />
       </div>
 
       {recordingFlowId !== undefined && !result && (
@@ -296,14 +385,29 @@ export default function RecordingPage() {
         />
       )}
 
-      {result && (
+      {result && !generation && (
         <RecordingReviewComponent
           result={result}
           flowId={recordingFlowId}
           elapsedMilliseconds={progress?.elapsedMilliseconds ?? 0}
           isContinuing={isContinuing}
+          generateUnavailable={generateUnavailable}
           onRecordAgain={recordAgain}
           onContinue={(reviews) => void continueFromReview(reviews)}
+          onGenerate={(reviews) => void generateFromReview(reviews)}
+        />
+      )}
+
+      {result && generation && generatedFrom && recordingFlowId !== undefined && (
+        <RecordingGeneratingComponent
+          flowId={recordingFlowId}
+          recording={result}
+          reviews={generatedFrom}
+          progress={generation}
+          result={generated}
+          onCancel={() => void cancelGeneration()}
+          onBack={() => setGeneration(null)}
+          onOpen={() => void openFlow(generated?.import.flowId ?? recordingFlowId)}
         />
       )}
 
@@ -365,7 +469,7 @@ export default function RecordingPage() {
   );
 }
 
-// The steps that exist so far. Generate and Check join when the draft and the model do.
+// The steps that exist so far. Check joins when its page does.
 function RecordingStepsComponent({ current }: { current: number }) {
   return (
     <ol
@@ -410,7 +514,8 @@ function RecordingStepsComponent({ current }: { current: number }) {
   );
 }
 
-function stepOf(isDescribed: boolean, isRecorded: boolean): number {
+function stepOf(isDescribed: boolean, isRecorded: boolean, isGenerating: boolean): number {
+  if (isGenerating) return 3;
   if (isRecorded) return 2;
   if (isDescribed) return 1;
   return 0;

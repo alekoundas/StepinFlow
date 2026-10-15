@@ -53,12 +53,10 @@ namespace Business.Recording.Generation
                 CancellationTokenSource cts = new CancellationTokenSource();
                 _cts = cts;
 
-                FlowGenerationProgressDto started = new FlowGenerationProgressDto
-                {
-                    State = FlowGenerationStateEnum.GENERATING,
-                    Stage = FlowGenerationStageEnum.WRITING_DRAFT,
-                };
-                Report(started);
+                // Not sent: the first stage says it, with the model and what it is sent. Kept, so a
+                // second start is refused from now.
+                lock (_progressLock)
+                    _progress = new FlowGenerationProgressDto { State = FlowGenerationStateEnum.GENERATING, Stage = FlowGenerationStageEnum.WRITING_DRAFT };
 
                 _generation = Task.Run(() => GenerateAsync(flowId, recording, reviewed, screenAt, cts.Token), CancellationToken.None);
                 return ResultDto<bool>.Success(true);

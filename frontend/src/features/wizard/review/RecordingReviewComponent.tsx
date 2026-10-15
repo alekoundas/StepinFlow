@@ -28,8 +28,12 @@ interface Props {
   flowId: number | undefined;
   elapsedMilliseconds: number;
   isContinuing: boolean;
+
+  /** Why the model cannot shape the draft, or null when it can. */
+  generateUnavailable: string | null;
   onRecordAgain: () => void;
   onContinue: (reviews: Record<number, ActionReview>) => void;
+  onGenerate: (reviews: Record<number, ActionReview>) => void;
 }
 
 /**
@@ -42,8 +46,10 @@ export default function RecordingReviewComponent({
   flowId,
   elapsedMilliseconds,
   isContinuing,
+  generateUnavailable,
   onRecordAgain,
   onContinue,
+  onGenerate,
 }: Props) {
   const listed = listedActions(result);
 
@@ -100,10 +106,20 @@ export default function RecordingReviewComponent({
           <Button
             type="button"
             label="Plain draft, no AI"
-            icon="pi pi-arrow-right"
-            iconPos="right"
             onClick={() => onContinue(reviews)}
+            disabled={isContinuing}
+            severity="secondary"
+            outlined
+          />
+          <Button
+            type="button"
+            label="Generate flow"
+            icon="pi pi-sparkles"
+            onClick={() => onGenerate(reviews)}
             loading={isContinuing}
+            disabled={generateUnavailable !== null}
+            tooltip={generateUnavailable ?? undefined}
+            tooltipOptions={{ position: "bottom", showOnDisabled: true }}
           />
         </div>
       </div>

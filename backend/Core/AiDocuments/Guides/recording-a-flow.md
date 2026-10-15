@@ -73,11 +73,30 @@ the same picture. "What it should do" can be edited here too.
 The draft is written the way an imported script is, so a draft that does not read cleanly leaves the
 flow as it was and says on which line.
 
+## Generate flow
+
+"Generate flow" gives the plain draft, as a script, with what the flow should do, to the model chosen
+in Settings, and the model shapes it: it names the steps after the task, turns clicks on the same
+picture into one search for every match, and says in each failure what was not found. It is off
+until an AI provider and a model are chosen.
+
+The answer is read the way an imported file is. When it does not read cleanly, or changes something
+it may not - the flow's name and id, a template, an input other than by renaming it - it is sent back
+with the lines that were wrong, three times at most. Nothing is saved until an answer reads cleanly.
+When none does, or the model cannot be reached, the plain draft is saved instead, and the page says
+why.
+
+What goes to the model: what the flow should do, the draft as a script, and which clicks hit the same
+picture. The text read under each click goes too, unless the provider is a cloud one and "Send text
+read from the screen" is off; then the model names the steps from what the flow should do. What you
+typed never goes: the model sees only the input's name, such as {{email}}. The screenshots and
+templates stay on this machine. "Show the exact request" shows what was sent.
+
+The page shows each stage as it happens, and once it is done, what the model says to check. "Open in
+the editor" opens the flow.
+
 ## Recording into a flow you already have
 
-In the editor, select the empty row where the steps should go and press **Record steps here**. The
-recording is made against the flow's main area. A flow with no main area asks for its window first,
-in the same picker as a new flow, and keeps it as its main area.
-
-Review is the same. The plain draft goes in at that row, and the steps after it move down. Only the
-new steps are written, so the steps the flow already had keep their history.
+Not available yet: the editor's **Record steps here** button is disabled until a model's draft can
+go into a flow that already exists. Record a new flow instead, and call it from the existing one as
+a sub-flow.

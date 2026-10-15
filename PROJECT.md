@@ -4,10 +4,11 @@
 > what is knowingly unfinished. Written to be read top to bottom by a person joining the project,
 > or pasted into a model as context.
 >
-> `backend/Core/AiDocuments/Reference/flow-format.md` holds the flow script grammar and is kept separate on purpose — it
-> is a specification you read while writing a parser, not prose. It sits with the AI documents
-> because a model revising a script is given it whole, and the assistant searches it. `PLAN.md` is the build order and
-> holds only open work. `TODO.md` is everything deferred.
+> `backend/Core/AiDocuments/Reference/flow-format.md` holds the flow script grammar and is kept
+> separate on purpose — it is a specification you read while writing a parser, not prose. It sits
+> with the AI documents because a model revising a script is given it whole, and the assistant
+> searches it. `PLAN.md` is the build order and holds only open work. `TODO.md` is everything
+> deferred.
 >
 > Where a section describes something not built yet, it says so and names the `PLAN.md` phase.
 >
@@ -396,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 106 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -518,7 +519,8 @@ against SQLite's own foreign keys, through `ExecuteDelete` rather than EF's chan
 The global input hook records every click, drag, scroll and keystroke with the pause before it, and
 the main area at each click. Nothing becomes a step while recording. After the stop, what each click
 hit is found and the clicks on the same picture grouped; the tester goes through it all in Review,
-and the plain draft writes it into the flow, which opens in the editor - all below. The template is
+and the plain draft - or a model shaping it - writes it into the flow, which opens in the editor -
+all below. The template is
 cut from the recording's own screenshot, so nothing is captured twice.
 
 A per-action wizard did this until 2026-10-14, asking what each action was for, one at a time, and
@@ -535,9 +537,10 @@ it has a space, so the window has to be open, and `opens` the main area, so an e
 The recorded steps go after it. Discard deletes the
 flow while nothing but the setup is in it.
 
-**Recording steps into a flow that already exists** - the editor's "Record steps here" - opens the
-recording page with the position of the placeholder it was pressed on, at the flow's top or under a
-step. The recording is made against the flow's main area; a flow with none is first asked for its
+**Recording steps into a flow that already exists** - the editor's "Record steps here" - is
+disabled since 2026-10-15, until how a model's draft lands in an existing flow is settled
+(`TODO.md`, Recording). Built and tested, it opens the recording page with the position of the
+placeholder it was pressed on, at the flow's top or under a step. The recording is made against the flow's main area; a flow with none is first asked for its
 window, in the setup's picker, which saves it as the main area. Review is the same, and the plain
 draft is inserted at that position (below).
 
@@ -723,12 +726,33 @@ every row, and a step replaced loses its last good screenshots, which cascade wi
 to the executions it was in, which only its name then keeps. A draft that does not read cleanly
 writes nothing and says on which line, as an import does.
 
-**A model shapes it as a script.** It is given the draft as a script with the description, names
-the steps, groups repeated clicks - four clicks on one download icon become one Find All - and writes
-the reason each wait fails. Its answer goes through the scanner and the importer like any file, and
-when it does not read cleanly the diagnostics go back to it, three attempts at most. The guard rails
-are code rather than prompt: the flow's name and id, its templates and its inputs cannot be
-invented. What it wrote lands in the editor and never executes on its own (§10).
+**A model shapes it as a script** - Review's "Generate flow".
+`FlowGenerationService.ImportModelDraftAsync` writes the plain draft as a script and hands it, with
+an instruction to name the steps after the task, fold clicks on the same picture into one Find All
+Images and say what each failed wait was waiting for, to `Business/Ai/ScriptRevision/
+ScriptRevisionService`: a script and an instruction in, a script that reads cleanly out, built once
+for phase 9's fix loop as well. Its standing instructions are `AiPromptHelper.ReviseScript` followed
+by the whole of `AiDocuments/Reference/flow-format.md`, the grammar people read.
+
+The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
+do, with no tool calling. It is read back with the scanner as a file is, and checked in code rather
+than in the prompt: `Flow:` and `Id:` as they were, no template the draft did not cut, and every
+input kept, renamed only through the map. A refusal is a `Diagnostic` like a scanner error, with
+codes of its own, and goes back to the model line by line, three attempts at most. What the code owns
+is never taken from the answer: input values are not even sent, and they, the description and each
+template's click point, size and DPI are put back from the draft. When no answer reads cleanly, or
+the model cannot be reached, the plain draft is saved instead and the page says why, so the tester
+always has a flow. A cloud provider that may not be sent screen content (§10) gets the draft with
+nothing read under the clicks - its search names are placeholders - and is told to name the steps
+from the description.
+
+A model takes minutes over a draft, so it is work longer than a request can wait for (§4):
+`Recording.generateDraft` starts `FlowGenerationSessionService` and returns;
+`FLOW_GENERATION_PROGRESS` reports writing the draft, each attempt with the last refusal's lines,
+and saving; and `Recording.getGeneratedDraft` has what was saved - which draft, the model's notes,
+and the exact request it was sent. The page draws it as the mockup's Generating board, beside what
+went to the model and what stayed on the machine. What it wrote lands in the editor and never
+executes on its own (§10); the Check page comes next (`PLAN.md`, phase 7).
 
 **A QA test adds to it.** The screen sizes to test at, and what should happen when an execution
 ends, which becomes steps under `End Execution` because teardown is steps (§8). Stage markers and
@@ -1338,6 +1362,9 @@ rounds, so there is no orchestration framework.
 **Explain** takes a failed execution - its steps, the closest scores, the screenshots when allowed -
 and says what went wrong and what to change.
 
+**Generate flow** shapes a reviewed recording's plain draft into the flow its description asks for,
+as a script read back like any import (§6).
+
 **The element detector.** OmniParser v2's `icon_detect_v3`, a YOLOv9-E whose weights are MIT,
 Copyright Microsoft - the earlier `icon_detect` is AGPL-3.0, inherited from Ultralytics, and is not
 used. Microsoft ships it as TorchScript; it was exported once to ONNX (opset 17, with a height and
@@ -1758,13 +1785,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-732 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+750 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 546 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 564 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1878,7 +1905,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 732 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 750 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

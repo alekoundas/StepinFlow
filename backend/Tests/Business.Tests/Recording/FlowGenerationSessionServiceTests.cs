@@ -32,10 +32,11 @@ namespace Business.Tests.Recording
             return _session.StartAsync(1, new RecordingResultDto(), new ReviewedRecordingDto(), x => null);
         }
 
-        private FlowGenerationProgressDto LastProgress()
+        // Null until the generation's first stage says something.
+        private FlowGenerationProgressDto? LastProgress()
         {
             lock (_broadcast.Sent)
-                return (FlowGenerationProgressDto)_broadcast.Sent.Last(x => x.Type == BroadcastTypeEnum.FLOW_GENERATION_PROGRESS).Payload!;
+                return _broadcast.Sent.Where(x => x.Type == BroadcastTypeEnum.FLOW_GENERATION_PROGRESS).Select(x => (FlowGenerationProgressDto)x.Payload!).LastOrDefault();
         }
 
         private static async Task WaitUntilAsync(Func<bool> condition)
@@ -51,12 +52,11 @@ namespace Business.Tests.Recording
         public async Task A_generation_says_DONE_and_its_result_is_there()
         {
             (await StartAsync()).IsSuccess.ShouldBeTrue();
-            LastProgress().State.ShouldBe(FlowGenerationStateEnum.GENERATING);
             _session.GetResult().ShouldBeNull();
 
             FlowGenerationResultDto result = new FlowGenerationResultDto { IsModelDraft = true };
             _generation.Finish(result);
-            await WaitUntilAsync(() => LastProgress().State == FlowGenerationStateEnum.DONE);
+            await WaitUntilAsync(() => LastProgress()?.State == FlowGenerationStateEnum.DONE);
 
             _session.GetResult().ShouldBeSameAs(result);
         }
@@ -78,7 +78,7 @@ namespace Business.Tests.Recording
 
             await _session.CancelAsync();
 
-            LastProgress().State.ShouldBe(FlowGenerationStateEnum.NONE);
+            LastProgress().ShouldNotBeNull().State.ShouldBe(FlowGenerationStateEnum.NONE);
             _session.GetResult().ShouldBeNull();
             _generation.WasCancelled.ShouldBeTrue();
         }
@@ -89,9 +89,9 @@ namespace Business.Tests.Recording
             await StartAsync();
 
             _generation.Fail(new InvalidOperationException("There is no flow 1 to export."));
-            await WaitUntilAsync(() => LastProgress().State == FlowGenerationStateEnum.DONE);
+            await WaitUntilAsync(() => LastProgress()?.State == FlowGenerationStateEnum.DONE);
 
-            LastProgress().ErrorMessage.ShouldBe("Nothing was saved. There is no flow 1 to export.");
+            LastProgress().ShouldNotBeNull().ErrorMessage.ShouldBe("Nothing was saved. There is no flow 1 to export.");
             _session.GetResult().ShouldBeNull();
         }
 
