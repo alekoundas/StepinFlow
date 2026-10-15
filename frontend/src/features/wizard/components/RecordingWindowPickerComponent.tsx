@@ -11,7 +11,7 @@ import { FormInputTextComponent } from "@/shared/components/form/FormInputTextCo
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import type { WindowMatchDto } from "@/shared/models/window-match-dto";
-import type { RecordingSetupForm } from "@/features/wizard/components/recording-setup.zod";
+import type { RecordingWindowForm } from "@/features/wizard/components/recording-setup.zod";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 const MONO: CSSProperties = { fontFamily: "ui-monospace, Consolas, monospace" };
@@ -45,7 +45,7 @@ interface Props {
  * form and the window step use, laid out as the recording setup is.
  */
 export default function RecordingWindowPickerComponent({ children }: Props) {
-  const { control, setValue, getValues } = useFormContext<RecordingSetupForm>();
+  const { control, setValue, getValues } = useFormContext<RecordingWindowForm>();
   const titleMatchMode = useWatch({ control, name: "titleMatchMode" });
 
   const [findBy, setFindBy] = useState("APP");

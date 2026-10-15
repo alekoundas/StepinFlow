@@ -11,9 +11,10 @@ using Core.Ports;
 namespace Business.Recording.Draft
 {
     /// <summary>
-    /// The draft as it is built: the flow's rows with the recording's added after them. Every action's
-    /// builder adds through here, so what all steps share is in one place - a name unique in the
-    /// flow, the order, which branch a step goes in, the template cut for a click and the points.
+    /// The draft as it is built: the flow's rows with the recording's added at a position in them, or
+    /// after them. Every action's builder adds through here, so what all steps share is in one place -
+    /// a name unique in the flow, the order, which branch a step goes in, the template cut for a click
+    /// and the points.
     ///
     /// Everything after a search, up to the next search, goes in that search's Success branch: it
     /// only makes sense once the search found what it waited for. Its Failure branch ends the
@@ -38,9 +39,14 @@ namespace Business.Recording.Draft
         private readonly HashSet<string> _templateNames;
         private readonly Dictionary<FlowStep, int> _childCounts = new Dictionary<FlowStep, int>();
         private readonly Dictionary<int, FlowStepTemplate> _groupTemplates = new Dictionary<int, FlowStepTemplate>();
-        private int _rootCount;
 
-        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService)
+        // Where the recording goes: under this step, or at the top of the flow when null. The steps
+        // already there after the position move down one for each step added beside them.
+        private readonly FlowStep? _start;
+        private readonly List<FlowStep> _after;
+        private int _startCount;
+
+        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService, FlowStep? under, int? index)
         {
             Schema = schema;
             _result = result;
@@ -54,9 +60,16 @@ namespace Business.Recording.Draft
             _names = new HashSet<string>(taken.Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
             _templateNames = schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            // After what the flow already holds: the setup's Launch step comes first.
-            List<FlowStep> roots = schema.Steps.Where(x => x.ParentFlowStep == null).ToList();
-            _rootCount = roots.Count == 0 ? 0 : roots.Max(x => x.OrderNumber) + 1;
+            // Numbered as the tree shows them, so the ones after the position can move down. With no
+            // position, after what is already there: the setup's Launch step comes first.
+            List<FlowStep> siblings = schema.Steps.Where(x => x.ParentFlowStep == under).OrderBy(x => x.OrderNumber).ToList();
+            for (int i = 0; i < siblings.Count; i++)
+                siblings[i].OrderNumber = i;
+
+            _start = under;
+            _startCount = Math.Clamp(index ?? siblings.Count, 0, siblings.Count);
+            _after = siblings.Skip(_startCount).ToList();
+            Parent = under;
         }
 
         public FlowScriptSchema Schema { get; }
@@ -64,7 +77,7 @@ namespace Business.Recording.Draft
         /// <summary>The window the flow works in. A search looks inside it, and a point is placed in it.</summary>
         public FlowArea? MainArea { get; }
 
-        /// <summary>Where the steps added go: the top, or the Success branch of the last search.</summary>
+        /// <summary>Where the steps added go: where the recording started, or the Success branch of the last search.</summary>
         public FlowStep? Parent { get; private set; }
 
 
@@ -114,8 +127,8 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
-        /// A search that waits for the element, at the top, with its branches. What comes after it
-        /// goes in its Success branch, until the next search.
+        /// A search that waits for the element, where the recording started, with its branches. What
+        /// comes after it goes in its Success branch, until the next search.
         /// </summary>
         public FlowStep AddSearch(RecordedActionDto action, string name, FlowStepTemplate template)
         {
@@ -132,7 +145,7 @@ namespace Business.Recording.Draft
                 CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait",
             };
 
-            Parent = null;
+            Parent = _start;
             Add(search);
 
             FlowStep success = Branch(search, FlowStepTypeEnum.SUCCESS, 0);
@@ -272,8 +285,13 @@ namespace Business.Recording.Draft
 
         private int NextOrder(FlowStep? parent)
         {
-            if (parent == null)
-                return _rootCount++;
+            if (parent == null || parent == _start)
+            {
+                foreach (FlowStep later in _after)
+                    later.OrderNumber++;
+
+                return _startCount++;
+            }
 
             _childCounts.TryGetValue(parent, out int count);
             _childCounts[parent] = count + 1;

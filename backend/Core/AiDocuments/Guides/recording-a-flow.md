@@ -72,3 +72,12 @@ the same picture. "What it should do" can be edited here too.
 
 The draft is written the way an imported script is, so a draft that does not read cleanly leaves the
 flow as it was and says on which line.
+
+## Recording into a flow you already have
+
+In the editor, select the empty row where the steps should go and press **Record steps here**. The
+recording is made against the flow's main area. A flow with no main area asks for its window first,
+in the same picker as a new flow, and keeps it as its main area.
+
+Review is the same. The plain draft goes in at that row, and the steps after it move down. Only the
+new steps are written, so the steps the flow already had keep their history.

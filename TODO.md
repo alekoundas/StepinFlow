@@ -289,15 +289,11 @@ the history.
 
 ## Recording
 
-- [ ] **"Record steps here" has no way in since the wizard went.** Raised 2026-10-14. The editor's
-      button opens the recording page with a position in an existing flow, and only the per-action
-      wizard could insert steps at a position. Today it records with no main area, and Review's
-      draft button does nothing without a flow the setup made. Either it becomes Review and the
-      draft, inserted at that position - the flow needs a main area to record against, and
-      `FlowStepDataService.CreateTreeAsync` already inserts a tree at a position, with tests - or
-      the button goes. To decide. Either way what only the wizard read goes with it: the 400 by
-      400 crop kept at each press, with its two capture-size settings and `Recording.getScreenshot`,
-      and if the button goes, recording with no main area.
+- [ ] **Remove what only the wizard read.** Raised 2026-10-14. Every recording is now made against
+      a main area - "Record steps here" asks for the flow's window when it has none - so recording
+      with none is never asked for: `Recording.start` without a flow, `TryCaptureAround`, and the
+      400 by 400 crop kept at each press, with its two capture-size settings and
+      `Recording.getScreenshot`. `RecordingStartDto.FlowId` then stops being optional.
 
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that

@@ -1,6 +1,7 @@
 using Business.FlowScript.Models;
 using Business.Recording.Draft.Actions;
 using Core.Enums;
+using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Ports;
 
@@ -33,9 +34,11 @@ namespace Business.Recording.Draft
             FlowScriptSchema flow,
             RecordingResultDto recording,
             ReviewedRecordingDto reviewed,
-            Func<int, RecordingScreenDto?> screenAt)
+            Func<int, RecordingScreenDto?> screenAt,
+            FlowStep? under,
+            int? index)
         {
-            RecordingDraft draft = new RecordingDraft(flow, recording, screenAt, _screenshotService);
+            RecordingDraft draft = new RecordingDraft(flow, recording, screenAt, _screenshotService, under, index);
             Dictionary<int, ReviewedActionDto> reviews = reviewed.Actions.ToDictionary(x => x.ActionIndex);
 
             foreach (RecordedActionDto action in recording.Actions)

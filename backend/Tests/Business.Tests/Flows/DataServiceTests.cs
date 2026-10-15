@@ -345,7 +345,7 @@ namespace Business.Tests.Flows
             FlowStep success = TreeStepHelper.CreateBranchChildren(find).First(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
             FlowStep move = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", ParentFlowStep = success, FlowStepReference = find, FlowPoint = new FlowPoint { Name = "Find" } };
 
-            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, move], Ct);
+            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, move], [], Ct);
 
             created.Data.ShouldBe(flowId);
             using AppDbContext db = _database.CreateDbContext();
@@ -373,7 +373,7 @@ namespace Business.Tests.Flows
             string existing = Templates(flowId).Single().Name;
 
             FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", FlowStepTemplates = [new FlowStepTemplate { Name = existing }, new FlowStepTemplate()] };
-            (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 1, [find], Ct)).IsSuccess.ShouldBeTrue();
+            (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 1, [find], [], Ct)).IsSuccess.ShouldBeTrue();
 
             List<FlowStepTemplate> templates = Templates(flowId);
             templates.ShouldAllBe(x => IsTemplateName(x.Name));
@@ -386,7 +386,7 @@ namespace Business.Tests.Flows
             int flowId = await NewFlowAsync();
             int searchId = (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Search" }, [], Ct)).Data;
 
-            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(null, searchId, 0, [new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait" }], Ct);
+            ResultDto<int> created = await _dataService.FlowStep.CreateTreeAsync(null, searchId, 0, [new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait" }], [], Ct);
 
             created.ErrorMessage.ShouldBe("\"Search\" holds steps in its branches, not directly.");
             Steps(flowId).ShouldNotContain(x => x.Name == "Wait");

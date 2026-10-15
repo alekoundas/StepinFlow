@@ -21,7 +21,8 @@ namespace Business.Tests.Recording
 {
     /// <summary>
     /// The plain draft, end to end: a flow made by the recording setup, a reviewed recording added
-    /// to it, written as a script and imported through a real database.
+    /// to it, written as a script and imported through a real database - or inserted at a position,
+    /// as the editor's "Record steps here" does.
     /// </summary>
     public sealed class FlowGenerationServiceTests : IDisposable
     {
@@ -46,7 +47,7 @@ namespace Business.Tests.Recording
             FlowScriptExporter exporter = new FlowScriptExporter(_database, new Printer());
             FlowScriptImporter importer = new FlowScriptImporter(new Scanner(), _dataService);
             RecordingDraftBuilder draftBuilder = new RecordingDraftBuilder(new FakeScreenshotService());
-            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer());
+            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer(), new Scanner(), _dataService);
 
             _resolver.AreasByName["chrome"] = AreaResolution.Ok(new Rectangle(0, 0, 800, 600), new WindowHandle(7));
             _windows.WindowProcessId = CHROME;
@@ -130,6 +131,73 @@ namespace Business.Tests.Recording
             (flow.Id, flow.Name, flow.IsQaTest).ShouldBe((flowId, "Download invoices", true));
             flow.Description.ShouldBe("Logs in and downloads last month's invoices.");
             (await db.FlowAreas.SingleAsync(Ct)).IsMain.ShouldBeTrue();
+        }
+
+        // ================================================================
+        // Into a flow that already existed
+        // ================================================================
+
+        // Only the new rows are written, so a step already there keeps its history.
+        [Fact]
+        public async Task A_recording_at_a_position_goes_in_between_and_the_steps_already_there_keep_their_ids()
+        {
+            int flowId = await NewFlowAsync();
+            int launchId = Steps(flowId).Single(x => x.ParentFlowStepId == null).Id;
+            Record();
+
+            RecordingDraftPositionDto position = new RecordingDraftPositionDto { FlowId = flowId, Index = 0 };
+            ResultDto<FlowScriptImportResultDto> inserted = await _generation.InsertPlainDraftAsync(position, _recording, _reviewed, ScreenAt, Ct);
+
+            inserted.IsSuccess.ShouldBeTrue(inserted.ErrorMessage);
+            FlowScriptImportResultDto result = inserted.Data.ShouldNotBeNull();
+            (result.IsSuccess, result.FlowId).ShouldBe((true, flowId));
+
+            List<FlowStep> steps = Steps(flowId);
+            List<FlowStep> roots = steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).ToList();
+            roots.Select(x => x.Name).ShouldBe(["Find Email", "Launch chrome"]);
+            roots[1].Id.ShouldBe(launchId);
+
+            using AppDbContext db = _database.CreateDbContext();
+            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == roots[0].Id, Ct);
+            template.TemplateImage.ShouldNotBeNull();
+            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
+        }
+
+        [Fact]
+        public async Task A_recording_under_a_branch_goes_in_that_branch()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep check = new FlowStep { RootId = flowId, FlowId = flowId, OrderNumber = 1, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Signed in" };
+            int checkId = (await _dataService.FlowStep.CreateAsync(check, [], Ct)).Data;
+            int successId = Steps(flowId).Single(x => x.ParentFlowStepId == checkId && x.FlowStepType == FlowStepTypeEnum.SUCCESS).Id;
+            Record();
+
+            RecordingDraftPositionDto position = new RecordingDraftPositionDto { FlowId = flowId, ParentFlowStepId = successId, Index = 0 };
+            ResultDto<FlowScriptImportResultDto> inserted = await _generation.InsertPlainDraftAsync(position, _recording, _reviewed, ScreenAt, Ct);
+
+            inserted.IsSuccess.ShouldBeTrue(inserted.ErrorMessage);
+            Steps(flowId).Where(x => x.ParentFlowStepId == successId).Select(x => x.Name).ShouldBe(["Find Email"]);
+        }
+
+        [Fact]
+        public async Task A_position_under_a_step_no_longer_there_writes_nothing_and_says_so()
+        {
+            int flowId = await NewFlowAsync();
+            int stepCount = Steps(flowId).Count;
+            Record();
+
+            RecordingDraftPositionDto position = new RecordingDraftPositionDto { FlowId = flowId, ParentFlowStepId = 999, Index = 0 };
+            ResultDto<FlowScriptImportResultDto> inserted = await _generation.InsertPlainDraftAsync(position, _recording, _reviewed, ScreenAt, Ct);
+
+            inserted.ErrorMessage.ShouldBe("The step the recording goes under is no longer in the flow.");
+            Steps(flowId).Count.ShouldBe(stepCount);
+        }
+
+        private List<FlowStep> Steps(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+            return db.FlowSteps.AsNoTracking().Where(x => x.RootId == flowId).ToList();
         }
     }
 }

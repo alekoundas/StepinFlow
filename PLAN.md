@@ -210,6 +210,9 @@ In this order:
       no tool calling, so any model that returns JSON works. Guard rails sit in code rather than the
       prompt: `Flow:` and `Id:` match the draft, every template the answer names is one the draft
       cut, and inputs are renamed only through the map, so their values and secrets follow.
+      A recording into a flow that already existed is inserted, writing only its new rows, so the
+      steps there keep their history: the model's answer has to land the same way, as new rows at
+      the position, rather than through the import that replaces them.
 - [ ] **The Check page.** The script with what the model changed marked, the tree, the model's
       notes, the import's errors and warnings (5.13), and "ask for changes", which sends the script
       back with what the tester wrote.

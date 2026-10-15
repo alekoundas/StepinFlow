@@ -107,7 +107,8 @@ namespace Business.FlowScript
             result.TemplateCount++;
         }
 
-        private static FlowScriptImportResultDto Failed(IReadOnlyList<Diagnostic> diagnostics)
+        // Also what the recording's draft says when it does not read as a file.
+        internal static FlowScriptImportResultDto Failed(IReadOnlyList<Diagnostic> diagnostics)
         {
             return new FlowScriptImportResultDto
             {

@@ -395,7 +395,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 103 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 104 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -534,11 +534,11 @@ it has a space, so the window has to be open, and `opens` the main area, so an e
 The recorded steps go after it. Discard deletes the
 flow while nothing but the setup is in it.
 
-**Recording steps into a flow that already exists** - the editor's "Record steps here" - has no
-way in since the wizard went, which was the only thing that inserted steps at a position. It still
-records with no main area - a fixed square around the cursor, taken a moment after the press, with
-no window size or DPI - and Review's draft writes only a flow the setup made. What becomes of it is
-in `TODO.md` (Recording).
+**Recording steps into a flow that already exists** - the editor's "Record steps here" - opens the
+recording page with the position of the placeholder it was pressed on, at the flow's top or under a
+step. The recording is made against the flow's main area; a flow with none is first asked for its
+window, in the setup's picker, which saves it as the main area. Review is the same, and the plain
+draft is inserted at that position (below).
 
 Given a flow, `Business/Recording/Session` records against the flow's main area:
 
@@ -713,6 +713,14 @@ model's answer land the one way, and the plain draft is held to what a file is: 
 read cleanly leaves the flow as it was and says on which line. Then the editor opens on the flow.
 The import replaces the flow's rows and keeps the row, so its name, description, QA switch and
 sub-flow setting stay as the setup left them.
+
+**Into a flow that already existed it is inserted, not imported.** `Recording.insertDraft` builds
+the draft on the flow's rows at the editor's position - the steps after it move down, and each
+search sits at that position rather than at the top - and reads it back through the scanner the same
+way, but writes only the new rows, through `FlowStepDataService.CreateTreeAsync`. An import replaces
+every row, and a step replaced loses its last good screenshots, which cascade with it, and its link
+to the executions it was in, which only its name then keeps. A draft that does not read cleanly
+writes nothing and says on which line, as an import does.
 
 **A model shapes it as a script.** It is given the draft as a script with the description, names
 the steps, groups repeated clicks - four clicks on one download icon become one Find All - and writes
@@ -1749,13 +1757,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-728 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+733 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 542 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 547 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1869,7 +1877,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 728 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 733 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

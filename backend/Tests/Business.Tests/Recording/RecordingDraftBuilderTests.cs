@@ -105,7 +105,7 @@ namespace Business.Tests.Recording
 
         private FlowScriptSchema Build()
         {
-            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt);
+            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null);
         }
 
         private static List<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)
@@ -187,6 +187,37 @@ namespace Business.Tests.Recording
             Click(400, 300, "Invoices");
 
             ChildrenOf(Build(), null).Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SYSTEM_COMMAND, FlowStepTypeEnum.SEARCH_IMAGE]);
+        }
+
+        // The editor's "Record steps here".
+        [Fact]
+        public void A_recording_at_a_position_goes_in_between_and_the_steps_after_it_move_down()
+        {
+            FlowScriptSchema flow = Flow();
+            flow.Steps.Add(new FlowStep { Name = "Wait", FlowStepType = FlowStepTypeEnum.WAIT, OrderNumber = 1 });
+            Click(400, 300, "Invoices");
+
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, null, 1);
+
+            ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Find Invoices", "Wait"]);
+        }
+
+        // Each search beside the one before it, as at the top: what follows one is in its Success branch.
+        [Fact]
+        public void A_recording_under_a_branch_puts_its_searches_beside_each_other_there()
+        {
+            FlowScriptSchema flow = Flow();
+            FlowStep check = new FlowStep { Name = "Signed in", FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, OrderNumber = 1 };
+            FlowStep success = new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS, ParentFlowStep = check, OrderNumber = 0 };
+            flow.Steps.AddRange([check, success, new FlowStep { FlowStepType = FlowStepTypeEnum.FAILURE, ParentFlowStep = check, OrderNumber = 1 }]);
+            Click(300, 200, "Email");
+            Typing("ops@example.com", inputName: "email");
+            Click(300, 400, "Sign in");
+
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, success, 0);
+
+            ChildrenOf(schema, success).Select(x => x.Name).ShouldBe(["Find Email", "Find Sign in"]);
+            ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Signed in"]);
         }
 
         [Fact]

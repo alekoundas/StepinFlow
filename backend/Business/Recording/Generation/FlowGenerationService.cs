@@ -1,5 +1,7 @@
+using Business.Flows.DataService;
 using Business.FlowScript;
 using Business.FlowScript.Models;
+using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
 using Core.Models.Database;
@@ -12,6 +14,10 @@ namespace Business.Recording.Generation
     /// A recording into a flow: the draft, the script, the import. The draft goes through the
     /// printer and the scanner rather than straight to the database, so a recorded flow, a file and
     /// a model's answer all land the one way, and the plain draft is held to what a file is.
+    ///
+    /// Into a flow that already existed, at a position, it is read back the same way but only the
+    /// new rows are written: the import replaces every row, and a step replaced loses its last good
+    /// screenshots and its link to the executions it was in.
     /// </summary>
     public sealed class FlowGenerationService : IFlowGenerationService
     {
@@ -19,13 +25,23 @@ namespace Business.Recording.Generation
         private readonly IFlowScriptImporter _importer;
         private readonly IRecordingDraftBuilder _draftBuilder;
         private readonly IPrinter _printer;
+        private readonly IScanner _scanner;
+        private readonly DataService _dataService;
 
-        public FlowGenerationService(IFlowScriptExporter exporter, IFlowScriptImporter importer, IRecordingDraftBuilder draftBuilder, IPrinter printer)
+        public FlowGenerationService(
+            IFlowScriptExporter exporter,
+            IFlowScriptImporter importer,
+            IRecordingDraftBuilder draftBuilder,
+            IPrinter printer,
+            IScanner scanner,
+            DataService dataService)
         {
             _exporter = exporter;
             _importer = importer;
             _draftBuilder = draftBuilder;
             _printer = printer;
+            _scanner = scanner;
+            _dataService = dataService;
         }
 
 
@@ -41,12 +57,65 @@ namespace Business.Recording.Generation
             CancellationToken ct = default)
         {
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt);
+            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null);
 
             string script = _printer.Write(draft);
             Dictionary<string, byte[]> templates = TemplatesOf(draft);
 
             return await _importer.ImportTextAsync(script, templates, ct);
+        }
+
+        public async Task<ResultDto<FlowScriptImportResultDto>> InsertPlainDraftAsync(
+            RecordingDraftPositionDto position,
+            RecordingResultDto recording,
+            ReviewedRecordingDto reviewed,
+            Func<int, RecordingScreenDto?> screenAt,
+            CancellationToken ct = default)
+        {
+            FlowScriptSchema flow = await _exporter.LoadAsync(position.FlowId, ct);
+
+            FlowStep? under = null;
+            if (position.ParentFlowStepId != null)
+            {
+                under = flow.Steps.FirstOrDefault(x => x.Id == position.ParentFlowStepId);
+                if (under == null)
+                    return ResultDto<FlowScriptImportResultDto>.Failure("The step the recording goes under is no longer in the flow.");
+            }
+
+            HashSet<FlowStep> stepsBefore = flow.Steps.ToHashSet();
+            HashSet<FlowCsvColumn> inputsBefore = flow.Inputs.ToHashSet();
+
+            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index);
+
+            string script = _printer.Write(draft);
+            FlowScriptSchema read = _scanner.Read(script);
+            if (!read.IsValid)
+            {
+                FlowScriptImportResultDto refused = FlowScriptImporter.Failed(read.Diagnostics);
+                return ResultDto<FlowScriptImportResultDto>.Success(refused);
+            }
+
+            List<FlowStep> steps = draft.Steps.Where(x => !stepsBefore.Contains(x)).ToList();
+            List<FlowCsvColumn> inputs = draft.Inputs.Where(x => !inputsBefore.Contains(x)).ToList();
+
+            // The tree insert hangs them at the position by its ids, as it renumbers the steps there.
+            foreach (FlowStep step in steps.Where(x => x.ParentFlowStep == under))
+                step.ParentFlowStep = null;
+
+            ResultDto<int> saved = await _dataService.FlowStep.CreateTreeAsync(position.FlowId, position.ParentFlowStepId, position.Index, steps, inputs, ct);
+            if (!saved.IsSuccess)
+                return ResultDto<FlowScriptImportResultDto>.Failure(saved.ErrorMessage ?? "The recording could not be written into the flow.");
+
+            FlowScriptImportResultDto inserted = new FlowScriptImportResultDto
+            {
+                IsSuccess = true,
+                FlowId = saved.Data,
+                FlowName = flow.Flow.Name,
+                StepCount = steps.Count,
+                TemplateCount = steps.SelectMany(x => x.FlowStepTemplates).Count(),
+            };
+
+            return ResultDto<FlowScriptImportResultDto>.Success(inserted);
         }
 
 

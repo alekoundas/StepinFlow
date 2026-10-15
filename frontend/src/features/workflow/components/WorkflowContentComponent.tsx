@@ -148,12 +148,12 @@ export function WorkflowContentComponent() {
     // Recording lands the steps exactly where this placeholder sits, so the position the user
     // already chose in the tree is the position they get.
     const startRecording = () => {
+      if (rootFlowId === undefined) return;
+
       setTarget({
-        targetFlowId: selectedTreeNode.parentFlowStepId
-          ? undefined
-          : selectedTreeNode.parentFlowId,
-        targetParentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-        targetIndex: selectedTreeNode.orderNumber,
+        flowId: rootFlowId,
+        parentFlowStepId: selectedTreeNode.parentFlowStepId ?? null,
+        index: selectedTreeNode.orderNumber,
       });
       navigate("/record");
     };

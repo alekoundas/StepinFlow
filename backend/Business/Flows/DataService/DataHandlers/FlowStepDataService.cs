@@ -89,9 +89,10 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// New steps saved at once from a recording.
+        /// New steps saved at once from a recording, with the inputs they type. Only new rows are
+        /// written: the flow's steps keep their ids and their history.
         /// </summary>
-        public async Task<ResultDto<int>> CreateTreeAsync(int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, CancellationToken ct)
+        public async Task<ResultDto<int>> CreateTreeAsync(int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowCsvColumn> inputs, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
@@ -121,9 +122,10 @@ namespace Business.Flows.DataService.DataHandlers
             // well as against what was already saved.
             HashSet<string> taken = await TakenNamesAsync(dbContext, rootId.Value, ct);
             HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, rootId.Value, ct);
+            Dictionary<string, string> templateNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (FlowStep step in rows)
-                PrepareNewStep(step, rootId.Value, taken, takenTemplates);
+                PrepareNewStep(step, rootId.Value, taken, takenTemplates, templateNames);
 
             // The children of each new step in the order given, a check's branches Success then Failure.
             foreach (IGrouping<FlowStep, FlowStep> children in rows.Where(x => x.ParentFlowStep != null).GroupBy(x => x.ParentFlowStep!))
@@ -137,7 +139,14 @@ namespace Business.Flows.DataService.DataHandlers
             List<FlowStep> landing = rows.Where(x => x.ParentFlowStep == null).ToList();
             await PlaceAtTargetAsync(dbContext, landing, rootId.Value, parentFlowStepId, targetIndex, ct);
 
+            foreach (FlowCsvColumn input in inputs)
+            {
+                input.Id = 0;
+                input.FlowId = rootId.Value;
+            }
+
             dbContext.FlowSteps.AddRange(rows);
+            dbContext.FlowCsvColumns.AddRange(inputs);
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<int>.Success(rootId.Value);
@@ -300,7 +309,7 @@ namespace Business.Flows.DataService.DataHandlers
 
         // A new row in the flow, named apart from everything in it, with the points it creates and
         // its templates in the order given. A branch row keeps its name: two Success rows are no clash.
-        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken, HashSet<string> takenTemplates)
+        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken, HashSet<string> takenTemplates, Dictionary<string, string> templateNames)
         {
             step.Id = 0;
             step.RootId = rootId;
@@ -309,6 +318,13 @@ namespace Business.Flows.DataService.DataHandlers
 
             if (!TreeStepHelper.IsBranchChild(step.FlowStepType))
                 step.Name = UniqueName(step.Name, taken);
+
+            // A row already saved is linked by its id, or saving the new ones would insert it again.
+            if (step.FlowArea != null && step.FlowArea.Id != 0)
+            {
+                step.FlowAreaId = step.FlowArea.Id;
+                step.FlowArea = null;
+            }
 
             // A recorded click knows where it happened, but a cursor step reads its position from a
             // FlowPoint, so the recording creates one for the step to link.
@@ -319,20 +335,44 @@ namespace Business.Flows.DataService.DataHandlers
 
                 point.FlowId = rootId;
                 point.Name = UniqueName(point.Name, taken);
+
+                if (point.FlowArea != null && point.FlowArea.Id != 0)
+                {
+                    point.FlowAreaId = point.FlowArea.Id;
+                    point.FlowArea = null;
+                }
             }
 
             int order = 0;
             foreach (FlowStepTemplate template in step.FlowStepTemplates)
             {
-                // Gennerate unique Template name!
-                string name = FileNameHelper.GenerateTemplateFileName();
-                while (!takenTemplates.Add(name))
-                    name = FileNameHelper.GenerateTemplateFileName();
-
                 template.Id = 0;
-                template.Name = name;
+                template.Name = TemplateName(template.Name, takenTemplates, templateNames);
                 template.OrderNumber = order++;
             }
+        }
+
+        // A template keeps the name it came with while the flow has none by it, so steps sharing a
+        // picture keep sharing its file. One with no name, or a taken one, is given a new name.
+        private static string TemplateName(string given, HashSet<string> takenTemplates, Dictionary<string, string> templateNames)
+        {
+            if (given.Length > 0 && templateNames.TryGetValue(given, out string? shared))
+                return shared;
+
+            string name = given;
+            if (name.Length == 0 || takenTemplates.Contains(name))
+            {
+                // Gennerate unique Template name!
+                name = FileNameHelper.GenerateTemplateFileName();
+                while (takenTemplates.Contains(name))
+                    name = FileNameHelper.GenerateTemplateFileName();
+            }
+
+            takenTemplates.Add(name);
+            if (given.Length > 0)
+                templateNames[given] = name;
+
+            return name;
         }
 
         private static string UniqueName(string desired, HashSet<string> taken)

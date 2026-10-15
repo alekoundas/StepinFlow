@@ -1,16 +1,14 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-/** Where a recording's steps go: child number targetIndex of a flow, or of a step. */
-export interface RecordingTarget {
-  targetFlowId?: number | null;
-  targetParentFlowStepId?: number | null;
-  targetIndex: number;
-}
+import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
 
 interface Props {
-  /** Where the steps land. */
-  target: RecordingTarget | undefined;
+  /**
+   * Where the steps go in a flow that already existed: the editor's "Record steps here". Undefined
+   * when the recording makes a flow of its own.
+   */
+  target: RecordingDraftPositionDto | undefined;
 
   /** Whether the flow the recorder is about to create should be a sub-flow. */
   createAsSubFlow: boolean;
@@ -22,7 +20,7 @@ interface Props {
    */
   setupFlowId: number | undefined;
 
-  setTarget: (target: RecordingTarget | undefined) => void;
+  setTarget: (target: RecordingDraftPositionDto | undefined) => void;
   setCreateAsSubFlow: (isSubFlow: boolean) => void;
   setSetupFlowId: (flowId: number | undefined) => void;
 

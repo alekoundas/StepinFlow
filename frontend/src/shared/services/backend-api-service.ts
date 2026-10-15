@@ -27,6 +27,7 @@ import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { RecordingScreenDto } from "@/shared/models/recording-screen-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
 import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
+import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -188,7 +189,7 @@ export const backendApiService = {
     // Creates the flow the recording goes into, and returns its id.
     setup: (dto: RecordingSetupDto) => call<number>("Recording.setup", dto),
 
-    // With a flow, against its main area. Without one, as the wizard records.
+    // With a flow, against its main area.
     // Electron's process owns every StepinFlow window, and nothing done on them is recorded.
     start: async (flowId?: number) => {
       const electronProcessId = await window.electronApi.electronProcess.getId();
@@ -208,6 +209,9 @@ export const backendApiService = {
     // The reviewed recording written into its flow with no model, as an imported file would be.
     importDraft: (flowId: number) =>
       call<FlowScriptImportResultDto>("Recording.importDraft", flowId),
+    // Into a flow that already existed, at a position: only the new rows are written.
+    insertDraft: (dto: RecordingDraftPositionDto) =>
+      call<FlowScriptImportResultDto>("Recording.insertDraft", dto),
     // The flow the setup created goes with it while nothing but the setup is in it.
     discard: (flowId?: number) => call<boolean>("Recording.discard", { flowId }),
     // .Net returns byte[], which arrives here as a base64 string

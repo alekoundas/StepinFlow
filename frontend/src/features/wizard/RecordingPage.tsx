@@ -16,10 +16,13 @@ import { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum"
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
+import RecordingMainAreaComponent from "@/features/wizard/components/RecordingMainAreaComponent";
 import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
 import { type ActionReview, toReviewed } from "@/features/wizard/review/review";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { flowKeys, useFlow } from "@/features/flow/hooks/use-flow";
 
 const RECORDING_STEPS = ["Describe", "Record", "Review"];
 
@@ -41,19 +44,24 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
  * A discard from anywhere comes back as NONE, and the page leaves. The bar closes once the
  * recording stops.
  *
- * The live list is lines, never pixels; the wizard asks for an image when it draws that step.
+ * A new flow is described first, and the plain draft is imported into it whole. From the editor's
+ * "Record steps here" the flow already exists: it records against its main area, asking for the
+ * window when it has none, and the draft is inserted at the editor's position.
+ *
+ * The live list is lines, never pixels; Review asks for an image when it draws that action.
  */
 export default function RecordingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const {
-    target,
-    createAsSubFlow,
-    setupFlowId,
-    setTarget,
-    setSetupFlowId,
-    reset,
-  } = useWizardStore();
+  const { target, createAsSubFlow, setupFlowId, setSetupFlowId, reset } = useWizardStore();
+  const { setSelectedTreeNode } = useWorkflowStore();
+
+  const { data: targetFlow } = useFlow(target?.flowId ?? null);
+  const mainArea = targetFlow?.flowAreas.find((x) => x.isMain);
+  const needsMainArea = targetFlow !== undefined && mainArea === undefined;
+
+  // The flow the recording is made against, once it has a main area.
+  const recordingFlowId = setupFlowId ?? (mainArea ? target?.flowId : undefined);
 
   // The recording this page follows, null until one is underway, so the NONE of a discard made
   // before any recording - this page's own Cancel - is not taken for one.
@@ -107,17 +115,20 @@ export default function RecordingPage() {
     }
   };
 
-  // The plain draft, written into the flow the setup made, then the editor. A draft that does not
-  // read cleanly leaves the flow as it was and says where.
+  // The plain draft, then the editor: imported whole into the flow the setup made, or inserted at
+  // the editor's position. A draft that does not read cleanly leaves the flow as it was and says where.
   const continueFromReview = async (reviews: Record<number, ActionReview>) => {
-    if (!result || setupFlowId === undefined) return;
+    if (!result || recordingFlowId === undefined) return;
 
     setIsContinuing(true);
     setError(null);
 
     try {
       await backendApiService.Recording.review(toReviewed(result, reviews));
-      const imported = await backendApiService.Recording.importDraft(setupFlowId);
+
+      let imported;
+      if (target) imported = await backendApiService.Recording.insertDraft(target);
+      else imported = await backendApiService.Recording.importDraft(recordingFlowId);
 
       if (!imported.isSuccess) {
         const where = imported.errors.map((x) => `line ${x.line}: ${x.message}`).join(" ");
@@ -132,6 +143,9 @@ export default function RecordingPage() {
         queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
       ]);
 
+      // The placeholder it was recorded from is gone from the tree.
+      if (target) setSelectedTreeNode(undefined);
+
       reset();
       navigate(`/workflow/${imported.flowId}`);
     } catch (err) {
@@ -144,7 +158,7 @@ export default function RecordingPage() {
   const recordAgain = () => {
     setResult(null);
     setProgress(null);
-    void openBar(setupFlowId);
+    void openBar(recordingFlowId);
   };
 
   // Stopped or discarded, from wherever it was.
@@ -168,15 +182,17 @@ export default function RecordingPage() {
     }
   };
 
-  // The flow is created before anything is recorded, not on save. Every step form then has a
-  // real flow to list search areas and points against, and to save a new one into, which is the
-  // difference between an image search step you can finish here and one you cannot. The recorded
-  // steps go after the launch step when there is one.
-  const handleSetupCreated = (flowId: number, addsLaunchStep: boolean) => {
-    setTarget({ targetFlowId: flowId, targetIndex: addsLaunchStep ? 1 : 0 });
-    setSetupFlowId(flowId);
+  // The flow is created before anything is recorded, not on save: the recording is made against
+  // its main area, and the name is reserved. The recorded steps go after the launch step.
+  const handleSetupCreated = (createdFlowId: number) => {
+    setSetupFlowId(createdFlowId);
     void queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
-    void openBar(flowId);
+    void openBar(createdFlowId);
+  };
+
+  const handleMainAreaSaved = (intoFlowId: number) => {
+    void queryClient.invalidateQueries({ queryKey: flowKeys.detail(intoFlowId) });
+    void openBar(intoFlowId);
   };
 
   const handleStop = async () => {
@@ -221,28 +237,29 @@ export default function RecordingPage() {
             className="m-0 text-3xl font-semibold"
             style={{ letterSpacing: "-0.02em" }}
           >
-            Record a flow
+            {target ? `Record steps into ${targetFlow?.name ?? "the flow"}` : "Record a flow"}
           </h1>
           <p
             className="m-0"
             style={{ color: "var(--text-color-secondary)", maxWidth: 680 }}
           >
-            Tell it what the flow is for and which window it works in. Then do the task once; nothing
-            you do becomes a step until you have reviewed it.
+            {target
+              ? "Do the task once. The steps go where you were in the editor, and nothing you do becomes a step until you have reviewed it."
+              : "Tell it what the flow is for and which window it works in. Then do the task once; nothing you do becomes a step until you have reviewed it."}
           </p>
         </div>
 
-        <RecordingStepsComponent current={stepOf(target !== null, result !== null)} />
+        <RecordingStepsComponent current={stepOf(recordingFlowId !== undefined, result !== null)} />
       </div>
 
-      {target && !result && (
+      {recordingFlowId !== undefined && !result && (
         <div className="flex align-items-center justify-content-end flex-wrap gap-2">
           {!progress && (
             <Button
               type="button"
               label="Record now"
               icon="pi pi-circle-fill"
-              onClick={() => void openBar(setupFlowId)}
+              onClick={() => void openBar(recordingFlowId)}
               severity="danger"
             />
           )}
@@ -278,7 +295,7 @@ export default function RecordingPage() {
       {result && (
         <RecordingReviewComponent
           result={result}
-          flowId={setupFlowId}
+          flowId={recordingFlowId}
           elapsedMilliseconds={progress?.elapsedMilliseconds ?? 0}
           isContinuing={isContinuing}
           onRecordAgain={recordAgain}
@@ -311,7 +328,7 @@ export default function RecordingPage() {
         </div>
       )}
 
-      {!target && (
+      {!target && setupFlowId === undefined && (
         <RecordingSetupComponent
           isSubFlow={createAsSubFlow}
           onCreated={handleSetupCreated}
@@ -319,7 +336,15 @@ export default function RecordingPage() {
         />
       )}
 
-      {target && !result && (
+      {target && needsMainArea && (
+        <RecordingMainAreaComponent
+          flowId={target.flowId}
+          onSaved={() => handleMainAreaSaved(target.flowId)}
+          onCancel={() => void handleCancel()}
+        />
+      )}
+
+      {recordingFlowId !== undefined && !result && (
         <Panel header={`Actions (${actionCount})`}>
           {recentActions.length === 0 ? (
             <LabelComponent
