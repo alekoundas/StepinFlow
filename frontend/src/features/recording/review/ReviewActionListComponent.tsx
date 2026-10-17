@@ -13,7 +13,7 @@ import {
   listedActions,
   subtitleOf,
   titleOf,
-} from "@/features/wizard/review/review";
+} from "@/features/recording/review/review";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 

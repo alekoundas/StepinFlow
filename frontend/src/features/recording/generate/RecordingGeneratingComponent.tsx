@@ -13,7 +13,7 @@ import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-re
 import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { type ActionReview, listedActions } from "@/features/wizard/review/review";
+import { type ActionReview, listedActions } from "@/features/recording/review/review";
 
 // The theme's own variables: PrimeFlex 4's surface and text-color classes read tokens this theme
 // does not define.

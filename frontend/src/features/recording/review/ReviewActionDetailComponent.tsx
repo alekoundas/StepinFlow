@@ -10,7 +10,7 @@ import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import ElementRectangleEditorComponent from "@/features/wizard/review/ElementRectangleEditorComponent";
+import ElementRectangleEditorComponent from "@/features/recording/review/ElementRectangleEditorComponent";
 import {
   type ActionReview,
   elementOf,
@@ -23,7 +23,7 @@ import {
   titleOf,
   toSeconds,
   waitFor,
-} from "@/features/wizard/review/review";
+} from "@/features/recording/review/review";
 
 const CARD: CSSProperties = { background: "var(--surface-card)", borderColor: "var(--surface-border)" };
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };

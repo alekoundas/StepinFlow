@@ -19,16 +19,16 @@ import type { RecordingProgressDto } from "@/shared/models/recording-progress-dt
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
-import RecordingSetupComponent from "@/features/wizard/components/RecordingSetupComponent";
-import RecordingMainAreaComponent from "@/features/wizard/components/RecordingMainAreaComponent";
-import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
-import RecordingGeneratingComponent from "@/features/wizard/generate/RecordingGeneratingComponent";
-import RecordingCheckComponent, { type RevisionProblem } from "@/features/wizard/check/RecordingCheckComponent";
-import { type ActionReview, toReviewed } from "@/features/wizard/review/review";
+import RecordingSetupComponent from "@/features/recording/components/RecordingSetupComponent";
+import RecordingMainAreaComponent from "@/features/recording/components/RecordingMainAreaComponent";
+import RecordingReviewComponent from "@/features/recording/review/RecordingReviewComponent";
+import RecordingGeneratingComponent from "@/features/recording/generate/RecordingGeneratingComponent";
+import RecordingCheckComponent, { type RevisionProblem } from "@/features/recording/check/RecordingCheckComponent";
+import { type ActionReview, toReviewed } from "@/features/recording/review/review";
 import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
-import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import RecordingLiveListComponent from "@/features/recording/components/RecordingLiveListComponent";
+import { useRecordingStore } from "@/features/recording/store/recording-store";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { flowKeys, useFlow } from "@/features/flow/hooks/use-flow";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
@@ -81,7 +81,7 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
 export default function RecordingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { target, createAsSubFlow, setupFlowId, setSetupFlowId, reset } = useWizardStore();
+  const { target, createAsSubFlow, setupFlowId, setSetupFlowId, reset } = useRecordingStore();
   const { setSelectedTreeNode } = useWorkflowStore();
   const { openConfirm } = useDialogStore();
   const { data: isAiConfigured } = useAiStatus();

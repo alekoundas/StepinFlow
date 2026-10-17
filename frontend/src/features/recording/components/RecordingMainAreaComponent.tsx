@@ -6,13 +6,13 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/forms/FlowAreaScalesWithFieldComponent";
-import RecordingSectionComponent from "@/features/wizard/components/RecordingSectionComponent";
-import RecordingWindowPickerComponent from "@/features/wizard/components/RecordingWindowPickerComponent";
-import WhileYouRecordComponent from "@/features/wizard/components/WhileYouRecordComponent";
+import RecordingSectionComponent from "@/features/recording/components/RecordingSectionComponent";
+import RecordingWindowPickerComponent from "@/features/recording/components/RecordingWindowPickerComponent";
+import WhileYouRecordComponent from "@/features/recording/components/WhileYouRecordComponent";
 import {
   RecordingWindowSchema,
   type RecordingWindowForm,
-} from "@/features/wizard/components/recording-setup.zod";
+} from "@/features/recording/components/recording-setup.zod";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";

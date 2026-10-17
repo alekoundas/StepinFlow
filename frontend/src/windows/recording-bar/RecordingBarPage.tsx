@@ -12,7 +12,7 @@ import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
-import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
+import RecordingLiveListComponent from "@/features/recording/components/RecordingLiveListComponent";
 import { toClock } from "@/shared/utils/clock";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 

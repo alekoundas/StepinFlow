@@ -51,7 +51,8 @@ live.
 
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
 - [ ] **Buttons.** `FlowScript.export` and `FlowScript.import` are reachable over IPC; nothing in the UI calls
-      them yet. They share phase 7's script view, and an import lists its errors and warnings (5.13).
+      them yet. They share phase 7's script view (`shared/components/script-view/`), which takes
+      an import's errors and warnings as marks at their lines (5.13).
 - [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.
@@ -205,16 +206,14 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The screens, and the app around them.** A new shell, built with PrimeReact components and
-      PrimeFlex classes first, CSS only where they cannot get there (settled 2026-10-09).
-      `features/recording/` replaces `features/wizard/`, and its script view is the one the export
-      and import buttons use. The script view is CodeMirror 6, settled 2026-10-14: colouring from a
-      small `StreamLanguage` tokenizer, the importer's diagnostics as `@codemirror/lint` marks at
-      their line and column, what the model changed as an `@codemirror/merge` view, folding for
-      the branches, read-only until editing is wanted. Not Monaco: it loads from a CDN unless told
-      not to, wants web workers set up for Vite, and takes its colours as fixed values in script
-      where CodeMirror's theme is CSS and can use the app's variables. The tokenizer only colours;
-      `Scanner.Read` stays the one judge of a script.
+- [ ] **The rest of the mockup's app.** The shell, the recorder's pages in `features/recording/`
+      and the CodeMirror script view are in (`PROJECT.md` §13). Left: the flows list as board 1 -
+      kind, health, last execution and an Execute on each row, with its filters; the editor as
+      board 8 - a header with the flow's kind, health, Export and Execute, the Steps, Areas,
+      Inputs, Templates and Script tabs, and a banner over a generated flow until it is read; and
+      the search over flows and steps in the header. Built with PrimeReact components and PrimeFlex
+      classes first, CSS only where they cannot get there (settled 2026-10-09). The mockup's colours
+      and type are `TODO.md`, Frontend.
 - [ ] **Tests that guard the work come with it**, settled 2026-10-09: every draft printing and
       reading back with no diagnostics. Everything else is tested once the update is done.
 - [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,

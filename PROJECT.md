@@ -654,7 +654,7 @@ wrong thing and a missed one only a longer draft: only elements the model found,
 the click; never a flat one; never two whose read text differs. A group in different places is
 marked moving, the same place clicked again is not.
 
-**Review** comes before anything becomes a step (`features/wizard/review/`). Every action is listed
+**Review** comes before anything becomes a step (`features/recording/review/`). Every action is listed
 with a checkbox to keep it, the main area at that moment (`Recording.getScreen`: the action's own
 press, or for typed text and keys the last click's before it) with where it was clicked, and the
 rectangle the template will be cut from, whose corners are dragged to change it. Each action says
@@ -753,13 +753,15 @@ and saving; and `Recording.getGeneratedDraft` has what was saved - which draft, 
 and the exact request it was sent. The page draws it as the mockup's Generating board, beside what
 went to the model and what stayed on the machine.
 
-**Check comes before the editor**, for either draft (`features/wizard/check/`). What it shows is
+**Check comes before the editor**, for either draft (`features/recording/check/`). What it shows is
 read back from the database rather than taken from what was sent: the script, numbered, with the
 lines the model added or changed marked against the draft it was given; the tree; the model's notes;
 the import's warnings at their lines and what the validator says; and the steps, inputs and
-templates counted, a template once however many steps search for it. The marks are a line diff in
-the page until the script view's merge view replaces it, and a test holds the saved flow to differ
-from the draft by what the model changed and nothing else. Nothing there executes: "Open in the
+templates counted, a template once however many steps search for it. The script is the script
+view (§13) with the draft as its merge original, so what the model wrote is green and the draft's
+lines it replaced sit red above it; "Changes from the draft" puts the two side by side with the
+unchanged stretches folded. A test holds the saved flow to differ from the draft by what the model
+changed and nothing else, so the marks are the model's. Nothing there executes: "Open in the
 editor" goes on, and "Discard the flow" deletes it and the recording.
 
 "Ask for changes" sends the flow's script back with what the tester wrote, through the same
@@ -1616,13 +1618,29 @@ login test fails at 390x844 four times in fifty, always on the cart badge check"
 
 React 19 and TypeScript on Vite (the rolldown build), with the React Compiler; PrimeReact and
 PrimeFlex for components; React Router 7; TanStack Query for server state and Zustand for UI state;
-React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answers. ESLint 9 with
+React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answers; CodeMirror 6
+for the script view. ESLint 9 with
 `typescript-eslint` and the React hooks rules. Electron 40 is the shell, packaged by
 electron-builder, with `electron-updater` and `electron-log`.
 
 Feature-based: `features/<name>/{components,hooks,store}`, shared code in `shared/`, Electron-window
-pages in `windows/`. The recorder is `features/wizard/`, a name left from the per-action wizard
-Review replaced; `features/recording/` takes it over (`PLAN.md`, phase 7).
+pages in `windows/`. The recorder is `features/recording/`: the setup, Review, Generating and
+Check, with the recording bar's own window in `windows/recording-bar/`.
+
+**The shell** is the mockup's (`app-layout.tsx`): a rail on the left with Flows, Sub-flows and
+Executions, then Ask AI, Settings, and the model the AI features use with where it runs, a link to
+its settings. On the editor and an execution it keeps only its icons, since those pages want the
+width. `/` opens the flows.
+
+**The script view** is CodeMirror 6, read-only (`shared/components/script-view/`). A
+`StreamLanguage` tokenizer colours a line the way the scanner reads one - the step's keyword where
+it starts, its options, its `<[ quoted ]>` text, `{{inputs}}`, numbers - from the words of
+`ScriptKeywordCatalog`, and colours only: `Scanner.Read` stays the one judge, and what it says
+arrives as `@codemirror/lint` marks at their line and column. A line folds what is indented under
+it, and a `##` section everything to the next. Given an original, `@codemirror/merge` shows what
+changed from it in place; `ScriptMergeComponent` puts two scripts side by side. Its colours are the
+theme's variables, so it follows the app. Not Monaco, settled 2026-10-14: it loads from a CDN unless
+told not to, wants web workers set up for Vite, and takes its colours as fixed values in script.
 
 Every entity form is a pair — `XFormComponent` (React Hook Form setup, header, footer, submit) and
 `XFormFieldsComponent` (fields only, reads `useFormContext`) — with a sibling `x.zod.ts`.

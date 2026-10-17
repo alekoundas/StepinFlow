@@ -98,9 +98,10 @@ The page shows each stage as it happens. Once it is done, "Check the flow" shows
 
 Check shows the flow as it was saved, before it ever executes:
 
-- **Script**: the flow as a script, numbered. After a model, a line it added is marked +, and a line
-  it changed from the draft ~. **Changes from the draft** shows the draft's lines beside the ones
-  that replaced them.
+- **Script**: the flow as a script, numbered, its steps and branches folding. After a model, what it
+  wrote is green, with the draft's lines it replaced in red above them, and a warning from the
+  import is underlined at its line. **Changes from the draft** puts the draft and the saved flow
+  side by side, with what did not change folded away.
 - **Tree**: the steps as the editor shows them, every branch open.
 - What the model did, in its own notes; for the plain draft, how it was written.
 - The errors and warnings: what the import let through, at its line, and what the flow's validation

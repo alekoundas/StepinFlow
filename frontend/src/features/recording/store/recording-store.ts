@@ -33,7 +33,7 @@ const initial = {
   setupFlowId: undefined,
 };
 
-export const useWizardStore = create<Props>()(
+export const useRecordingStore = create<Props>()(
   devtools((set) => ({
     ...initial,
 

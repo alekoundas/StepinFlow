@@ -6,7 +6,7 @@ import { Card } from "primereact/card";
 import { FlowViewToggleComponent } from "@/features/flow/components/FlowViewToggleComponent";
 import { FlowDataTableComponent } from "@/features/flow/components/FlowDataTableComponent";
 import { FlowDataGridComponent } from "@/features/flow/components/FlowDataGridComponent";
-import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import { useRecordingStore } from "@/features/recording/store/recording-store";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowCreateChoiceDialogComponent } from "@/features/flow/components/FlowCreateChoiceDialogComponent";
 
@@ -17,7 +17,7 @@ interface Props {
 
 export default function FlowListPage({ isSubFlow = false }: Props) {
   const navigate = useNavigate();
-  const { setTarget, setCreateAsSubFlow } = useWizardStore();
+  const { setTarget, setCreateAsSubFlow } = useRecordingStore();
   const { openCustom } = useDialogStore();
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 

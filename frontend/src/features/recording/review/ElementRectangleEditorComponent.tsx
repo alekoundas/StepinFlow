@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 
-import type { ElementRectangle } from "@/features/wizard/review/review";
+import type { ElementRectangle } from "@/features/recording/review/review";
 
 // Annotations over a screenshot of any application, so fixed colours rather than the theme's.
 const TEMPLATE_COLOUR = "#4F63E6";

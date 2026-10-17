@@ -8,13 +8,13 @@ import { Message } from "primereact/message";
 
 import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/forms/FlowAreaScalesWithFieldComponent";
 import { DESCRIPTION_MAX_LENGTH } from "@/features/flow/components/form/flow.zod";
-import RecordingSectionComponent from "@/features/wizard/components/RecordingSectionComponent";
-import RecordingWindowPickerComponent from "@/features/wizard/components/RecordingWindowPickerComponent";
-import WhileYouRecordComponent from "@/features/wizard/components/WhileYouRecordComponent";
+import RecordingSectionComponent from "@/features/recording/components/RecordingSectionComponent";
+import RecordingWindowPickerComponent from "@/features/recording/components/RecordingWindowPickerComponent";
+import WhileYouRecordComponent from "@/features/recording/components/WhileYouRecordComponent";
 import {
   RecordingSetupSchema,
   type RecordingSetupForm,
-} from "@/features/wizard/components/recording-setup.zod";
+} from "@/features/recording/components/recording-setup.zod";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";

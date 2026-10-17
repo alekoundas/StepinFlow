@@ -10,8 +10,8 @@ import type { RecordedActionDto } from "@/shared/models/database/recorded-action
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { toClock } from "@/shared/utils/clock";
-import ReviewActionDetailComponent from "@/features/wizard/review/ReviewActionDetailComponent";
-import ReviewActionListComponent from "@/features/wizard/review/ReviewActionListComponent";
+import ReviewActionDetailComponent from "@/features/recording/review/ReviewActionDetailComponent";
+import ReviewActionListComponent from "@/features/recording/review/ReviewActionListComponent";
 import {
   type ActionReview,
   elementOf,
@@ -19,7 +19,7 @@ import {
   keepingChoice,
   listedActions,
   optionsFor,
-} from "@/features/wizard/review/review";
+} from "@/features/recording/review/review";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 

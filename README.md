@@ -224,7 +224,7 @@ npm run coverage:backend
 |---|---|
 | Shell | Electron 40, electron-builder, electron-updater |
 | UI | React 19, TypeScript, Vite (rolldown), React Compiler, React Router 7 |
-| Components | PrimeReact + PrimeFlex |
+| Components | PrimeReact + PrimeFlex, CodeMirror 6 for the flow script |
 | State | Zustand (UI), TanStack Query (server) |
 | Forms | React Hook Form + Zod |
 | Backend | .NET 10, a hand-written IPC dispatcher, AutoMapper |

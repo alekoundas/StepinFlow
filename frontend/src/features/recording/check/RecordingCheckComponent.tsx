@@ -17,8 +17,9 @@ import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
 import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
-import { CheckChangesComponent, CheckScriptComponent } from "@/features/wizard/check/CheckScriptComponent";
-import { RefusedComponent } from "@/features/wizard/generate/RecordingGeneratingComponent";
+import ScriptMergeComponent from "@/shared/components/script-view/ScriptMergeComponent";
+import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
+import { RefusedComponent } from "@/features/recording/generate/RecordingGeneratingComponent";
 
 // The theme's own variables: PrimeFlex 4's surface and text-color classes read tokens this theme
 // does not define.
@@ -75,6 +76,10 @@ export default function RecordingCheckComponent({
 
   let heading = "Check the draft";
   if (result.isModelDraft) heading = "Check what was generated";
+
+  // What the model was given, so what it changed shows. A plain draft changed nothing.
+  let changedFrom = "";
+  if (result.isModelDraft) changedFrom = result.draft;
 
   return (
     <div className="flex flex-column gap-4">
@@ -187,19 +192,33 @@ export default function RecordingCheckComponent({
             renderActiveOnly
           >
             <TabPanel header="Script">
-              <CheckScriptComponent
+              <ScriptViewComponent
                 script={result.script}
-                draft={result.isModelDraft ? result.draft : ""}
+                original={changedFrom || undefined}
+                diagnostics={result.import.warnings}
               />
+              {changedFrom && (
+                <div
+                  className="flex flex-wrap gap-4 px-3 py-2 border-top-1 text-xs"
+                  style={{ ...MUTED, borderColor: "var(--surface-border)" }}
+                >
+                  <span>
+                    <span style={{ color: "var(--green-400)" }}>Green</span>: written by the model
+                  </span>
+                  <span>
+                    <span style={{ color: "var(--red-400)" }}>Red</span>: the draft&apos;s lines it replaced
+                  </span>
+                </div>
+              )}
             </TabPanel>
             <TabPanel header="Tree">
               <CheckTreeComponent flowId={result.import.flowId} />
             </TabPanel>
-            {result.isModelDraft && result.draft && (
+            {changedFrom && (
               <TabPanel header="Changes from the draft">
-                <CheckChangesComponent
+                <ChangesComponent
+                  draft={changedFrom}
                   script={result.script}
-                  draft={result.draft}
                 />
               </TabPanel>
             )}
@@ -454,6 +473,28 @@ function AskComponent({
   );
 }
 
+// Side by side, folded to what changed.
+function ChangesComponent({ draft, script }: { draft: string; script: string }) {
+  if (linesOf(draft) === linesOf(script))
+    return (
+      <p
+        className="m-0 p-4"
+        style={MUTED}
+      >
+        The model changed nothing.
+      </p>
+    );
+
+  return (
+    <ScriptMergeComponent
+      original={draft}
+      script={script}
+      originalLabel="The draft it was given"
+      scriptLabel="Saved"
+    />
+  );
+}
+
 // The whole flow at once, every branch open: there is nothing to edit here, only to read.
 function CheckTreeComponent({ flowId }: { flowId: number }) {
   const { data: treeNodes } = useQuery({
@@ -514,6 +555,10 @@ function describeRevision(revision: FlowGenerationProgressDto): string {
     return `Asking ${model} · attempt ${revision.attempt} of ${revision.attemptCount}`;
 
   return "Reading the flow";
+}
+
+function linesOf(script: string): string {
+  return script.replace(/\r\n/g, "\n").trimEnd();
 }
 
 function plural(count: number, one: string): string {

@@ -15,7 +15,7 @@ import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
-import { useWizardStore } from "@/features/wizard/store/wizard-store";
+import { useRecordingStore } from "@/features/recording/store/recording-store";
 import ExtractSubFlowButtonComponent from "@/features/workflow/components/ExtractSubFlowButtonComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
@@ -34,7 +34,7 @@ export function WorkflowContentComponent() {
   } = useWorkflowStore();
 
   const navigate = useNavigate();
-  const { setTarget } = useWizardStore();
+  const { setTarget } = useRecordingStore();
 
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
   const [modeNodeKey, setModeNodeKey] = useState<string | undefined>(undefined);

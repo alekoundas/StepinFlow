@@ -411,13 +411,23 @@ the history.
 
 ## Frontend
 
+- [ ] **The mockup's colours and type. To decide.** Raised 2026-10-17, with the new shell. The
+      mockup's Foundations board is one near-black ground (#0B0C10) with cards a step lighter, one
+      blue accent (#8FA3FF), red only for recording and failure, and Geist; the app is PrimeReact's
+      soho-dark, lilac (#b19df7) on #1d1e27, in Lato. Everything new reads the theme's variables, so
+      it follows whichever is chosen. Two ways: lara-dark-indigo, the closest built-in theme (#818cf8
+      on #111827), one import in `main.tsx`; or soho-dark with its variables overridden in
+      `app.css`, which reaches little - soho-dark writes its accent into 166 rules and never through
+      `--primary-color`. Geist would be bundled rather than fetched, the app working offline. Check
+      the pages by eye after either, the recording bar too.
+
 - [ ] **Two layouts of one window matcher.** Raised 2026-10-14, when the recording setup was laid
       out as the mockup's: `RecordingWindowPickerComponent` lists the open windows as a radio list
       with a Test row, while `WindowMatchFieldsComponent` (the area form, the window step) has a
       dropdown and a "Test the match" button. Both call `Lookup.window` and
       `Lookup.testWindowMatch`, so the matching cannot drift, but the look and the wording can.
-      Once the mockup's look is the app's (PLAN, "The screens, and the app around them"), the area
-      form and the window step take the picker's layout and one component goes.
+      Once the mockup's look is the app's (PLAN, "The rest of the mockup's app"), the area form and
+      the window step take the picker's layout and one component goes.
 - [ ] **PrimeFlex 4's colour classes do nothing with this theme.** Found 2026-10-13, when the
       recording bar came out see-through. PrimeFlex is 4.x, and its `surface-*`, `text-color`,
       `text-color-secondary` and plain `border-round` classes read v4 design tokens (`--p-surface-0`
