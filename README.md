@@ -58,6 +58,8 @@ answer that here:
   to Ollama or OpenAI; the answer is read back like an imported file, checked against what it may
   not change, and sent back with the line numbers until it reads cleanly. Typed values never leave
   the machine
+- **Check it before it executes** - the script with what the model added or changed marked, the
+  tree, the warnings, and "ask for changes" in your own words; nothing generated executes on its own
 - **Templates cropped from the recording itself**, so nothing is captured twice
 
 ### Build
@@ -195,7 +197,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**750 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**755 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

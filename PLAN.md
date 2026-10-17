@@ -181,7 +181,7 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is.
 `Setup/`, `Session/`, `ActionBuilder/`, `Elements/`, `Draft/` and `Generation/` are built, with
-Review, the plain draft and the model's draft (`PROJECT.md` §6):
+Review, the plain draft, the model's draft and Check (`PROJECT.md` §6):
 
 ```
 Business/Recording/
@@ -195,7 +195,8 @@ Business/Recording/
   Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
                                           per kind of action; RecordingDraft holds what they share
   Generation/   FlowGenerationService     draft, script, scanner, import; the model's draft too
-                FlowGenerationSessionService  the model's draft in the background, by broadcast
+                FlowGenerationSessionService  the model's draft and Check's revisions in the
+                                              background, by broadcast
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
 Business/Ai/Vision/
@@ -204,9 +205,6 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The Check page.** The script with what the model changed marked, the tree, the model's
-      notes, the import's errors and warnings (5.13), and "ask for changes", which sends the script
-      back with what the tester wrote.
 - [ ] **The screens, and the app around them.** A new shell, built with PrimeReact components and
       PrimeFlex classes first, CSS only where they cannot get there (settled 2026-10-09).
       `features/recording/` replaces `features/wizard/`, and its script view is the one the export

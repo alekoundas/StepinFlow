@@ -38,14 +38,14 @@ interface Props {
   result: FlowGenerationResultDto | null;
   onCancel: () => void;
   onBack: () => void;
-  onOpen: () => void;
+  onCheck: () => void;
 }
 
 /**
  * The model shaping the reviewed recording, stage by stage, and what it was sent beside it. The
  * first three stages are the stop's, done before Review. A refused answer shows why, as it goes
  * back to the model. Nothing is saved until an answer reads cleanly, and when none does, the plain
- * draft is, and this says why.
+ * draft is, and this says why. What was saved is read on the Check page.
  */
 export default function RecordingGeneratingComponent({
   flowId,
@@ -55,7 +55,7 @@ export default function RecordingGeneratingComponent({
   result,
   onCancel,
   onBack,
-  onOpen,
+  onCheck,
 }: Props) {
   const isDone = progress.state === FlowGenerationStateEnum.DONE;
   const stages = stagesOf(recording, reviews, progress, result);
@@ -111,8 +111,6 @@ export default function RecordingGeneratingComponent({
           ))}
         </ol>
 
-        {result && result.notes.length > 0 && <NotesComponent notes={result.notes} />}
-
         <div className="flex align-items-center justify-content-between flex-wrap gap-3">
           <Button
             type="button"
@@ -124,10 +122,10 @@ export default function RecordingGeneratingComponent({
           {isDone && result?.import.isSuccess && (
             <Button
               type="button"
-              label="Open in the editor"
+              label="Check the flow"
               icon="pi pi-arrow-right"
               iconPos="right"
-              onClick={onOpen}
+              onClick={onCheck}
             />
           )}
         </div>
@@ -202,7 +200,7 @@ function StageComponent({ stage, status }: { stage: Stage; status: StageStatus }
 }
 
 // Each line as the scanner said it, which is also what went back to the model.
-function RefusedComponent({ refused, note }: { refused: FlowScriptErrorDto[]; note?: string }) {
+export function RefusedComponent({ refused, note }: { refused: FlowScriptErrorDto[]; note?: string }) {
   return (
     <span
       className="block mt-2 px-3 py-2 border-1 border-round-lg text-xs"
@@ -211,28 +209,6 @@ function RefusedComponent({ refused, note }: { refused: FlowScriptErrorDto[]; no
       {refused.map((x) => `line ${x.line}, column ${x.column} · ${x.code}\n${x.message}`).join("\n")}
       {note && `\n${note}`}
     </span>
-  );
-}
-
-function NotesComponent({ notes }: { notes: string[] }) {
-  return (
-    <section
-      aria-labelledby="notes-heading"
-      className="flex flex-column gap-2 p-4 border-1 border-round-xl"
-      style={CARD}
-    >
-      <h3
-        id="notes-heading"
-        className="m-0 text-base font-semibold"
-      >
-        What the model says to check
-      </h3>
-      <ul className="m-0 pl-4 flex flex-column gap-1">
-        {notes.map((note) => (
-          <li key={note}>{note}</li>
-        ))}
-      </ul>
-    </section>
   );
 }
 

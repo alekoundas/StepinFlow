@@ -233,6 +233,7 @@ namespace App
             builder.Services.AddTransient<ImportRecordingDraftHandler>();
             builder.Services.AddTransient<InsertRecordingDraftHandler>();
             builder.Services.AddTransient<GenerateRecordingDraftHandler>();
+            builder.Services.AddTransient<ReviseRecordingDraftHandler>();
             builder.Services.AddTransient<GetGeneratedRecordingDraftHandler>();
             builder.Services.AddTransient<CancelRecordingDraftGenerationHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();

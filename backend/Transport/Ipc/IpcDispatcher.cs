@@ -142,7 +142,8 @@ namespace Transport.Ipc
                     "Recording.importDraft" => await Handler<ImportRecordingDraftHandler>().HandleAsync(Payload<int>(request), ct),
                     "Recording.insertDraft" => await Handler<InsertRecordingDraftHandler>().HandleAsync(Payload<RecordingDraftPositionDto>(request), ct),
                     "Recording.generateDraft" => await Handler<GenerateRecordingDraftHandler>().HandleAsync(Payload<int>(request), ct),
-                    "Recording.getGeneratedDraft" => await Handler<GetGeneratedRecordingDraftHandler>().HandleAsync(ct),
+                    "Recording.reviseDraft" => await Handler<ReviseRecordingDraftHandler>().HandleAsync(Payload<RecordingDraftRevisionDto>(request), ct),
+                    "Recording.getGeneratedDraft" =>await Handler<GetGeneratedRecordingDraftHandler>().HandleAsync(ct),
                     "Recording.cancelDraftGeneration" => await Handler<CancelRecordingDraftGenerationHandler>().HandleAsync(ct),
 
                     // Settings

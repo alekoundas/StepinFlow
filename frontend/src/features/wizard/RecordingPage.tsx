@@ -23,16 +23,19 @@ import RecordingSetupComponent from "@/features/wizard/components/RecordingSetup
 import RecordingMainAreaComponent from "@/features/wizard/components/RecordingMainAreaComponent";
 import RecordingReviewComponent from "@/features/wizard/review/RecordingReviewComponent";
 import RecordingGeneratingComponent from "@/features/wizard/generate/RecordingGeneratingComponent";
+import RecordingCheckComponent, { type RevisionProblem } from "@/features/wizard/check/RecordingCheckComponent";
 import { type ActionReview, toReviewed } from "@/features/wizard/review/review";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import RecordingLiveListComponent from "@/features/wizard/components/RecordingLiveListComponent";
 import { useWizardStore } from "@/features/wizard/store/wizard-store";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { flowKeys, useFlow } from "@/features/flow/hooks/use-flow";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
 
-const RECORDING_STEPS = ["Describe", "Record", "Review", "Generate"];
+const RECORDING_STEPS = ["Describe", "Record", "Review", "Generate", "Check"];
 
-// Until the first stage says which model and what it is sent.
+// Until the first stage says which model and what it is sent. A revision starts the same way.
 const GENERATION_STARTING: FlowGenerationProgressDto = {
   state: FlowGenerationStateEnum.GENERATING,
   stage: FlowGenerationStageEnum.WRITING_DRAFT,
@@ -64,11 +67,14 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
  *
  * A new flow is described first, and the plain draft is imported into it whole. From the editor's
  * "Record steps here" the flow already exists: it records against its main area, asking for the
- * window when it has none, and the draft is inserted at the editor's position.
+ * window when it has none, and the draft is inserted at the editor's position and opens there.
  *
  * Generate flow hands the reviewed recording to the model set up in Settings, in the background:
  * FLOW_GENERATION_PROGRESS says how far, and once it says DONE the page fetches what was saved -
- * the model's draft, or the plain one and why. The editor opens when the tester says so.
+ * the model's draft, or the plain one and why.
+ *
+ * Either draft is read on Check before the editor opens. Its "Ask for changes" is followed the
+ * way a generation is, and an answer that is not saved leaves Check showing what was.
  *
  * The live list is lines, never pixels; Review asks for an image when it draws that action.
  */
@@ -77,6 +83,7 @@ export default function RecordingPage() {
   const queryClient = useQueryClient();
   const { target, createAsSubFlow, setupFlowId, setSetupFlowId, reset } = useWizardStore();
   const { setSelectedTreeNode } = useWorkflowStore();
+  const { openConfirm } = useDialogStore();
   const { data: isAiConfigured } = useAiStatus();
 
   const { data: targetFlow } = useFlow(target?.flowId ?? null);
@@ -98,6 +105,11 @@ export default function RecordingPage() {
   const [generated, setGenerated] = useState<FlowGenerationResultDto | null>(null);
   const [generatedFrom, setGeneratedFrom] = useState<Record<number, ActionReview> | null>(null);
 
+  // What Check shows, and an "Ask for changes" underway or the last one that was not saved.
+  const [checked, setChecked] = useState<FlowGenerationResultDto | null>(null);
+  const [revision, setRevision] = useState<FlowGenerationProgressDto | null>(null);
+  const [revisionProblem, setRevisionProblem] = useState<RevisionProblem | null>(null);
+
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
       if (message.type === BroadcastTypeEnum.RECORDING_PROGRESS) {
@@ -108,6 +120,7 @@ export default function RecordingPage() {
       if (message.type === BroadcastTypeEnum.FLOW_GENERATION_PROGRESS) {
         const received = message.payload as FlowGenerationProgressDto;
         setGeneration((current) => (current ? received : current));
+        setRevision((current) => (current ? received : current));
       }
     });
 
@@ -148,8 +161,9 @@ export default function RecordingPage() {
     }
   };
 
-  // The plain draft, then the editor: imported whole into the flow the setup made, or inserted at
-  // the editor's position. A draft that does not read cleanly leaves the flow as it was and says where.
+  // The plain draft: imported whole into the flow the setup made and read on Check, or inserted at
+  // the editor's position and opened there. A draft that does not read cleanly leaves the flow as it
+  // was and says where.
   const continueFromReview = async (reviews: Record<number, ActionReview>) => {
     if (!result || recordingFlowId === undefined) return;
 
@@ -159,17 +173,24 @@ export default function RecordingPage() {
     try {
       await backendApiService.Recording.review(toReviewed(result, reviews));
 
-      let imported;
-      if (target) imported = await backendApiService.Recording.insertDraft(target);
-      else imported = await backendApiService.Recording.importDraft(recordingFlowId);
+      if (target) {
+        const inserted = await backendApiService.Recording.insertDraft(target);
+        if (!inserted.isSuccess) {
+          setError(`The draft could not be written into the flow. ${linesOf(inserted.errors)}`);
+          return;
+        }
 
-      if (!imported.isSuccess) {
-        const where = imported.errors.map((x) => `line ${x.line}: ${x.message}`).join(" ");
-        setError(`The draft could not be written into the flow. ${where}`);
+        await openFlow(inserted.flowId);
         return;
       }
 
-      await openFlow(imported.flowId);
+      const imported = await backendApiService.Recording.importDraft(recordingFlowId);
+      if (!imported.import.isSuccess) {
+        setError(`The draft could not be written into the flow. ${linesOf(imported.import.errors)}`);
+        return;
+      }
+
+      setChecked(imported);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -240,9 +261,98 @@ export default function RecordingPage() {
     if (generation?.state === FlowGenerationStateEnum.DONE) void fetchGenerated();
   }, [generation?.state]);
 
+  const checkGenerated = () => {
+    if (!generated) return;
+
+    setChecked(generated);
+    setGeneration(null);
+  };
+
+  // Check's "Ask for changes": started and followed as a generation is.
+  const askForChanges = async (changes: string) => {
+    if (!checked) return;
+
+    setError(null);
+    setRevisionProblem(null);
+    setRevision(GENERATION_STARTING);
+
+    try {
+      await backendApiService.Recording.reviseDraft({ flowId: checked.import.flowId, changes });
+    } catch (err) {
+      setRevision(null);
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Nothing is saved: the NONE the cancel comes back as finds no revision to follow.
+  const cancelAsk = async () => {
+    try {
+      await backendApiService.Recording.cancelDraftGeneration();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+
+    setRevision(null);
+  };
+
+  // A revision that was not saved leaves Check as it was, and says why beside the ask.
+  const fetchRevised = async (done: FlowGenerationProgressDto) => {
+    if (done.errorMessage) {
+      setRevisionProblem({ message: done.errorMessage, refused: [] });
+      return;
+    }
+
+    try {
+      const revised = await backendApiService.Recording.getGeneratedDraft();
+      if (!revised) return;
+
+      if (revised.isModelDraft && revised.import.isSuccess) {
+        await queryClient.invalidateQueries({ queryKey: ["flowStep"] });
+        setChecked(revised);
+        return;
+      }
+
+      let message = revised.reason;
+      if (!message) message = `The answer could not be saved, so the flow is as it was. ${linesOf(revised.import.errors)}`;
+
+      setRevisionProblem({ message, refused: revised.refused });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  useEffect(() => {
+    if (revision?.state === FlowGenerationStateEnum.NONE) setRevision(null);
+
+    if (revision?.state === FlowGenerationStateEnum.DONE) {
+      void fetchRevised(revision);
+      setRevision(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision?.state]);
+
+  // The flow goes, its steps with it, and the recording after it.
+  const discardChecked = () => {
+    if (!checked) return;
+
+    openConfirm("recording-flow-discard", {
+      headerText: `Discard ${checked.import.flowName}?`,
+      confirmLabel: "Discard the flow",
+      confirmSeverity: "danger",
+      children: <LabelComponent text="Its steps and templates go with it, and so does the recording. This cannot be undone." />,
+      onConfirm: async () => {
+        await backendApiService.Flow.delete(checked.import.flowId);
+        await handleCancel();
+      },
+    });
+  };
+
   let generateUnavailable: string | null = null;
   if (!isAiConfigured) generateUnavailable = "Choose an AI provider and a model in Settings first.";
   if (target) generateUnavailable = "A model's draft cannot go into a flow that already exists yet.";
+
+  let askUnavailable: string | null = null;
+  if (!isAiConfigured) askUnavailable = "Choose an AI provider and a model in Settings first.";
 
   const recordAgain = () => {
     if (recordingFlowId === undefined) return;
@@ -342,7 +452,9 @@ export default function RecordingPage() {
           </p>
         </div>
 
-        <RecordingStepsComponent current={stepOf(recordingFlowId !== undefined, result !== null, generation !== null)} />
+        <RecordingStepsComponent
+          current={stepOf(recordingFlowId !== undefined, result !== null, generation !== null, checked !== null)}
+        />
       </div>
 
       {recordingFlowId !== undefined && !result && (
@@ -385,7 +497,7 @@ export default function RecordingPage() {
         />
       )}
 
-      {result && !generation && (
+      {result && !generation && !checked && (
         <RecordingReviewComponent
           result={result}
           flowId={recordingFlowId}
@@ -407,7 +519,20 @@ export default function RecordingPage() {
           result={generated}
           onCancel={() => void cancelGeneration()}
           onBack={() => setGeneration(null)}
-          onOpen={() => void openFlow(generated?.import.flowId ?? recordingFlowId)}
+          onCheck={checkGenerated}
+        />
+      )}
+
+      {checked && (
+        <RecordingCheckComponent
+          result={checked}
+          revision={revision}
+          revisionProblem={revisionProblem}
+          askUnavailable={askUnavailable}
+          onAsk={(changes) => void askForChanges(changes)}
+          onCancelAsk={() => void cancelAsk()}
+          onDiscard={discardChecked}
+          onOpen={() => void openFlow(checked.import.flowId)}
         />
       )}
 
@@ -469,7 +594,7 @@ export default function RecordingPage() {
   );
 }
 
-// The steps that exist so far. Check joins when its page does.
+// The plain draft skips Generate, which shows as passed all the same.
 function RecordingStepsComponent({ current }: { current: number }) {
   return (
     <ol
@@ -514,7 +639,8 @@ function RecordingStepsComponent({ current }: { current: number }) {
   );
 }
 
-function stepOf(isDescribed: boolean, isRecorded: boolean, isGenerating: boolean): number {
+function stepOf(isDescribed: boolean, isRecorded: boolean, isGenerating: boolean, isChecking: boolean): number {
+  if (isChecking) return 4;
   if (isGenerating) return 3;
   if (isRecorded) return 2;
   if (isDescribed) return 1;
@@ -536,6 +662,10 @@ function describeStage(progress: RecordingProgressDto): string {
   if (progress.stageCount > 1) line = `${progress.stageNumber} of ${progress.stageCount} · ${line}`;
 
   return line;
+}
+
+function linesOf(errors: FlowScriptErrorDto[]): string {
+  return errors.map((x) => `line ${x.line}: ${x.message}`).join(" ");
 }
 
 function percentOf(progress: RecordingProgressDto): number {

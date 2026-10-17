@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 106 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 107 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -519,8 +519,8 @@ against SQLite's own foreign keys, through `ExecuteDelete` rather than EF's chan
 The global input hook records every click, drag, scroll and keystroke with the pause before it, and
 the main area at each click. Nothing becomes a step while recording. After the stop, what each click
 hit is found and the clicks on the same picture grouped; the tester goes through it all in Review,
-and the plain draft - or a model shaping it - writes it into the flow, which opens in the editor -
-all below. The template is
+and the plain draft - or a model shaping it - writes it into the flow, which the tester reads on
+Check before the editor opens - all below. The template is
 cut from the recording's own screenshot, so nothing is captured twice.
 
 A per-action wizard did this until 2026-10-14, asking what each action was for, one at a time, and
@@ -706,15 +706,15 @@ setup's Launch step first.
   is on the line. A key is a `Press`, held and released around a click as it was recorded.
 - A pause is no step at all: it sizes the next wait. What was left out in Review is no step either.
 
-The draft is a flow on its own, so with no model configured it goes straight to the editor, and it
-prints and reads back with no diagnostics, which a test holds it to.
+The draft is a flow on its own, so with no model configured it is what the tester checks and then
+edits, and it prints and reads back with no diagnostics, which a test holds it to.
 
 **The plain draft ships.** Review's "Plain draft, no AI" sends what was decided, then
 `Recording.importDraft`: `Business/Recording/Generation/FlowGenerationService` loads the flow's
 rows the setup made, builds the draft on them, prints it, and imports the script through the
 scanner like any file, with the templates it cut as the images. So a recorded flow, a file and a
 model's answer land the one way, and the plain draft is held to what a file is: one that does not
-read cleanly leaves the flow as it was and says on which line. Then the editor opens on the flow.
+read cleanly leaves the flow as it was and says on which line. Then Check shows it (below).
 The import replaces the flow's rows and keeps the row, so its name, description, QA switch and
 sub-flow setting stay as the setup left them.
 
@@ -751,8 +751,25 @@ A model takes minutes over a draft, so it is work longer than a request can wait
 `FLOW_GENERATION_PROGRESS` reports writing the draft, each attempt with the last refusal's lines,
 and saving; and `Recording.getGeneratedDraft` has what was saved - which draft, the model's notes,
 and the exact request it was sent. The page draws it as the mockup's Generating board, beside what
-went to the model and what stayed on the machine. What it wrote lands in the editor and never
-executes on its own (§10); the Check page comes next (`PLAN.md`, phase 7).
+went to the model and what stayed on the machine.
+
+**Check comes before the editor**, for either draft (`features/wizard/check/`). What it shows is
+read back from the database rather than taken from what was sent: the script, numbered, with the
+lines the model added or changed marked against the draft it was given; the tree; the model's notes;
+the import's warnings at their lines and what the validator says; and the steps, inputs and
+templates counted, a template once however many steps search for it. The marks are a line diff in
+the page until the script view's merge view replaces it, and a test holds the saved flow to differ
+from the draft by what the model changed and nothing else. Nothing there executes: "Open in the
+editor" goes on, and "Discard the flow" deletes it and the recording.
+
+"Ask for changes" sends the flow's script back with what the tester wrote, through the same
+`ScriptRevisionService` under `AiPromptHelper.ReviseOnRequest`: make those changes, leave the rest,
+and say in a note when a change needs a search no template shows. `Recording.reviseDraft` starts it
+in the same session, followed by the same broadcast. An answer that reads cleanly replaces the flow
+and becomes what Check shows, marked against the script before it; when none does, the flow is as
+it was and Check says why beside the ask. The script goes as the flow holds it, step names
+included, so a cloud provider without screen content gets the names the plain draft read off the
+screen (`TODO.md`, Recording). What it wrote never executes on its own (§10).
 
 **A QA test adds to it.** The screen sizes to test at, and what should happen when an execution
 ends, which becomes steps under `End Execution` because teardown is steps (§8). Stage markers and
@@ -1363,7 +1380,8 @@ rounds, so there is no orchestration framework.
 and says what went wrong and what to change.
 
 **Generate flow** shapes a reviewed recording's plain draft into the flow its description asks for,
-as a script read back like any import (§6).
+as a script read back like any import, and Check's **Ask for changes** revises the saved flow the
+same way with what the tester wrote (§6).
 
 **The element detector.** OmniParser v2's `icon_detect_v3`, a YOLOv9-E whose weights are MIT,
 Copyright Microsoft - the earlier `icon_detect` is AGPL-3.0, inherited from Ultralytics, and is not
@@ -1785,13 +1803,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-750 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+755 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 564 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 569 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1905,7 +1923,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 750 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 755 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

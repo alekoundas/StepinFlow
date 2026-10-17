@@ -59,7 +59,7 @@ the same picture. "What it should do" can be edited here too.
 
 ## The plain draft
 
-"Plain draft, no AI" writes the reviewed recording into the flow and opens it in the editor:
+"Plain draft, no AI" writes the reviewed recording into the flow and shows it on Check:
 
 - A click becomes a search that waits for the element, then a move onto it and a click. The wait is
   three times how long you waited, never under 10 seconds nor over 60, with a comment saying what
@@ -92,8 +92,29 @@ read from the screen" is off; then the model names the steps from what the flow 
 typed never goes: the model sees only the input's name, such as {{email}}. The screenshots and
 templates stay on this machine. "Show the exact request" shows what was sent.
 
-The page shows each stage as it happens, and once it is done, what the model says to check. "Open in
-the editor" opens the flow.
+The page shows each stage as it happens. Once it is done, "Check the flow" shows what was saved.
+
+## Check
+
+Check shows the flow as it was saved, before it ever executes:
+
+- **Script**: the flow as a script, numbered. After a model, a line it added is marked +, and a line
+  it changed from the draft ~. **Changes from the draft** shows the draft's lines beside the ones
+  that replaced them.
+- **Tree**: the steps as the editor shows them, every branch open.
+- What the model did, in its own notes; for the plain draft, how it was written.
+- The errors and warnings: what the import let through, at its line, and what the flow's validation
+  says.
+
+**Ask for changes** sends the script back to the model with what you write, such as "also sign out
+at the end". The answer is read and checked the way the first one was, three times at most. When one
+reads cleanly it replaces the flow, and Check marks what it changed; when none does, the flow is as
+it was and Check says why. The model cannot cut a template, so a change that needs a search for
+something no template shows is left out, and its notes say so. The script goes as the flow holds it,
+step names included, even with "Send text read from the screen" off.
+
+**Open in the editor** goes on to the flow. **Discard the flow** deletes it, and the recording with
+it.
 
 ## Recording into a flow you already have
 

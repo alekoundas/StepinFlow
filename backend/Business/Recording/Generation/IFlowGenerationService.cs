@@ -9,9 +9,9 @@ namespace Business.Recording.Generation
         /// The reviewed recording added to its flow with no model: built, written as a script, and
         /// imported the way a file is, so what lands in the editor is exactly what that file would
         /// say. The flow's rows are replaced in one go; a draft that does not read cleanly leaves
-        /// them as they were and says why.
+        /// them as they were and says why. With what was saved, for the Check page.
         /// </summary>
-        Task<FlowScriptImportResultDto> ImportPlainDraftAsync(
+        Task<FlowGenerationResultDto> ImportPlainDraftAsync(
             int flowId,
             RecordingResultDto recording,
             ReviewedRecordingDto reviewed,
@@ -43,6 +43,17 @@ namespace Business.Recording.Generation
             RecordingResultDto recording,
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
+            Action<FlowGenerationProgressDto>? onProgress,
+            CancellationToken ct = default);
+
+        /// <summary>
+        /// The Check page's "Ask for changes": the flow as it is, as a script, sent to the model
+        /// with what the tester wrote, and its answer imported in place of it. When no answer reads
+        /// cleanly, or the model cannot be reached, nothing is saved and the result says why.
+        /// </summary>
+        Task<FlowGenerationResultDto> ReviseAsync(
+            int flowId,
+            string changes,
             Action<FlowGenerationProgressDto>? onProgress,
             CancellationToken ct = default);
     }

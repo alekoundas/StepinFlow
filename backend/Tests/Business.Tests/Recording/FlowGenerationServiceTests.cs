@@ -26,8 +26,8 @@ namespace Business.Tests.Recording
     /// <summary>
     /// The plain draft, end to end: a flow made by the recording setup, a reviewed recording added
     /// to it, written as a script and imported through a real database - or inserted at a position,
-    /// as the editor's "Record steps here" does. Then the model's draft, with the model played by
-    /// the test.
+    /// as the editor's "Record steps here" does. Then the model's draft and the Check page's
+    /// revisions, with the model played by the test.
     /// </summary>
     public sealed class FlowGenerationServiceTests : IDisposable
     {
@@ -106,7 +106,7 @@ namespace Business.Tests.Recording
             int flowId = await NewFlowAsync();
             Record();
 
-            FlowScriptImportResultDto imported = await _generation.ImportPlainDraftAsync(flowId, _recording, _reviewed, ScreenAt, Ct);
+            FlowScriptImportResultDto imported = (await _generation.ImportPlainDraftAsync(flowId, _recording, _reviewed, ScreenAt, Ct)).Import;
 
             imported.IsSuccess.ShouldBeTrue();
             imported.Errors.ShouldBeEmpty();
@@ -139,6 +139,22 @@ namespace Business.Tests.Recording
             (flow.Id, flow.Name, flow.IsQaTest).ShouldBe((flowId, "Download invoices", true));
             flow.Description.ShouldBe("Logs in and downloads last month's invoices.");
             (await db.FlowAreas.SingleAsync(Ct)).IsMain.ShouldBeTrue();
+        }
+
+        // What the Check page shows: the flow read back, counted as a tester counts it.
+        [Fact]
+        public async Task The_plain_draft_says_what_was_saved()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+
+            FlowGenerationResultDto saved = await _generation.ImportPlainDraftAsync(flowId, _recording, _reviewed, ScreenAt, Ct);
+
+            saved.IsModelDraft.ShouldBeFalse();
+            saved.Draft.ShouldBeEmpty();
+            saved.Script.ShouldContain("Find Email");
+            saved.StepCount.ShouldBe(Steps(flowId).Count(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE));
+            (saved.InputCount, saved.TemplateCount).ShouldBe((1, 1));
         }
 
         // ================================================================
@@ -256,6 +272,20 @@ namespace Business.Tests.Recording
             input.DefaultValue.ShouldBe("ops@example.com");
         }
 
+        // The Check page marks what the model changed against the draft, so nothing else may differ.
+        [Fact]
+        public async Task The_saved_flow_differs_from_the_draft_by_what_the_model_changed_only()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            Model(x => x.Replace("Find Email", "Find the email field"));
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.Draft.ShouldContain("Find Email");
+            generated.Draft.Replace("Find Email", "Find the email field").ShouldBe(generated.Script);
+        }
+
         // The tester always gets a flow.
         [Fact]
         public async Task When_no_answer_reads_cleanly_the_plain_draft_is_saved_and_says_why()
@@ -290,6 +320,60 @@ namespace Business.Tests.Recording
             request.ShouldContain("Find icon");
             request.ShouldContain("placeholders");
             progress.ShouldAllBe(x => !x.IsReadTextSent);
+        }
+
+        // ================================================================
+        // Ask for changes
+        // ================================================================
+
+        private async Task<int> PlainDraftAsync()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            await _generation.ImportPlainDraftAsync(flowId, _recording, _reviewed, ScreenAt, Ct);
+
+            return flowId;
+        }
+
+        [Fact]
+        public async Task Asked_for_changes_the_model_s_answer_replaces_the_flow()
+        {
+            int flowId = await PlainDraftAsync();
+            FakeChatClient model = Model(x => x.Replace("Find Email", "Find the sign-in field"));
+            List<FlowGenerationProgressDto> progress = [];
+
+            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Name the search after the sign-in.", progress.Add, Ct);
+
+            (revised.IsModelDraft, revised.Import.IsSuccess).ShouldBe((true, true));
+            revised.Draft.ShouldContain("Find Email");
+            revised.Script.ShouldContain("Find the sign-in field");
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain("Name the search after the sign-in.");
+            progress.Select(x => x.Stage).ShouldBe([FlowGenerationStageEnum.WRITING_DRAFT, FlowGenerationStageEnum.ASKING_MODEL, FlowGenerationStageEnum.SAVING]);
+
+            FlowStep search = Steps(flowId).Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            search.Name.ShouldBe("Find the sign-in field");
+
+            using AppDbContext db = _database.CreateDbContext();
+            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == search.Id, Ct);
+            template.TemplateImage.ShouldNotBeNull();
+            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            input.DefaultValue.ShouldBe("ops@example.com");
+        }
+
+        [Fact]
+        public async Task An_answer_that_never_reads_cleanly_leaves_the_flow_as_it_was()
+        {
+            int flowId = await PlainDraftAsync();
+            List<int> before = Steps(flowId).Select(x => x.Id).Order().ToList();
+            Model(x => x + "\nFnid Image  <[ Broken ]>\n");
+
+            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Sign out at the end.", null, Ct);
+
+            revised.IsModelDraft.ShouldBeFalse();
+            revised.Reason.ShouldBe($"No answer from the model read cleanly in {ScriptRevisionService.ATTEMPT_COUNT} attempts, so the flow is as it was.");
+            revised.Refused.ShouldNotBeEmpty();
+            revised.Script.ShouldBeEmpty();
+            Steps(flowId).Select(x => x.Id).Order().ShouldBe(before);
         }
 
         private List<FlowStep> Steps(int flowId)

@@ -29,6 +29,7 @@ import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dt
 import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
 import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
+import type { RecordingDraftRevisionDto } from "@/shared/models/recording-draft-revision-dto";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -207,15 +208,18 @@ export const backendApiService = {
       callNullable<RecordingScreenDto>("Recording.getScreen", actionIndex),
     // Once, as the tester continues from Review.
     review: (dto: ReviewedRecordingDto) => call<boolean>("Recording.review", dto),
-    // The reviewed recording written into its flow with no model, as an imported file would be.
+    // The reviewed recording written into its flow with no model, as an imported file would be,
+    // with what was saved for the Check page.
     importDraft: (flowId: number) =>
-      call<FlowScriptImportResultDto>("Recording.importDraft", flowId),
+      call<FlowGenerationResultDto>("Recording.importDraft", flowId),
     // Into a flow that already existed, at a position: only the new rows are written.
     insertDraft: (dto: RecordingDraftPositionDto) =>
       call<FlowScriptImportResultDto>("Recording.insertDraft", dto),
     // Starts the model's draft and returns. FLOW_GENERATION_PROGRESS says how far, then DONE,
     // and getGeneratedDraft has what was saved.
     generateDraft: (flowId: number) => call<boolean>("Recording.generateDraft", flowId),
+    // The Check page's "Ask for changes", followed the same way.
+    reviseDraft: (dto: RecordingDraftRevisionDto) => call<boolean>("Recording.reviseDraft", dto),
     getGeneratedDraft: () => callNullable<FlowGenerationResultDto>("Recording.getGeneratedDraft"),
     // Saves nothing.
     cancelDraftGeneration: () => call<boolean>("Recording.cancelDraftGeneration"),

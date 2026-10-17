@@ -28,6 +28,9 @@ namespace Business.Recording.Generation
     /// With a model, the plain draft is what it is given, as a script with the description, and its
     /// answer is imported in place of it. When no answer reads cleanly, or the model cannot be
     /// reached, the plain draft is saved instead and says why, so the tester always has a flow.
+    ///
+    /// On the Check page the tester can ask for changes: the flow as saved goes to the model with
+    /// what they wrote, and an answer that never reads cleanly leaves the flow as it was.
     /// </summary>
     public sealed class FlowGenerationService : IFlowGenerationService
     {
@@ -65,20 +68,18 @@ namespace Business.Recording.Generation
         // Public methods
         // ================================================================
 
-        public async Task<FlowScriptImportResultDto> ImportPlainDraftAsync(
+        public async Task<FlowGenerationResultDto> ImportPlainDraftAsync(
             int flowId,
             RecordingResultDto recording,
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             CancellationToken ct = default)
         {
-            FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null);
+            FlowGenerationResultDto result = new FlowGenerationResultDto();
+            result.Import = await ImportPlainAsync(flowId, recording, reviewed, screenAt, ct);
 
-            string script = _printer.Write(draft);
-            Dictionary<string, byte[]> templates = TemplatesOf(draft);
-
-            return await _importer.ImportTextAsync(script, templates, ct);
+            await ReadSavedAsync(result, ct);
+            return result;
         }
 
         public async Task<ResultDto<FlowScriptImportResultDto>> InsertPlainDraftAsync(
@@ -192,15 +193,77 @@ namespace Business.Recording.Generation
             if (revision.Script != null)
             {
                 result.IsModelDraft = true;
+                result.Draft = script;
                 result.Import = await _importer.ImportTextAsync(revision.Script, templates, ct);
+            }
+            else
+            {
+                // Built again from the recording itself, so its names have the text read under each click.
+                result.Reason = revision.ErrorMessage ?? $"No answer from the model read cleanly in {revision.Attempts} attempts.";
+                result.Refused = FlowScriptImporter.ToDtos(revision.Refused, DiagnosticSeverityEnum.ERROR);
+                result.Import = await ImportPlainAsync(flowId, recording, reviewed, screenAt, ct);
+            }
+
+            await ReadSavedAsync(result, ct);
+            return result;
+        }
+
+        public async Task<FlowGenerationResultDto> ReviseAsync(
+            int flowId,
+            string changes,
+            Action<FlowGenerationProgressDto>? onProgress,
+            CancellationToken ct = default)
+        {
+            string model = await _providerService.GetModelAsync(ct);
+
+            // The script is the flow as the tester has read it, so it goes as it is.
+            FlowGenerationProgressDto reading = new FlowGenerationProgressDto
+            {
+                State = FlowGenerationStateEnum.GENERATING,
+                Stage = FlowGenerationStageEnum.WRITING_DRAFT,
+                Model = model,
+                IsReadTextSent = true,
+                AttemptCount = ScriptRevisionService.ATTEMPT_COUNT,
+            };
+            onProgress?.Invoke(reading);
+
+            string script = await _exporter.RenderAsync(flowId, ct);
+            FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
+            Dictionary<string, byte[]> templates = TemplatesOf(flow);
+
+            FlowGenerationProgressDto read = Next(reading, FlowGenerationStageEnum.WRITING_DRAFT, 0, []);
+            read.ScriptLength = script.Length;
+
+            string instruction = $"{AiPromptHelper.ReviseOnRequest}\n\nWhat the tester asks for:\n\n{changes.Trim()}";
+
+            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, (attempt, refused) =>
+            {
+                FlowGenerationProgressDto asking = Next(read, FlowGenerationStageEnum.ASKING_MODEL, attempt, refused);
+                onProgress?.Invoke(asking);
+            }, ct);
+
+            FlowGenerationResultDto result = new FlowGenerationResultDto
+            {
+                Notes = revision.Notes,
+                Attempts = revision.Attempts,
+                Request = revision.Request,
+                Draft = script,
+            };
+
+            if (revision.Script == null)
+            {
+                result.Reason = revision.ErrorMessage ?? $"No answer from the model read cleanly in {revision.Attempts} attempts, so the flow is as it was.";
+                result.Refused = FlowScriptImporter.ToDtos(revision.Refused, DiagnosticSeverityEnum.ERROR);
                 return result;
             }
 
-            // Built again from the recording itself, so its names have the text read under each click.
-            result.Reason = revision.ErrorMessage ?? $"No answer from the model read cleanly in {revision.Attempts} attempts.";
-            result.Refused = FlowScriptImporter.ToDtos(revision.Refused, DiagnosticSeverityEnum.ERROR);
-            result.Import = await ImportPlainDraftAsync(flowId, recording, reviewed, screenAt, ct);
+            FlowGenerationProgressDto saving = Next(read, FlowGenerationStageEnum.SAVING, revision.Attempts, []);
+            onProgress?.Invoke(saving);
 
+            result.IsModelDraft = true;
+            result.Import = await _importer.ImportTextAsync(revision.Script, templates, ct);
+
+            await ReadSavedAsync(result, ct);
             return result;
         }
 
@@ -208,6 +271,40 @@ namespace Business.Recording.Generation
         // ================================================================
         // Private methods
         // ================================================================
+
+        private async Task<FlowScriptImportResultDto> ImportPlainAsync(
+            int flowId,
+            RecordingResultDto recording,
+            ReviewedRecordingDto reviewed,
+            Func<int, RecordingScreenDto?> screenAt,
+            CancellationToken ct)
+        {
+            FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
+            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null);
+
+            string script = _printer.Write(draft);
+            Dictionary<string, byte[]> templates = TemplatesOf(draft);
+
+            return await _importer.ImportTextAsync(script, templates, ct);
+        }
+
+        // The flow as saved, read back from the database rather than taken from what was sent to it.
+        private async Task ReadSavedAsync(FlowGenerationResultDto result, CancellationToken ct)
+        {
+            if (!result.Import.IsSuccess)
+                return;
+
+            result.Script = await _exporter.RenderAsync(result.Import.FlowId, ct);
+            FlowScriptSchema saved = _scanner.Read(result.Script);
+
+            result.StepCount = saved.Steps.Count(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE);
+            result.InputCount = saved.Inputs.Count;
+            result.TemplateCount = saved.Steps
+                .SelectMany(x => x.FlowStepTemplates)
+                .Select(x => x.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+        }
 
         // By name, as an import reads them: the ones cut from the recording and the ones the flow had.
         private static Dictionary<string, byte[]> TemplatesOf(FlowScriptSchema draft)

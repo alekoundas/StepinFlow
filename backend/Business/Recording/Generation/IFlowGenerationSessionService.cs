@@ -15,6 +15,12 @@ namespace Business.Recording.Generation
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt);
 
+        /// <summary>
+        /// Starts the Check page's "Ask for changes" the same way: the flow as it is, revised by the
+        /// model as the tester wrote. Refused while a generation is going.
+        /// </summary>
+        Task<ResultDto<bool>> StartRevisionAsync(int flowId, string changes);
+
         /// <summary>What the last generation saved. Null until one is DONE, and after a cancel.</summary>
         FlowGenerationResultDto? GetResult();
 

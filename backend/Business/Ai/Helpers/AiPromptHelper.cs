@@ -235,6 +235,16 @@ namespace Business.Ai.Helpers
               recorded, and never remove one.
             """;
 
+        // The Check page's "Ask for changes": the tester's words follow it.
+        public const string ReviseOnRequest =
+            """
+            The tester has read this flow before it ever executes and asks for the changes below, in
+            their own words. Make those changes and leave the rest of the script as it is.
+            - A search needs a template, and you cannot make one. When a change needs a search for
+              something no template in the script shows, leave that change out and say so in a note.
+            - Keep every timeout unless the tester asks to change it.
+            """;
+
         // Said when a cloud provider may not be sent what was read on screen.
         public const string ShapeRecordingWithoutReadText =
             """

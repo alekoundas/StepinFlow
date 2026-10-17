@@ -299,6 +299,15 @@ the history.
       and insert its answer the way the plain draft is inserted. To decide before the button
       comes back.
 
+- [ ] **Ask for changes and screen content. To decide.** Raised 2026-10-15. Check's "Ask for
+      changes" sends the flow's script as it is. After the plain draft its search names are the
+      text read under each click, so a cloud provider with "Send text read from the screen" off
+      gets them anyway - the first draft withholds them, the revision does not. The assistant reads
+      step names the same way, so it is consistent with how a flow is treated once saved; it is
+      not consistent with the setting's promise for a flow nobody has touched yet. The
+      recommendation: a step name is the tester's once they have seen it in Review, so send it, and
+      say so under the setting. The other way is to send placeholder names and map them back.
+
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
       nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were

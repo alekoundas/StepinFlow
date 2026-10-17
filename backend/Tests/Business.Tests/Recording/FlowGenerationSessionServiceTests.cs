@@ -8,8 +8,8 @@ using static Business.Tests.TestToken;
 namespace Business.Tests.Recording
 {
     /// <summary>
-    /// One generation at a time, in the background, said by broadcast. The generation itself is
-    /// played by the test, which decides when it ends.
+    /// One generation or revision at a time, in the background, said by broadcast. The generation
+    /// itself is played by the test, which decides when it ends.
     /// </summary>
     public sealed class FlowGenerationSessionServiceTests : IDisposable
     {
@@ -95,6 +95,21 @@ namespace Business.Tests.Recording
             _session.GetResult().ShouldBeNull();
         }
 
+        // The Check page's "Ask for changes" goes the same way, one at a time with a generation.
+        [Fact]
+        public async Task A_revision_says_DONE_and_its_result_is_there()
+        {
+            (await _session.StartRevisionAsync(1, "Sign out at the end.")).IsSuccess.ShouldBeTrue();
+            (await StartAsync()).ErrorMessage.ShouldBe("The flow is already being generated.");
+
+            FlowGenerationResultDto result = new FlowGenerationResultDto { IsModelDraft = true };
+            _generation.Finish(result);
+            await WaitUntilAsync(() => LastProgress()?.State == FlowGenerationStateEnum.DONE);
+
+            _generation.Changes.ShouldBe("Sign out at the end.");
+            _session.GetResult().ShouldBeSameAs(result);
+        }
+
 
         // ================================================================
         // Private types
@@ -117,13 +132,26 @@ namespace Business.Tests.Recording
                 _done.TrySetException(ex);
             }
 
-            public async Task<FlowGenerationResultDto> ImportModelDraftAsync(
+            public string? Changes { get; private set; }
+
+            public Task<FlowGenerationResultDto> ImportModelDraftAsync(
                 int flowId,
                 RecordingResultDto recording,
                 ReviewedRecordingDto reviewed,
                 Func<int, RecordingScreenDto?> screenAt,
                 Action<FlowGenerationProgressDto>? onProgress,
                 CancellationToken ct = default)
+            {
+                return WaitAsync(ct);
+            }
+
+            public Task<FlowGenerationResultDto> ReviseAsync(int flowId, string changes, Action<FlowGenerationProgressDto>? onProgress, CancellationToken ct = default)
+            {
+                Changes = changes;
+                return WaitAsync(ct);
+            }
+
+            private async Task<FlowGenerationResultDto> WaitAsync(CancellationToken ct)
             {
                 using CancellationTokenRegistration registration = ct.Register(() =>
                 {
@@ -134,7 +162,7 @@ namespace Business.Tests.Recording
                 return await _done.Task;
             }
 
-            public Task<FlowScriptImportResultDto> ImportPlainDraftAsync(int flowId, RecordingResultDto recording, ReviewedRecordingDto reviewed, Func<int, RecordingScreenDto?> screenAt, CancellationToken ct = default)
+            public Task<FlowGenerationResultDto> ImportPlainDraftAsync(int flowId, RecordingResultDto recording, ReviewedRecordingDto reviewed, Func<int, RecordingScreenDto?> screenAt, CancellationToken ct = default)
             {
                 throw new NotSupportedException();
             }

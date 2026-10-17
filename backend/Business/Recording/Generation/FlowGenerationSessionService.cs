@@ -5,8 +5,9 @@ using Core.Ports;
 namespace Business.Recording.Generation
 {
     /// <summary>
-    /// Owns one generation at a time. A model takes minutes over a draft - longer than a request can
-    /// wait, on a pipe that answers one call at a time - so the request starts it and returns,
+    /// Owns one generation at a time: the model's draft of a recording, or a revision the Check page
+    /// asked for. A model takes minutes over a draft - longer than a request can wait, on a pipe
+    /// that answers one call at a time - so the request starts it and returns,
     /// FLOW_GENERATION_PROGRESS says how far, and GetResult has what was saved once it says DONE.
     /// </summary>
     public sealed class FlowGenerationSessionService : IFlowGenerationSessionService, IDisposable
@@ -34,37 +35,18 @@ namespace Business.Recording.Generation
         // Public methods
         // ================================================================
 
-        public async Task<ResultDto<bool>> StartAsync(
+        public Task<ResultDto<bool>> StartAsync(
             int flowId,
             RecordingResultDto recording,
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt)
         {
-            await _gate.WaitAsync();
+            return BeginAsync((onProgress, ct) => _generationService.ImportModelDraftAsync(flowId, recording, reviewed, screenAt, onProgress, ct));
+        }
 
-            try
-            {
-                if (_progress.State == FlowGenerationStateEnum.GENERATING)
-                    return ResultDto<bool>.Failure("The flow is already being generated.");
-
-                await StopAsync();
-                _result = null;
-
-                CancellationTokenSource cts = new CancellationTokenSource();
-                _cts = cts;
-
-                // Not sent: the first stage says it, with the model and what it is sent. Kept, so a
-                // second start is refused from now.
-                lock (_progressLock)
-                    _progress = new FlowGenerationProgressDto { State = FlowGenerationStateEnum.GENERATING, Stage = FlowGenerationStageEnum.WRITING_DRAFT };
-
-                _generation = Task.Run(() => GenerateAsync(flowId, recording, reviewed, screenAt, cts.Token), CancellationToken.None);
-                return ResultDto<bool>.Success(true);
-            }
-            finally
-            {
-                _gate.Release();
-            }
+        public Task<ResultDto<bool>> StartRevisionAsync(int flowId, string changes)
+        {
+            return BeginAsync((onProgress, ct) => _generationService.ReviseAsync(flowId, changes, onProgress, ct));
         }
 
         public FlowGenerationResultDto? GetResult()
@@ -98,16 +80,40 @@ namespace Business.Recording.Generation
         // Private methods
         // ================================================================
 
-        private async Task GenerateAsync(
-            int flowId,
-            RecordingResultDto recording,
-            ReviewedRecordingDto reviewed,
-            Func<int, RecordingScreenDto?> screenAt,
-            CancellationToken ct)
+        private async Task<ResultDto<bool>> BeginAsync(Func<Action<FlowGenerationProgressDto>, CancellationToken, Task<FlowGenerationResultDto>> generate)
+        {
+            await _gate.WaitAsync();
+
+            try
+            {
+                if (_progress.State == FlowGenerationStateEnum.GENERATING)
+                    return ResultDto<bool>.Failure("The flow is already being generated.");
+
+                await StopAsync();
+                _result = null;
+
+                CancellationTokenSource cts = new CancellationTokenSource();
+                _cts = cts;
+
+                // Not sent: the first stage says it, with the model and what it is sent. Kept, so a
+                // second start is refused from now.
+                lock (_progressLock)
+                    _progress = new FlowGenerationProgressDto { State = FlowGenerationStateEnum.GENERATING, Stage = FlowGenerationStageEnum.WRITING_DRAFT };
+
+                _generation = Task.Run(() => GenerateAsync(generate, cts.Token), CancellationToken.None);
+                return ResultDto<bool>.Success(true);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        private async Task GenerateAsync(Func<Action<FlowGenerationProgressDto>, CancellationToken, Task<FlowGenerationResultDto>> generate, CancellationToken ct)
         {
             try
             {
-                FlowGenerationResultDto result = await _generationService.ImportModelDraftAsync(flowId, recording, reviewed, screenAt, Report, ct);
+                FlowGenerationResultDto result = await generate(Report, ct);
 
                 _result = result;
                 Report(Done(null));
