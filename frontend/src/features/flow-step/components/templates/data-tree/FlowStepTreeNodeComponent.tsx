@@ -20,7 +20,7 @@ interface Props {
  *
  * Only the accent is picked here and the tints are mixed from it. PrimeFlex's bg-{colour}-50
  * classes cannot be used: the palette is not inverted for dark themes, so bg-blue-50 is near
- * white on soho-dark. Mixing into transparent tints whatever surface is actually behind, which
+ * white on a dark theme. Mixing into transparent tints whatever surface is actually behind, which
  * lands correctly on either.
  *
  * No group uses green or red. Those mean Success and Failure.

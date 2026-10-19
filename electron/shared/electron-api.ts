@@ -54,4 +54,13 @@ export interface ElectronApi {
     // What the page shows, in CSS pixels.
     resizeWindow: (width: number, height: number) => void;
   };
+
+  // The system's file dialogs and file manager. A cancelled dialog answers null.
+  files: {
+    chooseFolder: (defaultPath?: string | null) => Promise<string | null>;
+    chooseScript: (defaultPath?: string | null) => Promise<string | null>;
+    showInFolder: (path: string) => Promise<void>;
+    // The path of a file dropped on the page. Empty for one that is not on disk.
+    pathOf: (file: File) => string;
+  };
 }

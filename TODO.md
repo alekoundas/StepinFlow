@@ -411,15 +411,19 @@ the history.
 
 ## Frontend
 
-- [ ] **The mockup's colours and type. To decide.** Raised 2026-10-17, with the new shell. The
-      mockup's Foundations board is one near-black ground (#0B0C10) with cards a step lighter, one
-      blue accent (#8FA3FF), red only for recording and failure, and Geist; the app is PrimeReact's
-      soho-dark, lilac (#b19df7) on #1d1e27, in Lato. Everything new reads the theme's variables, so
-      it follows whichever is chosen. Two ways: lara-dark-indigo, the closest built-in theme (#818cf8
-      on #111827), one import in `main.tsx`; or soho-dark with its variables overridden in
-      `app.css`, which reaches little - soho-dark writes its accent into 166 rules and never through
-      `--primary-color`. Geist would be bundled rather than fetched, the app working offline. Check
-      the pages by eye after either, the recording bar too.
+- [ ] **The home page, as the mockup draws it. To build.** Raised 2026-10-17; the mockup's Home
+      board was drawn and liked the same day, and building it waits. Today Home is the early
+      playground - start and stop the overlay recording, a screenshot into the image editor -
+      which nothing else needs. The board has this week's executions, completed, failed and
+      inconclusive; executions per day over 14 days by outcome; recent executions with Explain on
+      a failure; what is waiting - a generated flow not yet read, a flow with errors, one that
+      keeps failing; and the flows edited lately. Its numbers need an execution-statistics query
+      the backend does not have.
+- [ ] **Check the pages by eye on lara-dark-indigo.** Switched from soho-dark on 2026-10-17, to come
+      closer to the mockup's Foundations board: an indigo accent (#818cf8) on #111827, in Inter,
+      which the theme bundles. Everything written since the shell reads the theme's variables and
+      follows it; older pages, the recording bar and the overlay windows were laid out on
+      soho-dark. The mockup's own palette (#8FA3FF on #0B0C10, in Geist) is not attempted.
 
 - [ ] **Two layouts of one window matcher.** Raised 2026-10-14, when the recording setup was laid
       out as the mockup's: `RecordingWindowPickerComponent` lists the open windows as a radio list
@@ -432,8 +436,8 @@ the history.
       recording bar came out see-through. PrimeFlex is 4.x, and its `surface-*`, `text-color`,
       `text-color-secondary` and plain `border-round` classes read v4 design tokens (`--p-surface-0`
       to `--p-surface-950`, `--p-text-muted-color`, `--p-content-border-radius`) that the legacy
-      soho-dark theme does not define - it has `--surface-overlay`, `--text-color-secondary`,
-      `--border-radius`. So backgrounds come out transparent, borders and secondary text inherit,
+      themes do not define, soho-dark then and lara-dark-indigo now - they have `--surface-overlay`,
+      `--text-color-secondary`, `--border-radius`. So backgrounds come out transparent, borders and secondary text inherit,
       and corners stay square. About 80 uses in some 30 files, and every `LabelComponent` with
       `color="secondary"`. Less visible in the main window, where the page behind is dark; the
       recording bar uses the theme's variables inline instead. `border-round-lg`, `-xl` and

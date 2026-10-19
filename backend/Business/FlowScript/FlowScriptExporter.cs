@@ -92,9 +92,40 @@ namespace Business.FlowScript
         }
 
 
+        public List<FlowScriptFileDto> ListScripts(string folderPath)
+        {
+            if (!Directory.Exists(folderPath))
+                return [];
+
+            return Directory.EnumerateFiles(folderPath, "*.sflw")
+                .Select(x => new FlowScriptFileDto
+                {
+                    Path = x,
+                    FileName = Path.GetFileName(x),
+                    ModifiedAt = File.GetLastWriteTime(x),
+                    TemplateCount = TemplateCountOf(x),
+                })
+                .OrderByDescending(x => x.ModifiedAt)
+                .ToList();
+        }
+
+
         // ================================================================
         // Private methods
         // ================================================================
+
+        // The folder named after the script, beside it, as an export writes it.
+        private static int TemplateCountOf(string scriptPath)
+        {
+            string directory = Path.GetDirectoryName(scriptPath) ?? string.Empty;
+            string name = Path.GetFileNameWithoutExtension(scriptPath);
+            string templateFolder = Path.Combine(directory, name);
+
+            if (!Directory.Exists(templateFolder))
+                return 0;
+
+            return Directory.EnumerateFiles(templateFolder).Count();
+        }
 
         private static async Task<FlowScriptSchema> LoadAsync(AppDbContext dbContext, int flowId, bool includeImages, CancellationToken ct)
         {

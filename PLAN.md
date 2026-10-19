@@ -50,9 +50,6 @@ live.
 ### The script
 
 - [ ] **The CSV template beside the script**, plus a `.gitignore` entry for the secrets file.
-- [ ] **Buttons.** `FlowScript.export` and `FlowScript.import` are reachable over IPC; nothing in the UI calls
-      them yet. They share phase 7's script view (`shared/components/script-view/`), which takes
-      an import's errors and warnings as marks at their lines (5.13).
 - [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.

@@ -39,4 +39,12 @@ export const ElectronApiService = {
     resizeWindow: (width: number, height: number) =>
       window.electronApi.recordingBar.resizeWindow(width, height),
   },
+
+  // A cancelled dialog answers null.
+  files: {
+    chooseFolder: (defaultPath?: string) => window.electronApi.files.chooseFolder(defaultPath ?? null),
+    chooseScript: (defaultPath?: string) => window.electronApi.files.chooseScript(defaultPath ?? null),
+    showInFolder: (path: string) => window.electronApi.files.showInFolder(path),
+    pathOf: (file: File) => window.electronApi.files.pathOf(file),
+  },
 };

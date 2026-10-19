@@ -35,6 +35,20 @@ changes as you work through them.
 
 Cover: Extract to sub-flow, what gets copied versus moved, and why references are checked first.
 
+## Sharing a flow as a file
+
+A flow's **Export**, beside Run in the editor, writes it as a `.sflw` script with its templates in a
+folder of the same name beside it. The folder starts as the app's export folder; Browse picks
+another, and a script of the same name there is replaced.
+
+**Import**, in the menu, reads a `.sflw` file and says what importing it would do before anything
+is saved: a new flow, when no flow has the file's `Id`; the flow with that `Id` replaced, when one
+has - its executions are kept, and the page shows it beside the file; or nothing, when the file does
+not read cleanly or another flow already has its name. Its errors and warnings are marked at their
+lines in the script. A template the file names that is not in the folder beside it is imported
+without a picture, and a secret input has no value in the file: it is asked for when the flow
+executes.
+
 ## Being told when a flow fails
 
 Cover: a `NOTIFY` step in a Failure branch, reporting on the parent step, and what a `SEARCH_IMAGE`

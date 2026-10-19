@@ -16,7 +16,7 @@ type ImageEditorReadyResponse =
   import("./shared/types.js").ImageEditorReadyResponse;
 type ImageEditorResult = import("./shared/types.js").ImageEditorResult;
 
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 const IPC_CHANNELS = {
   // ========== Backend pipe channels =================
@@ -43,6 +43,11 @@ const IPC_CHANNELS = {
   RECORDING_BAR_OPEN_WINDOW: "RECORDING_BAR_OPEN_WINDOW",
   RECORDING_BAR_CLOSE_WINDOW: "RECORDING_BAR_CLOSE_WINDOW",
   RECORDING_BAR_RESIZE_WINDOW: "RECORDING_BAR_RESIZE_WINDOW",
+
+  // ========== Files channels ==========
+  FILES_CHOOSE_FOLDER: "FILES_CHOOSE_FOLDER",
+  FILES_CHOOSE_SCRIPT: "FILES_CHOOSE_SCRIPT",
+  FILES_SHOW_IN_FOLDER: "FILES_SHOW_IN_FOLDER",
 } as const;
 
 // Typed against the contract so the renderer and this file cannot drift.
@@ -110,6 +115,17 @@ const api: ElectronApi = {
       ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_CLOSE_WINDOW),
     resizeWindow: (width: number, height: number): void =>
       ipcRenderer.send(IPC_CHANNELS.RECORDING_BAR_RESIZE_WINDOW, width, height),
+  },
+
+  files: {
+    chooseFolder: (defaultPath?: string | null): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.FILES_CHOOSE_FOLDER, defaultPath ?? null),
+    chooseScript: (defaultPath?: string | null): Promise<string | null> =>
+      ipcRenderer.invoke(IPC_CHANNELS.FILES_CHOOSE_SCRIPT, defaultPath ?? null),
+    showInFolder: (path: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.FILES_SHOW_IN_FOLDER, path),
+    // A dropped File carries no path in the page; only the preload can ask for it.
+    pathOf: (file: File): string => webUtils.getPathForFile(file),
   },
 };
 

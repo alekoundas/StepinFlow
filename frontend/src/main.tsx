@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createHashRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
 
 // Global CSS PrimeReact
 import "primeicons/primeicons.css";
-import "primereact/resources/themes/soho-dark/theme.css";
+import "primereact/resources/themes/lara-dark-indigo/theme.css";
 import "primeflex/primeflex.css";
 import "@/styles/app.css";
 
@@ -22,6 +22,7 @@ import { ElectronApiService } from "@/shared/services/electron-api-service";
 
 // Pages
 import AppLayout from "@/app-layout";
+import HomePage from "@/pages/home/home-page";
 import WorkflowPage from "@/features/workflow/WorkflowPage";
 import ExecutionPage from "@/features/execution/ExecutionPage";
 import ExecutionsPage from "@/features/execution/ExecutionsPage";
@@ -30,6 +31,7 @@ import FlowAiCreatePage from "@/features/flow/FlowAiCreatePage";
 import FlowFormPage from "@/features/flow/FlowFormPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import RecordingPage from "@/features/recording/RecordingPage";
+import ImportFlowPage from "@/features/flow-script/ImportFlowPage";
 import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
 import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
@@ -41,12 +43,7 @@ const router = createHashRouter([
     children: [
       {
         path: "/",
-        element: (
-          <Navigate
-            to="/flows"
-            replace
-          />
-        ),
+        element: <HomePage />,
       },
       {
         path: "/flows",
@@ -95,6 +92,10 @@ const router = createHashRouter([
       {
         path: "/record",
         element: <RecordingPage />,
+      },
+      {
+        path: "/import",
+        element: <ImportFlowPage />,
       },
 
       // { path: "app", element: <App /> },

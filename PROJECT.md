@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 107 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 109 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -975,6 +975,26 @@ than being dropped with the parse.
 The template images come in as a dictionary by name rather than a folder path. The folder overload
 reads the folder into one, so the recorder can import its crops straight from memory.
 
+### Export and import in the app
+
+**Export** sits beside Run in the editor. Its dialog starts in the app's export folder
+(`PathHelper.GetExportDataPath()`, `StepinFlow_v2\Export` under the user's local application data),
+Browse picks another through the system's folder dialog, and a script of the same name there is
+replaced. It ends on where the files went, with "Show in folder".
+
+**Import** is in the rail, and reads a file before it saves anything. `FlowScript.preview` -
+`FlowScriptPreviewService` - reads the file and the folder beside it with the importer's own
+`FlowScriptFile`, scans it, and asks the flow data service what the write path would meet, the way
+`ReplaceAsync` decides it: the flow with the file's `Id`, which it would replace, and a name another
+flow already has, which refuses it. So the page can say, before Import, whether the file is a new
+flow, replaces one - whose executions stay and whose script is shown beside the file's, folded to
+what differs - or cannot be imported, with every diagnostic marked at its line in the script view
+(§13). Templates the file names that are not in the folder beside it are listed; they import
+without a picture. The file dialog opens in the export folder, the scripts already there are listed
+to pick from (`FlowScript.getExportFolder`), and a file can be dropped on the page, its path asked of
+the preload since a page cannot see one. The system dialogs, the file manager and the dropped file's
+path are the `files` group of the Electron bridge.
+
 ### The round trip is the acceptance test
 
 Export, import, export again, byte identical — over a flow using both search kinds, all four search
@@ -1457,7 +1477,7 @@ How a flow gets out of the database, into a repository, through a pipeline, and 
 to work out why it went red.
 
 **Mostly design, not yet built** - phases 8 and 12 to 14. What exists: the script and its
-transactional import and export (§7, reachable over IPC but with no button yet), `PublicId`, and
+transactional import and export (§7, the editor's Export and the Import page), `PublicId`, and
 the main area.
 
 ### The file is `.sflw`
@@ -1616,8 +1636,8 @@ login test fails at 390x844 four times in fifty, always on the cart badge check"
 
 ## 13. Frontend
 
-React 19 and TypeScript on Vite (the rolldown build), with the React Compiler; PrimeReact and
-PrimeFlex for components; React Router 7; TanStack Query for server state and Zustand for UI state;
+React 19 and TypeScript on Vite (the rolldown build), with the React Compiler; PrimeReact, on
+its lara-dark-indigo theme, and PrimeFlex for components; React Router 7; TanStack Query for server state and Zustand for UI state;
 React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answers; CodeMirror 6
 for the script view. ESLint 9 with
 `typescript-eslint` and the React hooks rules. Electron 40 is the shell, packaged by
@@ -1627,10 +1647,11 @@ Feature-based: `features/<name>/{components,hooks,store}`, shared code in `share
 pages in `windows/`. The recorder is `features/recording/`: the setup, Review, Generating and
 Check, with the recording bar's own window in `windows/recording-bar/`.
 
-**The shell** is the mockup's (`app-layout.tsx`): a rail on the left with Flows, Sub-flows and
-Executions, then Ask AI, Settings, and the model the AI features use with where it runs, a link to
-its settings. On the editor and an execution it keeps only its icons, since those pages want the
-width. `/` opens the flows.
+**The shell** is the mockup's (`app-layout.tsx`): a rail on the left with Home, Flows, Sub-flows
+and Executions, then Import and Ask AI, Settings, and the model the AI features use with where it
+runs, a link to its settings. On the editor and an execution it keeps only its icons, since those pages want the
+width. `/` is Home, which the mockup does not draw; what it shows is still to be talked about
+(`TODO.md`, Frontend).
 
 **The script view** is CodeMirror 6, read-only (`shared/components/script-view/`). A
 `StreamLanguage` tokenizer colours a line the way the scanner reads one - the step's keyword where
@@ -1821,13 +1842,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-755 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+763 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 569 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 577 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1941,15 +1962,13 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 755 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 763 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
 ### Known gaps
 
-- The flow script has no button: export and import are reachable over IPC and nothing in the UI
-  calls them, so an import's errors and warnings have no screen to show on yet. Inside it, a
-  `Sub Flow` step imports with no target.
+- A `Sub Flow` step in a script imports with no target.
 - No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
 - How long a step's result stays readable is undecided (§8).
 - The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build

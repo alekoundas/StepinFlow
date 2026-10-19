@@ -19,9 +19,9 @@ const RAIL: CSSProperties = {
 };
 
 /**
- * The app around every page: the rail on the left and the page beside it. Flows, sub-flows and
- * executions are what you work with; Ask AI and Settings sit apart, and the model the AI features
- * use is always in view at the bottom.
+ * The app around every page: the rail on the left and the page beside it. Home, then the flows,
+ * sub-flows and executions you work with; Import and Ask AI sit apart, Settings at the bottom with
+ * the model the AI features use always in view.
  */
 export default function AppLayout() {
   const { pathname } = useLocation();
@@ -45,6 +45,12 @@ export default function AppLayout() {
         <LogoComponent isNarrow={isNarrow} />
 
         <NavItemComponent
+          to="/"
+          icon="home"
+          label="Home"
+          isNarrow={isNarrow}
+        />
+        <NavItemComponent
           to="/flows"
           icon="sitemap"
           label="Flows"
@@ -66,6 +72,13 @@ export default function AppLayout() {
         <div
           className="my-2 mx-2"
           style={{ height: 1, background: "var(--surface-border)" }}
+        />
+
+        <NavItemComponent
+          to="/import"
+          icon="file-import"
+          label="Import"
+          isNarrow={isNarrow}
         />
 
         <button
@@ -148,8 +161,10 @@ function LogoComponent({ isNarrow }: { isNarrow: boolean }) {
 
 function NavItemComponent({ to, icon, label, isNarrow }: { to: string; icon: string; label: string; isNarrow: boolean }) {
   return (
+    // Home is only home at "/" itself; every other path is under it.
     <NavLink
       to={to}
+      end={to === "/"}
       className="nav-rail-item flex align-items-center gap-2 border-round-lg no-underline"
       style={({ isActive }) => itemStyle(isActive, isNarrow)}
       aria-label={isNarrow ? label : undefined}
@@ -229,7 +244,7 @@ function itemStyle(isActive: boolean, isNarrow: boolean): CSSProperties {
   if (isActive)
     style = {
       ...style,
-      background: "color-mix(in srgb, var(--surface-border) 70%, transparent)",
+      background: "color-mix(in srgb, var(--text-color) 9%, transparent)",
       color: "var(--text-color)",
       fontWeight: 500,
     };

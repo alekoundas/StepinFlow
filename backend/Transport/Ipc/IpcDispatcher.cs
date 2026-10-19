@@ -70,6 +70,8 @@ namespace Transport.Ipc
                     // FlowScript
                     "FlowScript.export" => await Handler<ExportFlowScriptHandler>().HandleAsync(Payload<FlowScriptExportRequestDto>(request), ct),
                     "FlowScript.import" => await Handler<ImportFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
+                    "FlowScript.preview" => await Handler<PreviewFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
+                    "FlowScript.getExportFolder" => await Handler<GetFlowScriptExportFolderHandler>().HandleAsync(ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),

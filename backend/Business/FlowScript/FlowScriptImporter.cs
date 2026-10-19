@@ -39,23 +39,9 @@ namespace Business.FlowScript
             if (!File.Exists(scriptPath))
                 return Failed([Diagnostic.Error(DiagnosticCodeEnum.FILE_MISSING, 1, 1, $"There is no file at {scriptPath}.")]);
 
-            string script = await File.ReadAllTextAsync(scriptPath, ct);
+            FlowScriptFile file = await FlowScriptFile.ReadAsync(scriptPath, ct);
 
-            // Templates sit in a folder named after the file, beside it. Named ignoring case, as
-            // Windows and macOS find a file.
-            Dictionary<string, byte[]> templates = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
-            string? directory = Path.GetDirectoryName(scriptPath);
-            if (directory != null)
-            {
-                string templateFolderPath = Path.Combine(directory, Path.GetFileNameWithoutExtension(scriptPath));
-                if (Directory.Exists(templateFolderPath))
-                {
-                    foreach (string path in Directory.EnumerateFiles(templateFolderPath))
-                        templates[Path.GetFileName(path)] = await File.ReadAllBytesAsync(path, ct);
-                }
-            }
-
-            return await ImportTextAsync(script, templates, ct);
+            return await ImportTextAsync(file.Script, file.Templates, ct);
         }
 
         /// <summary>

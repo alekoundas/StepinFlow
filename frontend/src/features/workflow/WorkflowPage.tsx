@@ -5,8 +5,10 @@ import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
+import ExportFlowDialogComponent from "@/features/flow-script/components/ExportFlowDialogComponent";
+import { useFlow } from "@/features/flow/hooks/use-flow";
 
 export default function WorkflowPage() {
   const { id } = useParams<{
@@ -15,6 +17,9 @@ export default function WorkflowPage() {
   const navigate = useNavigate();
 
   const { setRootFlowId } = useWorkflowStore();
+  const { data: flow } = useFlow(id ? +id : null);
+  const [isExporting, setIsExporting] = useState(false);
+
   useEffect(() => {
     setRootFlowId(id ? +id : undefined);
   }, []);
@@ -28,13 +33,32 @@ export default function WorkflowPage() {
           weight="bold"
         />
 
-        <Button
-          label="Run"
-          icon="pi pi-play"
-          onClick={() => navigate(`/execution/${id}`)}
-          disabled={!id}
-        />
+        <div className="flex gap-2">
+          <Button
+            label="Export"
+            icon="pi pi-file-export"
+            onClick={() => setIsExporting(true)}
+            disabled={!flow}
+            severity="secondary"
+            outlined
+          />
+          <Button
+            label="Run"
+            icon="pi pi-play"
+            onClick={() => navigate(`/execution/${id}`)}
+            disabled={!id}
+          />
+        </div>
       </div>
+
+      {flow && (
+        <ExportFlowDialogComponent
+          flowId={flow.id}
+          flowName={flow.name}
+          visible={isExporting}
+          onHide={() => setIsExporting(false)}
+        />
+      )}
 
       <div
         className="mt-6"

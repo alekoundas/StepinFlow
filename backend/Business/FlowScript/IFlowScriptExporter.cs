@@ -13,5 +13,8 @@ namespace Business.FlowScript
 
         /// <summary> Writes the script and its template images in the app's export path.</summary>
         Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default);
+
+        /// <summary>The .sflw files in a folder, newest first, each with the templates in the folder beside it.</summary>
+        List<FlowScriptFileDto> ListScripts(string folderPath);
     }
 }

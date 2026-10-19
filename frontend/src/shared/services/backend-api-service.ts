@@ -30,6 +30,8 @@ import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-impo
 import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
 import type { RecordingDraftRevisionDto } from "@/shared/models/recording-draft-revision-dto";
+import type { FlowScriptPreviewDto } from "@/shared/models/flow-script-preview-dto";
+import type { FlowScriptExportFolderDto, FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -81,6 +83,19 @@ export const backendApiService = {
     promoteToSubFlow: (id: number) => call<boolean>("Flow.promoteToSubFlow", id),
     extractSubFlow: (dto: ExtractSubFlowDto) =>
       call<ExtractSubFlowResultDto>("Flow.extractSubFlow", dto),
+  },
+
+  FlowScript: {
+    // The script and a folder of its templates, named after the flow. An empty folder is the export folder.
+    export: (flowId: number, folderPath: string) =>
+      call<FlowScriptExportResultDto>("FlowScript.export", { flowId, folderPath }),
+    // A file that does not read cleanly is an answer with errors, not a failure.
+    import: (scriptPath: string) =>
+      call<FlowScriptImportResultDto>("FlowScript.import", { scriptPath }),
+    // What importing would do, with nothing saved.
+    preview: (scriptPath: string) =>
+      call<FlowScriptPreviewDto>("FlowScript.preview", { scriptPath }),
+    getExportFolder: () => call<FlowScriptExportFolderDto>("FlowScript.getExportFolder"),
   },
 
   DiscordBot: {

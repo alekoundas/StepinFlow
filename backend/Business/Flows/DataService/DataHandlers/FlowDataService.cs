@@ -4,6 +4,7 @@ using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -175,6 +176,28 @@ namespace Business.Flows.DataService.DataHandlers
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<bool>.Success(true);
+        }
+
+        /// <summary>
+        /// What an import of a flow with this Id and name would meet, read the way ReplaceAsync
+        /// decides it: the flow with the Id is replaced, and a name another flow has refuses it.
+        /// </summary>
+        public async Task<FlowScriptImportTargetDto> GetImportTargetAsync(Guid publicId, string name, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            Flow? existing = await dbContext.Flows.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
+
+            FlowScriptImportTargetDto target = new FlowScriptImportTargetDto();
+            if (existing != null)
+            {
+                target.FlowId = existing.Id;
+                target.FlowName = existing.Name;
+                target.ExecutionCount = await dbContext.Executions.CountAsync(x => x.FlowId == existing.Id, ct);
+            }
+
+            target.NameTaken = await ValidateNameIsFreeAsync(dbContext, name, existing?.Id ?? 0, ct);
+            return target;
         }
 
         // Saves more than once, so in a transaction: an import that fails part way leaves the flow

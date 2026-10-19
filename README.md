@@ -197,7 +197,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**755 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**763 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 
@@ -306,8 +306,9 @@ In active development, and not yet released. The builder, recorder, image and te
 sub-flows, validation, notifications, the execution engine with its debugger, and the AI assistant
 all work.
 
-The flow script round-trips both ways — export, import, export again, byte identical — but has no
-button in the UI yet. CSV inputs, the viewport matrix and the CI runner are next on the roadmap.
+The flow script round-trips both ways — export, import, export again, byte identical — from the
+editor's Export and the Import page, which reads a file and says what it would do before saving
+anything. CSV inputs, the viewport matrix and the CI runner are next on the roadmap.
 
 ---
 

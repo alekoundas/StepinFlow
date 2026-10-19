@@ -113,6 +113,7 @@ namespace App
             builder.Services.AddSingleton<IScanner, Scanner>();
             builder.Services.AddSingleton<IFlowScriptExporter, FlowScriptExporter>();
             builder.Services.AddSingleton<IFlowScriptImporter, FlowScriptImporter>();
+            builder.Services.AddSingleton<IFlowScriptPreviewService, FlowScriptPreviewService>();
 
             builder.Services.AddExecutionEngine();
 
@@ -177,6 +178,8 @@ namespace App
             builder.Services.AddTransient<GetFlowTreeNodeHandler>();
             builder.Services.AddTransient<ExportFlowScriptHandler>();
             builder.Services.AddTransient<ImportFlowScriptHandler>();
+            builder.Services.AddTransient<PreviewFlowScriptHandler>();
+            builder.Services.AddTransient<GetFlowScriptExportFolderHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();
