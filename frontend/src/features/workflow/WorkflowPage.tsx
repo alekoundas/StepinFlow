@@ -5,7 +5,7 @@ import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 import ExportFlowDialogComponent from "@/features/flow-script/components/ExportFlowDialogComponent";
 import { useFlow } from "@/features/flow/hooks/use-flow";
@@ -16,13 +16,32 @@ export default function WorkflowPage() {
   }>();
   const navigate = useNavigate();
 
-  const { setRootFlowId } = useWorkflowStore();
-  const { data: flow } = useFlow(id ? +id : null);
+  const flowId = id ? +id : undefined;
+
+  const { setRootFlowId, setSelectedTreeNode, setSelectedFlowStepTypeToAdd, setTreeRefreshTrigger } =
+    useWorkflowStore();
+  const { data: flow } = useFlow(flowId ?? null);
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    setRootFlowId(id ? +id : undefined);
-  }, []);
+  // The selection lives in a store that outlives this page. A flow opened here, from the list or
+  // by going back to another, starts with nothing selected and its own root, and leaving lets go
+  // of both. Before paint, so the panel never shows a frame of the flow that was open before.
+  useLayoutEffect(() => {
+    const clear = () => {
+      setSelectedTreeNode(undefined);
+      setSelectedFlowStepTypeToAdd(undefined);
+      setTreeRefreshTrigger(null);
+    };
+
+    clear();
+    setRootFlowId(flowId);
+
+    return () => {
+      clear();
+      setRootFlowId(undefined);
+    };
+  }, [flowId, setRootFlowId, setSelectedTreeNode, setSelectedFlowStepTypeToAdd, setTreeRefreshTrigger]);
+
   return (
     <div className="flex flex-column m-4 mr-3">
       {/* Title */}
@@ -89,7 +108,11 @@ export default function WorkflowPage() {
             style={{ overflow: "hidden" }}
           >
             <ScrollPanel className="h-full">
-              <DataTreeComponent flowId={id ? +id : -1} />
+              {/* Keyed by the flow, so its open rows and loaded branches start over with each one. */}
+              <DataTreeComponent
+                key={flowId ?? -1}
+                flowId={flowId ?? -1}
+              />
             </ScrollPanel>
           </SplitterPanel>
         </Splitter>

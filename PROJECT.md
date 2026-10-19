@@ -1842,18 +1842,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-763 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+765 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 577 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 578 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
 | `Platform.Windows.Tests` | 4 | grouping clicked elements, on drawn screenshots |
-| `App.Tests` | 0 | wired and empty |
+| `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
 npm run test:backend
@@ -1962,7 +1962,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 763 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 765 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

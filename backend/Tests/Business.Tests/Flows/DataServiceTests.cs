@@ -319,6 +319,22 @@ namespace Business.Tests.Flows
             updated.IsSuccess.ShouldBeFalse();
         }
 
+        // The form sends no Id, which reached the flow as the empty Guid, so the second flow made
+        // from the form broke the unique index.
+        [Fact]
+        public async Task A_new_flow_gets_an_Id_of_its_own_whatever_it_came_with()
+        {
+            int first = (await _dataService.Flow.CreateAsync(new Flow { Name = "Login", PublicId = Guid.Empty }, Ct)).Data;
+            ResultDto<int> second = await _dataService.Flow.CreateAsync(new Flow { Name = "Checkout", PublicId = Guid.Empty }, Ct);
+
+            second.IsSuccess.ShouldBeTrue(second.ErrorMessage);
+
+            using AppDbContext db = _database.CreateDbContext();
+            List<Guid> ids = db.Flows.Where(x => x.Id == first || x.Id == second.Data).Select(x => x.PublicId).ToList();
+            ids.ShouldAllBe(x => x != Guid.Empty);
+            ids.Distinct().Count().ShouldBe(2);
+        }
+
         [Fact]
         public async Task A_flow_is_not_a_clash_with_itself()
         {

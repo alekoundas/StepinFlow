@@ -21,7 +21,9 @@ namespace App.AutoMapper
 
             // Flow
             CreateMap<Flow, FlowDto>();
+            // PublicId is the flow's identity in its script, given once when it is created.
             CreateMap<FlowDto, Flow>()
+                .ForMember(x => x.PublicId, o => o.Ignore())
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.FlowAreas, o => o.Ignore())

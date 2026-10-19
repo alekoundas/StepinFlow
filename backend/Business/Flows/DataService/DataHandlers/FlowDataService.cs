@@ -36,7 +36,9 @@ namespace Business.Flows.DataService.DataHandlers
             if (taken != null)
                 return ResultDto<int>.Failure(taken);
 
+            // A new flow is a new identity. Only an import takes one from outside, through ReplaceAsync.
             flow.Id = 0;
+            flow.PublicId = Guid.NewGuid();
 
             dbContext.Flows.Add(flow);
             await dbContext.SaveChangesAsync(ct);
