@@ -178,7 +178,7 @@ export function FlowStepFormLayoutComponent({
               type="submit"
               label="Save"
               icon="pi pi-check"
-              disabled={!isValid || !isDirty}
+              disabled={!isValid || (formMode === FormMode.EDIT && !isDirty)}
             />
           </>
         )}

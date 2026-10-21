@@ -219,7 +219,7 @@ body{margin:0}
 </sc-if>
 
 <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #1E222B">
-<label for="{{ c.cid }}" style="font-weight: 500">Why it is here</label>
+<label for="{{ c.cid }}" style="font-weight: 500">Comment</label>
 <textarea id="{{ c.cid }}" rows="2" value="{{ c.comment }}" onChange="{{ c.setComment }}" placeholder="What you expect here, and what it means if it fails." style="box-sizing: border-box; padding: 8px 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; font-size: 13px; resize: vertical"></textarea>
 </div>
 </div>
@@ -426,10 +426,9 @@ class Component extends DCLogic {
         name: 'Input', blurb: 'Acts where the cursor is, or on whatever has focus. A Move above a click says where.',
         cards: [
           {
-            id: 'click', type: 'Cursor', mode: 'Click', glyph: 'C', tint: I, name: 'Click into the field', hasTest: false,
+            id: 'click', type: 'Cursor', mode: 'Click', glyph: 'C', tint: I, name: 'Click', hasTest: false,
             summary: 'A single left click where the cursor is. The Move above it says where.',
             fields: [
-              name('Click into the field'),
               seg('Mode', CURSOR_MODES, 'Click', 'Press a mouse button where the cursor is. Single, double, hold or release.'),
               seg('Action', ['Single', 'Double', 'Hold', 'Release'], 'Single'),
               seg('Button', ['Left', 'Right', 'Middle'], 'Left', 'A new click starts as a single left click, which the script leaves unsaid.'),
@@ -439,10 +438,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'move-result', type: 'Cursor', mode: 'Move · Step result', glyph: 'M', tint: I, name: 'Move to the email field', hasTest: false,
+            id: 'move-result', type: 'Cursor', mode: 'Move · Step result', glyph: 'M', tint: I, name: 'Move cursor', hasTest: false,
             summary: 'Moves the cursor onto where Find the email field matched.',
             fields: [
-              name('Move to the email field'),
               seg('Mode', CURSOR_MODES, 'Move', 'Move the cursor to the location without clicking.'),
               seg('Location', ['Step result', 'Saved location'], 'Step result', 'A new move starts here: where a search above it matched.'),
               select('Use the result of', 'Find the email field', STEP_RESULT),
@@ -452,10 +450,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'move-saved', type: 'Cursor', mode: 'Move · Saved location', glyph: 'M', tint: I, name: 'Open the menu', hasTest: false,
+            id: 'move-saved', type: 'Cursor', mode: 'Move · Saved location', glyph: 'M', tint: I, name: 'Move cursor', hasTest: false,
             summary: 'Moves the cursor to the saved location Hamburger menu.',
             fields: [
-              name('Open the menu'),
               seg('Mode', CURSOR_MODES, 'Move', 'Move the cursor to the location without clicking.'),
               seg('Location', ['Step result', 'Saved location'], 'Saved location'),
               select('Location', 'Hamburger menu', 'New saves a location and picks it. Test moves the real cursor there.', ['New', 'Test']),
@@ -465,10 +462,9 @@ class Component extends DCLogic {
             comment: 'Only on a narrow window: the desktop nav was not found above.',
           },
           {
-            id: 'drag', type: 'Cursor', mode: 'Drag', glyph: 'D', tint: I, name: 'Drag the invoice onto Upload', hasTest: false,
+            id: 'drag', type: 'Cursor', mode: 'Drag', glyph: 'D', tint: I, name: 'Drag', hasTest: false,
             summary: 'Holds the left button where the invoice matched, drags to the Upload box, and lets go.',
             fields: [
-              name('Drag the invoice onto Upload'),
               seg('Mode', CURSOR_MODES, 'Drag', 'Hold at the grab point, drag to the drop point, then release.'),
               seg('Button', ['Left', 'Right', 'Middle'], 'Left', 'A new drag holds the left button.'),
               section('Grab point'),
@@ -483,10 +479,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'scroll', type: 'Cursor', mode: 'Scroll', glyph: 'S', tint: I, name: 'Scroll the list down', hasTest: false,
+            id: 'scroll', type: 'Cursor', mode: 'Scroll', glyph: 'S', tint: I, name: 'Scroll down 3', hasTest: false,
             summary: 'Turns the wheel 3 notches down where the cursor is.',
             fields: [
-              name('Scroll the list down'),
               seg('Mode', CURSOR_MODES, 'Scroll', 'Turn the mouse wheel where the cursor is, a number of notches in one direction.'),
               seg('Direction', ['Up', 'Down', 'Left', 'Right'], 'Down'),
               mono('Notches', '3', 'Wheel notches, where the cursor is.'),
@@ -496,10 +491,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'type', type: 'Keyboard', mode: 'Type text', glyph: 'K', tint: I, name: 'Type the email', hasTest: false,
+            id: 'type', type: 'Keyboard', mode: 'Type text', glyph: 'K', tint: I, name: 'Type {{email}}', hasTest: false,
             summary: 'Types the email input’s value into whatever has focus, one character at a time.',
             fields: [
-              name('Type the email'),
               seg('Mode', KEY_MODES, 'Type text', 'Types the characters one at a time, as though someone were at the keyboard.'),
               mono('Text to type', '{{email}}', 'Typed literally. An {{input}} is filled in when the flow executes. To press Enter or Tab, add a Send keys step after this one.'),
             ],
@@ -508,10 +502,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'press', type: 'Keyboard', mode: 'Send keys · Press', glyph: 'K', tint: I, name: 'Paste the address', hasTest: false,
+            id: 'press', type: 'Keyboard', mode: 'Send keys · Press', glyph: 'K', tint: I, name: 'Press Ctrl+V', hasTest: false,
             summary: 'Presses Ctrl+V and lets go, the way a shortcut arrives.',
             fields: [
-              name('Paste the address'),
               seg('Mode', KEY_MODES, 'Send keys', 'Holds the modifiers and presses the key, the way a shortcut is meant to arrive.'),
               seg('Keys', KEY_ACTIONS, 'Press', 'Presses the keys and lets them go.'),
               keys('Keys to send', 'Ctrl+V', 'Press the combination anywhere; letting a key go finishes it. Escape is recorded like any other key.'),
@@ -524,7 +517,6 @@ class Component extends DCLogic {
             id: 'hold', type: 'Keyboard', mode: 'Send keys · Hold', glyph: 'K', tint: I, name: 'Hold Ctrl', hasTest: false,
             summary: 'Puts Ctrl down and leaves it down for the steps after it, until a Release.',
             fields: [
-              name('Hold Ctrl'),
               seg('Mode', KEY_MODES, 'Send keys'),
               seg('Keys', KEY_ACTIONS, 'Hold', 'Hold Ctrl, click, Release Ctrl is a Ctrl+click. Anything still held when the execution ends is let go.'),
               keys('Keys to hold', 'Ctrl', 'A modifier on its own can be held.'),
@@ -537,7 +529,6 @@ class Component extends DCLogic {
             id: 'release', type: 'Keyboard', mode: 'Send keys · Release', glyph: 'K', tint: I, name: 'Release Ctrl', hasTest: false,
             summary: 'Lets go of the Ctrl a Hold above put down.',
             fields: [
-              name('Release Ctrl'),
               seg('Mode', KEY_MODES, 'Send keys'),
               seg('Keys', KEY_ACTIONS, 'Release', 'Lets go of keys a Hold put down.'),
               keys('Keys to release', 'Ctrl', 'The same keys as the Hold, or the script warns that they stay down.'),
@@ -581,10 +572,9 @@ class Component extends DCLogic {
         name: 'Control', blurb: 'Shapes the path an execution takes. None of them touch the screen.',
         cards: [
           {
-            id: 'wait-fixed', type: 'Wait', mode: 'Fixed', glyph: 'W', tint: C, name: 'Wait', hasTest: false,
+            id: 'wait-fixed', type: 'Wait', mode: 'Fixed', glyph: 'W', tint: C, name: 'Wait 800ms', hasTest: false,
             summary: 'Waits 800 ms.',
             fields: [
-              name('Wait'),
               seg('How long', ['Fixed', 'Random range'], 'Fixed'),
               mono('Wait', '800', '800ms. A last resort: a Wait For check waits only as long as it has to.', 'ms'),
             ],
@@ -593,10 +583,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'wait-random', type: 'Wait', mode: 'Random range', glyph: 'W', tint: C, name: 'Pause like a person', hasTest: false,
+            id: 'wait-random', type: 'Wait', mode: 'Random range', glyph: 'W', tint: C, name: 'Wait 800ms to 1s 200ms', hasTest: false,
             summary: 'Each execution waits somewhere between 800ms and 1s 200ms.',
             fields: [
-              name('Pause like a person'),
               seg('How long', ['Fixed', 'Random range'], 'Random range', 'A step that pauses for exactly the same time every execution leaves a pattern. Picks evenly between the two.'),
               row([box('Shortest', '800', 'ms'), box('Longest', '1200', 'ms')]),
             ],
@@ -647,9 +636,9 @@ class Component extends DCLogic {
               select('Flow to execute', 'Sign in', 'Only flows promoted to sub-flows can be used this way.'),
               { kind: 'preview', label: 'What it does', rows: [
                 { pad: 6, glyph: 'IS', tint: P, name: 'Find the email field' },
-                { pad: 26, glyph: 'M', tint: I, name: 'Move to the email field' },
-                { pad: 26, glyph: 'K', tint: I, name: 'Type the email' },
-                { pad: 26, glyph: 'K', tint: I, name: 'Type the password' },
+                { pad: 26, glyph: 'M', tint: I, name: 'Move cursor' },
+                { pad: 26, glyph: 'K', tint: I, name: 'Type {{email}}' },
+                { pad: 26, glyph: 'K', tint: I, name: 'Type {{password}}' },
               ] },
             ],
             gives: '',
@@ -834,26 +823,25 @@ class Component extends DCLogic {
         name: 'System', blurb: 'The machine, the team, and the windows on screen.',
         cards: [
           {
-            id: 'act-lock', type: 'System Action', mode: 'Lock', glyph: 'A', tint: S, name: 'Lock the PC', hasTest: false,
+            id: 'act-lock', type: 'System Action', mode: 'Lock', glyph: 'A', tint: S, name: 'Lock workstation', hasTest: false,
             summary: 'Locks Windows. Everything keeps going behind the lock screen.',
-            fields: [name('Lock the PC'), seg('Action', ACTIONS, 'Lock')],
+            fields: [seg('Action', ACTIONS, 'Lock')],
             gives: '',
             script: ['System          LOCK_WORKSTATION'],
             comment: '',
           },
           {
-            id: 'act-sleep', type: 'System Action', mode: 'Sleep PC', glyph: 'A', tint: S, name: 'Sleep the PC', hasTest: false,
+            id: 'act-sleep', type: 'System Action', mode: 'Sleep PC', glyph: 'A', tint: S, name: 'Sleep PC', hasTest: false,
             summary: 'Puts the whole machine to sleep. The flow stops here.',
-            fields: [name('Sleep the PC'), seg('Action', ACTIONS, 'Sleep PC')],
+            fields: [seg('Action', ACTIONS, 'Sleep PC')],
             gives: '',
             script: ['System          SLEEP_PC'],
             comment: '',
           },
           {
-            id: 'act-off', type: 'System Action', mode: 'Monitor off', glyph: 'A', tint: S, name: 'Screens off', hasTest: false,
+            id: 'act-off', type: 'System Action', mode: 'Monitor off', glyph: 'A', tint: S, name: 'Monitor off', hasTest: false,
             summary: 'Turns the screens off while everything keeps going.',
             fields: [
-              name('Screens off'),
               seg('Action', ACTIONS, 'Monitor off'),
               info('Any mouse or keyboard input wakes the screens again, including input this flow sends. Put this step last.'),
             ],
@@ -862,9 +850,9 @@ class Component extends DCLogic {
             comment: 'Overnight execution: nobody needs to watch it.',
           },
           {
-            id: 'act-on', type: 'System Action', mode: 'Monitor on', glyph: 'A', tint: S, name: 'Screens on', hasTest: false,
+            id: 'act-on', type: 'System Action', mode: 'Monitor on', glyph: 'A', tint: S, name: 'Monitor on', hasTest: false,
             summary: 'Wakes the screens back up.',
-            fields: [name('Screens on'), seg('Action', ACTIONS, 'Monitor on')],
+            fields: [seg('Action', ACTIONS, 'Monitor on')],
             gives: '',
             script: ['System          MONITOR_ON'],
             comment: '',
@@ -897,10 +885,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'win-focus', type: 'Window', mode: 'Focus', glyph: 'Wn', tint: S, name: 'Focus - Google Chrome', hasTest: false,
+            id: 'win-focus', type: 'Window', mode: 'Focus', glyph: 'Wn', tint: S, name: 'Focus chrome.exe', hasTest: false,
             summary: 'Brings the Chrome window whose title contains Billing portal to the front.',
             fields: [
-              name('Focus - Google Chrome', 'Picking an app names the step, until you rename it.'),
               seg('Mode', WINDOW_MODES, 'Focus', 'Bring the window to the foreground before anything else happens.'),
               ...windowMatch(false, 'chrome.exe · Google Chrome', 'contains', 'Billing portal'),
               button('Test the match'),
@@ -910,10 +897,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'win-resize', type: 'Window', mode: 'Resize', glyph: 'Wn', tint: S, name: 'Resize - Google Chrome', hasTest: false,
+            id: 'win-resize', type: 'Window', mode: 'Resize', glyph: 'Wn', tint: S, name: 'Resize chrome.exe to 1280x720', hasTest: false,
             summary: 'Makes the Chrome window whose title contains Billing portal 1280 × 720.',
             fields: [
-              name('Resize - Google Chrome'),
               seg('Mode', WINDOW_MODES, 'Resize', 'Force the window to a fixed size. Every area and location inside it then means the same thing on any machine.'),
               ...windowMatch(false, 'chrome.exe · Google Chrome', 'contains', 'Billing portal'),
               row([box('Width', '1280', 'px'), box('Height', '720', 'px')], 'The whole window, title bar and borders included.'),
@@ -924,10 +910,9 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'win-move', type: 'Window', mode: 'Move', glyph: 'Wn', tint: S, name: 'Move - Billing', hasTest: false,
+            id: 'win-move', type: 'Window', mode: 'Move', glyph: 'Wn', tint: S, name: 'Move Billing', hasTest: false,
             summary: 'Moves the window whose title starts with Billing so its corner lands on Top left.',
             fields: [
-              name('Move - Billing'),
               seg('Mode', WINDOW_MODES, 'Move', 'Move the window to a saved location.'),
               ...windowMatch(true, '', 'starts with', 'Billing'),
               select('Move to', 'Top left', 'The outer corner of the window lands here, title bar included.'),
@@ -1077,14 +1062,15 @@ class Component extends DCLogic {
 
     return {
       isSystem, isChecks: !isSystem,
-      intro: total + ' forms: every step type, once for each of its modes, as the editor shows it beside the tree. Every one ends with Why it is here, the step’s code comment; type in it and the script line under the form changes, since that is where it is printed. The system steps and the branches continue on the next board.',
+      intro: total + ' forms: every step type, once for each of its modes, as the editor shows it beside the tree. Every one ends with a Comment, printed above the step as # lines; type in it and the script line under the form changes. Cursor, wait, keyboard, window and system action steps have no Name field: the header shows the name their settings give them. The system steps and the branches continue on the next board.',
       changes: [
         { title: 'Type and mode in the header', text: 'The type, the step’s name and its mode replace “X Step Configuration”.' },
         { title: 'A sentence first', text: 'What the step will do, in its own words, before any field.' },
         { title: 'Segmented choices', text: 'Short option sets are buttons. Dropdowns stay for steps, areas, flows and conditions.' },
         { title: 'No expandable sections', text: 'Fields are flat, under light headings where a form is long.' },
         { title: 'Gives', text: 'What later steps can use from this one.' },
-        { title: 'Why it is here, and the script', text: 'The code comment on every form, both branches included, and the line it is printed over.' },
+        { title: 'Comment, and the script', text: 'The code comment on every form, both branches included, and the line it is printed over.' },
+        { title: 'Named by their settings', text: 'A cursor, wait, keyboard, window or system action step is called what it does, “Double click” or “Wait 2s”, renamed on every save.' },
       ],
       groups: shown.map((g) => ({
         name: g.name, blurb: g.blurb, hid: 'g-' + g.name.toLowerCase().replace(/\s+/g, '-'),

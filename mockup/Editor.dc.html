@@ -90,10 +90,12 @@ Execute</button>
 </div>
 </div>
 
+<sc-if value="{{ sel.hasName }}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-direction: column; gap: 8px">
 <label for="step-name" style="font-weight: 500">Name</label>
 <input id="step-name" type="text" value="{{ sel.name }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
 </div>
+</sc-if>
 
 <sc-if value="{{ sel.isSearch }}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-direction: column; gap: 8px">
@@ -126,7 +128,7 @@ Execute</button>
 </sc-if>
 
 <div style="display: flex; flex-direction: column; gap: 8px">
-<label for="why" style="font-weight: 500">Why it is here</label>
+<label for="why" style="font-weight: 500">Comment</label>
 <textarea id="why" rows="3" placeholder="What you expect here, and what it means if it fails." style="box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; resize: vertical">{{ sel.comment }}</textarea>
 <span style="font-size: 12px; color: #8790A0">Read by whoever reviews the script, and quoted back when a failure is explained.</span>
 </div>
@@ -155,12 +157,12 @@ class Component extends DCLogic {
     const defs = [
       step('email', 0, 'W', P, 'Wait For Image', 'Email field', 'up to 10 s · in Billing portal', '▾', { isSearch: true, thumb: 'Email', template: 'template-e4m2q.png', comment: 'recorded after a 1.4s wait' }),
       branch('s1', 1, true),
-      step('m1', 2, 'M', I, 'Cursor Move', 'Move', 'to Email field'),
-      step('c1', 2, 'C', I, 'Cursor Click', 'Click', 'left, single'),
-      step('t1', 2, 'T', I, 'Keyboard Input', 'Type', '{{email}}'),
-      step('k1', 2, 'K', I, 'Keyboard Input', 'Press', 'Tab'),
-      step('t2', 2, 'T', I, 'Keyboard Input', 'Type', '{{password}}'),
-      step('k2', 2, 'K', I, 'Keyboard Input', 'Press', 'Enter'),
+      step('m1', 2, 'M', I, 'Cursor Move', 'Move cursor', 'to Email field'),
+      step('c1', 2, 'C', I, 'Cursor Click', 'Click', ''),
+      step('t1', 2, 'T', I, 'Keyboard Input', 'Type {{email}}', ''),
+      step('k1', 2, 'K', I, 'Keyboard Input', 'Press Tab', ''),
+      step('t2', 2, 'T', I, 'Keyboard Input', 'Type {{password}}', ''),
+      step('k2', 2, 'K', I, 'Keyboard Input', 'Press Enter', ''),
       branch('f1', 1, false),
       step('e1', 2, 'E', E, 'End Execution', 'End Execution', 'failed · the sign-in page never appeared'),
       step('inv', 0, 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', '▸', { isSearch: true, thumb: 'Invoices', template: 'template-v8k1d.png', comment: 'recorded after a 3.8s wait' }),
@@ -169,8 +171,8 @@ class Component extends DCLogic {
       step('ll', 0, 'W', P, 'Wait For Image', 'Invoice list loaded', 'up to 10 s', '▸', { isSearch: true, thumb: '⤓', template: 'template-x9p4a.png', comment: 'One download icon on every row: wait for the first, then click them all.' }),
       step('dl', 0, 'F', P, 'Find All Images', 'Download buttons', 'Success once per match · in Billing portal', '▾', { isSearch: true, thumb: '⤓', template: 'template-x9p4a.png', comment: '', bp: true }),
       branch('s2', 1, true),
-      step('m2', 2, 'M', I, 'Cursor Move', 'Move', 'to Download buttons, this pass’s match'),
-      step('c2', 2, 'C', I, 'Cursor Click', 'Click', 'left, single'),
+      step('m2', 2, 'M', I, 'Cursor Move', 'Move cursor 2', 'to Download buttons, this pass’s match'),
+      step('c2', 2, 'C', I, 'Cursor Click', 'Click 2', ''),
     ];
     const rows = defs.map((d) => {
       const on = this.state.selected === d.id;
@@ -184,9 +186,11 @@ class Component extends DCLogic {
         pick: () => this.setState({ selected: d.id }),
       };
     });
+    // Named by their settings, so they have no Name field.
+    const BY_SETTINGS = ['Cursor Move', 'Cursor Click', 'Keyboard Input', 'Wait', 'Window', 'System Action'];
     const d = defs.find((x) => x.id === this.state.selected) || defs[0];
     const sel = {
-      tint: d.tint, glyph: d.glyph || '•', type: d.type, name: d.name,
+      tint: d.tint, glyph: d.glyph || '•', type: d.type, name: d.name, hasName: !BY_SETTINGS.includes(d.type),
       isSearch: !!d.isSearch, thumb: d.thumb || '', template: d.template || '', comment: d.comment || '',
     };
     return {

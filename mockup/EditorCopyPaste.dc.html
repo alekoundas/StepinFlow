@@ -51,8 +51,7 @@ Run</button>
 <sc-if value="{{ hasCopy }}" hint-placeholder-val="{{ true }}">
 <div role="status" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 12px 0; padding: 8px 10px 8px 12px; border-radius: 10px; border: 1px solid rgba(143,163,255,0.35); background: rgba(143,163,255,0.08)">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
-<span style="flex: 1 1 260px; font-size: 13px; color: #C9D2FF">Copied <span style="color: #ECEEF2; font-weight: 600">{{ copiedName }}</span>{{ copiedCount }}. Paste it at any <span style="font-family: 'Geist Mono', monospace">+</span>, in this flow or another.</span>
-<kbd style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #AEB4C0; border: 1px solid #313644; border-radius: 5px; padding: 1px 6px">Ctrl V</kbd>
+<span style="flex: 1 1 260px; font-size: 13px; color: #C9D2FF">Copied <span style="color: #ECEEF2; font-weight: 600">{{ copiedName }}</span>{{ copiedCount }}. Paste it beside any <span style="font-family: 'Geist Mono', monospace">+</span> in this flow.</span>
 <button type="button" aria-label="Forget the copied step" onClick="{{ forget }}" style="width: 28px; height: 28px; border-radius: 6px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 16px; line-height: 1; cursor: pointer">×</button>
 </div>
 </sc-if>
@@ -107,9 +106,9 @@ Paste here</button>
 <div style="padding: 12px 14px; border-radius: 10px; border: 1px solid #1E222B; background: #12141A; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #AEB4C0">
 <span style="font-weight: 600; color: #ECEEF2">How copy and paste works</span>
 <span>Copy on the selected step takes it and every step under it. One copy at a time: copying another replaces it, and × forgets it.</span>
-<span>Paste here sits beside every +, the places a step can go, and puts the copy there. The copy stays, so it can go in more than once, and into another flow.</span>
-<span>A pasted step takes a free name, Download buttons 2, since the script names steps. What it refers to inside the copy follows it; what it refers to outside does not and is flagged until fixed.</span>
-<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">Ctrl C on a step · Ctrl V on a +</span>
+<span>Paste here sits beside every +, the places a step can go, and puts the copy there. The copy stays, so it can go in more than once. Only into this flow: another has its own areas, points and inputs.</span>
+<span>A pasted step takes a free name, Download buttons 2, since the script names steps. What it refers to inside the copy follows it; one outside it is kept, and flagged when the new place cannot reach it.</span>
+<span style="font-size: 12px; color: #8790A0">Buttons only: no Ctrl C and Ctrl V in the tree.</span>
 </div>
 </aside>
 </div>
@@ -131,9 +130,9 @@ class Component extends DCLogic {
     const tree = [
       step('email', 'W', P, 'Wait For Image', 'Email field', 'up to 10 s · in Billing portal', [
         branch('s1', true, [
-          step('m1', 'M', I, 'Cursor Move', 'Move', 'to Email field'),
-          step('c1', 'C', I, 'Cursor Click', 'Click', 'left, single'),
-          step('t1', 'T', I, 'Keyboard', 'Type', '{{email}}'),
+          step('m1', 'M', I, 'Cursor Move', 'Move cursor', 'to Email field'),
+          step('c1', 'C', I, 'Cursor Click', 'Click', ''),
+          step('t1', 'T', I, 'Keyboard', 'Type {{email}}', ''),
           add('add-s1'),
         ]),
         branch('f1', false, [
@@ -143,15 +142,15 @@ class Component extends DCLogic {
       ]),
       step('inv', 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', [
         branch('s3', true, [
-          step('m3', 'M', I, 'Cursor Move', 'Move', 'to Invoices menu'),
-          step('c3', 'C', I, 'Cursor Click', 'Click', 'left, single'),
+          step('m3', 'M', I, 'Cursor Move', 'Move cursor 2', 'to Invoices menu'),
+          step('c3', 'C', I, 'Cursor Click', 'Click 2', ''),
           add('add-s3'),
         ]),
       ]),
       step('dl', 'F', P, 'Find All Images', 'Download buttons', 'Success once per match', [
         branch('s2', true, [
-          step('m2', 'M', I, 'Cursor Move', 'Move', 'to Download buttons'),
-          step('c2', 'C', I, 'Cursor Click', 'Click', 'left, single'),
+          step('m2', 'M', I, 'Cursor Move', 'Move cursor 3', 'to Download buttons'),
+          step('c2', 'C', I, 'Cursor Click', 'Click 3', ''),
           add('add-s2'),
         ]),
       ]),
