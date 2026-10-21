@@ -3,7 +3,6 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { SelectButton } from "primereact/selectbutton";
 
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { humanizeMilliseconds } from "@/shared/utils/humanize-milliseconds";
 
@@ -40,13 +39,6 @@ export default function FlowStepWaitFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
-
       <div className="field">
         <LabelComponent
           text="How long"

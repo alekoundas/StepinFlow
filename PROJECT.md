@@ -1675,9 +1675,10 @@ Every entity form is a pair — `XFormComponent` (React Hook Form setup, header,
 boards. It reads the values on the form and draws the rest, so no form repeats it:
 
 - **The header:** the step's type, its name, and its mode, coloured by the type's group as in the tree.
+  A step named by its settings shows the name it will be saved with.
 - **A sentence:** what the step will do. A form can pass its own.
 - **"Gives":** what later steps can use from it.
-- **"Why it is here":** the step's `CodeComment`, which the script prints above the step as `#` lines.
+- **"Comment":** the step's `CodeComment`, which the script prints above the step as `#` lines.
 - **The script line:** the line the step will be in its flow's script.
 - **Test now:** where the step has a test, beside Cancel and Save.
 
@@ -1688,6 +1689,15 @@ and the file cannot disagree. It also returns those names, which is how the sent
 "onto where “Find the email field” matched". Success and Failure have a form too: the comment and a
 sentence naming the check they belong to. Every step schema includes `CODE_COMMENT_SCHEMA`, for the
 reason the warning above gives.
+
+**Steps named by their settings.** A cursor, wait, keyboard, window or system action step has no
+Name field. `FlowStepNameHelper` names it from its own settings - "Double right click", "Wait 2s",
+"Type {{email}}", "Focus chrome" - whenever it is saved, pasted, recorded or imported, and
+`FlowNameHelper.MakeUnique` numbers it like any name: "Click 2", or "Wait 2s (2)" when the name
+already ends in a number. Only the step's own settings, never the name of the point or step it goes
+to: those can be renamed, and keeping a copy of their name current would mean renaming steps nobody
+edited. The tree shows where a Move goes beside its name instead. The form's header gets the name
+back with the script line, so it shows what the step will be called before it is saved.
 
 TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["lookup", …]`; mutations
 invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
@@ -1876,13 +1886,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-772 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+786 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 585 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Core.Tests` | 172 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
+| `Business.Tests` | 587 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1996,7 +2006,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 772 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 786 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

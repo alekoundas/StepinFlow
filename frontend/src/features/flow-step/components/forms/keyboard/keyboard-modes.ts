@@ -5,7 +5,6 @@ export interface KeyboardMode {
   value: KeyboardInputTypeEnum;
   label: string;
   description: string;
-  defaultName: string;
 }
 
 /**
@@ -17,14 +16,12 @@ export const KEYBOARD_MODES: KeyboardMode[] = [
     value: KeyboardInputTypeEnum.TEXT,
     label: "Type text",
     description: "Types the characters one at a time, as though someone were at the keyboard.",
-    defaultName: "Type Text",
   },
   {
     value: KeyboardInputTypeEnum.COMBINATION,
     label: "Send keys",
     description:
       "Holds the modifiers and presses the key, the way a shortcut is meant to arrive. Pressing Enter or Tab is its own step.",
-    defaultName: "Send Keys",
   },
 ];
 

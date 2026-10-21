@@ -17,6 +17,12 @@ namespace Core.Tests.Helpers
         }
 
         [Fact]
+        public void A_taken_name_ending_in_a_number_gets_its_number_in_brackets()
+        {
+            FlowNameHelper.MakeUnique("Scroll down 3", ["Scroll down 3", "Scroll down 3 (2)"]).ShouldBe("Scroll down 3 (3)");
+        }
+
+        [Fact]
         public void Duplicates_are_found_whatever_the_case_and_surrounding_space()
         {
             FlowNameHelper.Duplicates(["Login", " login ", "Cart", "LOGIN"]).ShouldBe(["Login"]);

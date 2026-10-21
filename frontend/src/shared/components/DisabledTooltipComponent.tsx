@@ -18,7 +18,11 @@ interface Props {
  * 'Node'". This wrapper is React's own, so nothing is moved. A disabled PrimeReact control takes no
  * pointer events, so hovering it reaches the wrapper.
  */
-export default function DisabledTooltipComponent({ tooltip, position = "bottom", children }: Props) {
+export default function DisabledTooltipComponent({
+  tooltip,
+  position = "bottom",
+  children,
+}: Props) {
   const wrapper = useRef<HTMLSpanElement>(null);
 
   return (

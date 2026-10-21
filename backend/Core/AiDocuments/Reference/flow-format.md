@@ -312,6 +312,11 @@ name declared twice is an error at the second.
 The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
 to a number only on a collision.
 
+**A cursor, wait, keyboard, window or system action line carries no name.** The app names those
+steps from their own settings when they are saved or imported — `Click`, `Wait 2s`,
+`Type {{email}}` — so the tree and the execution history can show them. No line declares that name,
+so nothing in a file can refer to one of those steps.
+
 ### Comments and sections
 
 ```
@@ -664,7 +669,8 @@ still returns its warnings.
 **Names correlate history.** Execution history is keyed on step name, and an execution step keeps
 the name it ran under while its foreign key is set null rather than cascaded — so a re-import keeps
 the trend for every step whose name did not change. Renaming a step starts its history over —
-accepted, because renames should be rare.
+accepted, because renames should be rare. A step named by its settings is renamed when they change,
+which starts its history over the same way.
 
 **The file wins.** A UI edit and a `git pull` cannot both be true. Importing overwrites.
 

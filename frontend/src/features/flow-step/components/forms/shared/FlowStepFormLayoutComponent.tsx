@@ -43,7 +43,7 @@ interface Props {
 
 /**
  * Every step's form, around its own fields: the step's type, name and mode, a sentence of what it
- * will do, what it gives later steps, Why it is here, the line it will be in the script, and Save.
+ * will do, what it gives later steps, the Comment, the line it will be in the script, and Save.
  * Inside the form's FormProvider, since it reads and binds the values.
  */
 export function FlowStepFormLayoutComponent({
@@ -85,7 +85,7 @@ export function FlowStepFormLayoutComponent({
         <div className="flex flex-column flex-1 min-w-0">
           <span className="text-sm text-color-secondary">{description.type}</span>
           <span className="text-xl font-semibold white-space-nowrap overflow-hidden text-overflow-ellipsis">
-            {dto.name || "Unnamed"}
+            {line?.name || dto.name || description.type}
           </span>
         </div>
 
@@ -134,7 +134,7 @@ export function FlowStepFormLayoutComponent({
       <div className="mt-4 pt-3 border-top-1 surface-border">
         <FormInputTextAreaComponent
           fieldName="codeComment"
-          label="Why it is here"
+          label="Comment"
           placeholderText="What you expect here, and what it means if it fails."
           hintText="Printed above the step in its script as a # comment, read by whoever reviews it, and quoted back when a failure is explained."
           rows={2}

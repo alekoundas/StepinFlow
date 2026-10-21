@@ -84,6 +84,8 @@ a move. Pick one of its earlier siblings or one of its parents.
 result changes nothing.
 
 **NAME_MISSING** — the step has no name. It still runs; it is just hard to find in an execution.
+A cursor, wait, keyboard, window or system action step never has this: the app names it from its
+settings.
 
 **SCREEN_COORDINATES** — the step uses an area or a point in screen coordinates: a region drawn
 with nothing around it, a point measured from nothing, or anything inside such a region. It works

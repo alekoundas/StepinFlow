@@ -7,7 +7,6 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useEffect } from "react";
 import { SelectButton } from "primereact/selectbutton";
 
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
@@ -64,14 +63,6 @@ export default function FlowStepWindowFormComponent({
       shouldValidate: true,
       shouldDirty: true,
     });
-
-    if (formMode === "ADD") {
-      const isUntouchedName = WINDOW_MODES.some(
-        (x) => x.defaultName === form.getValues("name"),
-      );
-      if (isUntouchedName)
-        setValue("name", mode.defaultName, { shouldValidate: true });
-    }
   };
 
   // Fields belonging to the other modes are cleared so a focus step never carries a stale size.
@@ -82,7 +73,6 @@ export default function FlowStepWindowFormComponent({
 
     return new FlowStepDto({
       ...defaultValues,
-      name: data.name,
       codeComment: data.codeComment ?? "",
       flowStepType: data.flowStepType,
 
@@ -109,13 +99,6 @@ export default function FlowStepWindowFormComponent({
           baseValues={defaultValues}
           toDto={(values) => toDto(values as z.infer<typeof FlowStepWindowSchema>)}
         >
-          <FormInputTextComponent
-            fieldName="name"
-            label="Name"
-            isRequired={true}
-            isDisabled={formMode === "VIEW"}
-          />
-
           {/* Each mode is its own FlowStepType, the form just switches between them. */}
           <div className="field">
             <LabelComponent

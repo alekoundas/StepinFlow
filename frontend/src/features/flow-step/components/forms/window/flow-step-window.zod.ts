@@ -19,11 +19,6 @@ export const isWindowFlowStepType = (
 export const FlowStepWindowSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
-    name: z
-      .string()
-      .min(1, "Name is required")
-      .max(120, "Name too long")
-      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
 
     // The window itself. Named here rather than borrowed from an APPLICATION area: a matcher is

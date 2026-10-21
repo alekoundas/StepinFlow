@@ -24,11 +24,6 @@ export const isCursorFlowStepType = (
 export const FlowStepCursorSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
-    name: z
-      .string()
-      .min(1, "Name is required")
-      .max(120, "Name too long")
-      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     flowStepType: z.enum(CURSOR_FLOW_STEP_TYPES),
 
     // Start point

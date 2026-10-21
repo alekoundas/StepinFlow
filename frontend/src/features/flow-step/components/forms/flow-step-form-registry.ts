@@ -27,15 +27,8 @@ import {
   CURSOR_FLOW_STEP_TYPES,
   type CursorFlowStepType,
 } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
-import {
-  CURSOR_STEP_DEFAULT_NAMES,
-  CURSOR_STEP_DEFAULTS,
-} from "@/features/flow-step/components/forms/cursor/cursor-modes";
-import {
-  WINDOW_FLOW_STEP_TYPES,
-  type WindowFlowStepType,
-} from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import { WINDOW_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/window/window-modes";
+import { CURSOR_STEP_DEFAULTS } from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import { WINDOW_FLOW_STEP_TYPES } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
 import { KEYBOARD_MODES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 
@@ -53,7 +46,8 @@ export interface FlowStepFormEntry {
 
   /**
    * What a brand new step of this type starts as, beyond the fields every step shares. Takes the
-   * type because the cursor and window forms each cover several of them.
+   * type because the cursor and window forms each cover several of them. A cursor, wait, keyboard,
+   * window or system action step starts with no name: the backend names it from its settings.
    */
   newStepValues: (flowStepType: FlowStepTypeEnum) => Partial<FlowStepDto>;
 }
@@ -75,25 +69,18 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   // All four cursor types share one form, the mode buttons switch flowStepType.
   ...forTypes(CURSOR_FLOW_STEP_TYPES, {
     component: FlowStepCursorFormComponent,
-    newStepValues: (type) => ({
-      name: CURSOR_STEP_DEFAULT_NAMES[type as CursorFlowStepType],
-      ...CURSOR_STEP_DEFAULTS[type as CursorFlowStepType],
-    }),
+    newStepValues: (type) => ({ ...CURSOR_STEP_DEFAULTS[type as CursorFlowStepType] }),
   }),
 
   // The three window types share one form too.
   ...forTypes(WINDOW_FLOW_STEP_TYPES, {
     component: FlowStepWindowFormComponent,
-    newStepValues: (type) => ({
-      name: WINDOW_STEP_DEFAULT_NAMES[type as WindowFlowStepType],
-      titleMatchMode: TitleMatchModeEnum.CONTAINS,
-    }),
+    newStepValues: () => ({ titleMatchMode: TitleMatchModeEnum.CONTAINS }),
   }),
 
   [FlowStepTypeEnum.WAIT]: {
     component: FlowStepWaitFormComponent,
     newStepValues: () => ({
-      name: "Wait",
       waitForMilliseconds: 50,
       waitForMillisecondsMax: 0,
     }),
@@ -142,7 +129,7 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
 
   [FlowStepTypeEnum.SYSTEM_ACTION]: {
     component: FlowStepSystemActionFormComponent,
-    newStepValues: () => ({ name: SYSTEM_ACTIONS[0].defaultName }),
+    newStepValues: () => ({ systemActionType: SYSTEM_ACTIONS[0].systemActionType }),
   },
 
   [FlowStepTypeEnum.NOTIFY]: {
@@ -153,7 +140,6 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   [FlowStepTypeEnum.KEYBOARD_INPUT]: {
     component: FlowStepKeyboardFormComponent,
     newStepValues: () => ({
-      name: KEYBOARD_MODES[0].defaultName,
       keyboardInputType: KEYBOARD_MODES[0].value,
       keyboardInputText: "",
     }),

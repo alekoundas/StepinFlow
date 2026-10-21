@@ -1,4 +1,5 @@
 using Business.FlowScript.Text;
+using Core.Helpers;
 using Core.Models;
 using Core.Models.Database;
 using Core.Models.Dtos.FlowScript;
@@ -9,7 +10,7 @@ namespace Business.FlowScript
 {
     /// <summary>
     /// A step's form shows the line the step will be in its flow's script, printed by the printer
-    /// an export uses, so the two never disagree.
+    /// an export uses, so the two never disagree, and the name a step named by its settings gets.
     /// </summary>
     public sealed class FlowStepScriptLineService : IFlowStepScriptLineService
     {
@@ -42,9 +43,14 @@ namespace Business.FlowScript
             if (step.SubFlow != null)
                 subFlowPath = FlowScriptExporter.SubFlowFileName(step.SubFlow.Name);
 
+            string name = step.Name;
+            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+                name = FlowStepNameHelper.NameOf(step);
+
             return new FlowStepScriptLineDto
             {
                 Script = _printer.WriteStep(step, subFlowPath),
+                Name = name,
                 AreaName = step.FlowArea?.Name,
                 PointName = step.FlowPoint?.Name,
                 PointEndName = step.FlowPointEnd?.Name,

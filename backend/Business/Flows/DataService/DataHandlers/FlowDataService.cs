@@ -257,7 +257,7 @@ namespace Business.Flows.DataService.DataHandlers
             dbContext.FlowViewports.AddRange(schema.Viewports);
             FlowAreaDataService.Add(dbContext, flow, schema.Areas);
             FlowPointDataService.Add(dbContext, flow, schema.Points);
-            FlowStepDataService.AddTree(dbContext, flow, schema.Steps);
+            FlowStepDataService.AddTree(dbContext, flow, schema.Steps, TakenNames(schema));
 
             // One save for the whole graph: EF inserts in dependency order and fills every key from
             // the links.
@@ -388,6 +388,20 @@ namespace Business.Flows.DataService.DataHandlers
                 return null;
 
             return $"Another flow is already called \"{taken}\". A flow's name is its file name, and Windows and macOS ignore case.";
+        }
+
+        // What an imported file names: its areas, points, inputs and the steps it writes a name for.
+        private static HashSet<string> TakenNames(FlowScriptSchema schema)
+        {
+            IEnumerable<string> stepNames = schema.Steps
+                .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType) && !FlowStepNameHelper.IsNamedBySettings(x.FlowStepType))
+                .Select(x => x.Name);
+
+            return schema.Areas.Select(x => x.Name)
+                .Concat(schema.Points.Select(x => x.Name))
+                .Concat(schema.Inputs.Select(x => x.Name))
+                .Concat(stepNames)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
 

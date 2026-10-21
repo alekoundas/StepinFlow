@@ -1,7 +1,6 @@
 import { useWatch, useFormContext } from "react-hook-form";
 import { Message } from "primereact/message";
 
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
@@ -19,13 +18,6 @@ export default function FlowStepSystemActionFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
-
       <FormSelectButtonComponent
         fieldName="systemActionType"
         labelText="Action"

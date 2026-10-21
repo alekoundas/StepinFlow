@@ -8,7 +8,8 @@ namespace Core.Helpers
         /// <summary>
         /// The name if nothing has it, otherwise the same name with the first free number after it.
         /// "Find button" becomes "Find button 2", and the numbering starts at two because the first
-        /// one was never called "Find button 1".
+        /// one was never called "Find button 1". A name already ending in a number has it in
+        /// brackets: "Wait 2s (2)", not "Wait 2s 2".
         /// </summary>
         public static string MakeUnique(string desired, IReadOnlyCollection<string> taken)
         {
@@ -18,11 +19,17 @@ namespace Core.Helpers
             if (!used.Contains(name))
                 return name;
 
+            string lastWord = name[(name.LastIndexOf(' ') + 1)..];
+            bool endsInNumber = lastWord.Any(char.IsAsciiDigit);
+
             // Bounded by how many names are already taken: the first number free of them all is
             // never further away than one past the last.
             for (int suffix = 2; suffix <= used.Count + 2; suffix++)
             {
                 string candidate = $"{name} {suffix}";
+                if (endsInNumber)
+                    candidate = $"{name} ({suffix})";
+
                 if (!used.Contains(candidate))
                     return candidate;
             }

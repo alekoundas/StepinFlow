@@ -7,7 +7,6 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useEffect } from "react";
 import { SelectButton } from "primereact/selectbutton";
 
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
@@ -77,16 +76,6 @@ export default function FlowStepCursorFormComponent({
     // a single left click, a drag holds the left button, a move and a scroll use neither.
     setValue("cursorButtonActionType", mode.defaults.cursorButtonActionType ?? null, { shouldValidate: true });
     setValue("cursorButtonType", mode.defaults.cursorButtonType ?? null, { shouldValidate: true });
-
-    // In ADD mode nothing is persisted yet, so the name should follow the mode instead of
-    // leaving "Cursor Click" on a scroll step. An edited name is left alone.
-    if (formMode === "ADD") {
-      const isUntouchedName = CURSOR_MODES.some(
-        (x) => x.defaultName === form.getValues("name"),
-      );
-      if (isUntouchedName)
-        setValue("name", mode.defaultName, { shouldValidate: true });
-    }
   };
 
   // Fields belonging to the other modes are cleared here rather than left as stale rows in the
@@ -100,7 +89,6 @@ export default function FlowStepCursorFormComponent({
 
     return new FlowStepDto({
       ...defaultValues,
-      name: data.name,
       codeComment: data.codeComment ?? "",
       flowStepType: data.flowStepType,
 
@@ -147,13 +135,6 @@ export default function FlowStepCursorFormComponent({
           baseValues={defaultValues}
           toDto={(values) => toDto(values as z.infer<typeof FlowStepCursorSchema>)}
         >
-          <FormInputTextComponent
-            fieldName="name"
-            label="Name"
-            isRequired={true}
-            isDisabled={formMode === "VIEW"}
-          />
-
           {/* Each mode is its own FlowStepType, the form just switches between them. */}
           <div className="field">
             <LabelComponent

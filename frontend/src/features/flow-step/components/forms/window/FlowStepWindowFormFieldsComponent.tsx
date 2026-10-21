@@ -8,7 +8,6 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import { WINDOW_MODES } from "@/features/flow-step/components/forms/window/window-modes";
 
 type WindowForm = z.infer<typeof FlowStepWindowSchema>;
 
@@ -27,7 +26,7 @@ export default function FlowStepWindowFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
-  const { control, getValues, setValue } = useFormContext();
+  const { control } = useFormContext();
   const flowStepType = useWatch({ control, name: "flowStepType" });
 
   const loadLocations = (filter?: string): Promise<IdOption[]> =>
@@ -40,33 +39,9 @@ export default function FlowStepWindowFormFieldsComponent({
         })),
     );
 
-  /**
-   * Picking an app names the step, so the tree reads "Focus - Google Chrome" rather than three
-   * identical "Window Focus" rows. Only while the name is still one this form wrote: changing the
-   * dropdown must never overwrite something typed on purpose.
-   */
-  const nameFromWindow = (label: string) => {
-    const current = getValues("name") as string;
-
-    const action = WINDOW_MODES.find((x) => x.flowStepType === flowStepType);
-    if (!action) return;
-
-    const isUntouched =
-      current.length === 0 ||
-      WINDOW_MODES.some(
-        (x) => current === x.defaultName || current.startsWith(`${x.label} - `),
-      );
-
-    if (isUntouched)
-      setValue("name", `${action.label} - ${label}`, { shouldValidate: true, shouldDirty: true });
-  };
-
   return (
     <>
-      <WindowMatchFieldsComponent
-        isDisabled={isDisabled}
-        onWindowPicked={nameFromWindow}
-      />
+      <WindowMatchFieldsComponent isDisabled={isDisabled} />
 
       {flowStepType === FlowStepTypeEnum.WINDOW_RESIZE && (
         <>

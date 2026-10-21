@@ -87,7 +87,7 @@ namespace Business.Tests.Flows
         public async Task A_new_area_takes_a_name_no_step_has()
         {
             int flowId = await NewFlowAsync();
-            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Browser" }, [], Ct);
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.LOOP, Name = "Browser" }, [], Ct);
 
             int areaId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.MONITOR }, Ct)).Data;
 
@@ -293,6 +293,29 @@ namespace Business.Tests.Flows
         }
 
         // ================================================================
+        // Named by their settings
+        // ================================================================
+
+        // Whatever name the form sends. Saved unchanged, a step keeps its number.
+        [Fact]
+        public async Task A_step_named_by_its_settings_is_renamed_when_they_change()
+        {
+            int flowId = await NewFlowAsync();
+            int firstId = (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Typed", WaitForMilliseconds = 2000 }, [], Ct)).Data;
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 2000, OrderNumber = 1 }, [], Ct);
+
+            Steps(flowId).Select(x => x.Name).Order().ShouldBe(["Wait 2s", "Wait 2s (2)"]);
+
+            FlowStepDto unchanged = new FlowStepDto { Id = firstId, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait 2s", WaitForMilliseconds = 2000 };
+            (await _dataService.FlowStep.UpdateAsync(unchanged, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single(x => x.Id == firstId).Name.ShouldBe("Wait 2s");
+
+            FlowStepDto changed = new FlowStepDto { Id = firstId, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait 2s", WaitForMilliseconds = 1500 };
+            (await _dataService.FlowStep.UpdateAsync(changed, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single(x => x.Id == firstId).Name.ShouldBe("Wait 1s 500ms");
+        }
+
+        // ================================================================
         // A flow's name
         // ================================================================
 
@@ -355,7 +378,7 @@ namespace Business.Tests.Flows
         public async Task A_tree_of_new_steps_is_linked_named_apart_and_placed_at_its_index()
         {
             int flowId = await NewFlowAsync();
-            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Find" }, [], Ct);
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.LOOP, Name = "Find" }, [], Ct);
 
             FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
             FlowStep success = TreeStepHelper.CreateBranchChildren(find).First(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
@@ -371,6 +394,7 @@ namespace Business.Tests.Flows
 
             savedFind.Name.ShouldBe("Find 2");
             db.FlowPoints.Single(x => x.Id == savedMove.FlowPointId).Name.ShouldBe("Find 3");
+            savedMove.Name.ShouldBe("Move cursor");
             savedMove.FlowStepReferenceId.ShouldBe(savedFind.Id);
 
             steps.Where(x => x.ParentFlowStepId == savedFind.Id).OrderBy(x => x.OrderNumber).Select(x => x.FlowStepType)
@@ -440,7 +464,7 @@ namespace Business.Tests.Flows
             FlowStep copyMove = steps.Single(x => x.ParentFlowStepId == copySuccess.Id);
 
             copy.Name.ShouldBe("Find 2");
-            copyMove.Name.ShouldBe("Move 2");
+            copyMove.Name.ShouldBe("Move cursor 2");
             copyMove.FlowStepReferenceId.ShouldBe(copy.Id);
             steps.Where(x => x.ParentFlowStepId == copy.Id).Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE], ignoreOrder: true);
             steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find", "Find 2"]);
@@ -510,6 +534,19 @@ namespace Business.Tests.Flows
             steps.Where(x => x.ParentFlowStepId == find.Id).OrderBy(x => x.OrderNumber).Select(x => x.FlowStepType)
                 .ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE]);
             steps.Single(x => x.FlowStepType == FlowStepTypeEnum.WAIT).ParentFlowStepId.ShouldBe(steps.Single(x => x.FlowStepType == FlowStepTypeEnum.FAILURE).Id);
+        }
+
+        // The script writes no name for a step its settings name, and the import leaves none unnamed.
+        [Fact]
+        public async Task An_import_names_the_steps_its_file_writes_no_name_for()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>\n Success:\n  Move to <[ Find ]>\n  Click\nWait  800ms\nWait  800ms\n");
+
+            Steps(imported.FlowId)
+                .Where(x => FlowStepNameHelper.IsNamedBySettings(x.FlowStepType))
+                .Select(x => x.Name)
+                .ShouldBe(["Move cursor", "Click", "Wait 800ms", "Wait 800ms (2)"], ignoreOrder: true);
+            imported.Validation!.Issues.Select(x => x.Code).ShouldNotContain(FlowValidationCodeEnum.NAME_MISSING);
         }
 
         // Validated once saved, the same as after a form: the errors are reported and the flow stays.

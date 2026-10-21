@@ -16,7 +16,6 @@ export interface CursorMode {
   flowStepType: CursorFlowStepType;
   label: string;
   iconName: string;
-  defaultName: string;
   description: string;
   defaults: CursorModeDefaults;
 }
@@ -30,7 +29,6 @@ export const CURSOR_MODES: CursorMode[] = [
     flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
     label: "Click",
     iconName: "bullseye",
-    defaultName: "Cursor Click",
     description:
       "Press a mouse button where the cursor is. Single, double, hold or release. A Move above it says where.",
     defaults: {
@@ -42,7 +40,6 @@ export const CURSOR_MODES: CursorMode[] = [
     flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
     label: "Move",
     iconName: "map-marker",
-    defaultName: "Cursor Move",
     description: "Move the cursor to the resolved location without clicking.",
     defaults: NO_BUTTON,
   },
@@ -50,7 +47,6 @@ export const CURSOR_MODES: CursorMode[] = [
     flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
     label: "Drag",
     iconName: "arrows-alt",
-    defaultName: "Cursor Drag & Drop",
     description:
       "Hold at the grab point, drag to the drop point, then release.",
     defaults: { cursorButtonActionType: undefined, cursorButtonType: CursorButtonTypeEnum.LEFT_BUTTON },
@@ -59,15 +55,10 @@ export const CURSOR_MODES: CursorMode[] = [
     flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
     label: "Scroll",
     iconName: "sort-alt",
-    defaultName: "Cursor Scroll",
     description: "Turn the mouse wheel where the cursor is, a number of notches in one direction.",
     defaults: NO_BUTTON,
   },
 ];
-
-export const CURSOR_STEP_DEFAULT_NAMES = Object.fromEntries(
-  CURSOR_MODES.map((x) => [x.flowStepType, x.defaultName]),
-) as Record<CursorFlowStepType, string>;
 
 export const CURSOR_STEP_DEFAULTS = Object.fromEntries(
   CURSOR_MODES.map((x) => [x.flowStepType, x.defaults]),

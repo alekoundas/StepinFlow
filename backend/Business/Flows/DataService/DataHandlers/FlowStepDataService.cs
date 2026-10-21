@@ -39,7 +39,9 @@ namespace Business.Flows.DataService.DataHandlers
         public static async Task<ResultDto<int>> CreateAsync(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> templates, CancellationToken ct)
         {
             step.Id = 0;
-            step.Name = FlowNameHelper.MakeUnique(step.Name, await TakenNamesAsync(dbContext, step.RootId, ct));
+
+            HashSet<string> taken = await TakenNamesAsync(dbContext, step.RootId, ct);
+            step.Name = FlowNameHelper.MakeUnique(DesiredName(step), taken);
 
             dbContext.FlowSteps.Add(step);
             HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
@@ -66,6 +68,13 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<FlowStep>.Failure("Entity doesnt exist in the Database!");
 
             dbContext.Entry(step).CurrentValues.SetValues(dto);
+
+            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+            {
+                HashSet<string> taken = await TakenNamesAsync(dbContext, step.RootId, step.Id, ct);
+                step.Name = FlowNameHelper.MakeUnique(FlowStepNameHelper.NameOf(step), taken);
+            }
+
             HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
 
             SyncTemplates(dbContext, step, dto.FlowStepTemplates, takenTemplates);
@@ -258,15 +267,19 @@ namespace Business.Flows.DataService.DataHandlers
         /// <summary>
         /// Steps read from a script, linked to their parents, references, areas, points and
         /// templates. A check the file wrote with an empty branch left out still gets both branch
-        /// rows, so there is somewhere to add steps under it.
+        /// rows, so there is somewhere to add steps under it. The file names no step its settings
+        /// name, so those are named here, apart from the names already taken.
         /// </summary>
-        public static void AddTree(AppDbContext dbContext, Flow flow, IReadOnlyList<FlowStep> steps)
+        public static void AddTree(AppDbContext dbContext, Flow flow, IReadOnlyList<FlowStep> steps, HashSet<string> taken)
         {
             foreach (FlowStep step in steps)
             {
                 step.RootId = flow.Id;
                 if (step.ParentFlowStep == null)
                     step.FlowId = flow.Id;
+
+                if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+                    step.Name = UniqueName(FlowStepNameHelper.NameOf(step), taken);
             }
 
             dbContext.FlowSteps.AddRange(steps);
@@ -372,7 +385,7 @@ namespace Business.Flows.DataService.DataHandlers
             step.ParentFlowStepId = null;
 
             if (!TreeStepHelper.IsBranchChild(step.FlowStepType))
-                step.Name = UniqueName(step.Name, taken);
+                step.Name = UniqueName(DesiredName(step), taken);
 
             // A row already saved is linked by its id, or saving the new ones would insert it again.
             if (step.FlowArea != null && step.FlowArea.Id != 0)
@@ -472,6 +485,15 @@ namespace Business.Flows.DataService.DataHandlers
 
             foreach (FlowStep child in flowSteps.Where(x => x.ParentFlowStepId == step.Id).OrderBy(x => x.OrderNumber))
                 AddWithChildren(flowSteps, child, copy);
+        }
+
+        // What a step named by its settings is called, whatever name it came with.
+        private static string DesiredName(FlowStep step)
+        {
+            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+                return FlowStepNameHelper.NameOf(step);
+
+            return step.Name;
         }
 
         private static string UniqueName(string desired, HashSet<string> taken)

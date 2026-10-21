@@ -56,13 +56,6 @@ export default function FlowStepKeyboardFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
-
       <FormSelectButtonComponent
         fieldName="keyboardInputType"
         labelText="Mode"

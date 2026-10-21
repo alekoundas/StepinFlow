@@ -48,10 +48,19 @@ when the new place cannot reach it.
 A copy goes only into the flow it was copied from. Another flow has its own areas, points and
 inputs, so to reuse steps across flows, extract them to a sub-flow instead.
 
+## Steps the app names
+
+A cursor, wait, keyboard, window or system action step has no name to type. The app names it from
+its own settings each time it is saved: "Double right click", "Wait 2s", "Type {{email}}", "Focus
+chrome", "Monitor off". A second one is numbered ("Click 2", "Wait 2s (2)"). Where a Move or a Drag
+goes is shown beside its name in the tree rather than in it, so renaming a search or a saved
+location never leaves a step with a stale name. Changing a step's settings renames it, which starts
+its execution history over.
+
 ## Saying why a step is there
 
-Every step's form, Success and Failure included, ends with **Why it is here**: the step's comment,
-written above it in the script as `#` lines. The form shows that line as it will print. It is the
+Every step's form, Success and Failure included, ends with a **Comment**, written above the step
+in the script as `#` lines. The form shows that line as it will print. It is the
 first thing read when a failure is explained, so say what you expect at that point and what it
 means if it fails, rather than what the step does, which its line already says.
 

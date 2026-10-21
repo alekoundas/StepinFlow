@@ -35,11 +35,17 @@ namespace Business.Flows.DataService
 
         // Steps, areas, points and csv columns are one namespace, because the script refers to all
         // of them by name.
-        protected static async Task<HashSet<string>> TakenNamesAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        protected static Task<HashSet<string>> TakenNamesAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        {
+            return TakenNamesAsync(dbContext, flowId, 0, ct);
+        }
+
+        // Less the step being saved, whose own name is not in its way.
+        protected static async Task<HashSet<string>> TakenNamesAsync(AppDbContext dbContext, int flowId, int exceptFlowStepId, CancellationToken ct)
         {
             List<string> names = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Where(x => x.RootId == flowId)
+                .Where(x => x.RootId == flowId && x.Id != exceptFlowStepId)
                 .Where(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE)
                 .Select(x => x.Name)
                 .Concat(dbContext.FlowAreas
