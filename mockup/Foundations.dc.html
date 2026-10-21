@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foundations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45; padding: 40px; box-sizing: border-box">
+<div style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em">Foundations</h1>
+<p style="margin: 0; color: #AEB4C0">One dark theme, one accent, one red that only means recording or failure.</p>
+</header>
+
+<section aria-labelledby="c-h" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="c-h" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0">Colour</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{ colors }}" as="c" hint-placeholder-count="12">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="height: 64px; border-radius: 10px; background: {{ c.hex }}; border: 1px solid #262A34"></div>
+<span style="font-weight: 500; font-size: 13px">{{ c.name }}</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">{{ c.hex }}</span>
+<span style="font-size: 12px; color: #AEB4C0">{{ c.use }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="st-h" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="st-h" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0">Step groups</h2>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; border: 1px solid #1E222B; background: #12141A">
+<span style="width: 26px; height: 26px; border-radius: 7px; background: #1F2330; color: {{ g.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">{{ g.glyph }}</span>
+<span style="display: flex; flex-direction: column">
+<span style="font-weight: 500; font-size: 13px">{{ g.name }}</span>
+<span style="font-size: 12px; color: #8790A0">{{ g.types }}</span>
+</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<div style="display: flex; gap: 36px; flex-wrap: wrap">
+<section aria-labelledby="t-h" style="flex: 1 1 420px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="t-h" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0">Type</h2>
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A">
+<span style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em">Page title · Geist 28 / 600</span>
+<span style="font-size: 20px; font-weight: 600">Dialog title · 20 / 600</span>
+<span style="font-size: 15px; font-weight: 600">Card title · 15 / 600</span>
+<span style="font-size: 14px">Body · 14 / 400, the default everywhere</span>
+<span style="font-size: 13px; color: #AEB4C0">Secondary · 13, for descriptions under a label</span>
+<span style="font-size: 12px; color: #8790A0">Caption · 12, hints and meta</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; color: #C4B5FD">Wait For Image <span style="color: #5D6473">&lt;[</span><span style="color: #E6E8EC"> Email field </span><span style="color: #5D6473">]&gt;</span> <span style="color: #8FA3FF">timeout</span> <span style="color: #F2B33D">10000ms</span></span>
+<span style="font-size: 12px; color: #8790A0">Geist Mono · the script, ids, file names, keys, numbers that line up</span>
+</div>
+</section>
+
+<section aria-labelledby="sp-h" style="flex: 1 1 420px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="sp-h" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0">Space and corners</h2>
+<div style="display: flex; flex-direction: column; gap: 16px; padding: 20px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A">
+<div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap">
+<sc-for list="{{ spaces }}" as="s" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+<span style="width: {{ s.px }}px; height: {{ s.px }}px; background: #2E3650; border-radius: 3px"></span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8790A0">{{ s.px }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #AEB4C0">
+<span style="padding: 10px 14px; border: 1px solid #313644; border-radius: 6px">6 · chips</span>
+<span style="padding: 10px 14px; border: 1px solid #313644; border-radius: 8px">8 · inputs, buttons</span>
+<span style="padding: 10px 14px; border: 1px solid #313644; border-radius: 12px">12 · cards</span>
+<span style="padding: 10px 14px; border: 1px solid #313644; border-radius: 16px">16 · dialogs</span>
+<span style="padding: 10px 14px; border: 1px solid #313644; border-radius: 999px">pill · status</span>
+</div>
+</div>
+</section>
+</div>
+
+<section aria-labelledby="p-h" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="p-h" style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0">Parts</h2>
+<div style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A">
+
+<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-weight: 600">Primary</button>
+<button type="button" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-weight: 500">Secondary</button>
+<button type="button" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit">Quiet</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 18px; border-radius: 10px; border: 0; background: #FF5D6C; color: #1A0A0D; font: inherit; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 999px; background: #1A0A0D"></span>Start recording</button>
+<button type="button" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #FF7A86; font: inherit">Discard</button>
+<button type="button" disabled="" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 0; background: #262A34; color: #5D6473; font: inherit; font-weight: 600">Disabled</button>
+</div>
+
+<div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 6px; width: 260px">
+<label for="f-text" style="font-weight: 500">Text field</label>
+<input id="f-text" type="text" value="Billing portal" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; width: 260px">
+<label for="f-err" style="font-weight: 500">With a problem</label>
+<input id="f-err" type="text" value="CON" aria-describedby="f-err-msg" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #FF5D6C; background: #0F1116; color: #ECEEF2; font: inherit">
+<span id="f-err-msg" style="font-size: 12px; color: #FF7A86">CON is a name Windows keeps for itself.</span>
+</div>
+<div role="radiogroup" aria-label="Segmented" style="display: inline-flex; padding: 3px; border-radius: 10px; background: #0F1116; border: 1px solid #242833">
+<button type="button" role="radio" aria-checked="true" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #232838; color: #ECEEF2; font: inherit; font-size: 13px; font-weight: 500">Shape</button>
+<button type="button" role="radio" aria-checked="false" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px">Shape and brightness</button>
+</div>
+<button type="button" role="switch" aria-checked="true" aria-label="Switch" style="width: 44px; height: 26px; border-radius: 999px; border: 0; padding: 3px; background: #8FA3FF; display: flex; justify-content: flex-end"><span style="width: 20px; height: 20px; border-radius: 999px; background: #ECEEF2; display: block"></span></button>
+<label style="display: inline-flex; align-items: center; gap: 8px; height: 40px"><input type="checkbox" checked="" style="accent-color: #8FA3FF; width: 16px; height: 16px; margin: 0">Checkbox</label>
+</div>
+
+<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+<sc-for list="{{ statuses }}" as="s" hint-placeholder-count="6">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; background: {{ s.bg }}; color: {{ s.fg }}; font-size: 12px; font-weight: 500"><span style="width: 6px; height: 6px; border-radius: 999px; background: {{ s.fg }}"></span>{{ s.label }}</span>
+</sc-for>
+<span style="width: 1px; height: 22px; background: #262A34"></span>
+<span style="font-size: 12px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 1px 8px">Automation</span>
+<span style="font-size: 12px; color: #8FA3FF; border: 1px solid rgba(143,163,255,0.5); border-radius: 6px; padding: 1px 8px">QA test</span>
+<span style="font-size: 11px; color: #8FA3FF; border: 1px solid rgba(143,163,255,0.45); border-radius: 999px; padding: 0 7px">same target ×4</span>
+<kbd style="font-family: 'Geist Mono', monospace; font-size: 12px; border: 1px solid #3A4152; border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px">F10</kbd>
+</div>
+
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<div role="status" style="flex: 1 1 280px; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(70,214,154,0.08); border: 1px solid rgba(70,214,154,0.3); color: #BFEBD6; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #46D69A; margin-top: 6px; flex: none"></span>Saved. 21 steps, no issues.</div>
+<div role="status" style="flex: 1 1 280px; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(242,179,61,0.08); border: 1px solid rgba(242,179,61,0.3); color: #E9D3A6; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #F2B33D; margin-top: 6px; flex: none"></span>Generated. Read it before it executes.</div>
+<div role="alert" style="flex: 1 1 280px; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(255,93,108,0.08); border: 1px solid rgba(255,93,108,0.3); color: #F5C2C7; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #FF5D6C; margin-top: 6px; flex: none"></span>Another flow is already called “Login”.</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const colors = [
+      { name: 'Ground', hex: '#0B0C10', use: 'Behind everything' },
+      { name: 'Rail', hex: '#0F1116', use: 'Navigation, inputs' },
+      { name: 'Surface', hex: '#12141A', use: 'Cards and panels' },
+      { name: 'Raised', hex: '#1A1D25', use: 'Hover, selection' },
+      { name: 'Line', hex: '#242833', use: 'Borders' },
+      { name: 'Line strong', hex: '#313644', use: 'Input borders' },
+      { name: 'Text', hex: '#ECEEF2', use: 'Primary text' },
+      { name: 'Text 2', hex: '#AEB4C0', use: 'Descriptions' },
+      { name: 'Text 3', hex: '#8790A0', use: 'Captions, meta' },
+      { name: 'Accent', hex: '#8FA3FF', use: 'Primary action, focus, selection' },
+      { name: 'Record', hex: '#FF5D6C', use: 'Recording, failure, danger' },
+      { name: 'Pass', hex: '#46D69A', use: 'Completed, no issues' },
+    ];
+    const groups = [
+      { glyph: 'W', tint: '#8FA3FF', name: 'Perception', types: 'Find and wait for images and text' },
+      { glyph: 'C', tint: '#B79CFF', name: 'Input', types: 'Click, type, press, scroll, drag' },
+      { glyph: 'V', tint: '#F2B33D', name: 'Decision', types: 'Check Value' },
+      { glyph: 'L', tint: '#AEB4C0', name: 'Control', types: 'Wait, loop, go back, sub-flow' },
+      { glyph: 'E', tint: '#FF7A86', name: 'End', types: 'End Execution' },
+      { glyph: 'S', tint: '#5ED3C3', name: 'System', types: 'Command, action, notify, window' },
+    ];
+    const spaces = [4, 8, 12, 16, 24, 32].map((px) => ({ px }));
+    const statuses = [
+      { label: 'Running', fg: '#8FA3FF', bg: 'rgba(143,163,255,0.12)' },
+      { label: 'Completed', fg: '#46D69A', bg: 'rgba(70,214,154,0.12)' },
+      { label: 'Failed', fg: '#FF7A86', bg: 'rgba(255,93,108,0.12)' },
+      { label: 'Inconclusive', fg: '#F2B33D', bg: 'rgba(242,179,61,0.12)' },
+      { label: 'Stopped', fg: '#AEB4C0', bg: 'rgba(135,144,160,0.14)' },
+      { label: 'Errored', fg: '#C4B5FD', bg: 'rgba(196,181,253,0.12)' },
+    ];
+    return { colors, groups, spaces, statuses };
+  }
+}
+</script>
+</body>
+</html>

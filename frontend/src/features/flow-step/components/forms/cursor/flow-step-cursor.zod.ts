@@ -91,7 +91,7 @@ export const FlowStepCursorSchema = z
         ctx.addIssue({
           code: "custom",
           message: "Please select a click action",
-          path: ["cursorActionType"],
+          path: ["cursorButtonActionType"],
         });
       }
     }

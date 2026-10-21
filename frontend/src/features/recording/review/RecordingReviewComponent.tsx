@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "primereact/button";
+import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 import { InputTextarea } from "primereact/inputtextarea";
 
 import { RecordedWindowEnum } from "../../../../../electron/shared/types";
@@ -111,16 +112,16 @@ export default function RecordingReviewComponent({
             severity="secondary"
             outlined
           />
-          <Button
-            type="button"
-            label="Generate flow"
-            icon="pi pi-sparkles"
-            onClick={() => onGenerate(reviews)}
-            loading={isContinuing}
-            disabled={generateUnavailable !== null}
-            tooltip={generateUnavailable ?? undefined}
-            tooltipOptions={{ position: "bottom", showOnDisabled: true }}
-          />
+          <DisabledTooltipComponent tooltip={generateUnavailable}>
+            <Button
+              type="button"
+              label="Generate flow"
+              icon="pi pi-sparkles"
+              onClick={() => onGenerate(reviews)}
+              loading={isContinuing}
+              disabled={generateUnavailable !== null}
+            />
+          </DisabledTooltipComponent>
         </div>
       </div>
 

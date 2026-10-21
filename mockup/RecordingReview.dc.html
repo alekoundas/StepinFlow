@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review the recording</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 1060px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 232px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 12px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<span style="font-weight: 600; font-size: 15px">StepinFlow</span>
+</div>
+<a href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #1A1D25; color: #ECEEF2; text-decoration: none; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg>
+Flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"></path><path d="m2 16 10 5 10-5"></path><path d="m2 12 10 5 10-5"></path></svg>
+Sub-flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+Executions</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 32px; border-bottom: 1px solid #1E222B">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px; color: #AEB4C0; font-size: 13px">
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none">Flows</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<span style="color: #ECEEF2">Download last month's invoices</span>
+</nav>
+<ol aria-label="Progress" style="display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; font-size: 13px">
+<li style="display: flex; align-items: center; gap: 8px; color: #AEB4C0"><span style="width: 22px; height: 22px; border-radius: 999px; background: #1F2433; color: #8FA3FF; display: inline-flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>Describe</li>
+<li aria-hidden="true" style="width: 20px; height: 1px; background: #8FA3FF"></li>
+<li style="display: flex; align-items: center; gap: 8px; color: #AEB4C0"><span style="width: 22px; height: 22px; border-radius: 999px; background: #1F2433; color: #8FA3FF; display: inline-flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>Record</li>
+<li aria-hidden="true" style="width: 20px; height: 1px; background: #8FA3FF"></li>
+<li aria-current="step" style="display: flex; align-items: center; gap: 8px; color: #ECEEF2"><span style="width: 22px; height: 22px; border-radius: 999px; background: #8FA3FF; color: #0C0E14; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">3</span>Review</li>
+<li aria-hidden="true" style="width: 20px; height: 1px; background: #313644"></li>
+<li style="display: flex; align-items: center; gap: 8px; color: #8790A0"><span style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid #313644; display: inline-flex; align-items: center; justify-content: center; font-size: 12px">4</span>Generate</li>
+<li aria-hidden="true" style="width: 20px; height: 1px; background: #313644"></li>
+<li style="display: flex; align-items: center; gap: 8px; color: #8790A0"><span style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid #313644; display: inline-flex; align-items: center; justify-content: center; font-size: 12px">5</span>Check</li>
+</ol>
+</header>
+
+<div style="padding: 28px 32px; box-sizing: border-box; width: 100%; max-width: 1240px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Review the recording</h1>
+<p style="margin: 0; color: #AEB4C0">{{ summary }}</p>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<a href="RecordingHud.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; color: #AEB4C0; text-decoration: none">Record again</a>
+<a href="Editor.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #313644; color: #ECEEF2; text-decoration: none; font-weight: 500">Plain draft, no AI</a>
+<a href="Generating.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 8px; background: #8FA3FF; color: #0C0E14; text-decoration: none; font-weight: 600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"></path></svg>
+Generate flow</a>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-radius: 12px; border: 1px solid #1E222B; background: #12141A; flex-wrap: wrap">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0; padding-top: 2px; flex: none">What it should do</span>
+<span style="flex: 1 1 360px; color: #ECEEF2">Sign in to the billing portal with the ops account, open Invoices, filter to last month and download every invoice as a PDF.</span>
+<button type="button" style="height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid #313644; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px; cursor: pointer">Edit</button>
+</div>
+
+<div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start">
+
+<section aria-labelledby="list-h" style="flex: 1 1 360px; min-width: 0; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #1E222B">
+<h2 id="list-h" style="margin: 0; font-size: 14px; font-weight: 600">Actions</h2>
+<span style="color: #8790A0; font-size: 12px">{{ counts }}</span>
+</div>
+<ol style="list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+<li style="display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 10px; background: {{ r.bg }}; opacity: {{ r.opacity }}">
+<input type="checkbox" checked="{{ r.included }}" onChange="{{ r.toggle }}" aria-label="Keep action {{ r.n }}" style="accent-color: #8FA3FF; width: 15px; height: 15px; margin: 0; flex: none">
+<button type="button" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 4px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8790A0; width: 18px; text-align: right; flex: none">{{ r.n }}</span>
+<span style="width: 26px; height: 26px; border-radius: 7px; background: #1F2330; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; flex: none">
+<sc-if value="{{ r.isClick }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 7-6 2-2 6z"></path></svg></sc-if>
+<sc-if value="{{ r.isType }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5h16v2M12 5v14M9 19h6"></path></svg></sc-if>
+<sc-if value="{{ r.isKey }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M7 14h10M6 10h.01M10 10h.01M14 10h.01M18 10h.01"></path></svg></sc-if>
+<sc-if value="{{ r.isOutside }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m5.6 5.6 12.8 12.8"></path></svg></sc-if>
+</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.title }}</span>
+<span style="font-size: 12px; color: #8790A0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.sub }}</span>
+</span>
+<sc-if value="{{ r.group }}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #8FA3FF; border: 1px solid rgba(143,163,255,0.45); border-radius: 999px; padding: 0 7px; white-space: nowrap; flex: none">same target ×4</span></sc-if>
+<sc-if value="{{ r.hasMini }}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 30px; max-width: 86px; height: 24px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; background: #F6F7F9; border: 1px solid #CFD4DC; color: #1D2230; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap">{{ r.mini }}</span></sc-if>
+</button>
+</li>
+</sc-for>
+</ol>
+</section>
+
+<section aria-labelledby="sel-h" style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<h2 id="sel-h" style="margin: 0; font-size: 14px; font-weight: 600">{{ sel.n }} · {{ sel.title }}</h2>
+<span style="font-size: 12px; color: #8790A0">{{ sel.frameNote }}</span>
+</div>
+<div style="overflow-x: auto">
+<div style="position: relative; width: 720px; height: 450px; background: #F6F7F9; border-radius: 10px; overflow: hidden; color: #1D2230; font-size: 12px; margin: 0 auto">
+<div style="position: absolute; left: 0; top: 0; right: 0; height: 30px; background: #E3E6EB; display: flex; align-items: center; padding: 0 12px; font-size: 11px; color: #4B5263">{{ sel.url }}</div>
+
+<sc-if value="{{ sel.isLogin }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 210px; top: 66px; width: 300px; height: 300px; background: #FFFFFF; border: 1px solid #E1E4EA; border-radius: 12px"></div>
+<span style="position: absolute; left: 234px; top: 86px; font-size: 18px; font-weight: 700">Sign in</span>
+<span style="position: absolute; left: 234px; top: 126px; font-size: 11px; color: #4B5263">Email</span>
+<span style="position: absolute; left: 234px; top: 144px; width: 252px; height: 32px; box-sizing: border-box; border: 1px solid #CFD4DC; border-radius: 7px; background: #FFFFFF; padding: 0 10px; display: flex; align-items: center">{{ sel.email }}</span>
+<span style="position: absolute; left: 234px; top: 186px; font-size: 11px; color: #4B5263">Password</span>
+<span style="position: absolute; left: 234px; top: 204px; width: 252px; height: 32px; box-sizing: border-box; border: 1px solid #CFD4DC; border-radius: 7px; background: #FFFFFF; padding: 0 10px; display: flex; align-items: center; letter-spacing: 0.1em">{{ sel.pass }}</span>
+<span style="position: absolute; left: 234px; top: 254px; width: 252px; height: 34px; border-radius: 7px; background: #234E50; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600">Sign in</span>
+<span style="position: absolute; left: 234px; top: 302px; font-size: 11px; color: #234E50">Forgot your password?</span>
+</sc-if>
+
+<sc-if value="{{ sel.isPortal }}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; top: 30px; width: 130px; height: 420px; background: #FFFFFF; border-right: 1px solid #E6E8EE"></div>
+<span style="position: absolute; left: 16px; top: 44px; font-weight: 700">Billing portal</span>
+<span style="position: absolute; left: 8px; top: 76px; width: 114px; height: 26px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; border-radius: 6px; background: {{ sel.dashBg }}; color: #4B5263">Dashboard</span>
+<span style="position: absolute; left: 8px; top: 104px; width: 114px; height: 26px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; border-radius: 6px; background: {{ sel.invBg }}; color: #234E50; font-weight: 600">Invoices</span>
+<span style="position: absolute; left: 8px; top: 132px; width: 114px; height: 26px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; color: #4B5263">Customers</span>
+<span style="position: absolute; left: 8px; top: 160px; width: 114px; height: 26px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; color: #4B5263">Settings</span>
+<span style="position: absolute; left: 152px; top: 44px; font-size: 18px; font-weight: 700">{{ sel.page }}</span>
+
+<sc-if value="{{ sel.isDashboard }}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; left: 152px; top: 84px; width: 170px; height: 80px; box-sizing: border-box; padding: 12px; background: #FFFFFF; border: 1px solid #E6E8EE; border-radius: 8px; color: #4B5263">Open invoices</span>
+<span style="position: absolute; left: 336px; top: 84px; width: 170px; height: 80px; box-sizing: border-box; padding: 12px; background: #FFFFFF; border: 1px solid #E6E8EE; border-radius: 8px; color: #4B5263">Paid this month</span>
+<span style="position: absolute; left: 520px; top: 84px; width: 170px; height: 80px; box-sizing: border-box; padding: 12px; background: #FFFFFF; border: 1px solid #E6E8EE; border-radius: 8px; color: #4B5263">Overdue</span>
+</sc-if>
+
+<sc-if value="{{ sel.isInvoices }}" hint-placeholder-val="{{ true }}">
+<span style="position: absolute; left: 630px; top: 42px; width: 70px; height: 26px; border-radius: 6px; background: #234E50; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600">Export</span>
+<span style="position: absolute; left: 152px; top: 84px; width: 130px; height: 26px; box-sizing: border-box; border: 1px solid #CFD4DC; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; padding: 0 8px; white-space: nowrap">Date range: {{ sel.range }}</span>
+<span style="position: absolute; left: 292px; top: 84px; width: 96px; height: 26px; box-sizing: border-box; border: 1px solid #CFD4DC; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; padding: 0 8px">Status: All</span>
+<div style="position: absolute; left: 152px; top: 124px; width: 548px; height: 182px; background: #FFFFFF; border: 1px solid #E6E8EE; border-radius: 8px"></div>
+<span style="position: absolute; left: 166px; top: 132px; color: #6B7282">Invoice</span><span style="position: absolute; left: 270px; top: 132px; color: #6B7282">Customer</span><span style="position: absolute; left: 460px; top: 132px; color: #6B7282">Amount</span><span style="position: absolute; left: 560px; top: 132px; color: #6B7282">Date</span>
+<span style="position: absolute; left: 166px; top: 165px">INV-2041</span><span style="position: absolute; left: 270px; top: 165px">Harbor &amp; Finch</span><span style="position: absolute; left: 460px; top: 165px">1,240.00</span><span style="position: absolute; left: 560px; top: 165px">03 Sep</span><span style="position: absolute; left: 670px; top: 163px; color: #234E50; font-size: 14px">⤓</span>
+<span style="position: absolute; left: 166px; top: 203px">INV-2042</span><span style="position: absolute; left: 270px; top: 203px">Oakline Studio</span><span style="position: absolute; left: 460px; top: 203px">860.50</span><span style="position: absolute; left: 560px; top: 203px">11 Sep</span><span style="position: absolute; left: 670px; top: 201px; color: #234E50; font-size: 14px">⤓</span>
+<span style="position: absolute; left: 166px; top: 241px">INV-2043</span><span style="position: absolute; left: 270px; top: 241px">Pemberton Labs</span><span style="position: absolute; left: 460px; top: 241px">2,015.00</span><span style="position: absolute; left: 560px; top: 241px">19 Sep</span><span style="position: absolute; left: 670px; top: 239px; color: #234E50; font-size: 14px">⤓</span>
+<span style="position: absolute; left: 166px; top: 279px">INV-2044</span><span style="position: absolute; left: 270px; top: 279px">Riverside Co-op</span><span style="position: absolute; left: 460px; top: 279px">415.75</span><span style="position: absolute; left: 560px; top: 279px">27 Sep</span><span style="position: absolute; left: 670px; top: 277px; color: #234E50; font-size: 14px">⤓</span>
+<sc-if value="{{ sel.menu }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 152px; top: 112px; width: 140px; height: 84px; background: #FFFFFF; border: 1px solid #CFD4DC; border-radius: 8px; box-shadow: 0 8px 20px rgba(29,34,48,0.15)"></div>
+<span style="position: absolute; left: 164px; top: 120px">This month</span>
+<span style="position: absolute; left: 164px; top: 148px">Last month</span>
+<span style="position: absolute; left: 164px; top: 176px">Custom range</span>
+</sc-if>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ sel.isOutside }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 30px 0 0 0; background: #2A2F3B; display: flex; align-items: center; justify-content: center; color: #ECEEF2; font-size: 14px">Outside Billing portal: the Windows taskbar</div>
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: #161A22"></span>
+</sc-if>
+
+<sc-if value="{{ sel.hasCrop }}" hint-placeholder-val="{{ true }}">
+<span aria-hidden="true" style="position: absolute; left: {{ sel.cx }}px; top: {{ sel.cy }}px; width: {{ sel.cw }}px; height: {{ sel.ch }}px; box-sizing: border-box; border: 2px dashed #4F63E6; border-radius: 4px; background: rgba(79,99,230,0.08)"></span>
+<span aria-hidden="true" style="position: absolute; left: {{ sel.hx1 }}px; top: {{ sel.hy1 }}px; width: 8px; height: 8px; background: #4F63E6; border-radius: 2px"></span>
+<span aria-hidden="true" style="position: absolute; left: {{ sel.hx2 }}px; top: {{ sel.hy2 }}px; width: 8px; height: 8px; background: #4F63E6; border-radius: 2px"></span>
+</sc-if>
+<sc-if value="{{ sel.hasMark }}" hint-placeholder-val="{{ true }}">
+<span aria-hidden="true" style="position: absolute; left: {{ sel.mx }}px; top: {{ sel.my }}px; width: 30px; height: 30px; box-sizing: border-box; border-radius: 999px; border: 2px solid #E5484D"></span>
+<span aria-hidden="true" style="position: absolute; left: {{ sel.mx2 }}px; top: {{ sel.my2 }}px; width: 6px; height: 6px; border-radius: 999px; background: #E5484D"></span>
+</sc-if>
+</div>
+</div>
+<div style="display: flex; gap: 18px; flex-wrap: wrap; color: #8790A0; font-size: 12px">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 999px; border: 2px solid #E5484D; box-sizing: border-box"></span>Where you clicked</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; border: 2px dashed #4F63E6; box-sizing: border-box"></span>The template it searches for. Drag an edge to change it.</span>
+</div>
+</div>
+
+<div style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 18px; display: flex; flex-direction: column; gap: 16px">
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(140px, auto) 1fr; gap: 10px 18px">
+<sc-for list="{{ sel.facts }}" as="f" hint-placeholder-count="3">
+<dt style="color: #8790A0">{{ f.k }}</dt>
+<dd style="margin: 0; color: #ECEEF2">{{ f.v }}</dd>
+</sc-for>
+</dl>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Becomes</span>
+<div role="radiogroup" aria-label="What this action becomes" style="display: inline-flex; padding: 3px; border-radius: 10px; background: #0F1116; border: 1px solid #242833; align-self: flex-start; flex-wrap: wrap">
+<sc-for list="{{ sel.options }}" as="o" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{ o.checked }}" onClick="{{ o.pick }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{ o.bg }}; color: {{ o.fg }}; font: inherit; font-size: 13px; cursor: pointer">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ sel.isType }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="input-name" style="font-weight: 500">Input name</label>
+<input id="input-name" type="text" value="{{ sel.input }}" style="height: 36px; width: 200px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font-family: 'Geist Mono', monospace; font-size: 13px">
+</div>
+<label style="display: inline-flex; align-items: center; gap: 8px; height: 36px">
+<input type="checkbox" checked="{{ sel.secret }}" style="accent-color: #8FA3FF; width: 15px; height: 15px; margin: 0">
+Secret: never written to a file
+</label>
+</div>
+</sc-if>
+<p style="margin: 0; color: #8790A0; font-size: 13px">{{ sel.note }}</p>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 6, choice: {} };
+  }
+  renderVals() {
+    const win = 'Billing portal — Google Chrome';
+    const login = { isLogin: true, isPortal: false, isOutside: false, url: 'billing.example.com/sign-in' };
+    const portal = (page) => ({
+      isLogin: false, isPortal: true, isOutside: false,
+      url: 'billing.example.com/' + page.toLowerCase(),
+      page, isInvoices: page === 'Invoices', isDashboard: page === 'Dashboard',
+      dashBg: page === 'Dashboard' ? '#E8F0F0' : 'transparent',
+      invBg: page === 'Invoices' ? '#E8F0F0' : 'transparent',
+    });
+    const download = (i, row, waited) => ({
+      n: 9 + i, kind: 'click', title: 'Clicked the download icon', sub: 'row ' + row + ' · after ' + waited, mini: '⤓', group: true,
+      ...portal('Invoices'), range: 'Last month', mark: [661, 158 + 38 * i], crop: [664, 161 + 38 * i, 24, 24],
+      facts: [
+        { k: 'Read under the click', v: 'No text: an icon' },
+        { k: 'Waited before', v: waited + ', so it waits up to 10 s' },
+        { k: 'Same picture as', v: 'Actions 9 to 12, each on a different row' },
+      ],
+      note: 'Four clicks on the same picture in different places. The model can turn them into one search for every match, whose Success branch moves onto each and clicks it.',
+    });
+    const defs = [
+      { n: 1, kind: 'click', title: 'Clicked “Email”', sub: 'after 1.4 s', mini: 'Email', ...login, email: '', pass: '', mark: [285, 145], crop: [230, 140, 260, 40],
+        facts: [{ k: 'Read under the click', v: '“Email”' }, { k: 'Waited before', v: '1.4 s, so it waits up to 10 s' }, { k: 'Window', v: win }],
+        note: 'Becomes three steps: a wait for the field, a move onto wherever it was found, and a click.' },
+      { n: 2, kind: 'type', title: 'Typed 15 characters', sub: 'becomes the input email', ...login, email: 'ops@example.com', pass: '', input: 'email', secret: false,
+        facts: [{ k: 'Typed', v: 'ops@example.com' }, { k: 'Into', v: 'The field read as “Email”' }],
+        note: 'The value stays on this machine as the input’s default. The flow, the script and the model only see {{email}}.' },
+      { n: 3, kind: 'key', title: 'Pressed Tab', sub: '', ...login, email: 'ops@example.com', pass: '',
+        facts: [{ k: 'Key', v: 'Tab' }], note: 'Becomes a Press step.' },
+      { n: 4, kind: 'type', title: 'Typed 12 characters', sub: 'becomes the input password · secret', ...login, email: 'ops@example.com', pass: '••••••••••••', input: 'password', secret: true,
+        facts: [{ k: 'Typed', v: '••••••••••••' }, { k: 'Into', v: 'The field read as “Password”' }],
+        note: 'Marked secret because the field is read as Password. A secret input is never written to a file and is never shown to a model.' },
+      { n: 5, kind: 'key', title: 'Pressed Enter', sub: '', ...login, email: 'ops@example.com', pass: '••••••••••••',
+        facts: [{ k: 'Key', v: 'Enter' }], note: 'Becomes a Press step.' },
+      { n: 6, kind: 'click', title: 'Clicked “Invoices”', sub: 'after 3.8 s', mini: 'Invoices', ...portal('Dashboard'), mark: [50, 102], crop: [6, 102, 118, 30],
+        facts: [{ k: 'Read under the click', v: '“Invoices”' }, { k: 'Waited before', v: '3.8 s, so it waits up to 11.4 s' }, { k: 'Window', v: win }],
+        note: 'You waited 3.8 s for the page after signing in. The wait is three times that, and never less than 10 s, because a CI machine is slower than this one.' },
+      { n: 7, kind: 'click', title: 'Clicked “Date range”', sub: 'after 0.9 s', mini: 'Date range', ...portal('Invoices'), range: 'This month', mark: [202, 82], crop: [150, 82, 134, 30],
+        facts: [{ k: 'Read under the click', v: '“Date range: This month”' }, { k: 'Waited before', v: '0.9 s, so it waits up to 10 s' }, { k: 'Window', v: win }],
+        note: 'The read text includes “This month”, which changes. The template is the button, so the search still finds it after the filter changes.' },
+      { n: 8, kind: 'click', title: 'Clicked “Last month”', sub: 'after 0.6 s', mini: 'Last month', ...portal('Invoices'), range: 'This month', menu: true, mark: [185, 142], crop: [152, 144, 140, 26],
+        facts: [{ k: 'Read under the click', v: '“Last month”' }, { k: 'Waited before', v: '0.6 s, so it waits up to 10 s' }, { k: 'Window', v: win }],
+        note: 'A menu item: the wait also covers the menu opening.' },
+      download(0, 1, '1.2 s'), download(1, 2, '1.1 s'), download(2, 3, '1.3 s'), download(3, 4, '1.2 s'),
+      { n: 13, kind: 'outside', title: 'Clicked the taskbar', sub: 'outside Billing portal', isLogin: false, isPortal: false, isOutside: true, url: '',
+        facts: [{ k: 'Window', v: 'Taskbar — explorer.exe' }],
+        note: 'Outside the window you picked, so it is left out. Keep it only if the flow really needs it.' },
+    ];
+    const optionsFor = (kind) => {
+      if (kind === 'click') return ['Wait for it, then click', 'Click this exact spot', 'Leave out'];
+      if (kind === 'type') return ['An input', 'Type it as written', 'Leave out'];
+      if (kind === 'key') return ['Press it', 'Leave out'];
+      return ['Leave out', 'Keep it'];
+    };
+    const choiceOf = (d) => {
+      const c = this.state.choice[d.n];
+      return c === undefined ? 0 : c;
+    };
+    const isIncluded = (d) => optionsFor(d.kind)[choiceOf(d)] !== 'Leave out';
+    const setChoice = (n, i) => this.setState({ choice: { ...this.state.choice, [n]: i } });
+    const rows = defs.map((d) => {
+      const on = this.state.selected === d.n;
+      const included = isIncluded(d);
+      const opts = optionsFor(d.kind);
+      return {
+        n: d.n, title: d.title, sub: d.sub, mini: d.mini || '', hasMini: !!d.mini, group: !!d.group,
+        isClick: d.kind === 'click', isType: d.kind === 'type', isKey: d.kind === 'key', isOutside: d.kind === 'outside',
+        tint: d.kind === 'click' ? '#8FA3FF' : (d.kind === 'outside' ? '#8790A0' : '#B79CFF'),
+        bg: on ? '#1A1F2C' : 'transparent',
+        pressed: on ? 'true' : 'false',
+        opacity: included ? '1' : '0.5',
+        included,
+        pick: () => this.setState({ selected: d.n }),
+        toggle: () => {
+          const leave = opts.indexOf('Leave out');
+          if (included) setChoice(d.n, leave);
+          else setChoice(d.n, leave === 0 ? 1 : 0);
+        },
+      };
+    });
+    const d = defs.find((x) => x.n === this.state.selected) || defs[0];
+    const mark = d.mark || [0, 0];
+    const crop = d.crop || [0, 0, 0, 0];
+    const opts = optionsFor(d.kind);
+    const sel = {
+      ...d,
+      email: d.email || '', pass: d.pass || '', range: d.range || '', menu: !!d.menu,
+      isDashboard: !!d.isDashboard, isInvoices: !!d.isInvoices, dashBg: d.dashBg || 'transparent', invBg: d.invBg || 'transparent', page: d.page || '',
+      isType: d.kind === 'type', input: d.input || '', secret: !!d.secret,
+      hasMark: !!d.mark, mx: mark[0], my: mark[1], mx2: mark[0] + 12, my2: mark[1] + 12,
+      hasCrop: !!d.crop, cx: crop[0], cy: crop[1], cw: crop[2], ch: crop[3],
+      hx1: crop[0] - 4, hy1: crop[1] - 4, hx2: crop[0] + crop[2] - 4, hy2: crop[1] + crop[3] - 4,
+      frameNote: d.kind === 'click' ? 'The screen at the moment you pressed' : 'The screen at this point',
+      options: opts.map((label, i) => {
+        const on = choiceOf(d) === i;
+        return { label, checked: on ? 'true' : 'false', bg: on ? '#232838' : 'transparent', fg: on ? '#ECEEF2' : '#AEB4C0', pick: () => setChoice(d.n, i) };
+      }),
+    };
+    const kept = defs.filter((x) => isIncluded(x)).length;
+    return {
+      rows,
+      sel,
+      counts: defs.length + ' recorded · ' + (defs.length - kept) + ' left out',
+      summary: defs.length + ' actions in 1:31, in ' + win + '.',
+    };
+  }
+}
+</script>
+</body>
+</html>

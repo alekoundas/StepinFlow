@@ -1,0 +1,184 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AfterStop.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "4b · After the stop: getting the review ready",
+      "w": 1440,
+      "x": 4560,
+      "y": 1020
+    },
+    "AiSetup.dc.html": {
+      "expand": "fill",
+      "h": 1832,
+      "is_interactive": true,
+      "title": "3 · Create with AI: describe it, pick the app",
+      "w": 1477,
+      "x": 3040,
+      "y": 0
+    },
+    "Editor.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8 · Lands in the editor",
+      "w": 1440,
+      "x": 10640,
+      "y": 0
+    },
+    "Foundations.dc.html": {
+      "expand": "fill",
+      "h": 1550,
+      "title": "Foundations · tokens and parts",
+      "w": 1587,
+      "x": 1520,
+      "y": 1600
+    },
+    "GeneratedReview.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "7 · Check what was generated",
+      "w": 1440,
+      "x": 9120,
+      "y": 0
+    },
+    "Generating.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "6 · Generating",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "1 · Flows",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "ManualWizard.dc.html": {
+      "expand": "fill",
+      "h": 980,
+      "is_interactive": true,
+      "title": "Fallback · step through the recording by hand",
+      "w": 1440,
+      "x": 0,
+      "y": 1600
+    },
+    "NewFlow.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "2 · New flow",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "RecordingHud.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "4 · Recording: the floating bar",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "RecordingReview.dc.html": {
+      "expand": "fill",
+      "h": 1060,
+      "is_interactive": true,
+      "title": "5 · Review the recording",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "Home.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Home · what executed, what is waiting",
+      "w": 1440,
+      "x": 3187,
+      "y": 1600
+    },
+    "Import.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Import a flow · read the file before it lands",
+      "w": 1440,
+      "x": 4707,
+      "y": 1600
+    },
+    "StepForms.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Step forms · every type, each with its code comment",
+      "w": 1440,
+      "x": 6227,
+      "y": 1600
+    },
+    "EditorCopyPaste.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "Editor · copy and paste a step",
+      "w": 1440,
+      "x": 7747,
+      "y": 1600
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-08T18:30:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "row1": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Create with AI: an automation flow from one recording",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "row2": {
+      "kind": "title1",
+      "maxW": 9187,
+      "text": "Around it",
+      "w": 240,
+      "x": 0,
+      "y": 1300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "NewFlow.dc.html",
+    "AiSetup.dc.html",
+    "RecordingHud.dc.html",
+    "AfterStop.dc.html",
+    "RecordingReview.dc.html",
+    "Generating.dc.html",
+    "GeneratedReview.dc.html",
+    "Editor.dc.html",
+    "ManualWizard.dc.html",
+    "Foundations.dc.html",
+    "Home.dc.html",
+    "Import.dc.html",
+    "StepForms.dc.html",
+    "EditorCopyPaste.dc.html"
+  ],
+  "pages": [],
+  "title": "StepinFlow recorder redesign"
+}

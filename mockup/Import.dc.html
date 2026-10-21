@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Import a flow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 1180px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 232px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 12px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<span style="font-weight: 600; font-size: 15px; letter-spacing: -0.01em">StepinFlow</span>
+</div>
+<a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
+Home</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg>
+Flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"></path><path d="m2 16 10 5 10-5"></path><path d="m2 12 10 5 10-5"></path></svg>
+Sub-flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+Executions</a>
+<div style="height: 1px; background: #1E222B; margin: 12px 10px"></div>
+<a href="Import.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #1A1D25; color: #ECEEF2; text-decoration: none; font-weight: 500">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"></path><path d="m7.5 9.5 4.5 4.5 4.5-4.5"></path><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"></path></svg>
+Import</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"></path><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"></path></svg>
+Ask AI</a>
+<div style="flex: 1 1 24px"></div>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>
+Settings</a>
+<div style="margin: 10px 4px 0; padding: 10px 12px; border: 1px solid #1E222B; border-radius: 10px; display: flex; align-items: center; gap: 10px; background: #12141A">
+<span style="width: 8px; height: 8px; border-radius: 999px; background: #46D69A; flex: none"></span>
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 12px; color: #ECEEF2; font-weight: 500">qwen3:8b</span>
+<span style="font-size: 12px; color: #8790A0">Ollama · on this machine</span>
+</div>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 32px; border-bottom: 1px solid #1E222B; font-size: 13px; color: #AEB4C0">
+<a href="Home.dc.html" style="color: #AEB4C0; text-decoration: none">Home</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<span style="color: #ECEEF2">Import a flow</span>
+</header>
+
+<div style="padding: 28px 32px; box-sizing: border-box; width: 100%; max-width: 1240px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Import a flow</h1>
+<p style="margin: 0; color: #AEB4C0; max-width: 760px">A .sflw script, with its templates in the folder named after it, beside it. It is read the way every script is, and nothing is saved until you press Import.</p>
+</div>
+
+<sc-if value="{{ isChoosing }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="choose-h" style="border: 1px dashed #313644; border-radius: 12px; background: #12141A; padding: 36px 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path><path d="M12 12v6"></path><path d="m9 15 3 3 3-3"></path></svg>
+<h2 id="choose-h" style="margin: 0; font-size: 17px; font-weight: 600">Choose a script to import</h2>
+<p style="margin: 0; color: #AEB4C0; max-width: 520px">Exported from StepinFlow or written by hand. The file dialog opens in the export folder; drop a file here instead if you have it open.</p>
+<button type="button" onClick="{{ pick }}" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-weight: 600; cursor: pointer">Choose a file…</button>
+</section>
+
+<section aria-labelledby="folder-h" style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; overflow: hidden">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 20px 12px">
+<h2 id="folder-h" style="margin: 0; font-size: 15px; font-weight: 600">In the export folder</h2>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">C:\Users\alex\AppData\Local\StepinFlow_v2\Export</span>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{ exported }}" as="x" hint-placeholder-count="3">
+<li style="border-top: 1px solid #1A1D25">
+<button type="button" onClick="{{ pick }}" style="width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 20px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span style="font-family: 'Geist Mono', monospace; font-size: 13px; flex: 1; min-width: 0">{{ x.file }}</span>
+<span style="font-size: 12px; color: #8790A0">{{ x.templates }}</span>
+<span style="font-size: 12px; color: #AEB4C0; min-width: 120px; text-align: right">{{ x.when }}</span>
+</button>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-if>
+
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 16px 18px; border-radius: 12px; background: rgba(70,214,154,0.08); border: 1px solid rgba(70,214,154,0.3)">
+<span style="width: 8px; height: 8px; border-radius: 999px; background: #46D69A; flex: none"></span>
+<span style="flex: 1 1 320px; color: #BFEBD6">{{ doneText }}</span>
+<button type="button" onClick="{{ again }}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px; cursor: pointer">Import another</button>
+<a href="Editor.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 8px; background: #8FA3FF; color: #0C0E14; text-decoration: none; font-size: 13px; font-weight: 600">Open in the editor
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRead }}" hint-placeholder-val="{{ true }}">
+<section aria-label="The file" style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#AEB4C0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path></svg>
+<span style="display: flex; flex-direction: column; flex: 1 1 420px; min-width: 0">
+<span style="font-family: 'Geist Mono', monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">C:\Users\alex\AppData\Local\StepinFlow_v2\Export\Download last month’s invoices.sflw</span>
+<span style="font-size: 12px; color: #8790A0">{{ templateLine }}</span>
+</span>
+<button type="button" onClick="{{ chooseAnother }}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Choose another…</button>
+</section>
+
+<div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start">
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<section aria-labelledby="what-h" style="border: 1px solid {{ verdict.border }}; border-radius: 12px; background: {{ verdict.bg }}; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<h2 id="what-h" style="margin: 0; font-size: 15px; font-weight: 600; color: {{ verdict.fg }}">{{ verdict.title }}</h2>
+<p style="margin: 0; color: #AEB4C0">{{ verdict.text }}</p>
+<sc-if value="{{ verdict.canCompare }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ seeChanges }}" style="align-self: flex-start; margin-top: 4px; padding: 0; border: 0; background: transparent; color: #8FA3FF; font: inherit; font-size: 13px; cursor: pointer">See what changes</button>
+</sc-if>
+</section>
+
+<section aria-labelledby="flow-h" style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="flow-h" style="margin: 0; font-size: 15px; font-weight: 600">Download last month’s invoices</h2>
+<p style="margin: 0; color: #AEB4C0">Signs in to the billing portal and downloads every invoice from last month as a PDF.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px">
+<span style="padding: 3px 10px; border-radius: 999px; background: #1A1D25; color: #AEB4C0">25 steps</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: #1A1D25; color: #AEB4C0">2 inputs</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: #1A1D25; color: #AEB4C0">5 templates</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: {{ issuesChip.bg }}; color: {{ issuesChip.fg }}">{{ issuesChip.text }}</span>
+</div>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">Id 3b1f6a0e-2c4d-4e8a-9f61-0d5c7a2b9e14</span>
+</section>
+
+<section aria-labelledby="issues-h" style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="issues-h" style="margin: 0; font-size: 15px; font-weight: 600">Errors and warnings</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{ issues }}" as="i" hint-placeholder-count="2">
+<li style="display: flex; gap: 10px">
+<span aria-hidden="true" style="flex: none; width: 18px; color: {{ i.fg }}; font-size: 12px; line-height: 20px">{{ i.glyph }}</span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 13px; font-weight: 500">{{ i.where }}</span>
+<span style="font-size: 13px; color: #AEB4C0">{{ i.message }}</span>
+</span>
+</li>
+</sc-for>
+</ul>
+</section>
+
+<section aria-labelledby="tpl-h" style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+<h2 id="tpl-h" style="margin: 0; font-size: 15px; font-weight: 600">Templates and inputs</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ templates }}" as="t" hint-placeholder-count="5">
+<li style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+<span aria-hidden="true" style="flex: none; width: 16px; color: {{ t.fg }}">{{ t.glyph }}</span>
+<span style="font-family: 'Geist Mono', monospace; flex: 1; min-width: 0">{{ t.name }}</span>
+<span style="color: {{ t.fg }}; font-size: 12px">{{ t.state }}</span>
+</li>
+</sc-for>
+</ul>
+<div style="height: 1px; background: #1E222B; margin: 4px 0"></div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+<li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #46D69A; min-width: 90px">{{ inputEmail }}</span><span style="color: #AEB4C0">default ops@example.com</span></li>
+<li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #46D69A; min-width: 90px">{{ inputPassword }}</span><span style="color: #AEB4C0">secret: not in the file, asked for when the flow executes</span></li>
+</ul>
+</section>
+</div>
+
+<section aria-label="The script" style="flex: 2 1 600px; min-width: 0; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; overflow: hidden">
+<div role="tablist" aria-label="View" style="display: flex; gap: 4px; padding: 8px 8px 0; border-bottom: 1px solid #1E222B; flex-wrap: wrap">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+<button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.pick }}" style="height: 38px; padding: 0 14px; border: 0; border-bottom: 2px solid {{ t.line }}; background: transparent; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{ t.label }}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{ showScript }}" hint-placeholder-val="{{ true }}">
+<div style="overflow-x: auto; padding: 12px 0; max-height: 720px; overflow-y: auto">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12.5px; line-height: 1.75; white-space: pre; min-width: 860px">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="24">
+<div style="display: flex; background: {{ l.bg }}"><span style="width: 18px; text-align: center; color: {{ l.markFg }}; flex: none">{{ l.mark }}</span><span style="width: 32px; text-align: right; padding-right: 14px; color: #4A5060; flex: none">{{ l.no }}</span><span style="text-decoration: {{ l.underline }}"><sc-for list="{{ l.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}; font-weight: {{ s.w }}; font-style: {{ s.i }}">{{ s.t }}</span></sc-for></span></div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showChanges }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column">
+<p style="margin: 0; padding: 14px 18px; color: #AEB4C0; border-bottom: 1px solid #1E222B">Two changes from the flow you have: the sign-in wait is 15 s in the file and 10 s here, and the download search has a new name. Red is what goes, green what the file brings.</p>
+<div style="overflow-x: auto; padding: 8px 0">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12.5px; line-height: 1.75; white-space: pre; min-width: 860px">
+<sc-for list="{{ diff }}" as="d" hint-placeholder-count="12">
+<div style="display: flex; background: {{ d.bg }}"><span style="width: 18px; text-align: center; color: {{ d.signFg }}; flex: none">{{ d.sign }}</span><span style="width: 32px; text-align: right; padding-right: 14px; color: #4A5060; flex: none">{{ d.no }}</span><span style="color: {{ d.fg }}">{{ d.text }}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</section>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap">
+<span style="color: #8790A0; font-size: 13px; flex: 1 1 320px">{{ footNote }}</span>
+<a href="Home.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; color: #AEB4C0; text-decoration: none">Cancel</a>
+<button type="button" onClick="{{ doImport }}" disabled="{{ cannotImport }}" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 0; background: {{ importBg }}; color: {{ importFg }}; font: inherit; font-weight: 600; cursor: {{ importCursor }}">{{ importLabel }}</button>
+</div>
+</sc-if>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"case":{"editor":"enum","options":["Replaces a flow you have","A new flow","Does not read cleanly","Name already taken"],"default":"Replaces a flow you have"},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { stage: 'read', tab: 'script' };
+  }
+  renderVals() {
+    const which = this.props.case ?? 'Replaces a flow you have';
+    const isReplace = which === 'Replaces a flow you have';
+    const isNew = which === 'A new flow';
+    const isBroken = which === 'Does not read cleanly';
+    const isTaken = which === 'Name already taken';
+
+    const script = [
+      'Flow:         Download last month’s invoices',
+      'Id:           3b1f6a0e-2c4d-4e8a-9f61-0d5c7a2b9e14',
+      'Description:',
+      '  # Signs in to the billing portal and downloads every invoice from last month as a PDF.',
+      '',
+      'Areas:',
+      '  <[ Billing portal ]>   main   window process <[ chrome.exe ]> title contains <[ Billing portal ]>   scales with dpi   at 120dpi',
+      '',
+      'Inputs:',
+      '  <[ email ]>       default <[ ops@example.com ]>',
+      '  <[ password ]>    secret',
+      '',
+      'Templates:',
+      '  <[ template-e4m2q.png ]>    click 130 20   captured 1600x1000 at 120dpi',
+      '  <[ template-v8k1d.png ]>    click 59 15   captured 1600x1000 at 120dpi',
+      '  <[ template-r2n7c.png ]>    click 67 15   captured 1600x1000 at 120dpi',
+      '  <[ template-h5t3w.png ]>    click 70 13   captured 1600x1000 at 120dpi',
+      '  <[ template-x9p4a.png ]>    click 12 12   captured 1600x1000 at 120dpi',
+      '',
+      'Steps:',
+      '',
+      '# recorded after a 1.4s wait',
+      'Wait For Image  <[ Email field ]>   template <[ template-e4m2q.png ]>   in <[ Billing portal ]>   timeout 15000ms',
+      ' Success:',
+      '  Move    to <[ Email field ]>',
+      '  Click',
+      '  Type    <[ {{email}} ]>',
+      '  Press   <[ Tab ]>',
+      '  Type    <[ {{password}} ]>',
+      '  Press   <[ Enter ]>',
+      ' Failure:',
+      '  End Execution  failed  <[ the sign-in page never appeared ]>',
+      '',
+      'Wait For Image  <[ Invoices menu ]>   template <[ template-v8k1d.png ]>   in <[ Billing portal ]>   timeout 11400ms',
+      ' Success:',
+      '  Move    to <[ Invoices menu ]>',
+      '  Click',
+      ' Failure:',
+      '  End Execution  failed  <[ signing in did not reach the dashboard ]>',
+      '',
+      'Find All Images  <[ Download buttons ]>   template <[ template-x9p4a.png ]>   in <[ Billing portal ]>',
+      ' Success:',
+      '  Move    to <[ Download buttons ]>',
+      '  Click',
+      '',
+      '# Left over from an older version.',
+    ];
+    const WARN_LINE = 46, BAD_STEP_LINE = 34, BAD_INDENT_LINE = 37;
+    if (isBroken) {
+      script[BAD_STEP_LINE - 1] = 'Wiat For Image  <[ Invoices menu ]>   template <[ template-v8k1d.png ]>   in <[ Billing portal ]>   timeout 11400ms';
+      script[BAD_INDENT_LINE - 1] = '     Click';
+    }
+
+    const AMBER = '#F2B33D', RED = '#FF7A86', GREEN = '#46D69A';
+    const issues = [];
+    if (isBroken) {
+      issues.push({ where: 'Line 34, column 1', message: 'Wiat For Image is not a step. Did you mean Wait For Image?', glyph: '●', fg: RED });
+      issues.push({ where: 'Line 37, column 1', message: 'Indented too far. Each level is one space, so this line can have at most 2.', glyph: '●', fg: RED });
+    }
+    if (isTaken) issues.push({ where: 'Line 1', message: 'Another flow is already called Download last month’s invoices.', glyph: '●', fg: RED });
+    issues.push({ where: 'Line 46, column 1', message: 'A comment with no step below it is left out.', glyph: '▲', fg: AMBER });
+
+    const errorCount = issues.filter((x) => x.fg === RED).length;
+    const warningCount = issues.length - errorCount;
+    const plural = (n, one) => n + ' ' + (n === 1 ? one : one + 's');
+    const issuesChip = {
+      text: plural(errorCount, 'error') + ' · ' + plural(warningCount, 'warning'),
+      bg: errorCount > 0 ? 'rgba(255,93,108,0.12)' : 'rgba(242,179,61,0.12)',
+      fg: errorCount > 0 ? RED : AMBER,
+    };
+
+    const verdicts = {
+      replace: { title: 'Replaces a flow you have', text: 'Download last month’s invoices here has the same Id, so the file takes its place: its steps, areas, points and inputs become the file’s. Its 12 executions stay in the history; the last good screenshots of its steps go.', fg: AMBER, border: 'rgba(242,179,61,0.35)', bg: 'rgba(242,179,61,0.06)', canCompare: true },
+      fresh: { title: 'A new flow', text: 'No flow here has this Id, so it is added beside the others. It never executes on its own: open it and read it first.', fg: '#8FA3FF', border: 'rgba(143,163,255,0.35)', bg: 'rgba(143,163,255,0.06)', canCompare: false },
+      broken: { title: 'The file does not read cleanly', text: 'Nothing can be imported until the errors are fixed in the file and it is chosen again. They are marked at their lines in the script.', fg: RED, border: 'rgba(255,93,108,0.35)', bg: 'rgba(255,93,108,0.06)', canCompare: false },
+      taken: { title: 'The name is taken', text: 'Another flow, with a different Id, is already called Download last month’s invoices. Rename one of them - the Flow: line in the file, or the flow here - and choose the file again.', fg: RED, border: 'rgba(255,93,108,0.35)', bg: 'rgba(255,93,108,0.06)', canCompare: false },
+    };
+    let verdict = verdicts.replace;
+    if (isNew) verdict = verdicts.fresh;
+    if (isBroken) verdict = verdicts.broken;
+    if (isTaken) verdict = verdicts.taken;
+
+    const templateNames = ['template-e4m2q.png', 'template-v8k1d.png', 'template-r2n7c.png', 'template-h5t3w.png', 'template-x9p4a.png'];
+    const templates = templateNames.map((name) => {
+      const missing = isNew && name === 'template-x9p4a.png';
+      return {
+        name,
+        glyph: missing ? '▲' : '✓',
+        fg: missing ? AMBER : GREEN,
+        state: missing ? 'not in the folder: imported without a picture' : 'found',
+      };
+    });
+    const found = templates.filter((t) => t.glyph === '✓').length;
+    const templateLine = 'Templates from Export\\Download last month’s invoices\\ · ' + found + ' of 5 found';
+
+    // The script view, coloured the way the app's tokenizer colours it.
+    const KW = '#8FA3FF', STEP = '#C4B5FD', Q = '#E6E8EC', DLM = '#5D6473', NUM = '#F2B33D', CM = '#7D8597', PLAIN = '#AEB4C0', VAR = '#46D69A';
+    const steps = ['Wait For Image', 'Find All Images', 'End Execution', 'Move', 'Click', 'Type', 'Press'];
+    const words = ['Areas:', 'Inputs:', 'Templates:', 'Steps:', 'Success:', 'Failure:', 'window process', 'title contains', 'scales with', 'template', 'timeout', 'captured', 'default', 'failed', 'secret', 'click', 'main', 'dpi', 'in', 'at', 'to'];
+    const seg = (t, c, w, i) => ({ t, c, w: w || '400', i: i || 'normal' });
+    const paint = (line) => {
+      const out = [];
+      const lead = line.match(/^\s*/)[0];
+      if (lead) out.push(seg(lead, PLAIN));
+      let rest = line.slice(lead.length);
+      if (rest.startsWith('#')) { out.push(seg(rest, CM, '400', 'italic')); return out; }
+      for (const h of ['Flow:', 'Id:', 'Description:']) {
+        if (rest.startsWith(h)) { out.push(seg(h, KW, '600')); out.push(seg(rest.slice(h.length), Q)); return out; }
+      }
+      while (rest.length) {
+        const ws = rest.match(/^\s+/);
+        if (ws) { out.push(seg(ws[0], PLAIN)); rest = rest.slice(ws[0].length); continue; }
+        if (rest.startsWith('<[')) {
+          const end = rest.indexOf(']>');
+          const inner = rest.slice(2, end);
+          out.push(seg('<[', DLM));
+          out.push(seg(inner, inner.indexOf('{{') >= 0 ? VAR : Q));
+          out.push(seg(']>', DLM));
+          rest = rest.slice(end + 2);
+          continue;
+        }
+        const step = steps.find((s) => rest.startsWith(s));
+        if (step) { out.push(seg(step, STEP, '600')); rest = rest.slice(step.length); continue; }
+        const word = words.find((k) => rest.startsWith(k) && (rest.length === k.length || /\s/.test(rest[k.length])));
+        if (word) { out.push(seg(word, KW)); rest = rest.slice(word.length); continue; }
+        const num = rest.match(/^[\d.]+(ms|dpi|x\d+)?/);
+        if (num && num[0].length) { out.push(seg(num[0], NUM)); rest = rest.slice(num[0].length); continue; }
+        const other = rest.match(/^\S+/)[0];
+        out.push(seg(other, PLAIN));
+        rest = rest.slice(other.length);
+      }
+      return out;
+    };
+    const errorLines = [];
+    if (isBroken) errorLines.push(BAD_STEP_LINE, BAD_INDENT_LINE);
+    if (isTaken) errorLines.push(1);
+    const lines = script.map((text, index) => {
+      const no = index + 1;
+      const isError = errorLines.indexOf(no) >= 0;
+      const isWarning = no === WARN_LINE;
+      let mark = '', markFg = 'transparent', bg = 'transparent', underline = 'none';
+      if (isWarning) { mark = '▲'; markFg = AMBER; bg = 'rgba(242,179,61,0.06)'; underline = 'underline wavy ' + AMBER; }
+      if (isError) { mark = '●'; markFg = RED; bg = 'rgba(255,93,108,0.08)'; underline = 'underline wavy ' + RED; }
+      return { no, mark, markFg, bg, underline, segs: paint(text) };
+    });
+
+    const goes = { bg: 'rgba(255,93,108,0.09)', sign: '-', signFg: RED, fg: '#F5C2C7' };
+    const comes = { bg: 'rgba(70,214,154,0.09)', sign: '+', signFg: GREEN, fg: '#BFEBD6' };
+    const same = { bg: 'transparent', sign: '', signFg: 'transparent', fg: PLAIN };
+    const diff = [
+      { no: '21', text: '', ...same },
+      { no: '22', text: '# recorded after a 1.4s wait', ...same },
+      { no: '', text: 'Wait For Image  <[ Email field ]>   template <[ template-e4m2q.png ]>   in <[ Billing portal ]>   timeout 10000ms', ...goes },
+      { no: '23', text: 'Wait For Image  <[ Email field ]>   template <[ template-e4m2q.png ]>   in <[ Billing portal ]>   timeout 15000ms', ...comes },
+      { no: '24', text: ' Success:', ...same },
+      { no: '', text: '⋯', ...same },
+      { no: '40', text: '', ...same },
+      { no: '', text: 'Find All Images  <[ Download icons ]>   template <[ template-x9p4a.png ]>   in <[ Billing portal ]>', ...goes },
+      { no: '41', text: 'Find All Images  <[ Download buttons ]>   template <[ template-x9p4a.png ]>   in <[ Billing portal ]>', ...comes },
+      { no: '42', text: ' Success:', ...same },
+      { no: '', text: '  Move    to <[ Download icons ]>', ...goes },
+      { no: '43', text: '  Move    to <[ Download buttons ]>', ...comes },
+      { no: '44', text: '  Click', ...same },
+    ];
+
+    const tabDefs = [{ id: 'script', label: 'Script' }];
+    if (isReplace) tabDefs.push({ id: 'changes', label: 'Changes from the flow you have' });
+    let tab = this.state.tab;
+    if (!isReplace) tab = 'script';
+    const tabs = tabDefs.map((t) => {
+      const on = tab === t.id;
+      return { label: t.label, selected: on ? 'true' : 'false', line: on ? '#8FA3FF' : 'transparent', fg: on ? '#ECEEF2' : '#8790A0', pick: () => this.setState({ tab: t.id }) };
+    });
+
+    const cannotImport = isBroken || isTaken;
+    let importLabel = 'Import';
+    if (isReplace) importLabel = 'Replace the flow';
+    let footNote = 'A warning does not stop an import.';
+    if (cannotImport) footNote = 'Fix the file, then choose it again.';
+    if (isReplace) footNote = 'The file stays where it is; replacing the flow cannot be undone here.';
+
+    let doneText = 'Imported as a new flow: Download last month’s invoices, 25 steps, 4 of 5 templates. It has not executed yet.';
+    if (isReplace) doneText = 'Replaced Download last month’s invoices with the file: 25 steps, 5 templates. Its execution history is kept.';
+
+    return {
+      isChoosing: this.state.stage === 'choose',
+      isRead: this.state.stage === 'read',
+      isDone: this.state.stage === 'done',
+      exported: [
+        { file: 'Download last month’s invoices.sflw', templates: '5 templates', when: 'Today, 18:20' },
+        { file: 'Checkout smoke.sflw', templates: '12 templates', when: '2 days ago' },
+        { file: 'Weekly stock export.sflw', templates: '3 templates', when: '9 Oct' },
+      ],
+      pick: () => this.setState({ stage: 'read', tab: 'script' }),
+      chooseAnother: () => this.setState({ stage: 'choose' }),
+      again: () => this.setState({ stage: 'choose' }),
+      doImport: () => { if (!cannotImport) this.setState({ stage: 'done' }); },
+      seeChanges: () => this.setState({ tab: 'changes' }),
+      verdict, issues, issuesChip, templates, templateLine, lines, diff, tabs,
+      showScript: tab === 'script',
+      showChanges: tab === 'changes',
+      inputEmail: '{{email}}',
+      inputPassword: '{{password}}',
+      cannotImport,
+      importLabel,
+      importBg: cannotImport ? '#262A34' : '#8FA3FF',
+      importFg: cannotImport ? '#5D6473' : '#0C0E14',
+      importCursor: cannotImport ? 'not-allowed' : 'pointer',
+      footNote, doneText,
+    };
+  }
+}
+</script>
+</body>
+</html>

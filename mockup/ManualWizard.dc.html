@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Step through the recording</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 980px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 0 0 64px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="margin-bottom: 14px"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<a href="Main.dc.html" aria-label="Flows" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: #1A1D25; color: #ECEEF2; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 28px; border-bottom: 1px solid #1E222B">
+<div style="display: flex; flex-direction: column">
+<h1 style="margin: 0; font-size: 18px; font-weight: 600">Step through the recording</h1>
+<span style="color: #8790A0; font-size: 13px">Action 6 of 13 · no model involved</span>
+</div>
+<div role="progressbar" aria-label="Actions decided" aria-valuemin="0" aria-valuemax="13" aria-valuenow="5" style="width: 260px; max-width: 100%; height: 6px; border-radius: 999px; background: #1F2330; overflow: hidden">
+<div style="width: 38%; height: 100%; background: #8FA3FF"></div>
+</div>
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none; font-size: 13px">Discard</a>
+</header>
+
+<div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 24px 28px; box-sizing: border-box; align-items: flex-start">
+
+<ol aria-label="Actions" style="flex: 1 1 220px; min-width: 0; list-style: none; margin: 0; padding: 6px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ actions }}" as="a" hint-placeholder-count="13">
+<li style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: {{ a.bg }}; color: {{ a.fg }}; font-size: 13px">
+<span style="width: 18px; height: 18px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{ a.dot }}; color: #0C0E14; font-size: 10px; flex: none">{{ a.mark }}</span>
+<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ a.title }}</span>
+</li>
+</sc-for>
+</ol>
+
+<section aria-labelledby="cur-h" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; gap: 16px; align-items: center; padding: 16px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; flex-wrap: wrap">
+<div style="width: 220px; height: 120px; border-radius: 8px; background: #F6F7F9; position: relative; overflow: hidden; flex: none">
+<span style="position: absolute; left: 0; top: 0; width: 70px; height: 120px; background: #FFFFFF; border-right: 1px solid #E6E8EE"></span>
+<span style="position: absolute; left: 8px; top: 30px; font-size: 10px; color: #4B5263">Dashboard</span>
+<span style="position: absolute; left: 4px; top: 46px; width: 60px; height: 18px; border-radius: 4px; background: #E8F0F0"></span>
+<span style="position: absolute; left: 8px; top: 48px; font-size: 10px; color: #234E50; font-weight: 600">Invoices</span>
+<span style="position: absolute; left: 2px; top: 44px; width: 64px; height: 22px; box-sizing: border-box; border: 2px dashed #4F63E6; border-radius: 4px"></span>
+<span style="position: absolute; left: 24px; top: 45px; width: 20px; height: 20px; box-sizing: border-box; border-radius: 999px; border: 2px solid #E5484D"></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<h2 id="cur-h" style="margin: 0; font-size: 17px; font-weight: 600">Clicked “Invoices”</h2>
+<span style="color: #8790A0">after 3.8 s · Billing portal — Google Chrome</span>
+</div>
+</div>
+
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="font-weight: 600; margin-bottom: 8px; padding: 0">What should this become?</legend>
+<sc-for list="{{ options }}" as="o" hint-placeholder-count="3">
+<label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 10px; border: 1px solid {{ o.border }}; background: {{ o.bg }}; cursor: pointer">
+<input type="radio" name="becomes" checked="{{ o.checked }}" onChange="{{ o.pick }}" style="accent-color: #8FA3FF; width: 16px; height: 16px; margin: 2px 0 0">
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0">
+<span style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap"><span style="font-weight: 500">{{ o.label }}</span><sc-if value="{{ o.recommended }}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #8FA3FF; border: 1px solid rgba(143,163,255,0.45); border-radius: 999px; padding: 0 7px">recommended</span></sc-if></span>
+<span style="color: #8790A0; font-size: 13px">{{ o.description }}</span>
+</span>
+<span style="font-size: 12px; color: #AEB4C0; background: #1F2330; border-radius: 6px; padding: 2px 8px; white-space: nowrap">{{ o.count }}</span>
+</label>
+</sc-for>
+</fieldset>
+
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="font-weight: 600; margin-bottom: 8px; padding: 0">Where does it go?</legend>
+<div role="radiogroup" aria-label="Placement" style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{ places }}" as="p" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{ p.checked }}" onClick="{{ p.pick }}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid {{ p.border }}; background: {{ p.bg }}; color: {{ p.fg }}; font: inherit; font-size: 13px; cursor: pointer">{{ p.label }}</button>
+</sc-for>
+</div>
+</fieldset>
+
+<div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; padding: 16px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 220px">
+<label for="w-name" style="font-weight: 500">Name</label>
+<input id="w-name" type="text" value="Invoices menu" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px">
+<label for="w-area" style="font-weight: 500">Look in</label>
+<select id="w-area" style="height: 38px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit"><option>Billing portal</option></select>
+</div>
+<button type="button" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Adjust the crop</button>
+</div>
+
+<div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+<button type="button" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; cursor: pointer">Back</button>
+<div style="display: flex; gap: 10px">
+<button type="button" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #FF7A86; font: inherit; cursor: pointer">Skip</button>
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-weight: 600; cursor: pointer">Add and continue</button>
+</div>
+</div>
+</section>
+
+<aside aria-labelledby="sofar-h" style="flex: 1 1 280px; min-width: 0; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="sofar-h" style="margin: 0; font-size: 14px; font-weight: 600">The flow so far</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #8FA3FF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">W</span>Email field</li>
+<li style="padding: 3px 6px 3px 28px; font-size: 12px; font-weight: 600; color: #46D69A">Success</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">M</span>Move to Email field</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">C</span>Click</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">T</span>Type</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">K</span>Press Tab</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">T</span>Type</li>
+<li style="display: flex; gap: 8px; align-items: center; padding: 5px 6px 5px 50px"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: #B79CFF; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">K</span>Press Enter</li>
+<li style="margin: 4px 0 0 {{ pendingIndent }}px; padding: 7px 10px; border-radius: 8px; border: 1px dashed #8FA3FF; color: #AEB4C0">Invoices menu · {{ pendingCount }}</li>
+</ol>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { option: 0, place: 1 };
+  }
+  renderVals() {
+    const titles = ['Clicked “Email”', 'Typed 15 characters', 'Pressed Tab', 'Typed 12 characters', 'Pressed Enter', 'Clicked “Invoices”', 'Clicked “Date range”', 'Clicked “Last month”', 'Clicked the download icon', 'Clicked the download icon', 'Clicked the download icon', 'Clicked the download icon', 'Clicked the taskbar'];
+    const actions = titles.map((t, i) => ({
+      title: t,
+      mark: i < 5 ? '✓' : (i === 5 ? '6' : ''),
+      dot: i < 5 ? '#46D69A' : (i === 5 ? '#8FA3FF' : '#313644'),
+      bg: i === 5 ? '#1A1F2C' : 'transparent',
+      fg: i <= 5 ? '#ECEEF2' : '#8790A0',
+    }));
+    const defs = [
+      { label: 'Wait for it, then click', description: 'Waits until it is on screen, up to 11.4 s, moves onto wherever it is and clicks.', count: '3 steps', recommended: true },
+      { label: 'Click this exact spot', description: 'Moves to a saved point in the window and clicks. Breaks when the layout moves.', count: '2 steps' },
+      { label: 'Only check it is on screen', description: 'Waits for it and branches on whether it appeared, without clicking.', count: '1 step' },
+    ];
+    const options = defs.map((d, i) => {
+      const on = this.state.option === i;
+      return { ...d, recommended: !!d.recommended, checked: on, border: on ? '#8FA3FF' : '#242833', bg: on ? '#181C28' : '#12141A', pick: () => this.setState({ option: i }) };
+    });
+    const placeDefs = ['After “Press Enter”', 'After “Email field”, outside its branch'];
+    const places = placeDefs.map((label, i) => {
+      const on = this.state.place === i;
+      return { label, checked: on ? 'true' : 'false', border: on ? '#8FA3FF' : '#313644', bg: on ? '#1F2433' : 'transparent', fg: on ? '#ECEEF2' : '#AEB4C0', pick: () => this.setState({ place: i }) };
+    });
+    return {
+      actions, options, places,
+      pendingIndent: this.state.place === 0 ? 44 : 0,
+      pendingCount: defs[this.state.option].count,
+    };
+  }
+}
+</script>
+</body>
+</html>

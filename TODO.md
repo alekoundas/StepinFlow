@@ -411,6 +411,20 @@ the history.
 
 ## Frontend
 
+- [ ] **Copy and paste a step. Drawn, to build.** Raised 2026-10-21; the mockup's "Editor · copy and
+      paste a step" board. Copy on the selected step takes it and everything under it; Paste here
+      sits beside every +; a bar over the tree names what is copied, with × to forget it; one copy
+      at a time, kept after a paste. To settle when building: whether a copy goes into another
+      flow (its areas, points and inputs are the other flow's to have), a pasted step's name made
+      free since the script names steps, and references inside the copy following it while ones
+      outside are flagged. The script printer and scanner are the likely way to copy a subtree.
+- [ ] **Every step's form, with its code comment. Drawn, to build.** Raised 2026-10-21; the mockup's
+      "Step forms" board. `FlowStep.CodeComment` is stored and printed above the step as `#`, but
+      no form shows it; every form gets "Why it is here", the Success and Failure branches too. The
+      board also restyles the forms: a header with the step's type, segmented choices for short
+      option sets, a one-line summary of what the step will do, what it gives a later step, and
+      the step's script line beside the form.
+
 - [ ] **The home page, as the mockup draws it. To build.** Raised 2026-10-17; the mockup's Home
       board was drawn and liked the same day, and building it waits. Today Home is the early
       playground - start and stop the overlay recording, a screenshot into the image editor -

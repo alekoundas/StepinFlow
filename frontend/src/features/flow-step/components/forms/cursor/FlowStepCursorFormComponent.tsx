@@ -38,11 +38,12 @@ export default function FlowStepCursorFormComponent({
   const form = useForm<z.infer<typeof FlowStepCursorSchema>>({
     resolver: zodResolver(FlowStepCursorSchema),
     mode: "onChange",
-    // Form state only: the saved step says which source it uses by which id is set.
+    // Form state only: the saved step says which source it uses by which id is set. A new step
+    // starts on a step's result, the usual source: move onto what a search above found.
     defaultValues: {
       ...defaultValues,
-      isPointCustom: defaultValues.flowStepReferenceId == null,
-      isPointEndCustom: defaultValues.flowStepReferenceEndId == null,
+      isPointCustom: defaultValues.flowPointId != null,
+      isPointEndCustom: defaultValues.flowPointEndId != null,
     } as any,
   });
 
@@ -73,6 +74,11 @@ export default function FlowStepCursorFormComponent({
       shouldValidate: true,
       shouldDirty: true,
     });
+
+    // The last mode's button and action go, and this mode's own start in their place: a click is
+    // a single left click, a drag holds the left button, a move and a scroll use neither.
+    setValue("cursorButtonActionType", mode.defaults.cursorButtonActionType ?? null, { shouldValidate: true });
+    setValue("cursorButtonType", mode.defaults.cursorButtonType ?? null, { shouldValidate: true });
 
     // In ADD mode nothing is persisted yet, so the name should follow the mode instead of
     // leaving "Cursor Click" on a scroll step. An edited name is left alone.

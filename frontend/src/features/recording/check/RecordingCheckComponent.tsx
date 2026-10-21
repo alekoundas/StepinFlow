@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
+import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 import { ProgressBar } from "primereact/progressbar";
@@ -445,18 +446,18 @@ function AskComponent({
 
       <div className="flex gap-2">
         {!revision && (
-          <Button
-            type="button"
-            label="Regenerate"
-            icon="pi pi-refresh"
-            onClick={() => onAsk(changes.trim())}
-            disabled={unavailable !== null || changes.trim().length === 0}
-            tooltip={unavailable ?? undefined}
-            tooltipOptions={{ position: "bottom", showOnDisabled: true }}
-            size="small"
-            severity="secondary"
-            outlined
-          />
+          <DisabledTooltipComponent tooltip={unavailable}>
+            <Button
+              type="button"
+              label="Regenerate"
+              icon="pi pi-refresh"
+              onClick={() => onAsk(changes.trim())}
+              disabled={unavailable !== null || changes.trim().length === 0}
+              size="small"
+              severity="secondary"
+              outlined
+            />
+          </DisabledTooltipComponent>
         )}
         {revision && (
           <Button

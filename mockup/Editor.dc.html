@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flow editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 960px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 0 0 64px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="margin-bottom: 14px"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<a href="Main.dc.html" aria-label="Flows" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: #1A1D25; color: #ECEEF2; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg></a>
+<a href="Main.dc.html" aria-label="Sub-flows" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"></path><path d="m2 16 10 5 10-5"></path><path d="m2 12 10 5 10-5"></path></svg></a>
+<a href="Main.dc.html" aria-label="Executions" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 12px 24px; border-bottom: 1px solid #1E222B">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0">
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none; font-size: 13px">Flows</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Download last month's invoices</h1>
+<span style="font-size: 12px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 1px 8px">Automation</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #46D69A"><span style="width: 7px; height: 7px; border-radius: 999px; background: #46D69A"></span>No issues</span>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>
+Export .sflw</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg>
+Execute</button>
+</div>
+</header>
+
+<sc-if value="{{ banner }}" hint-placeholder-val="{{ true }}">
+<div role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: rgba(242,179,61,0.08); border-bottom: 1px solid rgba(242,179,61,0.25); color: #F2B33D; font-size: 13px; flex-wrap: wrap">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"></path></svg>
+<span style="flex: 1 1 320px; color: #E9D3A6">Generated from your recording today. Read it through, then execute it once while you watch.</span>
+<button type="button" onClick="{{ hideBanner }}" style="height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(242,179,61,0.4); background: transparent; color: #F2B33D; font: inherit; font-size: 12px; cursor: pointer">I have read it</button>
+</div>
+</sc-if>
+
+<div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+<section aria-label="Steps" style="flex: 999 1 460px; min-width: 0; border-right: 1px solid #1E222B; display: flex; flex-direction: column">
+<div role="tablist" aria-label="Flow parts" style="display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid #1E222B; flex-wrap: wrap">
+<button type="button" role="tab" aria-selected="true" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid #8FA3FF; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; font-weight: 500">Steps</button>
+<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Areas <span style="color: #5D6473">1</span></button>
+<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Inputs <span style="color: #5D6473">2</span></button>
+<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Templates <span style="color: #5D6473">5</span></button>
+<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Script</button>
+</div>
+<ol aria-label="Step tree" style="list-style: none; margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="14">
+<li style="display: flex; align-items: center; gap: 6px">
+<span aria-hidden="true" style="width: 18px; display: inline-flex; justify-content: center; flex: none"><span style="width: 10px; height: 10px; border-radius: 999px; background: {{ r.bp }}"></span></span>
+<button type="button" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px 0 {{ r.pad }}px; border-radius: 8px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="width: 14px; color: #5D6473; font-size: 11px; flex: none">{{ r.twisty }}</span>
+<sc-if value="{{ r.isBranch }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: {{ r.tint }}">{{ r.name }}</span></sc-if>
+<sc-if value="{{ r.isStep }}" hint-placeholder-val="{{ true }}">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: #1F2330; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none">{{ r.glyph }}</span>
+<span style="font-size: 13px; font-weight: 500; white-space: nowrap">{{ r.name }}</span>
+<span style="font-size: 12px; color: #8790A0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.detail }}</span>
+</sc-if>
+</button>
+</li>
+</sc-for>
+</ol>
+</section>
+
+<aside aria-labelledby="insp-h" style="flex: 1 1 400px; min-width: 0; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 34px; height: 34px; border-radius: 9px; background: #1F2330; color: {{ sel.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{ sel.glyph }}</span>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 12px; color: #8790A0">{{ sel.type }}</span>
+<h2 id="insp-h" style="margin: 0; font-size: 17px; font-weight: 600">{{ sel.name }}</h2>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="step-name" style="font-weight: 500">Name</label>
+<input id="step-name" type="text" value="{{ sel.name }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+
+<sc-if value="{{ sel.isSearch }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Template</span>
+<div style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 10px; border: 1px solid #242833; background: #0F1116">
+<span style="width: 64px; height: 64px; border-radius: 8px; background: #F6F7F9; display: inline-flex; align-items: center; justify-content: center; color: #234E50; font-size: 22px; flex: none; position: relative">{{ sel.thumb }}</span>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px">{{ sel.template }}</span>
+<span style="font-size: 12px; color: #8790A0">Cut from your recording · captured 1600×1000 at 120 dpi</span>
+</div>
+</div>
+<label for="acc" style="display: flex; justify-content: space-between; font-size: 13px; color: #AEB4C0; margin-top: 6px"><span>Accuracy</span><span style="font-family: 'Geist Mono', monospace; color: #ECEEF2">0.80</span></label>
+<input id="acc" type="range" min="0.5" max="1" step="0.01" value="0.8" style="accent-color: #8FA3FF">
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 160px">
+<label for="area" style="font-weight: 500">Look in</label>
+<select id="area" style="height: 38px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+<option>Billing portal</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 160px">
+<label for="mode" style="font-weight: 500">Match</label>
+<select id="mode" style="height: 38px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+<option>Shape</option>
+<option>Shape and brightness</option>
+</select>
+</div>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="why" style="font-weight: 500">Why it is here</label>
+<textarea id="why" rows="3" placeholder="What you expect here, and what it means if it fails." style="box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; resize: vertical">{{ sel.comment }}</textarea>
+<span style="font-size: 12px; color: #8790A0">Read by whoever reviews the script, and quoted back when a failure is explained.</span>
+</div>
+
+<div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid #1E222B">
+<sc-if value="{{ sel.isSearch }}" hint-placeholder-val="{{ true }}">
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Test now</button>
+</sc-if>
+<button type="button" style="height: 36px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Save</button>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 'dl', banner: true };
+  }
+  renderVals() {
+    const P = '#8FA3FF', I = '#B79CFF', E = '#FF7A86', C = '#AEB4C0';
+    const step = (id, depth, glyph, tint, type, name, detail, twisty, extra) => ({ id, depth, glyph, tint, type, name, detail, twisty: twisty || '', isStep: true, isBranch: false, ...(extra || {}) });
+    const branch = (id, depth, ok) => ({ id, depth, name: ok ? 'Success' : 'Failure', tint: ok ? '#46D69A' : '#FF7A86', isStep: false, isBranch: true, twisty: '▾', glyph: '', detail: '', type: 'Branch' });
+    const defs = [
+      step('email', 0, 'W', P, 'Wait For Image', 'Email field', 'up to 10 s · in Billing portal', '▾', { isSearch: true, thumb: 'Email', template: 'template-e4m2q.png', comment: 'recorded after a 1.4s wait' }),
+      branch('s1', 1, true),
+      step('m1', 2, 'M', I, 'Cursor Move', 'Move', 'to Email field'),
+      step('c1', 2, 'C', I, 'Cursor Click', 'Click', 'left, single'),
+      step('t1', 2, 'T', I, 'Keyboard Input', 'Type', '{{email}}'),
+      step('k1', 2, 'K', I, 'Keyboard Input', 'Press', 'Tab'),
+      step('t2', 2, 'T', I, 'Keyboard Input', 'Type', '{{password}}'),
+      step('k2', 2, 'K', I, 'Keyboard Input', 'Press', 'Enter'),
+      branch('f1', 1, false),
+      step('e1', 2, 'E', E, 'End Execution', 'End Execution', 'failed · the sign-in page never appeared'),
+      step('inv', 0, 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', '▸', { isSearch: true, thumb: 'Invoices', template: 'template-v8k1d.png', comment: 'recorded after a 3.8s wait' }),
+      step('dr', 0, 'W', P, 'Wait For Image', 'Date range filter', 'up to 10 s', '▸', { isSearch: true, thumb: 'Date', template: 'template-r2n7c.png', comment: '' }),
+      step('lm', 0, 'W', P, 'Wait For Image', 'Last month option', 'up to 10 s', '▸', { isSearch: true, thumb: 'Last', template: 'template-h5t3w.png', comment: '' }),
+      step('ll', 0, 'W', P, 'Wait For Image', 'Invoice list loaded', 'up to 10 s', '▸', { isSearch: true, thumb: '⤓', template: 'template-x9p4a.png', comment: 'One download icon on every row: wait for the first, then click them all.' }),
+      step('dl', 0, 'F', P, 'Find All Images', 'Download buttons', 'Success once per match · in Billing portal', '▾', { isSearch: true, thumb: '⤓', template: 'template-x9p4a.png', comment: '', bp: true }),
+      branch('s2', 1, true),
+      step('m2', 2, 'M', I, 'Cursor Move', 'Move', 'to Download buttons, this pass’s match'),
+      step('c2', 2, 'C', I, 'Cursor Click', 'Click', 'left, single'),
+    ];
+    const rows = defs.map((d) => {
+      const on = this.state.selected === d.id;
+      return {
+        ...d,
+        pad: 6 + d.depth * 20,
+        bp: d.bp ? '#FF5D6C' : 'transparent',
+        pressed: on ? 'true' : 'false',
+        bg: on ? '#1A1F2C' : 'transparent',
+        border: on ? '#2E3650' : 'transparent',
+        pick: () => this.setState({ selected: d.id }),
+      };
+    });
+    const d = defs.find((x) => x.id === this.state.selected) || defs[0];
+    const sel = {
+      tint: d.tint, glyph: d.glyph || '•', type: d.type, name: d.name,
+      isSearch: !!d.isSearch, thumb: d.thumb || '', template: d.template || '', comment: d.comment || '',
+    };
+    return {
+      rows, sel,
+      banner: this.state.banner,
+      hideBanner: () => this.setState({ banner: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>

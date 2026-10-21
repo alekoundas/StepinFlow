@@ -1,5 +1,4 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import { Panel } from "primereact/panel";
 import { Message } from "primereact/message";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
@@ -123,26 +122,17 @@ export default function FlowStepSearchImageFormFieldsComponent({
         </div>
       )}
 
-      <Panel
-        header="Matching"
-        toggleable
-        collapsed
-        className="mt-3"
-      >
-
-        <FormSelectButtonComponent
-          fieldName="templateMatchMode"
-          labelText="Compare"
-          options={MATCH_MODES.map((x) => ({
-            label: x.label,
-            value: x.value,
-          }))}
-          isRequired={true}
-          isDisabled={isDisabled}
-          hintText={MATCH_MODES.find((x) => x.value === matchMode)?.description}
-        />
-
-      </Panel>
+      <FormSelectButtonComponent
+        fieldName="templateMatchMode"
+        labelText="Compare"
+        options={MATCH_MODES.map((x) => ({
+          label: x.label,
+          value: x.value,
+        }))}
+        isRequired={true}
+        isDisabled={isDisabled}
+        hintText={MATCH_MODES.find((x) => x.value === matchMode)?.description}
+      />
 
       <Message
         severity="info"

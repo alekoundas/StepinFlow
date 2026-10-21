@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Generating the flow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 960px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 232px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 12px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<span style="font-weight: 600; font-size: 15px">StepinFlow</span>
+</div>
+<a href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #1A1D25; color: #ECEEF2; text-decoration: none; font-weight: 500">Flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">Sub-flows</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #AEB4C0; text-decoration: none">Executions</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 32px; border-bottom: 1px solid #1E222B">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px; color: #AEB4C0; font-size: 13px">
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none">Flows</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<span style="color: #ECEEF2">Download last month's invoices</span>
+</nav>
+<ol aria-label="Progress" style="display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; font-size: 13px; color: #AEB4C0">
+<li>Describe</li><li aria-hidden="true" style="width: 20px; height: 1px; background: #8FA3FF"></li>
+<li>Record</li><li aria-hidden="true" style="width: 20px; height: 1px; background: #8FA3FF"></li>
+<li>Review</li><li aria-hidden="true" style="width: 20px; height: 1px; background: #8FA3FF"></li>
+<li aria-current="step" style="display: flex; align-items: center; gap: 8px; color: #ECEEF2"><span style="width: 22px; height: 22px; border-radius: 999px; background: #8FA3FF; color: #0C0E14; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">4</span>Generate</li>
+<li aria-hidden="true" style="width: 20px; height: 1px; background: #313644"></li>
+<li style="color: #8790A0">Check</li>
+</ol>
+</header>
+
+<div style="padding: 40px 32px; box-sizing: border-box; width: 100%; max-width: 1120px; display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start">
+
+<section aria-labelledby="g-h" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 id="g-h" style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">{{ heading }}</h1>
+<p style="margin: 0; color: #AEB4C0">Nothing is saved until the script reads cleanly. A refused attempt leaves the flow exactly as it was.</p>
+</div>
+
+<ol aria-label="Stages" style="list-style: none; margin: 0; padding: 8px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="7">
+<li style="display: flex; gap: 14px; padding: 12px; border-radius: 10px; background: {{ s.bg }}">
+<span style="flex: none; width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{ s.dotBg }}; color: {{ s.dotFg }}; border: 1px solid {{ s.dotBorder }}; box-sizing: border-box">
+<sc-if value="{{ s.done }}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+<sc-if value="{{ s.active }}" hint-placeholder-val="{{ false }}"><span style="width: 8px; height: 8px; border-radius: 999px; background: #8FA3FF"></span></sc-if>
+</span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-weight: 500; color: {{ s.fg }}">{{ s.title }}</span>
+<span style="font-size: 13px; color: #8790A0">{{ s.detail }}</span>
+<sc-if value="{{ s.showRetry }}" hint-placeholder-val="{{ false }}">
+<span style="margin-top: 8px; display: block; padding: 10px 12px; border-radius: 8px; background: #0F1116; border: 1px solid #242833; font-family: 'Geist Mono', monospace; font-size: 12px; color: #AEB4C0; white-space: pre-wrap">line 41, column 4 · LEADING_SPACES_UNEXPECTED
+Indented too far. Each level is one space, so this line can have at most 2.
+Sent back to the model with the line. Attempt 2 of 3 read cleanly.</span>
+</sc-if>
+</span>
+</li>
+</sc-for>
+</ol>
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<a href="RecordingReview.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; color: #AEB4C0; text-decoration: none">{{ backLabel }}</a>
+<sc-if value="{{ finished }}" hint-placeholder-val="{{ false }}">
+<a href="GeneratedReview.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 8px; background: #8FA3FF; color: #0C0E14; text-decoration: none; font-weight: 600">Check the flow
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+</sc-if>
+</div>
+</section>
+
+<aside aria-labelledby="sent-h" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="sent-h" style="margin: 0; font-size: 15px; font-weight: 600">Sent to qwen3:8b</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<li style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #AEB4C0">Your description</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">1 sentence</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #AEB4C0">The draft, as a script</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">2.9 KB</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #AEB4C0">Text read under each click</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">4 labels</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #AEB4C0">Which clicks hit the same picture</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">1 group</span></li>
+</ul>
+<div style="height: 1px; background: #1E222B"></div>
+<h3 style="margin: 0; font-size: 13px; font-weight: 600; color: #8790A0">Kept on this machine</h3>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; color: #AEB4C0">
+<li>9 screenshots and the 5 templates cut from them</li>
+<li>What you typed: the model sees {{ tokenEmail }} and {{ tokenPassword }}</li>
+</ul>
+<button type="button" style="align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Show the exact request</button>
+</section>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { at: 4 };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.at >= 7) { clearInterval(this.timer); return; }
+      this.setState({ at: this.state.at + 1 });
+    }, 1400);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  renderVals() {
+    const defs = [
+      { title: 'Folded the recording into actions', detail: '214 input events became 13 actions; 1 left out by you' },
+      { title: 'Read the text under each click', detail: 'Windows OCR, on this machine: 4 labels; the 4 download clicks are an icon with no text' },
+      { title: 'Cut the templates', detail: '5 templates from 8 clicks: the 4 download clicks share one' },
+      { title: 'Wrote the draft', detail: '36 steps, 2 inputs, every wait sized from how long you waited' },
+      { title: 'Asked the model to shape it', detail: 'Naming the steps and grouping the repeated clicks, with your description' },
+      { title: 'Read the script back', detail: 'Parsed and checked the way an imported file is', retry: true },
+      { title: 'Saved and validated', detail: '0 errors, 0 warnings' },
+    ];
+    const at = this.state.at;
+    const stages = defs.map((d, i) => {
+      const done = i < at;
+      const active = i === at;
+      return {
+        title: d.title,
+        detail: d.detail,
+        done,
+        active,
+        showRetry: !!d.retry && done,
+        bg: active ? '#161A24' : 'transparent',
+        fg: done || active ? '#ECEEF2' : '#8790A0',
+        dotBg: done ? '#1F2433' : 'transparent',
+        dotFg: '#8FA3FF',
+        dotBorder: done ? '#1F2433' : (active ? '#8FA3FF' : '#313644'),
+      };
+    });
+    const finished = at >= defs.length;
+    return {
+      stages,
+      finished,
+      heading: finished ? 'The flow is ready to check' : 'Generating the flow',
+      backLabel: finished ? 'Back to the recording' : 'Cancel',
+      tokenEmail: '{{email}}',
+      tokenPassword: '{{password}}',
+    };
+  }
+}
+</script>
+</body>
+</html>

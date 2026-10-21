@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Step forms</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 1180px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 0 0 64px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="margin-bottom: 14px"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<a href="Home.dc.html" aria-label="Home" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg></a>
+<a href="Main.dc.html" aria-label="Flows" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: #1A1D25; color: #ECEEF2; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg></a>
+<a href="Main.dc.html" aria-label="Executions" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 32px; border-bottom: 1px solid #1E222B; font-size: 13px; color: #AEB4C0">
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none">Flows</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<a href="Editor.dc.html" style="color: #AEB4C0; text-decoration: none">Download last month’s invoices</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<span style="color: #ECEEF2">Every step’s form</span>
+</header>
+
+<div style="padding: 24px 32px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px; max-width: 900px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Every step’s form</h1>
+<p style="margin: 0; color: #AEB4C0">Pick a type to see its form as the editor shows it. Every form ends with <span style="color: #ECEEF2">Why it is here</span>, the step’s code comment: type in it and the script beside it changes, since that is where it is printed.</p>
+</div>
+
+<div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start">
+
+<nav aria-label="Step types" style="flex: 0 1 236px; min-width: 200px; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; padding: 10px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="7">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0; padding: 10px 8px 4px">{{ g.name }}</span>
+<sc-for list="{{ g.items }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.pick }}" aria-pressed="{{ t.pressed }}" style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid {{ t.border }}; background: {{ t.bg }}; color: #ECEEF2; font: inherit; font-size: 13px; text-align: left; cursor: pointer">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: #1F2330; color: {{ t.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none">{{ t.glyph }}</span>
+{{ t.label }}
+</button>
+</sc-for>
+</sc-for>
+</nav>
+
+<section aria-labelledby="form-h" style="flex: 2 1 520px; min-width: 0; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #1E222B">
+<span style="width: 36px; height: 36px; border-radius: 10px; background: #1F2330; color: {{ form.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none">{{ form.glyph }}</span>
+<div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+<span style="font-size: 12px; color: #8790A0">{{ form.type }}</span>
+<h2 id="form-h" style="margin: 0; font-size: 18px; font-weight: 600">{{ form.name }}</h2>
+</div>
+<span style="font-size: 12px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 2px 8px">{{ form.group }}</span>
+</div>
+
+<div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{ form.hasSummary }}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; padding: 10px 12px; border-radius: 8px; background: rgba(143,163,255,0.08); border: 1px solid rgba(143,163,255,0.22); color: #C9D2FF; font-size: 13px">{{ form.summary }}</p>
+</sc-if>
+
+<sc-for list="{{ form.fields }}" as="f" hint-placeholder-count="5">
+<sc-if value="{{ f.isSection }}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0; padding-top: 4px; border-top: 1px solid #1E222B; margin-top: 2px; padding-top: 14px">{{ f.label }}</span>
+</sc-if>
+
+<sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.label }}</span>
+<div style="min-height: 38px; box-sizing: border-box; padding: 8px 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: {{ f.font }}; font-size: {{ f.size }}; color: {{ f.fg }}; white-space: pre-wrap"><span>{{ f.value }}</span><span style="font-family: 'Geist', sans-serif; font-size: 12px; color: #8790A0">{{ f.unit }}</span></div>
+<span style="font-size: 12px; color: #8790A0">{{ f.hint }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.label }}</span>
+<div style="display: flex; gap: 8px">
+<div style="flex: 1; min-width: 0; height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; display: flex; align-items: center; justify-content: space-between; gap: 10px">
+<span style="color: {{ f.fg }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ f.value }}</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8790A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+</div>
+<sc-if value="{{ f.hasAction }}" hint-placeholder-val="{{ false }}">
+<button type="button" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">{{ f.action }}</button>
+</sc-if>
+</div>
+<span style="font-size: 12px; color: #8790A0">{{ f.hint }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isSegmented }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.label }}</span>
+<div role="radiogroup" aria-label="{{ f.label }}" style="align-self: flex-start; display: inline-flex; flex-wrap: wrap; padding: 3px; border-radius: 10px; background: #0F1116; border: 1px solid #242833">
+<sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3">
+<span role="radio" aria-checked="{{ o.checked }}" style="height: 32px; padding: 0 12px; border-radius: 8px; background: {{ o.bg }}; color: {{ o.fg }}; font-size: 13px; font-weight: {{ o.weight }}; display: inline-flex; align-items: center">{{ o.label }}</span>
+</sc-for>
+</div>
+<span style="font-size: 12px; color: #8790A0">{{ f.hint }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isPair }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.a.label }}</span>
+<div style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; display: flex; align-items: center; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 13px"><span>{{ f.a.value }}</span><span style="font-family: 'Geist', sans-serif; font-size: 12px; color: #8790A0">{{ f.a.unit }}</span></div>
+</div>
+<div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.b.label }}</span>
+<div style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; display: flex; align-items: center; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 13px"><span>{{ f.b.value }}</span><span style="font-family: 'Geist', sans-serif; font-size: 12px; color: #8790A0">{{ f.b.unit }}</span></div>
+</div>
+</div>
+<span style="font-size: 12px; color: #8790A0">{{ f.hint }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isTemplates }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">{{ f.label }}</span>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<sc-for list="{{ f.items }}" as="i" hint-placeholder-count="2">
+<div style="flex: 1 1 220px; display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; border: 1px solid #242833; background: #0F1116">
+<span style="width: 56px; height: 40px; border-radius: 6px; background: #F6F7F9; color: #234E50; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex: none">{{ i.thumb }}</span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px">{{ i.name }}</span>
+<span style="font-size: 12px; color: #8790A0">{{ i.meta }}</span>
+</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Capture from the screen</button>
+<button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px; cursor: pointer">Add from a file</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isPreview }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 500">{{ f.label }}</span>
+<ol style="list-style: none; margin: 0; padding: 8px; border-radius: 10px; border: 1px solid #242833; background: #0F1116; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ f.rows }}" as="r" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px {{ r.pad }}px; font-size: 13px"><span style="width: 18px; height: 18px; border-radius: 5px; background: #1F2330; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700">{{ r.glyph }}</span>{{ r.name }}</li>
+</sc-for>
+</ol>
+</div>
+</sc-if>
+
+<sc-if value="{{ f.isNote }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #0F1116; border: 1px solid #1E222B; color: #AEB4C0; font-size: 13px">{{ f.text }}</p>
+</sc-if>
+</sc-for>
+
+<sc-if value="{{ form.hasGives }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8790A0; flex: none">Gives</span>
+<span style="color: #AEB4C0">{{ form.gives }}</span>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid #1E222B">
+<label for="code-comment" style="font-weight: 500">Why it is here</label>
+<textarea id="code-comment" rows="3" value="{{ comment }}" onChange="{{ setComment }}" placeholder="What you expect here, and what it means if it fails." style="box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; resize: vertical"></textarea>
+<span style="font-size: 12px; color: #8790A0">Printed above the step in its script as a # comment, read by whoever reviews it, and quoted back when a failure is explained.</span>
+</div>
+</div>
+
+<div style="margin-top: auto; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding: 14px 22px; border-top: 1px solid #1E222B">
+<sc-if value="{{ form.hasTest }}" hint-placeholder-val="{{ true }}">
+<button type="button" style="margin-right: auto; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg>Test now</button>
+</sc-if>
+<button type="button" style="height: 36px; padding: 0 14px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px; cursor: pointer">Cancel</button>
+<button type="button" style="height: 36px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Save</button>
+</div>
+</section>
+
+<aside aria-labelledby="script-h" style="flex: 1 1 340px; min-width: 0; border: 1px solid #1E222B; border-radius: 12px; background: #12141A; overflow: hidden">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #1E222B">
+<h2 id="script-h" style="margin: 0; font-size: 15px; font-weight: 600">In the script</h2>
+<span style="font-size: 12px; color: #8790A0">read-only</span>
+</div>
+<div style="overflow-x: auto; padding: 12px 0">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12.5px; line-height: 1.75; white-space: pre; min-width: max-content">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="6">
+<div style="display: flex; background: {{ l.bg }}"><span style="width: 32px; text-align: right; padding-right: 14px; color: #4A5060; flex: none">{{ l.no }}</span><span style="padding-right: 16px"><sc-for list="{{ l.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}; font-weight: {{ s.w }}; font-style: {{ s.i }}">{{ s.t }}</span></sc-for></span></div>
+</sc-for>
+</div>
+</div>
+<p style="margin: 0; padding: 12px 18px 16px; color: #8790A0; font-size: 12px">The highlighted line is the comment. An empty one prints nothing; a comment over a branch sits over its Success: or Failure: line.</p>
+</aside>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { type: 'image', comments: {} };
+  }
+  renderVals() {
+    const P = '#8FA3FF', I = '#B79CFF', D = '#F2B33D', C = '#AEB4C0', E = '#FF7A86', S = '#5ED3C3', OK = '#46D69A';
+    const text = (label, value, hint, extra) => ({ kind: 'text', label, value, hint: hint || '', ...(extra || {}) });
+    const mono = (label, value, hint, unit) => text(label, value, hint, { font: "'Geist Mono', monospace", size: '13px', unit: unit || '' });
+    const select = (label, value, hint, action) => ({ kind: 'select', label, value, hint: hint || '', action: action || '' });
+    const seg = (label, options, selected, hint) => ({ kind: 'segmented', label, hint: hint || '', options: options.map((o) => ({ label: o, on: o === selected })) });
+    const pair = (a, au, av, b, bu, bv, hint) => ({ kind: 'pair', a: { label: a, unit: au, value: av }, b: { label: b, unit: bu, value: bv }, hint: hint || '' });
+    const section = (label) => ({ kind: 'section', label });
+    const note = (t) => ({ kind: 'note', text: t });
+
+    const types = {
+      image: {
+        group: 'Perception', label: 'Image Search', glyph: 'IS', tint: P, type: 'Image Search', name: 'Find the email field', hasTest: true,
+        summary: 'Waits for 2 templates to appear, checking every 200 ms for up to 10 s. On the first match it runs the Success steps once; if nothing appears in time, the Failure steps.',
+        gives: 'Where it matched: the location a Move or a Drag below can go to.',
+        fields: [
+          text('Name', 'Find the email field'),
+          seg('Mode', ['Best match', 'Every match', 'Until found', 'Until not found'], 'Until found', 'Waits for the template to appear, then runs Success once.'),
+          { kind: 'templates', label: 'Templates', items: [
+            { thumb: 'Email', name: 'template-e4m2q.png', meta: 'accuracy 0.80 · required' },
+            { thumb: 'E-mail', name: 'template-k2v9p.png', meta: 'accuracy 0.85 · an alternative' },
+          ] },
+          select('Where to look', 'Billing portal', 'A smaller area is the single biggest thing that makes the search fast.'),
+          seg('Compare', ['Shape', 'Shape and brightness'], 'Shape', 'Shape alone ignores colour and lightness, so a hover or a theme does not stop a match.'),
+          section('Timing'),
+          pair('Check every', 'ms', '200', 'Give up after', 'ms', '10000', '0 waits for ever.'),
+        ],
+        script: ['Wait For Image  <[ Find the email field ]>   template <[ template-e4m2q.png ]> required  template <[ template-k2v9p.png ]>   in <[ Billing portal ]>   timeout 10000ms'],
+        comment: 'recorded after a 1.4s wait',
+      },
+      text: {
+        group: 'Perception', label: 'Read Text', glyph: 'RT', tint: P, type: 'Read Text', name: 'Read the total', hasTest: true,
+        summary: 'Reads the cart badge until the text matches total: (\\d+), checking every 500 ms for up to 10 s, and keeps the number.',
+        gives: 'The text it kept, as {{Read the total}} and for a Check Value below.',
+        fields: [
+          text('Name', 'Read the total'),
+          seg('Mode', ['Check once', 'Until it matches', 'Until it stops matching'], 'Until it matches'),
+          select('Where to read', 'Cart badge', 'Reading a small area is both faster and far more accurate than reading a screen.'),
+          pair('Condition', '', 'matches', 'Text', '', 'total: (\\d+)'),
+          mono('Keep only', '(\\d+)', 'A regex: the step keeps what its first group captured.'),
+          select('Language', 'English (United States)', 'Windows reads text with the language packs it has installed. Add more in Settings.'),
+          section('Timing'),
+          pair('Check every', 'ms', '500', 'Give up after', 'ms', '10000', '0 waits for ever.'),
+        ],
+        script: ['Wait For Text   <[ Read the total ]>   matches <[ total: (\\d+) ]>   in <[ Cart badge ]>   keep <[ (\\d+) ]>   timeout 10000ms'],
+        comment: '',
+      },
+      click: {
+        group: 'Input', label: 'Click', glyph: 'C', tint: I, type: 'Cursor · Click', name: 'Click', hasTest: false,
+        summary: 'A single left click where the cursor is. A Move above it says where.',
+        gives: '',
+        fields: [
+          text('Name', 'Click'),
+          seg('Mode', ['Click', 'Move', 'Drag', 'Scroll'], 'Click'),
+          seg('Action', ['Single', 'Double', 'Hold', 'Release'], 'Single', 'A new click starts as a single left click.'),
+          seg('Button', ['Left', 'Right', 'Middle'], 'Left'),
+        ],
+        script: ['Click'],
+        comment: '',
+      },
+      move: {
+        group: 'Input', label: 'Move', glyph: 'M', tint: I, type: 'Cursor · Move', name: 'Move to the email field', hasTest: false,
+        summary: 'Moves the cursor onto where Find the email field matched.',
+        gives: '',
+        fields: [
+          text('Name', 'Move to the email field'),
+          seg('Mode', ['Click', 'Move', 'Drag', 'Scroll'], 'Move'),
+          seg('Location', ['Step result', 'Saved location'], 'Step result', 'A new move starts on a step’s result: where a search above it matched.'),
+          select('Use the result of', 'Find the email field', 'Only Image Search and Read Text steps this one sits under, on their Success side.'),
+        ],
+        script: ['Move            to <[ Find the email field ]>'],
+        comment: '',
+      },
+      drag: {
+        group: 'Input', label: 'Drag', glyph: 'D', tint: I, type: 'Cursor · Drag', name: 'Drag the invoice onto Upload', hasTest: false,
+        summary: 'Holds the left button where the invoice matched, drags to the Upload box, and lets go.',
+        gives: '',
+        fields: [
+          text('Name', 'Drag the invoice onto Upload'),
+          seg('Mode', ['Click', 'Move', 'Drag', 'Scroll'], 'Drag'),
+          seg('Button', ['Left', 'Right', 'Middle'], 'Left'),
+          section('Grab point'),
+          seg('From', ['Step result', 'Saved location'], 'Step result'),
+          select('Use the result of', 'Find the invoice'),
+          section('Drop point'),
+          seg('To', ['Step result', 'Saved location'], 'Saved location'),
+          select('Location', 'Upload box', 'Test moves the real cursor there.', 'New'),
+        ],
+        script: ['Drag            at <[ Find the invoice ]> to point <[ Upload box ]>'],
+        comment: '',
+      },
+      scroll: {
+        group: 'Input', label: 'Scroll', glyph: 'S', tint: I, type: 'Cursor · Scroll', name: 'Scroll the list down', hasTest: false,
+        summary: 'Turns the wheel 3 notches down where the cursor is.',
+        gives: '',
+        fields: [
+          text('Name', 'Scroll the list down'),
+          seg('Mode', ['Click', 'Move', 'Drag', 'Scroll'], 'Scroll'),
+          seg('Direction', ['Up', 'Down', 'Left', 'Right'], 'Down'),
+          mono('Notches', '3', 'Wheel notches, at the cursor.'),
+        ],
+        script: ['Scroll          down 3'],
+        comment: '',
+      },
+      keyboard: {
+        group: 'Input', label: 'Keyboard', glyph: 'K', tint: I, type: 'Keyboard', name: 'Type the email', hasTest: false,
+        summary: 'Types the email input’s value into whatever has focus.',
+        gives: '',
+        fields: [
+          text('Name', 'Type the email'),
+          seg('Mode', ['Type text', 'Send keys'], 'Type text'),
+          mono('Text to type', '{{email}}', 'Typed literally. An {{input}} is filled in when the flow executes; to press Enter or Tab, Send keys after it.'),
+        ],
+        script: ['Type            <[ {{email}} ]>'],
+        comment: '',
+      },
+      check: {
+        group: 'Decision', label: 'Check Value', glyph: 'V', tint: D, type: 'Check Value', name: 'Order is large', hasTest: false,
+        summary: 'Runs Success when the total read above is between 1 and 9, Failure otherwise.',
+        gives: '',
+        fields: [
+          text('Name', 'Order is large'),
+          select('Check the result of', 'Read the total', 'Only Read Text and System Command steps this one sits under, on their Success side.'),
+          select('Condition', 'is between'),
+          pair('From', '', '1', 'To', '', '9'),
+        ],
+        script: ['Check Value     <[ Order is large ]>   <[ {{Read the total}} ]> between <[ 1 ]> and <[ 9 ]>'],
+        comment: '',
+      },
+      wait: {
+        group: 'Control', label: 'Wait', glyph: 'W', tint: C, type: 'Wait', name: 'Wait', hasTest: false,
+        summary: 'Waits a random time between 0.8 s and 1.2 s.',
+        gives: '',
+        fields: [
+          text('Name', 'Wait'),
+          seg('How long', ['Fixed', 'Random range'], 'Random range'),
+          pair('Shortest', 'ms', '800', 'Longest', 'ms', '1200', 'A range waits a different time each pass, so the app under test sees no rhythm.'),
+        ],
+        script: ['Wait            800ms to 1200ms'],
+        comment: '',
+      },
+      loop: {
+        group: 'Control', label: 'Loop', glyph: 'L', tint: C, type: 'Loop', name: 'Retry the upload', hasTest: false,
+        summary: 'Runs the steps inside it 5 times.',
+        gives: '',
+        fields: [
+          text('Name', 'Retry the upload'),
+          seg('Repeat', ['A number of times', 'For ever'], 'A number of times'),
+          mono('Times', '5'),
+          note('For ever is ended by an End Execution or a Go Back inside it.'),
+        ],
+        script: ['Loop            5 times'],
+        comment: '',
+      },
+      back: {
+        group: 'Control', label: 'Go Back', glyph: 'B', tint: C, type: 'Go Back', name: 'Read it again', hasTest: false,
+        summary: 'Carries on from Read the total, which this step has already passed.',
+        gives: '',
+        fields: [
+          text('Name', 'Read it again'),
+          select('Go back to', 'Read the total', 'Only steps this one passes on the way here, nearest first: never the other branch of a check, nor inside a loop or a check that already finished.'),
+        ],
+        script: ['Go Back         to <[ Read the total ]>'],
+        comment: '',
+      },
+      sub: {
+        group: 'Control', label: 'Sub-Flow', glyph: 'SF', tint: C, type: 'Sub-Flow', name: 'Sign in', hasTest: false,
+        summary: 'Executes the Sign in sub-flow and comes back here.',
+        gives: '',
+        fields: [
+          text('Name', 'Sign in'),
+          select('Flow to run', 'Sign in', 'Only flows promoted to sub-flows can be run this way.'),
+          { kind: 'preview', label: 'What it runs', rows: [
+            { pad: 6, glyph: 'IS', tint: P, name: 'Find the email field' },
+            { pad: 26, glyph: 'K', tint: I, name: 'Type the email' },
+            { pad: 26, glyph: 'K', tint: I, name: 'Type the password' },
+          ] },
+        ],
+        script: ['Sub Flow        <[ Sign in.sflw ]>'],
+        comment: '',
+      },
+      stage: {
+        group: 'Control', label: 'Stage Marker', glyph: '§', tint: C, type: 'Stage Marker', name: 'Sign in', hasTest: false,
+        summary: 'Starts a stage the report groups steps by, until the next marker.',
+        gives: '',
+        fields: [
+          text('Name', 'Sign in', 'The stage fails if any step in it failed, and passes otherwise.'),
+          note('Printed as a ## heading; the steps under it are not indented.'),
+        ],
+        script: ['## Sign in'],
+        comment: '',
+      },
+      end: {
+        group: 'End', label: 'End Execution', glyph: 'E', tint: E, type: 'End Execution', name: 'Sign-in failed', hasTest: false,
+        summary: 'Ends the execution as failed, saying why. Steps under it still run: that is the teardown.',
+        gives: '',
+        fields: [
+          text('Name', 'Sign-in failed'),
+          seg('Verdict', ['Passed', 'Failed'], 'Failed'),
+          text('Message', 'the sign-in page never appeared', 'Shown against this step in the report and in the failure notification.'),
+        ],
+        script: ['End Execution   failed <[ the sign-in page never appeared ]>'],
+        comment: '',
+      },
+      command: {
+        group: 'System', label: 'System Command', glyph: '$', tint: S, type: 'System Command', name: 'Open the portal', hasTest: true,
+        summary: 'Starts Chrome on the portal and waits up to 15 s for its window. Succeeds on exit code 0.',
+        gives: 'What it printed, from its output, for a Check Value below.',
+        fields: [
+          text('Name', 'Open the portal'),
+          seg('Shell', ['Command Prompt', 'PowerShell'], 'Command Prompt'),
+          mono('Command', 'chrome.exe https://billing.example.com', 'One line. Chain several with & in Command Prompt or ; in PowerShell.'),
+          select('Its window', 'Billing portal', 'Optional. Left alone when it is already open, and waited for when it is not.'),
+          section('When it ends'),
+          pair('Succeeds on exit code', '', '0', 'Give up after', 'ms', '15000', '0 waits 30 seconds.'),
+          seg('Result comes from', ['Output', 'Errors'], 'Output'),
+        ],
+        script: ['Launch          <[ chrome.exe https://billing.example.com ]>   opens <[ Billing portal ]>'],
+        comment: 'A fresh profile every time.',
+      },
+      action: {
+        group: 'System', label: 'System Action', glyph: 'A', tint: S, type: 'System Action', name: 'Lock the PC', hasTest: false,
+        summary: 'Locks the PC.',
+        gives: '',
+        fields: [
+          text('Name', 'Lock the PC'),
+          seg('Action', ['Lock', 'Sleep PC', 'Monitor off', 'Monitor on'], 'Lock'),
+        ],
+        script: ['System          lock'],
+        comment: '',
+      },
+      notify: {
+        group: 'System', label: 'Notify', glyph: 'N', tint: S, type: 'Notify', name: 'Tell the channel', hasTest: true,
+        summary: 'Posts to Discord what Find the email field was trying to do, and why it failed.',
+        gives: '',
+        fields: [
+          text('Name', 'Tell the channel'),
+          select('Send through', 'Ops channel bot', 'Throttled per bot: anything inside the gap is dropped, so a Notify in a retry loop sends once.', 'New'),
+          select('Which step', 'Find the email field', 'Only steps that fail above this one, nearest first.'),
+        ],
+        script: ['Notify          <[ Find the email field ]>'],
+        comment: '',
+      },
+      window: {
+        group: 'System', label: 'Window', glyph: 'Wn', tint: S, type: 'Window · Resize', name: 'Size the portal', hasTest: true,
+        summary: 'Finds the Chrome window whose title contains Billing portal and makes it 1280 × 720.',
+        gives: '',
+        fields: [
+          text('Name', 'Size the portal'),
+          seg('Mode', ['Focus', 'Resize', 'Move'], 'Resize'),
+          select('Application', 'chrome.exe', 'Matched on the process name, which does not change while the app runs.'),
+          pair('Title match', '', 'contains', 'Window title', '', 'Billing portal'),
+          pair('Width', 'px', '1280', 'Height', 'px', '720'),
+        ],
+        script: ['Resize Window   process <[ chrome.exe ]> title contains <[ Billing portal ]> size 1280 720'],
+        comment: '',
+      },
+      success: {
+        group: 'Branches', label: 'Success', glyph: '✓', tint: OK, type: 'Branch', name: 'Success', hasTest: false,
+        summary: 'Runs when Find the email field matches. A branch has no settings of its own: its name is fixed, and what it does is the steps under it.',
+        gives: '',
+        fields: [],
+        script: ['Wait For Image  <[ Find the email field ]>   template <[ template-e4m2q.png ]>', ' Success:', '  Move            to <[ Find the email field ]>'],
+        branch: true,
+        comment: '',
+      },
+      failure: {
+        group: 'Branches', label: 'Failure', glyph: '✗', tint: E, type: 'Branch', name: 'Failure', hasTest: false,
+        summary: 'Runs when Find the email field does not match in time.',
+        gives: '',
+        fields: [],
+        script: ['Wait For Image  <[ Find the email field ]>   template <[ template-e4m2q.png ]>', ' Failure:', '  End Execution   failed <[ the sign-in page never appeared ]>'],
+        branch: true,
+        comment: 'The field is behind the menu on a narrow window.',
+      },
+    };
+
+    const order = ['Perception', 'Input', 'Decision', 'Control', 'End', 'System', 'Branches'];
+    const groups = order.map((name) => ({
+      name,
+      items: Object.keys(types).filter((k) => types[k].group === name).map((k) => {
+        const on = this.state.type === k;
+        return {
+          label: types[k].label, glyph: types[k].glyph, tint: types[k].tint,
+          pressed: on ? 'true' : 'false',
+          bg: on ? '#1A1F2C' : 'transparent',
+          border: on ? '#2E3650' : 'transparent',
+          pick: () => this.setState({ type: k }),
+        };
+      }),
+    }));
+
+    const t = types[this.state.type];
+    const stored = this.state.comments[this.state.type];
+    const comment = stored === undefined ? t.comment : stored;
+
+    const fields = t.fields.map((f) => {
+      const out = {
+        ...f,
+        isSection: f.kind === 'section', isText: f.kind === 'text', isSelect: f.kind === 'select',
+        isSegmented: f.kind === 'segmented', isPair: f.kind === 'pair', isTemplates: f.kind === 'templates',
+        isPreview: f.kind === 'preview', isNote: f.kind === 'note',
+        hasAction: !!f.action,
+        font: f.font || "'Geist', sans-serif", size: f.size || '14px', unit: f.unit || '',
+        fg: (f.value || '').indexOf('{{') >= 0 ? '#46D69A' : '#ECEEF2',
+      };
+      if (f.kind === 'segmented') {
+        out.options = f.options.map((o) => ({
+          label: o.label, checked: o.on ? 'true' : 'false',
+          bg: o.on ? '#232838' : 'transparent', fg: o.on ? '#ECEEF2' : '#AEB4C0', weight: o.on ? '500' : '400',
+        }));
+      }
+      return out;
+    });
+
+    // The script view's colours.
+    const KW = '#8FA3FF', STEP = '#C4B5FD', Q = '#E6E8EC', DLM = '#5D6473', NUM = '#F2B33D', CM = '#7D8597', PLAIN = '#AEB4C0', VAR = '#46D69A', GOOD = '#46D69A', BAD = '#FF7A86';
+    const stepWords = ['Wait For Image', 'Wait For Text', 'End Execution', 'Resize Window', 'Check Value', 'Sub Flow', 'Go Back', 'Notify', 'Scroll', 'System', 'Launch', 'Click', 'Drag', 'Move', 'Loop', 'Type', 'Wait'];
+    const words = ['template', 'timeout', 'required', 'matches', 'between', 'contains', 'process', 'opens', 'title', 'point', 'times', 'failed', 'keep', 'lock', 'size', 'down', 'and', 'in', 'at', 'to'];
+    const seg2 = (tt, c, w, i) => ({ t: tt, c, w: w || '400', i: i || 'normal' });
+    const paint = (line) => {
+      const out = [];
+      const lead = line.match(/^\s*/)[0];
+      if (lead) out.push(seg2(lead, PLAIN));
+      let rest = line.slice(lead.length);
+      if (rest.startsWith('##')) { out.push(seg2(rest, KW, '600')); return out; }
+      if (rest.startsWith('#')) { out.push(seg2(rest, CM, '400', 'italic')); return out; }
+      if (rest === 'Success:') { out.push(seg2(rest, GOOD, '600')); return out; }
+      if (rest === 'Failure:') { out.push(seg2(rest, BAD, '600')); return out; }
+      while (rest.length) {
+        const ws = rest.match(/^\s+/);
+        if (ws) { out.push(seg2(ws[0], PLAIN)); rest = rest.slice(ws[0].length); continue; }
+        if (rest.startsWith('<[')) {
+          const end = rest.indexOf(']>');
+          const inner = rest.slice(2, end);
+          out.push(seg2('<[', DLM));
+          out.push(seg2(inner, inner.indexOf('{{') >= 0 ? VAR : Q));
+          out.push(seg2(']>', DLM));
+          rest = rest.slice(end + 2);
+          continue;
+        }
+        const step = stepWords.find((s) => rest.startsWith(s));
+        if (step && out.every((x) => !x.t.trim())) { out.push(seg2(step, STEP, '600')); rest = rest.slice(step.length); continue; }
+        const word = words.find((k) => rest.startsWith(k) && (rest.length === k.length || /\s/.test(rest[k.length])));
+        if (word) { out.push(seg2(word, KW)); rest = rest.slice(word.length); continue; }
+        const num = rest.match(/^[\d.]+(ms|dpi|x\d+)?/);
+        if (num && num[0].length) { out.push(seg2(num[0], NUM)); rest = rest.slice(num[0].length); continue; }
+        const other = rest.match(/^\S+/)[0];
+        out.push(seg2(other, PLAIN));
+        rest = rest.slice(other.length);
+      }
+      return out;
+    };
+
+    // The comment goes over the step's own line: over the branch line for a branch.
+    const target = t.branch ? 1 : 0;
+    const indent = t.script[target].match(/^\s*/)[0];
+    const commentLines = comment.trim() ? comment.trim().split('\n').map((x) => indent + '# ' + x.trim()) : [];
+    const script = [...t.script.slice(0, target), ...commentLines, ...t.script.slice(target)];
+    const lines = script.map((x, i) => ({
+      no: i + 1,
+      segs: paint(x),
+      bg: i >= target && i < target + commentLines.length ? 'rgba(143,163,255,0.08)' : 'transparent',
+    }));
+
+    return {
+      groups, lines, comment,
+      form: { ...t, fields, hasSummary: !!t.summary, hasGives: !!t.gives },
+      setComment: (e) => this.setState({ comments: { ...this.state.comments, [this.state.type]: e.target.value } }),
+    };
+  }
+}
+</script>
+</body>
+</html>

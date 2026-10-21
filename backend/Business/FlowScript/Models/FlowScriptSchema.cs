@@ -10,7 +10,6 @@ namespace Business.FlowScript.Models
     /// </summary>
     public sealed class FlowScriptSchema
     {
-        /// <summary>The name and the public id. The rows below do not link to it.</summary>
         public Flow Flow { get; set; } = new Flow() { PublicId = Guid.Empty };
 
         public List<FlowViewport> Viewports { get; } = new List<FlowViewport>();
@@ -21,10 +20,7 @@ namespace Business.FlowScript.Models
         /// <summary>In file order, so a parent always comes before its children. Templates are on their step.</summary>
         public List<FlowStep> Steps { get; } = new List<FlowStep>();
 
-        /// <summary>
-        /// A sub-flow is another file, which nothing in this one can link to, so its path is kept as
-        /// written.
-        /// </summary>
+        /// <summary> A sub-flow is another file, which nothing in this one can link to, so its path is kept as written. </summary>
         public Dictionary<FlowStep, string> SubFlowPaths { get; } = new Dictionary<FlowStep, string>();
 
         public List<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
+import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
@@ -162,16 +163,19 @@ export function WorkflowContentComponent() {
       <>
         <div className="flex justify-content-end mb-3">
           {/* Off until how a model's draft lands in a flow that already exists is settled (TODO.md). */}
-          <Button
-            type="button"
-            label="Record steps here"
-            icon="pi pi-circle-fill"
-            onClick={startRecording}
-            className="p-button-outlined"
-            disabled
+          <DisabledTooltipComponent
             tooltip="Not yet: recording into a flow that already exists comes back once the AI draft can land there too"
-            tooltipOptions={{ position: "left", showOnDisabled: true }}
-          />
+            position="left"
+          >
+            <Button
+              type="button"
+              label="Record steps here"
+              icon="pi pi-circle-fill"
+              onClick={startRecording}
+              className="p-button-outlined"
+              disabled
+            />
+          </DisabledTooltipComponent>
         </div>
         <FlowStepTypesDataGridComponent />
       </>,

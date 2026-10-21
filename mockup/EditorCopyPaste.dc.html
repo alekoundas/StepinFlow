@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Copy and paste a step</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C10}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="min-height: 960px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 0 0 64px; box-sizing: border-box; background: #0F1116; border-right: 1px solid #1E222B; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="margin-bottom: 14px"><rect x="3" y="3" width="8" height="8" rx="2" fill="#8FA3FF"></rect><rect x="13" y="13" width="8" height="8" rx="2" stroke="#8FA3FF" stroke-width="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4" stroke="#8FA3FF" stroke-width="2"></path></svg>
+<a href="Home.dc.html" aria-label="Home" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg></a>
+<a href="Main.dc.html" aria-label="Flows" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: #1A1D25; color: #ECEEF2; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M9 6h4a2 2 0 0 1 2 2v7"></path></svg></a>
+<a href="Main.dc.html" aria-label="Executions" style="width: 44px; height: 44px; border-radius: 10px; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 12px 24px; border-bottom: 1px solid #1E222B">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0">
+<a href="Main.dc.html" style="color: #AEB4C0; text-decoration: none; font-size: 13px">Flows</a>
+<span aria-hidden="true" style="color: #4A5060">/</span>
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Download last month’s invoices</h1>
+<span style="font-size: 12px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 1px 8px">Automation</span>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>
+Export</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg>
+Run</button>
+</div>
+</header>
+
+<div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+<section aria-label="Steps" style="flex: 999 1 460px; min-width: 0; border-right: 1px solid #1E222B; display: flex; flex-direction: column">
+
+<sc-if value="{{ hasCopy }}" hint-placeholder-val="{{ true }}">
+<div role="status" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 12px 0; padding: 8px 10px 8px 12px; border-radius: 10px; border: 1px solid rgba(143,163,255,0.35); background: rgba(143,163,255,0.08)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+<span style="flex: 1 1 260px; font-size: 13px; color: #C9D2FF">Copied <span style="color: #ECEEF2; font-weight: 600">{{ copiedName }}</span>{{ copiedCount }}. Paste it at any <span style="font-family: 'Geist Mono', monospace">+</span>, in this flow or another.</span>
+<kbd style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #AEB4C0; border: 1px solid #313644; border-radius: 5px; padding: 1px 6px">Ctrl V</kbd>
+<button type="button" aria-label="Forget the copied step" onClick="{{ forget }}" style="width: 28px; height: 28px; border-radius: 6px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 16px; line-height: 1; cursor: pointer">×</button>
+</div>
+</sc-if>
+
+<ol aria-label="Step tree" style="list-style: none; margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="16">
+<li style="display: flex; align-items: center; gap: 6px; padding-left: {{ r.pad }}px">
+<sc-if value="{{ r.isBranch }}" hint-placeholder-val="{{ false }}">
+<span style="height: 30px; display: inline-flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 12px; font-weight: 600; color: {{ r.tint }}"><span aria-hidden="true" style="color: #5D6473; font-size: 11px">▾</span>{{ r.name }}</span>
+</sc-if>
+
+<sc-if value="{{ r.isStep }}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; height: 36px; padding: 0 6px 0 10px; border-radius: 8px; border: 1px solid {{ r.border }}; background: {{ r.bg }}">
+<button type="button" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 34px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: #1F2330; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none">{{ r.glyph }}</span>
+<span style="font-size: 13px; font-weight: 500; white-space: nowrap">{{ r.name }}</span>
+<span style="font-size: 12px; color: #8790A0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.detail }}</span>
+<sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #46D69A; border: 1px solid rgba(70,214,154,0.4); border-radius: 999px; padding: 0 7px; flex: none">pasted</span></sc-if>
+</button>
+<sc-if value="{{ r.showCopy }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ r.copy }}" aria-label="Copy {{ r.name }} and the steps under it" style="flex: none; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-radius: 6px; border: 1px solid {{ r.copyBorder }}; background: transparent; color: {{ r.copyFg }}; font: inherit; font-size: 12px; cursor: pointer">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+{{ r.copyLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ r.isAdd }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 6px; height: 32px">
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 6px; border: 1px dashed #313644; background: transparent; color: #AEB4C0; font: inherit; font-size: 12px; cursor: pointer">+ Add step</button>
+<sc-if value="{{ r.canPaste }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ r.paste }}" aria-label="Paste {{ r.copiedName }} here" style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(143,163,255,0.5); background: rgba(143,163,255,0.1); color: #C9D2FF; font: inherit; font-size: 12px; cursor: pointer">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"></path><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"></path></svg>
+Paste here</button>
+</sc-if>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+</section>
+
+<aside aria-labelledby="insp-h" style="flex: 1 1 380px; min-width: 0; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 34px; height: 34px; border-radius: 9px; background: #1F2330; color: {{ sel.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{ sel.glyph }}</span>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 12px; color: #8790A0">{{ sel.type }}</span>
+<h2 id="insp-h" style="margin: 0; font-size: 17px; font-weight: 600">{{ sel.name }}</h2>
+</div>
+</div>
+<p style="margin: 0; color: #AEB4C0">The step’s form, as the step forms board draws it.</p>
+<div style="padding: 12px 14px; border-radius: 10px; border: 1px solid #1E222B; background: #12141A; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #AEB4C0">
+<span style="font-weight: 600; color: #ECEEF2">How copy and paste works</span>
+<span>Copy on the selected step takes it and every step under it. One copy at a time: copying another replaces it, and × forgets it.</span>
+<span>Paste here sits beside every +, the places a step can go, and puts the copy there. The copy stays, so it can go in more than once, and into another flow.</span>
+<span>A pasted step takes a free name, Download buttons 2, since the script names steps. What it refers to inside the copy follows it; what it refers to outside does not and is flagged until fixed.</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #8790A0">Ctrl C on a step · Ctrl V on a +</span>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 'dl', copied: 'dl', pastedAt: null };
+  }
+  renderVals() {
+    const P = '#8FA3FF', I = '#B79CFF', E = '#FF7A86', OK = '#46D69A';
+    const step = (id, glyph, tint, type, name, detail, children) => ({ id, kind: 'step', glyph, tint, type, name, detail, children: children || [] });
+    const branch = (id, ok, children) => ({ id, kind: 'branch', ok, children });
+    const add = (id) => ({ id, kind: 'add', children: [] });
+
+    const tree = [
+      step('email', 'W', P, 'Wait For Image', 'Email field', 'up to 10 s · in Billing portal', [
+        branch('s1', true, [
+          step('m1', 'M', I, 'Cursor Move', 'Move', 'to Email field'),
+          step('c1', 'C', I, 'Cursor Click', 'Click', 'left, single'),
+          step('t1', 'T', I, 'Keyboard', 'Type', '{{email}}'),
+          add('add-s1'),
+        ]),
+        branch('f1', false, [
+          step('e1', 'E', E, 'End Execution', 'End Execution', 'failed · the sign-in page never appeared'),
+          add('add-f1'),
+        ]),
+      ]),
+      step('inv', 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', [
+        branch('s3', true, [
+          step('m3', 'M', I, 'Cursor Move', 'Move', 'to Invoices menu'),
+          step('c3', 'C', I, 'Cursor Click', 'Click', 'left, single'),
+          add('add-s3'),
+        ]),
+      ]),
+      step('dl', 'F', P, 'Find All Images', 'Download buttons', 'Success once per match', [
+        branch('s2', true, [
+          step('m2', 'M', I, 'Cursor Move', 'Move', 'to Download buttons'),
+          step('c2', 'C', I, 'Cursor Click', 'Click', 'left, single'),
+          add('add-s2'),
+        ]),
+      ]),
+      add('add-root'),
+    ];
+
+    const find = (nodes, id) => {
+      for (const n of nodes) {
+        if (n.id === id) return n;
+        const inner = find(n.children, id);
+        if (inner) return inner;
+      }
+      return null;
+    };
+    const stepsUnder = (n) => n.children.reduce((a, c) => a + (c.kind === 'step' ? 1 : 0) + stepsUnder(c), 0);
+
+    const copied = this.state.copied ? find(tree, this.state.copied) : null;
+    const rows = [];
+
+    // The copy, as it lands: its own name made free, everything under it as it was.
+    const emitCopy = (n, depth, isTop) => {
+      if (n.kind === 'add') return;
+      rows.push({ ...n, depth, isNew: true, name: isTop ? n.name + ' 2' : n.name, id: n.id + '-copy' });
+      n.children.forEach((c) => emitCopy(c, depth + 1, false));
+    };
+
+    const walk = (nodes, depth) => {
+      nodes.forEach((n) => {
+        if (n.kind === 'add' && this.state.pastedAt === n.id && copied) emitCopy(copied, depth, true);
+        rows.push({ ...n, depth, isNew: false });
+        walk(n.children, depth + 1);
+      });
+    };
+    walk(tree, 0);
+
+    const shaped = rows.map((r) => {
+      const isSelected = this.state.selected === r.id;
+      const isCopied = this.state.copied === r.id;
+      return {
+        ...r,
+        pad: r.depth * 20,
+        isStep: r.kind === 'step', isBranch: r.kind === 'branch', isAdd: r.kind === 'add',
+        name: r.kind === 'branch' ? (r.ok ? 'Success' : 'Failure') : r.name,
+        tint: r.kind === 'branch' ? (r.ok ? OK : E) : r.tint,
+        bg: isSelected ? '#1A1F2C' : (r.isNew ? 'rgba(70,214,154,0.06)' : 'transparent'),
+        border: isSelected ? '#2E3650' : 'transparent',
+        pressed: isSelected ? 'true' : 'false',
+        showCopy: r.kind === 'step' && isSelected,
+        copyLabel: isCopied ? 'Copied' : 'Copy',
+        copyBorder: isCopied ? 'rgba(143,163,255,0.5)' : '#313644',
+        copyFg: isCopied ? '#C9D2FF' : '#ECEEF2',
+        canPaste: r.kind === 'add' && !!copied,
+        copiedName: copied ? copied.name : '',
+        pick: () => this.setState({ selected: r.id }),
+        copy: () => this.setState({ copied: r.id.replace('-copy', '') }),
+        paste: () => this.setState({ pastedAt: r.id, selected: (this.state.copied || '') + '-copy' }),
+      };
+    });
+
+    const selectedRow = rows.find((r) => r.id === this.state.selected) || rows[0];
+    const count = copied ? stepsUnder(copied) : 0;
+
+    return {
+      rows: shaped,
+      hasCopy: !!copied,
+      copiedName: copied ? copied.name : '',
+      copiedCount: count > 0 ? ' and the ' + count + ' steps under it' : '',
+      forget: () => this.setState({ copied: null }),
+      sel: { glyph: selectedRow.glyph || '', tint: selectedRow.tint || P, type: selectedRow.type || '', name: selectedRow.name || '' },
+    };
+  }
+}
+</script>
+</body>
+</html>

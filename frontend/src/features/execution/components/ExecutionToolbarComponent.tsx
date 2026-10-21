@@ -1,4 +1,5 @@
 import { Button } from "primereact/button";
+import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 import { Dropdown } from "primereact/dropdown";
 
 import LabelComponent from "@/shared/components/LabelComponent";
@@ -96,15 +97,15 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
           }}
         />
       ) : (
-        <Button
-          label="Start"
-          icon="pi pi-play"
-          size="small"
-          disabled={isRunning || hasErrors}
-          onClick={handleStart}
-          tooltip={hasErrors ? "Fix the errors in this flow before running it" : undefined}
-          tooltipOptions={{ position: "bottom", showOnDisabled: true }}
-        />
+        <DisabledTooltipComponent tooltip={hasErrors ? "Fix the errors in this flow before running it" : null}>
+          <Button
+            label="Start"
+            icon="pi pi-play"
+            size="small"
+            disabled={isRunning || hasErrors}
+            onClick={handleStart}
+          />
+        </DisabledTooltipComponent>
       )}
 
       <Button

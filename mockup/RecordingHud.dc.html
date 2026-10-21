@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Recording bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#1A1E27}
+a{color:#8FA3FF}a:hover{color:#B8C5FF}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; background: #1A1E27; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45; color: #1D2230">
+
+<div aria-label="The application being recorded" style="position: absolute; left: 110px; top: 96px; width: 1220px; height: 760px; border-radius: 12px; overflow: hidden; background: #F6F7F9; box-shadow: 0 30px 80px rgba(0,0,0,0.45); display: flex; flex-direction: column">
+<div style="height: 40px; background: #E3E6EB; display: flex; align-items: flex-end; gap: 8px; padding: 0 12px">
+<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; background: #F6F7F9; border-radius: 8px 8px 0 0; font-size: 12px; color: #2A3040">
+<span style="width: 12px; height: 12px; border-radius: 3px; background: #3C6E71"></span>Billing portal</span>
+</div>
+<div style="height: 40px; background: #F6F7F9; border-bottom: 1px solid #E1E4EA; display: flex; align-items: center; padding: 0 14px">
+<span style="flex: 1; height: 28px; border-radius: 999px; background: #E9ECF1; display: flex; align-items: center; padding: 0 14px; font-size: 12px; color: #4B5263">billing.example.com/invoices</span>
+</div>
+<div style="flex: 1; display: flex; min-height: 0">
+<div style="width: 210px; background: #FFFFFF; border-right: 1px solid #E6E8EE; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 13px">
+<span style="font-weight: 700; color: #1D2230; padding: 0 10px 16px">Billing portal</span>
+<span style="padding: 8px 10px; color: #4B5263">Dashboard</span>
+<span style="padding: 8px 10px; border-radius: 8px; background: #E8F0F0; color: #234E50; font-weight: 600">Invoices</span>
+<span style="padding: 8px 10px; color: #4B5263">Customers</span>
+<span style="padding: 8px 10px; color: #4B5263">Settings</span>
+</div>
+<div style="flex: 1; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; min-width: 0">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span style="font-size: 22px; font-weight: 700">Invoices</span>
+<span style="height: 34px; padding: 0 14px; border-radius: 8px; background: #234E50; color: #FFFFFF; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600">Export</span>
+</div>
+<div style="display: flex; gap: 10px">
+<span style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #CFD4DC; background: #FFFFFF; display: inline-flex; align-items: center; font-size: 13px">Date range: Last month</span>
+<span style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #CFD4DC; background: #FFFFFF; display: inline-flex; align-items: center; font-size: 13px">Status: All</span>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6E8EE; border-radius: 10px; overflow: hidden; font-size: 13px">
+<div style="display: grid; grid-template-columns: 140px 1fr 140px 120px 60px; padding: 12px 18px; color: #6B7282; border-bottom: 1px solid #EEF0F4"><span>Invoice</span><span>Customer</span><span>Amount</span><span>Date</span><span></span></div>
+<div style="display: grid; grid-template-columns: 140px 1fr 140px 120px 60px; padding: 14px 18px; border-bottom: 1px solid #EEF0F4; align-items: center"><span>INV-2041</span><span>Harbor &amp; Finch</span><span>1,240.00</span><span>03 Sep</span><span style="color: #234E50">⤓</span></div>
+<div style="display: grid; grid-template-columns: 140px 1fr 140px 120px 60px; padding: 14px 18px; border-bottom: 1px solid #EEF0F4; align-items: center; background: #F7FAFA"><span>INV-2042</span><span>Oakline Studio</span><span>860.50</span><span>11 Sep</span><span style="position: relative; color: #234E50">⤓<span style="position: absolute; left: -12px; top: -12px; width: 34px; height: 34px; border-radius: 999px; border: 2px solid #FF5D6C"></span><span style="position: absolute; left: -22px; top: -22px; width: 54px; height: 54px; border-radius: 999px; border: 2px solid rgba(255,93,108,0.35)"></span></span></div>
+<div style="display: grid; grid-template-columns: 140px 1fr 140px 120px 60px; padding: 14px 18px; border-bottom: 1px solid #EEF0F4; align-items: center"><span>INV-2043</span><span>Pemberton Labs</span><span>2,015.00</span><span>19 Sep</span><span style="color: #234E50">⤓</span></div>
+<div style="display: grid; grid-template-columns: 140px 1fr 140px 120px 60px; padding: 14px 18px; align-items: center"><span>INV-2044</span><span>Riverside Co-op</span><span>415.75</span><span>27 Sep</span><span style="color: #234E50">⤓</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 50%; top: 22px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: 'Geist', system-ui, sans-serif; color: #ECEEF2">
+<div role="toolbar" aria-label="Recording" style="display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 14px; background: rgba(16,18,24,0.94); border: 1px solid #2A2F3B; box-shadow: 0 16px 40px rgba(0,0,0,0.45)">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 36px; border-radius: 10px; background: {{ badgeBg }}">
+<span style="width: 10px; height: 10px; border-radius: 999px; background: {{ dot }}"></span>
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: {{ dot }}">{{ badge }}</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #ECEEF2">{{ clock }}</span>
+</div>
+<div style="display: flex; flex-direction: column; justify-content: center; padding: 0 12px; height: 36px; min-width: 0; max-width: 300px">
+<span style="font-size: 12px; color: #8790A0">{{ countLine }}</span>
+<span style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ lastLine }}</span>
+</div>
+<span aria-hidden="true" style="width: 1px; height: 24px; background: #2A2F3B; margin: 0 4px"></span>
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ start }}" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 10px; border: 0; background: #FF5D6C; color: #1A0A0D; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">
+<span style="width: 9px; height: 9px; border-radius: 999px; background: #1A0A0D"></span>
+Start
+</button>
+</sc-if>
+<sc-if value="{{ live }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ togglePause }}" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; border: 0; background: #1F2330; color: #ECEEF2; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">
+<sc-if value="{{ recording }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></sc-if>
+<sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg></sc-if>
+{{ pauseLabel }}
+<kbd style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #AEB4C0; border: 1px solid #3A4152; border-radius: 5px; padding: 0 5px">F9</kbd>
+</button>
+<a href="AfterStop.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: #ECEEF2; color: #0C0E14; text-decoration: none; font-size: 13px; font-weight: 600">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
+Stop
+<kbd style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #3A4152; border: 1px solid #AEB4C0; border-radius: 5px; padding: 0 5px">F10</kbd>
+</a>
+</sc-if>
+<button type="button" aria-label="{{ feedLabel }}" aria-expanded="{{ feedExpanded }}" onClick="{{ toggleFeed }}" style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; border: 0; background: transparent; color: #AEB4C0; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{ chevron }})"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+<a href="AiSetup.dc.html" aria-label="Close without recording" style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #8790A0; text-decoration: none">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+</a>
+</sc-if>
+<sc-if value="{{ live }}" hint-placeholder-val="{{ false }}">
+<a href="Main.dc.html" aria-label="Discard the recording" style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #8790A0; text-decoration: none">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+</a>
+</sc-if>
+</div>
+
+<sc-if value="{{ feed }}" hint-placeholder-val="{{ true }}">
+<div style="width: 420px; border-radius: 12px; background: rgba(16,18,24,0.94); border: 1px solid #2A2F3B; box-shadow: 0 16px 40px rgba(0,0,0,0.45); padding: 8px; display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+<div style="padding: 7px 10px; font-size: 13px; color: #8790A0">Nothing recorded yet. StepinFlow is out of the way: arrange your windows, then press Start.</div>
+</sc-if>
+<sc-if value="{{ live }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ actions }}" as="a" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; background: {{ a.bg }}">
+<span style="width: 24px; height: 24px; border-radius: 6px; background: #1F2330; color: {{ a.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex: none">{{ a.glyph }}</span>
+<span style="flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ a.text }}</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8790A0">{{ a.time }}</span>
+</div>
+</sc-for>
+</sc-if>
+<sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 4px; padding: 8px 10px; border-radius: 8px; background: rgba(242,179,61,0.12); color: #F2B33D; font-size: 12px">Paused. Nothing you do is recorded until you resume.</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { started: false, paused: false, feed: true };
+  }
+  renderVals() {
+    const ready = !this.state.started;
+    const paused = this.state.paused;
+    const feed = this.state.feed;
+    const items = [
+      { glyph: 'K', tint: '#B79CFF', text: 'Pressed Enter', time: '00:21' },
+      { glyph: 'C', tint: '#8FA3FF', text: 'Clicked “Invoices”', time: '00:38' },
+      { glyph: 'C', tint: '#8FA3FF', text: 'Clicked “Date range”', time: '00:44' },
+      { glyph: 'C', tint: '#8FA3FF', text: 'Clicked “Last month”', time: '00:47' },
+      { glyph: 'C', tint: '#8FA3FF', text: 'Clicked the download icon, row 1', time: '01:05' },
+      { glyph: 'C', tint: '#8FA3FF', text: 'Clicked the download icon, row 2', time: '01:12' },
+    ];
+    const actions = items.map((x, i) => ({ ...x, bg: i === items.length - 1 ? '#1A1F2C' : 'transparent' }));
+    let badge = paused ? 'PAUSED' : 'REC';
+    let dot = paused ? '#F2B33D' : '#FF5D6C';
+    let badgeBg = paused ? 'rgba(242,179,61,0.12)' : 'rgba(255,93,108,0.12)';
+    if (ready) {
+      badge = 'READY';
+      dot = '#8790A0';
+      badgeBg = 'rgba(135,144,160,0.14)';
+    }
+    return {
+      ready,
+      live: !ready,
+      start: () => this.setState({ started: true }),
+      clock: ready ? '00:00' : '01:12',
+      recording: !paused,
+      paused: !ready && paused,
+      badge,
+      dot,
+      badgeBg,
+      countLine: ready ? '0 actions' : '10 actions',
+      lastLine: ready ? 'Arrange your windows, then press Start.' : 'Clicked the download icon, row 2',
+      pauseLabel: paused ? 'Resume' : 'Pause',
+      togglePause: () => this.setState({ paused: !paused }),
+      feed,
+      feedExpanded: feed ? 'true' : 'false',
+      feedLabel: feed ? 'Hide the action list' : 'Show the action list',
+      chevron: feed ? '180deg' : '0deg',
+      toggleFeed: () => this.setState({ feed: !feed }),
+      actions,
+    };
+  }
+}
+</script>
+</body>
+</html>

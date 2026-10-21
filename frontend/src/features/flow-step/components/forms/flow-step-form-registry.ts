@@ -26,7 +26,10 @@ import {
   CURSOR_FLOW_STEP_TYPES,
   type CursorFlowStepType,
 } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
-import { CURSOR_STEP_DEFAULT_NAMES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import {
+  CURSOR_STEP_DEFAULT_NAMES,
+  CURSOR_STEP_DEFAULTS,
+} from "@/features/flow-step/components/forms/cursor/cursor-modes";
 import {
   WINDOW_FLOW_STEP_TYPES,
   type WindowFlowStepType,
@@ -73,6 +76,7 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     component: FlowStepCursorFormComponent,
     newStepValues: (type) => ({
       name: CURSOR_STEP_DEFAULT_NAMES[type as CursorFlowStepType],
+      ...CURSOR_STEP_DEFAULTS[type as CursorFlowStepType],
     }),
   }),
 
