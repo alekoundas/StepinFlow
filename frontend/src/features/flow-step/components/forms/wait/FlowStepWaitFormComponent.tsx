@@ -7,8 +7,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import FlowStepWaitFormFieldsComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormFieldsComponent";
 import { FlowStepWaitSchema } from "@/features/flow-step/components/forms/wait/flow-step-wait.zod";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 
 interface Props {
   formMode: FormMode;
@@ -36,30 +35,23 @@ export default function FlowStepWaitFormComponent({
   } = form;
 
   return (
-    <div>
-      <FormHeaderComponent
-        title="Wait Step Configuration"
-        description="Pause execution for a specified duration before continuing to the next step."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
-            onSubmit({ ...defaultValues, ...partialDto }),
-          )}
-          className="flex flex-column h-full"
+    <FormProvider {...form}>
+      <form
+        onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
+          onSubmit({ ...defaultValues, ...partialDto }),
+        )}
+      >
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
         >
           <FlowStepWaitFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </div>
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

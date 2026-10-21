@@ -37,7 +37,19 @@ namespace Business.FlowScript.Text
             return builder.ToString();
         }
 
- 
+        public string WriteStep(FlowStep step, string subFlowPath)
+        {
+            FlowScriptSchema schema = new FlowScriptSchema();
+            schema.SubFlowPaths[step] = subFlowPath;
+
+            StringBuilder builder = new StringBuilder();
+            WriteComment(builder, step, 0);
+
+            string line = StepWriter(step, schema).Write();
+            builder.Append(line);
+
+            return builder.ToString();
+        }
 
         // The writer for a step's line, by its type - the mirror of ScriptLineParser choosing a
         // parser. A type with none throws rather than writing a line no reader accepts.

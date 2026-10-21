@@ -3,6 +3,13 @@ import { devtools } from "zustand/middleware";
 import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
+/** The step Copy took. One at a time, kept after a paste, and only for the flow it came from. */
+export interface CopiedStep {
+  id: number;
+  name: string;
+  flowStepType?: FlowStepTypeEnum;
+}
+
 interface Props {
   selectedTreeNode: TreeNodeDto | undefined;
   selectedFlowStepTypeToAdd: FlowStepTypeEnum | undefined;
@@ -12,6 +19,7 @@ interface Props {
     selectNodeIdAfterLoad?: number;
   } | null;
   rootFlowId: number | undefined;
+  copiedStep: CopiedStep | undefined;
 
   // Actions
   setSelectedTreeNode: (dto: TreeNodeDto | undefined) => void;
@@ -26,6 +34,7 @@ interface Props {
   ) => void;
 
   setRootFlowId: (id: number | undefined) => void;
+  setCopiedStep: (step: CopiedStep | undefined) => void;
 }
 
 export const useWorkflowStore = create<Props>()(
@@ -34,6 +43,7 @@ export const useWorkflowStore = create<Props>()(
     selectedFlowStepTypeToAdd: undefined,
     treeRefreshTrigger: undefined,
     rootFlowId: undefined,
+    copiedStep: undefined,
 
     setSelectedTreeNode: (dto: TreeNodeDto | undefined): void =>
       set({
@@ -49,5 +59,7 @@ export const useWorkflowStore = create<Props>()(
       set({ treeRefreshTrigger: trigger }),
 
     setRootFlowId: (id: number | undefined): void => set({ rootFlowId: id }),
+
+    setCopiedStep: (step: CopiedStep | undefined): void => set({ copiedStep: step }),
   })),
 );

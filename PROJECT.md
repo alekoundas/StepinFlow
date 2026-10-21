@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 109 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 111 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -1671,6 +1671,24 @@ Every entity form is a pair — `XFormComponent` (React Hook Form setup, header,
 > already cost one debugging session: a form typechecked, looked correct, and quietly discarded two
 > new columns because the schema had not been updated.
 
+**A step's form** puts its fields inside `FlowStepFormLayoutComponent`, the mockup's "Step forms"
+boards. It reads the values on the form and draws the rest, so no form repeats it:
+
+- **The header:** the step's type, its name, and its mode, coloured by the type's group as in the tree.
+- **A sentence:** what the step will do. A form can pass its own.
+- **"Gives":** what later steps can use from it.
+- **"Why it is here":** the step's `CodeComment`, which the script prints above the step as `#` lines.
+- **The script line:** the line the step will be in its flow's script.
+- **Test now:** where the step has a test, beside Cancel and Save.
+
+The sentence and "Gives" come from `flow-step-description.ts`. The script line comes from
+`FlowStep.getScriptLine`, once typing pauses. `FlowStepScriptLineService` reads by id the areas,
+points, steps and sub-flow the step names, and prints with the printer an export uses, so the form
+and the file cannot disagree. It also returns those names, which is how the sentence can say
+"onto where “Find the email field” matched". Success and Failure have a form too: the comment and a
+sentence naming the check they belong to. Every step schema includes `CODE_COMMENT_SCHEMA`, for the
+reason the warning above gives.
+
 TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["lookup", …]`; mutations
 invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
 `DialogRootComponent`.
@@ -1685,6 +1703,22 @@ Flow 5 and FlowStep 5 the same node as far as selection and expansion are concer
 — **these two must stay in sync.** `TreeNodeDto.entityId` carries the real id; nothing parses the key.
 
 For the same reason `FlowStep.getTreeNodes` takes `{ id, isFlow }` rather than a bare id.
+
+**Copy and paste.** A selected step shows Copy, which takes it and everything under it. A bar
+over the tree then names what was copied, with × to forget it, and every + has Paste here beside it.
+There is one copy at a time. It stays after a paste, and goes when another flow is opened. A Success
+or Failure row is not copied on its own; it belongs to its step. Buttons only: no Ctrl+C and Ctrl+V
+in the tree.
+
+`FlowStep.paste` reads the copied rows untracked and inserts them with `CreateTreeAsync`'s code,
+the recorder's. So a copy gets free names ("Find button 2"), its own template files, and both
+branch rows, placed at the end of the branch the + is in. References between the copied steps
+follow the copy. A reference to a step outside it is kept, and validation says when the new place
+cannot reach it.
+
+A copy pastes only into the flow it came from, since its areas, points and inputs are that flow's.
+Pasting into another flow would have to bring those along, or ask what to point them at
+(`TODO.md`).
 
 ### Capture flows
 
@@ -1842,13 +1876,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-765 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+772 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 160 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 578 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 585 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
@@ -1962,7 +1996,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 765 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 772 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

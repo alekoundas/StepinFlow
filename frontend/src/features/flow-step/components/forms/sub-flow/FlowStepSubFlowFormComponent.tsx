@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { useEffect } from "react";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepSubFlowSchema } from "@/features/flow-step/components/forms/sub-flow/flow-step-sub-flow.zod";
 import FlowStepSubFlowFormFieldsComponent from "@/features/flow-step/components/forms/sub-flow/FlowStepSubFlowFormFieldsComponent";
 
@@ -55,26 +54,21 @@ export default function FlowStepSubFlowFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Sub-Flow Step Configuration"
-        description="Run another flow from here, then carry on with the next step."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepSubFlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepSubFlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

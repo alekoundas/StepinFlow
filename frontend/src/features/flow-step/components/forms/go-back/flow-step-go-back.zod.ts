@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepGoBackSchema = z
   .object({
+    codeComment: CODE_COMMENT_SCHEMA,
     name: z
       .string()
       .min(1, "Name is required")

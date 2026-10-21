@@ -1,4 +1,5 @@
 using Business.FlowScript.Models;
+using Core.Models.Database;
 
 namespace Business.FlowScript.Text
 {
@@ -9,5 +10,11 @@ namespace Business.FlowScript.Text
         /// same bytes, which is what makes a round trip testable.
         /// </summary>
         string Write(FlowScriptSchema schema);
+
+        /// <summary>
+        /// One step as a flow's script prints it, its comment above its line, with no indent. A
+        /// sub-flow step names its file by the path given.
+        /// </summary>
+        string WriteStep(FlowStep step, string subFlowPath);
     }
 }

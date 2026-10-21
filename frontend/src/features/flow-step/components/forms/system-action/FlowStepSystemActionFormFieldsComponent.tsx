@@ -17,10 +17,6 @@ export default function FlowStepSystemActionFormFieldsComponent({
   const { control } = useFormContext();
   const systemActionType = useWatch({ control, name: "systemActionType" });
 
-  const activeAction = SYSTEM_ACTIONS.find(
-    (x) => x.systemActionType === systemActionType,
-  );
-
   return (
     <>
       <FormInputTextComponent
@@ -28,7 +24,6 @@ export default function FlowStepSystemActionFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormSelectButtonComponent
@@ -41,14 +36,6 @@ export default function FlowStepSystemActionFormFieldsComponent({
         isRequired={true}
         isDisabled={isDisabled}
       />
-
-      {activeAction && (
-        <LabelComponent
-          text={activeAction.description}
-          color="secondary"
-          size="sm"
-        />
-      )}
 
       {systemActionType === SystemActionTypeEnum.MONITOR_OFF && (
         <Message

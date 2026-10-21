@@ -2,9 +2,11 @@ import { z } from "zod";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
+import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepSearchImageSchema = z
   .object({
+    codeComment: CODE_COMMENT_SCHEMA,
     name: z
       .string()
       .min(1, "Name is required")

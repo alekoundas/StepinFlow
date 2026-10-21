@@ -5,8 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepEndExecutionSchema } from "@/features/flow-step/components/forms/end-execution/flow-step-end-execution.zod";
 import FlowStepEndExecutionFormFieldsComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormFieldsComponent";
 
@@ -48,26 +47,21 @@ export default function FlowStepEndExecutionFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="End Execution Step Configuration"
-        description="Stops the flow here and stamps the verdict. Without one, a flow ends when it runs out of steps."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepEndExecutionFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepEndExecutionFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

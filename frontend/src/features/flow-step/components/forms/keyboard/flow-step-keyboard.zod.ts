@@ -5,9 +5,11 @@ import {
   KEY_ACTION_VALUES,
   KEYBOARD_MODE_VALUES,
 } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepKeyboardSchema = z
   .object({
+    codeComment: CODE_COMMENT_SCHEMA,
     name: z
       .string()
       .min(1, "Name is required")

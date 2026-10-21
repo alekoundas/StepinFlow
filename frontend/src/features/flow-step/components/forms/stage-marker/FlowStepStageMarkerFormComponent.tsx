@@ -5,8 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FlowStepStageMarkerSchema } from "@/features/flow-step/components/forms/stage-marker/flow-step-stage-marker.zod";
 
@@ -48,34 +47,28 @@ export default function FlowStepStageMarkerFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Stage Marker Step Configuration"
-        description="Names the stage that follows. Each stage becomes a test case in the report, so name it after what a person would say they were doing."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FormInputTextComponent
-            fieldName="name"
-            label="Name"
-            placeholderText="Sign in"
-            isRequired={true}
-            isDisabled={formMode === "VIEW"}
-            className="mt-5"
-            hintText="The stage fails if any step in it failed, and passes otherwise."
-          />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FormInputTextComponent
+              fieldName="name"
+              label="Name"
+              placeholderText="Sign in"
+              isRequired={true}
+              isDisabled={formMode === "VIEW"}
+              hintText="The stage fails if any step in it failed, and passes otherwise."
+            />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

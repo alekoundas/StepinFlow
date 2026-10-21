@@ -1,9 +1,8 @@
 import type z from "zod";
 import { useFormContext, useWatch } from "react-hook-form";
 
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
+import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
@@ -13,22 +12,31 @@ import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button
 
 type CursorForm = z.infer<typeof FlowStepCursorSchema>;
 
-interface EnumOption {
-  label: string;
-  value: string;
-}
-
 interface Props {
   flowId: number | undefined;
   parentFlowStepId: number | undefined;
   isDisabled?: boolean;
 }
 
-const toOptions = (values: Record<string, string>): EnumOption[] =>
-  Object.values(values).map((value) => ({
-    label: value.replaceAll("_", " ").toLowerCase(),
-    value,
-  }));
+const ACTION_OPTIONS = [
+  { label: "Single", value: cursorButtonActionTypeEnum.SINGLE_CLICK },
+  { label: "Double", value: cursorButtonActionTypeEnum.DOUBLE_CLICK },
+  { label: "Hold", value: cursorButtonActionTypeEnum.HOLD_CLICK },
+  { label: "Release", value: cursorButtonActionTypeEnum.RELEASE_CLICK },
+];
+
+const BUTTON_OPTIONS = [
+  { label: "Left", value: CursorButtonTypeEnum.LEFT_BUTTON },
+  { label: "Right", value: CursorButtonTypeEnum.RIGHT_BUTTON },
+  { label: "Middle", value: CursorButtonTypeEnum.MIDDLE_BUTTON },
+];
+
+const DIRECTION_OPTIONS = [
+  { label: "Up", value: CursorScrollDirectionTypeEnum.UP },
+  { label: "Down", value: CursorScrollDirectionTypeEnum.DOWN },
+  { label: "Left", value: CursorScrollDirectionTypeEnum.LEFT },
+  { label: "Right", value: CursorScrollDirectionTypeEnum.RIGHT },
+];
 
 export default function FlowStepCursorFormFieldsComponent({
   flowId,
@@ -40,96 +48,63 @@ export default function FlowStepCursorFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-        className="mt-5"
-      />
-
-      {/* CURSOR_CLICK */}
       {flowStepType === FlowStepTypeEnum.CURSOR_CLICK && (
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <FormDropdownComponent<CursorForm, EnumOption>
-              fieldName="cursorButtonActionType"
-              labelText="Click Action"
-              mode="local"
-              options={toOptions(cursorButtonActionTypeEnum)}
-              optionLabel="label"
-              optionValue="value"
-              isRequired={true}
-              isDisabled={isDisabled}
-            />
-          </div>
-
-          <div className="flex-1">
-            <FormDropdownComponent<CursorForm, EnumOption>
-              fieldName="cursorButtonType"
-              labelText="Mouse Button"
-              mode="local"
-              options={toOptions(CursorButtonTypeEnum)}
-              optionLabel="label"
-              optionValue="value"
-              isRequired={true}
-              isDisabled={isDisabled}
-            />
-          </div>
-        </div>
+        <>
+          <FormSelectButtonComponent<CursorForm, string>
+            fieldName="cursorButtonActionType"
+            labelText="Action"
+            options={ACTION_OPTIONS}
+            isRequired={true}
+            isDisabled={isDisabled}
+          />
+          <FormSelectButtonComponent<CursorForm, string>
+            fieldName="cursorButtonType"
+            labelText="Button"
+            options={BUTTON_OPTIONS}
+            isRequired={true}
+            isDisabled={isDisabled}
+            hintText="A single left click is what the script leaves unsaid."
+          />
+        </>
       )}
 
-      {/* CURSOR_DRAG */}
       {flowStepType === FlowStepTypeEnum.CURSOR_DRAG && (
-        <FormDropdownComponent<CursorForm, EnumOption>
+        <FormSelectButtonComponent<CursorForm, string>
           fieldName="cursorButtonType"
-          labelText="Mouse Button"
-          mode="local"
-          options={toOptions(CursorButtonTypeEnum)}
-          optionLabel="label"
-          optionValue="value"
+          labelText="Button"
+          options={BUTTON_OPTIONS}
           isRequired={true}
           isDisabled={isDisabled}
         />
       )}
 
-      {/* CURSOR_SCROLL */}
       {flowStepType === FlowStepTypeEnum.CURSOR_SCROLL && (
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <FormDropdownComponent<CursorForm, EnumOption>
-              fieldName="cursorScrollDirectionType"
-              labelText="Direction"
-              mode="local"
-              options={toOptions(CursorScrollDirectionTypeEnum)}
-              optionLabel="label"
-              optionValue="value"
-              isRequired={true}
-              isDisabled={isDisabled}
-            />
-          </div>
-
-          <div className="flex-1">
-            <FormInputNumberComponent
-              fieldName="loopCount"
-              label="Scroll Amount"
-              min={1}
-              max={2147483647}
-              isRequired={true}
-              isDisabled={isDisabled}
-              hintText="Number of wheel notches"
-            />
-          </div>
-        </div>
+        <>
+          <FormSelectButtonComponent<CursorForm, string>
+            fieldName="cursorScrollDirectionType"
+            labelText="Direction"
+            options={DIRECTION_OPTIONS}
+            isRequired={true}
+            isDisabled={isDisabled}
+          />
+          <FormInputNumberComponent
+            fieldName="loopCount"
+            label="Notches"
+            min={1}
+            max={2147483647}
+            isRequired={true}
+            isDisabled={isDisabled}
+            hintText="Wheel notches, where the cursor is."
+          />
+        </>
       )}
 
-      {/* Point pickers */}
       {(flowStepType === FlowStepTypeEnum.CURSOR_RELOCATE ||
         flowStepType === FlowStepTypeEnum.CURSOR_DRAG) && (
         <FlowStepCursorLocationFieldsComponent
           title={
             flowStepType === FlowStepTypeEnum.CURSOR_DRAG
-              ? "Grab Point"
+              ? "Grab point"
               : "Location"
           }
           flowId={flowId}
@@ -141,7 +116,7 @@ export default function FlowStepCursorFormFieldsComponent({
       {flowStepType === FlowStepTypeEnum.CURSOR_DRAG && (
         <FlowStepCursorLocationFieldsComponent
           isEndPoint={true}
-          title="Drop Point"
+          title="Drop point"
           flowId={flowId}
           parentFlowStepId={parentFlowStepId}
           isDisabled={isDisabled}

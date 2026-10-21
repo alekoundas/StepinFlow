@@ -96,6 +96,61 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
+            return await InsertTreeAsync(dbContext, flowId, parentFlowStepId, targetIndex, steps, inputs, ct);
+        }
+
+        /// <summary>
+        /// A copy of a step and everything under it, placed at the target, with the id of the copy.
+        /// A reference between the copied steps follows the copy; one to a step outside it is kept,
+        /// and the validator says when the new place cannot reach it. Only into the flow it was
+        /// copied from, whose areas, points and inputs it uses.
+        /// </summary>
+        public async Task<ResultDto<int>> PasteAsync(FlowStepPasteDto dto, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            int? sourceRootId = await dbContext.FlowSteps
+                .Where(x => x.Id == dto.FlowStepId)
+                .Select(x => (int?)x.RootId)
+                .FirstOrDefaultAsync(ct);
+
+            if (sourceRootId == null)
+                return ResultDto<int>.Failure("The copied step no longer exists.");
+
+            int? targetRootId = dto.TargetFlowId;
+            if (dto.TargetParentFlowStepId != null)
+            {
+                targetRootId = await dbContext.FlowSteps
+                    .Where(x => x.Id == dto.TargetParentFlowStepId)
+                    .Select(x => (int?)x.RootId)
+                    .FirstOrDefaultAsync(ct);
+            }
+
+            if (targetRootId != sourceRootId)
+                return ResultDto<int>.Failure("A copy goes into the flow it was copied from: its areas, points and inputs are that flow's.");
+
+            // Untracked, so each row read is a new object to insert rather than the saved one.
+            List<FlowStep> flowSteps = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Include(x => x.FlowStepTemplates)
+                .Where(x => x.RootId == sourceRootId)
+                .ToListAsync(ct);
+
+            FlowStep source = flowSteps.First(x => x.Id == dto.FlowStepId);
+            if (TreeStepHelper.IsBranchChild(source.FlowStepType))
+                return ResultDto<int>.Failure("A Success or Failure branch belongs to its step, so it is copied with it.");
+
+            List<FlowStep> copy = CopyOf(flowSteps, source);
+
+            ResultDto<int> inserted = await InsertTreeAsync(dbContext, dto.TargetFlowId, dto.TargetParentFlowStepId, dto.TargetIndex, copy, [], ct);
+            if (!inserted.IsSuccess)
+                return inserted;
+
+            return ResultDto<int>.Success(source.Id);
+        }
+
+        private static async Task<ResultDto<int>> InsertTreeAsync(AppDbContext dbContext, int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowCsvColumn> inputs, CancellationToken ct)
+        {
             int? rootId = flowId;
             if (parentFlowStepId != null)
             {
@@ -373,6 +428,50 @@ namespace Business.Flows.DataService.DataHandlers
                 templateNames[given] = name;
 
             return name;
+        }
+
+        // The step and everything under it, in tree order, linked to each other rather than to the
+        // rows they were read from: the rows are untracked, so they become the new ones.
+        private static List<FlowStep> CopyOf(List<FlowStep> flowSteps, FlowStep top)
+        {
+            List<FlowStep> copy = new List<FlowStep>();
+            AddWithChildren(flowSteps, top, copy);
+
+            Dictionary<int, FlowStep> copiedById = copy.ToDictionary(x => x.Id);
+
+            foreach (FlowStep step in copy)
+            {
+                if (step != top)
+                    step.ParentFlowStep = copiedById[step.ParentFlowStepId!.Value];
+
+                if (step.FlowStepReferenceId != null && copiedById.TryGetValue(step.FlowStepReferenceId.Value, out FlowStep? reference))
+                {
+                    step.FlowStepReference = reference;
+                    step.FlowStepReferenceId = null;
+                }
+
+                if (step.FlowStepReferenceEndId != null && copiedById.TryGetValue(step.FlowStepReferenceEndId.Value, out FlowStep? referenceEnd))
+                {
+                    step.FlowStepReferenceEnd = referenceEnd;
+                    step.FlowStepReferenceEndId = null;
+                }
+
+                foreach (FlowStepTemplate template in step.FlowStepTemplates)
+                {
+                    template.FlowStepId = 0;
+                    template.FlowStep = step;
+                }
+            }
+
+            return copy;
+        }
+
+        private static void AddWithChildren(List<FlowStep> flowSteps, FlowStep step, List<FlowStep> copy)
+        {
+            copy.Add(step);
+
+            foreach (FlowStep child in flowSteps.Where(x => x.ParentFlowStepId == step.Id).OrderBy(x => x.OrderNumber))
+                AddWithChildren(flowSteps, child, copy);
         }
 
         private static string UniqueName(string desired, HashSet<string> taken)

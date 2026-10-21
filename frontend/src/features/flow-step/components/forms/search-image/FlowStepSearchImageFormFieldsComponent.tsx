@@ -1,5 +1,4 @@
 import { useFormContext, useWatch } from "react-hook-form";
-import { Message } from "primereact/message";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
@@ -14,51 +13,20 @@ import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/fo
 
 interface Props {
   flowId: number | undefined;
-  templateCount: number;
   isDisabled?: boolean;
 }
 
 export default function FlowStepSearchImageFormFieldsComponent({
   flowId,
-  templateCount,
   isDisabled = false,
 }: Props) {
   const { control } = useFormContext();
 
   const mode = useWatch({ control, name: "searchMode" });
   const matchMode = useWatch({ control, name: "templateMatchMode" });
-  const timeout = useWatch({ control, name: "timeoutMilliseconds" });
-  const pollInterval = useWatch({ control, name: "pollIntervalMilliseconds" });
-  const maxMatches = useWatch({ control, name: "maxMatches" });
 
   const isWaiting = isWaitingMode(mode);
   const isFindAll = mode === SearchModeEnum.FIND_ALL;
-
-  // The semantics are fiddly enough that spelling them out beats another tooltip.
-  const summary = () => {
-    const what =
-      templateCount === 0
-        ? "no templates yet"
-        : templateCount === 1
-          ? "1 template"
-          : `${templateCount} templates`;
-
-    if (mode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND) {
-      return `Waits until ${what} is no longer on screen, checking every ${pollInterval}ms${
-        timeout > 0 ? ` for up to ${timeout}ms` : " for as long as it takes"
-      }. Then runs the Success steps once. If it is still there when time runs out, runs the Failure steps.`;
-    }
-
-    if (mode === SearchModeEnum.WAIT_UNTIL_FOUND) {
-      return `Waits for ${what} to appear, checking every ${pollInterval}ms${
-        timeout > 0 ? ` for up to ${timeout}ms` : " for as long as it takes"
-      }. On the first match, runs the Success steps once. If nothing appears in time, runs the Failure steps.`;
-    }
-
-    return isFindAll
-      ? `Looks for ${what} once and runs the Success steps for every match found, up to ${maxMatches}. If nothing matches, runs the Failure steps.`
-      : `Looks for ${what} once and runs the Success steps for the best match. If nothing matches, runs the Failure steps.`;
-  };
 
   return (
     <>
@@ -67,7 +35,6 @@ export default function FlowStepSearchImageFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormSelectButtonComponent
@@ -132,12 +99,6 @@ export default function FlowStepSearchImageFormFieldsComponent({
         isRequired={true}
         isDisabled={isDisabled}
         hintText={MATCH_MODES.find((x) => x.value === matchMode)?.description}
-      />
-
-      <Message
-        severity="info"
-        className="w-full justify-content-start mt-3"
-        text={summary()}
       />
     </>
   );

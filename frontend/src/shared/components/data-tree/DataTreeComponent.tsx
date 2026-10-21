@@ -14,7 +14,9 @@ import {
   type TreeSelectionEvent,
 } from "primereact/tree";
 import { classNames } from "primereact/utils";
+import { Button } from "primereact/button";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { TreeNodeDto, buildTreeNodeKey } from "@/shared/models/tree-node-dto";
@@ -37,19 +39,28 @@ interface Props {
   flowId: number;
 }
 
+// A step and everything under it. A branch belongs to its step, so it is copied with it.
+const isCopyable = (node: TreeNodeDto): boolean =>
+  !node.isFlow &&
+  !node.isNew &&
+  node.flowStepType !== FlowStepTypeEnum.SUCCESS &&
+  node.flowStepType !== FlowStepTypeEnum.FAILURE;
+
 export function DataTreeComponent({ flowId }: Props) {
   const [data, setData] = useState<TreeNodeDto[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
   const {
     selectedTreeNode,
     treeRefreshTrigger,
+    copiedStep,
     setSelectedTreeNode,
     setSelectedFlowStepTypeToAdd,
     setTreeRefreshTrigger,
+    setCopiedStep,
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
-  const { openConfirm } = useDialogStore();
-  const { moveFlowStepMutation } = useFlowStepMutations();
+  const { openConfirm, close } = useDialogStore();
+  const { moveFlowStepMutation, pasteFlowStepMutation } = useFlowStepMutations();
 
   // Fetched once for the flow rather than per branch: whether a step can read another step's
   // result depends on the whole parent chain, not on the branch being expanded.
@@ -317,6 +328,50 @@ export function DataTreeComponent({ flowId }: Props) {
       onDrop: handleDrop,
     });
 
+  // ====================== COPY & PASTE ======================
+
+  const copy = useCallback(
+    (node: TreeNodeDto) =>
+      setCopiedStep({
+        id: node.entityId,
+        name: node.name,
+        flowStepType: node.flowStepType,
+      }),
+    [setCopiedStep],
+  );
+
+  // Lands where the + is, at the end of that branch, and is selected. The copy stays, so the same
+  // step can go in several places.
+  const paste = useCallback(
+    async (placeholder: TreeNodeDto) => {
+      if (!copiedStep) return;
+
+      const isFlow = placeholder.parentFlowStepId == null;
+      const parentId = isFlow ? placeholder.parentFlowId : placeholder.parentFlowStepId;
+      if (parentId == null) return;
+
+      try {
+        const pastedId = await pasteFlowStepMutation.mutateAsync({
+          flowStepId: copiedStep.id,
+          targetParentFlowStepId: placeholder.parentFlowStepId ?? undefined,
+          targetFlowId: placeholder.parentFlowId ?? undefined,
+          targetIndex: placeholder.orderNumber,
+        });
+
+        setTreeRefreshTrigger({ id: parentId, isFlow, selectNodeIdAfterLoad: pastedId });
+      } catch (err) {
+        openConfirm("tree-paste-error", {
+          headerText: "Cannot paste here",
+          hideConfirm: true,
+          cancelLabel: "Close",
+          children: <span>{err instanceof Error ? err.message : String(err)}</span>,
+          onConfirm: () => close("tree-paste-error"),
+        });
+      }
+    },
+    [copiedStep, pasteFlowStepMutation, setTreeRefreshTrigger, openConfirm, close],
+  );
+
   // ====================== CONTROLLED SELECTION ======================
 
   const onSelectionChange = (e: TreeSelectionEvent) => {
@@ -347,7 +402,30 @@ export function DataTreeComponent({ flowId }: Props) {
     if (treeNodeDto.isFlow) {
       template = <DataTreeFlowTemplate treeNode={treeNodeDto} />;
     } else if (treeNodeDto.isNew) {
-      template = <IconComponent name="plus" />;
+      template = (
+        <div className="flex align-items-center gap-3">
+          <span className="flex align-items-center gap-2 text-color-secondary text-sm">
+            <IconComponent name="plus" />
+            Add step
+          </span>
+          {copiedStep && (
+            <Button
+              type="button"
+              label="Paste here"
+              icon="pi pi-clipboard"
+              size="small"
+              text
+              className="py-1 px-2"
+              loading={pasteFlowStepMutation.isPending}
+              onClick={(e) => {
+                // The row underneath would take the click as a selection and open the type picker.
+                e.stopPropagation();
+                void paste(treeNodeDto);
+              }}
+            />
+          )}
+        </div>
+      );
     } else {
       template = (
         <FlowStepTreeNodeComponent
@@ -400,7 +478,21 @@ export function DataTreeComponent({ flowId }: Props) {
         )}
 
         <div className="flex w-full">{template}</div>
-        {isSelected && !treeNodeDto.isNew && <IconComponent name="check" />}
+        {isSelected && treeNodeDto.isFlow && <IconComponent name="check" />}
+        {isSelected && isCopyable(treeNodeDto) && (
+          <Button
+            type="button"
+            label={copiedStep?.id === treeNodeDto.entityId ? "Copied" : "Copy"}
+            icon="pi pi-copy"
+            size="small"
+            outlined
+            className="flex-shrink-0 py-1 px-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              copy(treeNodeDto);
+            }}
+          />
+        )}
       </div>
     );
   };

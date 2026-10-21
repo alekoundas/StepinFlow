@@ -1,8 +1,6 @@
 import type z from "zod";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Card } from "primereact/card";
-import { classNames } from "primereact/utils";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
@@ -99,48 +97,16 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
-      <LabelComponent
-        text="Command"
-        weight="bold"
+      <FormSelectButtonComponent<SystemCommandForm, string>
+        fieldName="runCommandPreset"
+        labelText="Command"
+        options={presets.map((x) => ({ label: x.label, value: x.preset }))}
+        isRequired={true}
+        isDisabled={isDisabled}
+        hintText={activePreset?.description}
       />
-      <div className="flex flex-wrap gap-2 mb-3">
-        {presets.map((item) => (
-          <Card
-            key={item.preset}
-            className={classNames(
-              "cursor-pointer border-round-2xl transition-all",
-              item.preset === preset ? "shadow-4 border-primary border-2" : "shadow-1",
-              { "opacity-60": isDisabled },
-            )}
-            onClick={() =>
-              !isDisabled &&
-              setValue("runCommandPreset", item.preset, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-          >
-            <LabelComponent
-              text={item.label}
-              weight="semibold"
-              size="sm"
-              wrap={false}
-            />
-          </Card>
-        ))}
-      </div>
-
-      {activePreset && (
-        <LabelComponent
-          text={activePreset.description}
-          color="secondary"
-          size="sm"
-          className="mb-3"
-        />
-      )}
 
       {isCustom ? (
         <>
@@ -193,7 +159,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
       {!isCustom && !isLaunch && resolvedCommand.length > 0 && (
         <div className="mb-3">
           <LabelComponent
-            text="Runs"
+            text="Executes"
             weight="bold"
             size="sm"
           />
@@ -205,10 +171,10 @@ export default function FlowStepSystemCommandFormFieldsComponent({
 
       <FormInputTextComponent
         fieldName="runCommandWorkingDirectory"
-        label="Run from folder"
+        label="Start in folder"
         placeholderText="C:\\Projects"
         isDisabled={isDisabled}
-        hintText="Optional. The command runs here instead of wherever the app happens to be."
+        hintText="Optional. The command starts here instead of wherever the app happens to be."
       />
 
       {isLaunch && (

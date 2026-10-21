@@ -5,8 +5,7 @@ import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepSystemActionSchema } from "@/features/flow-step/components/forms/system-action/flow-step-system-action.zod";
 import FlowStepSystemActionFormFieldsComponent from "@/features/flow-step/components/forms/system-action/FlowStepSystemActionFormFieldsComponent";
 
@@ -40,26 +39,21 @@ export default function FlowStepSystemActionFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="System Action Step Configuration"
-        description="Ask Windows to do something directly: lock, sleep, or turn the screens off."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepSystemActionFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepSystemActionFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

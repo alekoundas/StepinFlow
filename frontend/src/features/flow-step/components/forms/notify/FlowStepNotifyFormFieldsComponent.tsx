@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
+import { InputSwitch } from "primereact/inputswitch";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 
@@ -168,12 +169,11 @@ export default function FlowStepNotifyFormFieldsComponent({
 
       <div className="mt-3 flex flex-column gap-2">
         <div className="flex align-items-center gap-2">
-          <input
-            id="notify-report-failure"
-            type="checkbox"
+          <InputSwitch
+            inputId="notify-report-failure"
             checked={isReportingFailure}
             disabled={isDisabled || failedSteps.length === 0}
-            onChange={(e) => toggleReporting(e.target.checked)}
+            onChange={(e) => toggleReporting(e.value)}
           />
           <label htmlFor="notify-report-failure">
             <LabelComponent text="Say why a step failed" />

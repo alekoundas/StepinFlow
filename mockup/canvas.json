@@ -119,11 +119,11 @@
     },
     "StepForms.dc.html": {
       "expand": "fill",
-      "h": 1180,
+      "h": 6040,
       "is_interactive": true,
-      "title": "Step forms · every type, each with its code comment",
-      "w": 1440,
-      "x": 6227,
+      "title": "Step forms · checks, input, control and end",
+      "w": 3280,
+      "x": 7747,
       "y": 1600
     },
     "EditorCopyPaste.dc.html": {
@@ -132,7 +132,16 @@
       "is_interactive": true,
       "title": "Editor · copy and paste a step",
       "w": 1440,
-      "x": 7747,
+      "x": 6227,
+      "y": 1600
+    },
+    "StepFormsSystem.dc.html": {
+      "expand": "fill",
+      "h": 5340,
+      "is_interactive": true,
+      "title": "Step forms · system steps and branches",
+      "w": 3280,
+      "x": 11107,
       "y": 1600
     }
   },
@@ -155,7 +164,7 @@
     },
     "row2": {
       "kind": "title1",
-      "maxW": 9187,
+      "maxW": 14387,
       "text": "Around it",
       "w": 240,
       "x": 0,
@@ -176,8 +185,9 @@
     "Foundations.dc.html",
     "Home.dc.html",
     "Import.dc.html",
+    "EditorCopyPaste.dc.html",
     "StepForms.dc.html",
-    "EditorCopyPaste.dc.html"
+    "StepFormsSystem.dc.html"
   ],
   "pages": [],
   "title": "StepinFlow recorder redesign"

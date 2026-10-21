@@ -9,8 +9,7 @@ import type { Rectangle } from "electron";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
@@ -278,22 +277,45 @@ export default function FlowStepSearchImageFormComponent({
   );
 
   return (
-    <>
-      <FormHeaderComponent
-        title="Image Search Step Configuration"
-        description="Look for one or more template images inside a search area, then branch on what was found."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit((data) => onSubmit(buildDto(data)))}>
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
+          testAction={
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                label="Test now"
+                icon="pi pi-play"
+                loading={isTesting}
+                disabled={images.length === 0}
+                onClick={handleTest}
+                outlined
+                tooltip="Searches the live screen without clicking anything"
+                tooltipOptions={{ position: "top" }}
+              />
 
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit((data) => onSubmit(buildDto(data)))}
-          className="flex flex-column h-full"
+              <Button
+                type="button"
+                label="Details"
+                icon="pi pi-image"
+                disabled={!testResult?.isResolved}
+                onClick={openTestDetails}
+                outlined
+                severity="secondary"
+                tooltip="See what matched, and where it would click"
+                tooltipOptions={{ position: "top" }}
+              />
+            </div>
+          }
         >
           <FlowStepSearchImageFormFieldsComponent
             flowId={defaultValues.flowId ?? defaultValues.rootId}
-            templateCount={images.length}
             isDisabled={formMode === "VIEW"}
           />
 
@@ -318,62 +340,27 @@ export default function FlowStepSearchImageFormComponent({
             />
           )}
 
-          <div className="flex gap-3 align-items-center mt-3">
-            <Button
-              type="button"
-              label="Test now"
-              icon="pi pi-play"
-              loading={isTesting}
-              disabled={images.length === 0}
-              onClick={handleTest}
-              className="p-button-outlined"
-              tooltip="Run the search against the live screen without clicking anything"
-              tooltipOptions={{ position: "top" }}
+          {testResult && !testResult.isResolved && (
+            <Message
+              severity="error"
+              className="w-full justify-content-start mt-3"
+              text={testResult.errorMessage ?? "Could not resolve the search area."}
             />
+          )}
 
-            <Button
-              type="button"
-              label="Details"
-              icon="pi pi-image"
-              disabled={!testResult?.isResolved}
-              onClick={openTestDetails}
-              className="p-button-outlined p-button-secondary"
-              tooltip="See what matched, and where it would click"
-              tooltipOptions={{ position: "top" }}
+          {testResult?.isResolved && (
+            <Message
+              severity={testResult.wouldSucceed ? "success" : "warn"}
+              className="w-full justify-content-start mt-3"
+              text={
+                testResult.wouldSucceed
+                  ? `Would succeed. ${testResult.totalMatches} match(es) in ${testResult.searchAreaWidth}×${testResult.searchAreaHeight}.`
+                  : `Would go on to the Failure steps. ${testResult.totalMatches} match(es) found.`
+              }
             />
-
-            {testResult && !testResult.isResolved && (
-              <Message
-                severity="error"
-                className="flex-1 justify-content-start"
-                text={
-                  testResult.errorMessage ??
-                  "Could not resolve the search area."
-                }
-              />
-            )}
-
-            {testResult?.isResolved && (
-              <Message
-                severity={testResult.wouldSucceed ? "success" : "warn"}
-                className="flex-1 justify-content-start"
-                text={
-                  testResult.wouldSucceed
-                    ? `Would succeed. ${testResult.totalMatches} match(es) in ${testResult.searchAreaWidth}×${testResult.searchAreaHeight}.`
-                    : `Would run the Failure steps. ${testResult.totalMatches} match(es) found.`
-                }
-              />
-            )}
-          </div>
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </>
+          )}
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

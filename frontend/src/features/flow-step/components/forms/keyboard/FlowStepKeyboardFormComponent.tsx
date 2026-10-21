@@ -5,8 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepKeyboardSchema } from "@/features/flow-step/components/forms/keyboard/flow-step-keyboard.zod";
 import FlowStepKeyboardFormFieldsComponent from "@/features/flow-step/components/forms/keyboard/FlowStepKeyboardFormFieldsComponent";
 
@@ -48,26 +47,21 @@ export default function FlowStepKeyboardFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Keyboard Step Configuration"
-        description="Type text, or send a shortcut. Whatever has focus when the step runs is what receives it."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepKeyboardFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepKeyboardFormFieldsComponent isDisabled={formMode === "VIEW"} />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

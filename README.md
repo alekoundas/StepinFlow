@@ -197,7 +197,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**765 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**772 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 
@@ -296,7 +296,7 @@ electron-builder into `release/`.
 | [flow-format.md](backend/Core/AiDocuments/Reference/flow-format.md) | The `.sflw` flow script grammar, with the AI documents a model is given |
 | [SampleFlow.approved.sflw](backend/Tests/Business.Tests/FlowScript/SampleFlow.approved.sflw) | A flow script using most of the grammar, checked by a test |
 | [PLAN.md](PLAN.md) | What is left to build, in order |
-| [mockup/](mockup/) | The screens the UI is being built towards, a copy of the design canvas |
+| [mockup/](mockup/) | The screens the UI is being built towards: a copy of the design canvas, and [every screen in one picture](mockup/mockup.png) |
 | [TODO.md](TODO.md) | Everything deferred |
 
 ---

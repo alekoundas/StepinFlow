@@ -1,92 +1,75 @@
-import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { SelectButton } from "primereact/selectbutton";
 
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
-import { classNames } from "primereact/utils";
+import LabelComponent from "@/shared/components/LabelComponent";
 
 interface Props {
   isDisabled?: boolean;
-  className?: string;
 }
+
+const REPEAT_OPTIONS = [
+  { label: "A number of times", value: false },
+  { label: "Forever", value: true },
+];
 
 export default function FlowStepLoopFormFieldsComponent({
   isDisabled = false,
-  className,
 }: Props) {
-  const { control, setValue, trigger } = useFormContext();
-  
-  // Watch the two fields that control each other
-  const isLoopInfinite = useWatch({ control, name: "isLoopInfinite" });
-  const loopCount = useWatch({ control, name: "loopCount" });
+  const { control, setValue, getValues, trigger } = useFormContext();
+  const isLoopInfinite = useWatch({ control, name: "isLoopInfinite" }) === true;
 
-  const isInfiniteActive = isLoopInfinite === true;
-  const isFiniteActive = (loopCount ?? 0) > 0;
+  // One or the other: forever stores no count, and a count is never forever. Both are checked
+  // again together, since the rule that joins them puts its error on both.
+  const pick = (isForever: boolean) => {
+    const count = getValues("loopCount") as number | undefined;
 
-  // Main logic: enforce mutual exclusivity + force revalidation of both
-  useEffect(() => {
-    if (isInfiniteActive && loopCount !== 0) {
-      setValue("loopCount", 0, { shouldValidate: false, shouldDirty: true });
-    }
-
-    if (isFiniteActive && isLoopInfinite === true) {
-      setValue("isLoopInfinite", false, {
-        shouldValidate: false,
-        shouldDirty: true,
-      });
-    }
-
-    // Always re-validate BOTH fields after any change
-    trigger(["isLoopInfinite", "loopCount"]);
-
-    // Optional: if the state is now valid, aggressively clear old cross errors
-    // if (isInfiniteActive || isFiniteActive) {
-    //   clearErrors(["isLoopInfinite", "loopCount"]);
-    // }
-  }, [isLoopInfinite, loopCount, setValue, trigger]);
-
-  // Disable logic
-  const disableInfiniteCheckbox = isFiniteActive;
-  const disableLoopCountInput = isInfiniteActive;
-
-  // Hint texts
-  const loopCountHint = disableLoopCountInput
-    ? "Disabled because Infinite Loop is enabled"
-    : undefined;
-
-  const infiniteHint = disableInfiniteCheckbox
-    ? "Disabled because Loop Count is set > 0"
-    : undefined;
+    setValue("isLoopInfinite", isForever, { shouldDirty: true });
+    setValue("loopCount", isForever ? 0 : Math.max(count ?? 0, 1), { shouldDirty: true });
+    void trigger(["isLoopInfinite", "loopCount"]);
+  };
 
   return (
     <>
-      <div className={classNames(className, "flex", "flex-column")}>
-        <FormInputTextComponent
-          fieldName="name"
-          label="Name"
-          isRequired={isDisabled ? false : true}
-          isDisabled={isDisabled}
-        />
+      <FormInputTextComponent
+        fieldName="name"
+        label="Name"
+        isRequired={!isDisabled}
+        isDisabled={isDisabled}
+      />
 
+      <div className="field">
+        <LabelComponent
+          text="Repeat"
+          weight="bold"
+        />
+        <SelectButton
+          value={isLoopInfinite}
+          options={REPEAT_OPTIONS}
+          disabled={isDisabled}
+          onChange={(e) => (e.value !== null ? pick(e.value) : null)}
+        />
+        {isLoopInfinite && (
+          <LabelComponent
+            text="Ended by an End Execution or a Go Back inside it."
+            size="xs"
+            weight="bold"
+            className="mt-1"
+          />
+        )}
+      </div>
+
+      {!isLoopInfinite && (
         <FormInputNumberComponent
           fieldName="loopCount"
-          label="Loop Count"
-          min={0}
+          label="Times"
+          min={1}
           max={2147483647}
-          isRequired={isDisabled || disableLoopCountInput ? false : true}
-          isDisabled={isDisabled || disableLoopCountInput}
-          hintText={isDisabled ? undefined : loopCountHint}
+          isRequired={!isDisabled}
+          isDisabled={isDisabled}
         />
-
-        <FormInputCheckboxComponent
-          fieldName="isLoopInfinite"
-          label="Infinite Loop"
-          isRequired={isDisabled || disableInfiniteCheckbox ? false : true}
-          isDisabled={isDisabled || disableInfiniteCheckbox}
-          hintText={isDisabled ? undefined : infiniteHint}
-        />
-      </div>
+      )}
     </>
   );
 }

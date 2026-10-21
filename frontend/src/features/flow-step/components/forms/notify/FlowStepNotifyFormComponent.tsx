@@ -5,8 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepNotifySchema } from "@/features/flow-step/components/forms/notify/flow-step-notify.zod";
 import FlowStepNotifyFormFieldsComponent from "@/features/flow-step/components/forms/notify/FlowStepNotifyFormFieldsComponent";
 
@@ -55,29 +54,24 @@ export default function FlowStepNotifyFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Notify Step Configuration"
-        description="Post a message to Discord. Put one in a Failure branch and it can say what broke."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepNotifyFormFieldsComponent
-            parentFlowStepId={defaultValues.parentFlowStepId}
-            isDisabled={formMode === "VIEW"}
-          />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepNotifyFormFieldsComponent
+              parentFlowStepId={defaultValues.parentFlowStepId}
+              isDisabled={formMode === "VIEW"}
+            />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

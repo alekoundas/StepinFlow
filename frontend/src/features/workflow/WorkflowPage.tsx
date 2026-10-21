@@ -3,6 +3,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { Button } from "primereact/button";
 import { Splitter, SplitterPanel } from "primereact/splitter";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
+import { CopiedStepBarComponent } from "@/features/workflow/components/CopiedStepBarComponent";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useLayoutEffect, useState } from "react";
@@ -18,19 +19,26 @@ export default function WorkflowPage() {
 
   const flowId = id ? +id : undefined;
 
-  const { setRootFlowId, setSelectedTreeNode, setSelectedFlowStepTypeToAdd, setTreeRefreshTrigger } =
-    useWorkflowStore();
+  const {
+    setRootFlowId,
+    setSelectedTreeNode,
+    setSelectedFlowStepTypeToAdd,
+    setTreeRefreshTrigger,
+    setCopiedStep,
+  } = useWorkflowStore();
   const { data: flow } = useFlow(flowId ?? null);
   const [isExporting, setIsExporting] = useState(false);
 
   // The selection lives in a store that outlives this page. A flow opened here, from the list or
   // by going back to another, starts with nothing selected and its own root, and leaving lets go
-  // of both. Before paint, so the panel never shows a frame of the flow that was open before.
+  // of both. Before paint, so the panel never shows a frame of the flow that was open before. A
+  // copy goes too: it pastes only into the flow it came from.
   useLayoutEffect(() => {
     const clear = () => {
       setSelectedTreeNode(undefined);
       setSelectedFlowStepTypeToAdd(undefined);
       setTreeRefreshTrigger(null);
+      setCopiedStep(undefined);
     };
 
     clear();
@@ -40,7 +48,14 @@ export default function WorkflowPage() {
       clear();
       setRootFlowId(undefined);
     };
-  }, [flowId, setRootFlowId, setSelectedTreeNode, setSelectedFlowStepTypeToAdd, setTreeRefreshTrigger]);
+  }, [
+    flowId,
+    setRootFlowId,
+    setSelectedTreeNode,
+    setSelectedFlowStepTypeToAdd,
+    setTreeRefreshTrigger,
+    setCopiedStep,
+  ]);
 
   return (
     <div className="flex flex-column m-4 mr-3">
@@ -107,7 +122,11 @@ export default function WorkflowPage() {
             className="flex flex-column "
             style={{ overflow: "hidden" }}
           >
-            <ScrollPanel className="h-full">
+            <CopiedStepBarComponent />
+            <ScrollPanel
+              className="flex-1"
+              style={{ minHeight: 0 }}
+            >
               {/* Keyed by the flow, so its open rows and loaded branches start over with each one. */}
               <DataTreeComponent
                 key={flowId ?? -1}

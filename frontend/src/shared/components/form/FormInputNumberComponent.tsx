@@ -79,6 +79,8 @@ export function FormInputNumberComponent({
           disabled={isDisabled}
           // required={isRequired}
           className={classNames("w-full", { "p-invalid": invalid })}
+          // The input inside keeps a default width of its own, which overflows a narrow column.
+          inputClassName="w-full min-w-0"
         />
         <LabelComponent
           text={hintText ?? ""}

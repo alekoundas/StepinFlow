@@ -58,7 +58,6 @@ export default function FlowStepCheckValueFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormDropdownComponent<CheckValueForm, StepOption>

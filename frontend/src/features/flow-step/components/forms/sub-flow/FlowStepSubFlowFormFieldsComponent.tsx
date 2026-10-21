@@ -39,7 +39,6 @@ export default function FlowStepSubFlowFormFieldsComponent({ isDisabled = false 
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormDropdownComponent<SubFlowForm, FlowOption>

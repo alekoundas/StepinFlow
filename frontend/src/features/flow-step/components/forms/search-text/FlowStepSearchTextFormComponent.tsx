@@ -7,12 +7,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
 import FlowStepSearchTextFormFieldsComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextFormFieldsComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import FlowStepSearchTextTestPanelComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextTestPanelComponent";
 
 interface Props {
@@ -75,50 +74,39 @@ export default function FlowStepSearchTextFormComponent({
     onSubmit(buildDto(data));
 
   return (
-    <>
-      <FormHeaderComponent
-        title="Search Text Step Configuration"
-        description="Read the text inside an area, decide whether it says what it should, and hand what was read to later steps."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex flex-column h-full"
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
+          testAction={
+            <Button
+              type="button"
+              label={isTesting ? "Reading..." : "Test now"}
+              icon="pi pi-play"
+              loading={isTesting}
+              disabled={!isValid || isTesting}
+              onClick={handleTest}
+              outlined
+              tooltip="Reads the area now so you can see what Windows makes of it"
+              tooltipOptions={{ position: "top" }}
+            />
+          }
         >
           <FlowStepSearchTextFormFieldsComponent
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />
 
-          <div>
-            <Button
-              type="button"
-              label={isTesting ? "Reading..." : "Test"}
-              icon="pi pi-play"
-              loading={isTesting}
-              disabled={!isValid || isTesting}
-              onClick={handleTest}
-              className="p-button-outlined"
-              tooltip="Reads the area now so you can see what Windows makes of it"
-              tooltipOptions={{ position: "top" }}
-            />
-          </div>
-
           {testResult && (
             <FlowStepSearchTextTestPanelComponent result={testResult} />
           )}
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </>
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

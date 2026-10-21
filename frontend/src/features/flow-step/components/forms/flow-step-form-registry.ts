@@ -21,6 +21,7 @@ import FlowStepKeyboardFormComponent from "@/features/flow-step/components/forms
 import FlowStepEndExecutionFormComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormComponent";
 import FlowStepStageMarkerFormComponent from "@/features/flow-step/components/forms/stage-marker/FlowStepStageMarkerFormComponent";
 import FlowStepGoBackFormComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormComponent";
+import FlowStepBranchFormComponent from "@/features/flow-step/components/forms/branch/FlowStepBranchFormComponent";
 
 import {
   CURSOR_FLOW_STEP_TYPES,
@@ -173,6 +174,12 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     component: FlowStepStageMarkerFormComponent,
     newStepValues: () => ({ name: "Stage" }),
   },
+
+  // Never added from the picker: a check is created with both. The form is there for the comment.
+  ...forTypes([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE], {
+    component: FlowStepBranchFormComponent,
+    newStepValues: () => ({}),
+  }),
 };
 
 export const getFlowStepForm = (

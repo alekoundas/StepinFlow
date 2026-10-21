@@ -1,10 +1,10 @@
 import { classNames } from "primereact/utils";
 
 import IconComponent from "@/shared/components/IconComponent";
-import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import {
-  FlowStepGroupEnum,
+  flowStepAccent,
   getFlowStepCatalogEntry,
+  tint,
 } from "@/shared/models/flow-step-catalog";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { StepIssues } from "@/features/flow/hooks/use-flow-validation";
@@ -15,42 +15,10 @@ interface Props {
   issues?: StepIssues;
 }
 
-/**
- * A colour per group, so a glance says what kind of thing a step does.
- *
- * Only the accent is picked here and the tints are mixed from it. PrimeFlex's bg-{colour}-50
- * classes cannot be used: the palette is not inverted for dark themes, so bg-blue-50 is near
- * white on a dark theme. Mixing into transparent tints whatever surface is actually behind, which
- * lands correctly on either.
- *
- * No group uses green or red. Those mean Success and Failure.
- */
-const GROUP_ACCENTS: Record<FlowStepGroupEnum, string> = {
-  CONTROL: "var(--bluegray-400)",
-  INPUT: "var(--blue-400)",
-  WINDOW: "var(--purple-400)",
-  PERCEPTION: "var(--orange-400)",
-  SYSTEM: "var(--teal-400)",
-  BRANCH: "var(--bluegray-400)",
-};
-
-/** The two branches carry meaning rather than a category, so they get the semantic colours. */
-const TYPE_ACCENTS: Partial<Record<FlowStepTypeEnum, string>> = {
-  [FlowStepTypeEnum.SUCCESS]: "var(--green-400)",
-  [FlowStepTypeEnum.FAILURE]: "var(--red-400)",
-};
-
-const tint = (accent: string, percent: number) =>
-  `color-mix(in srgb, ${accent} ${percent}%, transparent)`;
-
 export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
   const entry = getFlowStepCatalogEntry(treeNode.flowStepType);
   const detail = buildFlowStepTreeDetail(treeNode);
-
-  const group = entry?.group ?? FlowStepGroupEnum.CONTROL;
-  const accent =
-    (treeNode.flowStepType && TYPE_ACCENTS[treeNode.flowStepType]) ??
-    GROUP_ACCENTS[group];
+  const accent = flowStepAccent(treeNode.flowStepType);
 
   return (
     <div

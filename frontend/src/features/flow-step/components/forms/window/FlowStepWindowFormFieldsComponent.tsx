@@ -1,7 +1,6 @@
 import type z from "zod";
 import { useFormContext, useWatch } from "react-hook-form";
 
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import WindowMatchFieldsComponent from "@/shared/components/form/WindowMatchFieldsComponent";
@@ -64,14 +63,6 @@ export default function FlowStepWindowFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-        className="mt-5"
-      />
-
       <WindowMatchFieldsComponent
         isDisabled={isDisabled}
         onWindowPicked={nameFromWindow}

@@ -7,8 +7,6 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -16,6 +14,9 @@ import type { RunCommandTestResultDto } from "@/shared/models/database/run-comma
 import { useCommandPresets } from "@/features/flow-step/hooks/use-command-presets";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
 import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
+import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
+import { humanizeMilliseconds } from "@/shared/utils/humanize-milliseconds";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import FlowStepSystemCommandFormFieldsComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormFieldsComponent";
 import FlowStepSystemCommandTestPanelComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandTestPanelComponent";
 
@@ -54,8 +55,9 @@ export default function FlowStepSystemCommandFormComponent({
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<RunCommandTestResultDto | null>(null);
 
-  const preset = useWatch({ control, name: "runCommandPreset" });
-  const timeoutMilliseconds = useWatch({ control, name: "timeoutMilliseconds" });
+  const values = useWatch({ control });
+  const preset = values.runCommandPreset;
+  const timeoutMilliseconds = values.timeoutMilliseconds as number | undefined;
   const activePreset = presets.find((x) => x.preset === preset);
 
   // Testing would start the application, and a launch has no output to show.
@@ -119,19 +121,57 @@ export default function FlowStepSystemCommandFormComponent({
       }),
     );
 
-  return (
-    <>
-      <FormHeaderComponent
-        title="System Command Step Configuration"
-        description="Run a command on this machine, then branch on whether it worked and use what it printed."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
+  // What this one will do, in its own words: the command as it will be executed, or the program
+  // started.
+  const summaryOf = (): string | undefined => {
+    if (!activePreset) return undefined;
 
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex flex-column h-full"
+    const value = (values.runCommandValue as string | undefined) ?? "";
+    const codes = (values.successExitCodes as string | undefined) || "0";
+
+    if (isLaunch) {
+      const waits = values.flowAreaId
+        ? ` Waits up to ${humanizeMilliseconds(timeoutMilliseconds || 30000)} for its window, and leaves it alone when it is already open.`
+        : "";
+      return `Starts “${value}” and carries on without waiting for it to close.${waits}`;
+    }
+
+    const command =
+      preset === RunCommandPresetEnum.CUSTOM
+        ? value
+        : activePreset.commandTemplate.replace("{0}", value);
+    const shell = values.runCommandShell === RunCommandShellEnum.POWERSHELL ? "PowerShell" : "Command Prompt";
+
+    return `Executes “${command}” in ${shell}. Exit code ${codes} goes on to Success, any other to Failure.`;
+  };
+
+  return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
+          mode={activePreset?.label}
+          summary={summaryOf()}
+          testAction={
+            !isLaunch && (
+              <Button
+                type="button"
+                label={isTesting ? "Testing..." : "Test now"}
+                icon="pi pi-play"
+                loading={isTesting}
+                disabled={!isValid || isTesting}
+                onClick={handleTest}
+                outlined
+                tooltip="Executes the command now so you can see what it returns"
+                tooltipOptions={{ position: "top" }}
+              />
+            )
+          }
         >
           <FlowStepSystemCommandFormFieldsComponent
             presets={presets}
@@ -139,40 +179,17 @@ export default function FlowStepSystemCommandFormComponent({
             isDisabled={formMode === "VIEW"}
           />
 
-          {!isLaunch && (
-            <div className="flex align-items-center gap-3">
-              <Button
-                type="button"
-                label={isTesting ? "Running..." : "Test"}
-                icon="pi pi-play"
-                loading={isTesting}
-                disabled={!isValid || isTesting}
-                onClick={handleTest}
-                className="p-button-outlined"
-                tooltip="Runs the command now so you can see what it returns"
-                tooltipOptions={{ position: "top" }}
-              />
-
-              {timeoutMilliseconds === 0 && (
-                <LabelComponent
-                  text="Give up after is 0, so a command that never finishes keeps this running."
-                  color="secondary"
-                  size="sm"
-                />
-              )}
-            </div>
+          {!isLaunch && timeoutMilliseconds === 0 && (
+            <LabelComponent
+              text="Give up after is 0, so a test of a command that never finishes keeps going."
+              color="secondary"
+              size="sm"
+            />
           )}
 
           {!isLaunch && testResult && <FlowStepSystemCommandTestPanelComponent result={testResult} />}
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </>
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

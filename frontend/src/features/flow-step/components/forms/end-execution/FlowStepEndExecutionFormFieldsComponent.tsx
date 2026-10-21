@@ -24,7 +24,6 @@ export default function FlowStepEndExecutionFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormSelectButtonComponent<EndExecutionForm, boolean>

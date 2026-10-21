@@ -78,8 +78,8 @@ export default function FlowStepCursorLocationFieldsComponent({
   const flowPointId = useWatch({ control, name: locationFieldName });
 
   const sourceOptions = [
-    { label: "Saved Location", value: true },
-    { label: "Step Result", value: false },
+    { label: "Step result", value: false },
+    { label: "Saved location", value: true },
   ];
 
   const loadLocations = (filter?: string): Promise<LocationOption[]> =>

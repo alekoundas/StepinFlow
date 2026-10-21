@@ -9,7 +9,9 @@ import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
 import type {
   FlowStepMoveDto,
   FlowStepMovePreviewDto,
+  FlowStepPasteDto,
 } from "@/shared/models/flow-step-move.dto";
+import type { FlowStepScriptLineDto } from "@/shared/models/flow-step-script-line-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
@@ -131,6 +133,10 @@ export const backendApiService = {
     getMovePreview: (dto: FlowStepMoveDto) =>
       call<FlowStepMovePreviewDto>("FlowStep.getMovePreview", dto),
     move: (dto: FlowStepMoveDto) => call<boolean>("FlowStep.move", dto),
+    /** The id of the copy. */
+    paste: (dto: FlowStepPasteDto) => call<number>("FlowStep.paste", dto),
+    getScriptLine: (dto: FlowStepDto) =>
+      call<FlowStepScriptLineDto>("FlowStep.getScriptLine", dto),
     testImageSearch: (dto: FlowStepDto) =>
       call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
     testRunCommand: (dto: FlowStepDto) =>

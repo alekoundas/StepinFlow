@@ -8,8 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import FlowStepLoopFormFieldsComponent from "@/features/flow-step/components/forms/loop/FlowStepLoopFormFieldsComponent";
 import { FlowStepLoopSchema } from "@/features/flow-step/components/forms/loop/flow-step-loop.zod";
 import { useEffect } from "react";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 
 interface Props {
   formMode: FormMode;
@@ -47,33 +46,23 @@ export default function FlowStepLoopFormComponent({
   }, [trigger]);
 
   return (
-    <div>
-      <FormHeaderComponent
-        title="Loop Step Configuration"
-        description="Repeat a set of child steps a specified number of times or for ever."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
-            onSubmit({ ...defaultValues, ...partialDto }),
-          )}
-          className="flex flex-column h-full"
+    <FormProvider {...form}>
+      <form
+        onSubmit={form.handleSubmit((partialDto: Partial<FlowStepDto>) =>
+          onSubmit({ ...defaultValues, ...partialDto }),
+        )}
+      >
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
         >
-          <FlowStepLoopFormFieldsComponent
-            isDisabled={formMode === "VIEW"}
-            className="mt-5 ml-3 mr-4"
-          />
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </div>
+          <FlowStepLoopFormFieldsComponent isDisabled={formMode === "VIEW"} />
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

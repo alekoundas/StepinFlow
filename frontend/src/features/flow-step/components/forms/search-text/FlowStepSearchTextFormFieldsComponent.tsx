@@ -58,7 +58,6 @@ export default function FlowStepSearchTextFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormSelectButtonComponent

@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { useEffect } from "react";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepCheckValueSchema } from "@/features/flow-step/components/forms/check-value/flow-step-check-value.zod";
 import FlowStepCheckValueFormFieldsComponent from "@/features/flow-step/components/forms/check-value/FlowStepCheckValueFormFieldsComponent";
 
@@ -55,29 +54,24 @@ export default function FlowStepCheckValueFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Check Value Step Configuration"
-        description="Test what an earlier step read or printed, and branch on the answer."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepCheckValueFormFieldsComponent
-            parentFlowStepId={defaultValues.parentFlowStepId}
-            isDisabled={formMode === "VIEW"}
-          />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepCheckValueFormFieldsComponent
+              parentFlowStepId={defaultValues.parentFlowStepId}
+              isDisabled={formMode === "VIEW"}
+            />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

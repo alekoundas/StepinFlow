@@ -5,9 +5,11 @@ import {
   SEARCH_TEXT_CONDITION_TYPES,
 } from "@/features/flow-step/components/forms/shared/condition-types";
 import { SEARCH_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
+import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepSearchTextSchema = z
   .object({
+    codeComment: CODE_COMMENT_SCHEMA,
     name: z
       .string()
       .min(1, "Name is required")

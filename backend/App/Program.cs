@@ -114,6 +114,7 @@ namespace App
             builder.Services.AddSingleton<IFlowScriptExporter, FlowScriptExporter>();
             builder.Services.AddSingleton<IFlowScriptImporter, FlowScriptImporter>();
             builder.Services.AddSingleton<IFlowScriptPreviewService, FlowScriptPreviewService>();
+            builder.Services.AddSingleton<IFlowStepScriptLineService, FlowStepScriptLineService>();
 
             builder.Services.AddExecutionEngine();
 
@@ -196,6 +197,8 @@ namespace App
             builder.Services.AddTransient<GetFlowStepDeleteImpactHandler>();
             builder.Services.AddTransient<GetFlowStepMovePreviewHandler>();
             builder.Services.AddTransient<MoveFlowStepHandler>();
+            builder.Services.AddTransient<PasteFlowStepHandler>();
+            builder.Services.AddTransient<GetFlowStepScriptLineHandler>();
             builder.Services.AddTransient<TestImageSearchHandler>();
             builder.Services.AddTransient<TestRunCommandHandler>();
             builder.Services.AddTransient<TestSearchTextHandler>();

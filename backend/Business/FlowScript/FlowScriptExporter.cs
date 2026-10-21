@@ -169,6 +169,12 @@ namespace Business.FlowScript
             return schema;
         }
 
+        // The file a sub-flow exports to, which is how a step that executes it names it.
+        internal static string SubFlowFileName(string flowName)
+        {
+            return FileNameHelper.Clean(flowName, "sub-flow") + ".sflw";
+        }
+
         // A sub-flow step names a file the parser has to find, and it sits beside this one.
         private static async Task AddSubFlowPathsAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
         {
@@ -181,7 +187,7 @@ namespace Business.FlowScript
             Dictionary<int, string> paths = await dbContext.Flows.AsNoTracking()
                 .Where(x => subFlowIds.Contains(x.Id))
                 .Select(x => new { x.Id, x.Name })
-                .ToDictionaryAsync(x => x.Id, x => FileNameHelper.Clean(x.Name, "sub-flow") + ".sflw", ct);
+                .ToDictionaryAsync(x => x.Id, x => SubFlowFileName(x.Name), ct);
 
             foreach (FlowStep step in schema.Steps.Where(x => x.SubFlowId != null))
             {

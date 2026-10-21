@@ -1,15 +1,15 @@
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import type z from "zod";
-import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
+import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useEffect } from "react";
+import { SelectButton } from "primereact/selectbutton";
 
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
-import IconComponent from "@/shared/components/IconComponent";
+import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 import {
@@ -17,8 +17,6 @@ import {
   type CursorMode,
 } from "@/features/flow-step/components/forms/cursor/cursor-modes";
 import FlowStepCursorFormFieldsComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormFieldsComponent";
-import { Card } from "primereact/card";
-import { classNames } from "primereact/utils";
 
 interface Props {
   formMode: FormMode;
@@ -92,16 +90,18 @@ export default function FlowStepCursorFormComponent({
   };
 
   // Fields belonging to the other modes are cleared here rather than left as stale rows in the
-  // database, so a step only ever carries the values its type actually uses.
-  const handleSubmit = (data: z.infer<typeof FlowStepCursorSchema>) => {
+  // database, so a step only ever carries the values its type actually uses. The script line under
+  // the form is printed from the same step.
+  const toDto = (data: z.infer<typeof FlowStepCursorSchema>): FlowStepDto => {
     const isClick = data.flowStepType === FlowStepTypeEnum.CURSOR_CLICK;
     const isDrag = data.flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
     const isScroll = data.flowStepType === FlowStepTypeEnum.CURSOR_SCROLL;
     const hasStartPoint = !isScroll;
 
-    onSubmit({
+    return new FlowStepDto({
       ...defaultValues,
       name: data.name,
+      codeComment: data.codeComment ?? "",
       flowStepType: data.flowStepType,
 
       flowPointId:
@@ -136,43 +136,45 @@ export default function FlowStepCursorFormComponent({
   };
 
   return (
-    <>
-      <FormHeaderComponent
-        title="Cursor Step Configuration"
-        description={activeMode.description}
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex flex-column h-full"
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit((data) => onSubmit(toDto(data)))}>
+        <FlowStepFormLayoutComponent
+          formMode={formMode}
+          isValid={isValid}
+          isDirty={isDirty}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          baseValues={defaultValues}
+          toDto={(values) => toDto(values as z.infer<typeof FlowStepCursorSchema>)}
         >
-          {/* Mode picker. Each mode is its own FlowStepType, the form just switches between them. */}
-          <div className="flex gap-3 mt-4">
-            {CURSOR_MODES.map((mode) => (
-              <Card
-                key={mode.flowStepType}
-                className={classNames(
-                  "flex-1 text-center cursor-pointer border-round-2xl transition-all",
-                  mode.flowStepType === flowStepType
-                    ? "shadow-4 border-primary border-2"
-                    : "shadow-1",
-                  { "opacity-60": formMode === "VIEW" },
-                )}
-                onClick={() => handleModeChange(mode)}
-              >
-                <div className="flex flex-column align-items-center gap-2">
-                  <IconComponent name={mode.iconName} />
-                  <LabelComponent
-                    text={mode.label}
-                    weight="semibold"
-                    size="sm"
-                  />
-                </div>
-              </Card>
-            ))}
+          <FormInputTextComponent
+            fieldName="name"
+            label="Name"
+            isRequired={true}
+            isDisabled={formMode === "VIEW"}
+          />
+
+          {/* Each mode is its own FlowStepType, the form just switches between them. */}
+          <div className="field">
+            <LabelComponent
+              text="Mode"
+              weight="bold"
+            />
+            <SelectButton
+              value={activeMode.flowStepType}
+              options={CURSOR_MODES.map((x) => ({ label: x.label, value: x.flowStepType }))}
+              disabled={formMode === "VIEW"}
+              onChange={(e) => {
+                const mode = CURSOR_MODES.find((x) => x.flowStepType === e.value);
+                if (mode) handleModeChange(mode);
+              }}
+            />
+            <LabelComponent
+              text={activeMode.description}
+              size="xs"
+              weight="bold"
+              className="mt-1"
+            />
           </div>
 
           <FlowStepCursorFormFieldsComponent
@@ -180,15 +182,8 @@ export default function FlowStepCursorFormComponent({
             parentFlowStepId={defaultValues.parentFlowStepId}
             isDisabled={formMode === "VIEW"}
           />
-
-          <FormFooterComponent
-            formMode={formMode}
-            isValid={isValid}
-            isDirty={isDirty}
-            onCancel={onCancel}
-          />
-        </form>
-      </FormProvider>
-    </>
+        </FlowStepFormLayoutComponent>
+      </form>
+    </FormProvider>
   );
 }

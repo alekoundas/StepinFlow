@@ -409,6 +409,91 @@ namespace Business.Tests.Flows
         }
 
         // ================================================================
+        // Copy and paste
+        // ================================================================
+
+        // A search with a template, its Success row, and a move under it reading the search.
+        private async Task<List<FlowStep>> SearchWithMoveAsync(int flowId)
+        {
+            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find", FlowStepTemplates = [new FlowStepTemplate { TemplateImage = [1, 2, 3] }] };
+            FlowStep success = TreeStepHelper.CreateBranchChildren(find).First(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+            FlowStep move = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", ParentFlowStep = success, FlowStepReference = find };
+
+            await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, move], [], Ct);
+
+            return Steps(flowId);
+        }
+
+        [Fact]
+        public async Task A_pasted_step_brings_everything_under_it_named_apart_and_reading_the_copy()
+        {
+            int flowId = await NewFlowAsync();
+            List<FlowStep> original = await SearchWithMoveAsync(flowId);
+            FlowStep find = original.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = find.Id, TargetFlowId = flowId, TargetIndex = 1 }, Ct);
+
+            pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
+            List<FlowStep> steps = Steps(flowId);
+            FlowStep copy = steps.Single(x => x.Id == pasted.Data);
+            FlowStep copySuccess = steps.Single(x => x.ParentFlowStepId == copy.Id && x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+            FlowStep copyMove = steps.Single(x => x.ParentFlowStepId == copySuccess.Id);
+
+            copy.Name.ShouldBe("Find 2");
+            copyMove.Name.ShouldBe("Move 2");
+            copyMove.FlowStepReferenceId.ShouldBe(copy.Id);
+            steps.Where(x => x.ParentFlowStepId == copy.Id).Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE], ignoreOrder: true);
+            steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find", "Find 2"]);
+
+            List<FlowStepTemplate> templates = Templates(flowId);
+            templates.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(2);
+            templates.Single(x => x.FlowStepId == copy.Id).TemplateImage.ShouldBe([1, 2, 3]);
+        }
+
+        // Where it lands decides whether the step can still read it, and the validator says when not.
+        [Fact]
+        public async Task A_pasted_step_keeps_a_reference_to_a_step_outside_the_copy()
+        {
+            int flowId = await NewFlowAsync();
+            List<FlowStep> original = await SearchWithMoveAsync(flowId);
+            FlowStep find = original.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            FlowStep move = original.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE);
+            FlowStep failure = original.Single(x => x.FlowStepType == FlowStepTypeEnum.FAILURE);
+
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = move.Id, TargetParentFlowStepId = failure.Id }, Ct);
+
+            pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
+            FlowStep copy = Steps(flowId).Single(x => x.Id == pasted.Data);
+            copy.ParentFlowStepId.ShouldBe(failure.Id);
+            copy.FlowStepReferenceId.ShouldBe(find.Id);
+        }
+
+        [Fact]
+        public async Task A_step_is_pasted_only_into_the_flow_it_was_copied_from()
+        {
+            int flowId = await NewFlowAsync();
+            int otherFlowId = (await _dataService.Flow.CreateAsync(new Flow { Name = "Other" }, Ct)).Data;
+            FlowStep find = (await SearchWithMoveAsync(flowId)).Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = find.Id, TargetFlowId = otherFlowId }, Ct);
+
+            pasted.IsSuccess.ShouldBeFalse();
+            Steps(otherFlowId).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_branch_is_not_pasted_without_its_step()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep success = (await SearchWithMoveAsync(flowId)).Single(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = success.Id, TargetFlowId = flowId }, Ct);
+
+            pasted.IsSuccess.ShouldBeFalse();
+            Steps(flowId).Count(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS).ShouldBe(1);
+        }
+
+        // ================================================================
         // From a file
         // ================================================================
 

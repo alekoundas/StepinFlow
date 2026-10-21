@@ -61,7 +61,6 @@ export default function FlowStepKeyboardFormFieldsComponent({
         label="Name"
         isRequired={true}
         isDisabled={isDisabled}
-        className="mt-5"
       />
 
       <FormSelectButtonComponent

@@ -179,6 +179,38 @@ export const getFlowStepCatalogEntry = (
   FLOW_STEP_CATALOG.find((x) => x.flowStepType === flowStepType);
 
 /**
+ * A colour per group, so a glance says what kind of thing a step does, in the tree and on its form.
+ *
+ * Only the accent is picked here and the tints are mixed from it. PrimeFlex's bg-{colour}-50
+ * classes cannot be used: the palette is not inverted for dark themes, so bg-blue-50 is near
+ * white on a dark theme. Mixing into transparent tints whatever surface is actually behind, which
+ * lands correctly on either.
+ *
+ * No group uses green or red. Those mean Success and Failure.
+ */
+const GROUP_ACCENTS: Record<FlowStepGroupEnum, string> = {
+  CONTROL: "var(--bluegray-400)",
+  INPUT: "var(--blue-400)",
+  WINDOW: "var(--purple-400)",
+  PERCEPTION: "var(--orange-400)",
+  SYSTEM: "var(--teal-400)",
+  BRANCH: "var(--bluegray-400)",
+};
+
+/** The two branches carry meaning rather than a category, so they get the semantic colours. */
+const TYPE_ACCENTS: Partial<Record<FlowStepTypeEnum, string>> = {
+  [FlowStepTypeEnum.SUCCESS]: "var(--green-400)",
+  [FlowStepTypeEnum.FAILURE]: "var(--red-400)",
+};
+
+export const flowStepAccent = (flowStepType: FlowStepTypeEnum | undefined): string =>
+  (flowStepType && TYPE_ACCENTS[flowStepType]) ??
+  GROUP_ACCENTS[getFlowStepCatalogEntry(flowStepType)?.group ?? FlowStepGroupEnum.CONTROL];
+
+export const tint = (accent: string, percent: number): string =>
+  `color-mix(in srgb, ${accent} ${percent}%, transparent)`;
+
+/**
  * Types created with a Success and a Failure child. Mirrors TreeStepHelper.BranchTypes - only these
  * route on their outcome, so only these are worth reporting one for.
  */

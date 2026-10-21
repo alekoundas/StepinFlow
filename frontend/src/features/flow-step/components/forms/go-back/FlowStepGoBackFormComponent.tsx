@@ -5,8 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
-import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
+import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepGoBackSchema } from "@/features/flow-step/components/forms/go-back/flow-step-go-back.zod";
 import FlowStepGoBackFormFieldsComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormFieldsComponent";
 
@@ -54,31 +53,26 @@ export default function FlowStepGoBackFormComponent({
 
   return (
     <>
-      <FormHeaderComponent
-        title="Go Back Step Configuration"
-        description="Return to a step this one already passed on the way here, and carry on from there."
-        formMode={formMode}
-        onEdit={onEdit}
-      />
-
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-column h-full"
         >
-          <FlowStepGoBackFormFieldsComponent
-            rootId={defaultValues.rootId}
-            parentFlowStepId={defaultValues.parentFlowStepId}
-            orderNumber={defaultValues.orderNumber}
-            isDisabled={formMode === "VIEW"}
-          />
-
-          <FormFooterComponent
+          <FlowStepFormLayoutComponent
             formMode={formMode}
             isValid={isValid}
             isDirty={isDirty}
+            onEdit={onEdit}
             onCancel={onCancel}
-          />
+            baseValues={defaultValues}
+          >
+            <FlowStepGoBackFormFieldsComponent
+              rootId={defaultValues.rootId}
+              parentFlowStepId={defaultValues.parentFlowStepId}
+              orderNumber={defaultValues.orderNumber}
+              isDisabled={formMode === "VIEW"}
+            />
+          </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>
     </>

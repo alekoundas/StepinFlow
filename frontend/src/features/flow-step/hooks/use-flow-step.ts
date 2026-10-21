@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
+import type {
+  FlowStepMoveDto,
+  FlowStepPasteDto,
+} from "@/shared/models/flow-step-move.dto";
 
 export const flowStepKeys = {
   detail: (id: number) => ["flowStep", "detail", id] as const,
@@ -53,10 +56,17 @@ export function useFlowStepMutations() {
     onSuccess: invalidate,
   });
 
+  // A copy can carry references to steps outside it that its new place cannot reach.
+  const pasteFlowStepMutation = useMutation({
+    mutationFn: (dto: FlowStepPasteDto) => backendApiService.FlowStep.paste(dto),
+    onSuccess: invalidate,
+  });
+
   return {
     createFlowStepMutation,
     updateFlowStepMutation,
     deleteFlowStepMutation,
     moveFlowStepMutation,
+    pasteFlowStepMutation,
   };
 }

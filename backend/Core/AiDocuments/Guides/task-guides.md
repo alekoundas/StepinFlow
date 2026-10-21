@@ -35,6 +35,26 @@ changes as you work through them.
 
 Cover: Extract to sub-flow, what gets copied versus moved, and why references are checked first.
 
+## Repeating a step somewhere else in the flow
+
+Select the step in the tree and press **Copy**. The copy takes everything under the step, and a bar
+over the tree names it. **Paste here** beside any + puts a copy at the end of that branch; the copy
+stays, so it can go in several places. A pasted step is named apart from the one it copies ("Find
+button 2"), since the script refers to steps by name.
+Its templates become files of its own. A step inside the copy that read another step inside it
+reads the copy's. One that read a step outside it still reads that step, and validation marks it
+when the new place cannot reach it.
+
+A copy goes only into the flow it was copied from. Another flow has its own areas, points and
+inputs, so to reuse steps across flows, extract them to a sub-flow instead.
+
+## Saying why a step is there
+
+Every step's form, Success and Failure included, ends with **Why it is here**: the step's comment,
+written above it in the script as `#` lines. The form shows that line as it will print. It is the
+first thing read when a failure is explained, so say what you expect at that point and what it
+means if it fails, rather than what the step does, which its line already says.
+
 ## Sharing a flow as a file
 
 A flow's **Export**, beside Run in the editor, writes it as a `.sflw` script with its templates in a

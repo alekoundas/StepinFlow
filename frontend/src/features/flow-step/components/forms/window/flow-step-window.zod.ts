@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
+import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const WINDOW_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.WINDOW_FOCUS,
@@ -17,6 +18,7 @@ export const isWindowFlowStepType = (
 
 export const FlowStepWindowSchema = z
   .object({
+    codeComment: CODE_COMMENT_SCHEMA,
     name: z
       .string()
       .min(1, "Name is required")
