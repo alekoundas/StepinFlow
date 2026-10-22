@@ -257,6 +257,29 @@ namespace Business.Tests.AreaPoint
             point.Point.ShouldBe(new Point(1920, 540));
         }
 
+        // The location form's Test, before the location is saved.
+        [Fact]
+        public async Task A_point_not_saved_yet_is_measured_from_its_saved_area()
+        {
+            using TestDatabase database = new TestDatabase();
+            int areaId;
+            using (DataAccess.AppDbContext db = database.CreateDbContext())
+            {
+                Flow flow = new Flow { Name = "Flow" };
+                FlowArea area = new FlowArea { Name = "Screen", Type = FlowAreaTypeEnum.MONITOR, Flow = flow };
+                db.FlowAreas.Add(area);
+                db.SaveChanges();
+                areaId = area.Id;
+            }
+
+            AreaPointResolver resolver = new AreaPointResolver(database, _windows, _screen);
+            FlowPoint unsaved = new FlowPoint { FlowAreaId = areaId, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.5f, RatioY = 0.25f };
+
+            PointResolution point = await resolver.ResolvePointAsync(unsaved, TestToken.Ct);
+
+            point.Point.ShouldBe(new Point(1920, 540));
+        }
+
         [Fact]
         public void A_point_outside_its_area_is_brought_to_its_edge()
         {

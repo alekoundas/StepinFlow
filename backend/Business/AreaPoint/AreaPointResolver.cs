@@ -58,6 +58,25 @@ namespace Business.AreaPoint
             return ResolvePoint(point);
         }
 
+        public async Task<PointResolution> ResolvePointAsync(FlowPoint point, CancellationToken ct = default)
+        {
+            if (point.FlowAreaId == null)
+                return ResolvePoint(point);
+
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            FlowArea? area = await dbContext.FlowAreas
+                .AsNoTracking()
+                .Include(x => x.ParentFlowArea)
+                .FirstOrDefaultAsync(x => x.Id == point.FlowAreaId, ct);
+
+            if (area == null)
+                return PointResolution.Fail("The area it is measured from is not saved yet.");
+
+            point.FlowArea = area;
+            return ResolvePoint(point);
+        }
+
         public AreaResolution ResolveArea(FlowArea area)
         {
             AreaResolution placed;

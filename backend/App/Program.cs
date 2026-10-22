@@ -201,6 +201,7 @@ namespace App
             builder.Services.AddTransient<GetFlowStepScriptLineHandler>();
             builder.Services.AddTransient<TestImageSearchHandler>();
             builder.Services.AddTransient<TestRunCommandHandler>();
+            builder.Services.AddTransient<TestCursorStepHandler>();
             builder.Services.AddTransient<TestSearchTextHandler>();
             builder.Services.AddTransient<CreateFlowAreaHandler>();
             builder.Services.AddTransient<UpdateFlowAreaHandler>();
@@ -213,6 +214,7 @@ namespace App
             builder.Services.AddTransient<DeleteFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointPreviewHandler>();
+            builder.Services.AddTransient<ResolveFlowPointHandler>();
             builder.Services.AddTransient<GetFlowStepTemplateHandler>();
             builder.Services.AddTransient<GetLookupWindowHandler>();
             builder.Services.AddTransient<GetLookupMonitorHandler>();

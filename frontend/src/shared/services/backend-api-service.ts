@@ -143,6 +143,8 @@ export const backendApiService = {
       call<RunCommandTestResultDto>("FlowStep.testRunCommand", dto),
     testSearchText: (dto: FlowStepDto) =>
       call<SearchTextTestResultDto>("FlowStep.testSearchText", dto),
+    /** Moves or drags the real cursor as the step would. Saved locations only. */
+    testCursor: (dto: FlowStepDto) => call<boolean>("FlowStep.testCursor", dto),
   },
 
   FlowStepTemplate: {
@@ -170,6 +172,9 @@ export const backendApiService = {
     get: (id: number) => call<FlowPointDto>("FlowPoint.get", id),
     getPreview: (id: number) =>
       call<ScreenPointDto>("FlowPoint.getPreview", id),
+    /** Where a location as its form has it lands now, measured from its saved area. */
+    resolve: (dto: FlowPointDto) =>
+      call<ScreenPointDto>("FlowPoint.resolve", dto),
   },
 
   Lookup: {

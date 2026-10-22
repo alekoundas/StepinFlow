@@ -23,6 +23,11 @@ namespace Business.Tests.Fakes
             return Task.FromResult(Points.GetValueOrDefault(flowPointId) ?? PointResolution.Fail("The point no longer exists."));
         }
 
+        public Task<PointResolution> ResolvePointAsync(FlowPoint point, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
+        }
+
         // An area already loaded, by its name.
         public Dictionary<string, AreaResolution> AreasByName { get; } = new Dictionary<string, AreaResolution>();
 

@@ -1,4 +1,5 @@
 import type z from "zod";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { SelectButton } from "primereact/selectbutton";
@@ -21,8 +22,6 @@ interface LocationOption {
   label: string;
   value: number;
   description?: string;
-  x: number;
-  y: number;
 }
 
 interface StepOption {
@@ -51,16 +50,22 @@ export default function FlowStepCursorLocationFieldsComponent({
   const { control, setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
   const { createFlowPointMutation } = useFlowPointMutations();
+  const [testError, setTestError] = useState<string | null>(null);
 
   // A location created from here should still be anchorable to an area, so the flow's areas
-  // are fetched rather than passed down from the flow form.
+  // are fetched rather than passed down from the flow form. What each scales with comes along,
+  // since it decides what a location in it is measured in.
   const { data: areaOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", flowId],
     queryFn: () =>
       backendApiService.Lookup.flowArea({ flowId }).then((res) =>
         res.data.map(
           (item) =>
-            new FlowAreaDto({ id: Number(item.value), name: item.label }),
+            new FlowAreaDto({
+              id: Number(item.value),
+              name: item.label,
+              scalesWith: item.extraData?.scalesWith,
+            }),
         ),
       ),
     enabled: !!flowId,
@@ -91,8 +96,6 @@ export default function FlowStepCursorLocationFieldsComponent({
         label: item.label,
         value: Number(item.value),
         description: item.description,
-        x: item.extraData?.x ?? 0,
-        y: item.extraData?.y ?? 0,
       })),
     );
 
@@ -138,12 +141,17 @@ export default function FlowStepCursorLocationFieldsComponent({
     });
   };
 
+  // Worked out from its area the way an execution does, not read off the stored numbers.
   const handleTest = async () => {
-    const locations = await loadLocations();
-    const selected = locations.find((x) => x.value === flowPointId);
-    if (!selected) return;
+    if (!flowPointId) return;
+    setTestError(null);
 
-    await backendApiService.System.moveCursor({ x: selected.x, y: selected.y });
+    try {
+      const point = await backendApiService.FlowPoint.getPreview(flowPointId);
+      await backendApiService.System.moveCursor(point);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "The location could not be worked out.");
+    }
   };
 
   return (
@@ -202,7 +210,7 @@ export default function FlowStepCursorLocationFieldsComponent({
             onClick={handleTest}
             disabled={!flowPointId}
             className="p-button-outlined mb-3"
-            tooltip="Move the real cursor to the selected location"
+            tooltip="Move the real cursor to where the flow will put it"
             tooltipOptions={{ position: "top" }}
           />
         </div>
@@ -223,6 +231,13 @@ export default function FlowStepCursorLocationFieldsComponent({
           />
         </div>
       )}
+
+      <LabelComponent
+        text={testError ?? ""}
+        hidden={testError === null}
+        size="sm"
+        color="error"
+      />
     </div>
   );
 }

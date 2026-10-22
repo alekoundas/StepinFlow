@@ -14,6 +14,12 @@ percentage. When the flow runs, the area is resolved first and the point is plac
 Pixels are stored with the DPI they were captured at, so inside an area that scales with DPI the
 point moves with the monitor's scaling.
 
+What a point is measured in follows the area it is measured from. Inside an area whose contents
+scale with its size, such as a game that stretches with its window, pixels are not scaled at all,
+so the form picks Percent and keeps it there. Inside an area that scales with the screen's DPI it
+picks Pixels, since a button keeps its distance from the corner as the window grows, and Percent
+can still be chosen for something laid out proportionally.
+
 An absolute point is a fixed screen position. Anchor a point whenever the thing it points at
 belongs to a window: an absolute point stops being right the moment the window moves, and on any
 other screen. Every step that uses one - or a point inside a region that is itself in screen
@@ -29,9 +35,15 @@ area must be on screen when you capture, because the offset is measured from whe
 
 ## Testing a point
 
-The **Test** button physically moves your mouse to where the point resolves. If the mouse lands
-somewhere unexpected, the point is anchored to the wrong area or the area is resolving somewhere
-you did not expect.
+The **Test** button physically moves your mouse to where the point resolves, worked out exactly as
+a flow does. It works in the point's own form before it is saved, and beside a saved point in a
+Move or a Drag. A point measured from an area added in the same unsaved edit cannot be tested
+until the flow is saved. If the mouse lands somewhere unexpected, the point is anchored to the
+wrong area or the area is resolving somewhere you did not expect.
+
+A Move or a Drag between saved points has **Test now** in its form, which does the move or the
+whole drag for real, as the flow would. A step's result exists only while the flow executes, so a
+Move or a Drag that uses one cannot be tested.
 
 ## Where a cursor step gets its position
 

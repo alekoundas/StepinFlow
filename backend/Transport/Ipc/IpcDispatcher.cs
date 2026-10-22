@@ -98,6 +98,7 @@ namespace Transport.Ipc
                     "FlowStep.testImageSearch" => await Handler<TestImageSearchHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
                     "FlowStep.testRunCommand" => await Handler<TestRunCommandHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
                     "FlowStep.testSearchText" => await Handler<TestSearchTextHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.testCursor" => await Handler<TestCursorStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
 
                     // FlowArea
                     "FlowArea.create" => await Handler<CreateFlowAreaHandler>().HandleAsync(Payload<FlowAreaDto>(request), ct),
@@ -113,6 +114,7 @@ namespace Transport.Ipc
                     "FlowPoint.delete" => await Handler<DeleteFlowPointHandler>().HandleAsync(Payload<int>(request), ct),
                     "FlowPoint.get" => await Handler<GetFlowPointHandler>().HandleAsync(Payload<int>(request), ct),
                     "FlowPoint.getPreview" => await Handler<GetFlowPointPreviewHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowPoint.resolve" => await Handler<ResolveFlowPointHandler>().HandleAsync(Payload<FlowPointDto>(request), ct),
 
                     // FlowStepTemplate
                     "FlowStepTemplate.get" => await Handler<GetFlowStepTemplateHandler>().HandleAsync(Payload<int>(request), ct),

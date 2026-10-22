@@ -4,10 +4,12 @@ import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "primereact/button";
 import { SelectButton } from "primereact/selectbutton";
 
 import LabelComponent from "@/shared/components/LabelComponent";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
@@ -55,6 +57,21 @@ export default function FlowStepCursorFormComponent({
   const activeMode =
     CURSOR_MODES.find((x) => x.flowStepType === flowStepType) ??
     CURSOR_MODES[0];
+
+  const isPointCustom = useWatch({ control, name: "isPointCustom" });
+  const flowPointId = useWatch({ control, name: "flowPointId" });
+  const isPointEndCustom = useWatch({ control, name: "isPointEndCustom" });
+  const flowPointEndId = useWatch({ control, name: "flowPointEndId" });
+
+  const [isTesting, setIsTesting] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  // A step result exists only while the flow executes, so only saved locations can be tested.
+  const isMove = flowStepType === FlowStepTypeEnum.CURSOR_RELOCATE;
+  const isDrag = flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
+  const hasStart = isPointCustom && !!flowPointId;
+  const hasEnd = isPointEndCustom && !!flowPointEndId;
+  const canTest = (isMove && hasStart) || (isDrag && hasStart && hasEnd);
 
   // Force full validation on mount so that isValid + errors are in sync
   useEffect(() => {
@@ -123,6 +140,23 @@ export default function FlowStepCursorFormComponent({
     });
   };
 
+  const runTest = async () => {
+    setIsTesting(true);
+    setTestError(null);
+
+    try {
+      await backendApiService.FlowStep.testCursor(toDto(form.getValues()));
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "The test did not complete.");
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  let testTooltip = "Moves the cursor now, the way the flow will";
+  if (!canTest) testTooltip = "A step result exists only while the flow executes: test with saved locations";
+  else if (isDrag) testTooltip = "Does the drag now, the way the flow will";
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit((data) => onSubmit(toDto(data)))}>
@@ -134,6 +168,21 @@ export default function FlowStepCursorFormComponent({
           onCancel={onCancel}
           baseValues={defaultValues}
           toDto={(values) => toDto(values as z.infer<typeof FlowStepCursorSchema>)}
+          testAction={
+            (isMove || isDrag) && (
+              <Button
+                type="button"
+                label={isTesting ? "Testing..." : "Test now"}
+                icon="pi pi-play"
+                loading={isTesting}
+                disabled={!canTest || isTesting}
+                onClick={runTest}
+                outlined
+                tooltip={testTooltip}
+                tooltipOptions={{ position: "top", showOnDisabled: true }}
+              />
+            )
+          }
         >
           {/* Each mode is its own FlowStepType, the form just switches between them. */}
           <div className="field">
@@ -162,6 +211,13 @@ export default function FlowStepCursorFormComponent({
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             parentFlowStepId={defaultValues.parentFlowStepId}
             isDisabled={formMode === "VIEW"}
+          />
+
+          <LabelComponent
+            text={testError ?? ""}
+            hidden={testError === null}
+            size="sm"
+            color="error"
           />
         </FlowStepFormLayoutComponent>
       </form>

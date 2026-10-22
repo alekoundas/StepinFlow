@@ -17,9 +17,11 @@ namespace Platform.Windows.Vision
     public sealed class OpenCvService : IOpenCvService
     {
         // What a normalized correlation can legitimately produce. Anything outside is an artefact
-        // of the division, not a measurement.
-        private const double ScoreCeiling = 1d;
-        private const double ScoreFloor = -1d;
+        // of the division, not a measurement - give or take rounding, since a template matching
+        // itself comes out a hair over one.
+        private const double SCORE_CEILING = 1d;
+        private const double SCORE_FLOOR = -1d;
+        private const double ROUNDING = 0.001d;
 
         public TemplateMatchOutcome Match(TemplateMatchRequest request)
         {
@@ -139,17 +141,26 @@ namespace Platform.Windows.Vision
 
             using Mat working = result.Clone();
 
-            // A masked correlation over a flat region is 0/0. Screenshots are full of flat regions,
-            // and one NaN poisons MinMaxLoc for the whole matrix - which loses the real match, not
-            // just the blank area. Rewrite them as the worst score this mode can hold instead.
-            Cv2.PatchNaNs(working, lowerIsBetter ? 1d : 0d);
+            // A masked correlation over a flat region divides by zero, and screenshots are full of
+            // flat regions: a blank panel, a black transition, a white flash. Nothing over nothing is
+            // a NaN, which poisons MinMaxLoc for the whole matrix; anything else over nothing is an
+            // infinity, or a number far outside [-1, 1]. None of them is a measurement, so all become
+            // the worst score this mode can hold. Clamped to the ceiling instead, an infinity was a
+            // perfect match, accepted at any accuracy, in the middle of whatever was blank.
+            double worst = lowerIsBetter ? 1d : 0d;
+            Cv2.PatchNaNs(working, worst);
 
-            // The same division underflows to an infinity rather than a NaN, which PatchNaNs leaves
-            // alone. An infinite score then beats every real one: it sorts to the front, clears any
-            // accuracy, and is recorded as the best the screenshot had. Every normalized mode lives in
-            // [-1, 1], so clamping there removes the infinities and touches nothing genuine.
-            Cv2.Min(working, ScoreCeiling, working);
-            Cv2.Max(working, ScoreFloor, working);
+            Scalar lowest = new Scalar(SCORE_FLOOR - ROUNDING);
+            Scalar highest = new Scalar(SCORE_CEILING + ROUNDING);
+            using Mat measured = new Mat();
+            using Mat unmeasured = new Mat();
+            Cv2.InRange(working, lowest, highest, measured);
+            Cv2.BitwiseNot(measured, unmeasured);
+            working.SetTo(Scalar.All(worst), unmeasured);
+
+            // What is left is genuine, and only rounding takes it past the bounds.
+            Cv2.Min(working, SCORE_CEILING, working);
+            Cv2.Max(working, SCORE_FLOOR, working);
 
             while (matches.Count < request.MaxMatches || rejected.Count < request.RejectedLimit)
             {

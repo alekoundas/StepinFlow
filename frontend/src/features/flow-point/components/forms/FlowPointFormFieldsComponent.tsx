@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -13,6 +13,7 @@ import { useCapturePoint } from "@/features/flow-point/hooks/use-capture-point";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
+import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 interface Props {
   // Areas this point can be measured from.
@@ -25,19 +26,59 @@ interface Props {
 const toRatio = (offset: number, size: number): number =>
   size > 0 ? Math.round((offset / size) * 10000) / 10000 : 0;
 
+// The backend's rule: unset inherits the parent's, and an area with neither scales with DPI.
+const scalesWithOf = (
+  areaId: number | null | undefined,
+  areas: FlowAreaDto[],
+): ScalesWithEnum | undefined => {
+  const area = areas.find((x) => x.id === areaId);
+  if (!area) return undefined;
+  if (area.scalesWith) return area.scalesWith;
+
+  const parent = areas.find((x) => x.id === area.parentFlowAreaId);
+  return parent?.scalesWith ?? ScalesWithEnum.DPI;
+};
+
 export default function FlowPointFormFieldsComponent({
   areaOptions,
   isDisabled = false,
 }: Props) {
-  const { control, setValue } = useFormContext();
-  const [captureError, setCaptureError] = useState<string | null>(null);
+  const { control, setValue, getValues } = useFormContext();
+  const [pointError, setPointError] = useState<string | null>(null);
 
   const flowAreaId = useWatch({ control, name: "flowAreaId" });
   const offsetMode = useWatch({ control, name: "offsetMode" });
-  const locationX = useWatch({ control, name: "locationX" });
-  const locationY = useWatch({ control, name: "locationY" });
 
   const { capturePoint, cancelCapture, isCapturing } = useCapturePoint();
+
+  const areaName = areaOptions.find((x) => x.id === flowAreaId)?.name ?? "The area";
+
+  // Pixels inside an area that scales with its size are not scaled at all, so they land somewhere
+  // else as soon as the window is another size. Only a percent follows it.
+  const isPercentOnly = scalesWithOf(flowAreaId, areaOptions) === ScalesWithEnum.AREA;
+
+  // A new area is not in the database yet, and the location is measured from the saved one.
+  const isAreaUnsaved = !!flowAreaId && flowAreaId < 0;
+
+  // Picking an area sets what the location is measured in: Percent where only a percent follows
+  // it, Pixels where its contents keep their size. Only on a pick, so opening a saved location
+  // changes nothing.
+  const pickedAreaId = useRef(flowAreaId);
+  useEffect(() => {
+    if (isDisabled || pickedAreaId.current === flowAreaId) return;
+    pickedAreaId.current = flowAreaId;
+
+    if (!flowAreaId) return;
+
+    const mode = isPercentOnly ? AreaSizingModeEnum.RATIO : AreaSizingModeEnum.ABSOLUTE_PX;
+    setValue("offsetMode", mode, { shouldValidate: true, shouldDirty: true });
+  }, [flowAreaId, isPercentOnly, isDisabled, setValue]);
+
+  let measuredInHint: string | undefined;
+  if (isPercentOnly && offsetMode === AreaSizingModeEnum.RATIO)
+    measuredInHint = `${areaName} scales with its size, so a location in it is a percent of it.`;
+  else if (isPercentOnly)
+    measuredInHint = `${areaName} scales with its size, and pixels do not follow it. Switch to Percent and capture the location again.`;
 
   const areaDropdownOptions = areaOptions.map((x) => ({
     label: x.name,
@@ -55,7 +96,7 @@ export default function FlowPointFormFieldsComponent({
 
     // No area: the point is an absolute screen coordinate.
     if (!flowAreaId) {
-      setCaptureError(null);
+      setPointError(null);
       write("locationX", point.x);
       write("locationY", point.y);
       return;
@@ -67,13 +108,13 @@ export default function FlowPointFormFieldsComponent({
     // Writing the raw screen point as if it were an offset would look like it worked and place
     // the click somewhere else entirely, so refuse instead.
     if (!preview.isResolved) {
-      setCaptureError(
+      setPointError(
         preview.errorMessage ??
           "That area is not on screen right now, so the point cannot be measured from it.",
       );
       return;
     }
-    setCaptureError(null);
+    setPointError(null);
 
     const offsetX = point.x - preview.locationX;
     const offsetY = point.y - preview.locationY;
@@ -91,8 +132,16 @@ export default function FlowPointFormFieldsComponent({
     write("authoredDpi", preview.dpi);
   };
 
+  // Worked out the way an execution does, from the values on the form and the saved area.
   const handleTest = async () => {
-    await backendApiService.System.moveCursor({ x: locationX, y: locationY });
+    setPointError(null);
+
+    try {
+      const point = await backendApiService.FlowPoint.resolve(getValues() as FlowPointDto);
+      await backendApiService.System.moveCursor(point);
+    } catch (err) {
+      setPointError(err instanceof Error ? err.message : "The location could not be worked out.");
+    }
   };
 
   return (
@@ -127,7 +176,8 @@ export default function FlowPointFormFieldsComponent({
                 { label: "Pixels", value: AreaSizingModeEnum.ABSOLUTE_PX },
                 { label: "Percent", value: AreaSizingModeEnum.RATIO },
               ]}
-              isDisabled={isDisabled}
+              isDisabled={isDisabled || (isPercentOnly && offsetMode === AreaSizingModeEnum.RATIO)}
+              hintText={measuredInHint}
             />
           </div>
         </div>
@@ -158,20 +208,20 @@ export default function FlowPointFormFieldsComponent({
             type="button"
             label="Test"
             icon="pi pi-play"
-            disabled={isCapturing || !!flowAreaId}
+            disabled={isCapturing || isAreaUnsaved}
             onClick={handleTest}
             className="p-button-outlined"
             tooltip={
-              flowAreaId
-                ? "Save first, then test from the grid so the area can be resolved"
-                : "Move the real cursor here so you can confirm the point"
+              isAreaUnsaved
+                ? "Save the flow first: its new area cannot be found until it is saved"
+                : "Move the real cursor to where the flow will put it"
             }
             tooltipOptions={{ position: "top" }}
           />
 
           <LabelComponent
-            text={captureError ?? ""}
-            hidden={captureError === null}
+            text={pointError ?? ""}
+            hidden={pointError === null}
             size="sm"
             color="error"
           />

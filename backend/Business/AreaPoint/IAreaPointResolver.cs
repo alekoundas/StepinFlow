@@ -13,6 +13,9 @@ namespace Business.AreaPoint
         Task<AreaResolution> ResolveAreaAsync(int flowAreaId, CancellationToken ct = default);
         Task<PointResolution> ResolvePointAsync(int flowPointId, CancellationToken ct = default);
 
+        /// <summary>A point not saved yet, as its form has it, measured from a saved area.</summary>
+        Task<PointResolution> ResolvePointAsync(FlowPoint point, CancellationToken ct = default);
+
         /// <summary>Parent chain must already be loaded.</summary>
         AreaResolution ResolveArea(FlowArea area);
         PointResolution ResolvePoint(FlowPoint point);

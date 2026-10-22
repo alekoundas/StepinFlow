@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 111 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 113 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -1699,6 +1699,15 @@ to: those can be renamed, and keeping a copy of their name current would mean re
 edited. The tree shows where a Move goes beside its name instead. The form's header gets the name
 back with the script line, so it shows what the step will be called before it is saved.
 
+**Testing a location.** Every Test of a location works it out with `AreaPointResolver`, the way an
+execution does: `FlowPoint.resolve` for the values on the location form, measured from the saved
+area, and `FlowPoint.getPreview` for a saved location beside a Move or a Drag. A Move or a Drag
+between saved locations has Test now: `FlowStep.testCursor` works out both ends with the resolver,
+then moves or drags the real cursor in `TestCursorStepHandler`. A step result exists only while the
+flow executes, so a step that reads one is not tested. "Measured in" follows the area a location is
+measured from: Percent, fixed, in an area that scales with its size, where pixels are not scaled;
+Pixels, changeable, in one that scales with DPI.
+
 TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["lookup", …]`; mutations
 invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
 `DialogRootComponent`.
@@ -1886,17 +1895,17 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-786 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+792 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 172 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 587 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 588 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
-| `Transport.Tests` | 4 | Start refusing a flow, or a sub-flow it calls, that has errors |
-| `Platform.Windows.Tests` | 4 | grouping clicked elements, on drawn screenshots |
+| `Transport.Tests` | 7 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test |
+| `Platform.Windows.Tests` | 6 | grouping clicked elements, and a template with erased pixels beside a flat patch, on drawn screenshots |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2006,7 +2015,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 786 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 792 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

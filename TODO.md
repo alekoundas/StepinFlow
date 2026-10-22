@@ -411,6 +411,23 @@ the history.
 
 ## Frontend
 
+- [ ] **Say when a location is outside its area, or in pixels where pixels cannot follow.**
+      Raised 2026-10-22. An execution brings a location outside its area to the area's edge
+      (`AreaPointResolver.Clamp`), so a bad value clicks somewhere plausible instead of failing.
+      Percent is already held to 0-100% by the form. Still to do:
+      - **The location form:** refuse a capture outside the area on the spot, in both modes; never a
+        negative pixel offset from an area; typed pixels checked against the area's size when it is
+        on screen, and saved with a hint that it could not be checked when it is not.
+      - **The flow validator:** an error for a location outside its area (negative pixels, a percent
+        past 0-100%), since it always clicks the wrong place; a warning for pixels inside an area
+        that scales with its size, which is right only at the size it was captured. Changing an
+        area still saves; the locations it breaks are flagged. The live size is not known here, so
+        only those rules.
+      - **Where it shows:** issues are keyed to steps today, so a location's need their own key. A
+        warning on the location's row and on the tab that lists locations, and on the steps that use
+        it, since that is where an execution's failure shows. The mockup's editor has tabs for
+        steps, areas, inputs, templates and the script but none for locations yet.
+
 - [ ] **Paste a copied step into another flow.** Raised 2026-10-21, when copy and paste was built
       for one flow (PROJECT.md §13, The tree). Opening another flow drops the copy, and
       `FlowStep.paste` refuses a target outside the source flow. The copy's areas, points and

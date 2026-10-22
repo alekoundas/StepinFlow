@@ -1,3 +1,4 @@
+using Core.Enums;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,12 @@ namespace Transport.Ipc.Handlers
                     Value = x.Id.ToString(CultureInfo.InvariantCulture),
                     Label = x.Name,
                     Description = x.Type.ToString(),
+                    // What a location in it is measured in follows from this. Unset inherits the
+                    // parent's, and an area with neither scales with DPI.
+                    ExtraData = new
+                    {
+                        ScalesWith = x.ScalesWith ?? (x.ParentFlowArea != null ? x.ParentFlowArea.ScalesWith : null) ?? ScalesWithEnum.DPI,
+                    },
                 })
                 .ToListAsync(ct);
 
