@@ -40,6 +40,28 @@ namespace Core.Helpers
             return cropped;
         }
 
+        /// <summary>
+        /// Copies the part of source that overlaps target into it, both in screen coordinates. How a
+        /// region lying across two monitors is put together from their screenshots.
+        /// </summary>
+        public static void Paste(RawImage target, Rectangle targetBounds, RawImage source, Rectangle sourceBounds)
+        {
+            Rectangle overlap = Rectangle.Intersect(targetBounds, sourceBounds);
+            if (overlap.Width <= 0 || overlap.Height <= 0 || source.IsEmpty || target.IsEmpty)
+                return;
+
+            int sourceLeft = (overlap.X - sourceBounds.X) * BYTES_PER_PIXEL;
+            int targetLeft = (overlap.X - targetBounds.X) * BYTES_PER_PIXEL;
+            int rowLength = overlap.Width * BYTES_PER_PIXEL;
+
+            for (int row = 0; row < overlap.Height; row++)
+            {
+                int from = (overlap.Y - sourceBounds.Y + row) * source.Stride + sourceLeft;
+                int to = (overlap.Y - targetBounds.Y + row) * target.Stride + targetLeft;
+                Buffer.BlockCopy(source.Pixels, from, target.Pixels, to, rowLength);
+            }
+        }
+
         /// <summary>Each pixel repeated factor times across and down, with nothing blended.</summary>
         public static RawImage Enlarge(RawImage image, int factor)
         {

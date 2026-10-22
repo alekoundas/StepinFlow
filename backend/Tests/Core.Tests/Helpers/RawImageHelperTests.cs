@@ -61,5 +61,18 @@ namespace Core.Tests.Helpers
         {
             RawImageHelper.Crop(Screenshot(), BOUNDS, new Rectangle(0, 0, 50, 50)).IsEmpty.ShouldBeTrue();
         }
+
+        // Two monitors side by side, and a region lying across the seam between them.
+        [Fact]
+        public void A_region_across_two_screenshots_takes_each_part_from_its_own()
+        {
+            Rectangle region = new Rectangle(102, 201, 4, 1);
+            RawImage target = new RawImage { Width = 4, Height = 1, Stride = 16, Pixels = new byte[16] };
+
+            RawImageHelper.Paste(target, region, Screenshot(), BOUNDS);
+            RawImageHelper.Paste(target, region, Screenshot(), new Rectangle(104, 200, 4, 3));
+
+            Blues(target).ShouldBe([12, 13, 10, 11]);
+        }
     }
 }

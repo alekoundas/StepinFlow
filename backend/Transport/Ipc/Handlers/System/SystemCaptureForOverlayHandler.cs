@@ -20,9 +20,12 @@ namespace Transport.Ipc.Handlers
         {
             List<ScreenshotMonitorResponseDto> response = new List<ScreenshotMonitorResponseDto>();
 
+            // Taken the way an execution takes its screenshots, and lossless: the overlay shows them,
+            // and a template is cut from them, so it matches what a search will see. A fresh grab
+            // after confirming would race the overlay fading out and catch its selection border.
             foreach (MonitorInfo monitor in _screenService.GetAllMonitors())
             {
-                byte[] screenshot = _screenshotService.CaptureMonitor(monitor.DeviceId, ScreenshotFormatEnum.JPEG, 100);
+                byte[] screenshot = _screenshotService.Capture(monitor.Bounds, ScreenshotFormatEnum.PNG, 100);
 
                 response.Add(new ScreenshotMonitorResponseDto
                 {

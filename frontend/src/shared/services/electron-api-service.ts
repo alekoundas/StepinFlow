@@ -14,10 +14,12 @@ export const ElectronApiService = {
     openCaptureWindow: (
       parentSearchAreaBounds?: Rectangle | null,
       parentAreaName?: string | null,
+      withImage?: boolean,
     ) =>
       window.electronApi.overlay.openCaptureWindow(
         parentSearchAreaBounds,
         parentAreaName,
+        withImage,
       ),
     signalReady: () => window.electronApi.overlay.signalReady(),
     signalCloseWindow: (rect: Rectangle | null) =>

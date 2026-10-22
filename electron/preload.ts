@@ -10,6 +10,7 @@ type IpcBroadcastMessage<T> =
   import("./shared/types.js").IpcBroadcastMessage<T>;
 type ResultDto<T> = import("./shared/types.js").ResultDto<T>;
 type SignalReadyResponse = import("./shared/types.js").SignalReadyResponse;
+type OverlayCaptureResult = import("./shared/types.js").OverlayCaptureResult;
 type ImageEditorOpenRequest =
   import("./shared/types.js").ImageEditorOpenRequest;
 type ImageEditorReadyResponse =
@@ -84,11 +85,13 @@ const api: ElectronApi = {
     openCaptureWindow: (
       parentSearchAreaBounds?: Electron.Rectangle | null,
       parentAreaName?: string | null,
-    ): Promise<Electron.Rectangle | null> =>
+      withImage?: boolean,
+    ): Promise<OverlayCaptureResult | null> =>
       ipcRenderer.invoke(
         IPC_CHANNELS.OVERLAY_OPEN_CAPTURE_WINDOW,
         parentSearchAreaBounds ?? null,
         parentAreaName ?? null,
+        withImage ?? false,
       ),
     openPreviewWindow: (): Promise<null> =>
       ipcRenderer.invoke(IPC_CHANNELS.OVERLAY_OPEN_PREVIEW_WINDOW),

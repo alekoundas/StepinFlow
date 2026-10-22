@@ -234,7 +234,7 @@ export default function OverlayCapturePage() {
 
   function base64ToBlob(
     base64: string,
-    contentType = "image/jpeg",
+    contentType = "image/png",
     sliceSize = 512 * 1024,
   ): Blob {
     const byteCharacters = atob(base64);

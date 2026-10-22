@@ -167,6 +167,7 @@ namespace Transport.Ipc
                     // System IO
                     "System.takeScreenshot" => await Handler<SystemTakeScreenshotHandler>().HandleAsync(Payload<ScreenshotRequestDto>(request), ct),
                     "System.captureForOverlay" => await Handler<SystemCaptureForOverlayHandler>().HandleAsync(ct),
+                    "System.cropScreenshots" => await Handler<SystemCropScreenshotsHandler>().HandleAsync(Payload<ScreenshotCropRequestDto>(request), ct),
                     "System.moveCursor" => await Handler<SystemMoveCursorHandler>().HandleAsync(Payload<ScreenPointDto>(request), ct),
                     "System.installOcrLanguage" => await Handler<SystemInstallOcrLanguageHandler>().HandleAsync(Payload<string>(request), ct),
                     "System.openWindowsLanguageSettings" => await Handler<SystemOpenWindowsLanguageSettingsHandler>().HandleAsync(ct),

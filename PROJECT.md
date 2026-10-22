@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 119 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 120 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -1766,9 +1766,16 @@ Pasting into another flow would have to bring those along, or ask what to point 
 
 ### Capture flows
 
-**Overlay capture** (for `FlowArea`) opens a fullscreen transparent window per monitor, all showing a
-frozen screenshot plus a dimmer, clipping one shared physical selection rect to their own monitor.
-Confirm sends the physical absolute rect back.
+**Overlay capture** (for `FlowArea` and templates) opens a fullscreen transparent window per
+monitor, all showing a frozen screenshot plus a dimmer, clipping one shared physical selection rect
+to their own monitor. Confirm sends the physical absolute rect back.
+
+A template is cut from the screenshots the overlay showed, not grabbed from the screen after
+confirming. Windows can still be fading the overlay out by then, and a fresh grab caught the
+selection's border round the template's edge. The screenshots are PNG, taken the way an execution
+takes its own, so the template matches what a search will see. Electron keeps them while the overlay
+is open and, on confirm, sends the selection back with the ones it lies on; `System.cropScreenshots`
+cuts it out, across monitors when it spans two.
 
 **Point capture** (for `FlowPoint`) is deliberately not a window. The always-running global hook is
 put into point-capture mode and resolves on the first `BUTTON_DOWN` — not `BUTTON_UP`, because the
@@ -1920,16 +1927,16 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-796 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+799 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 172 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
+| `Core.Tests` | 173 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
 | `Business.Tests` | 590 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
-| `Transport.Tests` | 9 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered |
+| `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
 | `Platform.Windows.Tests` | 6 | grouping clicked elements, and a template with erased pixels beside a flat patch, on drawn screenshots |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
@@ -2040,7 +2047,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 796 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 799 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

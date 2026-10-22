@@ -1,12 +1,14 @@
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import type { Rectangle } from "electron";
 import { useState, useCallback } from "react";
+import type { OverlayCaptureResult } from "../../../../../electron/shared/types";
 
 interface Props {
   openWindow: (
     parentSearchAreaBounds?: Rectangle | null,
     parentAreaName?: string | null,
-  ) => Promise<Rectangle | null>;
+    withImage?: boolean,
+  ) => Promise<OverlayCaptureResult | null>;
   isWindowOpen: boolean;
 }
 
@@ -17,14 +19,15 @@ export function useWindowOverlay(): Props {
     async (
       parentSearchAreaBounds?: Rectangle | null,
       parentAreaName?: string | null,
-    ): Promise<Rectangle | null> => {
+      withImage?: boolean,
+    ): Promise<OverlayCaptureResult | null> => {
       setIsWindowOpen(true);
       try {
-        const rect = await ElectronApiService.overlay.openCaptureWindow(
+        return await ElectronApiService.overlay.openCaptureWindow(
           parentSearchAreaBounds,
           parentAreaName,
+          withImage,
         );
-        return rect;
       } catch (err) {
         console.error("[useWindowOverlay]: capture failed:", err);
         return null;

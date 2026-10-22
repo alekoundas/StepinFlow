@@ -4,6 +4,7 @@ import type {
   ImageEditorResult,
   IpcBroadcastMessage,
   IpcRequestMessage,
+  OverlayCaptureResult,
   ResultDto,
   SignalReadyResponse,
 } from "./types.js";
@@ -32,7 +33,8 @@ export interface ElectronApi {
     openCaptureWindow: (
       parentSearchAreaBounds?: Electron.Rectangle | null,
       parentAreaName?: string | null,
-    ) => Promise<Electron.Rectangle | null>;
+      withImage?: boolean,
+    ) => Promise<OverlayCaptureResult | null>;
     openPreviewWindow: () => Promise<null>;
     signalReady: () => Promise<SignalReadyResponse | null>;
     signalCloseWindow: (rect: Electron.Rectangle | null) => void;

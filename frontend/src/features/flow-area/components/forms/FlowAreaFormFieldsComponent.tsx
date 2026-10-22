@@ -144,7 +144,7 @@ export default function FlowAreaFormFieldsComponent({
     // No parent: the rect is absolute screen coordinates and the whole desktop is fair game.
     if (!parentId) {
       setCaptureError(null);
-      const rect = await openWindow();
+      const rect = (await openWindow())?.rect;
       if (!rect) return;
 
       write("locationX", rect.x);
@@ -169,15 +169,17 @@ export default function FlowAreaFormFieldsComponent({
 
     // A child can never legally leave its parent, so the selection is clamped to it rather than
     // cropped away later by the resolver.
-    const rect = await openWindow(
-      {
-        x: preview.locationX,
-        y: preview.locationY,
-        width: preview.width,
-        height: preview.height,
-      },
-      parentName,
-    );
+    const rect = (
+      await openWindow(
+        {
+          x: preview.locationX,
+          y: preview.locationY,
+          width: preview.width,
+          height: preview.height,
+        },
+        parentName,
+      )
+    )?.rect;
     if (!rect) return;
 
     // Percent shows different fields, so writing pixels here is a silent no-op.

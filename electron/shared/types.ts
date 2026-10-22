@@ -53,6 +53,13 @@ export interface SignalReadyResponse {
   parentAreaName: string | null;
 }
 
+// The selection in physical pixels. image is the PNG of it as base64, cut from the desktop as it
+// was before the overlay opened, and only when asked for.
+export interface OverlayCaptureResult {
+  rect: Electron.Rectangle;
+  image: string | null;
+}
+
 // Bounds are physical pixels. Convert with screen.screenToDipRect before placing a window.
 export interface ScreenshotMonitorResponseDto {
   screenshot: Uint8Array;

@@ -46,7 +46,8 @@ function handleBroadcastPipeData(
         const broadcast = IpcBroadcast.decode(msgBuf);
         const plain = IpcBroadcast.toObject(broadcast, { bytes: Buffer });
 
-        console.log("[BroadcastHandler] Received:", plain.type ?? plain.action);
+        // One line per broadcast, two per executed step. Uncomment to debug the pipe.
+        // console.log("[BroadcastHandler] Received:", plain.type ?? plain.action);
 
         // Broadcast on all windows
         BrowserWindow.getAllWindows().forEach((win) => {

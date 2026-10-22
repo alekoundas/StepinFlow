@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
 import { InvokeBackend } from "./backend-request-handler.js";
 import {
+  OverlayCaptureResult,
   ScreenshotMonitorResponseDto,
   SignalReadyResponse,
 } from "../../shared/types.js";
@@ -32,7 +33,8 @@ export async function registerOverlayCaptureHandler(
       _event,
       parentSearchAreaBounds: Rectangle | null,
       parentAreaName: string | null,
-    ): Promise<Rectangle | null> => {
+      withImage: boolean,
+    ): Promise<OverlayCaptureResult | null> => {
       if (isWindowOpen) {
         console.warn("[OverlayHandler]: Overlay already open");
         return null;
@@ -41,7 +43,8 @@ export async function registerOverlayCaptureHandler(
       let monitorEntries: MonitorEntry[] = [];
 
       try {
-        // 1. Get screenshots from .Net (physical bounds + physical px screenshots)
+        // 1. Get screenshots from .Net (physical bounds + physical px screenshots, PNG). A template
+        //    is cut from these, so it shows the screen as it was before any overlay window existed.
         const responses = await getScreenshot(invokeBackend);
         if (!responses || responses.length === 0) {
           console.error("[OverlayHandler]: Cant get the screenshot!");
@@ -97,7 +100,7 @@ export async function registerOverlayCaptureHandler(
         );
 
         // 7. Wait for result (any window can send it — first one wins)
-        return await registerSignalCloseHandler(monitorEntries, invokeBackend);
+        return await registerSignalCloseHandler(monitorEntries, invokeBackend, withImage);
       } catch (err) {
         // Without this an exception after step 3 leaves fullscreen always-on-top windows with
         // no close handler attached, which is unrecoverable for the user.
@@ -225,8 +228,9 @@ function registerSignalReadyHandlers(
 function registerSignalCloseHandler(
   monitorEntries: MonitorEntry[],
   invokeBackend: InvokeBackend,
-): Promise<Rectangle | null> {
-  return new Promise<Rectangle | null>((resolve) => {
+  withImage: boolean,
+): Promise<OverlayCaptureResult | null> {
+  return new Promise<OverlayCaptureResult | null>((resolve) => {
     const electronWindows = monitorEntries
       .map((x) => x.electronWindow)
       .filter((x) => x !== null);
@@ -268,7 +272,9 @@ function registerSignalCloseHandler(
         onSignalClose,
       );
 
-      void cleanup().then(() => resolve(rect));
+      void cleanup()
+        .then(() => cutSelection(rect, withImage, monitorEntries, invokeBackend))
+        .then(resolve);
     };
 
     const onSignalClose = (_event: unknown, rect: Rectangle | null): void =>
@@ -281,6 +287,46 @@ function registerSignalCloseHandler(
       win.once("closed", () => settle(null));
     });
   });
+}
+
+// The template is cut from the screenshots the overlay showed, not grabbed from the screen now:
+// Windows can still be fading the overlay out, and a fresh grab catches its border. Only the
+// monitors the selection lies on are sent back.
+async function cutSelection(
+  rect: Rectangle | null,
+  withImage: boolean,
+  monitorEntries: MonitorEntry[],
+  invokeBackend: InvokeBackend,
+): Promise<OverlayCaptureResult | null> {
+  if (!rect) return null;
+  if (!withImage) return { rect, image: null };
+
+  const screenshots = monitorEntries
+    .map((x) => x.screenshotMonitorResponse)
+    .filter((x) => overlaps(x, rect));
+
+  try {
+    const result = await invokeBackend("System.cropScreenshots", {
+      region: rect,
+      screenshots,
+    });
+    if (result?.isSuccess) return { rect, image: result.data };
+
+    console.error("[OverlayHandler]: Could not cut the selection:", result?.errorMessage);
+  } catch (err) {
+    console.error("[OverlayHandler]: Could not cut the selection:", err);
+  }
+
+  return { rect, image: null };
+}
+
+function overlaps(monitor: ScreenshotMonitorResponseDto, rect: Rectangle): boolean {
+  return (
+    rect.x < monitor.x + monitor.width &&
+    monitor.x < rect.x + rect.width &&
+    rect.y < monitor.y + monitor.height &&
+    monitor.y < rect.y + rect.height
+  );
 }
 
 //=====================================================================

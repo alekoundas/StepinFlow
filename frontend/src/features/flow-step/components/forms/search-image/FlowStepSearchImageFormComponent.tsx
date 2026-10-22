@@ -5,7 +5,6 @@ import type z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Rectangle } from "electron";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
@@ -171,7 +170,7 @@ export default function FlowStepSearchImageFormComponent({
         return;
       }
 
-      const rect = await openWindow(
+      const selection = await openWindow(
         {
           x: area.locationX,
           y: area.locationY,
@@ -179,10 +178,16 @@ export default function FlowStepSearchImageFormComponent({
           height: area.height,
         },
         "Search area",
+        true,
       );
-      if (!rect) return;
+      if (!selection) return;
 
-      await captureTemplate(rect, area);
+      if (!selection.image) {
+        setTemplateError("The template could not be cut from the screenshot. Capture it again.");
+        return;
+      }
+
+      addTemplate(selection.image, area);
     } catch (err) {
       // Without this the capture fails and the list simply stays empty, which reads as the
       // button doing nothing.
@@ -193,19 +198,7 @@ export default function FlowStepSearchImageFormComponent({
     }
   };
 
-  const captureTemplate = async (rect: Rectangle, area: FlowAreaPreviewDto) => {
-    const screenshot = await backendApiService.System.takeScreenshot({
-      formatType: "PNG",
-      jpegQuality: 100,
-      locationX: rect.x,
-      locationY: rect.y,
-      width: rect.width,
-      height: rect.height,
-      captureVirtualScreen: false,
-      captureMonitor: "",
-      captureAppWindow: "",
-    });
-
+  const addTemplate = (screenshot: string, area: FlowAreaPreviewDto) => {
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({

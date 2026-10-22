@@ -255,6 +255,7 @@ namespace App
             builder.Services.AddTransient<SetAppSettingHandler>();
             builder.Services.AddTransient<SystemTakeScreenshotHandler>();
             builder.Services.AddTransient<SystemCaptureForOverlayHandler>();
+            builder.Services.AddTransient<SystemCropScreenshotsHandler>();
             builder.Services.AddTransient<SystemMoveCursorHandler>();
             builder.Services.AddTransient<SystemInstallOcrLanguageHandler>();
             builder.Services.AddTransient<SystemOpenWindowsLanguageSettingsHandler>();

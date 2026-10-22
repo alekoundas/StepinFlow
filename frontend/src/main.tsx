@@ -12,13 +12,13 @@ import "primeflex/primeflex.css";
 import "@/styles/app.css";
 
 // Global shared types
-import {
-  BroadcastTypeEnum,
-  type RecordedInput,
-} from "../../electron/shared/types";
+// import {
+//   BroadcastTypeEnum,
+//   type RecordedInput,
+// } from "../../electron/shared/types";
 
 // Services
-import { ElectronApiService } from "@/shared/services/electron-api-service";
+// import { ElectronApiService } from "@/shared/services/electron-api-service";
 
 // Pages
 import AppLayout from "@/app-layout";
@@ -130,46 +130,47 @@ const queryClient = new QueryClient({
   },
 });
 
-console.log("============LISTENING BACKEND BROADCASTS: ============");
-ElectronApiService.backendApi.OnBroadcast((msg) => {
-  if (msg.type === BroadcastTypeEnum.OVERLAY_MOUSE_EVENT) {
-    const recordedInput = msg.payload as RecordedInput;
-    switch (recordedInput.type) {
-      case "BUTTON_DOWN":
-      case "BUTTON_UP":
-        console.log(
-          "Received backend broadcast - " +
-            recordedInput.type +
-            ", Button Type: " +
-            recordedInput.cursorButtonType,
-        );
-        break;
-      case "CURSOR_MOVE":
-      case "CURSOR_DRAG":
-        console.log(
-          "Received backend broadcast - " +
-            recordedInput.type +
-            ", Physical Position: " +
-            recordedInput.physicalX +
-            ", " +
-            recordedInput.physicalY,
-        );
-        break;
-      case "KEY_UP":
-      case "KEY_DOWN":
-        console.log(
-          "Received backend broadcast - " +
-            recordedInput.type +
-            ", Key Code: " +
-            recordedInput.keyCode,
-        );
-        break;
-      default:
-        console.log("Received backend broadcast - OTHER_EVENT:", msg);
-    }
-  }
-  // console.log("Received backend broadcast:", msg);
-});
+// Logs every overlay mouse event, 60 a second during a drag. Uncomment to debug the overlay.
+// console.log("============LISTENING BACKEND BROADCASTS: ============");
+// ElectronApiService.backendApi.OnBroadcast((msg) => {
+//   if (msg.type === BroadcastTypeEnum.OVERLAY_MOUSE_EVENT) {
+//     const recordedInput = msg.payload as RecordedInput;
+//     switch (recordedInput.type) {
+//       case "BUTTON_DOWN":
+//       case "BUTTON_UP":
+//         console.log(
+//           "Received backend broadcast - " +
+//             recordedInput.type +
+//             ", Button Type: " +
+//             recordedInput.cursorButtonType,
+//         );
+//         break;
+//       case "CURSOR_MOVE":
+//       case "CURSOR_DRAG":
+//         console.log(
+//           "Received backend broadcast - " +
+//             recordedInput.type +
+//             ", Physical Position: " +
+//             recordedInput.physicalX +
+//             ", " +
+//             recordedInput.physicalY,
+//         );
+//         break;
+//       case "KEY_UP":
+//       case "KEY_DOWN":
+//         console.log(
+//           "Received backend broadcast - " +
+//             recordedInput.type +
+//             ", Key Code: " +
+//             recordedInput.keyCode,
+//         );
+//         break;
+//       default:
+//         console.log("Received backend broadcast - OTHER_EVENT:", msg);
+//     }
+//   }
+//   // console.log("Received backend broadcast:", msg);
+// });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
