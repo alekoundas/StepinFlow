@@ -162,6 +162,29 @@ namespace Business.Tests.Flows.Validation
             CodesOn(move).ShouldContain(FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE);
         }
 
+        // Waiting until it finds nothing is only a condition, so there is no location to move to.
+        [Fact]
+        public void A_move_cannot_read_a_search_that_waits_until_it_finds_nothing()
+        {
+            FlowStep search = Search("Spinner gone");
+            search.SearchMode = SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move", Branch(search, FlowStepTypeEnum.SUCCESS));
+            move.FlowStepReferenceId = search.Id;
+
+            CodesOn(move).ShouldBe([FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN]);
+        }
+
+        [Fact]
+        public void A_value_check_cannot_read_text_that_waits_until_it_stops_matching()
+        {
+            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Loading gone");
+            read.SearchMode = SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            FlowStep check = Add(FlowStepTypeEnum.CHECK_VALUE, "Check", Branch(read, FlowStepTypeEnum.SUCCESS));
+            check.FlowStepReferenceId = read.Id;
+
+            CodesOn(check).ShouldContain(FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN);
+        }
+
         [Fact]
         public void An_end_execution_under_another_can_never_decide()
         {

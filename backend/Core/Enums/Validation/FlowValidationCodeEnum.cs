@@ -15,6 +15,9 @@ namespace Core.Enums
         /// <summary>Set, but the step it reads no longer runs above this one through Success.</summary>
         STEP_RESULT_UNREACHABLE,
 
+        /// <summary>Set, but the step it reads waits until it finds nothing, which gives no result.</summary>
+        STEP_RESULT_NOT_GIVEN,
+
         // Areas
         AREA_MISSING,
 

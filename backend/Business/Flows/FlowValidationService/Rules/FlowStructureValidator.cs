@@ -200,7 +200,12 @@ namespace Business.Flows.FlowValidationService.Rules
                     name = "that step";
 
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.");
+                return;
             }
+
+            StepChainNode source = byId[referenceId.Value];
+            if (TreeStepHelper.GivesNoResult(source))
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN, $"The {label}point reads \"{source.Name}\", which waits until it finds nothing and so gives no point.");
         }
 
         private static void ValidateValueSource(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
@@ -220,7 +225,12 @@ namespace Business.Flows.FlowValidationService.Rules
                     name = "that step";
 
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"This checks \"{name}\", which no longer runs above this step on the Success side.");
+                return;
             }
+
+            StepChainNode source = byId[step.FlowStepReferenceId.Value];
+            if (TreeStepHelper.GivesNoResult(source))
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN, $"This checks \"{source.Name}\", which waits until its text stops matching and so gives no value.");
         }
 
         private static void ValidateNotify(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)

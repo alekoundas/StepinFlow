@@ -25,6 +25,9 @@ move goes on the step above them.
 **STEP_RESULT_UNREACHABLE** — the step it reads no longer runs above it on a Success path. Usually
 caused by moving one of the two steps. Either move it back, or pick a different source.
 
+**STEP_RESULT_NOT_GIVEN** — the step it reads is a search in `WAIT_UNTIL_NOT_FOUND`, which gives
+nothing to use. Usually caused by switching that search's mode. Pick a different source.
+
 ## Areas
 
 **AREA_MISSING** — the step searches an area, and the area is not set or was deleted.

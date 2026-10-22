@@ -1147,7 +1147,8 @@ Hidden     SUCCESS, FAILURE
 `WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking once, so it is a
 mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
 screenshot, and its Success branch executes once per hit; inside it the search's own result is the
-hit of that pass, so a move to the search followed by a click clicks each one.
+hit of that pass, so a move to the search followed by a click clicks each one. A `WAIT_UNTIL_NOT_FOUND`
+search is the opposite: a condition with no location or value, so nothing below can read it.
 
 A `Run` waits for its command to exit; a `Launch` starts its program through
 `IProcessService.Launch` and carries on, since an application never exits on its own. Given its
@@ -1919,16 +1920,16 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-793 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+796 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 172 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 588 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 590 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
-| `Transport.Tests` | 8 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses |
+| `Transport.Tests` | 9 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered |
 | `Platform.Windows.Tests` | 6 | grouping clicked elements, and a template with erased pixels beside a flat patch, on drawn screenshots |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
@@ -2039,7 +2040,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 793 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 796 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

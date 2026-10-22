@@ -61,12 +61,12 @@ namespace Transport.Ipc.Handlers
             Dictionary<int, StepChainNode> byId = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.RootId == rootId)
-                .Select(x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber))
+                .Select(x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber, x.SearchMode))
                 .ToDictionaryAsync(x => x.Id, ct);
 
             List<LookupItemDto> items = TreeStepHelper
                 .SuccessfulAncestors(byId, dto.FlowStepId.Value)
-                .Where(x => producingTypes.Contains(x.Step.FlowStepType) && !dto.ExcludedIds.Contains(x.Step.Id))
+                .Where(x => producingTypes.Contains(x.Step.FlowStepType) && !TreeStepHelper.GivesNoResult(x.Step) && !dto.ExcludedIds.Contains(x.Step.Id))
                 .Select(x => new LookupItemDto
                 {
                     Value = x.Step.Id.ToString(CultureInfo.InvariantCulture),

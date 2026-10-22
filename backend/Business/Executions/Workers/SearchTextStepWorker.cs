@@ -71,11 +71,11 @@ namespace Business.Executions.Workers
                     return read;
 
                 // No longer saying it is what this mode waits for, so it is a success - the read
-                // itself failed its condition, which on its own reads as a failure.
+                // itself failed its condition, which on its own reads as a failure. It is a
+                // condition and nothing more, so the read goes in the message and not the value.
                 if (satisfied == wantSatisfied)
                 {
-                    ExecutionStep gone = ExecutionStep.Success(message: $"No longer {ConditionEvaluatorHelper.Describe(step)}.");
-                    gone.Value = read.Value;
+                    ExecutionStep gone = ExecutionStep.Success(message: $"No longer {ConditionEvaluatorHelper.Describe(step)}. Last read \"{read.Value}\".");
                     gone.Screenshot = read.Screenshot;
 
                     return gone;

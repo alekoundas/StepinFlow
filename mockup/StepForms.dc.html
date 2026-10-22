@@ -275,8 +275,8 @@ class Component extends DCLogic {
     const warn = (t) => ({ kind: 'note', text: t, tone: 'warn' });
     const name = (value, hint) => text('Name', value, hint);
 
-    const IMAGE_MODES = ['Best match', 'Every match', 'Until found', 'Until not found'];
-    const TEXT_MODES = ['Check once', 'Until it matches', 'Until it stops matching'];
+    const IMAGE_MODES = ['Best match', 'Every match', 'Wait until found', 'Wait until not found'];
+    const TEXT_MODES = ['Check once', 'Wait until it matches', 'Wait until it stops matching'];
     const CURSOR_MODES = ['Click', 'Move', 'Drag', 'Scroll'];
     const KEY_MODES = ['Type text', 'Send keys'];
     const KEY_ACTIONS = ['Press', 'Hold', 'Release'];
@@ -341,11 +341,11 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'image-until', type: 'Image Search', mode: 'Until found', glyph: 'IS', tint: P, name: 'Find the email field', hasTest: true,
+            id: 'image-until', type: 'Image Search', mode: 'Wait until found', glyph: 'IS', tint: P, name: 'Find the email field', hasTest: true,
             summary: 'Waits for either of 2 templates to appear, checking every 200 ms for up to 10 s. On the first match, Success once. If nothing appears in time, Failure.',
             fields: [
               name('Find the email field'),
-              seg('Mode', IMAGE_MODES, 'Until found', 'Keep checking until it appears. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.'),
+              seg('Mode', IMAGE_MODES, 'Wait until found', 'Keep checking until it appears. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.'),
               { kind: 'templates', label: 'Templates', items: [
                 { thumb: 'Email', name: 'template-e4m2q.png', meta: 'accuracy 0.80' },
                 { thumb: 'E-mail', name: 'template-k2v9p.png', meta: 'accuracy 0.85 · either one is enough' },
@@ -359,11 +359,11 @@ class Component extends DCLogic {
             comment: 'Recorded after a 1.4 s wait.',
           },
           {
-            id: 'image-gone', type: 'Image Search', mode: 'Until not found', glyph: 'IS', tint: P, name: 'Spinner gone', hasTest: true,
+            id: 'image-gone', type: 'Image Search', mode: 'Wait until not found', glyph: 'IS', tint: P, name: 'Spinner gone', hasTest: true,
             summary: 'Waits until 1 template is no longer on screen, checking every 250 ms for up to 15 s, then Success once. If it is still there when time is up, Failure.',
             fields: [
               name('Spinner gone'),
-              seg('Mode', IMAGE_MODES, 'Until not found', 'Keep checking until it stops matching. For loading spinners and transition overlays.'),
+              seg('Mode', IMAGE_MODES, 'Wait until not found', 'Keep checking until it stops matching. For loading spinners and transition overlays.'),
               { kind: 'templates', label: 'Templates', items: [{ thumb: '◌', name: 'template-s5p1n.png', meta: 'accuracy 0.95' }] },
               select('Where to look', 'Billing portal', LOOK),
               row([box('Check every', '250', 'ms'), box('Give up after', '15000', 'ms')], TIMING),
@@ -389,11 +389,11 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'text-until', type: 'Read Text', mode: 'Until it matches', glyph: 'RT', tint: P, name: 'Saved banner', hasTest: true,
+            id: 'text-until', type: 'Read Text', mode: 'Wait until it matches', glyph: 'RT', tint: P, name: 'Saved banner', hasTest: true,
             summary: 'Reads the status bar every 500 ms until it contains “Saved”, for up to 10 s.',
             fields: [
               name('Saved banner'),
-              seg('Mode', TEXT_MODES, 'Until it matches', 'Keep reading until the condition holds. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.'),
+              seg('Mode', TEXT_MODES, 'Wait until it matches', 'Keep reading until the condition holds. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.'),
               select('Where to read', 'Status bar', READ),
               select('Language', 'English (United States)', LANGUAGE),
               mono('Keep only', '', KEEP, '', 'Everything'),
@@ -405,11 +405,11 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'text-gone', type: 'Read Text', mode: 'Until it stops matching', glyph: 'RT', tint: P, name: 'Error cleared', hasTest: true,
+            id: 'text-gone', type: 'Read Text', mode: 'Wait until it stops matching', glyph: 'RT', tint: P, name: 'Error cleared', hasTest: true,
             summary: 'Reads the error banner every 500 ms until it is empty, for up to 5 s.',
             fields: [
               name('Error cleared'),
-              seg('Mode', TEXT_MODES, 'Until it stops matching', 'Keep reading until the condition stops holding. For spinners and status messages.'),
+              seg('Mode', TEXT_MODES, 'Wait until it stops matching', 'Keep reading until the condition stops holding. For spinners and status messages.'),
               select('Where to read', 'Error banner', READ),
               select('Language', 'English (United States)', LANGUAGE),
               mono('Keep only', '', KEEP, '', 'Everything'),

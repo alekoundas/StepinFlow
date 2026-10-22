@@ -124,6 +124,10 @@ the history.
          `_depthByStepId`, and let the validator allow an earlier sibling. Simpler to write flows
          in; the cost is a stale result from an earlier loop pass or a branch not taken this time.
       `ExecutionFlowWalkerTests` holds the test for option 1, skipped until this is decided.
+      Either way, `{{name}}` is not checked for whether that step keeps a value at all: `{{Click}}`,
+      or a `WAIT_UNTIL_NOT_FOUND` search (which keeps none since 2026-10-22), passes the validator
+      and fails during execution. The step-result dropdowns already apply that rule
+      (`TreeStepHelper.GivesNoResult`).
 
 ## Flow script
 

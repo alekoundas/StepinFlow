@@ -21,13 +21,13 @@ export const SEARCH_IMAGE_MODES: SearchMode[] = [
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_FOUND,
-    label: "Until found",
+    label: "Wait until found",
     description:
       "Keep checking until it appears. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.",
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_NOT_FOUND,
-    label: "Until not found",
+    label: "Wait until not found",
     description:
       "Keep checking until it stops matching. For loading spinners and transition overlays.",
   },
@@ -45,13 +45,13 @@ export const SEARCH_TEXT_MODES: SearchMode[] = [
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_FOUND,
-    label: "Until it matches",
+    label: "Wait until it matches",
     description:
       "Keep reading until the condition holds. Replaces guessing a fixed wait, which is what breaks flows on a slower machine.",
   },
   {
     value: SearchModeEnum.WAIT_UNTIL_NOT_FOUND,
-    label: "Until it stops matching",
+    label: "Wait until it stops matching",
     description: "Keep reading until the condition stops holding. For spinners and status messages.",
   },
 ];

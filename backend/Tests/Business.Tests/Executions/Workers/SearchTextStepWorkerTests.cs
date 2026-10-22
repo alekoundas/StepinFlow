@@ -102,7 +102,8 @@ namespace Business.Tests.Executions.Workers
             ExecutionStep result = await SearchText(step);
 
             result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
-            result.Value.ShouldBe("Products");
+            result.Value.ShouldBeNull();
+            result.Message.ShouldBe(@"No longer CONTAINS Loading. Last read ""Products"".");
             _ocr.ReadCount.ShouldBe(3);
         }
 

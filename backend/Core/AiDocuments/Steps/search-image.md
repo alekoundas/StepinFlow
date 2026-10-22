@@ -51,6 +51,9 @@ the thing was ever there, so if it never matched at all, the step succeeds immed
 If you need "wait for the spinner to appear and then go away", that is two steps:
 `WAIT_UNTIL_FOUND` then `WAIT_UNTIL_NOT_FOUND`.
 
+It is a condition and nothing more: there is no position to give, so no Move or Drag can go to
+it. The dropdown does not offer it, and the validator reports a step still pointing at it.
+
 ## How FIND_ALL runs
 
 `FIND_ALL` takes **one** screenshot and works through every hit found in it. The search never runs

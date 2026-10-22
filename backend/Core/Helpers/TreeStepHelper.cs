@@ -67,6 +67,17 @@ namespace Core.Helpers
             return !CanContainChildren(type) && !HasBranchChildren(type);
         }
 
+        /// <summary>
+        /// A search waiting until it finds nothing is only a condition: it has no location and no
+        /// value for a step below to use.
+        /// </summary>
+        public static bool GivesNoResult(StepChainNode step)
+        {
+            bool isSearch = step.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE || step.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT;
+
+            return isSearch && step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+        }
+
         public static IEnumerable<(StepChainNode Step, int Depth)> SuccessfulAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
             if (!byId.TryGetValue(fromStepId, out StepChainNode from))

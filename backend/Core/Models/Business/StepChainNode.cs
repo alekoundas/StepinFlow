@@ -11,5 +11,6 @@ namespace Core.Models.Business
         int? ParentFlowStepId,
         FlowStepTypeEnum FlowStepType,
         string Name,
-        int OrderNumber);
+        int OrderNumber,
+        SearchModeEnum? SearchMode = null);
 }

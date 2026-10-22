@@ -32,6 +32,9 @@ Three of the four search modes are offered:
 `FIND_ALL` is not offered. Reading gives one block of text and no positions, so there is nothing to
 act on one at a time.
 
+`WAIT_UNTIL_NOT_FOUND` is a condition and nothing more. It keeps no value and no position, so no
+Check Value, Move or Drag can read it; what it last read is in its message in the execution view.
+
 **Every mode evaluates the condition**, including `FIND_BEST`. There is no mode that succeeds merely
 because something was read.
 

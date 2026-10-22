@@ -68,7 +68,7 @@ namespace Business.Flows.FlowValidationService
             }
 
 
-            Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber));
+            Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber, x.SearchMode));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
 
             FlowStepValidator.Validate(authored, templateCountByStepId, result);
