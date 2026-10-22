@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { classNames } from "primereact/utils";
@@ -21,13 +21,11 @@ interface Props {
  * Reuses the read-only tree so a step is drawn exactly as it is everywhere else, and only adds the
  * gutter and the "you are here" marker on top of it.
  */
-export default function ExecutionFlowTreeComponent({ flowId }: Props) {
-  const {
-    breakpointStepIds,
-    currentFlowStepId,
-    runState,
-    toggleBreakpoint,
-  } = useExecutionStore();
+function ExecutionFlowTreeComponent({ flowId }: Props) {
+  const breakpointStepIds = useExecutionStore((x) => x.breakpointStepIds);
+  const currentFlowStepId = useExecutionStore((x) => x.currentFlowStepId);
+  const runState = useExecutionStore((x) => x.runState);
+  const toggleBreakpoint = useExecutionStore((x) => x.toggleBreakpoint);
 
   const { setBreakpointsMutation } = useExecutionMutations();
 
@@ -78,6 +76,9 @@ export default function ExecutionFlowTreeComponent({ flowId }: Props) {
     />
   );
 }
+
+// Drawn again only when the step being executed or a breakpoint changes, not on every new row.
+export default memo(ExecutionFlowTreeComponent);
 
 function collectKeys(nodes: TreeNodeDto[], keys: TreeExpandedKeysType): void {
   for (const node of nodes) {

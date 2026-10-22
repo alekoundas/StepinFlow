@@ -418,6 +418,10 @@ Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated 
 (`BroadcastTypeEnum` as a string). They carry execution progress, recording progress and model
 download progress.
 
+The execution page applies execution progress in batches, at most every 100 ms and on a screen
+refresh, so a window nobody can see draws nothing. Drawing on every event cost more than a fast flow
+left between two, and the page fell further and further behind the execution.
+
 **Work longer than a request can wait for is started by the request and reported by broadcast.**
 The pipe answers one call at a time and Electron gives up on a call after 30 seconds, so the
 request starts the work and returns, the progress goes out as a broadcast, and the result is asked

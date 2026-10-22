@@ -29,17 +29,15 @@ const HISTORY_LEVEL_OPTIONS = [
  * never has to keep a second idea of what is going on.
  */
 export default function ExecutionToolbarComponent({ flowId }: Props) {
-  const {
-    runState,
-    breakpointStepIds,
-    historyLevel,
-    executionSteps,
-    currentStepName,
-    setHistoryLevel,
-    setRunState,
-    setExecutionId,
-    resetRun,
-  } = useExecutionStore();
+  const runState = useExecutionStore((x) => x.runState);
+  const breakpointStepIds = useExecutionStore((x) => x.breakpointStepIds);
+  const historyLevel = useExecutionStore((x) => x.historyLevel);
+  const stepCount = useExecutionStore((x) => x.executionSteps.length);
+  const currentStepName = useExecutionStore((x) => x.currentStepName);
+  const setHistoryLevel = useExecutionStore((x) => x.setHistoryLevel);
+  const setRunState = useExecutionStore((x) => x.setRunState);
+  const setExecutionId = useExecutionStore((x) => x.setExecutionId);
+  const resetRun = useExecutionStore((x) => x.resetRun);
 
   const {
     startExecutionMutation,
@@ -58,6 +56,7 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
 
   const isRunning = runState !== RunStateEnum.FINISHED;
   const isPaused = runState === RunStateEnum.PAUSED;
+  const isStopping = runState === RunStateEnum.STOPPING;
 
   const handleStart = async () => {
     resetRun();
@@ -113,7 +112,7 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
         icon="pi pi-pause"
         size="small"
         outlined
-        disabled={!isRunning || isPaused}
+        disabled={!isRunning || isPaused || isStopping}
         onClick={() => pauseExecutionMutation.mutate()}
       />
 
@@ -141,8 +140,12 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
         size="small"
         outlined
         severity="danger"
-        disabled={!isRunning}
-        onClick={() => stopExecutionMutation.mutate()}
+        disabled={!isRunning || isStopping}
+        onClick={() => {
+          // Said at once rather than when the engine's last events have arrived.
+          setRunState(RunStateEnum.STOPPING);
+          stopExecutionMutation.mutate();
+        }}
       />
 
       <div className="flex-auto" />
@@ -156,7 +159,7 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
       />
 
       <StatusPillComponent
-        text={statusText(runState, executionSteps.length, currentStepName)}
+        text={statusText(runState, stepCount, currentStepName)}
         severity={statusSeverity(runState)}
         pulse={runState === RunStateEnum.RUNNING}
       />

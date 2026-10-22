@@ -7,6 +7,11 @@ the history.
 
 ## Execution
 
+- [ ] **The execution list keeps every row in the page.** Since 2026-10-22 events arrive in batches
+      and a row draws once, so a fast flow no longer leaves the page behind. But an execution that
+      loops for an hour can reach tens of thousands of rows, and each batch still walks all of them,
+      and the browser lays them all out. If that drags, draw only the rows in view (PrimeReact
+      `VirtualScroller`) in `ExecutionStepListComponent`.
 - [ ] **A `Launch` line is this machine's.** Since 2026-10-13 a launch starts through
       `IProcessService.Launch` - `Process.Start` with shell execute, which is the shell on Windows,
       `open` on macOS and `xdg-open` on Linux - so starting works on all three. The command text does

@@ -73,8 +73,10 @@ export function useExecutionMutations() {
     },
   });
 
+  // The engine's own state settles it, if the run had already ended and nothing will say so.
   const stopExecutionMutation = useMutation({
     mutationFn: () => backendApiService.Execution.stop(),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: executionKeys.state() }),
   });
 
   const pauseExecutionMutation = useMutation({

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { classNames } from "primereact/utils";
 
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
@@ -27,7 +27,7 @@ interface Props {
  *
  * Monospace because it is columnar - sequences, types and durations all line up.
  */
-export default function ExecutionStepRowComponent({
+function ExecutionStepRowComponent({
   executionStep,
   isFatal,
   isSelected,
@@ -165,3 +165,7 @@ export default function ExecutionStepRowComponent({
     </div>
   );
 }
+
+// A row never changes once it has arrived, so a new batch draws only the new rows - unless one of
+// them is the slowest yet, which rescales every bar.
+export default memo(ExecutionStepRowComponent);

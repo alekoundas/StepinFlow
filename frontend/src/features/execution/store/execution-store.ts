@@ -28,7 +28,7 @@ interface Props {
   setRunState: (state: RunStateEnum) => void;
   setExecutionId: (id: number | undefined) => void;
 
-  addExecutionStep: (step: ExecutionStepDto) => void;
+  addExecutionSteps: (steps: ExecutionStepDto[]) => void;
   setExecutionSteps: (steps: ExecutionStepDto[]) => void;
   setSelectedSequence: (sequence: number | undefined) => void;
 
@@ -65,10 +65,10 @@ export const useExecutionStore = create<Props>()(
 
     setExecutionId: (id: number | undefined): void => set({ executionId: id }),
 
-    // Appended rather than replaced: a run of five hundred steps must not rebuild the list five
-    // hundred times, and a row never changes once it has arrived.
-    addExecutionStep: (step: ExecutionStepDto): void =>
-      set((state) => ({ executionSteps: [...state.executionSteps, step] })),
+    // Appended a batch at a time, and a row never changes once it has arrived, so a memoised row
+    // draws once.
+    addExecutionSteps: (steps: ExecutionStepDto[]): void =>
+      set((state) => ({ executionSteps: [...state.executionSteps, ...steps] })),
 
     setExecutionSteps: (steps: ExecutionStepDto[]): void =>
       set({ executionSteps: steps }),

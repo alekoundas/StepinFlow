@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import ExecutionStepRowComponent from "@/features/execution/components/templates/ExecutionStepRowComponent";
@@ -56,19 +58,17 @@ interface Props {
  * Ordered by sequence and indented by depth, which is why both are stored: no joins and no walking
  * a parent chain to draw a tree.
  */
-export default function ExecutionStepListComponent({
+function ExecutionStepListComponent({
   errorFlowStepId,
   showFailuresOnly = false,
   emptyReason = "idle",
   emptyMessage,
 }: Props) {
-  const {
-    executionSteps,
-    selectedSequence,
-    runState,
-    currentStepName,
-    setSelectedSequence,
-  } = useExecutionStore();
+  const executionSteps = useExecutionStore((x) => x.executionSteps);
+  const selectedSequence = useExecutionStore((x) => x.selectedSequence);
+  const runState = useExecutionStore((x) => x.runState);
+  const currentStepName = useExecutionStore((x) => x.currentStepName);
+  const setSelectedSequence = useExecutionStore((x) => x.setSelectedSequence);
 
   if (executionSteps.length === 0)
     return (
@@ -92,8 +92,9 @@ export default function ExecutionStepListComponent({
     : executionSteps;
 
   // Scaled against the whole run, not the filtered view, so hiding rows does not restretch the bars.
-  const maxDurationMilliseconds = Math.max(
-    ...executionSteps.map((x) => x.durationMilliseconds),
+  // Not Math.max(...rows): a long run has more rows than a call takes arguments.
+  const maxDurationMilliseconds = executionSteps.reduce(
+    (max, x) => Math.max(max, x.durationMilliseconds),
     1,
   );
 
@@ -142,3 +143,5 @@ export default function ExecutionStepListComponent({
     </div>
   );
 }
+
+export default memo(ExecutionStepListComponent);

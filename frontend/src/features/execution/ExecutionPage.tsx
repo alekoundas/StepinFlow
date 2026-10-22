@@ -25,14 +25,12 @@ export default function ExecutionPage() {
 
   const flowId = id ? +id : -1;
 
-  const {
-    executionSteps,
-    selectedSequence,
-    setSelectedSequence,
-    setExecutionSteps,
-    setRunState,
-    setExecutionId,
-  } = useExecutionStore();
+  const executionSteps = useExecutionStore((x) => x.executionSteps);
+  const selectedSequence = useExecutionStore((x) => x.selectedSequence);
+  const setSelectedSequence = useExecutionStore((x) => x.setSelectedSequence);
+  const setExecutionSteps = useExecutionStore((x) => x.setExecutionSteps);
+  const setRunState = useExecutionStore((x) => x.setRunState);
+  const setExecutionId = useExecutionStore((x) => x.setExecutionId);
 
   // The run being looked at. Live while one is going, and whatever was opened from History after.
   const [openedExecution, setOpenedExecution] = useState<ExecutionDto | undefined>(
