@@ -19,10 +19,13 @@ branch the result calls for.
 A loop's continuation is the loop itself, so nothing special is needed to repeat it. When the last
 step inside a loop finishes, the loop is back on top of the stack and starts its next pass.
 
-## How GO_BACK runs
+## How BREAK runs
 
-`GO_BACK` pushes its target as the continuation rather than as a child. Going back therefore does
-not grow the stack on every pass, which it would if the target were pushed as a child.
+`BREAK` leaves the step it names as if that step had just finished with nothing left inside it.
+Everything still pending inside it is dropped from the stack, a loop does no more passes and a
+`FIND_ALL` search serves no more hits; the walk carries on with whatever follows the step it left.
+Every loop it leaves on the way starts counting from its first pass the next time the walk reaches
+it.
 
 ## How sub-flows return
 

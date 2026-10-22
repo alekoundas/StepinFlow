@@ -86,6 +86,9 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
     case FlowStepTypeEnum.SUB_FLOW:
       return { text: detail.subFlowName ?? "no flow picked", chips: [] };
 
+    case FlowStepTypeEnum.BREAK:
+      return { text: `out of ${detail.referenceStepName ?? "nothing picked"}`, chips: [] };
+
     case FlowStepTypeEnum.CURSOR_CLICK:
       return {
         chips: detail.cursorButtonActionType

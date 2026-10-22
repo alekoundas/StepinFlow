@@ -42,10 +42,10 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     iconName: "refresh",
   },
   {
-    flowStepType: FlowStepTypeEnum.GO_BACK,
+    flowStepType: FlowStepTypeEnum.BREAK,
     group: FlowStepGroupEnum.CONTROL,
-    label: "Go Back",
-    iconName: "arrow-right-arrow-left",
+    label: "Break",
+    iconName: "sign-out",
   },
   {
     flowStepType: FlowStepTypeEnum.SUB_FLOW,

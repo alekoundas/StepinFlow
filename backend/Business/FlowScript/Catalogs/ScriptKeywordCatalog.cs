@@ -32,7 +32,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Find Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.FIND_BEST),
             new ScriptKeyword("Check Text", FlowStepTypeEnum.SEARCH_TEXT, SearchModeEnum.FIND_BEST),
             new ScriptKeyword("Sub Flow", FlowStepTypeEnum.SUB_FLOW),
-            new ScriptKeyword("Go Back", FlowStepTypeEnum.GO_BACK),
+            new ScriptKeyword("Break", FlowStepTypeEnum.BREAK),
             new ScriptKeyword("Notify", FlowStepTypeEnum.NOTIFY),
             new ScriptKeyword("Scroll", FlowStepTypeEnum.CURSOR_SCROLL),
             new ScriptKeyword("System", FlowStepTypeEnum.SYSTEM_ACTION),
@@ -84,6 +84,7 @@ namespace Business.FlowScript.Catalogs
 
             // FlowStep - 
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
+            new ScriptKeyword("out of", ScriptSymbolEnum.OUT_OF),
             new ScriptKeyword("point", ScriptSymbolEnum.POINT),
             new ScriptKeyword("nowhere", ScriptSymbolEnum.NOWHERE),
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),

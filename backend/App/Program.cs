@@ -230,7 +230,7 @@ namespace App
             builder.Services.AddTransient<GetLookupSubFlowHandler>();
             builder.Services.AddTransient<GetLookupDiscordBotHandler>();
             builder.Services.AddTransient<GetLookupFailedStepHandler>();
-            builder.Services.AddTransient<GetLookupGoBackHandler>();
+            builder.Services.AddTransient<GetLookupBreakHandler>();
             builder.Services.AddTransient<TestWindowMatchHandler>();
             builder.Services.AddTransient<GetLookupFlowAreaHandler>();
             builder.Services.AddTransient<GetLookupOcrLanguagesHandler>();

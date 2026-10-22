@@ -20,7 +20,7 @@ import FlowStepNotifyFormComponent from "@/features/flow-step/components/forms/n
 import FlowStepKeyboardFormComponent from "@/features/flow-step/components/forms/keyboard/FlowStepKeyboardFormComponent";
 import FlowStepEndExecutionFormComponent from "@/features/flow-step/components/forms/end-execution/FlowStepEndExecutionFormComponent";
 import FlowStepStageMarkerFormComponent from "@/features/flow-step/components/forms/stage-marker/FlowStepStageMarkerFormComponent";
-import FlowStepGoBackFormComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormComponent";
+import FlowStepBreakFormComponent from "@/features/flow-step/components/forms/break/FlowStepBreakFormComponent";
 import FlowStepBranchFormComponent from "@/features/flow-step/components/forms/branch/FlowStepBranchFormComponent";
 
 import {
@@ -91,9 +91,9 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     newStepValues: () => ({ name: "Loop" }),
   },
 
-  [FlowStepTypeEnum.GO_BACK]: {
-    component: FlowStepGoBackFormComponent,
-    newStepValues: () => ({ name: "Go Back" }),
+  [FlowStepTypeEnum.BREAK]: {
+    component: FlowStepBreakFormComponent,
+    newStepValues: () => ({}),
   },
 
   [FlowStepTypeEnum.SEARCH_IMAGE]: {

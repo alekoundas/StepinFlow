@@ -46,10 +46,10 @@ namespace Core.Enums
         END_EXECUTION_UNREACHABLE,
         WAIT_RANGE_INVALID,
         SUB_FLOW_MISSING,
-        GO_BACK_TARGET_MISSING,
+        BREAK_TARGET_MISSING,
 
-        /// <summary>Set, but not a step this one passed on the way here.</summary>
-        GO_BACK_TARGET_UNREACHABLE,
+        /// <summary>Set, but not a step this one sits inside.</summary>
+        BREAK_TARGET_UNREACHABLE,
 
         // Notifications
         DISCORD_BOT_MISSING,

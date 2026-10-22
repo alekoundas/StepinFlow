@@ -13,9 +13,14 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Loop  5 times | forever
+            // Loop  <[ name ]>   5 times | forever
             ExpectKeyword(FlowStepTypeEnum.LOOP);
-            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.LOOP };
+
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string name = ExtractText();
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.LOOP, Name = name };
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.FOREVER))
             {

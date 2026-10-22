@@ -80,11 +80,10 @@ Focus Window    process <[ chrome.exe ]>
 
 Notify          <[ done ]>
 
-Go Back         to <[ Read the total ]>
-
-Loop            5 times
+Loop            <[ Retry ]>   5 times
  Move            to <[ Find username field ]>
  Click
+ Break           out of <[ Retry ]>
 
 End Execution   failed  <[ did not reach the products page ]>
  Run             KILL_PROCESS <[ chrome.exe ]>

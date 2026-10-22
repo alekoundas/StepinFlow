@@ -87,8 +87,8 @@ namespace Business.FlowScript.Text
                 case FlowStepTypeEnum.LOOP:
                     return new LoopWriter(step);
 
-                case FlowStepTypeEnum.GO_BACK:
-                    return new GoBackWriter(step);
+                case FlowStepTypeEnum.BREAK:
+                    return new BreakWriter(step);
 
                 case FlowStepTypeEnum.SUB_FLOW:
                     string subFlowPath = schema.SubFlowPaths.GetValueOrDefault(step, string.Empty);

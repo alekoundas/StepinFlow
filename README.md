@@ -123,7 +123,7 @@ a flow handles its own problems rather than stopping.
 |---|---|---|
 | **Control** | Wait | Pause, for a fixed time or a random range |
 | | Loop | Repeat its children a number of times, or forever |
-| | Go Back | Return to a step it already passed and carry on from there |
+| | Break | Leave a loop or a check it sits inside and carry on after it |
 | | Sub-Flow | Execute another flow and come back |
 | | End Execution | Finish, passed or failed, with a reason — and run the cleanup written under it |
 | | Marker | A named divider — becomes a heading in the script |
@@ -168,8 +168,8 @@ the handler.
 
 ### The execution engine
 
-A flow is walked with an **explicit stack**, not recursion — infinite loops and `Go Back` make
-recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
+A flow is walked with an **explicit stack**, not recursion — infinite loops make recursion depth
+unbounded, and a stack gives pause, resume and step-into almost for free.
 
 The walker that decides which step comes next executes nothing: it is handed each step's result. So
 the most intricate code in the repository is also the cheapest to test.
@@ -197,7 +197,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**799 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**803 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

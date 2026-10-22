@@ -199,29 +199,104 @@ namespace Business.Tests.Executions
         }
 
         // ================================================================
-        // Go Back, End Execution and sub-flows
+        // Break, End Execution and sub-flows
         // ================================================================
 
-        // Back to A and on from there, so nothing after the Go Back runs while it keeps going back.
         [Fact]
-        public async Task Go_back_carries_on_from_the_step_it_names()
+        public async Task Break_ends_a_loop_and_the_walk_carries_on_after_it()
         {
-            FlowStep a = Add("A");
-            Add("B");
-            FlowStep goBack = Add("Go back to A", FlowStepTypeEnum.GO_BACK);
-            Add("C");
-            goBack.FlowStepReferenceId = a.Id;
+            FlowStep loop = Add("Loop", FlowStepTypeEnum.LOOP);
+            loop.IsLoopInfinite = true;
+            Add("A", parent: loop);
+            FlowStep leave = Add("Break", FlowStepTypeEnum.BREAK, loop);
+            leave.FlowStepReferenceId = loop.Id;
+            Add("Never", parent: loop);
+            Add("After");
 
-            (await WalkAsync(maxSteps: 6)).ShouldBe(["A", "B", "Go back to A", "A", "B", "Go back to A"]);
+            (await WalkAsync()).ShouldBe(["Loop", "A", "Break", "After"]);
+        }
+
+        // A retry: what follows the loop runs once, however many tries it took. Going back to the
+        // search from its Failure branch used to leave what follows it pending once per try.
+        [Fact]
+        public async Task A_retry_loop_left_on_success_runs_what_follows_it_once()
+        {
+            FlowStep loop = Add("Retry", FlowStepTypeEnum.LOOP);
+            loop.LoopCount = 5;
+            FlowStep find = Search("Find", loop);
+            FlowStep leave = Add("Break", FlowStepTypeEnum.BREAK, Success(find));
+            leave.FlowStepReferenceId = loop.Id;
+            Add("Fix", parent: Failure(find));
+            Add("After");
+
+            int attempts = 0;
+            _failing.Add("Find");
+            _effects["Find"] = _ =>
+            {
+                attempts++;
+                if (attempts == 3)
+                    _failing.Remove("Find");
+            };
+
+            (await WalkAsync()).ShouldBe(["Retry", "Find", "Fix", "Retry", "Find", "Fix", "Retry", "Find", "Break", "After"]);
         }
 
         [Fact]
-        public async Task Go_back_with_nowhere_to_go_carries_on_to_the_next_step()
+        public async Task Break_out_of_a_check_skips_the_rest_of_its_branch()
         {
-            Add("Go back to nowhere", FlowStepTypeEnum.GO_BACK);
+            FlowStep find = Search("Find");
+            FlowStep success = Success(find);
+            Add("A", parent: success);
+            FlowStep leave = Add("Break", FlowStepTypeEnum.BREAK, success);
+            leave.FlowStepReferenceId = find.Id;
+            Add("Never", parent: success);
+            Add("After");
+
+            (await WalkAsync()).ShouldBe(["Find", "A", "Break", "After"]);
+        }
+
+        [Fact]
+        public async Task Break_out_of_every_match_skips_the_hits_left()
+        {
+            FlowStep find = Search("Find all", mode: SearchModeEnum.FIND_ALL);
+            FlowStep success = Success(find);
+            Add("Click", parent: success);
+            FlowStep leave = Add("Break", FlowStepTypeEnum.BREAK, success);
+            leave.FlowStepReferenceId = find.Id;
+            Add("After");
+
+            _effects["Find all"] = x => _cache.RecordMatches(x.Id, [new Point(10, 10), new Point(20, 10), new Point(30, 10)]);
+
+            (await WalkAsync()).ShouldBe(["Find all", "Click", "Break", "After"]);
+        }
+
+        // The loop it leaves, and every loop it leaves on the way, counts from the first pass when
+        // the walk reaches it again.
+        [Fact]
+        public async Task Loops_left_by_a_break_start_counting_again_next_time()
+        {
+            FlowStep outer = Add("Outer", FlowStepTypeEnum.LOOP);
+            outer.LoopCount = 2;
+            FlowStep middle = Add("Middle", FlowStepTypeEnum.LOOP, outer);
+            middle.LoopCount = 3;
+            FlowStep inner = Add("Inner", FlowStepTypeEnum.LOOP, middle);
+            inner.LoopCount = 3;
+            FlowStep leave = Add("Break", FlowStepTypeEnum.BREAK, inner);
+            leave.FlowStepReferenceId = middle.Id;
+            Add("After");
+
+            (await WalkAsync()).ShouldBe(["Outer", "Middle", "Inner", "Break", "Outer", "Middle", "Inner", "Break", "After"]);
+            _placed.Where(x => x.Name == "Middle").Select(x => x.LoopPass).ShouldBe([0, 0]);
+            _placed.Where(x => x.Name == "Inner").Select(x => x.LoopPass).ShouldBe([0, 0]);
+        }
+
+        [Fact]
+        public async Task Break_with_nothing_to_leave_carries_on_to_the_next_step()
+        {
+            Add("Break", FlowStepTypeEnum.BREAK);
             Add("B");
 
-            (await WalkAsync()).ShouldBe(["Go back to nowhere", "B"]);
+            (await WalkAsync()).ShouldBe(["Break", "B"]);
         }
 
         [Fact]

@@ -216,43 +216,56 @@ namespace Business.Tests.Flows.Validation
         }
 
         [Fact]
-        public void A_go_back_needs_a_target()
+        public void A_break_needs_a_target()
         {
-            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
+            FlowStep leave = Add(FlowStepTypeEnum.BREAK, "Break");
 
-            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_MISSING);
+            CodesOn(leave).ShouldContain(FlowValidationCodeEnum.BREAK_TARGET_MISSING);
         }
 
         [Fact]
-        public void A_go_back_can_return_to_a_step_above_it()
+        public void A_break_can_leave_the_check_it_sits_under()
+        {
+            FlowStep search = Search("Find");
+            FlowStep leave = Add(FlowStepTypeEnum.BREAK, "Break", Branch(search, FlowStepTypeEnum.SUCCESS));
+            leave.FlowStepReferenceId = search.Id;
+
+            CodesOn(leave).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_break_can_leave_a_loop_further_up()
+        {
+            FlowStep loop = Add(FlowStepTypeEnum.LOOP, "Retry");
+            loop.LoopCount = 3;
+            FlowStep search = Search("Find", loop);
+            FlowStep leave = Add(FlowStepTypeEnum.BREAK, "Break", Branch(search, FlowStepTypeEnum.SUCCESS));
+            leave.FlowStepReferenceId = loop.Id;
+
+            CodesOn(leave).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_break_cannot_leave_a_step_beside_it()
         {
             FlowStep wait = Add(FlowStepTypeEnum.WAIT, "Wait");
             wait.WaitForMilliseconds = 100;
-            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
-            goBack.FlowStepReferenceId = wait.Id;
+            FlowStep leave = Add(FlowStepTypeEnum.BREAK, "Break");
+            leave.FlowStepReferenceId = wait.Id;
 
-            CodesOn(goBack).ShouldBeEmpty();
+            CodesOn(leave).ShouldContain(FlowValidationCodeEnum.BREAK_TARGET_UNREACHABLE);
         }
 
+        // Leaving a branch is leaving its check, so the check is what is named.
         [Fact]
-        public void A_go_back_cannot_return_into_the_other_branch()
+        public void A_break_cannot_name_a_success_or_failure_row()
         {
             FlowStep search = Search("Find");
-            FlowStep retry = Add(FlowStepTypeEnum.WAIT, "Retry", Branch(search, FlowStepTypeEnum.FAILURE));
-            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back", Branch(search, FlowStepTypeEnum.SUCCESS));
-            goBack.FlowStepReferenceId = retry.Id;
+            FlowStep success = Branch(search, FlowStepTypeEnum.SUCCESS);
+            FlowStep leave = Add(FlowStepTypeEnum.BREAK, "Break", success);
+            leave.FlowStepReferenceId = success.Id;
 
-            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE);
-        }
-
-        [Fact]
-        public void A_go_back_cannot_jump_forward()
-        {
-            FlowStep goBack = Add(FlowStepTypeEnum.GO_BACK, "Go back");
-            FlowStep later = Add(FlowStepTypeEnum.WAIT, "Later");
-            goBack.FlowStepReferenceId = later.Id;
-
-            CodesOn(goBack).ShouldContain(FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE);
+            CodesOn(leave).ShouldContain(FlowValidationCodeEnum.BREAK_TARGET_UNREACHABLE);
         }
 
         // ================================================================

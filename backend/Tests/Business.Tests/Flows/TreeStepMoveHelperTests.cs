@@ -101,31 +101,32 @@ namespace Business.Tests.Flows
             broken[0].ReferencedStepName.ShouldBe("Find image");
         }
 
-        // A, B, Go back to A, all at the root.
-        private static List<FlowStep> GoBackRow()
+        // A loop holding a wait and a Break out of it, and a wait after the loop.
+        private static List<FlowStep> RetryLoop()
         {
             return
             [
-                new FlowStep { Id = 1, FlowId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "A", OrderNumber = 0 },
-                new FlowStep { Id = 2, FlowId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "B", OrderNumber = 1 },
-                new FlowStep { Id = 3, FlowId = 1, FlowStepType = FlowStepTypeEnum.GO_BACK, Name = "Go back", FlowStepReferenceId = 1, OrderNumber = 2 },
+                new FlowStep { Id = 1, FlowId = 1, FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", OrderNumber = 0 },
+                new FlowStep { Id = 2, ParentFlowStepId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", OrderNumber = 0 },
+                new FlowStep { Id = 3, ParentFlowStepId = 1, FlowStepType = FlowStepTypeEnum.BREAK, Name = "Break", FlowStepReferenceId = 1, OrderNumber = 1 },
+                new FlowStep { Id = 4, FlowId = 1, FlowStepType = FlowStepTypeEnum.WAIT, Name = "After", OrderNumber = 1 },
             ];
         }
 
         [Fact]
-        public void Moving_a_go_back_target_below_it_reports_the_reference_it_breaks()
+        public void Moving_a_break_out_of_the_loop_it_leaves_reports_the_reference_it_breaks()
         {
-            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(GoBackRow(), new FlowStepMoveDto { FlowStepId = 1, TargetFlowId = 1, TargetIndex = 2 });
+            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(RetryLoop(), new FlowStepMoveDto { FlowStepId = 3, TargetFlowId = 1, TargetIndex = 2 });
 
             broken.Count.ShouldBe(1);
-            broken[0].FlowStepName.ShouldBe("Go back");
-            broken[0].ReferencedStepName.ShouldBe("A");
+            broken[0].FlowStepName.ShouldBe("Break");
+            broken[0].ReferencedStepName.ShouldBe("Retry");
         }
 
         [Fact]
-        public void Reordering_steps_that_stay_above_a_go_back_breaks_nothing()
+        public void Reordering_steps_inside_the_loop_a_break_leaves_breaks_nothing()
         {
-            TreeStepMoveHelper.FindBrokenReferences(GoBackRow(), new FlowStepMoveDto { FlowStepId = 2, TargetFlowId = 1, TargetIndex = 0 }).ShouldBeEmpty();
+            TreeStepMoveHelper.FindBrokenReferences(RetryLoop(), new FlowStepMoveDto { FlowStepId = 2, TargetParentFlowStepId = 1, TargetIndex = 1 }).ShouldBeEmpty();
         }
 
         [Fact]

@@ -37,10 +37,10 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       iconName: "refresh",
     },
     {
-      flowStepType: FlowStepTypeEnum.GO_BACK,
-      name: "Go Back",
-      description: "Go back to a step already passed on the way here and carry on from there.",
-      iconName: "arrow-right-arrow-left",
+      flowStepType: FlowStepTypeEnum.BREAK,
+      name: "Break",
+      description: "Leave a loop or a check it sits inside and carry on after it.",
+      iconName: "sign-out",
     },
     {
       flowStepType: FlowStepTypeEnum.SYSTEM_COMMAND,

@@ -875,8 +875,8 @@ The scanner reads a file into it, the exporter loads one out of the database int
 rows as they load into one context - and the printer writes it. So the scanner and the printer are
 exact mirrors, and the round trip needs no database.
 
-**Every name is declared above its first use**, which a `Go Back` that only goes back made true of
-every reference. So a line is linked the moment it is read: `ScriptScope` holds what the lines above
+**Every name is declared above its first use**, which a `Break` that only leaves a step it sits
+inside keeps true of every reference. So a line is linked the moment it is read: `ScriptScope` holds what the lines above
 declared, every parser is handed it, and a parser resolves a name as it reads the quote - a step
 comes back already pointing at its area, its point, the step it reads. A name nothing above
 declares is `NAME_UNKNOWN` at that quote, and the line reads on, so every unknown name in a file is
@@ -1113,8 +1113,15 @@ spaces already group the lines.
 
 ### The engine
 
-A flow is walked with an **explicit stack**, not recursion. Infinite loops and `Go Back` make
-recursion depth unbounded, and a stack gives pause, resume and step-into almost for free.
+A flow is walked with an **explicit stack**, not recursion. Infinite loops make recursion depth
+unbounded, and a stack gives pause, resume and step-into almost for free.
+
+A `Break` leaves a loop or a check it sits inside by unwinding the stack to that step's level: what
+is pending inside it is dropped, a loop's next pass and a search's next hit with it, and the walk
+carries on with what follows the step it left. It replaced `Go Back`, which jumped to an earlier
+step: a retry is now a loop with a count and a Break on success, so it gives up after the count and
+the part that repeats is indented under the loop. Going back from inside a branch also left the
+step after the target pending once per jump, which ran it again for every retry.
 
 `ExecutionFlowWalker` decides which step runs next and executes nothing - it is handed each step's
 result - which is what makes the most intricate code in the repository the cheapest to test.
@@ -1134,7 +1141,7 @@ singletons because they hold no state.
 ### The step types
 
 ```
-System     WAIT, LOOP, GO_BACK, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
+System     WAIT, LOOP, BREAK, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
            NOTIFY, END_EXECUTION, STAGE_MARKER
 Input      CURSOR_CLICK, CURSOR_DRAG, CURSOR_SCROLL, CURSOR_RELOCATE,
            WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, KEYBOARD_INPUT
@@ -1332,7 +1339,7 @@ warning counts, and the editor names the step.
 | a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
 | a step reading a result it does not sit under through Success | a step with no name |
 | a `Notify` reporting a step it does not sit under through Failure | anything positioned in screen coordinates |
-| a `Go Back` to a step it did not pass on the way here | keys held with nothing below letting them go |
+| a `Break` out of a step it does not sit inside | keys held with nothing below letting them go |
 | a sub-flow that does not exist | |
 | an `End Execution` under another one, which reads as a decision and is not | |
 | `NAME_DUPLICATE` - two steps, areas or points sharing a name | |
@@ -1353,9 +1360,9 @@ step and what is wrong. The Start button reads the same answer, so the two canno
 
 The rules that relate two steps live once, in `TreeStepHelper`, and three places ask them: the
 validator, the form's dropdown, which offers only what the validator accepts, and a drag and drop,
-which clears a reference the move would break. A `Go Back` may return to its earlier siblings, its
-parent, the parent's earlier siblings and so on up to the root - never forward, never into the
-other branch of a check, never inside a block that already finished.
+which clears a reference the move would break. A `Break` may leave only a step it sits inside, up to
+the top of its flow - never one beside it, and never a Success or Failure row, since leaving a branch
+is leaving its check.
 
 `FlowCheckListHelper` and the `GetFlowChecks` AI tool expose the checks a flow contains, so a
 question about "what does this flow verify" is answerable without walking the tree by hand. The
@@ -1931,13 +1938,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-799 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+803 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 173 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 590 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
+| `Business.Tests` | 596 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2051,7 +2058,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 799 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 803 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

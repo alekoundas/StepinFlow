@@ -280,8 +280,8 @@ namespace Business.FlowScript.Parsers
                 case FlowStepTypeEnum.LOOP:
                     return new LoopParser(tokens, _scope).Parse();
 
-                case FlowStepTypeEnum.GO_BACK:
-                    return new GoBackParser(tokens, _scope).Parse();
+                case FlowStepTypeEnum.BREAK:
+                    return new BreakParser(tokens, _scope).Parse();
 
                 case FlowStepTypeEnum.SUB_FLOW:
                     return new SubFlowParser(tokens, _scope).Parse();

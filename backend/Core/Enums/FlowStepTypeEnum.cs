@@ -5,7 +5,7 @@ namespace Core.Enums
         // System Steps
         WAIT,
         LOOP,
-        GO_BACK,
+        BREAK,
         SYSTEM_COMMAND,
         SYSTEM_ACTION,
         SUB_FLOW,

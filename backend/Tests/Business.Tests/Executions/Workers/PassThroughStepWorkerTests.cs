@@ -6,7 +6,7 @@ using static Business.Tests.TestToken;
 namespace Business.Tests.Executions.Workers
 {
     /// <summary>
-    /// The worker for the step types the walker handles itself - LOOP, GO_BACK, SUB_FLOW, SUCCESS,
+    /// The worker for the step types the walker handles itself - LOOP, BREAK, SUB_FLOW, SUCCESS,
     /// FAILURE, STAGE_MARKER. It exists so those types have something to execute, and it does nothing.
     ///
     /// It is also the fallback for a type nobody mapped, which is the hazard: a new step type with a
@@ -23,6 +23,17 @@ namespace Business.Tests.Executions.Workers
             ExecutionStep result = await new PassThroughStepWorker().ExecuteAsync(loop, await WorkerCache.ForAsync(loop), Ct);
 
             result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+        }
+
+        [Fact]
+        public async Task A_break_says_which_step_it_left()
+        {
+            FlowStep loop = new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry login" };
+            FlowStep leave = new FlowStep { Id = 2, FlowStepType = FlowStepTypeEnum.BREAK, ParentFlowStepId = 1, FlowStepReferenceId = 1 };
+
+            ExecutionStep result = await new PassThroughStepWorker().ExecuteAsync(leave, await WorkerCache.ForAsync(loop, leave), Ct);
+
+            result.Message.ShouldBe(@"Broke out of ""Retry login"".");
         }
     }
 }

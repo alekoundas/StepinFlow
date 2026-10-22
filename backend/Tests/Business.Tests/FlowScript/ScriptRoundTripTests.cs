@@ -86,7 +86,7 @@ namespace Business.Tests.FlowScript
             find.FlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
             schema.Areas.Single(x => x.Name == "Cart badge").ParentFlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
             schema.Points.Single(x => x.Name == "Hamburger").FlowArea.ShouldBeSameAs(schema.Areas.Single(x => x.Name == "Browser"));
-            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.GO_BACK).FlowStepReference.ShouldBeSameAs(total);
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.BREAK).FlowStepReference.ShouldBeSameAs(schema.Steps.Single(x => x.Name == "Retry"));
             schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CHECK_VALUE).FlowStepReference.ShouldBeSameAs(total);
             schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_DRAG).FlowPointEnd.ShouldBeSameAs(schema.Points.Single(x => x.Name == "Origin"));
         }

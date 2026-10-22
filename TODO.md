@@ -136,6 +136,12 @@ the history.
 
 ## Flow script
 
+- [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the
+      Break dropdown offers every step it sits inside, but only a loop, a search and a Check Value
+      write their own name in the script. A Break out of a System Command, a window step or an End
+      Execution executes fine and exports as `Break  out of <[ Focus chrome.exe ]>`, which the import
+      then reports as `NAME_UNKNOWN`. Either offer only loops and checks in the dropdown, or have the
+      parser declare settings-named steps under the name they will be given.
 - [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
       both called "Retry" is a fair description of some flows - until the cost showed up: the script
       links a step reference by name across every named step, and a stage is a named step, so

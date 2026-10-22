@@ -168,10 +168,10 @@ namespace Core.Helpers
         }
 
         /// <summary>
-        /// Where a Go Back may return to, nearest first: the one chain of steps that ran on the way to
-        /// it - its previous siblings, its parent.
+        /// What a Break can leave, nearest first: the steps it sits inside, up to the top of its flow.
+        /// Never a Success or Failure row - leaving one is leaving its check.
         /// </summary>
-        public static IEnumerable<StepChainNode> GoBackTargets(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
+        public static IEnumerable<StepChainNode> BreakTargets(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
             if (!byId.TryGetValue(fromStepId, out StepChainNode current))
                 yield break;
@@ -179,20 +179,9 @@ namespace Core.Helpers
             // Bounded by the step count, so a corrupt parent chain cannot spin forever.
             int guard = byId.Count + 1;
 
-            while (guard-- > 0)
+            while (current.ParentFlowStepId != null && guard-- > 0)
             {
-                // A branch row's siblings are the other branch, which this way never ran through.
-                if (!IsBranchChild(current.FlowStepType))
-                {
-                    IEnumerable<StepChainNode> earlier = byId.Values
-                        .Where(x => x.ParentFlowStepId == current.ParentFlowStepId && x.OrderNumber < current.OrderNumber)
-                        .OrderByDescending(x => x.OrderNumber);
-
-                    foreach (StepChainNode sibling in earlier)
-                        yield return sibling;
-                }
-
-                if (current.ParentFlowStepId == null || !byId.TryGetValue(current.ParentFlowStepId.Value, out StepChainNode parent))
+                if (!byId.TryGetValue(current.ParentFlowStepId.Value, out StepChainNode parent))
                     yield break;
 
                 if (!IsBranchChild(parent.FlowStepType))
@@ -202,9 +191,9 @@ namespace Core.Helpers
             }
         }
 
-        public static bool CanGoBackTo(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int targetId)
+        public static bool CanBreakOutOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int targetId)
         {
-            return GoBackTargets(byId, fromStepId).Any(x => x.Id == targetId);
+            return BreakTargets(byId, fromStepId).Any(x => x.Id == targetId);
         }
     }
 }

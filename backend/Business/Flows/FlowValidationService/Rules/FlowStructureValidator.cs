@@ -47,8 +47,8 @@ namespace Business.Flows.FlowValidationService.Rules
                 if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
                     ValidateEndExecution(result, step, byStepId);
 
-                if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
-                    ValidateGoBack(result, step, byStepId);
+                if (step.FlowStepType == FlowStepTypeEnum.BREAK)
+                    ValidateBreak(result, step, byStepId);
 
                 // A step that branches and has nothing in.
                 if (TreeStepHelper.HasBranchChildren(step.FlowStepType) && IsEveryBranchEmpty(step, childrenByParentId))
@@ -147,22 +147,22 @@ namespace Business.Flows.FlowValidationService.Rules
             }
         }
 
-        private static void ValidateGoBack(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
+        private static void ValidateBreak(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
             if (step.FlowStepReferenceId == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.GO_BACK_TARGET_MISSING, "Pick the step to go back to.");
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.BREAK_TARGET_MISSING, "Pick the step to break out of. A Break goes inside a loop or a check.");
                 return;
             }
 
-            if (TreeStepHelper.CanGoBackTo(byId, step.Id, step.FlowStepReferenceId.Value))
+            if (TreeStepHelper.CanBreakOutOf(byId, step.Id, step.FlowStepReferenceId.Value))
                 return;
 
             string name = "that step";
             if (byId.TryGetValue(step.FlowStepReferenceId.Value, out StepChainNode target))
                 name = target.Name;
 
-            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.GO_BACK_TARGET_UNREACHABLE, $"\"{name}\" is not a step this one passed on the way here, so it cannot go back to it.");
+            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.BREAK_TARGET_UNREACHABLE, $"This step is not inside \"{name}\", so it cannot break out of it.");
         }
 
         private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)

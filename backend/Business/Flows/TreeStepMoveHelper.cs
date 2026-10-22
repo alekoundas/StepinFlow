@@ -84,9 +84,9 @@ namespace Business.Flows
         /// user is told before the move commits.
         ///
         /// The same rule on purpose: a weaker one here would let a step be dropped into a Failure
-        /// branch without warning and only fail validation afterwards. A Go Back and a Notify are
-        /// held to their own rules the same way: a Go Back's target has to stay behind it, and a
-        /// Notify has to stay under the Failure branch of the step it reports on.
+        /// branch without warning and only fail validation afterwards. A Break and a Notify are
+        /// held to their own rules the same way: a Break has to stay inside the step it breaks out
+        /// of, and a Notify has to stay under the Failure branch of the step it reports on.
         ///
         /// Only references that are valid now and broken afterwards are reported: pre-existing
         /// breakage is not this move's fault.
@@ -155,8 +155,8 @@ namespace Business.Flows
 
         private static bool CanReach(IReadOnlyDictionary<int, StepChainNode> byId, FlowStep step, int referenceId)
         {
-            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
-                return TreeStepHelper.CanGoBackTo(byId, step.Id, referenceId);
+            if (step.FlowStepType == FlowStepTypeEnum.BREAK)
+                return TreeStepHelper.CanBreakOutOf(byId, step.Id, referenceId);
 
             if (step.FlowStepType == FlowStepTypeEnum.NOTIFY)
                 return TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId);
@@ -164,8 +164,7 @@ namespace Business.Flows
             return TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId);
         }
 
-        // The new parent, and the destination renumbered the way ApplyOrder will, because a Go Back
-        // cares which siblings end up above it.
+        // The new parent, and the destination renumbered the way ApplyOrder will.
         private static Dictionary<int, StepChainNode> AfterMove(Dictionary<int, StepChainNode> before, FlowStepMoveDto dto)
         {
             StepChainNode from = before[dto.FlowStepId];

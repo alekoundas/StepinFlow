@@ -31,30 +31,24 @@ namespace Core.Tests.Helpers
             [10] = new StepChainNode(10, 9, FlowStepTypeEnum.CURSOR_CLICK, "Click", 0),
         };
 
-        // 1 Open the page
-        // 2 Loop
-        //   3 Type
-        //   4 Wait
-        // 5 Find image
-        //   6 Success
-        //     7 Click
-        //     8 Go back
-        //   9 Failure
-        //     10 Retry
-        // 11 Go back
-        private static readonly Dictionary<int, StepChainNode> GoBackTree = new Dictionary<int, StepChainNode>
+        // 1 Retry
+        //   2 Find image
+        //     3 Success
+        //       4 Click
+        //       5 Break
+        //     6 Failure
+        //       7 Fix
+        // 8 Break
+        private static readonly Dictionary<int, StepChainNode> BreakTree = new Dictionary<int, StepChainNode>
         {
-            [1] = new StepChainNode(1, null, FlowStepTypeEnum.WAIT, "Open the page", 0),
-            [2] = new StepChainNode(2, null, FlowStepTypeEnum.LOOP, "Loop", 1),
-            [3] = new StepChainNode(3, 2, FlowStepTypeEnum.KEYBOARD_INPUT, "Type", 0),
-            [4] = new StepChainNode(4, 2, FlowStepTypeEnum.WAIT, "Wait", 1),
-            [5] = new StepChainNode(5, null, FlowStepTypeEnum.SEARCH_IMAGE, "Find image", 2),
-            [6] = new StepChainNode(6, 5, FlowStepTypeEnum.SUCCESS, "Success", 0),
-            [7] = new StepChainNode(7, 6, FlowStepTypeEnum.CURSOR_CLICK, "Click", 0),
-            [8] = new StepChainNode(8, 6, FlowStepTypeEnum.GO_BACK, "Go back", 1),
-            [9] = new StepChainNode(9, 5, FlowStepTypeEnum.FAILURE, "Failure", 1),
-            [10] = new StepChainNode(10, 9, FlowStepTypeEnum.WAIT, "Retry", 0),
-            [11] = new StepChainNode(11, null, FlowStepTypeEnum.GO_BACK, "Go back", 3),
+            [1] = new StepChainNode(1, null, FlowStepTypeEnum.LOOP, "Retry", 0),
+            [2] = new StepChainNode(2, 1, FlowStepTypeEnum.SEARCH_IMAGE, "Find image", 0),
+            [3] = new StepChainNode(3, 2, FlowStepTypeEnum.SUCCESS, "Success", 0),
+            [4] = new StepChainNode(4, 3, FlowStepTypeEnum.CURSOR_CLICK, "Click", 0),
+            [5] = new StepChainNode(5, 3, FlowStepTypeEnum.BREAK, "Break", 1),
+            [6] = new StepChainNode(6, 2, FlowStepTypeEnum.FAILURE, "Failure", 1),
+            [7] = new StepChainNode(7, 6, FlowStepTypeEnum.WAIT, "Fix", 0),
+            [8] = new StepChainNode(8, null, FlowStepTypeEnum.BREAK, "Break 2", 1),
         };
 
         [Theory]
@@ -103,39 +97,37 @@ namespace Core.Tests.Helpers
         }
 
         [Fact]
-        public void Go_back_targets_come_nearest_first()
+        public void Break_targets_are_the_steps_it_sits_inside_nearest_first()
         {
-            TreeStepHelper.GoBackTargets(GoBackTree, 8).Select(x => x.Id).ShouldBe([7, 5, 2, 1]);
+            TreeStepHelper.BreakTargets(BreakTree, 5).Select(x => x.Id).ShouldBe([2, 1]);
         }
 
-        // How Lookup.goBack asks for a step not saved yet: a stand-in at the end of its parent.
+        // How Lookup.break asks for a step not saved yet: a stand-in under its parent.
         [Theory]
-        [InlineData(6, 2, new[] { 8, 7, 5, 2, 1 })]
-        [InlineData(null, 4, new[] { 11, 5, 2, 1 })]
-        public void A_step_not_saved_yet_goes_back_by_its_position(int? parentId, int orderNumber, int[] expected)
+        [InlineData(3, new[] { 2, 1 })]
+        [InlineData(null, new int[0])]
+        public void A_step_not_saved_yet_breaks_out_by_its_parent(int? parentId, int[] expected)
         {
-            Dictionary<int, StepChainNode> withNew = new Dictionary<int, StepChainNode>(GoBackTree)
+            Dictionary<int, StepChainNode> withNew = new Dictionary<int, StepChainNode>(BreakTree)
             {
-                [0] = new StepChainNode(0, parentId, FlowStepTypeEnum.GO_BACK, string.Empty, orderNumber),
+                [0] = new StepChainNode(0, parentId, FlowStepTypeEnum.BREAK, string.Empty, 0),
             };
 
-            TreeStepHelper.GoBackTargets(withNew, 0).Select(x => x.Id).ShouldBe(expected);
+            TreeStepHelper.BreakTargets(withNew, 0).Select(x => x.Id).ShouldBe(expected);
         }
 
         [Theory]
-        [InlineData(8, 7, true)]
-        [InlineData(8, 5, true)]
-        [InlineData(8, 1, true)]
-        [InlineData(11, 5, true)]
-        [InlineData(4, 2, true)]
-        [InlineData(8, 10, false)] // the other branch
-        [InlineData(8, 3, false)]  // inside an earlier block
-        [InlineData(8, 6, false)]  // a branch row
-        [InlineData(7, 8, false)]  // forward
-        [InlineData(8, 8, false)]  // itself
-        public void A_go_back_returns_only_to_a_step_it_passed_on_the_way_here(int from, int target, bool canGoBack)
+        [InlineData(5, 2, true)]
+        [InlineData(5, 1, true)]
+        [InlineData(7, 1, true)]
+        [InlineData(5, 3, false)] // a branch row
+        [InlineData(5, 4, false)] // beside it
+        [InlineData(5, 7, false)] // the other branch
+        [InlineData(8, 1, false)] // beside it, at the top
+        [InlineData(5, 5, false)] // itself
+        public void A_break_leaves_only_a_step_it_sits_inside(int from, int target, bool canBreak)
         {
-            TreeStepHelper.CanGoBackTo(GoBackTree, from, target).ShouldBe(canGoBack);
+            TreeStepHelper.CanBreakOutOf(BreakTree, from, target).ShouldBe(canBreak);
         }
 
         [Fact]

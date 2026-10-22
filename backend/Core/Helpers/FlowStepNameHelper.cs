@@ -4,9 +4,10 @@ using Core.Models.Database;
 namespace Core.Helpers
 {
     /// <summary>
-    /// The steps nobody names. A cursor, wait, keyboard, window or system action step is called what
-    /// its own settings say, "Double click" or "Wait 2s", and renamed whenever it is saved. Never
-    /// from another row, such as the point a Move goes to, which could be renamed under it.
+    /// The steps nobody names. A cursor, wait, keyboard, window, system action or break step is called
+    /// what its own settings say, "Double click" or "Wait 2s", and renamed whenever it is saved. Never
+    /// from another row, such as the point a Move goes to or the loop a Break leaves, which could be
+    /// renamed under it.
     /// </summary>
     public static class FlowStepNameHelper
     {
@@ -24,6 +25,7 @@ namespace Core.Helpers
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,
             FlowStepTypeEnum.KEYBOARD_INPUT,
+            FlowStepTypeEnum.BREAK,
         ];
 
         public static bool IsNamedBySettings(FlowStepTypeEnum type)
@@ -67,6 +69,9 @@ namespace Core.Helpers
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     return KeyboardName(step);
+
+                case FlowStepTypeEnum.BREAK:
+                    return "Break";
 
                 default:
                     return step.Name;

@@ -1,4 +1,4 @@
-# Wait, Loop, Go Back, Sub-Flow, End Execution and Stage Marker
+# Wait, Loop, Break, Sub-Flow, End Execution and Stage Marker
 
 ## Wait
 
@@ -16,25 +16,39 @@ every time is recognisably a bot; a varying pause is not.
 Steps to repeat go **inside** the loop. A loop with nothing inside it does nothing.
 
 An infinite loop is a supported thing to build, not a mistake. Stop it with the debugger, or put a
-step inside it that ends the execution.
+`BREAK` or an `END_EXECUTION` inside it.
 
 Each pass is labelled in the execution view, so a failure on pass 40 is distinguishable from one on pass 1.
 
-## Go Back
+## Break
 
-`GO_BACK` returns to a step that already ran on the way here and carries on from there.
+`BREAK` leaves a step it sits inside and carries on with what follows that step.
 
-The steps it can go back to are its earlier siblings, its parent, the parent's earlier siblings,
-and so on up to the top of the flow. Never a step below it, never one in the other branch of a
-check above it, and never one inside an earlier block: a loop or a check that already finished is
-gone back to as a whole, not into. The form's **Go back to** dropdown offers only those steps,
-nearest first, the validator reports anything else, and moving a step so its target falls off that
-chain clears the target.
+- Out of a **loop**, the loop does no more passes.
+- Out of a `FIND_ALL` search, the hits not yet worked through are skipped.
+- Out of any other **check**, the rest of that branch is skipped.
 
-Going back repeatedly does not accumulate anything, so a Go Back can run indefinitely without
-growing.
+The step it leaves is picked in the form's **Break out of** dropdown, which offers the steps it sits
+inside, nearest first, up to the top of its flow. Never a step beside it, and never a Success or
+Failure row: leaving a branch is leaving its check. It defaults to the nearest loop. The validator
+reports anything else, and moving a Break out of the step it names clears the target, after saying
+so. A Break inside a sub-flow can only leave steps of that sub-flow.
 
-`GO_BACK` is a leaf. Anything after it in the same branch never runs.
+A retry is a loop with a count and a Break on success:
+
+```
+Loop 3 times   (Retry sign in)
+  click Sign in
+  Wait for "Signed in"
+    Success: Break out of Retry sign in
+```
+
+It gives up after the count instead of trying forever, and the part that repeats is the part
+indented under the loop. Every loop a Break leaves counts from its first pass the next time the
+execution reaches it.
+
+`BREAK` is a leaf and is named by its settings, always "Break". Anything after it in the same branch
+never runs.
 
 ## Sub-Flow
 

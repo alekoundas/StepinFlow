@@ -273,14 +273,14 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
         return {
           type,
           mode: "Forever",
-          summary: "Executes the steps inside it again and again, until an End Execution or a Go Back inside it.",
+          summary: "Executes the steps inside it again and again, until a Break or an End Execution inside it.",
         };
       }
 
       return { type, mode: "Times", summary: `Executes the steps inside it ${plural(dto.loopCount, "time", "times")}.` };
 
-    case FlowStepTypeEnum.GO_BACK:
-      return { type, summary: `Carries on from ${reference}, which this step has already passed.` };
+    case FlowStepTypeEnum.BREAK:
+      return { type, summary: `Leaves ${reference} and carries on with what follows it. Nothing after this step inside it executes.` };
 
     case FlowStepTypeEnum.SUB_FLOW:
       return {

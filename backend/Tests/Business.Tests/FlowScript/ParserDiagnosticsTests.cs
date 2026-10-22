@@ -61,7 +61,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
-            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nGo Back to <[ Itself ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nBreak out of <[ Itself ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
             { DiagnosticCodeEnum.AREA_MAIN_DUPLICATE, "Areas:\n  <[ A ]> main monitor primary\n  <[ B ]> main window process <[ chrome.exe ]>" },
@@ -114,7 +114,7 @@ namespace Business.Tests.FlowScript
         [InlineData("Steps:\nNotify <[ never closes", "Unexpected end of the line, expected \"]>\".")]
         [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected the end of the line.")]
         [InlineData("Steps:\nFnid Image <[ x ]>", "Unexpected \"Fnid\".")]
-        [InlineData("Steps:\nLoop often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
+        [InlineData("Steps:\nLoop <[ Retry ]> often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]
         [InlineData("Points:\n  <[ Origin ]> offset 1 2", "Unexpected \"offset\", expected \"inside\" or \"on screen\".")]
         [InlineData("Points:\n  <[ Origin ]> on screen offset 1 2 offset 3 4", "Unexpected \"offset\", expected \"at\" or the end of the line.")]
@@ -170,10 +170,10 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_name_declared_only_below_is_unknown_where_it_is_used()
         {
-            Diagnostic diagnostic = Read(Header + "Steps:\nGo Back to <[ Retry ]>\n## Retry").ShouldHaveSingleItem();
+            Diagnostic diagnostic = Read(Header + "Steps:\nBreak out of <[ Retry ]>\n## Retry").ShouldHaveSingleItem();
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_UNKNOWN);
-            (diagnostic.Line, diagnostic.Column).ShouldBe((5, 15));
+            (diagnostic.Line, diagnostic.Column).ShouldBe((5, 17));
         }
 
         // Reported at the quote the name was read from, not at the first quote on the line with the

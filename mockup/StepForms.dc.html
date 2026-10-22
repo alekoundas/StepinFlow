@@ -602,7 +602,7 @@ class Component extends DCLogic {
               mono('Times', '5'),
             ],
             gives: '',
-            script: ['Loop            5 times'],
+            script: ['Loop            <[ Retry the upload ]>   5 times'],
             comment: '',
           },
           {
@@ -611,21 +611,20 @@ class Component extends DCLogic {
             fields: [
               name('Keep polling the inbox'),
               seg('Repeat', ['A number of times', 'Forever'], 'Forever'),
-              note('Ended by an End Execution or a Go Back inside it.'),
+              note('Ended by a Break or an End Execution inside it.'),
             ],
             gives: '',
-            script: ['Loop            forever'],
+            script: ['Loop            <[ Keep polling the inbox ]>   forever'],
             comment: '',
           },
           {
-            id: 'back', type: 'Go Back', mode: '', glyph: 'B', tint: C, name: 'Read it again', hasTest: false,
-            summary: 'Carries on from Read the total, which this step has already passed.',
+            id: 'break', type: 'Break', mode: '', glyph: 'Br', tint: C, name: 'Break', hasTest: false,
+            summary: 'Leaves Retry the upload and carries on with what follows it. Nothing after this step inside it executes.',
             fields: [
-              name('Read it again', 'What this step is called in the tree.'),
-              select('Go back to', 'Read the total', 'Only steps this one passes on the way here, nearest first: the ones above it, the step it sits under, and the ones above that. Never the other branch of a check, and never inside a loop or check that already finished.'),
+              select('Break out of', 'Retry the upload', 'The steps it sits inside, nearest first. Out of a loop, no more passes; out of an Every match search, no more hits; out of a check, the rest of its branch is skipped. The execution carries on after the step it leaves.'),
             ],
             gives: '',
-            script: ['Go Back         to <[ Read the total ]>'],
+            script: ['Break           out of <[ Retry the upload ]>'],
             comment: '',
           },
           {
@@ -951,8 +950,8 @@ class Component extends DCLogic {
 
     // The script view's colours.
     const KW = '#8FA3FF', STEP = '#C4B5FD', Q = '#E6E8EC', DLM = '#5D6473', NUM = '#F2B33D', CM = '#7D8597', PLAIN = '#AEB4C0', VAR = '#46D69A', GOOD = '#46D69A', BAD = '#FF7A86';
-    const stepWords = ['Wait Until No Image', 'Wait Until No Text', 'Find All Images', 'Wait For Image', 'Wait For Text', 'End Execution', 'Resize Window', 'Focus Window', 'Move Window', 'Check Value', 'Find Image', 'Check Text', 'Sub Flow', 'Go Back', 'Notify', 'Scroll', 'System', 'Launch', 'Click', 'Press', 'Drag', 'Move', 'Loop', 'Type', 'Wait', 'Run'];
-    const words = ['shape and brightness', 'is not empty', 'starts with', 'no timeout', 'IS_PROCESS_RUNNING', 'LOCK_WORKSTATION', 'CANCEL_SHUTDOWN', 'WRITE_CLIPBOARD', 'CHECK_INTERNET', 'READ_CLIPBOARD', 'KILL_PROCESS', 'MONITOR_OFF', 'SHUTDOWN_IN', 'MONITOR_ON', 'SLEEP_PC', 'template', 'accuracy', 'required', 'contains', 'between', 'timeout', 'process', 'forever', 'release', 'passed', 'failed', 'opens', 'title', 'point', 'times', 'match', 'shape', 'keep', 'hold', 'size', 'down', 'and', 'in', 'at', 'to', '>'];
+    const stepWords = ['Wait Until No Image', 'Wait Until No Text', 'Find All Images', 'Wait For Image', 'Wait For Text', 'End Execution', 'Resize Window', 'Focus Window', 'Move Window', 'Check Value', 'Find Image', 'Check Text', 'Sub Flow', 'Break', 'Notify', 'Scroll', 'System', 'Launch', 'Click', 'Press', 'Drag', 'Move', 'Loop', 'Type', 'Wait', 'Run'];
+    const words = ['shape and brightness', 'is not empty', 'starts with', 'no timeout', 'IS_PROCESS_RUNNING', 'LOCK_WORKSTATION', 'CANCEL_SHUTDOWN', 'WRITE_CLIPBOARD', 'CHECK_INTERNET', 'READ_CLIPBOARD', 'KILL_PROCESS', 'MONITOR_OFF', 'SHUTDOWN_IN', 'MONITOR_ON', 'SLEEP_PC', 'template', 'accuracy', 'required', 'contains', 'between', 'timeout', 'process', 'forever', 'release', 'out of', 'passed', 'failed', 'opens', 'title', 'point', 'times', 'match', 'shape', 'keep', 'hold', 'size', 'down', 'and', 'in', 'at', 'to', '>'];
     const seg2 = (tt, c, w, i) => ({ t: tt, c, w: w || '400', i: i || 'normal' });
     const paint = (line) => {
       const out = [];

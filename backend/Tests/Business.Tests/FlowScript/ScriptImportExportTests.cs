@@ -324,11 +324,11 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.GO_BACK, FlowStepReferenceId = total.Id }, null);
 
-            FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 5 }, null);
+            FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReferenceId = find.Id }, loop.Id);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, loop.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReferenceId = loop.Id }, loop.Id);
 
             FlowStep end = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end.Id);

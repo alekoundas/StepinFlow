@@ -52,7 +52,7 @@ export default function FlowStepLoopFormFieldsComponent({
         />
         {isLoopInfinite && (
           <LabelComponent
-            text="Ended by an End Execution or a Go Back inside it."
+            text="Ended by a Break or an End Execution inside it."
             size="xs"
             weight="bold"
             className="mt-1"

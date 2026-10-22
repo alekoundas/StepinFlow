@@ -494,9 +494,11 @@ after it would arrive without it.
 ### Loops
 
 ```
-Loop  5 times
-Loop  forever
+Loop  <[ Retry sign in ]>   5 times
+Loop  <[ Poll the inbox ]>   forever
 ```
+
+A loop is named, so a `Break` inside it can say which one it leaves.
 
 Working through every hit of a search is not a loop. A `Find All Images` takes one screenshot and
 executes its Success branch once per hit, and inside that branch the search's own name is the hit
@@ -511,22 +513,26 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]>   in
 
 A step after all the hits is the next step after the search.
 
-### Going back
+### Breaking out
 
 ```
 ## Sign in
-Move            to point <[ Sign in button ]>
-Click
-Wait For Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
- Failure:
-  Go Back  to <[ Sign in ]>
+Loop  <[ Retry sign in ]>   3 times
+ Move            to point <[ Sign in button ]>
+ Click
+ Wait For Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
+  Success:
+   Break  out of <[ Retry sign in ]>
 ```
 
-`Go Back` returns to a step the execution already passed on the way here, and carries on from there:
-an earlier step beside it, the step it sits under, or one beside those, up to the top of the flow.
-Never a step further down, never one in the other branch of a check, and never one inside a loop or
-check that already finished - that block is gone back to as a whole. So the name a `Go Back` uses
-is always written above it.
+`Break` leaves a step it sits inside and carries on with what follows that step: out of a loop, it
+does no more passes; out of a `Find All Images`, it works through no more hits; out of any other
+check, it skips the rest of that branch. It names a step it sits inside, never one beside it, and
+never a `Success:` or `Failure:` line - leaving a branch is leaving its check. So the name a `Break`
+uses is always written above it.
+
+A retry is a loop with a count and a `Break` on success, as above: it gives up after the count
+rather than trying for ever, and the part that repeats is the part indented under the loop.
 
 ### Ending an execution
 

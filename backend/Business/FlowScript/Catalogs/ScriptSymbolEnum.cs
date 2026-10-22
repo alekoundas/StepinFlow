@@ -48,6 +48,7 @@ namespace Business.FlowScript.Catalogs
 
         // FlowStep
         TO,
+        OUT_OF,
         POINT,
         NOWHERE,
         MATCH,

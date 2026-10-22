@@ -12,10 +12,13 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Loop  5 times | forever
+            // Loop  <[ name ]>   5 times | forever
             // Working through every hit of a search is the search's own Success branch, not a loop.
+            // Named, so a Break inside it can say it leaves it.
             WriteKeyword(FlowStepTypeEnum.LOOP);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
+            WriteQuote(Step.Name);
+            WriteGap();
 
             if (Step.IsLoopInfinite)
             {

@@ -99,11 +99,11 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, ProcessName = "chrome.exe", FlowPoint = origin }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, ProcessName = "chrome.exe" }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.GO_BACK, FlowStepReference = total }, null);
 
-            FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 5 }, null);
+            FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReference = find }, loop);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, loop);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReference = loop }, loop);
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end);

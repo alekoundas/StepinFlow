@@ -6,8 +6,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
-import { FlowStepGoBackSchema } from "@/features/flow-step/components/forms/go-back/flow-step-go-back.zod";
-import FlowStepGoBackFormFieldsComponent from "@/features/flow-step/components/forms/go-back/FlowStepGoBackFormFieldsComponent";
+import { FlowStepBreakSchema } from "@/features/flow-step/components/forms/break/flow-step-break.zod";
+import FlowStepBreakFormFieldsComponent from "@/features/flow-step/components/forms/break/FlowStepBreakFormFieldsComponent";
 
 interface Props {
   formMode: FormMode;
@@ -17,15 +17,15 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function FlowStepGoBackFormComponent({
+export default function FlowStepBreakFormComponent({
   formMode,
   defaultValues,
   onSubmit,
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepGoBackSchema>>({
-    resolver: zodResolver(FlowStepGoBackSchema),
+  const form = useForm<z.infer<typeof FlowStepBreakSchema>>({
+    resolver: zodResolver(FlowStepBreakSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -42,7 +42,7 @@ export default function FlowStepGoBackFormComponent({
     return () => clearTimeout(timer);
   }, [trigger]);
 
-  const handleSubmit = (data: z.infer<typeof FlowStepGoBackSchema>) =>
+  const handleSubmit = (data: z.infer<typeof FlowStepBreakSchema>) =>
     onSubmit(
       new FlowStepDto({
         ...defaultValues,
@@ -66,10 +66,9 @@ export default function FlowStepGoBackFormComponent({
             onCancel={onCancel}
             baseValues={defaultValues}
           >
-            <FlowStepGoBackFormFieldsComponent
+            <FlowStepBreakFormFieldsComponent
               rootId={defaultValues.rootId}
               parentFlowStepId={defaultValues.parentFlowStepId}
-              orderNumber={defaultValues.orderNumber}
               isDisabled={formMode === "VIEW"}
             />
           </FlowStepFormLayoutComponent>

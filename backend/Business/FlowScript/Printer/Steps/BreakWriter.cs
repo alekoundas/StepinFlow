@@ -4,18 +4,18 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Text.Steps
 {
-    internal sealed class GoBackWriter : BaseStepWriter
+    internal sealed class BreakWriter : BaseStepWriter
     {
-        public GoBackWriter(FlowStep step) : base(step)
+        public BreakWriter(FlowStep step) : base(step)
         {
         }
 
         protected override void Compose()
         {
-            // Go Back  to <[ step ]>
-            WriteKeyword(FlowStepTypeEnum.GO_BACK);
+            // Break  out of <[ step ]>
+            WriteKeyword(FlowStepTypeEnum.BREAK);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteKeyword(ScriptSymbolEnum.TO);
+            WriteKeyword(ScriptSymbolEnum.OUT_OF);
             WriteQuote(Step.FlowStepReference?.Name ?? string.Empty);
         }
     }

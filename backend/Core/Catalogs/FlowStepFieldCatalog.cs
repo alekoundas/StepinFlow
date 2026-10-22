@@ -62,8 +62,8 @@ namespace Core.Catalogs
                 nameof(FlowStep.IsLoopInfinite),
             ],
 
-            // The step it jumps to.
-            [FlowStepTypeEnum.GO_BACK] = [nameof(FlowStep.FlowStepReferenceId)],
+            // The step it breaks out of.
+            [FlowStepTypeEnum.BREAK] = [nameof(FlowStep.FlowStepReferenceId)],
 
             [FlowStepTypeEnum.SUB_FLOW] = [nameof(FlowStep.SubFlowId)],
 

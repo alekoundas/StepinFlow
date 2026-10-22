@@ -89,7 +89,7 @@ namespace Business.Executions
             if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
                 _executionStack.Clear();
             else
-                PushContinuation(step, result); // Siblings or loops or GOTO
+                PushContinuation(step, result); // Siblings, loops, or past what a Break leaves
 
             PushChild(step, result);            // Add Child last so its executed first
 
@@ -103,12 +103,8 @@ namespace Business.Executions
 
         private void PushContinuation(FlowStep step, ExecutionStep result)
         {
-            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
-            {
-                bool isPushed = GetGoBackTargetStep(step);
-                if (isPushed)
-                    return;
-            }
+            if (step.FlowStepType == FlowStepTypeEnum.BREAK && BreakOutOf(step))
+                return;
 
             if (step.FlowStepType == FlowStepTypeEnum.LOOP && HasAnotherLoop(step)) // Re-add the same loop type step
             {
@@ -135,15 +131,17 @@ namespace Business.Executions
                 return;
             }
 
-            if (step.FlowStepType == FlowStepTypeEnum.GO_BACK)
-                return;
-
             FlowStep? first = FirstChildOf(step, result);
             if (first != null)
                 _executionStack.Push(new PendingStep(first, Depth + 1, _subFlowDepth));
         }
 
-        private bool GetGoBackTargetStep(FlowStep step)
+        /// <summary>
+        /// Leaves the step a Break names as if it had just finished with nothing left inside it:
+        /// what is pending inside it is dropped, a loop does no more passes and a search serves no
+        /// more hits. False when it names nothing it sits inside, and the walk carries on past it.
+        /// </summary>
+        private bool BreakOutOf(FlowStep step)
         {
             if (step.FlowStepReferenceId == null)
                 return false;
@@ -152,8 +150,62 @@ namespace Business.Executions
             if (target == null)
                 return false;
 
-            _executionStack.Push(new PendingStep(target, Depth, _subFlowDepth));
+            int? targetDepth = DepthOf(target, step);
+            if (targetDepth == null)
+                return false;
+
+            // Everything pending inside it sits deeper than it does.
+            while (_executionStack.Count > 0 && _executionStack.Peek().Depth > targetDepth.Value)
+                Abandon(_executionStack.Pop());
+
+            // Its own continuation is itself again when another pass or hit was due. That stops here,
+            // and the walk goes on to what follows it.
+            if (_executionStack.Count > 0 && _executionStack.Peek().Depth == targetDepth.Value && _executionStack.Peek().Step.Id == target.Id)
+            {
+                PendingStep again = _executionStack.Pop();
+                Abandon(again);
+
+                FlowStep? sibling = NextSiblingOf(target);
+                if (sibling != null)
+                    _executionStack.Push(new PendingStep(sibling, again.Depth, again.SubFlowDepth));
+            }
+
+            _loopPasses.Remove(target.Id);
+            _pendingMatches.Remove(target.Id);
+
             return true;
+        }
+
+        // How deep a step it sits inside ran: one level up per step, except the Success and Failure
+        // rows, which never run at a depth of their own.
+        private int? DepthOf(FlowStep ancestor, FlowStep step)
+        {
+            int depth = Depth;
+            FlowStep current = step;
+
+            while (current.ParentFlowStepId != null)
+            {
+                FlowStep? parent = Step(current.ParentFlowStepId.Value);
+                if (parent == null)
+                    return null;
+
+                if (!TreeStepHelper.IsBranchChild(parent.FlowStepType))
+                    depth--;
+
+                if (parent.Id == ancestor.Id)
+                    return depth;
+
+                current = parent;
+            }
+
+            return null;
+        }
+
+        // A loop or a search left part way through starts over the next time the walk reaches it.
+        private void Abandon(PendingStep pending)
+        {
+            _loopPasses.Remove(pending.Step.Id);
+            _pendingMatches.Remove(pending.Step.Id);
         }
 
         private void PushSubFlow(FlowStep step)
