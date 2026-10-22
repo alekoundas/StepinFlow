@@ -35,6 +35,10 @@ An input is a named value the flow types, such as `{{username}}`. It keeps the v
 recorded with as its default, and a row of the CSV beside the flow overrides it. A **secret** input
 keeps no value anywhere in the flow or its file, so it has no default.
 
+The editor's **Inputs** tab lists them, with the steps that type each one. Renaming an input there
+does not rename it in those steps: each one still typing the old name shows an error until it is
+changed.
+
 ## What a sub-flow is
 
 A sub-flow is a flow meant to be called by another flow rather than started on its own. It has the

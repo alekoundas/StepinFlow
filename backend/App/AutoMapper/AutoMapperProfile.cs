@@ -28,10 +28,17 @@ namespace App.AutoMapper
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.FlowAreas, o => o.Ignore())
                 .ForMember(x => x.FlowPoints, o => o.Ignore())
-                .ForMember(x => x.FlowViewports, o => o.Ignore());
+                .ForMember(x => x.FlowViewports, o => o.Ignore())
+                .ForMember(x => x.FlowCsvColumns, o => o.Ignore());
 
             // FlowViewport
             CreateMap<FlowViewport, FlowViewportDto>();
+
+            // FlowCsvColumn
+            CreateMap<FlowCsvColumn, FlowCsvColumnDto>();
+            CreateMap<FlowCsvColumnDto, FlowCsvColumn>()
+                .ForMember(x => x.CreatedOn, o => o.Ignore())
+                .ForMember(x => x.Flow, o => o.Ignore());
 
             // FlowStep
             CreateMap<FlowStep, FlowStepDto>();

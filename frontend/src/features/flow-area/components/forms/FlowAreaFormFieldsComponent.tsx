@@ -154,15 +154,6 @@ export default function FlowAreaFormFieldsComponent({
       return;
     }
 
-    // A parent added in this same editing session only has a temporary negative id, so there is
-    // nothing for the backend to resolve yet.
-    if (parentId < 0) {
-      setCaptureError(
-        `Save the flow before capturing inside "${parentName}", which has not been created yet.`,
-      );
-      return;
-    }
-
     // Resolved before the overlay opens, not after: the overlay needs these bounds to confine
     // the drag, and a parent that cannot be found is a reason not to open it at all. Writing the
     // raw screen rect as an offset would look like it worked and put the region elsewhere.

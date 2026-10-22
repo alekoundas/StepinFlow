@@ -109,16 +109,14 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// The flow form: the flow's own fields, and its areas, points and sizes as the form left
-        /// them. Areas first, because a point can sit in an area created in this same save.
+        /// The flow form: the flow's own fields and its sizes. Areas, points and inputs have tabs
+        /// of their own and are saved one at a time, so they are left as they are.
         /// </summary>
         public async Task<ResultDto<Flow>> UpdateAsync(FlowDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
             Flow? flow = await dbContext.Flows
-                .Include(x => x.FlowAreas)
-                .Include(x => x.FlowPoints)
                 .Include(x => x.FlowViewports)
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
@@ -132,17 +130,6 @@ namespace Business.Flows.DataService.DataHandlers
             flow.Name = dto.Name;
             flow.Description = dto.Description;
 
-            Dictionary<int, FlowArea> areasByDtoId = SyncAreas(dbContext, flow, dto.FlowAreas);
-
-            string? tooDeep = ValidateAreaDepth(areasByDtoId.Values);
-            if (tooDeep != null)
-                return ResultDto<Flow>.Failure(tooDeep);
-
-            string? notMain = ValidateMainArea(areasByDtoId.Values);
-            if (notMain != null)
-                return ResultDto<Flow>.Failure(notMain);
-
-            SyncPoints(dbContext, flow, dto.FlowPoints, areasByDtoId);
             SyncViewports(dbContext, flow, dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
@@ -435,137 +422,6 @@ namespace Business.Flows.DataService.DataHandlers
                 viewport.Width = dto.Width;
                 viewport.Height = dto.Height;
                 viewport.OrderNumber = order++;
-            }
-        }
-
-        private static Dictionary<int, FlowArea> SyncAreas(AppDbContext dbContext, Flow flow, IEnumerable<FlowAreaDto> dtos)
-        {
-            List<FlowArea> existing = flow.FlowAreas.ToList();
-            HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
-
-            foreach (FlowArea removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowAreas.Remove(removed);
-
-            Dictionary<int, FlowArea> byDtoId = new Dictionary<int, FlowArea>();
-
-            foreach (FlowAreaDto dto in dtos)
-            {
-                FlowArea? area = null;
-                if (dto.Id > 0)
-                    area = existing.FirstOrDefault(x => x.Id == dto.Id);
-
-                if (area == null)
-                {
-                    area = new FlowArea { FlowId = flow.Id };
-                    dbContext.FlowAreas.Add(area);
-                }
-
-                area.Name = dto.Name;
-                area.Type = dto.Type;
-                area.IsMain = dto.IsMain;
-
-                area.SizingMode = dto.SizingMode;
-                area.LocationX = dto.LocationX;
-                area.LocationY = dto.LocationY;
-                area.Width = dto.Width;
-                area.Height = dto.Height;
-                area.RatioX = dto.RatioX;
-                area.RatioY = dto.RatioY;
-                area.RatioWidth = dto.RatioWidth;
-                area.RatioHeight = dto.RatioHeight;
-
-                area.ProcessName = dto.ProcessName;
-                area.TitlePattern = dto.TitlePattern;
-                area.TitleMatchMode = dto.TitleMatchMode;
-                area.UseClientArea = dto.UseClientArea;
-
-                area.TabMatchValue = dto.TabMatchValue;
-                area.TabMatchOn = dto.TabMatchOn;
-
-                area.MonitorDeviceName = dto.MonitorDeviceName;
-
-                area.ScalesWith = dto.ScalesWith;
-                area.AuthoredDpi = dto.AuthoredDpi;
-
-                byDtoId[dto.Id] = area;
-            }
-
-            foreach (FlowAreaDto dto in dtos)
-            {
-                FlowArea area = byDtoId[dto.Id];
-
-                area.ParentFlowArea = null;
-                if (dto.ParentFlowAreaId != null && byDtoId.TryGetValue(dto.ParentFlowAreaId.Value, out FlowArea? parent) && parent != area)
-                    area.ParentFlowArea = parent;
-
-                if (area.ParentFlowArea == null)
-                    area.ParentFlowAreaId = null;
-            }
-
-            return byDtoId;
-        }
-
-        // Areas go one level deep, so the one an area sits inside sits inside nothing.
-        private static string? ValidateAreaDepth(IEnumerable<FlowArea> areas)
-        {
-            FlowArea? tooDeep = areas.FirstOrDefault(x => x.ParentFlowArea?.ParentFlowArea != null);
-            if (tooDeep == null)
-                return null;
-
-            FlowArea parent = tooDeep.ParentFlowArea!;
-
-            return $"\"{tooDeep.Name}\" cannot go inside \"{parent.Name}\", which is already inside \"{parent.ParentFlowArea!.Name}\". Areas go one level deep.";
-        }
-
-        // The main area is the window the flow works in: one of them, and never a region inside another.
-        private static string? ValidateMainArea(IEnumerable<FlowArea> areas)
-        {
-            List<FlowArea> main = areas.Where(x => x.IsMain).ToList();
-
-            if (main.Count > 1)
-                return $"\"{main[0].Name}\" and \"{main[1].Name}\" are both marked main. A flow works in one window.";
-
-            FlowArea? inside = main.FirstOrDefault(x => x.ParentFlowArea != null);
-            if (inside != null)
-                return $"\"{inside.Name}\" is inside \"{inside.ParentFlowArea!.Name}\", so it cannot be the main area. The main area is the window itself.";
-
-            return null;
-        }
-
-        private static void SyncPoints(AppDbContext dbContext, Flow flow, IEnumerable<FlowPointDto> dtos, Dictionary<int, FlowArea> areasByDtoId)
-        {
-            List<FlowPoint> existing = flow.FlowPoints.ToList();
-            HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
-
-            foreach (FlowPoint removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowPoints.Remove(removed);
-
-            foreach (FlowPointDto dto in dtos)
-            {
-                FlowPoint? point = null;
-                if (dto.Id > 0)
-                    point = existing.FirstOrDefault(x => x.Id == dto.Id);
-
-                if (point == null)
-                {
-                    point = new FlowPoint { FlowId = flow.Id };
-                    dbContext.FlowPoints.Add(point);
-                }
-
-                point.Name = dto.Name;
-                point.OffsetMode = dto.OffsetMode;
-                point.LocationX = dto.LocationX;
-                point.LocationY = dto.LocationY;
-                point.AuthoredDpi = dto.AuthoredDpi;
-                point.RatioX = dto.RatioX;
-                point.RatioY = dto.RatioY;
-
-                point.FlowArea = null;
-                if (dto.FlowAreaId != null && areasByDtoId.TryGetValue(dto.FlowAreaId.Value, out FlowArea? area))
-                    point.FlowArea = area;
-
-                if (point.FlowArea == null)
-                    point.FlowAreaId = null;
             }
         }
 

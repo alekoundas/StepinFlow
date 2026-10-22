@@ -30,5 +30,8 @@ namespace Core.Models.Dtos
 
         /// <summary>The sizes this flow is expected to pass at. One execution per size.</summary>
         public IEnumerable<FlowViewportDto> FlowViewports { get; set; } = new Collection<FlowViewportDto>();
+
+        /// <summary>The flow's inputs: the values its steps type in, written {{name}}.</summary>
+        public IEnumerable<FlowCsvColumnDto> FlowCsvColumns { get; set; } = new Collection<FlowCsvColumnDto>();
     }
 }

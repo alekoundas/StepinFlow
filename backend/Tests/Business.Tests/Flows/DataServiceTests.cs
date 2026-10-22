@@ -95,31 +95,24 @@ namespace Business.Tests.Flows
             db.FlowAreas.Single(x => x.Id == areaId).Name.ShouldBe("Browser 2");
         }
 
-        // Areas go one level deep, from every form that gives an area a parent.
+        // Areas and points are saved from their own tabs, so the flow form's save leaves them as
+        // they are, whatever lists it sends.
         [Fact]
-        public async Task The_flow_form_refuses_an_area_inside_one_already_inside_another()
+        public async Task The_flow_form_leaves_areas_and_points_as_they_are()
         {
             int flowId = await NewFlowAsync();
+            int areaId = (await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "Browser", Type = FlowAreaTypeEnum.MONITOR }, Ct)).Data;
+            await _dataService.FlowPoint.CreateAsync(new FlowPoint { FlowId = flowId, Name = "Origin", FlowAreaId = areaId }, Ct);
 
-            FlowDto dto = new FlowDto
-            {
-                Id = flowId,
-                Name = "Flow",
-                FlowAreas =
-                [
-                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.MONITOR },
-                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1 },
-                    new FlowAreaDto { Id = -3, Name = "Logo", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -2 },
-                ],
-            };
+            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(new FlowDto { Id = flowId, Name = "Renamed" }, Ct);
 
-            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
-
-            updated.IsSuccess.ShouldBeFalse();
+            updated.IsSuccess.ShouldBeTrue();
             using AppDbContext db = _database.CreateDbContext();
-            db.FlowAreas.Count(x => x.FlowId == flowId).ShouldBe(0);
+            db.FlowAreas.Count(x => x.FlowId == flowId).ShouldBe(1);
+            db.FlowPoints.Single(x => x.FlowId == flowId).FlowAreaId.ShouldBe(areaId);
         }
 
+        // Areas go one level deep, from every form that gives an area a parent.
         [Fact]
         public async Task A_new_area_cannot_go_inside_one_already_inside_another()
         {
@@ -148,73 +141,6 @@ namespace Business.Tests.Flows
         }
 
         // A flow works in one window, and the main area is that window, never a part of one.
-        [Fact]
-        public async Task The_flow_form_refuses_two_main_areas()
-        {
-            int flowId = await NewFlowAsync();
-
-            FlowDto dto = new FlowDto
-            {
-                Id = flowId,
-                Name = "Flow",
-                FlowAreas =
-                [
-                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
-                    new FlowAreaDto { Id = -2, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
-                ],
-            };
-
-            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
-
-            updated.IsSuccess.ShouldBeFalse();
-            using AppDbContext db = _database.CreateDbContext();
-            db.FlowAreas.Count(x => x.FlowId == flowId).ShouldBe(0);
-        }
-
-        [Fact]
-        public async Task The_flow_form_refuses_a_main_area_inside_another()
-        {
-            int flowId = await NewFlowAsync();
-
-            FlowDto dto = new FlowDto
-            {
-                Id = flowId,
-                Name = "Flow",
-                FlowAreas =
-                [
-                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION },
-                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1, IsMain = true },
-                ],
-            };
-
-            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
-
-            updated.IsSuccess.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task The_flow_form_keeps_one_main_area()
-        {
-            int flowId = await NewFlowAsync();
-
-            FlowDto dto = new FlowDto
-            {
-                Id = flowId,
-                Name = "Flow",
-                FlowAreas =
-                [
-                    new FlowAreaDto { Id = -1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true },
-                    new FlowAreaDto { Id = -2, Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowAreaId = -1 },
-                ],
-            };
-
-            ResultDto<Flow> updated = await _dataService.Flow.UpdateAsync(dto, Ct);
-
-            updated.IsSuccess.ShouldBeTrue();
-            using AppDbContext db = _database.CreateDbContext();
-            db.FlowAreas.Single(x => x.FlowId == flowId && x.IsMain).Name.ShouldBe("Browser");
-        }
-
         [Fact]
         public async Task A_new_area_cannot_be_main_when_another_is()
         {
@@ -249,6 +175,47 @@ namespace Business.Tests.Flows
             ResultDto<FlowArea> updated = await _dataService.FlowArea.UpdateAsync(new FlowAreaDto { Id = browserId, FlowId = flowId, Name = "Browser 2", Type = FlowAreaTypeEnum.APPLICATION, IsMain = true }, Ct);
 
             updated.IsSuccess.ShouldBeTrue();
+        }
+
+        // Inputs share the one namespace too: a step types {{email}} and has to know what it means.
+        [Fact]
+        public async Task A_new_input_takes_a_name_no_area_has()
+        {
+            int flowId = await NewFlowAsync();
+            await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "email", Type = FlowAreaTypeEnum.MONITOR }, Ct);
+
+            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "email" }, Ct)).Data;
+
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowCsvColumns.Single(x => x.Id == inputId).Name.ShouldBe("email 2");
+        }
+
+        // What was typed for a secret is never stored, whichever form sends it.
+        [Fact]
+        public async Task A_secret_input_keeps_no_value()
+        {
+            int flowId = await NewFlowAsync();
+            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "password", DefaultValue = "hunter2" }, Ct)).Data;
+
+            await _dataService.FlowCsvColumn.UpdateAsync(new FlowCsvColumnDto { Id = inputId, FlowId = flowId, Name = "password", DefaultValue = "hunter2", IsSecret = true }, Ct);
+
+            using AppDbContext db = _database.CreateDbContext();
+            FlowCsvColumn saved = db.FlowCsvColumns.Single(x => x.Id == inputId);
+            saved.IsSecret.ShouldBeTrue();
+            saved.DefaultValue.ShouldBeEmpty();
+        }
+
+        // Its own name is not in its way, so saving an input unchanged keeps its name.
+        [Fact]
+        public async Task An_input_saved_under_its_own_name_keeps_it()
+        {
+            int flowId = await NewFlowAsync();
+            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "email" }, Ct)).Data;
+
+            ResultDto<FlowCsvColumn> updated = await _dataService.FlowCsvColumn.UpdateAsync(new FlowCsvColumnDto { Id = inputId, FlowId = flowId, Name = "email", DefaultValue = "ops@example.com" }, Ct);
+
+            updated.Data!.Name.ShouldBe("email");
+            updated.Data.DefaultValue.ShouldBe("ops@example.com");
         }
 
         // Nobody names a template: a new one gets a name no template in the flow has, and keeps it

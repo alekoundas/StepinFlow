@@ -5,8 +5,7 @@ import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import type { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 export class FlowAreaDto {
-  // 0 for a new row. New rows get a negative id so a sibling added in the same save can
-  // reference them; the backend swaps them for real ids after the insert.
+  // 0 for a new one. Areas are saved one at a time, from the editor's Areas tab.
   id: number = 0;
   name: string = "";
   type: FlowAreaTypeEnum = FlowAreaTypeEnum.CUSTOM;

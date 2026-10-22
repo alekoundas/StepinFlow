@@ -27,6 +27,11 @@ than editing these.
 | 6 · Generating | `Generating.dc.html` |
 | 7 · Check what was generated | `GeneratedReview.dc.html` |
 | 8 · Lands in the editor | `Editor.dc.html` |
+| 8a · Editor: Areas, the windows and regions steps look in | `EditorAreas.dc.html`, which shows `Editor.dc.html` with `tab="areas"` |
+| 8b · Editor: Locations, one to fix after its area changed | `EditorLocations.dc.html`, with `tab="locations"` and `issue="true"` |
+| 8c · Editor: Inputs, the values steps type in | `EditorInputs.dc.html`, with `tab="inputs"` |
+| 8d · Editor: Templates, each with the steps that search for it | `EditorTemplates.dc.html`, with `tab="templates"` |
+| 8e · Editor: Script, what Export writes | `EditorScript.dc.html`, with `tab="script"` |
 | Fallback · step through the recording by hand | `ManualWizard.dc.html` |
 | Foundations · tokens and parts | `Foundations.dc.html` |
 | Home · what executed, what is waiting | `Home.dc.html` |

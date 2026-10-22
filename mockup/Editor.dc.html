@@ -34,7 +34,7 @@ a{color:#8FA3FF}a:hover{color:#B8C5FF}
 <span aria-hidden="true" style="color: #4A5060">/</span>
 <h1 style="margin: 0; font-size: 16px; font-weight: 600">Download last month's invoices</h1>
 <span style="font-size: 12px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 1px 8px">Automation</span>
-<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #46D69A"><span style="width: 7px; height: 7px; border-radius: 999px; background: #46D69A"></span>No issues</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: {{ health.color }}"><span style="width: 7px; height: 7px; border-radius: 999px; background: {{ health.color }}"></span>{{ health.text }}</span>
 </div>
 <div style="display: flex; gap: 8px; flex-wrap: wrap">
 <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">
@@ -55,14 +55,14 @@ Execute</button>
 </sc-if>
 
 <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
-<section aria-label="Steps" style="flex: 999 1 460px; min-width: 0; border-right: 1px solid #1E222B; display: flex; flex-direction: column">
+<section aria-label="{{ sectionLabel }}" style="flex: 999 1 460px; min-width: 0; border-right: 1px solid {{ sectionBorder }}; display: flex; flex-direction: column">
 <div role="tablist" aria-label="Flow parts" style="display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid #1E222B; flex-wrap: wrap">
-<button type="button" role="tab" aria-selected="true" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid #8FA3FF; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; font-weight: 500">Steps</button>
-<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Areas <span style="color: #5D6473">1</span></button>
-<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Inputs <span style="color: #5D6473">2</span></button>
-<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Templates <span style="color: #5D6473">5</span></button>
-<button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #8790A0; font: inherit; font-size: 13px">Script</button>
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+<button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.pick }}" style="display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid {{ t.line }}; background: transparent; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: {{ t.weight }}; cursor: pointer">{{ t.label }}<sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ true }}"><span style="color: #5D6473">{{ t.count }}</span></sc-if><sc-if value="{{ t.warn }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2B33D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Needs fixing"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></sc-if></button>
+</sc-for>
 </div>
+
+<sc-if value="{{ isSteps }}" hint-placeholder-val="{{ true }}">
 <ol aria-label="Step tree" style="list-style: none; margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px">
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="14">
 <li style="display: flex; align-items: center; gap: 6px">
@@ -79,9 +79,71 @@ Execute</button>
 </li>
 </sc-for>
 </ol>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px 4px">
+<span style="font-size: 12px; color: #8790A0">{{ listNote }}</span>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+{{ addLabel }}</button>
+</div>
+<ol aria-label="{{ sectionLabel }}" style="list-style: none; margin: 0; padding: 6px 12px 12px; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{ items }}" as="x" hint-placeholder-count="3">
+<li>
+<button type="button" onClick="{{ x.pick }}" aria-pressed="{{ x.pressed }}" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px; box-sizing: border-box; padding: 6px 12px 6px {{ x.pad }}px; border-radius: 8px; border: 1px solid {{ x.border }}; background: {{ x.bg }}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: #1F2330; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none">{{ x.glyph }}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="display: flex; align-items: center; gap: 8px; min-width: 0">
+<span style="font-size: 13px; font-weight: 500; white-space: nowrap">{{ x.name }}</span>
+<sc-if value="{{ x.hasChip }}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #AEB4C0; border: 1px solid #313644; border-radius: 6px; padding: 0 6px">{{ x.chip }}</span></sc-if>
+<sc-if value="{{ x.warn }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2B33D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Needs fixing" style="flex: none"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></sc-if>
+</span>
+<span style="font-size: 12px; color: #8790A0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ x.detail }}</span>
+</span>
+<span style="font-size: 12px; color: #8790A0; white-space: nowrap; flex: none">{{ x.used }}</span>
+</button>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+
+<sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 12px 16px 4px; font-size: 12px; color: #8790A0">Cut from your recording. Each belongs to the steps that search for it.</p>
+<ul aria-label="Templates" style="list-style: none; margin: 0; padding: 8px 16px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px">
+<sc-for list="{{ tiles }}" as="t" hint-placeholder-count="5">
+<li>
+<button type="button" onClick="{{ t.pick }}" aria-pressed="{{ t.pressed }}" style="width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px; box-sizing: border-box; border-radius: 10px; border: 1px solid {{ t.border }}; background: {{ t.bg }}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="height: 72px; border-radius: 8px; background: #F6F7F9; display: flex; align-items: center; justify-content: center; color: #234E50; font-size: 18px">{{ t.thumb }}</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ t.name }}</span>
+<span style="font-size: 12px; color: #8790A0">{{ t.used }}</span>
+</button>
+</li>
+</sc-for>
+</ul>
+</sc-if>
+
+<sc-if value="{{ isScript }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px">
+<span style="font-size: 12px; color: #8790A0">What Export writes. Read only: change the flow in the other tabs.</span>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>
+Copy</button>
+</div>
+<div style="overflow-x: auto; padding: 0 0 16px">
+<div style="font-family: 'Geist Mono', monospace; font-size: 12.5px; line-height: 1.75; white-space: pre; min-width: 900px">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="24">
+<div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #4A5060; flex: none">{{ l.no }}</span><span><sc-for list="{{ l.segs }}" as="s" hint-placeholder-count="3"><span style="color: {{ s.c }}; font-weight: {{ s.w }}; font-style: {{ s.i }}">{{ s.t }}</span></sc-for></span></div>
+</sc-for>
+</div>
+</div>
+</sc-if>
 </section>
 
+<sc-if value="{{ hasAside }}" hint-placeholder-val="{{ true }}">
 <aside aria-labelledby="insp-h" style="flex: 1 1 400px; min-width: 0; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+
+<sc-if value="{{ isSteps }}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; align-items: center; gap: 12px">
 <span style="width: 34px; height: 34px; border-radius: 9px; background: #1F2330; color: {{ sel.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{ sel.glyph }}</span>
 <div style="display: flex; flex-direction: column">
@@ -139,18 +201,184 @@ Execute</button>
 </sc-if>
 <button type="button" style="height: 36px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Save</button>
 </div>
+</sc-if>
+
+<sc-if value="{{ isPart }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 34px; height: 34px; border-radius: 9px; background: #1F2330; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{ part.glyph }}</span>
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 12px; color: #8790A0">{{ part.type }}</span>
+<h2 id="insp-h" style="margin: 0; font-size: 17px; font-weight: 600; overflow-wrap: anywhere">{{ part.name }}</h2>
+</div>
+</div>
+
+<sc-if value="{{ isAreas }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="area-name" style="font-weight: 500">Name</label>
+<input id="area-name" type="text" value="{{ part.name }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Type</span>
+<div role="group" aria-label="Type" style="display: inline-flex; flex-wrap: wrap; align-self: flex-start; border: 1px solid #313644; border-radius: 8px; overflow: hidden">
+<sc-for list="{{ ar.types }}" as="o" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{ o.pressed }}" style="height: 34px; padding: 0 12px; border: 0; background: {{ o.bg }}; color: {{ o.fg }}; font: inherit; font-size: 13px; cursor: pointer">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ ar.isWindow }}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; align-items: center; gap: 10px; min-height: 32px"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0"><span>Main area <span style="color: #8790A0">· the window the flow works in</span></span></label>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 160px">
+<label for="area-app" style="font-weight: 500">Running app</label>
+<input id="area-app" type="text" value="chrome.exe" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 160px">
+<label for="area-title" style="font-weight: 500">Window title contains</label>
+<input id="area-title" type="text" value="Billing portal" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ ar.isRegion }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="area-in" style="font-weight: 500">Inside</label>
+<select id="area-in" style="height: 38px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+<option>Billing portal</option>
+</select>
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<sc-for list="{{ ar.box }}" as="b" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 80px">
+<label for="{{ b.id }}" style="font-weight: 500">{{ b.label }}</label>
+<input id="{{ b.id }}" type="text" value="{{ b.value }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; font-family: 'Geist Mono', monospace; font-size: 13px">
+</div>
+</sc-for>
+</div>
+<span style="font-size: 12px; color: #8790A0; margin-top: -8px">Percent of Billing portal, so the region follows the window's size.</span>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Contents scale with</span>
+<div role="group" aria-label="Contents scale with" style="display: inline-flex; align-self: flex-start; border: 1px solid #313644; border-radius: 8px; overflow: hidden">
+<sc-for list="{{ ar.scales }}" as="o" hint-placeholder-count="2">
+<button type="button" aria-pressed="{{ o.pressed }}" style="height: 34px; padding: 0 12px; border: 0; background: {{ o.bg }}; color: {{ o.fg }}; font: inherit; font-size: 13px; cursor: pointer">{{ o.label }}</button>
+</sc-for>
+</div>
+<span style="font-size: 12px; color: #8790A0">{{ ar.scalesHint }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLocations }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ lc.warn }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 10px; border: 1px solid rgba(242,179,61,0.35); background: rgba(242,179,61,0.08); font-size: 13px; color: #E9D3A6">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2B33D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+<span>PDF preview now scales with its size, so a location in pixels lands right only at the size it was captured at. Switch to Percent and capture it again.</span>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="loc-name" style="font-weight: 500">Name</label>
+<input id="loc-name" type="text" value="{{ part.name }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="loc-from" style="font-weight: 500">Measured from</label>
+<select id="loc-from" style="height: 38px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+<option>{{ lc.from }}</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Measured in</span>
+<div role="group" aria-label="Measured in" style="display: inline-flex; align-self: flex-start; border: 1px solid #313644; border-radius: 8px; overflow: hidden">
+<sc-for list="{{ lc.units }}" as="o" hint-placeholder-count="2">
+<button type="button" aria-pressed="{{ o.pressed }}" style="height: 34px; padding: 0 12px; border: 0; background: {{ o.bg }}; color: {{ o.fg }}; font: inherit; font-size: 13px; cursor: pointer">{{ o.label }}</button>
+</sc-for>
+</div>
+<span style="font-size: 12px; color: #8790A0">{{ lc.unitsHint }}</span>
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 100px">
+<label for="loc-x" style="font-weight: 500">X</label>
+<input id="loc-x" type="text" value="{{ lc.x }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; font-family: 'Geist Mono', monospace; font-size: 13px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 100px">
+<label for="loc-y" style="font-weight: 500">Y</label>
+<input id="loc-y" type="text" value="{{ lc.y }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; font-family: 'Geist Mono', monospace; font-size: 13px">
+</div>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<button type="button" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Capture location</button>
+<button type="button" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Test</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isInputs }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="input-name" style="font-weight: 500">Name</label>
+<input id="input-name" type="text" value="{{ part.name }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit; font-family: 'Geist Mono', monospace; font-size: 13px">
+<span style="font-size: 12px; color: #8790A0">{{ ip.hint }}</span>
+</div>
+<sc-if value="{{ ip.secret }}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; align-items: center; gap: 10px; min-height: 32px"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0"><span>Secret <span style="color: #8790A0">· its value is never saved with the flow</span></span></label>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="input-default" style="font-weight: 500">Default value</label>
+<input id="input-default" type="text" disabled placeholder="Not saved for a secret" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #242833; background: #12141A; color: #8790A0; font: inherit">
+</div>
+</sc-if>
+<sc-if value="{{ ip.plain }}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; align-items: center; gap: 10px; min-height: 32px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0"><span>Secret <span style="color: #8790A0">· its value is never saved with the flow</span></span></label>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="input-default" style="font-weight: 500">Default value</label>
+<input id="input-default" type="text" value="{{ ip.value }}" style="height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: #0F1116; color: #ECEEF2; font: inherit">
+<span style="font-size: 12px; color: #8790A0">What you typed while recording.</span>
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+<span aria-hidden="true" style="height: 160px; border-radius: 10px; background: #F6F7F9; display: flex; align-items: center; justify-content: center; color: #234E50; font-size: 34px">{{ tp.thumb }}</span>
+<dl style="margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; font-size: 13px">
+<dt style="color: #8790A0">Captured</dt><dd style="margin: 0">1600×1000 at 120 dpi</dd>
+<dt style="color: #8790A0">Clicks at</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">{{ tp.click }}</dd>
+<dt style="color: #8790A0">Accuracy</dt><dd style="margin: 0; font-family: 'Geist Mono', monospace">0.80</dd>
+</dl>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 500">Used by</span>
+<sc-if value="{{ part.hasUsed }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{ part.used }}" as="u" hint-placeholder-count="3">
+<button type="button" onClick="{{ u.open }}" style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 6px; border-radius: 8px; border: 1px solid #242833; background: #0F1116; color: #ECEEF2; font: inherit; font-size: 12px; cursor: pointer"><span style="width: 20px; height: 20px; border-radius: 5px; background: #1F2330; color: {{ u.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700">{{ u.glyph }}</span>{{ u.name }}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ part.noUse }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #8790A0">{{ part.noUseText }}</span></sc-if>
+</div>
+
+<sc-if value="{{ part.isEditable }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid #1E222B">
+<button type="button" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,122,134,0.45); background: transparent; color: #FF7A86; font: inherit; font-size: 13px; cursor: pointer">{{ part.deleteLabel }}</button>
+<button type="button" style="height: 36px; padding: 0 16px; border-radius: 8px; border: 0; background: #8FA3FF; color: #0C0E14; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Save</button>
+</div>
+</sc-if>
+<sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; color: #8790A0; padding-top: 10px; border-top: 1px solid #1E222B">Change or replace it from a step that searches for it.</span>
+</sc-if>
+</sc-if>
 </aside>
+</sc-if>
 </div>
 </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["steps","areas","locations","inputs","templates","script"],"default":"steps"},"issue":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":960}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { selected: 'dl', banner: true };
+    const tab = props.tab || 'steps';
+    this.state = { tab, selected: 'dl', banner: tab === 'steps', area: 'bp', loc: 'pdf', input: 'email', tpl: 'x9p4a' };
   }
   renderVals() {
+    // A board that shows a location needing a fix after its area changed.
+    const issue = this.props.issue === true || this.props.issue === 'true';
+    const tab = this.state.tab;
     const P = '#8FA3FF', I = '#B79CFF', E = '#FF7A86', C = '#AEB4C0';
     const step = (id, depth, glyph, tint, type, name, detail, twisty, extra) => ({ id, depth, glyph, tint, type, name, detail, twisty: twisty || '', isStep: true, isBranch: false, ...(extra || {}) });
     const branch = (id, depth, ok) => ({ id, depth, name: ok ? 'Success' : 'Failure', tint: ok ? '#46D69A' : '#FF7A86', isStep: false, isBranch: true, twisty: '▾', glyph: '', detail: '', type: 'Branch' });
@@ -193,8 +421,223 @@ class Component extends DCLogic {
       tint: d.tint, glyph: d.glyph || '•', type: d.type, name: d.name, hasName: !BY_SETTINGS.includes(d.type),
       isSearch: !!d.isSearch, thumb: d.thumb || '', template: d.template || '', comment: d.comment || '',
     };
+
+    // The parts of the flow, each listed on the left and edited on the right.
+    const areas = [
+      { id: 'bp', depth: 0, glyph: 'A', type: 'Application window', name: 'Billing portal', chip: 'Main', detail: 'chrome.exe · title contains Billing portal', used: ['email', 'inv', 'dr', 'lm', 'll', 'dl'], isWindow: true, scalesDpi: true },
+      { id: 'pdf', depth: 1, glyph: 'R', type: 'Region', name: 'PDF preview', chip: '', detail: 'inside Billing portal · 55%, 10% · 43% × 86%', used: [], isWindow: false, scalesDpi: false },
+    ];
+    const locations = [
+      { id: 'close', glyph: 'L', type: 'Location', name: 'Cookie banner close', detail: '1412, 36 px in Billing portal', from: 'Billing portal', isPx: true, x: '1412', y: '36', used: [], warn: false },
+      { id: 'pdf', glyph: 'L', type: 'Location', name: 'Save PDF icon', detail: issue ? '412, 18 px in PDF preview' : '96%, 3% of PDF preview', from: 'PDF preview', isPx: issue, x: issue ? '412' : '96%', y: issue ? '18' : '3%', used: [], warn: issue },
+      { id: 'sign', glyph: 'L', type: 'Location', name: 'Sign in button', detail: '58%, 64% of Billing portal', from: 'Billing portal', isPx: false, x: '58%', y: '64%', used: [], warn: false },
+    ];
+    const inputs = [
+      { id: 'email', glyph: 'In', type: 'Input', name: 'email', detail: 'default ops@example.com', used: ['t1'], secret: false, value: 'ops@example.com' },
+      { id: 'password', glyph: 'In', type: 'Input', name: 'password', detail: 'secret', used: ['t2'], secret: true, value: '' },
+    ];
+    const templates = [
+      { id: 'e4m2q', name: 'template-e4m2q.png', thumb: 'Email', click: '130, 20', used: ['email'] },
+      { id: 'v8k1d', name: 'template-v8k1d.png', thumb: 'Invoices', click: '59, 15', used: ['inv'] },
+      { id: 'r2n7c', name: 'template-r2n7c.png', thumb: 'Date', click: '67, 15', used: ['dr'] },
+      { id: 'h5t3w', name: 'template-h5t3w.png', thumb: 'Last', click: '70, 13', used: ['lm'] },
+      { id: 'x9p4a', name: 'template-x9p4a.png', thumb: '⤓', click: '12, 12', used: ['ll', 'dl'] },
+    ];
+    const steps = (n) => (n === 1 ? '1 step' : n + ' steps');
+    const usedText = (ids) => (ids.length ? steps(ids.length) : 'unused');
+    const usedChips = (ids) => ids.map((id) => {
+      const s = defs.find((x) => x.id === id);
+      return { glyph: s.glyph, tint: s.tint, name: s.name, open: () => this.setState({ tab: 'steps', selected: id }) };
+    });
+    const warnCount = issue ? 1 : 0;
+
+    const tabDefs = [
+      { id: 'steps', label: 'Steps', count: '' },
+      { id: 'areas', label: 'Areas', count: String(areas.length) },
+      { id: 'locations', label: 'Locations', count: String(locations.length), warn: warnCount > 0 },
+      { id: 'inputs', label: 'Inputs', count: String(inputs.length) },
+      { id: 'templates', label: 'Templates', count: String(templates.length) },
+      { id: 'script', label: 'Script', count: '' },
+    ];
+    const tabs = tabDefs.map((t) => {
+      const on = tab === t.id;
+      return {
+        ...t, hasCount: !!t.count, warn: !!t.warn,
+        selected: on ? 'true' : 'false', line: on ? '#8FA3FF' : 'transparent', fg: on ? '#ECEEF2' : '#8790A0', weight: on ? '500' : '400',
+        pick: () => this.setState({ tab: t.id }),
+      };
+    });
+
+    const lists = { areas, locations, inputs };
+    const selKey = { areas: 'area', locations: 'loc', inputs: 'input' }[tab];
+    const items = (lists[tab] || []).map((x) => {
+      const on = this.state[selKey] === x.id;
+      return {
+        id: x.id, glyph: x.glyph, name: x.name, chip: x.chip || '', hasChip: !!x.chip, detail: x.detail, used: usedText(x.used), warn: !!x.warn,
+        pad: 12 + (x.depth || 0) * 24,
+        pressed: on ? 'true' : 'false', bg: on ? '#1A1F2C' : 'transparent', border: on ? '#2E3650' : 'transparent',
+        pick: () => this.setState({ [selKey]: x.id }),
+      };
+    });
+    const tiles = templates.map((t) => {
+      const on = this.state.tpl === t.id;
+      return { ...t, used: usedText(t.used), pressed: on ? 'true' : 'false', bg: on ? '#1A1F2C' : '#0F1116', border: on ? '#2E3650' : '#1E222B', pick: () => this.setState({ tpl: t.id }) };
+    });
+
+    const segment = (options, picked) => options.map((label) => {
+      const on = label === picked;
+      return { label, pressed: on ? 'true' : 'false', bg: on ? '#1F2638' : 'transparent', fg: on ? '#ECEEF2' : '#8790A0' };
+    });
+
+    const area = areas.find((x) => x.id === this.state.area) || areas[0];
+    const ar = {
+      isWindow: area.isWindow, isRegion: !area.isWindow,
+      types: segment(['Region', 'Application', 'Browser tab', 'Monitor'], area.isWindow ? 'Application' : 'Region'),
+      box: [
+        { id: 'area-x', label: 'X', value: '55%' }, { id: 'area-y', label: 'Y', value: '10%' },
+        { id: 'area-w', label: 'Width', value: '43%' }, { id: 'area-h', label: 'Height', value: '86%' },
+      ],
+      scales: segment(['Screen DPI', 'Area size'], area.scalesDpi ? 'Screen DPI' : 'Area size'),
+      scalesHint: area.scalesDpi
+        ? 'Text and buttons grow with the monitor’s DPI, like a web page.'
+        : 'Its contents zoom to fit it, like a PDF viewer. Locations in it are kept in percent.',
+    };
+    const loc = locations.find((x) => x.id === this.state.loc) || locations[0];
+    const inArea = areas.find((x) => x.name === loc.from);
+    const lc = {
+      warn: loc.warn, from: loc.from, x: loc.x, y: loc.y,
+      units: segment(['Pixels', 'Percent'], loc.isPx ? 'Pixels' : 'Percent'),
+      unitsHint: inArea && !inArea.scalesDpi
+        ? loc.from + ' scales with its size, so Percent is the only choice that follows it.'
+        : 'Pixels follow the screen’s DPI here. Percent follows the window’s size.',
+    };
+    const input = inputs.find((x) => x.id === this.state.input) || inputs[0];
+    const ip = { secret: input.secret, plain: !input.secret, value: input.value, hint: 'Steps type it where they say {{' + input.name + '}}.' };
+    const tpl = templates.find((x) => x.id === this.state.tpl) || templates[0];
+    const tp = { thumb: tpl.thumb, click: tpl.click };
+
+    const current = { areas: area, locations: loc, inputs: input, templates: tpl }[tab];
+    const noUseText = {
+      areas: 'No step searches in it yet.',
+      locations: 'No step moves to it yet.',
+      inputs: 'No step types it yet.',
+      templates: 'No step searches for it.',
+    }[tab];
+    const part = current ? {
+      glyph: current.glyph || 'T', type: current.type || 'Template', name: current.name,
+      used: usedChips(current.used), hasUsed: current.used.length > 0, noUse: current.used.length === 0, noUseText,
+      isEditable: tab !== 'templates',
+      deleteLabel: { areas: 'Delete area', locations: 'Delete location', inputs: 'Delete input' }[tab] || '',
+    } : {};
+
+    const listNote = {
+      areas: 'Where steps look. A region sits inside a window and follows it.',
+      locations: 'Points a cursor step can move to, measured from an area.',
+      inputs: 'Values the steps type in, like the email to sign in with.',
+    }[tab] || '';
+    const addLabel = { areas: 'Add area', locations: 'Add location', inputs: 'Add input' }[tab] || '';
+
+    const script = [
+      'Flow:         Download last month’s invoices',
+      'Id:           3b1f6a0e-2c4d-4e8a-9f61-0d5c7a2b9e14',
+      'Description:  Signs in to the billing portal and downloads every invoice from last month as a PDF.',
+      '',
+      'Areas:',
+      '  <[ Billing portal ]>   main   window process <[ chrome.exe ]> title contains <[ Billing portal ]>   scales with dpi   at 120dpi',
+      '  <[ PDF preview ]>      inside <[ Billing portal ]>   ratio 0.55 0.10  size 0.43 0.86   scales with area',
+      '',
+      'Points:',
+      '  <[ Cookie banner close ]>   inside <[ Billing portal ]>   offset 1412 36   at 120dpi',
+      issue
+        ? '  <[ Save PDF icon ]>         inside <[ PDF preview ]>      offset 412 18   at 120dpi'
+        : '  <[ Save PDF icon ]>         inside <[ PDF preview ]>      ratio 0.96 0.03',
+      '  <[ Sign in button ]>        inside <[ Billing portal ]>   ratio 0.58 0.64',
+      '',
+      'Inputs:',
+      '  <[ email ]>       default <[ ops@example.com ]>',
+      '  <[ password ]>    secret',
+      '',
+      'Templates:',
+      '  <[ template-e4m2q.png ]>    click 130 20   captured 1600x1000 at 120dpi',
+      '  <[ template-v8k1d.png ]>    click 59 15   captured 1600x1000 at 120dpi',
+      '  <[ template-r2n7c.png ]>    click 67 15   captured 1600x1000 at 120dpi',
+      '  <[ template-h5t3w.png ]>    click 70 13   captured 1600x1000 at 120dpi',
+      '  <[ template-x9p4a.png ]>    click 12 12   captured 1600x1000 at 120dpi',
+      '',
+      'Steps:',
+      '',
+      '# recorded after a 1.4s wait',
+      'Wait For Image  <[ Email field ]>   template <[ template-e4m2q.png ]>   in <[ Billing portal ]>   timeout 10000ms',
+      ' Success:',
+      '  Move    to <[ Email field ]>',
+      '  Click',
+      '  Type    <[ {{email}} ]>',
+      '  Press   <[ Tab ]>',
+      '  Type    <[ {{password}} ]>',
+      '  Press   <[ Enter ]>',
+      ' Failure:',
+      '  End Execution  failed  <[ the sign-in page never appeared ]>',
+      '',
+      '# recorded after a 3.8s wait',
+      'Wait For Image  <[ Invoices menu ]>   template <[ template-v8k1d.png ]>   in <[ Billing portal ]>   timeout 11400ms',
+      ' Success:',
+      '  Move    to <[ Invoices menu ]>',
+      '  Click',
+      ' Failure:',
+      '  End Execution  failed  <[ signing in did not reach the dashboard ]>',
+      '',
+      'Wait For Image  <[ Date range filter ]>   template <[ template-r2n7c.png ]>   in <[ Billing portal ]>   timeout 10000ms',
+      '  …',
+    ];
+    const KW = '#8FA3FF', STEP = '#C4B5FD', Q = '#E6E8EC', DLM = '#5D6473', NUM = '#F2B33D', CM = '#7D8597', PLAIN = '#AEB4C0', VAR = '#46D69A';
+    const stepWords = ['Wait For Image', 'Find All Images', 'End Execution', 'Move', 'Click', 'Type', 'Press'];
+    const words = ['Areas:', 'Points:', 'Inputs:', 'Templates:', 'Steps:', 'Success:', 'Failure:', 'window process', 'title contains', 'scales with dpi', 'scales with area', 'template', 'timeout', 'captured', 'default', 'failed', 'secret', 'inside', 'offset', 'ratio', 'size', 'click', 'main', 'in', 'at', 'to'];
+    const seg = (t, c, w, i) => ({ t, c, w: w || '400', i: i || 'normal' });
+    const paint = (line) => {
+      const out = [];
+      const lead = line.match(/^\s*/)[0];
+      if (lead) out.push(seg(lead, PLAIN));
+      let rest = line.slice(lead.length);
+      if (rest.startsWith('#')) { out.push(seg(rest, CM, '400', 'italic')); return out; }
+      for (const h of ['Flow:', 'Id:', 'Description:']) {
+        if (rest.startsWith(h)) { out.push(seg(h, KW)); out.push(seg(rest.slice(h.length), Q)); return out; }
+      }
+      while (rest.length) {
+        const ws = rest.match(/^\s+/);
+        if (ws) { out.push(seg(ws[0], PLAIN)); rest = rest.slice(ws[0].length); continue; }
+        if (rest.startsWith('<[')) {
+          const end = rest.indexOf(']>');
+          const inner = rest.slice(2, end);
+          out.push(seg('<[', DLM));
+          out.push(seg(inner, inner.indexOf('{{') >= 0 ? VAR : Q));
+          out.push(seg(']>', DLM));
+          rest = rest.slice(end + 2);
+          continue;
+        }
+        const sw = stepWords.find((s) => rest.startsWith(s));
+        if (sw) { out.push(seg(sw, STEP, '600')); rest = rest.slice(sw.length); continue; }
+        const word = words.find((k) => rest.startsWith(k) && (rest.length === k.length || /\s/.test(rest[k.length])));
+        if (word) { out.push(seg(word, KW)); rest = rest.slice(word.length); continue; }
+        const num = rest.match(/^[\d.]+(ms|dpi|x\d+)?/);
+        if (num) { out.push(seg(num[0], NUM)); rest = rest.slice(num[0].length); continue; }
+        const other = rest.match(/^\S+/)[0];
+        out.push(seg(other, PLAIN));
+        rest = rest.slice(other.length);
+      }
+      return out;
+    };
+    const lines = script.map((text, i) => ({ no: i + 1, segs: paint(text) }));
+
+    const sectionLabel = { steps: 'Steps', areas: 'Areas', locations: 'Locations', inputs: 'Inputs', templates: 'Templates', script: 'Script' }[tab];
     return {
-      rows, sel,
+      rows, sel, tabs, items, tiles, lines, part, ar, lc, ip, tp, listNote, addLabel, sectionLabel,
+      isSteps: tab === 'steps', isAreas: tab === 'areas', isLocations: tab === 'locations', isInputs: tab === 'inputs',
+      isTemplates: tab === 'templates', isScript: tab === 'script',
+      isList: tab === 'areas' || tab === 'locations' || tab === 'inputs',
+      isPart: tab === 'areas' || tab === 'locations' || tab === 'inputs' || tab === 'templates',
+      hasAside: tab !== 'script',
+      sectionBorder: tab === 'script' ? 'transparent' : '#1E222B',
+      health: warnCount > 0 ? { color: '#F2B33D', text: '1 warning' } : { color: '#46D69A', text: 'No issues' },
       banner: this.state.banner,
       hideBanner: () => this.setState({ banner: false }),
     };

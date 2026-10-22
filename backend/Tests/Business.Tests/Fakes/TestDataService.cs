@@ -17,7 +17,8 @@ namespace Business.Tests.Fakes
                 new FlowDataService(database, validation),
                 new FlowStepDataService(database, validation),
                 new FlowAreaDataService(database, validation),
-                new FlowPointDataService(database, validation));
+                new FlowPointDataService(database, validation),
+                new FlowCsvColumnDataService(database, validation));
         }
     }
 }

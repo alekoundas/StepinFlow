@@ -397,7 +397,7 @@ message IpcBroadcast { string type = 1;   bytes payload = 2; }
 `action` is a string like `"FlowStep.update"`, routed by a switch in `Transport/Ipc/IpcDispatcher.cs`
 to its handler. `payload` is UTF-8 JSON, camelCase, enums as strings, `ReferenceHandler.IgnoreCycles`.
 
-The dispatcher is written by hand: one switch arm per action, 113 of them, and each handler
+The dispatcher is written by hand: one switch arm per action, 119 of them, and each handler
 registered by name in `Program.cs`.
 
 ```
@@ -977,7 +977,7 @@ reads the folder into one, so the recorder can import its crops straight from me
 
 ### Export and import in the app
 
-**Export** sits beside Run in the editor. Its dialog starts in the app's export folder
+**Export** sits beside Execute in the editor's header. Its dialog starts in the app's export folder
 (`PathHelper.GetExportDataPath()`, `StepinFlow_v2\Export` under the user's local application data),
 Browse picks another through the system's folder dialog, and a script of the same name there is
 replaced. It ends on where the files went, with "Show in folder".
@@ -1712,6 +1712,30 @@ TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["
 invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
 `DialogRootComponent`.
 
+### The editor
+
+The workflow page is the mockup's editor boards (8 to 8e). Its header has the way back to Flows or
+Sub-flows, the flow's name and kind, whether it would execute - the validator's errors and
+warnings - and Export and Execute. Below, tabs on the left list the flow's parts and the right side
+edits the one picked; a splitter between them remembers its place.
+
+- **Steps:** the tree, and the step or flow form for the row picked. The flow's form keeps its
+  name, description, sizes and callers.
+- **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
+  it, and the picked one's form. Each is created, saved and deleted on its own
+  (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them.
+- **Templates:** one tile per template name (`FlowStepTemplate.getByFlow`), read only, since a
+  template belongs to the steps that search for it.
+- **Script:** the whole width, the script Export writes (`FlowScript.render`), with Copy.
+
+Every "Used by" comes from `Flow.getStepUses`: for each step, its area, its locations, the
+`{{names}}` in its text and its templates. A step in that list opens in the Steps tab, its branches
+loaded and opened down to it. The Steps tab is hidden rather than unmounted while another is open,
+so the tree keeps its open branches and a half-edited step its edits.
+
+Renaming an input does not rename it in the steps that type it; the validator says which ones still
+use the old name. A secret keeps no value, whichever form saves it.
+
 ### The tree
 
 `DataTreeComponent` renders a PrimeReact `Tree`, lazily loading children on expand.
@@ -1895,7 +1919,7 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-792 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+793 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
@@ -1904,7 +1928,7 @@ per production project, plus `Architecture.Tests`.
 | `Business.Tests` | 588 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
-| `Transport.Tests` | 7 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test |
+| `Transport.Tests` | 8 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses |
 | `Platform.Windows.Tests` | 6 | grouping clicked elements, and a template with erased pixels beside a flat patch, on drawn screenshots |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
@@ -2015,7 +2039,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 792 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 793 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

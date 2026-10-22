@@ -66,12 +66,14 @@ namespace Transport.Ipc
                     "Flow.promoteToSubFlow" => await Handler<PromoteFlowToSubFlowHandler>().HandleAsync(Payload<int>(request), ct),
                     "Flow.extractSubFlow" => await Handler<ExtractSubFlowHandler>().HandleAsync(Payload<ExtractSubFlowDto>(request), ct),
                     "Flow.getTreeNodes" => await Handler<GetFlowTreeNodeHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.getStepUses" => await Handler<GetFlowStepUsesHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // FlowScript
                     "FlowScript.export" => await Handler<ExportFlowScriptHandler>().HandleAsync(Payload<FlowScriptExportRequestDto>(request), ct),
                     "FlowScript.import" => await Handler<ImportFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
                     "FlowScript.preview" => await Handler<PreviewFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
                     "FlowScript.getExportFolder" => await Handler<GetFlowScriptExportFolderHandler>().HandleAsync(ct),
+                    "FlowScript.render" => await Handler<RenderFlowScriptHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),
@@ -116,8 +118,14 @@ namespace Transport.Ipc
                     "FlowPoint.getPreview" => await Handler<GetFlowPointPreviewHandler>().HandleAsync(Payload<int>(request), ct),
                     "FlowPoint.resolve" => await Handler<ResolveFlowPointHandler>().HandleAsync(Payload<FlowPointDto>(request), ct),
 
+                    // FlowCsvColumn
+                    "FlowCsvColumn.create" => await Handler<CreateFlowCsvColumnHandler>().HandleAsync(Payload<FlowCsvColumnDto>(request), ct),
+                    "FlowCsvColumn.update" => await Handler<UpdateFlowCsvColumnHandler>().HandleAsync(Payload<FlowCsvColumnDto>(request), ct),
+                    "FlowCsvColumn.delete" => await Handler<DeleteFlowCsvColumnHandler>().HandleAsync(Payload<int>(request), ct),
+
                     // FlowStepTemplate
                     "FlowStepTemplate.get" => await Handler<GetFlowStepTemplateHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowStepTemplate.getByFlow" => await Handler<GetFlowTemplatesHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Lookups
                     "Lookup.window" => await Handler<GetLookupWindowHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),

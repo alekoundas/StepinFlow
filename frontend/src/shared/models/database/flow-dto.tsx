@@ -2,6 +2,7 @@ import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowViewportDto } from "@/shared/models/database/flow-viewport-dto";
+import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
 
 export class FlowDto {
   id: number = 0;
@@ -33,6 +34,9 @@ export class FlowDto {
 
   /** The sizes this flow is expected to pass at. One execution per size. */
   flowViewports: FlowViewportDto[] = [];
+
+  /** The values its steps type in, written {{name}}. */
+  flowCsvColumns: FlowCsvColumnDto[] = [];
 
   constructor(data: Partial<FlowDto> = {}) {
     Object.assign(this, {

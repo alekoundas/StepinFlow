@@ -10,13 +10,15 @@ export const flowAreaKeys = {
 export function useFlowAreaMutations() {
   const queryClient = useQueryClient();
 
-  // The Flow form edits areas as a field array, so an area created straight from a step has to
-  // invalidate the flow too or the next Flow save would treat it as removed.
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
-    queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
-  };
+  // The areas come with the flow. Deleting one clears it from the steps that used it, so the
+  // steps are refetched too, and awaited so a save resolves once the lists show it.
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] }),
+      queryClient.invalidateQueries({ queryKey: ["flow"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+    ]);
 
   const createFlowAreaMutation = useMutation({
     mutationFn: (dto: FlowAreaDto) =>

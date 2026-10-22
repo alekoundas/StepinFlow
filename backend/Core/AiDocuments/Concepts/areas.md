@@ -53,8 +53,8 @@ One area can be marked **Main area** - `IsMain` in the data, `main` on its line 
 is the window the flow works in. A recording is stored relative to it, and a viewport resizes it.
 
 There is at most one, and it always sits inside nothing: the main area is the window itself, never
-a region of one. Marking another area main in the flow form unmarks the one before; a save or an
-import with two, or with one inside another area, is refused.
+a region of one. Saving a second area as main is refused until the first is unmarked, and so is an
+import with two, or with one inside another area.
 
 A main area that is a `CUSTOM` rectangle on screen is fixed screen coordinates, so the flow works on
 the machine it was made on and nowhere else. Make the main area an application window instead.

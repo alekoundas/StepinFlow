@@ -5,10 +5,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
-import { FlowAreaDataTableComponent } from "@/features/flow-area/components/FlowAreaDataTableComponent";
-import { FlowPointDataTableComponent } from "@/features/flow-point/components/FlowPointDataTableComponent";
 import { FlowViewportDataTableComponent } from "@/features/flow-viewport/components/FlowViewportDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
@@ -43,17 +40,6 @@ export function FlowFormComponent({
   } = form;
 
   const {
-    fields: searchAreaFields,
-    append: appendSearchArea,
-    remove: removeSearchArea,
-    update: updateSearchArea,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowAreas", "fieldId">({
-    control,
-    name: "flowAreas",
-    keyName: "fieldId",
-  });
-
-  const {
     fields: viewportFields,
     append: appendViewport,
     remove: removeViewport,
@@ -61,17 +47,6 @@ export function FlowFormComponent({
   } = useFieldArray<z.infer<typeof FlowSchema>, "flowViewports", "fieldId">({
     control,
     name: "flowViewports",
-    keyName: "fieldId",
-  });
-
-  const {
-    fields: locationFields,
-    append: appendLocation,
-    remove: removeLocation,
-    update: updateLocation,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowPoints", "fieldId">({
-    control,
-    name: "flowPoints",
     keyName: "fieldId",
   });
 
@@ -103,31 +78,6 @@ export function FlowFormComponent({
           className="flex flex-column h-full"
         >
           <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <div className="grid">
-            <div className="col-12 lg:col-6">
-              <FlowAreaDataTableComponent
-                fields={searchAreaFields}
-                append={appendSearchArea}
-                remove={removeSearchArea}
-                update={updateSearchArea}
-                formMode={formMode}
-                isDisabled={formMode === "VIEW"}
-              />
-            </div>
-
-            <div className="col-12 lg:col-6">
-              <FlowPointDataTableComponent
-                fields={locationFields}
-                append={appendLocation}
-                remove={removeLocation}
-                update={updateLocation}
-                areaOptions={searchAreaFields as unknown as FlowAreaDto[]}
-                formMode={formMode}
-                isDisabled={formMode === "VIEW"}
-              />
-            </div>
-          </div>
 
           <FlowViewportDataTableComponent
             fields={viewportFields}

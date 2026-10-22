@@ -106,6 +106,7 @@ namespace App
             builder.Services.AddSingleton<FlowStepDataService>();
             builder.Services.AddSingleton<FlowAreaDataService>();
             builder.Services.AddSingleton<FlowPointDataService>();
+            builder.Services.AddSingleton<FlowCsvColumnDataService>();
             builder.Services.AddSingleton<DataService>();
 
             // Flow script
@@ -177,10 +178,12 @@ namespace App
             builder.Services.AddTransient<PromoteFlowToSubFlowHandler>();
             builder.Services.AddTransient<ExtractSubFlowHandler>();
             builder.Services.AddTransient<GetFlowTreeNodeHandler>();
+            builder.Services.AddTransient<GetFlowStepUsesHandler>();
             builder.Services.AddTransient<ExportFlowScriptHandler>();
             builder.Services.AddTransient<ImportFlowScriptHandler>();
             builder.Services.AddTransient<PreviewFlowScriptHandler>();
             builder.Services.AddTransient<GetFlowScriptExportFolderHandler>();
+            builder.Services.AddTransient<RenderFlowScriptHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();
@@ -215,7 +218,11 @@ namespace App
             builder.Services.AddTransient<GetFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointPreviewHandler>();
             builder.Services.AddTransient<ResolveFlowPointHandler>();
+            builder.Services.AddTransient<CreateFlowCsvColumnHandler>();
+            builder.Services.AddTransient<UpdateFlowCsvColumnHandler>();
+            builder.Services.AddTransient<DeleteFlowCsvColumnHandler>();
             builder.Services.AddTransient<GetFlowStepTemplateHandler>();
+            builder.Services.AddTransient<GetFlowTemplatesHandler>();
             builder.Services.AddTransient<GetLookupWindowHandler>();
             builder.Services.AddTransient<GetLookupMonitorHandler>();
             builder.Services.AddTransient<GetLookupFlowStepHandler>();

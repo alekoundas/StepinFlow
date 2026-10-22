@@ -29,6 +29,7 @@ namespace Transport.Ipc.Handlers
                     Name = x.Name,
                     Description = x.Description,
                     IsSubFlow = x.IsSubFlow,
+                    IsQaTest = x.IsQaTest,
                     CreatedOn = x.CreatedOn,
                     UpdatedOn = x.UpdatedOn,
 
@@ -101,6 +102,19 @@ namespace Transport.Ipc.Handlers
                             FlowId = l.FlowId,
                             FlowStepsCount = l.FlowSteps.Count() + l.EndFlowSteps.Count(),
                             FlowAreaName = l.FlowArea != null ? l.FlowArea.Name : string.Empty,
+                        })
+                        .ToList(),
+
+                    FlowCsvColumns = x.FlowCsvColumns
+                        .OrderBy(c => c.OrderNumber)
+                        .Select(c => new FlowCsvColumnDto
+                        {
+                            Id = c.Id,
+                            Name = c.Name,
+                            DefaultValue = c.DefaultValue,
+                            IsSecret = c.IsSecret,
+                            OrderNumber = c.OrderNumber,
+                            FlowId = c.FlowId,
                         })
                         .ToList(),
                 })

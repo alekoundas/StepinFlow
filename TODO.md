@@ -425,8 +425,12 @@ the history.
         only those rules.
       - **Where it shows:** issues are keyed to steps today, so a location's need their own key. A
         warning on the location's row and on the tab that lists locations, and on the steps that use
-        it, since that is where an execution's failure shows. The mockup's editor has tabs for
-        steps, areas, inputs, templates and the script but none for locations yet.
+        it, since that is where an execution's failure shows. The mockup's Locations board (8b)
+        draws it: the icon on the row and on the tab, the reason above the form, and the header's
+        count. The app's Locations tab has none of it yet.
+      - **Regions too:** the old flow form took a pixel region out of its window when the window
+        shrank past it. The Areas tab saves one area at a time and does not; the resolver crops
+        such a region to its window, so the validator should say when one falls partly outside.
 
 - [ ] **Paste a copied step into another flow.** Raised 2026-10-21, when copy and paste was built
       for one flow (PROJECT.md §13, The tree). Opening another flow drops the copy, and

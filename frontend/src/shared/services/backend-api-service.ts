@@ -16,6 +16,8 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
+import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
+import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
@@ -76,6 +78,8 @@ export const backendApiService = {
     getLazy: (dto: LazyDto) =>
       call<LazyResponseDto<FlowDto>>("Flow.getLazy", dto),
     getTreeNodes: (id: number) => call<TreeNodeDto[]>("Flow.getTreeNodes", id),
+    /** What each step uses: its area, locations, {{names}} and templates. */
+    getStepUses: (id: number) => call<FlowStepUseDto[]>("Flow.getStepUses", id),
     validate: (id: number) =>
       call<FlowValidationResultDto>("Flow.validate", id),
 
@@ -98,6 +102,8 @@ export const backendApiService = {
     preview: (scriptPath: string) =>
       call<FlowScriptPreviewDto>("FlowScript.preview", { scriptPath }),
     getExportFolder: () => call<FlowScriptExportFolderDto>("FlowScript.getExportFolder"),
+    // The script Export would write, with nothing written.
+    render: (flowId: number) => call<string>("FlowScript.render", flowId),
   },
 
   DiscordBot: {
@@ -149,6 +155,9 @@ export const backendApiService = {
 
   FlowStepTemplate: {
     get: (id: number) => call<FlowStepTemplateDto>("FlowStepTemplate.get", id),
+    /** One per name, with its image: steps searching for the same image share it. */
+    getByFlow: (flowId: number) =>
+      call<FlowStepTemplateDto[]>("FlowStepTemplate.getByFlow", flowId),
   },
 
   FlowArea: {
@@ -175,6 +184,13 @@ export const backendApiService = {
     /** Where a location as its form has it lands now, measured from its saved area. */
     resolve: (dto: FlowPointDto) =>
       call<ScreenPointDto>("FlowPoint.resolve", dto),
+  },
+
+  FlowCsvColumn: {
+    create: (dto: FlowCsvColumnDto) => call<number>("FlowCsvColumn.create", dto),
+    update: (dto: FlowCsvColumnDto) =>
+      call<FlowCsvColumnDto>("FlowCsvColumn.update", dto),
+    delete: (id: number) => call<boolean>("FlowCsvColumn.delete", id),
   },
 
   Lookup: {

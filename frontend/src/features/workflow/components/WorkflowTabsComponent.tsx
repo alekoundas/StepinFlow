@@ -1,0 +1,57 @@
+import { TabMenu } from "primereact/tabmenu";
+import type { MenuItem, MenuItemOptions } from "primereact/menuitem";
+
+import { useWorkflowStore, type WorkflowTab } from "@/features/workflow/store/workflow-store";
+
+interface Props {
+  areaCount?: number;
+  locationCount?: number;
+  inputCount?: number;
+  templateCount?: number;
+}
+
+const TABS: { tab: WorkflowTab; label: string }[] = [
+  { tab: "steps", label: "Steps" },
+  { tab: "areas", label: "Areas" },
+  { tab: "locations", label: "Locations" },
+  { tab: "inputs", label: "Inputs" },
+  { tab: "templates", label: "Templates" },
+  { tab: "script", label: "Script" },
+];
+
+/** The editor's tabs, each part with how many the flow has. */
+export function WorkflowTabsComponent({ areaCount, locationCount, inputCount, templateCount }: Props) {
+  const { activeTab, setActiveTab } = useWorkflowStore();
+
+  const counts: Partial<Record<WorkflowTab, number | undefined>> = {
+    areas: areaCount,
+    locations: locationCount,
+    inputs: inputCount,
+    templates: templateCount,
+  };
+
+  const model: MenuItem[] = TABS.map(({ tab, label }) => ({
+    label,
+    template: (_: MenuItem, options: MenuItemOptions) => (
+      <a
+        className={options.className}
+        onClick={options.onClick}
+        role="tab"
+        tabIndex={0}
+      >
+        <span className={options.labelClassName}>{label}</span>
+        {counts[tab] !== undefined && <span className="ml-2 text-color-secondary">{counts[tab]}</span>}
+      </a>
+    ),
+  }));
+
+  return (
+    <TabMenu
+      model={model}
+      activeIndex={TABS.findIndex((x) => x.tab === activeTab)}
+      onTabChange={(e) => setActiveTab(TABS[e.index].tab)}
+      className="px-3 pt-2"
+      pt={{ menu: { className: "bg-transparent" } }}
+    />
+  );
+}

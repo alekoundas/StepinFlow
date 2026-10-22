@@ -57,9 +57,6 @@ export default function FlowPointFormFieldsComponent({
   // else as soon as the window is another size. Only a percent follows it.
   const isPercentOnly = scalesWithOf(flowAreaId, areaOptions) === ScalesWithEnum.AREA;
 
-  // A new area is not in the database yet, and the location is measured from the saved one.
-  const isAreaUnsaved = !!flowAreaId && flowAreaId < 0;
-
   // Picking an area sets what the location is measured in: Percent where only a percent follows
   // it, Pixels where its contents keep their size. Only on a pick, so opening a saved location
   // changes nothing.
@@ -208,14 +205,10 @@ export default function FlowPointFormFieldsComponent({
             type="button"
             label="Test"
             icon="pi pi-play"
-            disabled={isCapturing || isAreaUnsaved}
+            disabled={isCapturing}
             onClick={handleTest}
             className="p-button-outlined"
-            tooltip={
-              isAreaUnsaved
-                ? "Save the flow first: its new area cannot be found until it is saved"
-                : "Move the real cursor to where the flow will put it"
-            }
+            tooltip="Move the real cursor to where the flow will put it"
             tooltipOptions={{ position: "top" }}
           />
 

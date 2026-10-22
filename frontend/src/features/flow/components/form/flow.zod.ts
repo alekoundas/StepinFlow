@@ -1,6 +1,4 @@
 // schemas/base-flow-step.schema.ts
-import { FlowAreaZod } from "@/features/flow-area/components/forms/flow-area.zod";
-import { FlowPointZod } from "@/features/flow-point/components/forms/flow-point.zod";
 import { FlowViewportZod } from "@/features/flow-viewport/components/forms/flow-viewport.zod";
 import { validateFileName } from "@/shared/utils/file-name";
 import { z } from "zod";
@@ -19,7 +17,6 @@ export const FlowSchema = z.object({
     }),
   description: z.string().max(DESCRIPTION_MAX_LENGTH, `Keep it under ${DESCRIPTION_MAX_LENGTH} characters`),
 
-  flowAreas: z.array(FlowAreaZod),
-  flowPoints: z.array(FlowPointZod),
+  // Areas, locations and inputs have tabs of their own and are saved one at a time.
   flowViewports: z.array(FlowViewportZod),
 });

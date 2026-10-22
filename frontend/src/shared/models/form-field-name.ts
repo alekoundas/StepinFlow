@@ -2,6 +2,7 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
+import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
 import type { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 
@@ -13,4 +14,5 @@ export type FormFieldName =
   | keyof FlowAreaDto
   | keyof DiscordBotDto
   | keyof FlowPointDto
+  | keyof FlowCsvColumnDto
   | keyof RecordingSetupDto;

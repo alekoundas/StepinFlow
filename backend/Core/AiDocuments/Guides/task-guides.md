@@ -66,7 +66,7 @@ means if it fails, rather than what the step does, which its line already says.
 
 ## Sharing a flow as a file
 
-A flow's **Export**, beside Run in the editor, writes it as a `.sflw` script with its templates in a
+A flow's **Export**, beside Execute at the top of the editor, writes it as a `.sflw` script with its templates in a
 folder of the same name beside it. The folder starts as the app's export folder; Browse picks
 another, and a script of the same name there is replaced.
 

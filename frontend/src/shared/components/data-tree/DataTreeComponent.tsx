@@ -53,10 +53,12 @@ export function DataTreeComponent({ flowId }: Props) {
     selectedTreeNode,
     treeRefreshTrigger,
     copiedStep,
+    stepToReveal,
     setSelectedTreeNode,
     setSelectedFlowStepTypeToAdd,
     setTreeRefreshTrigger,
     setCopiedStep,
+    setStepToReveal,
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
   const { openConfirm, close } = useDialogStore();
@@ -190,6 +192,10 @@ export function DataTreeComponent({ flowId }: Props) {
           ),
         );
 
+        // Known at once rather than after the next render, so a branch opened straight after this
+        // one is given its add placeholder by its own rules.
+        for (const node of response) nodesByKeyRef.current.set(node.key, node);
+
         // Every child here is a fresh node with no children of its own, but expandedKeys still
         // says the ones that were open are open. PrimeReact would draw them expanded and empty,
         // and never fire onExpand again because it thinks they already are. Reloading them keeps
@@ -242,6 +248,48 @@ export function DataTreeComponent({ flowId }: Props) {
     }
     setTreeRefreshTrigger(null);
   }, [treeRefreshTrigger, loadTreeChildren]); // loadTreeChildren is stable if you wrap it in useCallback
+
+  // A "Used by" list asked for this step. Its branches are loaded and opened from the top down,
+  // then it is selected, so it shows where it sits and not only in the panel.
+  useEffect(() => {
+    if (stepToReveal == null) return;
+
+    const flowStepId = stepToReveal;
+    setStepToReveal(null);
+
+    const reveal = async () => {
+      const ancestors: number[] = [];
+      let step = await backendApiService.FlowStep.get(flowStepId);
+      while (step.parentFlowStepId) {
+        ancestors.unshift(step.parentFlowStepId);
+        step = await backendApiService.FlowStep.get(step.parentFlowStepId);
+      }
+
+      const opened: TreeExpandedKeysType = { [buildTreeNodeKey(flowId, true)]: true };
+      let children = await loadTreeChildren(flowId, true);
+      for (const id of ancestors) {
+        opened[buildTreeNodeKey(id, false)] = true;
+        children = await loadTreeChildren(id, false);
+      }
+
+      setExpandedKeys((prev) => ({ ...prev, ...opened }));
+
+      const node = children?.find((x) => x.entityId === flowStepId);
+      if (!node) return;
+
+      setSelectedFlowStepTypeToAdd(undefined);
+      setSelectedTreeNode(node);
+    };
+
+    void reveal();
+  }, [
+    stepToReveal,
+    flowId,
+    loadTreeChildren,
+    setStepToReveal,
+    setSelectedTreeNode,
+    setSelectedFlowStepTypeToAdd,
+  ]);
 
   const onExpand = async (e: TreeEventNodeEvent) => {
     const node = e.node as TreeNodeDto;

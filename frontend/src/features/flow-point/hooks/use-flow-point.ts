@@ -10,13 +10,15 @@ export const flowPointKeys = {
 export function useFlowPointMutations() {
   const queryClient = useQueryClient();
 
-  // The Flow form edits locations as a field array, so a location created straight from a cursor
-  // step has to invalidate the flow too or the next Flow save would treat it as removed.
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
-    queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
-  };
+  // The locations come with the flow. Deleting one clears it from the steps that used it, so the
+  // steps are refetched too, and awaited so a save resolves once the lists show it.
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] }),
+      queryClient.invalidateQueries({ queryKey: ["flow"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+    ]);
 
   const createFlowPointMutation = useMutation({
     mutationFn: (dto: FlowPointDto) =>
