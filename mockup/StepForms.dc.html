@@ -154,9 +154,9 @@ body{margin:0}
 </span>
 </div>
 </sc-for>
-<div style="display: flex; gap: 8px">
-<button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer">Capture from the screen</button>
-<button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: transparent; color: #AEB4C0; font: inherit; font-size: 13px; cursor: pointer">Add from a file</button>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #313644; background: transparent; color: #ECEEF2; font: inherit; font-size: 13px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add template</button>
+<span style="font-size: 12px; color: #8790A0">Capture one now, or reuse one this flow already has.</span>
 </div>
 </div>
 </sc-if>
@@ -1070,6 +1070,7 @@ class Component extends DCLogic {
         { title: 'Gives', text: 'What later steps can use from this one.' },
         { title: 'Comment, and the script', text: 'The code comment on every form, both branches included, and the line it is printed over.' },
         { title: 'Named by their settings', text: 'A cursor, wait, keyboard, window or system action step is called what it does, “Double click” or “Wait 2s”, renamed on every save.' },
+        { title: 'Templates are shared', text: 'Add template captures a new one or reuses one the flow has. Steps link to the picture; accuracy and required stay each step’s own.' },
       ],
       groups: shown.map((g) => ({
         name: g.name, blurb: g.blurb, hid: 'g-' + g.name.toLowerCase().replace(/\s+/g, '-'),

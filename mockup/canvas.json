@@ -175,7 +175,7 @@
       "expand": "fill",
       "h": 960,
       "is_interactive": true,
-      "title": "8d · Editor: Templates, each with the steps that search for it",
+      "title": "8d · Editor: Templates, the pictures steps share",
       "w": 1440,
       "x": 16720,
       "y": 0
@@ -187,6 +187,33 @@
       "title": "8e · Editor: Script, what Export writes",
       "w": 1440,
       "x": 18240,
+      "y": 0
+    },
+    "EditorTemplateAdd.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8f · Editor: Add template, capture now or reuse one",
+      "w": 1440,
+      "x": 19760,
+      "y": 0
+    },
+    "EditorTemplateReuse.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8g · Editor: Reuse a template, picked by its picture",
+      "w": 1440,
+      "x": 21280,
+      "y": 0
+    },
+    "EditorTemplateShared.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8h · Editor: Editing a template two steps share",
+      "w": 1440,
+      "x": 22800,
       "y": 0
     }
   },
@@ -231,6 +258,9 @@
     "EditorInputs.dc.html",
     "EditorTemplates.dc.html",
     "EditorScript.dc.html",
+    "EditorTemplateAdd.dc.html",
+    "EditorTemplateReuse.dc.html",
+    "EditorTemplateShared.dc.html",
     "ManualWizard.dc.html",
     "Foundations.dc.html",
     "Home.dc.html",

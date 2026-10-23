@@ -30,8 +30,11 @@ than editing these.
 | 8a · Editor: Areas, the windows and regions steps look in | `EditorAreas.dc.html`, which shows `Editor.dc.html` with `tab="areas"` |
 | 8b · Editor: Locations, one to fix after its area changed | `EditorLocations.dc.html`, with `tab="locations"` and `issue="true"` |
 | 8c · Editor: Inputs, the values steps type in | `EditorInputs.dc.html`, with `tab="inputs"` |
-| 8d · Editor: Templates, each with the steps that search for it | `EditorTemplates.dc.html`, with `tab="templates"` |
+| 8d · Editor: Templates, the pictures steps share | `EditorTemplates.dc.html`, with `tab="templates"` |
 | 8e · Editor: Script, what Export writes | `EditorScript.dc.html`, with `tab="script"` |
+| 8f · Editor: Add template, capture now or reuse one | `EditorTemplateAdd.dc.html`, with `dialog="add"` |
+| 8g · Editor: Reuse a template, picked by its picture | `EditorTemplateReuse.dc.html`, with `dialog="reuse"` |
+| 8h · Editor: Editing a template two steps share | `EditorTemplateShared.dc.html`, with `dialog="shared"` |
 | Fallback · step through the recording by hand | `ManualWizard.dc.html` |
 | Foundations · tokens and parts | `Foundations.dc.html` |
 | Home · what executed, what is waiting | `Home.dc.html` |
