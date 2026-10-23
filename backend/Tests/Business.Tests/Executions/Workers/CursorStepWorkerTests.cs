@@ -96,24 +96,15 @@ namespace Business.Tests.Executions.Workers
         }
 
         [Theory]
-        [InlineData(CursorScrollDirectionTypeEnum.DOWN, "scroll 10,20 -3")]
-        [InlineData(CursorScrollDirectionTypeEnum.UP, "scroll 10,20 3")]
+        [InlineData(CursorScrollDirectionTypeEnum.DOWN, "scroll 10,20 DOWN 3")]
+        [InlineData(CursorScrollDirectionTypeEnum.UP, "scroll 10,20 UP 3")]
+        [InlineData(CursorScrollDirectionTypeEnum.LEFT, "scroll 10,20 LEFT 3")]
+        [InlineData(CursorScrollDirectionTypeEnum.RIGHT, "scroll 10,20 RIGHT 3")]
         public async Task A_scroll_turns_the_wheel_its_count_in_its_direction(CursorScrollDirectionTypeEnum direction, string done)
         {
             await Cursor(new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = direction, LoopCount = 3 });
 
             _input.Actions.ShouldBe([done]);
-        }
-
-        // Known gap, in TODO.md: the input port has no horizontal wheel, so left and right scroll up.
-        [Theory]
-        [InlineData(CursorScrollDirectionTypeEnum.LEFT)]
-        [InlineData(CursorScrollDirectionTypeEnum.RIGHT)]
-        public async Task A_sideways_scroll_turns_the_vertical_wheel_today(CursorScrollDirectionTypeEnum direction)
-        {
-            await Cursor(new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = direction, LoopCount = 3 });
-
-            _input.Actions.ShouldBe(["scroll 10,20 3"]);
         }
     }
 }

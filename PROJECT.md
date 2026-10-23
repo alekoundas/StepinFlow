@@ -577,6 +577,10 @@ input of its own (`KEY_TYPED`), so nothing already published changes. So Caps Lo
 and the text is what appeared. The builders, one per kind:
 
 - **A press** is a click, a double click or a drag; **a notch** a scroll, with the notches after it.
+  The hook counts in wheel units, which on Windows it multiplies by the lines a notch scrolls in the
+  mouse options, so the recorder adds a scroll's units up and divides by one notch's: a touchpad's
+  slices make whole notches. Replayed, each notch is a wheel event of its own, 20 ms apart, because
+  some apps count wheel events rather than add up their size.
 - **A modifier** is a hold where it went down and a release where it came up, with everything between
   them a step of its own: Ctrl+C is Hold Ctrl, Press C, Release Ctrl, and Ctrl+click is Hold Ctrl,
   Click, Release Ctrl. Nothing is worked out about what the modifier meant - the order replays it.
@@ -1938,13 +1942,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-803 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+805 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 596 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 598 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2058,7 +2062,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 803 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 805 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

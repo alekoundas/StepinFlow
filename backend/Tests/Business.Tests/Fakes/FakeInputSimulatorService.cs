@@ -50,9 +50,9 @@ namespace Business.Tests.Fakes
             Actions.Add($"up {x},{y} {button}");
         }
 
-        public void SimulateMouseScroll(int x, int y, int delta)
+        public void SimulateMouseScroll(int x, int y, CursorScrollDirectionTypeEnum direction, int notches, CancellationToken ct)
         {
-            Actions.Add($"scroll {x},{y} {delta}");
+            Actions.Add($"scroll {x},{y} {direction} {notches}");
         }
 
         public void SimulateMouseDrag(int fromX, int fromY, int toX, int toY, CursorButtonTypeEnum button)

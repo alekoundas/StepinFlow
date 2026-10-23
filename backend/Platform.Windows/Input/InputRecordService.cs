@@ -2,6 +2,7 @@
 using Core.Enums;
 using Core.Enums.Business;
 using Core.Models.Business;
+using Platform.Windows.Native;
 using SharpHook;
 using SharpHook.Data;
 
@@ -258,18 +259,21 @@ namespace Platform.Windows.Input
             if (!IsRecording)
                 return;
 
-            // SharpHook reports rotation as signed detents: positive is away from the user.
+            // Signed wheel units, positive up or left.
             int rotation = e.Data.Rotation;
             if (rotation == 0)
                 return;
+
+            bool isHorizontal = e.Data.Direction == MouseWheelScrollDirection.Horizontal;
 
             Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.CURSOR_SCROLL,
                 PhysicalX = e.Data.X,
                 PhysicalY = e.Data.Y,
-                ScrollDirection = rotation > 0 ? CursorScrollDirectionTypeEnum.UP : CursorScrollDirectionTypeEnum.DOWN,
-                ScrollAmount = Math.Abs(rotation),
+                ScrollDirection = MapScrollDirection(rotation, isHorizontal),
+                ScrollRotation = Math.Abs(rotation),
+                ScrollUnitsPerNotch = UnitsPerNotch(e.Data, isHorizontal),
             });
         }
 
@@ -439,6 +443,26 @@ namespace Platform.Windows.Input
 
             _ => KeyCodeEnum.Unknown
         };
+
+        private static CursorScrollDirectionTypeEnum MapScrollDirection(int rotation, bool isHorizontal)
+        {
+            if (isHorizontal)
+                return rotation > 0 ? CursorScrollDirectionTypeEnum.LEFT : CursorScrollDirectionTypeEnum.RIGHT;
+
+            return rotation > 0 ? CursorScrollDirectionTypeEnum.UP : CursorScrollDirectionTypeEnum.DOWN;
+        }
+
+        // The hook multiplies a line-by-line turn by the lines (or characters sideways) a notch
+        // scrolls in the Windows mouse options, so one notch is 360 units at the default of 3.
+        private static int UnitsPerNotch(MouseWheelEventData data, bool isHorizontal)
+        {
+            if (data.Type == MouseWheelScrollType.BlockScroll)
+                return data.Delta;
+
+            uint scrollPerNotch = NativeWheel.ScrollPerNotch(isHorizontal);
+
+            return data.Delta * (int)Math.Max(scrollPerNotch, 1);
+        }
 
         //private static KeyModifierEnum MapModifiers(ModifierMask raw)
         //{

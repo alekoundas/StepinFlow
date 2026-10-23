@@ -40,10 +40,16 @@ namespace Business.Tests.Recording
             return Press(ms, x, y).Release(ms + 50, x, y);
         }
 
-        private RecordingActionBuilderTests Scroll(int ms, CursorScrollDirectionTypeEnum direction, int amount = 1)
+        // Wheel units as Windows reports them: 120 to a notch.
+        private RecordingActionBuilderTests Turn(int ms, CursorScrollDirectionTypeEnum direction, int rotation)
         {
-            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.CURSOR_SCROLL, PhysicalX = 10, PhysicalY = 20, ScrollDirection = direction, ScrollAmount = amount, CreatedOn = START.AddMilliseconds(ms) });
+            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.CURSOR_SCROLL, PhysicalX = 10, PhysicalY = 20, ScrollDirection = direction, ScrollRotation = rotation, ScrollUnitsPerNotch = 120, CreatedOn = START.AddMilliseconds(ms) });
             return this;
+        }
+
+        private RecordingActionBuilderTests Scroll(int ms, CursorScrollDirectionTypeEnum direction, int notches = 1)
+        {
+            return Turn(ms, direction, notches * 120);
         }
 
         // The hook writes the character the layout typed onto every key, as these do: a US layout's,
@@ -222,6 +228,23 @@ namespace Business.Tests.Recording
 
             actions.Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.SCROLL, RecordedActionKindEnum.TYPING]);
             actions[0].ScrollAmount.ShouldBe(2);
+        }
+
+        [Fact]
+        public void A_touchpad_s_slices_add_up_to_whole_notches()
+        {
+            for (int i = 0; i < 8; i++)
+                Turn(i * 10, CursorScrollDirectionTypeEnum.DOWN, 30);
+
+            Build().Single().ScrollAmount.ShouldBe(2);
+        }
+
+        [Fact]
+        public void A_turn_short_of_a_notch_is_still_one()
+        {
+            Turn(0, CursorScrollDirectionTypeEnum.UP, 30);
+
+            Build().Single().ScrollAmount.ShouldBe(1);
         }
 
         // Nothing between a press and its release is skipped over.

@@ -113,7 +113,8 @@ export interface RecordedInput {
 
   // Scroll
   scrollDirection?: CursorScrollDirectionTypeEnum;
-  scrollAmount?: number;
+  scrollRotation?: number; // Unsigned, in the platform's wheel units
+  scrollUnitsPerNotch?: number;
 
   // Recording session only. Position in the session, which is also the screenshot key, so the
   // live feed can name an image it never carries.

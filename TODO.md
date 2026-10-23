@@ -106,14 +106,6 @@ the history.
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
 
-- [ ] **Scrolling left or right scrolls up.** `CursorStepWorker.Scroll` only checks for `DOWN`, and
-      `IInputSimulatorService.SimulateMouseScroll` has one vertical delta, so the grammar's and the form's
-      `left` and `right` turn the vertical wheel. Needs a horizontal wheel on the port and in the
-      adapter. `InputWorkerTests` pins today's behaviour, so the test changes with the fix.
-      The recorder has the same gap from the other side, talked about after the recording update
-      (2026-10-09): `InputRecordService.OnMouseWheel` reads only the sign of the rotation and
-      ignores SharpHook's vertical or horizontal direction, so tilting the wheel sideways, or
-      swiping sideways on a touchpad, is recorded as up or down.
 - [ ] **Decide how long a step's result lives.** `ExecutionFlowWalker.Pop` writes the popped step's
       depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
       entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays

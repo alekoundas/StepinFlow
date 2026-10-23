@@ -23,7 +23,8 @@ namespace Core.Ports
         void SimulateMouseDoubleClick(int x, int y, CursorButtonTypeEnum button);
         void SimulateMouseDown(int x, int y, CursorButtonTypeEnum button);
         void SimulateMouseUp(int x, int y, CursorButtonTypeEnum button);
-        void SimulateMouseScroll(int x, int y, int delta);
+        /// <summary>Turns the wheel whole notches, or tilts it for left and right. Each platform turns a notch into its own wheel units.</summary>
+        void SimulateMouseScroll(int x, int y, CursorScrollDirectionTypeEnum direction, int notches, CancellationToken ct);
         void SimulateMouseDrag(int fromX, int fromY, int toX, int toY, CursorButtonTypeEnum button);
 
         void SimulateKeyboard(string text);

@@ -50,7 +50,7 @@ namespace Transport.Tests.Fakes
             throw new NotImplementedException();
         }
 
-        public void SimulateMouseScroll(int x, int y, int delta)
+        public void SimulateMouseScroll(int x, int y, CursorScrollDirectionTypeEnum direction, int notches, CancellationToken ct)
         {
             throw new NotImplementedException();
         }

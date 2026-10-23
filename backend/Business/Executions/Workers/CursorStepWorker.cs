@@ -34,7 +34,7 @@ namespace Business.Executions.Workers
                     return Click(step);
 
                 case FlowStepTypeEnum.CURSOR_SCROLL:
-                    return Scroll(step);
+                    return Scroll(step, ct);
 
                 case FlowStepTypeEnum.CURSOR_DRAG:
                     return await DragAsync(step, cache, ct);
@@ -90,14 +90,14 @@ namespace Business.Executions.Workers
             return ExecutionStep.Success(at);
         }
 
-        private ExecutionStep Scroll(FlowStep step)
+        private ExecutionStep Scroll(FlowStep step, CancellationToken ct)
         {
             Point at = _inputSimulatorService.CursorPosition();
 
             int notches = Math.Max(step.LoopCount, 1);
-            int delta = step.CursorScrollDirectionType == CursorScrollDirectionTypeEnum.DOWN ? -notches : notches;
+            CursorScrollDirectionTypeEnum direction = step.CursorScrollDirectionType ?? CursorScrollDirectionTypeEnum.DOWN;
 
-            _inputSimulatorService.SimulateMouseScroll(at.X, at.Y, delta);
+            _inputSimulatorService.SimulateMouseScroll(at.X, at.Y, direction, notches, ct);
 
             return ExecutionStep.Success(at);
         }

@@ -18,7 +18,12 @@ namespace Core.Models.Business
 
         // Scroll
         public CursorScrollDirectionTypeEnum? ScrollDirection { get; set; }
-        public int ScrollAmount { get; set; }
+
+        /// <summary> How far the wheel turned, unsigned, in the platform's wheel units. A touchpad sends slices of a notch. </summary>
+        public int ScrollRotation { get; set; }
+
+        /// <summary> The platform's wheel units in one notch, as the hook counts them. </summary>
+        public int ScrollUnitsPerNotch { get; set; }
 
 
 

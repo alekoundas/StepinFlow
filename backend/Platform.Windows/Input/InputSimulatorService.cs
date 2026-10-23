@@ -26,6 +26,13 @@ namespace Platform.Windows.Input
         // not swallowed as one.
         private const int DOUBLE_CLICK_GAP_MS = 40;
 
+        // WHEEL_DELTA: one notch in Windows wheel units.
+        private const short WHEEL_NOTCH = 120;
+
+        // A real wheel sends one event per notch. Apps that count events rather than add up their
+        // size take one big event as a single notch.
+        private const int SCROLL_NOTCH_GAP_MS = 20;
+
         // Cursor movement does not go through SharpHook: its absolute coordinates are DPI
         // virtualized, and everything stored in the database is in physical pixels.
         public bool MoveCursor(int x, int y) => NativeCursor.MoveCursor(x, y);
@@ -85,12 +92,24 @@ namespace Platform.Windows.Input
                 _heldButtons.Remove(pressed);
         }
 
-        public void SimulateMouseScroll(int x, int y, int delta)
+        public void SimulateMouseScroll(int x, int y, CursorScrollDirectionTypeEnum direction, int notches, CancellationToken ct)
         {
+            // SharpHook's sign: positive is up or left.
+            bool isForward = direction == CursorScrollDirectionTypeEnum.UP || direction == CursorScrollDirectionTypeEnum.LEFT;
+            short rotation = isForward ? WHEEL_NOTCH : (short)-WHEEL_NOTCH;
+            MouseWheelScrollDirection wheel = SharpHookMap.Wheel(direction);
+
             MoveCursor(x, y);
             Thread.Sleep(MOVE_SETTLE_MS);
 
-            _simulator.SimulateMouseWheel((short)delta, 0);
+            for (int i = 0; i < notches; i++)
+            {
+                // Stop lands between notches, so a long scroll does not hold the execution up.
+                if (i > 0 && ct.WaitHandle.WaitOne(SCROLL_NOTCH_GAP_MS))
+                    return;
+
+                _simulator.SimulateMouseWheel(rotation, wheel);
+            }
         }
 
         public void SimulateMouseDrag(int fromX, int fromY, int toX, int toY, CursorButtonTypeEnum button)

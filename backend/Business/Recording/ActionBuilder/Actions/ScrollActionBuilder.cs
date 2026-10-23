@@ -14,21 +14,22 @@ namespace Business.Recording.ActionBuilder.Actions
     {
         public static void Build(RecordedInput first, RecordingReader reader)
         {
-            List<RecordedInput> notches = [first];
-            int amount = first.ScrollAmount;
+            List<RecordedInput> turns = [first];
+            int rotation = first.ScrollRotation;
 
             foreach (RecordedInput next in reader.After(first).Where(x => !IsKey(x)))
             {
                 if (!IsSameScroll(first, next))
                     break;
 
-                notches.Add(next);
-                amount += next.ScrollAmount;
+                turns.Add(next);
+                rotation += next.ScrollRotation;
             }
 
 
-            RecordedActionDto scroll = Scroll(first, amount);
-            reader.AddHandled(new HumanAction(scroll, notches));
+            int notches = Notches(rotation, first.ScrollUnitsPerNotch);
+            RecordedActionDto scroll = Scroll(first, notches);
+            reader.AddHandled(new HumanAction(scroll, turns));
         }
 
 
@@ -41,6 +42,15 @@ namespace Business.Recording.ActionBuilder.Actions
             return input.Type == RecordedInputTypeEnum.KEY_DOWN
                 || input.Type == RecordedInputTypeEnum.KEY_UP
                 || input.Type == RecordedInputTypeEnum.KEY_TYPED;
+        }
+
+        // Added up before dividing, so a touchpad's slices make whole notches rather than one each.
+        private static int Notches(int rotation, int unitsPerNotch)
+        {
+            double notches = (double)rotation / Math.Max(unitsPerNotch, 1);
+            int whole = (int)Math.Round(notches);
+
+            return Math.Max(1, whole);
         }
 
         private static bool IsSameScroll(RecordedInput first, RecordedInput next)

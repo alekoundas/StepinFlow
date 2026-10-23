@@ -19,6 +19,18 @@ namespace Platform.Windows.Input
             }
         }
 
+        internal static MouseWheelScrollDirection Wheel(CursorScrollDirectionTypeEnum direction)
+        {
+            switch (direction)
+            {
+                case CursorScrollDirectionTypeEnum.LEFT:
+                case CursorScrollDirectionTypeEnum.RIGHT:
+                    return MouseWheelScrollDirection.Horizontal;
+
+                default: return MouseWheelScrollDirection.Vertical;
+            }
+        }
+
         // Undefined rather than an exception: a key nothing can press is a step that does nothing,
         // which the validator catches, where a throw would take down an execution mid flow.
         internal static KeyCode Key(KeyCodeEnum key)
