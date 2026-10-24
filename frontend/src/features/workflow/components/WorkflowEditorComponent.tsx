@@ -35,6 +35,7 @@ interface Props {
  */
 export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const activeTab = useWorkflowStore((x) => x.activeTab);
+  const treeZoom = useWorkflowStore((x) => x.treeZoom);
   const { data: uses } = useFlowStepUses(flowId);
   const { data: templates } = useFlowTemplates(flowId);
 
@@ -79,7 +80,11 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
               className="flex-1 px-2"
               style={{ minHeight: 0 }}
             >
-              <DataTreeComponent flowId={flowId} />
+              {/* zoom rather than a font size: the rows' padding, icons and thumbnails are in rem
+                  and would not follow. */}
+              <div style={{ zoom: treeZoom / 100 }}>
+                <DataTreeComponent flowId={flowId} />
+              </div>
             </ScrollPanel>
           </div>
 

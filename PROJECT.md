@@ -1741,7 +1741,11 @@ warnings - and Export and Execute. Below, tabs on the left list the flow's parts
 edits the one picked; a splitter between them remembers its place.
 
 - **Flow:** the tree, and the step or flow form for the row picked. The flow's form keeps its
-  name, description, sizes and callers.
+  name, description, sizes and callers. **−** and **+** beside the tabs draw the tree from 70% to
+  130%, and the percentage puts it back. It is CSS `zoom` on the tree rather than a font size,
+  because the rows' padding, icons and thumbnails are in rem and would stay put. Like the
+  splitter's place, the size is the window's `localStorage` (`workflow-tree-zoom`), kept per
+  user on this machine, not in the database.
 - **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
   it, and the picked one's form. Each is created, saved and deleted on its own
   (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them.

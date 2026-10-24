@@ -33,15 +33,16 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
           behind it, and the step's icon stays on its corner. */}
       {thumbnail ? (
         <span className="relative flex flex-shrink-0 mr-1">
+          {/* The theme's variables: PrimeFlex 4's surface classes come out transparent (TODO.md). */}
           {moreTemplates > 0 && (
             <span
-              className="absolute border-round-sm surface-400 opacity-40"
-              style={{ ...THUMBNAIL_BOX, left: 3, top: -3 }}
+              className="absolute border-round-sm opacity-40"
+              style={{ ...THUMBNAIL_BOX, left: 3, top: -3, background: "var(--surface-400)" }}
             />
           )}
           <span
-            className="relative flex align-items-center justify-content-center border-round-sm border-1 surface-border surface-ground overflow-hidden"
-            style={THUMBNAIL_BOX}
+            className="relative flex align-items-center justify-content-center border-round-sm border-1 overflow-hidden"
+            style={{ ...THUMBNAIL_BOX, borderColor: "var(--surface-border)", background: "var(--surface-ground)" }}
           >
             <img
               className="max-w-full max-h-full"
@@ -68,8 +69,17 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
           </span>
           {moreTemplates > 0 && (
             <span
-              className="absolute flex align-items-center justify-content-center bg-primary font-bold border-round-3xl"
-              style={{ right: -7, top: -6, minWidth: 16, height: 14, padding: "0 3px", fontSize: 9 }}
+              className="absolute flex align-items-center justify-content-center font-bold border-round-3xl"
+              style={{
+                right: -7,
+                top: -6,
+                minWidth: 16,
+                height: 14,
+                padding: "0 3px",
+                fontSize: 9,
+                color: "var(--primary-color-text)",
+                background: "var(--primary-color)",
+              }}
               title={`${moreTemplates} more ${moreTemplates === 1 ? "template" : "templates"}`}
             >
               +{moreTemplates}
