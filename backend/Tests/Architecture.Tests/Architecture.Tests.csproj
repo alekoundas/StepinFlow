@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\DataAccess\DataAccess.csproj" />
     <ProjectReference Include="..\..\Business\Business.csproj" />
     <ProjectReference Include="..\..\Transport\Transport.csproj" />
+    <ProjectReference Include="..\..\Platform.Shared\Platform.Shared.csproj" />
     <ProjectReference Include="..\..\Platform.Windows\Platform.Windows.csproj" />
     <ProjectReference Include="..\..\App\App.csproj" />
   </ItemGroup>

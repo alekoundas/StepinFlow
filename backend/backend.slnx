@@ -12,6 +12,7 @@
     <Project Path="Tests/Business.Tests/Business.Tests.csproj" />
     <Project Path="Tests/Core.Tests/Core.Tests.csproj" />
     <Project Path="Tests/DataAccess.Tests/DataAccess.Tests.csproj" />
+    <Project Path="Tests/Platform.Shared.Tests/Platform.Shared.Tests.csproj" />
     <Project Path="Tests/Platform.Windows.Tests/Platform.Windows.Tests.csproj" />
     <Project Path="Tests/Transport.Tests/Transport.Tests.csproj" />
   </Folder>
@@ -19,6 +20,7 @@
   <Project Path="Business/Business.csproj" />
   <Project Path="Core/Core.csproj" />
   <Project Path="DataAccess/DataAccess.csproj" />
+  <Project Path="Platform.Shared/Platform.Shared.csproj" />
   <Project Path="Platform.Windows/Platform.Windows.csproj" />
   <Project Path="Transport/Transport.csproj" />
 </Solution>

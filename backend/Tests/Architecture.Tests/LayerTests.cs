@@ -20,11 +20,12 @@ namespace Architecture.Tests
         private static readonly Assembly DataAccess = Assembly.Load("DataAccess");
         private static readonly Assembly Business = Assembly.Load("Business");
         private static readonly Assembly Transport = Assembly.Load("Transport");
+        private static readonly Assembly PlatformShared = Assembly.Load("Platform.Shared");
         private static readonly Assembly PlatformWindows = Assembly.Load("Platform.Windows");
         private static readonly Assembly App = Assembly.Load("App");
 
         private static readonly SolutionArchitecture Solution = new ArchLoader()
-            .LoadAssemblies(Core, DataAccess, Business, Transport, PlatformWindows, App)
+            .LoadAssemblies(Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App)
             .Build();
 
 
@@ -33,7 +34,7 @@ namespace Architecture.Tests
         public void Core_depends_on_no_other_project()
         {
             Types().That().ResideInAssembly(Core)
-                .Should().NotDependOnAny(Types().That().ResideInAssembly(DataAccess, Business, Transport, PlatformWindows, App))
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(DataAccess, Business, Transport, PlatformShared, PlatformWindows, App))
                 .Check(Solution);
         }
 
@@ -41,7 +42,7 @@ namespace Architecture.Tests
         public void DataAccess_depends_on_Core_alone()
         {
             Types().That().ResideInAssembly(DataAccess)
-                .Should().NotDependOnAny(Types().That().ResideInAssembly(Business, Transport, PlatformWindows, App))
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(Business, Transport, PlatformShared, PlatformWindows, App))
                 .Check(Solution);
         }
 
@@ -49,7 +50,7 @@ namespace Architecture.Tests
         public void Business_never_touches_the_machine_or_the_transport()
         {
             Types().That().ResideInAssembly(Business)
-                .Should().NotDependOnAny(Types().That().ResideInAssembly(Transport, PlatformWindows, App))
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(Transport, PlatformShared, PlatformWindows, App))
                 .Check(Solution);
         }
 
@@ -57,7 +58,15 @@ namespace Architecture.Tests
         public void Transport_never_touches_the_machine()
         {
             Types().That().ResideInAssembly(Transport)
-                .Should().NotDependOnAny(Types().That().ResideInAssembly(PlatformWindows, App))
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(PlatformShared, PlatformWindows, App))
+                .Check(Solution);
+        }
+
+        [Fact]
+        public void Platform_Shared_depends_on_Core_alone()
+        {
+            Types().That().ResideInAssembly(PlatformShared)
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(DataAccess, Business, Transport, PlatformWindows, App))
                 .Check(Solution);
         }
 
@@ -65,7 +74,7 @@ namespace Architecture.Tests
         public void Platform_Windows_depends_on_Core_alone()
         {
             Types().That().ResideInAssembly(PlatformWindows)
-                .Should().NotDependOnAny(Types().That().ResideInAssembly(DataAccess, Business, Transport, App))
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(DataAccess, Business, Transport, PlatformShared, App))
                 .Check(Solution);
         }
 
@@ -76,7 +85,7 @@ namespace Architecture.Tests
         [InlineData("SharpHook")]
         public void Only_Platform_Windows_uses_a_native_library(string library)
         {
-            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformWindows, App }
+            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App }
                 .Where(x => x.GetReferencedAssemblies().Any(r => r.Name != null && r.Name.StartsWith(library, StringComparison.Ordinal)))
                 .Select(x => x.GetName().Name ?? string.Empty)
                 .ToList();
@@ -86,9 +95,20 @@ namespace Architecture.Tests
         }
 
         [Fact]
+        public void Only_Platform_Shared_uses_git()
+        {
+            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App }
+                .Where(x => x.GetReferencedAssemblies().Any(r => r.Name == "LibGit2Sharp"))
+                .Select(x => x.GetName().Name ?? string.Empty)
+                .ToList();
+
+            users.ShouldBe(["Platform.Shared"]);
+        }
+
+        [Fact]
         public void Only_the_transport_and_the_composition_root_use_AutoMapper()
         {
-            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformWindows, App }
+            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App }
                 .Where(x => x.GetReferencedAssemblies().Any(r => r.Name == "AutoMapper"))
                 .Select(x => x.GetName().Name ?? string.Empty)
                 .ToList();
