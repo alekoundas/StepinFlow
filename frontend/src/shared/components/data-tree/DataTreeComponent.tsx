@@ -29,6 +29,8 @@ import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templ
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
+import { TreeSelectionRingComponent } from "@/shared/components/data-tree/TreeSelectionRingComponent";
+import { flowStepAccent, tint } from "@/shared/models/flow-step-catalog";
 import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
 import {
   groupIssuesByStep,
@@ -490,6 +492,16 @@ export function DataTreeComponent({ flowId }: Props) {
       ? "var(--primary-color)"
       : "var(--red-500)";
 
+    // The picked row wears its step's colour; the flow and the + rows have none of their own.
+    const accent =
+      treeNodeDto.isFlow || treeNodeDto.isNew
+        ? "var(--primary-color)"
+        : flowStepAccent(treeNodeDto.flowStepType);
+
+    let borderRadius: number | undefined;
+    if (isSelected) borderRadius = 6;
+    else if (showInside) borderRadius = 4;
+
     return (
       <div
         {...getRowDragProps(treeNodeDto)}
@@ -500,11 +512,15 @@ export function DataTreeComponent({ flowId }: Props) {
           // Outline the row when the step would land inside it.
           outline: showInside ? `2px solid ${indicatorColor}` : undefined,
           outlineOffset: showInside ? "2px" : undefined,
-          borderRadius: showInside ? "4px" : undefined,
+          borderRadius,
           backgroundColor:
             showInside && dropTarget?.isValid
               ? "var(--highlight-bg)"
               : undefined,
+          boxShadow: isSelected
+            ? `0 0 0 4px ${tint(accent, 12)}, 0 8px 22px -10px ${accent}`
+            : undefined,
+          transition: "box-shadow 160ms ease",
         }}
         title={
           !dropTarget?.isValid && isDropTarget ? dropTarget?.reason : undefined
@@ -524,6 +540,8 @@ export function DataTreeComponent({ flowId }: Props) {
             }}
           />
         )}
+
+        {isSelected && <TreeSelectionRingComponent accent={accent} />}
 
         <div className="flex w-full">{template}</div>
         {isSelected && treeNodeDto.isFlow && <IconComponent name="check" />}

@@ -340,6 +340,10 @@ namespace Business.Flows.DataService.DataHandlers
 
             HashSet<string> takenTemplates = await FlowTemplateDataService.TakenFileNamesAsync(dbContext, step.RootId, ct);
 
+            // A lone template has to be found either way, so a step left with one requires nothing
+            // and its script line does not say a required that means nothing.
+            bool canRequire = wanted.Count > 1;
+
             int order = 0;
             foreach (FlowStepTemplateDto dto in wanted)
             {
@@ -359,7 +363,7 @@ namespace Business.Flows.DataService.DataHandlers
 
                 link.FlowTemplate = picture;
                 link.OrderNumber = order++;
-                link.IsRequired = dto.IsRequired;
+                link.IsRequired = canRequire && dto.IsRequired;
                 link.Accuracy = dto.Accuracy;
             }
         }

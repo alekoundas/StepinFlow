@@ -188,6 +188,7 @@ Copy</button>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
 Add template</button>
 </div>
+<span style="font-size: 12px; color: #8790A0">{{ sel.outcome }}</span>
 <sc-for list="{{ sel.cards }}" as="c" hint-placeholder-count="1">
 <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid #242833; background: #0F1116">
 <div style="display: flex; gap: 14px; align-items: center">
@@ -214,12 +215,12 @@ Add template</button>
 <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
 <label for="acc-{{ c.key }}" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #AEB4C0">Accuracy <span style="font-family: 'Geist Mono', monospace; color: #ECEEF2">0.80</span></label>
 <input id="acc-{{ c.key }}" type="range" min="0.5" max="1" step="0.01" value="0.8" style="flex: 1 1 140px; accent-color: #8FA3FF">
-<label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0">Required</label>
+<sc-if value="{{ c.canRequire }}" hint-placeholder-val="{{ false }}"><label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0">Required</label></sc-if>
 </div>
 </div>
 </sc-for>
 <sc-if value="{{ sel.isShared }}" hint-placeholder-val="{{ true }}">
-<span style="font-size: 12px; color: #8790A0">Accuracy and Required are this step’s own. The picture and its click point are shared.</span>
+<span style="font-size: 12px; color: #8790A0">{{ sel.ownText }}</span>
 </sc-if>
 </div>
 <div style="display: flex; gap: 12px; flex-wrap: wrap">
@@ -656,7 +657,15 @@ class Component extends DCLogic {
       };
     };
     const extras = (d.extra || []).map((id) => templates.find((x) => x.id === id));
-    sel.cards = selTpl ? [cardOf(selTpl, sel.isShared), ...extras.map((t) => cardOf(t, false))] : [];
+    // Required only means something beside another template; either way a miss fails the step once.
+    const canRequire = extras.length > 0;
+    sel.cards = selTpl ? [cardOf(selTpl, sel.isShared), ...extras.map((t) => cardOf(t, false))].map((c) => ({ ...c, canRequire })) : [];
+    sel.outcome = canRequire
+      ? 'Finding any one of these is enough. If none is found, the Failure branch executes once.'
+      : 'If it is not found, the Failure branch executes.';
+    sel.ownText = canRequire
+      ? 'Accuracy and Required are this step’s own. The picture and its click point are shared.'
+      : 'Accuracy is this step’s own. The picture and its click point are shared.';
 
     const dialog = this.state.dialog;
     const dlg = {

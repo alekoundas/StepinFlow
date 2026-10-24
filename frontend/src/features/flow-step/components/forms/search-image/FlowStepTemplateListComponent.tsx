@@ -57,7 +57,19 @@ export function FlowStepTemplateListComponent({
   onChange,
   onRemove,
 }: Props) {
-  const anyRequired = images.some((x) => x.isRequired);
+  // A lone template has to be found either way, so Required only means something beside another.
+  const canRequire = images.length > 1;
+  const anyRequired = canRequire && images.some((x) => x.isRequired);
+
+  // Missing templates never add up to more than one failure: the step fails once, either way.
+  let outcome = "";
+  if (anyRequired)
+    outcome =
+      "Every template marked Required must be found. If any is missing, the Failure branch executes once, and its message names the missing ones.";
+  else if (canRequire)
+    outcome = "Finding any one of these is enough. If none is found, the Failure branch executes once.";
+  else if (images.length === 1)
+    outcome = "If it is not found, the Failure branch executes.";
 
   return (
     <div className="flex flex-column gap-2 mt-4">
@@ -77,15 +89,13 @@ export function FlowStepTemplateListComponent({
         )}
       </div>
 
-      <LabelComponent
-        size="sm"
-        color="secondary"
-        text={
-          anyRequired
-            ? "Every template marked required must be found, or the step fails."
-            : "Nothing is marked required, so finding any one of these counts as success."
-        }
-      />
+      {outcome && (
+        <LabelComponent
+          size="sm"
+          color="secondary"
+          text={outcome}
+        />
+      )}
 
       {images.length === 0 && (
         <LabelComponent
@@ -174,25 +184,27 @@ export function FlowStepTemplateListComponent({
                 />
               )}
 
-              <div className="flex align-items-center gap-2">
-                <Checkbox
-                  inputId={`required-${index}`}
-                  checked={image.isRequired}
-                  disabled={isDisabled}
-                  onChange={(e) =>
-                    onChange(
-                      index,
-                      new FlowStepTemplateDto({ ...image, isRequired: !!e.checked }),
-                    )
-                  }
-                />
-                <label htmlFor={`required-${index}`}>
-                  <LabelComponent
-                    text="Required"
-                    size="xs"
+              {canRequire && (
+                <div className="flex align-items-center gap-2">
+                  <Checkbox
+                    inputId={`required-${index}`}
+                    checked={image.isRequired}
+                    disabled={isDisabled}
+                    onChange={(e) =>
+                      onChange(
+                        index,
+                        new FlowStepTemplateDto({ ...image, isRequired: !!e.checked }),
+                      )
+                    }
                   />
-                </label>
-              </div>
+                  <label htmlFor={`required-${index}`}>
+                    <LabelComponent
+                      text="Required"
+                      size="xs"
+                    />
+                  </label>
+                </div>
+              )}
 
               {!isDisabled && (
                 <ActionsMenuComponent

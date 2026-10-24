@@ -79,7 +79,12 @@ Templates are a list. How they combine depends on whether any are marked require
 - **Some marked required** — every required one must be found.
 
 A missing required template fails the search even when others matched, and the failure message
-names it. The waiting modes use the same rule: `WAIT_UNTIL_FOUND` waits until every required one
+names it. However many are missing, or with none required and none found, the step fails once, so
+its Failure branch executes once.
+
+Required needs a second template to mean anything: a lone template has to be found either way. The
+form shows Required only from the second template on, and a step saved from it with one template
+requires nothing. The waiting modes use the same rule: `WAIT_UNTIL_FOUND` waits until every required one
 is there, `WAIT_UNTIL_NOT_FOUND` until at least one is gone. **Test now** and an execution decide it
 the same way.
 

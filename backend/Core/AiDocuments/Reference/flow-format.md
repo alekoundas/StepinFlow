@@ -622,7 +622,8 @@ step's.
   another. Left out, it is the mode's default.
 - **`required`** - with none marked, any one template found is enough: three variants of the same
   icon. Marked, those templates all have to be there. It is on the line because it turns an OR into
-  an AND, and a reviewer should see that.
+  an AND, and a reviewer should see that. A step with one template has no use for it: that
+  template has to be found either way, and the step's form clears it.
 - **`match shape and brightness`** - the mode, for every template in the step. Written only when it
   is not the default, `match shape`.
 

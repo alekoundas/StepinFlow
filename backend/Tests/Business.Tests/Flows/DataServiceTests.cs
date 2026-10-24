@@ -327,6 +327,24 @@ namespace Business.Tests.Flows
             Pictures(flowId).ShouldBeEmpty();
         }
 
+        // A lone template has to be found either way, so its required would only mislead the script.
+        [Fact]
+        public async Task A_step_left_with_one_template_requires_nothing()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep find = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
+            FlowStepTemplateDto first = new FlowStepTemplateDto { IsRequired = true, FlowTemplate = new FlowTemplateDto { TemplateImage = [1] } };
+            FlowStepTemplateDto second = new FlowStepTemplateDto { IsRequired = true, FlowTemplate = new FlowTemplateDto { TemplateImage = [2] } };
+            int stepId = (await _dataService.FlowStep.CreateAsync(find, [first, second], Ct)).Data;
+            Templates(flowId).ShouldAllBe(x => x.IsRequired);
+
+            FlowStepTemplate kept = Templates(flowId).Single(x => x.OrderNumber == 0);
+            FlowStepTemplateDto alone = new FlowStepTemplateDto { Id = kept.Id, FlowTemplateId = kept.FlowTemplateId, IsRequired = true };
+            (await _dataService.FlowStep.UpdateAsync(SearchDto(flowId, stepId, "Find", alone), Ct)).IsSuccess.ShouldBeTrue();
+
+            Templates(flowId).ShouldHaveSingleItem().IsRequired.ShouldBeFalse();
+        }
+
         [Fact]
         public async Task A_step_cannot_link_another_flows_picture()
         {

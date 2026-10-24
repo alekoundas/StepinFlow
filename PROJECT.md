@@ -1777,6 +1777,12 @@ For the same reason `FlowStep.getTreeNodes` takes `{ id, isFlow }` rather than a
 step's icon sits on its corner, and a step with more templates stacks them behind it with "+2". The
 row reads the thumbnail from `FlowStepTreeNodeProjection`, never the picture itself.
 
+**The picked row wears a ring** from its step's colour into the accent, with a soft glow.
+`TreeSelectionRingComponent` draws it as a masked overlay, so only the ring is painted and the row
+shows through. It turns once as the row is picked: a Web Animation on `--tree-ring-angle`, a
+property registered from script because the app keeps its styles inline. It stays still when the
+system asks for less motion.
+
 **Copy and paste.** A selected step shows Copy, which takes it and everything under it. A bar
 over the tree then names what was copied, with × to forget it, and every + has Paste here beside it.
 There is one copy at a time. It stays after a paste, and goes when another flow is opened. A Success
@@ -1956,13 +1962,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-820 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+821 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 606 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 607 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2076,7 +2082,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 820 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 821 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
