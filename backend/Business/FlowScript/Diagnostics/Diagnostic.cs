@@ -20,9 +20,10 @@ namespace Business.FlowScript.Diagnostics
         FLOW_LINE_MISSING,
         FLOW_NAME_INVALID,
 
-        // Templates: one a step names with no line above it, one described twice.
+        // Templates: one a step names with no line above it, one described twice, one not named .png.
         TEMPLATE_UNKNOWN,
         TEMPLATE_DUPLICATE,
+        TEMPLATE_NOT_PNG,
 
         // Steps
         LEADING_SPACES_UNEXPECTED,

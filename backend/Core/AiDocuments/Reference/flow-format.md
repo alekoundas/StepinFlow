@@ -616,9 +616,11 @@ putting tests in a repository.
 
 A template made in the app is named once, when it is created: `template-k3x9q.png`, five random
 characters from `0-9a-z`, drawn again if the flow already has it. A file written by hand can use any
-name a file can have, such as `login-button.png`. Either way the name is kept exactly as it is
-through every import and export. Two names that differ only in case are one file on Windows and
-macOS, so they are `TEMPLATE_DUPLICATE`.
+name a file can have that ends in lowercase `.png`, such as `login-button.png`; any other is
+`TEMPLATE_NOT_PNG`. Either way the name is kept exactly as it is through every import and export.
+Two names that differ only in case are one file on Windows and macOS, so they are
+`TEMPLATE_DUPLICATE`. Only PNGs are read from the folder, by their bytes as well as their name: a
+JPEG renamed to `.png` is not one, and its template is imported without a picture.
 
 **Not** a content hash, and not the database id: a hash changes whenever the image is edited and an
 id whenever the flow is imported, and either way git would record a delete and an add rather than a

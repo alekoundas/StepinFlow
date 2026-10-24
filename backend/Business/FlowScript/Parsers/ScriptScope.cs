@@ -1,5 +1,6 @@
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Text;
+using Core.Helpers;
 using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers
@@ -57,6 +58,9 @@ namespace Business.FlowScript.Parsers
 
         public void Declare(FlowTemplate template, ScriptToken at)
         {
+            if (!template.Name.EndsWith(FileNameHelper.TEMPLATE_EXTENSION, StringComparison.Ordinal))
+                Report(DiagnosticCodeEnum.TEMPLATE_NOT_PNG, at, $"\"{template.Name}\" is not a .png. A template is a PNG file named in lowercase, such as \"login-button.png\".");
+
             if (!_templates.TryAdd(template.Name, template))
                 Report(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, at, $"\"{template.Name}\" is already described above.");
         }

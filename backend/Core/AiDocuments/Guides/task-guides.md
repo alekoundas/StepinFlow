@@ -75,7 +75,7 @@ another, and a script of the same name there is replaced.
 is saved: a new flow, when no flow has the file's `Id`; the flow with that `Id` replaced, when one
 has - its executions are kept, and the page shows it beside the file; or nothing, when the file does
 not read cleanly or another flow already has its name. Its errors and warnings are marked at their
-lines in the script. A template the file names that is not in the folder beside it is imported
+lines in the script. A template the file names that is not a PNG in the folder beside it is imported
 without a picture, and a secret input has no value in the file: it is asked for when the flow
 executes.
 

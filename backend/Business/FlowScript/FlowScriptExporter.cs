@@ -125,7 +125,7 @@ namespace Business.FlowScript
             if (!Directory.Exists(templateFolder))
                 return 0;
 
-            return Directory.EnumerateFiles(templateFolder).Count();
+            return Directory.EnumerateFiles(templateFolder).Count(FlowScriptFile.IsPngName);
         }
 
         private static async Task<FlowScriptSchema> LoadAsync(AppDbContext dbContext, int flowId, bool includeImages, CancellationToken ct)
