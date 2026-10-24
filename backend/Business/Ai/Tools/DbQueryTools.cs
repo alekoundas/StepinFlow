@@ -164,7 +164,7 @@ namespace Business.Ai.Tools
 
             Core.Models.Database.FlowStep? step = await dbContext.FlowSteps
                 .AsNoTracking()
-                .Include(x => x.FlowStepTemplates)
+                .Include(x => x.FlowStepTemplates).ThenInclude(x => x.FlowTemplate)
                 .Include(x => x.FlowArea)
                 .ThenInclude(x => x!.ParentFlowArea)
                 .FirstOrDefaultAsync(x => x.Id == flowStepId);
@@ -194,14 +194,14 @@ namespace Business.Ai.Tools
                 .OrderBy(x => x.OrderNumber)
                 .Select(x => new TemplateSummary(
                     x.Id,
-                    x.Name,
+                    x.FlowTemplate.Name,
                     x.IsRequired,
                     x.Accuracy,
-                    x.ClickOffsetX,
-                    x.ClickOffsetY,
-                    x.AuthoredFlowAreaWidth,
-                    x.AuthoredFlowAreaHeight,
-                    x.AuthoredDpi))
+                    x.FlowTemplate.ClickOffsetX,
+                    x.FlowTemplate.ClickOffsetY,
+                    x.FlowTemplate.AuthoredFlowAreaWidth,
+                    x.FlowTemplate.AuthoredFlowAreaHeight,
+                    x.FlowTemplate.AuthoredDpi))
                 .ToList();
 
             return new StepDetail(
@@ -276,10 +276,10 @@ namespace Business.Ai.Tools
                 .Distinct()
                 .ToList();
 
-            Dictionary<int, Core.Models.Database.FlowStepTemplate> closest = await dbContext.FlowStepTemplates
+            Dictionary<int, ClosestTemplate> closest = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => templateIds.Contains(x.Id))
-                .Select(x => new Core.Models.Database.FlowStepTemplate { Id = x.Id, Name = x.Name, Accuracy = x.Accuracy })
+                .Select(x => new ClosestTemplate(x.Id, x.FlowTemplate.Name, x.Accuracy))
                 .ToDictionaryAsync(x => x.Id);
 
             return steps
@@ -566,6 +566,8 @@ namespace Business.Ai.Tools
         public record RunStepSummary(int Sequence, int Depth, string Name, string Type, string Outcome, bool EndedRun, bool WasHandled, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore, string? ClosestTemplate, float? ClosestTemplateAccuracy);
 
         private sealed record RunStep(int Sequence, int Depth, string Name, string Type, StepOutcomeEnum Outcome, int? FlowStepId, int DurationMilliseconds, string? Value, string? Message, int? ExitCode, float? BestScore, int? BestTemplateId);
+
+        private sealed record ClosestTemplate(int Id, string Name, float Accuracy);
 
         public record StepTypeCount(string Type, int Count);
 

@@ -691,6 +691,39 @@ namespace DataAccess.Migrations
                     b.Property<float>("Accuracy")
                         .HasColumnType("REAL");
 
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FlowStepId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FlowTemplateId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowStepId");
+
+                    b.HasIndex("FlowTemplateId");
+
+                    b.ToTable("FlowStepTemplates");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("AuthoredDpi")
                         .HasColumnType("INTEGER");
 
@@ -709,18 +742,12 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("FlowStepId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsRequired")
+                    b.Property<int>("FlowId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("OrderNumber")
-                        .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("TemplateImage")
                         .HasColumnType("BLOB");
@@ -733,9 +760,9 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowStepId");
+                    b.HasIndex("FlowId");
 
-                    b.ToTable("FlowStepTemplates");
+                    b.ToTable("FlowTemplates");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowViewport", b =>
@@ -929,7 +956,26 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Core.Models.Database.FlowTemplate", "FlowTemplate")
+                        .WithMany("FlowStepTemplates")
+                        .HasForeignKey("FlowTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("FlowStep");
+
+                    b.Navigation("FlowTemplate");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowTemplate", b =>
+                {
+                    b.HasOne("Core.Models.Database.Flow", "Flow")
+                        .WithMany("FlowTemplates")
+                        .HasForeignKey("FlowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Flow");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowViewport", b =>
@@ -963,6 +1009,8 @@ namespace DataAccess.Migrations
 
                     b.Navigation("FlowSteps");
 
+                    b.Navigation("FlowTemplates");
+
                     b.Navigation("FlowViewports");
                 });
 
@@ -992,6 +1040,11 @@ namespace DataAccess.Migrations
 
                     b.Navigation("FlowStepReferencesEnd");
 
+                    b.Navigation("FlowStepTemplates");
+                });
+
+            modelBuilder.Entity("Core.Models.Database.FlowTemplate", b =>
+                {
                     b.Navigation("FlowStepTemplates");
                 });
 #pragma warning restore 612, 618

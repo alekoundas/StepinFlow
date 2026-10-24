@@ -25,31 +25,35 @@ namespace Business.Searching
 
         public static SearchTemplate From(FlowStepTemplate template)
         {
+            FlowTemplate picture = template.FlowTemplate;
+
             return new SearchTemplate
             {
-                Image = template.TemplateImage ?? [],
+                Image = picture.TemplateImage ?? [],
                 Accuracy = template.Accuracy,
                 IsRequired = template.IsRequired,
-                AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
-                AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
-                AuthoredDpi = template.AuthoredDpi,
-                ClickOffsetX = template.ClickOffsetX,
-                ClickOffsetY = template.ClickOffsetY,
+                AuthoredFlowAreaWidth = picture.AuthoredFlowAreaWidth,
+                AuthoredFlowAreaHeight = picture.AuthoredFlowAreaHeight,
+                AuthoredDpi = picture.AuthoredDpi,
+                ClickOffsetX = picture.ClickOffsetX,
+                ClickOffsetY = picture.ClickOffsetY,
             };
         }
 
         public static SearchTemplate From(FlowStepTemplateDto template)
         {
+            FlowTemplateDto picture = template.FlowTemplate ?? new FlowTemplateDto();
+
             return new SearchTemplate
             {
-                Image = template.TemplateImage ?? [],
+                Image = picture.TemplateImage ?? [],
                 Accuracy = template.Accuracy,
                 IsRequired = template.IsRequired,
-                AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
-                AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
-                AuthoredDpi = template.AuthoredDpi,
-                ClickOffsetX = template.ClickOffsetX,
-                ClickOffsetY = template.ClickOffsetY,
+                AuthoredFlowAreaWidth = picture.AuthoredFlowAreaWidth,
+                AuthoredFlowAreaHeight = picture.AuthoredFlowAreaHeight,
+                AuthoredDpi = picture.AuthoredDpi,
+                ClickOffsetX = picture.ClickOffsetX,
+                ClickOffsetY = picture.ClickOffsetY,
             };
         }
 

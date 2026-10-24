@@ -22,5 +22,6 @@ namespace Core.Models.Database
         public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();
         public IEnumerable<FlowViewport> FlowViewports { get; set; } = new Collection<FlowViewport>();
         public IEnumerable<FlowCsvColumn> FlowCsvColumns { get; set; } = new Collection<FlowCsvColumn>();
+        public IEnumerable<FlowTemplate> FlowTemplates { get; set; } = new Collection<FlowTemplate>();
     }
 }

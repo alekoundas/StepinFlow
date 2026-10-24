@@ -73,7 +73,7 @@ namespace Transport.Ipc.Handlers
                 ImageSearchTestImageDto imageResult = new ImageSearchTestImageDto
                 {
                     FlowStepTemplateId = image.Id,
-                    Name = image.Name,
+                    Name = image.FlowTemplate?.Name ?? string.Empty,
                     IsRequired = image.IsRequired,
                 };
 

@@ -41,8 +41,9 @@ Select the step in the tree and press **Copy**. The copy takes everything under 
 over the tree names it. **Paste here** beside any + puts a copy at the end of that branch; the copy
 stays, so it can go in several places. A pasted step is named apart from the one it copies ("Find
 button 2"), since the script refers to steps by name.
-Its templates become files of its own. A step inside the copy that read another step inside it
-reads the copy's. One that read a step outside it still reads that step, and validation marks it
+It links to the same template images as the step it copies, so fixing a picture once fixes both;
+**Edit a copy for this step** gives one of them its own. A step inside the copy that read another
+step inside it reads the copy's. One that read a step outside it still reads that step, and validation marks it
 when the new place cannot reach it.
 
 A copy goes only into the flow it was copied from. Another flow has its own areas, points and

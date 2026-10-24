@@ -44,8 +44,7 @@ namespace Business.Flows.DataService.DataHandlers
             step.Name = FlowNameHelper.MakeUnique(DesiredName(step), taken);
 
             dbContext.FlowSteps.Add(step);
-            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
-            SyncTemplates(dbContext, step, templates, takenTemplates);
+            await SyncTemplatesAsync(dbContext, step, templates, ct);
             dbContext.FlowSteps.AddRange(TreeStepHelper.CreateBranchChildren(step));
 
             await dbContext.SaveChangesAsync(ct);
@@ -75,11 +74,10 @@ namespace Business.Flows.DataService.DataHandlers
                 step.Name = FlowNameHelper.MakeUnique(FlowStepNameHelper.NameOf(step), taken);
             }
 
-            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, step.RootId, ct);
-
-            SyncTemplates(dbContext, step, dto.FlowStepTemplates, takenTemplates);
+            await SyncTemplatesAsync(dbContext, step, dto.FlowStepTemplates, ct);
 
             await dbContext.SaveChangesAsync(ct);
+            await FlowTemplateDataService.RemoveUnusedAsync(dbContext, step.RootId, ct);
 
             return ResultDto<FlowStep>.Success(step);
         }
@@ -90,9 +88,16 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            int count = await dbContext.FlowSteps.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
-            if (count <= 0)
+            int? rootId = await dbContext.FlowSteps
+                .Where(x => x.Id == id)
+                .Select(x => (int?)x.RootId)
+                .FirstOrDefaultAsync(ct);
+
+            if (rootId == null)
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
+
+            await dbContext.FlowSteps.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
+            await FlowTemplateDataService.RemoveUnusedAsync(dbContext, rootId.Value, ct);
 
             return ResultDto<bool>.Success(true);
         }
@@ -185,11 +190,11 @@ namespace Business.Flows.DataService.DataHandlers
             // Grows as the steps add to it, so the twelfth is unique against the eleven before it as
             // well as against what was already saved.
             HashSet<string> taken = await TakenNamesAsync(dbContext, rootId.Value, ct);
-            HashSet<string> takenTemplates = await TakenTemplateNamesAsync(dbContext, rootId.Value, ct);
-            Dictionary<string, string> templateNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> takenTemplates = await FlowTemplateDataService.TakenFileNamesAsync(dbContext, rootId.Value, ct);
+            HashSet<FlowTemplate> pictures = new HashSet<FlowTemplate>();
 
             foreach (FlowStep step in rows)
-                PrepareNewStep(step, rootId.Value, taken, takenTemplates, templateNames);
+                PrepareNewStep(step, rootId.Value, taken, takenTemplates, pictures);
 
             // The children of each new step in the order given, a check's branches Success then Failure.
             foreach (IGrouping<FlowStep, FlowStep> children in rows.Where(x => x.ParentFlowStep != null).GroupBy(x => x.ParentFlowStep!))
@@ -282,6 +287,10 @@ namespace Business.Flows.DataService.DataHandlers
                     step.Name = UniqueName(FlowStepNameHelper.NameOf(step), taken);
             }
 
+            // The script names each picture once, so the steps that search for it share one row.
+            foreach (FlowTemplate picture in steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct())
+                picture.FlowId = flow.Id;
+
             dbContext.FlowSteps.AddRange(steps);
 
             foreach (FlowStep step in steps.Where(x => TreeStepHelper.HasBranchChildren(x.FlowStepType)))
@@ -311,63 +320,73 @@ namespace Business.Flows.DataService.DataHandlers
             return branches.Except(written).ToList();
         }
 
-        // Templates are edited as part of their step, so they are matched by id and updated in
-        // place rather than replaced. Nobody names a template: a new one is given its name here.
-        private static void SyncTemplates(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos, HashSet<string> takenTemplates)
+        // A step's links to its pictures, matched by id and updated in place. A link names a picture
+        // the flow has, or brings a new one. Editing a picture through one step edits it for every
+        // step that links to it.
+        private static async Task SyncTemplatesAsync(AppDbContext dbContext, FlowStep step, IEnumerable<FlowStepTemplateDto> dtos, CancellationToken ct)
         {
+            List<FlowStepTemplateDto> wanted = dtos.ToList();
             List<FlowStepTemplate> existing = step.FlowStepTemplates.ToList();
-            HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
+            HashSet<int> keptIds = wanted.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
 
             foreach (FlowStepTemplate removed in existing.Where(x => !keptIds.Contains(x.Id)))
                 dbContext.FlowStepTemplates.Remove(removed);
 
+            // Only this flow's: a step cannot link to another flow's picture.
+            HashSet<int> pictureIds = wanted.Where(x => x.FlowTemplateId > 0).Select(x => x.FlowTemplateId).ToHashSet();
+            Dictionary<int, FlowTemplate> pictures = await dbContext.FlowTemplates
+                .Where(x => x.FlowId == step.RootId && pictureIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, ct);
+
+            HashSet<string> takenTemplates = await FlowTemplateDataService.TakenFileNamesAsync(dbContext, step.RootId, ct);
+
             int order = 0;
-            foreach (FlowStepTemplateDto dto in dtos)
+            foreach (FlowStepTemplateDto dto in wanted)
             {
-                FlowStepTemplate? image = null;
+                FlowTemplate? picture = Picture(dbContext, step.RootId, dto, pictures, takenTemplates);
+                if (picture == null)
+                    continue;
+
+                FlowStepTemplate? link = null;
                 if (dto.Id > 0)
-                    image = existing.FirstOrDefault(x => x.Id == dto.Id);
+                    link = existing.FirstOrDefault(x => x.Id == dto.Id);
 
-                if (image == null)
+                if (link == null)
                 {
-                    // Gennerate unique Template name!
-                    string name = FileNameHelper.GenerateTemplateFileName();
-                    while (!takenTemplates.Add(name))
-                        name = FileNameHelper.GenerateTemplateFileName();
-
-                    image = new FlowStepTemplate { FlowStep = step, Name = name };
-                    dbContext.FlowStepTemplates.Add(image);
+                    link = new FlowStepTemplate { FlowStep = step };
+                    dbContext.FlowStepTemplates.Add(link);
                 }
 
-                image.OrderNumber = order++;
-                image.IsRequired = dto.IsRequired;
-
-                // Only overwrite the blob when the client actually sent one: the list view sends
-                // templates back without their bytes so a save does not push megabytes per step.
-                if (dto.TemplateImage != null && dto.TemplateImage.Length > 0)
-                    image.TemplateImage = dto.TemplateImage;
-
-                image.Accuracy = dto.Accuracy;
-
-                image.ClickOffsetX = dto.ClickOffsetX;
-                image.ClickOffsetY = dto.ClickOffsetY;
-
-                image.AuthoredFlowAreaWidth = dto.AuthoredFlowAreaWidth;
-                image.AuthoredFlowAreaHeight = dto.AuthoredFlowAreaHeight;
-                image.AuthoredDpi = dto.AuthoredDpi;
+                link.FlowTemplate = picture;
+                link.OrderNumber = order++;
+                link.IsRequired = dto.IsRequired;
+                link.Accuracy = dto.Accuracy;
             }
         }
 
-        // A template's name is its file name, and a flow keeps its templates in one folder.
-        private static async Task<HashSet<string>> TakenTemplateNamesAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
+        // The flow's picture the link names, with what the form changed about it, or a new picture
+        // given its file name here. Null for a picture the flow does not have.
+        private static FlowTemplate? Picture(AppDbContext dbContext, int flowId, FlowStepTemplateDto dto, Dictionary<int, FlowTemplate> pictures, HashSet<string> takenTemplates)
         {
-            List<string> names = await dbContext.FlowStepTemplates
-                .AsNoTracking()
-                .Where(x => x.FlowStep.RootId == flowId)
-                .Select(x => x.Name)
-                .ToListAsync(ct);
+            FlowTemplate? picture;
+            if (dto.FlowTemplateId > 0)
+            {
+                if (!pictures.TryGetValue(dto.FlowTemplateId, out picture))
+                    return null;
+            }
+            else
+            {
+                if (dto.FlowTemplate == null)
+                    return null;
 
-            return new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+                picture = new FlowTemplate { FlowId = flowId, Name = FlowTemplateDataService.NewName(takenTemplates) };
+                dbContext.FlowTemplates.Add(picture);
+            }
+
+            if (dto.FlowTemplate != null)
+                FlowTemplateDataService.CopyPicture(dto.FlowTemplate, picture);
+
+            return picture;
         }
 
 
@@ -377,7 +396,7 @@ namespace Business.Flows.DataService.DataHandlers
 
         // A new row in the flow, named apart from everything in it, with the points it creates and
         // its templates in the order given. A branch row keeps its name: two Success rows are no clash.
-        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken, HashSet<string> takenTemplates, Dictionary<string, string> templateNames)
+        private static void PrepareNewStep(FlowStep step, int rootId, HashSet<string> taken, HashSet<string> takenTemplates, HashSet<FlowTemplate> pictures)
         {
             step.Id = 0;
             step.RootId = rootId;
@@ -415,32 +434,33 @@ namespace Business.Flows.DataService.DataHandlers
             foreach (FlowStepTemplate template in step.FlowStepTemplates)
             {
                 template.Id = 0;
-                template.Name = TemplateName(template.Name, takenTemplates, templateNames);
                 template.OrderNumber = order++;
+                PreparePicture(template, rootId, takenTemplates, pictures);
             }
         }
 
-        // A template keeps the name it came with while the flow has none by it, so steps sharing a
-        // picture keep sharing its file. One with no name, or a taken one, is given a new name.
-        private static string TemplateName(string given, HashSet<string> takenTemplates, Dictionary<string, string> templateNames)
+        // A picture already saved is linked by its id, as a pasted copy's is: the copy and the step
+        // it came from share it. A new one, which several new steps may share, joins the flow once,
+        // keeping the name it came with while the flow has none by it.
+        private static void PreparePicture(FlowStepTemplate template, int rootId, HashSet<string> takenTemplates, HashSet<FlowTemplate> pictures)
         {
-            if (given.Length > 0 && templateNames.TryGetValue(given, out string? shared))
-                return shared;
+            FlowTemplate? picture = template.FlowTemplate;
+            if (picture == null)
+                return;
 
-            string name = given;
-            if (name.Length == 0 || takenTemplates.Contains(name))
+            if (picture.Id != 0)
             {
-                // Gennerate unique Template name!
-                name = FileNameHelper.GenerateTemplateFileName();
-                while (takenTemplates.Contains(name))
-                    name = FileNameHelper.GenerateTemplateFileName();
+                template.FlowTemplateId = picture.Id;
+                template.FlowTemplate = null!;
+                return;
             }
 
-            takenTemplates.Add(name);
-            if (given.Length > 0)
-                templateNames[given] = name;
+            if (!pictures.Add(picture))
+                return;
 
-            return name;
+            picture.FlowId = rootId;
+            if (picture.Name.Length == 0 || !takenTemplates.Add(picture.Name))
+                picture.Name = FlowTemplateDataService.NewName(takenTemplates);
         }
 
         // The step and everything under it, in tree order, linked to each other rather than to the

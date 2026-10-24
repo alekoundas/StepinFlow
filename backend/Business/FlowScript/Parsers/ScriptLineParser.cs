@@ -196,7 +196,7 @@ namespace Business.FlowScript.Parsers
 
         private void AddTemplate(ScriptLine line)
         {
-            FlowStepTemplate template = new TemplateParser(line.Tokens).Parse();
+            FlowTemplate template = new TemplateParser(line.Tokens).Parse();
 
             _scope.Declare(template, line.Tokens[0]);
         }

@@ -21,7 +21,8 @@ namespace Transport.Ipc.Handlers
         public async Task<ResultDto<FlowStepScriptLineDto>> HandleAsync(FlowStepDto dto, CancellationToken ct)
         {
             FlowStep step = _mapper.Map<FlowStep>(dto);
-            step.FlowStepTemplates = _mapper.Map<List<FlowStepTemplate>>(dto.FlowStepTemplates);
+            List<FlowStepTemplateDto> pictured = dto.FlowStepTemplates.Where(x => x.FlowTemplate != null).ToList();
+            step.FlowStepTemplates = _mapper.Map<List<FlowStepTemplate>>(pictured);
 
             try
             {

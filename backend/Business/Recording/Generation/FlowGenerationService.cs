@@ -129,7 +129,7 @@ namespace Business.Recording.Generation
                 FlowId = saved.Data,
                 FlowName = flow.Flow.Name,
                 StepCount = steps.Count,
-                TemplateCount = steps.SelectMany(x => x.FlowStepTemplates).Count(),
+                TemplateCount = steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct().Count(),
             };
 
             return ResultDto<FlowScriptImportResultDto>.Success(inserted);
@@ -301,7 +301,7 @@ namespace Business.Recording.Generation
             result.InputCount = saved.Inputs.Count;
             result.TemplateCount = saved.Steps
                 .SelectMany(x => x.FlowStepTemplates)
-                .Select(x => x.Name)
+                .Select(x => x.FlowTemplate.Name)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
         }
@@ -311,7 +311,7 @@ namespace Business.Recording.Generation
         {
             Dictionary<string, byte[]> templates = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (FlowStepTemplate template in draft.Steps.SelectMany(x => x.FlowStepTemplates))
+            foreach (FlowTemplate template in draft.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate))
             {
                 if (template.TemplateImage != null)
                     templates[template.Name] = template.TemplateImage;

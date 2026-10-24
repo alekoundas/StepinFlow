@@ -14,7 +14,10 @@ export function useFlowStepScriptLine(dto: FlowStepDto) {
   // The line needs a template's name, never its picture, and a keystroke should not send megabytes.
   const request = JSON.stringify({
     ...dto,
-    flowStepTemplates: (dto.flowStepTemplates ?? []).map((x) => ({ ...x, templateImage: undefined })),
+    flowStepTemplates: (dto.flowStepTemplates ?? []).map((x) => ({
+      ...x,
+      flowTemplate: { ...x.flowTemplate, templateImage: undefined },
+    })),
   });
 
   const [debounced, setDebounced] = useState(request);

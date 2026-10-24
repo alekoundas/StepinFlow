@@ -222,14 +222,15 @@ namespace Business.Ai.ScriptRevision
                 answered.IsSecret = input.IsSecret;
             }
 
-            Dictionary<string, FlowStepTemplate> pictures = original.Steps
+            Dictionary<string, FlowTemplate> pictures = original.Steps
                 .SelectMany(x => x.FlowStepTemplates)
+                .Select(x => x.FlowTemplate)
                 .DistinctBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
 
-            foreach (FlowStepTemplate template in revised.Steps.SelectMany(x => x.FlowStepTemplates))
+            foreach (FlowTemplate template in revised.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct())
             {
-                FlowStepTemplate picture = pictures[template.Name];
+                FlowTemplate picture = pictures[template.Name];
 
                 template.ClickOffsetX = picture.ClickOffsetX;
                 template.ClickOffsetY = picture.ClickOffsetY;
@@ -277,7 +278,7 @@ namespace Business.Ai.ScriptRevision
         {
             return schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
-                .Select(x => x.Name)
+                .Select(x => x.FlowTemplate.Name)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 

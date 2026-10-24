@@ -12,6 +12,7 @@ import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/for
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
+import { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type {
   ImageSearchTestImageDto,
@@ -27,9 +28,17 @@ import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms
 import FlowStepSearchImageFormFieldsComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageFormFieldsComponent";
 import { FlowStepTemplateListComponent } from "@/features/flow-step/components/forms/search-image/FlowStepTemplateListComponent";
 import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestDialogComponent";
+import { FlowTemplateAddDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateAddDialogComponent";
+import { FlowTemplateSharedDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateSharedDialogComponent";
 import { defaultAccuracyFor } from "@/features/flow-step/components/forms/shared/match-modes";
+import { stepsSearchingFor, useFlowStepUses } from "@/features/workflow/hooks/use-flow-parts";
 
 const TEST_DETAILS_ID = "image-search-test-details";
+const ADD_TEMPLATE_ID = "image-search-add-template";
+const SHARED_TEMPLATE_ID = "image-search-shared-template";
+
+// What an edit changed about a picture, or null when the window was closed without one.
+type PictureChange = (picture: FlowTemplateDto) => Promise<Partial<FlowTemplateDto> | null>;
 
 interface Props {
   formMode: FormMode;
@@ -105,7 +114,13 @@ export default function FlowStepSearchImageFormComponent({
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
   const { openImageEditor } = useWindowImageEditor();
-  const { openConfirm, close } = useDialogStore();
+  const { openConfirm, openCustom, close } = useDialogStore();
+
+  // Which other steps link to each picture, as the flow was last saved.
+  const { data: uses } = useFlowStepUses(defaultValues.rootId || null);
+  const sharedWith = images.map((x) =>
+    x.flowTemplateId > 0 ? stepsSearchingFor(uses, x.flowTemplate.name, defaultValues.id) : [],
+  );
 
   // Passed by value: the dialog store keeps elements, so a result read from the closure later
   // would be whatever it was at open time anyway.
@@ -137,10 +152,26 @@ export default function FlowStepSearchImageFormComponent({
       flowStepTemplates: imagesRef.current,
     });
 
+  // Capture a new picture, or link one the flow already has.
+  const handleAddTemplate = () => {
+    setTemplateError(null);
+
+    openCustom(
+      ADD_TEMPLATE_ID,
+      <FlowTemplateAddDialogComponent
+        flowId={defaultValues.rootId}
+        stepName={form.getValues().name ?? ""}
+        takenIds={imagesRef.current.map((x) => x.flowTemplateId).filter((x) => x > 0)}
+        onCapture={handleCaptureTemplate}
+        onReuse={reuseTemplate}
+      />,
+    );
+  };
+
   // A template is measured against the area it is searched in - that area's size and DPI are
   // what let it scale on another screen - so there is no capturing one until the step has an
   // area. The drag is confined to it, because a template from outside it can never be found.
-  const handleAddTemplate = async () => {
+  const handleCaptureTemplate = async () => {
     setTemplateError(null);
 
     const areaId = form.getValues().flowAreaId;
@@ -198,56 +229,112 @@ export default function FlowStepSearchImageFormComponent({
     }
   };
 
+  // The name is only what the list shows until the save gives the picture its file name.
   const addTemplate = (screenshot: string, area: FlowAreaPreviewDto) => {
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({
-        name: `Template ${previous.length + 1}`,
-        templateImage: screenshot,
         accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
-        authoredFlowAreaWidth: area.width,
-        authoredFlowAreaHeight: area.height,
-        authoredDpi: area.dpi,
-        ...centreClickOffset(screenshot),
+        flowTemplate: new FlowTemplateDto({
+          name: `Template ${previous.length + 1}`,
+          templateImage: screenshot,
+          authoredFlowAreaWidth: area.width,
+          authoredFlowAreaHeight: area.height,
+          authoredDpi: area.dpi,
+          ...centreClickOffset(screenshot),
+        }),
       }),
     ]);
   };
 
-  const handleEditImage = async (index: number) => {
-    const image = images[index];
-    if (!image.templateImage) return;
+  // The step links to the picture; the accuracy is its own, on the mode's default.
+  const reuseTemplate = (template: FlowTemplateDto) => {
+    applyImages((previous) => [
+      ...previous,
+      new FlowStepTemplateDto({
+        accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
+        flowTemplateId: template.id,
+        flowTemplate: new FlowTemplateDto(template),
+      }),
+    ]);
+  };
 
-    const edited = await openImageEditor(image.templateImage);
-    if (typeof edited !== "string") return;
+  // A copy has no id, so the save makes it a new picture of the flow and only this step links to it.
+  const editPicture = async (index: number, asCopy: boolean, change: PictureChange) => {
+    const image = imagesRef.current[index];
+    const changed = await change(image.flowTemplate);
+    if (!changed) return;
+
+    if (!asCopy) {
+      updateImage(
+        index,
+        new FlowStepTemplateDto({
+          ...image,
+          flowTemplate: new FlowTemplateDto({ ...image.flowTemplate, ...changed }),
+        }),
+      );
+      return;
+    }
 
     updateImage(
       index,
-      // Re-cropping moves every pixel, so a click point picked on the old image now points at
-      // something else - or off the edge. The middle of the new one is the honest answer.
       new FlowStepTemplateDto({
         ...image,
-        templateImage: edited,
-        ...centreClickOffset(edited),
+        flowTemplateId: 0,
+        flowTemplate: new FlowTemplateDto({
+          ...image.flowTemplate,
+          ...changed,
+          id: 0,
+          name: `Template ${index + 1}`,
+          flowStepsCount: 0,
+        }),
       }),
     );
   };
 
-  const handleSetClickPoint = async (index: number) => {
-    const image = images[index];
-    if (!image.templateImage) return;
+  // Changing a picture other steps link to asks first: for all of them, or a copy for this step.
+  const askThenEdit = (index: number, change: PictureChange) => {
+    const others = sharedWith[index] ?? [];
+    if (others.length === 0) {
+      editPicture(index, false, change);
+      return;
+    }
 
-    const point = await openImageEditor(image.templateImage, "PICK_POINT");
-    if (!isImageEditorPoint(point)) return;
-
-    updateImage(
-      index,
-      new FlowStepTemplateDto({
-        ...image,
-        clickOffsetX: point.x,
-        clickOffsetY: point.y,
-      }),
+    openCustom(
+      SHARED_TEMPLATE_ID,
+      <FlowTemplateSharedDialogComponent
+        template={imagesRef.current[index].flowTemplate}
+        stepName={form.getValues().name ?? ""}
+        otherSteps={others}
+        onAll={() => editPicture(index, false, change)}
+        onCopy={() => editPicture(index, true, change)}
+      />,
     );
   };
+
+  // Re-cropping moves every pixel, so a click point picked on the old image now points at
+  // something else - or off the edge. The middle of the new one is the honest answer.
+  const cropPicture: PictureChange = async (picture) => {
+    if (!picture.templateImage) return null;
+
+    const edited = await openImageEditor(picture.templateImage);
+    if (typeof edited !== "string") return null;
+
+    return { templateImage: edited, ...centreClickOffset(edited) };
+  };
+
+  const pickClickPoint: PictureChange = async (picture) => {
+    if (!picture.templateImage) return null;
+
+    const point = await openImageEditor(picture.templateImage, "PICK_POINT");
+    if (!isImageEditorPoint(point)) return null;
+
+    return { clickOffsetX: point.x, clickOffsetY: point.y };
+  };
+
+  const handleEditImage = (index: number) => askThenEdit(index, cropPicture);
+  const handleSetClickPoint = (index: number) => askThenEdit(index, pickClickPoint);
+  const handleEditCopy = (index: number) => editPicture(index, true, cropPicture);
 
   const updateImage = (index: number, image: FlowStepTemplateDto) =>
     applyImages((previous) => previous.map((x, i) => (i === index ? image : x)));
@@ -315,10 +402,12 @@ export default function FlowStepSearchImageFormComponent({
           <FlowStepTemplateListComponent
             images={images}
             testResults={testResultsByIndex}
+            sharedWith={sharedWith}
             isDisabled={formMode === "VIEW" || isWindowOpen}
             onAdd={handleAddTemplate}
             onEditImage={handleEditImage}
             onSetClickPoint={handleSetClickPoint}
+            onEditCopy={handleEditCopy}
             onChange={updateImage}
             onRemove={(index) =>
               applyImages((previous) => previous.filter((_, i) => i !== index))

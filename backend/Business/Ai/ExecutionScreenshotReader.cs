@@ -136,11 +136,11 @@ namespace Business.Ai
 
             List<StepTemplateImage> templateImages = await dbContext.FlowStepTemplates
                 .AsNoTracking()
-                .Where(x => x.FlowStepId == flowStepId && x.TemplateImage != null)
+                .Where(x => x.FlowStepId == flowStepId && x.FlowTemplate.TemplateImage != null)
                 .OrderByDescending(x => x.IsRequired)
                 .ThenBy(x => x.OrderNumber)
                 .Take(_maxTemplateImages)
-                .Select(x => new StepTemplateImage(x.Name, x.TemplateImage!))
+                .Select(x => new StepTemplateImage(x.FlowTemplate.Name, x.FlowTemplate.TemplateImage!))
                 .ToListAsync(ct);
 
             List<AiImage> images = new List<AiImage>();

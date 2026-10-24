@@ -38,19 +38,10 @@ namespace Business.FlowScript.Parsers.Steps
                 string fileName = ExtractText();
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-                // The step's own row: accuracy and required are the step's, so the picture's facts
-                // are copied onto it rather than the Templates line's row being shared.
-                FlowStepTemplate template = new FlowStepTemplate() { Name = fileName, OrderNumber = templates.Count };
-
-                FlowStepTemplate? described = Scope.Template(fileName, at);
-                if (described != null)
-                {
-                    template.ClickOffsetX = described.ClickOffsetX;
-                    template.ClickOffsetY = described.ClickOffsetY;
-                    template.AuthoredFlowAreaWidth = described.AuthoredFlowAreaWidth;
-                    template.AuthoredFlowAreaHeight = described.AuthoredFlowAreaHeight;
-                    template.AuthoredDpi = described.AuthoredDpi;
-                }
+                // The step's own link, to the picture the Templates line describes: every step that
+                // names the file shares it, while accuracy and required are the step's.
+                FlowTemplate picture = Scope.Template(fileName, at) ?? new FlowTemplate() { Name = fileName };
+                FlowStepTemplate template = new FlowStepTemplate() { FlowTemplate = picture, OrderNumber = templates.Count };
 
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.ACCURACY))
                     template.Accuracy = ExtractFloat();

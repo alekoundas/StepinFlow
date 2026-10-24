@@ -249,7 +249,7 @@ function AccuracyMeterComponent({ flowStepId, bestTemplateId, bestScore }: Accur
     <div className="flex flex-column gap-2">
       <div className="flex align-items-center justify-content-between">
         <LabelComponent
-          text={`Accuracy · ${template.name}`}
+          text={`Accuracy · ${template.flowTemplate?.name ?? ""}`}
           size="sm"
           color="secondary"
         />
@@ -346,10 +346,10 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
             className="surface-ground border-1 surface-border border-round p-2 flex flex-column align-items-center gap-1"
             style={{ width: 96 }}
           >
-            {image.templateImage ? (
+            {image.flowTemplate?.templateImage ? (
               <img
-                src={`data:image/png;base64,${image.templateImage}`}
-                alt={image.name}
+                src={`data:image/png;base64,${image.flowTemplate.templateImage}`}
+                alt={image.flowTemplate.name}
                 style={{
                   width: 64,
                   height: 64,
@@ -362,7 +362,7 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
             )}
 
             <LabelComponent
-              text={image.name || `Template ${image.orderNumber + 1}`}
+              text={image.flowTemplate?.name || `Template ${image.orderNumber + 1}`}
               size="xs"
             />
 

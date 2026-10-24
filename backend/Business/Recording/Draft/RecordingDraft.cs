@@ -38,7 +38,7 @@ namespace Business.Recording.Draft
         private readonly HashSet<string> _names;
         private readonly HashSet<string> _templateNames;
         private readonly Dictionary<FlowStep, int> _childCounts = new Dictionary<FlowStep, int>();
-        private readonly Dictionary<int, FlowStepTemplate> _groupTemplates = new Dictionary<int, FlowStepTemplate>();
+        private readonly Dictionary<int, FlowTemplate> _groupTemplates = new Dictionary<int, FlowTemplate>();
 
         // Where the recording goes: under this step, or at the top of the flow when null. The steps
         // already there after the position move down one for each step added beside them.
@@ -58,7 +58,7 @@ namespace Business.Recording.Draft
             // Steps, areas and points share one namespace.
             IEnumerable<string> taken = schema.Steps.Select(x => x.Name).Concat(schema.Areas.Select(x => x.Name)).Concat(schema.Points.Select(x => x.Name));
             _names = new HashSet<string>(taken.Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
-            _templateNames = schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _templateNames = schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Numbered as the tree shows them, so the ones after the position can move down. With no
             // position, after what is already there: the setup's Launch step comes first.
@@ -164,14 +164,14 @@ namespace Business.Recording.Draft
 
         /// <summary>
         /// The template for a click, cut from the main area at its press along the rectangle Review
-        /// settled on. Clicks that hit the same picture share one. Null when there is nothing to cut
+        /// settled on. Clicks that hit the same picture link to one. Null when there is nothing to cut
         /// it from, and the click goes to its spot instead.
         /// </summary>
         public FlowStepTemplate? Template(RecordedActionDto action, ReviewedActionDto review)
         {
             int? group = GroupOf(action);
-            if (group != null && _groupTemplates.TryGetValue(group.Value, out FlowStepTemplate? shared))
-                return Copy(shared);
+            if (group != null && _groupTemplates.TryGetValue(group.Value, out FlowTemplate? shared))
+                return new FlowStepTemplate { FlowTemplate = shared };
 
             RecordingScreenDto? screen = _screenAt(action.Index);
             if (screen == null || screen.ActionIndex != action.Index)
@@ -193,7 +193,7 @@ namespace Business.Recording.Draft
             int clickX = Math.Clamp(action.LocationX - screen.X - rectangle.X, 0, cut.Width - 1);
             int clickY = Math.Clamp(action.LocationY - screen.Y - rectangle.Y, 0, cut.Height - 1);
 
-            FlowStepTemplate template = new FlowStepTemplate
+            FlowTemplate picture = new FlowTemplate
             {
                 Name = TemplateName(),
                 TemplateImage = _screenshotService.Encode(cut, ScreenshotFormatEnum.PNG, 100),
@@ -205,9 +205,9 @@ namespace Business.Recording.Draft
             };
 
             if (group != null)
-                _groupTemplates[group.Value] = template;
+                _groupTemplates[group.Value] = picture;
 
-            return template;
+            return new FlowStepTemplate { FlowTemplate = picture };
         }
 
         /// <summary>
@@ -328,22 +328,6 @@ namespace Business.Recording.Draft
 
             _templateNames.Add(name);
             return name;
-        }
-
-        // Every step gets its own row for the picture, because accuracy and required are the step's.
-        private static FlowStepTemplate Copy(FlowStepTemplate template)
-        {
-            return new FlowStepTemplate
-            {
-                Name = template.Name,
-                TemplateImage = template.TemplateImage,
-                Accuracy = template.Accuracy,
-                ClickOffsetX = template.ClickOffsetX,
-                ClickOffsetY = template.ClickOffsetY,
-                AuthoredFlowAreaWidth = template.AuthoredFlowAreaWidth,
-                AuthoredFlowAreaHeight = template.AuthoredFlowAreaHeight,
-                AuthoredDpi = template.AuthoredDpi,
-            };
         }
 
         private static string Seconds(int milliseconds)

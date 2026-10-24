@@ -64,7 +64,7 @@ namespace Business.Flows
                 TemplateCount = x.FlowStepTemplates.Count(),
                 Thumbnail = x.FlowStepTemplates
                     .OrderBy(image => image.OrderNumber)
-                    .Select(image => image.Thumbnail)
+                    .Select(image => image.FlowTemplate.Thumbnail)
                     .FirstOrDefault(),
 
                 ConditionText = x.ConditionText,

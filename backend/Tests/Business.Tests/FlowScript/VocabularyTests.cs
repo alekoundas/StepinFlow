@@ -239,7 +239,7 @@ namespace Business.Tests.FlowScript
         public void A_click_is_two_whole_numbers(string text, int x, int y)
         {
             FlowScriptSchema schema = Read("Templates:\n  <[ a.png ]> click " + text + "\nSteps:\nFind Image <[ Find ]> template <[ a.png ]>");
-            FlowStepTemplate template = schema.Steps.Single().FlowStepTemplates.Single();
+            FlowTemplate template = schema.Steps.Single().FlowStepTemplates.Single().FlowTemplate;
 
             (template.ClickOffsetX, template.ClickOffsetY).ShouldBe((x, y));
         }

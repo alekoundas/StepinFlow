@@ -449,7 +449,8 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 | `FlowViewports` | One screen size to test at. |
 | `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
-| `FlowStepTemplates` | Template image, its accuracy, click point, required flag, and captured size and DPI. The blob lives here, off `FlowStep`. |
+| `FlowTemplates` | A template image of a flow: its file name, the blob, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
+| `FlowStepTemplates` | A step's link to a template, with the step's own accuracy, required flag and order. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
 | `Executions` | One walk of a flow, at one viewport, with one data row. |
 | `ExecutionSteps` | Per-step result within an execution. |
@@ -949,8 +950,9 @@ Facts about the picture go in the header - the click point, and the area size an
 captured at. Decisions about the search go on the step - `accuracy` and `required` on each
 template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
 see that. The area line carries `scales with` and its DPI. In a script a template is named by its
-file, and the step's parser takes the header's facts from the scope as it reads each template: every
-step gets its own row for the picture, because accuracy and required are the step's.
+file, and the step's parser takes the picture from the scope as it reads each template: every step
+naming the file links to the one `FlowTemplate` the header line made, with its own `accuracy` and
+`required`, the way the database holds them.
 Every template has a click, so the printer always writes it and the parser always requires it. A
 step naming a template with no line in the header is `TEMPLATE_UNKNOWN`, reported at the name.
 
@@ -1537,7 +1539,7 @@ A template is part of the test definition, like a snapshot in a unit test: a flo
 ago cannot execute without the images it was written against. They sit in the folder beside the flow
 and they are small. Nobody names a template, so each is given its file name when it is created:
 `FileNameHelper.GenerateTemplateFileName` draws `template-k3x9q.png`, five random characters from
-`0-9a-z`, and `FlowStepDataService` draws again while the flow already has it, ignoring case as
+`0-9a-z`, and `FlowTemplateDataService` draws again while the flow already has it, ignoring case as
 Windows and macOS do. It keeps that name for good: the database, the script and the folder all hold
 the one string, an import takes it from the file and an export writes it back unchanged. Not the
 database id, which every import renumbers, and **not** a content hash. A hash would dedupe
@@ -1740,8 +1742,9 @@ edits the one picked; a splitter between them remembers its place.
 - **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
   it, and the picked one's form. Each is created, saved and deleted on its own
   (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them.
-- **Templates:** one tile per template name (`FlowStepTemplate.getByFlow`), read only, since a
-  template belongs to the steps that search for it.
+- **Templates:** one tile per picture (`FlowTemplate.getByFlow`), and the picked one's image,
+  click point and steps. **Edit image** and **Set click point** save with `FlowTemplate.update`,
+  for every step that links to it.
 - **Script:** the whole width, the script Export writes (`FlowScript.render`), with Copy.
 
 Every "Used by" comes from `Flow.getStepUses`: for each step, its area, its locations, the
@@ -1770,9 +1773,9 @@ or Failure row is not copied on its own; it belongs to its step. Buttons only: n
 in the tree.
 
 `FlowStep.paste` reads the copied rows untracked and inserts them with `CreateTreeAsync`'s code,
-the recorder's. So a copy gets free names ("Find button 2"), its own template files, and both
-branch rows, placed at the end of the branch the + is in. References between the copied steps
-follow the copy. A reference to a step outside it is kept, and validation says when the new place
+the recorder's. So a copy gets free names ("Find button 2"), links to the same template images, and
+both branch rows, placed at the end of the branch the + is in. References between the copied
+steps follow the copy. A reference to a step outside it is kept, and validation says when the new place
 cannot reach it.
 
 A copy pastes only into the flow it came from, since its areas, points and inputs are that flow's.
@@ -1942,13 +1945,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-805 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+813 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 598 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 606 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
 | `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2062,7 +2065,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 805 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 813 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

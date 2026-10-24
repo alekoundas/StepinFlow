@@ -47,7 +47,7 @@ namespace Business.FlowScript.Text.Steps
         private void WriteTemplate(FlowStepTemplate template)
         {
             WriteKeyword(ScriptSymbolEnum.TEMPLATE);
-            WriteQuote(template.Name);
+            WriteQuote(template.FlowTemplate.Name);
             WriteKeyword(ScriptSymbolEnum.ACCURACY);
             WriteNumber(template.Accuracy);
 

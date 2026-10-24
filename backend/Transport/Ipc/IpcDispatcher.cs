@@ -123,9 +123,9 @@ namespace Transport.Ipc
                     "FlowCsvColumn.update" => await Handler<UpdateFlowCsvColumnHandler>().HandleAsync(Payload<FlowCsvColumnDto>(request), ct),
                     "FlowCsvColumn.delete" => await Handler<DeleteFlowCsvColumnHandler>().HandleAsync(Payload<int>(request), ct),
 
-                    // FlowStepTemplate
-                    "FlowStepTemplate.get" => await Handler<GetFlowStepTemplateHandler>().HandleAsync(Payload<int>(request), ct),
-                    "FlowStepTemplate.getByFlow" => await Handler<GetFlowTemplatesHandler>().HandleAsync(Payload<int>(request), ct),
+                    // FlowTemplate
+                    "FlowTemplate.getByFlow" => await Handler<GetFlowTemplatesHandler>().HandleAsync(Payload<int>(request), ct),
+                    "FlowTemplate.update" => await Handler<UpdateFlowTemplateHandler>().HandleAsync(Payload<FlowTemplateDto>(request), ct),
 
                     // Lookups
                     "Lookup.window" => await Handler<GetLookupWindowHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),

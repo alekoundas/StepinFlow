@@ -77,7 +77,7 @@ namespace DataAccess.Tests
             await db.SaveChangesAsync(Ct);
 
             FlowStep click = new FlowStep { RootId = flow.Id, ParentFlowStepId = search.Id, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, FlowPointId = point.Id, FlowPointEndId = point.Id, FlowStepReferenceId = search.Id };
-            FlowStepTemplate template = new FlowStepTemplate { FlowStepId = search.Id, Name = "button" };
+            FlowStepTemplate template = new FlowStepTemplate { FlowStepId = search.Id, FlowTemplate = new FlowTemplate { FlowId = flow.Id, Name = "button" } };
             db.FlowSteps.Add(click);
             db.FlowStepTemplates.Add(template);
             await db.SaveChangesAsync(Ct);

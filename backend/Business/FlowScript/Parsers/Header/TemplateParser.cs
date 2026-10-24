@@ -10,17 +10,17 @@ namespace Business.FlowScript.Parsers.Header
     /// The facts about one picture, named by its file. Every template has a click, so the line
     /// always gives one.
     /// </summary>
-    internal sealed class TemplateParser : BaseParser<FlowStepTemplate>
+    internal sealed class TemplateParser : BaseParser<FlowTemplate>
     {
         public TemplateParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 
-        public override FlowStepTemplate Parse()
+        public override FlowTemplate Parse()
         {
             // <[ a.png ]>   click 120 40   [captured 800x600] [at 120dpi]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            FlowStepTemplate template = new FlowStepTemplate() { Name = ExtractText() };
+            FlowTemplate template = new FlowTemplate() { Name = ExtractText() };
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             ExpectKeyword(ScriptSymbolEnum.CLICK);

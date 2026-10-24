@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { Dialog } from "primereact/dialog";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import IconComponent from "@/shared/components/IconComponent";
+import { ChoiceCardComponent } from "@/shared/components/ChoiceCardComponent";
 
 export interface IFlowCreateChoiceDialogProps {
   /** Sub-Flow or Flow, so the wording matches the page it was opened from. */
@@ -50,7 +49,7 @@ export function FlowCreateChoiceDialogComponent({
         />
 
         {onManual ? (
-          <ChoiceComponent
+          <ChoiceCardComponent
             icon="pencil"
             title="Build it myself"
             description="Start with an empty flow and add steps one at a time."
@@ -58,14 +57,14 @@ export function FlowCreateChoiceDialogComponent({
           />
         ) : null}
 
-        <ChoiceComponent
+        <ChoiceCardComponent
           icon="circle-fill"
           title="Record it"
           description="Do the task once. Every click and keystroke is captured, and you say what each one should become."
           onSelect={() => choose(onRecord)}
         />
 
-        <ChoiceComponent
+        <ChoiceCardComponent
           icon="sparkles"
           title="Create with AI"
           description="Describe what you want, record it once, or both. The steps are written for you and land in the editor to check."
@@ -76,44 +75,3 @@ export function FlowCreateChoiceDialogComponent({
   );
 }
 
-interface ChoiceComponentProps {
-  icon: string;
-  title: string;
-  description: string;
-  onSelect: () => void;
-}
-
-function ChoiceComponent({ icon, title, description, onSelect }: ChoiceComponentProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <div
-      onClick={onSelect}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="flex align-items-start gap-3 border-1 border-round p-3 cursor-pointer"
-      style={{
-        borderColor: isHovered ? "var(--primary-color)" : "var(--surface-border)",
-        background: isHovered ? "var(--highlight-bg)" : "var(--surface-ground)",
-      }}
-    >
-      <IconComponent
-        name={icon}
-        className={isHovered ? "text-primary" : "text-color-secondary"}
-      />
-
-      <div className="flex flex-column gap-1">
-        <LabelComponent
-          text={title}
-          weight="semibold"
-          color={isHovered ? "primary" : undefined}
-        />
-        <LabelComponent
-          text={description}
-          size="sm"
-          color="secondary"
-        />
-      </div>
-    </div>
-  );
-}

@@ -107,6 +107,7 @@ namespace App
             builder.Services.AddSingleton<FlowAreaDataService>();
             builder.Services.AddSingleton<FlowPointDataService>();
             builder.Services.AddSingleton<FlowCsvColumnDataService>();
+            builder.Services.AddSingleton<FlowTemplateDataService>();
             builder.Services.AddSingleton<DataService>();
 
             // Flow script
@@ -221,8 +222,8 @@ namespace App
             builder.Services.AddTransient<CreateFlowCsvColumnHandler>();
             builder.Services.AddTransient<UpdateFlowCsvColumnHandler>();
             builder.Services.AddTransient<DeleteFlowCsvColumnHandler>();
-            builder.Services.AddTransient<GetFlowStepTemplateHandler>();
             builder.Services.AddTransient<GetFlowTemplatesHandler>();
+            builder.Services.AddTransient<UpdateFlowTemplateHandler>();
             builder.Services.AddTransient<GetLookupWindowHandler>();
             builder.Services.AddTransient<GetLookupMonitorHandler>();
             builder.Services.AddTransient<GetLookupFlowStepHandler>();

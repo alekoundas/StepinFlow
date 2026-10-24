@@ -43,7 +43,7 @@ namespace Transport.Tests.Flows
             db.FlowSteps.AddRange(search, type);
             db.SaveChanges();
 
-            db.FlowStepTemplates.Add(new FlowStepTemplate { FlowStepId = search.Id, Name = "template-e4m2q.png" });
+            db.FlowStepTemplates.Add(new FlowStepTemplate { FlowStepId = search.Id, FlowTemplate = new FlowTemplate { FlowId = flow.Id, Name = "template-e4m2q.png" } });
             db.SaveChanges();
 
             ResultDto<List<FlowStepUseDto>> result = await new GetFlowStepUsesHandler(_database).HandleAsync(flow.Id, Ct);

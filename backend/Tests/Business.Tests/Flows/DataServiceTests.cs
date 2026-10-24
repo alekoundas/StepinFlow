@@ -10,6 +10,7 @@ using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Models.Dtos.FlowScript;
 using DataAccess;
+using Microsoft.EntityFrameworkCore;
 using static Business.Tests.TestToken;
 
 namespace Business.Tests.Flows
@@ -32,9 +33,9 @@ namespace Business.Tests.Flows
             _database.Dispose();
         }
 
-        private async Task<int> NewFlowAsync()
+        private async Task<int> NewFlowAsync(string name = "Flow")
         {
-            return (await _dataService.Flow.CreateAsync(new Flow { Name = "Flow" }, Ct)).Data;
+            return (await _dataService.Flow.CreateAsync(new Flow { Name = name }, Ct)).Data;
         }
 
         private List<FlowStep> Steps(int flowId)
@@ -46,7 +47,29 @@ namespace Business.Tests.Flows
         private List<FlowStepTemplate> Templates(int flowId)
         {
             using AppDbContext db = _database.CreateDbContext();
-            return db.FlowStepTemplates.Where(x => x.FlowStep.RootId == flowId).ToList();
+            return db.FlowStepTemplates.Include(x => x.FlowTemplate).Where(x => x.FlowStep.RootId == flowId).ToList();
+        }
+
+        private List<FlowTemplate> Pictures(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+            return db.FlowTemplates.Where(x => x.FlowId == flowId).ToList();
+        }
+
+        // A search step with one new picture, and the id of that picture.
+        private async Task<(int StepId, int PictureId)> SearchWithPictureAsync(int flowId, string name, byte[] image)
+        {
+            FlowStep find = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = name };
+            FlowStepTemplateDto template = new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto { TemplateImage = image, ClickOffsetX = 5, ClickOffsetY = 6 } };
+            int stepId = (await _dataService.FlowStep.CreateAsync(find, [template], Ct)).Data;
+
+            return (stepId, Templates(flowId).Single(x => x.FlowStepId == stepId).FlowTemplateId);
+        }
+
+        // The step's form as it saves: its own fields and its links.
+        private static FlowStepDto SearchDto(int flowId, int stepId, string name, params FlowStepTemplateDto[] templates)
+        {
+            return new FlowStepDto { Id = stepId, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = name, FlowStepTemplates = templates.ToList() };
         }
 
         // template-, five of 0-9a-z, then .png.
@@ -225,11 +248,11 @@ namespace Business.Tests.Flows
         {
             int flowId = await NewFlowAsync();
             FlowStep find = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
-            int stepId = (await _dataService.FlowStep.CreateAsync(find, [new FlowStepTemplateDto(), new FlowStepTemplateDto()], Ct)).Data;
+            int stepId = (await _dataService.FlowStep.CreateAsync(find, [new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto() }, new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto() }], Ct)).Data;
 
             List<FlowStepTemplate> created = Templates(flowId);
-            created.ShouldAllBe(x => IsTemplateName(x.Name));
-            created.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(2);
+            created.ShouldAllBe(x => IsTemplateName(x.FlowTemplate.Name));
+            created.Select(x => x.FlowTemplate.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(2);
 
             FlowStepDto dto = new FlowStepDto
             {
@@ -238,13 +261,99 @@ namespace Business.Tests.Flows
                 FlowId = flowId,
                 FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
                 Name = "Find",
-                FlowStepTemplates = created.Select(x => new FlowStepTemplateDto { Id = x.Id }).Append(new FlowStepTemplateDto()).ToList(),
+                FlowStepTemplates = created.Select(x => new FlowStepTemplateDto { Id = x.Id, FlowTemplateId = x.FlowTemplateId }).Append(new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto() }).ToList(),
             };
             (await _dataService.FlowStep.UpdateAsync(dto, Ct)).IsSuccess.ShouldBeTrue();
 
             List<FlowStepTemplate> saved = Templates(flowId);
-            saved.Where(x => created.Any(y => y.Id == x.Id)).Select(x => x.Name).ShouldBe(created.Select(x => x.Name), ignoreOrder: true);
-            saved.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
+            saved.Where(x => created.Any(y => y.Id == x.Id)).Select(x => x.FlowTemplate.Name).ShouldBe(created.Select(x => x.FlowTemplate.Name), ignoreOrder: true);
+            saved.Select(x => x.FlowTemplate.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
+        }
+
+        // The point of a flow's templates: one picture, many steps, and a fix to it made once.
+        [Fact]
+        public async Task Two_steps_link_one_picture_and_an_edit_through_either_reaches_both()
+        {
+            int flowId = await NewFlowAsync();
+            (int firstId, int pictureId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            FlowStep second = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again" };
+            int secondId = (await _dataService.FlowStep.CreateAsync(second, [new FlowStepTemplateDto { FlowTemplateId = pictureId, Accuracy = 0.9f }], Ct)).Data;
+
+            FlowStepTemplate link = Templates(flowId).Single(x => x.FlowStepId == secondId);
+            FlowStepTemplateDto moved = new FlowStepTemplateDto { Id = link.Id, FlowTemplateId = pictureId, Accuracy = 0.9f, FlowTemplate = new FlowTemplateDto { Id = pictureId, ClickOffsetX = 40, ClickOffsetY = 2 } };
+            (await _dataService.FlowStep.UpdateAsync(SearchDto(flowId, secondId, "Find again", moved), Ct)).IsSuccess.ShouldBeTrue();
+
+            FlowTemplate picture = Pictures(flowId).ShouldHaveSingleItem();
+            (picture.ClickOffsetX, picture.ClickOffsetY).ShouldBe((40, 2));
+            picture.TemplateImage.ShouldBe([1, 2, 3]);
+            Templates(flowId).Where(x => x.FlowStepId == firstId || x.FlowStepId == secondId).ShouldAllBe(x => x.FlowTemplateId == pictureId);
+            Templates(flowId).Single(x => x.FlowStepId == firstId).Accuracy.ShouldBe(0.8f);
+        }
+
+        // A link with no id brings a picture of its own, so one step can change what it looks for
+        // without the others noticing.
+        [Fact]
+        public async Task A_copy_of_a_shared_picture_is_the_steps_alone()
+        {
+            int flowId = await NewFlowAsync();
+            (int firstId, int pictureId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            FlowStep second = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again" };
+            int secondId = (await _dataService.FlowStep.CreateAsync(second, [new FlowStepTemplateDto { FlowTemplateId = pictureId }], Ct)).Data;
+
+            FlowStepTemplate link = Templates(flowId).Single(x => x.FlowStepId == secondId);
+            FlowStepTemplateDto copied = new FlowStepTemplateDto { Id = link.Id, FlowTemplate = new FlowTemplateDto { TemplateImage = [9, 9] } };
+            (await _dataService.FlowStep.UpdateAsync(SearchDto(flowId, secondId, "Find again", copied), Ct)).IsSuccess.ShouldBeTrue();
+
+            List<FlowStepTemplate> links = Templates(flowId);
+            links.Single(x => x.FlowStepId == firstId).FlowTemplate.TemplateImage.ShouldBe([1, 2, 3]);
+            links.Single(x => x.FlowStepId == secondId).FlowTemplate.TemplateImage.ShouldBe([9, 9]);
+            links.Single(x => x.FlowStepId == secondId).Id.ShouldBe(link.Id);
+            Pictures(flowId).Count.ShouldBe(2);
+        }
+
+        // So the flow, its script and its folder hold the same pictures.
+        [Fact]
+        public async Task A_picture_goes_when_the_last_step_stops_using_it()
+        {
+            int flowId = await NewFlowAsync();
+            (int firstId, int pictureId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            FlowStep second = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again" };
+            int secondId = (await _dataService.FlowStep.CreateAsync(second, [new FlowStepTemplateDto { FlowTemplateId = pictureId }], Ct)).Data;
+
+            (await _dataService.FlowStep.UpdateAsync(SearchDto(flowId, firstId, "Find"), Ct)).IsSuccess.ShouldBeTrue();
+            Pictures(flowId).ShouldHaveSingleItem().Id.ShouldBe(pictureId);
+
+            (await _dataService.FlowStep.DeleteAsync(secondId, Ct)).IsSuccess.ShouldBeTrue();
+            Pictures(flowId).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_step_cannot_link_another_flows_picture()
+        {
+            int flowId = await NewFlowAsync();
+            (_, int pictureId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            int otherId = await NewFlowAsync("Other");
+
+            FlowStep find = new FlowStep { RootId = otherId, FlowId = otherId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
+            (await _dataService.FlowStep.CreateAsync(find, [new FlowStepTemplateDto { FlowTemplateId = pictureId }], Ct)).IsSuccess.ShouldBeTrue();
+
+            Templates(otherId).ShouldBeEmpty();
+        }
+
+        // From the Templates tab: the picture changes for every step, and its name stays the file's.
+        [Fact]
+        public async Task Editing_a_template_on_its_own_keeps_its_name_and_reaches_every_step()
+        {
+            int flowId = await NewFlowAsync();
+            (_, int pictureId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            string name = Pictures(flowId).Single().Name;
+
+            ResultDto<FlowTemplate> updated = await _dataService.FlowTemplate.UpdateAsync(new FlowTemplateDto { Id = pictureId, Name = "renamed.png", TemplateImage = [7], ClickOffsetX = 1, ClickOffsetY = 1 }, Ct);
+
+            updated.IsSuccess.ShouldBeTrue();
+            FlowTemplate picture = Pictures(flowId).Single();
+            picture.Name.ShouldBe(name);
+            picture.TemplateImage.ShouldBe([7]);
         }
 
         [Fact]
@@ -371,20 +480,35 @@ namespace Business.Tests.Flows
             steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find 2", "Find"]);
         }
 
-        // A recorded template comes with no name, a pasted one with the name of the one it copies.
+        // A new picture keeps the name it came with while the flow has none by it.
         [Fact]
         public async Task A_tree_of_new_steps_names_its_templates_apart_from_the_flows()
         {
             int flowId = await NewFlowAsync();
-            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" }, [new FlowStepTemplateDto()], Ct);
-            string existing = Templates(flowId).Single().Name;
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" }, [new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto() }], Ct);
+            string existing = Pictures(flowId).Single().Name;
 
-            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", FlowStepTemplates = [new FlowStepTemplate { Name = existing }, new FlowStepTemplate()] };
+            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", FlowStepTemplates = [new FlowStepTemplate { FlowTemplate = new FlowTemplate { Name = existing } }, new FlowStepTemplate { FlowTemplate = new FlowTemplate() }] };
             (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 1, [find], [], Ct)).IsSuccess.ShouldBeTrue();
 
-            List<FlowStepTemplate> templates = Templates(flowId);
-            templates.ShouldAllBe(x => IsTemplateName(x.Name));
-            templates.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
+            List<FlowTemplate> pictures = Pictures(flowId);
+            pictures.ShouldAllBe(x => IsTemplateName(x.Name));
+            pictures.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(3);
+        }
+
+        // Clicks on one element share its picture, so the recording hands over one row for both.
+        [Fact]
+        public async Task New_steps_sharing_a_picture_save_it_once()
+        {
+            int flowId = await NewFlowAsync();
+            FlowTemplate picture = new FlowTemplate { TemplateImage = [4, 5] };
+            FlowStep first = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find", FlowStepTemplates = [new FlowStepTemplate { FlowTemplate = picture }] };
+            FlowStep second = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", FlowStepTemplates = [new FlowStepTemplate { FlowTemplate = picture }] };
+
+            (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [first, second], [], Ct)).IsSuccess.ShouldBeTrue();
+
+            IsTemplateName(Pictures(flowId).ShouldHaveSingleItem().Name).ShouldBeTrue();
+            Templates(flowId).Select(x => x.FlowTemplateId).Distinct().ShouldHaveSingleItem();
         }
 
         [Fact]
@@ -406,7 +530,7 @@ namespace Business.Tests.Flows
         // A search with a template, its Success row, and a move under it reading the search.
         private async Task<List<FlowStep>> SearchWithMoveAsync(int flowId)
         {
-            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find", FlowStepTemplates = [new FlowStepTemplate { TemplateImage = [1, 2, 3] }] };
+            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find", FlowStepTemplates = [new FlowStepTemplate { FlowTemplate = new FlowTemplate { TemplateImage = [1, 2, 3] } }] };
             FlowStep success = TreeStepHelper.CreateBranchChildren(find).First(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
             FlowStep move = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", ParentFlowStep = success, FlowStepReference = find };
 
@@ -436,9 +560,12 @@ namespace Business.Tests.Flows
             steps.Where(x => x.ParentFlowStepId == copy.Id).Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE], ignoreOrder: true);
             steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber).Select(x => x.Name).ShouldBe(["Find", "Find 2"]);
 
+            // The copy links to the picture rather than copying it: fixing it once fixes both.
             List<FlowStepTemplate> templates = Templates(flowId);
-            templates.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count().ShouldBe(2);
-            templates.Single(x => x.FlowStepId == copy.Id).TemplateImage.ShouldBe([1, 2, 3]);
+            templates.Count.ShouldBe(2);
+            templates.Select(x => x.FlowTemplateId).Distinct().ShouldHaveSingleItem();
+            templates.Single(x => x.FlowStepId == copy.Id).FlowTemplate.TemplateImage.ShouldBe([1, 2, 3]);
+            Pictures(flowId).ShouldHaveSingleItem();
         }
 
         // Where it lands decides whether the step can still read it, and the validator says when not.
@@ -613,6 +740,30 @@ namespace Business.Tests.Flows
                 ScriptRows.Differences(original, db.FlowAreas.Single(x => x.FlowId == subFlowId && x.Name == original.Name)).ShouldBeEmpty(original.Name);
 
             ScriptRows.Differences(db.FlowPoints.Single(x => x.FlowId == flowId), db.FlowPoints.Single(x => x.FlowId == subFlowId)).ShouldBeEmpty();
+        }
+
+        // A sub-flow keeps its own pictures, as it keeps its own areas. One the flow still uses
+        // stays there too; one only the extracted steps used leaves with them.
+        [Fact]
+        public async Task An_extracted_step_takes_copies_of_its_pictures()
+        {
+            int flowId = await NewFlowAsync();
+            (int keptId, int sharedId) = await SearchWithPictureAsync(flowId, "Find", [1, 2, 3]);
+            FlowStep leaving = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find again", OrderNumber = 1 };
+            FlowStepTemplateDto own = new FlowStepTemplateDto { FlowTemplate = new FlowTemplateDto { TemplateImage = [8] } };
+            int leavingId = (await _dataService.FlowStep.CreateAsync(leaving, [new FlowStepTemplateDto { FlowTemplateId = sharedId }, own], Ct)).Data;
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await _dataService.Flow.ExtractSubFlowAsync(
+                new ExtractSubFlowDto { FlowStepId = leavingId, Name = "Look again", SourceRootId = flowId, SourceFlowId = flowId, SourceOrderNumber = 1 }, Ct);
+            extracted.IsSuccess.ShouldBeTrue(extracted.ErrorMessage);
+
+            List<FlowTemplate> flowPictures = Pictures(flowId);
+            flowPictures.ShouldHaveSingleItem().Id.ShouldBe(sharedId);
+
+            List<FlowTemplate> subFlowPictures = Pictures(extracted.Data!.SubFlowId);
+            subFlowPictures.Select(x => x.TemplateImage).ShouldBe([[1, 2, 3], [8]], ignoreOrder: true);
+            Templates(extracted.Data.SubFlowId).ShouldAllBe(x => subFlowPictures.Any(y => y.Id == x.FlowTemplateId));
+            Templates(flowId).Single(x => x.FlowStepId == keptId).FlowTemplateId.ShouldBe(sharedId);
         }
     }
 }

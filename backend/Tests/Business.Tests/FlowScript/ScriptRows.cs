@@ -19,6 +19,7 @@ namespace Business.Tests.FlowScript
         [
             "Id", "CreatedOn", "UpdatedOn", "FlowId", "RootId", "ParentFlowAreaId", "FlowAreaId", "FlowStepId",
             "ParentFlowStepId", "FlowPointId", "FlowPointEndId", "FlowStepReferenceId", "FlowStepReferenceEndId", "SubFlowId",
+            "FlowTemplateId",
         ];
 
         public Flow Flow { get; set; } = null!;
@@ -39,7 +40,7 @@ namespace Business.Tests.FlowScript
                 Areas = await db.FlowAreas.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
                 Points = await db.FlowPoints.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
                 Steps = await db.FlowSteps.AsNoTracking().Where(x => x.RootId == flowId).ToListAsync(ct),
-                Templates = await db.FlowStepTemplates.AsNoTracking().Where(x => x.FlowStep.RootId == flowId).ToListAsync(ct),
+                Templates = await db.FlowStepTemplates.AsNoTracking().Include(x => x.FlowTemplate).Where(x => x.FlowStep.RootId == flowId).ToListAsync(ct),
                 Inputs = await db.FlowCsvColumns.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
             };
         }

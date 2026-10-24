@@ -4,22 +4,16 @@ namespace Core.Models.Dtos
     {
         public int Id { get; set; }
 
-        public string Name { get; set; } = string.Empty;
         public int OrderNumber { get; set; }
-
-        public byte[]? TemplateImage { get; set; }
 
         public bool IsRequired { get; set; }
 
         public float Accuracy { get; set; } = 0.8f;
 
-        public int ClickOffsetX { get; set; }
-        public int ClickOffsetY { get; set; }
-
-        public int AuthoredFlowAreaWidth { get; set; }
-        public int AuthoredFlowAreaHeight { get; set; }
-        public int AuthoredDpi { get; set; }
-
         public int FlowStepId { get; set; }
+
+        /// <summary>0 with a FlowTemplate to save as a new picture of the flow.</summary>
+        public int FlowTemplateId { get; set; }
+        public FlowTemplateDto? FlowTemplate { get; set; }
     }
 }

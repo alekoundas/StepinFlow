@@ -75,6 +75,15 @@ namespace App.AutoMapper
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.EndFlowSteps, o => o.Ignore());
 
+            // FlowTemplate
+            CreateMap<FlowTemplate, FlowTemplateDto>()
+                .ForMember(x => x.FlowStepsCount, o => o.MapFrom(x => x.FlowStepTemplates.Count()));
+            CreateMap<FlowTemplateDto, FlowTemplate>()
+                .ForMember(x => x.CreatedOn, o => o.Ignore())
+                .ForMember(x => x.Flow, o => o.Ignore())
+                .ForMember(x => x.Thumbnail, o => o.Ignore())
+                .ForMember(x => x.FlowStepTemplates, o => o.Ignore());
+
             // FlowStepTemplate
             CreateMap<FlowStepTemplate, FlowStepTemplateDto>();
             CreateMap<FlowStepTemplateDto, FlowStepTemplate>()

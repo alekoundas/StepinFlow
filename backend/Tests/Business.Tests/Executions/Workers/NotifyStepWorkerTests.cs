@@ -61,7 +61,7 @@ namespace Business.Tests.Executions.Workers
         public async Task Reporting_a_failed_search_lists_its_templates_with_their_accuracy()
         {
             (int flowId, int botId) = Seed();
-            FlowStep failed = new FlowStep { Id = 2, Name = "Find login", FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, FlowStepTemplates = [new FlowStepTemplate { Name = "login button", Accuracy = 0.85f }] };
+            FlowStep failed = new FlowStep { Id = 2, Name = "Find login", FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, FlowStepTemplates = [new FlowStepTemplate { Accuracy = 0.85f, FlowTemplate = new FlowTemplate { Name = "login button" } }] };
 
             await Notify(new FlowStep { Id = 1, RootId = flowId, FlowStepType = FlowStepTypeEnum.NOTIFY, DiscordBotId = botId, FlowStepReferenceId = 2 }, failed);
 

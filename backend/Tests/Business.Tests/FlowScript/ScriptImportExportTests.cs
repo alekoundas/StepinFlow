@@ -130,7 +130,8 @@ namespace Business.Tests.FlowScript
                 FlowStepTemplate? match = trip.After.Templates.FirstOrDefault(x =>
                     trip.After.StepName(x.FlowStepId) == trip.Before.StepName(template.FlowStepId) && x.OrderNumber == template.OrderNumber);
 
-                ScriptRows.Differences(template, match).ShouldBeEmpty(template.Name);
+                ScriptRows.Differences(template, match).ShouldBeEmpty(template.FlowTemplate.Name);
+                ScriptRows.Differences(template.FlowTemplate, match?.FlowTemplate).ShouldBeEmpty(template.FlowTemplate.Name);
             }
         }
 
@@ -232,7 +233,7 @@ namespace Business.Tests.FlowScript
             imported.MissingTemplates.ShouldBeEmpty();
 
             ScriptRows rows = await ScriptRows.LoadAsync(_database, imported.FlowId);
-            rows.Templates.Select(x => x.Name).ShouldBe(["login-button.png", "logo.jpg"], ignoreOrder: true);
+            rows.Templates.Select(x => x.FlowTemplate.Name).ShouldBe(["login-button.png", "logo.jpg"], ignoreOrder: true);
 
             FlowScriptExportResultDto exported = await Exporter().ExportAsync(imported.FlowId, Path.Combine(_folder, "out"), Ct);
             string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
@@ -241,6 +242,42 @@ namespace Business.Tests.FlowScript
             script.ShouldContain("<[ logo.jpg ]>");
             (await File.ReadAllBytesAsync(Path.Combine(exported.TemplateFolderPath, "login-button.png"), Ct)).ShouldBe(button);
             (await File.ReadAllBytesAsync(Path.Combine(exported.TemplateFolderPath, "logo.jpg"), Ct)).ShouldBe(logo);
+        }
+
+        // The header describes a picture once, so every step that names the file links to one row,
+        // and the export writes the file once.
+        [Fact]
+        public async Task Steps_naming_one_file_share_its_picture()
+        {
+            byte[] button = Png(40, 12);
+
+            string templateFolder = Path.Combine(_folder, "Shared");
+            Directory.CreateDirectory(templateFolder);
+            await File.WriteAllBytesAsync(Path.Combine(templateFolder, "template-k3x9q.png"), button, Ct);
+
+            string scriptPath = Path.Combine(_folder, "Shared.sflw");
+            await File.WriteAllTextAsync(scriptPath,
+                "Flow:    Shared\n" +
+                "Id:      7d2e4f61-0a1b-4c2d-8e3f-4a5b6c7d8e9f\n\n" +
+                "Templates:\n" +
+                "  <[ template-k3x9q.png ]>    click 20 6\n\n" +
+                "Steps:\n\n" +
+                "Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.9\n" +
+                "Find Image  <[ Find login again ]>   template <[ template-k3x9q.png ]> accuracy 0.7 required\n", Ct);
+
+            FlowScriptImportResultDto imported = await Importer().ImportAsync(scriptPath, Ct);
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => $"line {x.Line}: {x.Message}")));
+
+            ScriptRows rows = await ScriptRows.LoadAsync(_database, imported.FlowId);
+            rows.Templates.Count.ShouldBe(2);
+            rows.Templates.Select(x => x.FlowTemplateId).Distinct().ShouldHaveSingleItem();
+            rows.Templates.Select(x => (x.Accuracy, x.IsRequired)).ShouldBe([(0.9f, false), (0.7f, true)], ignoreOrder: true);
+
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(imported.FlowId, Path.Combine(_folder, "out"), Ct);
+            string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
+
+            script.Split('\n').Count(x => x.TrimStart().StartsWith("<[ template-k3x9q.png ]>", StringComparison.Ordinal)).ShouldBe(1);
+            Directory.GetFiles(exported.TemplateFolderPath).ShouldHaveSingleItem();
         }
 
         // ================================================================
@@ -303,9 +340,11 @@ namespace Business.Tests.FlowScript
             // Two variants and only one required, so an importer forcing every template required -
             // which this one did - shows up as a changed row.
             FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
+            FlowTemplate username = new FlowTemplate { FlowId = flow.Id, Name = "template-u9d3n.png", TemplateImage = Png(120, 24), ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 };
+            FlowTemplate usernameFocused = new FlowTemplate { FlowId = flow.Id, Name = "template-w2h6r.png", TemplateImage = Png(80, 20), ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 };
             db.FlowStepTemplates.AddRange(
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "template-u9d3n.png", OrderNumber = 0, TemplateImage = Png(120, 24), IsRequired = false, Accuracy = 0.96f, ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 },
-                new FlowStepTemplate { FlowStepId = find.Id, Name = "template-w2h6r.png", OrderNumber = 1, TemplateImage = Png(80, 20), IsRequired = true, Accuracy = 0.9f, ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 });
+                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = username, OrderNumber = 0, IsRequired = false, Accuracy = 0.96f },
+                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = usernameFocused, OrderNumber = 1, IsRequired = true, Accuracy = 0.9f });
             db.SaveChanges();
 
             FlowStep found = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);

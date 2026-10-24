@@ -140,7 +140,7 @@ namespace Business.Executions.Workers
                 if (search.MissingRequired.Count > 0)
                 {
                     List<FlowStepTemplate> images = step.FlowStepTemplates.ToList();
-                    outcome = $"required {string.Join(", ", search.MissingRequired.Select(x => images[x].Name))} not found";
+                    outcome = $"required {string.Join(", ", search.MissingRequired.Select(x => images[x].FlowTemplate.Name))} not found";
                 }
 
                 ExecutionStep missed = ExecutionStep.Failure(Detail(step, outcome, search.BestScore, bestTemplateId));
@@ -175,7 +175,7 @@ namespace Business.Executions.Workers
         // accuracy, so 0.78 means nothing until it is read against the bar of the one that scored it.
         private static string Detail(FlowStep step, string outcome, float? bestScore, int? bestTemplateId)
         {
-            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.Name} at {Score(x.Accuracy)}"));
+            string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.FlowTemplate.Name} at {Score(x.Accuracy)}"));
             if (templates.Length == 0)
                 templates = "no templates";
 
@@ -183,7 +183,7 @@ namespace Business.Executions.Workers
             if (bestScore == null || closest == null)
                 return $"{outcome} - {templates}, {step.SearchMode}";
 
-            return $"{outcome}, closest {closest.Name} at {Score(bestScore.Value)} - {templates}, {step.SearchMode}";
+            return $"{outcome}, closest {closest.FlowTemplate.Name} at {Score(bestScore.Value)} - {templates}, {step.SearchMode}";
         }
 
         private static string Score(float value)

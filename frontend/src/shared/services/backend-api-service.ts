@@ -13,7 +13,7 @@ import type {
 } from "@/shared/models/flow-step-move.dto";
 import type { FlowStepScriptLineDto } from "@/shared/models/flow-step-script-line-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
+import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
@@ -153,11 +153,13 @@ export const backendApiService = {
     testCursor: (dto: FlowStepDto) => call<boolean>("FlowStep.testCursor", dto),
   },
 
-  FlowStepTemplate: {
-    get: (id: number) => call<FlowStepTemplateDto>("FlowStepTemplate.get", id),
-    /** One per name, with its image: steps searching for the same image share it. */
+  FlowTemplate: {
+    /** Every picture of the flow, with its image and how many steps link to it. */
     getByFlow: (flowId: number) =>
-      call<FlowStepTemplateDto[]>("FlowStepTemplate.getByFlow", flowId),
+      call<FlowTemplateDto[]>("FlowTemplate.getByFlow", flowId),
+    /** The picture and its click point, for every step that links to it. */
+    update: (dto: FlowTemplateDto) =>
+      call<FlowTemplateDto>("FlowTemplate.update", dto),
   },
 
   FlowArea: {

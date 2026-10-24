@@ -418,6 +418,13 @@ the history.
 
 ## Frontend
 
+- [ ] **Capture a template again from the Templates tab.** Raised 2026-10-23, left out of the
+      shared templates change. A capture is measured against the area it is searched in, and a
+      template has no area of its own: the steps that link to it each have one, and they can
+      differ. Either capture in the area of a step picked from its "Used by", or only offer it
+      when every step that uses it searches in the same area. Edit image and Set click point are
+      there already.
+
 - [ ] **Say when a location is outside its area, or in pixels where pixels cannot follow.**
       Raised 2026-10-22. An execution brings a location outside its area to the area's edge
       (`AreaPointResolver.Clamp`), so a bad value clicks somewhere plausible instead of failing.

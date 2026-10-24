@@ -648,7 +648,8 @@ Facts about the picture rather than the search, once per file:
   against.
 
 Every template a step names has a line here, and every line has a `click`: a template always says
-where it is clicked. A step naming a file with no line is `TEMPLATE_UNKNOWN`, and a line with no
+where it is clicked. Steps that name the same file share that one picture in the flow, each with
+its own `accuracy` and `required`. A step naming a file with no line is `TEMPLATE_UNKNOWN`, and a line with no
 `click` is a syntax error. The size and DPI are optional; one with neither is searched at the size
 it was captured.
 

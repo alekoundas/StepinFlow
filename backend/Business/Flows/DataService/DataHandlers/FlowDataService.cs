@@ -228,6 +228,7 @@ namespace Business.Flows.DataService.DataHandlers
             if (existing != null)
             {
                 await dbContext.FlowSteps.Where(x => x.RootId == flow.Id).ExecuteDeleteAsync(ct);
+                await dbContext.FlowTemplates.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowPoints.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowAreas.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowCsvColumns.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
@@ -260,14 +261,13 @@ namespace Business.Flows.DataService.DataHandlers
         /// place.
         ///
         /// The rows are moved, not copied. Ids survive, so a reference between two extracted steps
-        /// keeps resolving with no remapping and the template images follow their step untouched.
-        /// Only RootId, and the parentage of the step at the top, change. That is also why a
-        /// reference crossing the boundary is the one case that has to be refused rather than fixed
-        /// up: everything else takes care of itself.
+        /// keeps resolving with no remapping. Only RootId, and the parentage of the step at the top,
+        /// change. That is also why a reference crossing the boundary is the one case that has to be
+        /// refused rather than fixed up: everything else takes care of itself.
         ///
-        /// Search areas and points are the exception. Those belong to a flow, so the ones the moved
-        /// steps use are copied into the new sub-flow and the steps repointed, which is what makes it
-        /// self contained enough to call from anywhere.
+        /// Search areas, points and templates are the exception. Those belong to a flow, so the ones
+        /// the moved steps use are copied into the new sub-flow and the steps repointed, which is
+        /// what makes it self contained enough to call from anywhere.
         ///
         /// Saves more than once, so in a transaction. Every refusal comes before the first save.
         /// </summary>
@@ -317,6 +317,7 @@ namespace Business.Flows.DataService.DataHandlers
             List<FlowStep> moved = steps.Where(x => moving.Contains(x.Id)).ToList();
 
             await CopyAreasAndPointsAsync(dbContext, subFlow, moved, ct);
+            await CopyTemplatesAsync(dbContext, subFlow, moved, ct);
 
             foreach (FlowStep step in moved)
                 step.RootId = subFlow.Id;
@@ -346,6 +347,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             RenumberSource(steps, moving, placeholder, dto);
             await dbContext.SaveChangesAsync(ct);
+            await FlowTemplateDataService.RemoveUnusedAsync(dbContext, dto.SourceRootId, ct);
             await transaction.CommitAsync(ct);
 
             return ResultDto<ExtractSubFlowResultDto>.Success(new ExtractSubFlowResultDto
@@ -524,6 +526,30 @@ namespace Business.Flows.DataService.DataHandlers
                 if (step.FlowPointEndId != null)
                     step.FlowPointEnd = pointCopies[step.FlowPointEndId.Value];
             }
+        }
+
+        // Templates belong to a flow too, and are copied for the same reason. The moved steps' links
+        // point at the copies; a template the source flow no longer uses goes after the save.
+        private static async Task CopyTemplatesAsync(AppDbContext dbContext, Flow subFlow, List<FlowStep> moved, CancellationToken ct)
+        {
+            HashSet<int> movedIds = moved.Select(x => x.Id).ToHashSet();
+            List<FlowStepTemplate> links = await dbContext.FlowStepTemplates.Where(x => movedIds.Contains(x.FlowStepId)).ToListAsync(ct);
+
+            HashSet<int> pictureIds = links.Select(x => x.FlowTemplateId).ToHashSet();
+            List<FlowTemplate> pictures = await dbContext.FlowTemplates.AsNoTracking().Where(x => pictureIds.Contains(x.Id)).ToListAsync(ct);
+
+            Dictionary<int, FlowTemplate> copies = pictures.ToDictionary(x => x.Id);
+            foreach (FlowTemplate copy in pictures)
+            {
+                copy.Id = 0;
+                copy.FlowId = subFlow.Id;
+                copy.UpdatedOn = null;
+            }
+
+            dbContext.FlowTemplates.AddRange(pictures);
+
+            foreach (FlowStepTemplate link in links)
+                link.FlowTemplate = copies[link.FlowTemplateId];
         }
 
         // The areas asked for and every area above them, however deep, so each copy has its

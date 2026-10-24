@@ -118,8 +118,8 @@ namespace Business.Tests.Recording
             roots.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SYSTEM_COMMAND, FlowStepTypeEnum.SEARCH_IMAGE]);
             roots[1].Name.ShouldBe("Find Email");
 
-            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
-            template.TemplateImage.ShouldNotBeNull();
+            FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
+            template.FlowTemplate.TemplateImage.ShouldNotBeNull();
 
             FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
             (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
@@ -182,8 +182,8 @@ namespace Business.Tests.Recording
             roots[1].Id.ShouldBe(launchId);
 
             using AppDbContext db = _database.CreateDbContext();
-            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == roots[0].Id, Ct);
-            template.TemplateImage.ShouldNotBeNull();
+            FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == roots[0].Id, Ct);
+            template.FlowTemplate.TemplateImage.ShouldNotBeNull();
             FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
             (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
         }
@@ -266,8 +266,8 @@ namespace Business.Tests.Recording
             roots[1].Name.ShouldBe("Find the email field");
 
             using AppDbContext db = _database.CreateDbContext();
-            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
-            template.TemplateImage.ShouldNotBeNull();
+            FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
+            template.FlowTemplate.TemplateImage.ShouldNotBeNull();
             FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
             input.DefaultValue.ShouldBe("ops@example.com");
         }
@@ -354,8 +354,8 @@ namespace Business.Tests.Recording
             search.Name.ShouldBe("Find the sign-in field");
 
             using AppDbContext db = _database.CreateDbContext();
-            FlowStepTemplate template = await db.FlowStepTemplates.SingleAsync(x => x.FlowStepId == search.Id, Ct);
-            template.TemplateImage.ShouldNotBeNull();
+            FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == search.Id, Ct);
+            template.FlowTemplate.TemplateImage.ShouldNotBeNull();
             FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
             input.DefaultValue.ShouldBe("ops@example.com");
         }

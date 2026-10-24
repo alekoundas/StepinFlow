@@ -41,7 +41,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const [area, setArea] = useState<WorkflowPartSelection>(null);
   const [location, setLocation] = useState<WorkflowPartSelection>(null);
   const [input, setInput] = useState<WorkflowPartSelection>(null);
-  const [templateName, setTemplateName] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<number | null>(null);
 
   const isSteps = activeTab === "steps";
   const isScript = activeTab === "script";
@@ -115,9 +115,8 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
               {activeTab === "templates" && (
                 <WorkflowTemplateGridComponent
                   templates={templates}
-                  uses={uses}
-                  selected={templateName}
-                  onSelect={setTemplateName}
+                  selected={templateId}
+                  onSelect={setTemplateId}
                 />
               )}
             </ScrollPanel>
@@ -171,7 +170,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
                 )}
                 {activeTab === "templates" && (
                   <WorkflowTemplatePanelComponent
-                    template={templates?.find((x) => x.name === templateName)}
+                    template={templates?.find((x) => x.id === templateId)}
                     uses={uses}
                   />
                 )}

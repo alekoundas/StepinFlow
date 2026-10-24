@@ -39,7 +39,7 @@ namespace Business.Tests.Executions.Workers
 
         private static FlowStepTemplate Template(int id, string name, float accuracy, bool isRequired = false)
         {
-            return new FlowStepTemplate { Id = id, Name = name, Accuracy = accuracy, IsRequired = isRequired, TemplateImage = [(byte)id] };
+            return new FlowStepTemplate { Id = id, Accuracy = accuracy, IsRequired = isRequired, FlowTemplate = new FlowTemplate { Id = id, Name = name, TemplateImage = [(byte)id] } };
         }
 
         private static FlowStep ImageSearch(SearchModeEnum mode, params FlowStepTemplate[] templates)
@@ -59,8 +59,8 @@ namespace Business.Tests.Executions.Workers
         {
             _matcher.Found(1, 0.9f, x: 5, y: 5);
             FlowStepTemplate play = Template(1, "play", 0.8f);
-            play.ClickOffsetX = 10;
-            play.ClickOffsetY = 4;
+            play.FlowTemplate.ClickOffsetX = 10;
+            play.FlowTemplate.ClickOffsetY = 4;
 
             (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.FIND_BEST, play));
 

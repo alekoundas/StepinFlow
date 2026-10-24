@@ -62,7 +62,7 @@ namespace Business.FlowScript
                 Warnings = ToDtos(schema.Diagnostics, DiagnosticSeverityEnum.WARNING),
             };
 
-            foreach (FlowStepTemplate template in schema.Steps.SelectMany(x => x.FlowStepTemplates))
+            foreach (FlowTemplate template in schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct())
                 TakeTemplateImage(template, templates, result);
 
             // Save to Database.
@@ -81,7 +81,7 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        private static void TakeTemplateImage(FlowStepTemplate template, IReadOnlyDictionary<string, byte[]> templates, FlowScriptImportResultDto result)
+        private static void TakeTemplateImage(FlowTemplate template, IReadOnlyDictionary<string, byte[]> templates, FlowScriptImportResultDto result)
         {
             // A missing image is reported, and the template is kept without one.
             templates.TryGetValue(template.Name, out byte[]? image);

@@ -5,9 +5,9 @@ namespace Business.FlowScript.Text.Header
 {
     internal sealed class TemplateWriter : BaseWriter
     {
-        private readonly FlowStepTemplate _template;
+        private readonly FlowTemplate _template;
 
-        public TemplateWriter(FlowStepTemplate template)
+        public TemplateWriter(FlowTemplate template)
         {
             _template = template;
         }

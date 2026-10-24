@@ -8,32 +8,36 @@ import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
+import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
 
 interface Props {
   images: FlowStepTemplateDto[];
   // Keyed by list index, since a freshly added template has no id yet.
   testResults: Map<number, ImageSearchTestImageDto>;
+  // By list index: the other steps that link to the same picture.
+  sharedWith: string[][];
   isDisabled?: boolean;
 
   onAdd: () => void;
   onEditImage: (index: number) => void;
   onSetClickPoint: (index: number) => void;
+  onEditCopy: (index: number) => void;
   onChange: (index: number, image: FlowStepTemplateDto) => void;
   onRemove: (index: number) => void;
 }
 
 // What a different screen is measured against: the area's size for one that scales with its
 // area, the DPI for one that scales with the monitor.
-const capturedIn = (image: FlowStepTemplateDto): string => {
+const capturedIn = (picture: FlowTemplateDto): string => {
   const facts: string[] = [];
 
-  if (image.authoredFlowAreaWidth > 0)
+  if (picture.authoredFlowAreaWidth > 0)
     facts.push(
-      `in a ${image.authoredFlowAreaWidth}×${image.authoredFlowAreaHeight} area`,
+      `in a ${picture.authoredFlowAreaWidth}×${picture.authoredFlowAreaHeight} area`,
     );
 
-  if (image.authoredDpi > 0) facts.push(`at ${image.authoredDpi} dpi`);
+  if (picture.authoredDpi > 0) facts.push(`at ${picture.authoredDpi} dpi`);
 
   if (facts.length === 0)
     return "nothing recorded about where it was captured, so it is searched at this size everywhere";
@@ -44,10 +48,12 @@ const capturedIn = (image: FlowStepTemplateDto): string => {
 export function FlowStepTemplateListComponent({
   images,
   testResults,
+  sharedWith,
   isDisabled = false,
   onAdd,
   onEditImage,
   onSetClickPoint,
+  onEditCopy,
   onChange,
   onRemove,
 }: Props) {
@@ -85,12 +91,15 @@ export function FlowStepTemplateListComponent({
         <LabelComponent
           size="sm"
           color="secondary"
-          text="No templates yet. Capture one to tell the step what to look for."
+          text="No templates yet. Capture one, or reuse one of the flow's, to tell the step what to look for."
         />
       )}
 
       {images.map((image, index) => {
         const result = testResults.get(index);
+        const picture = image.flowTemplate;
+        const others = sharedWith[index] ?? [];
+        const isShared = others.length > 0;
 
         return (
           <Card
@@ -98,9 +107,9 @@ export function FlowStepTemplateListComponent({
             className="shadow-1 border-round-xl"
           >
             <div className="flex gap-3 align-items-center">
-              {image.templateImage ? (
+              {picture.templateImage ? (
                 <img
-                  src={`data:image/png;base64,${image.templateImage}`}
+                  src={`data:image/png;base64,${picture.templateImage}`}
                   alt={`Template ${index + 1}`}
                   style={{
                     width: 48,
@@ -115,17 +124,23 @@ export function FlowStepTemplateListComponent({
 
               <div className="flex flex-column flex-1">
                 <LabelComponent
-                  text={`Template ${index + 1}`}
+                  text={picture.name || `Template ${index + 1}`}
                   weight="semibold"
                   size="sm"
                 />
                 <LabelComponent
                   size="xs"
                   color="secondary"
-                  text={capturedIn(image)}
+                  text={capturedIn(picture)}
                 />
+                {isShared && (
+                  <span className="flex align-items-center gap-1 text-xs text-primary mt-1">
+                    <i className="pi pi-link text-xs" />
+                    {`Shared · also used by ${others.join(", ")}`}
+                  </span>
+                )}
 
-                {/* Per template: one variant of an icon can need a looser bar than another. */}
+                {/* Per step: one variant of an icon can need a looser bar than another. */}
                 <div className="flex align-items-center gap-2 mt-2">
                   <LabelComponent
                     text={`Accuracy ${image.accuracy.toFixed(2)}`}
@@ -182,13 +197,30 @@ export function FlowStepTemplateListComponent({
               {!isDisabled && (
                 <ActionsMenuComponent
                   id={index}
-                  onEdit={() => onEditImage(index)}
-                  onDelete={() => onRemove(index)}
                   extraActions={[
+                    {
+                      label: "Edit image",
+                      icon: "pi pi-pencil",
+                      command: () => onEditImage(index),
+                    },
                     {
                       label: "Set click point",
                       icon: "pi pi-crosshairs",
                       command: () => onSetClickPoint(index),
+                    },
+                    ...(isShared
+                      ? [
+                          {
+                            label: "Edit a copy for this step",
+                            icon: "pi pi-clone",
+                            command: () => onEditCopy(index),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Remove from this step",
+                      icon: "pi pi-times",
+                      command: () => onRemove(index),
                     },
                   ]}
                 />

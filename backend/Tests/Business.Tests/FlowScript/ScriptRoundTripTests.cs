@@ -232,7 +232,7 @@ namespace Business.Tests.FlowScript
         public void The_header_facts_reach_the_steps_that_name_the_file()
         {
             FlowScriptSchema schema = new Scanner().Read(HandWritten);
-            FlowStepTemplate described = schema.Steps[1].FlowStepTemplates.Single();
+            FlowTemplate described = schema.Steps[1].FlowStepTemplates.Single().FlowTemplate;
 
             (described.ClickOffsetX, described.ClickOffsetY).ShouldBe((5, 6));
             (described.AuthoredFlowAreaWidth, described.AuthoredFlowAreaHeight, described.AuthoredDpi).ShouldBe((800, 600, 144));

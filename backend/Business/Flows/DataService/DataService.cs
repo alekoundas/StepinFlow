@@ -12,14 +12,16 @@ namespace Business.Flows.DataService
         public FlowAreaDataService FlowArea { get; }
         public FlowPointDataService FlowPoint { get; }
         public FlowCsvColumnDataService FlowCsvColumn { get; }
+        public FlowTemplateDataService FlowTemplate { get; }
 
-        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowCsvColumnDataService flowCsvColumn)
+        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowCsvColumnDataService flowCsvColumn, FlowTemplateDataService flowTemplate)
         {
             Flow = flow;
             FlowStep = flowStep;
             FlowArea = flowArea;
             FlowPoint = flowPoint;
             FlowCsvColumn = flowCsvColumn;
+            FlowTemplate = flowTemplate;
         }
     }
 }

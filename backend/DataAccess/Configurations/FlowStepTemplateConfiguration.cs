@@ -17,6 +17,12 @@ namespace DataAccess.Configurations
                 .WithMany(x => x.FlowStepTemplates)
                 .HasForeignKey(x => x.FlowStepId)
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
+
+            // Relationship with FlowTemplate (one-to-many)
+            builder.HasOne(x => x.FlowTemplate)
+                .WithMany(x => x.FlowStepTemplates)
+                .HasForeignKey(x => x.FlowTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);  // Delete if parent is removed
         }
     }
 }

@@ -247,7 +247,7 @@ namespace Business.Tests.Recording
             FlowScriptSchema schema = Build();
 
             _screenshots.Encoded.Select(x => (x.Width, x.Height)).ShouldBe([(60, 30)]);
-            FlowStepTemplate template = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).FlowStepTemplates.ShouldHaveSingleItem();
+            FlowTemplate template = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).FlowStepTemplates.ShouldHaveSingleItem().FlowTemplate;
             (template.ClickOffsetX, template.ClickOffsetY).ShouldBe((click.LocationX - MAIN.X - 270, click.LocationY - MAIN.Y - 240));
             (template.AuthoredFlowAreaWidth, template.AuthoredFlowAreaHeight, template.AuthoredDpi).ShouldBe((800, 600, 120));
             template.Name.ShouldStartWith("template-");
@@ -263,9 +263,10 @@ namespace Business.Tests.Recording
 
             FlowScriptSchema schema = Build();
 
-            List<string> names = schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.Name).ToList();
-            names.Count.ShouldBe(2);
-            names.Distinct().ShouldHaveSingleItem();
+            // Two links, each with its own accuracy, to one picture.
+            List<FlowStepTemplate> links = schema.Steps.SelectMany(x => x.FlowStepTemplates).ToList();
+            links.Count.ShouldBe(2);
+            links.Select(x => x.FlowTemplate).Distinct().ShouldHaveSingleItem();
             _screenshots.Encoded.Count.ShouldBe(1);
         }
 

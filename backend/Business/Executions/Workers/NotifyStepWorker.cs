@@ -81,7 +81,7 @@ namespace Business.Executions.Workers
 
             // Each with its own accuracy, since that is what a template was searched at.
             return failedStep.FlowStepTemplates
-                .Select(x => $"{x.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}")
+                .Select(x => $"{x.FlowTemplate.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}")
                 .ToList();
         }
     }

@@ -17,7 +17,7 @@ namespace Business.FlowScript.Parsers
         private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FlowStepTemplate> _templates = new Dictionary<string, FlowStepTemplate>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, FlowTemplate> _templates = new Dictionary<string, FlowTemplate>(StringComparer.OrdinalIgnoreCase);
 
         public ScriptScope(List<Diagnostic> diagnostics)
         {
@@ -55,7 +55,7 @@ namespace Business.FlowScript.Parsers
             DeclareName(input.Name, at);
         }
 
-        public void Declare(FlowStepTemplate template, ScriptToken at)
+        public void Declare(FlowTemplate template, ScriptToken at)
         {
             if (!_templates.TryAdd(template.Name, template))
                 Report(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, at, $"\"{template.Name}\" is already described above.");
@@ -108,9 +108,9 @@ namespace Business.FlowScript.Parsers
             return null;
         }
 
-        public FlowStepTemplate? Template(string fileName, ScriptToken at)
+        public FlowTemplate? Template(string fileName, ScriptToken at)
         {
-            if (_templates.TryGetValue(fileName, out FlowStepTemplate? row))
+            if (_templates.TryGetValue(fileName, out FlowTemplate? row))
                 return row;
 
             Report(DiagnosticCodeEnum.TEMPLATE_UNKNOWN, at, $"\"{fileName}\" has no line under Templates above, so nothing says where it is clicked.");

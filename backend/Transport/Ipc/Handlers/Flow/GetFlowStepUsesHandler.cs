@@ -34,7 +34,7 @@ namespace Transport.Ipc.Handlers
             List<TemplateName> templates = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => x.FlowStep.RootId == flowId)
-                .Select(x => new TemplateName(x.FlowStepId, x.Name))
+                .Select(x => new TemplateName(x.FlowStepId, x.FlowTemplate.Name))
                 .ToListAsync(ct);
 
             ILookup<int, string> templatesByStep = templates.ToLookup(x => x.FlowStepId, x => x.Name);

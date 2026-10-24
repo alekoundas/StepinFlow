@@ -140,18 +140,14 @@ namespace Business.FlowScript
             schema.Viewports.AddRange(await dbContext.FlowViewports.Where(x => x.FlowId == flowId).ToListAsync(ct));
             schema.Steps.AddRange(await dbContext.FlowSteps.Where(x => x.RootId == flowId).ToListAsync(ct));
 
-            // Their pixels are megabytes, so only when asked for. Not tracked, so linked to their steps here.
-            List<FlowStepTemplate> templates = await dbContext.FlowStepTemplates.AsNoTracking()
-                .Where(x => x.FlowStep.RootId == flowId)
-                .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
-                .Select(x => new FlowStepTemplate
+            // Their pixels are megabytes, so only when asked for. Not tracked, so linked to their steps
+            // here, each picture once however many steps search for it.
+            List<FlowTemplate> pictures = await dbContext.FlowTemplates.AsNoTracking()
+                .Where(x => x.FlowStepTemplates.Any(y => y.FlowStep.RootId == flowId))
+                .Select(x => new FlowTemplate
                 {
                     Id = x.Id,
-                    FlowStepId = x.FlowStepId,
                     Name = x.Name,
-                    OrderNumber = x.OrderNumber,
-                    Accuracy = x.Accuracy,
-                    IsRequired = x.IsRequired,
                     ClickOffsetX = x.ClickOffsetX,
                     ClickOffsetY = x.ClickOffsetY,
                     AuthoredFlowAreaWidth = x.AuthoredFlowAreaWidth,
@@ -160,6 +156,25 @@ namespace Business.FlowScript
                     TemplateImage = includeImages ? x.TemplateImage : null,
                 })
                 .ToListAsync(ct);
+
+            Dictionary<int, FlowTemplate> pictureById = pictures.ToDictionary(x => x.Id);
+
+            List<FlowStepTemplate> templates = await dbContext.FlowStepTemplates.AsNoTracking()
+                .Where(x => x.FlowStep.RootId == flowId)
+                .OrderBy(x => x.FlowStepId).ThenBy(x => x.OrderNumber).ThenBy(x => x.Id)
+                .Select(x => new FlowStepTemplate
+                {
+                    Id = x.Id,
+                    FlowStepId = x.FlowStepId,
+                    FlowTemplateId = x.FlowTemplateId,
+                    OrderNumber = x.OrderNumber,
+                    Accuracy = x.Accuracy,
+                    IsRequired = x.IsRequired,
+                })
+                .ToListAsync(ct);
+
+            foreach (FlowStepTemplate template in templates)
+                template.FlowTemplate = pictureById[template.FlowTemplateId];
 
             foreach (FlowStep step in schema.Steps)
                 step.FlowStepTemplates = templates.Where(x => x.FlowStepId == step.Id).ToList();
@@ -200,9 +215,11 @@ namespace Business.FlowScript
         private static async Task<int> WriteTemplatesAsync(FlowScriptSchema schema, string templateFolder, CancellationToken ct)
         {
             // Gather templates.
-            List<FlowStepTemplate> templates = schema.Steps
+            List<FlowTemplate> templates = schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
+                .Select(x => x.FlowTemplate)
                 .Where(x => x.TemplateImage != null)
+                .Distinct()
                 .ToList();
 
             if (templates.Count == 0)
@@ -212,7 +229,7 @@ namespace Business.FlowScript
             Directory.CreateDirectory(templateFolder);
 
             // Write to disk.
-            foreach (FlowStepTemplate template in templates)
+            foreach (FlowTemplate template in templates)
                 await File.WriteAllBytesAsync(Path.Combine(templateFolder, template.Name), template.TemplateImage!, ct);
 
             return templates.Count;

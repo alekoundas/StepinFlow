@@ -83,10 +83,22 @@ names it. The waiting modes use the same rule: `WAIT_UNTIL_FOUND` waits until ev
 is there, `WAIT_UNTIL_NOT_FOUND` until at least one is gone. **Test now** and an execution decide it
 the same way.
 
+## Templates are shared
+
+A template image belongs to the flow, and steps link to it. **Add template** captures a new one, or
+reuses one the flow already has, picked by its picture. A pasted step links to the pictures of the
+step it copies rather than copying them.
+
+The picture, its click point and where it was captured are shared: editing them through one step,
+or from the editor's Templates tab, changes them for every step that links to it, and the form asks
+first when other steps use it. **Edit a copy for this step** gives one step a picture of its own.
+Accuracy and required are each step's own. A template goes when the last step stops using it.
+
 ## Accuracy
 
-Accuracy is how close a match has to be, between 0 and 1. **Each template has its own** — one
-variant of an icon can need a looser bar than another. There is no accuracy on the step.
+Accuracy is how close a match has to be, between 0 and 1. **Each template a step searches for has
+its own**, on that step — one variant of an icon can need a looser bar than another, and two steps
+sharing a picture can search for it at different bars. There is no accuracy on the step.
 
 A new template starts on its mode's default, and changing the step's mode puts every template back
 on the new mode's default, because the same number means different things in the two modes.

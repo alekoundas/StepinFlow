@@ -220,8 +220,9 @@ namespace Business.FlowScript.Text
 
         private static void WriteTemplates(StringBuilder builder, FlowScriptSchema schema)
         {
-            List<FlowStepTemplate> templates = schema.Steps
+            List<FlowTemplate> templates = schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
+                .Select(x => x.FlowTemplate)
                 .DistinctBy(x => x.Name, StringComparer.Ordinal)
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
                 .ToList();
@@ -232,7 +233,7 @@ namespace Business.FlowScript.Text
             string heading = new SectionWriter(ScriptSymbolEnum.TEMPLATES).Write();
             builder.AppendLine(heading);
 
-            foreach (FlowStepTemplate template in templates)
+            foreach (FlowTemplate template in templates)
             {
                 string line = new TemplateWriter(template).Write();
                 builder.Append("  ").AppendLine(line);

@@ -58,7 +58,7 @@ namespace Business.FlowScript
 
             preview.TemplateNames = schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
-                .Select(x => x.Name)
+                .Select(x => x.FlowTemplate.Name)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
             preview.MissingTemplates = preview.TemplateNames.Where(x => !file.Templates.ContainsKey(x)).ToList();
