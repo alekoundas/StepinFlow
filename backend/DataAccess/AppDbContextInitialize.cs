@@ -18,6 +18,7 @@ namespace DataAccess
                 File.Create(dataSource).Close();
 
             services.AddSingleton<TimestampInterceptor>();
+            services.AddSingleton<TemplateThumbnailInterceptor>();
 
             services.AddPooledDbContextFactory<AppDbContext>((serviceProvider, options) =>
             {
@@ -25,6 +26,9 @@ namespace DataAccess
 
                 // Intercept INSERT/UPDATE commands and fill the CreatedOn/UpdatedOn of the BaseDbModel.
                 options.AddInterceptors(serviceProvider.GetRequiredService<TimestampInterceptor>());
+
+                // A template's thumbnail is made whenever its picture is saved.
+                options.AddInterceptors(serviceProvider.GetRequiredService<TemplateThumbnailInterceptor>());
             });
 
             return services;

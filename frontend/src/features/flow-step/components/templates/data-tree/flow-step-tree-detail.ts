@@ -149,17 +149,22 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         chips: [],
       };
 
+    // A row with a thumbnail counts its templates on it.
     case FlowStepTypeEnum.SEARCH_IMAGE:
       return {
         text: detail.areaName ?? "no area picked",
         chips: [
-          {
-            text:
-              detail.templateCount === 1
-                ? "1 template"
-                : `${detail.templateCount} templates`,
-            isMuted: detail.templateCount === 0,
-          },
+          ...(detail.thumbnail
+            ? []
+            : [
+                {
+                  text:
+                    detail.templateCount === 1
+                      ? "1 template"
+                      : `${detail.templateCount} templates`,
+                  isMuted: detail.templateCount === 0,
+                },
+              ]),
           ...searchChips(detail),
         ],
       };

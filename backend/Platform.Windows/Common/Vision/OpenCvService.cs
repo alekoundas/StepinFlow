@@ -413,6 +413,31 @@ namespace Platform.Windows.Vision
             return resized.ImEncode(".jpg", [(int)ImwriteFlags.JpegQuality, quality]);
         }
 
+        public byte[]? Thumbnail(byte[] png, int maxEdge)
+        {
+            try
+            {
+                using Mat decoded = Cv2.ImDecode(png, ImreadModes.Unchanged);
+                if (decoded.Empty())
+                    return null;
+
+                int longest = Math.Max(decoded.Width, decoded.Height);
+                if (longest <= maxEdge)
+                    return png;
+
+                double scale = (double)maxEdge / longest;
+
+                using Mat resized = new Mat();
+                Cv2.Resize(decoded, resized, new Size(0, 0), scale, scale, InterpolationFlags.Area);
+
+                return resized.ImEncode(".png");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
 
         // ================================================================
         // Private types

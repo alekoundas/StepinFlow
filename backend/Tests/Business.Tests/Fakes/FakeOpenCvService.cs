@@ -74,5 +74,10 @@ namespace Business.Tests.Fakes
         {
             throw new NotImplementedException();
         }
+
+        public byte[]? Thumbnail(byte[] png, int maxEdge)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

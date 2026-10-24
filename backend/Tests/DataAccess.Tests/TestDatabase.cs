@@ -2,6 +2,7 @@ using DataAccess.Interceptors;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace DataAccess.Tests
 {
@@ -15,7 +16,7 @@ namespace DataAccess.Tests
         private readonly SqliteConnection _connection;
         private readonly DbContextOptions<AppDbContext> _options;
 
-        public TestDatabase(TimeProvider? clock = null)
+        public TestDatabase(TimeProvider? clock = null, params IInterceptor[] interceptors)
         {
             _connection = new SqliteConnection("Data Source=:memory:");
             _connection.Open();
@@ -23,6 +24,8 @@ namespace DataAccess.Tests
             DbContextOptionsBuilder<AppDbContext> builder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(_connection);
             if (clock != null)
                 builder.AddInterceptors(new TimestampInterceptor(clock));
+
+            builder.AddInterceptors(interceptors);
 
             _options = builder.Options;
 

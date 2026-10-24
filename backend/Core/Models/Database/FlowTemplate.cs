@@ -8,7 +8,7 @@ namespace Core.Models.Database
         public string Name { get; set; } = string.Empty;
 
         public byte[]? TemplateImage { get; set; } // PNG
-        public byte[]? Thumbnail { get; set; } //todo maybe drop
+        public byte[]? Thumbnail { get; set; } // PNG, made from TemplateImage whenever it is saved
 
         public int ClickOffsetX { get; set; }
         public int ClickOffsetY { get; set; }

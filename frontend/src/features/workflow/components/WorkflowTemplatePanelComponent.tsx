@@ -11,6 +11,7 @@ import {
   useWindowImageEditor,
 } from "@/windows/image-editor/hooks/use-window-image-editor";
 import { useUpdateFlowTemplate } from "@/features/workflow/hooks/use-flow-parts";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { WorkflowUsedByComponent } from "@/features/workflow/components/WorkflowUsedByComponent";
 
 interface Props {
@@ -25,6 +26,7 @@ interface Props {
 export function WorkflowTemplatePanelComponent({ template, uses }: Props) {
   const { openImageEditor } = useWindowImageEditor();
   const updateTemplate = useUpdateFlowTemplate();
+  const setTreeRefreshTrigger = useWorkflowStore((x) => x.setTreeRefreshTrigger);
 
   const [draft, setDraft] = useState<FlowTemplateDto | null>(null);
   const [draftOf, setDraftOf] = useState<number | null>(template?.id ?? null);
@@ -74,6 +76,9 @@ export function WorkflowTemplatePanelComponent({ template, uses }: Props) {
     try {
       await updateTemplate.mutateAsync(draft);
       setDraft(null);
+
+      // The tree is only hidden, so its rows would keep the old thumbnail.
+      setTreeRefreshTrigger({ id: draft.flowId, isFlow: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }

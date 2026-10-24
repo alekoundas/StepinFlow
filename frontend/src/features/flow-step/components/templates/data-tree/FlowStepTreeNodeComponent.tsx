@@ -15,23 +15,67 @@ interface Props {
   issues?: StepIssues;
 }
 
+const THUMBNAIL_BOX = { width: "2.5rem", height: "2rem" };
+
 export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
   const entry = getFlowStepCatalogEntry(treeNode.flowStepType);
   const detail = buildFlowStepTreeDetail(treeNode);
   const accent = flowStepAccent(treeNode.flowStepType);
+  const thumbnail = treeNode.detail?.thumbnail;
+  const moreTemplates = (treeNode.detail?.templateCount ?? 0) - 1;
 
   return (
     <div
       className="flex align-items-center gap-2 w-full min-w-0 py-1 pl-2 border-round-sm"
       style={{ borderLeft: `3px solid ${accent}`, background: tint(accent, 10) }}
     >
-      {/* A template says more about what the step looks for than any icon can. */}
-      {treeNode.detail?.thumbnail ? (
-        <img
-          className="flex-shrink-0 max-w-2rem max-h-2rem border-round-sm"
-          src={`data:image/png;base64,${treeNode.detail.thumbnail}`}
-          alt=""
-        />
+      {/* A template says more about what the step looks for than any icon can. The others stack
+          behind it, and the step's icon stays on its corner. */}
+      {thumbnail ? (
+        <span className="relative flex flex-shrink-0 mr-1">
+          {moreTemplates > 0 && (
+            <span
+              className="absolute border-round-sm surface-400 opacity-40"
+              style={{ ...THUMBNAIL_BOX, left: 3, top: -3 }}
+            />
+          )}
+          <span
+            className="relative flex align-items-center justify-content-center border-round-sm border-1 surface-border surface-ground overflow-hidden"
+            style={THUMBNAIL_BOX}
+          >
+            <img
+              className="max-w-full max-h-full"
+              src={`data:image/png;base64,${thumbnail}`}
+              alt=""
+            />
+          </span>
+          <span
+            className="absolute flex align-items-center justify-content-center border-round-sm"
+            style={{
+              right: -5,
+              bottom: -4,
+              width: 14,
+              height: 14,
+              color: accent,
+              background: "var(--surface-card)",
+              boxShadow: `0 0 0 1px ${tint(accent, 40)}`,
+            }}
+          >
+            <IconComponent
+              name={entry?.iconName ?? "circle"}
+              size="xs"
+            />
+          </span>
+          {moreTemplates > 0 && (
+            <span
+              className="absolute flex align-items-center justify-content-center bg-primary font-bold border-round-3xl"
+              style={{ right: -7, top: -6, minWidth: 16, height: 14, padding: "0 3px", fontSize: 9 }}
+              title={`${moreTemplates} more ${moreTemplates === 1 ? "template" : "templates"}`}
+            >
+              +{moreTemplates}
+            </span>
+          )}
+        </span>
       ) : (
         <span
           className="flex align-items-center justify-content-center flex-shrink-0 w-2rem h-2rem border-round-sm"

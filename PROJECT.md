@@ -449,7 +449,7 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 | `FlowViewports` | One screen size to test at. |
 | `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
-| `FlowTemplates` | A template image of a flow: its file name, the blob, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
+| `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
 | `FlowStepTemplates` | A step's link to a template, with the step's own accuracy, required flag and order. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
 | `Executions` | One walk of a flow, at one viewport, with one data row. |
@@ -460,7 +460,10 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 `BaseDbModel` gives every row `Id`, `CreatedOn` and `UpdatedOn`, stamped at save by
 `TimestampInterceptor` from the injected `TimeProvider` - an interceptor rather than a
 `SaveChanges` override because the context factory is pooled, and a pooled context may only have
-the one options constructor. Enums are stored as strings (`HasConversion<string>()`) — which means
+the one options constructor. `TemplateThumbnailInterceptor` makes a template's thumbnail the same
+way, whenever its picture is added or changed: a capture, an edit, an import and a recording all
+leave the tree showing the picture that was saved, and a template saved before thumbnails existed
+gets one the next time a save loads it, even if nothing about it changed. Enums are stored as strings (`HasConversion<string>()`) — which means
 a migration adding one needs a **parseable** `defaultValue`, not `""`.
 
 A schema change is a migration, and existing data is not converted: the database is disposable
@@ -1766,6 +1769,10 @@ Flow 5 and FlowStep 5 the same node as far as selection and expansion are concer
 
 For the same reason `FlowStep.getTreeNodes` takes `{ id, isFlow }` rather than a bare id.
 
+**A search row shows its template.** The first template's thumbnail takes the icon's place, the
+step's icon sits on its corner, and a step with more templates stacks them behind it with "+2". The
+row reads the thumbnail from `FlowStepTreeNodeProjection`, never the picture itself.
+
 **Copy and paste.** A selected step shows Copy, which takes it and everything under it. A bar
 over the tree then names what was copied, with × to forget it, and every + has Paste here beside it.
 There is one copy at a time. It stays after a paste, and goes when another flow is opened. A Success
@@ -1945,17 +1952,17 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-813 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+820 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
 | `Business.Tests` | 606 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
-| `DataAccess.Tests` | 9 | migrations, the model matching them, timestamps, and every delete rule |
+| `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 9 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
-| `Platform.Windows.Tests` | 6 | grouping clicked elements, and a template with erased pixels beside a flat patch, on drawn screenshots |
+| `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2065,7 +2072,7 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 813 backend tests.
+directions, and the AI assistant with Ollama or OpenAI. 820 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

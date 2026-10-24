@@ -45,5 +45,12 @@ namespace Core.Ports
         /// original when it already is. How large is the caller's decision; doing it is not.
         /// </summary>
         byte[] Downscale(byte[] jpeg, int maxEdge, int quality);
+
+        /// <summary>
+        /// A template image small enough for a list to show, its longest edge at most
+        /// <paramref name="maxEdge"/>. Stays PNG with its erased pixels; the original when it is
+        /// already that small, null when the bytes are not a readable image.
+        /// </summary>
+        byte[]? Thumbnail(byte[] png, int maxEdge);
     }
 }
