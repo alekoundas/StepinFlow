@@ -35,6 +35,7 @@ than editing these.
 | 8f · Editor: Add template, capture now or reuse one | `EditorTemplateAdd.dc.html`, with `dialog="add"` |
 | 8g · Editor: Reuse a template, picked by its picture | `EditorTemplateReuse.dc.html`, with `dialog="reuse"` |
 | 8h · Editor: Editing a template two steps share | `EditorTemplateShared.dc.html`, with `dialog="shared"` |
+| 8i · Editor: a smaller tree, and a step with three templates | `EditorTreeSize.dc.html`, with `step="inv"` and `size="80"` |
 | Fallback · step through the recording by hand | `ManualWizard.dc.html` |
 | Foundations · tokens and parts | `Foundations.dc.html` |
 | Home · what executed, what is waiting | `Home.dc.html` |

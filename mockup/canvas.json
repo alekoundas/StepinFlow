@@ -215,6 +215,15 @@
       "w": 1440,
       "x": 22800,
       "y": 0
+    },
+    "EditorTreeSize.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8i · Editor: a smaller tree, and a step with three templates",
+      "w": 1440,
+      "x": 24320,
+      "y": 0
     }
   },
   "createdOnFiles": {
@@ -261,6 +270,7 @@
     "EditorTemplateAdd.dc.html",
     "EditorTemplateReuse.dc.html",
     "EditorTemplateShared.dc.html",
+    "EditorTreeSize.dc.html",
     "ManualWizard.dc.html",
     "Foundations.dc.html",
     "Home.dc.html",

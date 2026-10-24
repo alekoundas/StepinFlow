@@ -13,6 +13,8 @@
 <style>
 body{margin:0;background:#0B0C10}
 a{color:#8FA3FF}a:hover{color:#B8C5FF}
+@property --ring{syntax:'<angle>';inherits:false;initial-value:0deg}
+@media (prefers-reduced-motion:no-preference){@keyframes sf-ring{from{--ring:0deg}to{--ring:360deg}}}
 </style>
 </helmet>
 <div style="position: relative; min-height: 960px; display: flex; flex-wrap: wrap; background: #0B0C10; color: #ECEEF2; font-family: 'Geist', system-ui, sans-serif; font-size: 14px; line-height: 1.45">
@@ -56,22 +58,41 @@ Execute</button>
 
 <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
 <section aria-label="{{ sectionLabel }}" style="flex: 999 1 460px; min-width: 0; border-right: 1px solid {{ sectionBorder }}; display: flex; flex-direction: column">
-<div role="tablist" aria-label="Flow parts" style="display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid #1E222B; flex-wrap: wrap">
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 16px 0; border-bottom: 1px solid #1E222B; flex-wrap: wrap">
+<div role="tablist" aria-label="Flow parts" style="display: flex; gap: 4px; flex-wrap: wrap">
 <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
 <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.pick }}" style="display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid {{ t.line }}; background: transparent; color: {{ t.fg }}; font: inherit; font-size: 13px; font-weight: {{ t.weight }}; cursor: pointer">{{ t.label }}<sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ true }}"><span style="color: #5D6473">{{ t.count }}</span></sc-if><sc-if value="{{ t.warn }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2B33D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Needs fixing"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></sc-if></button>
 </sc-for>
 </div>
+<sc-if value="{{ isFlow }}" hint-placeholder-val="{{ true }}">
+<div role="group" aria-label="Step size" style="margin-left: auto; margin-bottom: 4px; display: inline-flex; align-items: center; border: 1px solid #313644; border-radius: 8px; overflow: hidden">
+<button type="button" aria-label="Smaller steps" onClick="{{ size.smaller }}" style="width: 30px; height: 28px; border: 0; background: transparent; color: {{ size.smallerFg }}; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<button type="button" title="Back to 100%" onClick="{{ size.reset }}" style="min-width: 50px; height: 28px; padding: 0 6px; border: 0; border-left: 1px solid #313644; border-right: 1px solid #313644; background: transparent; color: #AEB4C0; font: inherit; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer">{{ size.text }}</button>
+<button type="button" aria-label="Larger steps" onClick="{{ size.larger }}" style="width: 30px; height: 28px; border: 0; background: transparent; color: {{ size.largerFg }}; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+</sc-if>
+</div>
 
-<sc-if value="{{ isSteps }}" hint-placeholder-val="{{ true }}">
-<ol aria-label="Step tree" style="list-style: none; margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px">
+<sc-if value="{{ isFlow }}" hint-placeholder-val="{{ true }}">
+<ol aria-label="Step tree" style="list-style: none; margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; zoom: {{ size.zoom }}">
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="14">
 <li style="display: flex; align-items: center; gap: 6px">
 <span aria-hidden="true" style="width: 18px; display: inline-flex; justify-content: center; flex: none"><span style="width: 10px; height: 10px; border-radius: 999px; background: {{ r.bp }}"></span></span>
-<button type="button" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px 0 {{ r.pad }}px; border-radius: 8px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+<button type="button" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px 0 {{ r.pad }}px; border-radius: 9px; border: 2px solid transparent; background: {{ r.bg }}; box-shadow: {{ r.glow }}; animation: {{ r.anim }}; transition: box-shadow 160ms ease; color: inherit; font: inherit; text-align: left; cursor: pointer">
 <span aria-hidden="true" style="width: 14px; color: #5D6473; font-size: 11px; flex: none">{{ r.twisty }}</span>
 <sc-if value="{{ r.isBranch }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: {{ r.tint }}">{{ r.name }}</span></sc-if>
 <sc-if value="{{ r.isStep }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ false }}">
+<span style="position: relative; flex: none; display: inline-flex; margin-right: 2px">
+<sc-if value="{{ r.hasMore }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; left: 3px; top: -3px; width: 40px; height: 26px; border-radius: 5px; background: #AEB4C0; opacity: 0.35"></span></sc-if>
+<span aria-hidden="true" style="position: relative; width: 40px; height: 26px; border-radius: 5px; background: #F6F7F9; color: #234E50; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; overflow: hidden; white-space: nowrap">{{ r.thumb }}</span>
+<span aria-hidden="true" style="position: absolute; right: -5px; bottom: -4px; width: 14px; height: 14px; border-radius: 4px; background: #1F2330; box-shadow: 0 0 0 2px {{ r.cut }}; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700">{{ r.glyph }}</span>
+<sc-if value="{{ r.hasMore }}" hint-placeholder-val="{{ false }}"><span title="{{ r.moreTitle }}" style="position: absolute; right: -7px; top: -6px; min-width: 16px; height: 14px; box-sizing: border-box; padding: 0 3px; border-radius: 999px; background: #8FA3FF; box-shadow: 0 0 0 2px {{ r.cut }}; color: #0C0E14; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700">{{ r.more }}</span></sc-if>
+</span>
+</sc-if>
+<sc-if value="{{ r.noThumb }}" hint-placeholder-val="{{ true }}">
 <span style="width: 22px; height: 22px; border-radius: 6px; background: #1F2330; color: {{ r.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none">{{ r.glyph }}</span>
+</sc-if>
 <span style="font-size: 13px; font-weight: 500; white-space: nowrap">{{ r.name }}</span>
 <span style="font-size: 12px; color: #8790A0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.detail }}</span>
 </sc-if>
@@ -143,7 +164,7 @@ Copy</button>
 <sc-if value="{{ hasAside }}" hint-placeholder-val="{{ true }}">
 <aside aria-labelledby="insp-h" style="flex: 1 1 400px; min-width: 0; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
 
-<sc-if value="{{ isSteps }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ isFlow }}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; align-items: center; gap: 12px">
 <span style="width: 34px; height: 34px; border-radius: 9px; background: #1F2330; color: {{ sel.tint }}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{ sel.glyph }}</span>
 <div style="display: flex; flex-direction: column">
@@ -167,22 +188,23 @@ Copy</button>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
 Add template</button>
 </div>
+<sc-for list="{{ sel.cards }}" as="c" hint-placeholder-count="1">
 <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid #242833; background: #0F1116">
 <div style="display: flex; gap: 14px; align-items: center">
-<span style="width: 56px; height: 56px; border-radius: 8px; background: #F6F7F9; display: inline-flex; align-items: center; justify-content: center; color: #234E50; font-size: 20px; flex: none">{{ sel.thumb }}</span>
+<span style="width: 56px; height: 56px; border-radius: 8px; background: #F6F7F9; display: inline-flex; align-items: center; justify-content: center; color: #234E50; font-size: {{ c.thumbSize }}; overflow: hidden; flex: none">{{ c.thumb }}</span>
 <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
-<span style="font-family: 'Geist Mono', monospace; font-size: 12px">{{ sel.template }}</span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px">{{ c.name }}</span>
 <span style="font-size: 12px; color: #8790A0">Captured in a 1600×1000 area at 120 dpi</span>
-<sc-if value="{{ sel.isShared }}" hint-placeholder-val="{{ true }}">
-<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8FA3FF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>{{ sel.sharedText }}</span>
+<sc-if value="{{ c.isShared }}" hint-placeholder-val="{{ true }}">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8FA3FF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>{{ c.sharedText }}</span>
 </sc-if>
 </div>
 <div style="position: relative; flex: none">
-<button type="button" aria-label="Template actions" aria-haspopup="menu" aria-expanded="{{ menuExpanded }}" onClick="{{ toggleMenu }}" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid {{ menuBorder }}; background: transparent; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<button type="button" aria-label="Template actions" aria-haspopup="menu" aria-expanded="{{ c.menuExpanded }}" onClick="{{ c.toggleMenu }}" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid {{ c.menuBorder }}; background: transparent; color: #AEB4C0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
-<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ c.menuOpen }}" hint-placeholder-val="{{ false }}">
 <ul role="menu" aria-label="Template actions" style="position: absolute; right: 0; top: 38px; z-index: 5; width: 280px; list-style: none; margin: 0; padding: 4px; border-radius: 10px; border: 1px solid #313644; background: #14161C; box-shadow: 0 16px 40px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 1px">
-<sc-for list="{{ menu }}" as="m" hint-placeholder-count="4">
+<sc-for list="{{ c.menu }}" as="m" hint-placeholder-count="4">
 <li role="none"><button type="button" role="menuitem" onClick="{{ m.act }}" style="width: 100%; display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 7px; border: 0; background: transparent; color: {{ m.fg }}; font: inherit; font-size: 13px; text-align: left; cursor: pointer">{{ m.label }}<span style="font-size: 12px; color: #8790A0">{{ m.note }}</span></button></li>
 </sc-for>
 </ul>
@@ -190,11 +212,12 @@ Add template</button>
 </div>
 </div>
 <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
-<label for="acc" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #AEB4C0">Accuracy <span style="font-family: 'Geist Mono', monospace; color: #ECEEF2">0.80</span></label>
-<input id="acc" type="range" min="0.5" max="1" step="0.01" value="0.8" style="flex: 1 1 140px; accent-color: #8FA3FF">
+<label for="acc-{{ c.key }}" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #AEB4C0">Accuracy <span style="font-family: 'Geist Mono', monospace; color: #ECEEF2">0.80</span></label>
+<input id="acc-{{ c.key }}" type="range" min="0.5" max="1" step="0.01" value="0.8" style="flex: 1 1 140px; accent-color: #8FA3FF">
 <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #8FA3FF; margin: 0">Required</label>
 </div>
 </div>
+</sc-for>
 <sc-if value="{{ sel.isShared }}" hint-placeholder-val="{{ true }}">
 <span style="font-size: 12px; color: #8790A0">Accuracy and Required are this step’s own. The picture and its click point are shared.</span>
 </sc-if>
@@ -509,13 +532,13 @@ Add template</button>
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["steps","areas","locations","inputs","templates","script"],"default":"steps"},"issue":{"editor":"boolean","default":false},"dialog":{"editor":"enum","options":["none","add","reuse","shared"],"default":"none"},"$preview":{"width":1440,"height":960}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["flow","areas","locations","inputs","templates","script"],"default":"flow"},"step":{"editor":"enum","options":["dl","inv","email"],"default":"dl"},"size":{"editor":"enum","options":["70","80","90","100","110","120","130"],"default":"100"},"issue":{"editor":"boolean","default":false},"dialog":{"editor":"enum","options":["none","add","reuse","shared"],"default":"none"},"$preview":{"width":1440,"height":960}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    const tab = props.tab || 'steps';
+    const tab = props.tab || 'flow';
     const dialog = props.dialog || 'none';
-    this.state = { tab, selected: 'dl', banner: tab === 'steps' && dialog === 'none', area: 'bp', loc: 'pdf', input: 'email', tpl: 'x9p4a', dialog, menu: false, reuse: '' };
+    this.state = { tab, selected: props.step || 'dl', banner: tab === 'flow' && dialog === 'none', area: 'bp', loc: 'pdf', input: 'email', tpl: 'x9p4a', dialog, menu: '', reuse: '', size: Number(props.size) || 100 };
   }
   renderVals() {
     // A board that shows a location needing a fix after its area changed.
@@ -535,7 +558,7 @@ class Component extends DCLogic {
       step('k2', 2, 'K', I, 'Keyboard Input', 'Press Enter', ''),
       branch('f1', 1, false),
       step('e1', 2, 'E', E, 'End Execution', 'End Execution', 'failed · the sign-in page never appeared'),
-      step('inv', 0, 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', '▸', { isSearch: true, thumb: 'Invoices', template: 'template-v8k1d.png', comment: 'recorded after a 3.8s wait' }),
+      step('inv', 0, 'W', P, 'Wait For Image', 'Invoices menu', 'up to 11.4 s', '▸', { isSearch: true, thumb: 'Invoices', template: 'template-v8k1d.png', extra: ['w3j6p', 'b5n8t'], comment: 'recorded after a 3.8s wait' }),
       step('dr', 0, 'W', P, 'Wait For Image', 'Date range filter', 'up to 10 s', '▸', { isSearch: true, thumb: 'Date', template: 'template-r2n7c.png', comment: '' }),
       step('lm', 0, 'W', P, 'Wait For Image', 'Last month option', 'up to 10 s', '▸', { isSearch: true, thumb: 'Last', template: 'template-h5t3w.png', comment: '' }),
       step('ll', 0, 'W', P, 'Wait For Image', 'Invoice list loaded', 'up to 10 s', '▸', { isSearch: true, thumb: '⤓', template: 'template-x9p4a.png', comment: 'One download icon on every row: wait for the first, then click them all.' }),
@@ -544,16 +567,23 @@ class Component extends DCLogic {
       step('m2', 2, 'M', I, 'Cursor Move', 'Move cursor 2', 'to Download buttons, this pass’s match'),
       step('c2', 2, 'C', I, 'Cursor Click', 'Click 2', ''),
     ];
+    // The picked row wears a ring from its step's colour into the accent, turning once as it is picked.
+    const ring = (tint) => 'linear-gradient(#151926, #151926) padding-box, conic-gradient(from var(--ring, 0deg), ' + tint + ', #8FA3FF, #C4B5FD, ' + tint + ') border-box';
     const rows = defs.map((d) => {
       const on = this.state.selected === d.id;
+      const more = d.extra ? d.extra.length : 0;
       return {
         ...d,
         pad: 6 + d.depth * 20,
         bp: d.bp ? '#FF5D6C' : 'transparent',
         pressed: on ? 'true' : 'false',
-        bg: on ? '#1A1F2C' : 'transparent',
-        border: on ? '#2E3650' : 'transparent',
-        pick: () => this.setState({ selected: d.id }),
+        bg: on ? ring(d.tint) : 'transparent',
+        glow: on ? '0 0 0 3px ' + d.tint + '1F, 0 8px 22px -10px ' + d.tint : 'none',
+        anim: on ? 'sf-ring 900ms cubic-bezier(0.2, 0.7, 0.2, 1)' : 'none',
+        cut: on ? '#151926' : '#0B0C10',
+        hasThumb: !!d.thumb, noThumb: !d.thumb,
+        hasMore: more > 0, more: '+' + more, moreTitle: more + ' more templates',
+        pick: () => this.setState({ selected: d.id, menu: '' }),
       };
     });
     // Named by their settings, so they have no Name field.
@@ -581,6 +611,8 @@ class Component extends DCLogic {
     const templates = [
       { id: 'e4m2q', name: 'template-e4m2q.png', thumb: 'Email', click: '130, 20', used: ['email'] },
       { id: 'v8k1d', name: 'template-v8k1d.png', thumb: 'Invoices', click: '59, 15', used: ['inv'] },
+      { id: 'w3j6p', name: 'template-w3j6p.png', thumb: 'Billing', click: '52, 15', used: ['inv'] },
+      { id: 'b5n8t', name: 'template-b5n8t.png', thumb: '☰', click: '12, 12', used: ['inv'] },
       { id: 'r2n7c', name: 'template-r2n7c.png', thumb: 'Date', click: '67, 15', used: ['dr'] },
       { id: 'h5t3w', name: 'template-h5t3w.png', thumb: 'Last', click: '70, 13', used: ['lm'] },
       { id: 'x9p4a', name: 'template-x9p4a.png', thumb: '⤓', click: '12, 12', used: ['ll', 'dl'] },
@@ -589,7 +621,7 @@ class Component extends DCLogic {
     const usedText = (ids) => (ids.length ? steps(ids.length) : 'unused');
     const usedChips = (ids) => ids.map((id) => {
       const s = defs.find((x) => x.id === id);
-      return { glyph: s.glyph, tint: s.tint, name: s.name, open: () => this.setState({ tab: 'steps', selected: id, dialog: 'none' }) };
+      return { glyph: s.glyph, tint: s.tint, name: s.name, open: () => this.setState({ tab: 'flow', selected: id, dialog: 'none', menu: '' }) };
     });
     const stepNames = (ids) => ids.map((id) => defs.find((x) => x.id === id).name).join(', ');
 
@@ -600,9 +632,9 @@ class Component extends DCLogic {
     sel.isShared = others.length > 0;
     sel.sharedText = 'Shared · also used by ' + stepNames(others);
 
-    const open = (dialog) => () => this.setState({ dialog, menu: false });
-    const closeMenu = () => this.setState({ menu: false });
-    const menuItems = sel.isShared
+    const open = (dialog) => () => this.setState({ dialog, menu: '' });
+    const closeMenu = () => this.setState({ menu: '' });
+    const menuFor = (shared) => (shared
       ? [
         { label: 'Edit image', note: 'Changes it for all ' + userIds.length + ' steps', act: open('shared') },
         { label: 'Set click point', note: 'Changes it for all ' + userIds.length + ' steps', act: open('shared') },
@@ -613,8 +645,18 @@ class Component extends DCLogic {
         { label: 'Edit image', note: 'Only this step uses it', act: closeMenu },
         { label: 'Set click point', note: 'Where a Move to this step lands', act: closeMenu },
         { label: 'Remove from this step', note: 'No other step uses it, so it goes', act: closeMenu, danger: true },
-      ];
-    const menu = menuItems.map((m) => ({ ...m, fg: m.danger ? '#FF7A86' : '#ECEEF2' }));
+      ]).map((m) => ({ ...m, fg: m.danger ? '#FF7A86' : '#ECEEF2' }));
+    // One card per template the step looks for, each with its own menu.
+    const cardOf = (t, shared) => {
+      const isOpen = this.state.menu === t.id;
+      return {
+        key: t.id, thumb: t.thumb, thumbSize: t.thumb.length > 2 ? '12px' : '20px', name: t.name, isShared: shared, sharedText: sel.sharedText, menu: menuFor(shared),
+        menuOpen: isOpen, menuExpanded: isOpen ? 'true' : 'false', menuBorder: isOpen ? '#8FA3FF' : '#313644',
+        toggleMenu: () => this.setState({ menu: isOpen ? '' : t.id }),
+      };
+    };
+    const extras = (d.extra || []).map((id) => templates.find((x) => x.id === id));
+    sel.cards = selTpl ? [cardOf(selTpl, sel.isShared), ...extras.map((t) => cardOf(t, false))] : [];
 
     const dialog = this.state.dialog;
     const dlg = {
@@ -633,7 +675,7 @@ class Component extends DCLogic {
       hasPick: !!picked, noPick: !picked, thumb: picked ? picked.thumb : '', name: picked ? picked.name : '',
       addBg: picked ? '#8FA3FF' : '#2A2F3D', addFg: picked ? '#0C0E14' : '#7D8597',
       options: templates.map((t) => {
-        const onStep = t.name === d.template;
+        const onStep = t.name === d.template || (d.extra || []).includes(t.id);
         const on = this.state.reuse === t.id;
         return {
           thumb: t.thumb, name: t.name, used: 'Used by ' + stepNames(t.used),
@@ -647,7 +689,7 @@ class Component extends DCLogic {
     const warnCount = issue ? 1 : 0;
 
     const tabDefs = [
-      { id: 'steps', label: 'Steps', count: '' },
+      { id: 'flow', label: 'Flow', count: '' },
       { id: 'areas', label: 'Areas', count: String(areas.length) },
       { id: 'locations', label: 'Locations', count: String(locations.length), warn: warnCount > 0 },
       { id: 'inputs', label: 'Inputs', count: String(inputs.length) },
@@ -758,6 +800,8 @@ class Component extends DCLogic {
       'Templates:',
       '  <[ template-e4m2q.png ]>    click 130 20   captured 1600x1000 at 120dpi',
       '  <[ template-v8k1d.png ]>    click 59 15   captured 1600x1000 at 120dpi',
+      '  <[ template-w3j6p.png ]>    click 52 15   captured 1600x1000 at 120dpi',
+      '  <[ template-b5n8t.png ]>    click 12 12   captured 1600x1000 at 120dpi',
       '  <[ template-r2n7c.png ]>    click 67 15   captured 1600x1000 at 120dpi',
       '  <[ template-h5t3w.png ]>    click 70 13   captured 1600x1000 at 120dpi',
       '  <[ template-x9p4a.png ]>    click 12 12   captured 1600x1000 at 120dpi',
@@ -777,7 +821,7 @@ class Component extends DCLogic {
       '  End Execution  failed  <[ the sign-in page never appeared ]>',
       '',
       '# recorded after a 3.8s wait',
-      'Wait For Image  <[ Invoices menu ]>   template <[ template-v8k1d.png ]>   in <[ Billing portal ]>   timeout 11400ms',
+      'Wait For Image  <[ Invoices menu ]>   template <[ template-v8k1d.png ]>   template <[ template-w3j6p.png ]>   template <[ template-b5n8t.png ]>   in <[ Billing portal ]>   timeout 11400ms',
       ' Success:',
       '  Move    to <[ Invoices menu ]>',
       '  Click',
@@ -826,15 +870,20 @@ class Component extends DCLogic {
     };
     const lines = script.map((text, i) => ({ no: i + 1, segs: paint(text) }));
 
-    const sectionLabel = { steps: 'Steps', areas: 'Areas', locations: 'Locations', inputs: 'Inputs', templates: 'Templates', script: 'Script' }[tab];
+    const sectionLabel = { flow: 'Flow', areas: 'Areas', locations: 'Locations', inputs: 'Inputs', templates: 'Templates', script: 'Script' }[tab];
     return {
       rows, sel, tabs, items, tiles, lines, part, ar, lc, ip, tp, listNote, addLabel, sectionLabel,
-      menu, menuOpen: this.state.menu, menuExpanded: this.state.menu ? 'true' : 'false', menuBorder: this.state.menu ? '#8FA3FF' : '#313644',
-      toggleMenu: () => this.setState({ menu: !this.state.menu }),
+      size: {
+        zoom: String(this.state.size / 100), text: this.state.size + '%',
+        smaller: () => this.setState({ size: Math.max(70, this.state.size - 10) }),
+        larger: () => this.setState({ size: Math.min(130, this.state.size + 10) }),
+        reset: () => this.setState({ size: 100 }),
+        smallerFg: this.state.size > 70 ? '#ECEEF2' : '#4A5060', largerFg: this.state.size < 130 ? '#ECEEF2' : '#4A5060',
+      },
       dlg, strip, reuse, sharedUsers: usedChips(userIds),
       hasDialog: dialog !== 'none', dlgAdd: dialog === 'add', dlgReuse: dialog === 'reuse', dlgShared: dialog === 'shared',
       openAdd: open('add'), toReuse: open('reuse'), toAdd: open('add'), closeDialog: open('none'),
-      isSteps: tab === 'steps', isAreas: tab === 'areas', isLocations: tab === 'locations', isInputs: tab === 'inputs',
+      isFlow: tab === 'flow', isAreas: tab === 'areas', isLocations: tab === 'locations', isInputs: tab === 'inputs',
       isTemplates: tab === 'templates', isScript: tab === 'script',
       isList: tab === 'areas' || tab === 'locations' || tab === 'inputs',
       isPart: tab === 'areas' || tab === 'locations' || tab === 'inputs' || tab === 'templates',
