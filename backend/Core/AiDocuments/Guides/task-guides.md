@@ -79,6 +79,26 @@ lines in the script. A template the file names that is not in the folder beside 
 without a picture, and a secret input has no value in the file: it is asked for when the flow
 executes.
 
+## Keeping a flow's history and seeing what changed
+
+Every flow is also kept as its `.sflw` file, with its template images beside it, in a git
+repository the app makes the first time it starts. Saving a flow writes its files there within a
+second; nothing has to be exported. The first launch commits every flow as it is, so each edit
+after that shows as a change.
+
+Committing is never automatic. The top of the editor shows the branch and how many of this flow's
+files changed since the last commit; the count opens the **Script** tab's **Changes**, which shows
+the script against the last commit, unchanged lines folded, and each changed template image before
+and after. **Commit** lists every changed file - this flow's ticked, other flows' not - with a
+message filled in from what changed, and records exactly the ticked files. **History** on the same
+tab lists the commits that changed the flow, newest first, each shown against the one before it.
+The Flows page marks a flow with changes not committed yet.
+
+**Settings › Repository** shows the folder, with Open folder, and the name and email commits are
+made as; left empty, they come from the computer's git configuration. The folder belongs to the
+app: a file changed there by another program is replaced the next time that flow is saved. Putting
+a flow back as it was, branches and a remote such as GitHub are not there yet.
+
 ## Being told when a flow fails
 
 Cover: a `NOTIFY` step in a Failure branch, reporting on the parent step, and what a `SEARCH_IMAGE`

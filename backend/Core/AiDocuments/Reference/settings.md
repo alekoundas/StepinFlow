@@ -8,6 +8,14 @@ step. Nothing is written while a flow succeeds.
 **Screenshots kept per execution** — how many screenshots an execution leaves behind so you can see what a step
 was looking at. Zero keeps none.
 
+## Repository
+
+Where every flow is kept as a file, in a git repository on this computer, with **Open folder**, the
+branch, the number of commits and how many flows have changes not committed yet.
+
+**Name** and **Email** — who every commit is by. Left empty, they come from the computer's git
+configuration, shown in the empty field; with neither, the commit is by the computer's user name.
+
 ## AI
 
 **AI provider** — `NONE`, `OLLAMA` or `OPENAI`. Nothing AI-related is available until one is

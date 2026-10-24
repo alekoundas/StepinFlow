@@ -15,7 +15,7 @@ namespace Business.FlowScript.Text.Header
 
         protected override void Compose()
         {
-            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] [tab url contains <[ z ]>] [with frame] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             WriteQuote(_area.Name);
             WriteGapUntil(NAME_GAP_UNTIL);
 
@@ -88,6 +88,24 @@ namespace Business.FlowScript.Text.Header
                         WriteKeyword(ScriptSymbolEnum.TITLE);
                         WriteKeyword(_area.TitleMatchMode);
                         WriteQuote(_area.TitlePattern);
+                    }
+
+                    // The window above is the browser, and this picks the tab in it. A tab is only
+                    // ever matched by what it contains.
+                    if (_area.Type == FlowAreaTypeEnum.BROWSER_TAB)
+                    {
+                        WriteGap();
+                        WriteKeyword(ScriptSymbolEnum.TAB);
+                        WriteKeyword(_area.TabMatchOn);
+                        WriteKeyword(TitleMatchModeEnum.CONTAINS);
+                        WriteQuote(_area.TabMatchValue);
+                    }
+
+                    // Without it the area leaves out the title bar and borders, which is nearly always wanted.
+                    if (!_area.UseClientArea)
+                    {
+                        WriteGap();
+                        WriteKeyword(ScriptSymbolEnum.WITH_FRAME);
                     }
                     break;
             }

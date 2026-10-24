@@ -15,7 +15,7 @@ on one machine can work on another.
 | `CUSTOM` | A rectangle you drew. Can sit inside another area; with nothing around it, it is fixed screen coordinates. |
 | `APPLICATION` | A window, found by process name and title pattern. |
 | `MONITOR` | A whole screen. **Primary monitor** is whichever monitor is primary, the one choice that means the same thing on another PC. A named one (`\\.\DISPLAY2`) can be renumbered when monitors are plugged in or out. |
-| `BROWSER_TAB` | Modelled but not implemented. The resolver reports that it is not supported yet. |
+| `BROWSER_TAB` | A tab inside a browser window, by what its title or address contains - `tab url contains <[ /cart ]>` after the window in the script. Modelled but not implemented: the resolver reports that it is not supported yet. |
 
 ## Application areas
 
@@ -26,6 +26,7 @@ When several windows match, the frontmost one is used. There is no instance inde
 
 **Client area** is an option. With it on, the area covers the window's content and excludes the
 title bar and borders, so a window with a different border style does not shift everything inside.
+It is on unless the window's line in the script ends with `with frame`.
 
 ## Nesting areas inside other areas
 

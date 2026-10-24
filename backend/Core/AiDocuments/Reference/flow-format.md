@@ -225,6 +225,21 @@ A root area is one of three things:
 | `monitor primary`, `monitor <[ \\.\DISPLAY2 ]>` | a whole monitor; `primary` is the one that means the same thing on another PC |
 | `on screen   offset 10 20  size 300 200` | fixed screen coordinates - right on the machine it was made on and nowhere else |
 
+A window takes two optional clauses after its title, in this order:
+
+- **`tab title contains <[ … ]>`** or **`tab url contains <[ … ]>`** - the tab inside that browser
+  window, by what its title or its address contains. The area is then that tab's page rather than
+  the whole window. Read and written, but not yet found when a flow executes: a step that searches
+  in one fails, saying so.
+- **`with frame`** - the window's title bar and borders are part of the area. Left out, the area is
+  the window's content only, which is nearly always wanted: a different border style then shifts
+  nothing inside it.
+
+```
+  <[ Cart ]>        window process <[ chrome.exe ]> title contains <[ Shop ]>   tab url contains <[ /cart ]>
+  <[ Game ]>        window process <[ game.exe ]>   with frame
+```
+
 A child area is placed inside its parent, either by **ratio** (`ratio x y size width height`, each
 0–1) or by fixed **offset and size** in pixels (`offset x y size width height`). Both say where the
 area starts and how big it is, so both are written the same way.
@@ -590,7 +605,7 @@ A path relative to the repository root, because names are only unique within a f
 ```
 flows/
   login.sflw
-  login.csv            ← values, gitignored
+  login.csv            ← values, committed: a secret is never in it
   login/
     template-l8p4w.png
     template-u9d3n.png

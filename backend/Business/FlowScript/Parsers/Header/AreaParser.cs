@@ -16,7 +16,7 @@ namespace Business.FlowScript.Parsers.Header
 
         public override FlowArea Parse()
         {
-            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] [tab url contains <[ z ]>] [with frame] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
@@ -40,6 +40,19 @@ namespace Business.FlowScript.Parsers.Header
                     area.TitlePattern = ExtractText();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                 }
+
+                // The window above is the browser, and this picks the tab in it.
+                if (ExpectOptionalKeyword(ScriptSymbolEnum.TAB))
+                {
+                    area.Type = FlowAreaTypeEnum.BROWSER_TAB;
+                    area.TabMatchOn = ExtractKeyword<TabMatchOnEnum>();
+                    ExpectKeyword(TitleMatchModeEnum.CONTAINS);
+                    ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+                    area.TabMatchValue = ExtractText();
+                    ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+                }
+
+                area.UseClientArea = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
             }
             // Empty is the primary monitor. A device is quoted, so one called primary is not mistaken for it.
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.MONITOR))
