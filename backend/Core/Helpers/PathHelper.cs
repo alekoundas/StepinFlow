@@ -54,6 +54,16 @@
             return path;
         }
 
+        public static string GetRepositoryPath()
+        {
+            string path = Path.Combine(_appDataPath, _appFolderName, "Repository");
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            return path;
+        }
+
         public static string GetExecutionRunPath(string flowName, DateTime startedOn)
         {
             string safeName = FileNameHelper.Clean(flowName, "Flow");
