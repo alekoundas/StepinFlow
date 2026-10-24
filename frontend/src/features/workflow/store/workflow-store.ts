@@ -4,7 +4,7 @@ import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-en
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 /** The editor's tabs: the flow's steps and the parts they use, then the script they make. */
-export type WorkflowTab = "steps" | "areas" | "locations" | "inputs" | "templates" | "script";
+export type WorkflowTab = "flow" | "areas" | "locations" | "inputs" | "templates" | "script";
 
 /** The step Copy took. One at a time, kept after a paste, and only for the flow it came from. */
 export interface CopiedStep {
@@ -53,7 +53,7 @@ export const useWorkflowStore = create<Props>()(
     treeRefreshTrigger: undefined,
     rootFlowId: undefined,
     copiedStep: undefined,
-    activeTab: "steps",
+    activeTab: "flow",
     stepToReveal: null,
 
     setSelectedTreeNode: (dto: TreeNodeDto | undefined): void =>
@@ -75,8 +75,8 @@ export const useWorkflowStore = create<Props>()(
 
     setActiveTab: (tab: WorkflowTab): void => set({ activeTab: tab }),
 
-    // Opening a step is opening the Steps tab too.
+    // Opening a step is opening the Flow tab too.
     setStepToReveal: (flowStepId: number | null): void =>
-      set(flowStepId == null ? { stepToReveal: null } : { stepToReveal: flowStepId, activeTab: "steps" }),
+      set(flowStepId == null ? { stepToReveal: null } : { stepToReveal: flowStepId, activeTab: "flow" }),
   })),
 );

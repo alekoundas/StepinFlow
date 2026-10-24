@@ -27,7 +27,7 @@ export default function WorkflowPage() {
   const [isExporting, setIsExporting] = useState(false);
 
   // The selection lives in a store that outlives this page. A flow opened here, from the list or
-  // by going back to another, starts with nothing selected, on its Steps tab and with its own
+  // by going back to another, starts with nothing selected, on its Flow tab and with its own
   // root, and leaving lets go of all of it. Before paint, so the panel never shows a frame of the
   // flow that was open before. A copy goes too: it pastes only into the flow it came from.
   useLayoutEffect(() => {
@@ -36,7 +36,7 @@ export default function WorkflowPage() {
       setSelectedFlowStepTypeToAdd(undefined);
       setTreeRefreshTrigger(null);
       setCopiedStep(undefined);
-      setActiveTab("steps");
+      setActiveTab("flow");
     };
 
     clear();

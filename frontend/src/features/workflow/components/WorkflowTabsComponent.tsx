@@ -11,7 +11,7 @@ interface Props {
 }
 
 const TABS: { tab: WorkflowTab; label: string }[] = [
-  { tab: "steps", label: "Steps" },
+  { tab: "flow", label: "Flow" },
   { tab: "areas", label: "Areas" },
   { tab: "locations", label: "Locations" },
   { tab: "inputs", label: "Inputs" },

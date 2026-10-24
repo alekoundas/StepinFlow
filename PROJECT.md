@@ -1737,7 +1737,7 @@ Sub-flows, the flow's name and kind, whether it would execute - the validator's 
 warnings - and Export and Execute. Below, tabs on the left list the flow's parts and the right side
 edits the one picked; a splitter between them remembers its place.
 
-- **Steps:** the tree, and the step or flow form for the row picked. The flow's form keeps its
+- **Flow:** the tree, and the step or flow form for the row picked. The flow's form keeps its
   name, description, sizes and callers.
 - **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
   it, and the picked one's form. Each is created, saved and deleted on its own
@@ -1748,8 +1748,8 @@ edits the one picked; a splitter between them remembers its place.
 - **Script:** the whole width, the script Export writes (`FlowScript.render`), with Copy.
 
 Every "Used by" comes from `Flow.getStepUses`: for each step, its area, its locations, the
-`{{names}}` in its text and its templates. A step in that list opens in the Steps tab, its branches
-loaded and opened down to it. The Steps tab is hidden rather than unmounted while another is open,
+`{{names}}` in its text and its templates. A step in that list opens in the Flow tab, its branches
+loaded and opened down to it. The Flow tab is hidden rather than unmounted while another is open,
 so the tree keeps its open branches and a half-edited step its edits.
 
 Renaming an input does not rename it in the steps that type it; the validator says which ones still

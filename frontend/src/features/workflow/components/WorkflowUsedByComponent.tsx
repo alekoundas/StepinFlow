@@ -10,7 +10,7 @@ interface Props {
   emptyText: string;
 }
 
-/** The steps a part reaches. Each one opens in the Steps tab, its branches expanded down to it. */
+/** The steps a part reaches. Each one opens in the Flow tab, its branches expanded down to it. */
 export function WorkflowUsedByComponent({ steps, emptyText }: Props) {
   const setStepToReveal = useWorkflowStore((x) => x.setStepToReveal);
 

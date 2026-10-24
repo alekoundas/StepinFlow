@@ -30,7 +30,7 @@ interface Props {
  * The editor below its header: the tabs and what each lists on the left, the picked one's form on
  * the right. The Script tab takes the whole width.
  *
- * The Steps tab is hidden rather than unmounted while another is open, so the tree keeps the
+ * The Flow tab is hidden rather than unmounted while another is open, so the tree keeps the
  * branches that were open and a half-edited step keeps its edits.
  */
 export function WorkflowEditorComponent({ flowId, flow }: Props) {
@@ -43,7 +43,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const [input, setInput] = useState<WorkflowPartSelection>(null);
   const [templateId, setTemplateId] = useState<number | null>(null);
 
-  const isSteps = activeTab === "steps";
+  const isFlow = activeTab === "flow";
   const isScript = activeTab === "script";
 
   const tabs = (
@@ -72,7 +72,8 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
         >
           {tabs}
 
-          <div className={classNames("flex flex-column flex-1 min-h-0", { hidden: !isSteps })}>
+          {/* Never flex and hidden together: PrimeFlex's flex comes later and wins. */}
+          <div className={classNames("flex-column flex-1 min-h-0", isFlow ? "flex" : "hidden")}>
             <CopiedStepBarComponent />
             <ScrollPanel
               className="flex-1 px-2"
@@ -82,7 +83,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
             </ScrollPanel>
           </div>
 
-          {!isSteps && flow && (
+          {!isFlow && flow && (
             <ScrollPanel
               className="flex-1"
               style={{ minHeight: 0 }}
@@ -130,7 +131,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
           style={{ overflow: "hidden" }}
         >
           <ScrollPanel
-            className={classNames("flex-1", { hidden: !isSteps })}
+            className={classNames("flex-1", { hidden: !isFlow })}
             style={{ minHeight: 0 }}
           >
             <div className="p-4">
@@ -138,7 +139,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
             </div>
           </ScrollPanel>
 
-          {!isSteps && flow && (
+          {!isFlow && flow && (
             <ScrollPanel
               className="flex-1"
               style={{ minHeight: 0 }}
