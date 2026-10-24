@@ -40,6 +40,16 @@ export function WorkflowContentComponent() {
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
   const [modeNodeKey, setModeNodeKey] = useState<string | undefined>(undefined);
 
+  // react-hook-form reads its values once, on mount, and measures every change against them. A
+  // save or a Cancel starts the form again, from what is saved: otherwise putting a field back to
+  // its value before the save counts as no change, and a cancelled edit stays on screen.
+  const [formVersion, setFormVersion] = useState(0);
+
+  const startFormAgain = () => {
+    setFormVersion((x) => x + 1);
+    setFormMode(FormMode.VIEW);
+  };
+
   // Selecting a different row resets the mode: a placeholder row opens in ADD, a saved one in
   // VIEW. Adjusted during render rather than in an effect, so the form never paints one frame
   // with the mode of the row that was selected before it.
@@ -88,7 +98,7 @@ export function WorkflowContentComponent() {
       isFlow: true,
     });
 
-    setFormMode(FormMode.VIEW);
+    startFormAgain();
   };
 
   const handleSave = async (saveDto: FlowStepDto) => {
@@ -128,7 +138,7 @@ export function WorkflowContentComponent() {
       }
     }
 
-    setFormMode(FormMode.VIEW);
+    startFormAgain();
   };
 
   // ====================== RENDER ======================
@@ -259,11 +269,11 @@ export function WorkflowContentComponent() {
         )}
 
         <FlowFormComponent
-          key={flowId}
+          key={`${flowId}-${formVersion}`}
           formMode={formMode}
           defaultValues={loadedFlow}
           onSubmit={handleFlowSave}
-          onCancel={() => setFormMode(FormMode.VIEW)}
+          onCancel={startFormAgain}
           onEdit={() => setFormMode(FormMode.EDIT)}
         />
       </>,
@@ -324,10 +334,10 @@ export function WorkflowContentComponent() {
       )}
 
       <StepForm
-        key={stepId}
+        key={`${stepId}-${formVersion}`}
         formMode={formMode}
         onSubmit={handleSave}
-        onCancel={() => setFormMode(FormMode.VIEW)}
+        onCancel={startFormAgain}
         onEdit={() => setFormMode(FormMode.EDIT)}
         defaultValues={new FlowStepDto(loadedStep as FlowStepDto)}
       />

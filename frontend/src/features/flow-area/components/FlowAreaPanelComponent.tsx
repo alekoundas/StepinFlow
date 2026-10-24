@@ -77,6 +77,8 @@ export function FlowAreaPanelComponent({ flow, uses, selected, onSelect }: Props
       }
 
       await updateFlowAreaMutation.mutateAsync(dto);
+      // From what was saved, so putting a field back afterwards counts as a change.
+      setResetCount((x) => x + 1);
       setFormMode(FormMode.VIEW);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

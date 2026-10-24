@@ -31,16 +31,18 @@ export function useFlowMutations() {
     },
   });
 
+  // Awaited, so a save resolves once the form can start again from what was saved.
   const updateFlowMutation = useMutation({
     mutationFn: (dto: FlowDto) => backendApiService.Flow.update(dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
-      // Search area / location usage counts are computed server side.
-      queryClient.invalidateQueries({ queryKey: ["flow"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });
-      queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] });
-      queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
+        // Search area / location usage counts are computed server side.
+        queryClient.invalidateQueries({ queryKey: ["flow"] }),
+        queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] }),
+        queryClient.invalidateQueries({ queryKey: ["lookup", "flowArea"] }),
+        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+      ]),
   });
 
   const deleteFlowMutation = useMutation({

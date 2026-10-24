@@ -25,11 +25,13 @@ export function useFlowStepMutations() {
   const queryClient = useQueryClient();
 
   // Anything that changes a step can change what is broken about the flow around it, so the
-  // validation badges are refetched alongside the step itself.
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["flowStep"] });
-    queryClient.invalidateQueries({ queryKey: ["flowValidation"] });
-  };
+  // validation badges are refetched alongside the step itself. Awaited, so a save resolves once
+  // the form can start again from what was saved.
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["flowStep"] }),
+      queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+    ]);
 
   const createFlowStepMutation = useMutation({
     mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.create(dto),
