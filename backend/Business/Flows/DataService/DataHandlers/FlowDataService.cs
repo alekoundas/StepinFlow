@@ -1,5 +1,6 @@
 using Business.FlowScript.Models;
 using Business.Flows.FlowValidationService;
+using Business.Repository;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
@@ -17,10 +18,14 @@ namespace Business.Flows.DataService.DataHandlers
     /// </summary>
     public sealed class FlowDataService : BaseDataService
     {
+        private readonly IGitRepositoryService _gitRepositoryService;
+
         public FlowDataService(
             IDbContextFactory<AppDbContext> dbContextFactory,
-            IFlowValidationService flowValidationService) : base(dbContextFactory, flowValidationService)
+            IFlowValidationService flowValidationService,
+            IGitRepositoryService gitRepositoryService) : base(dbContextFactory, flowValidationService)
         {
+            _gitRepositoryService = gitRepositoryService;
         }
 
 
@@ -42,6 +47,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             dbContext.Flows.Add(flow);
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(flow.Id);
 
             return ResultDto<int>.Success(flow.Id);
         }
@@ -78,6 +84,7 @@ namespace Business.Flows.DataService.DataHandlers
             }
 
             await transaction.CommitAsync(ct);
+            _gitRepositoryService.Changed(flow.Id);
 
             return ResultDto<int>.Success(flow.Id);
         }
@@ -104,6 +111,7 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<bool>.Success(false);
 
             await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
+            _gitRepositoryService.Changed(id);
 
             return ResultDto<bool>.Success(true);
         }
@@ -133,6 +141,7 @@ namespace Business.Flows.DataService.DataHandlers
             SyncViewports(dbContext, flow, dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(flow.Id);
 
             return ResultDto<Flow>.Success(flow);
         }
@@ -144,6 +153,8 @@ namespace Business.Flows.DataService.DataHandlers
             int count = await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
             if (count <= 0)
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
+
+            _gitRepositoryService.Changed(id);
 
             return ResultDto<bool>.Success(true);
         }
@@ -163,6 +174,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             flow.IsSubFlow = true;
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(id);
 
             return ResultDto<bool>.Success(true);
         }
@@ -198,6 +210,9 @@ namespace Business.Flows.DataService.DataHandlers
 
             ResultDto<(int FlowId, FlowValidationResultDto Validation)> replaced = await ReplaceAsync(dbContext, schema, ct);
             await transaction.CommitAsync(ct);
+
+            if (replaced.IsSuccess)
+                _gitRepositoryService.Changed(replaced.Data.FlowId);
 
             return replaced;
         }
@@ -349,6 +364,8 @@ namespace Business.Flows.DataService.DataHandlers
             await dbContext.SaveChangesAsync(ct);
             await FlowTemplateDataService.RemoveUnusedAsync(dbContext, dto.SourceRootId, ct);
             await transaction.CommitAsync(ct);
+            _gitRepositoryService.Changed(dto.SourceRootId);
+            _gitRepositoryService.Changed(subFlow.Id);
 
             return ResultDto<ExtractSubFlowResultDto>.Success(new ExtractSubFlowResultDto
             {

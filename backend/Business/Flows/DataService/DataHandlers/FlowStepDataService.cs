@@ -1,4 +1,5 @@
 using Business.Flows.FlowValidationService;
+using Business.Repository;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
@@ -13,9 +14,12 @@ namespace Business.Flows.DataService.DataHandlers
     /// </summary>
     public sealed class FlowStepDataService : BaseDataService
     {
-        public FlowStepDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
+        private readonly IGitRepositoryService _gitRepositoryService;
+
+        public FlowStepDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, IGitRepositoryService gitRepositoryService)
             : base(dbContextFactory, flowValidationService)
         {
+            _gitRepositoryService = gitRepositoryService;
         }
 
 
@@ -30,7 +34,11 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            return await CreateAsync(dbContext, step, templates, ct);
+            ResultDto<int> created = await CreateAsync(dbContext, step, templates, ct);
+            if (created.IsSuccess)
+                _gitRepositoryService.Changed(step.RootId);
+
+            return created;
         }
 
         /// <summary>
@@ -78,6 +86,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             await dbContext.SaveChangesAsync(ct);
             await FlowTemplateDataService.RemoveUnusedAsync(dbContext, step.RootId, ct);
+            _gitRepositoryService.Changed(step.RootId);
 
             return ResultDto<FlowStep>.Success(step);
         }
@@ -98,6 +107,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             await dbContext.FlowSteps.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
             await FlowTemplateDataService.RemoveUnusedAsync(dbContext, rootId.Value, ct);
+            _gitRepositoryService.Changed(rootId.Value);
 
             return ResultDto<bool>.Success(true);
         }
@@ -110,7 +120,12 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            return await InsertTreeAsync(dbContext, flowId, parentFlowStepId, targetIndex, steps, inputs, ct);
+            // The root flow's id, on success.
+            ResultDto<int> inserted = await InsertTreeAsync(dbContext, flowId, parentFlowStepId, targetIndex, steps, inputs, ct);
+            if (inserted.IsSuccess)
+                _gitRepositoryService.Changed(inserted.Data);
+
+            return inserted;
         }
 
         /// <summary>
@@ -159,6 +174,8 @@ namespace Business.Flows.DataService.DataHandlers
             ResultDto<int> inserted = await InsertTreeAsync(dbContext, dto.TargetFlowId, dto.TargetParentFlowStepId, dto.TargetIndex, copy, [], ct);
             if (!inserted.IsSuccess)
                 return inserted;
+
+            _gitRepositoryService.Changed(sourceRootId.Value);
 
             return ResultDto<int>.Success(source.Id);
         }
@@ -263,6 +280,7 @@ namespace Business.Flows.DataService.DataHandlers
             ClearBrokenReferences(steps, brokenReferences);
 
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(moved.RootId);
 
             return ResultDto<bool>.Success(true);
         }

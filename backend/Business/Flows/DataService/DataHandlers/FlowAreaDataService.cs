@@ -1,4 +1,5 @@
 using Business.Flows.FlowValidationService;
+using Business.Repository;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -12,11 +13,14 @@ namespace Business.Flows.DataService.DataHandlers
     /// </summary>
     public sealed class FlowAreaDataService : BaseDataService
     {
+        private readonly IGitRepositoryService _gitRepositoryService;
+
         public FlowAreaDataService(
             IDbContextFactory<AppDbContext> dbContextFactory,
-            IFlowValidationService flowValidationService
-            ): base(dbContextFactory, flowValidationService)
+            IFlowValidationService flowValidationService,
+            IGitRepositoryService gitRepositoryService): base(dbContextFactory, flowValidationService)
         {
+            _gitRepositoryService = gitRepositoryService;
         }
 
 
@@ -41,6 +45,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             dbContext.FlowAreas.Add(area);
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(area.FlowId);
 
             return ResultDto<int>.Success(area.Id);
         }
@@ -63,6 +68,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             dbContext.Entry(area).CurrentValues.SetValues(dto);
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(area.FlowId);
 
             return ResultDto<FlowArea>.Success(area);
         }
@@ -71,9 +77,13 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
+            int? flowId = await dbContext.FlowAreas.Where(x => x.Id == id).Select(x => (int?)x.FlowId).FirstOrDefaultAsync(ct);
+
             int count = await dbContext.FlowAreas.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
-            if (count <= 0)
+            if (count <= 0 || flowId == null)
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
+
+            _gitRepositoryService.Changed(flowId.Value);
 
             return ResultDto<bool>.Success(true);
         }

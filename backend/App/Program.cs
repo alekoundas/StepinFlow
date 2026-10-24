@@ -34,11 +34,14 @@ using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
 using Business.Ai.Vision;
 using Business.Ai.ScriptRevision;
+using Business.Repository;
 
 using DataAccess;
 
 using Core.Ports;
 using Core.Enums;
+
+using Platform.Shared.Git;
 
 using Platform.Windows.Input;
 using Platform.Windows.Native;
@@ -118,6 +121,11 @@ namespace App
             builder.Services.AddSingleton<IFlowScriptPreviewService, FlowScriptPreviewService>();
             builder.Services.AddSingleton<IFlowStepScriptLineService, FlowStepScriptLineService>();
 
+            // Repository.
+            builder.Services.AddSingleton<IGitService, GitService>();
+            builder.Services.AddSingleton<IGitRepositoryService, GitRepositoryService>();
+            builder.Services.AddHostedService<HostedGitRepositoryService>(); // <- Background service!
+
             builder.Services.AddExecutionEngine();
 
             // AI.
@@ -185,6 +193,12 @@ namespace App
             builder.Services.AddTransient<PreviewFlowScriptHandler>();
             builder.Services.AddTransient<GetFlowScriptExportFolderHandler>();
             builder.Services.AddTransient<RenderFlowScriptHandler>();
+            builder.Services.AddTransient<GetRepositoryStatusHandler>();
+            builder.Services.AddTransient<GetRepositoryChangesHandler>();
+            builder.Services.AddTransient<GetFlowRepositoryChangesHandler>();
+            builder.Services.AddTransient<CommitRepositoryHandler>();
+            builder.Services.AddTransient<GetFlowRepositoryHistoryHandler>();
+            builder.Services.AddTransient<GetFlowRepositoryCommitHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();
@@ -389,6 +403,23 @@ namespace App
                     _logger.LogError(exception, "Building the ai document index failed.");
                 }
             }, cancellationToken);
+        }
+    }
+
+    // Keep the repository's folder a copy of the flows. Off the startup thread: making the
+    // repository and writing every flow is file work the host should not wait for.
+    internal sealed class HostedGitRepositoryService : BackgroundService
+    {
+        private readonly IGitRepositoryService _gitRepositoryService;
+
+        public HostedGitRepositoryService(IGitRepositoryService gitRepositoryService)
+        {
+            _gitRepositoryService = gitRepositoryService;
+        }
+
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            return Task.Run(() => _gitRepositoryService.RunAsync(cancellationToken), cancellationToken);
         }
     }
 }

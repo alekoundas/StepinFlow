@@ -1,4 +1,5 @@
 using Business.Flows.FlowValidationService;
+using Business.Repository;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -13,9 +14,12 @@ namespace Business.Flows.DataService.DataHandlers
     /// </summary>
     public sealed class FlowTemplateDataService : BaseDataService
     {
-        public FlowTemplateDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
+        private readonly IGitRepositoryService _gitRepositoryService;
+
+        public FlowTemplateDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, IGitRepositoryService gitRepositoryService)
             : base(dbContextFactory, flowValidationService)
         {
+            _gitRepositoryService = gitRepositoryService;
         }
 
 
@@ -37,6 +41,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             CopyPicture(dto, template);
             await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(template.FlowId);
 
             return ResultDto<FlowTemplate>.Success(template);
         }
