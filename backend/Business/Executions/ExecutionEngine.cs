@@ -113,6 +113,7 @@ namespace Business.Executions
             int stepCount = 0;
 
             // Load
+            bool isQaTest = await dbContext.Flows.Where(x => x.Id == dto.FlowId).Select(x => x.IsQaTest).FirstOrDefaultAsync(ct);
             Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
             await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
             ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
@@ -127,7 +128,7 @@ namespace Business.Executions
                 try
                 {
                     using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct, runToken);
-                    WalkOutcome outcome = await WalkAsync(linked.Token);
+                    WalkOutcome outcome = await WalkAsync(isQaTest, linked.Token);
 
                     stepCount = outcome.StepCount;
                     status = outcome.Status;
@@ -272,7 +273,7 @@ namespace Business.Executions
         }
 
 
-        private async Task<WalkOutcome> WalkAsync(CancellationToken ct)
+        private async Task<WalkOutcome> WalkAsync(bool isQaTest, CancellationToken ct)
         {
             FlowStep? step = _walker.Start(FlowId);
             int stepCount = 0;
@@ -315,9 +316,13 @@ namespace Business.Executions
                 }
             }
 
-            // Nobody said how it went.
-            if (verdict == null)
+            // Nobody said how it went. An automation that reached its end did what it was written to
+            // do; a QA test whose checks all failed would look the same, so it has to say.
+            if (verdict == null && isQaTest)
                 return new WalkOutcome(stepCount, ExecutionStatusEnum.INCONCLUSIVE, string.Empty);
+
+            if (verdict == null)
+                return new WalkOutcome(stepCount, ExecutionStatusEnum.COMPLETED, string.Empty);
 
             return new WalkOutcome(stepCount, verdict.Status, verdict.Reason);
         }

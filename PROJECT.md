@@ -156,7 +156,7 @@ Platform.Windows/
 
 There is no `Windows/` wrapper folder: the project name already carries the OS. Code that would
 move unchanged into a `Platform.Linux` is not here but in `Platform.Shared`, below. OpenCvSharp was
-the first of it, in a `Common/` folder of this project until `PLAN.md` 14.4; what stays of it here is
+the first of it, in a `Common/` folder of this project until 2026-10-25; what stays of it here is
 `OpenCvSharp4.runtime.win`, OpenCV's Windows binaries with no code. Note the trap:
 `System.Drawing.Common` is named Common and is **not** — GDI+ has been Windows-only since .NET 6,
 so it sits with the rest of the Win32 code.
@@ -1277,26 +1277,30 @@ The verdict is **latched** at the first `End Execution` reached. Cleanup below i
 anything else but cannot change what the flow already said happened, and a second `End Execution`
 under the first is rejected by the validator as unreachable.
 
-### A flow that says nothing is not a flow that passed
+### A test that says nothing is not a test that passed
 
 An execution ends one of five ways, and the distinction that matters is the third:
 
 | | |
 | --- | --- |
-| `COMPLETED` | an `End Execution` said it passed |
+| `COMPLETED` | an `End Execution` said it passed, or an automation reached its end |
 | `FAILED` | an `End Execution` said it failed |
-| `INCONCLUSIVE` | the walk reached the end and **nothing ever said** |
+| `INCONCLUSIVE` | a QA test reached the end and **nothing ever said** |
 | `STOPPED` | somebody pressed stop |
 | `ERRORED` | the harness broke, not the product |
 
-`INCONCLUSIVE` exists because a flow whose every check failed looks, from the outside, exactly like
-a flow that ran to the end. Reporting that as green is the precise failure this whole model was
+`INCONCLUSIVE` exists because a QA test whose every check failed looks, from the outside, exactly
+like one that ran to the end. Reporting that as green is the precise failure this whole model was
 built to stop. MSTest and NUnit both carry the same outcome; JUnit writes it as `skipped`, which is
 amber in every dashboard rather than green.
 
 It adds no inference. The engine still does not count checks — it reports the structural fact that
-no step declared a verdict. A recorded flow is inconclusive by default, because the recorder
-deliberately adds no `End Execution`, and that is the honest reading of it.
+no step declared a verdict.
+
+It is a QA test's only, since 2026-10-25 (`Flow.IsQaTest`). An automation is written to do
+something rather than to prove it, so one that reaches its end did what it was written to do and is
+`COMPLETED`. It fails only where an `End Execution` says so, as a generated one's waits do when they
+time out.
 
 An **exception** is the one path with no cleanup, because there is no `End Execution` in scope and
 so nothing was authored to run. It ends the whole execution, the viewport matrix included — there
@@ -2104,13 +2108,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-932 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+936 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 690 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 694 | the walker, how an execution ends, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2226,7 +2230,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 932 backend tests.
+or OpenAI. 936 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

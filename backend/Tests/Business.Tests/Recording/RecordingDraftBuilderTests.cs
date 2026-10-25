@@ -368,6 +368,10 @@ namespace Business.Tests.Recording
             Typing("September", ReviewChoiceEnum.TYPE_AS_WRITTEN);
             RecordedActionDto outside = Act(new RecordedActionDto { Kind = RecordedActionKindEnum.CLICK, LocationX = 1500, LocationY = 1060, Window = RecordedWindowEnum.OTHER });
             Review(outside, ReviewChoiceEnum.CLICK_AT_SPOT);
+            RecordedActionDto menu = Click(420, 330, "Row", ReviewChoiceEnum.CLICK_AT_SPOT);
+            (menu.CursorButtonType, menu.CursorButtonActionType) = (CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionTypeEnum.DOUBLE_CLICK);
+            RecordedActionDto slide = Click(200, 500, "Slider", ReviewChoiceEnum.CLICK_AT_SPOT, kind: RecordedActionKindEnum.DRAG);
+            (slide.LocationEndX, slide.LocationEndY) = (320, 500);
 
             FlowScriptSchema draft = Build();
             string script = new Printer().Write(draft);

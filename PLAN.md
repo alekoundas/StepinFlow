@@ -13,7 +13,7 @@ in `PROJECT.md`, and why it was built that way is in the git history of this fil
 
 ## Landed
 
-Everything here was finished by 2026-10-09.
+Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25.
 
 | phase | what it gave | where it is described |
 | --- | --- | --- |
@@ -34,11 +34,12 @@ Everything here was finished by 2026-10-09.
 | 5.12 | Every step is a line: Click and Scroll act where the cursor is, Find All's Success once per hit, `nowhere` | §7 |
 | 5.13 | The header says what a flow is for and where it works: `Description:`, a `main` area, input defaults; an import returns its warnings and takes template images from memory | §3, §7, §11 |
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
+| 14 | Git: the flows kept as files in a repository of the app's own and written on every save; commits, discard and restore, branches that hide a flow rather than delete it, a remote to push to and pull from; `Platform.Shared` | §2, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** Git, brought forward on 2026-10-24, is built - 14.1 to 14.4. Then the recording update - phase 7
-for automation flows, with phase 6's detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
-question per action, and QA tests come after. The machine-only test bucket and the two engine seams
+**Next:** the recording update - phase 7 for automation flows, with phase 6's detection model inside
+it: its one open decision, then QA tests. Settled 2026-10-08: a recording and a description
+become a flow with no question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
 Execution) still wants making before layer 5, because the engine tests would pin whichever answer is
 live.
@@ -53,16 +54,6 @@ live.
 - [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.
-- [x] **`Sub Flow` imports with no target.** Built 2026-10-25: `Sub Flow  <[ Checkout ]>   id <[ … ]>`,
-      linked by `Id`, else name, else the old path's file name, and only to a sub-flow; anything else
-      imports the step empty with `SUB_FLOW_UNKNOWN` or `SUB_FLOW_NOT_CALLABLE`. The path is parsed and carried as far as the importer
-      (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow. Decided
-      2026-10-24: the line carries the sub-flow's `Id` beside its name, and the import links by the
-      `Id`. It falls back to the name, which no two flows share, for a line a person or a model wrote
-      without one. The database keeps `SubFlowId`: the `Id` is what crosses machines and branches. A
-      file written before this, naming a path such as `<[ flows/checkout.sflw ]>`, still imports, by
-      the name in the path. A sub-flow the database does not have yet leaves the step empty, with a
-      warning naming it. Needed before phase 14.2.
 
 ### The engine
 
@@ -205,44 +196,17 @@ Business/Ai/Vision/
                 ElementLocator            phase 6's detection model, with a fallback box
 ```
 
-In this order:
+Open, with a recommendation:
 
-- [x] **The rest of the mockup's app.** The shell, the recorder's pages in `features/recording/`
-      and the CodeMirror script view are in (`PROJECT.md` §13). Left: the flows list as board 1 -
-      kind, health, last execution and an Execute on each row, with its filters; the editor as
-      board 8 - a header with the flow's kind, health, Export and Execute, the Steps, Areas,
-      Inputs, Templates and Script tabs, and a banner over a generated flow until it is read; and
-      the search over flows and steps in the header. Built with PrimeReact components and PrimeFlex
-      classes first, CSS only where they cannot get there (settled 2026-10-09). The mockup's colours
-      and type are `TODO.md`, Frontend. Built 2026-10-25, the editor before it: the list's card
-      view went, since board 1 has none; Clone, Settings and Delete stay in a menu beside Execute;
-      the search is in the bar over Flows and Sub-flows, and Ctrl K reaches it there, since Home is
-      still to be talked about. No banner, settled 2026-10-25: Review and Check already show what
-      was recorded and what became of it, and nothing more stands between a recording and its
-      first execution than for any flow - Start refuses a flow with errors.
-- [ ] **Tests that guard the work come with it**, settled 2026-10-09: every draft printing and
-      reading back with no diagnostics. Everything else is tested once the update is done.
-- [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
-      and a tight loop competes with the application being tested.
-
-Open, each with a recommendation:
-
-- **The end of a generated automation** is COMPLETED rather than INCONCLUSIVE, with
-  `Flow.IsQaTest` (settled 2026-10-13, a bool for now). Its waits end the execution, failed, with a
-  reason, when they time out: the draft writes that Failure branch (`PROJECT.md` §6).
-- **Typed text** is always an input, named from the field's label, and secret when the label reads
-  as a password.
-- **The pressed screenshots** go to a temp folder per session, deleted when the tester leaves the
-  Check page. Whether a recording outlives the app is in `TODO.md` (Recording). Today the session
-  holds each press's PNG of the whole main area in memory, a megabyte or two each.
-- **The model's answer** is a whole script; questions back to the tester wait for phase 9.
-- **A cloud model without screen content** gets no read text, so it names steps from the description
-  and the order alone. Allowed, and the setup page says so.
 - **Window steps name an area** rather than repeating a process and title the main area already
-  holds.
+  holds. Today a window step carries its own process and title, and the draft writes none.
 
-**QA tests, after the automation path.** The setup's switch turns them on.
+**QA tests, after the automation path.** The setup's switch turns them on. Settled 2026-10-25: a
+QA test differs from an automation only in being generated by the model, with stage markers and
+`End Execution` steps added where they belong; everything else is the same. An automation that
+reaches its end is COMPLETED and a QA test that never said is INCONCLUSIVE (`PROJECT.md` §8).
 
+- [ ] A QA test is generated by the model only: the plain draft is not offered for one.
 - [ ] The screen sizes, and what happens when an execution ends - which becomes steps under
       `End Execution`, because teardown is steps.
 - [ ] The model adds stage markers, and `End Execution` checks for what the description says the
@@ -370,87 +334,12 @@ what was refused back to the model (`PROJECT.md` §6).
 
 ### 14. Git
 
-Settled 2026-10-24. The app keeps its flows in a git repository of its own, local from the first
-launch; a remote is added later, in Settings. Saving writes the files, and committing is a button.
-Four steps, in this order: each reads back only what the one before it made safe.
+Built 2026-10-24 to 2026-10-25 (`PROJECT.md` §11). Left:
 
-**14.1 The local repository: the database writes the files.** Built 2026-10-24 - `PROJECT.md` §11
-says how: the folder, the first commit at startup, a flow's files written on every save, commits of
-exactly the files picked, and the header, the commit dialog, the Script tab's Changes and History,
-the Flows page and Settings. What is left of it:
-
-- [x] **An execution records the commit it executed at**, whether the flow had uncommitted changes,
-      and the flow script as text. Built 2026-10-25: three nullable columns on `Execution`
-      (`ExecutionCommit`), so every existing row stays as it was. The script is kept only when the
-      commit cannot say what executed - changes not committed, or no commit - so a flow executed as
-      committed costs no text.
-- [x] **The Script view marks the lines changed since the last commit**, in the margin, as the
-      mockup draws it. Built 2026-10-25: a bar left of the line numbers, green for a line added, blue
-      for one changed, and a red tick on the line below where lines were removed.
-- [x] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone
-      flow included; a save shows as a change half a second later; a commit clears it. Seen working
-      2026-10-25.
-
-**14.2 Reading files back: discard, restore and branches.** Each of these re-imports a flow, so
-first the round trip has to lose nothing:
-
-- [x] `Sub Flow` by its `Id` - the loose end under The script, above. Built 2026-10-25.
-- [x] `IsQaTest` in the header (`TODO.md`, Flow script). Built 2026-10-25 as `Kind:    automation`
-      or `qa test`, either followed by `sub-flow`, since `IsSubFlow` was not in the file either.
-
-Then:
-
-- [x] **Discard** re-imports a flow from the last commit. **Restore this version** re-imports it
-      from an older one and lands as an uncommitted change, to commit or discard. Built 2026-10-25:
-      the flow's file is found in the commit by its `Id`, so a rename since is taken back too.
-- [x] **Local branches**: create, switch and list, from the branch in the editor header. Needed
-      locally because a remote will want them. A switch needs no uncommitted changes. Git reports
-      which files differ between the two branches, and only those flows are touched: a changed one
-      is re-imported by its `Id`, a new one is created, and a missing one is **hidden, never
-      deleted** - deleting a flow deletes its executions. Hidden is a new column, and its migration
-      sets every existing flow visible. Sub-flows are imported before the flows that call them. A
-      blocking overlay shows the progress, and a switch is refused while an execution is active.
-      Built 2026-10-25, in one transaction: a flow that does not import leaves every flow, and the
-      folder, as they were.
-- [x] **The working tree is the truth; the database is a cache plus execution history.** That only
-      holds together because identity is `PublicId`: the same flow on two branches is one family, so
-      its executions accumulate rather than fragmenting. Built with the branches: a hidden flow is
-      the same row when a branch brings it back.
-- [x] **A name is unique among the flows on the current branch**, not among hidden ones: two
-      branches can each have a "Login". Built with the branches.
-
-**14.3 The remote.**
-
-- [x] **Settings, Repository**: the remote URL, HTTPS only; a token, in one plain input (`TODO.md`,
-      Git); and the branch. Built 2026-10-25. The branch is no field: since 14.2 there are local
-      branches, so Push and Pull act on the one checked out, against the remote's branch of the
-      same name, and a branch only the remote has is in the branch menu, made here by switching
-      to it.
-- [x] **Connecting**: an empty remote gets the local history pushed. A remote with history replaces
-      the local one, which is kept on a backup branch first, and the database follows as it does for
-      a switch. Built 2026-10-25: every local branch is pushed to an empty remote; with history,
-      the person is shown what the pull would bring and drop before anything is replaced.
-- [x] **Push, and a pull that overwrites**: a fetch and a reset to the remote branch, so commits
-      that were never pushed go too. Before it, the old state is kept on `backup/<date time>`, and a
-      dialog names what will be dropped. Merging is in `TODO.md`, Git. Built 2026-10-25: the backup
-      is made only when something is dropped, a pull is refused while anything is not committed, as
-      a switch is, and a push while the remote has commits the branch does not.
 - [ ] If SSH or the browser sign-in becomes necessary, push and pull alone move to the `git`
       program, behind the same port.
 - [ ] Later: pointing the app at an existing repository, flows in a folder of it, and folders in the
       app becoming folders in the repository.
-
-**14.4 The rest of `Platform.Shared`.** After 14.3, what in `Platform.Windows` is not Windows code
-moves across:
-
-- [x] **`OpenCvService`**, from `Platform.Windows/Common/Vision`. Its code is the same everywhere;
-      only its runtime package is per system (`OpenCvSharp4.runtime.win` today). Built 2026-10-25:
-      in `Platform.Shared/Vision` with its tests, and the runtime package stays in `Platform.Windows`.
-- [x] **The SharpHook input services**, `InputRecordService` and `InputSimulatorService`. SharpHook
-      works on all three, but both reach into `Platform.Windows.Native` - `NativeCursor` for the
-      cursor, `NativeWheel` for scrolling - so those calls stay per system, behind a port. Built
-      2026-10-25: in `Platform.Shared/Input`, and the port is `IMouseService` - where the cursor is,
-      moving it, and how far a wheel notch scrolls - with `MouseService` in `Platform.Windows`.
 
 ### 15. Reporting
 
@@ -487,8 +376,8 @@ What is left, in order:
       ports, a recording broadcast, and assert the event sequence and the `Execution` row. A second
       `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
       worker throwing leaving `errorStepId` on the right step, a breakpoint inside a stepped-over
-      subtree parking there anyway, and a walk that reaches the end with no `End Execution`
-      recording INCONCLUSIVE.
+      subtree parking there anyway. How a walk ends is in already (`ExecutionEngineTests`,
+      2026-10-25), polling the broadcast for the end until the task is held.
 
 ### Optional
 

@@ -606,9 +606,10 @@ End Execution  failed  <[ did not reach the products page ]>
 The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes
 nothing, and a second `End Execution` underneath is rejected - the first one already decided.
 
-A flow that reaches the end without an `End Execution` anywhere is **inconclusive**: not a pass and
-not a failure, because nothing in it ever said. A flow whose every check failed looks exactly the
-same from the outside, which is why walking to the end is not reported as success.
+A QA test that reaches the end without an `End Execution` anywhere is **inconclusive**: not a pass
+and not a failure, because nothing in it ever said. A QA test whose every check failed looks exactly
+the same from the outside, which is why walking to the end is not reported as success. An automation
+that reaches the end has **completed**: it was written to do something, and it did.
 
 A path relative to the repository root, because names are only unique within a flow.
 

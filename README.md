@@ -37,7 +37,7 @@ in a pull request.
 them, because a recording breaks the first time anything moves and nobody can tell why. Three things
 answer that here:
 
-- **A recording is not a test until it has validated.** A flow that never says whether it passed is
+- **A recording is not a test until it has validated.** A QA test that never says whether it passed is
   reported as *inconclusive*, not green — a suite of those proves nothing, and the app says so.
 - **A failure is diagnosed, not just reported** — with the screenshots, the template that came
   closest and by how much, and a model that can read your flows and their history.
@@ -199,7 +199,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**932 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**936 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

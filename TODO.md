@@ -54,7 +54,8 @@ the history.
       `INCONCLUSIVE` rather than COMPLETED, so such a flow is amber instead of green. That is the
       runtime backstop; both items above are still open, and they are the half that tells somebody
       while they are still authoring. Until they land, an inconclusive execution means "nobody
-      said", and every recorded flow is one.
+      said". Since 2026-10-25 all of this is a QA test's only: an automation that walks to its end
+      is COMPLETED (`PROJECT.md` §8).
 
 - [ ] **Clear the execution cache when the walk ends.** `ForgetFrom` only runs inside `Pop()`, and
       when the stack empties `Pop()` returns `null` without calling it — so the last path's values
@@ -415,6 +416,11 @@ the history.
       beside the database, would let a flow be generated again later from the same recording, and
       give the phase 9 fix loop the original screenshots to cut a new template from. Not part of
       the recording update.
+- [ ] **The pressed screenshots stay in memory. To talk about.** Raised 2026-10-25. A session holds
+      each press's PNG of the whole main area, a megabyte or two each, so a hundred clicks hold a
+      couple of hundred MB until the recording is discarded. A temp folder per session, cleared on
+      leaving Check and swept at startup, would cap that, and works the same on every system. It may
+      never be needed; decide it with whether a recording outlives the app, above.
 - [ ] **One OCR on every system: PaddleOCR's models on ONNX. To talk about.** Raised 2026-10-14.
       `IOcrService` has one adapter, Windows OCR, so the Read Text step and the text on a clicked
       element (`ClickedElementFinder`) are Windows only; on macOS or Linux a click keeps its
