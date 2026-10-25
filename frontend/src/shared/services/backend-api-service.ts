@@ -65,6 +65,7 @@ import type {
   ExtractSubFlowResultDto,
 } from "@/shared/models/database/extract-sub-flow-dto";
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
+import type { FlowSearchHitDto } from "@/shared/models/flow-search-hit-dto";
 import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-request.dto";
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
@@ -102,6 +103,7 @@ export const backendApiService = {
     getHealth: (flowIds: number[]) =>
       call<FlowHealthDto[]>("Flow.getHealth", { flowIds }),
     promoteToSubFlow: (id: number) => call<boolean>("Flow.promoteToSubFlow", id),
+    search: (text: string) => call<FlowSearchHitDto[]>("Flow.search", text),
     extractSubFlow: (dto: ExtractSubFlowDto) =>
       call<ExtractSubFlowResultDto>("Flow.extractSubFlow", dto),
   },

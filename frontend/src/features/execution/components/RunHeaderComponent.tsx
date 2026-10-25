@@ -3,9 +3,7 @@ import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
-import StatusPillComponent, {
-  type StatusPillSeverity,
-} from "@/shared/components/StatusPillComponent";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import RunSummaryComponent from "@/features/execution/components/RunSummaryComponent";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
@@ -14,6 +12,7 @@ import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+import { executionStatusSeverity } from "@/shared/utils/execution-status";
 
 interface Props {
   flowName: string;
@@ -74,7 +73,7 @@ export default function RunHeaderComponent({
             />
             <StatusPillComponent
               text={execution.status}
-              severity={statusSeverity(execution.status)}
+              severity={executionStatusSeverity(execution.status)}
               pulse={execution.status === ExecutionStatusEnum.RUNNING}
             />
             <ExecutedVersionComponent
@@ -150,20 +149,4 @@ function AskAiButtons({ execution, flowName }: AskAiButtonsProps) {
       />
     </div>
   );
-}
-
-function statusSeverity(status: ExecutionStatusEnum): StatusPillSeverity {
-  switch (status) {
-    case ExecutionStatusEnum.RUNNING:
-      return "running";
-    case ExecutionStatusEnum.COMPLETED:
-      return "success";
-    case ExecutionStatusEnum.FAILED:
-    case ExecutionStatusEnum.ERRORED:
-      return "danger";
-    case ExecutionStatusEnum.INCONCLUSIVE:
-      return "warning";
-    default:
-      return "paused";
-  }
 }

@@ -189,6 +189,7 @@ namespace App
             builder.Services.AddTransient<GetFlowHealthHandler>();
             builder.Services.AddTransient<GetFlowCallersHandler>();
             builder.Services.AddTransient<PromoteFlowToSubFlowHandler>();
+            builder.Services.AddTransient<SearchFlowsHandler>();
             builder.Services.AddTransient<ExtractSubFlowHandler>();
             builder.Services.AddTransient<GetFlowTreeNodeHandler>();
             builder.Services.AddTransient<GetFlowStepUsesHandler>();

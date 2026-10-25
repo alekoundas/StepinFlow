@@ -41,6 +41,7 @@ namespace Transport.Ipc.Handlers
                     Name = x.Name,
                     Description = x.Description,
                     IsSubFlow = x.IsSubFlow,
+                    IsQaTest = x.IsQaTest,
                     CreatedOn = x.CreatedOn,
                     UpdatedOn = x.UpdatedOn,
 

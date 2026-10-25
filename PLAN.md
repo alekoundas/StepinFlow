@@ -36,7 +36,7 @@ Everything here was finished by 2026-10-09.
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** Git - 14.1 to 14.3 built, 14.4 next - brought forward on 2026-10-24. Then the recording update - phase 7
+**Next:** Git, brought forward on 2026-10-24, is built - 14.1 to 14.4. Then the recording update - phase 7
 for automation flows, with phase 6's detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
 question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
@@ -207,14 +207,19 @@ Business/Ai/Vision/
 
 In this order:
 
-- [ ] **The rest of the mockup's app.** The shell, the recorder's pages in `features/recording/`
+- [x] **The rest of the mockup's app.** The shell, the recorder's pages in `features/recording/`
       and the CodeMirror script view are in (`PROJECT.md` §13). Left: the flows list as board 1 -
       kind, health, last execution and an Execute on each row, with its filters; the editor as
       board 8 - a header with the flow's kind, health, Export and Execute, the Steps, Areas,
       Inputs, Templates and Script tabs, and a banner over a generated flow until it is read; and
       the search over flows and steps in the header. Built with PrimeReact components and PrimeFlex
       classes first, CSS only where they cannot get there (settled 2026-10-09). The mockup's colours
-      and type are `TODO.md`, Frontend.
+      and type are `TODO.md`, Frontend. Built 2026-10-25, the editor before it: the list's card
+      view went, since board 1 has none; Clone, Settings and Delete stay in a menu beside Execute;
+      the search is in the bar over Flows and Sub-flows, and Ctrl K reaches it there, since Home is
+      still to be talked about. No banner, settled 2026-10-25: Review and Check already show what
+      was recorded and what became of it, and nothing more stands between a recording and its
+      first execution than for any flow - Start refuses a flow with errors.
 - [ ] **Tests that guard the work come with it**, settled 2026-10-09: every draft printing and
       reading back with no diagnostics. Everything else is tested once the update is done.
 - [ ] Polling is deliberately not as fast as possible - screenshot plus template match is real CPU,
@@ -438,11 +443,14 @@ Then:
 **14.4 The rest of `Platform.Shared`.** After 14.3, what in `Platform.Windows` is not Windows code
 moves across:
 
-- [ ] **`OpenCvService`**, from `Platform.Windows/Common/Vision`. Its code is the same everywhere;
-      only its runtime package is per system (`OpenCvSharp4.runtime.win` today).
-- [ ] **The SharpHook input services**, `InputRecordService` and `InputSimulatorService`. SharpHook
+- [x] **`OpenCvService`**, from `Platform.Windows/Common/Vision`. Its code is the same everywhere;
+      only its runtime package is per system (`OpenCvSharp4.runtime.win` today). Built 2026-10-25:
+      in `Platform.Shared/Vision` with its tests, and the runtime package stays in `Platform.Windows`.
+- [x] **The SharpHook input services**, `InputRecordService` and `InputSimulatorService`. SharpHook
       works on all three, but both reach into `Platform.Windows.Native` - `NativeCursor` for the
-      cursor, `NativeWheel` for scrolling - so those calls stay per system, behind a port.
+      cursor, `NativeWheel` for scrolling - so those calls stay per system, behind a port. Built
+      2026-10-25: in `Platform.Shared/Input`, and the port is `IMouseService` - where the cursor is,
+      moving it, and how far a wheel notch scrolls - with `MouseService` in `Platform.Windows`.
 
 ### 15. Reporting
 

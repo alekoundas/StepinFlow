@@ -1,6 +1,3 @@
-import { Tag } from "primereact/tag";
-
-import IconComponent from "@/shared/components/IconComponent";
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
 
 interface Props {
@@ -9,7 +6,7 @@ interface Props {
 }
 
 /**
- * Whether the flow would run. The question you actually have when looking at a list of them.
+ * Whether the flow would execute. The question you actually have when looking at a list of them.
  *
  * Nothing is shown while the counts are still loading rather than a placeholder that flickers
  * into a different answer a moment later.
@@ -17,9 +14,9 @@ interface Props {
 export default function FlowHealthBadgeComponent({ health, isEmpty }: Props) {
   if (isEmpty)
     return (
-      <Tag
-        value="Empty"
-        severity="secondary"
+      <HealthComponent
+        color="var(--surface-400)"
+        text="No steps"
       />
     );
 
@@ -27,32 +24,39 @@ export default function FlowHealthBadgeComponent({ health, isEmpty }: Props) {
 
   if (health.errorCount > 0)
     return (
-      <Tag severity="danger">
-        <IconComponent
-          name="times-circle"
-          size="sm"
-        />
-        <span className="ml-1">{health.errorCount}</span>
-      </Tag>
+      <HealthComponent
+        color="var(--red-400)"
+        text={plural(health.errorCount, "error")}
+      />
     );
 
   if (health.warningCount > 0)
     return (
-      <Tag severity="warning">
-        <IconComponent
-          name="exclamation-triangle"
-          size="sm"
-        />
-        <span className="ml-1">{health.warningCount}</span>
-      </Tag>
+      <HealthComponent
+        color="var(--yellow-500)"
+        text={plural(health.warningCount, "warning")}
+      />
     );
 
   return (
-    <Tag severity="success">
-      <IconComponent
-        name="check"
-        size="sm"
-      />
-    </Tag>
+    <HealthComponent
+      color="var(--green-400)"
+      text="No issues"
+    />
   );
 }
+
+function HealthComponent({ color, text }: { color: string; text: string }) {
+  return (
+    <span className="inline-flex align-items-center gap-2 text-color-secondary white-space-nowrap">
+      <span
+        className="border-circle flex-none"
+        style={{ width: 8, height: 8, background: color }}
+      />
+      {text}
+    </span>
+  );
+}
+
+const plural = (count: number, noun: string) =>
+  `${count} ${noun}${count === 1 ? "" : "s"}`;

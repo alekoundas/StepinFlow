@@ -65,6 +65,14 @@ in the script as `#` lines. The form shows that line as it will print. It is the
 first thing read when a failure is explained, so say what you expect at that point and what it
 means if it fails, rather than what the step does, which its line already says.
 
+## Finding a flow or a step
+
+**Search flows and steps**, at the top of Flows and Sub-flows, or Ctrl K there, finds a flow by
+its name or description and a step by its name, on the branch checked out. Every word typed has to
+be there, in any order. A flow found opens in the editor; a step found opens its flow with the step
+picked in the tree. The chips over the list narrow it to automations, QA tests, flows with issues,
+or flows with changes not committed.
+
 ## Sharing a flow as a file
 
 A flow's **Export**, beside Execute at the top of the editor, writes it as a `.sflw` script with its templates in a

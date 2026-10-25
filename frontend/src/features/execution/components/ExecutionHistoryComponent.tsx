@@ -1,10 +1,8 @@
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 
-import StatusPillComponent, {
-  type StatusPillSeverity,
-} from "@/shared/components/StatusPillComponent";
-import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
+import { executionStatusSeverity, executionStatusText } from "@/shared/utils/execution-status";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { useExecutionList } from "@/features/execution/hooks/use-execution";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
@@ -52,8 +50,8 @@ export default function ExecutionHistoryComponent({
         header="Result"
         body={(execution: ExecutionDto) => (
           <StatusPillComponent
-            text={statusText(execution.status)}
-            severity={statusSeverity(execution.status)}
+            text={executionStatusText(execution.status)}
+            severity={executionStatusSeverity(execution.status)}
           />
         )}
       />
@@ -101,41 +99,6 @@ export default function ExecutionHistoryComponent({
       />
     </DataTable>
   );
-}
-
-function statusSeverity(status: ExecutionStatusEnum): StatusPillSeverity {
-  switch (status) {
-    case ExecutionStatusEnum.RUNNING:
-      return "running";
-    case ExecutionStatusEnum.COMPLETED:
-      return "success";
-    case ExecutionStatusEnum.FAILED:
-    case ExecutionStatusEnum.ERRORED:
-      return "danger";
-    case ExecutionStatusEnum.INCONCLUSIVE:
-      return "warning";
-    default:
-      return "paused";
-  }
-}
-
-function statusText(status: ExecutionStatusEnum): string {
-  switch (status) {
-    case ExecutionStatusEnum.RUNNING:
-      return "Running";
-    case ExecutionStatusEnum.COMPLETED:
-      return "Completed";
-    case ExecutionStatusEnum.FAILED:
-      return "Failed";
-    case ExecutionStatusEnum.ERRORED:
-      return "Errored";
-    case ExecutionStatusEnum.INCONCLUSIVE:
-      return "Inconclusive";
-    case ExecutionStatusEnum.STOPPED:
-      return "Stopped";
-    default:
-      return "Abandoned";
-  }
 }
 
 function historyLevelText(level: ExecutionHistoryLevelEnum): string {

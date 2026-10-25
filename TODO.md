@@ -12,6 +12,12 @@ the history.
       loops for an hour can reach tens of thousands of rows, and each batch still walks all of them,
       and the browser lays them all out. If that drags, draw only the rows in view (PrimeReact
       `VirtualScroller`) in `ExecutionStepListComponent`.
+- [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
+      `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
+      the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,
+      `OpenCvSharp4.runtime.osx.arm64` and `.osx.x64` - which go in their platform projects.
+      `Platform.Shared.Tests` takes the Windows package on Windows only, so its OpenCV tests fail
+      elsewhere until then.
 - [ ] **A `Launch` line is this machine's.** Since 2026-10-13 a launch starts through
       `IProcessService.Launch` - `Process.Start` with shell execute, which is the shell on Windows,
       `open` on macOS and `xdg-open` on Linux - so starting works on all three. The command text does
@@ -395,9 +401,15 @@ the history.
       sends, and macOS as far as known. X11's auto-repeat is known to send a fake key-up before each
       repeated key-down, with the same timestamp; whether libuiohook (under SharpHook) filters them
       out is not verified. If it does not, a held Backspace or arrow records as many presses.
-      Check there too that each key carries its typed character (2026-10-12). The fix belongs in the Linux adapter, not in Business: drop a key-up
+      Check there too that each key carries its typed character (2026-10-12). The fix belongs in `InputRecordService`, the same on every system since 2026-10-25, not in Business: drop a key-up
       followed at the same timestamp by a key-down of the same key. Wayland is a separate limit - no
       app may hook keys going to another, so only X11 applications under XWayland are seen at all.
+- [ ] **The mouse on macOS and Linux. Check with those adapters.** `IMouseService` - where the
+      cursor is, moving it, and how far a wheel notch scrolls - has a Windows implementation only.
+      The shared input services also carry Windows numbers: a notch simulated as 120 wheel units,
+      Windows' `WHEEL_DELTA`; a double click's presses 40 ms apart, inside Windows' 500 ms; and a
+      recorded notch multiplied by the lines Windows scrolls. What SharpHook makes of each on the
+      other two is not checked.
 - [ ] **Whether a recording outlives the app. To decide.** A session lives in memory, and its
       screenshots go when it is discarded. A `Recording` table, with the screenshots in a folder
       beside the database, would let a flow be generated again later from the same recording, and

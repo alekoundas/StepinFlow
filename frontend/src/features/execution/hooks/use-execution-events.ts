@@ -84,6 +84,7 @@ export function useExecutionEvents(flowId: number) {
     if (endedExecutionId !== null) {
       // The run is only in the history list once it has ended.
       queryClient.invalidateQueries({ queryKey: executionKeys.list(flowId) });
+      queryClient.invalidateQueries({ queryKey: executionKeys.flowSummaries() });
 
       void replaceWithSavedSteps(endedExecutionId);
     }

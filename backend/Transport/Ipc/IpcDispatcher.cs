@@ -65,6 +65,7 @@ namespace Transport.Ipc
                     "Flow.getHealth" => await Handler<GetFlowHealthHandler>().HandleAsync(Payload<FlowHealthRequestDto>(request), ct),
                     "Flow.getCallers" => await Handler<GetFlowCallersHandler>().HandleAsync(Payload<int>(request), ct),
                     "Flow.promoteToSubFlow" => await Handler<PromoteFlowToSubFlowHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Flow.search" => await Handler<SearchFlowsHandler>().HandleAsync(Payload<string>(request), ct),
                     "Flow.extractSubFlow" => await Handler<ExtractSubFlowHandler>().HandleAsync(Payload<ExtractSubFlowDto>(request), ct),
                     "Flow.getTreeNodes" => await Handler<GetFlowTreeNodeHandler>().HandleAsync(Payload<int>(request), ct),
                     "Flow.getStepUses" => await Handler<GetFlowStepUsesHandler>().HandleAsync(Payload<int>(request), ct),

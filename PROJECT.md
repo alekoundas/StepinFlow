@@ -67,8 +67,8 @@ App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
 |---|---|---|---|
 | `Core` | `net10.0` | Models, DTOs, enums, ports, pure logic | — |
 | `DataAccess` | `net10.0` | `AppDbContext`, configurations, migrations | Core |
-| `Platform.Shared` | `net10.0` | What touches the machine the same way on every system: git | Core |
-| `Platform.Windows` | `net10.0-windows` | Everything that touches the machine | Core |
+| `Platform.Shared` | `net10.0` | What touches the machine the same way on every system: git, OpenCV, the global hook and simulated input | Core |
+| `Platform.Windows` | `net10.0-windows` | What touches the machine the Windows way: Win32, WinRT, GDI+ | Core |
 | `Business` | `net10.0` | The features: execution, search, the flow script, validation, AI | Core, DataAccess |
 | `Transport` | `net10.0` | The IPC pipes, the dispatcher and one handler per action | Business |
 | `App` | `net10.0-windows` | Host, DI, composition root | all |
@@ -117,13 +117,14 @@ consumes the interface and never sees the implementation.
 ```
 Core/Ports/IScreenshotService        →  Platform.Windows/Screen/ScreenshotService
 Core/Ports/IScreenService            →  Platform.Windows/Screen/ScreenService
-Core/Ports/IInputSimulatorService    →  Platform.Windows/Input/InputSimulatorService
-Core/Ports/IInputRecordService       →  Platform.Windows/Input/InputRecordService
+Core/Ports/IInputSimulatorService    →  Platform.Shared/Input/InputSimulatorService
+Core/Ports/IInputRecordService       →  Platform.Shared/Input/InputRecordService
+Core/Ports/IMouseService             →  Platform.Windows/Input/MouseService
 Core/Ports/IWindowService            →  Platform.Windows/Windowing/WindowService
 Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
 Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
 Core/Ports/IProcessService           →  Platform.Windows/SystemActions/ProcessService
-Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
+Core/Ports/IOpenCvService            →  Platform.Shared/Vision/OpenCvService
 Core/Ports/IGitService               →  Platform.Shared/Git/GitService
 Core/Ports/IIpcBroadcastService      →  Transport/Ipc/IpcBroadcastService
 ```
@@ -148,22 +149,17 @@ outside the adapter can interpret one, a monitor handle cannot be passed where a
 and the Linux XID - 32 bits rather than a pointer - has one place to live instead of every call
 site.
 
-The folders inside it split on a second axis — whether the native code is OS-specific:
-
 ```
 Platform.Windows/
   Screen/  Input/  Windowing/  Ocr/  SystemActions/  Native/   — Win32, WinRT, GDI+
-  Common/Vision/                                               — native, identical everywhere
 ```
 
-There is no `Windows/` wrapper folder: the project name already carries the OS. What the split
-still has to say is which code would move unchanged into a `Platform.Linux`, and that is
-`Common/`.
-
-It exists for OpenCvSharp. That is native code, so it is not `Business`; it is byte-identical on
-Linux, so it does not belong beside the Win32. Without `Common` it would be homeless. Note the
-trap: `System.Drawing.Common` is named Common and is **not** — GDI+ has been Windows-only since
-.NET 6, so it sits with the rest of the Win32 code.
+There is no `Windows/` wrapper folder: the project name already carries the OS. Code that would
+move unchanged into a `Platform.Linux` is not here but in `Platform.Shared`, below. OpenCvSharp was
+the first of it, in a `Common/` folder of this project until `PLAN.md` 14.4; what stays of it here is
+`OpenCvSharp4.runtime.win`, OpenCV's Windows binaries with no code. Note the trap:
+`System.Drawing.Common` is named Common and is **not** — GDI+ has been Windows-only since .NET 6,
+so it sits with the rest of the Win32 code.
 
 What this rule deliberately **excludes**: `DiscordNotifier` and the Ollama client are external
 *system* adapters, not platform adapters. They sit behind interfaces already and they do not
@@ -171,12 +167,18 @@ constrain the target framework, so they stay in `Business`.
 
 ### What goes in Platform.Shared
 
-An adapter that touches the machine the same way on Windows, macOS and Linux. Today that is git,
-through LibGit2Sharp, which carries libgit2 for each system, so nothing has to be installed. It
-targets plain `net10.0`, depends on `Core` alone and takes the banned-API list every project but
-`Platform.Windows` takes; the architecture tests hold it to that, and to being the only project
-that uses LibGit2Sharp. `OpenCvService` and the SharpHook services move here once the Git phase is
-done (`PLAN.md` 14.4) - their code is the same everywhere, and what is not stays behind a port.
+An adapter that touches the machine the same way on Windows, macOS and Linux: git through
+LibGit2Sharp, template matching through OpenCvSharp, and the global hook and simulated input through
+SharpHook. LibGit2Sharp and SharpHook carry their native library for each system, so nothing has to
+be installed; OpenCV's comes from the platform project, `OpenCvSharp4.runtime.win` in
+`Platform.Windows`. It targets plain `net10.0`, depends on `Core` alone and takes the banned-API list
+every project but `Platform.Windows` takes; the architecture tests hold it to that, and to being the
+only project that uses the three libraries.
+
+What the input services cannot do through SharpHook - read where the cursor is, move it in physical
+pixels, and know how far a notch of the wheel scrolls - is `IMouseService`, which `Platform.Windows`
+implements over `NativeCursor` and `NativeWheel`. It is in `Core/Ports` with the rest, since neither
+platform project may reference the other.
 
 ### Why this boundary exists
 
@@ -1859,6 +1861,20 @@ TanStack Query for server state, keyed `["flow", …]`, `["flowStep", …]`, `["
 invalidate. Zustand for UI state. Dialogs go through `useDialogStore` rendering into
 `DialogRootComponent`.
 
+### The flows list
+
+Flows and Sub-flows are the mockup's first board, one page with the sub-flow flag flipped. A bar
+over it has the page's name, the branch and its menu, and **Search flows and steps**: every word
+typed has to be in a flow's name or description, or in a step's name, on the branch checked out
+(`Flow.search`). Ctrl K puts the cursor in it. A flow found opens in the editor; a step found opens
+its flow with the tree opened down to it, the way a "Used by" row does. Below the page's title, chips
+filter the list - All, Automation, QA tests, With issues, Not committed; a sub-flow page has no kinds
+to filter - and the table has a row a flow: its name, its changes not committed and the first line
+of its description, its kind (or for a sub-flow, how many flows call it), its health, its last
+execution and when, or when it was last edited when it has none, its steps, and Execute, with Clone,
+Settings and Delete in a menu. The list comes whole from `Flow.getLazy`, so the chips filter it here,
+with the health and the repository's status the page already has.
+
 ### The editor
 
 The workflow page is the mockup's editor boards (8 to 8e). Its header has the way back to Flows or
@@ -2088,7 +2104,7 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-926 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+932 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
@@ -2097,9 +2113,9 @@ per production project, plus `Architecture.Tests`.
 | `Business.Tests` | 690 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
-| `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
-| `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
-| `Platform.Shared.Tests` | 20 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server |
+| `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
+| `Platform.Windows.Tests` | 0 | none since its OpenCV tests moved with `OpenCvService`; the P/Invoke probe is to come here (`PLAN.md`, Tests) |
+| `Platform.Shared.Tests` | 29 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2174,8 +2190,8 @@ architecture rule that is false today failed and named every class that broke it
 
 ### The architecture tests
 
-Five layer rules, one per project, each naming what it may not depend on; no OpenCvSharp or
-SharpHook outside `Platform.Windows`; `Core` using nothing but the framework; and no `Services`
+Six layer rules, one per project, each naming what it may not depend on; no OpenCvSharp,
+SharpHook or LibGit2Sharp outside `Platform.Shared`; `Core` using nothing but the framework; and no `Services`
 namespace coming back into `Business`. Today no forbidden edge can even be written - each would be a
 reference cycle or a reference to a Windows framework - so they first bite when somebody gives a
 project a Windows target to reach the machine, which is exactly how `Business` was before the split.
@@ -2210,7 +2226,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 926 backend tests.
+or OpenAI. 932 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
