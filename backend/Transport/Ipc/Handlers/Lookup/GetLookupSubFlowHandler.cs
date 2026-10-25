@@ -28,7 +28,7 @@ namespace Transport.Ipc.Handlers
 
             IQueryable<Core.Models.Database.Flow> query = dbContext.Flows
                 .AsNoTracking()
-                .Where(x => x.IsSubFlow);
+                .Where(x => x.IsSubFlow && !x.IsHidden);
 
             if (!string.IsNullOrWhiteSpace(dto.SearchText))
                 query = query.Where(x => x.Name.Contains(dto.SearchText));

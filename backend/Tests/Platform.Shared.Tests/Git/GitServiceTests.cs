@@ -207,5 +207,64 @@ namespace Platform.Shared.Tests.Git
             _git.FindCommit(_folder, "0123456789abcdef0123456789abcdef01234567").ShouldBeNull();
             _git.ReadFile(_folder, "0123456789abcdef0123456789abcdef01234567", "a.txt").ShouldBeNull();
         }
+
+        [Fact]
+        public void A_new_branch_starts_at_the_last_commit_and_only_a_switch_checks_it_out()
+        {
+            _git.Branches(_folder).ShouldBeEmpty();
+            Write("a.txt", "one");
+            GitCommit first = Commit("First", "a.txt");
+
+            _git.CreateBranch(_folder, "login-fix");
+
+            _git.Branches(_folder).Select(x => (x.Name, x.Sha, x.IsCurrent)).ShouldBe(
+            [
+                ("login-fix", first.Sha, false),
+                ("main", first.Sha, true),
+            ]);
+
+            _git.SwitchBranch(_folder, "login-fix");
+            _git.CurrentBranch(_folder).ShouldBe("login-fix");
+        }
+
+        [Fact]
+        public void A_switch_brings_the_branchs_files_and_Compare_names_what_differs()
+        {
+            Write("a.txt", "one");
+            Write("folder/b.txt", "one");
+            GitCommit first = Commit("First", "a.txt", "folder/b.txt");
+            _git.CreateBranch(_folder, "feature");
+            _git.SwitchBranch(_folder, "feature");
+
+            Write("a.txt", "two");
+            File.Delete(Path.Combine(_folder, "folder", "b.txt"));
+            Write("c.txt", "new");
+            GitCommit second = Commit("Second", "a.txt", "folder/b.txt", "c.txt");
+
+            _git.SwitchBranch(_folder, "main");
+
+            File.ReadAllText(Path.Combine(_folder, "a.txt")).ShouldBe("one");
+            File.Exists(Path.Combine(_folder, "folder", "b.txt")).ShouldBeTrue();
+            File.Exists(Path.Combine(_folder, "c.txt")).ShouldBeFalse();
+            _git.Changes(_folder).ShouldBeEmpty();
+
+            _git.Compare(_folder, first.Sha, second.Sha).Select(x => (x.Path, x.Kind)).ShouldBe(
+            [
+                ("a.txt", GitChangeKindEnum.MODIFIED),
+                ("c.txt", GitChangeKindEnum.ADDED),
+                ("folder/b.txt", GitChangeKindEnum.DELETED),
+            ], ignoreOrder: true);
+        }
+
+        [Theory]
+        [InlineData("login-fix", true)]
+        [InlineData("feature/login", true)]
+        [InlineData("login fix", false)]
+        [InlineData("login..fix", false)]
+        [InlineData("login~1", false)]
+        public void A_branch_name_is_one_git_takes(string name, bool isValid)
+        {
+            _git.IsValidBranchName(name).ShouldBe(isValid);
+        }
     }
 }

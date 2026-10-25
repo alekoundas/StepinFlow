@@ -1,10 +1,12 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
 import type { RepositoryCommitRequestDto } from "@/shared/models/repository-dtos";
 
 export const repositoryKeys = {
@@ -14,6 +16,7 @@ export const repositoryKeys = {
   flowChanges: (flowId: number) => ["repository", "flowChanges", flowId] as const,
   flowHistory: (flowId: number) => ["repository", "flowHistory", flowId] as const,
   flowCommit: (flowId: number, sha: string) => ["repository", "flowCommit", flowId, sha] as const,
+  branches: () => ["repository", "branches"] as const,
 } as const;
 
 /**
@@ -74,19 +77,9 @@ export function useCommitRepository() {
   });
 }
 
-/**
- * Discard and Restore import the flow over itself, so every step, area and template it shows is a
- * new row: everything is read again, and the tree starts over with nothing selected.
- */
+/** Discard and Restore. */
 export function useBringBackFlow(flowId: number) {
-  const queryClient = useQueryClient();
-  const { setSelectedTreeNode, setTreeRefreshTrigger } = useWorkflowStore();
-
-  const reload = async () => {
-    setSelectedTreeNode(undefined);
-    setTreeRefreshTrigger({ id: -1, isFlow: true });
-    await queryClient.invalidateQueries();
-  };
+  const reload = useReloadImported();
 
   const discard = useMutation({
     mutationFn: () => backendApiService.Repository.discard(flowId),
@@ -99,6 +92,58 @@ export function useBringBackFlow(flowId: number) {
   });
 
   return { discard, restore };
+}
+
+/** Only while the branch menu is open. */
+export function useRepositoryBranches(enabled: boolean) {
+  return useQuery({
+    queryKey: repositoryKeys.branches(),
+    queryFn: () => backendApiService.Repository.getBranches(),
+    enabled,
+    staleTime: 0,
+  });
+}
+
+export function useCreateBranch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => backendApiService.Repository.createBranch(name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: repositoryKeys.all }),
+  });
+}
+
+/** A flow the branch does not have is hidden, so the editor leaves it for the list it was in. */
+export function useSwitchBranch(flowId: number | undefined) {
+  const reload = useReloadImported();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: (name: string) => backendApiService.Repository.switchBranch(name),
+    onSuccess: async (result) => {
+      const hidden = result.flows.find((x) => x.flowId === flowId && x.change === GitChangeKindEnum.DELETED);
+      if (hidden) navigate(hidden.isSubFlow ? "/sub-flows" : "/flows");
+
+      await reload();
+    },
+  });
+}
+
+/**
+ * After flows are imported over themselves - a discard, a restore, a branch switch - every step,
+ * area and template they show is a new row: everything is read again, and the tree starts over with
+ * nothing selected or copied.
+ */
+function useReloadImported() {
+  const queryClient = useQueryClient();
+  const { setSelectedTreeNode, setTreeRefreshTrigger, setCopiedStep } = useWorkflowStore();
+
+  return async () => {
+    setSelectedTreeNode(undefined);
+    setCopiedStep(undefined);
+    setTreeRefreshTrigger({ id: -1, isFlow: true });
+    await queryClient.invalidateQueries();
+  };
 }
 
 /**

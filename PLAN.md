@@ -36,7 +36,7 @@ Everything here was finished by 2026-10-09.
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** Git - the rest of 14.1, then 14.2 - brought forward on 2026-10-24. Then the recording update - phase 7
+**Next:** Git - 14.1 and 14.2 built, 14.3 the remote next - brought forward on 2026-10-24. Then the recording update - phase 7
 for automation flows, with phase 6's detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
 question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
@@ -382,8 +382,9 @@ the Flows page and Settings. What is left of it:
 - [x] **The Script view marks the lines changed since the last commit**, in the margin, as the
       mockup draws it. Built 2026-10-25: a bar left of the line numbers, green for a line added, blue
       for one changed, and a red tick on the line below where lines were removed.
-- [ ] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone
-      flow included; a save shows as a change half a second later; a commit clears it.
+- [x] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone
+      flow included; a save shows as a change half a second later; a commit clears it. Seen working
+      2026-10-25.
 
 **14.2 Reading files back: discard, restore and branches.** Each of these re-imports a flow, so
 first the round trip has to lose nothing:
@@ -397,18 +398,21 @@ Then:
 - [x] **Discard** re-imports a flow from the last commit. **Restore this version** re-imports it
       from an older one and lands as an uncommitted change, to commit or discard. Built 2026-10-25:
       the flow's file is found in the commit by its `Id`, so a rename since is taken back too.
-- [ ] **Local branches**: create, switch and list, from the branch in the editor header. Needed
+- [x] **Local branches**: create, switch and list, from the branch in the editor header. Needed
       locally because a remote will want them. A switch needs no uncommitted changes. Git reports
       which files differ between the two branches, and only those flows are touched: a changed one
       is re-imported by its `Id`, a new one is created, and a missing one is **hidden, never
       deleted** - deleting a flow deletes its executions. Hidden is a new column, and its migration
       sets every existing flow visible. Sub-flows are imported before the flows that call them. A
       blocking overlay shows the progress, and a switch is refused while an execution is active.
-- [ ] **The working tree is the truth; the database is a cache plus execution history.** That only
+      Built 2026-10-25, in one transaction: a flow that does not import leaves every flow, and the
+      folder, as they were.
+- [x] **The working tree is the truth; the database is a cache plus execution history.** That only
       holds together because identity is `PublicId`: the same flow on two branches is one family, so
-      its executions accumulate rather than fragmenting.
-- [ ] **A name is unique among the flows on the current branch**, not among hidden ones: two
-      branches can each have a "Login".
+      its executions accumulate rather than fragmenting. Built with the branches: a hidden flow is
+      the same row when a branch brings it back.
+- [x] **A name is unique among the flows on the current branch**, not among hidden ones: two
+      branches can each have a "Login". Built with the branches.
 
 **14.3 The remote.**
 

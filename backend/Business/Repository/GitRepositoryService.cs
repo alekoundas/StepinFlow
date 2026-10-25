@@ -190,11 +190,13 @@ namespace Business.Repository
                 .ToListAsync(ct);
 
             HashSet<int> wantedFlowIds = flowIds.Concat(subflowCallerFlowIds).ToHashSet();
-            List<Flow> flows = await FlowNamesAsync(ct);
+            List<Flow> flows;
 
+            // Read under the lock: a branch switch may have changed the flows while this waited.
             await _gate.WaitAsync(ct);
             try
             {
+                flows = await FlowNamesAsync(ct);
                 RemoveGoneFlows(flows);
             }
             finally
@@ -452,18 +454,7 @@ namespace Business.Repository
                 if (scriptFile == null)
                     return null;
 
-                byte[] script = _git.ReadFile(_folderPath, commitSha, scriptFile) ?? [];
-                GitFlowFiles found = new GitFlowFiles { Script = Encoding.UTF8.GetString(script) };
-
-                string committedFlowFileName = RepositoryPathHelper.FlowFileNameOf(scriptFile);
-                foreach (string path in files.Where(x => RepositoryPathHelper.IsImage(x) && RepositoryPathHelper.BelongsTo(x, committedFlowFileName)))
-                {
-                    byte[]? image = _git.ReadFile(_folderPath, commitSha, path);
-                    if (image != null)
-                        found.Templates[Path.GetFileName(path)] = image;
-                }
-
-                return found;
+                return ReadFlowFiles(files, commitSha, scriptFile);
             }
             finally
             {
@@ -523,6 +514,119 @@ namespace Business.Repository
 
 
         // ================================================================
+        // Public methods - branches
+        // ================================================================
+
+        public async Task<List<RepositoryBranchDto>> GetBranchesAsync(CancellationToken ct)
+        {
+            await _gate.WaitAsync(ct);
+            try
+            {
+                return _git.Branches(_folderPath)
+                    .Select(x => new RepositoryBranchDto { Name = x.Name, IsCurrent = x.IsCurrent, LastCommitAt = x.When })
+                    .ToList();
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        public async Task<ResultDto<RepositoryBranchDto>> CreateBranchAsync(string name, CancellationToken ct)
+        {
+            string branch = name.Trim();
+            if (branch.Length == 0)
+                return ResultDto<RepositoryBranchDto>.Failure("A branch needs a name.");
+
+            if (!_git.IsValidBranchName(branch))
+                return ResultDto<RepositoryBranchDto>.Failure("Git does not take that as a branch name: no spaces, none of ~ ^ : ? * [ \\, and no two dots in a row.");
+
+            GitBranch created;
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                List<GitBranch> branches = _git.Branches(_folderPath);
+                if (branches.Count == 0)
+                    return ResultDto<RepositoryBranchDto>.Failure("A branch starts from a commit, and there is none yet.");
+
+                // Git keeps a branch as a file, and Windows and macOS ignore case.
+                GitBranch? taken = branches.FirstOrDefault(x => string.Equals(x.Name, branch, StringComparison.OrdinalIgnoreCase));
+                if (taken != null)
+                    return ResultDto<RepositoryBranchDto>.Failure($"There is already a branch called \"{taken.Name}\".");
+
+                // At the last commit, so nothing differs and the flows stay as they are, changes included.
+                _git.CreateBranch(_folderPath, branch);
+                _git.SwitchBranch(_folderPath, branch);
+
+                created = _git.Branches(_folderPath).First(x => x.Name == branch);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+
+            await BroadcastAsync([]);
+
+            RepositoryBranchDto dto = new RepositoryBranchDto { Name = created.Name, IsCurrent = created.IsCurrent, LastCommitAt = created.When };
+            return ResultDto<RepositoryBranchDto>.Success(dto);
+        }
+
+        public async Task<ResultDto<GitBranchSwitch>> SwitchBranchAsync(string branch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct)
+        {
+            // A save not written yet would not show as a change, and the branch would replace it unseen.
+            List<Flow> flows = await FlowNamesAsync(ct);
+            await WriteAsync(flows.Select(x => x.Id).ToList(), ct);
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                int changeCount = _git.Changes(_folderPath).Count;
+                if (changeCount > 0)
+                {
+                    string changes = changeCount == 1 ? "1 change" : $"{changeCount} changes";
+                    return ResultDto<GitBranchSwitch>.Failure($"Commit or discard the {changes} first: a switch brings every flow to the branch's version.");
+                }
+
+                List<GitBranch> branches = _git.Branches(_folderPath);
+                GitBranch? from = branches.FirstOrDefault(x => x.IsCurrent);
+                GitBranch? to = branches.FirstOrDefault(x => x.Name == branch);
+
+                if (from == null || to == null)
+                    return ResultDto<GitBranchSwitch>.Failure($"There is no branch called \"{branch}\".");
+
+                GitBranchSwitch branchSwitch = ReadSwitch(from, to);
+                if (to.IsCurrent)
+                    return ResultDto<GitBranchSwitch>.Success(branchSwitch);
+
+                _git.SwitchBranch(_folderPath, to.Name);
+
+                // Held until the database has the branch too, so no flow is written into the folder halfway.
+                bool isApplied = false;
+                try
+                {
+                    ResultDto<bool> applied = await applyAsync(branchSwitch, ct);
+                    if (!applied.IsSuccess)
+                        return ResultDto<GitBranchSwitch>.Failure(applied.ErrorMessage ?? "The branch's flows could not be imported.");
+
+                    isApplied = true;
+                    return ResultDto<GitBranchSwitch>.Success(branchSwitch);
+                }
+                finally
+                {
+                    // The database kept the flows it had, so the files go back to match them.
+                    if (!isApplied)
+                        _git.SwitchBranch(_folderPath, from.Name);
+                }
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+
+        // ================================================================
         // Private methods - writing
         // ================================================================
 
@@ -551,13 +655,15 @@ namespace Business.Repository
             return flowIds;
         }
 
-        // The export writes only what changed and removes the images the flow no longer uses.
+        // The export writes only what changed and removes the images the flow no longer uses. A
+        // flow a branch switch hid since the list was read has no files on this branch.
         private async Task WriteFlowAsync(int flowId, CancellationToken ct)
         {
             await _gate.WaitAsync(ct);
             try
             {
-                await _exporter.ExportAsync(flowId, _folderPath, ct);
+                if (await IsVisibleAsync(flowId, ct))
+                    await _exporter.ExportAsync(flowId, _folderPath, ct);
             }
             finally
             {
@@ -670,8 +776,16 @@ namespace Business.Repository
 
             return await dbContext.Flows
                 .AsNoTracking()
+                .Where(x => !x.IsHidden)
                 .Select(x => new Flow { Id = x.Id, Name = x.Name })
                 .ToListAsync(ct);
+        }
+
+        private async Task<bool> IsVisibleAsync(int flowId, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            return await dbContext.Flows.AnyAsync(x => x.Id == flowId && !x.IsHidden, ct);
         }
 
         private async Task<Flow?> FlowNameAsync(int flowId, CancellationToken ct)
@@ -708,9 +822,72 @@ namespace Business.Repository
             return null;
         }
 
-        // The header's Id: line, read without the scanner: which flow a file is, nothing more.
-        private static Guid? IdOf(string script)
+        // A flow's script and the images in its folder, as a commit holds them.
+        private GitFlowFiles ReadFlowFiles(List<string> files, string? commitSha, string scriptFile)
         {
+            byte[] script = _git.ReadFile(_folderPath, commitSha, scriptFile) ?? [];
+            GitFlowFiles found = new GitFlowFiles { Path = scriptFile, Script = Encoding.UTF8.GetString(script) };
+
+            string flowFileName = RepositoryPathHelper.FlowFileNameOf(scriptFile);
+            foreach (string path in files.Where(x => RepositoryPathHelper.IsImage(x) && RepositoryPathHelper.BelongsTo(x, flowFileName)))
+            {
+                byte[]? image = _git.ReadFile(_folderPath, commitSha, path);
+                if (image != null)
+                    found.Templates[Path.GetFileName(path)] = image;
+            }
+
+            return found;
+        }
+
+        // Every flow whose files differ between the two branches, as the one switched to has it,
+        // and the Id of each flow it does not have: one whose file it lacks, or whose file there
+        // is another flow's now.
+        private GitBranchSwitch ReadSwitch(GitBranch from, GitBranch to)
+        {
+            GitBranchSwitch branchSwitch = new GitBranchSwitch { From = from.Name, To = to.Name };
+            if (from.Sha == to.Sha)
+                return branchSwitch;
+
+            List<string> flowFileNames = _git.Compare(_folderPath, from.Sha, to.Sha)
+                .Select(x => RepositoryPathHelper.FlowFileNameOf(x.Path))
+                .Where(x => x.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            List<string> files = _git.Files(_folderPath, to.Sha);
+            HashSet<Guid> fromIds = new HashSet<Guid>();
+            HashSet<Guid> toIds = new HashSet<Guid>();
+
+            foreach (string flowFileName in flowFileNames)
+            {
+                string scriptFile = RepositoryPathHelper.ScriptFileOf(flowFileName);
+
+                byte[]? fromScript = _git.ReadFile(_folderPath, from.Sha, scriptFile);
+                Guid? fromId = IdOf(Text(fromScript));
+                if (fromId != null)
+                    fromIds.Add(fromId.Value);
+
+                if (!files.Contains(scriptFile))
+                    continue;
+
+                GitFlowFiles flow = ReadFlowFiles(files, to.Sha, scriptFile);
+                branchSwitch.Flows.Add(flow);
+
+                Guid? toId = IdOf(flow.Script);
+                if (toId != null)
+                    toIds.Add(toId.Value);
+            }
+
+            branchSwitch.GoneFlowIds = fromIds.Except(toIds).ToList();
+            return branchSwitch;
+        }
+
+        // The header's Id: line, read without the scanner: which flow a file is, nothing more.
+        private static Guid? IdOf(string? script)
+        {
+            if (script == null)
+                return null;
+
             foreach (string line in script.Split('\n'))
             {
                 string trimmed = line.Trim();

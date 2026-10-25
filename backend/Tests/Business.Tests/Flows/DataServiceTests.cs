@@ -425,6 +425,21 @@ namespace Business.Tests.Flows
             created.ErrorMessage.ShouldNotBeNull().ShouldContain("\"Login\"");
         }
 
+        // A hidden flow is not on this branch, so it has no file here to clash with.
+        [Fact]
+        public async Task A_hidden_flow_does_not_hold_its_name()
+        {
+            using (AppDbContext db = _database.CreateDbContext())
+            {
+                db.Flows.Add(new Flow { Name = "Login", IsHidden = true });
+                db.SaveChanges();
+            }
+
+            ResultDto<int> created = await _dataService.Flow.CreateAsync(new Flow { Name = "Login" }, Ct);
+
+            created.IsSuccess.ShouldBeTrue(created.ErrorMessage);
+        }
+
         [Fact]
         public async Task A_flow_cannot_be_renamed_to_another_flows_name()
         {

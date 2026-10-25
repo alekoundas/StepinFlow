@@ -42,7 +42,7 @@ namespace Transport.Ipc.Handlers
 
             List<int> flowIds = dto.FlowIds;
             if (flowIds.Count == 0)
-                flowIds = await dbContext.Flows.Select(x => x.Id).ToListAsync(ct);
+                flowIds = await dbContext.Flows.Where(x => !x.IsHidden).Select(x => x.Id).ToListAsync(ct);
 
             if (flowIds.Count == 0)
                 return ResultDto<IReadOnlyList<FlowHealthDto>>.Success([]);

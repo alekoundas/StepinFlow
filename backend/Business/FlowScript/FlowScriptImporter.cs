@@ -49,8 +49,7 @@ namespace Business.FlowScript
         /// </summary>
         public async Task<FlowScriptImportResultDto> ImportTextAsync(string script, IReadOnlyDictionary<string, byte[]> templates, CancellationToken ct = default)
         {
-
-            FlowScriptSchema schema = _scanner.Read(script); // Script -> ScriptLines -> LineTokens -> Parse LineTokens -> Schema
+            FlowScriptSchema schema = Read(script, templates);
             if (!schema.IsValid)
                 return Failed(schema.Diagnostics);
 
@@ -58,16 +57,17 @@ namespace Business.FlowScript
             List<Diagnostic> unlinked = await _dataService.Flow.LinkSubFlowsAsync(schema, ct);
             schema.Diagnostics.AddRange(unlinked);
 
+            // A missing image is reported, and the template is kept without one.
+            List<FlowTemplate> pictures = TemplatesOf(schema);
             FlowScriptImportResultDto result = new FlowScriptImportResultDto
             {
                 IsSuccess = true,
                 FlowName = schema.Flow.Name,
                 StepCount = schema.Steps.Count,
+                TemplateCount = pictures.Count,
+                MissingTemplates = pictures.Where(x => x.TemplateImage == null).Select(x => x.Name).ToList(),
                 Warnings = ToDtos(schema.Diagnostics, DiagnosticSeverityEnum.WARNING),
             };
-
-            foreach (FlowTemplate template in schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct())
-                TakeTemplateImage(template, templates, result);
 
             // Save to Database.
             ResultDto<(int FlowId, FlowValidationResultDto Validation)> replaced = await _dataService.Flow.ReplaceAsync(schema, ct);
@@ -81,20 +81,27 @@ namespace Business.FlowScript
         }
 
 
+        public FlowScriptSchema Read(string script, IReadOnlyDictionary<string, byte[]> templates)
+        {
+            FlowScriptSchema schema = _scanner.Read(script); // Script -> ScriptLines -> LineTokens -> Parse LineTokens -> Schema
+
+            foreach (FlowTemplate template in TemplatesOf(schema))
+            {
+                templates.TryGetValue(template.Name, out byte[]? image);
+                template.TemplateImage = image;
+            }
+
+            return schema;
+        }
+
+
         // ================================================================
         // Private methods
         // ================================================================
 
-        private static void TakeTemplateImage(FlowTemplate template, IReadOnlyDictionary<string, byte[]> templates, FlowScriptImportResultDto result)
+        private static List<FlowTemplate> TemplatesOf(FlowScriptSchema schema)
         {
-            // A missing image is reported, and the template is kept without one.
-            templates.TryGetValue(template.Name, out byte[]? image);
-            if (image == null)
-                result.MissingTemplates.Add(template.Name);
-
-            template.TemplateImage = image;
-
-            result.TemplateCount++;
+            return schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate).Distinct().ToList();
         }
 
         // Also what the recording's draft says when it does not read as a file.

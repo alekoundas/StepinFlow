@@ -191,6 +191,19 @@ the history.
       the commit but cannot show that script. And a run with a sub-flow changed but not committed
       keeps only the calling flow's script, so the sub-flow's version is marked, not kept.
 
+- [ ] **A branch cannot be renamed or deleted yet.** Only made, listed and switched to (phase
+      14.2). Deleting one is safe for the database - no flow is hidden by a branch that is not
+      checked out - but wants a confirmation naming the commits only it holds.
+- [ ] **A `Sub Flow` step can still point at a hidden flow.** A switch imports a caller again, and
+      the import links only to flows on the branch; but a caller the switch does not touch keeps its
+      link. That happens only when a branch was committed with the caller and without the sub-flow
+      it calls, and then it executes the hidden flow. Validation should say "not on this branch".
+- [ ] **A crash in the middle of a switch leaves the folder and the database apart.** The checkout
+      and the database's transaction cannot be one. Between them the folder is on the new branch and
+      the database on the old one, and after a restart every flow that differs shows as a change.
+      Recording the branch the database has, and finishing or undoing the switch at startup, would
+      close it.
+
 ## AI
 
 - [ ] **See what actually goes to the model.** `.UseOpenTelemetry(configure: x => x.EnableSensitiveData = true)`

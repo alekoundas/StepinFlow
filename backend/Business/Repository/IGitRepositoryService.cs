@@ -27,7 +27,7 @@ namespace Business.Repository
 
         /// <summary>
         /// Brings these flows' files up to date, and those of the flows that call them, then removes
-        /// the files of flows that are gone.
+        /// the files of flows that are gone or hidden.
         /// </summary>
         Task WriteAsync(IReadOnlyCollection<int> flowIds, CancellationToken ct);
 
@@ -60,5 +60,22 @@ namespace Business.Repository
 
         /// <summary>What one commit changed in one flow, or null when either is not there.</summary>
         Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct);
+
+        /// <summary>The local branches, by name.</summary>
+        Task<List<RepositoryBranchDto>> GetBranchesAsync(CancellationToken ct);
+
+        /// <summary>
+        /// A new branch at the last commit, checked out. Nothing differs, so no flow changes, and
+        /// changes not committed yet stay as they are.
+        /// </summary>
+        Task<ResultDto<RepositoryBranchDto>> CreateBranchAsync(string name, CancellationToken ct);
+
+        /// <summary>
+        /// Checks out another branch and hands what differs on it to <paramref name="applyAsync"/>,
+        /// which brings the database along. The folder is held until it returns, so no flow is
+        /// written into it halfway, and goes back to the branch it was on when it fails. Refused
+        /// while anything is not committed.
+        /// </summary>
+        Task<ResultDto<GitBranchSwitch>> SwitchBranchAsync(string branch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct);
     }
 }

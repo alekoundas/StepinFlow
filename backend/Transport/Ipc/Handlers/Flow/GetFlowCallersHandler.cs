@@ -32,7 +32,7 @@ namespace Transport.Ipc.Handlers
 
             List<LookupItemDto> callers = await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => callerIds.Contains(x.Id))
+                .Where(x => callerIds.Contains(x.Id) && !x.IsHidden)
                 .OrderBy(x => x.Name)
                 .Select(x => new LookupItemDto
                 {

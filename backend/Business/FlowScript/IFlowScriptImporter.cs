@@ -1,3 +1,4 @@
+using Business.FlowScript.Models;
 using Core.Models.Dtos.FlowScript;
 
 namespace Business.FlowScript
@@ -15,5 +16,11 @@ namespace Business.FlowScript
         /// script. Each template's image is taken from <paramref name="templates"/> by its name.
         /// </summary>
         Task<FlowScriptImportResultDto> ImportTextAsync(string script, IReadOnlyDictionary<string, byte[]> templates, CancellationToken ct = default);
+
+        /// <summary>
+        /// A script read into the rows an import saves, each template given its image by its name,
+        /// with nothing saved: for a caller that saves several flows in one transaction.
+        /// </summary>
+        FlowScriptSchema Read(string script, IReadOnlyDictionary<string, byte[]> templates);
     }
 }

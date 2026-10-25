@@ -21,7 +21,8 @@ namespace Transport.Ipc.Handlers
         public async Task<ResultDto<LazyResponseDto<FlowDto>>> HandleAsync(LazyRequestDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-            IQueryable<Flow> query = dbContext.Flows.AsNoTracking();
+            // A hidden flow is not on the repository's branch.
+            IQueryable<Flow> query = dbContext.Flows.AsNoTracking().Where(x => !x.IsHidden);
 
             // Unset lists everything, which is what a lookup wants; the two pages always set it.
             if (dto.IsSubFlow is bool isSubFlow)
@@ -53,7 +54,7 @@ namespace Transport.Ipc.Handlers
                     // that is still one thing depending on it.
                     CallerCount = x.IsSubFlow
                         ? dbContext.FlowSteps
-                            .Where(step => step.SubFlowId == x.Id)
+                            .Where(step => step.SubFlowId == x.Id && dbContext.Flows.Any(caller => caller.Id == step.RootId && !caller.IsHidden))
                             .Select(step => step.RootId)
                             .Distinct()
                             .Count()

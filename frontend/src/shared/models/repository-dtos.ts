@@ -88,3 +88,29 @@ export interface RepositoryFlowCommitDto {
 export interface RepositoryChangedDto {
   flowIds: number[];
 }
+
+export interface RepositoryBranchDto {
+  name: string;
+  isCurrent: boolean;
+  lastCommitAt: string;
+}
+
+/** One flow a branch switch touches. */
+export interface RepositoryBranchSwitchFlowDto {
+  /** Null for a flow new on the branch until it is imported. */
+  flowId: number | null;
+  name: string;
+  isSubFlow: boolean;
+
+  /** New on the branch, changed on it, or not on it - hidden. */
+  change: GitChangeKindEnum;
+  isDone: boolean;
+}
+
+/** A branch switch as it goes: sent whole on every change, and returned once it is done. */
+export interface RepositoryBranchSwitchDto {
+  branch: string;
+
+  /** The flows hidden first, then the ones imported, sub-flows before their callers. */
+  flows: RepositoryBranchSwitchFlowDto[];
+}

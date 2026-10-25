@@ -69,6 +69,35 @@ namespace Business.Tests.Repository
         }
 
 
+        // At the last commit, so nothing differs and nothing has to be brought across.
+        [Fact]
+        public async Task A_new_branch_starts_at_the_last_commit_and_is_checked_out()
+        {
+            _git.Committed["Login.sflw"] = [1];
+
+            ResultDto<RepositoryBranchDto> created = await Service().CreateBranchAsync("  login-fix ", Ct);
+
+            created.IsSuccess.ShouldBeTrue(created.ErrorMessage);
+            created.Data.ShouldNotBeNull().Name.ShouldBe("login-fix");
+            _git.Current.ShouldBe("login-fix");
+            _git.Committed["Login.sflw"].ShouldBe([1]);
+            _broadcast.Sent.ShouldContain(x => x.Type == BroadcastTypeEnum.REPOSITORY_CHANGED);
+        }
+
+        // Git keeps a branch as a file, so "MAIN" would be main on Windows and macOS.
+        [Theory]
+        [InlineData("")]
+        [InlineData("login fix")]
+        [InlineData("MAIN")]
+        public async Task A_branch_name_git_does_not_take_or_one_taken_is_refused(string name)
+        {
+            ResultDto<RepositoryBranchDto> created = await Service().CreateBranchAsync(name, Ct);
+
+            created.IsSuccess.ShouldBeFalse();
+            _git.Current.ShouldBe("main");
+            _git.Branches(_path).Count.ShouldBe(1);
+        }
+
         [Fact]
         public async Task Each_change_belongs_to_the_flow_its_path_names()
         {

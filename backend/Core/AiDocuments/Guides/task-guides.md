@@ -108,8 +108,16 @@ app: a file changed there by another program is replaced the next time that flow
 **Discard changes**, in **Changes**, puts the flow back as the last commit has it, after asking,
 since what changed since is lost. **Restore this version**, on a commit in **History**, brings the
 flow back to how it was after that commit, as a change not committed yet - commit it, or discard it
-to return. Both take back a rename too, and keep the flow's executions. Branches and a remote such
-as GitHub are not there yet.
+to return. Both take back a rename too, and keep the flow's executions.
+
+The branch at the top of the editor opens the **branches**. **New branch** starts one from the last
+commit and switches to it; nothing changes, and changes not committed yet come along. Picking
+another branch switches to it once everything is committed or discarded and no flow is executing:
+only the flows that differ between the two are touched, each brought to that branch's version, and a
+flow the branch does not have is hidden, never deleted - its executions are kept, and it comes back
+on any branch that has it. A switch is all or nothing: a flow that cannot be imported leaves every
+flow as it was. Two branches can each have a flow of the same name. A remote such as GitHub is not
+there yet.
 
 ## Being told when a flow fails
 

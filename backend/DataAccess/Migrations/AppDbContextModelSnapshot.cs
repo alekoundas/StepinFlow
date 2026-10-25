@@ -241,6 +241,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsQaTest")
                         .HasColumnType("INTEGER");
 

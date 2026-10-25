@@ -1518,7 +1518,8 @@ to work out why it went red.
 
 **Partly built** - phases 8 and 12 to 14. What exists: the script and its transactional import
 and export (§7, the editor's Export and the Import page), `PublicId`, the main area, and the
-flows kept in a local repository (phase 14.1, below).
+flows kept in a local repository with its discard, restore and branches (phases 14.1 and 14.2,
+below).
 
 ### Every flow is kept in a repository of the app's own
 
@@ -1538,7 +1539,7 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
 - **Every save writes the flow's files.** Each public data-service write calls
   `GitRepositoryService.Changed(flowId)` once it has saved or committed; the service waits for half a
   second of quiet, then writes each changed flow and every flow that calls it - a `Sub Flow` line
-  names the file of the flow it calls - and removes the files of flows that are gone. Not a
+  names the file of the flow it calls - and removes the files of flows that are gone or hidden. Not a
   `SaveChangesInterceptor`: several deletes are `ExecuteDelete`, which never reaches one.
 - **A flow is written by its export.** `FlowScriptExporter.ExportAsync` writes a file only when its
   bytes differ, and removes a PNG only when the flow names it no more, at the folder's top level,
@@ -1565,7 +1566,7 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
   only when the commit cannot say: changes not committed, or no commit. A repository that cannot be
   read costs the record, never the execution. Three nullable columns, so older executions simply
   have none.
-- **What the app shows.** The editor header has the branch, the flow's changes and Commit; the
+- **What the app shows.** The editor header has the branch and its menu, the flow's changes and Commit; the
   commit dialog lists every changed file with this flow's ticked and a message filled in from
   what changed; the Script tab is Script, Changes and History - Script marks each line changed
   since the last commit in its margin (`change-gutter.ts`, a line diff), the other two are
@@ -1585,7 +1586,30 @@ and executions stay, then writes the flow's files at once. Discard reads the las
 nothing to commit; Restore reads an older one and lands as a change. It is a class of its own because
 the import saves through the data services, which tell `GitRepositoryService` what they changed -
 the service cannot also depend on them - and it still reads the commit through that service.
-Branches read files back too, and wait for the rest of 14.2.
+
+**Branches.** The branch in the editor header opens a menu of the local branches and a new one. A
+new branch starts at the last commit and is checked out at once, so nothing differs and changes not
+committed yet come along. A switch is refused while anything is not committed or a flow is
+executing. `GitRepositoryService.SwitchBranchAsync` writes every flow first, so a save a moment ago
+counts as a change, then compares the two branches' last commits: for each flow whose files differ
+it reads the script and images as the other branch has them, and it takes the `Id` of each flow the
+other branch does not have from the `Id:` of the scripts that differ, so a flow renamed between
+them is one flow. It checks the branch out and hands that to `BranchSwitchService`, holding the
+folder until the database has caught up, so the background writer cannot write a flow into it
+halfway; when anything fails, the old branch is checked out again. `BranchSwitchService` - a class
+of its own for the reason `FlowRestoreService` is - reads every script first, so one that does not
+read refuses the switch before anything is saved. Then, in one transaction, it hides the flows the
+branch does not have, names the ones it imports by their `Id` for the moment, since a branch may
+have swapped two names, and imports them sub-flows first, so a `Sub Flow` line finds the flow it
+calls.
+
+A hidden flow is `Flow.IsHidden` (`FlowHidden`, which leaves every existing flow visible): its row
+and its executions stay. Nothing lists it - flows, sub-flows, lookups, health, the runs summary, the
+AI's search - its name is free for another flow, a `Sub Flow` line does not link to it, and the
+writer leaves it out of the folder. A branch that has it imports it back as the same row, since
+identity is the `PublicId`: the same flow on two branches is one row, and its executions
+accumulate. `REPOSITORY_BRANCH_SWITCH` carries the progress to a dialog that holds the app until the
+switch is done, and a flow open in the editor that the branch hides is left for its list.
 
 ### The file is `.sflw`
 
@@ -2048,18 +2072,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-890 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+909 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 664 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
+| `Business.Tests` | 676 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore and branch switches |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
 | `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
-| `Platform.Shared.Tests` | 10 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files |
+| `Platform.Shared.Tests` | 17 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2170,7 +2194,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 890 backend tests.
+or OpenAI. 909 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

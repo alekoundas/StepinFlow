@@ -55,6 +55,7 @@ namespace Business.Ai.Tools
 
             return await dbContext.Flows
                 .AsNoTracking()
+                .Where(x => !x.IsHidden)
                 .Where(x => isListAll || tokens.Any(t => EF.Functions.Like(x.Name, t) || EF.Functions.Like(x.Description, t)))
                 .OrderBy(x => x.Name)
                 .Take(_maxRows)

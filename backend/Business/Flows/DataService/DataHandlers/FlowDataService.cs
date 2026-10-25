@@ -168,14 +168,22 @@ namespace Business.Flows.DataService.DataHandlers
         /// </summary>
         public async Task<List<Diagnostic>> LinkSubFlowsAsync(FlowScriptSchema schema, CancellationToken ct)
         {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            return await LinkSubFlowsAsync(dbContext, schema, ct);
+        }
+
+        /// <summary>The same, inside the caller's transaction, so a sub-flow it just imported is found.</summary>
+        public static async Task<List<Diagnostic>> LinkSubFlowsAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
+        {
             List<Diagnostic> warnings = new List<Diagnostic>();
             if (schema.SubFlows.Count == 0)
                 return warnings;
 
-            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
-
+            // A hidden flow is not on this branch, so nothing here can call it.
             List<Flow> flows = await dbContext.Flows
                 .AsNoTracking()
+                .Where(x => !x.IsHidden)
                 .Select(x => new Flow { Id = x.Id, Name = x.Name, PublicId = x.PublicId, IsSubFlow = x.IsSubFlow })
                 .ToListAsync(ct);
 
@@ -274,9 +282,11 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<(int FlowId, FlowValidationResultDto Validation)>.Failure(taken);
 
             // Saved on its own first: RootId names the flow by id, with no link EF could fill it from.
+            // A hidden flow imported is back on the current branch.
             Flow flow = existing ?? schema.Flow;
             flow.Name = schema.Flow.Name;
             flow.Description = schema.Flow.Description;
+            flow.IsHidden = false;
 
             // A file from before the Kind line keeps what the flow was. A sub-flow stays one: its
             // callers point at it, which is why making one is one way.
@@ -320,6 +330,32 @@ namespace Business.Flows.DataService.DataHandlers
             FlowValidationResultDto validation = await ValidateAsync(dbContext, flow.Id, ct);
 
             return ResultDto<(int FlowId, FlowValidationResultDto Validation)>.Success((flow.Id, validation));
+        }
+
+        /// <summary>
+        /// Inside a branch switch: hides the flows the branch does not have. Their rows stay, for
+        /// their executions, and a branch that has them imports them back.
+        /// </summary>
+        public static Task HideAsync(AppDbContext dbContext, IReadOnlyCollection<Guid> publicIds, CancellationToken ct)
+        {
+            return dbContext.Flows
+                .Where(x => publicIds.Contains(x.PublicId))
+                .ExecuteUpdateAsync(x => x.SetProperty(flow => flow.IsHidden, true), ct);
+        }
+
+        /// <summary>
+        /// Inside a branch switch, before its flows are replaced: each is named by its Id for the
+        /// moment, so two the branch swapped names between do not refuse each other. Replacing
+        /// names each again.
+        /// </summary>
+        public static async Task ReleaseNamesAsync(AppDbContext dbContext, IReadOnlyCollection<Guid> publicIds, CancellationToken ct)
+        {
+            List<Flow> flows = await dbContext.Flows.Where(x => publicIds.Contains(x.PublicId)).ToListAsync(ct);
+
+            foreach (Flow flow in flows)
+                flow.Name = flow.PublicId.ToString();
+
+            await dbContext.SaveChangesAsync(ct);
         }
 
         /// <summary>
@@ -432,11 +468,12 @@ namespace Business.Flows.DataService.DataHandlers
         // ================================================================
 
         // The name is the flow's file name, and Windows and macOS ignore case, so "Login" and
-        // "login" would be one file. Compared here rather than in SQL, which folds only A to Z.
+        // "login" would be one file. Compared here rather than in SQL, which folds only A to Z. A
+        // hidden flow has no file on this branch, so its name is free here.
         private static async Task<string?> ValidateNameIsFreeAsync(AppDbContext dbContext, string name, int flowId, CancellationToken ct)
         {
             List<string> names = await dbContext.Flows
-                .Where(x => x.Id != flowId)
+                .Where(x => x.Id != flowId && !x.IsHidden)
                 .Select(x => x.Name)
                 .ToListAsync(ct);
 

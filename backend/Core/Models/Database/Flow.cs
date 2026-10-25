@@ -16,6 +16,9 @@ namespace Core.Models.Database
         // A QA test rather than an automation, chosen at the recording setup.
         public bool IsQaTest { get; set; }
 
+        // Not on the repository's current branch: kept for its executions, and back on a branch that has it.
+        public bool IsHidden { get; set; }
+
 
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();

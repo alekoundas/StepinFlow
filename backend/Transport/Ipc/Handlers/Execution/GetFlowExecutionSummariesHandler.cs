@@ -33,6 +33,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             var flows = await dbContext.Flows
                 .AsNoTracking()
+                .Where(x => !x.IsHidden)
                 .OrderBy(x => x.Name)
                 .Select(x => new { x.Id, x.Name, x.IsSubFlow })
                 .ToListAsync(ct);

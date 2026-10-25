@@ -40,5 +40,20 @@ namespace Core.Ports
 
         /// <summary>The name and email the user's git config gives, or null when it gives neither.</summary>
         GitSignature? ConfiguredAuthor(string folderPath);
+
+        /// <summary>The local branches, by name. None before the first commit.</summary>
+        List<GitBranch> Branches(string folderPath);
+
+        /// <summary>Whether git takes this as a branch's name.</summary>
+        bool IsValidBranchName(string name);
+
+        /// <summary>A new branch at the last commit. It is not checked out.</summary>
+        void CreateBranch(string folderPath, string name);
+
+        /// <summary>Checks the branch out. Files that differ from the last commit are kept when the branch has them as that commit does.</summary>
+        void SwitchBranch(string folderPath, string name);
+
+        /// <summary>The files that differ between two commits.</summary>
+        List<GitFileChange> Compare(string folderPath, string fromCommitSha, string toCommitSha);
     }
 }

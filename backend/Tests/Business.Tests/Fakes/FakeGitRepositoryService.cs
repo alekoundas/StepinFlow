@@ -75,5 +75,20 @@ namespace Business.Tests.Fakes
         {
             throw new NotImplementedException();
         }
+
+        public Task<List<RepositoryBranchDto>> GetBranchesAsync(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ResultDto<RepositoryBranchDto>> CreateBranchAsync(string name, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ResultDto<GitBranchSwitch>> SwitchBranchAsync(string branch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -2,9 +2,10 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { Button } from "primereact/button";
 
+import BranchMenuComponent from "@/features/repository/components/BranchMenuComponent";
 import CommitDialogComponent from "@/features/repository/components/CommitDialogComponent";
 import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import { MONO, UNCOMMITTED_COLOR, plural } from "@/features/repository/repository-format";
+import { UNCOMMITTED_COLOR, plural } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -16,8 +17,8 @@ interface Props {
 }
 
 /**
- * The editor header's word on the repository: the branch, this flow's changes since the last
- * commit, and Commit. Saving writes the flow's files; committing is always this button.
+ * The editor header's word on the repository: the branch and its menu, this flow's changes since
+ * the last commit, and Commit. Saving writes the flow's files; committing is always this button.
  */
 export default function RepositoryChipComponent({ flowId, onShowChanges }: Props) {
   const { data: status, isError } = useRepositoryStatus();
@@ -45,14 +46,12 @@ export default function RepositoryChipComponent({ flowId, onShowChanges }: Props
         className="flex align-items-center border-round-md"
         style={{ border: "1px solid var(--surface-border)" }}
       >
-        <span
-          className="flex align-items-center gap-2 px-3 py-2 text-sm"
-          title="The repository's branch"
-          style={{ fontFamily: MONO }}
-        >
-          <BranchIconComponent />
-          {status.branch}
-        </span>
+        <BranchMenuComponent
+          flowId={flowId}
+          branch={status.branch}
+          commitCount={status.commitCount}
+          changeCount={status.changeCount}
+        />
 
         <span
           aria-hidden="true"
@@ -110,37 +109,3 @@ export default function RepositoryChipComponent({ flowId, onShowChanges }: Props
   );
 }
 
-// PrimeIcons has no branch.
-function BranchIconComponent() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle
-        cx="6"
-        cy="5"
-        r="2"
-      />
-      <circle
-        cx="6"
-        cy="19"
-        r="2"
-      />
-      <circle
-        cx="18"
-        cy="7"
-        r="2"
-      />
-      <path d="M6 7v10" />
-      <path d="M18 9c0 5-6 4-12 8" />
-    </svg>
-  );
-}

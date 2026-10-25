@@ -37,6 +37,8 @@ import type { RecordingDraftRevisionDto } from "@/shared/models/recording-draft-
 import type { FlowScriptPreviewDto } from "@/shared/models/flow-script-preview-dto";
 import type { FlowScriptExportFolderDto, FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
 import type {
+  RepositoryBranchDto,
+  RepositoryBranchSwitchDto,
   RepositoryCommitDto,
   RepositoryCommitRequestDto,
   RepositoryFileChangeDto,
@@ -134,6 +136,11 @@ export const backendApiService = {
     // The flow back as an older commit has it, as a change not committed yet.
     restore: (dto: RepositoryFlowCommitRequestDto) =>
       call<FlowScriptImportResultDto>("Repository.restore", dto),
+    getBranches: () => call<RepositoryBranchDto[]>("Repository.getBranches"),
+    // At the last commit, and checked out; nothing else changes.
+    createBranch: (name: string) => call<RepositoryBranchDto>("Repository.createBranch", name),
+    // Every flow brought to the branch's version; REPOSITORY_BRANCH_SWITCH says how far.
+    switchBranch: (name: string) => call<RepositoryBranchSwitchDto>("Repository.switchBranch", name),
   },
 
   DiscordBot: {

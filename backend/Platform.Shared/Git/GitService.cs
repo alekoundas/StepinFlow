@@ -202,33 +202,7 @@ namespace Platform.Shared.Git
             Commit? parent = commit.Parents.FirstOrDefault();
             TreeChanges treeChanges = repository.Diff.Compare<TreeChanges>(parent?.Tree, commit.Tree);
 
-            foreach (TreeEntryChanges change in treeChanges)
-            {
-                // A rename is the old file gone and the new one added, as a reviewer would read it.
-                if (change.Status == ChangeKind.Renamed)
-                {
-                    if (IsUnder(change.OldPath, paths))
-                        changes.Add(new GitFileChange { Path = change.OldPath, Kind = GitChangeKindEnum.DELETED });
-
-                    if (IsUnder(change.Path, paths))
-                        changes.Add(new GitFileChange { Path = change.Path, Kind = GitChangeKindEnum.ADDED });
-
-                    continue;
-                }
-
-                if (!IsUnder(change.Path, paths))
-                    continue;
-
-                GitChangeKindEnum kind = GitChangeKindEnum.MODIFIED;
-                if (change.Status == ChangeKind.Added)
-                    kind = GitChangeKindEnum.ADDED;
-                else if (change.Status == ChangeKind.Deleted)
-                    kind = GitChangeKindEnum.DELETED;
-
-                changes.Add(new GitFileChange { Path = change.Path, Kind = kind });
-            }
-
-            return changes;
+            return ChangesOf(treeChanges).Where(x => IsUnder(x.Path, paths)).ToList();
         }
 
         public GitSignature? ConfiguredAuthor(string folderPath)
@@ -242,6 +216,58 @@ namespace Platform.Shared.Git
                 return null;
 
             return new GitSignature { Name = name, Email = email };
+        }
+
+        public List<GitBranch> Branches(string folderPath)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            List<GitBranch> branches = new List<GitBranch>();
+            foreach (Branch branch in repository.Branches.Where(x => !x.IsRemote && x.Tip != null))
+            {
+                branches.Add(new GitBranch
+                {
+                    Name = branch.FriendlyName,
+                    Sha = branch.Tip.Sha,
+                    IsCurrent = branch.IsCurrentRepositoryHead,
+                    When = branch.Tip.Author.When,
+                });
+            }
+
+            return branches.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public bool IsValidBranchName(string name)
+        {
+            return Reference.IsValidName("refs/heads/" + name);
+        }
+
+        public void CreateBranch(string folderPath, string name)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            repository.CreateBranch(name);
+        }
+
+        public void SwitchBranch(string folderPath, string name)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Branch branch = repository.Branches[name]
+                ?? throw new InvalidOperationException($"There is no branch called \"{name}\".");
+
+            Commands.Checkout(repository, branch);
+        }
+
+        public List<GitFileChange> Compare(string folderPath, string fromCommitSha, string toCommitSha)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Commit from = repository.Lookup<Commit>(fromCommitSha);
+            Commit to = repository.Lookup<Commit>(toCommitSha);
+            TreeChanges treeChanges = repository.Diff.Compare<TreeChanges>(from.Tree, to.Tree);
+
+            return ChangesOf(treeChanges);
         }
 
 
@@ -260,6 +286,32 @@ namespace Platform.Shared.Git
                 else if (entry.TargetType == TreeEntryTargetType.Blob)
                     paths.Add(entry.Path.Replace('\\', '/'));
             }
+        }
+
+        // A rename is the old file gone and the new one added, as a reviewer would read it.
+        private static List<GitFileChange> ChangesOf(TreeChanges treeChanges)
+        {
+            List<GitFileChange> changes = new List<GitFileChange>();
+
+            foreach (TreeEntryChanges change in treeChanges)
+            {
+                if (change.Status == ChangeKind.Renamed)
+                {
+                    changes.Add(new GitFileChange { Path = change.OldPath, Kind = GitChangeKindEnum.DELETED });
+                    changes.Add(new GitFileChange { Path = change.Path, Kind = GitChangeKindEnum.ADDED });
+                    continue;
+                }
+
+                GitChangeKindEnum kind = GitChangeKindEnum.MODIFIED;
+                if (change.Status == ChangeKind.Added)
+                    kind = GitChangeKindEnum.ADDED;
+                else if (change.Status == ChangeKind.Deleted)
+                    kind = GitChangeKindEnum.DELETED;
+
+                changes.Add(new GitFileChange { Path = change.Path, Kind = kind });
+            }
+
+            return changes;
         }
 
         // Against the last commit: new, gone or changed, whether staged or not.

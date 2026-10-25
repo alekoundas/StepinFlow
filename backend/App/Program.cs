@@ -125,6 +125,7 @@ namespace App
             builder.Services.AddSingleton<IGitService, GitService>();
             builder.Services.AddSingleton<IGitRepositoryService, GitRepositoryService>();
             builder.Services.AddSingleton<IFlowRestoreService, FlowRestoreService>();
+            builder.Services.AddSingleton<IBranchSwitchService, BranchSwitchService>();
             builder.Services.AddHostedService<HostedGitRepositoryService>(); // <- Background service!
 
             builder.Services.AddExecutionEngine();
@@ -202,6 +203,9 @@ namespace App
             builder.Services.AddTransient<GetFlowRepositoryCommitHandler>();
             builder.Services.AddTransient<DiscardFlowChangesHandler>();
             builder.Services.AddTransient<RestoreFlowVersionHandler>();
+            builder.Services.AddTransient<GetRepositoryBranchesHandler>();
+            builder.Services.AddTransient<CreateRepositoryBranchHandler>();
+            builder.Services.AddTransient<SwitchRepositoryBranchHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();
