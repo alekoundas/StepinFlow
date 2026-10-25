@@ -18,6 +18,7 @@ every step of the flow, and the file wins.
 ```
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
+Kind:    qa test
 Sizes:   1920x1080 1024x768 390x844
 Description:
   # Signs in to Swag Labs, adds every product on the first page to the cart, and checks out.
@@ -101,7 +102,7 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accu
 
 ## Check out
 
-Sub Flow  <[ flows/checkout.sflw ]>
+Sub Flow  <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
 
 ---
@@ -130,6 +131,13 @@ at either end, and not a Windows device name such as `CON` or `NUL.txt` - or the
 `FLOW_NAME_INVALID`. No two flows share a name, whatever its case, because Windows and macOS would
 make them one file: importing a file whose name a flow with another `Id` already has is refused as
 `FLOW_NAME_TAKEN`.
+
+`Kind` is what the flow is for: `automation` does a task, `qa test` checks an application works.
+Either can be followed by `sub-flow`, for a flow that other flows call rather than one started on
+its own: `Kind:    automation   sub-flow`. The line is always written. A file from before it has
+none, and importing that file over a flow keeps what the flow already was; a new flow from it is an
+automation. A sub-flow stays one even when a file says otherwise, because the flows that call it
+point at it.
 
 ### Text is quoted with `<[` and `]>`
 
@@ -572,8 +580,16 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 ### Sub-flows
 
 ```
-Sub Flow  <[ flows/checkout.sflw ]>
+Sub Flow  <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
+
+The line names the sub-flow it executes by its name, for the reader, and by its `Id`, which finds it
+on another machine or branch even after either side renamed it. A line written by hand may leave
+the `id` out, and is matched by the name, which no two flows share. A file from before the `id`
+names the path it was exported to instead, `<[ flows/checkout.sflw ]>`, and is matched by that
+file's name. The flow it finds has to be a sub-flow: one that is not here, or is not a sub-flow,
+leaves the step with nothing to execute, imported with a warning - `SUB_FLOW_UNKNOWN` or
+`SUB_FLOW_NOT_CALLABLE` - and the step's form says to pick one.
 
 ### Cleanup under End Execution
 
@@ -709,8 +725,9 @@ What the parser checks is structural — is that a keyword, is that a condition,
 above, does every word belong. The semantic validator runs on the saved flow, as it does after a
 save from a form, so a flow it finds errors in is imported and shows them.
 
-One thing it does not do yet: a `Sub Flow` step imports with no target, because resolving the path
-means reading the `Id:` out of the file it names and deciding what a missing one does.
+A `Sub Flow` step links to the sub-flow already in the app with its `Id`, else its name; one that
+is not there comes in empty, with a warning, rather than refusing the file. Import a sub-flow
+before the flows that call it.
 
 ---
 

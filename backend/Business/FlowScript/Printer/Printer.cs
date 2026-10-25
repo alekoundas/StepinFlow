@@ -37,10 +37,11 @@ namespace Business.FlowScript.Text
             return builder.ToString();
         }
 
-        public string WriteStep(FlowStep step, string subFlowPath)
+        public string WriteStep(FlowStep step, SubFlowReference? subFlow)
         {
             FlowScriptSchema schema = new FlowScriptSchema();
-            schema.SubFlowPaths[step] = subFlowPath;
+            if (subFlow != null)
+                schema.SubFlows[step] = subFlow;
 
             StringBuilder builder = new StringBuilder();
             WriteComment(builder, step, 0);
@@ -91,8 +92,8 @@ namespace Business.FlowScript.Text
                     return new BreakWriter(step);
 
                 case FlowStepTypeEnum.SUB_FLOW:
-                    string subFlowPath = schema.SubFlowPaths.GetValueOrDefault(step, string.Empty);
-                    return new SubFlowWriter(step, subFlowPath);
+                    SubFlowReference? subFlow = schema.SubFlows.GetValueOrDefault(step);
+                    return new SubFlowWriter(step, subFlow);
 
                 case FlowStepTypeEnum.NOTIFY:
                     return new NotifyWriter(step);
@@ -139,6 +140,9 @@ namespace Business.FlowScript.Text
 
             string flowId = new FlowIdWriter(schema.Flow).Write();
             builder.AppendLine(flowId);
+
+            string flowKind = new FlowKindWriter(schema.Flow).Write();
+            builder.AppendLine(flowKind);
 
             if (schema.Viewports.Count > 0)
             {

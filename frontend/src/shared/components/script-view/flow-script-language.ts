@@ -4,7 +4,7 @@ import type { Extension } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 
 // The words of the flow format, as Business/FlowScript/Catalogs/ScriptKeywordCatalog spells them.
-const HEADERS = ["Flow:", "Id:", "Sizes:", "Description:", "Areas:", "Points:", "Inputs:", "Templates:", "Steps:"];
+const HEADERS = ["Flow:", "Id:", "Kind:", "Sizes:", "Description:", "Areas:", "Points:", "Inputs:", "Templates:", "Steps:"];
 
 const STEPS = [
   "Wait Until No Image",
@@ -74,6 +74,10 @@ const OPTIONS = [
   "forever",
   "passed",
   "failed",
+  "id",
+  "automation",
+  "qa test",
+  "sub-flow",
   "is not empty",
   "is empty",
   "is not",

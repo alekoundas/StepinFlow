@@ -87,8 +87,10 @@ repository the app makes the first time it starts. Saving a flow writes its file
 second; nothing has to be exported. The first launch commits every flow as it is, so each edit
 after that shows as a change.
 
-Committing is never automatic. The top of the editor shows the branch and how many of this flow's
-files changed since the last commit; the count opens the **Script** tab's **Changes**, which shows
+Committing is never automatic. The **Script** tab marks each line changed since the last commit in
+its margin: green added, blue changed, a red tick where lines above were removed. The top of the
+editor shows the branch and how many of this flow's files changed since the last commit; the count
+opens the **Script** tab's **Changes**, which shows
 the script against the last commit, unchanged lines folded, and each changed template image before
 and after. **Commit** lists every changed file - this flow's ticked, other flows' not - with a
 message filled in from what changed, and records exactly the ticked files. **History** on the same

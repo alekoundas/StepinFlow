@@ -8,7 +8,7 @@ import { useFlowScript } from "@/features/workflow/hooks/use-flow-parts";
 import { useWorkflowStore, type ScriptView } from "@/features/workflow/store/workflow-store";
 import FlowChangesComponent from "@/features/repository/components/FlowChangesComponent";
 import FlowHistoryComponent from "@/features/repository/components/FlowHistoryComponent";
-import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
+import { useFlowRepositoryChanges, useRepositoryStatus } from "@/features/repository/hooks/use-repository";
 import { UNCOMMITTED_COLOR } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
@@ -20,7 +20,7 @@ const VIEWS: { value: ScriptView; label: string }[] = [
 ];
 
 const NOTES: Record<ScriptView, string> = {
-  script: "The flow as its file in the repository. Read only: change the flow in the other tabs.",
+  script: "The flow as its file in the repository, the margin marking what changed since the last commit. Read only: change the flow in the other tabs.",
   changes: "What changed since the last commit.",
   history: "Every commit that changed this flow, each against the one before it.",
 };
@@ -34,6 +34,11 @@ export function WorkflowScriptComponent({ flowId }: Props) {
   const { scriptView, setScriptView } = useWorkflowStore();
   const { data: status } = useRepositoryStatus();
   const { data: script, isLoading, error } = useFlowScript(flowId);
+  const { data: changes } = useFlowRepositoryChanges(flowId);
+
+  // Against the last commit; a flow no commit holds yet is all new. Without the repository, no marks.
+  let committedScript: string | undefined;
+  if (changes) committedScript = changes.committedScript ?? "";
 
   const changeCount = status?.flows.find((x) => x.flowId === flowId)?.changeCount ?? 0;
 
@@ -99,6 +104,7 @@ export function WorkflowScriptComponent({ flowId }: Props) {
           {script && (
             <ScriptViewComponent
               script={script}
+              marksFrom={committedScript}
               maxHeight={2000}
             />
           )}

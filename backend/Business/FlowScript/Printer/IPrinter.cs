@@ -13,8 +13,8 @@ namespace Business.FlowScript.Text
 
         /// <summary>
         /// One step as a flow's script prints it, its comment above its line, with no indent. A
-        /// sub-flow step names its file by the path given.
+        /// sub-flow step names the flow given, by name and Id.
         /// </summary>
-        string WriteStep(FlowStep step, string subFlowPath);
+        string WriteStep(FlowStep step, SubFlowReference? subFlow);
     }
 }

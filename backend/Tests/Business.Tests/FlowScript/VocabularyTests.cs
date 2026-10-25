@@ -71,6 +71,7 @@ namespace Business.Tests.FlowScript
             values.AddRange(Enum.GetValues<ConditionTypeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TitleMatchModeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TabMatchOnEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<FlowKindEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TemplateMatchModeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<ScalesWithEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<CursorScrollDirectionTypeEnum>().Cast<Enum>());
@@ -201,6 +202,44 @@ namespace Business.Tests.FlowScript
             FlowArea read = Read("Areas:\n  " + written).Areas.Single();
 
             (read.Type, read.UseClientArea).ShouldBe((FlowAreaTypeEnum.APPLICATION, useClientArea), written);
+        }
+
+        // ================================================================
+        // The flow's kind, and the sub-flow a step calls
+        // ================================================================
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public void A_flows_kind_is_read_back_as_written(bool isQaTest, bool isSubFlow)
+        {
+            Flow flow = new Flow { Name = "Test", IsQaTest = isQaTest, IsSubFlow = isSubFlow };
+            string written = new FlowKindWriter(flow).Write();
+            FlowScriptSchema read = Read(written);
+
+            (read.HasKind, read.Flow.IsQaTest, read.Flow.IsSubFlow).ShouldBe((true, isQaTest, isSubFlow), written);
+        }
+
+        [Fact]
+        public void A_file_from_before_the_kind_line_says_it_has_none()
+        {
+            Read("Steps:\nWait 800ms").HasKind.ShouldBeFalse();
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void A_sub_flow_line_is_read_back_with_its_id_or_without(bool hasId)
+        {
+            Guid? publicId = hasId ? Guid.Parse("3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d") : null;
+            FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW };
+            string written = new SubFlowWriter(step, new SubFlowReference { Name = "Check out", PublicId = publicId }).Write();
+
+            SubFlowReference read = Read("Steps:\n" + written).SubFlows.Values.Single();
+
+            (read.Name, read.PublicId).ShouldBe(("Check out", publicId), written);
         }
 
         // ================================================================

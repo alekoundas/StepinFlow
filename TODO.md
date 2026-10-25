@@ -141,12 +141,10 @@ the history.
       the rule costs a rename; dropping it would have cost either the `Go Back` target or a silent
       first-match.
 
-- [ ] **`Flow.IsQaTest` is not in the script.** Added 2026-10-13, set by the recording setup. The
-      header has no line for it, so an export drops it and an import of a new flow leaves it false;
-      re-importing over an existing flow keeps it, because the import only replaces the name and
-      description. Decided 2026-10-24: the writer writes it as a header line and the parser reads
-      it, before Git phase 14.2 - a flow arriving by a branch switch or a pull is a new flow to the
-      database, and would lose it.
+- [x] **`Flow.IsQaTest` is not in the script. Done 2026-10-25.** The header's `Kind:` line carries
+      it, and `IsSubFlow`, which was missing the same way: `automation` or `qa test`, either followed
+      by `sub-flow`. A file without the line keeps what the flow was, and an import never turns a
+      sub-flow back into a flow.
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing

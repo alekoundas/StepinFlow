@@ -13,12 +13,19 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Sub Flow  <[ path ]>
+            // Sub Flow  <[ Checkout ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
             ExpectKeyword(FlowStepTypeEnum.SUB_FLOW);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            Flow subFlow = new Flow() { Name = ExtractText() };
+            Flow subFlow = new Flow() { Name = ExtractText(), PublicId = Guid.Empty };
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.ID))
+            {
+                ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+                subFlow.PublicId = ExtractGuid();
+                ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+            }
 
             ExpectEnd();
 

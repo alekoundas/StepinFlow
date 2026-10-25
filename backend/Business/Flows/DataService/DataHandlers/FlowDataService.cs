@@ -1,3 +1,4 @@
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Business.Flows.FlowValidationService;
 using Business.Repository;
@@ -160,6 +161,48 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
+        /// Points each Sub Flow step of a script at the sub-flow it names: by Id, else by name, else -
+        /// for a file from before the Id - by the file name in its path. A step whose flow is not
+        /// here, or is not a sub-flow, is left without one and comes back as a warning naming it;
+        /// nothing is made a sub-flow on the file's word.
+        /// </summary>
+        public async Task<List<Diagnostic>> LinkSubFlowsAsync(FlowScriptSchema schema, CancellationToken ct)
+        {
+            List<Diagnostic> warnings = new List<Diagnostic>();
+            if (schema.SubFlows.Count == 0)
+                return warnings;
+
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            List<Flow> flows = await dbContext.Flows
+                .AsNoTracking()
+                .Select(x => new Flow { Id = x.Id, Name = x.Name, PublicId = x.PublicId, IsSubFlow = x.IsSubFlow })
+                .ToListAsync(ct);
+
+            foreach ((FlowStep step, SubFlowReference subFlow) in schema.SubFlows)
+            {
+                Flow? target = FindSubFlow(flows, subFlow);
+                if (target == null)
+                {
+                    warnings.Add(Diagnostic.Warning(DiagnosticCodeEnum.SUB_FLOW_UNKNOWN, subFlow.Line, 1,
+                        $"No flow here is \"{subFlow.Name}\", so this step has nothing to execute until that flow is imported or another is picked."));
+                    continue;
+                }
+
+                if (!target.IsSubFlow)
+                {
+                    warnings.Add(Diagnostic.Warning(DiagnosticCodeEnum.SUB_FLOW_NOT_CALLABLE, subFlow.Line, 1,
+                        $"\"{target.Name}\" is a flow, not a sub-flow, so this step has nothing to execute until it is made one and picked."));
+                    continue;
+                }
+
+                step.SubFlowId = target.Id;
+            }
+
+            return warnings;
+        }
+
+        /// <summary>
         /// Marks a flow as callable. One way on purpose: a caller's SubFlowId can then never point
         /// at something that has stopped being invokable, which is what removes every stale caller
         /// case from the rest of the feature.
@@ -234,6 +277,14 @@ namespace Business.Flows.DataService.DataHandlers
             Flow flow = existing ?? schema.Flow;
             flow.Name = schema.Flow.Name;
             flow.Description = schema.Flow.Description;
+
+            // A file from before the Kind line keeps what the flow was. A sub-flow stays one: its
+            // callers point at it, which is why making one is one way.
+            if (schema.HasKind)
+            {
+                flow.IsQaTest = schema.Flow.IsQaTest;
+                flow.IsSubFlow = flow.IsSubFlow || schema.Flow.IsSubFlow;
+            }
 
             if (existing == null)
                 dbContext.Flows.Add(flow);
@@ -408,6 +459,26 @@ namespace Business.Flows.DataService.DataHandlers
                 .Concat(schema.Inputs.Select(x => x.Name))
                 .Concat(stepNames)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        // By Id first, since either side may have renamed it; then by the name, which no two flows
+        // share. A file from before the Id names the path it was exported to, flows/checkout.sflw.
+        private static Flow? FindSubFlow(List<Flow> flows, SubFlowReference subFlow)
+        {
+            if (subFlow.PublicId != null)
+            {
+                Flow? byId = flows.FirstOrDefault(x => x.PublicId == subFlow.PublicId);
+                if (byId != null)
+                    return byId;
+            }
+
+            if (!subFlow.Name.EndsWith(".sflw", StringComparison.OrdinalIgnoreCase))
+                return flows.FirstOrDefault(x => string.Equals(x.Name, subFlow.Name, StringComparison.OrdinalIgnoreCase));
+
+            string path = subFlow.Name.Replace('\\', '/');
+            string fileName = Path.GetFileNameWithoutExtension(path);
+
+            return flows.FirstOrDefault(x => string.Equals(FileNameHelper.Clean(x.Name, "sub-flow"), fileName, StringComparison.OrdinalIgnoreCase));
         }
 
 

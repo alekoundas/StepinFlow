@@ -239,7 +239,7 @@ namespace Business.Tests.Repository
             await Service().WriteAsync([subFlow], Ct);
 
             string script = await File.ReadAllTextAsync(PathOf("Shop.sflw"), Ct);
-            script.ShouldContain("Pay.sflw");
+            script.ShouldContain("<[ Pay ]>   id <[");
         }
 
         [Fact]

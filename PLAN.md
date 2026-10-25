@@ -53,7 +53,9 @@ live.
 - [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.
-- [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
+- [x] **`Sub Flow` imports with no target.** Built 2026-10-25: `Sub Flow  <[ Checkout ]>   id <[ … ]>`,
+      linked by `Id`, else name, else the old path's file name, and only to a sub-flow; anything else
+      imports the step empty with `SUB_FLOW_UNKNOWN` or `SUB_FLOW_NOT_CALLABLE`. The path is parsed and carried as far as the importer
       (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow. Decided
       2026-10-24: the line carries the sub-flow's `Id` beside its name, and the import links by the
       `Id`. It falls back to the name, which no two flows share, for a line a person or a model wrote
@@ -377,16 +379,18 @@ the Flows page and Settings. What is left of it:
       (`ExecutionCommit`), so every existing row stays as it was. The script is kept only when the
       commit cannot say what executed - changes not committed, or no commit - so a flow executed as
       committed costs no text.
-- [ ] **The Script view marks the lines changed since the last commit**, in the margin, as the
-      mockup draws it. Changes already shows the same diff in full.
+- [x] **The Script view marks the lines changed since the last commit**, in the margin, as the
+      mockup draws it. Built 2026-10-25: a bar left of the line numbers, green for a line added, blue
+      for one changed, and a red tick on the line below where lines were removed.
 - [ ] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone
       flow included; a save shows as a change half a second later; a commit clears it.
 
 **14.2 Reading files back: discard, restore and branches.** Each of these re-imports a flow, so
 first the round trip has to lose nothing:
 
-- [ ] `Sub Flow` by its `Id` - the loose end under The script, above.
-- [ ] `IsQaTest` in the header (`TODO.md`, Flow script).
+- [x] `Sub Flow` by its `Id` - the loose end under The script, above. Built 2026-10-25.
+- [x] `IsQaTest` in the header (`TODO.md`, Flow script). Built 2026-10-25 as `Kind:    automation`
+      or `qa test`, either followed by `sub-flow`, since `IsSubFlow` was not in the file either.
 
 Then:
 

@@ -320,6 +320,155 @@ namespace Business.Tests.FlowScript
         }
 
         // ================================================================
+        // Sub-flows and the flow's kind
+        // ================================================================
+
+        // By Id, so a sub-flow renamed on one side is still the one called.
+        [Fact]
+        public async Task A_sub_flow_line_links_by_its_id_whatever_name_it_gives()
+        {
+            Flow checkout = SeedSubFlow("Checkout", isSubFlow: true);
+
+            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Pay ]>   id <[ {checkout.PublicId} ]>");
+
+            imported.Warnings.ShouldBeEmpty();
+            SubFlowIdOf(imported.FlowId).ShouldBe(checkout.Id);
+        }
+
+        [Theory]
+        [InlineData("Sub Flow  <[ checkout ]>")]
+        [InlineData("Sub Flow  <[ flows/Checkout.sflw ]>")]
+        public async Task A_sub_flow_line_without_an_id_links_by_name_or_by_the_path_a_file_from_before_names(string line)
+        {
+            Flow checkout = SeedSubFlow("Checkout", isSubFlow: true);
+
+            FlowScriptImportResultDto imported = await ImportCallerAsync(line);
+
+            imported.Warnings.ShouldBeEmpty();
+            SubFlowIdOf(imported.FlowId).ShouldBe(checkout.Id);
+        }
+
+        [Fact]
+        public async Task A_sub_flow_that_is_not_here_leaves_its_step_empty_with_a_warning()
+        {
+            FlowScriptImportResultDto imported = await ImportCallerAsync("Sub Flow  <[ Checkout ]>");
+
+            imported.IsSuccess.ShouldBeTrue();
+            FlowScriptErrorDto warning = imported.Warnings.ShouldHaveSingleItem();
+            (warning.Code, warning.Line).ShouldBe((nameof(DiagnosticCodeEnum.SUB_FLOW_UNKNOWN), 5));
+            SubFlowIdOf(imported.FlowId).ShouldBeNull();
+        }
+
+        // Making a flow a sub-flow is one way, so a file's word is not enough to do it.
+        [Fact]
+        public async Task A_flow_that_is_not_a_sub_flow_is_neither_linked_nor_made_one()
+        {
+            Flow checkout = SeedSubFlow("Checkout", isSubFlow: false);
+
+            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Checkout ]>   id <[ {checkout.PublicId} ]>");
+
+            imported.Warnings.ShouldHaveSingleItem().Code.ShouldBe(nameof(DiagnosticCodeEnum.SUB_FLOW_NOT_CALLABLE));
+            SubFlowIdOf(imported.FlowId).ShouldBeNull();
+            FlowOf(checkout.Id).IsSubFlow.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task A_caller_exported_and_imported_back_still_calls_its_sub_flow()
+        {
+            Flow checkout = SeedSubFlow("Checkout", isSubFlow: true);
+            int shop = SeedCaller("Shop", checkout.Id);
+
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(shop, _folder, Ct);
+            FlowScriptImportResultDto imported = await Importer().ImportAsync(exported.ScriptPath, Ct);
+
+            imported.Warnings.ShouldBeEmpty();
+            SubFlowIdOf(shop).ShouldBe(checkout.Id);
+        }
+
+        [Fact]
+        public async Task A_kind_line_says_what_a_new_flow_is()
+        {
+            string script =
+                "Flow:    Checkout\n" +
+                "Id:      3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d\n" +
+                "Kind:    qa test   sub-flow\n\n" +
+                "Steps:\n" +
+                "Wait 800ms\n";
+
+            FlowScriptImportResultDto imported = await Importer().ImportTextAsync(script, new Dictionary<string, byte[]>(), Ct);
+
+            Flow flow = FlowOf(imported.FlowId);
+            (flow.IsQaTest, flow.IsSubFlow).ShouldBe((true, true));
+        }
+
+        // A file from before the line says nothing either way; a sub-flow stays one, since its callers point at it.
+        [Fact]
+        public async Task A_flow_keeps_its_kind_without_a_kind_line_and_stays_a_sub_flow_with_one()
+        {
+            Flow checkout = SeedSubFlow("Checkout", isSubFlow: true, isQaTest: true);
+            string header = $"Flow:    Checkout\nId:      {checkout.PublicId}\n";
+
+            await Importer().ImportTextAsync(header + "\nSteps:\nWait 800ms\n", new Dictionary<string, byte[]>(), Ct);
+            Flow kept = FlowOf(checkout.Id);
+
+            await Importer().ImportTextAsync(header + "Kind:    automation\n\nSteps:\nWait 800ms\n", new Dictionary<string, byte[]>(), Ct);
+            Flow automation = FlowOf(checkout.Id);
+
+            (kept.IsQaTest, kept.IsSubFlow).ShouldBe((true, true));
+            (automation.IsQaTest, automation.IsSubFlow).ShouldBe((false, true));
+        }
+
+        private Task<FlowScriptImportResultDto> ImportCallerAsync(string subFlowLine)
+        {
+            string script =
+                "Flow:    Shop\n" +
+                "Id:      9a1e2f3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b\n\n" +
+                "Steps:\n" +
+                subFlowLine + "\n";
+
+            return Importer().ImportTextAsync(script, new Dictionary<string, byte[]>(), Ct);
+        }
+
+        private Flow SeedSubFlow(string name, bool isSubFlow, bool isQaTest = false)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            Flow flow = new Flow { Name = name, PublicId = Guid.NewGuid(), IsSubFlow = isSubFlow, IsQaTest = isQaTest };
+            db.Flows.Add(flow);
+            db.SaveChanges();
+
+            return flow;
+        }
+
+        private int SeedCaller(string name, int subFlowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            Flow flow = new Flow { Name = name, PublicId = Guid.NewGuid() };
+            db.Flows.Add(flow);
+            db.SaveChanges();
+
+            db.FlowSteps.Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW, Name = "Pay up", SubFlowId = subFlowId, RootId = flow.Id, FlowId = flow.Id });
+            db.SaveChanges();
+
+            return flow.Id;
+        }
+
+        private Flow FlowOf(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            return db.Flows.Single(x => x.Id == flowId);
+        }
+
+        private int? SubFlowIdOf(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            return db.FlowSteps.Single(x => x.RootId == flowId && x.FlowStepType == FlowStepTypeEnum.SUB_FLOW).SubFlowId;
+        }
+
+        // ================================================================
         // The flow
         // ================================================================
 

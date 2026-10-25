@@ -51,6 +51,7 @@ namespace Business.FlowScript.Catalogs
             // Flow
             new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
             new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
+            new ScriptKeyword("Kind:", ScriptSymbolEnum.FLOWFIELD_KIND),
             new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
             new ScriptKeyword("Description:", ScriptSymbolEnum.FLOWFIELD_DESCRIPTION),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
@@ -103,6 +104,12 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("forever", ScriptSymbolEnum.FOREVER),
             new ScriptKeyword("passed", ScriptSymbolEnum.PASSED),
             new ScriptKeyword("failed", ScriptSymbolEnum.FAILED),
+            new ScriptKeyword("id", ScriptSymbolEnum.ID),
+
+            // Flow kind
+            new ScriptKeyword("automation", FlowKindEnum.AUTOMATION),
+            new ScriptKeyword("qa test", FlowKindEnum.QA_TEST),
+            new ScriptKeyword("sub-flow", FlowKindEnum.SUB_FLOW),
 
             // Numbers
             new ScriptKeyword("ms", ScriptSymbolEnum.MILLISECONDS),

@@ -249,6 +249,10 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.FILE_MISSING);
             covered.Add(DiagnosticCodeEnum.FLOW_NAME_TAKEN);
 
+            // Raised as the import links each Sub Flow line to a flow in the database (ScriptImportExportTests).
+            covered.Add(DiagnosticCodeEnum.SUB_FLOW_UNKNOWN);
+            covered.Add(DiagnosticCodeEnum.SUB_FLOW_NOT_CALLABLE);
+
             // Raised by ScriptRevisionService, against the script the model was given (ScriptRevisionServiceTests).
             covered.Add(DiagnosticCodeEnum.ANSWER_UNREADABLE);
             covered.Add(DiagnosticCodeEnum.FLOW_CHANGED);

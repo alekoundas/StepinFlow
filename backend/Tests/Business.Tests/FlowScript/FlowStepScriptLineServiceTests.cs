@@ -5,6 +5,7 @@ using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos.FlowScript;
+using DataAccess;
 using static Business.Tests.TestToken;
 
 namespace Business.Tests.FlowScript
@@ -60,13 +61,15 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public async Task A_sub_flow_step_names_the_file_its_sub_flow_exports_to()
+        public async Task A_sub_flow_step_names_its_sub_flow_by_name_and_id()
         {
             int subFlowId = (await _dataService.Flow.CreateAsync(new Flow { Name = "Sign in" }, Ct)).Data;
+            using AppDbContext db = _database.CreateDbContext();
+            Guid publicId = db.Flows.Single(x => x.Id == subFlowId).PublicId;
 
             FlowStepScriptLineDto line = await _service.WriteAsync(new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW, Name = "Sign in", SubFlowId = subFlowId }, Ct);
 
-            line.Script.ShouldEndWith(".sflw ]>");
+            line.Script.ShouldEndWith($"<[ Sign in ]>   id <[ {publicId} ]>");
             line.SubFlowName.ShouldBe("Sign in");
         }
     }

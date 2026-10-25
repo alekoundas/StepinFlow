@@ -43,6 +43,10 @@ namespace Business.FlowScript.Diagnostics
         FILE_MISSING,
         FLOW_NAME_TAKEN,
 
+        // Sub-flows, found as the file is imported: none by that Id or name, or a flow that is not a sub-flow.
+        SUB_FLOW_UNKNOWN,
+        SUB_FLOW_NOT_CALLABLE,
+
         // A model's answer: not the JSON asked for, a flow line or id it changed, a template the
         // draft did not cut, an input it did not rename through the map.
         ANSWER_UNREADABLE,

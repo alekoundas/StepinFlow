@@ -1,3 +1,4 @@
+using Business.FlowScript.Models;
 using Business.FlowScript.Text;
 using Core.Helpers;
 using Core.Models;
@@ -39,9 +40,9 @@ namespace Business.FlowScript
             step.FlowStepReferenceEnd = await FindAsync(dbContext.FlowSteps, step.FlowStepReferenceEndId, ct);
             step.SubFlow = await FindAsync(dbContext.Flows, step.SubFlowId, ct);
 
-            string subFlowPath = string.Empty;
+            SubFlowReference? subFlow = null;
             if (step.SubFlow != null)
-                subFlowPath = FlowScriptExporter.SubFlowFileName(step.SubFlow.Name);
+                subFlow = new SubFlowReference { Name = step.SubFlow.Name, PublicId = step.SubFlow.PublicId };
 
             string name = step.Name;
             if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
@@ -49,7 +50,7 @@ namespace Business.FlowScript
 
             return new FlowStepScriptLineDto
             {
-                Script = _printer.WriteStep(step, subFlowPath),
+                Script = _printer.WriteStep(step, subFlow),
                 Name = name,
                 AreaName = step.FlowArea?.Name,
                 PointName = step.FlowPoint?.Name,

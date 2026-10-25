@@ -1567,8 +1567,9 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
   have none.
 - **What the app shows.** The editor header has the branch, the flow's changes and Commit; the
   commit dialog lists every changed file with this flow's ticked and a message filled in from
-  what changed; the Script tab is Script, Changes and History, the last two through CodeMirror's
-  merge view with the unchanged lines folded; the Flows page counts each flow's changes; Settings
+  what changed; the Script tab is Script, Changes and History - Script marks each line changed
+  since the last commit in its margin (`change-gutter.ts`, a line diff), the other two are
+  CodeMirror's merge view with the unchanged lines folded; the Flows page counts each flow's changes; Settings
   has the folder and who commits; a run's header and the runs list show the commit it executed at,
   marked when it executed changes not committed yet. `REPOSITORY_CHANGED` is broadcast after each
   write and commit, and the app reads it all again.
@@ -2037,13 +2038,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-871 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+886 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 646 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
+| `Business.Tests` | 661 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2159,13 +2160,12 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 871 backend tests.
+or OpenAI. 886 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
 ### Known gaps
 
-- A `Sub Flow` step in a script imports with no target.
 - No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
 - How long a step's result stays readable is undecided (§8).
 - The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build

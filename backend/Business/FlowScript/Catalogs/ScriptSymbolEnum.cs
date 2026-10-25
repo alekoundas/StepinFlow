@@ -13,6 +13,7 @@ namespace Business.FlowScript.Catalogs
         // Flow
         FLOWFIELD_NAME,
         FLOWFIELD_ID,
+        FLOWFIELD_KIND,
         FLOWFIELD_SIZES,
         FLOWFIELD_DESCRIPTION,
 
@@ -67,6 +68,7 @@ namespace Business.FlowScript.Catalogs
         FOREVER,
         PASSED,
         FAILED,
+        ID,
         MILLISECONDS, // Written onto a number: 800ms, 120dpi, 1920x1080
         DPI,
         SIZE_SEPARATOR,

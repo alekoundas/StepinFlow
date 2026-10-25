@@ -182,19 +182,14 @@ namespace Business.FlowScript
             foreach (FlowStep step in schema.Steps)
                 step.FlowStepTemplates = templates.Where(x => x.FlowStepId == step.Id).ToList();
 
-            await AddSubFlowPathsAsync(dbContext, schema, ct);
+            await AddSubFlowsAsync(dbContext, schema, ct);
 
             return schema;
         }
 
-        // The file a sub-flow exports to, which is how a step that executes it names it.
-        internal static string SubFlowFileName(string flowName)
-        {
-            return FileNameHelper.Clean(flowName, "sub-flow") + ".sflw";
-        }
-
-        // A sub-flow step names a file the parser has to find, and it sits beside this one.
-        private static async Task AddSubFlowPathsAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
+        // A sub-flow step names the flow it calls by name, for the reader, and by Id, which is what
+        // finds it on another machine or branch.
+        private static async Task AddSubFlowsAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
         {
             List<int> subFlowIds = schema.Steps
                 .Where(x => x.SubFlowId != null)
@@ -202,15 +197,14 @@ namespace Business.FlowScript
                 .Distinct()
                 .ToList();
 
-            Dictionary<int, string> paths = await dbContext.Flows.AsNoTracking()
+            Dictionary<int, SubFlowReference> subFlows = await dbContext.Flows.AsNoTracking()
                 .Where(x => subFlowIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.Name })
-                .ToDictionaryAsync(x => x.Id, x => SubFlowFileName(x.Name), ct);
+                .ToDictionaryAsync(x => x.Id, x => new SubFlowReference { Name = x.Name, PublicId = x.PublicId }, ct);
 
             foreach (FlowStep step in schema.Steps.Where(x => x.SubFlowId != null))
             {
-                if (paths.TryGetValue(step.SubFlowId!.Value, out string? path))
-                    schema.SubFlowPaths[step] = path;
+                if (subFlows.TryGetValue(step.SubFlowId!.Value, out SubFlowReference? subFlow))
+                    schema.SubFlows[step] = subFlow;
             }
         }
 

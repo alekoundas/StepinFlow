@@ -1,5 +1,6 @@
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
+Kind:    automation
 Sizes:   1920x1080 390x844
 Description:
   # Logs in to Swag Labs and adds the backpack to the cart.

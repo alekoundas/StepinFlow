@@ -4,6 +4,7 @@ import { unifiedMergeView } from "@codemirror/merge";
 import { EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
+import { changeGutter } from "@/shared/components/script-view/change-gutter";
 import { diagnosticsOf, scriptViewSetup } from "@/shared/components/script-view/script-view-setup";
 import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 
@@ -16,6 +17,9 @@ interface Props {
   /** With an original, the lines that did not change fold away to a few either side of each change. */
   collapseUnchanged?: boolean;
 
+  /** When given, each line that differs from it is marked in the margin, and the script stays as it is. */
+  marksFrom?: string;
+
   /** What the import said, marked at its line and column. */
   diagnostics?: FlowScriptErrorDto[];
 
@@ -27,7 +31,7 @@ interface Props {
  * and the import's diagnostics as lint marks. The one script view: Check reads a draft with it,
  * and the export and import buttons are to show a file with it.
  */
-export default function ScriptViewComponent({ script, original, collapseUnchanged, diagnostics, maxHeight = 640 }: Props) {
+export default function ScriptViewComponent({ script, original, collapseUnchanged, marksFrom, diagnostics, maxHeight = 640 }: Props) {
   const parent = useRef<HTMLDivElement>(null);
 
   // CodeMirror owns what is inside the element. A new script builds a new view rather than being
@@ -35,7 +39,10 @@ export default function ScriptViewComponent({ script, original, collapseUnchange
   useEffect(() => {
     if (!parent.current) return;
 
-    const extensions: Extension[] = [scriptViewSetup(maxHeight)];
+    // Before the setup, so its bar sits left of the line numbers.
+    const extensions: Extension[] = [];
+    if (marksFrom !== undefined) extensions.push(changeGutter(marksFrom, script));
+    extensions.push(scriptViewSetup(maxHeight));
     // An empty original is a file that is all new, every line of it added.
     if (original !== undefined) {
       extensions.push(
@@ -57,7 +64,7 @@ export default function ScriptViewComponent({ script, original, collapseUnchange
     view.dispatch(setDiagnostics(view.state, marks));
 
     return () => view.destroy();
-  }, [script, original, collapseUnchanged, diagnostics, maxHeight]);
+  }, [script, original, collapseUnchanged, marksFrom, diagnostics, maxHeight]);
 
   return <div ref={parent} />;
 }

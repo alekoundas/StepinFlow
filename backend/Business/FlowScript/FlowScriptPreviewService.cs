@@ -45,6 +45,10 @@ namespace Business.FlowScript
             FlowScriptFile file = await FlowScriptFile.ReadAsync(scriptPath, ct);
             FlowScriptSchema schema = _scanner.Read(file.Script);
 
+            // The sub-flows the import would not find are warned about before it, not after.
+            List<Diagnostic> unlinked = await _dataService.Flow.LinkSubFlowsAsync(schema, ct);
+            schema.Diagnostics.AddRange(unlinked);
+
             preview.Script = file.Script;
             preview.TemplateFolderPath = file.TemplateFolderPath;
             preview.Errors = FlowScriptImporter.ToDtos(schema.Diagnostics, DiagnosticSeverityEnum.ERROR);

@@ -145,6 +145,13 @@ namespace Business.FlowScript.Parsers
                     _flowScriptSchema.Flow.PublicId = new FlowIdParser(line.Tokens).Parse();
                     break;
 
+                case ScriptSymbolEnum.FLOWFIELD_KIND:
+                    Flow kind = new FlowKindParser(line.Tokens).Parse();
+                    _flowScriptSchema.Flow.IsQaTest = kind.IsQaTest;
+                    _flowScriptSchema.Flow.IsSubFlow = kind.IsSubFlow;
+                    _flowScriptSchema.HasKind = true;
+                    break;
+
                 case ScriptSymbolEnum.FLOWFIELD_SIZES:
                     _flowScriptSchema.Viewports.AddRange(new FlowSizesParser(line.Tokens).Parse());
                     break;
@@ -228,11 +235,15 @@ namespace Business.FlowScript.Parsers
                 throw;
             }
 
-            // A sub-flow is another file, which nothing in this one declares, so its path is kept as
-            // written instead of resolved.
+            // A sub-flow is another flow, which nothing in this file declares, so what the line names
+            // is kept for the import to find.
             if (step.SubFlow != null)
             {
-                _flowScriptSchema.SubFlowPaths[step] = step.SubFlow.Name;
+                SubFlowReference subFlow = new SubFlowReference { Name = step.SubFlow.Name, Line = line.Number };
+                if (step.SubFlow.PublicId != Guid.Empty)
+                    subFlow.PublicId = step.SubFlow.PublicId;
+
+                _flowScriptSchema.SubFlows[step] = subFlow;
                 step.SubFlow = null;
             }
 

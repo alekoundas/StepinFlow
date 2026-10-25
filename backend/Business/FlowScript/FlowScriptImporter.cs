@@ -54,6 +54,10 @@ namespace Business.FlowScript
             if (!schema.IsValid)
                 return Failed(schema.Diagnostics);
 
+            // A sub-flow it does not find leaves its step empty, as a warning beside the result.
+            List<Diagnostic> unlinked = await _dataService.Flow.LinkSubFlowsAsync(schema, ct);
+            schema.Diagnostics.AddRange(unlinked);
+
             FlowScriptImportResultDto result = new FlowScriptImportResultDto
             {
                 IsSuccess = true,
