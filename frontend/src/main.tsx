@@ -86,7 +86,7 @@ const router = createHashRouter([
         element: <ExecutionPage />,
       },
       {
-        path: "/settings",
+        path: "/settings/:section?",
         element: <SettingsPage />,
       },
       {

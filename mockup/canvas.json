@@ -184,7 +184,7 @@
       "expand": "fill",
       "h": 960,
       "is_interactive": true,
-      "title": "8e · Editor: Script, what Export writes",
+      "title": "8e · Editor: Script, the lines changed since the last commit marked",
       "w": 1440,
       "x": 18240,
       "y": 0
@@ -224,6 +224,60 @@
       "w": 1440,
       "x": 24320,
       "y": 0
+    },
+    "GitChanges.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9a · Git: what changed since the last commit (Discard comes in 14.2)",
+      "w": 1440,
+      "x": 0,
+      "y": 8100
+    },
+    "GitCommit.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9b · Git: commit, with this flow's files ticked",
+      "w": 1440,
+      "x": 1520,
+      "y": 8100
+    },
+    "GitHistory.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9c · Git: a flow's history, each commit against the one before (Restore comes in 14.2)",
+      "w": 1440,
+      "x": 3040,
+      "y": 8100
+    },
+    "GitBranch.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9d · Git: the branch menu (14.2)",
+      "w": 1440,
+      "x": 4560,
+      "y": 8100
+    },
+    "GitSwitching.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9e · Git: switching branch, the database follows (14.2)",
+      "w": 1440,
+      "x": 6080,
+      "y": 8100
+    },
+    "SettingsRepository.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "9f · Settings: a section per card, Repository open",
+      "w": 1440,
+      "x": 7600,
+      "y": 8100
     }
   },
   "createdOnFiles": {
@@ -250,6 +304,14 @@
       "w": 240,
       "x": 0,
       "y": 1300
+    },
+    "row3": {
+      "kind": "title1",
+      "maxW": 9040,
+      "text": "Git: the repository behind every flow",
+      "w": 240,
+      "x": 0,
+      "y": 7800
     }
   },
   "order": [
@@ -277,7 +339,13 @@
     "Import.dc.html",
     "EditorCopyPaste.dc.html",
     "StepForms.dc.html",
-    "StepFormsSystem.dc.html"
+    "StepFormsSystem.dc.html",
+    "GitChanges.dc.html",
+    "GitCommit.dc.html",
+    "GitHistory.dc.html",
+    "GitBranch.dc.html",
+    "GitSwitching.dc.html",
+    "SettingsRepository.dc.html"
   ],
   "pages": [],
   "title": "StepinFlow recorder redesign"

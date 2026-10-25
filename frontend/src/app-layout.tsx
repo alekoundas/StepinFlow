@@ -200,7 +200,7 @@ function AiModelComponent({ isNarrow }: { isNarrow: boolean }) {
 
   return (
     <NavLink
-      to="/settings"
+      to="/settings/ai"
       className="nav-rail-item flex align-items-center gap-2 mt-2 p-2 border-1 border-round-lg no-underline"
       style={{
         borderColor: "var(--surface-border)",

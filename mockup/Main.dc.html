@@ -56,7 +56,7 @@ Settings</a>
 
 <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
 <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 32px; border-bottom: 1px solid #1E222B">
-<span style="color: #AEB4C0; font-size: 13px">Flows</span>
+<span style="display: inline-flex; align-items: center; gap: 12px"><span style="color: #AEB4C0; font-size: 13px">Flows</span><span title="The repository's branch" style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #313644; border-radius: 6px; color: #AEB4C0; font-family: 'Geist Mono', monospace; font-size: 12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="7" r="2"></circle><path d="M6 7v10"></path><path d="M18 9c0 5-6 4-12 8"></path></svg>main</span></span>
 <label style="display: flex; align-items: center; gap: 8px; width: 340px; max-width: 100%; box-sizing: border-box; height: 36px; padding: 0 10px; border: 1px solid #242833; border-radius: 8px; background: #12141A; color: #8790A0">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
 <input type="search" aria-label="Search flows and steps" placeholder="Search flows and steps" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #ECEEF2; font: inherit; font-size: 13px">
@@ -97,7 +97,7 @@ New flow</a>
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
 <tr>
 <td style="padding: 14px 20px; border-bottom: 1px solid #1A1D25; vertical-align: top">
-<a href="Editor.dc.html" style="color: #ECEEF2; text-decoration: none; font-weight: 500; font-size: 14px">{{ r.name }}</a>
+<a href="Editor.dc.html" style="color: #ECEEF2; text-decoration: none; font-weight: 500; font-size: 14px">{{ r.name }}</a><sc-if value="{{ r.dirty }}" hint-placeholder-val="{{ false }}"><span title="{{ r.dirtyTitle }}" style="margin-left: 10px; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #F2B33D"><span style="width: 7px; height: 7px; border-radius: 999px; background: #F2B33D"></span>{{ r.dirtyText }}</span></sc-if>
 <div style="color: #8790A0; margin-top: 2px; max-width: 420px">{{ r.desc }}</div>
 </td>
 <td style="padding: 14px 12px; border-bottom: 1px solid #1A1D25; vertical-align: top">
@@ -137,6 +137,7 @@ class Component extends DCLogic {
       { id: 'auto', label: 'Automation' },
       { id: 'qa', label: 'QA tests' },
       { id: 'issues', label: 'With issues' },
+      { id: 'uncommitted', label: 'Not committed' },
     ];
     const filters = defs.map((d) => {
       const on = this.state.filter === d.id;
@@ -161,8 +162,16 @@ class Component extends DCLogic {
       { name: 'Weekly stock export', desc: 'Exports the stock report from the warehouse app to the shared drive.', kind: 'Automation', ...auto, health: '2 errors', healthColor: '#FF7A86', status: 'Never executed', ...never, when: 'Edited 3 days ago', steps: '11', isQa: false, hasIssues: true },
       { name: 'Nightly report refresh', desc: 'Opens the reporting tool and refreshes every dashboard.', kind: 'Automation', ...auto, health: 'No issues', healthColor: '#46D69A', status: 'Inconclusive', ...amber, when: 'Today, 06:00', steps: '23', isQa: false, hasIssues: false },
     ];
+    // Changes saved since the last commit, by flow.
+    const uncommitted = { 'Download last month’s invoices': 4, 'Checkout smoke': 1 };
+    all.forEach((r) => {
+      const n = uncommitted[r.name] || 0;
+      r.dirty = n > 0;
+      r.dirtyText = n === 1 ? '1 change' : n + ' changes';
+      r.dirtyTitle = 'Saved, not committed yet';
+    });
     const f = this.state.filter;
-    const rows = all.filter((r) => f === 'all' || (f === 'qa' && r.isQa) || (f === 'auto' && !r.isQa) || (f === 'issues' && r.hasIssues));
+    const rows = all.filter((r) => f === 'all' || (f === 'qa' && r.isQa) || (f === 'auto' && !r.isQa) || (f === 'issues' && r.hasIssues) || (f === 'uncommitted' && r.dirty));
     return { filters, rows };
   }
 }

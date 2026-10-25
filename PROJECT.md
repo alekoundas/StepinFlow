@@ -1797,7 +1797,8 @@ Check, with the recording bar's own window in `windows/recording-bar/`.
 and Executions, then Import and Ask AI, Settings, and the model the AI features use with where it
 runs, a link to its settings. On the editor and an execution it keeps only its icons, since those pages want the
 width. `/` is Home, which the mockup does not draw; what it shows is still to be talked about
-(`TODO.md`, Frontend).
+(`TODO.md`, Frontend). Settings shows one card at a time, picked from a list of sections beside it,
+each at its own address such as `/settings/ai`, so the model's link opens the AI card.
 
 **The script view** is CodeMirror 6, read-only (`shared/components/script-view/`). A
 `StreamLanguage` tokenizer colours a line the way the scanner reads one - the step's keyword where

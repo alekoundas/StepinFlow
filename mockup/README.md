@@ -31,7 +31,7 @@ than editing these.
 | 8b · Editor: Locations, one to fix after its area changed | `EditorLocations.dc.html`, with `tab="locations"` and `issue="true"` |
 | 8c · Editor: Inputs, the values steps type in | `EditorInputs.dc.html`, with `tab="inputs"` |
 | 8d · Editor: Templates, the pictures steps share | `EditorTemplates.dc.html`, with `tab="templates"` |
-| 8e · Editor: Script, what Export writes | `EditorScript.dc.html`, with `tab="script"` |
+| 8e · Editor: Script, the lines changed since the last commit marked | `EditorScript.dc.html`, with `tab="script"` |
 | 8f · Editor: Add template, capture now or reuse one | `EditorTemplateAdd.dc.html`, with `dialog="add"` |
 | 8g · Editor: Reuse a template, picked by its picture | `EditorTemplateReuse.dc.html`, with `dialog="reuse"` |
 | 8h · Editor: Editing a template two steps share | `EditorTemplateShared.dc.html`, with `dialog="shared"` |
@@ -43,3 +43,9 @@ than editing these.
 | Editor · copy and paste a step | `EditorCopyPaste.dc.html` |
 | Step forms · checks, input, control and end | `StepForms.dc.html` |
 | Step forms · system steps and branches | `StepFormsSystem.dc.html`, which shows `StepForms.dc.html` with `part="system"` |
+| 9a · Git: what changed since the last commit | `GitChanges.dc.html`, which shows `Editor.dc.html` with `tab="script"` and `view="changes"` |
+| 9b · Git: commit, with this flow's files ticked | `GitCommit.dc.html`, with `dialog="commit"` |
+| 9c · Git: a flow's history, each commit against the one before | `GitHistory.dc.html`, with `tab="script"` and `view="history"` |
+| 9d · Git: the branch menu | `GitBranch.dc.html`, with `git="clean"` and `branches="true"` |
+| 9e · Git: switching branch, the database follows | `GitSwitching.dc.html`, with `git="clean"` and `switching="true"` |
+| 9f · Settings: a section per card, Repository open | `SettingsRepository.dc.html` |

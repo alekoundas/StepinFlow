@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "type": "module",
   "description": "StepinFlow - Workflow automation app",
-  "author": "Alex Psihogios todo@mail.com",
+  "author": "Alex Psychogyios todo@mail.com",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend/App && dotnet run",
