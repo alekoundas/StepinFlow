@@ -79,29 +79,19 @@ namespace Architecture.Tests
         }
 
 
-        // 2) Libraries 
+        // 2) Libraries
         [Theory]
         [InlineData("OpenCvSharp")]
         [InlineData("SharpHook")]
-        public void Only_Platform_Windows_uses_a_native_library(string library)
+        [InlineData("LibGit2Sharp")]
+        public void Only_Platform_Shared_uses_a_native_library(string library)
         {
             List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App }
                 .Where(x => x.GetReferencedAssemblies().Any(r => r.Name != null && r.Name.StartsWith(library, StringComparison.Ordinal)))
                 .Select(x => x.GetName().Name ?? string.Empty)
                 .ToList();
 
-            // Platform.Windows is in the list on purpose: a misspelt library would otherwise pass.
-            users.ShouldBe(["Platform.Windows"]);
-        }
-
-        [Fact]
-        public void Only_Platform_Shared_uses_git()
-        {
-            List<string> users = new[] { Core, DataAccess, Business, Transport, PlatformShared, PlatformWindows, App }
-                .Where(x => x.GetReferencedAssemblies().Any(r => r.Name == "LibGit2Sharp"))
-                .Select(x => x.GetName().Name ?? string.Empty)
-                .ToList();
-
+            // Platform.Shared is in the list on purpose: a misspelt library would otherwise pass.
             users.ShouldBe(["Platform.Shared"]);
         }
 

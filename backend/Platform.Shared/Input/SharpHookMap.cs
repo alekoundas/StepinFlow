@@ -2,7 +2,7 @@ using Core.Enums;
 using Core.Enums.Business;
 using SharpHook.Data;
 
-namespace Platform.Windows.Input
+namespace Platform.Shared.Input
 {
     // This application's vocabulary translated into the input library's, in the one place that is
     // allowed to know the library exists. Everything above the port speaks KeyCodeEnum and

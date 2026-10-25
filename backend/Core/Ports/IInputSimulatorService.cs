@@ -11,7 +11,7 @@ namespace Core.Ports
     /// Driving the real mouse and keyboard.
     /// Points are absolute.
     /// 
-    /// Will use the Platform.Windows or Platform.Linux depending the underlying OS
+    /// The same on every system, over SharpHook; what each system does its own way is IMouseService.
     /// </summary>
     public interface IInputSimulatorService
     {

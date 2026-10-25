@@ -1,8 +1,8 @@
 using Core.Models.Business.OpenCV;
 using OpenCvSharp;
-using Platform.Windows.Vision;
+using Platform.Shared.Vision;
 
-namespace Platform.Windows.Tests.Vision
+namespace Platform.Shared.Tests.Vision
 {
     /// <summary>
     /// Clicked elements that are the same picture, on drawn screenshots: a 24 pixel icon on a row of

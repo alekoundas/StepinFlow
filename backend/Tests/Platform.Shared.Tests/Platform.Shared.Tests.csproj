@@ -8,4 +8,9 @@
     <ProjectReference Include="..\..\Platform.Shared\Platform.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- OpenCV itself, which the app takes from Platform.Windows. -->
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+  </ItemGroup>
+
 </Project>

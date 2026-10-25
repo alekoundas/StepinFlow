@@ -2,11 +2,10 @@
 using Core.Enums;
 using Core.Enums.Business;
 using Core.Models.Business;
-using Platform.Windows.Native;
 using SharpHook;
 using SharpHook.Data;
 
-namespace Platform.Windows.Input
+namespace Platform.Shared.Input
 {
     /// <summary>
     /// SharpHook. Handlers run on one thread of their own, one at a time, in the order the
@@ -50,11 +49,13 @@ namespace Platform.Windows.Input
         private static readonly long DragThrottleTicks = TimeSpan.FromMilliseconds(16).Ticks;
 
         private readonly IIpcBroadcastService _broadcastService;
+        private readonly IMouseService _mouse;
         private readonly TimeProvider _timeProvider;
 
-        public InputRecordService(IIpcBroadcastService broadcastService, TimeProvider timeProvider)
+        public InputRecordService(IIpcBroadcastService broadcastService, IMouseService mouse, TimeProvider timeProvider)
         {
             _broadcastService = broadcastService;
+            _mouse = mouse;
             _timeProvider = timeProvider;
 
             _hook.MouseReleased += OnMouseReleased;
@@ -454,12 +455,12 @@ namespace Platform.Windows.Input
 
         // The hook multiplies a line-by-line turn by the lines (or characters sideways) a notch
         // scrolls in the Windows mouse options, so one notch is 360 units at the default of 3.
-        private static int UnitsPerNotch(MouseWheelEventData data, bool isHorizontal)
+        private int UnitsPerNotch(MouseWheelEventData data, bool isHorizontal)
         {
             if (data.Type == MouseWheelScrollType.BlockScroll)
                 return data.Delta;
 
-            uint scrollPerNotch = NativeWheel.ScrollPerNotch(isHorizontal);
+            uint scrollPerNotch = _mouse.ScrollPerNotch(isHorizontal);
 
             return data.Delta * (int)Math.Max(scrollPerNotch, 1);
         }

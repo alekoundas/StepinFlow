@@ -10,6 +10,12 @@
   <ItemGroup>
     <!-- Carries libgit2 for each system, so no git install is needed. -->
     <PackageReference Include="LibGit2Sharp" Version="0.32.0" />
+
+    <!-- The managed half only. OpenCV itself is per system, so its runtime package is in the platform project. -->
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+
+    <!-- Carries libuiohook for each system. -->
+    <PackageReference Include="SharpHook" Version="7.1.3" />
   </ItemGroup>
 
   <ItemGroup>

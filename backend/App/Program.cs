@@ -42,13 +42,14 @@ using Core.Ports;
 using Core.Enums;
 
 using Platform.Shared.Git;
+using Platform.Shared.Input;
+using Platform.Shared.Vision;
 
 using Platform.Windows.Input;
 using Platform.Windows.Native;
 using Platform.Windows.Ocr;
 using Platform.Windows.Screen;
 using Platform.Windows.SystemActions;
-using Platform.Windows.Vision;
 using Platform.Windows.Windowing;
 
 namespace App
@@ -77,6 +78,7 @@ namespace App
 
             // Ports
             builder.Services.AddSingleton<IOpenCvService, OpenCvService>();
+            builder.Services.AddSingleton<IMouseService, MouseService>();
             builder.Services.AddSingleton<IInputSimulatorService, InputSimulatorService>();
             builder.Services.AddSingleton<IInputRecordService, InputRecordService>();
             builder.Services.AddSingleton<IScreenshotService, ScreenshotService>();

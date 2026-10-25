@@ -1,12 +1,11 @@
 ﻿using Core.Enums;
 using Core.Enums.Business;
 using Core.Ports;
-using Platform.Windows.Native;
 using SharpHook;
 using SharpHook.Data;
 using System.Drawing;
 
-namespace Platform.Windows.Input
+namespace Platform.Shared.Input
 {
     public sealed class InputSimulatorService : IInputSimulatorService
     {
@@ -33,9 +32,19 @@ namespace Platform.Windows.Input
         // size take one big event as a single notch.
         private const int SCROLL_NOTCH_GAP_MS = 20;
 
+        private readonly IMouseService _mouse;
+
+        public InputSimulatorService(IMouseService mouse)
+        {
+            _mouse = mouse;
+        }
+
         // Cursor movement does not go through SharpHook: its absolute coordinates are DPI
         // virtualized, and everything stored in the database is in physical pixels.
-        public bool MoveCursor(int x, int y) => NativeCursor.MoveCursor(x, y);
+        public bool MoveCursor(int x, int y)
+        {
+            return _mouse.MoveCursor(x, y);
+        }
 
         public void SimulateMouseClick(int x, int y, CursorButtonTypeEnum button)
         {
@@ -130,7 +139,7 @@ namespace Platform.Windows.Input
 
         public Point CursorPosition()
         {
-            return NativeCursor.CurrentPosition();
+            return _mouse.CursorPosition();
         }
 
         public void SimulateKeyboard(string text)

@@ -1,7 +1,7 @@
 using OpenCvSharp;
-using Platform.Windows.Vision;
+using Platform.Shared.Vision;
 
-namespace Platform.Windows.Tests.Vision
+namespace Platform.Shared.Tests.Vision
 {
     /// <summary>
     /// The small copy of a template a tree row shows.

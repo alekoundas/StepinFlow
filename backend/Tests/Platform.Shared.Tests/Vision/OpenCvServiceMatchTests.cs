@@ -2,9 +2,9 @@ using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Business.OpenCV;
 using OpenCvSharp;
-using Platform.Windows.Vision;
+using Platform.Shared.Vision;
 
-namespace Platform.Windows.Tests.Vision
+namespace Platform.Shared.Tests.Vision
 {
     /// <summary>
     /// A template with erased pixels, on a drawn screenshot: seeded noise with a flat black patch,

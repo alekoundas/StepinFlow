@@ -4,7 +4,7 @@ using Core.Models.Business;
 using OpenCvSharp;
 using Core.Models.Business.OpenCV;
 
-namespace Platform.Windows.Vision
+namespace Platform.Shared.Vision
 {
     /// <summary>
     /// Template matching over OpenCV.
