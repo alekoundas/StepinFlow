@@ -9,6 +9,7 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 import FlowHealthBadgeComponent from "@/features/flow/components/FlowHealthBadgeComponent";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
 import { useFlowHealth } from "@/features/flow/hooks/use-flow-health";
+import UncommittedBadgeComponent from "@/features/repository/components/UncommittedBadgeComponent";
 
 type Props = {
   className?: string;
@@ -36,7 +37,10 @@ export function FlowDataTableComponent({ className, isSubFlow }: Props) {
       filter: true,
       body: (row: FlowDto) => (
         <div className="flex flex-column">
-          <LabelComponent text={row.name} />
+          <div className="flex align-items-center flex-wrap gap-2">
+            <LabelComponent text={row.name} />
+            <UncommittedBadgeComponent flowId={row.id} />
+          </div>
           {row.description && (
             <LabelComponent
               text={row.description.split("\n")[0]}

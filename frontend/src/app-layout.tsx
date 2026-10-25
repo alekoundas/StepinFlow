@@ -6,6 +6,7 @@ import { Tooltip } from "primereact/tooltip";
 import AiChatDialogComponent from "@/features/ai/components/AiChatDialogComponent";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
+import { useRepositoryEvents } from "@/features/repository/hooks/use-repository";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { AiProviderEnum } from "@/shared/enums/backend/ai/ai-provider-enum";
@@ -26,6 +27,7 @@ const RAIL: CSSProperties = {
 export default function AppLayout() {
   const { pathname } = useLocation();
   const openAiChat = useAiChatStore((state) => state.open);
+  useRepositoryEvents();
 
   const isNarrow = NARROW_PATHS.some((x) => pathname.startsWith(x));
 

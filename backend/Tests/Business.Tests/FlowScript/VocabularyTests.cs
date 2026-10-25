@@ -5,6 +5,7 @@ using Business.FlowScript.Models;
 using Business.FlowScript.Models.Text;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
+using Business.FlowScript.Text.Header;
 using Business.FlowScript.Text.Steps;
 using Core.Enums;
 using Core.Models.Database;
@@ -69,6 +70,7 @@ namespace Business.Tests.FlowScript
             values.AddRange(Enum.GetValues<ScriptSymbolEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<ConditionTypeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TitleMatchModeEnum>().Cast<Enum>());
+            values.AddRange(Enum.GetValues<TabMatchOnEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TemplateMatchModeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<ScalesWithEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<CursorScrollDirectionTypeEnum>().Cast<Enum>());
@@ -175,6 +177,30 @@ namespace Business.Tests.FlowScript
             FlowScriptSchema schema = Read($"Areas:\n  <[ A ]> monitor primary   scales with {ScriptKeywordCatalog.GetTextOfKeyword(scalesWith)}");
 
             schema.Areas.Single().ScalesWith.ShouldBe(scalesWith);
+        }
+
+        [Theory]
+        [InlineData(TabMatchOnEnum.TITLE)]
+        [InlineData(TabMatchOnEnum.URL)]
+        public void A_browser_tab_is_read_back_as_written(TabMatchOnEnum matchOn)
+        {
+            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TitlePattern = "Shop", TitleMatchMode = TitleMatchModeEnum.CONTAINS, TabMatchOn = matchOn, TabMatchValue = "/cart" };
+            string written = new AreaWriter(area).Write();
+            FlowArea read = Read("Areas:\n  " + written).Areas.Single();
+
+            (read.Type, read.TitlePattern, read.TabMatchOn, read.TabMatchValue).ShouldBe((FlowAreaTypeEnum.BROWSER_TAB, "Shop", matchOn, "/cart"), written);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void A_window_with_or_without_its_frame_is_read_back_as_written(bool useClientArea)
+        {
+            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = useClientArea };
+            string written = new AreaWriter(area).Write();
+            FlowArea read = Read("Areas:\n  " + written).Areas.Single();
+
+            (read.Type, read.UseClientArea).ShouldBe((FlowAreaTypeEnum.APPLICATION, useClientArea), written);
         }
 
         // ================================================================

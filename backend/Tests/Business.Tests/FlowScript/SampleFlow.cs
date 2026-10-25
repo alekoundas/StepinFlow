@@ -30,7 +30,9 @@ namespace Business.Tests.FlowScript
             FlowArea screen = new FlowArea { Name = "Screen", Type = FlowAreaTypeEnum.MONITOR };
             FlowArea rightScreen = new FlowArea { Name = "Right screen", Type = FlowAreaTypeEnum.MONITOR, MonitorDeviceName = @"\\.\DISPLAY2", AuthoredDpi = 96 };
             FlowArea box = new FlowArea { Name = "Box", Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = -10, LocationY = 20, Width = 300, Height = 200 };
-            schema.Areas.AddRange([browser, badge, header, game, screen, rightScreen, box]);
+            FlowArea inventoryTab = new FlowArea { Name = "Inventory tab", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TabMatchOn = TabMatchOnEnum.URL, TabMatchValue = "/inventory.html" };
+            FlowArea gameClient = new FlowArea { Name = "Game client", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA };
+            schema.Areas.AddRange([browser, badge, header, game, screen, rightScreen, box, inventoryTab, gameClient]);
 
             FlowPoint hamburger = new FlowPoint { Name = "Hamburger", FlowArea = browser, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.95f, RatioY = 0.05f };
             FlowPoint origin = new FlowPoint { Name = "Origin", OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 12, LocationY = -12 };

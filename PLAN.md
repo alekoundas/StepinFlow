@@ -36,8 +36,8 @@ Everything here was finished by 2026-10-09.
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** the recording update - phase 7 for automation flows, with phase 6's detection model
-inside it. Settled 2026-10-08: a recording and a description become a flow with no
+**Next:** Git - the rest of 14.1, then 14.2 - brought forward on 2026-10-24. Then the recording update - phase 7
+for automation flows, with phase 6's detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
 question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
 Execution) still wants making before layer 5, because the engine tests would pin whichever answer is
@@ -54,9 +54,13 @@ live.
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.
 - [ ] **`Sub Flow` imports with no target.** The path is parsed and carried as far as the importer
-      (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow - resolving it
-      means reading the `Id:` out of the file it names and matching that, and deciding what a missing
-      file does. It lands in the importer, which has the files and the database.
+      (`FlowScriptSchema.SubFlowPaths`), which then writes the step with no sub-flow. Decided
+      2026-10-24: the line carries the sub-flow's `Id` beside its name, and the import links by the
+      `Id`. It falls back to the name, which no two flows share, for a line a person or a model wrote
+      without one. The database keeps `SubFlowId`: the `Id` is what crosses machines and branches. A
+      file written before this, naming a path such as `<[ flows/checkout.sflw ]>`, still imports, by
+      the name in the path. A sub-flow the database does not have yet leaves the step empty, with a
+      warning naming it. Needed before phase 14.2.
 
 ### The engine
 
@@ -91,8 +95,6 @@ live.
 - [ ] **Click through the 5.7 forms in the running app.** Verified by the build, the type check,
       the round trip and fakes, never by hand: capture a template with and without an area, and an
       application area's "Contents scale with".
-- [ ] **`Thumbnail`.** Half built - the tree renders it, the projection reads it, and the only
-      writer is commented out.
 
 ---
 
@@ -361,16 +363,70 @@ what was refused back to the model (`PROJECT.md` §6).
 
 ### 14. Git
 
-- [ ] Point the app at a repository folder and a branch. Flows appear in the folder structure the
-      repository has; adding a folder in the app adds one in the repository.
-- [ ] **Switching branches hides flows, it never deletes them.** The working tree is the truth, the
-      database is a cache plus execution history. This only holds together because identity is
-      `PublicId`: the same flow on two branches is one family, so its executions accumulate rather
-      than fragmenting.
-- [ ] The execution records the branch and the commit, and stores the flow script as text. Git is
-      the version history; what git cannot answer is "what exactly ran in execution 37".
-- [ ] Script changes are visible in the app, including what a model changed when asked to fix
-      something, so a tester can see the edit before trusting it.
+Settled 2026-10-24. The app keeps its flows in a git repository of its own, local from the first
+launch; a remote is added later, in Settings. Saving writes the files, and committing is a button.
+Four steps, in this order: each reads back only what the one before it made safe.
+
+**14.1 The local repository: the database writes the files.** Built 2026-10-24 - `PROJECT.md` §11
+says how: the folder, the first commit at startup, a flow's files written on every save, commits of
+exactly the files picked, and the header, the commit dialog, the Script tab's Changes and History,
+the Flows page and Settings. What is left of it:
+
+- [ ] **An execution records the commit it executed at**, whether the flow had uncommitted changes,
+      and the flow script as text. Git is the version history; what git cannot answer is "what
+      exactly did execution 37 execute". Nullable columns on `Execution`, so the migration leaves
+      every existing row as it is.
+- [ ] **The Script view marks the lines changed since the last commit**, in the margin, as the
+      mockup draws it. Changes already shows the same diff in full.
+- [ ] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone
+      flow included; a save shows as a change half a second later; a commit clears it.
+
+**14.2 Reading files back: discard, restore and branches.** Each of these re-imports a flow, so
+first the round trip has to lose nothing:
+
+- [ ] `Sub Flow` by its `Id` - the loose end under The script, above.
+- [ ] `IsQaTest` in the header (`TODO.md`, Flow script).
+
+Then:
+
+- [ ] **Discard** re-imports a flow from the last commit. **Restore this version** re-imports it
+      from an older one and lands as an uncommitted change, to commit or discard.
+- [ ] **Local branches**: create, switch and list, from the branch in the editor header. Needed
+      locally because a remote will want them. A switch needs no uncommitted changes. Git reports
+      which files differ between the two branches, and only those flows are touched: a changed one
+      is re-imported by its `Id`, a new one is created, and a missing one is **hidden, never
+      deleted** - deleting a flow deletes its executions. Hidden is a new column, and its migration
+      sets every existing flow visible. Sub-flows are imported before the flows that call them. A
+      blocking overlay shows the progress, and a switch is refused while an execution is active.
+- [ ] **The working tree is the truth; the database is a cache plus execution history.** That only
+      holds together because identity is `PublicId`: the same flow on two branches is one family, so
+      its executions accumulate rather than fragmenting.
+- [ ] **A name is unique among the flows on the current branch**, not among hidden ones: two
+      branches can each have a "Login".
+
+**14.3 The remote.**
+
+- [ ] **Settings, Repository**: the remote URL, HTTPS only; a token, in one plain input (`TODO.md`,
+      Git); and the branch.
+- [ ] **Connecting**: an empty remote gets the local history pushed. A remote with history replaces
+      the local one, which is kept on a backup branch first, and the database follows as it does for
+      a switch.
+- [ ] **Push, and a pull that overwrites**: a fetch and a reset to the remote branch, so commits
+      that were never pushed go too. Before it, the old state is kept on `backup/<date time>`, and a
+      dialog names what will be dropped. Merging is in `TODO.md`, Git.
+- [ ] If SSH or the browser sign-in becomes necessary, push and pull alone move to the `git`
+      program, behind the same port.
+- [ ] Later: pointing the app at an existing repository, flows in a folder of it, and folders in the
+      app becoming folders in the repository.
+
+**14.4 The rest of `Platform.Shared`.** After 14.3, what in `Platform.Windows` is not Windows code
+moves across:
+
+- [ ] **`OpenCvService`**, from `Platform.Windows/Common/Vision`. Its code is the same everywhere;
+      only its runtime package is per system (`OpenCvSharp4.runtime.win` today).
+- [ ] **The SharpHook input services**, `InputRecordService` and `InputSimulatorService`. SharpHook
+      works on all three, but both reach into `Platform.Windows.Native` - `NativeCursor` for the
+      cursor, `NativeWheel` for scrolling - so those calls stay per system, behind a port.
 
 ### 15. Reporting
 

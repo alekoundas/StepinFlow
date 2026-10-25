@@ -419,7 +419,7 @@ namespace App
 
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            return Task.Run(() => _gitRepositoryService.RunAsync(cancellationToken), cancellationToken);
+            return Task.Run(() => _gitRepositoryService.StartBackgroundService(cancellationToken), cancellationToken);
         }
     }
 }

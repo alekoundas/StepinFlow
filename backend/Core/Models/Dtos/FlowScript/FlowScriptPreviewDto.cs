@@ -31,7 +31,7 @@ namespace Core.Models.Dtos.FlowScript
         /// <summary>Each picture once, however many steps search for it.</summary>
         public List<string> TemplateNames { get; set; } = [];
 
-        /// <summary>Named by the file but not in the folder beside it. Imported without a picture.</summary>
+        /// <summary>Named by the file but not a PNG in the folder beside it. Imported without a picture.</summary>
         public List<string> MissingTemplates { get; set; } = [];
 
         public FlowScriptImportTargetDto Target { get; set; } = new FlowScriptImportTargetDto();

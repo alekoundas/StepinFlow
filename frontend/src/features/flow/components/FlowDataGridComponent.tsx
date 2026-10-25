@@ -7,6 +7,7 @@ import IconComponent from "@/shared/components/IconComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowDto } from "@/shared/models/database/flow-dto";
 import FlowHealthBadgeComponent from "@/features/flow/components/FlowHealthBadgeComponent";
+import UncommittedBadgeComponent from "@/features/repository/components/UncommittedBadgeComponent";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
 import { useFlowHealth } from "@/features/flow/hooks/use-flow-health";
 
@@ -43,6 +44,7 @@ export function FlowDataGridComponent({ className, isSubFlow }: Props) {
           />
 
           <div className="flex align-items-center gap-1 flex-shrink-0">
+            <UncommittedBadgeComponent flowId={item.id} />
             <FlowHealthBadgeComponent
               health={health.get(item.id)}
               isEmpty={item.stepCount === 0}

@@ -39,7 +39,7 @@ export interface FlowScriptPreviewDto {
   /** Each picture once, however many steps search for it. */
   templateNames: string[];
 
-  /** Named by the file but not in the folder beside it. Imported without a picture. */
+  /** Named by the file but not a PNG in the folder beside it. Imported without a picture. */
   missingTemplates: string[];
 
   target: FlowScriptImportTargetDto;

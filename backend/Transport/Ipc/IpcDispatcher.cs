@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 using Core.Models.Dtos;
 using Core.Models.Dtos.FlowScript;
+using Core.Models.Dtos.Repository;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -74,6 +75,14 @@ namespace Transport.Ipc
                     "FlowScript.preview" => await Handler<PreviewFlowScriptHandler>().HandleAsync(Payload<FlowScriptImportRequestDto>(request), ct),
                     "FlowScript.getExportFolder" => await Handler<GetFlowScriptExportFolderHandler>().HandleAsync(ct),
                     "FlowScript.render" => await Handler<RenderFlowScriptHandler>().HandleAsync(Payload<int>(request), ct),
+
+                    // Repository
+                    "Repository.getStatus" => await Handler<GetRepositoryStatusHandler>().HandleAsync(ct),
+                    "Repository.getChanges" => await Handler<GetRepositoryChangesHandler>().HandleAsync(ct),
+                    "Repository.getFlowChanges" => await Handler<GetFlowRepositoryChangesHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Repository.commit" => await Handler<CommitRepositoryHandler>().HandleAsync(Payload<RepositoryCommitRequestDto>(request), ct),
+                    "Repository.getFlowHistory" => await Handler<GetFlowRepositoryHistoryHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Repository.getFlowCommit" => await Handler<GetFlowRepositoryCommitHandler>().HandleAsync(Payload<RepositoryFlowCommitRequestDto>(request), ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),

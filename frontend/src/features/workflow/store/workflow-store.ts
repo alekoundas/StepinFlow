@@ -6,6 +6,9 @@ import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 /** The editor's tabs: the flow's steps and the parts they use, then the script they make. */
 export type WorkflowTab = "flow" | "areas" | "locations" | "inputs" | "templates" | "script";
 
+/** The Script tab: the flow's file, what changed in it since the last commit, and its commits. */
+export type ScriptView = "script" | "changes" | "history";
+
 /** How large the tree is drawn, in percent. The user's own, kept on this machine like the splitter's place. */
 export const TREE_ZOOM = { min: 70, max: 130, step: 10, initial: 100 };
 
@@ -34,6 +37,7 @@ interface Props {
   rootFlowId: number | undefined;
   copiedStep: CopiedStep | undefined;
   activeTab: WorkflowTab;
+  scriptView: ScriptView;
   treeZoom: number;
 
   /** A step to open in the tree, its branches expanded down to it. Set from a "Used by" list. */
@@ -54,6 +58,7 @@ interface Props {
   setRootFlowId: (id: number | undefined) => void;
   setCopiedStep: (step: CopiedStep | undefined) => void;
   setActiveTab: (tab: WorkflowTab) => void;
+  setScriptView: (view: ScriptView) => void;
   setTreeZoom: (percent: number) => void;
   setStepToReveal: (flowStepId: number | null) => void;
 }
@@ -66,6 +71,7 @@ export const useWorkflowStore = create<Props>()(
     rootFlowId: undefined,
     copiedStep: undefined,
     activeTab: "flow",
+    scriptView: "script",
     treeZoom: savedTreeZoom(),
     stepToReveal: null,
 
@@ -87,6 +93,8 @@ export const useWorkflowStore = create<Props>()(
     setCopiedStep: (step: CopiedStep | undefined): void => set({ copiedStep: step }),
 
     setActiveTab: (tab: WorkflowTab): void => set({ activeTab: tab }),
+
+    setScriptView: (view: ScriptView): void => set({ scriptView: view }),
 
     setTreeZoom: (percent: number): void => {
       const treeZoom = Math.min(TREE_ZOOM.max, Math.max(TREE_ZOOM.min, percent));

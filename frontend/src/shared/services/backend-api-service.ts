@@ -36,6 +36,15 @@ import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-re
 import type { RecordingDraftRevisionDto } from "@/shared/models/recording-draft-revision-dto";
 import type { FlowScriptPreviewDto } from "@/shared/models/flow-script-preview-dto";
 import type { FlowScriptExportFolderDto, FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
+import type {
+  RepositoryCommitDto,
+  RepositoryCommitRequestDto,
+  RepositoryFileChangeDto,
+  RepositoryFlowChangesDto,
+  RepositoryFlowCommitDto,
+  RepositoryFlowCommitRequestDto,
+  RepositoryStatusDto,
+} from "@/shared/models/repository-dtos";
 import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
@@ -104,6 +113,21 @@ export const backendApiService = {
     getExportFolder: () => call<FlowScriptExportFolderDto>("FlowScript.getExportFolder"),
     // The script Export would write, with nothing written.
     render: (flowId: number) => call<string>("FlowScript.render", flowId),
+  },
+
+  Repository: {
+    getStatus: () => call<RepositoryStatusDto>("Repository.getStatus"),
+    // Every file not committed yet, whichever flow it belongs to.
+    getChanges: () => call<RepositoryFileChangeDto[]>("Repository.getChanges"),
+    getFlowChanges: (flowId: number) =>
+      call<RepositoryFlowChangesDto>("Repository.getFlowChanges", flowId),
+    // Exactly the files named, nothing else.
+    commit: (dto: RepositoryCommitRequestDto) =>
+      call<RepositoryCommitDto>("Repository.commit", dto),
+    getFlowHistory: (flowId: number) =>
+      call<RepositoryCommitDto[]>("Repository.getFlowHistory", flowId),
+    getFlowCommit: (dto: RepositoryFlowCommitRequestDto) =>
+      call<RepositoryFlowCommitDto>("Repository.getFlowCommit", dto),
   },
 
   DiscordBot: {

@@ -4,6 +4,8 @@ import { Button } from "primereact/button";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
 import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import RepositoryChipComponent from "@/features/repository/components/RepositoryChipComponent";
 
 interface Props {
   flow: FlowDto | undefined;
@@ -11,9 +13,18 @@ interface Props {
   onExecute: () => void;
 }
 
-/** Where the flow sits, what kind it is, whether it would execute, and the two things to do with it. */
+/**
+ * Where the flow sits, what kind it is, whether it would execute, what is not committed yet, and
+ * the things to do with it.
+ */
 export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
   const { data: validation } = useFlowValidation(flow?.id ?? null);
+  const { setActiveTab, setScriptView } = useWorkflowStore();
+
+  const showChanges = () => {
+    setActiveTab("script");
+    setScriptView("changes");
+  };
 
   const issues = validation?.issues ?? [];
   const errors = issues.filter((x) => x.severity === ValidationSeverityEnum.ERROR).length;
@@ -57,7 +68,11 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        <RepositoryChipComponent
+          flowId={flow?.id}
+          onShowChanges={showChanges}
+        />
         <Button
           label="Export .sflw"
           icon="pi pi-download"

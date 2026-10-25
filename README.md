@@ -178,13 +178,15 @@ the most intricate code in the repository is also the cheapest to test.
 
 ```
 App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
+ ├────→ Platform.Shared ──────────────────────→ Core
  └────→ Platform.Windows ─────────────────────→ Core
 ```
 
 `Business` holds the domain — validation, the flow script, the execution walker, the searcher — and
-**cannot reach native code**, because it does not reference `Platform.Windows`. The ports it calls
-(`IScreenshotService`, `IInputSimulatorService`, `IWindowService` …) are declared in `Core` and bound to
-their Windows adapters in `App`, the composition root. `Transport` is how a request gets in and
+**cannot reach native code**, because it references neither `Platform.Windows` nor `Platform.Shared`.
+The ports it calls (`IScreenshotService`, `IInputSimulatorService`, `IGitService` …) are declared in
+`Core` and bound to their adapters in `App`, the composition root - Windows ones, or the shared ones
+that are the same on every system. `Transport` is how a request gets in and
 cannot reach the machine either. That boundary is what keeps the domain testable without a screen,
 and what a Linux port would slot into.
 
@@ -197,7 +199,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**821 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
+**866 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
 parsing as a system action that does not exist.
 

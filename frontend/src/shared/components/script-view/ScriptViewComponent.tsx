@@ -13,6 +13,9 @@ interface Props {
   /** When given, what changed from it is shown in place: its lines above the ones that replaced them. */
   original?: string;
 
+  /** With an original, the lines that did not change fold away to a few either side of each change. */
+  collapseUnchanged?: boolean;
+
   /** What the import said, marked at its line and column. */
   diagnostics?: FlowScriptErrorDto[];
 
@@ -24,7 +27,7 @@ interface Props {
  * and the import's diagnostics as lint marks. The one script view: Check reads a draft with it,
  * and the export and import buttons are to show a file with it.
  */
-export default function ScriptViewComponent({ script, original, diagnostics, maxHeight = 640 }: Props) {
+export default function ScriptViewComponent({ script, original, collapseUnchanged, diagnostics, maxHeight = 640 }: Props) {
   const parent = useRef<HTMLDivElement>(null);
 
   // CodeMirror owns what is inside the element. A new script builds a new view rather than being
@@ -33,7 +36,17 @@ export default function ScriptViewComponent({ script, original, diagnostics, max
     if (!parent.current) return;
 
     const extensions: Extension[] = [scriptViewSetup(maxHeight)];
-    if (original) extensions.push(unifiedMergeView({ original, mergeControls: false, syntaxHighlightDeletions: true }));
+    // An empty original is a file that is all new, every line of it added.
+    if (original !== undefined) {
+      extensions.push(
+        unifiedMergeView({
+          original,
+          mergeControls: false,
+          syntaxHighlightDeletions: true,
+          collapseUnchanged: collapseUnchanged ? { margin: 3, minSize: 6 } : undefined,
+        }),
+      );
+    }
 
     const view = new EditorView({
       parent: parent.current,
@@ -44,7 +57,7 @@ export default function ScriptViewComponent({ script, original, diagnostics, max
     view.dispatch(setDiagnostics(view.state, marks));
 
     return () => view.destroy();
-  }, [script, original, diagnostics, maxHeight]);
+  }, [script, original, collapseUnchanged, diagnostics, maxHeight]);
 
   return <div ref={parent} />;
 }

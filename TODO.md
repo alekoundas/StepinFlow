@@ -144,7 +144,9 @@ the history.
 - [ ] **`Flow.IsQaTest` is not in the script.** Added 2026-10-13, set by the recording setup. The
       header has no line for it, so an export drops it and an import of a new flow leaves it false;
       re-importing over an existing flow keeps it, because the import only replaces the name and
-      description. Add a header line when the name is settled (it is "a bool for now").
+      description. Decided 2026-10-24: the writer writes it as a header line and the parser reads
+      it, before Git phase 14.2 - a flow arriving by a branch switch or a pull is a new flow to the
+      database, and would lose it.
 
 - [ ] **A cursor button comes back different from how it went out.** The printer leaves out a
       plain left click, and the parser writes `LEFT_BUTTON` / `SINGLE_CLICK` for a click and nothing
@@ -152,27 +154,38 @@ the history.
       null. Harmless - `CursorStepWorker` reads null as left - but it is the one step field a round
       trip changes, and the only thing stopping `ScriptImportExportTests` comparing steps as
       strictly as it compares areas, points and templates.
-- [ ] **An export leaves the images of deleted templates behind. Open - to decide whether an export
-      should clean up at all.** `WriteTemplatesAsync` writes each template's image into the flow's
-      folder and removes nothing, so a template deleted since the last export keeps its image there
-      for good - committed with the rest, and named by nothing. Today the person removes it, and
-      `git status` is where they would notice. If the export is to do it, what it has to get right:
-      - Keep every name the flow has, not only the files this export wrote: a template imported with
-        its image missing has no bytes to write, and a file put back since is then the only copy.
-      - Compare ignoring case - writing `login.png` over `Login.png` on Windows keeps the old casing.
-      - Only the folder's top level, and only image files (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`,
-        `.webp`, `.tif`, `.tiff`): a hand-written template can be any of them, and a README or
-        `.gitkeep` someone put there has to survive.
-      - Remove the folder once it is empty; git does not track it anyway.
-      - Say what it deleted: a `RemovedTemplates` list on `FlowScriptExportResultDto`, as an import
-        reports `MissingTemplates`.
+- [ ] **An export to a folder of the user's choosing leaves a renamed flow's old files behind.**
+      Since 2026-10-25 an export over an earlier one removes the PNGs the flow no longer names, as
+      the repository does. A renamed flow still leaves its old `.sflw` and folder there: the export
+      folder is not a copy of the database, so it cannot tell another flow's files from this one's
+      old ones without reading each script's `Id`. Exporting a flow renamed only in case keeps the
+      old casing on Windows and macOS for the same reason. Nor does the export say what it removed:
+      a `RemovedTemplates` list on `FlowScriptExportResultDto`, as an import reports
+      `MissingTemplates`.
+- [ ] **A browser tab area does not resolve.** Since 2026-10-24 the script carries it -
+      `tab title contains <[ … ]>` or `tab url contains <[ … ]>` after the window - so it survives a
+      round trip, but `AreaPointResolver` still refuses it ("not supported yet"), and the form warns
+      as much. Finding the tab means UI Automation on the browser window: the tab's title or
+      address, and the rectangle of its page. Windows only; macOS and Linux each need their own.
 
-      A renamed flow leaves the same kind of leftover one level up: the old `.sflw` and its folder.
-      The export does not know the old name, so that cleanup means finding the file by the `Id:`
-      inside it - a separate decision.
-- [ ] **Two area facts the grammar cannot say.** A `BROWSER_TAB` area exports as its window and
-      imports as `APPLICATION`, and `UseClientArea = false` imports as true. The first waits on the
-      resolver supporting tabs at all; the second wants a word such as `with frame`.
+## Git
+
+- [ ] **A hand edit in the Repository folder is overwritten.** Decided 2026-10-24: the app owns the
+      folder, so a `.sflw` changed in another editor is replaced the next time that flow is saved
+      in the app, and nothing reads it back meanwhile. Honouring one means watching the folder and
+      importing what changed - which is phase 14.2's import, plus deciding what wins when the app
+      and the file both changed.
+
+- [ ] **Merge conflicts are not handled: a pull overwrites.** Decided 2026-10-24: until merging is
+      built, a pull takes the remote branch as it is - a fetch and a reset to it - so local commits
+      that were never pushed go too, not only uncommitted changes. Handling it properly means
+      showing both versions of a flow that changed on both sides and letting the person choose,
+      per flow or per step, before anything is imported.
+- [ ] **The remote token is a plain setting.** One input in Settings, stored as an `AppSetting` the
+      way `AI_API_KEY` is. It belongs in the operating system's credential store instead: Credential
+      Manager on Windows, but the Keychain on macOS and libsecret on Linux are separate code each. It
+      also only covers an HTTPS remote: LibGit2Sharp speaks neither SSH nor the Git Credential
+      Manager's browser sign-in, so a `git@...` URL is refused rather than half working.
 
 ## AI
 

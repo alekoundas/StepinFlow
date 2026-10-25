@@ -106,6 +106,17 @@ namespace Core.Catalogs
             "Where Ollama is listening. The default is right unless you moved it.",
             defaultValue: "http://localhost:11434");
 
+        // Repository. Empty takes the user's git config, which most people who use git already have.
+        public static readonly TextAppSettingDefinition GitAuthorName = new TextAppSettingDefinition(
+            AppSettingKeyEnum.GIT_AUTHOR_NAME,
+            "Name",
+            "Who every commit is by.");
+
+        public static readonly TextAppSettingDefinition GitAuthorEmail = new TextAppSettingDefinition(
+            AppSettingKeyEnum.GIT_AUTHOR_EMAIL,
+            "Email",
+            "Written into every commit beside the name.");
+
         public static IReadOnlyList<AppSettingDefinition> All { get; } =
         [
             RecordingHotkeyPause,
@@ -125,6 +136,9 @@ namespace Core.Catalogs
             AiSendScreenContent,
             AiOllamaContextLength,
             AiOllamaUrl,
+
+            GitAuthorName,
+            GitAuthorEmail,
         ];
 
         /// <summary>In the order the Settings page lists them.</summary>

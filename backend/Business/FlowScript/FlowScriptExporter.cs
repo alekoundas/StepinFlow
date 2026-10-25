@@ -1,3 +1,5 @@
+using System.Text;
+
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos.FlowScript;
@@ -54,7 +56,7 @@ namespace Business.FlowScript
 
         /// <summary>
         /// Save to Disk the flowscript along with a folder with png immages from templates.
-        /// Png name used is the FlowStepTemplate name
+        /// Over an earlier export it writes only what changed, and removes the images the flow no longer uses.
         /// </summary>
         public async Task<FlowScriptExportResultDto> ExportAsync(int flowId, string? folderPath = null, CancellationToken ct = default)
         {
@@ -81,7 +83,8 @@ namespace Business.FlowScript
 
             int written = await WriteTemplatesAsync(schema, templateFolder, ct);
 
-            await File.WriteAllTextAsync(scriptPath, script.ReplaceLineEndings("\n"), ct);
+            byte[] scriptBytes = Encoding.UTF8.GetBytes(script.ReplaceLineEndings("\n"));
+            await WriteIfChangedAsync(scriptPath, scriptBytes, ct);
 
             return new FlowScriptExportResultDto
             {
@@ -211,28 +214,65 @@ namespace Business.FlowScript
             }
         }
 
-        // Write all PNGs to the disk.
+        // Write the PNGs whose bytes changed, and remove the ones the flow no longer names, so an
+        // export over an earlier one brings it up to date.
         private static async Task<int> WriteTemplatesAsync(FlowScriptSchema schema, string templateFolder, CancellationToken ct)
         {
             // Gather templates.
             List<FlowTemplate> templates = schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
                 .Select(x => x.FlowTemplate)
-                .Where(x => x.TemplateImage != null)
                 .Distinct()
                 .ToList();
 
-            if (templates.Count == 0)
-                return 0;
+            List<FlowTemplate> pictures = templates.Where(x => x.TemplateImage != null).ToList();
 
             // Create template folder in disk.
-            Directory.CreateDirectory(templateFolder);
+            if (pictures.Count > 0)
+                Directory.CreateDirectory(templateFolder);
 
             // Write to disk.
-            foreach (FlowTemplate template in templates)
-                await File.WriteAllBytesAsync(Path.Combine(templateFolder, template.Name), template.TemplateImage!, ct);
+            foreach (FlowTemplate picture in pictures)
+                await WriteIfChangedAsync(Path.Combine(templateFolder, picture.Name), picture.TemplateImage!, ct);
 
-            return templates.Count;
+            // Every name the flow has, not only the images written: a template imported with its
+            // image missing has no bytes, and a file put back by hand is then the only copy.
+            HashSet<string> names = templates.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            RemoveUnusedImages(templateFolder, names);
+
+            return pictures.Count;
+        }
+
+        // Top level only, and only PNGs, so whatever else someone keeps in the folder survives.
+        private static void RemoveUnusedImages(string templateFolder, IReadOnlySet<string> names)
+        {
+            if (!Directory.Exists(templateFolder))
+                return;
+
+            List<string> paths = Directory.EnumerateFiles(templateFolder, "*", SearchOption.TopDirectoryOnly).ToList();
+
+            foreach (string path in paths)
+            {
+                string name = Path.GetFileName(path);
+                if (FlowScriptFile.IsPngName(name) && !names.Contains(name))
+                    File.Delete(path);
+            }
+
+            if (!Directory.EnumerateFileSystemEntries(templateFolder).Any())
+                Directory.Delete(templateFolder);
+        }
+
+        // Only when the bytes differ, so a file that has not changed keeps its time and git never looks at it.
+        private static async Task WriteIfChangedAsync(string path, byte[] bytes, CancellationToken ct)
+        {
+            if (File.Exists(path))
+            {
+                byte[] current = await File.ReadAllBytesAsync(path, ct);
+                if (current.AsSpan().SequenceEqual(bytes))
+                    return;
+            }
+
+            await File.WriteAllBytesAsync(path, bytes, ct);
         }
     }
 }

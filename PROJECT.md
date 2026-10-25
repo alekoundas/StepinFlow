@@ -55,10 +55,11 @@ has never opened the app, with `git log` and `git blame` as its version history.
 
 ### The layout
 
-Six projects. The dependency arrows are the design; everything else is detail.
+Seven projects. The dependency arrows are the design; everything else is detail.
 
 ```
 App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
+ ├────→ Platform.Shared ──────────────────────→ Core
  └────→ Platform.Windows ─────────────────────→ Core
 ```
 
@@ -66,6 +67,7 @@ App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
 |---|---|---|---|
 | `Core` | `net10.0` | Models, DTOs, enums, ports, pure logic | — |
 | `DataAccess` | `net10.0` | `AppDbContext`, configurations, migrations | Core |
+| `Platform.Shared` | `net10.0` | What touches the machine the same way on every system: git | Core |
 | `Platform.Windows` | `net10.0-windows` | Everything that touches the machine | Core |
 | `Business` | `net10.0` | The features: execution, search, the flow script, validation, AI | Core, DataAccess |
 | `Transport` | `net10.0` | The IPC pipes, the dispatcher and one handler per action | Business |
@@ -75,7 +77,7 @@ App ──→ Transport ──→ Business ──→ DataAccess ──→ Core
 something that touches the machine. A command-line runner arrives in phase 12 as a folder beside
 `Ipc/`, not as another project.
 
-Seven test projects sit beside them in `backend/Tests/`, one per production project plus
+Eight test projects sit beside them in `backend/Tests/`, one per production project plus
 `Architecture.Tests`, which turns the arrows above into test failures - see §15.
 
 ### Inside Business
@@ -89,6 +91,7 @@ Business/
   FlowScript/    Scanner/ Lexing/ Parsers/ Models/ Printer/ Catalogs/ Diagnostics/, importer and exporter
   Flows/         DataService/ - every write to a flow - FlowValidationService/ with its Rules/ -
                  what every write is checked against - and the tree maths a move uses
+  Repository/    the flows kept as files in a git repository: GitRepositoryService writes, reads and commits
   Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
 ```
 
@@ -101,14 +104,15 @@ under `Business`.
 and goes in `Core/Helpers`; used by one, it sits in that feature's folder. A `Helpers/` subfolder
 only once there are more than three.
 
-**`Business` does not reference `Platform.Windows`.** They are siblings. `App` is the only project
+**`Business` does not reference `Platform.Windows`, or `Platform.Shared`.** They are siblings. `App` is the only project
 that knows both exist, because `App` is the composition root and binding a port to an adapter is
 its job and nobody else's.
 
 ### Ports and adapters
 
 The interfaces for anything outside the process live in `Core/Ports`. The implementations live in
-`Platform.Windows`. `Business` consumes the interface and never sees the implementation.
+`Platform.Windows`, or in `Platform.Shared` when the code is the same on every system. `Business`
+consumes the interface and never sees the implementation.
 
 ```
 Core/Ports/IScreenshotService        →  Platform.Windows/Screen/ScreenshotService
@@ -120,6 +124,7 @@ Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
 Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
 Core/Ports/IProcessService           →  Platform.Windows/SystemActions/ProcessService
 Core/Ports/IOpenCvService            →  Platform.Windows/Common/Vision/OpenCvService
+Core/Ports/IGitService               →  Platform.Shared/Git/GitService
 Core/Ports/IIpcBroadcastService      →  Transport/Ipc/IpcBroadcastService
 ```
 
@@ -163,6 +168,15 @@ trap: `System.Drawing.Common` is named Common and is **not** — GDI+ has been W
 What this rule deliberately **excludes**: `DiscordNotifier` and the Ollama client are external
 *system* adapters, not platform adapters. They sit behind interfaces already and they do not
 constrain the target framework, so they stay in `Business`.
+
+### What goes in Platform.Shared
+
+An adapter that touches the machine the same way on Windows, macOS and Linux. Today that is git,
+through LibGit2Sharp, which carries libgit2 for each system, so nothing has to be installed. It
+targets plain `net10.0`, depends on `Core` alone and takes the banned-API list every project but
+`Platform.Windows` takes; the architecture tests hold it to that, and to being the only project
+that uses LibGit2Sharp. `OpenCvService` and the SharpHook services move here once the Git phase is
+done (`PLAN.md` 14.4) - their code is the same everywhere, and what is not stays behind a port.
 
 ### Why this boundary exists
 
@@ -1497,9 +1511,56 @@ everything is worse than a preview that admits it cannot.
 How a flow gets out of the database, into a repository, through a pipeline, and back to whoever has
 to work out why it went red.
 
-**Mostly design, not yet built** - phases 8 and 12 to 14. What exists: the script and its
-transactional import and export (§7, the editor's Export and the Import page), `PublicId`, and
-the main area.
+**Partly built** - phases 8 and 12 to 14. What exists: the script and its transactional import
+and export (§7, the editor's Export and the Import page), `PublicId`, the main area, and the
+flows kept in a local repository (phase 14.1, below).
+
+### Every flow is kept in a repository of the app's own
+
+`%LOCALAPPDATA%\StepinFlow_v2\Repository\` (`PathHelper.GetRepositoryPath`) is a git repository the
+app makes and owns: every flow as `<Name>.sflw` at the top, its template images in `<Name>/` beside
+it - the layout Export writes. `GitRepositoryService` is the only thing that works in it - it
+writes the flows, reads the changes and commits - and `IGitService` reaches git.
+
+- **Made at startup.** `HostedGitRepositoryService` hands over to
+  `GitRepositoryService.StartBackgroundService`, off the startup thread. `GitRepositoryInitializer`
+  makes a repository on `main` when there is none, a `.gitattributes` (`*.sflw text
+  eol=lf`, `*.png binary`), a `.gitignore` that keeps out everything but `.sflw`, `.csv` and `.png` -
+  a flow's CSV of values is committed, since a secret is never written to it - both put back
+  whenever they differ; then every flow is written. Only when it has just
+  made the repository does it commit, "Snapshot of N flows", so the first edit shows as a change
+  against it rather than inside it. It only reads the database.
+- **Every save writes the flow's files.** Each public data-service write calls
+  `GitRepositoryService.Changed(flowId)` once it has saved or committed; the service waits for half a
+  second of quiet, then writes each changed flow and every flow that calls it - a `Sub Flow` line
+  names the file of the flow it calls - and removes the files of flows that are gone. Not a
+  `SaveChangesInterceptor`: several deletes are `ExecuteDelete`, which never reaches one.
+- **A flow is written by its export.** `FlowScriptExporter.ExportAsync` writes a file only when its
+  bytes differ, and removes a PNG only when the flow names it no more, at the folder's top level,
+  so a README survives - the same for an export to a folder of the user's choosing. Before any flow
+  is written, the files of a flow renamed or deleted go whole, compared by exact name: a rename
+  that changes only case then gets files in the new casing, which Windows and macOS would not give
+  it by writing over the old ones, and git and Linux would never see. Nothing is removed while the
+  database has no flows at all. One flow that cannot be written costs its own files and is logged.
+- **Committing is a button.** `GitRepositoryService.CommitAsync` starts the index from the last
+  commit and stages exactly the files picked, so nothing staged before comes along. The author is
+  the Settings fields, else the user's git config, else the system's user name.
+- **One thing at a time.** A write, a read and a commit each wait their turn on the service's own
+  lock, so a commit never takes a file half written. Writing takes its turn a flow at a time, after
+  reading the flow from the database: requests are answered one at a time on one pipe, so a read
+  waiting behind the whole startup would hold up every other request.
+- **Templates are PNGs.** A template's name ends in lowercase `.png` (`TEMPLATE_NOT_PNG` otherwise),
+  and an import reads only the PNGs beside the script, by their bytes as well as their name, so the
+  `.gitignore` above can let back `*.png` alone.
+- **What the app shows.** The editor header has the branch, the flow's changes and Commit; the
+  commit dialog lists every changed file with this flow's ticked and a message filled in from
+  what changed; the Script tab is Script, Changes and History, the last two through CodeMirror's
+  merge view with the unchanged lines folded; the Flows page counts each flow's changes; Settings
+  has the folder and who commits. `REPOSITORY_CHANGED` is broadcast after each write and commit,
+  and the app reads it all again.
+
+The folder is the app's: a `.sflw` edited in another program is replaced the next time that flow is
+saved (`TODO.md`, Git). Discard, restore and branches read files back, so they wait for 14.2.
 
 ### The file is `.sflw`
 
@@ -1962,17 +2023,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-821 tests, all passing but one skipped on purpose, in seven projects under `backend/Tests/` - one
+866 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 607 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules |
+| `Business.Tests` | 641 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
-| `Architecture.Tests` | 9 | the layering in §2 as failing tests |
+| `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
 | `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
+| `Platform.Shared.Tests` | 9 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2082,7 +2144,8 @@ In active development, not released.
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
-directions, and the AI assistant with Ollama or OpenAI. 821 backend tests.
+directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
+or OpenAI. 866 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

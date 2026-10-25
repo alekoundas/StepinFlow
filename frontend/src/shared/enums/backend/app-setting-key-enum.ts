@@ -16,6 +16,9 @@ export const AppSettingKeyEnum = {
   AI_SEND_SCREEN_CONTENT: "AI_SEND_SCREEN_CONTENT",
   AI_OLLAMA_CONTEXT_LENGTH: "AI_OLLAMA_CONTEXT_LENGTH",
   AI_OLLAMA_URL: "AI_OLLAMA_URL",
+
+  GIT_AUTHOR_NAME: "GIT_AUTHOR_NAME",
+  GIT_AUTHOR_EMAIL: "GIT_AUTHOR_EMAIL",
 } as const;
 
 /** What control a setting needs. The page renders on this rather than branching on the key. */

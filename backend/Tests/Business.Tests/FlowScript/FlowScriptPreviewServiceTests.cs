@@ -18,6 +18,9 @@ namespace Business.Tests.FlowScript
         private const string LOGIN_ID = "3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d";
         private const string OTHER_ID = "9a1e2f3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b";
 
+        // As much of a PNG as the importer looks at: its signature.
+        private static readonly byte[] PNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
+
         private readonly TestDatabase _database = new TestDatabase();
         private readonly string _folder = Path.Combine(Path.GetTempPath(), "sflw-preview-" + Guid.NewGuid().ToString("N")[..8]);
         private readonly FlowScriptExporter _exporter;
@@ -63,7 +66,7 @@ namespace Business.Tests.FlowScript
         {
             string templateFolder = Path.Combine(_folder, fileName);
             Directory.CreateDirectory(templateFolder);
-            await File.WriteAllBytesAsync(Path.Combine(templateFolder, "login-button.png"), [1, 2, 3], Ct);
+            await File.WriteAllBytesAsync(Path.Combine(templateFolder, "login-button.png"), PNG, Ct);
 
             string scriptPath = Path.Combine(_folder, fileName + ".sflw");
             await File.WriteAllTextAsync(scriptPath, script, Ct);
@@ -103,6 +106,17 @@ namespace Business.Tests.FlowScript
             preview.TemplateNames.ShouldBe(["login-button.png", "logo.png"]);
             preview.MissingTemplates.ShouldBe(["logo.png"]);
             preview.TemplateFolderPath.ShouldBe(Path.Combine(_folder, "Login"));
+        }
+
+        [Fact]
+        public async Task A_file_named_png_that_is_not_one_is_missing()
+        {
+            string path = await WriteAsync("Login", Script("Login", LOGIN_ID, "Find login"));
+            await File.WriteAllBytesAsync(Path.Combine(_folder, "Login", "logo.png"), [0xFF, 0xD8, 0xFF, 0xE0], Ct);
+
+            FlowScriptPreviewDto preview = await _preview.PreviewAsync(path, Ct);
+
+            preview.MissingTemplates.ShouldBe(["logo.png"]);
         }
 
         // The import's write path finds the flow by its Id, so the preview does too.

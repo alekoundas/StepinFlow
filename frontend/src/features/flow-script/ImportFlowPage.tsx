@@ -644,7 +644,7 @@ function TemplatesComponent({ preview }: { preview: FlowScriptPreviewDto }) {
                 className="text-xs"
                 style={{ color: isMissing ? "var(--yellow-400)" : "var(--text-color-secondary)" }}
               >
-                {isMissing ? "not in the folder: imported without a picture" : "found"}
+                {isMissing ? "no PNG of that name in the folder: imported without a picture" : "found"}
               </span>
             </li>
           );

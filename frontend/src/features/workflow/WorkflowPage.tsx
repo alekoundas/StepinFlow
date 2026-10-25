@@ -22,6 +22,7 @@ export default function WorkflowPage() {
     setTreeRefreshTrigger,
     setCopiedStep,
     setActiveTab,
+    setScriptView,
   } = useWorkflowStore();
   const { data: flow } = useFlow(flowId ?? null);
   const [isExporting, setIsExporting] = useState(false);
@@ -37,6 +38,7 @@ export default function WorkflowPage() {
       setTreeRefreshTrigger(null);
       setCopiedStep(undefined);
       setActiveTab("flow");
+      setScriptView("script");
     };
 
     clear();
@@ -54,6 +56,7 @@ export default function WorkflowPage() {
     setTreeRefreshTrigger,
     setCopiedStep,
     setActiveTab,
+    setScriptView,
   ]);
 
   return (

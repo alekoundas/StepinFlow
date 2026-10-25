@@ -69,7 +69,8 @@ means if it fails, rather than what the step does, which its line already says.
 
 A flow's **Export**, beside Execute at the top of the editor, writes it as a `.sflw` script with its templates in a
 folder of the same name beside it. The folder starts as the app's export folder; Browse picks
-another, and a script of the same name there is replaced.
+another, and a script of the same name there is replaced, with any image in its folder that the
+flow no longer uses removed.
 
 **Import**, in the menu, reads a `.sflw` file and says what importing it would do before anything
 is saved: a new flow, when no flow has the file's `Id`; the flow with that `Id` replaced, when one

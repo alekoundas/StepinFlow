@@ -7,6 +7,9 @@ namespace Core.Helpers
     /// </summary>
     public static class FileNameHelper
     {
+        /// <summary>Every template is a PNG, named in lowercase, so git and Linux find it by the name the script gives.</summary>
+        public const string TEMPLATE_EXTENSION = ".png";
+
         private const string TemplateNameCharacters = "0123456789abcdefghijklmnopqrstuvwxyz";
         private static readonly char[] InvalidCharacters = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
 
@@ -76,7 +79,7 @@ namespace Core.Helpers
         /// </summary>
         public static string GenerateTemplateFileName()
         {
-            return $"template-{RandomNumberGenerator.GetString(TemplateNameCharacters, 5)}.png";
+            return $"template-{RandomNumberGenerator.GetString(TemplateNameCharacters, 5)}{TEMPLATE_EXTENSION}";
         }
 
 

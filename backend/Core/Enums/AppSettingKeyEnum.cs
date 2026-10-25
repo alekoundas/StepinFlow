@@ -28,5 +28,9 @@ namespace Core.Enums
 
         /// <summary>How big a context window to ask Ollama for, since it serves 4096 by default.</summary>
         AI_OLLAMA_CONTEXT_LENGTH,
+
+        /// <summary>Who a commit is by. Empty takes the user's git config.</summary>
+        GIT_AUTHOR_NAME,
+        GIT_AUTHOR_EMAIL,
     }
 }
