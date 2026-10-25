@@ -171,6 +171,20 @@ namespace Platform.Shared.Tests.Git
             ]);
         }
 
+        [Fact]
+        public void A_commit_lists_every_file_it_holds_with_forward_slashes()
+        {
+            Write("Login.sflw", "one");
+            Write("Login/template-a.png", "picture");
+            GitCommit first = Commit("First", "Login.sflw", "Login/template-a.png");
+            Write("Other.sflw", "one");
+            Commit("Second", "Other.sflw");
+
+            _git.Files(_folder, first.Sha).ShouldBe(["Login.sflw", "Login/template-a.png"], ignoreOrder: true);
+            _git.Files(_folder, null).ShouldBe(["Login.sflw", "Login/template-a.png", "Other.sflw"], ignoreOrder: true);
+            _git.Files(_folder, "0123456789abcdef0123456789abcdef01234567").ShouldBeEmpty();
+        }
+
         // The repository's .gitignore: everything out, then back in only what the app writes.
         [Fact]
         public void A_gitignore_that_lets_back_only_some_files_keeps_the_rest_out_of_the_changes()

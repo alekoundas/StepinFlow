@@ -1575,7 +1575,17 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
   write and commit, and the app reads it all again.
 
 The folder is the app's: a `.sflw` edited in another program is replaced the next time that flow is
-saved (`TODO.md`, Git). Discard, restore and branches read files back, so they wait for 14.2.
+saved (`TODO.md`, Git).
+
+**Discard and Restore this version** read a flow back. `GitRepositoryService.ReadFlowAtAsync` finds
+the flow's script in a commit by the `Id:` in its header - the file of its name now first, then
+every other, so a flow renamed since is found under its old name - and its images in the folder of
+that name. `FlowRestoreService` imports them over the flow the way a file is imported, so its row
+and executions stay, then writes the flow's files at once. Discard reads the last commit and leaves
+nothing to commit; Restore reads an older one and lands as a change. It is a class of its own because
+the import saves through the data services, which tell `GitRepositoryService` what they changed -
+the service cannot also depend on them - and it still reads the commit through that service.
+Branches read files back too, and wait for the rest of 14.2.
 
 ### The file is `.sflw`
 
@@ -2038,18 +2048,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-886 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+890 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 661 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
+| `Business.Tests` | 664 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
 | `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
-| `Platform.Shared.Tests` | 9 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files |
+| `Platform.Shared.Tests` | 10 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2160,7 +2170,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 886 backend tests.
+or OpenAI. 890 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

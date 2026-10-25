@@ -51,6 +51,13 @@ namespace Business.Repository
         /// </summary>
         Task<GitFlowVersion> GetFlowVersionAsync(int flowId, CancellationToken ct);
 
+        /// <summary>
+        /// A flow's script and images as a commit holds them - the last one when none is given - or
+        /// null when that commit does not have the flow. Found by its Id, so a flow renamed since is
+        /// found under its old name.
+        /// </summary>
+        Task<GitFlowFiles?> ReadFlowAtAsync(int flowId, string? commitSha, CancellationToken ct);
+
         /// <summary>What one commit changed in one flow, or null when either is not there.</summary>
         Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct);
     }

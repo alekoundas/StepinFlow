@@ -102,6 +102,23 @@ namespace Platform.Shared.Git
             return bytes.ToArray();
         }
 
+        public List<string> Files(string folderPath, string? commitSha)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Commit? commit;
+            if (commitSha == null)
+                commit = repository.Head.Tip;
+            else
+                commit = repository.Lookup<Commit>(commitSha);
+
+            List<string> paths = new List<string>();
+            if (commit != null)
+                AddFiles(commit.Tree, paths);
+
+            return paths;
+        }
+
         public GitCommit Commit(string folderPath, IReadOnlyList<string> paths, string message, GitSignature author)
         {
             using Repository repository = new Repository(folderPath);
@@ -231,6 +248,19 @@ namespace Platform.Shared.Git
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Every file under the tree, folders walked into. A tree entry's path uses the system's
+        // separator, and every path in the port uses forward slashes.
+        private static void AddFiles(Tree tree, List<string> paths)
+        {
+            foreach (TreeEntry entry in tree)
+            {
+                if (entry.TargetType == TreeEntryTargetType.Tree)
+                    AddFiles((Tree)entry.Target, paths);
+                else if (entry.TargetType == TreeEntryTargetType.Blob)
+                    paths.Add(entry.Path.Replace('\\', '/'));
+            }
+        }
 
         // Against the last commit: new, gone or changed, whether staged or not.
         private static GitChangeKindEnum? ChangeKindOf(FileStatus state)

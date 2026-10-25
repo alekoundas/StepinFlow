@@ -128,6 +128,12 @@ export const backendApiService = {
       call<RepositoryCommitDto[]>("Repository.getFlowHistory", flowId),
     getFlowCommit: (dto: RepositoryFlowCommitRequestDto) =>
       call<RepositoryFlowCommitDto>("Repository.getFlowCommit", dto),
+    // The flow back as the last commit has it.
+    discard: (flowId: number) =>
+      call<FlowScriptImportResultDto>("Repository.discard", flowId),
+    // The flow back as an older commit has it, as a change not committed yet.
+    restore: (dto: RepositoryFlowCommitRequestDto) =>
+      call<FlowScriptImportResultDto>("Repository.restore", dto),
   },
 
   DiscordBot: {

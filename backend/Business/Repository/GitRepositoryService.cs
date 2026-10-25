@@ -35,6 +35,7 @@ namespace Business.Repository
     {
         private const int HISTORY_LIMIT = 200;
         private const int SHORT_SHA_LENGTH = 7;
+        private const string ID_FIELD = "Id:";
 
         private static readonly TimeSpan QUIET = TimeSpan.FromMilliseconds(500);
 
@@ -433,6 +434,43 @@ namespace Business.Repository
             }
         }
 
+        public async Task<GitFlowFiles?> ReadFlowAtAsync(int flowId, string? commitSha, CancellationToken ct)
+        {
+            Flow? flow = await FlowNameAsync(flowId, ct);
+            if (flow == null)
+                return null;
+
+            string flowFileName = FileNameHelper.Clean(flow.Name, "flow");
+            string currentScriptFile = RepositoryPathHelper.ScriptFileOf(flowFileName);
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                List<string> files = _git.Files(_folderPath, commitSha);
+
+                string? scriptFile = ScriptFileIn(files, commitSha, currentScriptFile, flow.PublicId);
+                if (scriptFile == null)
+                    return null;
+
+                byte[] script = _git.ReadFile(_folderPath, commitSha, scriptFile) ?? [];
+                GitFlowFiles found = new GitFlowFiles { Script = Encoding.UTF8.GetString(script) };
+
+                string committedFlowFileName = RepositoryPathHelper.FlowFileNameOf(scriptFile);
+                foreach (string path in files.Where(x => RepositoryPathHelper.IsImage(x) && RepositoryPathHelper.BelongsTo(x, committedFlowFileName)))
+                {
+                    byte[]? image = _git.ReadFile(_folderPath, commitSha, path);
+                    if (image != null)
+                        found.Templates[Path.GetFileName(path)] = image;
+                }
+
+                return found;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
         public async Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct)
         {
             Flow? flow = await FlowNameAsync(dto.FlowId, ct);
@@ -643,8 +681,50 @@ namespace Business.Repository
             return await dbContext.Flows
                 .AsNoTracking()
                 .Where(x => x.Id == flowId)
-                .Select(x => new Flow { Id = x.Id, Name = x.Name })
+                .Select(x => new Flow { Id = x.Id, Name = x.Name, PublicId = x.PublicId })
                 .FirstOrDefaultAsync(ct);
+        }
+
+        // The file of the flow's name now first. One renamed since the commit is found by the Id in
+        // its header, the one thing every copy of a flow keeps.
+        private string? ScriptFileIn(List<string> files, string? commitSha, string currentScriptFile, Guid publicId)
+        {
+            List<string> scriptFiles = files
+                .Where(x => !x.Contains('/', StringComparison.Ordinal) && x.EndsWith(RepositoryPathHelper.SCRIPT_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => x == currentScriptFile)
+                .ToList();
+
+            foreach (string scriptFile in scriptFiles)
+            {
+                byte[]? bytes = _git.ReadFile(_folderPath, commitSha, scriptFile);
+                if (bytes == null)
+                    continue;
+
+                string script = Encoding.UTF8.GetString(bytes);
+                if (IdOf(script) == publicId)
+                    return scriptFile;
+            }
+
+            return null;
+        }
+
+        // The header's Id: line, read without the scanner: which flow a file is, nothing more.
+        private static Guid? IdOf(string script)
+        {
+            foreach (string line in script.Split('\n'))
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith(ID_FIELD, StringComparison.Ordinal))
+                    continue;
+
+                string value = trimmed[ID_FIELD.Length..].Trim();
+                if (Guid.TryParse(value, out Guid id))
+                    return id;
+
+                return null;
+            }
+
+            return null;
         }
 
         private async Task<byte[]?> ReadDiskAsync(string path, CancellationToken ct)

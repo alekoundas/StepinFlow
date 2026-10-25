@@ -83,6 +83,8 @@ namespace Transport.Ipc
                     "Repository.commit" => await Handler<CommitRepositoryHandler>().HandleAsync(Payload<RepositoryCommitRequestDto>(request), ct),
                     "Repository.getFlowHistory" => await Handler<GetFlowRepositoryHistoryHandler>().HandleAsync(Payload<int>(request), ct),
                     "Repository.getFlowCommit" => await Handler<GetFlowRepositoryCommitHandler>().HandleAsync(Payload<RepositoryFlowCommitRequestDto>(request), ct),
+                    "Repository.discard" => await Handler<DiscardFlowChangesHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Repository.restore" => await Handler<RestoreFlowVersionHandler>().HandleAsync(Payload<RepositoryFlowCommitRequestDto>(request), ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),

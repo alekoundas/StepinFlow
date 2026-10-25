@@ -4,6 +4,7 @@ import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import type { RepositoryCommitRequestDto } from "@/shared/models/repository-dtos";
 
 export const repositoryKeys = {
@@ -71,6 +72,33 @@ export function useCommitRepository() {
     mutationFn: (dto: RepositoryCommitRequestDto) => backendApiService.Repository.commit(dto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: repositoryKeys.all }),
   });
+}
+
+/**
+ * Discard and Restore import the flow over itself, so every step, area and template it shows is a
+ * new row: everything is read again, and the tree starts over with nothing selected.
+ */
+export function useBringBackFlow(flowId: number) {
+  const queryClient = useQueryClient();
+  const { setSelectedTreeNode, setTreeRefreshTrigger } = useWorkflowStore();
+
+  const reload = async () => {
+    setSelectedTreeNode(undefined);
+    setTreeRefreshTrigger({ id: -1, isFlow: true });
+    await queryClient.invalidateQueries();
+  };
+
+  const discard = useMutation({
+    mutationFn: () => backendApiService.Repository.discard(flowId),
+    onSuccess: reload,
+  });
+
+  const restore = useMutation({
+    mutationFn: (sha: string) => backendApiService.Repository.restore({ flowId, sha }),
+    onSuccess: reload,
+  });
+
+  return { discard, restore };
 }
 
 /**

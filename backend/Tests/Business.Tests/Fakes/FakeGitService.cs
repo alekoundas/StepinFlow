@@ -55,6 +55,12 @@ namespace Business.Tests.Fakes
             return Committed.GetValueOrDefault(path);
         }
 
+        // One commit's worth, whichever is asked for.
+        public List<string> Files(string folderPath, string? commitSha)
+        {
+            return Committed.Keys.ToList();
+        }
+
         public GitCommit Commit(string folderPath, IReadOnlyList<string> paths, string message, GitSignature author)
         {
             Commits.Add((paths, message, author));

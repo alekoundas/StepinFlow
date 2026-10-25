@@ -1,15 +1,20 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import type { RepositoryCommitDto } from "@/shared/models/repository-dtos";
 import TemplateImageChangesComponent from "@/features/repository/components/TemplateImageChangesComponent";
 import {
+  useBringBackFlow,
   useFlowRepositoryCommit,
   useFlowRepositoryHistory,
+  useRepositoryStatus,
 } from "@/features/repository/hooks/use-repository";
-import { MONO, formatWhen } from "@/features/repository/repository-format";
+import { MONO, formatWhen, plural } from "@/features/repository/repository-format";
+import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -128,6 +133,32 @@ interface DetailProps {
 
 function CommitDetailComponent({ flowId, sha }: DetailProps) {
   const { data: detail, isLoading, error } = useFlowRepositoryCommit(flowId, sha);
+  const { data: status } = useRepositoryStatus();
+  const { restore } = useBringBackFlow(flowId);
+  const { openConfirm } = useDialogStore();
+  const { setScriptView } = useWorkflowStore();
+
+  const changeCount = status?.flows.find((x) => x.flowId === flowId)?.changeCount ?? 0;
+
+  // Lands as a change not committed yet, so Changes is where to see what it brought back.
+  const restoreNow = () => restore.mutate(sha, { onSuccess: () => setScriptView("changes") });
+
+  // Only changes not committed yet are lost; anything committed is still in the history.
+  const askToRestore = () => {
+    if (changeCount === 0) {
+      restoreNow();
+      return;
+    }
+
+    openConfirm("flow-restore", {
+      headerText: "Restore this version?",
+      confirmLabel: "Restore this version",
+      confirmIcon: "pi pi-undo",
+      confirmSeverity: "warning",
+      children: <LabelComponent text={`It replaces the flow as it is now, and its ${plural(changeCount, "change")} not committed yet are lost.`} />,
+      onConfirm: restoreNow,
+    });
+  };
 
   if (isLoading)
     return (
@@ -152,16 +183,37 @@ function CommitDetailComponent({ flowId, sha }: DetailProps) {
 
   return (
     <div className="flex flex-column gap-3">
-      <div className="flex flex-column gap-1">
-        <span className="font-semibold">{detail.commit.message}</span>
-        <span
-          className="text-xs"
-          style={MUTED}
-        >
-          {detail.commit.authorName} · {formatWhen(detail.commit.when)} ·{" "}
-          <span style={{ fontFamily: MONO }}>{detail.commit.shortSha}</span>
-        </span>
+      <div className="flex align-items-start justify-content-between flex-wrap gap-3">
+        <div className="flex flex-column gap-1">
+          <span className="font-semibold">{detail.commit.message}</span>
+          <span
+            className="text-xs"
+            style={MUTED}
+          >
+            {detail.commit.authorName} · {formatWhen(detail.commit.when)} ·{" "}
+            <span style={{ fontFamily: MONO }}>{detail.commit.shortSha}</span>
+          </span>
+        </div>
+
+        <Button
+          type="button"
+          label="Restore this version"
+          icon="pi pi-undo"
+          size="small"
+          outlined
+          loading={restore.isPending}
+          tooltip="Brings the flow back to how it was after this commit, as an uncommitted change"
+          tooltipOptions={{ position: "bottom" }}
+          onClick={askToRestore}
+        />
       </div>
+
+      {restore.error && (
+        <LabelComponent
+          text={restore.error.message}
+          color="error"
+        />
+      )}
 
       {before !== after ? (
         <ScriptViewComponent

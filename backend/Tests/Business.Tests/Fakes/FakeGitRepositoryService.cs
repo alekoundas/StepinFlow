@@ -66,6 +66,11 @@ namespace Business.Tests.Fakes
             return Task.FromResult(Version);
         }
 
+        public Task<GitFlowFiles?> ReadFlowAtAsync(int flowId, string? commitSha, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct)
         {
             throw new NotImplementedException();

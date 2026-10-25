@@ -103,8 +103,13 @@ that also keeps the script it executed, since no commit holds it.
 
 **Settings › Repository** shows the folder, with Open folder, and the name and email commits are
 made as; left empty, they come from the computer's git configuration. The folder belongs to the
-app: a file changed there by another program is replaced the next time that flow is saved. Putting
-a flow back as it was, branches and a remote such as GitHub are not there yet.
+app: a file changed there by another program is replaced the next time that flow is saved.
+
+**Discard changes**, in **Changes**, puts the flow back as the last commit has it, after asking,
+since what changed since is lost. **Restore this version**, on a commit in **History**, brings the
+flow back to how it was after that commit, as a change not committed yet - commit it, or discard it
+to return. Both take back a rename too, and keep the flow's executions. Branches and a remote such
+as GitHub are not there yet.
 
 ## Being told when a flow fails
 

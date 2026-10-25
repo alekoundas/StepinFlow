@@ -394,8 +394,9 @@ first the round trip has to lose nothing:
 
 Then:
 
-- [ ] **Discard** re-imports a flow from the last commit. **Restore this version** re-imports it
-      from an older one and lands as an uncommitted change, to commit or discard.
+- [x] **Discard** re-imports a flow from the last commit. **Restore this version** re-imports it
+      from an older one and lands as an uncommitted change, to commit or discard. Built 2026-10-25:
+      the flow's file is found in the commit by its `Id`, so a rename since is taken back too.
 - [ ] **Local branches**: create, switch and list, from the branch in the editor header. Needed
       locally because a remote will want them. A switch needs no uncommitted changes. Git reports
       which files differ between the two branches, and only those flows are touched: a changed one

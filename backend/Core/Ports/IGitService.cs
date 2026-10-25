@@ -23,6 +23,9 @@ namespace Core.Ports
         /// <summary>A file's bytes in a commit, or null when it had no such file. A null commit is the last one.</summary>
         byte[]? ReadFile(string folderPath, string? commitSha, string path);
 
+        /// <summary>Every file in a commit, or none when there is no such commit. A null commit is the last one.</summary>
+        List<string> Files(string folderPath, string? commitSha);
+
         /// <summary>Records these paths as they are on disk, and only these. Returns the new commit.</summary>
         GitCommit Commit(string folderPath, IReadOnlyList<string> paths, string message, GitSignature author);
 

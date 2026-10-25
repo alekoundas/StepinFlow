@@ -8,8 +8,9 @@ import { useFlowScript } from "@/features/workflow/hooks/use-flow-parts";
 import { useWorkflowStore, type ScriptView } from "@/features/workflow/store/workflow-store";
 import FlowChangesComponent from "@/features/repository/components/FlowChangesComponent";
 import FlowHistoryComponent from "@/features/repository/components/FlowHistoryComponent";
-import { useFlowRepositoryChanges, useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import { UNCOMMITTED_COLOR } from "@/features/repository/repository-format";
+import { useBringBackFlow, useFlowRepositoryChanges, useRepositoryStatus } from "@/features/repository/hooks/use-repository";
+import { UNCOMMITTED_COLOR, plural } from "@/features/repository/repository-format";
+import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -41,6 +42,19 @@ export function WorkflowScriptComponent({ flowId }: Props) {
   if (changes) committedScript = changes.committedScript ?? "";
 
   const changeCount = status?.flows.find((x) => x.flowId === flowId)?.changeCount ?? 0;
+
+  const { discard } = useBringBackFlow(flowId);
+  const { openConfirm } = useDialogStore();
+
+  const askToDiscard = () =>
+    openConfirm("flow-discard", {
+      headerText: `Discard ${plural(changeCount, "change")}?`,
+      confirmLabel: "Discard changes",
+      confirmIcon: "pi pi-undo",
+      confirmSeverity: "danger",
+      children: <LabelComponent text="The flow goes back to how it was at the last commit, and what changed since is lost." />,
+      onConfirm: () => discard.mutate(),
+    });
 
   const viewTemplate = (option: { value: ScriptView; label: string }) => (
     <span className="flex align-items-center gap-2">
@@ -85,7 +99,29 @@ export function WorkflowScriptComponent({ flowId }: Props) {
             onClick={() => void navigator.clipboard.writeText(script ?? "")}
           />
         )}
+
+        {scriptView === "changes" && changeCount > 0 && (
+          <Button
+            type="button"
+            label="Discard changes"
+            icon="pi pi-undo"
+            size="small"
+            severity="danger"
+            outlined
+            loading={discard.isPending}
+            tooltip="Puts the flow back as it was at the last commit"
+            tooltipOptions={{ position: "bottom" }}
+            onClick={askToDiscard}
+          />
+        )}
       </div>
+
+      {discard.error && (
+        <LabelComponent
+          text={discard.error.message}
+          color="error"
+        />
+      )}
 
       {scriptView === "script" && (
         <>
