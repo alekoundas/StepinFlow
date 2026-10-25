@@ -37,6 +37,9 @@ namespace Transport.Ipc.Handlers.Execution
                     ErrorMessage = x.ErrorMessage,
                     ScreenshotFolderName = x.ScreenshotFolderName,
                     FlowStructureHash = x.FlowStructureHash,
+                    CommitSha = x.CommitSha,
+                    HasUncommittedChanges = x.HasUncommittedChanges,
+                    Script = x.Script,
                     FlowId = x.FlowId,
                 })
                 .FirstOrDefaultAsync(ct);

@@ -7,6 +7,7 @@ import StatusPillComponent, {
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { useExecutionList } from "@/features/execution/hooks/use-execution";
+import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 
 interface Props {
@@ -69,6 +70,19 @@ export default function ExecutionHistoryComponent({
         header="Took"
         align="right"
         body={(execution: ExecutionDto) => duration(execution)}
+      />
+      <Column
+        header="Version"
+        body={(execution: ExecutionDto) =>
+          execution.commitSha || execution.hasUncommittedChanges ? (
+            <ExecutedVersionComponent
+              commitSha={execution.commitSha}
+              hasUncommittedChanges={execution.hasUncommittedChanges}
+            />
+          ) : (
+            "—"
+          )
+        }
       />
       <Column
         header="Screenshots"

@@ -406,6 +406,33 @@ namespace Business.Repository
             }
         }
 
+        public async Task<GitFlowVersion> GetFlowVersionAsync(int flowId, CancellationToken ct)
+        {
+            List<int> flowIds = await WithSubFlowsAsync(flowId, ct);
+
+            // Written now rather than once the saves go quiet, so a save a moment ago counts.
+            await WriteAsync(flowIds, ct);
+
+            List<Flow> flows = await FlowNamesAsync(ct);
+            List<string> flowFileNames = flows
+                .Where(x => flowIds.Contains(x.Id))
+                .Select(x => FileNameHelper.Clean(x.Name, "flow"))
+                .ToList();
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                GitCommit? last = _git.Log(_folderPath, [], 1).FirstOrDefault();
+                bool hasUncommittedChanges = _git.Changes(_folderPath).Any(x => flowFileNames.Any(y => RepositoryPathHelper.BelongsTo(x.Path, y)));
+
+                return new GitFlowVersion { CommitSha = last?.Sha, HasUncommittedChanges = hasUncommittedChanges };
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
         public async Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct)
         {
             Flow? flow = await FlowNameAsync(dto.FlowId, ct);
@@ -569,6 +596,34 @@ namespace Business.Repository
                 name = Environment.UserName;
 
             return new GitSignature { Name = name, Email = email, When = _timeProvider.GetLocalNow() };
+        }
+
+        // The flow and every flow it calls, however deep, since they all execute with it.
+        private async Task<List<int>> WithSubFlowsAsync(int flowId, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            HashSet<int> found = new HashSet<int> { flowId };
+            List<int> callers = [flowId];
+
+            while (callers.Count > 0)
+            {
+                List<int> called = await dbContext.FlowSteps
+                    .AsNoTracking()
+                    .Where(x => x.SubFlowId != null && callers.Contains(x.RootId))
+                    .Select(x => x.SubFlowId!.Value)
+                    .Distinct()
+                    .ToListAsync(ct);
+
+                callers = new List<int>();
+                foreach (int subFlowId in called)
+                {
+                    if (found.Add(subFlowId))
+                        callers.Add(subFlowId);
+                }
+            }
+
+            return found.ToList();
         }
 
         private async Task<List<Flow>> FlowNamesAsync(CancellationToken ct)

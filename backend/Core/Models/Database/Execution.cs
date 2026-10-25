@@ -23,6 +23,15 @@ namespace Core.Models.Database
         /// <summary>Set only when Status is ERRORED: the step that threw, and what it said.</summary>
         public int? ErrorFlowStepId { get; set; }
 
+        /// <summary>The repository's last commit as the execution started. Null when it had none or could not be read.</summary>
+        public string? CommitSha { get; set; }
+
+        /// <summary>Whether the flow, or a sub-flow it calls, had changes not committed yet. Null when the repository could not be read.</summary>
+        public bool? HasUncommittedChanges { get; set; }
+
+        /// <summary>The flow's script as it executed, kept only when the commit cannot say: changes not committed, or no commit.</summary>
+        public string? Script { get; set; }
+
 
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;

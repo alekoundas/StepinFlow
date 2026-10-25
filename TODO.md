@@ -186,6 +186,12 @@ the history.
       Manager on Windows, but the Keychain on macOS and libsecret on Linux are separate code each. It
       also only covers an HTTPS remote: LibGit2Sharp speaks neither SSH nor the Git Credential
       Manager's browser sign-in, so a `git@...` URL is refused rather than half working.
+- [ ] **A run's record of what it executed is not read by anything yet.** Since 2026-10-25 an
+      execution keeps its commit, whether anything was uncommitted, and then its script. The run's
+      explanation still reads the flow as it is now, which after an edit is not what the run
+      executed; it should read `Execution.Script`, or the script at `CommitSha`. The run page shows
+      the commit but cannot show that script. And a run with a sub-flow changed but not committed
+      keeps only the calling flow's script, so the sub-flow's version is marked, not kept.
 
 ## AI
 

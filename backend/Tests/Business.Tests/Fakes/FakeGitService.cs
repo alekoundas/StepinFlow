@@ -62,9 +62,14 @@ namespace Business.Tests.Fakes
             return new GitCommit { Sha = new string('a', 40), Message = message, AuthorName = author.Name, AuthorEmail = author.Email, When = author.When };
         }
 
+        // Every commit made, newest first, whatever the paths: none of them is ever about another flow here.
         public List<GitCommit> Log(string folderPath, IReadOnlyList<string> paths, int max)
         {
-            return [];
+            return Commits
+                .Select(x => new GitCommit { Sha = new string('a', 40), Message = x.Message, AuthorName = x.Author.Name, AuthorEmail = x.Author.Email, When = x.Author.When })
+                .Reverse()
+                .Take(max)
+                .ToList();
         }
 
         public GitCommit? FindCommit(string folderPath, string commitSha)

@@ -73,6 +73,9 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CommitSha")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("TEXT");
 
@@ -96,11 +99,17 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool?>("HasUncommittedChanges")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("HistoryLevel")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ScreenshotFolderName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Script")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")

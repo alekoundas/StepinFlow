@@ -22,6 +22,15 @@ export interface ExecutionDto {
   /** The shape of the flow at the time - a run stops being replayable once this stops matching. */
   flowStructureHash: string;
 
+  /** The repository's last commit as it started. Null when there was none or it could not be read. */
+  commitSha?: string | null;
+
+  /** The flow or a sub-flow it calls had changes not committed yet. Null when unknown. */
+  hasUncommittedChanges?: boolean | null;
+
+  /** Filled only when a single run is opened, and only when the commit cannot say what executed. */
+  script?: string | null;
+
   flowId: number;
 
   executionSteps: ExecutionStepDto[];

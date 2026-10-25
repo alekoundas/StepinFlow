@@ -372,10 +372,11 @@ says how: the folder, the first commit at startup, a flow's files written on eve
 exactly the files picked, and the header, the commit dialog, the Script tab's Changes and History,
 the Flows page and Settings. What is left of it:
 
-- [ ] **An execution records the commit it executed at**, whether the flow had uncommitted changes,
-      and the flow script as text. Git is the version history; what git cannot answer is "what
-      exactly did execution 37 execute". Nullable columns on `Execution`, so the migration leaves
-      every existing row as it is.
+- [x] **An execution records the commit it executed at**, whether the flow had uncommitted changes,
+      and the flow script as text. Built 2026-10-25: three nullable columns on `Execution`
+      (`ExecutionCommit`), so every existing row stays as it was. The script is kept only when the
+      commit cannot say what executed - changes not committed, or no commit - so a flow executed as
+      committed costs no text.
 - [ ] **The Script view marks the lines changed since the last commit**, in the margin, as the
       mockup draws it. Changes already shows the same diff in full.
 - [ ] **Click it through in the app**: the first launch's snapshot holds every flow, the Firestone

@@ -22,6 +22,10 @@ namespace Core.Models.Dtos
 
         public string FlowStructureHash { get; set; } = string.Empty; //The shape of the flow at the time - a run stops being replayable once this stops matching
 
+        public string? CommitSha { get; set; } //The repository's last commit as it started; null when there was none or it could not be read
+        public bool? HasUncommittedChanges { get; set; } //The flow or a sub-flow had changes not committed yet; null when unknown
+        public string? Script { get; set; } //Filled only when a single run is opened, and only when the commit cannot say what executed
+
         public int FlowId { get; set; }
 
         public IEnumerable<ExecutionStepDto> ExecutionSteps { get; set; } = new Collection<ExecutionStepDto>();

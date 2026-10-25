@@ -3,6 +3,7 @@ using Business.FlowScript.Text;
 using Business.Repository;
 using Business.Tests.Fakes;
 using Core.Enums;
+using Core.Models.Business.Git;
 using Core.Models.Database;
 using DataAccess;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -249,6 +250,41 @@ namespace Business.Tests.Repository
             await Service().WriteAsync([1], Ct);
 
             File.Exists(PathOf("Old.sflw")).ShouldBeTrue();
+        }
+
+        // ================================================================
+        // The version an execution starts at
+        // ================================================================
+
+        [Fact]
+        public async Task A_flows_version_is_the_last_commit_and_counts_a_sub_flows_changes()
+        {
+            int checkout = SeedFlow("Checkout");
+            int shop = SeedCaller("Shop", checkout);
+            SeedFlow("Other");
+            await Service().StartAsync(Ct);
+
+            _git.PendingChanges = [new GitFileChange { Path = "Other.sflw", Kind = GitChangeKindEnum.MODIFIED }];
+            GitFlowVersion clean = await Service().GetFlowVersionAsync(shop, Ct);
+
+            _git.PendingChanges = [new GitFileChange { Path = "Checkout.sflw", Kind = GitChangeKindEnum.MODIFIED }];
+            GitFlowVersion dirty = await Service().GetFlowVersionAsync(shop, Ct);
+
+            (clean.CommitSha, clean.HasUncommittedChanges).ShouldBe((new string('a', 40), false));
+            dirty.HasUncommittedChanges.ShouldBeTrue();
+        }
+
+        // Without waiting for the saves to go quiet, so a save a moment before Execute counts.
+        [Fact]
+        public async Task A_flows_files_are_written_before_its_version_is_read()
+        {
+            int flowId = SeedFlow("Login");
+
+            GitFlowVersion version = await Service().GetFlowVersionAsync(flowId, Ct);
+
+            File.Exists(PathOf("Login.sflw")).ShouldBeTrue();
+            version.HasUncommittedChanges.ShouldBeTrue();
+            version.CommitSha.ShouldBeNull();
         }
 
         // ================================================================

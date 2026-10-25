@@ -41,6 +41,8 @@ namespace Transport.Ipc.Handlers.Execution
                     ErrorMessage = x.ErrorMessage,
                     ScreenshotFolderName = x.ScreenshotFolderName,
                     FlowStructureHash = x.FlowStructureHash,
+                    CommitSha = x.CommitSha,
+                    HasUncommittedChanges = x.HasUncommittedChanges,
                     FlowId = x.FlowId,
                 })
                 .ToListAsync(ct);

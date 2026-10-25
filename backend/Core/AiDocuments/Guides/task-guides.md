@@ -95,6 +95,10 @@ message filled in from what changed, and records exactly the ticked files. **His
 tab lists the commits that changed the flow, newest first, each shown against the one before it.
 The Flows page marks a flow with changes not committed yet.
 
+Each run records the commit it executed at, shown in the run's header and in the list of runs, and
+marked "uncommitted" when the flow or a sub-flow it calls had changes not committed yet. A run like
+that also keeps the script it executed, since no commit holds it.
+
 **Settings › Repository** shows the folder, with Open folder, and the name and email commits are
 made as; left empty, they come from the computer's git configuration. The folder belongs to the
 app: a file changed there by another program is replaced the next time that flow is saved. Putting

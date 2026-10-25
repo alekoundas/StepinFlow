@@ -1,3 +1,4 @@
+using Core.Models.Business.Git;
 using Core.Models.Dtos;
 using Core.Models.Dtos.Repository;
 
@@ -43,6 +44,12 @@ namespace Business.Repository
 
         /// <summary>Newest first, the commits that changed this flow's script or its images.</summary>
         Task<List<RepositoryCommitDto>> GetFlowHistoryAsync(int flowId, CancellationToken ct);
+
+        /// <summary>
+        /// The commit a flow is at as it starts executing, and whether it or a sub-flow it calls has
+        /// changes not committed yet. Their files are written first, so a save a moment ago counts.
+        /// </summary>
+        Task<GitFlowVersion> GetFlowVersionAsync(int flowId, CancellationToken ct);
 
         /// <summary>What one commit changed in one flow, or null when either is not there.</summary>
         Task<RepositoryFlowCommitDto?> GetFlowCommitAsync(RepositoryFlowCommitRequestDto dto, CancellationToken ct);

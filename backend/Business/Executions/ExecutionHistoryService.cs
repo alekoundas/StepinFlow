@@ -1,7 +1,10 @@
 ﻿using Core.Catalogs;
 using Business.AppSettings;
+using Business.FlowScript;
+using Business.Repository;
 using Core.Enums;
 using Core.Helpers;
+using Core.Models.Business.Git;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -29,6 +32,8 @@ namespace Business.Executions
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IExecutionCacheService _cache;
         private readonly IAppSettingService _appSettingService;
+        private readonly IGitRepositoryService _gitRepositoryService;
+        private readonly IFlowScriptExporter _exporter;
         private readonly TimeProvider _timeProvider;
         private readonly ILogger<ExecutionHistoryService> _logger;
 
@@ -44,12 +49,16 @@ namespace Business.Executions
             IDbContextFactory<AppDbContext> dbContextFactory,
             IExecutionCacheService cache,
             IAppSettingService appSettingService,
+            IGitRepositoryService gitRepositoryService,
+            IFlowScriptExporter exporter,
             TimeProvider timeProvider,
             ILogger<ExecutionHistoryService> logger)
         {
             _dbContextFactory = dbContextFactory;
             _cache = cache;
             _appSettingService = appSettingService;
+            _gitRepositoryService = gitRepositoryService;
+            _exporter = exporter;
             _timeProvider = timeProvider;
             _logger = logger;
         }
@@ -86,6 +95,8 @@ namespace Business.Executions
                 HistoryLevel = dto.HistoryLevel,
                 FlowStructureHash = FlowStructureHasher.Hash(stepsById.Values),
             };
+
+            await RecordVersionAsync(execution, ct);
 
             dbContext.Executions.Add(execution);
             await dbContext.SaveChangesAsync(ct);
@@ -152,6 +163,35 @@ namespace Business.Executions
             _flowName = string.Empty;
             _runFolder = string.Empty;
             _screenshotsWritten = 0;
+        }
+
+        // Git is the version history; what git cannot answer is kept here. The script goes in only
+        // when the commit alone cannot say what executed. A repository that cannot be read costs the
+        // record, never the execution.
+        private async Task RecordVersionAsync(Execution execution, CancellationToken ct)
+        {
+            try
+            {
+                GitFlowVersion version = await _gitRepositoryService.GetFlowVersionAsync(execution.FlowId, ct);
+                execution.CommitSha = version.CommitSha;
+                execution.HasUncommittedChanges = version.HasUncommittedChanges;
+
+                if (execution.CommitSha != null && execution.HasUncommittedChanges == false)
+                    return;
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                _logger.LogWarning(exception, "Reading the repository for flow {FlowId} failed, so execution starts without its commit.", execution.FlowId);
+            }
+
+            try
+            {
+                execution.Script = await _exporter.RenderAsync(execution.FlowId, ct);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                _logger.LogWarning(exception, "Printing flow {FlowId} failed, so execution starts without its script.", execution.FlowId);
+            }
         }
 
         private async Task WriteExecutionStepsAsync()

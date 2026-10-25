@@ -7,6 +7,7 @@ import StatusPillComponent, {
   type StatusPillSeverity,
 } from "@/shared/components/StatusPillComponent";
 import RunSummaryComponent from "@/features/execution/components/RunSummaryComponent";
+import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
 import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
@@ -75,6 +76,10 @@ export default function RunHeaderComponent({
               text={execution.status}
               severity={statusSeverity(execution.status)}
               pulse={execution.status === ExecutionStatusEnum.RUNNING}
+            />
+            <ExecutedVersionComponent
+              commitSha={execution.commitSha}
+              hasUncommittedChanges={execution.hasUncommittedChanges}
             />
           </>
         ) : null}

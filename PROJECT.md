@@ -466,7 +466,7 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 | `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
 | `FlowStepTemplates` | A step's link to a template, with the step's own accuracy, required flag and order. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
-| `Executions` | One walk of a flow, at one viewport, with one data row. |
+| `Executions` | One walk of a flow, at one viewport, with one data row, and the commit it executed at. |
 | `ExecutionSteps` | Per-step result within an execution. |
 | `AppSettings` | Key/value, defined by `AppSettingCatalog`. |
 | `DiscordBots` | Webhook targets for notifications. |
@@ -480,9 +480,14 @@ leave the tree showing the picture that was saved, and a template saved before t
 gets one the next time a save loads it, even if nothing about it changed. Enums are stored as strings (`HasConversion<string>()`) — which means
 a migration adding one needs a **parseable** `defaultValue`, not `""`.
 
-A schema change is a migration, and existing data is not converted: the database is disposable
-until there is a release. `DataAccess.Tests` fails if an entity changes without one - EF Core 10
-refuses `Migrate()` in that state, so the app would refuse to start as well.
+A schema change is a migration, and the migration carries the existing data over: a column that
+moves takes its values with it, a table that splits moves its rows, and a renamed enum value
+updates the rows that hold it. Since 2026-10-23 the database holds flows built by hand - the
+Firestone flow among them - so it is never treated as disposable, and "recreate the database" is
+never the way past a change. `SharedFlowTemplates` is the example: it moves every picture into
+`FlowTemplates` before dropping the old columns. `DataAccess.Tests` fails if an entity changes
+without a migration - EF Core 10 refuses `Migrate()` in that state, so the app would refuse to start
+as well.
 
 ### Flow identity: `PublicId`
 
@@ -1552,12 +1557,21 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
 - **Templates are PNGs.** A template's name ends in lowercase `.png` (`TEMPLATE_NOT_PNG` otherwise),
   and an import reads only the PNGs beside the script, by their bytes as well as their name, so the
   `.gitignore` above can let back `*.png` alone.
+- **An execution records what it executed.** Git is the version history; what git cannot answer is
+  "what exactly did execution 37 execute". As an execution starts, `ExecutionHistoryService` asks
+  `GitRepositoryService.GetFlowVersionAsync`, which writes the flow and every sub-flow it calls
+  first - so a save a moment before Execute counts - then answers with the last commit and whether
+  any of their files changed since. `Execution` keeps both, and keeps the flow's script as well
+  only when the commit cannot say: changes not committed, or no commit. A repository that cannot be
+  read costs the record, never the execution. Three nullable columns, so older executions simply
+  have none.
 - **What the app shows.** The editor header has the branch, the flow's changes and Commit; the
   commit dialog lists every changed file with this flow's ticked and a message filled in from
   what changed; the Script tab is Script, Changes and History, the last two through CodeMirror's
   merge view with the unchanged lines folded; the Flows page counts each flow's changes; Settings
-  has the folder and who commits. `REPOSITORY_CHANGED` is broadcast after each write and commit,
-  and the app reads it all again.
+  has the folder and who commits; a run's header and the runs list show the commit it executed at,
+  marked when it executed changes not committed yet. `REPOSITORY_CHANGED` is broadcast after each
+  write and commit, and the app reads it all again.
 
 The folder is the app's: a `.sflw` edited in another program is replaced the next time that flow is
 saved (`TODO.md`, Git). Discard, restore and branches read files back, so they wait for 14.2.
@@ -2023,13 +2037,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-866 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+871 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 641 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
+| `Business.Tests` | 646 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
@@ -2145,7 +2159,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 866 backend tests.
+or OpenAI. 871 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
