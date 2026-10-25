@@ -19,6 +19,7 @@ export const AppSettingKeyEnum = {
 
   GIT_AUTHOR_NAME: "GIT_AUTHOR_NAME",
   GIT_AUTHOR_EMAIL: "GIT_AUTHOR_EMAIL",
+  GIT_REMOTE_TOKEN: "GIT_REMOTE_TOKEN",
 } as const;
 
 /** What control a setting needs. The page renders on this rather than branching on the key. */

@@ -117,6 +117,13 @@ namespace Core.Catalogs
             "Email",
             "Written into every commit beside the name.");
 
+        // A plain setting for now (TODO.md, Git): the system's credential store is per system.
+        public static readonly TextAppSettingDefinition GitRemoteToken = new TextAppSettingDefinition(
+            AppSettingKeyEnum.GIT_REMOTE_TOKEN,
+            "Token",
+            "Made on the provider's site, for this repository only, allowed to read and write its contents.",
+            isSecret: true);
+
         public static IReadOnlyList<AppSettingDefinition> All { get; } =
         [
             RecordingHotkeyPause,
@@ -139,6 +146,7 @@ namespace Core.Catalogs
 
             GitAuthorName,
             GitAuthorEmail,
+            GitRemoteToken,
         ];
 
         /// <summary>In the order the Settings page lists them.</summary>

@@ -2,6 +2,7 @@ using System.Text;
 
 using Core.Enums;
 using Core.Models.Business.Git;
+using LibGit2Sharp;
 using Platform.Shared.Git;
 
 namespace Platform.Shared.Tests.Git
@@ -13,6 +14,7 @@ namespace Platform.Shared.Tests.Git
     {
         private readonly string _folder = Path.Combine(Path.GetTempPath(), "stepinflow-git-" + Guid.NewGuid().ToString("N"));
         private readonly GitService _git = new GitService();
+        private readonly List<string> _others = [];
 
         public GitServiceTests()
         {
@@ -21,11 +23,23 @@ namespace Platform.Shared.Tests.Git
 
         public void Dispose()
         {
-            // git marks its objects read only, and Windows will not delete a read only file.
-            foreach (string file in Directory.EnumerateFiles(_folder, "*", SearchOption.AllDirectories))
-                File.SetAttributes(file, FileAttributes.Normal);
+            foreach (string folder in _others.Append(_folder).Where(Directory.Exists))
+            {
+                // git marks its objects read only, and Windows will not delete a read only file.
+                foreach (string file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
+                    File.SetAttributes(file, FileAttributes.Normal);
 
-            Directory.Delete(_folder, recursive: true);
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+
+        // Another folder, gone with this one.
+        private string OtherFolder()
+        {
+            string folder = Path.Combine(Path.GetTempPath(), "stepinflow-git-" + Guid.NewGuid().ToString("N"));
+            _others.Add(folder);
+
+            return folder;
         }
 
         private void Write(string path, string text)
@@ -215,7 +229,7 @@ namespace Platform.Shared.Tests.Git
             Write("a.txt", "one");
             GitCommit first = Commit("First", "a.txt");
 
-            _git.CreateBranch(_folder, "login-fix");
+            _git.CreateBranch(_folder, "login-fix", first.Sha);
 
             _git.Branches(_folder).Select(x => (x.Name, x.Sha, x.IsCurrent)).ShouldBe(
             [
@@ -233,7 +247,7 @@ namespace Platform.Shared.Tests.Git
             Write("a.txt", "one");
             Write("folder/b.txt", "one");
             GitCommit first = Commit("First", "a.txt", "folder/b.txt");
-            _git.CreateBranch(_folder, "feature");
+            _git.CreateBranch(_folder, "feature", first.Sha);
             _git.SwitchBranch(_folder, "feature");
 
             Write("a.txt", "two");
@@ -254,6 +268,65 @@ namespace Platform.Shared.Tests.Git
                 ("c.txt", GitChangeKindEnum.ADDED),
                 ("folder/b.txt", GitChangeKindEnum.DELETED),
             ], ignoreOrder: true);
+        }
+
+        [Fact]
+        public void A_remote_address_is_set_changed_and_removed()
+        {
+            _git.RemoteUrl(_folder).ShouldBeNull();
+
+            _git.SetRemoteUrl(_folder, "https://example.com/you/a.git");
+            _git.SetRemoteUrl(_folder, "https://example.com/you/b.git");
+            _git.RemoteUrl(_folder).ShouldBe("https://example.com/you/b.git");
+
+            _git.SetRemoteUrl(_folder, null);
+            _git.RemoteUrl(_folder).ShouldBeNull();
+        }
+
+        // A bare repository in a folder stands in for the server: libgit2 reaches it the same way,
+        // with no sign-in.
+        [Fact]
+        public void What_one_repository_pushes_another_fetches_and_is_reset_to()
+        {
+            string remote = OtherFolder();
+            Repository.Init(remote, isBare: true);
+
+            Write("a.txt", "one");
+            GitCommit pushed = Commit("Theirs", "a.txt");
+            _git.SetRemoteUrl(_folder, remote);
+            _git.Push(_folder, ["main"], "");
+
+            string other = OtherFolder();
+            _git.EnsureRepositoryFolderExists(other);
+            File.WriteAllText(Path.Combine(other, "b.txt"), "mine");
+            GitSignature author = new GitSignature { Name = "Tester", Email = "tester@example.com", When = new DateTimeOffset(2026, 10, 25, 12, 0, 0, TimeSpan.Zero) };
+            GitCommit snapshot = _git.Commit(other, ["b.txt"], "Mine", author);
+
+            _git.SetRemoteUrl(other, remote);
+            _git.Fetch(other, "");
+
+            GitBranch main = _git.RemoteBranches(other).ShouldHaveSingleItem();
+            (main.Name, main.Sha).ShouldBe(("main", pushed.Sha));
+            _git.CommitsBetween(other, main.Sha, snapshot.Sha).Select(x => x.Message).ShouldBe(["Theirs"]);
+            _git.CommitsBetween(other, snapshot.Sha, main.Sha).Select(x => x.Message).ShouldBe(["Mine"]);
+
+            _git.Reset(other, main.Sha);
+
+            File.ReadAllText(Path.Combine(other, "a.txt")).ShouldBe("one");
+            File.Exists(Path.Combine(other, "b.txt")).ShouldBeFalse();
+            _git.Branches(other).ShouldHaveSingleItem().Sha.ShouldBe(pushed.Sha);
+        }
+
+        // Said in words the person can act on, never as an exception from libgit2.
+        [Fact]
+        public void A_remote_that_cannot_be_reached_says_so()
+        {
+            // file:///, since a bare path that is not there is read as an SSH address.
+            Uri nowhere = new Uri(Path.Combine(OtherFolder(), "nothing-here"));
+            _git.SetRemoteUrl(_folder, nowhere.AbsoluteUri);
+
+            string message = Should.Throw<InvalidOperationException>(() => _git.Fetch(_folder, "")).Message;
+            message.ShouldStartWith("The remote could not be reached: failed to resolve path");
         }
 
         [Theory]

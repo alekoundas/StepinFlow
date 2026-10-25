@@ -2,17 +2,23 @@ using Core.Enums;
 using Core.Models.Business.Git;
 using Core.Ports;
 using LibGit2Sharp;
+using LibGit2Sharp.Handlers;
 
 namespace Platform.Shared.Git
 {
     /// <summary>
     /// The repository through LibGit2Sharp, in process. Each call opens the repository and lets it
     /// go, because a Repository is not safe to share between threads; whoever calls keeps the calls
-    /// one at a time.
+    /// one at a time. The remote is reached over HTTPS only, with a token: LibGit2Sharp speaks
+    /// neither SSH nor the Git Credential Manager's sign-in.
     /// </summary>
     public sealed class GitService : IGitService
     {
         private const string BRANCH = "main";
+        private const string REMOTE = "origin";
+
+        // Any user name with the token as the password: GitHub, GitLab and Azure DevOps all take that.
+        private const string TOKEN_USER = "x-access-token";
 
 
         // ================================================================
@@ -242,11 +248,18 @@ namespace Platform.Shared.Git
             return Reference.IsValidName("refs/heads/" + name);
         }
 
-        public void CreateBranch(string folderPath, string name)
+        public void CreateBranch(string folderPath, string name, string commitSha)
         {
             using Repository repository = new Repository(folderPath);
 
-            repository.CreateBranch(name);
+            repository.CreateBranch(name, commitSha);
+        }
+
+        public void DeleteBranch(string folderPath, string name)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            repository.Branches.Remove(name);
         }
 
         public void SwitchBranch(string folderPath, string name)
@@ -270,6 +283,114 @@ namespace Platform.Shared.Git
             return ChangesOf(treeChanges);
         }
 
+        public List<GitCommit> CommitsBetween(string folderPath, string commitSha, string? exceptCommitSha)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            CommitFilter filter = new CommitFilter
+            {
+                IncludeReachableFrom = commitSha,
+                ExcludeReachableFrom = exceptCommitSha,
+                SortBy = CommitSortStrategies.Topological | CommitSortStrategies.Time,
+            };
+
+            return repository.Commits.QueryBy(filter).Select(ToModel).ToList();
+        }
+
+        public void Reset(string folderPath, string commitSha)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Commit commit = repository.Lookup<Commit>(commitSha)
+                ?? throw new InvalidOperationException($"There is no commit {commitSha}.");
+
+            repository.Reset(ResetMode.Hard, commit);
+        }
+
+        public string? RemoteUrl(string folderPath)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            return repository.Network.Remotes[REMOTE]?.Url;
+        }
+
+        public void SetRemoteUrl(string folderPath, string? url)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Remote? remote = repository.Network.Remotes[REMOTE];
+
+            if (url == null)
+            {
+                if (remote != null)
+                    repository.Network.Remotes.Remove(REMOTE);
+
+                return;
+            }
+
+            if (remote == null)
+                repository.Network.Remotes.Add(REMOTE, url);
+            else
+                repository.Network.Remotes.Update(REMOTE, x => x.Url = url);
+        }
+
+        public void Fetch(string folderPath, string token)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Remote remote = RemoteOf(repository);
+            List<string> refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
+            FetchOptions options = new FetchOptions { CredentialsProvider = CredentialsFor(token), Prune = true };
+
+            OverTheNetwork(() => Commands.Fetch(repository, REMOTE, refSpecs, options, null));
+        }
+
+        public void Push(string folderPath, IReadOnlyList<string> branches, string token)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            Remote remote = RemoteOf(repository);
+            List<Branch> pushed = branches.Select(x => repository.Branches[x]).Where(x => x != null).ToList();
+
+            // A branch the remote refused arrives here rather than as an exception.
+            List<string> refused = new List<string>();
+            PushOptions options = new PushOptions
+            {
+                CredentialsProvider = CredentialsFor(token),
+                OnPushStatusError = x => refused.Add($"{x.Reference}: {x.Message}"),
+            };
+
+            List<string> refSpecs = pushed.Select(x => $"{x.CanonicalName}:{x.CanonicalName}").ToList();
+            OverTheNetwork(() => repository.Network.Push(remote, refSpecs, options));
+
+            if (refused.Count > 0)
+                throw new InvalidOperationException(RemoteErrorOf(string.Join("; ", refused)));
+
+            // So git itself, in the folder, says how far each is ahead or behind.
+            foreach (Branch branch in pushed)
+                repository.Branches.Update(branch, x => x.Remote = REMOTE, x => x.UpstreamBranch = branch.CanonicalName);
+        }
+
+        public List<GitBranch> RemoteBranches(string folderPath)
+        {
+            using Repository repository = new Repository(folderPath);
+
+            string prefix = REMOTE + "/";
+            List<GitBranch> branches = new List<GitBranch>();
+
+            foreach (Branch branch in repository.Branches.Where(x => x.IsRemote && x.Tip != null && x.FriendlyName.StartsWith(prefix, StringComparison.Ordinal)))
+            {
+                // origin/HEAD names the remote's default branch, and is no branch of its own.
+                string name = branch.FriendlyName[prefix.Length..];
+                if (name == "HEAD")
+                    continue;
+
+                branches.Add(new GitBranch { Name = name, Sha = branch.Tip.Sha, When = branch.Tip.Author.When });
+            }
+
+            return branches.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
 
         // ================================================================
         // Private methods
@@ -286,6 +407,53 @@ namespace Platform.Shared.Git
                 else if (entry.TargetType == TreeEntryTargetType.Blob)
                     paths.Add(entry.Path.Replace('\\', '/'));
             }
+        }
+
+        private static Remote RemoteOf(Repository repository)
+        {
+            return repository.Network.Remotes[REMOTE]
+                ?? throw new InvalidOperationException("There is no remote yet. Connect one in Settings, Repository.");
+        }
+
+        // The token is the password. A user name in the address, as Bitbucket's x-token-auth@ wants,
+        // is kept. No token asks nothing, so a public remote still fetches.
+        private static CredentialsHandler? CredentialsFor(string token)
+        {
+            if (token.Length == 0)
+                return null;
+
+            return (_, usernameFromUrl, _) => new UsernamePasswordCredentials
+            {
+                Username = string.IsNullOrEmpty(usernameFromUrl) ? TOKEN_USER : usernameFromUrl,
+                Password = token,
+            };
+        }
+
+        private static void OverTheNetwork(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (LibGit2SharpException exception)
+            {
+                throw new InvalidOperationException(RemoteErrorOf(exception.Message), exception);
+            }
+        }
+
+        // libgit2's words for what went wrong, said so the person knows what to change.
+        private static string RemoteErrorOf(string message)
+        {
+            if (message.Contains("authentication", StringComparison.OrdinalIgnoreCase) || message.Contains("401", StringComparison.Ordinal) || message.Contains("403", StringComparison.Ordinal))
+                return "The remote refused the token. It needs to be allowed to read and write this repository's contents.";
+
+            if (message.Contains("404", StringComparison.Ordinal) || message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                return "There is no repository at that address, or the token cannot see it.";
+
+            if (message.Contains("fast-forward", StringComparison.OrdinalIgnoreCase) || message.Contains("fastforward", StringComparison.OrdinalIgnoreCase))
+                return "The remote has commits this branch does not. Pull first.";
+
+            return $"The remote could not be reached: {message}";
         }
 
         // A rename is the old file gone and the new one added, as a reviewer would read it.

@@ -206,6 +206,10 @@ namespace App
             builder.Services.AddTransient<GetRepositoryBranchesHandler>();
             builder.Services.AddTransient<CreateRepositoryBranchHandler>();
             builder.Services.AddTransient<SwitchRepositoryBranchHandler>();
+            builder.Services.AddTransient<ConnectRepositoryRemoteHandler>();
+            builder.Services.AddTransient<PreviewRepositoryPullHandler>();
+            builder.Services.AddTransient<PullRepositoryHandler>();
+            builder.Services.AddTransient<PushRepositoryHandler>();
             builder.Services.AddTransient<CreateDiscordBotHandler>();
             builder.Services.AddTransient<UpdateDiscordBotHandler>();
             builder.Services.AddTransient<DeleteDiscordBotHandler>();

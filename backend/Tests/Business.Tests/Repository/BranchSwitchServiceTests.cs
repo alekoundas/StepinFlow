@@ -50,13 +50,32 @@ namespace Business.Tests.Repository
                 Directory.Delete(_path, recursive: true);
         }
 
-        private Task<ResultDto<RepositoryBranchSwitchDto>> SwitchAsync(string branch)
+        private BranchSwitchService Service()
         {
             DataService data = TestDataService.For(_database);
             FlowScriptImporter importer = new FlowScriptImporter(new Scanner(), data);
-            BranchSwitchService service = new BranchSwitchService(_database, data, importer, _repository, _engine, new FakeIpcBroadcastService());
 
-            return service.SwitchAsync(branch, Ct);
+            return new BranchSwitchService(_database, data, importer, _repository, _engine, new FakeIpcBroadcastService());
+        }
+
+        private Task<ResultDto<RepositoryBranchSwitchDto>> SwitchAsync(string branch)
+        {
+            return Service().SwitchAsync(branch, Ct);
+        }
+
+        private Task<ResultDto<RepositoryBranchSwitchDto>> PullAsync(string remoteSha)
+        {
+            return Service().PullAsync(remoteSha, Ct);
+        }
+
+        // The remote's branch, as the one here has it to start with.
+        private Dictionary<string, byte[]> RemoteCopyOf(string branch)
+        {
+            Dictionary<string, byte[]> remote = _git.RemoteFiles(branch);
+            foreach ((string path, byte[] bytes) in _git.BranchFiles(branch))
+                remote[path] = bytes;
+
+            return remote;
         }
 
         // A flow with one image search.
@@ -274,7 +293,7 @@ namespace Business.Tests.Repository
         {
             AddFlow("Login");
             await KeepAsBranchAsync("main");
-            _git.CreateBranch(_path, "feature");
+            _git.CreateBranch(_path, "feature", _git.ShaOf("main"));
             _git.PendingChanges = [new GitFileChange { Path = "Login.sflw", Kind = GitChangeKindEnum.MODIFIED }];
 
             ResultDto<RepositoryBranchSwitchDto> switched = await SwitchAsync("feature");
@@ -285,9 +304,91 @@ namespace Business.Tests.Repository
         }
 
         [Fact]
+        public async Task A_pull_brings_the_remotes_flows_and_keeps_what_was_never_pushed_on_a_backup_branch()
+        {
+            int login = AddFlow("Login");
+            int report = AddFlow("Report");
+            await KeepAsBranchAsync("main");
+            string before = _git.ShaOf("main");
+
+            Dictionary<string, byte[]> remote = RemoteCopyOf("main");
+            Remove(remote, "Report");
+            Edit(remote, "Login.sflw", "Find button", "Find the button");
+            _git.Between = (sha, except) => sha == before ? [new GitCommit { Sha = "local", Message = "Never pushed" }] : [];
+
+            ResultDto<RepositoryBranchSwitchDto> pulled = await PullAsync(_git.RemoteShaOf("main"));
+
+            pulled.IsSuccess.ShouldBeTrue(pulled.ErrorMessage);
+            StepNameOf(login).ShouldBe("Find the button");
+            FlowOf(report).IsHidden.ShouldBeTrue();
+            _git.ShaOf("main").ShouldBe(_git.RemoteShaOf("main"));
+
+            string backup = pulled.Data.ShouldNotBeNull().BackupBranch.ShouldNotBeNull();
+            backup.ShouldStartWith("backup/");
+            _git.ShaOf(backup).ShouldBe(before);
+        }
+
+        [Fact]
+        public async Task A_pull_that_does_not_import_puts_the_branch_back_and_keeps_no_backup()
+        {
+            AddFlow("Login");
+            await KeepAsBranchAsync("main");
+            string before = _git.ShaOf("main");
+            byte[] script = _git.Committed["Login.sflw"];
+
+            Dictionary<string, byte[]> remote = RemoteCopyOf("main");
+            remote["Login.sflw"] = Encoding.UTF8.GetBytes("This is not a flow.");
+            _git.Between = (sha, except) => sha == before ? [new GitCommit { Sha = "local", Message = "Never pushed" }] : [];
+
+            ResultDto<RepositoryBranchSwitchDto> pulled = await PullAsync(_git.RemoteShaOf("main"));
+
+            pulled.IsSuccess.ShouldBeFalse();
+            _git.ShaOf("main").ShouldBe(before);
+            _git.Branches(_path).ShouldAllBe(x => !x.Name.StartsWith("backup/", StringComparison.Ordinal));
+            (await File.ReadAllBytesAsync(Path.Combine(_path, "Login.sflw"), Ct)).ShouldBe(script);
+        }
+
+        // What the person agreed to drop was read against the commit the dialog showed.
+        [Fact]
+        public async Task A_pull_is_refused_when_the_remote_has_moved_since_it_was_shown()
+        {
+            AddFlow("Login");
+            await KeepAsBranchAsync("main");
+            string before = _git.ShaOf("main");
+            RemoteCopyOf("main");
+
+            ResultDto<RepositoryBranchSwitchDto> pulled = await PullAsync("an-older-commit");
+
+            pulled.IsSuccess.ShouldBeFalse();
+            pulled.ErrorMessage.ShouldNotBeNull().ShouldContain("moved");
+            _git.ShaOf("main").ShouldBe(before);
+        }
+
+        [Fact]
+        public async Task A_branch_only_the_remote_has_is_made_here_by_switching_to_it()
+        {
+            int login = AddFlow("Login");
+            await KeepAsBranchAsync("main");
+
+            Dictionary<string, byte[]> remote = RemoteCopyOf("main");
+            _git.RemoteFiles("login-fix");
+            foreach ((string path, byte[] bytes) in remote)
+                _git.RemoteFiles("login-fix")[path] = bytes;
+
+            Edit(_git.RemoteFiles("login-fix"), "Login.sflw", "Find button", "Find the button");
+
+            ResultDto<RepositoryBranchSwitchDto> switched = await SwitchAsync("login-fix");
+
+            switched.IsSuccess.ShouldBeTrue(switched.ErrorMessage);
+            _git.Current.ShouldBe("login-fix");
+            _git.ShaOf("login-fix").ShouldBe(_git.RemoteShaOf("login-fix"));
+            StepNameOf(login).ShouldBe("Find the button");
+        }
+
+        [Fact]
         public async Task A_switch_is_refused_while_a_flow_executes()
         {
-            _git.CreateBranch(_path, "feature");
+            _git.CreateBranch(_path, "feature", _git.ShaOf("main"));
             _engine.IsRunning = true;
 
             ResultDto<RepositoryBranchSwitchDto> switched = await SwitchAsync("feature");

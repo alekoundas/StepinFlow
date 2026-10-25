@@ -47,13 +47,39 @@ namespace Core.Ports
         /// <summary>Whether git takes this as a branch's name.</summary>
         bool IsValidBranchName(string name);
 
-        /// <summary>A new branch at the last commit. It is not checked out.</summary>
-        void CreateBranch(string folderPath, string name);
+        /// <summary>A new branch at the commit. It is not checked out.</summary>
+        void CreateBranch(string folderPath, string name, string commitSha);
+
+        void DeleteBranch(string folderPath, string name);
 
         /// <summary>Checks the branch out. Files that differ from the last commit are kept when the branch has them as that commit does.</summary>
         void SwitchBranch(string folderPath, string name);
 
         /// <summary>The files that differ between two commits.</summary>
         List<GitFileChange> Compare(string folderPath, string fromCommitSha, string toCommitSha);
+
+        /// <summary>Newest first, the commits one commit has that another does not. No other is all of its history.</summary>
+        List<GitCommit> CommitsBetween(string folderPath, string commitSha, string? exceptCommitSha);
+
+        /// <summary>Moves the branch checked out to the commit, its files with it.</summary>
+        void Reset(string folderPath, string commitSha);
+
+        /// <summary>The remote's address, or null when there is none.</summary>
+        string? RemoteUrl(string folderPath);
+
+        /// <summary>Sets the remote's address. Null removes the remote, with what was fetched from it.</summary>
+        void SetRemoteUrl(string folderPath, string? url);
+
+        /// <summary>
+        /// The remote's branches as they are now, signed in with the token; one gone from it goes
+        /// here too. Throws, with a message to show, when the remote cannot be reached or refuses.
+        /// </summary>
+        void Fetch(string folderPath, string token);
+
+        /// <summary>Sends each branch to the remote's branch of the same name, which it then follows. Throws as Fetch does.</summary>
+        void Push(string folderPath, IReadOnlyList<string> branches, string token);
+
+        /// <summary>The remote's branches, by name, as last fetched.</summary>
+        List<GitBranch> RemoteBranches(string folderPath);
     }
 }

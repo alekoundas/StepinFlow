@@ -88,6 +88,10 @@ namespace Transport.Ipc
                     "Repository.getBranches" => await Handler<GetRepositoryBranchesHandler>().HandleAsync(ct),
                     "Repository.createBranch" => await Handler<CreateRepositoryBranchHandler>().HandleAsync(Payload<string>(request), ct),
                     "Repository.switchBranch" => await Handler<SwitchRepositoryBranchHandler>().HandleAsync(Payload<string>(request), ct),
+                    "Repository.connect" => await Handler<ConnectRepositoryRemoteHandler>().HandleAsync(Payload<RepositoryConnectRequestDto>(request), ct),
+                    "Repository.previewPull" => await Handler<PreviewRepositoryPullHandler>().HandleAsync(ct),
+                    "Repository.pull" => await Handler<PullRepositoryHandler>().HandleAsync(Payload<string>(request), ct),
+                    "Repository.push" => await Handler<PushRepositoryHandler>().HandleAsync(ct),
 
                     // DiscordBot
                     "DiscordBot.create" => await Handler<CreateDiscordBotHandler>().HandleAsync(Payload<DiscordBotDto>(request), ct),

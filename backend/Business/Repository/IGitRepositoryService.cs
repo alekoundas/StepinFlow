@@ -77,5 +77,28 @@ namespace Business.Repository
         /// while anything is not committed.
         /// </summary>
         Task<ResultDto<GitBranchSwitch>> SwitchBranchAsync(string branch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct);
+
+        /// <summary>
+        /// Sets the remote, HTTPS only, and saves a token when one is given. An empty remote is
+        /// sent every branch; one with history comes back with what pulling the branch checked
+        /// out would do, for the person to agree to. An address that does not answer is not kept.
+        /// </summary>
+        Task<ResultDto<RepositoryConnectDto>> ConnectAsync(RepositoryConnectRequestDto dto, CancellationToken ct);
+
+        /// <summary>Fetches, and says what pulling the branch checked out would bring and drop.</summary>
+        Task<ResultDto<RepositoryPullDto>> PreviewPullAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Moves the branch checked out to the remote's commit, as SwitchBranchAsync moves it to
+        /// another branch: commits never pushed are kept on a backup branch first, and go when the
+        /// pull does not happen. Refused when the remote has moved since the preview.
+        /// </summary>
+        Task<ResultDto<GitBranchSwitch>> PullAsync(string remoteSha, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct);
+
+        /// <summary>
+        /// Sends the branch checked out to the remote's branch of the same name. Refused when the
+        /// remote has commits the branch does not, which a pull brings.
+        /// </summary>
+        Task<ResultDto<RepositoryPushDto>> PushAsync(CancellationToken ct);
     }
 }

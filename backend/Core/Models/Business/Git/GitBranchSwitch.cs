@@ -11,5 +11,8 @@ namespace Core.Models.Business.Git
 
         /// <summary>The Id of each flow the branch does not have.</summary>
         public List<Guid> GoneFlowIds { get; set; } = [];
+
+        /// <summary>Where a pull kept the commits it dropped, when it dropped any.</summary>
+        public string? BackupBranch { get; set; }
     }
 }

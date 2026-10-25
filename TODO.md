@@ -193,7 +193,15 @@ the history.
 
 - [ ] **A branch cannot be renamed or deleted yet.** Only made, listed and switched to (phase
       14.2). Deleting one is safe for the database - no flow is hidden by a branch that is not
-      checked out - but wants a confirmation naming the commits only it holds.
+      checked out - but wants a confirmation naming the commits only it holds. Each pull that drops
+      commits adds a `backup/` branch, so these pile up until they can be deleted.
+- [ ] **A push or a pull holds the backend's request pipe while it waits on the network.** Requests
+      are answered one at a time on one pipe, so every other request waits for the fetch or the
+      push - a second or two, but up to libgit2's timeout for a remote that does not answer.
+      Starting it and reporting by broadcast, as the recording's draft does, would free the pipe.
+- [ ] **On macOS and Linux the system's proxy is not used.** libgit2 reaches HTTPS through WinHTTP
+      on Windows, which follows the system's proxy, but through its own TLS elsewhere, which
+      follows only git's `http.proxy` setting and the proxy environment variables.
 - [ ] **A `Sub Flow` step can still point at a hidden flow.** A switch imports a caller again, and
       the import links only to flows on the branch; but a caller the switch does not touch keeps its
       link. That happens only when a branch was committed with the caller and without the sub-flow

@@ -14,6 +14,8 @@ import { MONO } from "@/features/repository/repository-format";
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
 interface Props {
+  /** "Switching to", "Pulling": what the title says is happening to the branch. */
+  action: string;
   branch: string;
 
   /** Why the switch did not happen. Nothing changed then, and the dialog can be closed. */
@@ -22,10 +24,10 @@ interface Props {
 }
 
 /**
- * Holds the app while a branch switch brings the flows across, flow by flow. Mounted for one
- * switch, so it starts with nothing to show.
+ * Holds the app while a branch switch or a pull brings the flows across, flow by flow. Mounted for
+ * one of them, so it starts with nothing to show.
  */
-export default function BranchSwitchDialogComponent({ branch, error, onClose }: Props) {
+export default function BranchSwitchDialogComponent({ action, branch, error, onClose }: Props) {
   const [progress, setProgress] = useState<RepositoryBranchSwitchDto | null>(null);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function BranchSwitchDialogComponent({ branch, error, onClose }: 
             />
           )}
           <span>
-            Switching to <span style={{ fontFamily: MONO }}>{branch}</span>
+            {action} <span style={{ fontFamily: MONO }}>{branch}</span>
           </span>
         </span>
       }

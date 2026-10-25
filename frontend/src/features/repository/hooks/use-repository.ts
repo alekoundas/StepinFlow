@@ -7,7 +7,7 @@ import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
-import type { RepositoryCommitRequestDto } from "@/shared/models/repository-dtos";
+import type { RepositoryCommitRequestDto, RepositoryConnectRequestDto } from "@/shared/models/repository-dtos";
 
 export const repositoryKeys = {
   all: ["repository"] as const,
@@ -129,8 +129,43 @@ export function useSwitchBranch(flowId: number | undefined) {
   });
 }
 
+/** A remote with history comes back with what a pull would do, for the person to agree to. */
+export function useConnectRemote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (dto: RepositoryConnectRequestDto) => backendApiService.Repository.connect(dto),
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+/** Asks the network, so it is a mutation: it runs when Pull is pressed, never on its own. */
+export function usePreviewPull() {
+  return useMutation({
+    mutationFn: () => backendApiService.Repository.previewPull(),
+  });
+}
+
+export function usePull() {
+  const reload = useReloadImported();
+
+  return useMutation({
+    mutationFn: (remoteSha: string) => backendApiService.Repository.pull(remoteSha),
+    onSuccess: reload,
+  });
+}
+
+export function usePush() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => backendApiService.Repository.push(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: repositoryKeys.all }),
+  });
+}
+
 /**
- * After flows are imported over themselves - a discard, a restore, a branch switch - every step,
+ * After flows are imported over themselves - a discard, a restore, a switch, a pull - every step,
  * area and template they show is a new row: everything is read again, and the tree starts over with
  * nothing selected or copied.
  */

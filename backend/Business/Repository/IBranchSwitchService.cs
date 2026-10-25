@@ -11,5 +11,11 @@ namespace Business.Repository
         /// flow is executing. REPOSITORY_BRANCH_SWITCH says how far it is.
         /// </summary>
         Task<ResultDto<RepositoryBranchSwitchDto>> SwitchAsync(string branch, CancellationToken ct);
+
+        /// <summary>
+        /// Moves the branch checked out to the remote's commit, and every flow with it, as a switch
+        /// does. What was never pushed is kept on a backup branch, which the result names.
+        /// </summary>
+        Task<ResultDto<RepositoryBranchSwitchDto>> PullAsync(string remoteSha, CancellationToken ct);
     }
 }

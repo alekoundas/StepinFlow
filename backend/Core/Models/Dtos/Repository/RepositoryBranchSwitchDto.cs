@@ -10,5 +10,8 @@ namespace Core.Models.Dtos.Repository
 
         /// <summary>The flows hidden first, then the ones imported, sub-flows before their callers.</summary>
         public List<RepositoryBranchSwitchFlowDto> Flows { get; set; } = [];
+
+        /// <summary>Where a pull kept the commits it dropped, when it dropped any.</summary>
+        public string? BackupBranch { get; set; }
     }
 }

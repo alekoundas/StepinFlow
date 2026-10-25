@@ -23,6 +23,16 @@ export interface RepositoryStatusDto {
   /** What the user's git config says, shown where the Settings fields are left empty. */
   configuredAuthorName: string;
   configuredAuthorEmail: string;
+
+  /** Null when there is no remote. */
+  remoteUrl: string | null;
+
+  /** Whether the remote had the branch when it was last fetched. */
+  isBranchOnRemote: boolean;
+
+  /** Commits on the branch the remote does not have, and the other way round, as of the last fetch. */
+  aheadCount: number;
+  behindCount: number;
 }
 
 /** A file not committed yet, as the commit dialog lists it. */
@@ -93,6 +103,9 @@ export interface RepositoryBranchDto {
   name: string;
   isCurrent: boolean;
   lastCommitAt: string;
+
+  /** Only on the remote: switching to it makes it here. */
+  isRemoteOnly: boolean;
 }
 
 /** One flow a branch switch touches. */
@@ -113,4 +126,42 @@ export interface RepositoryBranchSwitchDto {
 
   /** The flows hidden first, then the ones imported, sub-flows before their callers. */
   flows: RepositoryBranchSwitchFlowDto[];
+
+  /** Where a pull kept the commits it dropped, when it dropped any. */
+  backupBranch: string | null;
+}
+
+export interface RepositoryConnectRequestDto {
+  url: string;
+
+  /** Empty keeps the token already saved. */
+  token: string;
+}
+
+/** What a pull of the branch checked out would do, for the person to agree to first. */
+export interface RepositoryPullDto {
+  branch: string;
+
+  /** The remote's commit the branch would be moved to. */
+  remoteSha: string;
+
+  /** Newest first, the commits the remote has that the branch does not. */
+  incoming: RepositoryCommitDto[];
+
+  /** Newest first, the commits never pushed. They leave the branch and are kept on a backup branch. */
+  dropped: RepositoryCommitDto[];
+}
+
+/** What connecting found: an empty remote it sent the branches to, or one with history. */
+export interface RepositoryConnectDto {
+  remoteUrl: string;
+  pushedBranches: string[];
+
+  /** What pulling the branch checked out would do, when the remote has that branch. */
+  pull: RepositoryPullDto | null;
+}
+
+export interface RepositoryPushDto {
+  branch: string;
+  commitCount: number;
 }

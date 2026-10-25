@@ -116,8 +116,18 @@ another branch switches to it once everything is committed or discarded and no f
 only the flows that differ between the two are touched, each brought to that branch's version, and a
 flow the branch does not have is hidden, never deleted - its executions are kept, and it comes back
 on any branch that has it. A switch is all or nothing: a flow that cannot be imported leaves every
-flow as it was. Two branches can each have a flow of the same name. A remote such as GitHub is not
-there yet.
+flow as it was. Two branches can each have a flow of the same name.
+
+**Settings › Repository › Remote** connects a server such as GitHub, GitLab or Azure DevOps: its
+HTTPS address and a token made on the provider's site, allowed to read and write the repository's
+contents. **Connect** sends an empty remote this history; a remote with history is pulled instead,
+after saying what arrives and what goes. **Push** sends the branch checked out to the remote's
+branch of the same name; it is refused while the remote has commits the branch does not - pull
+first. **Pull** takes the remote's version and replaces what is here: it shows the commits that
+arrive and the ones never pushed that would go, keeps those on a branch named `backup/` and the
+date and time, then brings every flow across as a branch switch does. Branches only the remote has
+are in the branch menu. There is no merging: when this computer and the remote both changed a
+branch, a pull keeps the remote's version, and what was here is on the backup branch.
 
 ## Being told when a flow fails
 

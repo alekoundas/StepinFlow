@@ -90,5 +90,25 @@ namespace Business.Tests.Fakes
         {
             throw new NotImplementedException();
         }
+
+        public Task<ResultDto<RepositoryConnectDto>> ConnectAsync(RepositoryConnectRequestDto dto, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ResultDto<RepositoryPullDto>> PreviewPullAsync(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ResultDto<GitBranchSwitch>> PullAsync(string remoteSha, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ResultDto<RepositoryPushDto>> PushAsync(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

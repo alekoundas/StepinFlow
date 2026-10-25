@@ -6,17 +6,23 @@ namespace Business.Tests.Fakes
 {
     /// <summary>
     /// A repository that is only a folder. What changed is every file in it, unless a test says
-    /// otherwise, and a commit is remembered rather than made. Each branch is the files of its last
-    /// commit, its name standing for that commit, and checking one out writes them to the folder.
+    /// otherwise, and a commit is remembered rather than made. A commit here is the files it holds;
+    /// each branch, here and on the remote, points at one, and checking one out writes its files to
+    /// the folder. Which commits one has that another does not is whatever a test says.
     /// </summary>
     public sealed class FakeGitService : IGitService
     {
         private const string MAIN = "main";
 
-        private readonly Dictionary<string, Dictionary<string, byte[]>> _branches = new Dictionary<string, Dictionary<string, byte[]>>
+        private readonly Dictionary<string, Dictionary<string, byte[]>> _commits = new Dictionary<string, Dictionary<string, byte[]>>();
+        private readonly Dictionary<string, string> _branches = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _remoteBranches = new Dictionary<string, string>();
+        private int _nextCommit;
+
+        public FakeGitService()
         {
-            [MAIN] = new Dictionary<string, byte[]>(),
-        };
+            _branches[MAIN] = NewCommit([]);
+        }
 
         public bool MakesRepository { get; set; } = true;
 
@@ -28,7 +34,7 @@ namespace Business.Tests.Fakes
         /// <summary>The last commit's files on the branch checked out, by path.</summary>
         public Dictionary<string, byte[]> Committed
         {
-            get { return _branches[Current]; }
+            get { return _commits[_branches[Current]]; }
         }
 
         public GitSignature? Configured { get; set; }
@@ -38,16 +44,50 @@ namespace Business.Tests.Fakes
         /// <summary>Every branch checked out, in order.</summary>
         public List<string> Switches { get; } = [];
 
+        public string? Remote { get; set; }
+
+        /// <summary>Thrown by a fetch, as the network would.</summary>
+        public string? FetchError { get; set; }
+
+        public List<string> Tokens { get; } = [];
+
+        public List<string> Pushed { get; } = [];
+
+        /// <summary>The commits one commit has that another does not.</summary>
+        public Func<string, string?, List<GitCommit>> Between { get; set; } = (_, _) => [];
+
         /// <summary>A branch's files, the branch made when there is none.</summary>
         public Dictionary<string, byte[]> BranchFiles(string name)
         {
-            if (!_branches.TryGetValue(name, out Dictionary<string, byte[]>? files))
+            if (!_branches.TryGetValue(name, out string? sha))
             {
-                files = new Dictionary<string, byte[]>();
-                _branches[name] = files;
+                sha = NewCommit([]);
+                _branches[name] = sha;
             }
 
-            return files;
+            return _commits[sha];
+        }
+
+        /// <summary>The same, for a branch on the remote.</summary>
+        public Dictionary<string, byte[]> RemoteFiles(string name)
+        {
+            if (!_remoteBranches.TryGetValue(name, out string? sha))
+            {
+                sha = NewCommit([]);
+                _remoteBranches[name] = sha;
+            }
+
+            return _commits[sha];
+        }
+
+        public string ShaOf(string branch)
+        {
+            return _branches[branch];
+        }
+
+        public string RemoteShaOf(string branch)
+        {
+            return _remoteBranches[branch];
         }
 
         public bool EnsureRepositoryFolderExists(string folderPath)
@@ -122,9 +162,9 @@ namespace Business.Tests.Fakes
 
         public List<GitBranch> Branches(string folderPath)
         {
-            return _branches.Keys
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .Select(x => new GitBranch { Name = x, Sha = x, IsCurrent = x == Current })
+            return _branches
+                .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(x => new GitBranch { Name = x.Key, Sha = x.Value, IsCurrent = x.Key == Current })
                 .ToList();
         }
 
@@ -133,25 +173,19 @@ namespace Business.Tests.Fakes
             return !name.Contains(' ', StringComparison.Ordinal);
         }
 
-        public void CreateBranch(string folderPath, string name)
+        public void CreateBranch(string folderPath, string name, string commitSha)
         {
-            _branches[name] = new Dictionary<string, byte[]>(Committed);
+            _branches[name] = commitSha;
         }
 
-        // As a checkout would: what the branch lacks removed, the rest written.
+        public void DeleteBranch(string folderPath, string name)
+        {
+            _branches.Remove(name);
+        }
+
         public void SwitchBranch(string folderPath, string name)
         {
-            Dictionary<string, byte[]> files = _branches[name];
-
-            foreach (string path in Committed.Keys.Except(files.Keys))
-                File.Delete(Path.Combine(folderPath, path));
-
-            foreach ((string path, byte[] bytes) in files)
-            {
-                string fullPath = Path.Combine(folderPath, path);
-                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-                File.WriteAllBytes(fullPath, bytes);
-            }
+            WriteFolder(folderPath, _branches[name]);
 
             Current = name;
             Switches.Add(name);
@@ -179,13 +213,87 @@ namespace Business.Tests.Fakes
             return changes;
         }
 
-        // A branch's name is its commit; any other commit is the last one on the branch checked out.
+        public List<GitCommit> CommitsBetween(string folderPath, string commitSha, string? exceptCommitSha)
+        {
+            return Between(commitSha, exceptCommitSha);
+        }
+
+        public void Reset(string folderPath, string commitSha)
+        {
+            WriteFolder(folderPath, commitSha);
+
+            _branches[Current] = commitSha;
+        }
+
+        public string? RemoteUrl(string folderPath)
+        {
+            return Remote;
+        }
+
+        public void SetRemoteUrl(string folderPath, string? url)
+        {
+            Remote = url;
+        }
+
+        public void Fetch(string folderPath, string token)
+        {
+            Tokens.Add(token);
+
+            if (FetchError != null)
+                throw new InvalidOperationException(FetchError);
+        }
+
+        public void Push(string folderPath, IReadOnlyList<string> branches, string token)
+        {
+            Tokens.Add(token);
+
+            foreach (string branch in branches)
+            {
+                _remoteBranches[branch] = _branches[branch];
+                Pushed.Add(branch);
+            }
+        }
+
+        public List<GitBranch> RemoteBranches(string folderPath)
+        {
+            return _remoteBranches
+                .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(x => new GitBranch { Name = x.Key, Sha = x.Value })
+                .ToList();
+        }
+
+        private string NewCommit(Dictionary<string, byte[]> files)
+        {
+            _nextCommit++;
+            string sha = "commit-" + _nextCommit;
+            _commits[sha] = files;
+
+            return sha;
+        }
+
+        // Any commit not known here is the last one on the branch checked out.
         private Dictionary<string, byte[]> FilesAt(string? commitSha)
         {
-            if (commitSha != null && _branches.TryGetValue(commitSha, out Dictionary<string, byte[]>? files))
+            if (commitSha != null && _commits.TryGetValue(commitSha, out Dictionary<string, byte[]>? files))
                 return files;
 
             return Committed;
+        }
+
+        // As a checkout would: what the commit lacks removed, the rest written.
+        private void WriteFolder(string folderPath, string commitSha)
+        {
+            Dictionary<string, byte[]> files = _commits[commitSha];
+
+            foreach (string path in Committed.Keys.Except(files.Keys))
+                File.Delete(Path.Combine(folderPath, path));
+
+            foreach ((string path, byte[] bytes) in files)
+            {
+                string fullPath = Path.Combine(folderPath, path);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+                File.WriteAllBytes(fullPath, bytes);
+            }
         }
     }
 }

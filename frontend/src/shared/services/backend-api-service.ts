@@ -39,6 +39,10 @@ import type { FlowScriptExportFolderDto, FlowScriptExportResultDto } from "@/sha
 import type {
   RepositoryBranchDto,
   RepositoryBranchSwitchDto,
+  RepositoryConnectDto,
+  RepositoryConnectRequestDto,
+  RepositoryPullDto,
+  RepositoryPushDto,
   RepositoryCommitDto,
   RepositoryCommitRequestDto,
   RepositoryFileChangeDto,
@@ -141,6 +145,13 @@ export const backendApiService = {
     createBranch: (name: string) => call<RepositoryBranchDto>("Repository.createBranch", name),
     // Every flow brought to the branch's version; REPOSITORY_BRANCH_SWITCH says how far.
     switchBranch: (name: string) => call<RepositoryBranchSwitchDto>("Repository.switchBranch", name),
+    // An empty remote is sent every branch; one with history says what a pull would do.
+    connect: (dto: RepositoryConnectRequestDto) => call<RepositoryConnectDto>("Repository.connect", dto),
+    // Fetches, and says what pulling the branch checked out would bring and drop.
+    previewPull: () => call<RepositoryPullDto>("Repository.previewPull"),
+    // The branch moved to that remote commit, every flow with it; REPOSITORY_BRANCH_SWITCH says how far.
+    pull: (remoteSha: string) => call<RepositoryBranchSwitchDto>("Repository.pull", remoteSha),
+    push: () => call<RepositoryPushDto>("Repository.push"),
   },
 
   DiscordBot: {

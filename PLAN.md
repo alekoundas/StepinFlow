@@ -36,7 +36,7 @@ Everything here was finished by 2026-10-09.
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** Git - 14.1 and 14.2 built, 14.3 the remote next - brought forward on 2026-10-24. Then the recording update - phase 7
+**Next:** Git - 14.1 to 14.3 built, 14.4 next - brought forward on 2026-10-24. Then the recording update - phase 7
 for automation flows, with phase 6's detection model inside it. Settled 2026-10-08: a recording and a description become a flow with no
 question per action, and QA tests come after. The machine-only test bucket and the two engine seams
 layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
@@ -416,14 +416,20 @@ Then:
 
 **14.3 The remote.**
 
-- [ ] **Settings, Repository**: the remote URL, HTTPS only; a token, in one plain input (`TODO.md`,
-      Git); and the branch.
-- [ ] **Connecting**: an empty remote gets the local history pushed. A remote with history replaces
+- [x] **Settings, Repository**: the remote URL, HTTPS only; a token, in one plain input (`TODO.md`,
+      Git); and the branch. Built 2026-10-25. The branch is no field: since 14.2 there are local
+      branches, so Push and Pull act on the one checked out, against the remote's branch of the
+      same name, and a branch only the remote has is in the branch menu, made here by switching
+      to it.
+- [x] **Connecting**: an empty remote gets the local history pushed. A remote with history replaces
       the local one, which is kept on a backup branch first, and the database follows as it does for
-      a switch.
-- [ ] **Push, and a pull that overwrites**: a fetch and a reset to the remote branch, so commits
+      a switch. Built 2026-10-25: every local branch is pushed to an empty remote; with history,
+      the person is shown what the pull would bring and drop before anything is replaced.
+- [x] **Push, and a pull that overwrites**: a fetch and a reset to the remote branch, so commits
       that were never pushed go too. Before it, the old state is kept on `backup/<date time>`, and a
-      dialog names what will be dropped. Merging is in `TODO.md`, Git.
+      dialog names what will be dropped. Merging is in `TODO.md`, Git. Built 2026-10-25: the backup
+      is made only when something is dropped, a pull is refused while anything is not committed, as
+      a switch is, and a push while the remote has commits the branch does not.
 - [ ] If SSH or the browser sign-in becomes necessary, push and pull alone move to the `git`
       program, behind the same port.
 - [ ] Later: pointing the app at an existing repository, flows in a folder of it, and folders in the

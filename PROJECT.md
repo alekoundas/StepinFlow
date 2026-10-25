@@ -1518,8 +1518,8 @@ to work out why it went red.
 
 **Partly built** - phases 8 and 12 to 14. What exists: the script and its transactional import
 and export (§7, the editor's Export and the Import page), `PublicId`, the main area, and the
-flows kept in a local repository with its discard, restore and branches (phases 14.1 and 14.2,
-below).
+flows kept in a local repository with its discard, restore, branches and remote (phases 14.1 to
+14.3, below).
 
 ### Every flow is kept in a repository of the app's own
 
@@ -1610,6 +1610,21 @@ writer leaves it out of the folder. A branch that has it imports it back as the 
 identity is the `PublicId`: the same flow on two branches is one row, and its executions
 accumulate. `REPOSITORY_BRANCH_SWITCH` carries the progress to a dialog that holds the app until the
 switch is done, and a flow open in the editor that the branch hides is left for its list.
+
+**The remote.** Settings, Repository has its address, HTTPS only, and a token - a secret setting,
+`GIT_REMOTE_TOKEN`, never sent back to the page. The address lives where git keeps it, as `origin`
+in the repository's config; an SSH address, a password in the address, or one that does not answer
+is refused, and the address it replaced is kept. The token is the password, under any user name or
+the one the address names. **Connect** fetches: an empty remote is sent every local branch, and one
+with history comes back with what pulling the branch checked out would do, which the person agrees
+to first. **Push** sends the branch checked out to the remote's branch of the same name, and is
+refused while the remote has commits it does not. **Pull** fetches and shows the commits that arrive
+and the ones never pushed that would go; agreed, `GitRepositoryService.PullAsync` keeps those on
+`backup/<date time>`, moves the branch to the remote's commit - refused when the remote has moved
+since the dialog - and the database follows as for a switch, the same `BranchSwitchService` and the
+same dialog, with the branch and its backup put back when an import fails. A branch only the remote
+has is in the branch menu, and switching to it makes it here. A fetch and a push go outside the
+service's lock, since the network can take seconds and they touch only what the remote has.
 
 ### The file is `.sflw`
 
@@ -2072,18 +2087,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-909 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+926 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 676 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore and branch switches |
+| `Business.Tests` | 690 | the walker, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 11 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed |
 | `Platform.Windows.Tests` | 9 | grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
-| `Platform.Shared.Tests` | 17 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared |
+| `Platform.Shared.Tests` | 20 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2194,7 +2209,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 909 backend tests.
+or OpenAI. 926 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

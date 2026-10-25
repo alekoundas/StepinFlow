@@ -17,15 +17,19 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Business.Repository
 {
     /// <summary>
-    /// Switching branch: the folder checks the branch out, and the database follows. Only the flows
-    /// whose files differ are touched: one the branch changed or added is imported by its Id, and one
-    /// it does not have is hidden, never deleted, since deleting a flow deletes its executions.
+    /// Switching branch, or pulling: the folder moves to another commit, and the database follows.
+    /// Only the flows whose files differ are touched: one the commit changed or added is imported by
+    /// its Id, and one it does not have is hidden, never deleted, since deleting a flow deletes its
+    /// executions.
     ///
     /// One transaction, so a flow that does not import leaves every flow, and the folder, as they
     /// were. Apart from <see cref="GitRepositoryService"/> for the reason <see cref="FlowRestoreService"/> is.
     /// </summary>
     public sealed class BranchSwitchService : IBranchSwitchService
     {
+        // The executing flow reads its steps from the rows this replaces.
+        private const string EXECUTING = "A flow is executing. Stop it, or let it finish, then try again.";
+
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly DataService _dataService;
         private readonly IFlowScriptImporter _importer;
@@ -56,20 +60,26 @@ namespace Business.Repository
 
         public async Task<ResultDto<RepositoryBranchSwitchDto>> SwitchAsync(string branch, CancellationToken ct)
         {
-            // The executing flow reads its steps from the rows a switch replaces.
             if (_executionEngine.IsRunning)
-                return ResultDto<RepositoryBranchSwitchDto>.Failure("A flow is executing. Stop it, or let it finish, then switch.");
+                return ResultDto<RepositoryBranchSwitchDto>.Failure(EXECUTING);
 
             RepositoryBranchSwitchDto progress = new RepositoryBranchSwitchDto { Branch = branch };
 
             ResultDto<GitBranchSwitch> switched = await _gitRepositoryService.SwitchBranchAsync(branch, (branchSwitch, token) => ApplyAsync(branchSwitch, progress, token), ct);
-            if (!switched.IsSuccess)
-                return ResultDto<RepositoryBranchSwitchDto>.Failure(switched.ErrorMessage ?? "The branch could not be switched to.");
 
-            RepositoryChangedDto changed = new RepositoryChangedDto { FlowIds = progress.Flows.Where(x => x.FlowId != null).Select(x => x.FlowId!.Value).ToList() };
-            await _broadcast.SendAsync(BroadcastTypeEnum.REPOSITORY_CHANGED, changed);
+            return await DoneAsync(switched, progress);
+        }
 
-            return ResultDto<RepositoryBranchSwitchDto>.Success(progress);
+        public async Task<ResultDto<RepositoryBranchSwitchDto>> PullAsync(string remoteSha, CancellationToken ct)
+        {
+            if (_executionEngine.IsRunning)
+                return ResultDto<RepositoryBranchSwitchDto>.Failure(EXECUTING);
+
+            RepositoryBranchSwitchDto progress = new RepositoryBranchSwitchDto();
+
+            ResultDto<GitBranchSwitch> pulled = await _gitRepositoryService.PullAsync(remoteSha, (branchSwitch, token) => ApplyAsync(branchSwitch, progress, token), ct);
+
+            return await DoneAsync(pulled, progress);
         }
 
 
@@ -77,9 +87,25 @@ namespace Business.Repository
         // Private methods
         // ================================================================
 
-        // Called with the branch checked out and the folder held.
+        private async Task<ResultDto<RepositoryBranchSwitchDto>> DoneAsync(ResultDto<GitBranchSwitch> moved, RepositoryBranchSwitchDto progress)
+        {
+            if (!moved.IsSuccess || moved.Data == null)
+                return ResultDto<RepositoryBranchSwitchDto>.Failure(moved.ErrorMessage ?? "The flows could not be brought across.");
+
+            progress.Branch = moved.Data.To;
+            progress.BackupBranch = moved.Data.BackupBranch;
+
+            RepositoryChangedDto changed = new RepositoryChangedDto { FlowIds = progress.Flows.Where(x => x.FlowId != null).Select(x => x.FlowId!.Value).ToList() };
+            await _broadcast.SendAsync(BroadcastTypeEnum.REPOSITORY_CHANGED, changed);
+
+            return ResultDto<RepositoryBranchSwitchDto>.Success(progress);
+        }
+
+        // Called with the folder moved and held.
         private async Task<ResultDto<bool>> ApplyAsync(GitBranchSwitch branchSwitch, RepositoryBranchSwitchDto progress, CancellationToken ct)
         {
+            progress.Branch = branchSwitch.To;
+
             // Every file read before anything is saved: one that does not read refuses the switch.
             List<FlowScriptSchema> schemas = new List<FlowScriptSchema>();
             foreach (GitFlowFiles flow in branchSwitch.Flows)

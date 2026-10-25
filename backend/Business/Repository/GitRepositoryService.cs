@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Threading.Channels;
 
@@ -30,12 +31,17 @@ namespace Business.Repository
     ///
     /// A flow is written by its export, which writes only the bytes that changed and removes the
     /// images the flow no longer uses. The files of a flow renamed or deleted are removed whole.
+    ///
+    /// A fetch and a push go outside the lock: the network can take seconds, and they touch only
+    /// what the remote has, so the flows go on being written meanwhile.
     /// </summary>
     public sealed class GitRepositoryService : IGitRepositoryService, IDisposable
     {
         private const int HISTORY_LIMIT = 200;
         private const int SHORT_SHA_LENGTH = 7;
         private const string ID_FIELD = "Id:";
+        private const string BACKUP_PREFIX = "backup/";
+        private const string NO_REMOTE = "There is no remote yet. Connect one in Settings, Repository.";
 
         private static readonly TimeSpan QUIET = TimeSpan.FromMilliseconds(500);
 
@@ -233,6 +239,22 @@ namespace Business.Repository
                 List<GitFileChange> changes = _git.Changes(_folderPath);
                 GitCommit? last = _git.Log(_folderPath, [], 1).FirstOrDefault();
                 GitSignature? configured = _git.ConfiguredAuthor(_folderPath);
+                string? remoteUrl = _git.RemoteUrl(_folderPath);
+
+                GitBranch? local = _git.Branches(_folderPath).FirstOrDefault(x => x.IsCurrent);
+                GitBranch? remote = null;
+                if (local != null)
+                    remote = _git.RemoteBranches(_folderPath).FirstOrDefault(x => x.Name == local.Name);
+
+                // As of the last fetch. A branch the remote does not have is all to push.
+                int ahead = 0;
+                int behind = 0;
+                if (local != null && remoteUrl != null)
+                {
+                    ahead = _git.CommitsBetween(_folderPath, local.Sha, remote?.Sha).Count;
+                    if (remote != null)
+                        behind = _git.CommitsBetween(_folderPath, remote.Sha, local.Sha).Count;
+                }
 
                 List<RepositoryFlowStatusDto> changedFlows = new List<RepositoryFlowStatusDto>();
                 foreach (Flow flow in flows)
@@ -254,6 +276,10 @@ namespace Business.Repository
                     Flows = changedFlows,
                     ConfiguredAuthorName = configured?.Name ?? string.Empty,
                     ConfiguredAuthorEmail = configured?.Email ?? string.Empty,
+                    RemoteUrl = remoteUrl,
+                    IsBranchOnRemote = remote != null,
+                    AheadCount = ahead,
+                    BehindCount = behind,
                 };
             }
             finally
@@ -522,9 +548,16 @@ namespace Business.Repository
             await _gate.WaitAsync(ct);
             try
             {
-                return _git.Branches(_folderPath)
+                List<GitBranch> local = _git.Branches(_folderPath);
+                List<RepositoryBranchDto> branches = local
                     .Select(x => new RepositoryBranchDto { Name = x.Name, IsCurrent = x.IsCurrent, LastCommitAt = x.When })
                     .ToList();
+
+                // One only the remote has is made here by switching to it.
+                foreach (GitBranch remote in _git.RemoteBranches(_folderPath).Where(x => !local.Any(y => string.Equals(y.Name, x.Name, StringComparison.OrdinalIgnoreCase))))
+                    branches.Add(new RepositoryBranchDto { Name = remote.Name, LastCommitAt = remote.When, IsRemoteOnly = true });
+
+                return branches;
             }
             finally
             {
@@ -547,7 +580,8 @@ namespace Business.Repository
             try
             {
                 List<GitBranch> branches = _git.Branches(_folderPath);
-                if (branches.Count == 0)
+                GitBranch? current = branches.FirstOrDefault(x => x.IsCurrent);
+                if (current == null)
                     return ResultDto<RepositoryBranchDto>.Failure("A branch starts from a commit, and there is none yet.");
 
                 // Git keeps a branch as a file, and Windows and macOS ignore case.
@@ -556,7 +590,7 @@ namespace Business.Repository
                     return ResultDto<RepositoryBranchDto>.Failure($"There is already a branch called \"{taken.Name}\".");
 
                 // At the last commit, so nothing differs and the flows stay as they are, changes included.
-                _git.CreateBranch(_folderPath, branch);
+                _git.CreateBranch(_folderPath, branch, current.Sha);
                 _git.SwitchBranch(_folderPath, branch);
 
                 created = _git.Branches(_folderPath).First(x => x.Name == branch);
@@ -574,23 +608,25 @@ namespace Business.Repository
 
         public async Task<ResultDto<GitBranchSwitch>> SwitchBranchAsync(string branch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct)
         {
-            // A save not written yet would not show as a change, and the branch would replace it unseen.
-            List<Flow> flows = await FlowNamesAsync(ct);
-            await WriteAsync(flows.Select(x => x.Id).ToList(), ct);
+            await WriteEveryFlowAsync(ct);
 
             await _gate.WaitAsync(ct);
             try
             {
-                int changeCount = _git.Changes(_folderPath).Count;
-                if (changeCount > 0)
-                {
-                    string changes = changeCount == 1 ? "1 change" : $"{changeCount} changes";
-                    return ResultDto<GitBranchSwitch>.Failure($"Commit or discard the {changes} first: a switch brings every flow to the branch's version.");
-                }
+                string? uncommitted = UncommittedRefusal();
+                if (uncommitted != null)
+                    return ResultDto<GitBranchSwitch>.Failure(uncommitted);
 
                 List<GitBranch> branches = _git.Branches(_folderPath);
                 GitBranch? from = branches.FirstOrDefault(x => x.IsCurrent);
                 GitBranch? to = branches.FirstOrDefault(x => x.Name == branch);
+
+                bool isRemoteOnly = false;
+                if (to == null)
+                {
+                    to = _git.RemoteBranches(_folderPath).FirstOrDefault(x => x.Name == branch);
+                    isRemoteOnly = to != null;
+                }
 
                 if (from == null || to == null)
                     return ResultDto<GitBranchSwitch>.Failure($"There is no branch called \"{branch}\".");
@@ -599,30 +635,228 @@ namespace Business.Repository
                 if (to.IsCurrent)
                     return ResultDto<GitBranchSwitch>.Success(branchSwitch);
 
+                // One only the remote has is made here, at the remote's commit, and goes again when
+                // the switch does not happen.
+                if (isRemoteOnly)
+                    _git.CreateBranch(_folderPath, to.Name, to.Sha);
+
                 _git.SwitchBranch(_folderPath, to.Name);
 
-                // Held until the database has the branch too, so no flow is written into the folder halfway.
-                bool isApplied = false;
+                return await ApplyOrUndoAsync(branchSwitch, applyAsync, () => UndoSwitch(from, to, isRemoteOnly), ct);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+
+        // ================================================================
+        // Public methods - the remote
+        // ================================================================
+
+        public async Task<ResultDto<RepositoryConnectDto>> ConnectAsync(RepositoryConnectRequestDto dto, CancellationToken ct)
+        {
+            string url = dto.Url.Trim();
+            string? refused = RefusedAddress(url);
+            if (refused != null)
+                return ResultDto<RepositoryConnectDto>.Failure(refused);
+
+            string newToken = dto.Token.Trim();
+            if (newToken.Length > 0)
+                await _appSettingService.SetAsync(AppSettingKeyEnum.GIT_REMOTE_TOKEN, newToken, ct);
+
+            string token = await TokenAsync(ct);
+            string? previousUrl;
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                previousUrl = _git.RemoteUrl(_folderPath);
+                _git.SetRemoteUrl(_folderPath, url);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+
+            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            if (unreachable != null)
+            {
+                // An address that does not answer is not kept.
+                await _gate.WaitAsync(ct);
                 try
                 {
-                    ResultDto<bool> applied = await applyAsync(branchSwitch, ct);
-                    if (!applied.IsSuccess)
-                        return ResultDto<GitBranchSwitch>.Failure(applied.ErrorMessage ?? "The branch's flows could not be imported.");
-
-                    isApplied = true;
-                    return ResultDto<GitBranchSwitch>.Success(branchSwitch);
+                    _git.SetRemoteUrl(_folderPath, previousUrl);
                 }
                 finally
                 {
-                    // The database kept the flows it had, so the files go back to match them.
-                    if (!isApplied)
-                        _git.SwitchBranch(_folderPath, from.Name);
+                    _gate.Release();
+                }
+
+                return ResultDto<RepositoryConnectDto>.Failure(unreachable);
+            }
+
+            RepositoryConnectDto connected = new RepositoryConnectDto { RemoteUrl = url };
+            List<string> branches;
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                branches = _git.Branches(_folderPath).Select(x => x.Name).ToList();
+                if (_git.RemoteBranches(_folderPath).Count > 0)
+                {
+                    connected.Pull = ReadPull();
+                    branches = [];
                 }
             }
             finally
             {
                 _gate.Release();
             }
+
+            // An empty remote is sent every branch, history and all.
+            if (branches.Count > 0)
+            {
+                string? notSent = OverTheNetwork(() => _git.Push(_folderPath, branches, token));
+                if (notSent != null)
+                    return ResultDto<RepositoryConnectDto>.Failure($"Connected, but the branches were not sent: {notSent} Push sends them.");
+
+                connected.PushedBranches = branches;
+            }
+
+            await BroadcastAsync([]);
+            return ResultDto<RepositoryConnectDto>.Success(connected);
+        }
+
+        public async Task<ResultDto<RepositoryPullDto>> PreviewPullAsync(CancellationToken ct)
+        {
+            string token = await TokenAsync(ct);
+            if (!await HasRemoteAsync(ct))
+                return ResultDto<RepositoryPullDto>.Failure(NO_REMOTE);
+
+            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            if (unreachable != null)
+                return ResultDto<RepositoryPullDto>.Failure(unreachable);
+
+            RepositoryPullDto? pull;
+            string branch;
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                pull = ReadPull();
+                branch = _git.CurrentBranch(_folderPath);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+
+            // What it brings shows in the status too.
+            await BroadcastAsync([]);
+
+            if (pull == null)
+                return ResultDto<RepositoryPullDto>.Failure($"The remote has no branch {branch} yet. Push sends it.");
+
+            return ResultDto<RepositoryPullDto>.Success(pull);
+        }
+
+        public async Task<ResultDto<GitBranchSwitch>> PullAsync(string remoteSha, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, CancellationToken ct)
+        {
+            await WriteEveryFlowAsync(ct);
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                string? uncommitted = UncommittedRefusal();
+                if (uncommitted != null)
+                    return ResultDto<GitBranchSwitch>.Failure(uncommitted);
+
+                List<GitBranch> branches = _git.Branches(_folderPath);
+                GitBranch? from = branches.FirstOrDefault(x => x.IsCurrent);
+                if (from == null)
+                    return ResultDto<GitBranchSwitch>.Failure("There is no commit to pull onto yet.");
+
+                GitBranch? remote = _git.RemoteBranches(_folderPath).FirstOrDefault(x => x.Name == from.Name);
+                if (remote == null)
+                    return ResultDto<GitBranchSwitch>.Failure($"The remote has no branch {from.Name}.");
+
+                // What the person agreed to drop was read against that commit.
+                if (remote.Sha != remoteSha)
+                    return ResultDto<GitBranchSwitch>.Failure("The remote has moved since. Pull again to see what it brings now.");
+
+                GitBranchSwitch branchSwitch = ReadSwitch(from, remote);
+
+                // Commits never pushed leave the branch, so they are kept on a branch of their own first.
+                if (_git.CommitsBetween(_folderPath, from.Sha, remote.Sha).Count > 0)
+                {
+                    branchSwitch.BackupBranch = BackupNameFor(branches);
+                    _git.CreateBranch(_folderPath, branchSwitch.BackupBranch, from.Sha);
+                }
+
+                _git.Reset(_folderPath, remote.Sha);
+
+                return await ApplyOrUndoAsync(branchSwitch, applyAsync, () => UndoPull(from, branchSwitch.BackupBranch), ct);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        public async Task<ResultDto<RepositoryPushDto>> PushAsync(CancellationToken ct)
+        {
+            string token = await TokenAsync(ct);
+            if (!await HasRemoteAsync(ct))
+                return ResultDto<RepositoryPushDto>.Failure(NO_REMOTE);
+
+            // Fetched first, so what the remote has that the branch does not is known.
+            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            if (unreachable != null)
+                return ResultDto<RepositoryPushDto>.Failure(unreachable);
+
+            GitBranch? local;
+            int sending;
+
+            await _gate.WaitAsync(ct);
+            try
+            {
+                local = _git.Branches(_folderPath).FirstOrDefault(x => x.IsCurrent);
+                if (local == null)
+                    return ResultDto<RepositoryPushDto>.Failure("There is nothing to push: commit first.");
+
+                GitBranch? remote = _git.RemoteBranches(_folderPath).FirstOrDefault(x => x.Name == local.Name);
+
+                // Pushing over them would lose them. A pull brings them, and keeps what was never pushed.
+                int behind = 0;
+                if (remote != null)
+                    behind = _git.CommitsBetween(_folderPath, remote.Sha, local.Sha).Count;
+
+                if (behind > 0)
+                {
+                    string commits = behind == 1 ? "1 commit" : $"{behind} commits";
+                    return ResultDto<RepositoryPushDto>.Failure($"The remote has {commits} {local.Name} does not. Pull first: it brings them, and keeps what was never pushed on a backup branch.");
+                }
+
+                sending = _git.CommitsBetween(_folderPath, local.Sha, remote?.Sha).Count;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+
+            if (sending > 0)
+            {
+                string branch = local.Name;
+                string? notSent = OverTheNetwork(() => _git.Push(_folderPath, [branch], token));
+                if (notSent != null)
+                    return ResultDto<RepositoryPushDto>.Failure(notSent);
+
+                await BroadcastAsync([]);
+            }
+
+            return ResultDto<RepositoryPushDto>.Success(new RepositoryPushDto { Branch = local.Name, CommitCount = sending });
         }
 
 
@@ -818,6 +1052,144 @@ namespace Business.Repository
                 if (IdOf(script) == publicId)
                     return scriptFile;
             }
+
+            return null;
+        }
+
+        // A save not written yet would not show as a change, and a switch or a pull would replace it unseen.
+        private async Task WriteEveryFlowAsync(CancellationToken ct)
+        {
+            List<Flow> flows = await FlowNamesAsync(ct);
+            await WriteAsync(flows.Select(x => x.Id).ToList(), ct);
+        }
+
+        // A switch or a pull replaces flows, so what is not committed would be lost unseen.
+        private string? UncommittedRefusal()
+        {
+            int changeCount = _git.Changes(_folderPath).Count;
+            if (changeCount == 0)
+                return null;
+
+            string changes = changeCount == 1 ? "1 change" : $"{changeCount} changes";
+            return $"Commit or discard the {changes} first: switching or pulling brings every flow to another version.";
+        }
+
+        // Called holding the folder, already moved. The database follows in applyAsync; when it does
+        // not, undo puts the folder back to match the flows it kept.
+        private static async Task<ResultDto<GitBranchSwitch>> ApplyOrUndoAsync(GitBranchSwitch branchSwitch, Func<GitBranchSwitch, CancellationToken, Task<ResultDto<bool>>> applyAsync, Action undo, CancellationToken ct)
+        {
+            bool isApplied = false;
+            try
+            {
+                ResultDto<bool> applied = await applyAsync(branchSwitch, ct);
+                if (!applied.IsSuccess)
+                    return ResultDto<GitBranchSwitch>.Failure(applied.ErrorMessage ?? "The flows could not be imported.");
+
+                isApplied = true;
+                return ResultDto<GitBranchSwitch>.Success(branchSwitch);
+            }
+            finally
+            {
+                if (!isApplied)
+                    undo();
+            }
+        }
+
+        private void UndoSwitch(GitBranch from, GitBranch to, bool isRemoteOnly)
+        {
+            _git.SwitchBranch(_folderPath, from.Name);
+
+            if (isRemoteOnly)
+                _git.DeleteBranch(_folderPath, to.Name);
+        }
+
+        private void UndoPull(GitBranch from, string? backupBranch)
+        {
+            _git.Reset(_folderPath, from.Sha);
+
+            if (backupBranch != null)
+                _git.DeleteBranch(_folderPath, backupBranch);
+        }
+
+        // backup/2026-10-25-1530, with the seconds when two pulls share a minute.
+        private string BackupNameFor(List<GitBranch> branches)
+        {
+            DateTimeOffset now = _timeProvider.GetLocalNow();
+
+            string name = BACKUP_PREFIX + now.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture);
+            if (branches.Any(x => x.Name == name))
+                name = BACKUP_PREFIX + now.ToString("yyyy-MM-dd-HHmmss", CultureInfo.InvariantCulture);
+
+            return name;
+        }
+
+        // What pulling the branch checked out would do, from what was last fetched: null when the
+        // remote does not have the branch.
+        private RepositoryPullDto? ReadPull()
+        {
+            GitBranch? local = _git.Branches(_folderPath).FirstOrDefault(x => x.IsCurrent);
+            if (local == null)
+                return null;
+
+            GitBranch? remote = _git.RemoteBranches(_folderPath).FirstOrDefault(x => x.Name == local.Name);
+            if (remote == null)
+                return null;
+
+            return new RepositoryPullDto
+            {
+                Branch = local.Name,
+                RemoteSha = remote.Sha,
+                Incoming = _git.CommitsBetween(_folderPath, remote.Sha, local.Sha).Select(ToDto).ToList(),
+                Dropped = _git.CommitsBetween(_folderPath, local.Sha, remote.Sha).Select(ToDto).ToList(),
+            };
+        }
+
+        private async Task<bool> HasRemoteAsync(CancellationToken ct)
+        {
+            await _gate.WaitAsync(ct);
+            try
+            {
+                return _git.RemoteUrl(_folderPath) != null;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        private async Task<string> TokenAsync(CancellationToken ct)
+        {
+            string token = await _appSettingService.GetTextAsync(AppSettingCatalog.GitRemoteToken, ct);
+
+            return token.Trim();
+        }
+
+        // Outside the lock. The message to show when the remote cannot be reached or refuses.
+        private static string? OverTheNetwork(Action action)
+        {
+            try
+            {
+                action();
+                return null;
+            }
+            catch (InvalidOperationException exception)
+            {
+                return exception.Message;
+            }
+        }
+
+        // HTTPS only: LibGit2Sharp speaks no SSH, and a token sent over plain HTTP goes in the clear.
+        // A password in the address would be kept in the repository's config, in the clear too.
+        private static string? RefusedAddress(string url)
+        {
+            if (url.StartsWith("git@", StringComparison.OrdinalIgnoreCase) || url.StartsWith("ssh://", StringComparison.OrdinalIgnoreCase))
+                return "An SSH address is refused: the app reaches a remote over HTTPS, with a token. Copy the HTTPS address from the provider's page.";
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || uri.Scheme != Uri.UriSchemeHttps || uri.Host.Length == 0)
+                return "The address has to start with https://, as https://github.com/you/flows.git does.";
+
+            if (uri.UserInfo.Contains(':', StringComparison.Ordinal))
+                return "Put the token in its own field, not in the address.";
 
             return null;
         }

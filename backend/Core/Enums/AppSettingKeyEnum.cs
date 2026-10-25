@@ -32,5 +32,8 @@ namespace Core.Enums
         /// <summary>Who a commit is by. Empty takes the user's git config.</summary>
         GIT_AUTHOR_NAME,
         GIT_AUTHOR_EMAIL,
+
+        /// <summary>The token a push and a fetch sign in to the remote with. Never sent to the page.</summary>
+        GIT_REMOTE_TOKEN,
     }
 }

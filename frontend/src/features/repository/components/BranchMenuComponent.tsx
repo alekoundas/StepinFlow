@@ -199,6 +199,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
 
       {switchingTo !== null && (
         <BranchSwitchDialogComponent
+          action="Switching to"
           branch={switchingTo}
           error={switchBranch.error?.message ?? null}
           onClose={closeSwitch}
@@ -259,11 +260,17 @@ function BranchRowComponent({ branch, commitCount, isLocked, onPick }: RowProps)
         className="text-xs"
         style={MUTED}
       >
-        {branch.isCurrent ? plural(commitCount, "commit") : formatWhen(branch.lastCommitAt)}
+        {noteOf(branch, commitCount)}
       </span>
     </button>
   );
 }
+
+const noteOf = (branch: RepositoryBranchDto, commitCount: number): string => {
+  if (branch.isCurrent) return plural(commitCount, "commit");
+  if (branch.isRemoteOnly) return "on the remote";
+  return formatWhen(branch.lastCommitAt);
+};
 
 // PrimeIcons has no branch.
 function BranchIconComponent() {
