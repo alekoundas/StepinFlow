@@ -13,6 +13,7 @@ namespace Transport.Tests.Fakes
         public int ExecutionId { get; } = 1;
         public int FlowId { get; private set; }
         public bool IsRunning { get; }
+        public Task Completion { get; } = Task.CompletedTask;
 
         public Task<int> StartAsync(ExecutionStartDto dto, CancellationToken ct)
         {

@@ -24,6 +24,11 @@ namespace Business.Tests.Fakes
             get { return 0; }
         }
 
+        public Task Completion
+        {
+            get { return Task.CompletedTask; }
+        }
+
         public Task<int> StartAsync(ExecutionStartDto dto, CancellationToken ct)
         {
             throw new NotImplementedException();

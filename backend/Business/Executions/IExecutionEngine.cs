@@ -9,6 +9,7 @@ namespace Business.Executions
         int ExecutionId { get; }
         int FlowId { get; }
         bool IsRunning { get; }
+        Task Completion { get; }
 
         Task<int> StartAsync(ExecutionStartDto dto, CancellationToken ct);
 

@@ -22,7 +22,7 @@ namespace Business.Executions
     /// only thing in here is the walking, the pause gate and cancellation.
     /// </summary>
     [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
-        Justification = "The source is never timed and never holds a registration - the one token linked to it is disposed by the using that made it - so there is nothing for Dispose to release. Owning a disposable field is not owning a resource. Making the engine IDisposable put Stop in a race with Reset over a source it could then cancel after disposal: 25 lines of guarding around a no-op.")]
+        Justification = "The source is never timed and never holds a registration - the one token linked to it is disposed by the using that made it - and the semaphore never builds its wait handle, because nothing asks for AvailableWaitHandle, so there is nothing for Dispose to release. Owning a disposable field is not owning a resource. Making the engine IDisposable put Stop in a race with Reset over a source it could then cancel after disposal: 25 lines of guarding around a no-op.")]
     public sealed class ExecutionEngine : IExecutionEngine
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -41,12 +41,14 @@ namespace Business.Executions
         // and start a walk. Two walks, one mouse.
         private readonly Lock _lockObj = new Lock();
         private CancellationTokenSource _cancellation = new CancellationTokenSource();
+        private Task _completion = Task.CompletedTask;
 
 
         private int? _debuggerStepOverDepth;// Set while stepping over, so the walk runs until it is back at or above this depth
+        private readonly SemaphoreSlim _debuggerWake = new SemaphoreSlim(0);// Released by Continue, Step Into and Step Over, waited on by a parked walk
 
         // Written by whichever thread the IPC call arrives on, read by the walk. Volatile rather
-        // than locked: the pause gate reads them in a loop and must see the write that ends it.
+        // than locked: the pause gate reads them each time it wakes and must see the write that woke it.
         private volatile bool _debuggerSignalNextStep;// Step into and step over stay paused but let one step through
         private volatile RunStateEnum _state = RunStateEnum.FINISHED;
         private HashSet<int> _debuggerBreakpoints = new HashSet<int>();
@@ -85,6 +87,15 @@ namespace Business.Executions
             private set { _state = value; }
         }
 
+        /// <summary>
+        /// The current execution, or the last one. Done once its history is written and its end is
+        /// broadcast.
+        /// </summary>
+        public Task Completion
+        {
+            get { return _completion; }
+        }
+
 
         // ================================================================
         // Public methods
@@ -120,9 +131,9 @@ namespace Business.Executions
             _walker = new ExecutionFlowWalker(_cache, _timeProvider);
 
 
-            // Fire and forget:
-            // Starts running synchronously on the calling thread and keeps running until it hits an await that genuinely suspends. Only then does it return an incomplete Task, and only then does StartAsync reach return ExecutionId.
-            _ = Task.Run(async () =>
+            // Not awaited: the caller gets the execution's id while the walk goes on. Kept so shutdown
+            // and the tests can wait for the history to be written.
+            _completion = Task.Run(async () =>
             {
                 // Start execution
                 try
@@ -178,7 +189,7 @@ namespace Business.Executions
         {
             State = RunStateEnum.STOPPING;
 
-            // A parked walk is sat in a Task.Delay on this token, so cancelling is what wakes it.
+            // A parked walk waits on the wake with this token, so cancelling is what ends the wait.
             _cancellation.Cancel();
         }
 
@@ -191,6 +202,7 @@ namespace Business.Executions
         {
             _debuggerStepOverDepth = null;
             State = RunStateEnum.RUNNING;
+            _debuggerWake.Release();
         }
 
         public void StepInto()
@@ -198,6 +210,7 @@ namespace Business.Executions
             _debuggerStepOverDepth = null;
             State = RunStateEnum.PAUSED;
             _debuggerSignalNextStep = true;
+            _debuggerWake.Release();
         }
 
         public void StepOver()
@@ -205,6 +218,7 @@ namespace Business.Executions
             _debuggerStepOverDepth = _currentDepth;
             State = RunStateEnum.PAUSED;
             _debuggerSignalNextStep = true;
+            _debuggerWake.Release();
         }
 
         public void SetBreakpoints(IEnumerable<int> flowStepIds)
@@ -374,16 +388,19 @@ namespace Business.Executions
             if (State != RunStateEnum.PAUSED)
                 return;
 
-            // Cleared before parking, so a press that landed while a slow step was still running
-            // cannot skip this stop. One arriving from here on is kept and moves the walk along.
+            // Cleared before parking, wakes and all, so a press that landed while a slow step was
+            // still executing cannot skip this stop. One arriving from here on is kept and moves the
+            // walk along.
             _debuggerSignalNextStep = false;
+            while (_debuggerWake.Wait(0, ct))
+            {
+            }
 
             await BroadcastAsync(ExecutionEventDto.Paused(ExecutionId, step));
 
-            // There is nothing to wait on but two fields, so they are read until one of them moves.
-            // Only ever spins while somebody is sat looking at a paused run, and Stop cancels it out.
+            // Woken by Continue, Step Into or Step Over, and ended by Stop cancelling.
             while (State == RunStateEnum.PAUSED && !_debuggerSignalNextStep)
-                await Task.Delay(50, ct);
+                await _debuggerWake.WaitAsync(ct);
         }
 
         private async Task FinishAsync(ExecutionStatusEnum status, string error, int? errorStepId, int stepCount)

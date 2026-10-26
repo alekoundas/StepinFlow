@@ -37,12 +37,9 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25.
 | 14 | Git: the flows kept as files in a repository of the app's own and written on every save; commits, discard and restore, branches that hide a flow rather than delete it, a remote to push to and pull from; `Platform.Shared` | §2, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** the recording update - phase 7 for automation flows, with phase 6's detection model inside
-it: QA tests are what is left. Settled 2026-10-08: a recording and a description
-become a flow with no question per action, and QA tests come after. The machine-only test bucket and the two engine seams
-layer 5 is waiting on follow it. The open decision on how long a step's result lives (`TODO.md`,
-Execution) still wants making before layer 5, because the engine tests would pin whichever answer is
-live.
+**Next:** a step's result living under its step, settled 2026-10-26 (`TODO.md`, Execution), then
+the rest of layer 5 and the machine-only bucket. Phase 7 is in for automation flows; QA tests, the
+rest of it, are set aside until they are picked up again.
 
 ---
 
@@ -54,17 +51,6 @@ live.
 - [ ] **The description's 5000 characters are the form's limit only.** A script can carry a longer
       one, imports it, and the flow form then refuses to save until it is cut. The data service
       should hold the same limit, so a form and a file meet the same rule.
-
-### The engine
-
-- [ ] **Hold the execution task.** `_ = Task.Run(...)` in `ExecutionEngine.StartAsync` is handed to
-      nobody, so shutdown cannot await it - the walk unwinds while the host tears down, and the
-      final history flush can fail against a disposed context factory - and a test can only poll
-      `IsRunning` in a sleep loop. Keep it and expose `Task Completion`. Three callers want it:
-      shutdown, the tests, and phase 12's CLI runner.
-- [ ] **Replace the 50ms poll in `DebugWaitAsync`.** A `SemaphoreSlim` released by `Continue`,
-      `StepInto` and `StepOver` removes both the spin and the latency. The comment in the code
-      already concedes the design.
 
 ### Commands and windows
 
@@ -367,12 +353,12 @@ What is left, in order:
 
 ### Layer 5 - `ExecutionEngine`
 
-- [ ] Waits on the two engine items above: the held task and the semaphore. Then: SQLite, fake
-      ports, a recording broadcast, and assert the event sequence and the `Execution` row. A second
-      `StartAsync` refusing rather than queueing, `Stop()` landing as STOPPED and not ERRORED, a
-      worker throwing leaving `errorStepId` on the right step, a breakpoint inside a stepped-over
-      subtree parking there anyway. How a walk ends is in already (`ExecutionEngineTests`,
-      2026-10-25), polling the broadcast for the end until the task is held.
+- [ ] In already (`ExecutionEngineTests`, on SQLite, a broadcast the tests can wait on, and
+      `Completion`): how a walk ends, a breakpoint holding the walk until Continue, Step Into moving
+      one step, and Stop while held landing as STOPPED. Left: a second `StartAsync` refusing rather
+      than queueing, `Stop()` during a step landing as STOPPED and not ERRORED, a worker throwing
+      leaving `errorStepId` on the right step, a breakpoint inside a stepped-over subtree parking
+      there anyway, and the `Execution` row as well as the events.
 
 ### Optional
 

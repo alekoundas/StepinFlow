@@ -113,25 +113,31 @@ the history.
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
 
-- [ ] **Decide how long a step's result lives.** `ExecutionFlowWalker.Pop` writes the popped step's
+- [ ] **A step's result lives under its step. Settled 2026-10-26.** The steps under it on its
+      Success side read it - on the Failure side too for a Check Text, which keeps what it read
+      either way - and it is forgotten once the walk leaves that step. Rejected: a result living
+      until its step executes again, which reads a stale value from an earlier loop pass or a branch
+      not taken this time. A step at the top that wants to quote a value, such as an `End Execution`
+      message, sits under the step that read it.
+      The walker means to do this and does not: `ExecutionFlowWalker.Pop` writes the popped step's
       depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
-      entry it just wrote. So `ForgetFrom` never has anything to forget, and every result stays
-      readable until its step runs again - the opposite of its comment, and of the validator, which
-      rejects a check or a click reading a result it does not sit under through Success.
-      Some of the language leans on the accident: flow-format.md's own example is a `Check Value`
-      reading its earlier **sibling** `{{Read the total}}`, and `{{name}}` variables are only checked
-      for existence, not reachability. Two ways out:
-      1) **Results live under their step**, as the code intends - swap the two lines in `Pop`. Then
-         the example and any flow like it break, the validator has to check `{{name}}`
-         reachability too, and reading a value later means nesting under the step that read it.
-      2) **Results live until the step runs again**, as it behaves - delete `ForgetFrom` and
-         `_depthByStepId`, and let the validator allow an earlier sibling. Simpler to write flows
-         in; the cost is a stale result from an earlier loop pass or a branch not taken this time.
-      `ExecutionFlowWalkerTests` holds the test for option 1, skipped until this is decided.
-      Either way, `{{name}}` is not checked for whether that step keeps a value at all: `{{Click}}`,
-      or a `WAIT_UNTIL_NOT_FOUND` search (which keeps none since 2026-10-22), passes the validator
-      and fails during execution. The step-result dropdowns already apply that rule
-      (`TreeStepHelper.GivesNoResult`).
+      entry it just wrote, so every result stays readable until its step executes again. What is
+      left:
+      - swap the two lines in `Pop`, and turn on the skipped test in `ExecutionFlowWalkerTests`;
+      - check `{{name}}` in text the way the dropdowns are checked (`TreeStepHelper.CanReadResultOf`),
+        where today it is only checked for existing;
+      - refuse `{{name}}` of a step that keeps no value - `{{Click}}`, or a `WAIT_UNTIL_NOT_FOUND`
+        search - the way the dropdowns already do (`TreeStepHelper.GivesNoResult`);
+      - fix flow-format.md's example and `SampleFlow.approved.sflw`: both are a `Check Value`
+        reading its earlier sibling, which the validator already refuses. None of the flows in the
+        database read a result outside its step.
+
+- [ ] **A start that fails before the walk leaves the engine claimed.** `StartAsync` sets the state
+      to RUNNING under the lock, then loads the steps and writes the `Execution` row before the
+      walk's task exists. If either throws - a database error, or the caller's token cancelled
+      mid-load - nothing sets it back, and every later Start is refused with "A flow is already
+      running" until the app restarts. Rare, but the fix is a catch that sets FINISHED and rethrows,
+      and layer 5's "a second `StartAsync` refusing" test wants it settled first.
 
 ## Flow script
 

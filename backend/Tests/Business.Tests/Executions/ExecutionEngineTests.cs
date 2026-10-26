@@ -13,11 +13,13 @@ using static Business.Tests.TestToken;
 namespace Business.Tests.Executions
 {
     /// <summary>
-    /// How an execution ends when the walk reaches the end. Every step passes and does nothing, so
+    /// How an execution ends, and how the debugger holds it. Every step passes and does nothing, so
     /// the verdict comes from the flow alone.
     /// </summary>
     public sealed class ExecutionEngineTests : IDisposable
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
+
         private readonly TestDatabase _database = new TestDatabase();
         private readonly FakeIpcBroadcastService _broadcast = new FakeIpcBroadcastService();
 
@@ -58,15 +60,25 @@ namespace Business.Tests.Executions
 
         private async Task<ExecutionStatusEnum?> ExecuteAsync(int flowId)
         {
-            await Engine().StartAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
-
-            using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(Ct);
-            timeout.CancelAfter(TimeSpan.FromSeconds(10));
-
-            while (Ended() == null)
-                await Task.Delay(10, timeout.Token);
+            ExecutionEngine engine = Engine();
+            await engine.StartAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
+            await engine.Completion.WaitAsync(TIMEOUT, Ct);
 
             return Ended()!.Status;
+        }
+
+        private async Task<ExecutionEngine> PausedAtAsync(int flowId, FlowStep breakpoint)
+        {
+            ExecutionEngine engine = Engine();
+            await engine.StartAsync(new ExecutionStartDto { FlowId = flowId, Breakpoints = [breakpoint.Id] }, Ct);
+            await _broadcast.SentAsync(PausedAt(breakpoint)).WaitAsync(TIMEOUT, Ct);
+
+            return engine;
+        }
+
+        private static Func<object?, bool> PausedAt(FlowStep step)
+        {
+            return x => x is ExecutionEventDto e && e.Type == ExecutionEventTypeEnum.PAUSED && e.FlowStepId == step.Id;
         }
 
         private ExecutionEventDto? Ended()
@@ -80,9 +92,22 @@ namespace Business.Tests.Executions
             }
         }
 
-        private static FlowStep Wait()
+        private List<string> Started()
         {
-            return new FlowStep { Name = "Wait", FlowStepType = FlowStepTypeEnum.WAIT };
+            lock (_broadcast.Sent)
+            {
+                return _broadcast.Sent
+                    .Select(x => x.Payload)
+                    .OfType<ExecutionEventDto>()
+                    .Where(x => x.Type == ExecutionEventTypeEnum.STEP_STARTED)
+                    .Select(x => x.Name)
+                    .ToList();
+            }
+        }
+
+        private static FlowStep Wait(string name = "Wait")
+        {
+            return new FlowStep { Name = name, FlowStepType = FlowStepTypeEnum.WAIT };
         }
 
 
@@ -111,6 +136,59 @@ namespace Business.Tests.Executions
             int flowId = SeedFlow(isQaTest, Wait(), end);
 
             (await ExecuteAsync(flowId)).ShouldBe(ExecutionStatusEnum.FAILED);
+        }
+
+        [Fact]
+        public async Task A_breakpoint_holds_the_walk_until_Continue()
+        {
+            FlowStep second = Wait("Second");
+            int flowId = SeedFlow(false, Wait("First"), second);
+
+            ExecutionEngine engine = await PausedAtAsync(flowId, second);
+
+            Started().ShouldBe(["First"]);
+            engine.Completion.IsCompleted.ShouldBeFalse();
+
+            engine.Continue();
+            await engine.Completion.WaitAsync(TIMEOUT, Ct);
+
+            Started().ShouldBe(["First", "Second"]);
+            Ended()!.Status.ShouldBe(ExecutionStatusEnum.COMPLETED);
+        }
+
+        [Fact]
+        public async Task Step_Into_executes_one_step_and_holds_at_the_next()
+        {
+            FlowStep first = Wait("First");
+            FlowStep second = Wait("Second");
+            int flowId = SeedFlow(false, first, second, Wait("Third"));
+
+            ExecutionEngine engine = await PausedAtAsync(flowId, first);
+
+            engine.StepInto();
+            await _broadcast.SentAsync(PausedAt(second)).WaitAsync(TIMEOUT, Ct);
+
+            Started().ShouldBe(["First"]);
+
+            engine.Continue();
+            await engine.Completion.WaitAsync(TIMEOUT, Ct);
+
+            Started().ShouldBe(["First", "Second", "Third"]);
+        }
+
+        [Fact]
+        public async Task Stop_while_held_ends_the_execution_as_stopped()
+        {
+            FlowStep first = Wait("First");
+            int flowId = SeedFlow(false, first);
+
+            ExecutionEngine engine = await PausedAtAsync(flowId, first);
+
+            engine.Stop();
+            await engine.Completion.WaitAsync(TIMEOUT, Ct);
+
+            Started().ShouldBeEmpty();
+            Ended()!.Status.ShouldBe(ExecutionStatusEnum.STOPPED);
         }
 
 

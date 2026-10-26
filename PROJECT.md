@@ -1299,7 +1299,7 @@ An execution ends one of five ways, and the distinction that matters is the thir
 | `COMPLETED` | an `End Execution` said it passed, or an automation reached its end |
 | `FAILED` | an `End Execution` said it failed |
 | `INCONCLUSIVE` | a QA test reached the end and **nothing ever said** |
-| `STOPPED` | somebody pressed stop |
+| `STOPPED` | somebody pressed stop, or closed the app while it was going |
 | `ERRORED` | the harness broke, not the product |
 
 `INCONCLUSIVE` exists because a QA test whose every check failed looks, from the outside, exactly
@@ -2122,13 +2122,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-941 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+944 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 699 | the walker, how an execution ends, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 702 | the walker, how an execution ends and how the debugger holds it, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2244,7 +2244,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 941 backend tests.
+or OpenAI. 944 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

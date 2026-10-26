@@ -14,6 +14,7 @@ using Transport.Ipc.Handlers.Execution;
 using Transport.Ipc.Handlers.Lookup;
 
 using Business.Command;
+using Business.Executions;
 using Business.Searching;
 using Business.AreaPoint;
 using Business.Flows.DataService;
@@ -178,6 +179,7 @@ namespace App
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
             builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
             builder.Services.AddHostedService<HostedBroadcastPipeListener>();// <- Background service!
+            builder.Services.AddHostedService<HostedExecutionEngine>(); // After the pipes, so it stops before them.
 
             // IPC handlers.
             builder.Services.AddTransient<CreateFlowHandler>();
@@ -372,6 +374,32 @@ namespace App
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
             return _ipcBroadcastPipe.StartBackgroundService(cancellationToken);
+        }
+    }
+
+
+    // Stop an execution still going when the app closes, and wait while it writes its history -
+    // the database and the broadcast pipe are still there until this returns.
+    internal sealed class HostedExecutionEngine : IHostedService
+    {
+        private readonly IExecutionEngine _executionEngine;
+
+        public HostedExecutionEngine(IExecutionEngine executionEngine)
+        {
+            _executionEngine = executionEngine;
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (_executionEngine.IsRunning)
+                _executionEngine.Stop();
+
+            await _executionEngine.Completion.WaitAsync(cancellationToken);
         }
     }
 
