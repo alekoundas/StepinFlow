@@ -119,13 +119,6 @@ the history.
       validator rule still use the Success side only, which is the rule for a location. Widening
       them is `TreeStepHelper.CanReadValueOf` in both places.
 
-- [ ] **A start that fails before the walk leaves the engine claimed.** `StartAsync` sets the state
-      to RUNNING under the lock, then loads the steps and writes the `Execution` row before the
-      walk's task exists. If either throws - a database error, or the caller's token cancelled
-      mid-load - nothing sets it back, and every later Start is refused with "A flow is already
-      running" until the app restarts. Rare, but the fix is a catch that sets FINISHED and rethrows,
-      and layer 5's "a second `StartAsync` refusing" test wants it settled first.
-
 ## Flow script
 
 - [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the

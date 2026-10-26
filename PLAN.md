@@ -36,9 +36,9 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25.
 | 5.14 | Keys pressed, held or released: a Ctrl+click is hold, click, release; whatever is still held is let go as an execution ends; `KEYS_NOT_RELEASED` | §7, §8, §9 |
 | 14 | Git: the flows kept as files in a repository of the app's own and written on every save; commits, discard and restore, branches that hide a flow rather than delete it, a remote to push to and pull from; `Platform.Shared` | §2, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
+| Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 
-**Next:** the rest of layer 5, starting with a start that fails before the walk (`TODO.md`,
-Execution), then the machine-only bucket. Phase 7 is in for automation flows; QA tests, the rest of
+**Next:** the machine-only test bucket. Phase 7 is in for automation flows; QA tests, the rest of
 it, are set aside until they are picked up again.
 
 ---
@@ -334,7 +334,7 @@ Built 2026-10-24 to 2026-10-25 (`PROJECT.md` §11). Left:
 
 ## Tests
 
-Layers 0 to 4 are done - see `PROJECT.md` §15 for what exists, how it is wired and what it found.
+Layers 0 to 5 are done - see `PROJECT.md` §15 for what exists, how it is wired and what it found.
 What is left, in order:
 
 ### The machine-only bucket
@@ -350,15 +350,6 @@ What is left, in order:
       run **from day one**, rather than discovered when CI first goes red. `Platform.Windows` near
       zero on purpose does not mean zero; it means the handful that need a real machine are
       quarantined and labelled.
-
-### Layer 5 - `ExecutionEngine`
-
-- [ ] In already (`ExecutionEngineTests`, on SQLite, a broadcast the tests can wait on, and
-      `Completion`): how a walk ends, a breakpoint holding the walk until Continue, Step Into moving
-      one step, and Stop while held landing as STOPPED. Left: a second `StartAsync` refusing rather
-      than queueing, `Stop()` during a step landing as STOPPED and not ERRORED, a worker throwing
-      leaving `errorStepId` on the right step, a breakpoint inside a stepped-over subtree parking
-      there anyway, and the `Execution` row as well as the events.
 
 ### Optional
 

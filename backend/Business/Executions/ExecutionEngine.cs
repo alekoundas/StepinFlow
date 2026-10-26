@@ -117,17 +117,29 @@ namespace Business.Executions
             }
 
             // Initialize.
-            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             ExecutionStatusEnum status = ExecutionStatusEnum.COMPLETED;
             string error = string.Empty;
             int? errorStepId = null;
             int stepCount = 0;
 
-            // Load
-            bool isQaTest = await dbContext.Flows.Where(x => x.Id == dto.FlowId).Select(x => x.IsQaTest).FirstOrDefaultAsync(ct);
-            Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
-            await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
-            ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
+            // Load. The engine is claimed already, and a throw from here would leave it claimed for
+            // good - every later start refused - so it lets go before passing the exception on.
+            bool isQaTest;
+            try
+            {
+                await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+                isQaTest = await dbContext.Flows.Where(x => x.Id == dto.FlowId).Select(x => x.IsQaTest).FirstOrDefaultAsync(ct);
+                Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
+                await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
+                ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
+            }
+            catch
+            {
+                State = RunStateEnum.FINISHED;
+                throw;
+            }
+
             _walker = new ExecutionFlowWalker(_cache, _timeProvider);
 
 

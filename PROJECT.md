@@ -2125,13 +2125,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-947 tests, all passing, in eight projects under `backend/Tests/` - one
+954 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 705 | the walker, how an execution ends and how the debugger holds it, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 712 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2185,6 +2185,9 @@ gap - which is how the last untested worker got its tests.
 - **xUnit's generated `Main` blocks on a task**, which the banned list refuses.
   `XUNIT_GENERATED_DISABLE_WARNINGS` silences warnings in that generated file and nowhere else.
 - **Exit code 8, "no tests ran", is not a failure**, so the three empty projects pass.
+- **The engine's tests wait rather than poll.** The engine keeps the execution's task as
+  `Completion`, and the broadcast fake hands back a task for an event - a pause at a given step -
+  so a test waits for exactly what it needs and no sleep loop decides how long that is.
 - **The snapshot is twenty lines rather than Verify.** Verify 33 fails the build until a project
   declares sponsorship, a licence or an exemption - a statement about the project that is not a
   test suite's to make. `ApprovedFile.ShouldMatch` compares the printed sample flow with
@@ -2192,8 +2195,7 @@ gap - which is how the last untested worker got its tests.
 
 ### What they found
 
-Three layers found a bug on their first run, none of which anybody had reported, and a fourth found
-an open question:
+Each of these was found by a layer's first run, and none had been reported:
 
 - **`Press Ctrl+1` pressed Ctrl+B.** The key parser used `Enum.TryParse`, which reads `"1"` as the
   enum member at position 1. The recorder writes `Num1`, which is why nobody saw it; a hand- or
@@ -2205,9 +2207,14 @@ an open question:
 - **Results were never forgotten.** The walker recorded where a result sat and then dropped that
   same record, so every result stayed readable until its step executed again. Left open while the
   rule was decided, fixed 2026-10-26 - see §8.
+- **A start that failed while loading left the engine claimed.** `StartAsync` claims the engine,
+  then loads the steps and writes the `Execution` row; a throw there - a database error, or the
+  request cancelled - never let go, and every later start was refused as "already running" until
+  the app restarted. Layer 5, 2026-10-26.
 
 Proving the tests bite: planting two bugs in `ImageSearcher` - the required rule off, the larger
 scale ratio instead of the smaller - each failed exactly the test written for it and nothing else.
+Taking the engine's fix back out failed its test and no other.
 Adding a column to an entity without a migration failed every `DataAccess` test. A throwaway
 architecture rule that is false today failed and named every class that broke it.
 
@@ -2249,7 +2256,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 947 backend tests.
+or OpenAI. 954 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

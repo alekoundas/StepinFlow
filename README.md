@@ -199,9 +199,10 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**947 backend tests**, and three of the layers found a real bug on their first run — `Press Ctrl+1`
-pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, and `System 99`
-parsing as a system action that does not exist.
+**954 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
+pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, `System 99`
+parsing as a system action that does not exist, and an engine that refused every start after one
+failed while loading.
 
 - **Architecture tests** turn the layering above into failing tests
 - **Hand-written fakes** for every port, recording what they were told as readable lines —
