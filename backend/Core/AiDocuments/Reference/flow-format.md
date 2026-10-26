@@ -510,6 +510,19 @@ other line means where a step works. Without `opens` it starts the program and m
 Launch   <[ "C:\Program Files\App\app.exe" --profile test ]>   opens <[ App ]>
 ```
 
+**A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
+`Move Window` take the name of a `window` area from the header, so a window is described once, under
+Areas, and the searches in it and the steps that place it all follow when its title changes. Several
+window steps can name the same area. It has to be a window: a monitor, a region or a browser tab has
+nothing to focus, resize or move, which is `AREA_NOT_A_WINDOW`. A step saved with no area is written
+`nowhere`, which the validator reports.
+
+```
+Focus Window    <[ Browser ]>
+Resize Window   <[ Browser ]>   size 1280 720
+Move Window     <[ Browser ]>   to point <[ Left half ]>
+```
+
 **A key between a hold and its release is written without the held keys.** Under `Press <[ Ctrl ]>
 hold`, Ctrl+C is `Press <[ C ]>`: pressed as `Ctrl+C`, the press would let Ctrl go, and the click
 after it would arrive without it.

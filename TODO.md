@@ -138,7 +138,7 @@ the history.
 - [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the
       Break dropdown offers every step it sits inside, but only a loop, a search and a Check Value
       write their own name in the script. A Break out of a System Command, a window step or an End
-      Execution executes fine and exports as `Break  out of <[ Focus chrome.exe ]>`, which the import
+      Execution executes fine and exports as `Break  out of <[ Focus window ]>`, which the import
       then reports as `NAME_UNKNOWN`. Either offer only loops and checks in the dropdown, or have the
       parser declare settings-named steps under the name they will be given.
 - [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
@@ -525,11 +525,11 @@ the history.
 
 - [ ] **Two layouts of one window matcher.** Raised 2026-10-14, when the recording setup was laid
       out as the mockup's: `RecordingWindowPickerComponent` lists the open windows as a radio list
-      with a Test row, while `WindowMatchFieldsComponent` (the area form, the window step) has a
-      dropdown and a "Test the match" button. Both call `Lookup.window` and
-      `Lookup.testWindowMatch`, so the matching cannot drift, but the look and the wording can.
-      Once the mockup's look is the app's (PLAN, "The rest of the mockup's app"), the area form and
-      the window step take the picker's layout and one component goes.
+      with a Test row, while `WindowMatchFieldsComponent` (the area form) has a dropdown and a
+      "Test the match" button. Both call `Lookup.window` and `Lookup.testWindowMatch`, so the
+      matching cannot drift, but the look and the wording can. The window step had a copy of the
+      matcher too until 2026-10-26, when it came to name a window area instead. Once the mockup's
+      look is the app's, the area form takes the picker's layout and one component goes.
 - [ ] **PrimeFlex 4's colour classes do nothing with this theme.** Found 2026-10-13, when the
       recording bar came out see-through. PrimeFlex is 4.x, and its `surface-*`, `text-color`,
       `text-color-secondary` and plain `border-round` classes read v4 design tokens (`--p-surface-0`

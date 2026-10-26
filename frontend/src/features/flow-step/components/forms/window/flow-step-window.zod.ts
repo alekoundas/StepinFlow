@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const WINDOW_FLOW_STEP_TYPES = [
@@ -21,15 +20,8 @@ export const FlowStepWindowSchema = z
     codeComment: CODE_COMMENT_SCHEMA,
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
 
-    // The window itself. Named here rather than borrowed from an APPLICATION area: a matcher is
-    // the same on every machine, so it has no reason to be a separate tunable record.
-    processName: z
-      .string()
-      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
-    titlePattern: z
-      .string()
-      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
-    titleMatchMode: z.enum(TitleMatchModeEnum),
+    // The window is a window area, described once on the Areas tab and shared with the searches.
+    flowAreaId: z.number().int().nullish(),
 
     // WINDOW_RESIZE
     windowWidth: z.number().int().min(0).max(2147483647),
@@ -39,12 +31,11 @@ export const FlowStepWindowSchema = z
     flowPointId: z.number().int().nullish(),
   })
   .superRefine((data, ctx) => {
-    // Either half is enough. Matching on nothing would act on whatever window is in front.
-    if (data.processName.length === 0 && data.titlePattern.length === 0) {
+    if (!data.flowAreaId) {
       ctx.addIssue({
         code: "custom",
-        message: "Pick an application, or type a title to match",
-        path: ["titlePattern"],
+        message: "Pick the window to act on",
+        path: ["flowAreaId"],
       });
     }
 

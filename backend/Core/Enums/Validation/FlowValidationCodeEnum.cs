@@ -37,7 +37,9 @@ namespace Core.Enums
 
         // Windows
         WINDOW_SIZE_MISSING,
-        WINDOW_MATCH_MISSING,
+
+        /// <summary>A window step's area is a monitor, a region or a browser tab rather than a window.</summary>
+        AREA_NOT_A_WINDOW,
 
         // Control
         LOOP_COUNT_MISSING,

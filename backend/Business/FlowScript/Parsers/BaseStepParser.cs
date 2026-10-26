@@ -1,4 +1,5 @@
 using Business.FlowScript.Catalogs;
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -81,21 +82,26 @@ namespace Business.FlowScript.Parsers
             }
         }
 
-        // process <[ chrome.exe ]>, and optionally title starts with <[ Swag ]>.
-        protected void ExpectWindow(FlowStep step)
+        // <[ Browser ]>, the window area the step acts on, or nowhere - a step saved with none.
+        protected FlowArea? ExtractWindowArea()
         {
-            ExpectKeyword(ScriptSymbolEnum.PROCESS);
+            // Before 2026-10-26 a window step described its window itself.
+            ScriptToken process = CurrentToken;
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.PROCESS))
+            {
+                throw new ScriptSyntaxException(Diagnostic.Error(DiagnosticCodeEnum.TOKEN_UNEXPECTED, process.Line, process.Column,
+                    "A window step names its window's area, such as \"Focus Window  <[ Browser ]>\", and the area under Areas says which window that is."));
+            }
+
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.NOWHERE))
+                return null;
+
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            step.ProcessName = ExtractText();
+            ScriptToken at = CurrentToken;
+            FlowArea? area = Scope.Area(ExtractText(), at);
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.TITLE))
-            {
-                step.TitleMatchMode = ExtractKeyword<TitleMatchModeEnum>();
-                ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                step.TitlePattern = ExtractText();
-                ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
-            }
+            return area;
         }
 
         // in <[ area ]>, or null.

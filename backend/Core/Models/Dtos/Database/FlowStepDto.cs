@@ -60,11 +60,7 @@ namespace Core.Models.Dtos
         public ConditionTypeEnum? ConditionType { get; set; }
 
 
-        // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-        public string ProcessName { get; set; } = string.Empty;
-        public string TitlePattern { get; set; } = string.Empty;
-        public TitleMatchModeEnum TitleMatchMode { get; set; }
-
+        // WINDOW_RESIZE. The window itself is the step's area.
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
 

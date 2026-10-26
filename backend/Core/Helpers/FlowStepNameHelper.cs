@@ -6,8 +6,8 @@ namespace Core.Helpers
     /// <summary>
     /// The steps nobody names. A cursor, wait, keyboard, window, system action or break step is called
     /// what its own settings say, "Double click" or "Wait 2s", and renamed whenever it is saved. Never
-    /// from another row, such as the point a Move goes to or the loop a Break leaves, which could be
-    /// renamed under it.
+    /// from another row, such as the window area a window step acts on, the point a Move goes to or
+    /// the loop a Break leaves, which could be renamed under it.
     /// </summary>
     public static class FlowStepNameHelper
     {
@@ -59,13 +59,13 @@ namespace Core.Helpers
                     return ScrollName(step);
 
                 case FlowStepTypeEnum.WINDOW_FOCUS:
-                    return $"Focus {WindowName(step)}";
+                    return "Focus window";
 
                 case FlowStepTypeEnum.WINDOW_RESIZE:
-                    return $"Resize {WindowName(step)} to {step.WindowWidth}x{step.WindowHeight}";
+                    return $"Resize window to {step.WindowWidth}x{step.WindowHeight}";
 
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
-                    return $"Move {WindowName(step)}";
+                    return "Move window";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     return KeyboardName(step);
@@ -156,18 +156,6 @@ namespace Core.Helpers
                 KeyboardKeyActionTypeEnum.RELEASE => WithText("Release keys", "Release", text),
                 _ => WithText("Press keys", "Press", text),
             };
-        }
-
-        // The application when there is one, otherwise what the title is matched against.
-        private static string WindowName(FlowStep step)
-        {
-            if (step.ProcessName.Trim().Length > 0)
-                return Shortened(step.ProcessName);
-
-            if (step.TitlePattern.Trim().Length > 0)
-                return Shortened(step.TitlePattern);
-
-            return "window";
         }
 
         private static string WithText(string without, string prefix, string text)

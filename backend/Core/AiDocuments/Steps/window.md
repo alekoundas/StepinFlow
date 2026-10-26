@@ -13,11 +13,20 @@ branches — a window can simply not be there.
 
 ## How a window step finds its window
 
-The match lives on the step itself: process name, title pattern, and how to match the title
-(`CONTAINS`, `EQUALS`, `STARTS_WITH`, `REGEX`).
+A window step names a **window area**: the same area a search looks inside, which finds its window
+by process name and title pattern (`CONTAINS`, `EQUALS`, `STARTS_WITH`, `REGEX`). The window is
+described once, on the Areas tab, and every step that searches in it or focuses, resizes or moves it
+follows when that description changes. Several window steps can name the same area.
 
-This is deliberately not an area. A window step cares about a window, not about a rectangle inside
-one.
+The area has to be a window. A monitor, a region inside a window or a browser tab has nothing to
+focus, resize or move, and the step is refused with `AREA_NOT_A_WINDOW`. The step acts on the whole
+window, title bar and borders included, whatever the area says about its frame.
+
+```
+Focus Window    <[ Browser ]>
+Resize Window   <[ Browser ]>   size 1280 720
+Move Window     <[ Browser ]>   to point <[ Left half ]>
+```
 
 ## Why resizing a window matters
 

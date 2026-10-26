@@ -44,6 +44,18 @@ namespace Business.FlowScript.Text
             WriteKeyword(ScriptSymbolEnum.NOWHERE);
         }
 
+        // <[ Browser ]>, the window area a window step acts on, or nowhere - so a step saved with none still round-trips.
+        protected void WriteWindowArea()
+        {
+            if (Step.FlowArea == null)
+            {
+                WriteKeyword(ScriptSymbolEnum.NOWHERE);
+                return;
+            }
+
+            WriteQuote(Step.FlowArea.Name);
+        }
+
         /// <summary>
         /// Write a FlowArea.
         /// </summary>

@@ -12,11 +12,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Focus Window  process <[ chrome.exe ]>   [title starts with <[ Swag ]>]
+            // Focus Window  <[ Browser ]>
             ExpectKeyword(FlowStepTypeEnum.WINDOW_FOCUS);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS };
 
-            ExpectWindow(step);
+            step.FlowArea = ExtractWindowArea();
 
             ExpectEnd();
 

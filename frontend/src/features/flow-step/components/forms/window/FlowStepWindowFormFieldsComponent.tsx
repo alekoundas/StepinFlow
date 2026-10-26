@@ -3,10 +3,11 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import WindowMatchFieldsComponent from "@/shared/components/form/WindowMatchFieldsComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
+import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
 
 type WindowForm = z.infer<typeof FlowStepWindowSchema>;
@@ -41,7 +42,13 @@ export default function FlowStepWindowFormFieldsComponent({
 
   return (
     <>
-      <WindowMatchFieldsComponent isDisabled={isDisabled} />
+      <FlowStepAreaFieldComponent
+        flowId={flowId}
+        labelText="Window"
+        hintText="A window area, found by its application and title. Change how it is found on the Areas tab, and every step using it follows."
+        flowAreaType={FlowAreaTypeEnum.APPLICATION}
+        isDisabled={isDisabled}
+      />
 
       {flowStepType === FlowStepTypeEnum.WINDOW_RESIZE && (
         <>

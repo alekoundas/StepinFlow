@@ -283,7 +283,6 @@ class Component extends DCLogic {
     const COMMANDS = ['Custom', 'Kill a process', 'Is a process running', 'Read clipboard', 'Write clipboard', 'Check internet', 'Shut down in', 'Cancel shutdown', 'Launch an app'];
     const ACTIONS = ['Lock', 'Sleep PC', 'Monitor off', 'Monitor on'];
     const WINDOW_MODES = ['Focus', 'Resize', 'Move'];
-    const FIND_BY = ['Running app', 'Window title'];
 
     const SHAPE = 'Matches the outline and forgives brightness, so it still finds the button on another PC’s screen or theme. Cannot tell an enabled button from a disabled one.';
     const SHAPE_BRIGHTNESS = 'Brightness counts too. For state: enabled or disabled, checked or not, lit or dim. Keep each template’s accuracy high, around 0.95, or it matches almost anything on a plain background.';
@@ -295,6 +294,7 @@ class Component extends DCLogic {
     const STEP_RESULT = 'Only Image Search and Read Text steps this one sits under, on their Success side.';
     const FOLDER = 'Optional. The command starts here instead of wherever the app happens to be.';
     const ASKS = 'Test now asks first: testing it really does it, on this machine.';
+    const WINDOW = 'A window area, found by its application and title. Change how it is found on the Areas tab, and every step using it follows.';
 
     const commandTail = (result, keep) => [
       text('Start in folder', '', FOLDER, { placeholder: 'C:\\Projects' }),
@@ -303,9 +303,6 @@ class Component extends DCLogic {
       select('Result comes from', result || 'Output'),
       mono('Keep only', keep || '', 'A regex: its first group is what a Check Value below sees.', '', 'Everything'),
     ];
-    const windowMatch = (byTitle, app, how, title) => byTitle
-      ? [seg('Find the window by', FIND_BY, 'Window title'), row([pick('Title match', how), box('Window title', title)], 'The title identifies the window, so this can name an app that is not open yet.')]
-      : [seg('Find the window by', FIND_BY, 'Running app'), select('Application', app, 'Matched on the process name, which does not change while the app is open.', ['↻']), row([pick('Title match', how), box('Window title', title)], 'Narrows it down. Optional.')];
 
     const groups = [
       {
@@ -884,41 +881,38 @@ class Component extends DCLogic {
             comment: '',
           },
           {
-            id: 'win-focus', type: 'Window', mode: 'Focus', glyph: 'Wn', tint: S, name: 'Focus chrome.exe', hasTest: false,
-            summary: 'Brings the Chrome window whose title contains Billing portal to the front.',
+            id: 'win-focus', type: 'Window', mode: 'Focus', glyph: 'Wn', tint: S, name: 'Focus window', hasTest: false,
+            summary: 'Brings the “Billing portal” window to the front.',
             fields: [
               seg('Mode', WINDOW_MODES, 'Focus', 'Bring the window to the foreground before anything else happens.'),
-              ...windowMatch(false, 'chrome.exe · Google Chrome', 'contains', 'Billing portal'),
-              button('Test the match'),
+              select('Window', 'Billing portal', WINDOW, ['New']),
             ],
             gives: '',
-            script: ['Focus Window    process <[ chrome.exe ]>   title contains <[ Billing portal ]>'],
+            script: ['Focus Window    <[ Billing portal ]>'],
             comment: '',
           },
           {
-            id: 'win-resize', type: 'Window', mode: 'Resize', glyph: 'Wn', tint: S, name: 'Resize chrome.exe to 1280x720', hasTest: false,
-            summary: 'Makes the Chrome window whose title contains Billing portal 1280 × 720.',
+            id: 'win-resize', type: 'Window', mode: 'Resize', glyph: 'Wn', tint: S, name: 'Resize window to 1280x720', hasTest: false,
+            summary: 'Makes the “Billing portal” window 1280 × 720.',
             fields: [
               seg('Mode', WINDOW_MODES, 'Resize', 'Force the window to a fixed size. Every area and location inside it then means the same thing on any machine.'),
-              ...windowMatch(false, 'chrome.exe · Google Chrome', 'contains', 'Billing portal'),
+              select('Window', 'Billing portal', WINDOW, ['New']),
               row([box('Width', '1280', 'px'), box('Height', '720', 'px')], 'The whole window, title bar and borders included.'),
-              button('Test the match'),
             ],
             gives: '',
-            script: ['Resize Window   process <[ chrome.exe ]>   title contains <[ Billing portal ]>   size 1280 720'],
+            script: ['Resize Window   <[ Billing portal ]>   size 1280 720'],
             comment: '',
           },
           {
-            id: 'win-move', type: 'Window', mode: 'Move', glyph: 'Wn', tint: S, name: 'Move Billing', hasTest: false,
-            summary: 'Moves the window whose title starts with Billing so its corner lands on Top left.',
+            id: 'win-move', type: 'Window', mode: 'Move', glyph: 'Wn', tint: S, name: 'Move window', hasTest: false,
+            summary: 'Moves the “Billing portal” window so its corner lands on “Top left”.',
             fields: [
               seg('Mode', WINDOW_MODES, 'Move', 'Move the window to a saved location.'),
-              ...windowMatch(true, '', 'starts with', 'Billing'),
+              select('Window', 'Billing portal', WINDOW, ['New']),
               select('Move to', 'Top left', 'The outer corner of the window lands here, title bar included.'),
-              button('Test the match'),
             ],
             gives: '',
-            script: ['Move Window     title starts with <[ Billing ]>   to point <[ Top left ]>'],
+            script: ['Move Window     <[ Billing portal ]>   to point <[ Top left ]>'],
             comment: '',
           },
         ],

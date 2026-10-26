@@ -557,10 +557,6 @@ namespace DataAccess.Migrations
                     b.Property<int>("PollIntervalMilliseconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ProcessName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("ResultExtractPattern")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -609,14 +605,6 @@ namespace DataAccess.Migrations
 
                     b.Property<int>("TimeoutMilliseconds")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("TitleMatchMode")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TitlePattern")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");

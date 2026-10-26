@@ -53,7 +53,8 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nPress <[ Ctrl ]> double" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop often" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nSystem EXPLODE" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFocus Window <[ chrome ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFocus Window process <[ chrome ]>" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ B ]> window process <[ b ]>\nSteps:\nResize Window <[ B ]>" },
             { DiagnosticCodeEnum.TEMPLATE_UNKNOWN, "Steps:\nFind Image <[ x ]> template <[ a.png ]>" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ a.png ]> click 3 4" },
             { DiagnosticCodeEnum.TEMPLATE_DUPLICATE, "Templates:\n  <[ a.png ]> click 1 2\n  <[ A.png ]> click 3 4" },
@@ -65,6 +66,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nBreak out of <[ Itself ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nFocus Window <[ chrome ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
             { DiagnosticCodeEnum.AREA_MAIN_DUPLICATE, "Areas:\n  <[ A ]> main monitor primary\n  <[ B ]> main window process <[ chrome.exe ]>" },
@@ -121,6 +123,7 @@ namespace Business.Tests.FlowScript
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]
         [InlineData("Points:\n  <[ Origin ]> offset 1 2", "Unexpected \"offset\", expected \"inside\" or \"on screen\".")]
         [InlineData("Points:\n  <[ Origin ]> on screen offset 1 2 offset 3 4", "Unexpected \"offset\", expected \"at\" or the end of the line.")]
+        [InlineData("Steps:\nFocus Window process <[ chrome.exe ]>", "A window step names its window's area, such as \"Focus Window  <[ Browser ]>\", and the area under Areas says which window that is.")]
         public void A_mistake_says_what_could_have_stood_there(string body, string message)
         {
             Read(Header + body).ShouldHaveSingleItem().Message.ShouldBe(message);

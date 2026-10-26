@@ -127,7 +127,7 @@ namespace Business.Ai.Tools
             return Redact(steps);
         }
 
-        [Description("Searches every flow's steps for text, across process names, window titles, typed text, commands, conditions and step names. Use this for questions like 'which flows use Chrome'.")]
+        [Description("Searches every flow's steps for text, across the area each step works in (its name, process and window title), typed text, commands, conditions and step names. Use this for questions like 'which flows use Chrome'.")]
         public async Task<IReadOnlyList<StepSummary>> SearchSteps(
             [Description("Text to look for, for example an application name.")] string text,
             [Description("Optional step type to narrow to. Empty searches every type.")] string flowStepType)
@@ -146,8 +146,7 @@ namespace Business.Ai.Tools
                 .Where(x => flowStepType == "" || x.FlowStepType.ToString() == flowStepType)
                 .Where(x => tokens.Any(t =>
                     EF.Functions.Like(x.Name, t) ||
-                    EF.Functions.Like(x.ProcessName, t) ||
-                    EF.Functions.Like(x.TitlePattern, t) ||
+                    (x.FlowArea != null && (EF.Functions.Like(x.FlowArea.Name, t) || EF.Functions.Like(x.FlowArea.ProcessName, t) || EF.Functions.Like(x.FlowArea.TitlePattern, t))) ||
                     (canSearchTypedText && EF.Functions.Like(x.KeyboardInputText, t)) ||
                     EF.Functions.Like(x.RunCommandValue, t) ||
                     EF.Functions.Like(x.ConditionText, t)))
@@ -452,8 +451,7 @@ namespace Business.Ai.Tools
                 x.FlowId,
                 x.Name,
                 x.Type,
-                x.ProcessName,
-                x.TitlePattern,
+                x.AreaName,
                 _redacted,
                 x.Command,
                 x.ConditionText,
@@ -528,8 +526,7 @@ namespace Business.Ai.Tools
                 x.RootId,
                 x.Name,
                 x.FlowStepType.ToString(),
-                x.ProcessName,
-                x.TitlePattern,
+                x.FlowArea != null ? x.FlowArea.Name : null,
                 x.KeyboardInputText,
                 x.RunCommandValue,
                 x.ConditionText,
@@ -556,7 +553,8 @@ namespace Business.Ai.Tools
         /// <summary><c>AreaName</c> null is a screen coordinate.</summary>
         public record PointSummary(int Id, string Name, string? AreaName, string OffsetMode, int X, int Y, float RatioX, float RatioY, int AuthoredDpi);
 
-        public record StepSummary(int Id, int FlowId, string Name, string Type, string ProcessName, string TitlePattern, string TypedText, string Command, string ConditionText, int? SubFlowId, int? FlowAreaId, int? FlowPointId);
+        /// <summary><c>AreaName</c> is where a search looks, or the window a window step acts on.</summary>
+        public record StepSummary(int Id, int FlowId, string Name, string Type, string? AreaName, string TypedText, string Command, string ConditionText, int? SubFlowId, int? FlowAreaId, int? FlowPointId);
 
         public record StepDetail(int Id, int FlowId, string Name, string Type, Dictionary<string, object?> Settings, AreaSummary? Area, List<TemplateSummary> Templates);
 

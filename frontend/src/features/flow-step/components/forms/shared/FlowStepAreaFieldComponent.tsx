@@ -6,11 +6,12 @@ import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComp
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
+import type { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { useFlowAreaMutations } from "@/features/flow-area/hooks/use-flow-area";
 import FlowAreaFormComponent from "@/features/flow-area/components/forms/FlowAreaFormComponent";
 
-const FORM_ID = "search-area-form";
+const FORM_ID = "step-area-form";
 
 interface IdOption {
   label: string;
@@ -21,17 +22,20 @@ interface Props {
   flowId: number | undefined;
   labelText: string;
   hintText?: string;
+  // Only areas of this type: a window step acts on a window.
+  flowAreaType?: FlowAreaTypeEnum;
   isDisabled?: boolean;
 }
 
 /**
  * Picks the area a step works in, with a way to make one without leaving the step. Shared so
- * every step that searches the screen offers the same thing.
+ * every step that searches the screen or acts on a window offers the same thing.
  */
-export default function FlowStepSearchAreaFieldComponent({
+export default function FlowStepAreaFieldComponent({
   flowId,
   labelText,
   hintText,
+  flowAreaType,
   isDisabled = false,
 }: Props) {
   const { setValue } = useFormContext();
@@ -39,7 +43,7 @@ export default function FlowStepSearchAreaFieldComponent({
   const { createFlowAreaMutation } = useFlowAreaMutations();
 
   const loadAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then(
+    backendApiService.Lookup.flowArea({ searchText: filter, flowId, flowAreaType }).then(
       (res) =>
         res.data.map((item) => ({
           label: item.label,
@@ -73,7 +77,9 @@ export default function FlowStepSearchAreaFieldComponent({
       formId: FORM_ID,
       children: (
         <FlowAreaFormComponent
-          defaultValues={new FlowAreaDto({ flowId: flowId ?? 0 })}
+          defaultValues={
+            new FlowAreaDto({ flowId: flowId ?? 0, ...(flowAreaType && { type: flowAreaType }) })
+          }
           formId={FORM_ID}
           isFormInDialog={true}
           formMode="ADD"
@@ -104,7 +110,7 @@ export default function FlowStepSearchAreaFieldComponent({
           fieldName="flowAreaId"
           labelText={labelText}
           mode="remote"
-          queryKey={["lookup", "flowArea", flowId]}
+          queryKey={["lookup", "flowArea", flowId, flowAreaType]}
           queryFn={loadAreas}
           optionLabel="label"
           optionValue="value"
@@ -122,7 +128,7 @@ export default function FlowStepSearchAreaFieldComponent({
         onClick={openAddArea}
         disabled={isDisabled || !flowId}
         className="p-button-outlined mb-3"
-        tooltip="Create a search area and use it here"
+        tooltip="Create an area and use it here"
         tooltipOptions={{ position: "top" }}
       />
     </div>

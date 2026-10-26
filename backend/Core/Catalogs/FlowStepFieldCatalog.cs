@@ -28,13 +28,6 @@ namespace Core.Catalogs
         //    return FieldsFor(type).Contains(nameof(FlowStep.FlowAreaId));
         //}
 
-        private static readonly string[] _windowMatch =
-        [
-            nameof(FlowStep.ProcessName),
-            nameof(FlowStep.TitlePattern),
-            nameof(FlowStep.TitleMatchMode),
-        ];
-
         private static readonly string[] _condition =
         [
             nameof(FlowStep.ConditionType),
@@ -95,18 +88,18 @@ namespace Core.Catalogs
                 nameof(FlowStep.CursorButtonType),
             ],
 
-            [FlowStepTypeEnum.WINDOW_FOCUS] = _windowMatch,
+            [FlowStepTypeEnum.WINDOW_FOCUS] = [nameof(FlowStep.FlowAreaId)],
 
             [FlowStepTypeEnum.WINDOW_RESIZE] =
             [
-                .. _windowMatch,
+                nameof(FlowStep.FlowAreaId),
                 nameof(FlowStep.WindowWidth),
                 nameof(FlowStep.WindowHeight),
             ],
 
             [FlowStepTypeEnum.WINDOW_RELOCATE] =
             [
-                .. _windowMatch,
+                nameof(FlowStep.FlowAreaId),
                 nameof(FlowStep.FlowPointId),
             ],
 

@@ -257,6 +257,7 @@ namespace Business.Executions
                 List<FlowStep> steps = await dbContext.FlowSteps
                     .AsNoTracking()
                     .Include(x => x.FlowStepTemplates).ThenInclude(x => x.FlowTemplate)
+                    .Include(x => x.FlowArea)
                     .Where(x => x.RootId == currentFlowId)
                     .ToListAsync(ct);
 

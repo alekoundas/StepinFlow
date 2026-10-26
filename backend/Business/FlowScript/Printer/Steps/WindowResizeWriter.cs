@@ -12,18 +12,10 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Resize Window  process <[ chrome.exe ]>   [title starts with <[ Swag ]>]   size 1280 720
+            // Resize Window  <[ Browser ]>   size 1280 720
             WriteKeyword(FlowStepTypeEnum.WINDOW_RESIZE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteKeyword(ScriptSymbolEnum.PROCESS);
-            WriteQuote(Step.ProcessName);
-
-            if (!string.IsNullOrWhiteSpace(Step.TitlePattern))
-            {
-                WriteKeyword(ScriptSymbolEnum.TITLE);
-                WriteKeyword(Step.TitleMatchMode);
-                WriteQuote(Step.TitlePattern);
-            }
+            WriteWindowArea();
 
             WriteGap();
             WriteKeyword(ScriptSymbolEnum.SIZE);

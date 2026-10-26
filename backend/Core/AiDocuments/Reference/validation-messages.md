@@ -30,7 +30,8 @@ nothing to use. Usually caused by switching that search's mode. Pick a different
 
 ## Areas
 
-**AREA_MISSING** — the step searches an area, and the area is not set or was deleted.
+**AREA_MISSING** — the step searches an area, or acts on a window area, and the area is not set or
+was deleted.
 
 ## Searches
 
@@ -56,8 +57,8 @@ nothing to use. Usually caused by switching that search's mode. Pick a different
 
 ## Windows
 
-**WINDOW_MATCH_MISSING** — a window step has no process name or title pattern, so it cannot find a
-window.
+**AREA_NOT_A_WINDOW** — a window step names an area that is a monitor, a region or a browser tab.
+Only a window can be focused, resized or moved, so pick a window area.
 
 **WINDOW_SIZE_MISSING** — a resize step has no width or height.
 

@@ -118,9 +118,9 @@ namespace Business.Tests.FlowScript
         [InlineData(TitleMatchModeEnum.REGEX)]
         public void A_title_match_is_read_back_as_written(TitleMatchModeEnum mode)
         {
-            FlowScriptSchema schema = Read($"Steps:\nFocus Window process <[ p ]> title {ScriptKeywordCatalog.GetTextOfKeyword(mode)} <[ x ]>");
+            FlowScriptSchema schema = Read($"Areas:\n  <[ W ]>  window process <[ p ]> title {ScriptKeywordCatalog.GetTextOfKeyword(mode)} <[ x ]>");
 
-            schema.Steps.Single().TitleMatchMode.ShouldBe(mode);
+            schema.Areas.Single().TitleMatchMode.ShouldBe(mode);
         }
 
         [Theory]

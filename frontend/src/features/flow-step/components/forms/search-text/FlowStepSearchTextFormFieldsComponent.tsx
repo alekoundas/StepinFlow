@@ -17,7 +17,7 @@ import {
   SEARCH_TEXT_MODES,
 } from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
-import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
+import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
 import { useOcrLanguages } from "@/features/settings/hooks/use-ocr-languages";
 
@@ -72,7 +72,7 @@ export default function FlowStepSearchTextFormFieldsComponent({
         hintText={SEARCH_TEXT_MODES.find((x) => x.value === mode)?.description}
       />
 
-      <FlowStepSearchAreaFieldComponent
+      <FlowStepAreaFieldComponent
         flowId={flowId}
         labelText="Where to read"
         hintText="Reading a small area is both faster and far more accurate than reading a screen."

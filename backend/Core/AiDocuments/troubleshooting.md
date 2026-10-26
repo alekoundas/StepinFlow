@@ -63,8 +63,10 @@ only offers packs that are.
 
 ## A window step does not find its window
 
-The process name is the executable name without `.exe`. The title pattern is matched with the mode
-you chose — a title that changes as the app is used will not match `EQUALS`.
+A window step finds its window through the window area it names, so check that area on the Areas
+tab: the process name is the executable name without `.exe`, and the title pattern is matched with
+the mode chosen there — a title that changes as the app is used will not match `EQUALS`. Test the
+match from the area's form.
 
 Where several windows match, the frontmost one wins.
 

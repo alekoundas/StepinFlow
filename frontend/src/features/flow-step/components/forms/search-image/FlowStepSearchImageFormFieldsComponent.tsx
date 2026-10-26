@@ -9,7 +9,7 @@ import {
   isWaitingMode,
 } from "@/features/flow-step/components/forms/shared/search-modes";
 import { MATCH_MODES } from "@/features/flow-step/components/forms/shared/match-modes";
-import FlowStepSearchAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepSearchAreaFieldComponent";
+import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 
 interface Props {
   flowId: number | undefined;
@@ -49,7 +49,7 @@ export default function FlowStepSearchImageFormFieldsComponent({
         hintText={SEARCH_IMAGE_MODES.find((x) => x.value === mode)?.description}
       />
 
-      <FlowStepSearchAreaFieldComponent
+      <FlowStepAreaFieldComponent
         flowId={flowId}
         labelText="Where to look"
         hintText="A smaller area is the single biggest thing that makes the search fast."

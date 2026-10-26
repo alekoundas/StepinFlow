@@ -8,7 +8,7 @@ using Core.Models.Business.AreaPointResolution;
 namespace Business.Executions.Workers
 {
     /// <summary>
-    /// Focus, resize and move. 
+    /// Focus, resize and move the window of the step's area. 
     /// </summary>
     public class WindowStepWorker : IStepWorker
     {
@@ -23,28 +23,35 @@ namespace Business.Executions.Workers
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
+            FlowArea? area = step.FlowArea;
+            if (area == null)
+                return ExecutionStep.Failure("There is no window to act on.");
+
+            if (area.Type != FlowAreaTypeEnum.APPLICATION)
+                return ExecutionStep.Failure(Detail(area, "not a window"));
+
             WindowQuery query = new WindowQuery
             {
-                ProcessName = step.ProcessName,
-                TitlePattern = step.TitlePattern,
-                TitleMatchMode = step.TitleMatchMode,
+                ProcessName = area.ProcessName,
+                TitlePattern = area.TitlePattern,
+                TitleMatchMode = area.TitleMatchMode,
                 UseClientArea = false,
             };
 
             WindowHandle window = _windowService.FindWindow(query);
             if (!window.IsValid)
-                return ExecutionStep.Failure(Detail(step, "no window matched"));
+                return ExecutionStep.Failure(Detail(area, "no window matched"));
 
             switch (step.FlowStepType)
             {
                 case FlowStepTypeEnum.WINDOW_FOCUS:
-                    return Focus(step, window);
+                    return Focus(area, window);
 
                 case FlowStepTypeEnum.WINDOW_RESIZE:
-                    return Resize(step, window);
+                    return Resize(step, area, window);
 
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
-                    return await RelocateAsync(step, window, ct);
+                    return await RelocateAsync(step, area, window, ct);
 
                 default:
                     return ExecutionStep.Failure($"{step.FlowStepType} is not a window step.");
@@ -56,50 +63,44 @@ namespace Business.Executions.Workers
         // Private methods
         // ================================================================
 
-        private ExecutionStep Focus(FlowStep step, WindowHandle window)
+        private ExecutionStep Focus(FlowArea area, WindowHandle window)
         {
             if (!_windowService.FocusWindow(window))
-                return ExecutionStep.Failure(Detail(step, "the window would not come to the front"));
+                return ExecutionStep.Failure(Detail(area, "the window would not come to the front"));
 
-            return ExecutionStep.Success(message: Detail(step, "focused"));
+            return ExecutionStep.Success(message: Detail(area, "focused"));
         }
 
-        private ExecutionStep Resize(FlowStep step, WindowHandle window)
+        private ExecutionStep Resize(FlowStep step, FlowArea area, WindowHandle window)
         {
             if (step.WindowWidth < 1 || step.WindowHeight < 1)
-                return ExecutionStep.Failure(Detail(step, "no size to resize to"));
+                return ExecutionStep.Failure(Detail(area, "no size to resize to"));
 
             if (!_windowService.ResizeWindow(window, step.WindowWidth, step.WindowHeight))
-                return ExecutionStep.Failure(Detail(step, "the window would not resize"));
+                return ExecutionStep.Failure(Detail(area, "the window would not resize"));
 
-            return ExecutionStep.Success(message: Detail(step, $"{step.WindowWidth} x {step.WindowHeight}"));
+            return ExecutionStep.Success(message: Detail(area, $"{step.WindowWidth} x {step.WindowHeight}"));
         }
 
-        private async Task<ExecutionStep> RelocateAsync(FlowStep step, WindowHandle window, CancellationToken ct)
+        private async Task<ExecutionStep> RelocateAsync(FlowStep step, FlowArea area, WindowHandle window, CancellationToken ct)
         {
             if (step.FlowPointId == null)
-                return ExecutionStep.Failure(Detail(step, "nowhere to move to"));
+                return ExecutionStep.Failure(Detail(area, "nowhere to move to"));
 
             PointResolution point = await _areaPointResolver.ResolvePointAsync(step.FlowPointId.Value, ct);
             if (!point.IsResolved)
                 return ExecutionStep.Failure(point.Error);
 
             if (!_windowService.MoveWindow(window, point.Point.X, point.Point.Y))
-                return ExecutionStep.Failure(Detail(step, "the window would not move"));
+                return ExecutionStep.Failure(Detail(area, "the window would not move"));
 
-            return ExecutionStep.Success(point.Point, Detail(step, "moved"));
+            return ExecutionStep.Success(point.Point, Detail(area, "moved"));
         }
 
-        /// <summary>Says which window was being looked for, since that is what usually went wrong.</summary>
-        private static string Detail(FlowStep step, string outcome)
+        // Says which window was being looked for, since that is what usually went wrong.
+        private static string Detail(FlowArea area, string outcome)
         {
-            if (!string.IsNullOrWhiteSpace(step.ProcessName))
-                return $"{step.ProcessName} - {outcome}";
-
-            if (!string.IsNullOrWhiteSpace(step.TitlePattern))
-                return $"Title {step.TitleMatchMode} \"{step.TitlePattern}\" - {outcome}";
-
-            return outcome;
+            return $"{area.Name} - {outcome}";
         }
     }
 }

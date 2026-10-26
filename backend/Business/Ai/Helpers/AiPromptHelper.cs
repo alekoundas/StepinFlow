@@ -64,8 +64,8 @@ namespace Business.Ai.Helpers
               Call SearchAiDocuments for them, even when the question also names one of their flows.
             - Start broad and narrow: SearchFlows or SearchSteps to find what the question is about,
               then GetFlow or GetFlowSteps for detail.
-            - SearchSteps is the one for "which flows use X" - it looks across process names, window
-              titles, typed text, commands and conditions in one pass.
+            - SearchSteps is the one for "which flows use X" - it looks across the area each step
+              works in (its process and window title), typed text, commands and conditions in one pass.
             - GetFlowChecks is the one for "what does this flow test, verify, assert or check". It
               answers in one call what listing every step only implies.
             - Call more than one tool when the question needs it, and say so plainly if the tools

@@ -21,8 +21,10 @@ namespace Business.Flows.FlowValidationService.Rules
         // ================================================================
         // Public methods
         // ================================================================
-        public static void Validate(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyDictionary<int, int> templateCountByStepId, FlowValidationResultDto result)
+        public static void Validate(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyDictionary<int, int> templateCountByStepId, IReadOnlyList<FlowArea> areas, FlowValidationResultDto result)
         {
+            Dictionary<int, FlowArea> areasById = areas.ToDictionary(x => x.Id);
+
             foreach (FlowStep step in authoredSteps)
             {
                 if (string.IsNullOrWhiteSpace(step.Name))
@@ -31,7 +33,7 @@ namespace Business.Flows.FlowValidationService.Rules
                 ValidateQuotes(result, step);
 
                 if (WindowTypes.Contains(step.FlowStepType))
-                    ValidateWindow(result, step);
+                    ValidateWindow(result, step, areasById);
 
                 switch (step.FlowStepType)
                 {
@@ -104,9 +106,7 @@ namespace Business.Flows.FlowValidationService.Rules
                 step.RunCommandWorkingDirectory,
                 step.ResultExtractPattern,
                 step.ConditionText,
-                step.ConditionTextEnd,
-                step.ProcessName,
-                step.TitlePattern);
+                step.ConditionTextEnd);
 
             if (!text.Contains(quoteOpen, StringComparison.Ordinal) && !text.Contains(quoteClose, StringComparison.Ordinal))
                 return;
@@ -115,10 +115,12 @@ namespace Business.Flows.FlowValidationService.Rules
                 $"Text in this step can't contain \"{quoteOpen}\" or \"{quoteClose}\".");
         }
 
-        private static void ValidateWindow(FlowValidationResultDto result, FlowStep step)
+        private static void ValidateWindow(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowArea> areasById)
         {
-            if (string.IsNullOrWhiteSpace(step.ProcessName) && string.IsNullOrWhiteSpace(step.TitlePattern))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_MATCH_MISSING, "Pick an application, or type a title to match.");
+            if (step.FlowAreaId == null)
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_MISSING, "Pick the window this step acts on.");
+            else if (areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? area) && area.Type != FlowAreaTypeEnum.APPLICATION)
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_NOT_A_WINDOW, $"\"{area.Name}\" is not a window, so there is nothing to focus, resize or move. Pick a window area.");
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && (step.WindowWidth < 1 || step.WindowHeight < 1))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");

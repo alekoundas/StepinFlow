@@ -12,18 +12,10 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Move Window  process <[ chrome.exe ]>   [title starts with <[ Swag ]>]   to point <[ X ]>
+            // Move Window  <[ Browser ]>   to point <[ X ]>
             WriteKeyword(FlowStepTypeEnum.WINDOW_RELOCATE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteKeyword(ScriptSymbolEnum.PROCESS);
-            WriteQuote(Step.ProcessName);
-
-            if (!string.IsNullOrWhiteSpace(Step.TitlePattern))
-            {
-                WriteKeyword(ScriptSymbolEnum.TITLE);
-                WriteKeyword(Step.TitleMatchMode);
-                WriteQuote(Step.TitlePattern);
-            }
+            WriteWindowArea();
 
             WriteGap();
             WriteKeyword(ScriptSymbolEnum.TO);

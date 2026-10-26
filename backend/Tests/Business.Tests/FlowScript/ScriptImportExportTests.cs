@@ -552,7 +552,8 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG, FlowPointId = hamburger.Id, FlowPointEndId = origin.Id, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowAreaId = browser.Id, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowAreaId = gameClient.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReferenceId = find.Id }, loop.Id);

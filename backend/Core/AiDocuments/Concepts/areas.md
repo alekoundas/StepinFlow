@@ -3,7 +3,8 @@
 ## What an area is
 
 An area is a rectangle on screen, worked out fresh every time a flow runs. Steps that look at the
-screen — image search and read text — search inside an area rather than the whole desktop.
+screen — image search and read text — search inside an area rather than the whole desktop, and the
+window steps — focus, resize and move — act on the window an `APPLICATION` area finds.
 
 An area is not fixed coordinates. It is a rule for finding a rectangle, which is why a flow built
 on one machine can work on another.
@@ -23,6 +24,9 @@ An `APPLICATION` area finds a window at runtime by process name plus a title pat
 is matched with one of `CONTAINS`, `EQUALS`, `STARTS_WITH` or `REGEX`.
 
 When several windows match, the frontmost one is used. There is no instance index.
+
+The same area is what a window step names, so one description of a window serves the searches
+inside it and every step that focuses, resizes or moves it.
 
 **Client area** is an option. With it on, the area covers the window's content and excludes the
 title bar and borders, so a window with a different border style does not shift everything inside.

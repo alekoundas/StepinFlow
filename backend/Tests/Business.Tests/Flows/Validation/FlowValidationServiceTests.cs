@@ -70,6 +70,33 @@ namespace Business.Tests.Flows.Validation
             codes.ShouldContain(FlowValidationCodeEnum.NO_TEMPLATES);
         }
 
+        [Fact]
+        public void A_window_step_needs_an_area_and_that_area_a_window()
+        {
+            _areas.Add(new FlowArea { Id = 1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION });
+            _areas.Add(new FlowArea { Id = 2, Name = "Screen", Type = FlowAreaTypeEnum.MONITOR });
+            _areas.Add(new FlowArea { Id = 3, Name = "Cart", Type = FlowAreaTypeEnum.BROWSER_TAB });
+
+            FlowStep focus = Add(FlowStepTypeEnum.WINDOW_FOCUS, "Focus");
+            focus.FlowAreaId = 1;
+            FlowStep nowhere = Add(FlowStepTypeEnum.WINDOW_FOCUS, "Focus nothing");
+            FlowStep monitor = Add(FlowStepTypeEnum.WINDOW_FOCUS, "Focus a monitor");
+            monitor.FlowAreaId = 2;
+            FlowStep tab = Add(FlowStepTypeEnum.WINDOW_FOCUS, "Focus a tab");
+            tab.FlowAreaId = 3;
+
+            // A window step has Success and Failure, so empty ones are warned about too.
+            List<FlowValidationCodeEnum> ErrorsOn(FlowStep step)
+            {
+                return CodesOn(step).Where(x => x != FlowValidationCodeEnum.BRANCHES_EMPTY).ToList();
+            }
+
+            ErrorsOn(focus).ShouldBeEmpty();
+            ErrorsOn(nowhere).ShouldBe([FlowValidationCodeEnum.AREA_MISSING]);
+            ErrorsOn(monitor).ShouldBe([FlowValidationCodeEnum.AREA_NOT_A_WINDOW]);
+            ErrorsOn(tab).ShouldBe([FlowValidationCodeEnum.AREA_NOT_A_WINDOW]);
+        }
+
         // The script writes text between <[ and ]>, so text holding either one could not be exported.
         [Theory]
         [InlineData("Login <[ failed")]

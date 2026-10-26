@@ -360,7 +360,8 @@ children so a flow handles its own problems rather than stopping.
 
 **FlowArea** — a named rectangle owned by a flow. A window matched by process name and title, a
 monitor, or a region inside another area - in pixels or as a fraction of it. Search steps look
-inside one. Each says what its contents **scale with**: the screen's DPI, or its own size (§8).
+inside one, and the window steps focus, resize or move the window one finds. Each says what its
+contents **scale with**: the screen's DPI, or its own size (§8).
 
 **Main area** — the window a flow works in: the one `FlowArea` with `IsMain`, always a root. A
 recording is stored relative to it, and a viewport resizes it.
@@ -1198,6 +1199,18 @@ for it - 30 seconds, or the step's timeout - so the next step does not act on a 
 loading. The runner refuses a launch outright, and every preset has a catalog entry, which a test
 holds to: Launch had none, and threw the first time one executed.
 
+**A window step names a window area**, since 2026-10-26: `Focus Window <[ Browser ]>`, `Resize Window
+<[ Browser ]> size 1280 720`, `Move Window <[ Browser ]> to point <[ X ]>`. The window is described
+once, by the area, and the searches inside it and every step that places it follow when its title
+changes; several steps share one area. Before, each window step carried its own process, title and
+match mode, so the same window was described twice and a renamed title broke the steps but not the
+searches. The step keeps `FlowAreaId` and drops those three columns (`WindowStepArea`, which links a
+window step to an area of its flow that finds the same window and makes one where none does). The
+worker finds the window the way the area does, but whole: a minimised window has no inside to
+measure and can still be focused. Only an `APPLICATION` area is a window - a monitor, a region or a
+browser tab is `AREA_NOT_A_WINDOW` - and an old `process <[ … ]>` line is refused with a message
+saying how it is written now.
+
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is
 hold Ctrl, click, release Ctrl - so the click never has to know about keys. The input adapter keeps
@@ -1704,7 +1717,7 @@ from whichever window has focus is exactly the implicit behaviour that breaks on
 
 `FlowArea` already binds to a window by process name and title, so this needs no new concept: one
 root area marked `IsMain`, written `main` in the script. Viewport sizing targets that window, and
-every other `WINDOW_*` step is untouched. The recorder stores what it keeps relative to the same
+a `WINDOW_*` step names it, or any other window area, rather than describing a window itself. The recorder stores what it keeps relative to the same
 area, which is what makes a recording portable; a main area in screen coordinates makes a flow that
 works on one machine only.
 
@@ -1845,11 +1858,12 @@ reason the warning above gives.
 
 **Steps named by their settings.** A cursor, wait, keyboard, window or system action step has no
 Name field. `FlowStepNameHelper` names it from its own settings - "Double right click", "Wait 2s",
-"Type {{email}}", "Focus chrome" - whenever it is saved, pasted, recorded or imported, and
+"Type {{email}}", "Focus window" - whenever it is saved, pasted, recorded or imported, and
 `FlowNameHelper.MakeUnique` numbers it like any name: "Click 2", or "Wait 2s (2)" when the name
 already ends in a number. Only the step's own settings, never the name of the point or step it goes
-to: those can be renamed, and keeping a copy of their name current would mean renaming steps nobody
-edited. The tree shows where a Move goes beside its name instead. The form's header gets the name
+to or the window area it acts on: those can be renamed, and keeping a copy of their name current
+would mean renaming steps nobody edited. The tree shows where a Move goes, and which window a window
+step acts on, beside its name instead. The form's header gets the name
 back with the script line, so it shows what the step will be called before it is saved.
 
 **Testing a location.** Every Test of a location works it out with `AreaPointResolver`, the way an
@@ -2108,13 +2122,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-936 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+941 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 694 | the walker, how an execution ends, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 699 | the walker, how an execution ends, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2230,7 +2244,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 936 backend tests.
+or OpenAI. 941 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

@@ -75,11 +75,11 @@ Wait            800ms to 1200ms
 
 System          LOCK_WORKSTATION
 
-Resize Window   process <[ chrome.exe ]> title starts with <[ Swag ]>   size 1280 720
+Resize Window   <[ Browser ]>   size 1280 720
 
-Move Window     process <[ chrome.exe ]>   to point <[ Origin ]>
+Move Window     <[ Browser ]>   to point <[ Origin ]>
 
-Focus Window    process <[ chrome.exe ]>
+Focus Window    <[ Game client ]>
 
 Notify          <[ done ]>
 

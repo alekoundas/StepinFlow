@@ -5,7 +5,6 @@ import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
-import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepScriptLineDto } from "@/shared/models/flow-step-script-line-dto";
 import { getFlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
@@ -58,13 +57,6 @@ const BUTTON_NAMES: Record<string, string> = {
   [CursorButtonTypeEnum.MIDDLE_BUTTON]: "middle",
 };
 
-const TITLE_MATCH_NAMES: Record<string, string> = {
-  [TitleMatchModeEnum.CONTAINS]: "contains",
-  [TitleMatchModeEnum.EQUALS]: "is",
-  [TitleMatchModeEnum.STARTS_WITH]: "starts with",
-  [TitleMatchModeEnum.REGEX]: "matches",
-};
-
 const quoted = (text: string | null | undefined) => `“${text ?? ""}”`;
 
 const plural = (count: number, one: string, many: string) =>
@@ -87,16 +79,8 @@ export const conditionPhrase = (dto: FlowStepDto): string => {
   return `${label} ${quoted(dto.conditionText)}`;
 };
 
-const windowPhrase = (dto: FlowStepDto): string => {
-  const title = dto.titlePattern
-    ? ` whose title ${TITLE_MATCH_NAMES[dto.titleMatchMode] ?? "contains"} ${quoted(dto.titlePattern)}`
-    : "";
-
-  if (dto.processName) return `the ${dto.processName} window${title}`;
-  if (title) return `the window${title}`;
-
-  return "the window";
-};
+const windowPhrase = (names: Names): string =>
+  names?.areaName ? `the ${quoted(names.areaName)} window` : "the window";
 
 const typeLabel = (type: FlowStepTypeEnum | undefined): string => {
   if (type && CURSOR_TYPES.includes(type)) return "Cursor";
@@ -326,14 +310,14 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
       return {
         type,
         mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
-        summary: `Brings ${windowPhrase(dto)} to the front.`,
+        summary: `Brings ${windowPhrase(names)} to the front.`,
       };
 
     case FlowStepTypeEnum.WINDOW_RESIZE:
       return {
         type,
         mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
-        summary: `Makes ${windowPhrase(dto)} ${dto.windowWidth} × ${dto.windowHeight}.`,
+        summary: `Makes ${windowPhrase(names)} ${dto.windowWidth} × ${dto.windowHeight}.`,
       };
 
     case FlowStepTypeEnum.WINDOW_RELOCATE:
@@ -341,8 +325,8 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
         type,
         mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
         summary: names?.pointName
-          ? `Moves ${windowPhrase(dto)} so its corner lands on ${quoted(names.pointName)}.`
-          : `Moves ${windowPhrase(dto)} to a saved location.`,
+          ? `Moves ${windowPhrase(names)} so its corner lands on ${quoted(names.pointName)}.`
+          : `Moves ${windowPhrase(names)} to a saved location.`,
       };
 
     case FlowStepTypeEnum.SYSTEM_COMMAND:

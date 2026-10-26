@@ -62,11 +62,7 @@ namespace Core.Models.Database
         public ConditionTypeEnum? ConditionType { get; set; }
 
 
-        // WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE
-        public string ProcessName { get; set; } = string.Empty;
-        public string TitlePattern { get; set; } = string.Empty;
-        public TitleMatchModeEnum TitleMatchMode { get; set; }
-
+        // WINDOW_RESIZE
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
 

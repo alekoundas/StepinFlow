@@ -28,10 +28,7 @@ interface WindowOption {
 interface Props {
   isDisabled?: boolean;
 
-  /**
-   * Mirrors the area's own checkbox so the tested bounds are the ones it will really resolve to.
-   * Steps leave it false: resize and relocate always mean the outer frame.
-   */
+  /** Mirrors the area's own checkbox so the tested bounds are the ones it will really resolve to. */
   useClientArea?: boolean;
 
   /**
@@ -45,8 +42,8 @@ interface Props {
 }
 
 /**
- * Says which window something means. Shared by the window step and the area form, so the two can
- * never drift apart.
+ * Says which window an area means. A window step names that area rather than describing a window of
+ * its own, so this is the one place a window is described.
  *
  * Two ways in, because they answer different situations. Picking a running app is the common case
  * and matches on the process name, which does not change while the app runs. Typing a title is the

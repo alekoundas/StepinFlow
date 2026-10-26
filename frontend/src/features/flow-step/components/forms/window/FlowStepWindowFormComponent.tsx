@@ -76,9 +76,7 @@ export default function FlowStepWindowFormComponent({
       codeComment: data.codeComment ?? "",
       flowStepType: data.flowStepType,
 
-      processName: data.processName,
-      titlePattern: data.titlePattern,
-      titleMatchMode: data.titleMatchMode,
+      flowAreaId: data.flowAreaId ?? undefined,
 
       windowWidth: isResize ? data.windowWidth : 0,
       windowHeight: isResize ? data.windowHeight : 0,

@@ -97,9 +97,9 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Shift", KeyboardKeyActionType = KeyboardKeyActionTypeEnum.RELEASE }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, WindowWidth = 1280, WindowHeight = 720 }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, ProcessName = "chrome.exe", FlowPoint = origin }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, ProcessName = "chrome.exe" }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowArea = browser, FlowPoint = origin }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 
             FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);

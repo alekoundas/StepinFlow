@@ -25,7 +25,6 @@ namespace DataAccess.Configurations
             builder.Property(x => x.CursorScrollDirectionType).HasConversion<string>();
             builder.Property(x => x.KeyboardInputType).HasConversion<string>();
             builder.Property(x => x.KeyboardKeyActionType).HasConversion<string>();
-            builder.Property(x => x.TitleMatchMode).HasConversion<string>();
             builder.Property(x => x.SearchMode).HasConversion<string>();
             builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
             builder.Property(x => x.RunCommandShell).HasConversion<string>();
@@ -57,7 +56,7 @@ namespace DataAccess.Configurations
 
 
             // Relationship with FlowArea (one-to-many)
-            // A search area is reusable, so removing it must not take the steps using it down with it.
+            // An area is reusable, so removing it must not take the steps using it down with it.
             builder.HasOne(x => x.FlowArea)
                 .WithMany(x => x.FlowSteps)
                 .HasForeignKey(x => x.FlowAreaId)

@@ -53,10 +53,10 @@ namespace Core.Tests.Helpers
         }
 
         [Fact]
-        public void A_window_step_says_which_window()
+        public void A_window_step_says_what_it_does_and_not_which_window_since_its_area_can_be_renamed()
         {
-            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, ProcessName = "chrome" }).ShouldBe("Focus chrome");
-            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, TitlePattern = "Inbox", WindowWidth = 1280, WindowHeight = 720 }).ShouldBe("Resize Inbox to 1280x720");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = new FlowArea { Name = "Browser" } }).ShouldBe("Focus window");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, WindowWidth = 1280, WindowHeight = 720 }).ShouldBe("Resize window to 1280x720");
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowPoint = new FlowPoint { Name = "Left half" } }).ShouldBe("Move window");
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.MONITOR_OFF }).ShouldBe("Monitor off");
         }
