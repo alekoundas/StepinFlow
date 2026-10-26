@@ -50,8 +50,8 @@ Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> ac
   Click           right double
 
 Wait For Text   <[ Read the total ]>   matches <[ total: (\d+) ]>   in <[ Cart badge ]>   keep <[ (\d+) ]>   timeout 10000ms
-
-Check Value     <[ Order is large ]>   <[ {{Read the total}} ]> > <[ 100 ]>
+ Success:
+  Check Value     <[ Order is large ]>   <[ {{Read the total}} ]> > <[ 100 ]>
 
 Wait Until No Text  <[ Banner cleared ]>   is not empty   in <[ Header ]>   no timeout
 
@@ -84,7 +84,7 @@ Focus Window    <[ Game client ]>
 Notify          <[ done ]>
 
 Loop            <[ Retry ]>   5 times
- Move            to <[ Find username field ]>
+ Move            to point <[ Hamburger ]>
  Click
  Break           out of <[ Retry ]>
 

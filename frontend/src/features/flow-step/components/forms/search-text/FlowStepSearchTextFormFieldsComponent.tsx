@@ -94,7 +94,7 @@ export default function FlowStepSearchTextFormFieldsComponent({
 
       {/* Before the condition, because the condition is tested against what this leaves. */}
       <FlowStepResultExtractFieldComponent
-        resultDescription="The condition below is tested against what is left, and later steps read it."
+        resultDescription="The condition below is tested against what is left, and the steps under this one read it."
         isDisabled={isDisabled}
       />
 

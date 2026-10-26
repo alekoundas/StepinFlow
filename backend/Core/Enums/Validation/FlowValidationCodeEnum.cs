@@ -12,10 +12,10 @@ namespace Core.Enums
         POINT_MISSING,
         STEP_RESULT_MISSING,
 
-        /// <summary>Set, but the step it reads no longer runs above this one through Success.</summary>
+        /// <summary>The step it reads, picked or written as {{name}}, is not above this one on a side that has its result.</summary>
         STEP_RESULT_UNREACHABLE,
 
-        /// <summary>Set, but the step it reads waits until it finds nothing, which gives no result.</summary>
+        /// <summary>The step it reads keeps nothing: a wait until nothing is found, or {{name}} of a step that keeps no value.</summary>
         STEP_RESULT_NOT_GIVEN,
 
         // Areas

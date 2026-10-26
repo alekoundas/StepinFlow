@@ -46,7 +46,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.SYSTEM_COMMAND,
       name: "System Command",
       description:
-        "Run a command on this machine, branch on whether it worked, and use what it printed in later steps.",
+        "Run a command on this machine, branch on whether it worked, and use what it printed in the steps under it.",
       iconName: "code",
     },
     {
@@ -67,7 +67,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.CHECK_VALUE,
       name: "Check Value",
       description:
-        "Test what an earlier step read or printed, and branch on the answer.",
+        "Test what a step above it read or printed, and branch on the answer.",
       iconName: "filter",
     },
     {
@@ -131,7 +131,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.SEARCH_TEXT,
       name: "Search Text",
       description:
-        "Read the text inside an area, decide whether it says what it should, and hand what was read to later steps.",
+        "Read the text inside an area, decide whether it says what it should, and hand what was read to the steps under it.",
       iconName: "file-edit",
     },
   ];

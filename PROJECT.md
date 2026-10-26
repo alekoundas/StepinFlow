@@ -1160,9 +1160,12 @@ result - which is what makes the most intricate code in the repository the cheap
 
 Everything an execution needs sits in memory rather than in the database. History is written in
 batches and only if it was asked for — turning history off changes what gets stored and never what a
-flow does. Results were meant to be dropped as the walk leaves a subtree; the walker's tests found
-they never are, and every result stays readable until its step runs again. Whether that is the bug
-or the rule is an open decision in `TODO.md`, because the language already leans on it.
+flow does. **A step's result is kept for the steps under it** and dropped as the walk leaves it,
+since 2026-10-26: a location for the Success side, a value for both, because a Read Text or a System
+Command keeps what it read or printed either way. The validator holds a `{{name}}` written in text
+to the same rule as a step picked from a dropdown. Until then the walker dropped nothing - two lines
+in the wrong order - and every result stayed readable until its step executed again, a stale value
+from an earlier loop pass included.
 
 `StepWorkerFactory` maps `FlowStepTypeEnum` to an `IStepWorker`. The map is built in
 `App/DependencyInjection/ExecutionServiceRegistration.cs` rather than inside the factory, so the
@@ -1328,15 +1331,15 @@ Three kinds of name translate through one helper, `VariableTranslator`:
 |---|---|
 | `{{username}}` | a CSV column |
 | `{{width}}`, `{{height}}` | the viewport being executed |
-| `{{Read the total}}` | what an earlier step produced |
+| `{{Read the total}}` | what a step it sits under read or printed |
 
 There are **two substitution mechanisms**, because there are two different needs. A keyboard step in
 column mode holds a `FlowCsvColumnId` — a foreign key, not text — because the whole value is one
 column, and a foreign key is what makes renaming a column safe. Free text fields hold `{{name}}`
 variables, because a notify message like `"Login failed: {{Login error}}"` mixes literal and
 variable and that mixing is the point. Renaming a column rewrites the variables across that flow's
-steps in one transaction; a validator rule catches a variable that names nothing, at save rather
-than at execution. The writer emits `{{username}}` either way, so the script reads the same.
+steps in one transaction; the validator catches a variable that names nothing, a step that keeps no
+value, or a step this one does not sit under, at save rather than at execution. The writer emits `{{username}}` either way, so the script reads the same.
 
 ### Coordinates
 
@@ -2122,13 +2125,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-944 tests, all passing but one skipped on purpose, in eight projects under `backend/Tests/` - one
+947 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 702 | the walker, how an execution ends and how the debugger holds it, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 705 | the walker, how an execution ends and how the debugger holds it, the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2199,7 +2202,9 @@ an open question:
 - **`Wait Until No Image` and `Wait Until No Text` took their Failure branch when the thing went
   away** - exactly when they should succeed - and failed again when it timed out still there. Since
   the wait modes were written.
-- **Results are never forgotten.** An open decision rather than a fix - see §8.
+- **Results were never forgotten.** The walker recorded where a result sat and then dropped that
+  same record, so every result stayed readable until its step executed again. Left open while the
+  rule was decided, fixed 2026-10-26 - see §8.
 
 Proving the tests bite: planting two bugs in `ImageSearcher` - the required rule off, the larger
 scale ratio instead of the smaller - each failed exactly the test written for it and nothing else.
@@ -2244,14 +2249,13 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 944 backend tests.
+or OpenAI. 947 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
 ### Known gaps
 
 - No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
-- How long a step's result stays readable is undecided (§8).
 - The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build
   and tests but have not been clicked through by hand.
 - `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the

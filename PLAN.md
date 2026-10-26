@@ -37,9 +37,9 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25.
 | 14 | Git: the flows kept as files in a repository of the app's own and written on every save; commits, discard and restore, branches that hide a flow rather than delete it, a remote to push to and pull from; `Platform.Shared` | §2, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 
-**Next:** a step's result living under its step, settled 2026-10-26 (`TODO.md`, Execution), then
-the rest of layer 5 and the machine-only bucket. Phase 7 is in for automation flows; QA tests, the
-rest of it, are set aside until they are picked up again.
+**Next:** the rest of layer 5, starting with a start that fails before the walk (`TODO.md`,
+Execution), then the machine-only bucket. Phase 7 is in for automation flows; QA tests, the rest of
+it, are set aside until they are picked up again.
 
 ---
 

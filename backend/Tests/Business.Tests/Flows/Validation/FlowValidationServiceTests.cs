@@ -309,14 +309,49 @@ namespace Business.Tests.Flows.Validation
         }
 
         [Fact]
-        public void A_variable_is_known_from_an_input_a_step_or_the_viewport()
+        public void A_variable_is_known_from_an_input_a_step_above_or_the_viewport()
         {
             _inputs.Add("username");
-            Search("Read the total");
-            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Read the total");
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type", Branch(read, FlowStepTypeEnum.SUCCESS));
             type.KeyboardInputText = "{{username}} {{Read the total}} {{width}}x{{height}}";
 
-            CodesOn(type).ShouldNotContain(FlowValidationCodeEnum.VARIABLE_UNKNOWN);
+            CodesOn(type).ShouldBeEmpty();
+        }
+
+        // What a step read is kept whichever way it went, and only for the steps under it.
+        [Fact]
+        public void A_steps_value_is_read_on_either_side_of_it_and_nowhere_else()
+        {
+            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Read the total");
+            FlowStep onSuccess = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type", Branch(read, FlowStepTypeEnum.SUCCESS));
+            onSuccess.KeyboardInputText = "{{Read the total}}";
+            FlowStep onFailure = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(read, FlowStepTypeEnum.FAILURE));
+            onFailure.Message = "The total was {{Read the total}}";
+            onFailure.DiscordBotId = 1;
+            FlowStep after = Add(FlowStepTypeEnum.END_EXECUTION, "End");
+            after.Message = "The total was {{Read the total}}";
+
+            CodesOn(onSuccess).ShouldBeEmpty();
+            CodesOn(onFailure).ShouldBeEmpty();
+            CodesOn(after).ShouldBe([FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE]);
+        }
+
+        [Fact]
+        public void A_variable_of_a_step_that_keeps_no_value_is_an_error()
+        {
+            FlowStep find = Search("Find");
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type", Branch(find, FlowStepTypeEnum.SUCCESS));
+            type.KeyboardInputText = "{{Find}}";
+
+            FlowStep gone = Add(FlowStepTypeEnum.SEARCH_TEXT, "Banner gone");
+            gone.SearchMode = SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            FlowStep tell = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(gone, FlowStepTypeEnum.SUCCESS));
+            tell.Message = "{{Banner gone}}";
+            tell.DiscordBotId = 1;
+
+            CodesOn(type).ShouldBe([FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN]);
+            CodesOn(tell).ShouldBe([FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN]);
         }
 
         [Fact]

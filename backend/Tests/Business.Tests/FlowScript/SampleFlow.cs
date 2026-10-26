@@ -84,7 +84,8 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK, CursorButtonType = CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionType = CursorButtonActionTypeEnum.DOUBLE_CLICK }, missed);
 
             FlowStep total = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "Read the total", SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND, ConditionType = ConditionTypeEnum.MATCHES_REGEX, ConditionText = @"total: (\d+)", FlowArea = badge, ResultExtractPattern = @"(\d+)", TimeoutMilliseconds = 10000 }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CHECK_VALUE, Name = "Order is large", FlowStepReference = total, ConditionType = ConditionTypeEnum.GREATER_THAN, ConditionText = "100" }, null);
+            FlowStep read = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, total);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CHECK_VALUE, Name = "Order is large", FlowStepReference = total, ConditionType = ConditionTypeEnum.GREATER_THAN, ConditionText = "100" }, read);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "Banner cleared", SearchMode = SearchModeEnum.WAIT_UNTIL_NOT_FOUND, ConditionType = ConditionTypeEnum.IS_NOT_EMPTY, FlowArea = header }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_TEXT, Name = "In range", SearchMode = SearchModeEnum.FIND_BEST, ConditionType = ConditionTypeEnum.BETWEEN, ConditionText = "1", ConditionTextEnd = "9", FlowArea = header }, null);
 
@@ -103,7 +104,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 
             FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReference = find }, loop);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowPoint = hamburger }, loop);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, loop);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReference = loop }, loop);
 

@@ -83,7 +83,8 @@ Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]>   in <[ 
 Wait For Text  <[ Products page loaded ]>   contains <[ Products ]>   in <[ Inventory ]>   timeout 10000ms
  Failure:
   Check Text   <[ Login error ]>   is not empty   in <[ Login form ]>
-  Notify       <[ Login failed: {{Login error}} ]>
+   Success:
+    Notify       <[ Login failed: {{Login error}} ]>
   End Execution  failed  <[ did not reach the products page ]>
 
 ## Add everything on the page to the cart
@@ -418,13 +419,15 @@ not for text, so there is no `Find All Texts` to mistype.
 succeeds immediately when the screen never matched at all.
 
 The text forms narrow before they judge — `matches <[ total: (\d+) ]>` keeps the captured group, and the
-condition is then tested against that. What is kept is what later steps read as `{{Name}}`, whether
-the check passed or failed, because a failure that says what was actually on screen is worth far
-more than one that only says it failed.
+condition is then tested against that. What is kept is what the steps under the check read as
+`{{Name}}`, on either side, because a failure that says what was actually on screen is worth far
+more than one that only says it failed. It is dropped once the flow moves past the check, so a step
+that wants it sits under it.
 
 ```
 Check Text   <[ Read the total ]>        matches <[ total: (\d+) ]>   in <[ Cart badge ]>
-Check Value  <[ Order is large ]>        <[ {{Read the total}} ]> > <[ 100 ]>
+ Success:
+  Check Value  <[ Order is large ]>      <[ {{Read the total}} ]> > <[ 100 ]>
 ```
 
 **A check's result must be read.** One that nothing branches on and nothing references was never

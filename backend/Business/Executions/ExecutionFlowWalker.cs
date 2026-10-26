@@ -265,9 +265,11 @@ namespace Business.Executions
 
                 Depth = pending.Depth;
                 _subFlowDepth = pending.SubFlowDepth;
-                _depthByStepId[pending.Step.Id] = pending.Depth;
 
+                // Forget first: what sat at this depth or deeper was a sibling's subtree, or this
+                // step's own result from the last time round.
                 ForgetFrom(pending.Depth);
+                _depthByStepId[pending.Step.Id] = pending.Depth;
 
                 return pending.Step;
             }

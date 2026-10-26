@@ -113,24 +113,11 @@ the history.
       the engine fills in and the history writes. Workers should set `Outcome`, `Location` and
       `Message` directly, or the shape should move to a type that is not the EF entity.
 
-- [ ] **A step's result lives under its step. Settled 2026-10-26.** The steps under it on its
-      Success side read it - on the Failure side too for a Check Text, which keeps what it read
-      either way - and it is forgotten once the walk leaves that step. Rejected: a result living
-      until its step executes again, which reads a stale value from an earlier loop pass or a branch
-      not taken this time. A step at the top that wants to quote a value, such as an `End Execution`
-      message, sits under the step that read it.
-      The walker means to do this and does not: `ExecutionFlowWalker.Pop` writes the popped step's
-      depth into `_depthByStepId` and then calls `ForgetFrom` with that depth, which removes the
-      entry it just wrote, so every result stays readable until its step executes again. What is
-      left:
-      - swap the two lines in `Pop`, and turn on the skipped test in `ExecutionFlowWalkerTests`;
-      - check `{{name}}` in text the way the dropdowns are checked (`TreeStepHelper.CanReadResultOf`),
-        where today it is only checked for existing;
-      - refuse `{{name}}` of a step that keeps no value - `{{Click}}`, or a `WAIT_UNTIL_NOT_FOUND`
-        search - the way the dropdowns already do (`TreeStepHelper.GivesNoResult`);
-      - fix flow-format.md's example and `SampleFlow.approved.sflw`: both are a `Check Value`
-        reading its earlier sibling, which the validator already refuses. None of the flows in the
-        database read a result outside its step.
+- [ ] **A Check Value is offered a value on the Success side only.** Since 2026-10-26 a `{{name}}`
+      in text reads a Read Text or a System Command from either side of it, because both keep their
+      value whichever way they went. The Check Value dropdown (`GetLookupFlowStepHandler`) and its
+      validator rule still use the Success side only, which is the rule for a location. Widening
+      them is `TreeStepHelper.CanReadValueOf` in both places.
 
 - [ ] **A start that fails before the walk leaves the engine claimed.** `StartAsync` sets the state
       to RUNNING under the lock, then loads the steps and writes the `Execution` row before the

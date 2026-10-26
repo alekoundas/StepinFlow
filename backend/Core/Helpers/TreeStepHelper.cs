@@ -26,6 +26,13 @@ namespace Core.Helpers
             FlowStepTypeEnum.CHECK_VALUE,
         ];
 
+        // The steps that keep what they read or printed, whichever way they went.
+        private static readonly FlowStepTypeEnum[] ValueTypes =
+        [
+            FlowStepTypeEnum.SEARCH_TEXT,
+            FlowStepTypeEnum.SYSTEM_COMMAND,
+        ];
+
         // Types the user can drop steps into.
         private static readonly FlowStepTypeEnum[] ContainerTypes =
         [
@@ -76,6 +83,12 @@ namespace Core.Helpers
             bool isSearch = step.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE || step.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT;
 
             return isSearch && step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+        }
+
+        /// <summary>Whether {{name}} of this step has anything to stand for.</summary>
+        public static bool GivesValue(StepChainNode step)
+        {
+            return ValueTypes.Contains(step.FlowStepType) && !GivesNoResult(step);
         }
 
         public static IEnumerable<(StepChainNode Step, int Depth)> SuccessfulAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
@@ -160,6 +173,17 @@ namespace Core.Helpers
         public static bool CanReadResultOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
         {
             return SuccessfulAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+        }
+
+        /// <summary>
+        /// Whether {{name}} here can be filled in from that step. A value is kept whichever way the
+        /// step went, so either side of it will do - a location only exists on the Success side.
+        /// </summary>
+        public static bool CanReadValueOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
+        {
+            return SuccessfulAncestors(byId, fromStepId)
+                .Concat(FailedAncestors(byId, fromStepId))
+                .Any(x => x.Step.Id == referenceId);
         }
 
         public static bool CanReportFailureOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)

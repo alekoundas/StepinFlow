@@ -74,11 +74,12 @@ A numeric comparison against text that will not parse as a number **fails** rath
 taking the false branch. "The number was too small" and "OCR read `S0` instead of `50`" are
 different problems and should not look the same.
 
-## What later steps read
+## What the steps under it read
 
-What Keep only left is kept **whether the condition passed or failed**, and steps below can
-reference it. A failure that says what was actually on screen is worth far more than one that only
-says it failed.
+What Keep only left is kept **whether the condition passed or failed**, and the steps under it, on
+either side, can reference it as `{{Name}}`. A failure that says what was actually on screen is worth
+far more than one that only says it failed. It is dropped once the flow moves past the step, so a
+step further down that wants it is moved under it.
 
 A `CHECK_VALUE` below a `SEARCH_TEXT` can therefore ask a second question of the same read without
 reading the screen again.

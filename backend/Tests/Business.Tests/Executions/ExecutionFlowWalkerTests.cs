@@ -366,10 +366,7 @@ namespace Business.Tests.Executions
             (await WalkAsync()).ShouldBe(["Find all", "Click"]);
         }
 
-        // What ForgetFrom says it does, and does not: it records the popped step's depth and then
-        // forgets that depth, so nothing is ever forgotten and every result stays readable. A decision
-        // rather than a fix - flow-format.md reads an earlier sibling's result. See TODO.md.
-        [Fact(Skip = "Results are never forgotten today; whether they should be is undecided. See TODO.md.")]
+        [Fact]
         public async Task A_result_is_readable_below_its_step_and_forgotten_once_the_walk_leaves_it()
         {
             FlowStep find = Search("Find");
@@ -385,6 +382,24 @@ namespace Business.Tests.Executions
 
             readableInside.ShouldBeTrue();
             readableAfter.ShouldBeFalse();
+        }
+
+        // A Read Text keeps what it read when it fails, so its Failure side can still say it.
+        [Fact]
+        public async Task A_result_is_readable_on_its_Failure_side_and_further_down()
+        {
+            FlowStep find = Search("Find");
+            _failing.Add("Find");
+            FlowStep loop = Add("Loop", FlowStepTypeEnum.LOOP, Failure(find));
+            loop.LoopCount = 1;
+            Add("Report", parent: loop);
+
+            bool readable = false;
+            _effects["Report"] = x => readable = _cache.GetExecutionStepFrom(find.Id) != null;
+
+            (await WalkAsync()).ShouldBe(["Find", "Loop", "Report"]);
+
+            readable.ShouldBeTrue();
         }
     }
 }

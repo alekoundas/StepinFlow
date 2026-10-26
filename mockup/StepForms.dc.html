@@ -289,7 +289,7 @@ class Component extends DCLogic {
     const LOOK = 'A smaller area is the single biggest thing that makes the search fast.';
     const READ = 'Reading a small area is both faster and far more accurate than reading a screen.';
     const LANGUAGE = 'Windows reads text with the language packs it has installed. Add more in Settings.';
-    const KEEP = 'A regex: its first group is kept, and empty keeps everything. The condition is tested against what is left, and later steps read it.';
+    const KEEP = 'A regex: its first group is kept, and empty keeps everything. The condition is tested against what is left, and the steps under this one read it.';
     const TIMING = '0 waits for ever.';
     const STEP_RESULT = 'Only Image Search and Read Text steps this one sits under, on their Success side.';
     const FOLDER = 'Optional. The command starts here instead of wherever the app happens to be.';
@@ -537,7 +537,7 @@ class Component extends DCLogic {
         ],
       },
       {
-        name: 'Decision', blurb: 'Tests a value an earlier step produced, without looking at the screen again.',
+        name: 'Decision', blurb: 'Tests a value a step above it produced, without looking at the screen again.',
         cards: [
           {
             id: 'check-one', type: 'Check Value', mode: 'One value', glyph: 'V', tint: D, name: 'Order is large', hasTest: false,
@@ -1061,7 +1061,7 @@ class Component extends DCLogic {
         { title: 'A sentence first', text: 'What the step will do, in its own words, before any field.' },
         { title: 'Segmented choices', text: 'Short option sets are buttons. Dropdowns stay for steps, areas, flows and conditions.' },
         { title: 'No expandable sections', text: 'Fields are flat, under light headings where a form is long.' },
-        { title: 'Gives', text: 'What later steps can use from this one.' },
+        { title: 'Gives', text: 'What the steps under this one can use from it.' },
         { title: 'Comment, and the script', text: 'The code comment on every form, both branches included, and the line it is printed over.' },
         { title: 'Named by their settings', text: 'A cursor, wait, keyboard, window or system action step is called what it does, “Double click” or “Wait 2s”, renamed on every save.' },
         { title: 'Templates are shared', text: 'Add template captures a new one or reuses one the flow has. Steps link to the picture; accuracy and required stay each step’s own.' },

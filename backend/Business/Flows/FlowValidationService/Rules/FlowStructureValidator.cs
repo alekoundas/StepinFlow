@@ -56,7 +56,7 @@ namespace Business.Flows.FlowValidationService.Rules
             }
 
             ValidateNamesAreUnique(authoredSteps, flowNames, result);
-            ValidateVariables(authoredSteps, flowNames, result);
+            ValidateVariables(authoredSteps, byStepId, flowNames, result);
             ValidateHeldKeys(childrenByParentId, result);
         }
 
@@ -93,29 +93,63 @@ namespace Business.Flows.FlowValidationService.Rules
 
         // A name nothing defines can never translate, so the step will stop the execution when it
         // gets there. Better said now, while the person who typed it is looking at it.
-        private static void ValidateVariables(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyList<string> flowNames, FlowValidationResultDto result)
+        private static void ValidateVariables(
+            IReadOnlyList<FlowStep> authoredSteps,
+            IReadOnlyDictionary<int, StepChainNode> byStepId,
+            IReadOnlyList<string> flowNames,
+            FlowValidationResultDto result)
         {
             HashSet<string> known = new HashSet<string>(flowNames, StringComparer.OrdinalIgnoreCase);
-
-            foreach (FlowStep step in authoredSteps)
-                known.Add(step.Name.Trim());
 
             foreach (string reserved in VariableTranslator.ViewportNames)
                 known.Add(reserved);
 
+            ILookup<string, FlowStep> stepsByName = authoredSteps.ToLookup(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase);
+
             foreach (FlowStep step in authoredSteps)
             {
-                List<string> unknown = VariableTranslator.VariableBearingText(step)
+                IEnumerable<string> names = VariableTranslator.VariableBearingText(step)
                     .SelectMany(VariableTranslator.Names)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Where(x => !known.Contains(x))
-                    .ToList();
+                    .Distinct(StringComparer.OrdinalIgnoreCase);
 
-                foreach (string name in unknown)
+                foreach (string name in names)
                 {
-                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.VARIABLE_UNKNOWN,
-                        $"Nothing in this flow is called \"{name}\", so this step can never fill it in.");
+                    if (stepsByName.Contains(name))
+                    {
+                        ValidateStepValue(result, step, byStepId[stepsByName[name].First().Id], byStepId);
+                    }
+                    else if (!known.Contains(name))
+                    {
+                        result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.VARIABLE_UNKNOWN,
+                            $"Nothing in this flow is called \"{name}\", so this step can never fill it in.");
+                    }
                 }
+            }
+        }
+
+        // {{name}} of a step is what that step read or printed, kept for the steps under it.
+        private static void ValidateStepValue(FlowValidationResultDto result, FlowStep step, StepChainNode source, IReadOnlyDictionary<int, StepChainNode> byId)
+        {
+            string written = "{{" + source.Name.Trim() + "}}";
+
+            if (TreeStepHelper.GivesNoResult(source))
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    $"{written} reads \"{source.Name}\", which waits until its text stops matching and so keeps no value.");
+                return;
+            }
+
+            if (!TreeStepHelper.GivesValue(source))
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    $"{written} reads \"{source.Name}\", which keeps no value. Only a Read Text or a System Command step keeps what it read or printed.");
+                return;
+            }
+
+            if (!TreeStepHelper.CanReadValueOf(byId, step.Id, source.Id))
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
+                    $"{written} reads \"{source.Name}\", which is not above this step, so it has no value here. A step's value is kept for the steps under it.");
             }
         }
 

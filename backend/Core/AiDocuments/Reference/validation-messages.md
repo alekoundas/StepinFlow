@@ -22,11 +22,18 @@ move goes on the step above them.
 
 **STEP_RESULT_MISSING** — the step reads another step's result but none is picked.
 
-**STEP_RESULT_UNREACHABLE** — the step it reads no longer runs above it on a Success path. Usually
-caused by moving one of the two steps. Either move it back, or pick a different source.
+**STEP_RESULT_UNREACHABLE** — the step it reads is not above it. A picked step must be above it on
+the Success side. A `{{Name}}` written in text may be on either side, because a value is kept
+whichever way its step went, but it must still be above: a step's result is kept for the steps
+under it and dropped once the flow moves past it. Usually caused by moving one of the two steps, or
+by writing `{{Name}}` in a step after it rather than under it. Move the step under the one it reads.
 
-**STEP_RESULT_NOT_GIVEN** — the step it reads is a search in `WAIT_UNTIL_NOT_FOUND`, which gives
-nothing to use. Usually caused by switching that search's mode. Pick a different source.
+**STEP_RESULT_NOT_GIVEN** — the step it reads keeps nothing to use: a search in
+`WAIT_UNTIL_NOT_FOUND`, or a `{{Name}}` naming a step that keeps no value. Only a `SEARCH_TEXT` or a
+`SYSTEM_COMMAND` keeps what it read or printed. Pick a different source.
+
+**VARIABLE_UNKNOWN** — a `{{Name}}` names nothing in the flow: no input, no step and not `width` or
+`height`. Usually a typo, or a step that was renamed.
 
 ## Areas
 
