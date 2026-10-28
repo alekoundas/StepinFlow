@@ -127,27 +127,59 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
-        /// A search that waits for the element, or for it to go, where the recording started, with
-        /// its branches. What comes after it goes in its Success branch, until the next search.
+        /// A search that waits for the element, or for it to go, as Review said to find it: by the
+        /// picture cut along its rectangle, or by the words read inside it, an area of its own in
+        /// the main area. Named from what it looks for, the suffix after. Null when there is nothing
+        /// to cut the picture from or to place the area by, and the caller does without.
         /// </summary>
-        public FlowStep AddSearch(RecordedActionDto action, string name, FlowStepTemplate template, SearchModeEnum mode)
+        public FlowStep? AddSearchFor(RecordedActionDto action, ReviewedActionDto review, string prefix, string fallback, string suffix, SearchModeEnum mode)
         {
-            int timeout = TimeoutFor(action.WaitedMilliseconds);
+            // Words left empty are no words, so it goes by the picture.
+            string words = Quotable(review.SearchText ?? string.Empty);
+            if (review.SearchBy == SearchByEnum.TEXT && words.Length > 0)
+            {
+                string name = Name(NameFrom(prefix, words, fallback) + suffix);
+                FlowArea? area = TextArea(action, review, $"{name} area");
+                if (area == null)
+                    return null;
 
-            string failed = $"{name} found nothing within {Seconds(timeout)}";
-            if (mode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
-                failed = $"{name}: still there after {Seconds(timeout)}";
+                return AddWaiting(action, new FlowStep
+                {
+                    FlowStepType = FlowStepTypeEnum.SEARCH_TEXT,
+                    Name = name,
+                    SearchMode = mode,
+                    FlowArea = area,
+                    ConditionType = ConditionTypeEnum.CONTAINS,
+                    ConditionText = words,
+                });
+            }
 
-            FlowStep search = new FlowStep
+            FlowStepTemplate? template = Template(action, review);
+            if (template == null)
+                return null;
+
+            string text = ElementOf(action)?.Text ?? string.Empty;
+            return AddWaiting(action, new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
-                Name = name,
+                Name = Name(NameFrom(prefix, text, fallback) + suffix),
                 SearchMode = mode,
-                TimeoutMilliseconds = timeout,
                 FlowArea = MainArea,
                 FlowStepTemplates = new List<FlowStepTemplate> { template },
-                CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait",
-            };
+            });
+        }
+
+        // Where the recording started, with its branches. What comes after it goes in its Success
+        // branch, until the next search.
+        private FlowStep AddWaiting(RecordedActionDto action, FlowStep search)
+        {
+            int timeout = TimeoutFor(action.WaitedMilliseconds);
+            search.TimeoutMilliseconds = timeout;
+            search.CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait";
+
+            string failed = $"{search.Name} found nothing within {Seconds(timeout)}";
+            if (search.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
+                failed = $"{search.Name}: still there after {Seconds(timeout)}";
 
             Parent = _start;
             Add(search);
@@ -320,6 +352,42 @@ namespace Business.Recording.Draft
                 return null;
 
             return group.ActionIndexes[0];
+        }
+
+        // The rectangle Review left, as an area inside the main area at the DPI of that press, placed
+        // as a point is. A text search succeeds with its area's centre, so a click lands there.
+        private FlowArea? TextArea(RecordedActionDto action, ReviewedActionDto review, string desired)
+        {
+            RecordingScreenDto? screen = _screenAt(action.Index);
+            if (MainArea == null || screen == null || screen.ActionIndex != action.Index)
+                return null;
+
+            Rectangle? rectangle = RectangleOf(review, ElementOf(action));
+            if (rectangle == null)
+                return null;
+
+            FlowArea area = new FlowArea
+            {
+                Name = Name(desired),
+                Type = FlowAreaTypeEnum.CUSTOM,
+                ParentFlowArea = MainArea,
+                SizingMode = AreaSizingModeEnum.ABSOLUTE_PX,
+                LocationX = rectangle.Value.X,
+                LocationY = rectangle.Value.Y,
+                Width = rectangle.Value.Width,
+                Height = rectangle.Value.Height,
+                AuthoredDpi = screen.Dpi,
+            };
+
+            Schema.Areas.Add(area);
+            return area;
+        }
+
+        // Text written inside a quote, which cannot hold the quote's own brackets.
+        private static string Quotable(string text)
+        {
+            string unquoted = text.Replace("<[", " ").Replace("]>", " ");
+            return string.Join(' ', unquoted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         }
 
         // As Review left it, or as the model found it when Review said nothing.

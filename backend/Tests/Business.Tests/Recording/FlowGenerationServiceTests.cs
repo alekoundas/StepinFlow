@@ -212,6 +212,30 @@ namespace Business.Tests.Recording
             (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
         }
 
+        // The area is new and its parent is not, so the parent is linked rather than written again.
+        [Fact]
+        public async Task A_click_found_by_its_words_brings_its_area_into_the_flow_it_goes_into()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            (_reviewed.Actions[0].SearchBy, _reviewed.Actions[0].SearchText) = (SearchByEnum.TEXT, "Email");
+
+            RecordingDraftPositionDto position = new RecordingDraftPositionDto { FlowId = flowId, Index = 0 };
+            ResultDto<FlowScriptImportResultDto> inserted = await _generation.InsertPlainDraftAsync(position, _recording, _reviewed, ScreenAt, Ct);
+
+            inserted.IsSuccess.ShouldBeTrue(inserted.ErrorMessage);
+
+            using AppDbContext db = _database.CreateDbContext();
+            List<FlowArea> areas = await db.FlowAreas.Where(x => x.FlowId == flowId).ToListAsync(Ct);
+            FlowArea main = areas.Single(x => x.IsMain);
+            areas.Count.ShouldBe(2);
+            FlowArea read = areas.Single(x => !x.IsMain);
+            (read.Name, read.ParentFlowAreaId).ShouldBe(("Find Email area", main.Id));
+
+            FlowStep search = Steps(flowId).Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+            (search.ConditionText, search.FlowAreaId).ShouldBe(("Email", read.Id));
+        }
+
         [Fact]
         public async Task A_recording_under_a_branch_goes_in_that_branch()
         {

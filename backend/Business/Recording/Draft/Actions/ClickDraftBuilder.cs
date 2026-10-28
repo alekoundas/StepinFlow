@@ -14,19 +14,17 @@ namespace Business.Recording.Draft.Actions
         {
             FlowStep move = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE };
 
-            FlowStepTemplate? template = null;
+            FlowStep? search = null;
             if (review.Choice == ReviewChoiceEnum.WAIT_AND_CLICK)
-                template = draft.Template(action, review);
+                search = draft.AddSearchFor(action, review, "Find", "Find icon", string.Empty, SearchModeEnum.WAIT_UNTIL_FOUND);
 
-            string text = draft.ElementOf(action)?.Text ?? string.Empty;
-
-            if (template != null)
+            if (search != null)
             {
-                string name = draft.Name(RecordingDraft.NameFrom("Find", text, "Find icon"));
-                move.FlowStepReference = draft.AddSearch(action, name, template, SearchModeEnum.WAIT_UNTIL_FOUND);
+                move.FlowStepReference = search;
             }
             else
             {
+                string text = draft.ElementOf(action)?.Text ?? string.Empty;
                 string spot = RecordingDraft.NameFrom("Click", text, "Click spot");
                 move.FlowPoint = draft.Point(spot, action, action.LocationX, action.LocationY);
             }

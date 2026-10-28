@@ -7,6 +7,7 @@ import { SelectButton } from "primereact/selectbutton";
 import { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-kind-enum";
 import { ElementFoundByEnum } from "@/shared/enums/backend/element-found-by-enum";
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
+import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -16,6 +17,7 @@ import {
   elementOf,
   fieldLabelBefore,
   groupOf,
+  isByWords,
   isOutside,
   isPointed,
   isTemplateChoice,
@@ -28,6 +30,11 @@ import {
 
 const CARD: CSSProperties = { background: "var(--surface-card)", borderColor: "var(--surface-border)" };
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
+
+const SEARCH_BY_OPTIONS = [
+  { label: "Its picture", value: SearchByEnum.IMAGE },
+  { label: "Its words", value: SearchByEnum.TEXT },
+];
 
 interface Props {
   result: RecordingResultDto;
@@ -118,7 +125,9 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </span>
           <span className="flex align-items-center gap-2">
             <span style={{ width: 14, height: 10, border: "2px dashed #4F63E6" }} />
-            The template it searches for. Drag a corner to change it.
+            {isByWords(review)
+              ? "The area it reads the words in. Drag a corner to change it."
+              : "The template it searches for. Drag a corner to change it."}
           </span>
         </div>
       </div>
@@ -154,6 +163,44 @@ export default function ReviewActionDetailComponent({ result, action, review, on
             className="align-self-start"
           />
         </div>
+
+        {isTemplate && isOwnScreen && (
+          <div className="flex align-items-end flex-wrap gap-3">
+            <div className="flex flex-column gap-2">
+              <span className="font-medium">Find it by</span>
+              <SelectButton
+                value={review.searchBy}
+                options={SEARCH_BY_OPTIONS}
+                optionLabel="label"
+                optionValue="value"
+                onChange={(e) => {
+                  if (e.value) onChange({ ...review, searchBy: e.value });
+                }}
+                allowEmpty={false}
+              />
+            </div>
+            {review.searchBy === SearchByEnum.TEXT && (
+              <div
+                className="flex flex-column gap-2"
+                style={{ flex: "1 1 220px" }}
+              >
+                <label
+                  htmlFor="review-search-text"
+                  className="font-medium"
+                >
+                  The words it waits to read
+                </label>
+                <InputText
+                  id="review-search-text"
+                  value={review.searchText}
+                  placeholder="Nothing was read here, so type them"
+                  onChange={(e) => onChange({ ...review, searchText: e.target.value })}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {review.choice === ReviewChoiceEnum.INPUT && (
           <div className="flex align-items-end flex-wrap gap-3">
@@ -285,6 +332,20 @@ function describeGroup(result: RecordingResultDto, actionIndexes: number[], isMo
 }
 
 function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: string | null | undefined): string {
+  const waitsUpTo = toSeconds(waitFor(action.waitedMilliseconds));
+  const words = review.searchText.trim();
+
+  if (isByWords(review)) {
+    switch (review.choice) {
+      case ReviewChoiceEnum.WAIT_AND_CLICK:
+        return `Becomes three steps: a wait until the area reads “${words}”, a move to the middle of the area, and a click there - so keep the area on what you clicked. Read by Windows, so Windows only for now.`;
+      case ReviewChoiceEnum.CHECK_THERE:
+        return `Waits until the area reads “${words}”, up to ${waitsUpTo}, and the execution fails if it never does. Read by Windows, so Windows only for now.`;
+      case ReviewChoiceEnum.CHECK_GONE:
+        return `Waits until the area no longer reads “${words}”, up to ${waitsUpTo}, and the execution fails if it still does. Read by Windows, so Windows only for now.`;
+    }
+  }
+
   switch (review.choice) {
     case ReviewChoiceEnum.WAIT_AND_CLICK:
       if (fallbackNote) return `A box around where you clicked: ${fallbackNote}`;
@@ -297,9 +358,9 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
     case ReviewChoiceEnum.TYPE_AS_WRITTEN:
       return "Typed into the flow as it is, so anyone reading the flow reads it too.";
     case ReviewChoiceEnum.CHECK_THERE:
-      return `Waits until it is there, up to ${toSeconds(waitFor(action.waitedMilliseconds))}, and the execution fails if it never comes. What you did next goes after it.`;
+      return `Waits until it is there, up to ${waitsUpTo}, and the execution fails if it never comes. What you did next goes after it.`;
     case ReviewChoiceEnum.CHECK_GONE:
-      return `Waits until it has gone, up to ${toSeconds(waitFor(action.waitedMilliseconds))}, and the execution fails if it is still there. What you did next goes after it.`;
+      return `Waits until it has gone, up to ${waitsUpTo}, and the execution fails if it is still there. What you did next goes after it.`;
     case ReviewChoiceEnum.EXECUTE_COMMAND:
       return "Executes the command in cmd and waits for it to finish. Windows only, as every command is for now.";
     case ReviewChoiceEnum.LAUNCH_APP:

@@ -435,6 +435,20 @@ namespace Business.Flows.DataService.DataHandlers
                 step.FlowArea = null;
             }
 
+            // A recorded text search reads an area of its own, inside an area the flow has.
+            FlowArea? newArea = step.FlowArea;
+            if (newArea != null)
+            {
+                newArea.FlowId = rootId;
+                newArea.Name = UniqueName(newArea.Name, taken);
+
+                if (newArea.ParentFlowArea != null && newArea.ParentFlowArea.Id != 0)
+                {
+                    newArea.ParentFlowAreaId = newArea.ParentFlowArea.Id;
+                    newArea.ParentFlowArea = null;
+                }
+            }
+
             // A recorded click knows where it happened, but a cursor step reads its position from a
             // FlowPoint, so the recording creates one for the step to link.
             foreach (FlowPoint? point in new[] { step.FlowPoint, step.FlowPointEnd })

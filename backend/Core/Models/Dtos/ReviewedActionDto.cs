@@ -9,10 +9,16 @@ namespace Core.Models.Dtos
         public ReviewChoiceEnum Choice { get; set; }
 
         // The element's rectangle as reviewed, in the main area's pixels. Null for an action with none.
+        // Searched by its picture, the template is cut along it; by its words, they are read inside it.
         public int? ElementX { get; set; }
         public int? ElementY { get; set; }
         public int? ElementWidth { get; set; }
         public int? ElementHeight { get; set; }
+
+        public SearchByEnum SearchBy { get; set; }
+
+        /// <summary>For a search by its words: the words it waits to read.</summary>
+        public string? SearchText { get; set; }
 
         /// <summary>For typed text that becomes an input, or an input's value typed: its name.</summary>
         public string? InputName { get; set; }

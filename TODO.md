@@ -99,6 +99,14 @@ the history.
 
 ## Flow script
 
+- [ ] **A text search's language is not in the script.** Found 2026-10-28, when the recorder began
+      writing `Wait For Text`. `OcrLanguage` is a column the script never writes, so a text search
+      from a file, a recording or a model's answer has none, and an export loses the one picked.
+      Since 2026-10-28 that is a warning rather than an error (`OCR_LANGUAGE_MISSING`): Windows reads
+      in the languages it is set to on each machine. Writing it - `Wait For Text <[ … ]> … language
+      <[ en-US ]>`, left out when none is picked - would make a flow read the same everywhere. A
+      format change, so the Firestone export has to keep importing; it has no text searches.
+
 - [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the
       Break dropdown offers every step it sits inside, but only a loop, a search and a Check Value
       write their own name in the script. A Break out of a System Command, a window step or an End

@@ -50,8 +50,10 @@ namespace Business.Flows.FlowValidationService.Rules
                         if (string.IsNullOrWhiteSpace(step.ConditionText))
                             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
 
+                        // A script does not carry it, so a text search from a file or a recording has none,
+                        // and Windows reads in the languages it is set to, which differ between machines.
                         if (string.IsNullOrWhiteSpace(step.OcrLanguage))
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "Pick the language the text is written in.");
+                            result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.OCR_LANGUAGE_MISSING, "No language is picked, so it reads in the languages Windows is set to on each machine. Pick one so it reads the same everywhere.");
                         break;
 
                     case FlowStepTypeEnum.SYSTEM_COMMAND:

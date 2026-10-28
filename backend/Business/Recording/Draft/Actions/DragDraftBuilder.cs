@@ -14,19 +14,17 @@ namespace Business.Recording.Draft.Actions
         {
             FlowStep drag = new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG };
 
-            FlowStepTemplate? template = null;
+            FlowStep? search = null;
             if (review.Choice == ReviewChoiceEnum.WAIT_AND_CLICK)
-                template = draft.Template(action, review);
+                search = draft.AddSearchFor(action, review, "Find", "Find drag start", string.Empty, SearchModeEnum.WAIT_UNTIL_FOUND);
 
-            string text = draft.ElementOf(action)?.Text ?? string.Empty;
-
-            if (template != null)
+            if (search != null)
             {
-                string name = draft.Name(RecordingDraft.NameFrom("Find", text, "Find drag start"));
-                drag.FlowStepReference = draft.AddSearch(action, name, template, SearchModeEnum.WAIT_UNTIL_FOUND);
+                drag.FlowStepReference = search;
             }
             else
             {
+                string text = draft.ElementOf(action)?.Text ?? string.Empty;
                 string start = RecordingDraft.NameFrom("Drag", text, "Drag start");
                 drag.FlowPoint = draft.Point(start, action, action.LocationX, action.LocationY);
             }

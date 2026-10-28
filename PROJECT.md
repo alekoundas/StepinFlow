@@ -733,8 +733,14 @@ setup's Launch step first.
 - The template is the element's rectangle as Review left it, cut from the main area at the press,
   with where the click landed inside it and the area's size and DPI. Clicks that hit the same
   picture share one template.
+- **Or by its words**, which Review offers for a click, a drag or a check: the words read on the
+  element, which the tester can change, and the same rectangle as an area of its own inside the main
+  area - `Find Invoices area`, placed as a point is, at the press's DPI. The search is a `Wait For
+  Text` there. A text search succeeds with its area's centre, so the move goes to the middle of the
+  rectangle, which is why for a click it sits on what was clicked. Words left empty go by the
+  picture. Read by Windows OCR, so Windows only until `TODO.md`'s OCR item is decided.
 - A search is named from the text read on the element - `Find Invoices`, `Find icon` when there was
-  none - through `FlowNameHelper.MakeUnique`.
+  none - through `FlowNameHelper.MakeUnique`; found by its words, from those.
 - Typed text is an input with what was typed as its default, and the step types `{{email}}`; a
   secret keeps no value anywhere, to be supplied when the flow executes. Typed as written, the text
   is on the line. A key is a `Press`, held and released around a click as it was recorded.
@@ -2157,13 +2163,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-983 tests, all passing, in eight projects under `backend/Tests/` - one
+988 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 733 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 738 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2288,7 +2294,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 983 backend tests.
+or OpenAI. 988 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

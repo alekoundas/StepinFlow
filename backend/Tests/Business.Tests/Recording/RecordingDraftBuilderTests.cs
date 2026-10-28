@@ -113,6 +113,13 @@ namespace Business.Tests.Recording
             return schema.Steps.Where(x => x.ParentFlowStep == parent).OrderBy(x => x.OrderNumber).ToList();
         }
 
+        // Found by the words Review says it waits to read, inside the rectangle Review left.
+        private void ByText(RecordedActionDto action, string words)
+        {
+            ReviewedActionDto review = _reviewed.Actions.Single(x => x.ActionIndex == action.Index);
+            (review.SearchBy, review.SearchText) = (SearchByEnum.TEXT, words);
+        }
+
         // Marked anywhere: where does not matter to a step that is not a click.
         private RecordedActionDto Substitute(ReviewChoiceEnum choice, string? commandText = null, string? inputName = null)
         {
@@ -351,6 +358,53 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Found by its words
+        // ================================================================
+
+        // A text search succeeds with its area's centre, which is where the move goes.
+        [Fact]
+        public void A_click_found_by_its_words_reads_them_in_an_area_of_its_own_and_clicks_its_middle()
+        {
+            ByText(Click(400, 300, "Invoices"), "Invoices");
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep search = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+            (search.Name, search.SearchMode, search.ConditionType, search.ConditionText).ShouldBe(("Find Invoices", SearchModeEnum.WAIT_UNTIL_FOUND, ConditionTypeEnum.CONTAINS, "Invoices"));
+            search.TimeoutMilliseconds.ShouldBe(10_000);
+
+            FlowArea area = search.FlowArea.ShouldNotBeNull();
+            (area.Name, area.Type, area.ParentFlowArea!.Name).ShouldBe(("Find Invoices area", FlowAreaTypeEnum.CUSTOM, "Browser"));
+            (area.LocationX, area.LocationY, area.Width, area.Height, area.AuthoredDpi).ShouldBe((280, 240, 40, 20, 120));
+
+            List<FlowStep> success = ChildrenOf(schema, BranchOf(schema, search, FlowStepTypeEnum.SUCCESS));
+            success[0].FlowStepReference.ShouldBeSameAs(search);
+            ChildrenOf(schema, BranchOf(schema, search, FlowStepTypeEnum.FAILURE)).ShouldHaveSingleItem().Message.ShouldBe("Find Invoices found nothing within 10.0s");
+        }
+
+        [Fact]
+        public void A_check_by_its_words_that_it_goes_waits_until_its_area_no_longer_reads_them()
+        {
+            ByText(Click(400, 300, "Loading", ReviewChoiceEnum.CHECK_GONE, kind: RecordedActionKindEnum.CHECK), "Loading");
+
+            FlowStep check = Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+
+            (check.Name, check.SearchMode, check.FlowArea!.Name).ShouldBe(("Check Loading gone", SearchModeEnum.WAIT_UNTIL_NOT_FOUND, "Check Loading gone area"));
+        }
+
+        [Fact]
+        public void Words_left_empty_go_by_the_picture()
+        {
+            ByText(Click(400, 300, "Invoices"), "  ");
+
+            FlowScriptSchema schema = Build();
+
+            schema.Steps.ShouldContain(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            schema.Steps.ShouldNotContain(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+            schema.Areas.ShouldHaveSingleItem();
+        }
+
+        // ================================================================
         // Marked while recording
         // ================================================================
 
@@ -466,6 +520,8 @@ namespace Business.Tests.Recording
             Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "del /q C:\\Exports\\*.csv");
             Substitute(ReviewChoiceEnum.LAUNCH_APP, commandText: "notepad.exe");
             Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "email");
+            ByText(Click(400, 380, "Download"), "Download");
+            ByText(Click(400, 420, "Saved", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK), "Saved");
 
             FlowScriptSchema draft = Build();
             string script = new Printer().Write(draft);
@@ -476,7 +532,7 @@ namespace Business.Tests.Recording
             int emptyBranches = draft.Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS && !draft.Steps.Any(y => y.ParentFlowStep == x));
 
             read.Diagnostics.ShouldBeEmpty(script);
-            emptyBranches.ShouldBe(1, script);
+            emptyBranches.ShouldBe(2, script);     // Check Paid, followed by a check, and Check Saved, the last
             read.Steps.Count.ShouldBe(draft.Steps.Count - emptyBranches, script);
             read.Points.Count.ShouldBe(draft.Points.Count, script);
             read.Inputs.Count.ShouldBe(2, script);

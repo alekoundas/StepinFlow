@@ -1,6 +1,7 @@
 import { RecordedWindowEnum } from "../../../../../electron/shared/types";
 import { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-kind-enum";
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
+import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { ClickedElementDto } from "@/shared/models/clicked-element-dto";
 import type { ClickGroupDto } from "@/shared/models/click-group-dto";
@@ -32,6 +33,10 @@ export interface ActionReview {
 
   /** For a command, what it executes; for an application, its program. */
   commandText: string;
+
+  /** For a search: by the picture cut along the rectangle, or by these words read inside it. */
+  searchBy: SearchByEnum;
+  searchText: string;
 }
 
 export interface ReviewOption {
@@ -150,6 +155,8 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
       inputName,
       isSecret: label !== null && SECRET_LABEL.test(label),
       commandText: "",
+      searchBy: SearchByEnum.IMAGE,
+      searchText: element?.text ?? "",
     };
   }
 
@@ -218,8 +225,8 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
     return `becomes the input ${review.inputName}${review.isSecret ? " · secret" : ""}`;
   }
 
-  if (review.choice === ReviewChoiceEnum.CHECK_THERE) return "until it is there";
-  if (review.choice === ReviewChoiceEnum.CHECK_GONE) return "until it has gone";
+  if (review.choice === ReviewChoiceEnum.CHECK_THERE) return `until it is there${byWords(review)}`;
+  if (review.choice === ReviewChoiceEnum.CHECK_GONE) return `until it has gone${byWords(review)}`;
 
   // With nothing to execute, open or type it is no step, so the list says so.
   const command = review.commandText.trim();
@@ -228,8 +235,18 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
   if (review.choice === ReviewChoiceEnum.TYPE_INPUT)
     return review.inputName ? `types {{${review.inputName}}}` : "no input yet, so no step";
 
-  if (isPointed(action) && action.waitedMilliseconds > 0) return `after ${toSeconds(action.waitedMilliseconds)}`;
+  if (isPointed(action) && action.waitedMilliseconds > 0)
+    return `after ${toSeconds(action.waitedMilliseconds)}${isTemplateChoice(review.choice) ? byWords(review) : ""}`;
   return "";
+}
+
+/** Whether a search goes by the words, which an empty field does not. */
+export function isByWords(review: ActionReview): boolean {
+  return review.searchBy === SearchByEnum.TEXT && review.searchText.trim().length > 0;
+}
+
+function byWords(review: ActionReview): string {
+  return isByWords(review) ? ` · reads “${review.searchText.trim()}”` : "";
 }
 
 /** The first option that keeps it, for a checkbox ticked back on. */
@@ -252,6 +269,8 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
         elementY: review.element?.y ?? null,
         elementWidth: review.element?.width ?? null,
         elementHeight: review.element?.height ?? null,
+        searchBy: review.searchBy,
+        searchText: review.searchBy === SearchByEnum.TEXT ? review.searchText : null,
         inputName: isNamed ? review.inputName : null,
         isSecret: isInput && review.isSecret,
         commandText: isCommand ? review.commandText : null,

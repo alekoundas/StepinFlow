@@ -46,7 +46,9 @@ was deleted.
 
 **SEARCH_TEXT_MISSING** — a waiting read-text mode has no text to look for.
 
-**OCR_LANGUAGE_MISSING** — no OCR language is picked, or the one picked is no longer installed.
+**OCR_LANGUAGE_MISSING** — no OCR language is picked. A warning: the step executes, reading in the
+languages Windows is set to on that machine, which can differ from one machine to the next. A
+script does not carry the language, so a text search from a file or a recording starts with none.
 
 ## Conditions
 

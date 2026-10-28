@@ -219,8 +219,9 @@ namespace Business.Ai.Helpers
         public const string ShapeRecording =
             """
             This draft was written from a recording, one action at a time, by rules rather than by
-            understanding: every click waits for what it clicked with Find Image, then moves onto it
-            and clicks it; everything after a search sits in that search's Success branch, until the
+            understanding: every click waits for what it clicked with Find Image - or with Wait For
+            Text in an area of its own, where the tester chose to find it by its words - then moves
+            onto it and clicks it; everything after a search sits in that search's Success branch, until the
             next search; and a wait that times out ends the execution, failed. The Description says
             what the flow is for.
 

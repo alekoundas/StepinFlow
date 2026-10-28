@@ -70,6 +70,23 @@ namespace Business.Tests.Flows.Validation
             codes.ShouldContain(FlowValidationCodeEnum.NO_TEMPLATES);
         }
 
+        // A script does not carry the language, so a text search from a file or a recording has
+        // none. It reads in the machine's own languages, and executes.
+        [Fact]
+        public void A_text_search_with_no_language_is_a_warning_not_an_error()
+        {
+            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Find Invoices");
+            read.FlowAreaId = 100;
+            read.ConditionType = ConditionTypeEnum.CONTAINS;
+            read.ConditionText = "Invoices";
+            _areas.Add(new FlowArea { Id = 100, Name = "Invoices area", Type = FlowAreaTypeEnum.MONITOR });
+
+            FlowValidationResultDto result = Validate();
+
+            result.Issues.Single(x => x.Code == FlowValidationCodeEnum.OCR_LANGUAGE_MISSING).Severity.ShouldBe(ValidationSeverityEnum.WARNING);
+            result.HasErrors.ShouldBeFalse();
+        }
+
         [Fact]
         public void A_window_step_needs_an_area_and_that_area_a_window()
         {
