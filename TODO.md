@@ -35,28 +35,6 @@ the history.
       `<error>`, and a dashboard that counts a missing window as a product regression will be
       ignored within a week. Decide it when the JUnit writer is built, not before.
 
-- [ ] **Nothing fails unless an END_EXECUTION says so, and only the validator can catch that.**
-      The engine no longer infers a verdict: it does not count checks, and the walker no longer
-      notices that a failure branch was empty. Both were removed on purpose - inferring was implicit
-      magic, and an empty failure branch is a legitimate thing to write. The consequence is that a
-      flow whose every check fails, with no `End Execution` anywhere, walks to the end and reports
-      COMPLETED. A suite of those is green and proves nothing, which is the exact failure this whole
-      model was built to stop.
-      Two things have to carry that weight, and neither exists yet:
-      1) **A validator rule.** A check step whose failure path reaches no `End Execution` -
-         not in its own Failure branch, not in any check below it - is a check whose result
-         changes nothing. Warn at save and at export, naming the step. An empty failure branch stays
-         legal; a check that can never fail the execution is what gets flagged.
-      2) **The QA recorder seeds `End Execution failed`** into every failure branch it creates, so
-         the common path is safe without anybody knowing the rule. A tester deleting it is then a
-         decision rather than an omission.
-      **Half done, 2026-09-21.** Walking to the end with no `End Execution` now reports
-      `INCONCLUSIVE` rather than COMPLETED, so such a flow is amber instead of green. That is the
-      runtime backstop; both items above are still open, and they are the half that tells somebody
-      while they are still authoring. Until they land, an inconclusive execution means "nobody
-      said". Since 2026-10-25 all of this is a QA test's only: an automation that walks to its end
-      is COMPLETED (`PROJECT.md` §8).
-
 - [ ] **Clear the execution cache when the walk ends.** `ForgetFrom` only runs inside `Pop()`, and
       when the stack empties `Pop()` returns `null` without calling it — so the last path's values
       sit in the cache until the next run resets it. Clear on end of walk, and log if anything was
@@ -345,6 +323,24 @@ the history.
       not consistent with the setting's promise for a flow nobody has touched yet. The
       recommendation: a step name is the tester's once they have seen it in Review, so send it, and
       say so under the setting. The other way is to send placeholder names and map them back.
+
+- [ ] **The model nests the draft by page. Not decided whether to build it.** Talked about on
+      2026-10-28. The draft is flat: every search sits at the top, with what followed it in its
+      Success branch. A tester would expect the steps done on the settings page under the search
+      that opened it, and the steps after an Edit click under Find Edit. The model cannot tell
+      where the page changed from the step names alone; two cheap signals would tell it:
+      - The window title, recorded on every action already and used by nothing. For a browser it is
+        the page's title. Written into the draft as a comment where it changes; it is screen text,
+        so it goes through the same gate as the text read under a click (`PROJECT.md` §10).
+      - How much of the main area changed after a click, measured from the screenshots the
+        recording already has. A number, so any provider may be sent it: most of it changed, the
+        steps after go under the click; little changed, they stay siblings.
+      A full-screen OmniParser pass per click would say more, at more cost, if those two are not
+      enough. Whatever is built, a check in code comes first: the answer's clicks, typed text and
+      keys in execution order are the draft's, or it goes back with the first place they differ.
+      Only the prompt forbids dropping or reordering one today, and restructuring is where a model
+      would. The fold into Find All Images turns several clicks into one loop, so the check counts
+      a fold as the clicks it replaced.
 
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that

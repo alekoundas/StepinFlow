@@ -162,7 +162,7 @@ namespace Business.Tests.Recording
                 return await _done.Task;
             }
 
-            public Task<FlowGenerationResultDto> ImportPlainDraftAsync(int flowId, RecordingResultDto recording, ReviewedRecordingDto reviewed, Func<int, RecordingScreenDto?> screenAt, CancellationToken ct = default)
+            public Task<ResultDto<FlowGenerationResultDto>> ImportPlainDraftAsync(int flowId, RecordingResultDto recording, ReviewedRecordingDto reviewed, Func<int, RecordingScreenDto?> screenAt, CancellationToken ct = default)
             {
                 throw new NotSupportedException();
             }

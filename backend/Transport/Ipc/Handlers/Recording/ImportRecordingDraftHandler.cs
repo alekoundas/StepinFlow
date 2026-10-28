@@ -30,8 +30,7 @@ namespace Transport.Ipc.Handlers
             if (reviewed == null)
                 return ResultDto<FlowGenerationResultDto>.Failure("Review the recording first.");
 
-            FlowGenerationResultDto imported = await _flowGenerationService.ImportPlainDraftAsync(flowId, recording, reviewed, _recordingSessionService.GetScreen, ct);
-            return ResultDto<FlowGenerationResultDto>.Success(imported);
+            return await _flowGenerationService.ImportPlainDraftAsync(flowId, recording, reviewed, _recordingSessionService.GetScreen, ct);
         }
     }
 }
