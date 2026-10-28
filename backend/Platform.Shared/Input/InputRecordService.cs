@@ -16,10 +16,13 @@ namespace Platform.Shared.Input
     /// </summary>
     public sealed class InputRecordService : IInputRecordService, IDisposable
     {
-        private readonly IGlobalHook _hook = new EventLoopGlobalHook();
+        private readonly GestureGlobalHook _hook = new GestureGlobalHook();
 
         // The key the next typed character came from.
         private KeyCodeEnum? _lastPressedKey;
+
+        // The gesture each held back button was pressed as, until its release. The handlers' thread only.
+        private readonly Dictionary<CursorButtonTypeEnum, RecordingGestureEnum> _gestureByButton = new Dictionary<CursorButtonTypeEnum, RecordingGestureEnum>();
 
         /// <summary>
         /// Raised for every recorded input while any mode is active.
@@ -104,7 +107,18 @@ namespace Platform.Shared.Input
         // Public methods
         // ================================================================
         public Task<bool> StartRecordingAllAsync() => Task.FromResult(StartRecording(ModeAll));
-        public Task<bool> StopRecordingAllAsync() => Task.FromResult(StopRecording(ModeAll));
+
+        public Task<bool> StopRecordingAllAsync()
+        {
+            _hook.HoldBack([]);
+            return Task.FromResult(StopRecording(ModeAll));
+        }
+
+        public void HoldBackPresses(IReadOnlyList<PressGesture> gestures)
+        {
+            _hook.HoldBack(gestures);
+        }
+
         public Task<bool> StartRecordingOverlayAsync() => Task.FromResult(StartRecording(ModeOverlay));
         public Task<bool> StopRecordingOverlayAsync() => Task.FromResult(StopRecording(ModeOverlay));
         public Task<bool> StartRecordingPointCaptureAsync() => Task.FromResult(StartRecording(ModePointCapture));
@@ -162,36 +176,26 @@ namespace Platform.Shared.Input
             if (!IsRecording)
                 return;
 
-            CursorButtonTypeEnum? buttonType;
-            switch (e.Data.Button)
-            {
-                case MouseButton.Button1:
-                    buttonType = CursorButtonTypeEnum.LEFT_BUTTON;
-                    break;
-                case MouseButton.Button2:
-                    buttonType = CursorButtonTypeEnum.RIGHT_BUTTON;
-                    break;
-                case MouseButton.Button3:
-                    buttonType = CursorButtonTypeEnum.MIDDLE_BUTTON;
-                    break;
-                case MouseButton.Button4:
-                case MouseButton.Button5:
-                case MouseButton.NoButton:
-                default:
-                    buttonType = null;
-                    break;
-            }
+            CursorButtonTypeEnum? buttonType = GestureGlobalHook.ButtonOf(e.Data.Button);
+            if (buttonType == null)
+                return;
 
-            RecordedInput recordedInput = new RecordedInput
+            // Held back by the hook, so the application never got it.
+            RecordingGestureEnum? gesture = null;
+            if ((e.RawEvent.Mask & EventMask.SuppressEvent) != EventMask.None)
+                gesture = _hook.Match(e.RawEvent.Mask, e.Data.Button);
+
+            if (gesture != null)
+                _gestureByButton[buttonType.Value] = gesture.Value;
+
+            Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.BUTTON_DOWN,
                 PhysicalX = e.Data.X,
                 PhysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
-            };
-
-            if (buttonType != null)
-                Publish(recordedInput);
+                Gesture = gesture,
+            });
         }
 
         private void OnMouseReleased(object? sender, MouseHookEventArgs e)
@@ -199,36 +203,22 @@ namespace Platform.Shared.Input
             if (!IsRecording)
                 return;
 
-            CursorButtonTypeEnum? buttonType;
-            switch (e.Data.Button)
-            {
-                case MouseButton.Button1:
-                    buttonType = CursorButtonTypeEnum.LEFT_BUTTON;
-                    break;
-                case MouseButton.Button2:
-                    buttonType = CursorButtonTypeEnum.RIGHT_BUTTON;
-                    break;
-                case MouseButton.Button3:
-                    buttonType = CursorButtonTypeEnum.MIDDLE_BUTTON;
-                    break;
-                case MouseButton.Button4:
-                case MouseButton.Button5:
-                case MouseButton.NoButton:
-                default:
-                    buttonType = null;
-                    break;
-            }
+            CursorButtonTypeEnum? buttonType = GestureGlobalHook.ButtonOf(e.Data.Button);
+            if (buttonType == null)
+                return;
 
-            RecordedInput recordedInput = new RecordedInput
+            RecordingGestureEnum? gesture = null;
+            if (_gestureByButton.Remove(buttonType.Value, out RecordingGestureEnum pressedAs))
+                gesture = pressedAs;
+
+            Publish(new RecordedInput
             {
                 Type = RecordedInputTypeEnum.BUTTON_UP,
                 PhysicalX = e.Data.X,
                 PhysicalY = e.Data.Y,
                 CursorButtonType = buttonType,
-            };
-
-            if (buttonType != null)
-                Publish(recordedInput);
+                Gesture = gesture,
+            });
         }
 
         private void OnMouseDragged(object? sender, MouseHookEventArgs e)

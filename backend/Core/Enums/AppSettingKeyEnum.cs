@@ -5,6 +5,8 @@ namespace Core.Enums
         // Recording bar hotkeys.
         RECORDING_HOTKEY_PAUSE,
         RECORDING_HOTKEY_STOP,
+        RECORDING_HOTKEY_CHECK,
+        RECORDING_HOTKEY_SUBSTITUTE,
 
 
         // Debugger hotkeys.

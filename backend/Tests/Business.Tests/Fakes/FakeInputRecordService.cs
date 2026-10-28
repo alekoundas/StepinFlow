@@ -10,6 +10,9 @@ namespace Business.Tests.Fakes
 
         public bool IsRecording { get; private set; }
 
+        /// <summary>What the session last asked to hold back.</summary>
+        public IReadOnlyList<PressGesture> HeldBack { get; private set; } = [];
+
         public void Raise(RecordedInput input)
         {
             ActionRecorded?.Invoke(input);
@@ -24,7 +27,13 @@ namespace Business.Tests.Fakes
         public Task<bool> StopRecordingAllAsync()
         {
             IsRecording = false;
+            HeldBack = [];
             return Task.FromResult(true);
+        }
+
+        public void HoldBackPresses(IReadOnlyList<PressGesture> gestures)
+        {
+            HeldBack = gestures;
         }
 
         public Task StartGlobalHookAsync()

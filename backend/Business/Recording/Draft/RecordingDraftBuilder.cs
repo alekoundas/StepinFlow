@@ -70,6 +70,14 @@ namespace Business.Recording.Draft
                     case RecordedActionKindEnum.KEY_RELEASE:
                         KeyDraftBuilder.Build(action, draft);
                         break;
+
+                    case RecordedActionKindEnum.CHECK:
+                        CheckDraftBuilder.Build(action, review, draft);
+                        break;
+
+                    case RecordedActionKindEnum.SUBSTITUTE:
+                        SubstituteDraftBuilder.Build(review, draft);
+                        break;
                 }
             }
 

@@ -5,6 +5,9 @@ namespace Core.Enums
     {
         INT,
         HOTKEY,
+
+        /// <summary>Modifiers and a mouse button, pressed while recording.</summary>
+        GESTURE,
         TEXT,
 
         /// <summary>Text the page must never show back in full - an api key.</summary>

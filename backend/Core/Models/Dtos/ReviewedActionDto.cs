@@ -14,10 +14,13 @@ namespace Core.Models.Dtos
         public int? ElementWidth { get; set; }
         public int? ElementHeight { get; set; }
 
-        /// <summary>For typed text that becomes an input: its name.</summary>
+        /// <summary>For typed text that becomes an input, or an input's value typed: its name.</summary>
         public string? InputName { get; set; }
 
         /// <summary>For an input: never written to a file, never shown to a model.</summary>
         public bool IsSecret { get; set; }
+
+        /// <summary>For a command: what it executes. For an application: the program that opens it.</summary>
+        public string? CommandText { get; set; }
     }
 }

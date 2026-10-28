@@ -23,7 +23,7 @@ namespace Business.Recording.Draft.Actions
             if (template != null)
             {
                 string name = draft.Name(RecordingDraft.NameFrom("Find", text, "Find drag start"));
-                drag.FlowStepReference = draft.AddSearch(action, name, template);
+                drag.FlowStepReference = draft.AddSearch(action, name, template, SearchModeEnum.WAIT_UNTIL_FOUND);
             }
             else
             {

@@ -825,24 +825,36 @@ it was and Check says why beside the ask. The script goes as the flow holds it, 
 included, so a cloud provider without screen content gets the names the plain draft read off the
 screen (`TODO.md`, Recording). What it wrote never executes on its own (§10).
 
-**A QA test adds to it.** The screen sizes to test at, and what should happen when an execution
-ends, which becomes steps under `End Execution` because teardown is steps (§8). Stage markers and
-`End Execution` checks for what the description says the flow is meant to prove. And two gestures
-while recording, Ctrl + click by default and rebindable in Settings, which Review asks about
-afterwards so nothing appears over the application while it is recorded:
+**Two gestures while recording**, in either kind of flow. Each is a setting under Recording keys,
+Ctrl + click and Ctrl + right click by default; a real Ctrl + click is recorded once they are
+rebound. Nothing is asked while recording, so nothing appears over the application: Review asks
+what each one was for.
 
-- **Ctrl + left click** marks a check at that spot. Does this text or image need to exist? Should
-  the flow wait until it appears, or until it goes away? The click position matters, which is why it
-  is the left button.
-- **Ctrl + right click** marks what should happen there instead of a click: a command, another
-  application, or a value from a CSV column. Position does not matter for any of those, which is why
-  it is the right button. Choosing a column offers the ones this flow already has, or defines a new
-  one with the recorded value as its default — which is why the CSV is per-flow and its template is
-  generated from the flow.
-- **A deliberate wrong value**: the tester types a wrong value on purpose, marks how the application
-  rejects it with Ctrl + left click, and marks the typed text in Review as deliberate. It stays
-  literal text rather than becoming an input, and the model gives it a stage of its own. That is how
-  failure paths get written — by provoking them rather than imagining them.
+- **Ctrl + click marks a check at that spot**, where the position matters, which is why it is the
+  left button. Review asks whether the flow waits until it is there or until it has gone - every
+  recorded check waits, so "it must be there" and "wait until it appears" are one step - and the
+  draft makes it a `Wait For Image` or a `Wait Until No Image` on the element's rectangle, its
+  Failure ending the execution and what came next in its Success branch, as after a click's search
+  (`Business/Recording/Draft/Actions/CheckDraftBuilder`). A check keeps a template of its own: one
+  shared with clicks could be folded into their `Find All Images`.
+- **Ctrl + right click marks a step that is not a click** where one would have been: a command, an
+  application opened, or an input's value typed, which Review asks for - a `Run`, a `Launch` or a
+  `Type {{input}}` (`SubstituteDraftBuilder`). Where it was marked does not matter, which is why it is
+  the right button. An input the flow does not have yet is added with no value.
+- **Neither click reaches the application** - a Ctrl + right click would open its menu, a Ctrl +
+  click a link in a new tab. The hook's handlers run on a thread of their own, too late to hold an
+  input back, so `Platform.Shared/Input/GestureGlobalHook`, SharpHook's event loop written again
+  because that one is sealed, decides on the hook's own thread whether a press is a gesture's
+  modifiers and button, holds it and its release back, and marks both. The recorder leaves out the
+  modifiers held for it, as it does a hotkey's (`RecordingHotkeyReader`). Paused, nothing is held
+  back. Windows and macOS only: on Linux the press reaches the application too (`TODO.md`).
+
+**A QA test adds to it**: stage markers and `End Execution` checks for what the description says
+the flow is meant to prove (above), and failure paths written by provoking them rather than
+imagining them - a **deliberate wrong value**, typed on purpose, the application's rejection marked
+with Ctrl + click, and the typed text marked in Review as deliberate. It stays literal text rather
+than becoming an input, and the model gives it a stage of its own. The screen sizes to test at and
+what happens when an execution ends wait in `TODO.md`.
 
 ### Search mode and timeout
 
@@ -2145,13 +2157,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-960 tests, all passing, in eight projects under `backend/Tests/` - one
+983 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 718 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
+| `Business.Tests` | 733 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2276,7 +2288,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 960 backend tests.
+or OpenAI. 983 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

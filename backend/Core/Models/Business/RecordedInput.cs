@@ -16,6 +16,9 @@ namespace Core.Models.Business
         public int PhysicalY { get; set; }
         public CursorButtonTypeEnum? CursorButtonType { get; set; }
 
+        /// <summary> A press, or its release, that the application never got: a recording gesture. </summary>
+        public RecordingGestureEnum? Gesture { get; set; }
+
         // Scroll
         public CursorScrollDirectionTypeEnum? ScrollDirection { get; set; }
 

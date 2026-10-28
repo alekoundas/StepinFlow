@@ -36,13 +36,14 @@ namespace Business.Tests.Recording
         private readonly FakeWindowService _windows = new FakeWindowService();
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
         private readonly FakeTimeProvider _clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 9, 12, 0, 0, TimeSpan.Zero));
+        private readonly FakeAppSettingService _settings = new FakeAppSettingService();
         private readonly RecordingSessionService _session;
 
         public RecordingSessionServiceTests()
         {
             ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
             ClickedElementGrouper grouper = new ClickedElementGrouper(new FakeOpenCvService(), _screenshots);
-            _session = new RecordingSessionService(_hook, _screenshots, new FakeAppSettingService(), _broadcast, _windows, _resolver, finder, grouper, _database, _clock);
+            _session = new RecordingSessionService(_hook, _screenshots, _settings, _broadcast, _windows, _resolver, finder, grouper, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -229,6 +230,62 @@ namespace Business.Tests.Recording
                 RecordedInputTypeEnum.KEY_DOWN,
                 RecordedInputTypeEnum.KEY_UP,
             ]);
+        }
+
+        // ================================================================
+        // Gestures
+        // ================================================================
+
+        // Paused, a Ctrl + click is the tester's own, and the application must get it.
+        [Fact]
+        public async Task The_gestures_are_held_back_while_recording_and_never_while_paused()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            _hook.HeldBack.Select(x => (x.Gesture, x.Button)).ShouldBe(
+            [
+                (RecordingGestureEnum.CHECK, CursorButtonTypeEnum.LEFT_BUTTON),
+                (RecordingGestureEnum.SUBSTITUTE, CursorButtonTypeEnum.RIGHT_BUTTON),
+            ]);
+
+            _session.Pause();
+            _hook.HeldBack.ShouldBeEmpty();
+
+            _session.Resume();
+            _hook.HeldBack.Count.ShouldBe(2);
+
+            await _session.StopAsync(Ct);
+            _hook.HeldBack.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_gesture_cleared_in_settings_holds_nothing_back()
+        {
+            _settings.Stored[AppSettingKeyEnum.RECORDING_HOTKEY_CHECK] = string.Empty;
+
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            _hook.HeldBack.ShouldHaveSingleItem().Gesture.ShouldBe(RecordingGestureEnum.SUBSTITUTE);
+        }
+
+        [Fact]
+        public async Task A_check_marked_while_recording_is_kept_without_the_ctrl_held_for_it()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.LeftCtrl, "VcLeftControl");
+            _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_DOWN, PhysicalX = 500, PhysicalY = 400, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, Gesture = RecordingGestureEnum.CHECK, CreatedOn = _clock.GetLocalNow().DateTime });
+            _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_UP, PhysicalX = 500, PhysicalY = 400, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON, Gesture = RecordingGestureEnum.CHECK, CreatedOn = _clock.GetLocalNow().DateTime });
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.LeftCtrl, "VcLeftControl");
+
+            IReadOnlyList<RecordedInput> recorded = await _session.StopAsync(Ct);
+
+            recorded.Select(x => (x.Type, x.Gesture)).ShouldBe(
+            [
+                (RecordedInputTypeEnum.BUTTON_DOWN, RecordingGestureEnum.CHECK),
+                (RecordedInputTypeEnum.BUTTON_UP, RecordingGestureEnum.CHECK),
+            ]);
+            recorded[0].HasScreenshot.ShouldBeTrue();
+            (await WaitUntilReadyAsync()).Actions.ShouldHaveSingleItem().Kind.ShouldBe(RecordedActionKindEnum.CHECK);
         }
 
         // ================================================================

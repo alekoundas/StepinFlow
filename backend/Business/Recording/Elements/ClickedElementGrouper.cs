@@ -52,7 +52,10 @@ namespace Business.Recording.Elements
             Action<int, int> onProgress,
             CancellationToken ct = default)
         {
-            List<ClickedElementDto> found = elements.Where(x => x.FoundBy == ElementFoundByEnum.MODEL).ToList();
+            // A check is not a click, and keeps a template of its own: one shared with clicks could be
+            // folded into their Find All Images.
+            HashSet<int> checks = actions.Where(x => x.Kind == RecordedActionKindEnum.CHECK).Select(x => x.Index).ToHashSet();
+            List<ClickedElementDto> found = elements.Where(x => x.FoundBy == ElementFoundByEnum.MODEL && !checks.Contains(x.ActionIndex)).ToList();
             List<Candidate> candidates = new List<Candidate>();
 
             onProgress(0, found.Count);

@@ -127,18 +127,22 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
-        /// A search that waits for the element, where the recording started, with its branches. What
-        /// comes after it goes in its Success branch, until the next search.
+        /// A search that waits for the element, or for it to go, where the recording started, with
+        /// its branches. What comes after it goes in its Success branch, until the next search.
         /// </summary>
-        public FlowStep AddSearch(RecordedActionDto action, string name, FlowStepTemplate template)
+        public FlowStep AddSearch(RecordedActionDto action, string name, FlowStepTemplate template, SearchModeEnum mode)
         {
             int timeout = TimeoutFor(action.WaitedMilliseconds);
+
+            string failed = $"{name} found nothing within {Seconds(timeout)}";
+            if (mode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
+                failed = $"{name}: still there after {Seconds(timeout)}";
 
             FlowStep search = new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
                 Name = name,
-                SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND,
+                SearchMode = mode,
                 TimeoutMilliseconds = timeout,
                 FlowArea = MainArea,
                 FlowStepTemplates = new List<FlowStepTemplate> { template },
@@ -155,7 +159,7 @@ namespace Business.Recording.Draft
             Add(new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.END_EXECUTION,
-                Message = $"{name} found nothing within {Seconds(timeout)}",
+                Message = failed,
             });
 
             Parent = success;
@@ -261,6 +265,16 @@ namespace Business.Recording.Draft
 
             Schema.Inputs.Add(input);
             return input;
+        }
+
+        /// <summary>The input by that name, the flow's or one this recording added, or a new one with no value yet.</summary>
+        public FlowCsvColumn InputNamed(string name)
+        {
+            FlowCsvColumn? input = Schema.Inputs.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (input != null)
+                return input;
+
+            return Input(name, string.Empty, false);
         }
 
         public static int TimeoutFor(int waitedMilliseconds)

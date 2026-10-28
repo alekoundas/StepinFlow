@@ -161,5 +161,60 @@ namespace Business.Tests.Recording
             hotkey.ShouldBeNull();
             released.ShouldBe([ctrl, f10]);
         }
+
+        // ================================================================
+        // Gestures
+        // ================================================================
+
+        private const string ALT = "VcLeftAlt";
+
+        // Alt starts no hotkey here, so only the gesture holds it back.
+        private void BindGestures()
+        {
+            _reader.BindGestures(
+            [
+                PressGesture.Parse(RecordingGestureEnum.CHECK, $"{CTRL}+LEFT_BUTTON")!,
+                PressGesture.Parse(RecordingGestureEnum.SUBSTITUTE, $"{ALT}+RIGHT_BUTTON")!,
+            ]);
+        }
+
+        private static RecordedInput GesturePress(RecordingGestureEnum gesture)
+        {
+            return new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_DOWN, Gesture = gesture };
+        }
+
+        [Fact]
+        public void A_gesture_s_modifier_is_left_out_with_its_press()
+        {
+            BindGestures();
+            RecordedInput press = GesturePress(RecordingGestureEnum.SUBSTITUTE);
+
+            Read(Down(ALT)).ShouldBeEmpty();
+            Read(Down(ALT)).ShouldBeEmpty();
+            Read(press).ShouldBe([press]);
+            Read(Up(ALT)).ShouldBeEmpty();
+        }
+
+        // The hook decides what a press is, so one it did not hold back is a click.
+        [Fact]
+        public void A_modifier_held_over_a_click_goes_through_before_it()
+        {
+            BindGestures();
+            RecordedInput alt = Down(ALT);
+            RecordedInput press = Press();
+            RecordedInput altUp = Up(ALT);
+
+            Read(alt).ShouldBeEmpty();
+            Read(press).ShouldBe([alt, press]);
+            Read(altUp).ShouldBe([altUp]);
+        }
+
+        [Fact]
+        public void A_modifier_bound_to_no_gesture_is_not_held_back()
+        {
+            RecordedInput alt = Down(ALT);
+
+            Read(alt).ShouldBe([alt]);
+        }
     }
 }

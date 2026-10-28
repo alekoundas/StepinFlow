@@ -32,9 +32,12 @@ export default function AppSettingsPanelComponent({
   const { data: all = [], isLoading } = useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
 
-  // A hotkey is captured from the keyboard, which HotkeysPanelComponent does.
+  // A hotkey or a gesture is captured from the hook, which HotkeysPanelComponent does.
   const settings = all.filter(
-    (x) => x.key.startsWith(keyPrefix) && x.kind !== AppSettingKindEnum.HOTKEY,
+    (x) =>
+      x.key.startsWith(keyPrefix) &&
+      x.kind !== AppSettingKindEnum.HOTKEY &&
+      x.kind !== AppSettingKindEnum.GESTURE,
   );
 
   const control = (setting: AppSettingDto) => {

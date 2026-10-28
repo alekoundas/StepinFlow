@@ -7,6 +7,8 @@ export const RecordedActionKindEnum = {
   KEY_HOLD: "KEY_HOLD",
   KEY_RELEASE: "KEY_RELEASE",
   PAUSE: "PAUSE",
+  CHECK: "CHECK", // A press marking something to check at that spot, the gesture's
+  SUBSTITUTE: "SUBSTITUTE", // A press marking a step that is not a click, the gesture's
 } as const;
 
 export type RecordedActionKindEnum =

@@ -79,6 +79,9 @@ namespace Business.Recording.Session
         private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
         private readonly Lock _progressLock = new Lock();
 
+        // The gestures this recording holds back, from the settings when it began.
+        private IReadOnlyList<PressGesture> _gestures = [];
+
         private Channel<PendingInput>? _queue;
         private Task? _drain;
         private Task? _capture;
@@ -140,6 +143,8 @@ namespace Business.Recording.Session
             if (!IsRecording || _filter.IsPaused)
                 return;
 
+            // Paused, a Ctrl + click is the tester's own and reaches the application.
+            _inputRecordService.HoldBackPresses([]);
             _filter.IsPaused = true;
             _cache.State = RecordingStateEnum.PAUSED;
             _ = SendProgressAsync();
@@ -159,6 +164,7 @@ namespace Business.Recording.Session
             };
 
             queue.Writer.TryWrite(new PendingInput(resumed, null));
+            _inputRecordService.HoldBackPresses(_gestures);
             _filter.IsPaused = false;
             _cache.State = RecordingStateEnum.RECORDING;
             _ = SendProgressAsync();
@@ -288,6 +294,9 @@ namespace Business.Recording.Session
             _hotkeys.Bind(RecordingHotkeyEnum.PAUSE, pauseKeys);
             _hotkeys.Bind(RecordingHotkeyEnum.STOP, stopKeys);
 
+            _gestures = await GesturesAsync(ct);
+            _hotkeys.BindGestures(_gestures);
+
             FlowArea? mainArea = await MainAreaOfAsync(flowId, ct);
             if (mainArea == null)
                 return ResultDto<bool>.Failure("Pick the window the flow works in before recording.");
@@ -299,6 +308,8 @@ namespace Business.Recording.Session
 
             if (!await _inputRecordService.StartRecordingAllAsync())
                 return ResultDto<bool>.Failure("Input is being captured for something else. Close it and start again.");
+
+            _inputRecordService.HoldBackPresses(_gestures);
 
             _cache.StartedOn = _timeProvider.GetLocalNow().DateTime;
             _cache.State = RecordingStateEnum.RECORDING;
@@ -316,6 +327,22 @@ namespace Business.Recording.Session
 
             await SendProgressAsync();
             return ResultDto<bool>.Success(true);
+        }
+
+        // An unbound or unreadable one is no gesture: its presses are clicks.
+        private async Task<IReadOnlyList<PressGesture>> GesturesAsync(CancellationToken ct)
+        {
+            List<PressGesture> gestures = [];
+
+            foreach (GestureAppSettingDefinition definition in new[] { AppSettingCatalog.RecordingGestureCheck, AppSettingCatalog.RecordingGestureSubstitute })
+            {
+                string combination = await _appSettingService.GetTextAsync(definition, ct);
+                PressGesture? gesture = PressGesture.Parse(definition.Gesture, combination);
+                if (gesture != null)
+                    gestures.Add(gesture);
+            }
+
+            return gestures;
         }
 
         private async Task<FlowArea?> MainAreaOfAsync(int flowId, CancellationToken ct)

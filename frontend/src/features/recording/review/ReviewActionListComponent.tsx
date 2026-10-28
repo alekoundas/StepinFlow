@@ -10,6 +10,7 @@ import {
   elementOf,
   groupOf,
   isOutside,
+  isPointed,
   listedActions,
   subtitleOf,
   titleOf,
@@ -148,6 +149,10 @@ function iconOf(action: RecordedActionDto): string {
       return "pi pi-sort-alt";
     case RecordedActionKindEnum.TYPING:
       return "pi pi-pencil";
+    case RecordedActionKindEnum.CHECK:
+      return "pi pi-check-circle";
+    case RecordedActionKindEnum.SUBSTITUTE:
+      return "pi pi-bolt";
     default:
       return "pi pi-th-large";
   }
@@ -155,8 +160,7 @@ function iconOf(action: RecordedActionDto): string {
 
 function tintOf(action: RecordedActionDto): string {
   if (isOutside(action)) return "var(--text-color-secondary)";
-  if (action.kind === RecordedActionKindEnum.CLICK || action.kind === RecordedActionKindEnum.DRAG)
-    return "var(--primary-color)";
+  if (isPointed(action)) return "var(--primary-color)";
 
   return "var(--purple-300)";
 }

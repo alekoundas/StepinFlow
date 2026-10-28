@@ -18,6 +18,13 @@ namespace Core.Ports
         public Task<bool> StartRecordingAllAsync();
         public Task<bool> StopRecordingAllAsync();
 
+        /// <summary>
+        /// While recording, a press matching one of these is held back from the application, and
+        /// so is its release; both are still raised, with <see cref="RecordedInput.Gesture"/> set.
+        /// Empty holds nothing back. Windows and macOS only: on Linux the press goes through too.
+        /// </summary>
+        public void HoldBackPresses(IReadOnlyList<PressGesture> gestures);
+
 
         public Task<bool> StartRecordingOverlayAsync();
         public Task<bool> StopRecordingOverlayAsync();

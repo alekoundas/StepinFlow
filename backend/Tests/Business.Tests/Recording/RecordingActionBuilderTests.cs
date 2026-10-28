@@ -202,6 +202,48 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Gestures
+        // ================================================================
+
+        // A press and its release the hook held back from the application.
+        private RecordingActionBuilderTests Gesture(int ms, int x, int y, RecordingGestureEnum gesture, int releasedAtX)
+        {
+            Press(ms, x, y).Release(ms + 50, releasedAtX, y);
+            _events[^2].Gesture = gesture;
+            _events[^1].Gesture = gesture;
+
+            return this;
+        }
+
+        [Fact]
+        public void A_check_is_marked_where_it_was_pressed_wherever_it_was_let_go()
+        {
+            Gesture(0, 100, 200, RecordingGestureEnum.CHECK, 160);
+
+            RecordedActionDto check = Build().ShouldHaveSingleItem();
+
+            check.Kind.ShouldBe(RecordedActionKindEnum.CHECK);
+            (check.LocationX, check.LocationY).ShouldBe((100, 200));
+            check.Summary.ShouldBe("Marked a check at 100, 200");
+        }
+
+        [Fact]
+        public void Two_checks_at_one_spot_are_two_rather_than_a_double_click()
+        {
+            Gesture(0, 100, 200, RecordingGestureEnum.CHECK, 100).Gesture(200, 100, 200, RecordingGestureEnum.CHECK, 100);
+
+            Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.CHECK, RecordedActionKindEnum.CHECK]);
+        }
+
+        [Fact]
+        public void A_substitute_is_a_step_that_is_not_a_click()
+        {
+            Gesture(0, 100, 200, RecordingGestureEnum.SUBSTITUTE, 100).Click(500, 300, 400);
+
+            Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.SUBSTITUTE, RecordedActionKindEnum.CLICK]);
+        }
+
+        // ================================================================
         // Scrolling
         // ================================================================
 

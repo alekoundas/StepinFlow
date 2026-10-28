@@ -29,6 +29,9 @@ export interface ActionReview {
   element: ElementRectangle | null;
   inputName: string;
   isSecret: boolean;
+
+  /** For a command, what it executes; for an application, its program. */
+  commandText: string;
 }
 
 export interface ReviewOption {
@@ -41,8 +44,22 @@ export function listedActions(result: RecordingResultDto): RecordedActionDto[] {
   return result.actions.filter((x) => x.kind !== RecordedActionKindEnum.PAUSE);
 }
 
+/** Where it was pressed matters: a click, a drag, a check. */
 export function isPointed(action: RecordedActionDto): boolean {
-  return action.kind === RecordedActionKindEnum.CLICK || action.kind === RecordedActionKindEnum.DRAG;
+  return (
+    action.kind === RecordedActionKindEnum.CLICK ||
+    action.kind === RecordedActionKindEnum.DRAG ||
+    action.kind === RecordedActionKindEnum.CHECK
+  );
+}
+
+/** Searches for the template Review's rectangle cuts. */
+export function isTemplateChoice(choice: ReviewChoiceEnum): boolean {
+  return (
+    choice === ReviewChoiceEnum.WAIT_AND_CLICK ||
+    choice === ReviewChoiceEnum.CHECK_THERE ||
+    choice === ReviewChoiceEnum.CHECK_GONE
+  );
 }
 
 export function isOutside(action: RecordedActionDto): boolean {
@@ -59,6 +76,25 @@ export function groupOf(result: RecordingResultDto, action: RecordedActionDto): 
 
 export function optionsFor(action: RecordedActionDto, element: ClickedElementDto | undefined): ReviewOption[] {
   const leaveOut = { label: "Leave out", value: ReviewChoiceEnum.LEAVE_OUT };
+
+  // A check looks inside the window the flow works in, so one outside it has nothing to look at.
+  if (action.kind === RecordedActionKindEnum.CHECK) {
+    if (isOutside(action)) return [leaveOut];
+
+    return [
+      { label: "Wait until it is there", value: ReviewChoiceEnum.CHECK_THERE },
+      { label: "Wait until it has gone", value: ReviewChoiceEnum.CHECK_GONE },
+      leaveOut,
+    ];
+  }
+
+  if (action.kind === RecordedActionKindEnum.SUBSTITUTE)
+    return [
+      { label: "A command", value: ReviewChoiceEnum.EXECUTE_COMMAND },
+      { label: "Open an application", value: ReviewChoiceEnum.LAUNCH_APP },
+      { label: "Type an input", value: ReviewChoiceEnum.TYPE_INPUT },
+      leaveOut,
+    ];
 
   if (isPointed(action)) {
     const isDrag = action.kind === RecordedActionKindEnum.DRAG;
@@ -113,6 +149,7 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
       element: element ? { x: element.x, y: element.y, width: element.width, height: element.height } : null,
       inputName,
       isSecret: label !== null && SECRET_LABEL.test(label),
+      commandText: "",
     };
   }
 
@@ -161,6 +198,9 @@ export function titleOf(action: RecordedActionDto, element: ClickedElementDto | 
   if (action.kind === RecordedActionKindEnum.CLICK && text.length > 0) return `Clicked “${text}”`;
   if (action.kind === RecordedActionKindEnum.DRAG && text.length > 0) return `Dragged “${text}”`;
 
+  if (action.kind === RecordedActionKindEnum.CHECK) return text.length > 0 ? `Check “${text}”` : "A check";
+  if (action.kind === RecordedActionKindEnum.SUBSTITUTE) return "Instead of a click";
+
   if (action.kind === RecordedActionKindEnum.TYPING) {
     const count = [...(action.text ?? "")].length;
     return count === 1 ? "Typed 1 character" : `Typed ${count} characters`;
@@ -178,6 +218,16 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
     return `becomes the input ${review.inputName}${review.isSecret ? " · secret" : ""}`;
   }
 
+  if (review.choice === ReviewChoiceEnum.CHECK_THERE) return "until it is there";
+  if (review.choice === ReviewChoiceEnum.CHECK_GONE) return "until it has gone";
+
+  // With nothing to execute, open or type it is no step, so the list says so.
+  const command = review.commandText.trim();
+  if (review.choice === ReviewChoiceEnum.EXECUTE_COMMAND) return command ? command : "no command yet, so no step";
+  if (review.choice === ReviewChoiceEnum.LAUNCH_APP) return command ? `opens ${command}` : "no program yet, so no step";
+  if (review.choice === ReviewChoiceEnum.TYPE_INPUT)
+    return review.inputName ? `types {{${review.inputName}}}` : "no input yet, so no step";
+
   if (isPointed(action) && action.waitedMilliseconds > 0) return `after ${toSeconds(action.waitedMilliseconds)}`;
   return "";
 }
@@ -192,6 +242,8 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
     actions: listedActions(result).map((action) => {
       const review = reviews[action.index];
       const isInput = review.choice === ReviewChoiceEnum.INPUT;
+      const isNamed = isInput || review.choice === ReviewChoiceEnum.TYPE_INPUT;
+      const isCommand = review.choice === ReviewChoiceEnum.EXECUTE_COMMAND || review.choice === ReviewChoiceEnum.LAUNCH_APP;
 
       return {
         actionIndex: action.index,
@@ -200,8 +252,9 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
         elementY: review.element?.y ?? null,
         elementWidth: review.element?.width ?? null,
         elementHeight: review.element?.height ?? null,
-        inputName: isInput ? review.inputName : null,
+        inputName: isNamed ? review.inputName : null,
         isSecret: isInput && review.isSecret,
+        commandText: isCommand ? review.commandText : null,
       };
     }),
   };

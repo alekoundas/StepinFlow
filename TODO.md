@@ -324,6 +324,12 @@ the history.
       recommendation: a step name is the tester's once they have seen it in Review, so send it, and
       say so under the setting. The other way is to send placeholder names and map them back.
 
+- [ ] **A QA test's screen sizes, and what happens when an execution ends, asked in the setup.**
+      Moved out of phase 7 on 2026-10-28. The sizes become `FlowViewport` rows, for phase 10's
+      viewport matrix; what happens at the end becomes steps under `End Execution`, because teardown
+      is steps. The only teardown step today is a kill-process command, so the `Close Window` loose
+      end in `PLAN.md` decides whether this ships with kill only.
+
 - [ ] **The model nests the draft by page. Not decided whether to build it.** Talked about on
       2026-10-28. The draft is flat: every search sits at the top, with what followed it in its
       Success branch. A tester would expect the steps done on the settings page under the search
@@ -428,6 +434,17 @@ the history.
       the backend like the docs model, so it ships inside the installer and nearly doubles it.
       Downloading it on first use instead would keep the installer small, at the price of a first
       recording that waits, or works with the box around the click until it has. To decide.
+- [ ] **The recording gestures on macOS and Linux. Check with those adapters.** Since 2026-10-28 a
+      Ctrl + click or Ctrl + right click while recording is held back from the application by
+      `GestureGlobalHook`, which sets SharpHook's suppress flag on the hook's own thread. SharpHook
+      suppresses on Windows and macOS only, so on Linux the press reaches the application as well -
+      a Ctrl + right click opens its menu, a Ctrl + click on a link opens a tab - and is still
+      recorded as the gesture. On macOS the hook needs the accessibility permission either way;
+      check that suppressing works under it.
+- [ ] **Not tried by hand: the gestures.** Verified by tests and the build only. A gesture is
+      decided from the modifiers the hook saw with the press; a modifier held down before the
+      recording started, or a press while StepinFlow's own window is in front, are the cases to
+      try first.
 - [ ] **The recording bar on macOS and Linux. Check with those adapters.** It is kept out of
       screenshots by `setContentProtection`, which Electron does not have on Linux, so there the bar
       would be in every screenshot the recorder takes of a main area under it. On macOS it sets the

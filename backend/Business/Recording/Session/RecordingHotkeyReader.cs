@@ -12,12 +12,16 @@ namespace Business.Recording.Session
     /// while they are down: when the combination follows they go with it, and anything else lets
     /// them through first, in order. Otherwise the Ctrl of Ctrl+F9 would already be recorded by
     /// the time F9 came. A key held down repeats, and only its first press counts.
+    ///
+    /// A recording gesture's modifiers are held back the same way. The hook decides which press is
+    /// a gesture, and marks it; the modifiers held for it are left out with it.
     /// </summary>
     public sealed class RecordingHotkeyReader
     {
         private const char SEPARATOR = '+';
 
         private readonly Dictionary<RecordingHotkeyEnum, string[]> _combinations = new Dictionary<RecordingHotkeyEnum, string[]>();
+        private readonly HashSet<string> _gestureModifiers = new HashSet<string>();     // Ctrl, Alt, Shift, Win
         private readonly HashSet<string> _held = new HashSet<string>();         // Every key down now.
         private readonly HashSet<string> _swallowed = new HashSet<string>();    // A pressed hotkey's keys, left out until they come up.
         private readonly List<RecordedInput> _heldBack = new List<RecordedInput>();
@@ -41,6 +45,16 @@ namespace Business.Recording.Session
                     _combinations.Remove(hotkey);
                 else
                     _combinations[hotkey] = keys;
+            }
+        }
+
+        /// <summary>The gestures whose modifiers to hold back until a press shows whether one was made.</summary>
+        public void BindGestures(IReadOnlyList<PressGesture> gestures)
+        {
+            lock (_lock)
+            {
+                _gestureModifiers.Clear();
+                _gestureModifiers.UnionWith(gestures.SelectMany(x => x.Modifiers));
             }
         }
 
@@ -85,6 +99,11 @@ namespace Business.Recording.Session
                                 return [];
                         }
                         break;
+
+                    case RecordedInputTypeEnum.BUTTON_DOWN:
+                        if (input.Gesture != null)
+                            SwallowGestureModifiers();
+                        break;
                 }
 
                 return Release(input);
@@ -122,9 +141,9 @@ namespace Business.Recording.Session
                 return Release(null);
             }
 
-            // A key that may start a combination waits to see what follows, and so do its repeats.
+            // A key that may start a combination or a gesture waits to see what follows, and so do its repeats.
             bool isHeldBack = _heldBack.Any(x => x.KeyChar == name);
-            if (isHeldBack || (!isRepeat && IsFirstKeys(name)))
+            if (isHeldBack || (!isRepeat && (IsFirstKeys(name) || IsGestureModifier(name))))
             {
                 _heldBack.Add(down);
                 return [];
@@ -156,6 +175,22 @@ namespace Business.Recording.Session
             }
 
             return false;
+        }
+
+        private bool IsGestureModifier(string name)
+        {
+            string? modifier = PressGesture.ModifierOf(name);
+            return modifier != null && _gestureModifiers.Contains(modifier);
+        }
+
+        // The modifiers held back for a gesture's press. One already recorded keeps its key-up, as
+        // for a hotkey.
+        private void SwallowGestureModifiers()
+        {
+            foreach (RecordedInput heldBack in _heldBack.Where(x => x.KeyChar != null && PressGesture.ModifierOf(x.KeyChar) != null))
+                _swallowed.Add(heldBack.KeyChar!);
+
+            _heldBack.RemoveAll(x => x.KeyChar != null && PressGesture.ModifierOf(x.KeyChar) != null);
         }
 
         // The key that completed it, and the ones held back for it. One already recorded keeps its

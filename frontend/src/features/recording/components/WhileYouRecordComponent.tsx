@@ -13,6 +13,8 @@ export default function WhileYouRecordComponent() {
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
+  const checkKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_CHECK)?.value;
+  const substituteKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE)?.value;
 
   return (
     <section
@@ -49,13 +51,32 @@ export default function WhileYouRecordComponent() {
         >
           Stop and review
         </dd>
+        <dt>
+          <KeysComponent keys={checkKeys} />
+        </dt>
+        <dd
+          className="m-0"
+          style={MUTED}
+        >
+          Check what you click on: that it is there, or that it goes
+        </dd>
+        <dt>
+          <KeysComponent keys={substituteKeys} />
+        </dt>
+        <dd
+          className="m-0"
+          style={MUTED}
+        >
+          A step that is not a click: a command, an application, an input
+        </dd>
       </dl>
       <span
         className="text-xs"
         style={MUTED}
       >
-        Both work whatever window is in front, and are never recorded. They are under Settings, Recording
-        keys.
+        They work whatever window is in front. The keys are never recorded, the two clicks never reach
+        the application, and Review asks what each click was for. All four are under Settings,
+        Recording keys.
       </span>
     </section>
   );

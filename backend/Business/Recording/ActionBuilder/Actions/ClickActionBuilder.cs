@@ -33,6 +33,13 @@ namespace Business.Recording.ActionBuilder.Actions
             if (release != null)
                 inputs.Add(release);
 
+            // A gesture marks the spot it was pressed at, wherever the cursor was let go.
+            if (press.Gesture != null)
+            {
+                reader.AddHandled(new HumanAction(Gesture(press, press.Gesture.Value), inputs));
+                return;
+            }
+
             // If none release exists, copy the press event as relese. ex: User paused while pressed click and on resume its already released.
             RecordedInput end = release ?? press;
 
@@ -121,6 +128,29 @@ namespace Business.Recording.ActionBuilder.Actions
                 LocationY = press.PhysicalY,
                 CursorButtonType = press.CursorButtonType,
                 CursorButtonActionType = buttonAction,
+            };
+        }
+
+        private static RecordedActionDto Gesture(RecordedInput press, RecordingGestureEnum gesture)
+        {
+            RecordedActionKindEnum kind = RecordedActionKindEnum.CHECK;
+            string summary = $"Marked a check at {press.PhysicalX}, {press.PhysicalY}";
+            if (gesture == RecordingGestureEnum.SUBSTITUTE)
+            {
+                kind = RecordedActionKindEnum.SUBSTITUTE;
+                summary = "Marked a step that is not a click";
+            }
+
+            return new RecordedActionDto
+            {
+                Kind = kind,
+                Summary = summary,
+                WindowTitle = press.WindowTitle,
+                Window = press.Window,
+                ScreenshotIndex = press.HasScreenshot ? press.Index : null,
+                LocationX = press.PhysicalX,
+                LocationY = press.PhysicalY,
+                CursorButtonType = press.CursorButtonType,
             };
         }
 

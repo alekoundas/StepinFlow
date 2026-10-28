@@ -11,5 +11,7 @@ namespace Core.Enums
         KEY_HOLD,       // A modifier going down and staying down over a click or a scroll
         KEY_RELEASE,    // That modifier coming back up
         PAUSE,
+        CHECK,          // A press marking something to check at that spot, the gesture's
+        SUBSTITUTE,     // A press marking a step that is not a click, the gesture's
     }
 }

@@ -59,6 +59,10 @@ const glyphOf = (kind: RecordedActionKindEnum): string => {
       return "S";
     case RecordedActionKindEnum.TYPING:
       return "T";
+    case RecordedActionKindEnum.CHECK:
+      return "✓";
+    case RecordedActionKindEnum.SUBSTITUTE:
+      return "I";
     default:
       return "K";
   }
@@ -70,6 +74,8 @@ const tintOf = (kind: RecordedActionKindEnum): string => {
     case RecordedActionKindEnum.CLICK:
     case RecordedActionKindEnum.DRAG:
     case RecordedActionKindEnum.SCROLL:
+    case RecordedActionKindEnum.CHECK:
+    case RecordedActionKindEnum.SUBSTITUTE:
       return "var(--blue-300)";
     default:
       return "var(--purple-300)";

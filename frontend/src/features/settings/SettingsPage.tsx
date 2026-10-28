@@ -55,7 +55,7 @@ const SECTIONS: Section[] = [
     content: (
       <HotkeysPanelComponent
         header="Recording keys"
-        description="Pressed while you are recording another application, so these are matched system wide and never recorded. They still reach that application, so rebind any it uses."
+        description="Pressed while you are recording another application, so these are matched system wide and never recorded. The keys still reach that application, so rebind any it uses. The two clicks do not: it never gets them."
         keyPrefix="RECORDING_HOTKEY_"
       />
     ),

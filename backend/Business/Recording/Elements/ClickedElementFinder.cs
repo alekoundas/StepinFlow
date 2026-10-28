@@ -79,7 +79,7 @@ namespace Business.Recording.Elements
 
         private static bool IsPress(RecordedActionDto action, Func<int, RecordedPress?> pressOf)
         {
-            bool isPointed = action.Kind == RecordedActionKindEnum.CLICK || action.Kind == RecordedActionKindEnum.DRAG;
+            bool isPointed = action.Kind == RecordedActionKindEnum.CLICK || action.Kind == RecordedActionKindEnum.DRAG || action.Kind == RecordedActionKindEnum.CHECK;
             return isPointed && action.ScreenshotIndex != null && pressOf(action.ScreenshotIndex.Value) != null;
         }
 

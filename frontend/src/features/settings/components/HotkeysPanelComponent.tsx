@@ -19,6 +19,18 @@ import {
 } from "@/features/settings/hooks/use-app-settings";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 
+// The hook's names for the keys a gesture may hold: either side of Ctrl, Alt, Shift and Win.
+const MODIFIER_KEYS = [
+  "VcLeftControl",
+  "VcRightControl",
+  "VcLeftAlt",
+  "VcRightAlt",
+  "VcLeftShift",
+  "VcRightShift",
+  "VcLeftMeta",
+  "VcRightMeta",
+];
+
 interface Props {
   header: string;
   description: string;
@@ -41,6 +53,9 @@ interface Props {
  *
  * The backend only reports keys. What counts as a combination, and when one is finished, is decided
  * here: keys accumulate while they are held, and the first release commits what was down.
+ *
+ * A recording gesture is modifiers and a mouse button, so for one the click commits what was held,
+ * and a key let go first only stops being held. The click lands on a box that does nothing.
  */
 export default function HotkeysPanelComponent({
   header,
@@ -51,12 +66,16 @@ export default function HotkeysPanelComponent({
   const { setSettingMutation } = useAppSettingMutations();
 
   const hotkeys = all.filter(
-    (x) => x.kind === AppSettingKindEnum.HOTKEY && x.key.startsWith(keyPrefix),
+    (x) =>
+      (x.kind === AppSettingKindEnum.HOTKEY || x.kind === AppSettingKindEnum.GESTURE) &&
+      x.key.startsWith(keyPrefix),
   );
 
   const [capturingKey, setCapturingKey] = useState<string | null>(null);
   const [heldKeys, setHeldKeys] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const isCapturingGesture = hotkeys.find((x) => x.key === capturingKey)?.kind === AppSettingKindEnum.GESTURE;
 
   // Written in an effect rather than during render: the subscription below needs the current
   // bindings to spot a clash, but re-subscribing whenever the list identity changes would tear
@@ -96,10 +115,21 @@ export default function HotkeysPanelComponent({
       setSettingMutation.mutate({ key: capturingKey as never, value: combination });
     };
 
+    const isGesture = hotkeysRef.current.find((x) => x.key === capturingKey)?.kind === AppSettingKindEnum.GESTURE;
+
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.HOTKEY_CAPTURE_EVENT) return;
 
       const input = message.payload as RecordedInput;
+
+      // A gesture's click commits the modifiers held for it, in the backend's name for the button.
+      if (isGesture && input.type === RecordedInputTypeEnum.BUTTON_DOWN) {
+        const held = heldRef.current;
+        if (held.length > 0 && held.every((x) => MODIFIER_KEYS.includes(x)))
+          commit([...held, input.cursorButtonType].join("+"));
+        else setError("Hold Ctrl, Alt, Shift or Win, and nothing else, as you click.");
+        return;
+      }
 
       // The hook's own name for the key, which is what gets stored: nothing translates it.
       const name = input.keyChar;
@@ -110,6 +140,13 @@ export default function HotkeysPanelComponent({
         if (heldRef.current.includes(name)) return;
 
         heldRef.current = [...heldRef.current, name];
+        setHeldKeys(heldRef.current);
+        return;
+      }
+
+      // For a gesture a key let go is only no longer held: the click is what commits it.
+      if (isGesture && input.type === RecordedInputTypeEnum.KEY_UP) {
+        heldRef.current = heldRef.current.filter((x) => x !== name);
         setHeldKeys(heldRef.current);
         return;
       }
@@ -189,6 +226,15 @@ export default function HotkeysPanelComponent({
                     )}
                   </span>
 
+                  {isCapturingGesture && (
+                    <span
+                      className="text-xs border-1 border-dashed border-round-md px-3 py-2 select-none"
+                      style={{ borderColor: "var(--surface-border)", color: "var(--text-color-secondary)" }}
+                    >
+                      Hold them and click here
+                    </span>
+                  )}
+
                   <Button
                     type="button"
                     label="Cancel"
@@ -233,7 +279,11 @@ export default function HotkeysPanelComponent({
       </div>
 
       <LabelComponent
-        text="Hold the keys you want, then let one go to save it."
+        text={
+          hotkeys.some((x) => x.kind === AppSettingKindEnum.GESTURE)
+            ? "Hold the keys you want, then let one go to save it. For a click, hold the keys and click, with whichever button."
+            : "Hold the keys you want, then let one go to save it."
+        }
         size="xs"
         color="secondary"
         className="mt-3"

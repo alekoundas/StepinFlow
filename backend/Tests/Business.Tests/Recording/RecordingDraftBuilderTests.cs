@@ -113,6 +113,15 @@ namespace Business.Tests.Recording
             return schema.Steps.Where(x => x.ParentFlowStep == parent).OrderBy(x => x.OrderNumber).ToList();
         }
 
+        // Marked anywhere: where does not matter to a step that is not a click.
+        private RecordedActionDto Substitute(ReviewChoiceEnum choice, string? commandText = null, string? inputName = null)
+        {
+            RecordedActionDto action = Act(new RecordedActionDto { Kind = RecordedActionKindEnum.SUBSTITUTE, LocationX = 400, LocationY = 300, Window = RecordedWindowEnum.MAIN_AREA });
+            _reviewed.Actions.Add(new ReviewedActionDto { ActionIndex = action.Index, Choice = choice, CommandText = commandText, InputName = inputName });
+
+            return action;
+        }
+
         private static FlowStep BranchOf(FlowScriptSchema schema, FlowStep search, FlowStepTypeEnum branch)
         {
             return ChildrenOf(schema, search).Single(x => x.FlowStepType == branch);
@@ -342,6 +351,86 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Marked while recording
+        // ================================================================
+
+        [Fact]
+        public void A_check_is_a_wait_for_the_element_that_fails_the_execution_when_it_never_comes()
+        {
+            Click(400, 300, "Paid", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep check = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            (check.Name, check.SearchMode, check.FlowArea!.Name).ShouldBe(("Check Paid", SearchModeEnum.WAIT_UNTIL_FOUND, "Browser"));
+            check.FlowStepTemplates.ShouldHaveSingleItem().FlowTemplate.TemplateImage.ShouldNotBeNull();
+            ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.SUCCESS)).ShouldBeEmpty();
+            ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.FAILURE)).ShouldHaveSingleItem().Message.ShouldBe("Check Paid found nothing within 10.0s");
+        }
+
+        [Fact]
+        public void A_check_that_something_goes_waits_until_it_has_gone()
+        {
+            Click(400, 300, "Loading", ReviewChoiceEnum.CHECK_GONE, kind: RecordedActionKindEnum.CHECK);
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep check = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            (check.Name, check.SearchMode).ShouldBe(("Check Loading gone", SearchModeEnum.WAIT_UNTIL_NOT_FOUND));
+            ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.FAILURE)).ShouldHaveSingleItem().Message.ShouldBe("Check Loading gone: still there after 10.0s");
+        }
+
+        [Fact]
+        public void What_comes_after_a_check_sits_in_its_success_branch()
+        {
+            Click(400, 300, "Signed in", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            Key(RecordedActionKindEnum.KEY_COMBINATION, "Enter");
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep check = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.SUCCESS)).ShouldHaveSingleItem().FlowStepType.ShouldBe(FlowStepTypeEnum.KEYBOARD_INPUT);
+        }
+
+        [Fact]
+        public void A_command_or_an_application_marked_instead_of_a_click_is_a_command_step()
+        {
+            Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "del /q C:\\Exports\\*.csv");
+            Substitute(ReviewChoiceEnum.LAUNCH_APP, commandText: "notepad.exe");
+
+            List<FlowStep> added = ChildrenOf(Build(), null).Skip(1).ToList();
+
+            added.Select(x => (x.FlowStepType, x.RunCommandPreset, x.RunCommandValue)).ShouldBe(
+            [
+                (FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM, "del /q C:\\Exports\\*.csv"),
+                (FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP, "notepad.exe"),
+            ]);
+        }
+
+        [Fact]
+        public void An_input_s_value_types_the_input_the_recording_made_or_a_new_one_with_no_value()
+        {
+            Typing("ops@example.com", inputName: "email");
+            Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "Email");
+            Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "account");
+
+            FlowScriptSchema schema = Build();
+
+            schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT).Select(x => x.KeyboardInputText).ShouldBe(["{{email}}", "{{email}}", "{{account}}"]);
+            schema.Inputs.Select(x => (x.Name, x.DefaultValue)).ShouldBe([("email", "ops@example.com"), ("account", "")]);
+        }
+
+        [Fact]
+        public void One_left_with_nothing_to_execute_open_or_type_is_no_step()
+        {
+            Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "  ");
+            Substitute(ReviewChoiceEnum.LAUNCH_APP);
+            Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "");
+
+            ChildrenOf(Build(), null).ShouldHaveSingleItem().Name.ShouldBe("Launch Browser");
+        }
+
+        // ================================================================
         // As a script
         // ================================================================
 
@@ -372,13 +461,23 @@ namespace Business.Tests.Recording
             (menu.CursorButtonType, menu.CursorButtonActionType) = (CursorButtonTypeEnum.RIGHT_BUTTON, CursorButtonActionTypeEnum.DOUBLE_CLICK);
             RecordedActionDto slide = Click(200, 500, "Slider", ReviewChoiceEnum.CLICK_AT_SPOT, kind: RecordedActionKindEnum.DRAG);
             (slide.LocationEndX, slide.LocationEndY) = (320, 500);
+            Click(400, 300, "Paid", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            Click(400, 340, "Loading", ReviewChoiceEnum.CHECK_GONE, kind: RecordedActionKindEnum.CHECK);
+            Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "del /q C:\\Exports\\*.csv");
+            Substitute(ReviewChoiceEnum.LAUNCH_APP, commandText: "notepad.exe");
+            Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "email");
 
             FlowScriptSchema draft = Build();
             string script = new Printer().Write(draft);
             FlowScriptSchema read = new Scanner().Read(script);
 
+            // A check followed straight by a search leaves its Success branch empty, which a script
+            // does not write and an import adds back (FlowStepDataService.MissingBranches).
+            int emptyBranches = draft.Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS && !draft.Steps.Any(y => y.ParentFlowStep == x));
+
             read.Diagnostics.ShouldBeEmpty(script);
-            read.Steps.Count.ShouldBe(draft.Steps.Count, script);
+            emptyBranches.ShouldBe(1, script);
+            read.Steps.Count.ShouldBe(draft.Steps.Count - emptyBranches, script);
             read.Points.Count.ShouldBe(draft.Points.Count, script);
             read.Inputs.Count.ShouldBe(2, script);
             new Printer().Write(read).ShouldBe(script);

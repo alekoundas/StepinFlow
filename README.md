@@ -199,7 +199,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**960 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
+**983 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, `System 99`
 parsing as a system action that does not exist, and an engine that refused every start after one
 failed while loading.

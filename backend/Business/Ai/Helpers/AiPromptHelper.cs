@@ -229,6 +229,8 @@ namespace Business.Ai.Helpers
             - Steps that name the same template clicked the same picture. When they did the same
               thing in different places - the same download icon on four rows - make them one Find
               All Images whose Success branch moves onto each hit and clicks it.
+            - A search the draft named Check is a check the tester marked while recording, not a
+              click: keep it where it is, and never fold it into another search.
             - Say in each End Execution message what was not found, in the words of the task.
             - Put a comment over every search saying what it is for in the task, and over any other
               step whose purpose is not plain from its name.

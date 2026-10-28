@@ -22,6 +22,21 @@ namespace Core.Catalogs
             "End the recording and review what was recorded.",
             "VcF10");
 
+        // Recording gestures. The press never reaches the application, on Windows and macOS.
+        public static readonly GestureAppSettingDefinition RecordingGestureCheck = new(
+            AppSettingKeyEnum.RECORDING_HOTKEY_CHECK,
+            RecordingGestureEnum.CHECK,
+            "Check here",
+            "Click something to check it is there, or that it goes. Review asks which.",
+            "VcLeftControl+LEFT_BUTTON");
+
+        public static readonly GestureAppSettingDefinition RecordingGestureSubstitute = new(
+            AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE,
+            RecordingGestureEnum.SUBSTITUTE,
+            "Do something else here",
+            "Click anywhere for a step that is not a click: a command, an application opened, or an input's value typed. Review asks which.",
+            "VcLeftControl+RIGHT_BUTTON");
+
 
         // Debugger hotkeys.
         public static readonly HotkeyAppSettingDefinition HotkeyContinue = new(
@@ -128,6 +143,8 @@ namespace Core.Catalogs
         [
             RecordingHotkeyPause,
             RecordingHotkeyStop,
+            RecordingGestureCheck,
+            RecordingGestureSubstitute,
 
             HotkeyContinue,
             HotkeyStepInto,

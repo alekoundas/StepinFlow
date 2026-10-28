@@ -18,6 +18,7 @@ import {
   groupOf,
   isOutside,
   isPointed,
+  isTemplateChoice,
   listedActions,
   optionsFor,
   titleOf,
@@ -58,7 +59,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
   let click: { x: number; y: number } | null = null;
   if (screen && isOwnScreen && isPointed(action)) click = { x: action.locationX - screen.x, y: action.locationY - screen.y };
 
-  const isTemplate = review.choice === ReviewChoiceEnum.WAIT_AND_CLICK;
+  const isTemplate = isTemplateChoice(review.choice);
 
   return (
     <section
@@ -181,6 +182,42 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </div>
         )}
 
+        {review.choice === ReviewChoiceEnum.TYPE_INPUT && (
+          <div className="flex flex-column gap-2">
+            <label
+              htmlFor="review-typed-input"
+              className="font-medium"
+            >
+              Input name
+            </label>
+            <InputText
+              id="review-typed-input"
+              value={review.inputName}
+              onChange={(e) => onChange({ ...review, inputName: toName(e.target.value) })}
+              style={{ width: 200, fontFamily: "ui-monospace, Consolas, monospace" }}
+            />
+          </div>
+        )}
+
+        {(review.choice === ReviewChoiceEnum.EXECUTE_COMMAND || review.choice === ReviewChoiceEnum.LAUNCH_APP) && (
+          <div className="flex flex-column gap-2">
+            <label
+              htmlFor="review-command"
+              className="font-medium"
+            >
+              {review.choice === ReviewChoiceEnum.EXECUTE_COMMAND ? "Command" : "Program"}
+            </label>
+            <InputText
+              id="review-command"
+              value={review.commandText}
+              placeholder={review.choice === ReviewChoiceEnum.EXECUTE_COMMAND ? "del /q C:\\Exports\\*.csv" : "notepad.exe, or the program's full path"}
+              onChange={(e) => onChange({ ...review, commandText: e.target.value })}
+              className="w-full"
+              style={{ fontFamily: "ui-monospace, Consolas, monospace" }}
+            />
+          </div>
+        )}
+
         <p
           className="m-0 text-sm"
           style={MUTED}
@@ -259,6 +296,16 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
       return `The value stays on this machine as the input's default. The flow and the script only see {{${review.inputName}}}.`;
     case ReviewChoiceEnum.TYPE_AS_WRITTEN:
       return "Typed into the flow as it is, so anyone reading the flow reads it too.";
+    case ReviewChoiceEnum.CHECK_THERE:
+      return `Waits until it is there, up to ${toSeconds(waitFor(action.waitedMilliseconds))}, and the execution fails if it never comes. What you did next goes after it.`;
+    case ReviewChoiceEnum.CHECK_GONE:
+      return `Waits until it has gone, up to ${toSeconds(waitFor(action.waitedMilliseconds))}, and the execution fails if it is still there. What you did next goes after it.`;
+    case ReviewChoiceEnum.EXECUTE_COMMAND:
+      return "Executes the command in cmd and waits for it to finish. Windows only, as every command is for now.";
+    case ReviewChoiceEnum.LAUNCH_APP:
+      return "Opens the program and carries on without waiting for its window.";
+    case ReviewChoiceEnum.TYPE_INPUT:
+      return "Types the input's value. One the flow does not have yet is added with no value, to be given before it executes.";
     case ReviewChoiceEnum.LEAVE_OUT:
       if (isOutside(action)) return "Outside the window you picked, so it is left out. Keep it only if the flow really needs it.";
       return "Left out of the flow.";

@@ -46,6 +46,29 @@ namespace Core.Models.Business
         public override string DefaultAsText => DefaultCombination;
     }
 
+    /// <summary>Modifiers and a mouse button, "VcLeftControl+LEFT_BUTTON", read as a <see cref="PressGesture"/>.</summary>
+    public sealed class GestureAppSettingDefinition : AppSettingDefinition
+    {
+        public GestureAppSettingDefinition(
+            AppSettingKeyEnum key,
+            RecordingGestureEnum gesture,
+            string label,
+            string description,
+            string defaultCombination)
+            : base(key, label, description)
+        {
+            Gesture = gesture;
+            DefaultCombination = defaultCombination;
+        }
+
+        public RecordingGestureEnum Gesture { get; }
+        public string DefaultCombination { get; }
+
+        public override AppSettingKindEnum Kind => AppSettingKindEnum.GESTURE;
+
+        public override string DefaultAsText => DefaultCombination;
+    }
+
     public sealed class IntAppSettingDefinition : AppSettingDefinition
     {
         public IntAppSettingDefinition(
