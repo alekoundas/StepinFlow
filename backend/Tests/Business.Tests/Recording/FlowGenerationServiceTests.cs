@@ -3,6 +3,7 @@ using System.Text.Json;
 using Business.Ai.ScriptRevision;
 using Business.Flows.DataService;
 using Business.FlowScript;
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
@@ -324,6 +325,57 @@ namespace Business.Tests.Recording
             generated.Refused.ShouldNotBeEmpty();
             generated.Import.IsSuccess.ShouldBeTrue();
             Steps(flowId).ShouldContain(x => x.Name == "Find Email");
+        }
+
+        // ================================================================
+        // A QA test's draft
+        // ================================================================
+
+        private const string QA_INSTRUCTION = "This flow is a QA test";
+
+        [Fact]
+        public async Task An_automation_is_not_told_to_be_a_test()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            FakeChatClient model = Model(x => x);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldNotContain(QA_INSTRUCTION);
+        }
+
+        // Whatever the instruction said, an answer without them is not a QA test.
+        [Fact]
+        public async Task A_QA_test_s_answer_without_stages_or_a_pass_is_refused()
+        {
+            int flowId = await NewFlowAsync(isQaTest: true);
+            Record();
+            FakeChatClient model = Model(x => x);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain(QA_INSTRUCTION);
+            generated.IsModelDraft.ShouldBeFalse();
+            generated.Refused.Select(x => x.Code).ShouldBe([nameof(DiagnosticCodeEnum.STAGE_MARKER_MISSING), nameof(DiagnosticCodeEnum.END_PASSED_MISSING)]);
+        }
+
+        [Fact]
+        public async Task A_QA_test_s_answer_with_a_stage_and_a_pass_is_saved_and_stays_a_QA_test()
+        {
+            int flowId = await NewFlowAsync(isQaTest: true);
+            Record();
+            Model(x => x + "\n## Signed in\nEnd Execution  passed\n");
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            Steps(flowId).ShouldContain(x => x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER);
+            Steps(flowId).ShouldContain(x => x.FlowStepType == FlowStepTypeEnum.END_EXECUTION && x.EndExecutionAsSuccess);
+
+            using AppDbContext db = _database.CreateDbContext();
+            (await db.Flows.SingleAsync(Ct)).IsQaTest.ShouldBeTrue();
         }
 
         // A cloud provider not allowed screen content names the steps from the description.

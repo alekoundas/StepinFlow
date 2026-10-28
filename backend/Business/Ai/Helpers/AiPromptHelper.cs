@@ -230,9 +230,30 @@ namespace Business.Ai.Helpers
               thing in different places - the same download icon on four rows - make them one Find
               All Images whose Success branch moves onto each hit and clicks it.
             - Say in each End Execution message what was not found, in the words of the task.
-            - Put a comment over a step whose purpose is not plain from its name.
+            - Put a comment over every search saying what it is for in the task, and over any other
+              step whose purpose is not plain from its name.
             - Keep every timeout. Never add a click, typed text or a key press that was not
               recorded, and never remove one.
+            """;
+
+        // Added after ShapeRecording when the flow is a QA test. An answer with no stage marker or
+        // no End Execution passed is refused in code, whatever this says.
+        public const string ShapeQaTest =
+            """
+            This flow is a QA test: it proves the application works, rather than only doing a
+            task. Shape it into a test as well:
+            - Divide it into stages with stage markers, one for each part of the journey the
+              Description names - ## Sign in, ## Open the invoices. A stage marker is a label and
+              does nothing when the flow executes. Put a comment over each one saying what the
+              stage proves.
+            - End it with End Execution passed, where what the Description says the flow proves
+              has been seen - usually as its last step.
+            - Every Failure branch ends with End Execution failed, its message saying in the words
+              of the test what did not happen.
+            - When the Description says something must be seen and no step checks for it, add a
+              check only if you can make it from what the script has: Check Text or Wait For Text
+              in the main area for words that will be on the screen, or a search for a template the
+              script already names. Otherwise say in a note what is not checked.
             """;
 
         // The Check page's "Ask for changes": the tester's words follow it.

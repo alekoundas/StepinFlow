@@ -580,8 +580,8 @@ End Execution  failed   <[ did not reach the products page ]>
 End Execution  passed
 ```
 
-Stops the flow and stamps the verdict. Without it a flow ends when it runs out of steps, and the
-verdict comes from whether every check passed.
+Stops the flow and stamps the verdict. Without it a flow ends when it runs out of steps: an
+automation has completed, and a QA test is inconclusive, because nothing in it said (below).
 
 Cleanup belongs above it, which is why it is a step and not a flag:
 

@@ -770,9 +770,9 @@ writes nothing and says on which line, as an import does.
 **A model shapes it as a script** - Review's "Generate flow".
 `FlowGenerationService.ImportModelDraftAsync` writes the plain draft as a script and hands it, with
 an instruction to name the steps after the task, fold clicks on the same picture into one Find All
-Images and say what each failed wait was waiting for, to `Business/Ai/ScriptRevision/
-ScriptRevisionService`: a script and an instruction in, a script that reads cleanly out, built once
-for phase 9's fix loop as well. Its standing instructions are `AiPromptHelper.ReviseScript` followed
+Images, say what each failed wait was waiting for and put a comment over every search, to
+`Business/Ai/ScriptRevision/ScriptRevisionService`: a script and an instruction in, a script that
+reads cleanly out, built once for phase 9's fix loop as well. Its standing instructions are `AiPromptHelper.ReviseScript` followed
 by the whole of `AiDocuments/Reference/flow-format.md`, the grammar people read.
 
 The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
@@ -780,12 +780,23 @@ do, with no tool calling. It is read back with the scanner as a file is, and che
 than in the prompt: `Flow:` and `Id:` as they were, no template the draft did not cut, and every
 input kept, renamed only through the map. A refusal is a `Diagnostic` like a scanner error, with
 codes of its own, and goes back to the model line by line, three attempts at most. What the code owns
-is never taken from the answer: input values are not even sent, and they, the description and each
-template's click point, size and DPI are put back from the draft. When no answer reads cleanly, or
-the model cannot be reached, the plain draft is saved instead and the page says why, so the tester
-always has a flow. A cloud provider that may not be sent screen content (§10) gets the draft with
+is never taken from the answer: input values are not even sent, and they, the description, the
+flow's kind and each template's click point, size and DPI are put back from the draft - the import
+writes a flow's kind from its script, so an answer could otherwise turn a QA test into an
+automation. When no answer reads cleanly, or the model cannot be reached, the plain draft is saved
+instead and the page says why, so the tester always has a flow. A cloud provider that may not be sent screen content (§10) gets the draft with
 nothing read under the clicks - its search names are placeholders - and is told to name the steps
 from the description.
+
+**A QA test is told to be one** (`AiPromptHelper.ShapeQaTest`, after the instruction above): stage
+markers for the parts of the journey the description names, each with a comment saying what it
+proves; `End Execution passed` where what the description says the flow proves has been seen;
+failure messages in the test's words; and a check it can make only from what the script has - a
+Check Text or Wait For Text in the main area, or a template the draft cut - or a note saying what
+is not checked. The code holds it to that whatever the prompt says: an answer with no stage marker,
+or no `End Execution passed`, is refused as `STAGE_MARKER_MISSING` or `END_PASSED_MISSING` and goes
+back like any other refusal. An "Ask for changes" is not held to it, so a tester can ask for what
+they like.
 
 A model takes minutes over a draft, so it is work longer than a request can wait for (§4):
 `Recording.generateDraft` starts `FlowGenerationSessionService` and returns;
@@ -2134,13 +2145,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-955 tests, all passing, in eight projects under `backend/Tests/` - one
+960 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 171 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - and the key names |
-| `Business.Tests` | 713 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 718 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2265,7 +2276,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 955 backend tests.
+or OpenAI. 960 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

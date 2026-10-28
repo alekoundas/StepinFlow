@@ -2,6 +2,7 @@ using System.Text.Json;
 using Business.Ai.ScriptRevision;
 using Business.Ai.ScriptRevision.Models;
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Tests.Fakes;
@@ -40,7 +41,7 @@ namespace Business.Tests.Ai
 
         private Task<ScriptRevisionResult> ReviseAsync()
         {
-            return _service.ReviseAsync(_script, INSTRUCTION, null, Ct);
+            return _service.ReviseAsync(_script, INSTRUCTION, null, null, Ct);
         }
 
         // The script as the model was sent it, in the first request.
@@ -117,6 +118,19 @@ namespace Business.Tests.Ai
             result.Script.ShouldNotBeNull().ShouldContain("click 60 12");
         }
 
+        // The import writes the flow's kind from the script, so an answer could turn an automation
+        // into a QA test, or one out of being one.
+        [Fact]
+        public async Task The_flow_s_kind_is_put_back()
+        {
+            Model(x => Answer(Sent(x).Replace("Kind:    automation", "Kind:    qa test")));
+
+            ScriptRevisionResult result = await ReviseAsync();
+
+            result.IsRevised.ShouldBeTrue();
+            result.Script.ShouldNotBeNull().ShouldContain("Kind:    automation");
+        }
+
         // ================================================================
         // Refused
         // ================================================================
@@ -133,7 +147,7 @@ namespace Business.Tests.Ai
                 return Answer(Sent(x));
             });
 
-            ScriptRevisionResult result = await _service.ReviseAsync(_script, INSTRUCTION, (attempt, refused) => attempts.Add((attempt, refused.Count)), Ct);
+            ScriptRevisionResult result = await _service.ReviseAsync(_script, INSTRUCTION, null, (attempt, refused) => attempts.Add((attempt, refused.Count)), Ct);
 
             result.IsRevised.ShouldBeTrue();
             result.Attempts.ShouldBe(2);
@@ -174,6 +188,33 @@ namespace Business.Tests.Ai
             ScriptRevisionResult result = await ReviseAsync();
 
             result.Refused.ShouldContain(x => x.Code == DiagnosticCodeEnum.FLOW_CHANGED);
+        }
+
+        // What one caller requires of an answer - a QA test's stages - goes back as the rest does.
+        [Fact]
+        public async Task What_the_caller_requires_is_refused_and_sent_back_like_the_rest()
+        {
+            FakeChatClient model = Model(x =>
+            {
+                if (x.Count == 2)
+                    return Answer(Sent(x));
+
+                return Answer(Sent(x).Replace("Find username field", "Find the sign-in field"));
+            });
+
+            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> requireSignIn = answer =>
+            {
+                if (answer.Steps.Any(y => y.Name == "Find the sign-in field"))
+                    return [];
+
+                return [Diagnostic.Error(DiagnosticCodeEnum.STAGE_MARKER_MISSING, 1, 1, "Name the search after the sign-in field.")];
+            };
+
+            ScriptRevisionResult result = await _service.ReviseAsync(_script, INSTRUCTION, requireSignIn, null, Ct);
+
+            result.IsRevised.ShouldBeTrue();
+            result.Attempts.ShouldBe(2);
+            model.Requests[1].Last().Text.ShouldContain("STAGE_MARKER_MISSING: Name the search after the sign-in field.");
         }
 
         [Fact]

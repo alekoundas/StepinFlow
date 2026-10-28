@@ -166,6 +166,7 @@ namespace Business.Recording.Generation
                 sent = WithoutReadText(recording);
 
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
+            bool isQaTest = flow.Flow.IsQaTest;
             FlowScriptSchema draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null);
 
             string script = _printer.Write(draft);
@@ -175,10 +176,17 @@ namespace Business.Recording.Generation
             drafted.ScriptLength = script.Length;
 
             string instruction = AiPromptHelper.ShapeRecording;
+            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>>? checkAnswer = null;
+            if (isQaTest)
+            {
+                instruction += $"\n\n{AiPromptHelper.ShapeQaTest}";
+                checkAnswer = CheckQaTest;
+            }
+
             if (!isReadTextSent)
                 instruction += $"\n\n{AiPromptHelper.ShapeRecordingWithoutReadText}";
 
-            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, (attempt, refused) =>
+            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, checkAnswer, (attempt, refused) =>
             {
                 FlowGenerationProgressDto asking = Next(drafted, FlowGenerationStageEnum.ASKING_MODEL, attempt, refused);
                 onProgress?.Invoke(asking);
@@ -241,7 +249,7 @@ namespace Business.Recording.Generation
 
             string instruction = $"{AiPromptHelper.ReviseOnRequest}\n\nWhat the tester asks for:\n\n{changes.Trim()}";
 
-            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, (attempt, refused) =>
+            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, null, (attempt, refused) =>
             {
                 FlowGenerationProgressDto asking = Next(read, FlowGenerationStageEnum.ASKING_MODEL, attempt, refused);
                 onProgress?.Invoke(asking);
@@ -290,6 +298,21 @@ namespace Business.Recording.Generation
             Dictionary<string, byte[]> templates = TemplatesOf(draft);
 
             return await _importer.ImportTextAsync(script, templates, ct);
+        }
+
+        // What makes a model's answer a QA test, whatever the instruction said. About the answer as
+        // a whole, so at its first line.
+        private static List<Diagnostic> CheckQaTest(FlowScriptSchema answer)
+        {
+            List<Diagnostic> refused = [];
+
+            if (!answer.Steps.Any(x => x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER))
+                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.STAGE_MARKER_MISSING, 1, 1, "A QA test is divided into stages. Put a stage marker, ## and the stage's name, above the first step of each part of the journey the Description names."));
+
+            if (!answer.Steps.Any(x => x.FlowStepType == FlowStepTypeEnum.END_EXECUTION && x.EndExecutionAsSuccess))
+                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.END_PASSED_MISSING, 1, 1, "A QA test says when it has passed. Put End Execution passed where what the Description says the flow proves has been seen."));
+
+            return refused;
         }
 
         // The flow as saved, read back from the database rather than taken from what was sent to it.

@@ -25,8 +25,8 @@ namespace Business.Ai.ScriptRevision
     /// ATTEMPT_COUNT attempts at most.
     ///
     /// What the code owns is never taken from the answer: the input values, which are not even
-    /// sent, the description, and what each template says about its picture are put back from the
-    /// script the model was given.
+    /// sent, the description, the flow's kind, and what each template says about its picture are
+    /// put back from the script the model was given.
     /// </summary>
     public sealed class ScriptRevisionService : IScriptRevisionService
     {
@@ -57,6 +57,7 @@ namespace Business.Ai.ScriptRevision
         public async Task<ScriptRevisionResult> ReviseAsync(
             string script,
             string instruction,
+            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>>? checkAnswer,
             Action<int, IReadOnlyList<Diagnostic>>? onAttempt,
             CancellationToken ct = default)
         {
@@ -111,6 +112,9 @@ namespace Business.Ai.ScriptRevision
                     FlowScriptSchema revised = _scanner.Read(answer.Script ?? string.Empty);
 
                     result.Refused = Check(original, revised, renames);
+                    if (checkAnswer != null && revised.IsValid)
+                        result.Refused.AddRange(checkAnswer(revised));
+
                     if (result.Refused.Count == 0)
                     {
                         PutBack(original, revised, renames);
@@ -212,6 +216,8 @@ namespace Business.Ai.ScriptRevision
         private static void PutBack(FlowScriptSchema original, FlowScriptSchema revised, Dictionary<string, string> renames)
         {
             revised.Flow.Description = original.Flow.Description;
+            revised.Flow.IsQaTest = original.Flow.IsQaTest;
+            revised.Flow.IsSubFlow = original.Flow.IsSubFlow;
 
             foreach (FlowCsvColumn input in original.Inputs)
             {
