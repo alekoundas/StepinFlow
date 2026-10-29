@@ -46,6 +46,12 @@ the history.
       list (SUCCESS, FAILURE, LOOP, GO_BACK, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
+- [ ] **Shape and brightness is only as strict as the template is tight.** Measured 2026-10-29 in
+      `OpenCvServiceMatchModeTests`: a PrimeReact button's template cut 4 pixels wide of it scores
+      0.937 against the disabled one, under the 0.95 bar; cut 10 wide, 0.964, and the disabled
+      button is clicked. Every pixel of background added agrees. Ways out: trim a template to what
+      differs from its own border as it is saved; or mask that border out of the match in this mode
+      only; or have the form say when a shape-and-brightness template is mostly background.
 - [ ] **Colour matching.** Both match modes run in grayscale, so two states with the same
       lightness in a different hue look identical - rarity borders in a game are the likely case.
       Matching the three channels costs roughly three times a grayscale match, affordable now the

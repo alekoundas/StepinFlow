@@ -199,7 +199,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**995 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
+**1011 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, `System 99`
 parsing as a system action that does not exist, and an engine that refused every start after one
 failed while loading.
@@ -211,6 +211,8 @@ failed while loading.
   entity changes without one
 - **The flow script** round-trips byte for byte and row for row, against an approved sample file a
   person has read
+- **Template matching on real PNGs** against the real OpenCV, so the table of match scores in
+  PROJECT.md is a test rather than a claim
 - **Coverage reported per project, not as one number** — the domain high, the code that touches the
   machine near zero on purpose
 

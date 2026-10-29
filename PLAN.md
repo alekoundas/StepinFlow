@@ -14,7 +14,7 @@ in `PROJECT.md`, and why it was built that way is in the git history of this fil
 ## Landed
 
 Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, the recorder by
-2026-10-28.
+2026-10-28, the machine-only tests by 2026-10-29.
 
 | phase | what it gave | where it is described |
 | --- | --- | --- |
@@ -39,9 +39,11 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | 14 | Git: the flows kept as files in a repository of the app's own and written on every save; commits, discard and restore, branches that hide a flow rather than delete it, a remote to push to and pull from; `Platform.Shared` | §2, §11 |
 | Tests 0-4 | 365 tests over Core, Business, DataAccess and the architecture | §15 |
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
+| Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** the machine-only test bucket. Nesting a recording's draft by page, and a QA test's screen
-sizes with what happens when it ends, wait in `TODO.md`, Recording.
+**Next:** phase 6, the local model, the first open phase below; 5.8's sub-stages wait on the
+questions listed with them. Nesting a recording's draft by page, and a QA test's screen sizes with
+what happens when it ends, wait in `TODO.md`, Recording.
 
 ---
 
@@ -274,22 +276,8 @@ Built 2026-10-24 to 2026-10-25 (`PROJECT.md` §11). Left:
 
 ## Tests
 
-Layers 0 to 5 are done - see `PROJECT.md` §15 for what exists, how it is wired and what it found.
-What is left, in order:
-
-### The machine-only bucket
-
-- [ ] **Real PNGs in `Tests/Assets/`, against the real OpenCV.** Template matching cannot be
-      meaningfully faked, and a read-only fixture directory has none of the problems a shared
-      database has. The match-mode measurements in `PROJECT.md` §8 - the letter A on a blank
-      screen, the disabled button - become the first cases, so the table is a test rather than a
-      claim.
-- [ ] **`probes/PInvokeEntryPoints` becomes a traited test** in `Platform.Windows.Tests`, and
-      `probes/` is deleted. It needs a live desktop session - it reads the foreground window - so it
-      can never run in headless CI. `[Trait("Category", "Desktop")]`, filtered out of the default
-      run **from day one**, rather than discovered when CI first goes red. `Platform.Windows` near
-      zero on purpose does not mean zero; it means the handful that need a real machine are
-      quarantined and labelled.
+Layers 0 to 5 and the machine-only bucket are done - see `PROJECT.md` §15 for what exists, how it
+is wired and what it found. What is left is optional:
 
 ### Optional
 

@@ -64,6 +64,10 @@
     <!-- Exit code 8 is "no tests ran". A project with none yet, or one whose tests are all filtered
          out - the desktop-only ones in a headless run - is not a failure. -->
     <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+
+    <!-- A test that needs a live desktop is traited Category=Desktop and left out, so a headless
+         machine never meets one. dotnet test -p:Desktop=true brings them in. -->
+    <TestingPlatformCommandLineArguments Condition="'$(Desktop)' != 'true'">$(TestingPlatformCommandLineArguments) --filter-not-trait Category=Desktop</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">

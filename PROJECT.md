@@ -1303,14 +1303,18 @@ never an execution step, a DTO or the poll loop.
 | | `SHAPE` - default, 0.80 | `SHAPE_AND_BRIGHTNESS` - 0.95 |
 | --- | --- | --- |
 | the right template | 1.000 | 1.000 |
-| letter A, screen blank white | 0.000 | **0.893** |
-| letter A, only B on screen | 0.302 | **0.823** |
-| enabled button, disabled one on screen | **0.954** | 0.752 |
+| letter A, screen blank white | 0.000 | **0.866** |
+| letter A, only B on screen | 0.523 | **0.878** |
+| enabled button, disabled one on screen | **1.000** | 0.937 |
 
-Measured with the app's own OpenCV build and score formula. A UI crop is mostly background and
-background always agrees, so brightness-and-shape scores high whatever the foreground does - at
-0.80 it finds an "A" on an empty screen; at 0.95 it rejects all three wrong cases. And shape alone
-clicks a disabled button, which is the reason the second mode exists. The other four OpenCV methods
+`OpenCvServiceMatchModeTests` measures every cell on screenshots headless Edge rendered - a letter
+in Segoe UI on white, a PrimeReact button enabled and disabled - with each template cut from its
+screenshot 4 pixels wide of it, so the table is checked on every test pass rather than claimed. A UI
+crop is mostly background and background always agrees, so brightness-and-shape scores high
+whatever the foreground does - at 0.80 it finds an "A" on an empty screen; at 0.95 it rejects all
+three wrong cases. And shape alone clicks a disabled button, which is the reason the second mode
+exists: PrimeReact disables a button by drawing it at 60% opacity, and a fade is exactly the change
+shape is built to forgive. The other four OpenCV methods
 are gone: the unnormalised ones return scores in the millions that no 0..1 threshold can judge, and
 `CCorrNormed` scores 0.95 against blank grey.
 
@@ -1333,7 +1337,9 @@ says the ratio was wrong.
 re-renders text rather than scaling it, so a word captured at 100% scores 0.67 at 125% where an
 icon scores 0.93: capture icons with Find Image, read words with Search Text. A single-colour
 template matches everywhere, because OpenCV defines a template with no variance as a perfect match.
-And colour is never compared - both modes match in grayscale.
+Brightness-and-shape is only as strict as the template is tight: the same button cut 10 pixels wide
+of it rather than 4 finds the disabled one at 0.964, past the bar, because every pixel of
+background added agrees. And colour is never compared - both modes match in grayscale.
 
 `SEARCH_TEXT` captures the area, reads it with Windows OCR, optionally keeps the part a regex
 captures, and evaluates the condition against it.
@@ -2206,8 +2212,9 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-995 tests, all passing, in eight projects under `backend/Tests/` - one
-per production project, plus `Architecture.Tests`.
+1011 tests, all passing, in eight projects under `backend/Tests/` - one
+per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
+unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
@@ -2216,8 +2223,8 @@ per production project, plus `Architecture.Tests`.
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
-| `Platform.Windows.Tests` | 0 | none since its OpenCV tests moved with `OpenCvService`; the P/Invoke probe is to come here (`PLAN.md`, Tests) |
-| `Platform.Shared.Tests` | 29 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, and the thumbnail of a template |
+| `Platform.Windows.Tests` | 1 + 4 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list and the cursor |
+| `Platform.Shared.Tests` | 44 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash
@@ -2265,7 +2272,11 @@ gap - which is how the last untested worker got its tests.
   needed relaxing for test code.
 - **xUnit's generated `Main` blocks on a task**, which the banned list refuses.
   `XUNIT_GENERATED_DISABLE_WARNINGS` silences warnings in that generated file and nowhere else.
-- **Exit code 8, "no tests ran", is not a failure**, so the three empty projects pass.
+- **Exit code 8, "no tests ran", is not a failure**, so a project whose tests are all filtered out
+  passes.
+- **A test that needs a live desktop is traited `Category=Desktop`**, and `Directory.Build.props`
+  filters the trait out, so a headless machine never meets one.
+  `dotnet test --solution backend.slnx -p:Desktop=true` brings them in.
 - **The engine's tests wait rather than poll.** The engine keeps the execution's task as
   `Completion`, and the broadcast fake hands back a task for an event - a pause at a given step -
   so a test waits for exactly what it needs and no sleep loop decides how long that is.
@@ -2292,10 +2303,16 @@ Each of these was found by a layer's first run, and none had been reported:
   then loads the steps and writes the `Execution` row; a throw there - a database error, or the
   request cancelled - never let go, and every later start was refused as "already running" until
   the app restarted. Layer 5, 2026-10-26.
+- **The P/Invoke probe never checked the five calls that move or close windows.** It resolved each
+  with `Marshal.Prelink` on the method a `LibraryImport` declares, which is a generated managed
+  wrapper rather than the native call, so there was nothing to bind. Planting `PostMessage` for
+  `PostMessageW` passed the probe; the test that replaced it binds the generated calls themselves
+  and names the missing export. 2026-10-29.
 
 Proving the tests bite: planting two bugs in `ImageSearcher` - the required rule off, the larger
 scale ratio instead of the smaller - each failed exactly the test written for it and nothing else.
-Taking the engine's fix back out failed its test and no other.
+Taking the engine's fix back out failed its test and no other. Mapping shape-and-brightness onto
+the removed `CCorrNormed` failed five cells of the match-mode table.
 Adding a column to an entity without a migration failed every `DataAccess` test. A throwaway
 architecture rule that is false today failed and named every class that broke it.
 
@@ -2323,8 +2340,7 @@ need a real screen labelled and kept out of CI. A blanket 100% buys tests for pr
 catches nothing. The number worth publishing is a mutation score over the walker and the script,
 because that is a claim about whether the tests detect defects rather than which lines ran.
 
-Not tested yet: the engine itself (it waits on two seams, `PLAN.md`), real OpenCV against real
-images, and the frontend. There is no Playwright and will not be: this product *is* a UI
+Not tested yet: the frontend. There is no Playwright and will not be: this product *is* a UI
 automation tool, and its end-to-end test is a flow script that tests StepinFlow.
 
 ---
@@ -2337,7 +2353,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 995 backend tests.
+or OpenAI. 1011 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 
