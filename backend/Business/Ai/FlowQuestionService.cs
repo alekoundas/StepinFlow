@@ -3,7 +3,6 @@ using Business.Ai.Helpers;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.Tools;
-using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
 
@@ -64,16 +63,11 @@ namespace Business.Ai
             string model = await _providerService.GetModelAsync(ct);
 
             if (!await _providerService.IsConfiguredAsync(ct))
-                return Unavailable(model, "Choose an AI provider and a model in Settings first.");
+                return Unavailable(model, AiProviderService.NOT_SET_UP);
 
-            AiProviderEnum provider = await _providerService.GetProviderAsync(ct);
-
-            // A paid provider's models all call tools. Ollama's depend on the model, and it says so
-            // itself - the same approach as the OCR languages, where only what Windows can actually
-            // read is offered.
-            if (provider != AiProviderEnum.OLLAMA)
-                return new AiChatAvailabilityDto { IsAvailable = true, Model = model };
-
+            // Whether a local model calls tools depends on the model, and Ollama says so itself -
+            // the same approach as the OCR languages, where only what Windows can actually read is
+            // offered.
             if (!await _modelService.SupportsToolsAsync(ct))
                 return Unavailable(model, $"{model} cannot call tools, so it would answer from nothing rather than from your flows. Qwen 2.5 and Llama 3.1 can; the bigger the model the better it chooses.");
 
@@ -88,7 +82,7 @@ namespace Business.Ai
 
             using IChatClient? baseClient = await _clientFactory.CreateAsync(ct);
             if (baseClient == null)
-                return Failed("AI is not set up yet. Choose a provider and a model in Settings first.");
+                return Failed(AiProviderService.NOT_SET_UP);
 
             // THE loop.
             using IChatClient chatClient = baseClient

@@ -55,9 +55,9 @@ answer that here:
   template's rectangle adjusted, typed text an input; then written into the flow as steps that wait
   for each element, with no question per action
 - **Or let a model shape it** - Generate flow sends the draft as a script, with your description,
-  to Ollama or OpenAI; the answer is read back like an imported file, checked against what it may
-  not change, and sent back with the line numbers until it reads cleanly. Typed values never leave
-  the machine
+  to the local model or a cloud one; the answer is read back like an imported file, checked against
+  what it may not change, and sent back with the line numbers until it reads cleanly. Typed values
+  never leave the machine
 - **Check it before it executes** - the script with what the model added or changed marked, the
   tree, the warnings, and "ask for changes" in your own words; nothing generated executes on its own
 - **Templates cropped from the recording itself**, so nothing is captured twice
@@ -109,8 +109,9 @@ answer that here:
 - **Ask about your flows** — a chat that answers by querying your own flows, executions and the app's
   documentation through tool calls, rather than being handed a dump
 - **Explain an execution** — what failed, the closest match, and what to change
-- **Ollama on your machine or OpenAI** — screen content never goes to a cloud provider unless you
-  switch it on, and credentials are never shown to a model
+- **A model on your machine, OpenAI on top** — every AI feature runs on Ollama locally; screen
+  content never goes to a cloud model unless you switch it on, and credentials are never shown to a
+  model
 
 ---
 
@@ -199,7 +200,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**1011 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
+**1024 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, `System 99`
 parsing as a system action that does not exist, and an engine that refused every start after one
 failed while loading.
@@ -256,6 +257,8 @@ on a 100% one.
 - Windows 10 (build 22621) or newer
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) 20 or newer
+- [Ollama](https://ollama.com/) running, for the AI features. Without it they are off; a model can
+  be downloaded from Settings, AI
 
 ### Run in development
 

@@ -9,7 +9,7 @@ import { useAiStatus } from "@/features/ai/hooks/use-ai";
 import { useRepositoryEvents } from "@/features/repository/hooks/use-repository";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import { AiProviderEnum } from "@/shared/enums/backend/ai/ai-provider-enum";
+import { AiCloudProviderEnum } from "@/shared/enums/backend/ai/ai-cloud-provider-enum";
 
 // Pages that want the width: the rail keeps only its icons there.
 const NARROW_PATHS = ["/workflow/", "/execution/"];
@@ -186,16 +186,22 @@ function AiModelComponent({ isNarrow }: { isNarrow: boolean }) {
   const { data: settings } = useAppSettings();
   const { data: isConfigured } = useAiStatus();
 
-  const provider = settings?.find((x) => x.key === AppSettingKeyEnum.AI_PROVIDER)?.value ?? AiProviderEnum.NONE;
-  const model = settings?.find((x) => x.key === AppSettingKeyEnum.AI_MODEL)?.value ?? "";
+  const settingOf = (key: AppSettingKeyEnum) => settings?.find((x) => x.key === key);
+  const ollamaModel = settingOf(AppSettingKeyEnum.AI_OLLAMA_MODEL)?.value ?? "";
+  const cloudModel = settingOf(AppSettingKeyEnum.AI_CLOUD_MODEL)?.value ?? "";
+  const isCloud =
+    (settingOf(AppSettingKeyEnum.AI_CLOUD_PROVIDER)?.value ?? AiCloudProviderEnum.NONE) !== AiCloudProviderEnum.NONE &&
+    cloudModel !== "" &&
+    settingOf(AppSettingKeyEnum.AI_API_KEY)?.isSet === true;
 
-  let name = "No AI";
-  let where = "Choose a model in Settings";
+  let name = ollamaModel || "No model chosen";
+  let where = "Ollama · on this machine";
   let dot = "var(--surface-400)";
 
-  if (provider === AiProviderEnum.OLLAMA) where = "Ollama · on this machine";
-  if (provider === AiProviderEnum.OPENAI) where = "OpenAI · in the cloud";
-  if (provider !== AiProviderEnum.NONE) name = model || "No model chosen";
+  if (isCloud) name = cloudModel;
+  if (isCloud) where = "OpenAI · in the cloud";
+  if (isConfigured === false) name = "AI is off";
+  if (isConfigured === false) where = "Needs Ollama and a model";
   if (isConfigured) dot = "var(--green-400)";
 
   return (

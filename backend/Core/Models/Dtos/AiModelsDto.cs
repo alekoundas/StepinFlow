@@ -1,12 +1,13 @@
 namespace Core.Models.Dtos
 {
     /// <summary>
-    /// What the chosen provider can be asked for. Empty with an Error when the provider cannot be
-    /// reached, which for Ollama usually means it is not running.
+    /// What can be chosen: the models downloaded into Ollama, and the cloud provider's. Models is
+    /// empty with an Error when Ollama cannot be reached, which usually means it is not running.
     /// </summary>
     public class AiModelsDto
     {
         public IReadOnlyList<AiModelDto> Models { get; set; } = [];
+        public IReadOnlyList<AiModelDto> CloudModels { get; set; } = [];
         public string Error { get; set; } = string.Empty;
     }
 }

@@ -136,6 +136,7 @@ namespace App
             // AI.
             // Scoped per call rather than singleton: the client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
             // Singletons: they hold nothing between calls, and the recording's generation, a singleton, asks them.
+            builder.Services.AddSingleton<IOllamaService, OllamaService>();
             builder.Services.AddSingleton<IAiProviderService, AiProviderService>();
             builder.Services.AddSingleton<IAiClientFactory, AiClientFactory>();
             builder.Services.AddSingleton<IScriptRevisionService, ScriptRevisionService>();
@@ -150,7 +151,7 @@ namespace App
             builder.Services.AddSingleton<IAiDocumentIndexService, AiDocumentIndexService>();
 
             // Ollama is on this machine, so a short timeout is right.
-            builder.Services.AddHttpClient(nameof(AiModelService), client =>
+            builder.Services.AddHttpClient(nameof(OllamaService), client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
             });

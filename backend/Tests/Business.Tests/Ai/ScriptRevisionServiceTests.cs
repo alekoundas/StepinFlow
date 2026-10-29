@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Business.Ai.Providers;
 using Business.Ai.ScriptRevision;
 using Business.Ai.ScriptRevision.Models;
 using Business.FlowScript.Diagnostics;
@@ -249,7 +250,7 @@ namespace Business.Tests.Ai
         {
             ScriptRevisionResult result = await ReviseAsync();
 
-            result.ErrorMessage.ShouldBe("AI is not set up yet. Choose a provider and a model in Settings first.");
+            result.ErrorMessage.ShouldBe(AiProviderService.NOT_SET_UP);
             result.Attempts.ShouldBe(0);
         }
     }

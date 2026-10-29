@@ -34,7 +34,7 @@ export default function ExplainExecutionComponent({ executionId }: Props) {
   if (!isConfigured)
     return (
       <LabelComponent
-        text="Set up an AI provider in Settings to have failures explained."
+        text="Start Ollama with a model chosen in Settings to have failures explained."
         size="sm"
         color="secondary"
       />

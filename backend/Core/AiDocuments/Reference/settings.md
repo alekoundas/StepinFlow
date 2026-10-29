@@ -18,20 +18,27 @@ configuration, shown in the empty field; with neither, the commit is by the comp
 
 ## AI
 
-**AI provider** — `NONE`, `OLLAMA` or `OPENAI`. Nothing AI-related is available until one is
-chosen; every AI feature checks first and stays disabled rather than failing when clicked.
+Every AI feature runs on a model on this machine, through Ollama, and is off without it: install
+Ollama from ollama.com, start it, and choose a model it has downloaded. Each feature checks first
+and stays disabled rather than failing when clicked, and so does "This flow is a QA test" when
+recording. The top of the panel says whether AI is on, and if not, what is in the way.
 
 **Ollama address** — where Ollama is listening. The default is right unless you moved it.
 
-**API key** — needed only for a provider that charges. Once saved it is never sent back to the
-page; the page is told a key is set, not what it is.
+**Model** — which of the models downloaded into Ollama to use. One can be downloaded from the list
+under it.
 
-**Model** — which model to ask. For Ollama this is the list of models you have downloaded; for
-OpenAI a short curated list.
+**Cloud model** — `NONE` or `OPENAI`, on top of the local model and never instead of it. Once it has
+a key and a model it answers in the local model's place.
 
-**Send text read from the screen** — on for Ollama, off and unchangeable for anything else. Text a
-Read Text step found could be an account number or a password, so it is never sent to a provider
-outside this machine. The rule is the provider, not a checkbox.
+**API key** — the cloud model's. Once saved it is never sent back to the page; the page is told a
+key is set, not what it is.
+
+**Model**, under the cloud model — a short curated list.
+
+**Let the cloud model see your screen** — off by default. Text a Read Text step found could be an
+account number or a password, and a screenshot is whatever was on screen. The local model always
+sees it, because nothing leaves this machine.
 
 ## OCR languages
 

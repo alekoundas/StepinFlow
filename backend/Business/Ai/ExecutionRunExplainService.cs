@@ -45,7 +45,7 @@ namespace Business.Ai
             // somebody presses repeatedly while reading a run.
             using IChatClient? chatClient = await _clientFactory.CreateAsync(ct);
             if (chatClient == null)
-                return Failed("AI is not set up yet. Choose a provider and a model in Settings first.");
+                return Failed(AiProviderService.NOT_SET_UP);
 
             ExecutionDto? execution = await LoadExecutionAndStepsAsync(executionId, ct);
             if (execution == null)

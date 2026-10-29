@@ -116,11 +116,7 @@ namespace Business.Ai
                 return false;
 
             // The same rule the screen text follows: local is always fine, cloud only if asked for.
-            AiProviderEnum provider = await _providerService.GetProviderAsync(ct);
-            if (provider == AiProviderEnum.OLLAMA)
-                return true;
-
-            return await _providerService.IsScreenContentAllowedAsync(ct);
+            return await _providerService.CanSendScreenDataAsync(ct);
         }
 
 

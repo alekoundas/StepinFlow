@@ -277,8 +277,8 @@ function SentComponent({
           className="text-xs"
           style={MUTED}
         >
-          Your provider may not be sent what is on screen, so the model names the steps from the description and
-          their order. It is &quot;Send text read from the screen&quot;, under Settings, AI.
+          The cloud model may not be sent what is on screen, so it names the steps from the description and their
+          order. It is &quot;Let the cloud model see your screen&quot;, under Settings, AI.
         </span>
       )}
 

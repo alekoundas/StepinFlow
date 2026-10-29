@@ -31,7 +31,7 @@ import RecordingLiveListComponent from "@/features/recording/components/Recordin
 import { useRecordingStore } from "@/features/recording/store/recording-store";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { flowKeys, useFlow } from "@/features/flow/hooks/use-flow";
-import { useAiStatus } from "@/features/ai/hooks/use-ai";
+import { AI_OFF, useAiStatus } from "@/features/ai/hooks/use-ai";
 
 const RECORDING_STEPS = ["Describe", "Record", "Review", "Generate", "Check"];
 
@@ -353,11 +353,11 @@ export default function RecordingPage() {
   };
 
   let generateUnavailable: string | null = null;
-  if (!isAiConfigured) generateUnavailable = "Choose an AI provider and a model in Settings first.";
+  if (!isAiConfigured) generateUnavailable = AI_OFF;
   if (target) generateUnavailable = "A model's draft cannot go into a flow that already exists yet.";
 
   let askUnavailable: string | null = null;
-  if (!isAiConfigured) askUnavailable = "Choose an AI provider and a model in Settings first.";
+  if (!isAiConfigured) askUnavailable = AI_OFF;
 
   const recordAgain = () => {
     if (recordingFlowId === undefined) return;

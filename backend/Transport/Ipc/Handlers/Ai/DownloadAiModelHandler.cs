@@ -22,7 +22,7 @@ namespace Transport.Ipc.Handlers.Ai
             bool isStarted = await _modelService.StartModelDownloadAsync(model, ct);
 
             if (!isStarted)
-                return ResultDto<bool>.Failure("Downloading a model needs Ollama to be the chosen provider.");
+                return ResultDto<bool>.Failure("A model is already downloading. Wait for it to finish, then download the next.");
 
             return ResultDto<bool>.Success(true);
         }

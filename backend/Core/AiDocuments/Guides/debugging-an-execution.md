@@ -54,7 +54,7 @@ limit in Settings. If a step has none, the panel says so rather than showing not
 
 ## Explain
 
-With an AI provider set up, the Explain tab reads the finished execution and says what it thinks went
+With AI on, the Explain tab reads the finished execution and says what it thinks went
 wrong. It can also show exactly what was sent to the model.
 
 A failed step's detail panel offers **Suggest a fix**, which opens the assistant with the step and

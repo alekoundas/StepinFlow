@@ -10,10 +10,11 @@ export interface AiModelDto {
 }
 
 /**
- * What the chosen provider can be asked for. Empty with an error when it could not be reached,
- * which for Ollama usually means it is not running.
+ * What can be chosen: the models downloaded into Ollama, and the cloud provider's. Models is empty
+ * with an error when Ollama could not be reached, which usually means it is not running.
  */
 export interface AiModelsDto {
   models: AiModelDto[];
+  cloudModels: AiModelDto[];
   error: string;
 }

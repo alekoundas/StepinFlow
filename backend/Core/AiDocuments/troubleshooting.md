@@ -93,7 +93,7 @@ If screenshots were kept, the failed step has the screenshots leading up to it. 
 earlier steps, which is deliberate: the screenshot at the moment of failure usually shows a screen the
 thing was never on.
 
-If an AI provider is set up, the **Explain** tab reads the execution and says what it thinks went wrong.
+If AI is on, the **Explain** tab reads the execution and says what it thinks went wrong.
 
 ## The execution will not start
 

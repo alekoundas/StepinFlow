@@ -199,6 +199,17 @@ the history.
 
 ## AI
 
+- [ ] **The app fetches and runs Ollama itself.** Decided 2026-10-29 as phase 6's local model:
+      every AI feature needs Ollama, and until this is built the tester installs it, starts it and
+      chooses a model, or the AI features and the recorder's QA switch stay off. The app would use
+      an Ollama already installed, and otherwise download Ollama's standalone build into its own
+      folder under app data, start it on a private port so it never meets a copy the tester runs,
+      and stop it as the app closes. It pulls a default model on first use - `qwen3-vl:4b`, vision
+      and tools, about 3.5 GB - through the download Settings already has. Open: the standalone
+      build's size, which is unchecked and mostly GPU libraries; whether it is fetched up front or
+      only when an AI feature is first wanted; and its licence beside the others (`Licences`).
+      Ollama has macOS and Linux builds, so this carries over, but each is a different download
+      and a different way to start a process.
 - [ ] **See what actually goes to the model.** `.UseOpenTelemetry(configure: x => x.EnableSensitiveData = true)`
       in the same builder chain as `UseFunctionInvocation`, exported to the standalone Aspire
       Dashboard (`docker run mcr.microsoft.com/dotnet/aspire-dashboard`). Gives a trace per request
@@ -308,8 +319,8 @@ the history.
       call is liable to be truncated or dropped rather than traced. Wants the image content stripped
       before it reaches the attribute, leaving a note of how many were attached.
 - [ ] **No way to clear a stored API key.** A secret reads back as empty, so emptying the box
-      compares equal to what is saved and nothing is written. Switching provider is the only way
-      to stop using a key, and the key stays in the table. Wants an explicit Clear next to the
+      compares equal to what is saved and nothing is written. Setting the cloud model to `NONE` is
+      the only way to stop using a key, and the key stays in the table. Wants an explicit Clear next to the
       field rather than a rule about when an empty value counts as an edit.
 - [ ] **The model download asks every second instead of listening.** `useAiModelDownload` polls
       `Ai.getDownloadState` once a second while a download is going, though every change already

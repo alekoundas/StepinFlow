@@ -78,24 +78,30 @@ namespace Core.Catalogs
             maximum: 500);
 
 
-        // AI. Nothing is on until a provider is chosen: every feature checks first and stays
-        // disabled rather than failing at the moment somebody clicks it.
-        public static readonly ChoiceAppSettingDefinition AiProvider = new ChoiceAppSettingDefinition(
-            AppSettingKeyEnum.AI_PROVIDER,
-            "AI provider",
-            "Where the model runs. Ollama keeps everything on this machine; OpenAI is faster and better but needs a key and sends data away.",
-            defaultValue: nameof(AiProviderEnum.NONE),
-            options: [nameof(AiProviderEnum.NONE), nameof(AiProviderEnum.OLLAMA), nameof(AiProviderEnum.OPENAI)]);
-
-        public static readonly TextAppSettingDefinition AiModel = new TextAppSettingDefinition(
-            AppSettingKeyEnum.AI_MODEL,
+        // AI. Nothing is on until Ollama answers with the local model chosen here: every feature
+        // checks first and stays disabled rather than failing at the moment somebody clicks it.
+        public static readonly TextAppSettingDefinition AiOllamaModel = new TextAppSettingDefinition(
+            AppSettingKeyEnum.AI_OLLAMA_MODEL,
             "Model",
-            "Which model to ask. For Ollama this is whatever you have downloaded, for example qwen2.5.");
+            "Which model Ollama runs, out of the ones downloaded onto this machine. Every AI feature needs one.");
+
+        // A cloud model is added on top of the local one, never instead of it.
+        public static readonly ChoiceAppSettingDefinition AiCloudProvider = new ChoiceAppSettingDefinition(
+            AppSettingKeyEnum.AI_CLOUD_PROVIDER,
+            "Cloud model",
+            "Optional. Answers in the local model's place, faster and better, but needs a key and sends data away.",
+            defaultValue: nameof(AiCloudProviderEnum.NONE),
+            options: [nameof(AiCloudProviderEnum.NONE), nameof(AiCloudProviderEnum.OPENAI)]);
+
+        public static readonly TextAppSettingDefinition AiCloudModel = new TextAppSettingDefinition(
+            AppSettingKeyEnum.AI_CLOUD_MODEL,
+            "Model",
+            "Which of the cloud provider's models to ask.");
 
         public static readonly TextAppSettingDefinition AiApiKey = new TextAppSettingDefinition(
             AppSettingKeyEnum.AI_API_KEY,
             "API key",
-            "Only needed for a provider that charges. Ollama ignores it.",
+            "The cloud provider's key. Kept on this machine and sent only to that provider.",
             isSecret: true);
 
         public static readonly BoolAppSettingDefinition AiSendScreenContent = new BoolAppSettingDefinition(
@@ -154,12 +160,13 @@ namespace Core.Catalogs
 
             ExecutionScreenshotLimit,
 
-            AiProvider,
-            AiModel,
+            AiOllamaModel,
+            AiOllamaUrl,
+            AiOllamaContextLength,
+            AiCloudProvider,
+            AiCloudModel,
             AiApiKey,
             AiSendScreenContent,
-            AiOllamaContextLength,
-            AiOllamaUrl,
 
             GitAuthorName,
             GitAuthorEmail,

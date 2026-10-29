@@ -74,7 +74,7 @@ namespace Business.Ai.ScriptRevision
             using IChatClient? chatClient = await _clientFactory.CreateAsync(ct);
             if (chatClient == null)
             {
-                result.ErrorMessage = "AI is not set up yet. Choose a provider and a model in Settings first.";
+                result.ErrorMessage = AiProviderService.NOT_SET_UP;
                 return result;
             }
 

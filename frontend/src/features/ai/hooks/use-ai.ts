@@ -10,9 +10,14 @@ export const aiKeys = {
   chatAvailability: () => ["ai", "chatAvailability"] as const,
 } as const;
 
+/** What a page says in place of an AI feature while useAiStatus is false. */
+export const AI_OFF =
+  "AI is off until Ollama is running on this machine with a model downloaded. Choose the model in Settings.";
+
 /**
- * Whether a provider is set up. Read once so a page can offer the feature or explain why it is
- * not there, rather than letting somebody click and get an error.
+ * Whether Ollama answers with the local model chosen in Settings, which every AI feature needs.
+ * Read once so a page can offer the feature or explain why it is not there, rather than letting
+ * somebody click and get an error.
  */
 export function useAiStatus() {
   return useQuery({
@@ -22,10 +27,7 @@ export function useAiStatus() {
   });
 }
 
-/**
- * What the chosen provider offers. Keyed on nothing but the provider setting, so changing provider
- * and invalidating settings brings a different list back.
- */
+/** The models downloaded into Ollama, and the cloud provider's. */
 export function useAiModels(isEnabled: boolean) {
   return useQuery({
     queryKey: aiKeys.models(),

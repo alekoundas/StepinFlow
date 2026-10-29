@@ -19,17 +19,20 @@ namespace Core.Enums
         EXECUTION_SCREENSHOT_LIMIT,
 
 
-        /// <summary>Who runs the model, and what it needs to reach it.</summary>
-        AI_PROVIDER,
-        AI_MODEL,
-        AI_API_KEY,
+        /// <summary>The local model, which every AI feature needs, and where Ollama listens.</summary>
+        AI_OLLAMA_MODEL,
         AI_OLLAMA_URL,
-
-        /// <summary>Whether a cloud provider may be shown what was on screen - read text and screenshots.</summary>
-        AI_SEND_SCREEN_CONTENT,
 
         /// <summary>How big a context window to ask Ollama for, since it serves 4096 by default.</summary>
         AI_OLLAMA_CONTEXT_LENGTH,
+
+        /// <summary>A cloud model on top of the local one, and what it needs to reach it.</summary>
+        AI_CLOUD_PROVIDER,
+        AI_CLOUD_MODEL,
+        AI_API_KEY,
+
+        /// <summary>Whether a cloud model may be shown what was on screen - read text and screenshots.</summary>
+        AI_SEND_SCREEN_CONTENT,
 
         /// <summary>Who a commit is by. Empty takes the user's git config.</summary>
         GIT_AUTHOR_NAME,

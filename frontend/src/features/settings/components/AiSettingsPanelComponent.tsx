@@ -9,24 +9,29 @@ import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import { AiProviderEnum } from "@/shared/enums/backend/ai/ai-provider-enum";
+import { AiCloudProviderEnum } from "@/shared/enums/backend/ai/ai-cloud-provider-enum";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
-import { aiKeys, useAiModels } from "@/features/ai/hooks/use-ai";
+import { aiKeys, useAiModels, useAiStatus } from "@/features/ai/hooks/use-ai";
 import OllamaModelDownloadComponent from "@/features/ai/components/OllamaModelDownloadComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
 import type { AiModelDto } from "@/shared/models/ai-models-dto";
 
 /**
- * The AI settings, which are a form rather than a list: what you need to fill in depends on which
- * provider you picked, and the model list has to be fetched from that provider. The generic panel
- * renders settings that stand alone, and these do not.
+ * The AI settings, which are a form rather than a list: the model lists have to be fetched, and
+ * what the cloud half asks for depends on whether a cloud model is wanted at all. The generic
+ * panel renders settings that stand alone, and these do not.
+ *
+ * The local half always shows, because every AI feature is off without it. The cloud half is on
+ * top: once it has a model and a key, that model answers in the local one's place.
  */
 export default function AiSettingsPanelComponent() {
   const queryClient = useQueryClient();
 
   const { data: settings = [] } = useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
+  const { data: isConfigured } = useAiStatus();
+  const { data: available, isFetching: isFetchingModels } = useAiModels(true);
 
   const find = (key: AppSettingKeyEnum): AppSettingDto | undefined =>
     settings.find((x) => x.key === key);
@@ -38,107 +43,81 @@ export default function AiSettingsPanelComponent() {
 
   const commitOf = (key: AppSettingKeyEnum) => commit(key, savedOf(key));
 
-  const provider = find(AppSettingKeyEnum.AI_PROVIDER)?.value ?? AiProviderEnum.NONE;
-  const isOllama = provider === AiProviderEnum.OLLAMA;
-  const isOpenAi = provider === AiProviderEnum.OPENAI;
-  const isOff = provider === AiProviderEnum.NONE;
+  const ollamaUrl = savedOf(AppSettingKeyEnum.AI_OLLAMA_URL);
+  const ollamaModel = savedOf(AppSettingKeyEnum.AI_OLLAMA_MODEL);
+  const cloudProvider = savedOf(AppSettingKeyEnum.AI_CLOUD_PROVIDER) || AiCloudProviderEnum.NONE;
+  const cloudModel = savedOf(AppSettingKeyEnum.AI_CLOUD_MODEL);
+  const isCloud = cloudProvider !== AiCloudProviderEnum.NONE;
 
-  const { data: available, isFetching: isFetchingModels } = useAiModels(!isOff);
-
-  // A different provider offers different models, so the list has to be asked for again.
+  // Whether AI is on, what can be chosen and what the chat can do all move with these.
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: aiKeys.models() });
     queryClient.invalidateQueries({ queryKey: aiKeys.status() });
     queryClient.invalidateQueries({ queryKey: aiKeys.suggestions() });
+    queryClient.invalidateQueries({ queryKey: aiKeys.chatAvailability() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider]);
+  }, [ollamaUrl, ollamaModel, cloudProvider, cloudModel]);
 
   const models = available?.models ?? [];
-  const model = shownOf(AppSettingKeyEnum.AI_MODEL);
-  const selectedModel = models.find((x) => x.name === model);
+  const selectedModel = models.find((x) => x.name === ollamaModel);
   const hasVision = selectedModel?.capabilities?.includes("vision") === true;
 
-  const isScreenContentAllowed =
-    savedOf(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT) === "true";
+  const isScreenContentAllowed = savedOf(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT) === "true";
 
   return (
     <Panel header="AI">
       <LabelComponent
-        text="Optional. With a provider set up, a failed run can be explained in plain language."
+        text="Every AI feature runs on a model on this machine, through Ollama. Install Ollama from ollama.com, start it, and choose a model below; until then they are off."
         size="sm"
         color="secondary"
       />
 
       <div className="flex flex-column gap-3 mt-3">
+        {isConfigured !== undefined && (
+          <LocalStatusComponent
+            error={available?.error ?? ""}
+            model={ollamaModel}
+            isConfigured={isConfigured}
+          />
+        )}
+
+        <LabelComponent
+          text="On this machine"
+          weight="semibold"
+        />
+
         <Row
-          label="AI provider"
-          description="Ollama runs the model on this machine and nothing leaves it. OpenAI is faster and better, but needs a key and sends the run away."
+          label="Ollama address"
+          description="Where Ollama is listening. The default is right unless you moved it."
         >
-          <Dropdown
-            value={provider}
-            options={[AiProviderEnum.NONE, AiProviderEnum.OLLAMA, AiProviderEnum.OPENAI]}
-            onChange={(e) => commitNow(AppSettingKeyEnum.AI_PROVIDER, e.value)}
-            className="w-12rem"
+          <InputText
+            value={shownOf(AppSettingKeyEnum.AI_OLLAMA_URL)}
+            onChange={(e) => edit(AppSettingKeyEnum.AI_OLLAMA_URL, e.target.value)}
+            onBlur={() => commitOf(AppSettingKeyEnum.AI_OLLAMA_URL)}
+            className="w-14rem"
           />
         </Row>
 
-        {isOllama && (
-          <Row
-            label="Ollama address"
-            description="Where Ollama is listening. The default is right unless you moved it."
-          >
-            <InputText
-              value={shownOf(AppSettingKeyEnum.AI_OLLAMA_URL)}
-              onChange={(e) => edit(AppSettingKeyEnum.AI_OLLAMA_URL, e.target.value)}
-              onBlur={() => commitOf(AppSettingKeyEnum.AI_OLLAMA_URL)}
-              className="w-14rem"
-            />
-          </Row>
-        )}
-
-        {isOpenAi && (
-          <Row
-            label="API key"
-            description="Kept on this machine and sent only to OpenAI."
-          >
-            <Password
-              value={shownOf(AppSettingKeyEnum.AI_API_KEY)}
-              placeholder={find(AppSettingKeyEnum.AI_API_KEY)?.isSet ? "Already set" : "Not set"}
-              onChange={(e) => edit(AppSettingKeyEnum.AI_API_KEY, e.target.value)}
-              onBlur={() => commitOf(AppSettingKeyEnum.AI_API_KEY)}
-              feedback={false}
-              toggleMask
-              className="w-14rem"
-            />
-          </Row>
-        )}
-
-        {!isOff && (
-          <Row
-            label="Model"
-            description={
-              isOllama
-                ? "The models you have downloaded with Ollama."
-                : "Which model to ask. The cheaper ones are enough to read a run."
-            }
-          >
-            <Dropdown
-              value={model}
-              options={models}
-              optionLabel="name"
-              optionValue="name"
-              itemTemplate={(option: AiModelDto) => <ModelOption model={option} />}
-              // A model that is set but no longer downloaded would otherwise vanish from the box.
-              placeholder={isFetchingModels ? "Looking..." : model || "Choose a model"}
-              emptyMessage="Nothing to choose from"
-              onChange={(e) => commitNow(AppSettingKeyEnum.AI_MODEL, e.value)}
-              className="w-18rem"
-            />
-          </Row>
-        )}
+        <Row
+          label="Model"
+          description="The models you have downloaded with Ollama."
+        >
+          <Dropdown
+            value={ollamaModel}
+            options={models}
+            optionLabel="name"
+            optionValue="name"
+            itemTemplate={(option: AiModelDto) => <ModelOption model={option} />}
+            // A model that is set but no longer downloaded would otherwise vanish from the box.
+            placeholder={isFetchingModels ? "Looking..." : ollamaModel || "Choose a model"}
+            emptyMessage="Nothing to choose from"
+            onChange={(e) => commitNow(AppSettingKeyEnum.AI_OLLAMA_MODEL, e.value)}
+            className="w-18rem"
+          />
+        </Row>
 
         {/* Under the dropdown it is about, and only once a model is chosen that cannot do it. */}
-        {!isOff && model && selectedModel && !hasVision && (
+        {!isCloud && selectedModel && !hasVision && (
           <div className="flex justify-content-end -mt-2">
             <LabelComponent
               text="Cannot read images, so run screenshots will not be sent."
@@ -148,39 +127,105 @@ export default function AiSettingsPanelComponent() {
           </div>
         )}
 
-        <OllamaModelDownloadComponent isEnabled={isOllama} />
+        <OllamaModelDownloadComponent />
 
-        {available?.error && (
-          <Message
-            severity="warn"
-            text={available.error}
+        <LabelComponent
+          text="In the cloud"
+          weight="semibold"
+          className="mt-3"
+        />
+
+        <Row
+          label="Cloud model"
+          description="Optional. Once it has a model and a key it answers in the local model's place: faster and better, but it sends the run away."
+        >
+          <Dropdown
+            value={cloudProvider}
+            options={[AiCloudProviderEnum.NONE, AiCloudProviderEnum.OPENAI]}
+            onChange={(e) => commitNow(AppSettingKeyEnum.AI_CLOUD_PROVIDER, e.value)}
+            className="w-12rem"
           />
-        )}
+        </Row>
 
-        {!isOff && (
-          <Row
-            label="Let the model see your screen"
-            description={
-              isOllama
-                ? "On, and not changeable. The model runs here, so the text a Read Text step found and the screenshots a run kept never leave this machine."
-                : "Off by default. Text a Read Text step found could be an account number or a password, and a screenshot is whatever was on screen. Turn this on only if you accept sending that to a provider outside this machine."
-            }
-          >
-            <InputSwitch
-              checked={isOllama || isScreenContentAllowed}
-              disabled={isOllama}
-              onChange={(e) =>
-                commitNow(
-                  AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT,
-                  e.value ? "true" : "false",
-                )
-              }
-            />
-          </Row>
-        )}
+        {isCloud && (
+          <>
+            <Row
+              label="API key"
+              description="Kept on this machine and sent only to OpenAI."
+            >
+              <Password
+                value={shownOf(AppSettingKeyEnum.AI_API_KEY)}
+                placeholder={find(AppSettingKeyEnum.AI_API_KEY)?.isSet ? "Already set" : "Not set"}
+                onChange={(e) => edit(AppSettingKeyEnum.AI_API_KEY, e.target.value)}
+                onBlur={() => commitOf(AppSettingKeyEnum.AI_API_KEY)}
+                feedback={false}
+                toggleMask
+                className="w-14rem"
+              />
+            </Row>
 
+            <Row
+              label="Model"
+              description="Which model to ask. The cheaper ones are enough to read a run."
+            >
+              <Dropdown
+                value={cloudModel}
+                options={available?.cloudModels ?? []}
+                optionLabel="name"
+                optionValue="name"
+                itemTemplate={(option: AiModelDto) => <ModelOption model={option} />}
+                placeholder={cloudModel || "Choose a model"}
+                onChange={(e) => commitNow(AppSettingKeyEnum.AI_CLOUD_MODEL, e.value)}
+                className="w-18rem"
+              />
+            </Row>
+
+            <Row
+              label="Let the cloud model see your screen"
+              description="Off by default. Text a Read Text step found could be an account number or a password, and a screenshot is whatever was on screen. Turn this on only if you accept sending that to a provider outside this machine. The local model always sees it: nothing leaves this machine."
+            >
+              <InputSwitch
+                checked={isScreenContentAllowed}
+                onChange={(e) => commitNow(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT, e.value ? "true" : "false")}
+              />
+            </Row>
+          </>
+        )}
       </div>
     </Panel>
+  );
+}
+
+interface LocalStatusProps {
+  error: string;
+  model: string;
+  isConfigured: boolean;
+}
+
+/** Whether the AI features are on, and if not, the one thing in the way. */
+function LocalStatusComponent({ error, model, isConfigured }: LocalStatusProps) {
+  let severity: "success" | "warn" | "info" = "success";
+  let text = `On. ${model} is ready on this machine.`;
+
+  if (!isConfigured) {
+    severity = "warn";
+    text = `Off. Ollama has no ${model}: choose a model it has downloaded, or download one below.`;
+  }
+  if (!model) {
+    severity = "info";
+    text = "Off. Choose a model, or download one below.";
+  }
+  if (error) {
+    severity = "warn";
+    text = `Off. ${error}`;
+  }
+
+  return (
+    <Message
+      severity={severity}
+      text={text}
+      className="justify-content-start"
+    />
   );
 }
 

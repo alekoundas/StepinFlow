@@ -7,11 +7,6 @@ import { useAiModelDownload } from "@/features/ai/hooks/use-ai-model-download";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
 import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
-interface Props {
-  /** Only Ollama downloads anything. A paid provider hosts its own models. */
-  isEnabled: boolean;
-}
-
 /**
  * Downloads a model onto this machine.
  *
@@ -19,11 +14,9 @@ interface Props {
  * page - you would have to know to open a terminal. A download is gigabytes, so it reports as it
  * goes rather than spinning.
  */
-export default function OllamaModelDownloadComponent({ isEnabled }: Props) {
-  const { data: suggestions = [], isLoading } = useAiModelSuggestions(isEnabled);
+export default function OllamaModelDownloadComponent() {
+  const { data: suggestions = [], isLoading } = useAiModelSuggestions(true);
   const { progress, isDownloading, download, dismiss } = useAiModelDownload();
-
-  if (!isEnabled) return null;
 
   return (
     <div className="flex flex-column gap-2 mt-2">

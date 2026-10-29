@@ -11,7 +11,7 @@ using OpenAI;
 namespace Business.Ai.Providers
 {
     /// <summary>
-    /// Turns the settings into a client.
+    /// Turns the settings into a client: the cloud model's once it is complete, Ollama's otherwise.
     ///
     /// Local and cloud were the same client with a different address for a while, because Ollama
     /// serves an OpenAI compatible api. That endpoint gives no way to set the context window and
@@ -34,10 +34,10 @@ namespace Business.Ai.Providers
             if (settings == null)
                 return null;
 
-            if (settings.Provider == AiProviderEnum.OLLAMA)
+            if (settings.CloudProvider == AiCloudProviderEnum.NONE)
             {
                 int contextLength = await _providerService.GetOllamaContextLengthAsync(ct);
-                OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.Model);
+                OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.OllamaModel);
 
                 return new OllamaContextChatClient(ollama, contextLength);
             }
@@ -45,7 +45,7 @@ namespace Business.Ai.Providers
             OpenAIClientOptions options = new OpenAIClientOptions();
             OpenAIClient client = new OpenAIClient(new ApiKeyCredential(settings.ApiKey), options);
 
-            return client.GetChatClient(settings.Model).AsIChatClient();
+            return client.GetChatClient(settings.CloudModel).AsIChatClient();
         }
     }
 }

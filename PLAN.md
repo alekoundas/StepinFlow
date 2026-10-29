@@ -126,15 +126,13 @@ exactly ran in execution 37").
 Here rather than at the end, because the fix loop below is the feature the product turns on and it
 cannot depend on an api key a customer may never add.
 
-- [ ] A local vision model is always present; a cloud provider is something a customer adds on top.
-      `AiProviderEnum` stops being one of three.
+**The local model is Ollama, settled 2026-10-29.** Every AI feature needs it, and a cloud model is
+added on top (`PROJECT.md` §10). The tester installs Ollama for now; the app fetching and running it
+is in `TODO.md`, AI.
+
 - [ ] **OmniParser** reads a screenshot and returns the interactive elements on it - type, label,
       position, state. That is what lets a flow find a button by what it says rather than by what it
       looks like, which is what phase 11 needs when text wraps at a smaller size.
-- [ ] **It is also what decides where a template is cut from a recording**, settled 2026-09-29: an
-      element's rectangle *is* the crop. Two things travel with the crop or it is not portable - the
-      area it was cut inside, and that area's size and DPI, which is what phase 5.7 exists for. A
-      model handing back bare pixels would undo it.
 - [ ] **The caption model**, OmniParser's Florence-2 (MIT), for elements with no text on them - an
       icon. The detector is in (`PROJECT.md` §6, §10); Windows OCR names anything with text.
 - [ ] Structured output, not prose: `elements`, `screenState`, `notes`. Settled so it is not
