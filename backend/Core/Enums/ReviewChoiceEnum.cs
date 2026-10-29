@@ -8,6 +8,7 @@ namespace Core.Enums
         CLICK_AT_SPOT,      // Click the place it was clicked, without looking for anything
         INPUT,              // Typed text that becomes an input, with what was typed as its default
         TYPE_AS_WRITTEN,    // Typed text written into the flow as it is
+        WRONG_ON_PURPOSE,   // Typed text written as it is, wrong on purpose for a QA test to prove it is rejected
         LEAVE_OUT,
 
         // A check marked while recording

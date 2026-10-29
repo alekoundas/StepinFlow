@@ -12,6 +12,7 @@ namespace Business.Tests.Flows.Validation
         private readonly List<FlowArea> _areas = new List<FlowArea>();
         private readonly List<FlowPoint> _points = new List<FlowPoint>();
         private readonly List<string> _inputs = new List<string>();
+        private bool _isQaTest;
 
         private FlowStep Add(FlowStepTypeEnum type, string name, FlowStep? parent = null)
         {
@@ -38,7 +39,7 @@ namespace Business.Tests.Flows.Validation
         private FlowValidationResultDto Validate()
         {
             List<string> names = _areas.Select(x => x.Name).Concat(_points.Select(x => x.Name)).Concat(_inputs).ToList();
-            return new FlowValidationService().Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names);
+            return new FlowValidationService().Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _isQaTest);
         }
 
         private List<FlowValidationCodeEnum> CodesOn(FlowStep step)
@@ -481,6 +482,62 @@ namespace Business.Tests.Flows.Validation
             Keys("Release Shift", "Shift", KeyboardKeyActionTypeEnum.RELEASE);
 
             CodesOn(hold).ShouldBe([FlowValidationCodeEnum.KEYS_NOT_RELEASED]);
+        }
+
+        // ================================================================
+        // A QA test's checks
+        // ================================================================
+
+        // A search whose Failure branch only carries on, as one with its End Execution removed does.
+        private FlowStep CheckThatCarriesOn(string name, FlowStep? parent = null)
+        {
+            FlowStep search = Search(name, parent);
+            Add(FlowStepTypeEnum.WAIT, "Wait", Branch(search, FlowStepTypeEnum.FAILURE));
+
+            return search;
+        }
+
+        [Fact]
+        public void A_QA_test_s_check_whose_failure_ends_nothing_is_a_note_that_blocks_nothing()
+        {
+            _isQaTest = true;
+            FlowStep check = CheckThatCarriesOn("Find Saved");
+
+            FlowValidationResultDto result = Validate();
+
+            FlowValidationIssueDto note = result.Issues.Single(x => x.Code == FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+            (note.FlowStepId, note.Severity).ShouldBe((check.Id, ValidationSeverityEnum.INFO));
+            result.HasErrors.ShouldBeFalse();
+        }
+
+        // Under a check in its Failure branch, whichever way that one goes, is still where its failure ends up.
+        [Fact]
+        public void A_check_whose_failure_ends_the_execution_however_deep_has_no_note()
+        {
+            _isQaTest = true;
+            FlowStep first = Search("Find Email");
+            Add(FlowStepTypeEnum.END_EXECUTION, "Stop", Branch(first, FlowStepTypeEnum.FAILURE));
+            FlowStep second = Search("Find Saved");
+            FlowStep retry = CheckThatCarriesOn("Find Retry", Branch(second, FlowStepTypeEnum.FAILURE));
+            Add(FlowStepTypeEnum.END_EXECUTION, "Stop again", Branch(retry, FlowStepTypeEnum.SUCCESS));
+
+            Validate().Issues.Where(x => x.Code == FlowValidationCodeEnum.CHECK_CANNOT_FAIL).Select(x => x.FlowStepId).ShouldBe([retry.Id]);
+        }
+
+        // An automation's search may only decide which way it goes, and the verdict is decided by
+        // the time the steps under an End Execution execute.
+        [Fact]
+        public void An_automation_s_checks_and_those_under_an_end_execution_have_no_note()
+        {
+            CheckThatCarriesOn("Find Saved");
+            Validate().Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+
+            _steps.Clear();
+            _isQaTest = true;
+            FlowStep first = Search("Find Email");
+            FlowStep stop = Add(FlowStepTypeEnum.END_EXECUTION, "Stop", Branch(first, FlowStepTypeEnum.FAILURE));
+            CheckThatCarriesOn("Find Dialog", stop);
+            Validate().Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
         }
     }
 }

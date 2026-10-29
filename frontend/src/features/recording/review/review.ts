@@ -79,7 +79,12 @@ export function groupOf(result: RecordingResultDto, action: RecordedActionDto): 
   return result.clickGroups.find((x) => x.actionIndexes.includes(action.index));
 }
 
-export function optionsFor(action: RecordedActionDto, element: ClickedElementDto | undefined): ReviewOption[] {
+/** A QA test can also type a value wrong on purpose, to prove the application rejects it. */
+export function optionsFor(
+  action: RecordedActionDto,
+  element: ClickedElementDto | undefined,
+  isQaTest: boolean,
+): ReviewOption[] {
   const leaveOut = { label: "Leave out", value: ReviewChoiceEnum.LEAVE_OUT };
 
   // A check looks inside the window the flow works in, so one outside it has nothing to look at.
@@ -118,12 +123,15 @@ export function optionsFor(action: RecordedActionDto, element: ClickedElementDto
     return [waitFor, atSpot, leaveOut];
   }
 
-  if (action.kind === RecordedActionKindEnum.TYPING)
-    return [
+  if (action.kind === RecordedActionKindEnum.TYPING) {
+    const typing: ReviewOption[] = [
       { label: "An input", value: ReviewChoiceEnum.INPUT },
       { label: "Type it as written", value: ReviewChoiceEnum.TYPE_AS_WRITTEN },
-      leaveOut,
     ];
+    if (isQaTest) typing.push({ label: "Wrong on purpose", value: ReviewChoiceEnum.WRONG_ON_PURPOSE });
+
+    return [...typing, leaveOut];
+  }
 
   if (action.kind === RecordedActionKindEnum.SCROLL)
     return [{ label: "Scroll", value: ReviewChoiceEnum.KEEP }, leaveOut];
@@ -150,7 +158,8 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
     if (action.kind === RecordedActionKindEnum.TYPING) inputName = uniqueName(toInputName(label), usedNames);
 
     reviews[action.index] = {
-      choice: optionsFor(action, element)[0].value,
+      // The first option is the same in either kind of flow.
+      choice: optionsFor(action, element, false)[0].value,
       element: element ? { x: element.x, y: element.y, width: element.width, height: element.height } : null,
       inputName,
       isSecret: label !== null && SECRET_LABEL.test(label),
@@ -222,6 +231,7 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
 
   if (action.kind === RecordedActionKindEnum.TYPING) {
     if (review.choice === ReviewChoiceEnum.TYPE_AS_WRITTEN) return "typed as written";
+    if (review.choice === ReviewChoiceEnum.WRONG_ON_PURPOSE) return "wrong on purpose";
     return `becomes the input ${review.inputName}${review.isSecret ? " · secret" : ""}`;
   }
 

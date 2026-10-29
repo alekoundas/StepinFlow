@@ -27,6 +27,13 @@ import { RefusedComponent } from "@/features/recording/generate/RecordingGenerat
 const CARD: CSSProperties = { background: "var(--surface-card)", borderColor: "var(--surface-border)" };
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
+// A note is quieter than a warning.
+const SEVERITY_LOOK: Record<ValidationSeverityEnum, { icon: string; color: string }> = {
+  [ValidationSeverityEnum.ERROR]: { icon: "pi pi-times-circle", color: "var(--red-400)" },
+  [ValidationSeverityEnum.WARNING]: { icon: "pi pi-exclamation-triangle", color: "var(--yellow-400)" },
+  [ValidationSeverityEnum.INFO]: { icon: "pi pi-info-circle", color: "var(--text-color-secondary)" },
+};
+
 /** Why the last "Ask for changes" left the flow as it was. */
 export interface RevisionProblem {
   message: string;
@@ -68,8 +75,12 @@ export default function RecordingCheckComponent({
 }: Props) {
   const issues = issuesOf(result);
   const errors = issues.filter((x) => x.severity === ValidationSeverityEnum.ERROR).length;
-  const warnings = issues.length - errors;
+  const warnings = issues.filter((x) => x.severity === ValidationSeverityEnum.WARNING).length;
+  const notes = issues.filter((x) => x.severity === ValidationSeverityEnum.INFO).length;
   const isAsking = revision !== null;
+
+  let issueCounts = `${plural(errors, "error")} · ${plural(warnings, "warning")}`;
+  if (notes > 0) issueCounts += ` · ${plural(notes, "note")}`;
 
   let issueSeverity: "success" | "warning" | "danger" = "success";
   if (warnings > 0) issueSeverity = "warning";
@@ -109,7 +120,7 @@ export default function RecordingCheckComponent({
               rounded
             />
             <Tag
-              value={`${plural(errors, "error")} · ${plural(warnings, "warning")}`}
+              value={issueCounts}
               severity={issueSeverity}
               rounded
             />
@@ -327,7 +338,7 @@ function IssuesComponent({ issues }: { issues: Issue[] }) {
         id="issues-heading"
         className="m-0 text-base font-semibold"
       >
-        Errors and warnings
+        Errors, warnings and notes
       </h3>
       <ul className="list-none m-0 p-0 flex flex-column gap-2">
         {issues.map((issue, index) => (
@@ -336,11 +347,8 @@ function IssuesComponent({ issues }: { issues: Issue[] }) {
             className="flex gap-2"
           >
             <i
-              className={issue.severity === ValidationSeverityEnum.ERROR ? "pi pi-times-circle" : "pi pi-exclamation-triangle"}
-              style={{
-                marginTop: 3,
-                color: issue.severity === ValidationSeverityEnum.ERROR ? "var(--red-400)" : "var(--yellow-400)",
-              }}
+              className={SEVERITY_LOOK[issue.severity].icon}
+              style={{ marginTop: 3, color: SEVERITY_LOOK[issue.severity].color }}
               aria-hidden="true"
             />
             <span className="flex flex-column">
@@ -545,7 +553,8 @@ function issuesOf(result: FlowGenerationResultDto): Issue[] {
 
 function severityOrder(severity: ValidationSeverityEnum): number {
   if (severity === ValidationSeverityEnum.ERROR) return 0;
-  return 1;
+  if (severity === ValidationSeverityEnum.WARNING) return 1;
+  return 2;
 }
 
 function describeRevision(revision: FlowGenerationProgressDto): string {

@@ -26,7 +26,7 @@ namespace Business.Flows.FlowValidationService
             LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
             Flow flow = loaded.Flows[flowId];
 
-            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), flow.IsQaTest);
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace Business.Flows.FlowValidationService
             Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
 
             foreach (Flow flow in loaded.Flows.Values)
-                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow));
+                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), flow.IsQaTest);
 
             return results;
         }
@@ -51,7 +51,8 @@ namespace Business.Flows.FlowValidationService
             IReadOnlyDictionary<int, int> templateCountByStepId,
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
-            IReadOnlyList<string> flowNames)
+            IReadOnlyList<string> flowNames,
+            bool isQaTest)
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
 
@@ -74,6 +75,9 @@ namespace Business.Flows.FlowValidationService
             FlowStepValidator.Validate(authored, templateCountByStepId, areas, result);
             FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
+
+            if (isQaTest)
+                FlowQaTestValidator.Validate(steps, result);
 
             result.HasErrors = result.Issues.Any(x => x.Severity == ValidationSeverityEnum.ERROR);
             return result;
@@ -110,6 +114,7 @@ namespace Business.Flows.FlowValidationService
                 .Select(x => new Flow
                 {
                     Id = x.Id,
+                    IsQaTest = x.IsQaTest,
                     FlowAreas = x.FlowAreas.Select(area => new FlowArea
                     {
                         Id = area.Id,

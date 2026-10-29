@@ -54,7 +54,7 @@ namespace Transport.Ipc.Handlers
                 {
                     FlowId = flowId,
                     ErrorCount = results[flowId].Issues.Count(x => x.Severity == ValidationSeverityEnum.ERROR),
-                    WarningCount = results[flowId].Issues.Count(x => x.Severity != ValidationSeverityEnum.ERROR),
+                    WarningCount = results[flowId].Issues.Count(x => x.Severity == ValidationSeverityEnum.WARNING),
                 })
                 .ToList();
 

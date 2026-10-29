@@ -7,5 +7,8 @@ namespace Core.Enums
 
         /// <summary>Runs, but probably not the way the author meant.</summary>
         WARNING,
+
+        /// <summary>Runs as meant, but worth knowing, quieter than a warning.</summary>
+        INFO,
     }
 }

@@ -26,6 +26,7 @@ export function useFlowValidation(flowId: number | null) {
 export interface StepIssues {
   errorCount: number;
   warningCount: number;
+  noteCount: number;
   messages: string[];
 }
 
@@ -41,11 +42,13 @@ export const groupIssuesByStep = (
     const current = byStep.get(issue.flowStepId) ?? {
       errorCount: 0,
       warningCount: 0,
+      noteCount: 0,
       messages: [],
     };
 
     if (issue.severity === ValidationSeverityEnum.ERROR) current.errorCount += 1;
-    else current.warningCount += 1;
+    else if (issue.severity === ValidationSeverityEnum.WARNING) current.warningCount += 1;
+    else current.noteCount += 1;
 
     current.messages.push(issue.message);
     byStep.set(issue.flowStepId, current);

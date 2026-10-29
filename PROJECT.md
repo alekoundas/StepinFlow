@@ -700,11 +700,40 @@ seconds, at most sixty - and the clicks on the same picture are shown beside it.
 backend until the draft is asked for, which sends it all in one call (`Recording.review`) for the
 draft to be built from.
 
-### Planned - phase 7: a recording and a description become a flow
+### A recording and a description become a flow
 
-The questions go. The tester describes the flow and records it once, and reviews the result rather
-than answering for each action. Automation flows come first; a QA test is the same path with more
-added. The build order is `PLAN.md` phase 7.
+The tester describes the flow and records it once, and reviews the result rather than answering for
+each action. A QA test is the same path with more added (below). Every result lands in the editor
+and never executes on its own - a model that could execute what it wrote would turn a prompt
+injection in OCR'd screen text into a moving mouse.
+
+```
+Setup -> Record -> Review -> Draft ---------------------------> Import -> Check -> Editor
+                              \-> Model -> Scanner --(clean)--/
+                                    ^---- diagnostics, at most 3 attempts
+```
+
+`Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is:
+
+```
+Business/Recording/
+  Setup/        RecordingSetupService     the flow, its main area and a Launch step, before the first click
+  Session/      RecordingSessionService   start, pause, resume, stop; the bar's hotkeys; the live list;
+                                          RecordingSessionCache holds what it remembers
+  ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
+  Elements/     ClickedElementFinder      per click: place in the main area, the element's rectangle,
+                                          the text on it
+                ClickedElementGrouper     the clicks that hit the same picture
+  Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
+                                          per kind of action; RecordingDraft holds what they share
+  Generation/   FlowGenerationService     draft, script, scanner, import; the model's draft too
+                FlowGenerationSessionService  the model's draft and Check's revisions in the
+                                              background, by broadcast
+Business/Ai/ScriptRevision/
+                ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
+Business/Ai/Vision/
+                ElementLocator            phase 6's detection model, with a fallback box
+```
 
 **The main area.** Before the first click the tester names the flow, describes it, and picks the
 window it works in from the windows open at the time: the flow's main area (`FlowArea.IsMain`,
@@ -800,9 +829,9 @@ proves; `End Execution passed` where what the description says the flow proves h
 failure messages in the test's words; and a check it can make only from what the script has - a
 Check Text or Wait For Text in the main area, or a template the draft cut - or a note saying what
 is not checked. The code holds it to that whatever the prompt says: an answer with no stage marker,
-or no `End Execution passed`, is refused as `STAGE_MARKER_MISSING` or `END_PASSED_MISSING` and goes
-back like any other refusal. An "Ask for changes" is not held to it, so a tester can ask for what
-they like.
+no `End Execution passed`, or a value typed wrong on purpose (below) no longer typed as it is, is
+refused as `STAGE_MARKER_MISSING`, `END_PASSED_MISSING` or `WRONG_VALUE_CHANGED` and goes back like
+any other refusal. An "Ask for changes" is not held to it, so a tester can ask for what they like.
 
 A model takes minutes over a draft, so it is work longer than a request can wait for (§4):
 `Recording.generateDraft` starts `FlowGenerationSessionService` and returns;
@@ -857,10 +886,13 @@ what each one was for.
 
 **A QA test adds to it**: stage markers and `End Execution` checks for what the description says
 the flow is meant to prove (above), and failure paths written by provoking them rather than
-imagining them - a **deliberate wrong value**, typed on purpose, the application's rejection marked
-with Ctrl + click, and the typed text marked in Review as deliberate. It stays literal text rather
-than becoming an input, and the model gives it a stage of its own. The screen sizes to test at and
-what happens when an execution ends wait in `TODO.md`.
+imagining them. The tester types a wrong value on purpose, marks the application's rejection with
+Ctrl + click, and in Review makes the typed text **Wrong on purpose**, offered only in a QA test.
+The draft types it as written - never an input, which a CSV row could put right, and never a
+secret, which keeps no value - with the comment `# wrong on purpose: the application should reject
+it` (`TypingDraftBuilder`), and the model is told to give it a stage of its own, "Rejects a wrong
+password", with the check after it as that stage's check. The screen sizes to test at and what
+happens when an execution ends wait in `TODO.md`.
 
 ### Search mode and timeout
 
@@ -1437,6 +1469,17 @@ warning counts, and the editor names the step.
 `NAME_DUPLICATE` is an error rather than a warning: the script refers to things by name, so a
 duplicate cannot round-trip, and it makes two steps share one history trend. Creating a step, an
 area or a point picks a free name automatically, so only a manual rename can reach it.
+
+**A QA test gets notes too**, a third severity, `INFO`, quieter than a warning and blocking nothing
+(`Rules/FlowQaTestValidator`). `CHECK_CANNOT_FAIL` names a check with no `End Execution` failed
+anywhere under its Failure branch, its own or under a check inside it - `FlowCheckListHelper`'s
+`IsFatal`, which the assistant's check list reads too. Such a check changes nothing when it fails,
+and a suite of them is green whatever the application does. A note rather than a warning, because a
+search that only decides which way the flow goes is fine, and the draft already ends every Failure
+branch with `End Execution` failed, so it fires only on one somebody removed or on a flow written by
+hand. A check under an `End Execution` gets none: the verdict is decided by then. The tree badges it
+grey with an info icon, the editor's header and Check count it, the flow list does not, and the
+export dialog names the checks before a QA test leaves the app.
 
 **An error stops a run, not a save.** A flow is validated once it is saved - after a form, and
 after an import, whose result carries the issues - and a flow with errors stays saved and shows
@@ -2163,13 +2206,13 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-988 tests, all passing, in eight projects under `backend/Tests/` - one
+995 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests`.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 738 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
+| `Business.Tests` | 745 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling |
 | `DataAccess.Tests` | 13 | migrations, the model matching them, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2294,7 +2337,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant with Ollama
-or OpenAI. 988 backend tests.
+or OpenAI. 995 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

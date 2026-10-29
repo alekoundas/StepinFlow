@@ -23,6 +23,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
   const accent = flowStepAccent(treeNode.flowStepType);
   const thumbnail = treeNode.detail?.thumbnail;
   const moreTemplates = (treeNode.detail?.templateCount ?? 0) - 1;
+  const badge = issues ? badgeOf(issues) : null;
 
   return (
     <div
@@ -115,21 +116,17 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
 
       {(issues || detail.chips.length > 0) && (
         <div className="flex align-items-center gap-1 flex-shrink-0">
-          {issues && (
+          {issues && badge && (
             <span
               className="flex align-items-center gap-1 text-xs px-2 py-1 border-round-sm white-space-nowrap"
-              style={
-                issues.errorCount > 0
-                  ? { color: "var(--red-400)", background: tint("var(--red-400)", 15) }
-                  : { color: "var(--yellow-400)", background: tint("var(--yellow-400)", 15) }
-              }
+              style={{ color: badge.color, background: tint(badge.color, 15) }}
               title={issues.messages.join("\n")}
             >
               <IconComponent
-                name="exclamation-triangle"
+                name={badge.icon}
                 size="sm"
               />
-              {issues.errorCount > 0 ? issues.errorCount : issues.warningCount}
+              {badge.count}
             </span>
           )}
 
@@ -153,4 +150,13 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
       )}
     </div>
   );
+}
+
+// The worst there is decides the badge: an error, then a warning, then a note, which is quieter.
+function badgeOf(issues: StepIssues): { color: string; icon: string; count: number } {
+  if (issues.errorCount > 0) return { color: "var(--red-400)", icon: "exclamation-triangle", count: issues.errorCount };
+  if (issues.warningCount > 0)
+    return { color: "var(--yellow-400)", icon: "exclamation-triangle", count: issues.warningCount };
+
+  return { color: "var(--text-color-secondary)", icon: "info-circle", count: issues.noteCount };
 }

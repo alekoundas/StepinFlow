@@ -28,8 +28,9 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
 
   const issues = validation?.issues ?? [];
   const errors = issues.filter((x) => x.severity === ValidationSeverityEnum.ERROR).length;
-  const warnings = issues.length - errors;
-  const health = healthOf(errors, warnings);
+  const warnings = issues.filter((x) => x.severity === ValidationSeverityEnum.WARNING).length;
+  const notes = issues.filter((x) => x.severity === ValidationSeverityEnum.INFO).length;
+  const health = healthOf(errors, warnings, notes);
 
   return (
     <header className="flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3 border-bottom-1 surface-border">
@@ -94,8 +95,9 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-const healthOf = (errors: number, warnings: number) => {
+const healthOf = (errors: number, warnings: number, notes: number) => {
   if (errors > 0) return { color: "var(--red-400)", text: plural(errors, "error") };
   if (warnings > 0) return { color: "var(--yellow-500)", text: plural(warnings, "warning") };
+  if (notes > 0) return { color: "var(--text-color-secondary)", text: plural(notes, "note") };
   return { color: "var(--green-400)", text: "No issues" };
 };

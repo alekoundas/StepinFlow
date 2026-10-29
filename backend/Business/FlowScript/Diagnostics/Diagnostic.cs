@@ -54,9 +54,11 @@ namespace Business.FlowScript.Diagnostics
         TEMPLATE_NOT_CUT,
         INPUT_NOT_RENAMED,
 
-        // A model's answer for a QA test: no stage marker, no End Execution passed.
+        // A model's answer for a QA test: no stage marker, no End Execution passed, a value typed
+        // wrong on purpose no longer typed as it is.
         STAGE_MARKER_MISSING,
         END_PASSED_MISSING,
+        WRONG_VALUE_CHANGED,
     }
 
     /// <summary>

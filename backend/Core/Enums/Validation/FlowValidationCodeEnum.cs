@@ -83,5 +83,10 @@ namespace Core.Enums
 
         /// <summary>Keys held with nothing below letting them go, so they stay down until the execution ends.</summary>
         KEYS_NOT_RELEASED,
+
+        // Notes
+
+        /// <summary>A QA test's check with no End Execution failed under its Failure branch, so it never fails the test.</summary>
+        CHECK_CANNOT_FAIL,
     }
 }

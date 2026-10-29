@@ -24,6 +24,7 @@ namespace Business.Flows.FlowValidationService
             IReadOnlyDictionary<int, int> templateCountByStepId,
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
-            IReadOnlyList<string> flowNames);
+            IReadOnlyList<string> flowNames,
+            bool isQaTest);
     }
 }

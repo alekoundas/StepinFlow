@@ -4,6 +4,7 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
+using Microsoft.EntityFrameworkCore;
 using static Business.Tests.TestToken;
 
 namespace Business.Tests.Flows.Validation
@@ -94,6 +95,23 @@ namespace Business.Tests.Flows.Validation
             Codes(batch[missing]).ShouldBe([FlowValidationCodeEnum.FLOW_HAS_NO_STEPS]);
             Codes(await validation.ValidateAsync(db, missing, Ct)).ShouldBe([FlowValidationCodeEnum.FLOW_HAS_NO_STEPS]);
             batch[existing].HasErrors.ShouldBeFalse();
+        }
+
+        // The kind is read with the flow, so a saved QA test gets the notes an automation does not.
+        [Fact]
+        public async Task A_saved_QA_test_is_validated_as_one()
+        {
+            int automation = Seed("Automation", new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find Saved" });
+            int test = Seed("Test", new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find Saved" });
+
+            using AppDbContext db = _database.CreateDbContext();
+            await db.Flows.Where(x => x.Id == test).ExecuteUpdateAsync(x => x.SetProperty(flow => flow.IsQaTest, true), Ct);
+
+            IReadOnlyDictionary<int, FlowValidationResultDto> batch = await new FlowValidationService().ValidateAsync(db, [automation, test], Ct);
+
+            Codes(batch[automation]).ShouldNotContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+            Codes(batch[test]).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+            Codes(await new FlowValidationService().ValidateAsync(db, test, Ct)).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
         }
     }
 }

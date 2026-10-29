@@ -7,6 +7,8 @@ import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 
 import { backendApiService } from "@/shared/services/backend-api-service";
+import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import type { FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
 
@@ -37,6 +39,12 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
   });
 
   const folder = chosen ?? exportFolder?.folderPath ?? "";
+
+  // A QA test leaving with checks that never fail it is green whatever the application does.
+  const { data: validation } = useFlowValidation(visible ? flowId : null);
+  const unfailing = (validation?.issues ?? [])
+    .filter((x) => x.severity === ValidationSeverityEnum.INFO)
+    .map((x) => x.flowStepName);
 
   const browse = async () => {
     const picked = await ElectronApiService.files.chooseFolder(folder || undefined);
@@ -157,6 +165,14 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
             )}
           </div>
 
+          {unfailing.length > 0 && (
+            <Message
+              severity="info"
+              className="w-full justify-content-start"
+              text={unfailingOf(unfailing)}
+            />
+          )}
+
           {error && (
             <Message
               severity="error"
@@ -190,6 +206,12 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
       )}
     </Dialog>
   );
+}
+
+function unfailingOf(names: string[]): string {
+  if (names.length === 1) return `Failing ${names[0]} never fails the execution, so the test passes whichever way it goes.`;
+
+  return `Failing these checks never fails the execution, so the test passes whichever way they go: ${names.join(", ")}.`;
 }
 
 function templatesOf(exported: FlowScriptExportResultDto): string {

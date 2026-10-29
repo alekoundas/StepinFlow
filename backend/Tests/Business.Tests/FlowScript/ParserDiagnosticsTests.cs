@@ -265,6 +265,7 @@ namespace Business.Tests.FlowScript
             // Raised by FlowGenerationService, against a QA test's answer (FlowGenerationServiceTests).
             covered.Add(DiagnosticCodeEnum.STAGE_MARKER_MISSING);
             covered.Add(DiagnosticCodeEnum.END_PASSED_MISSING);
+            covered.Add(DiagnosticCodeEnum.WRONG_VALUE_CHANGED);
 
             Enum.GetValues<DiagnosticCodeEnum>().Except(covered).ShouldBeEmpty();
         }

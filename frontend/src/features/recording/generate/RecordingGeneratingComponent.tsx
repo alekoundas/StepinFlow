@@ -238,7 +238,9 @@ function SentComponent({
   const choiceOf = (index: number) => reviews[index]?.choice;
 
   const labels = recording.clickedElements.filter((x) => x.text.trim().length > 0).length;
-  const asWritten = listed.filter((x) => choiceOf(x.index) === ReviewChoiceEnum.TYPE_AS_WRITTEN).length;
+  const asWritten = listed.filter(
+    (x) => choiceOf(x.index) === ReviewChoiceEnum.TYPE_AS_WRITTEN || choiceOf(x.index) === ReviewChoiceEnum.WRONG_ON_PURPOSE,
+  ).length;
   const screenshots = recording.actions.filter((x) => x.screenshotIndex != null).length;
   const inputs = listed
     .filter((x) => choiceOf(x.index) === ReviewChoiceEnum.INPUT)

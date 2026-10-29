@@ -69,7 +69,7 @@ export default function RecordingReviewComponent({
 
   const toggle = (action: RecordedActionDto) => {
     const review = reviews[action.index];
-    const options = optionsFor(action, elementOf(result, action));
+    const options = optionsFor(action, elementOf(result, action), isQaTest);
 
     let choice: ReviewChoiceEnum = ReviewChoiceEnum.LEAVE_OUT;
     if (review.choice === ReviewChoiceEnum.LEAVE_OUT) choice = keepingChoice(options);
@@ -158,6 +158,7 @@ export default function RecordingReviewComponent({
             review={reviews[selected.index]}
             onChange={(review) => change(selected.index, review)}
             recordingKey={recordingKey}
+            isQaTest={isQaTest}
           />
         </div>
       )}

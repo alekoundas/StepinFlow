@@ -331,6 +331,9 @@ the history.
       not consistent with the setting's promise for a flow nobody has touched yet. The
       recommendation: a step name is the tester's once they have seen it in Review, so send it, and
       say so under the setting. The other way is to send placeholder names and map them back.
+      Since 2026-10-28 the first draft has the same gap for a search by its words: Review fills
+      them in from what was read, and they go to the model with the setting off, because a
+      `Wait For Text` is nothing without them. The same decision covers both.
 
 - [ ] **A QA test's screen sizes, and what happens when an execution ends, asked in the setup.**
       Moved out of phase 7 on 2026-10-28. The sizes become `FlowViewport` rows, for phase 10's

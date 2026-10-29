@@ -239,8 +239,9 @@ namespace Business.Ai.Helpers
               recorded, and never remove one.
             """;
 
-        // Added after ShapeRecording when the flow is a QA test. An answer with no stage marker or
-        // no End Execution passed is refused in code, whatever this says.
+        // Added after ShapeRecording when the flow is a QA test. An answer with no stage marker, no
+        // End Execution passed, or a wrong value no longer typed as it is, is refused in code,
+        // whatever this says.
         public const string ShapeQaTest =
             """
             This flow is a QA test: it proves the application works, rather than only doing a
@@ -253,6 +254,13 @@ namespace Business.Ai.Helpers
               has been seen - usually as its last step.
             - Every Failure branch ends with End Execution failed, its message saying in the words
               of the test what did not happen.
+            - Typed text under the comment "wrong on purpose" was typed wrong deliberately, to prove
+              the application rejects it. Keep it typed exactly as it is - never an input - and give
+              it a stage of its own named for what is rejected: ## Rejects a wrong password. The
+              check after it is that stage's check, the message the application shows when it
+              refuses, and its End Execution failed message says the application accepted the wrong
+              value. With no check after it, do as the next point says. Where the tester typed
+              again after it, the next stage begins there.
             - When the Description says something must be seen and no step checks for it, add a
               check only if you can make it from what the script has: Check Text or Wait For Text
               in the main area for words that will be on the screen, or a search for a template the

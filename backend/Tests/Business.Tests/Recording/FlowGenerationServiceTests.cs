@@ -7,6 +7,7 @@ using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
+using Business.Recording.Draft.Actions;
 using Business.Recording.Generation;
 using Business.Recording.Setup;
 using Business.Tests.Fakes;
@@ -400,6 +401,45 @@ namespace Business.Tests.Recording
 
             using AppDbContext db = _database.CreateDbContext();
             (await db.Flows.SingleAsync(Ct)).IsQaTest.ShouldBeTrue();
+        }
+
+        private const string WRONG_VALUE = "not-the-password";
+        private const string PASSED = "\n## Signed in\nEnd Execution  passed\n";
+
+        private void RecordWrongValue()
+        {
+            _recording.Actions.Add(new RecordedActionDto { Index = 2, Kind = RecordedActionKindEnum.TYPING, Text = WRONG_VALUE });
+            _reviewed.Actions.Add(new ReviewedActionDto { ActionIndex = 2, Choice = ReviewChoiceEnum.WRONG_ON_PURPOSE });
+        }
+
+        // Made an input or put right, a row could make it the right value and the test would prove nothing.
+        [Fact]
+        public async Task A_QA_test_s_answer_that_changes_a_value_wrong_on_purpose_is_refused()
+        {
+            int flowId = await NewFlowAsync(isQaTest: true);
+            Record();
+            RecordWrongValue();
+            FakeChatClient model = Model(x => x.Replace(WRONG_VALUE, "secret_sauce") + PASSED);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain(TypingDraftBuilder.WRONG_ON_PURPOSE_COMMENT);
+            generated.IsModelDraft.ShouldBeFalse();
+            generated.Refused.Select(x => x.Code).ShouldBe([nameof(DiagnosticCodeEnum.WRONG_VALUE_CHANGED)]);
+        }
+
+        [Fact]
+        public async Task A_QA_test_s_answer_that_keeps_a_value_wrong_on_purpose_as_it_is_is_saved()
+        {
+            int flowId = await NewFlowAsync(isQaTest: true);
+            Record();
+            RecordWrongValue();
+            Model(x => x + PASSED);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            Steps(flowId).ShouldContain(x => x.KeyboardInputText == WRONG_VALUE && x.CodeComment == TypingDraftBuilder.WRONG_ON_PURPOSE_COMMENT);
         }
 
         // A cloud provider not allowed screen content names the steps from the description.

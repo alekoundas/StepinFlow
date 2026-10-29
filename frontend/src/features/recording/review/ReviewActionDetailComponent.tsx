@@ -44,15 +44,16 @@ interface Props {
 
   // Tells one recording's screens from the next one's.
   recordingKey: string;
+  isQaTest: boolean;
 }
 
 /**
  * One action: the screen at that moment with where it was clicked and the template to be cut,
  * what is known about it, and what it becomes.
  */
-export default function ReviewActionDetailComponent({ result, action, review, onChange, recordingKey }: Props) {
+export default function ReviewActionDetailComponent({ result, action, review, onChange, recordingKey, isQaTest }: Props) {
   const element = elementOf(result, action);
-  const options = optionsFor(action, element);
+  const options = optionsFor(action, element, isQaTest);
   const position = listedActions(result).findIndex((x) => x.index === action.index) + 1;
 
   const { data: screen } = useQuery({
@@ -309,7 +310,9 @@ function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: 
 
   if (action.kind === RecordedActionKindEnum.TYPING) {
     const text = action.text ?? "";
-    facts.push({ name: "Typed", value: review.isSecret ? "•".repeat([...text].length) : text });
+    // Hidden only while it stays a secret: any other choice writes it into the flow.
+    const isHidden = review.choice === ReviewChoiceEnum.INPUT && review.isSecret;
+    facts.push({ name: "Typed", value: isHidden ? "•".repeat([...text].length) : text });
 
     const label = fieldLabelBefore(result, action);
     facts.push({ name: "Into", value: label ? `The field read as “${label}”` : "The field clicked before it" });
@@ -357,6 +360,8 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
       return `The value stays on this machine as the input's default. The flow and the script only see {{${review.inputName}}}.`;
     case ReviewChoiceEnum.TYPE_AS_WRITTEN:
       return "Typed into the flow as it is, so anyone reading the flow reads it too.";
+    case ReviewChoiceEnum.WRONG_ON_PURPOSE:
+      return "Typed into the flow as it is, never an input, so no row can put it right. The model is told it is wrong on purpose and gives it a stage of its own, which passes when the check you marked after it sees the application refuse it.";
     case ReviewChoiceEnum.CHECK_THERE:
       return `Waits until it is there, up to ${waitsUpTo}, and the execution fails if it never comes. What you did next goes after it.`;
     case ReviewChoiceEnum.CHECK_GONE:

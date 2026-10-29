@@ -8,7 +8,8 @@ you a name is required while you type.
 
 This is exactly what a drag and drop breaks quietly, which is why it is checked separately.
 
-Errors are shown as badges on the tree and as messages on each step.
+Errors are shown as badges on the tree and as messages on each step. An error stops an execution;
+a warning and a note do not.
 
 ## Flow
 
@@ -110,3 +111,14 @@ or measure the point from one.
 keys, so they stay down for the rest of the execution and every key typed after them reads as a
 shortcut. Add a step that releases them after the steps they are held for. The engine lets go of
 anything still held when the execution ends, however it ends.
+
+## Notes
+
+A note is quieter than a warning and never stops an execution. Only a QA test gets them.
+
+**CHECK_CANNOT_FAIL** — a check with no `End Execution` failed anywhere under its Failure branch,
+neither its own nor under a check inside it, so failing it changes nothing and the test passes
+whichever way it goes. Fine for a search that only decides which way the flow goes, such as closing
+a banner when there is one. When the check is meant to prove something, end its Failure branch with
+`End Execution` failed. A check under an `End Execution` never gets one: the verdict is decided by
+then.

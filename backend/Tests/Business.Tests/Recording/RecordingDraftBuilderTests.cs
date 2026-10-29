@@ -3,6 +3,7 @@ using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
+using Business.Recording.Draft.Actions;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
@@ -323,6 +324,19 @@ namespace Business.Tests.Recording
             schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT).KeyboardInputText.ShouldBe("Invoices for September");
         }
 
+        // A field labelled Password would make an input a secret; a value wrong on purpose is neither.
+        [Fact]
+        public void A_value_wrong_on_purpose_is_on_the_line_itself_with_a_comment_saying_so()
+        {
+            Typing("not-the-password", ReviewChoiceEnum.WRONG_ON_PURPOSE, inputName: "password", isSecret: true);
+
+            FlowScriptSchema schema = Build();
+
+            schema.Inputs.ShouldBeEmpty();
+            FlowStep typed = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT);
+            (typed.KeyboardInputText, typed.CodeComment).ShouldBe(("not-the-password", TypingDraftBuilder.WRONG_ON_PURPOSE_COMMENT));
+        }
+
         [Fact]
         public void A_key_held_over_a_click_is_held_before_it_and_released_after()
         {
@@ -509,6 +523,7 @@ namespace Business.Tests.Recording
             Click(760, 248, "");
             _recording.ClickGroups.Add(new ClickGroupDto { ActionIndexes = [10, 12], IsMoving = true });
             Typing("September", ReviewChoiceEnum.TYPE_AS_WRITTEN);
+            Typing("not-the-password", ReviewChoiceEnum.WRONG_ON_PURPOSE);
             RecordedActionDto outside = Act(new RecordedActionDto { Kind = RecordedActionKindEnum.CLICK, LocationX = 1500, LocationY = 1060, Window = RecordedWindowEnum.OTHER });
             Review(outside, ReviewChoiceEnum.CLICK_AT_SPOT);
             RecordedActionDto menu = Click(420, 330, "Row", ReviewChoiceEnum.CLICK_AT_SPOT);

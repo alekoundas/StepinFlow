@@ -180,7 +180,8 @@ namespace Business.Recording.Generation
             if (isQaTest)
             {
                 instruction += $"\n\n{AiPromptHelper.ShapeQaTest}";
-                checkAnswer = CheckQaTest;
+                List<string> wrongValues = WrongValuesOf(recording, reviewed);
+                checkAnswer = answer => CheckQaTest(answer, wrongValues);
             }
 
             if (!isReadTextSent)
@@ -302,7 +303,7 @@ namespace Business.Recording.Generation
 
         // What makes a model's answer a QA test, whatever the instruction said. About the answer as
         // a whole, so at its first line.
-        private static List<Diagnostic> CheckQaTest(FlowScriptSchema answer)
+        private static List<Diagnostic> CheckQaTest(FlowScriptSchema answer, List<string> wrongValues)
         {
             List<Diagnostic> refused = [];
 
@@ -312,7 +313,29 @@ namespace Business.Recording.Generation
             if (!answer.Steps.Any(x => x.FlowStepType == FlowStepTypeEnum.END_EXECUTION && x.EndExecutionAsSuccess))
                 refused.Add(Diagnostic.Error(DiagnosticCodeEnum.END_PASSED_MISSING, 1, 1, "A QA test says when it has passed. Put End Execution passed where what the Description says the flow proves has been seen."));
 
+            // Made an input, a row could put it right, and the test would prove nothing.
+            List<string> typed = answer.Steps
+                .Where(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT && x.KeyboardInputType == KeyboardInputTypeEnum.TEXT)
+                .Select(x => x.KeyboardInputText.Trim())
+                .ToList();
+
+            foreach (string value in wrongValues.Where(x => !typed.Contains(x.Trim())))
+                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.WRONG_VALUE_CHANGED, 1, 1, $"The draft types <[ {value} ]> wrong on purpose, to prove the application rejects it. Keep it typed as it is, never as an input, in a stage of its own."));
+
             return refused;
+        }
+
+        private static List<string> WrongValuesOf(RecordingResultDto recording, ReviewedRecordingDto reviewed)
+        {
+            HashSet<int> indexes = reviewed.Actions
+                .Where(x => x.Choice == ReviewChoiceEnum.WRONG_ON_PURPOSE)
+                .Select(x => x.ActionIndex)
+                .ToHashSet();
+
+            return recording.Actions
+                .Where(x => indexes.Contains(x.Index) && !string.IsNullOrWhiteSpace(x.Text))
+                .Select(x => x.Text!)
+                .ToList();
         }
 
         // The flow as saved, read back from the database rather than taken from what was sent to it.
