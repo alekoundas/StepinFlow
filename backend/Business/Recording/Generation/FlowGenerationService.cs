@@ -25,9 +25,11 @@ namespace Business.Recording.Generation
     /// new rows are written: the import replaces every row, and a step replaced loses its last good
     /// screenshots and its link to the executions it was in.
     ///
-    /// With a model, the plain draft is what it is given, as a script with the description, and its
-    /// answer is imported in place of it. When no answer reads cleanly, or the model cannot be
-    /// reached, the plain draft is saved instead and says why, so the tester always has a flow.
+    /// With a model, the plain draft is what it is given, as a script with the description and
+    /// notes over its searches of what the screen said, and its answer is imported in place of it.
+    /// An answer that adds, drops or moves a recorded action is refused, and the notes never reach
+    /// the saved flow. When no answer reads cleanly, or the model cannot be reached, the plain
+    /// draft is saved instead and says why, so the tester always has a flow.
     ///
     /// On the Check page the tester can ask for changes: the flow as saved goes to the model with
     /// what they wrote, and an answer that never reads cleanly leaves the flow as it was.
@@ -106,7 +108,7 @@ namespace Business.Recording.Generation
             HashSet<FlowStep> stepsBefore = flow.Steps.ToHashSet();
             HashSet<FlowCsvColumn> inputsBefore = flow.Inputs.ToHashSet();
 
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index);
+            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index, false);
 
             string script = _printer.Write(draft);
             FlowScriptSchema read = _scanner.Read(script);
@@ -167,25 +169,24 @@ namespace Business.Recording.Generation
 
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
             bool isQaTest = flow.Flow.IsQaTest;
-            FlowScriptSchema draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null);
+            FlowScriptSchema draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null, true);
 
             string script = _printer.Write(draft);
             Dictionary<string, byte[]> templates = TemplatesOf(draft);
+            FlowScriptSchema sentDraft = _scanner.Read(script);
 
             FlowGenerationProgressDto drafted = Next(writing, FlowGenerationStageEnum.WRITING_DRAFT, 0, []);
             drafted.ScriptLength = script.Length;
 
             string instruction = AiPromptHelper.ShapeRecording;
-            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>>? checkAnswer = null;
             if (isQaTest)
-            {
                 instruction += $"\n\n{AiPromptHelper.ShapeQaTest}";
-                List<string> wrongValues = WrongValuesOf(recording, reviewed);
-                checkAnswer = answer => CheckQaTest(answer, wrongValues);
-            }
 
             if (!isReadTextSent)
                 instruction += $"\n\n{AiPromptHelper.ShapeRecordingWithoutReadText}";
+
+            List<string> wrongValues = WrongValuesOf(recording, reviewed);
+            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> checkAnswer = answer => CheckAnswer(sentDraft, answer, isQaTest, wrongValues);
 
             ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, checkAnswer, (attempt, refused) =>
             {
@@ -203,11 +204,12 @@ namespace Business.Recording.Generation
                 Request = revision.Request,
             };
 
+            // The notes are screen text, and the flow is written into a repository.
             if (revision.Script != null)
             {
                 result.IsModelDraft = true;
-                result.Draft = script;
-                result.Import = await _importer.ImportTextAsync(revision.Script, templates, ct);
+                result.Draft = ScreenNoteWriter.WithoutNotes(script);
+                result.Import = await _importer.ImportTextAsync(ScreenNoteWriter.WithoutNotes(revision.Script), templates, ct);
             }
             else
             {
@@ -293,12 +295,22 @@ namespace Business.Recording.Generation
             Func<int, RecordingScreenDto?> screenAt,
             CancellationToken ct)
         {
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null);
+            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null, false);
 
             string script = _printer.Write(draft);
             Dictionary<string, byte[]> templates = TemplatesOf(draft);
 
             return await _importer.ImportTextAsync(script, templates, ct);
+        }
+
+        // What a model may not do to any recording, and what makes an answer a QA test.
+        private static List<Diagnostic> CheckAnswer(FlowScriptSchema sentDraft, FlowScriptSchema answer, bool isQaTest, List<string> wrongValues)
+        {
+            List<Diagnostic> refused = RecordedActionsCheck.Check(sentDraft, answer);
+            if (isQaTest)
+                refused.AddRange(CheckQaTest(answer, wrongValues));
+
+            return refused;
         }
 
         // What makes a model's answer a QA test, whatever the instruction said. About the answer as
@@ -370,7 +382,7 @@ namespace Business.Recording.Generation
             return templates;
         }
 
-        // The same recording with nothing read under its clicks.
+        // The same recording with nothing read off the screen. How much of it changed is a number, and stays.
         private static RecordingResultDto WithoutReadText(RecordingResultDto recording)
         {
             List<ClickedElementDto> elements = recording.ClickedElements
@@ -387,11 +399,22 @@ namespace Business.Recording.Generation
                 })
                 .ToList();
 
+            List<ScreenChangeDto> changes = recording.ScreenChanges
+                .Select(x => new ScreenChangeDto
+                {
+                    ActionIndex = x.ActionIndex,
+                    NextActionIndex = x.NextActionIndex,
+                    ChangedShare = x.ChangedShare,
+                    IsNewScreen = x.IsNewScreen,
+                })
+                .ToList();
+
             return new RecordingResultDto
             {
                 Actions = recording.Actions,
                 ClickedElements = elements,
                 ClickGroups = recording.ClickGroups,
+                ScreenChanges = changes,
             };
         }
 

@@ -28,6 +28,7 @@ using Business.AppSettings;
 using Business.Recording.Draft;
 using Business.Recording.Elements;
 using Business.Recording.Generation;
+using Business.Recording.Screens;
 using Business.Recording.Session;
 using Business.Recording.Setup;
 using Business.Ai.Providers;
@@ -98,6 +99,7 @@ namespace App
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
             builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
             builder.Services.AddSingleton<IClickedElementGrouper, ClickedElementGrouper>();
+            builder.Services.AddSingleton<IRecordedScreenReader, RecordedScreenReader>();
             builder.Services.AddSingleton<IRecordingDraftBuilder, RecordingDraftBuilder>();
             builder.Services.AddSingleton<IFlowGenerationService, FlowGenerationService>();
             builder.Services.AddSingleton<IFlowGenerationSessionService, FlowGenerationSessionService>();

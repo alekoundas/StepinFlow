@@ -3,6 +3,7 @@ export const RecordingStageEnum = {
   NONE: "NONE", // Not processing
   FINDING_ELEMENTS: "FINDING_ELEMENTS", // What each click hit, by the detection model and OCR
   GROUPING_CLICKS: "GROUPING_CLICKS", // Which clicks hit the same picture
+  READING_SCREENS: "READING_SCREENS", // The text on every press's screenshot, by OCR, and what changed between them
 } as const;
 
 export type RecordingStageEnum =

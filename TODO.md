@@ -358,24 +358,6 @@ the history.
       is steps. The only teardown step today is a kill-process command, so the `Close Window` loose
       end in `PLAN.md` decides whether this ships with kill only.
 
-- [ ] **The model nests the draft by page. Not decided whether to build it.** Talked about on
-      2026-10-28. The draft is flat: every search sits at the top, with what followed it in its
-      Success branch. A tester would expect the steps done on the settings page under the search
-      that opened it, and the steps after an Edit click under Find Edit. The model cannot tell
-      where the page changed from the step names alone; two cheap signals would tell it:
-      - The window title, recorded on every action already and used by nothing. For a browser it is
-        the page's title. Written into the draft as a comment where it changes; it is screen text,
-        so it goes through the same gate as the text read under a click (`PROJECT.md` §10).
-      - How much of the main area changed after a click, measured from the screenshots the
-        recording already has. A number, so any provider may be sent it: most of it changed, the
-        steps after go under the click; little changed, they stay siblings.
-      A full-screen OmniParser pass per click would say more, at more cost, if those two are not
-      enough. Whatever is built, a check in code comes first: the answer's clicks, typed text and
-      keys in execution order are the draft's, or it goes back with the first place they differ.
-      Only the prompt forbids dropping or reordering one today, and restructuring is where a model
-      would. The fold into Find All Images turns several clicks into one loop, so the check counts
-      a fold as the clicks it replaced.
-
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that
       nothing ever read - only `_lastDragBroadcastTicks` is wired into `TryPassThrottle`. Both were
@@ -438,9 +420,10 @@ the history.
       leaving Check and swept at startup, would cap that, and works the same on every system. It may
       never be needed; decide it with whether a recording outlives the app, above.
 - [ ] **One OCR on every system: PaddleOCR's models on ONNX. To talk about.** Raised 2026-10-14.
-      `IOcrService` has one adapter, Windows OCR, so the Read Text step and the text on a clicked
-      element (`ClickedElementFinder`) are Windows only; on macOS or Linux a click keeps its
-      rectangle but no name. OmniParser does not read text itself - its detector only finds
+      `IOcrService` has one adapter, Windows OCR, so the Read Text step, the text on a clicked
+      element (`ClickedElementFinder`) and what changed on the screen between presses
+      (`RecordedScreenReader`) are Windows only; on macOS or Linux a click keeps its rectangle but
+      no name, and a recording says nothing of its screens. OmniParser does not read text itself - its detector only finds
       rectangles, and it calls EasyOCR or PaddleOCR (Python) for the words. PaddleOCR's own models,
       PP-OCR, are Apache-2.0 (GPL-3.0 compatible), cover 106 languages in v5, Greek included, and
       exist as ONNX, so one adapter on the ONNX Runtime the detector already runs on would read the

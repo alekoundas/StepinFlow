@@ -3,6 +3,7 @@ using Business.AreaPoint;
 using Business.Recording.ActionBuilder;
 using Business.Recording.Elements;
 using Business.Recording.Models.Session;
+using Business.Recording.Screens;
 using Core.Catalogs;
 using Core.Enums;
 using Core.Models.Business;
@@ -58,7 +59,7 @@ namespace Business.Recording.Session
         private static readonly TimeSpan FOLD_INTERVAL = TimeSpan.FromMilliseconds(250);
 
         // What a stopped recording is worked through, in order.
-        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS, RecordingStageEnum.GROUPING_CLICKS];
+        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS, RecordingStageEnum.GROUPING_CLICKS, RecordingStageEnum.READING_SCREENS];
 
         private readonly IInputRecordService _inputRecordService;
         private readonly IScreenshotService _screenshotService;
@@ -68,6 +69,7 @@ namespace Business.Recording.Session
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IClickedElementFinder _clickedElementFinder;
         private readonly IClickedElementGrouper _clickedElementGrouper;
+        private readonly IRecordedScreenReader _recordedScreenReader;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
 
@@ -99,6 +101,7 @@ namespace Business.Recording.Session
             IAreaPointResolver areaPointResolver,
             IClickedElementFinder clickedElementFinder,
             IClickedElementGrouper clickedElementGrouper,
+            IRecordedScreenReader recordedScreenReader,
             IDbContextFactory<AppDbContext> dbContextFactory,
             TimeProvider timeProvider)
         {
@@ -110,6 +113,7 @@ namespace Business.Recording.Session
             _areaPointResolver = areaPointResolver;
             _clickedElementFinder = clickedElementFinder;
             _clickedElementGrouper = clickedElementGrouper;
+            _recordedScreenReader = recordedScreenReader;
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
 
@@ -214,6 +218,7 @@ namespace Business.Recording.Session
                 Actions = _cache.Actions.ToList(),
                 ClickedElements = _cache.ClickedElements.ToList(),
                 ClickGroups = _cache.ClickGroups.ToList(),
+                ScreenChanges = _cache.ScreenChanges.ToList(),
             };
         }
 
@@ -611,6 +616,7 @@ namespace Business.Recording.Session
             {
                 await FindElementsAsync(actions, ct);
                 GroupClicks(actions, ct);
+                await ReadScreensAsync(actions, ct);
             }
             catch (OperationCanceledException)
             {
@@ -653,6 +659,23 @@ namespace Business.Recording.Session
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Fail("Could not group the clicks that hit the same picture.", ex);
+            }
+        }
+
+        private async Task ReadScreensAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
+        {
+            ReportStage(RecordingStageEnum.READING_SCREENS, 0, null);
+
+            try
+            {
+                _cache.ScreenChanges = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, (done, total) =>
+                {
+                    ReportStage(RecordingStageEnum.READING_SCREENS, done, total);
+                }, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Fail("Could not read the text on the screens.", ex);
             }
         }
 

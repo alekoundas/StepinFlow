@@ -235,8 +235,14 @@ namespace Business.Ai.Helpers
             - Say in each End Execution message what was not found, in the words of the task.
             - Put a comment over every search saying what it is for in the task, and over any other
               step whose purpose is not plain from its name.
+            - Comments that start with screen: are notes of what was read off the screen at that
+              search, and words in them may be misread: where a new page began and what was on it,
+              and what appeared and went after the click. Use them to name the steps for what the
+              tester was doing there, and to nest what was done on a page in the Success branch of
+              the search whose click opened it, after that click. Never keep a note: write the
+              comment a person would in its place.
             - Keep every timeout. Never add a click, typed text or a key press that was not
-              recorded, and never remove one.
+              recorded, never remove one, and never change their order.
             """;
 
         // Added after ShapeRecording when the flow is a QA test. An answer with no stage marker, no
@@ -281,7 +287,8 @@ namespace Business.Ai.Helpers
         public const string ShapeRecordingWithoutReadText =
             """
             The text read under each click was not sent, so the step names in the draft are
-            placeholders. Name the steps from the Description and the order of the steps.
+            placeholders. Name the steps from the Description and the order of the steps. The
+            screen: notes say only where a new page began.
             """;
 
         public static string FormatExecution(ExecutionDto execution, bool includeScreenValues)

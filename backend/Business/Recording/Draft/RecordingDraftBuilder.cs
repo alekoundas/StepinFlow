@@ -36,9 +36,10 @@ namespace Business.Recording.Draft
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             FlowStep? under,
-            int? index)
+            int? index,
+            bool includeScreenNotes)
         {
-            RecordingDraft draft = new RecordingDraft(flow, recording, screenAt, _screenshotService, under, index);
+            RecordingDraft draft = new RecordingDraft(flow, recording, screenAt, _screenshotService, under, index, includeScreenNotes);
             Dictionary<int, ReviewedActionDto> reviews = reviewed.Actions.ToDictionary(x => x.ActionIndex);
 
             foreach (RecordedActionDto action in recording.Actions)

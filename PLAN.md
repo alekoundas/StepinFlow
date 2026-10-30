@@ -41,9 +41,9 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phase 6, the local model, the first open phase below; 5.8's sub-stages wait on the
-questions listed with them. Nesting a recording's draft by page, and a QA test's screen sizes with
-what happens when it ends, wait in `TODO.md`, Recording.
+**Next:** phase 6, the local model reading the screen, the first open phase below; 5.8's sub-stages
+wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
+wait in `TODO.md`, Recording.
 
 ---
 
@@ -121,7 +121,7 @@ exactly ran in execution 37").
 
 ## Turning a recording into a test
 
-### 6. The local model
+### 6. The local model reads the screen
 
 Here rather than at the end, because the fix loop below is the feature the product turns on and it
 cannot depend on an api key a customer may never add.
@@ -130,18 +130,53 @@ cannot depend on an api key a customer may never add.
 added on top (`PROJECT.md` §10). The tester installs Ollama for now; the app fetching and running it
 is in `TODO.md`, AI.
 
-- [ ] **OmniParser** reads a screenshot and returns the interactive elements on it - type, label,
-      position, state. That is what lets a flow find a button by what it says rather than by what it
-      looks like, which is what phase 11 needs when text wraps at a smaller size.
-- [ ] **The caption model**, OmniParser's Florence-2 (MIT), for elements with no text on them - an
-      icon. The detector is in (`PROJECT.md` §6, §10); Windows OCR names anything with text.
-- [ ] Structured output, not prose: `elements`, `screenState`, `notes`. Settled so it is not
-      reopened at implementation time.
-- [ ] The cloud payload is shown before it is sent, with `label` and `notes` highlighted as the two
-      fields where screen text can appear.
+**OmniParser is out, settled 2026-10-30 on the tester's own screenshots.** Its detector over a whole
+4K screen took 20 to 30 seconds and 11 GB, and 6 seconds and 2 GB shrunk to the screen's 96-dpi
+size; on a game it found three things where Windows OCR read thirteen. Its caption model names an
+element with no words on it, which the local model did from the element's cutout in about two
+seconds - "cart icon", "settings", "envelope icon". The detector stays where it pays, the rectangle
+under a click (`PROJECT.md` §6). What a screen says comes from OCR, from Windows' accessibility tree
+where the application has one, and from the local model looking at the screenshot where the page
+changed, and it reaches the model as notes in the script it already reads.
+
+Built 2026-10-30: every press screenshot read whole by OCR after Stop, what changed from one press
+to the next, those changes as `screen:` notes in the draft the model shapes, and an answer refused
+when it adds, drops or reorders a recorded action (`PROJECT.md` §6). Each item below adds to the
+notes.
+
+- [ ] **The window title as a page boundary.** Recorded on every action and read by nothing; for a
+      browser it is the page's title.
+- [ ] **What the click hit, from Windows.** At each press, UI Automation's element under the cursor:
+      its role - button, link, text field, checkbox - its name, whether it is enabled or ticked,
+      and what it sits in: the dialog, the form, the page. Read at the press, before the screen
+      changes, and off the hook's thread. For names and structure only: execution stays
+      image-based, which is what lets a flow drive a game, and a game, drawing its own pixels,
+      tells UI Automation nothing - OCR and the model stand in there. Chromium exposes web pages
+      through it by default since Chrome 138. A port in `Core` with a Windows adapter; macOS and
+      Linux (AT-SPI) each want their own.
+- [ ] **A click on something with no words is named by the local model**, from its cutout, when
+      neither OCR nor UI Automation named it.
+- [ ] **The screen described where the page changed**, by the local model looking at the
+      screenshot: one sentence, only at the boundaries the comparison and the title found, so a
+      handful of calls a recording rather than one a step. From the picture, not from the OCR
+      text: given only the text, the model made up what the screen was for.
+- [ ] **Checks proposed from what appeared.** After "Add to cart" the button reads "Remove": the
+      answer may add a Wait For Text for words that appeared after a click, each marked as
+      proposed, and Check lets the tester keep or drop it. That is what turns a replay into a test.
+- [ ] **The tester names a stage while recording.** A hotkey on the recording bar adds a stage
+      marker with a few typed words - "Delete customer" - and Review offers to name each page the
+      comparison found. What the tester is testing is the one thing no model can work out.
+- [ ] **What is always on screen, learned from history.** Text in nearly every screenshot of a main
+      area, across its recordings and executions, is its menus and headers and stays out of the
+      notes. Counted over history, because one recording of one scenario has too few screenshots
+      to count across.
+- [ ] **The cloud payload is shown before it is sent**, with the screen text in it marked: the
+      notes carry what OCR, UI Automation and the model read off the screen, and reach a cloud
+      model only through the screen data gate.
 
 Accepted limitation: a good vision model wants a GPU, and a tester's laptop may not have one.
-Taking that cost for now rather than designing around it.
+Taking that cost for now rather than designing around it. OCR, the comparison and UI Automation
+cost no model call; only the names for wordless clicks and the page descriptions do.
 
 ### 8. Inputs, secrets and the CSV round trip
 
@@ -183,6 +218,11 @@ holds. Definition from the script, history from the rows.
       and each step's `#` comment, which is where the tester's intent lives - a text log of the
       execution, the application's documentation, the customer's own requirements, common issues and
       their solutions, and scripts of flows that already validate.
+- [ ] **The failing execution against the last one that passed.** The text on the screen at the
+      failing step that was there when it passed and is gone, and the text that is new - an error
+      banner, another dialog - read by phase 6's OCR and comparison. Matched by flow step rather
+      than position, since an execution keeps only some screenshots. It goes to the model with the
+      script and the failure screenshot.
 - [ ] **The execution log is generated from the rows, not stored instead of them.** Phase 15 wants
       "which checks have never failed", and that is a query. The log is a projection for the model.
       It leaves markers out: they execute nothing, so a line saying so is noise.
@@ -224,8 +264,8 @@ what was refused back to the model (`PROJECT.md` §6).
 
 - [ ] A scroll loop that scans from the current position down and back to the top, rather than
       failing because a button is off screen at a smaller size.
-- [ ] Finding an element by its label through OmniParser, which phase 6 already built, so a button
-      reading "Add to cart" over two lines still matches.
+- [ ] Finding an element by its label from OCR's lines and where they are, which phase 6 builds, so
+      a button reading "Add to cart" over two lines still matches.
 
 ---
 

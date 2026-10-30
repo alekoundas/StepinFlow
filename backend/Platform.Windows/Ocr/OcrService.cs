@@ -3,10 +3,13 @@ using Core.Models.Business;
 using Core.Models.Dtos;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using Windows.Foundation;
 using Windows.Globalization;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Security.Cryptography;
+using OcrWord = Core.Models.Business.OcrWord;
 
 namespace Platform.Windows.Ocr
 {
@@ -94,6 +97,38 @@ namespace Platform.Windows.Ocr
             if (image.IsEmpty)
                 return string.Empty;
 
+            OcrResult result = await RecognizeAsync(image, language, ct);
+            return result.Text;
+        }
+
+        public async Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, CancellationToken ct = default)
+        {
+            if (image.IsEmpty)
+                return [];
+
+            OcrResult result = await RecognizeAsync(image, language, ct);
+            double angle = (result.TextAngle ?? 0) * Math.PI / 180;
+            List<OcrWord> words = new List<OcrWord>();
+
+            for (int line = 0; line < result.Lines.Count; line++)
+            {
+                foreach (global::Windows.Media.Ocr.OcrWord word in result.Lines[line].Words)
+                {
+                    Rectangle bounds = InImage(word.BoundingRect, angle, image.Width / 2d, image.Height / 2d);
+                    words.Add(new OcrWord { Text = word.Text, Bounds = bounds, LineIndex = line });
+                }
+            }
+
+            return words;
+        }
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private static async Task<OcrResult> RecognizeAsync(RawImage image, string language, CancellationToken ct)
+        {
             OcrEngine? engine = string.IsNullOrWhiteSpace(language)
                 ? OcrEngine.TryCreateFromUserProfileLanguages()
                 : OcrEngine.TryCreateFromLanguage(new Language(language));
@@ -102,15 +137,37 @@ namespace Platform.Windows.Ocr
                 throw new InvalidOperationException($"Windows cannot read \"{language}\" on this machine. Install it from Settings.");
 
             using SoftwareBitmap bitmap = ToBitmap(image);
-            OcrResult result = await engine.RecognizeAsync(bitmap).AsTask(ct);
-
-            return result.Text;
+            return await engine.RecognizeAsync(bitmap).AsTask(ct);
         }
 
+        // The engine straightens text it finds tilted - a game's slanted lettering, 5.6 degrees on
+        // one Firestone screenshot - and gives every rectangle in the straightened image. Turned
+        // back by the angle around the centre, they are where the words are.
+        private static Rectangle InImage(Rect box, double angle, double centreX, double centreY)
+        {
+            double cos = Math.Cos(angle);
+            double sin = Math.Sin(angle);
+            double[] xs = [box.Left, box.Right, box.Left, box.Right];
+            double[] ys = [box.Top, box.Top, box.Bottom, box.Bottom];
 
-        // ================================================================
-        // Private methods
-        // ================================================================
+            double left = double.MaxValue;
+            double top = double.MaxValue;
+            double right = double.MinValue;
+            double bottom = double.MinValue;
+
+            for (int corner = 0; corner < xs.Length; corner++)
+            {
+                double x = centreX + (xs[corner] - centreX) * cos - (ys[corner] - centreY) * sin;
+                double y = centreY + (xs[corner] - centreX) * sin + (ys[corner] - centreY) * cos;
+
+                left = Math.Min(left, x);
+                top = Math.Min(top, y);
+                right = Math.Max(right, x);
+                bottom = Math.Max(bottom, y);
+            }
+
+            return Rectangle.FromLTRB((int)Math.Floor(left), (int)Math.Floor(top), (int)Math.Ceiling(right), (int)Math.Ceiling(bottom));
+        }
 
         private static string DisplayName(string tag) => Language.IsWellFormed(tag) ? new Language(tag).DisplayName : tag;
 

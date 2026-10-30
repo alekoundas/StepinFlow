@@ -1,6 +1,7 @@
 using System.Drawing;
 using Business.Recording.Elements;
 using Business.Recording.Models.Session;
+using Business.Recording.Screens;
 using Business.Recording.Session;
 using Business.Tests.Fakes;
 using Core.Enums;
@@ -37,13 +38,15 @@ namespace Business.Tests.Recording
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
         private readonly FakeTimeProvider _clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 9, 12, 0, 0, TimeSpan.Zero));
         private readonly FakeAppSettingService _settings = new FakeAppSettingService();
+        private readonly FakeOcrService _ocr = new FakeOcrService();
         private readonly RecordingSessionService _session;
 
         public RecordingSessionServiceTests()
         {
             ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
             ClickedElementGrouper grouper = new ClickedElementGrouper(new FakeOpenCvService(), _screenshots);
-            _session = new RecordingSessionService(_hook, _screenshots, _settings, _broadcast, _windows, _resolver, finder, grouper, _database, _clock);
+            RecordedScreenReader screens = new RecordedScreenReader(_ocr, _screenshots);
+            _session = new RecordingSessionService(_hook, _screenshots, _settings, _broadcast, _windows, _resolver, finder, grouper, screens, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -101,6 +104,12 @@ namespace Business.Tests.Recording
             RaiseKey(RecordedInputTypeEnum.KEY_DOWN, key, name);
             _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.KEY_TYPED, KeyCode = key, TypedCharacter = character, CreatedOn = _clock.GetLocalNow().DateTime });
             RaiseKey(RecordedInputTypeEnum.KEY_UP, key, name);
+        }
+
+        // A word OCR read on the screenshot, one engine line per line number.
+        private static OcrWord Word(string text, int line)
+        {
+            return new OcrWord { Text = text, Bounds = new Rectangle(10, 10 + line * 30, text.Length * 8, 14), LineIndex = line };
         }
 
         // The stop key stops on a thread of its own, so the hook is never held up.
@@ -381,14 +390,41 @@ namespace Business.Tests.Recording
             (found.X, found.Y).ShouldBe((380, 290));
 
             RecordingProgressDto lastClick = AllProgress().Last(x => x.Stage == RecordingStageEnum.FINDING_ELEMENTS);
-            (lastClick.StageNumber, lastClick.StageCount).ShouldBe((1, 2));
+            (lastClick.StageNumber, lastClick.StageCount).ShouldBe((1, 3));
             (lastClick.StageDone, lastClick.StageTotal).ShouldBe((1, 1));
 
             RecordingProgressDto lastGrouped = AllProgress().Last(x => x.Stage == RecordingStageEnum.GROUPING_CLICKS);
-            (lastGrouped.StageNumber, lastGrouped.StageCount).ShouldBe((2, 2));
+            (lastGrouped.StageNumber, lastGrouped.StageCount).ShouldBe((2, 3));
+
+            RecordingProgressDto lastRead = AllProgress().Last(x => x.Stage == RecordingStageEnum.READING_SCREENS);
+            (lastRead.StageNumber, lastRead.StageCount).ShouldBe((3, 3));
+            (lastRead.StageDone, lastRead.StageTotal).ShouldBe((1, 1));
 
             RecordingProgressDto ready = LastProgress();
             (ready.Stage, ready.StageNumber, ready.ErrorMessage).ShouldBe((RecordingStageEnum.NONE, 0, null));
+        }
+
+        [Fact]
+        public async Task A_stop_reads_what_changed_on_the_screen_from_one_press_to_the_next()
+        {
+            _ocr.ReadsWords([Word("Login", 0)], [Word("Products", 0)]);
+
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 300);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 300);
+            _clock.Advance(TimeSpan.FromSeconds(2));
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 400);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 400);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            List<int> clicks = recording.Actions.Where(x => x.Kind == RecordedActionKindEnum.CLICK).Select(x => x.Index).ToList();
+            ScreenChangeDto change = recording.ScreenChanges.ShouldHaveSingleItem();
+            (change.ActionIndex, change.NextActionIndex).ShouldBe((clicks[0], clicks[1]));
+            change.Appeared.ShouldBe(["Products"]);
+            change.Gone.ShouldBe(["Login"]);
+            change.IsNewScreen.ShouldBeTrue();
         }
 
         [Fact]

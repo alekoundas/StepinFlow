@@ -19,5 +19,8 @@ namespace Core.Ports
         /// a machine problem the author has to know about rather than an empty result.
         /// </summary>
         Task<string> ReadAsync(RawImage image, string language, CancellationToken ct = default);
+
+        /// <summary>Every word in the image with its rectangle, in the order read. Throws as ReadAsync does.</summary>
+        Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, CancellationToken ct = default);
     }
 }

@@ -11,7 +11,8 @@ namespace Business.Recording.Draft
         /// questions: child number index of under, or of the flow's top when under is null, or
         /// after the steps already there when index is null. Templates carry their images, cut from
         /// the main area at each press. screenAt is the recording session's: an action's own press,
-        /// or the last click's before it.
+        /// or the last click's before it. With includeScreenNotes, each search carries what the
+        /// screen said at it, for a model to read and never for a flow to keep.
         /// </summary>
         FlowScriptSchema Build(
             FlowScriptSchema flow,
@@ -19,6 +20,7 @@ namespace Business.Recording.Draft
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             FlowStep? under,
-            int? index);
+            int? index,
+            bool includeScreenNotes);
     }
 }

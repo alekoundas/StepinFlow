@@ -34,6 +34,7 @@ namespace Business.Recording.Draft
         private readonly RecordingResultDto _result;
         private readonly Func<int, RecordingScreenDto?> _screenAt;
         private readonly IScreenshotService _screenshotService;
+        private readonly bool _includeScreenNotes;
 
         private readonly HashSet<string> _names;
         private readonly HashSet<string> _templateNames;
@@ -46,12 +47,13 @@ namespace Business.Recording.Draft
         private readonly List<FlowStep> _after;
         private int _startCount;
 
-        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService, FlowStep? under, int? index)
+        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService, FlowStep? under, int? index, bool includeScreenNotes)
         {
             Schema = schema;
             _result = result;
             _screenAt = screenAt;
             _screenshotService = screenshotService;
+            _includeScreenNotes = includeScreenNotes;
 
             MainArea = schema.Areas.FirstOrDefault(x => x.IsMain);
 
@@ -176,6 +178,12 @@ namespace Business.Recording.Draft
             int timeout = TimeoutFor(action.WaitedMilliseconds);
             search.TimeoutMilliseconds = timeout;
             search.CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait";
+
+            if (_includeScreenNotes)
+            {
+                foreach (string note in ScreenNoteWriter.NotesFor(action.Index, _result.ScreenChanges))
+                    search.CodeComment += $"\n{note}";
+            }
 
             string failed = $"{search.Name} found nothing within {Seconds(timeout)}";
             if (search.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)

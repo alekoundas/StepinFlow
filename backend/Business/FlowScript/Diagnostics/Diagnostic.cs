@@ -59,6 +59,10 @@ namespace Business.FlowScript.Diagnostics
         STAGE_MARKER_MISSING,
         END_PASSED_MISSING,
         WRONG_VALUE_CHANGED,
+
+        // A model's answer for a recording: a click, drag, scroll, typed text or key it added,
+        // dropped or moved.
+        ACTIONS_CHANGED,
     }
 
     /// <summary>

@@ -668,13 +668,14 @@ which is let go after: it is hundreds of megabytes the app has no use for betwee
 
 **A stop starts that work and returns** (§4). Whichever of the page, the bar or a hotkey stopped
 it, the backend works the recording through in stages - finding what each click hit, then which
-clicks hit the same picture - and `RECORDING_PROGRESS` carries the stage, which of how many, and
-how far through it: "1 of 2 · Finding what you clicked: 44 of 90". A stage that cannot be counted ahead has no total, and the page shows
+clicks hit the same picture, then what changed on the screen - and `RECORDING_PROGRESS` carries
+the stage, which of how many, and how far through it: "1 of 3 · Finding what you clicked: 44 of
+90". A stage that cannot be counted ahead has no total, and the page shows
 a bar that moves rather than one sitting at zero. Stages are never added into one percentage: a
 click and a model call are not the same unit, and the bar would jump or stall. A stage that fails
 costs the review what it would have added, never the recording, and the progress says why. Then
-READY, and the page asks `Recording.getResult` for the actions, what each click hit and the
-groups.
+READY, and the page asks `Recording.getResult` for the actions, what each click hit, the groups
+and what changed on the screen.
 
 **Which clicks hit the same picture** (`Business/Recording/Elements/ClickedElementGrouper`) is what
 a list of coordinates cannot say - "these four clicks were the download icon on four rows" - and
@@ -687,6 +688,25 @@ between screenshots. It is shy on purpose, because an invented group becomes a l
 wrong thing and a missed one only a longer draft: only elements the model found, never a box around
 the click; never a flat one; never two whose read text differs. A group in different places is
 marked moving, the same place clicked again is not.
+
+**What changed on the screen** (`Business/Recording/Screens/RecordedScreenReader`) is read last:
+every press's screenshot of the main area whole, by Windows OCR, every word with its rectangle -
+about 80 ms a screenshot - and each compared with the one before (`Business/ScreenText/`). A
+press's screenshot is from just before it, so what a click did shows at the next press. The engine
+reads a row of buttons as one line, "Bag Fellowship Party", so a line is cut wherever two words are
+further apart than one and a half times their height. It reads a word differently on every
+screenshot - Town was "Town", "Towri" and "TOWR" on three of one screen - so two lines are the same
+when their words are, wherever they are, or when no more than one letter in three differs and they
+sit within a line's height of each other. Numbers never nearly match: a badge going from 1 to 2 is a
+change. Equal lines pair nearest first, so of six "Add to cart" buttons the one that became
+"Remove" is the one that changed. How much changed is counted in letters, on lines of four letters
+or more, because a game counts up numbers on every screenshot: over one Firestone execution the
+same screen scored 0 to 0.17, or 0.43 where OCR missed four labels on one of the two, a dialog
+opening or closing about 0.42, and the move to another screen 1. Half or more is a new page. When
+the engine finds text tilted - the game's slanted lettering, by 5.6 degrees - it straightens it and
+measures in the straightened picture, so `OcrService.ReadWordsAsync` turns its rectangles back by
+that angle. The words are screen data and reach a cloud model only through the gate (§10); how much
+changed is a number and goes anywhere. Windows only, as the text under a click is.
 
 **Review** comes before anything becomes a step (`features/recording/review/`). Every action is listed
 with a checkbox to keep it, the main area at that moment (`Recording.getScreen`: the action's own
@@ -822,6 +842,28 @@ automation. When no answer reads cleanly, or the model cannot be reached, the pl
 instead and the page says why, so the tester always has a flow. A cloud model that may not be sent screen content (§10) gets the draft with
 nothing read under the clicks - its search names are placeholders - and is told to name the steps
 from the description.
+
+**The draft the model gets carries notes of what the screen said** (`Business/Recording/Draft/ScreenNoteWriter`):
+comment lines starting `screen:` over each search, from what changed on the screen (above) - where a
+new page began and what was on it, and what appeared and went after the click, in the words read,
+lines of four letters or more, six at most, each cut at fifty characters with an ellipsis. The model
+is told to name the steps from them, to nest what was done on a page in the Success branch of the
+search whose click opened it, and to write the comment a person would in their place. Whatever it
+does with them, the code takes every `screen:` line out of its answer before the import, and out of
+the draft Check compares it with: they are screen text, and a flow is written into a repository
+(§11). With screen content not allowed, the notes say only where a new page began, which comes
+from a number.
+
+**An answer may not add, drop or reorder what was recorded**
+(`Business/Recording/Generation/RecordedActionsCheck`), only the prompt's word before. The draft and
+the answer are both read in the order an execution that finds everything goes - down each search's
+Success branch, never its Failure - and their clicks, drags, scrolls, typed text and keys compared
+one by one; typed text as typed text, since an input may be renamed. A Find All Images' Success
+branch, or a loop's, stands for one or more of what it holds in a row in the draft, as few as what
+comes after it needs, so three clicks on the download icon folded into one are still three, and the
+click on Log out after them is not a fourth. The first difference goes back as `ACTIONS_CHANGED`,
+saying which of the draft's actions it is and under which search. An "Ask for changes" is not held
+to it.
 
 **A QA test is told to be one** (`AiPromptHelper.ShapeQaTest`, after the instruction above): stage
 markers for the parts of the journey the description names, each with a comment saying what it
@@ -1586,7 +1628,7 @@ projection: the webhook URL *is* the credential and is never logged.
 AI-generated flows go into the editor and never execute on their own, because a prompt injection in
 text read off the screen would otherwise be code execution.
 
-### Planned - phase 6: the local model is always on
+### Planned - phase 6: the local model reads the screen
 
 The cloud is an addition, not an alternative, which the settings already are (above). What is left
 is the split of jobs between the two.
@@ -1595,7 +1637,7 @@ is the split of jobs between the two.
 |---|---|---|
 | always present | yes | only when an API key is set |
 | sees screenshots, OCR text, typed values | yes | only on opt-in |
-| receives the local model's structured findings | — | always |
+| receives what was read off the screen, as notes | — | on opt-in, after a preview |
 | job | see, extract, structure | reason, propose, summarise |
 
 Every install gets a working assistant with no configuration, which matters most for the fix loop —
@@ -1606,23 +1648,27 @@ means one component touches raw screen data and everything downstream gets deriv
 small CPU models read dense interfaces poorly. That cost is being taken for now rather than designed
 around.
 
-**Structured output, not prose.** The local model returns a schema:
+**What a screen says, without OmniParser.** Its detector over a whole screen costs seconds and
+gigabytes and finds almost nothing on a game (measured 2026-10-30), so it stays on the 640 pixels
+around a click. A screen is read by three things instead, cheapest first: Windows OCR over every
+press screenshot, each line with its rectangle, compared with the screenshot before - what appeared,
+what went, built (§6); UI Automation's element under each press - role, name, state, and the dialog or page it
+sits in - where the application has an accessibility tree, a browser or an ordinary desktop
+application and never a game; and the local model, for a click on something with no words, from its
+cutout, and for one sentence where the page changed, from the screenshot.
 
-```
-elements:    type, label, x, y, width, height, state     (OmniParser produces these)
-screenState: normal | loading | modal | error
-notes:       short strings — what looks wrong, what is covering what
-```
+**Notes in the script, not a schema.** All of it reaches the model as comments over the searches in
+the script it already reads and answers with (§7), in the words read, so a step can be named for
+exactly what its button says. The answer replaces them with comments a person would write, and a
+check in code holds it to the recorded clicks, typed text and keys, in order.
 
-**This localises leakage; it does not remove it.** `label` and `notes` are both text read off the
-screen, so a label can be `Welcome, alex@company.com`. The schema means there are exactly two fields
-where screen text can appear rather than an unbounded paragraph, which is what makes review
-possible.
+**This localises leakage; it does not remove it.** The notes are text read off the screen, so one
+can be `Welcome, alex@company.com`. They are the one place in the script where screen text appears,
+which is what makes review possible. How much of a screen changed is a number, and goes anywhere.
 
 **The payload is shown before it is sent**, which is the actual guarantee. The cloud query is
-assembled from local findings and displayed first, with `label` and `notes` highlighted as the
-fields carrying screen text. Visibility rather than a promise: a filter that claims to catch
-everything is worse than a preview that admits it cannot.
+displayed first, with the notes marked as the text read off the screen. Visibility rather than a
+promise: a filter that claims to catch everything is worse than a preview that admits it cannot.
 
 ---
 
@@ -2218,18 +2264,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1024 tests, all passing, in eight projects under `backend/Tests/` - one
+1066 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 754 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 793 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, the notes a model is given of it and the check that its answer keeps every recorded action, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 17 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
-| `Platform.Windows.Tests` | 1 + 4 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list and the cursor |
+| `Platform.Windows.Tests` | 4 + 4 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; Windows OCR on lines drawn straight and tilted, each read where it was drawn; and, traited `Desktop`, real monitors, the window in front, the window list and the cursor |
 | `Platform.Shared.Tests` | 44 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
@@ -2359,7 +2405,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant on a local Ollama model
-with OpenAI on top. 1024 backend tests.
+with OpenAI on top. 1066 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

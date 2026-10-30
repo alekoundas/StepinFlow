@@ -51,6 +51,7 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
   NONE: "Getting the review ready",
   FINDING_ELEMENTS: "Finding what you clicked",
   GROUPING_CLICKS: "Grouping the clicks that hit the same picture",
+  READING_SCREENS: "Reading what changed on the screen",
 };
 
 /**

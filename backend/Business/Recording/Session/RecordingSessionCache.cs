@@ -15,7 +15,8 @@ namespace Business.Recording.Session
     ///    a template shows the screen the tester decided on rather than what the press changed - the
     ///    pressed button, or the menu it opened.
     /// 4) where the recording is, and its actions as last folded, for the live list.
-    /// 5) once it stopped, how far it has been worked through, and what each click hit.
+    /// 5) once it stopped, how far it has been worked through, what each click hit, and what changed
+    ///    on the screen between one press and the next.
     ///
     /// The inputs and the screenshots per press outlive the recording, so the review can still ask
     /// for them, until the next recording starts or the review discards it.
@@ -34,6 +35,7 @@ namespace Business.Recording.Session
         private volatile IReadOnlyList<RecordedActionDto> _actions = [];
         private volatile IReadOnlyList<ClickedElementDto> _clickedElements = [];
         private volatile IReadOnlyList<ClickGroupDto> _clickGroups = [];
+        private volatile IReadOnlyList<ScreenChangeDto> _screenChanges = [];
         private volatile RecordingStageProgress? _stage;
         private volatile string? _errorMessage;
 
@@ -71,6 +73,13 @@ namespace Business.Recording.Session
         {
             get { return _clickGroups; }
             set { _clickGroups = value; }
+        }
+
+        /// <summary>What changed on the screen between one press and the next, once read.</summary>
+        public IReadOnlyList<ScreenChangeDto> ScreenChanges
+        {
+            get { return _screenChanges; }
+            set { _screenChanges = value; }
         }
 
         /// <summary>The stage a stopped recording is in. Null unless it is being worked through.</summary>
@@ -113,6 +122,7 @@ namespace Business.Recording.Session
             Actions = [];
             ClickedElements = [];
             ClickGroups = [];
+            ScreenChanges = [];
             Reviewed = null;
             Stage = null;
             ErrorMessage = null;

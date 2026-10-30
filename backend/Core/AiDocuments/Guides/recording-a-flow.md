@@ -82,16 +82,20 @@ picture into one search for every match, and says in each failure what was not f
 until Ollama is running with a model chosen under Settings, AI.
 
 The answer is read the way an imported file is. When it does not read cleanly, or changes something
-it may not - the flow's name and id, a template, an input other than by renaming it - it is sent back
-with the lines that were wrong, three times at most. Nothing is saved until an answer reads cleanly.
-When none does, or the model cannot be reached, the plain draft is saved instead, and the page says
-why.
+it may not - the flow's name and id, a template, an input other than by renaming it, or a click,
+drag, scroll, typed text or key you recorded, added, left out or moved - it is sent back with what
+was wrong, three times at most. Nothing is saved until an answer reads cleanly. When none does, or
+the model cannot be reached, the plain draft is saved instead, and the page says why.
 
 What goes to the model: what the flow should do, the draft as a script, and which clicks hit the same
-picture. The text read under each click goes too, unless a cloud model answers and "Let the cloud
-model see your screen" is off; then the model names the steps from what the flow should do. What you
-typed never goes: the model sees only the input's name, such as {{email}}. The screenshots and
-templates stay on this machine. "Show the exact request" shows what was sent.
+picture. Over each search are notes, comments starting "screen:", of what changed on the screen:
+where a new page began and what was on it, and what appeared and went after the click, read by OCR
+from the screenshots taken while recording. The model names the steps and nests them by page from
+these, and the notes are taken out before anything is saved. The text read under each click and in
+the notes goes too, unless a cloud model answers and "Let the cloud model see your screen" is off;
+then the model names the steps from what the flow should do, and the notes say only where a new
+page began. What you typed never goes: the model sees only the input's name, such as {{email}}. The
+screenshots and templates stay on this machine. "Show the exact request" shows what was sent.
 
 The page shows each stage as it happens. Once it is done, "Check the flow" shows what was saved.
 

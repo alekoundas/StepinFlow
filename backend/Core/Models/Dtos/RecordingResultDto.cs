@@ -10,5 +10,8 @@ namespace Core.Models.Dtos
 
         /// <summary>The clicks that hit the same picture. Empty when none did, or grouping failed.</summary>
         public List<ClickGroupDto> ClickGroups { get; set; } = [];
+
+        /// <summary>What changed on the screen between one press and the next. Empty with fewer than two presses, or when reading failed.</summary>
+        public List<ScreenChangeDto> ScreenChanges { get; set; } = [];
     }
 }

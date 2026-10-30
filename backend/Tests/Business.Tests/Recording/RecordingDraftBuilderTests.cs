@@ -106,7 +106,7 @@ namespace Business.Tests.Recording
 
         private FlowScriptSchema Build()
         {
-            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null);
+            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null, false);
         }
 
         private static List<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)
@@ -214,7 +214,7 @@ namespace Business.Tests.Recording
             flow.Steps.Add(new FlowStep { Name = "Wait", FlowStepType = FlowStepTypeEnum.WAIT, OrderNumber = 1 });
             Click(400, 300, "Invoices");
 
-            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, null, 1);
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, null, 1, false);
 
             ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Find Invoices", "Wait"]);
         }
@@ -231,7 +231,7 @@ namespace Business.Tests.Recording
             Typing("ops@example.com", inputName: "email");
             Click(300, 400, "Sign in");
 
-            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, success, 0);
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, success, 0, false);
 
             ChildrenOf(schema, success).Select(x => x.Name).ShouldBe(["Find Email", "Find Sign in"]);
             ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Signed in"]);

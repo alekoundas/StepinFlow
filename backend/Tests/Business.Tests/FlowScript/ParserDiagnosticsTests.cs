@@ -267,6 +267,9 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.END_PASSED_MISSING);
             covered.Add(DiagnosticCodeEnum.WRONG_VALUE_CHANGED);
 
+            // Raised by FlowGenerationService, against any recording's answer (RecordedActionsCheckTests).
+            covered.Add(DiagnosticCodeEnum.ACTIONS_CHANGED);
+
             Enum.GetValues<DiagnosticCodeEnum>().Except(covered).ShouldBeEmpty();
         }
     }

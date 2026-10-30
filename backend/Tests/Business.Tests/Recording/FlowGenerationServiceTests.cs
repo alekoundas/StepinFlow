@@ -352,6 +352,53 @@ namespace Business.Tests.Recording
             Steps(flowId).ShouldContain(x => x.Name == "Find Email");
         }
 
+        // The notes are screen text, and the flow is written into a repository.
+        [Fact]
+        public async Task The_model_is_told_what_changed_on_the_screen_and_the_saved_flow_keeps_none_of_it()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenChanges.Add(new ScreenChangeDto { ActionIndex = 0, NextActionIndex = 2, Appeared = ["Welcome back"], Gone = ["Sign in to continue"], ChangedShare = 0.3 });
+            FakeChatClient model = Model(x => x);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain("screen: after the click appeared \"Welcome back\"");
+            generated.IsModelDraft.ShouldBeTrue();
+            generated.Draft.ShouldNotContain("screen:");
+            generated.Script.ShouldNotContain("screen:");
+            Steps(flowId).ShouldAllBe(x => !x.CodeComment.Contains("screen:"));
+        }
+
+        [Fact]
+        public async Task Without_screen_content_the_notes_say_only_where_a_page_began()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenChanges.Add(new ScreenChangeDto { ActionIndex = 0, NextActionIndex = 2, Appeared = ["Welcome back"], ChangedShare = 0.9, IsNewScreen = true });
+            _provider.CanSendScreenData = false;
+            FakeChatClient model = Model(x => x);
+
+            await GenerateAsync(flowId, []);
+
+            string request = model.Requests[0].First(x => x.Role == ChatRole.User).Text;
+            request.ShouldNotContain("Welcome back");
+            request.ShouldContain("screen: after the click, a new page");
+        }
+
+        [Fact]
+        public async Task An_answer_that_leaves_out_a_recorded_action_is_refused()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            Model(x => string.Join("\n", x.Split('\n').Where(line => !line.TrimStart().StartsWith("Type", StringComparison.Ordinal))));
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeFalse();
+            generated.Refused.Select(x => x.Code).ShouldBe([nameof(DiagnosticCodeEnum.ACTIONS_CHANGED)]);
+        }
+
         // ================================================================
         // A QA test's draft
         // ================================================================
