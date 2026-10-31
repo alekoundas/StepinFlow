@@ -13,6 +13,7 @@ export default function WhileYouRecordComponent() {
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
+  const stageKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STAGE)?.value;
   const checkKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_CHECK)?.value;
   const substituteKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE)?.value;
 
@@ -52,6 +53,15 @@ export default function WhileYouRecordComponent() {
           Stop and review
         </dd>
         <dt>
+          <KeysComponent keys={stageKeys} />
+        </dt>
+        <dd
+          className="m-0"
+          style={MUTED}
+        >
+          A stage of the test begins here, such as Delete customer: Review asks for its name
+        </dd>
+        <dt>
           <KeysComponent keys={checkKeys} />
         </dt>
         <dd
@@ -75,8 +85,15 @@ export default function WhileYouRecordComponent() {
         style={MUTED}
       >
         They work whatever window is in front. The keys are never recorded, the two clicks never reach
-        the application, and Review asks what each click was for. All four are under Settings,
+        the application, and Review asks what each click was for. All five are under Settings,
         Recording keys.
+      </span>
+      <span
+        className="text-xs"
+        style={MUTED}
+      >
+        Before you stop, let the last screen finish loading: what it says after your last click is what a
+        QA test checks for at the end.
       </span>
     </section>
   );

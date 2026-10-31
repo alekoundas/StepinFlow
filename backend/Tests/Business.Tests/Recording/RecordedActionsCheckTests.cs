@@ -65,6 +65,35 @@ namespace Business.Tests.Recording
             return draft;
         }
 
+        private static void Stage(FlowScriptSchema schema, FlowStep? parent, string name)
+        {
+            Add(schema, parent, new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = name });
+        }
+
+        // The draft above with a stage over one of its searches, or at the end of the one before.
+        private static FlowScriptSchema Staged(string name, int beforeSearch, bool isInBranch = false)
+        {
+            FlowScriptSchema schema = new FlowScriptSchema();
+            FlowStep login = Search(schema, null, "Find Login");
+            Click(schema, login);
+
+            if (beforeSearch == 1)
+                Stage(schema, isInBranch ? login : null, name);
+
+            FlowStep email = Search(schema, null, "Find Email");
+            Click(schema, email);
+            Type(schema, email);
+
+            if (beforeSearch == 2)
+                Stage(schema, isInBranch ? email : null, name);
+
+            FlowStep submit = Search(schema, null, "Find Submit");
+            Click(schema, submit);
+            Press(schema, submit, "Enter");
+
+            return schema;
+        }
+
         private static string Refusal(FlowScriptSchema answer)
         {
             Diagnostic refused = RecordedActionsCheck.Check(Draft(), answer).ShouldHaveSingleItem();
@@ -180,6 +209,32 @@ namespace Business.Tests.Recording
             Press(answer, failure, "Escape");
 
             RecordedActionsCheck.Check(Draft(), answer).ShouldBeEmpty();
+        }
+
+        // ================================================================
+        // The tester's stages
+        // ================================================================
+
+        [Fact]
+        public void The_tester_s_stage_kept_where_it_was_passes_beside_one_the_model_added()
+        {
+            FlowScriptSchema answer = Staged("Sign in", 1);
+            Stage(answer, null, "Submitted");
+
+            RecordedActionsCheck.Check(Staged("Sign in", 1), answer).ShouldBeEmpty();
+        }
+
+        // Only a marker at the top of the flow is a stage.
+        [Theory]
+        [InlineData("Sign in", 2, false)]
+        [InlineData("Signing in", 1, false)]
+        [InlineData("Sign in", 1, true)]
+        public void The_tester_s_stage_moved_renamed_or_put_in_a_branch_is_refused(string name, int beforeSearch, bool isInBranch)
+        {
+            Diagnostic refused = RecordedActionsCheck.Check(Staged("Sign in", 1), Staged(name, beforeSearch, isInBranch)).ShouldHaveSingleItem();
+
+            refused.Code.ShouldBe(DiagnosticCodeEnum.ACTIONS_CHANGED);
+            refused.Message.ShouldContain("the stage <[ Sign in ]>");
         }
     }
 }

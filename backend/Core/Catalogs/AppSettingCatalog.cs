@@ -22,6 +22,12 @@ namespace Core.Catalogs
             "End the recording and review what was recorded.",
             "VcF10");
 
+        public static readonly HotkeyAppSettingDefinition RecordingHotkeyStage = new(
+            AppSettingKeyEnum.RECORDING_HOTKEY_STAGE,
+            "A stage begins",
+            "Mark where a part of what you are testing begins, such as Delete customer. Review asks for its name.",
+            "VcF8");
+
         // Recording gestures. The press never reaches the application, on Windows and macOS.
         public static readonly GestureAppSettingDefinition RecordingGestureCheck = new(
             AppSettingKeyEnum.RECORDING_HOTKEY_CHECK,
@@ -149,6 +155,7 @@ namespace Core.Catalogs
         [
             RecordingHotkeyPause,
             RecordingHotkeyStop,
+            RecordingHotkeyStage,
             RecordingGestureCheck,
             RecordingGestureSubstitute,
 
@@ -178,6 +185,7 @@ namespace Core.Catalogs
         [
             RecordingHotkeyPause,
             RecordingHotkeyStop,
+            RecordingHotkeyStage,
 
             HotkeyContinue,
             HotkeyStepInto,

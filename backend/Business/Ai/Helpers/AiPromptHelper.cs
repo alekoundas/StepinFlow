@@ -235,6 +235,11 @@ namespace Business.Ai.Helpers
             - Say in each End Execution message what was not found, in the words of the task.
             - Put a comment over every search saying what it is for in the task, and over any other
               step whose purpose is not plain from its name.
+            - A stage marker in the draft, ## and a name, was named by the tester: what they are
+              testing, which only they know. Keep each one with its name, before the same step, at
+              the top of the flow rather than in a branch - so a page a stage begins on is not
+              nested under the click before it. You may add a stage marker for a part they left
+              unnamed; never move, rename or remove theirs.
             - Comments that start with screen: are notes of what was read off the screen at that
               search, and words in them may be misread: where a new page began and what was on it,
               and what appeared and went after the click. Use them to name the steps for what the
@@ -246,16 +251,17 @@ namespace Business.Ai.Helpers
             """;
 
         // Added after ShapeRecording when the flow is a QA test. An answer with no stage marker, no
-        // End Execution passed, or a wrong value no longer typed as it is, is refused in code,
-        // whatever this says.
+        // End Execution passed, a wrong value no longer typed as it is, or a check for words no
+        // screenshot showed, is refused in code, whatever this says.
         public const string ShapeQaTest =
             """
             This flow is a QA test: it proves the application works, rather than only doing a
             task. Shape it into a test as well:
             - Divide it into stages with stage markers, one for each part of the journey the
-              Description names - ## Sign in, ## Open the invoices. A stage marker is a label and
-              does nothing when the flow executes. Put a comment over each one saying what the
-              stage proves.
+              Description names - ## Sign in, ## Open the invoices. Where the tester named stages,
+              those are the parts: add one only for a part of the journey they did not name. A stage
+              marker is a label and does nothing when the flow executes. Put a comment over each one
+              saying what the stage proves.
             - End it with End Execution passed, where what the Description says the flow proves
               has been seen - usually as its last step.
             - Every Failure branch ends with End Execution failed, its message saying in the words
@@ -267,10 +273,18 @@ namespace Business.Ai.Helpers
               refuses, and its End Execution failed message says the application accepted the wrong
               value. With no check after it, do as the next point says. Where the tester typed
               again after it, the next stage begins there.
+            - Prove each click did what it was for. Where a screen: note says words appeared after
+              it - the button now reads Remove, the order went through - add a Wait For Text for
+              them in the main area, right after that click, its Failure branch ending the
+              execution, failed. Use words exactly as a note shows them, without the … that ends a
+              line cut short, and only words that say what the click achieved: not a count, a
+              price, a date or a name that differs from one execution to the next. A note's words
+              that went after a click can be a Wait Until No Text the same way.
             - When the Description says something must be seen and no step checks for it, add a
               check only if you can make it from what the script has: Check Text or Wait For Text
-              in the main area for words that will be on the screen, or a search for a template the
+              in the main area for words a screen: note shows, or a search for a template the
               script already names. Otherwise say in a note what is not checked.
+            - The tester is shown every check you add, to keep or drop, before the flow executes.
             """;
 
         // The Check page's "Ask for changes": the tester's words follow it.
@@ -283,12 +297,30 @@ namespace Business.Ai.Helpers
             - Keep every timeout unless the tester asks to change it.
             """;
 
+        // The local model, looking at a cutout of something clicked that had no words on it.
+        public const string NameWordlessElement =
+            """
+            This is a small cutout of a user interface element that was clicked, enlarged. It has no
+            words on it. Name it the way a tester would refer to it in a test step, in two to four
+            words, such as "settings gear" or "cart icon". Answer with the name only: no verb and
+            no punctuation.
+            """;
+
+        // The local model, looking at the screen where a new page began.
+        public const string DescribePage =
+            """
+            This is a screenshot of an application, taken while somebody used it. In one short
+            sentence, say which page, screen or dialog this is. Answer with the sentence only.
+            """;
+
         // Said when a cloud provider may not be sent what was read on screen.
         public const string ShapeRecordingWithoutReadText =
             """
             The text read under each click was not sent, so the step names in the draft are
             placeholders. Name the steps from the Description and the order of the steps. The
-            screen: notes say only where a new page began.
+            screen: notes say only where a new page began, so a check you add for words is a
+            guess: add one only for words the Description gives, and say in a note that its words
+            were not seen.
             """;
 
         public static string FormatExecution(ExecutionDto execution, bool includeScreenValues)

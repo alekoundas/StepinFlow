@@ -16,5 +16,8 @@
 
         // Session: the tester resumed after a pause, so the gap before this is not a wait
         RESUMED,
+
+        // Session: the tester marked where a stage of the test begins
+        STAGE,
     }
 }

@@ -9,6 +9,7 @@ using Business.FlowScript.Text;
 using Business.Recording.Draft;
 using Business.Recording.Draft.Actions;
 using Business.Recording.Generation;
+using Business.Recording.Screens;
 using Business.Recording.Setup;
 using Business.Tests.Fakes;
 using Core.Enums;
@@ -43,6 +44,7 @@ namespace Business.Tests.Recording
         private readonly RecordingSetupService _setup;
         private readonly FakeAiClientFactory _models = new FakeAiClientFactory();
         private readonly FakeAiProviderService _provider = new FakeAiProviderService();
+        private readonly FakeOllamaService _ollama = new FakeOllamaService();
         private readonly FlowGenerationService _generation;
 
         private readonly RecordingResultDto _recording = new RecordingResultDto();
@@ -57,7 +59,8 @@ namespace Business.Tests.Recording
             FlowScriptImporter importer = new FlowScriptImporter(new Scanner(), _dataService);
             RecordingDraftBuilder draftBuilder = new RecordingDraftBuilder(new FakeScreenshotService());
             ScriptRevisionService revision = new ScriptRevisionService(_models, new Scanner(), new Printer(), NullLogger<ScriptRevisionService>.Instance);
-            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer(), new Scanner(), _dataService, revision, _provider);
+            RecordingScreenDescriber describer = new RecordingScreenDescriber(_models, _provider, _ollama, new FakeScreenshotService(), new FakeOpenCvService(), NullLogger<RecordingScreenDescriber>.Instance);
+            _generation = new FlowGenerationService(exporter, importer, draftBuilder, new Printer(), new Scanner(), _dataService, revision, _provider, describer);
 
             _resolver.AreasByName["chrome"] = AreaResolution.Ok(new Rectangle(0, 0, 800, 600), new WindowHandle(7));
             _windows.WindowProcessId = CHROME;
@@ -306,6 +309,8 @@ namespace Business.Tests.Recording
             generated.Notes.ShouldBe(["Check the email field."]);
             progress.Select(x => (x.Stage, x.Attempt)).ShouldBe(
             [
+                (FlowGenerationStageEnum.LOOKING_AT_SCREENS, 0),
+                (FlowGenerationStageEnum.LOOKING_AT_SCREENS, 0),
                 (FlowGenerationStageEnum.WRITING_DRAFT, 0),
                 (FlowGenerationStageEnum.ASKING_MODEL, 1),
                 (FlowGenerationStageEnum.SAVING, 1),
@@ -386,6 +391,63 @@ namespace Business.Tests.Recording
             request.ShouldContain("screen: after the click, a new page");
         }
 
+        // The screenshot goes to the local model only; what it says goes to the one shaping the draft.
+        [Fact]
+        public async Task What_the_local_model_sees_of_the_screen_reaches_the_model_as_a_note()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _ollama.Capabilities.Add("vision");
+            FakeChatClient local = new FakeChatClient(messages => "The sign-in page of the invoices site.");
+            _models.LocalClient = local;
+            FakeChatClient model = Model(x => x);
+            List<FlowGenerationProgressDto> progress = [];
+
+            await GenerateAsync(flowId, progress);
+
+            local.Requests.ShouldHaveSingleItem().Single().Contents.OfType<DataContent>().ShouldHaveSingleItem();
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain("screen: the local model sees the page as \"The sign-in page of the invoices site.\"");
+            model.Requests[0].ShouldAllBe(x => !x.Contents.OfType<DataContent>().Any());
+            (progress[^1].LookedAt, progress[^1].ToLookAt).ShouldBe((1, 1));
+        }
+
+        [Fact]
+        public async Task Without_screen_content_the_local_model_is_not_asked_to_look()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _ollama.Capabilities.Add("vision");
+            FakeChatClient local = new FakeChatClient(messages => "The sign-in page of the invoices site.");
+            _models.LocalClient = local;
+            _provider.CanSendScreenData = false;
+            Model(x => x);
+
+            await GenerateAsync(flowId, []);
+
+            local.Requests.ShouldBeEmpty();
+        }
+
+        // A window's title and an element's name are screen text; what kind of element it was is not.
+        [Fact]
+        public async Task Without_screen_content_the_model_is_sent_no_title_and_no_name_Windows_had()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenChanges.Add(new ScreenChangeDto { ActionIndex = 0, NextActionIndex = 2, IsNewTitle = true, Title = "Inbox - ops@example.com" });
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = 0, Role = "text field", Name = "Email address", Inside = ["group \"Account details\""] });
+            _provider.CanSendScreenData = false;
+            FakeChatClient model = Model(x => x);
+
+            await GenerateAsync(flowId, []);
+
+            string request = model.Requests[0].First(x => x.Role == ChatRole.User).Text;
+            request.ShouldNotContain("ops@example.com");
+            request.ShouldNotContain("Email address");
+            request.ShouldNotContain("Account details");
+            request.ShouldContain("screen: what was pressed, as Windows names it: text field");
+            request.ShouldContain("screen: after the click, a new page");
+        }
+
         [Fact]
         public async Task An_answer_that_leaves_out_a_recorded_action_is_refused()
         {
@@ -450,6 +512,22 @@ namespace Business.Tests.Recording
             (await db.Flows.SingleAsync(Ct)).IsQaTest.ShouldBeTrue();
         }
 
+        // What it tests is the tester's to say, so it needs no stage of the model's.
+        [Fact]
+        public async Task A_stage_the_tester_named_reaches_the_model_and_is_the_QA_test_s_stage()
+        {
+            int flowId = await NewFlowAsync(isQaTest: true);
+            Record();
+            _reviewed.Actions[0].StageName = "Sign in";
+            FakeChatClient model = Model(x => x + "\nEnd Execution  passed\n");
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            model.Requests[0].First(x => x.Role == ChatRole.User).Text.ShouldContain("## Sign in");
+            generated.IsModelDraft.ShouldBeTrue();
+            Steps(flowId).ShouldContain(x => x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER && x.Name == "Sign in" && x.ParentFlowStepId == null);
+        }
+
         private const string WRONG_VALUE = "not-the-password";
         private const string PASSED = "\n## Signed in\nEnd Execution  passed\n";
 
@@ -509,6 +587,116 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Checks the model added
+        // ================================================================
+
+        // The answer with a check after the typed text, in the main area, failing the execution.
+        private static string WithCheck(string script, string name, string words)
+        {
+            List<string> lines = script.Split('\n').ToList();
+            string main = lines.First(x => x.Contains(" main ", StringComparison.Ordinal));
+            string area = main[(main.IndexOf("<[", StringComparison.Ordinal) + 2)..main.IndexOf("]>", StringComparison.Ordinal)].Trim();
+
+            int typed = lines.FindIndex(x => x.TrimStart().StartsWith("Type", StringComparison.Ordinal));
+            string indent = lines[typed][..(lines[typed].Length - lines[typed].TrimStart().Length)];
+
+            lines.InsertRange(typed + 1,
+            [
+                $"{indent}Wait For Text  <[ {name} ]>   contains <[ {words} ]>   in <[ {area} ]>   timeout 10000ms",
+                $"{indent} Failure:",
+                $"{indent}  End Execution  failed  <[ {name} never showed ]>",
+            ]);
+
+            return string.Join('\n', lines);
+        }
+
+        [Fact]
+        public async Task A_check_for_words_that_appeared_is_saved_and_offered_to_keep_or_drop()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenLines.AddRange(["Email", "Welcome back"]);
+            Model(x => WithCheck(x, "Signed in", "Welcome back"));
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            ProposedCheckDto proposed = generated.ProposedChecks.ShouldHaveSingleItem();
+            (proposed.Name, proposed.Under, proposed.IsReadOnScreen).ShouldBe(("Signed in", "Find Email", true));
+            generated.Script.Split('\n')[proposed.Line - 1].ShouldContain("<[ Signed in ]>");
+        }
+
+        [Fact]
+        public async Task A_check_for_words_no_screenshot_showed_is_refused()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenLines.AddRange(["Email"]);
+            Model(x => WithCheck(x, "Signed in", "Welcome back"));
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeFalse();
+            generated.Refused.Select(x => x.Code).ShouldBe([nameof(DiagnosticCodeEnum.CHECK_TEXT_UNSEEN)]);
+            generated.ProposedChecks.ShouldBeEmpty();
+        }
+
+        // The model was not shown the words, so it is not told which were not there either.
+        [Fact]
+        public async Task Without_screen_content_a_check_for_unseen_words_is_saved_and_said_to_be_unseen()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenLines.AddRange(["Email"]);
+            _provider.CanSendScreenData = false;
+            Model(x => WithCheck(x, "Signed in", "Welcome back"));
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            generated.IsModelDraft.ShouldBeTrue();
+            generated.ProposedChecks.ShouldHaveSingleItem().IsReadOnScreen.ShouldBe(false);
+        }
+
+        [Fact]
+        public async Task A_dropped_check_leaves_the_flow_and_the_others_are_still_offered()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenLines.AddRange(["Email", "Welcome back", "Inbox"]);
+            Model(x => WithCheck(WithCheck(x, "Inbox shown", "Inbox"), "Signed in", "Welcome back"));
+            await GenerateAsync(flowId, []);
+
+            ProposedCheckDropDto drop = new ProposedCheckDropDto { FlowId = flowId, Name = "Signed in", Undecided = ["Signed in", "Inbox shown"] };
+            ResultDto<FlowGenerationResultDto> dropped = await _generation.DropCheckAsync(drop, _recording.ScreenLines, Ct);
+
+            dropped.IsSuccess.ShouldBeTrue(dropped.ErrorMessage);
+            dropped.Data!.Script.ShouldNotContain("Signed in");
+            dropped.Data.ProposedChecks.Select(x => x.Name).ShouldBe(["Inbox shown"]);
+            Steps(flowId).ShouldNotContain(x => x.Name == "Signed in");
+            Steps(flowId).ShouldContain(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT);
+        }
+
+        [Fact]
+        public async Task Asked_for_changes_a_check_not_yet_kept_is_still_offered_and_a_kept_one_is_not()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenLines.AddRange(["Email", "Welcome back"]);
+            Model(x => WithCheck(x, "Signed in", "Welcome back"));
+            await GenerateAsync(flowId, []);
+
+            Model(x => x.Replace("Signed in", "Welcome shown"));
+            FlowGenerationResultDto undecided = await _generation.ReviseAsync(flowId, "Say what the check is for.", ["Signed in"], _recording.ScreenLines, null, Ct);
+
+            undecided.ProposedChecks.Select(x => x.Name).ShouldBe(["Welcome shown"]);
+
+            Model(x => x);
+            FlowGenerationResultDto kept = await _generation.ReviseAsync(flowId, "Leave it as it is.", [], _recording.ScreenLines, null, Ct);
+
+            kept.ProposedChecks.ShouldBeEmpty();
+        }
+
+        // ================================================================
         // Ask for changes
         // ================================================================
 
@@ -528,7 +716,7 @@ namespace Business.Tests.Recording
             FakeChatClient model = Model(x => x.Replace("Find Email", "Find the sign-in field"));
             List<FlowGenerationProgressDto> progress = [];
 
-            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Name the search after the sign-in.", progress.Add, Ct);
+            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Name the search after the sign-in.", [], [], progress.Add, Ct);
 
             (revised.IsModelDraft, revised.Import.IsSuccess).ShouldBe((true, true));
             revised.Draft.ShouldContain("Find Email");
@@ -553,7 +741,7 @@ namespace Business.Tests.Recording
             List<int> before = Steps(flowId).Select(x => x.Id).Order().ToList();
             Model(x => x + "\nFnid Image  <[ Broken ]>\n");
 
-            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Sign out at the end.", null, Ct);
+            FlowGenerationResultDto revised = await _generation.ReviseAsync(flowId, "Sign out at the end.", [], [], null, Ct);
 
             revised.IsModelDraft.ShouldBeFalse();
             revised.Reason.ShouldBe($"No answer from the model read cleanly in {ScriptRevisionService.ATTEMPT_COUNT} attempts, so the flow is as it was.");

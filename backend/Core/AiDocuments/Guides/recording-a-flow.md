@@ -25,10 +25,13 @@ screen you were looking at when you decided to click, rather than whatever the c
 
 Record now minimises StepinFlow and opens a small bar at the top of the screen. Arrange your windows,
 then press Start on the bar. While recording, the bar shows whether it is recording or paused, a
-clock, the last few actions, and Pause and Stop. Closing the bar before Start records nothing and
-brings StepinFlow back. Nothing you do on the bar is recorded, and it never appears in a
-screenshot. Pause and Stop also have keys, F9 and F10 by default, which work whatever window is in
-front and are never recorded; they are under Recording keys in Settings. Typed text shows in the
+clock, the last few actions, and Pause, Stage and Stop. Closing the bar before Start records nothing
+and brings StepinFlow back. Nothing you do on the bar is recorded, and it never appears in a
+screenshot. Pause, Stage and Stop also have keys, F9, F8 and F10 by default, which work whatever
+window is in front and are never recorded; they are under Recording keys in Settings.
+
+Stage marks where a part of what you are testing begins - "Sign in", "Delete customer" - which is
+the one thing no model can work out. Nothing is typed then: Review asks for its name. Typed text shows in the
 bar as a count, "Typed 15 characters", never as the text.
 
 ## What each click hit
@@ -36,7 +39,14 @@ bar as a count, "Typed 15 characters", never as the text.
 When the recording stops, StepinFlow looks at the screenshot from before each click and finds the
 element under it — the button, field or icon — and reads the text on it. It takes about a second
 per click. Then it groups the clicks that hit the same picture, such as the same download icon on
-several rows. The recording page shows how far each of those has got.
+several rows, and reads all the text on every screenshot to see what changed from one click to the
+next - and from the last click to the screen as you left it when you pressed Stop, so let the last
+screen finish loading first. The recording page shows how far each of those has got.
+
+At each click, while recording, StepinFlow also asks Windows what the click landed on, as the
+application describes it to screen readers: a button, a link, a text field, its name, and whether
+it is enabled, ticked or a password field. A browser and most desktop applications answer; a game
+draws its own pixels and does not. Windows only.
 
 A box around the click stands in for the element when the model had nothing to say: no element was
 under the click, the element was bigger than the area it looked at, or the model file is not
@@ -51,12 +61,14 @@ to change it. Each action says what it becomes:
 - **A click**: wait for it, then click (the default); click this exact spot without looking for
   anything; or leave it out. A click outside the window you picked starts left out.
 - **Typed text**: an input, named from the field you clicked before typing, with what you typed as
-  its default; or the text as written. A field that reads as a password makes the input secret,
-  which is never written to a file.
+  its default; or the text as written. A field Windows says is a password field, or that reads as
+  one, makes the input secret, which is never written to a file.
 - **A key, a scroll**: kept, or left out.
+- **A stage you marked**: its name. With none it is no stage. Where the screen showed a new page,
+  Review offers to begin a stage there as well, and the list marks it "new page".
 
-Beside it: the text read under the click, how long you waited before it, and which other clicks hit
-the same picture. "What it should do" can be edited here too.
+Beside it: the text read under the click, what Windows says it was, how long you waited before it,
+and which other clicks hit the same picture. "What it should do" can be edited here too.
 
 ## The plain draft
 
@@ -70,6 +82,7 @@ the same picture. "What it should do" can be edited here too.
 - A search is named from the text on the element, such as "Find Invoices", or "Find icon".
 - Clicks that hit the same picture share one template.
 - Typed text types its input, such as {{email}}. A pause is not a step; it sizes the next wait.
+- A stage you named is `##` and its name over the next search, at the top of the flow.
 
 The draft is written the way an imported script is, so a draft that does not read cleanly leaves the
 flow as it was and says on which line.
@@ -81,20 +94,33 @@ in Settings, and the model shapes it: it names the steps after the task, turns c
 picture into one search for every match, and says in each failure what was not found. It is off
 until Ollama is running with a model chosen under Settings, AI.
 
+First, the local model looks at the screens, when it can take pictures: it says in a sentence which
+page each screen is where a new page began, and names in a few words each click that had no words
+on it and no name from Windows, such as an icon in a game. It is always the model in Ollama, even
+when a cloud model shapes the draft, so the screenshots never leave this machine; only what it said
+goes on. About two seconds a look on a graphics card, and much slower without one.
+
 The answer is read the way an imported file is. When it does not read cleanly, or changes something
-it may not - the flow's name and id, a template, an input other than by renaming it, or a click,
-drag, scroll, typed text or key you recorded, added, left out or moved - it is sent back with what
-was wrong, three times at most. Nothing is saved until an answer reads cleanly. When none does, or
+it may not - the flow's name and id, a template, an input other than by renaming it, a click, drag,
+scroll, typed text or key you recorded, added, left out or moved, or a stage you named moved,
+renamed or left out - it is sent back with what was wrong, three times at most. It may add stages
+of its own for parts you did not name. Nothing is saved until an answer reads cleanly. When none does, or
 the model cannot be reached, the plain draft is saved instead, and the page says why.
 
 What goes to the model: what the flow should do, the draft as a script, and which clicks hit the same
-picture. Over each search are notes, comments starting "screen:", of what changed on the screen:
-where a new page began and what was on it, and what appeared and went after the click, read by OCR
-from the screenshots taken while recording. The model names the steps and nests them by page from
-these, and the notes are taken out before anything is saved. The text read under each click and in
-the notes goes too, unless a cloud model answers and "Let the cloud model see your screen" is off;
-then the model names the steps from what the flow should do, and the notes say only where a new
-page began. What you typed never goes: the model sees only the input's name, such as {{email}}. The
+picture. Over each search are notes, comments starting "screen:", of what the screen said: where a
+new page began, by its words or by the window's title, what was on it and what the local model
+said it is; what was pressed, as the application named it to Windows or the local model saw it; and
+what appeared and went after the click, read by OCR from the screenshots taken while recording. The model names the steps and nests them by page from these, and
+the notes are taken out before anything is saved.
+
+In a QA test the model may add a check after a click for words that appeared - the button now reads
+"Remove", "Thank you for your order" - which is what makes a replay a test. A check it adds for
+words no screenshot showed is sent back, since it would fail the first execution; with "Let the
+cloud model see your screen" off it is kept, and Check says no screenshot showed its words. The text read under each click and in the notes
+goes too, unless a cloud model answers and "Let the cloud model see your screen" is off; then the
+model names the steps from what the flow should do, and the notes say only where a new page began
+and what kind of thing was pressed - a button, a text field - with no words, titles or names. What you typed never goes: the model sees only the input's name, such as {{email}}. The
 screenshots and templates stay on this machine. "Show the exact request" shows what was sent.
 
 The page shows each stage as it happens. Once it is done, "Check the flow" shows what was saved.
@@ -109,11 +135,16 @@ Check shows the flow as it was saved, before it ever executes:
   side by side, with what did not change folded away.
 - **Tree**: the steps as the editor shows them, every branch open.
 - What the model did, in its own notes; for the plain draft, how it was written.
+- **Checks the model added**, each with its line and the search it is under. They are in the flow
+  already: **Keep** stops offering it, and **Drop** takes it out, with what it did when it failed,
+  while the steps under it stay where it was. A check another step reads what it found from is not
+  dropped here.
 - The errors and warnings: what the import let through, at its line, and what the flow's validation
   says.
 
 **Ask for changes** sends the script back to the model with what you write, such as "also sign out
-at the end". The answer is read and checked the way the first one was, three times at most. When one
+at the end". The answer is read and checked the way the first one was, three times at most, and the
+checks you have not kept or dropped yet are still offered after it. When one
 reads cleanly it replaces the flow, and Check marks what it changed; when none does, the flow is as
 it was and Check says why. The model cannot cut a template, so a change that needs a search for
 something no template shows is left out, and its notes say so. The script goes as the flow holds it,

@@ -24,7 +24,7 @@ namespace Business.Recording.Draft.Actions
             }
             else
             {
-                string text = draft.ElementOf(action)?.Text ?? string.Empty;
+                string text = draft.TextOf(action);
                 string spot = RecordingDraft.NameFrom("Click", text, "Click spot");
                 move.FlowPoint = draft.Point(spot, action, action.LocationX, action.LocationY);
             }

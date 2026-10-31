@@ -638,15 +638,15 @@ every screenshot (`setContentProtection`). Record now opens it at the top of the
 minimises the main window, and the recording starts from the bar's Start. The tester arranges their
 windows first, and the bar is subscribed before the first `RECORDING_PROGRESS` goes out: a bar
 opened after the start would hear nothing until the first click, since a broadcast is never sent
-twice. It shows READY, REC or PAUSED with a clock, the action count and the last action, Pause and
-Stop with their keys, and the live list: the inputs folded a few times a second the way the stop
+twice. It shows READY, REC or PAUSED with a clock, the action count and the last action, Pause,
+Stage and Stop with their keys, and the live list: the inputs folded a few times a second the way the stop
 folds them, "Typed 15 characters" rather than every key-down and key-up, typed text counted rather
 than shown. The bar only asks. Every change goes out whole as `RECORDING_PROGRESS`, and the
 recording page follows a stop or a discard from there, whichever of the bar, a hotkey or the page
 made it, and closes the bar.
 
-**Its hotkeys never reach the recording**, whatever window is in front. They are two settings of
-their own, F9 and F10 by default, and the same key may also be one of the debugger's, since the
+**Its hotkeys never reach the recording**, whatever window is in front. They are three settings of
+their own, F9, F8 and F10 by default, and the same key may also be one of the debugger's, since the
 two are never live at once. `RecordingHotkeyReader` reads them at the hook before the filter. A
 combination's first keys are held back while they are down, so the Ctrl of Ctrl+F9 is not in the
 recording by the time F9 comes, and anything else lets them through first, in order.
@@ -692,7 +692,10 @@ marked moving, the same place clicked again is not.
 **What changed on the screen** (`Business/Recording/Screens/RecordedScreenReader`) is read last:
 every press's screenshot of the main area whole, by Windows OCR, every word with its rectangle -
 about 80 ms a screenshot - and each compared with the one before (`Business/ScreenText/`). A
-press's screenshot is from just before it, so what a click did shows at the next press. The engine
+press's screenshot is from just before it, so what a click did shows at the next press, and what
+the last one did on the screen the recording stopped on: the newest screenshot of the main area at
+Stop, taken while the bar was still up, so StepinFlow's own window is never over it, and kept
+unencoded only until it is read. Every line read is kept as well, once each. The engine
 reads a row of buttons as one line, "Bag Fellowship Party", so a line is cut wherever two words are
 further apart than one and a half times their height. It reads a word differently on every
 screenshot - Town was "Town", "Towri" and "TOWR" on three of one screen - so two lines are the same
@@ -707,6 +710,31 @@ the engine finds text tilted - the game's slanted lettering, by 5.6 degrees - it
 measures in the straightened picture, so `OcrService.ReadWordsAsync` turns its rectangles back by
 that angle. The words are screen data and reach a cloud model only through the gate (§10); how much
 changed is a number and goes anywhere. Windows only, as the text under a click is.
+
+The same comparison says whether the main area's window took another title between the two presses -
+for a browser, another page, which a single-page application can reach with most of its words in
+place. Only presses on the main area's own window count, so a click on the taskbar is no page. The
+title is screen text; that it changed is not.
+
+**What a press landed on, as its application tells Windows** (`Core/Ports/IAccessibleElementService`,
+`Platform.Windows/Accessibility/AccessibleElementService`). Every press is asked of Windows' UI
+Automation - what a screen reader is told - at once and off the drain, which every input after it
+waits on, and the stop waits up to three seconds for the last answer. The answer is the element's
+kind in English whatever the system's language (button, link, text field, check box), its name - its
+label, a web page's `aria-label` - whether it is enabled, ticked or a password field, and up to four
+named things it sits in, nearest first: `button "Add to cart", in group "Shipping", in window
+"Checkout"`. Chromium answers natively since Chrome 138; an application that draws its own pixels, a
+game, answers with its window, which says nothing its title does not, so that answer is dropped.
+UI Automation's three COM interfaces are declared by hand, slot for slot as far as the ones called,
+as the screen capture's are, and every property comes through `GetCurrentPropertyValue` - after
+asking whether the element has the pattern at all, since one without the toggle pattern answers
+"unticked". Asking turns on an application's accessibility tree if nothing had, which a browser
+builds for the whole page, so the first press of a recording can cost it a moment. Review shows it
+as "Windows says"; a typed field takes its input's name from it before the text read on the field,
+which may be a placeholder or what the field held, and a password field is made secret. A plain
+draft names a click OCR read nothing on - an icon - by it. For names and structure only: execution
+stays image-based. Windows only: macOS and Linux each want an adapter of their own (`TODO.md`,
+Recording).
 
 **Review** comes before anything becomes a step (`features/recording/review/`). Every action is listed
 with a checkbox to keep it, the main area at that moment (`Recording.getScreen`: the action's own
@@ -843,16 +871,34 @@ instead and the page says why, so the tester always has a flow. A cloud model th
 nothing read under the clicks - its search names are placeholders - and is told to name the steps
 from the description.
 
+**The local model looks at the screens first** (`Business/Recording/Screens/RecordingScreenDescriber`),
+the generation's first stage, "Looked at the screens with the local model: 3 of 8". It is always
+the local model, through `IAiClientFactory.CreateLocalAsync`, even when a cloud model shapes the
+draft: the pictures never leave the machine, and only what it says goes on. It describes in one
+sentence the first screen and every one where a new page began, by its words or its title - from
+the screenshot, never from the OCR text, which made a small model invent what a screen was for -
+and names in two to four words every kept click that neither OCR nor Windows named, from its
+cutout, enlarged to 64 pixels at least, with the verb and the full stop a small model adds anyway
+taken off. Measured on the tester's `qwen3.5:4b` on a graphics card: about 2.5 seconds a look,
+"settings gear" for the Firestone gear and "This is a character skill tree interface showing
+attribute points and specialization paths for Tree XLVII in a game." for its research screen. Eight
+pages and twelve clicks at most, a look that fails is passed over, and none at all when the local
+model takes no pictures, or when a cloud model may not be sent screen content, since what it said
+would be withheld. Not at Stop: a plain draft needs none of it, and a model on a CPU is slow.
+
 **The draft the model gets carries notes of what the screen said** (`Business/Recording/Draft/ScreenNoteWriter`):
-comment lines starting `screen:` over each search, from what changed on the screen (above) - where a
-new page began and what was on it, and what appeared and went after the click, in the words read,
-lines of four letters or more, six at most, each cut at fifty characters with an ellipsis. The model
+comment lines starting `screen:` over each search, from what changed on the screen, what was
+pressed and what the local model saw (above) - where a new page began, by its words or by the
+window's title, what was on it and what the local model sees it as; what was pressed, as Windows
+named it or the local model sees it; and what appeared and went after the click, in the words
+read, lines of four letters or more, six at most, each cut at fifty characters with an ellipsis. The model
 is told to name the steps from them, to nest what was done on a page in the Success branch of the
 search whose click opened it, and to write the comment a person would in their place. Whatever it
 does with them, the code takes every `screen:` line out of its answer before the import, and out of
 the draft Check compares it with: they are screen text, and a flow is written into a repository
-(§11). With screen content not allowed, the notes say only where a new page began, which comes
-from a number.
+(§11). With screen content not allowed, the notes say where a new page began and what kind of
+thing was pressed in what state, and no word read, no title, no name and nothing the local model
+said.
 
 **An answer may not add, drop or reorder what was recorded**
 (`Business/Recording/Generation/RecordedActionsCheck`), only the prompt's word before. The draft and
@@ -864,6 +910,24 @@ comes after it needs, so three clicks on the download icon folded into one are s
 click on Log out after them is not a fourth. The first difference goes back as `ACTIONS_CHANGED`,
 saying which of the draft's actions it is and under which search. An "Ask for changes" is not held
 to it.
+
+**The checks a model adds are proposed, and the tester keeps or drops each**
+(`Business/Recording/Generation/ProposedChecks`). After "Add to cart" the button reads "Remove":
+a QA test's answer may add a Wait For Text for words a `screen:` note says appeared after a click,
+or a Wait Until No Text for words that went, right after that click - what turns a replay into a
+test. Which checks it added is told by comparing, not by anything the model marks: a search nothing
+moves to is a check rather than a click's, and one with the words or the templates of a check the
+draft had is the tester's own, however renamed. An added check for words is tested the way an
+execution tests it, against every line OCR read on the recording, and one no line satisfies would
+fail the first execution, so the answer is refused as `CHECK_TEXT_UNSEEN` - only where screen
+content was sent, since a refusal would tell a model that was not shown the words what the screen
+did not say. Without it the check is saved and Check says no screenshot showed its words. Check
+lists each with its line and the search it sits under: Keep only stops offering it, since it is in
+the flow already; Drop (`Recording.dropProposedCheck`) takes it out with its Failure branch, and
+what its Success branch holds - the test's `End Execution passed`, the rest of a page a model nested
+under it - takes its place, then imports the flow again. A check another step reads is not dropped,
+and says which step. "Ask for changes" carries the ones not yet decided, by name, so a revision
+still offers them even renamed.
 
 **A QA test is told to be one** (`AiPromptHelper.ShapeQaTest`, after the instruction above): stage
 markers for the parts of the journey the description names, each with a comment saying what it
@@ -925,6 +989,21 @@ what each one was for.
   modifiers and button, holds it and its release back, and marks both. The recorder leaves out the
   modifiers held for it, as it does a hotkey's (`RecordingHotkeyReader`). Paused, nothing is held
   back. Windows and macOS only: on Linux the press reaches the application too (`TODO.md`).
+
+**The tester names the stages**, since what they are testing is the one thing no model can work
+out. F8, or Stage on the bar, marks where one begins - paused as well, while the next part is made
+ready - as an action of its own (`RecordedActionKindEnum.STAGE`) that takes no time, so the click
+after it still waited from the click before. Nothing is typed while recording: the bar never takes
+the keyboard from the application, and the click back into it would be recorded. Review asks for
+the name, "Delete customer", and offers a stage at each action where the comparison found a new page
+(What changed on the screen, above), marked "new page" in the list. A named stage is a stage marker at
+the top of the flow over the next search, so what came between stays in the search before; one at
+the end closes the flow, where a test says what it proved; one never named, or left out, is none
+(`RecordingDraft.BeginStage`). The model is told the draft's stage markers are the tester's, and
+`RecordedActionsCheck` holds it to that: each stands among the recorded actions where it was, at
+the top of the flow, by its name, so one moved, renamed or put in a branch is `ACTIONS_CHANGED`. A
+stage the model adds under another name is not compared, and a QA test whose stages are all the
+tester's needs none of the model's.
 
 **A QA test adds to it**: stage markers and `End Execution` checks for what the description says
 the flow is meant to prove (above), and failure paths written by provoking them rather than
@@ -1652,10 +1731,11 @@ around.
 gigabytes and finds almost nothing on a game (measured 2026-10-30), so it stays on the 640 pixels
 around a click. A screen is read by three things instead, cheapest first: Windows OCR over every
 press screenshot, each line with its rectangle, compared with the screenshot before - what appeared,
-what went, built (§6); UI Automation's element under each press - role, name, state, and the dialog or page it
-sits in - where the application has an accessibility tree, a browser or an ordinary desktop
-application and never a game; and the local model, for a click on something with no words, from its
-cutout, and for one sentence where the page changed, from the screenshot.
+what went, and the window's title; UI Automation's element under each press - role, name, state, and
+the dialog or page it sits in - where the application has an accessibility tree, a browser or an
+ordinary desktop application and never a game; and the local model, for a click on something with
+no words, from its cutout, and for one sentence where the page changed, from the screenshot. All
+three built (§6).
 
 **Notes in the script, not a schema.** All of it reaches the model as comments over the searches in
 the script it already reads and answers with (§7), in the words read, so a step can be named for
@@ -2264,18 +2344,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1066 tests, all passing, in eight projects under `backend/Tests/` - one
+1115 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 793 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, the notes a model is given of it and the check that its answer keeps every recorded action, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 842 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 17 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
-| `Platform.Windows.Tests` | 4 + 4 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; Windows OCR on lines drawn straight and tilted, each read where it was drawn; and, traited `Desktop`, real monitors, the window in front, the window list and the cursor |
+| `Platform.Windows.Tests` | 4 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; Windows OCR on lines drawn straight and tilted, each read where it was drawn; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
 | `Platform.Shared.Tests` | 44 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
@@ -2405,7 +2485,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant on a local Ollama model
-with OpenAI on top. 1066 backend tests.
+with OpenAI on top. 1115 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

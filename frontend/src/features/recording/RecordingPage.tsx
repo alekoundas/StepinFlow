@@ -19,6 +19,7 @@ import type { RecordingProgressDto } from "@/shared/models/recording-progress-dt
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
+import type { ProposedCheckDto } from "@/shared/models/proposed-check-dto";
 import RecordingSetupComponent from "@/features/recording/components/RecordingSetupComponent";
 import RecordingMainAreaComponent from "@/features/recording/components/RecordingMainAreaComponent";
 import RecordingReviewComponent from "@/features/recording/review/RecordingReviewComponent";
@@ -38,10 +39,12 @@ const RECORDING_STEPS = ["Describe", "Record", "Review", "Generate", "Check"];
 // Until the first stage says which model and what it is sent. A revision starts the same way.
 const GENERATION_STARTING: FlowGenerationProgressDto = {
   state: FlowGenerationStateEnum.GENERATING,
-  stage: FlowGenerationStageEnum.WRITING_DRAFT,
+  stage: FlowGenerationStageEnum.LOOKING_AT_SCREENS,
   model: "",
   isReadTextSent: true,
   scriptLength: 0,
+  lookedAt: 0,
+  toLookAt: 0,
   attempt: 0,
   attemptCount: 0,
   refused: [],
@@ -115,6 +118,12 @@ export default function RecordingPage() {
   const [checked, setChecked] = useState<FlowGenerationResultDto | null>(null);
   const [revision, setRevision] = useState<FlowGenerationProgressDto | null>(null);
   const [revisionProblem, setRevisionProblem] = useState<RevisionProblem | null>(null);
+
+  // What the tester decided about the checks the model added, and a drop underway or refused.
+  const [kept, setKept] = useState<ProposedCheckDto[]>([]);
+  const [dropped, setDropped] = useState<string[]>([]);
+  const [dropping, setDropping] = useState<string | null>(null);
+  const [dropProblem, setDropProblem] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
@@ -196,7 +205,7 @@ export default function RecordingPage() {
         return;
       }
 
-      setChecked(imported);
+      showChecked(imported);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -267,11 +276,59 @@ export default function RecordingPage() {
     if (generation?.state === FlowGenerationStateEnum.DONE) void fetchGenerated();
   }, [generation?.state]);
 
+  // A new flow to read: nothing about its checks is decided yet.
+  const showChecked = (next: FlowGenerationResultDto) => {
+    setChecked(next);
+    setKept([]);
+    setDropped([]);
+    setDropProblem(null);
+  };
+
   const checkGenerated = () => {
     if (!generated) return;
 
-    setChecked(generated);
+    showChecked(generated);
     setGeneration(null);
+  };
+
+  // It is in the flow already, so keeping it only stops offering it.
+  const keepCheck = (name: string) => {
+    if (!checked) return;
+
+    const check = checked.proposedChecks.find((x) => x.name === name);
+    if (!check) return;
+
+    setKept([...kept, check]);
+    setChecked({ ...checked, proposedChecks: checked.proposedChecks.filter((x) => x.name !== name) });
+  };
+
+  // What the model said and was given stays; the flow, as saved now, replaces what was shown of it.
+  const dropCheck = async (name: string) => {
+    if (!checked) return;
+
+    setDropping(name);
+    setDropProblem(null);
+
+    try {
+      const undecided = checked.proposedChecks.map((x) => x.name);
+      const saved = await backendApiService.Recording.dropProposedCheck({ flowId: checked.import.flowId, name, undecided });
+
+      await queryClient.invalidateQueries({ queryKey: ["flowStep"] });
+      setChecked({
+        ...checked,
+        import: saved.import,
+        script: saved.script,
+        stepCount: saved.stepCount,
+        inputCount: saved.inputCount,
+        templateCount: saved.templateCount,
+        proposedChecks: saved.proposedChecks,
+      });
+      setDropped([...dropped, name]);
+    } catch (err) {
+      setDropProblem(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDropping(null);
+    }
   };
 
   // Check's "Ask for changes": started and followed as a generation is.
@@ -283,7 +340,8 @@ export default function RecordingPage() {
     setRevision(GENERATION_STARTING);
 
     try {
-      await backendApiService.Recording.reviseDraft({ flowId: checked.import.flowId, changes });
+      const undecided = checked.proposedChecks.map((x) => x.name);
+      await backendApiService.Recording.reviseDraft({ flowId: checked.import.flowId, changes, undecided });
     } catch (err) {
       setRevision(null);
       setError(err instanceof Error ? err.message : String(err));
@@ -314,7 +372,7 @@ export default function RecordingPage() {
 
       if (revised.isModelDraft && revised.import.isSuccess) {
         await queryClient.invalidateQueries({ queryKey: ["flowStep"] });
-        setChecked(revised);
+        showChecked(revised);
         return;
       }
 
@@ -536,6 +594,12 @@ export default function RecordingPage() {
           revision={revision}
           revisionProblem={revisionProblem}
           askUnavailable={askUnavailable}
+          kept={kept}
+          dropped={dropped}
+          dropping={dropping}
+          dropProblem={dropProblem}
+          onKeep={keepCheck}
+          onDrop={(name) => void dropCheck(name)}
           onAsk={(changes) => void askForChanges(changes)}
           onCancelAsk={() => void cancelAsk()}
           onDiscard={discardChecked}

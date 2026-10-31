@@ -20,6 +20,9 @@ namespace Business.Recording.Session
 
         void Resume();
 
+        /// <summary>Marks where a stage of the test begins, for Review to name. Paused as well.</summary>
+        void MarkStage();
+
         /// <summary>
         /// Stops, returns every input captured, in order, and starts working the recording through
         /// in the background. RECORDING_PROGRESS says how far, then READY, and GetResult has it.

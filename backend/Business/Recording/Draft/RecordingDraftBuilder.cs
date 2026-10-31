@@ -10,8 +10,9 @@ namespace Business.Recording.Draft
     /// <summary>
     /// A reviewed recording into a flow, by a rule per kind of action rather than a question per
     /// action: a click waits for its element, moves onto it and clicks; typed text is an input; a
-    /// key is a Press; a pause is no step, only the size of the next wait. One builder per kind, as
-    /// there is a parser per kind of line.
+    /// key is a Press; a pause is no step, only the size of the next wait; a stage the tester named is
+    /// a stage marker over the next search. One builder per kind, as there is a parser per kind of
+    /// line.
     ///
     /// The draft is a flow on its own, written in the same rows a script reads into, so it prints
     /// and reads back like any file - which is what a model is later handed to shape.
@@ -45,7 +46,18 @@ namespace Business.Recording.Draft
             foreach (RecordedActionDto action in recording.Actions)
             {
                 // A pause is not listed in Review, and what it measured is already the next action's wait.
-                if (!reviews.TryGetValue(action.Index, out ReviewedActionDto? review) || review.Choice == ReviewChoiceEnum.LEAVE_OUT)
+                if (!reviews.TryGetValue(action.Index, out ReviewedActionDto? review))
+                    continue;
+
+                bool isLeftOut = review.Choice == ReviewChoiceEnum.LEAVE_OUT;
+
+                // A stage begins at the next search, so an action left out still says where one
+                // does. A mark of its own left out, or never named, is no stage.
+                string stage = review.StageName?.Trim() ?? string.Empty;
+                if (stage.Length > 0 && !(action.Kind == RecordedActionKindEnum.STAGE && isLeftOut))
+                    draft.BeginStage(stage);
+
+                if (isLeftOut)
                     continue;
 
                 switch (action.Kind)
@@ -82,6 +94,7 @@ namespace Business.Recording.Draft
                 }
             }
 
+            draft.AddStages();
             return flow;
         }
     }

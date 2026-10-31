@@ -40,6 +40,7 @@ namespace Business.Recording.Draft
         private readonly HashSet<string> _templateNames;
         private readonly Dictionary<FlowStep, int> _childCounts = new Dictionary<FlowStep, int>();
         private readonly Dictionary<int, FlowTemplate> _groupTemplates = new Dictionary<int, FlowTemplate>();
+        private readonly List<string> _stages = new List<string>();
 
         // Where the recording goes: under this step, or at the top of the flow when null. The steps
         // already there after the position move down one for each step added beside them.
@@ -92,6 +93,19 @@ namespace Business.Recording.Draft
             return _result.ClickedElements.FirstOrDefault(x => x.ActionIndex == action.Index);
         }
 
+        /// <summary>
+        /// What a press is named for: the text read on it, or when nothing was - an icon - its name
+        /// as its application told Windows.
+        /// </summary>
+        public string TextOf(RecordedActionDto action)
+        {
+            string text = ElementOf(action)?.Text ?? string.Empty;
+            if (text.Length > 0)
+                return text;
+
+            return _result.PressedElements.FirstOrDefault(x => x.ActionIndex == action.Index)?.Name ?? string.Empty;
+        }
+
         /// <summary>The name, or with the first free number after it when the flow has it already.</summary>
         public string Name(string desired)
         {
@@ -116,6 +130,29 @@ namespace Business.Recording.Draft
                 return fallback;
 
             return $"{prefix} {cleaned}";
+        }
+
+        /// <summary>A stage the tester named, which begins at the next search, or at the end when none follows.</summary>
+        public void BeginStage(string name)
+        {
+            _stages.Add(name);
+        }
+
+        /// <summary>
+        /// The stages begun since the last search, as stage markers where the recording started -
+        /// the top of the flow, where a marker is a stage - and steps go there from now.
+        /// </summary>
+        public void AddStages()
+        {
+            Parent = _start;
+
+            foreach (string stage in _stages)
+            {
+                string oneLine = string.Join(' ', stage.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+                Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = Name(oneLine) });
+            }
+
+            _stages.Clear();
         }
 
         /// <summary>Adds the step where steps go now, after the ones already there.</summary>
@@ -160,7 +197,7 @@ namespace Business.Recording.Draft
             if (template == null)
                 return null;
 
-            string text = ElementOf(action)?.Text ?? string.Empty;
+            string text = TextOf(action);
             return AddWaiting(action, new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
@@ -181,7 +218,7 @@ namespace Business.Recording.Draft
 
             if (_includeScreenNotes)
             {
-                foreach (string note in ScreenNoteWriter.NotesFor(action.Index, _result.ScreenChanges))
+                foreach (string note in ScreenNoteWriter.NotesFor(action.Index, _result))
                     search.CodeComment += $"\n{note}";
             }
 
@@ -189,7 +226,7 @@ namespace Business.Recording.Draft
             if (search.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
                 failed = $"{search.Name}: still there after {Seconds(timeout)}";
 
-            Parent = _start;
+            AddStages();
             Add(search);
 
             FlowStep success = Branch(search, FlowStepTypeEnum.SUCCESS, 0);

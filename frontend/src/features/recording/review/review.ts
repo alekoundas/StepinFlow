@@ -5,6 +5,7 @@ import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { ClickedElementDto } from "@/shared/models/clicked-element-dto";
 import type { ClickGroupDto } from "@/shared/models/click-group-dto";
+import type { PressedElementDto } from "@/shared/models/pressed-element-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
 
@@ -37,6 +38,9 @@ export interface ActionReview {
   /** For a search: by the picture cut along the rectangle, or by these words read inside it. */
   searchBy: SearchByEnum;
   searchText: string;
+
+  /** A stage's name: of a stage marked while recording, or one beginning at this action. */
+  stageName: string;
 }
 
 export interface ReviewOption {
@@ -75,6 +79,27 @@ export function elementOf(result: RecordingResultDto, action: RecordedActionDto)
   return result.clickedElements.find((x) => x.actionIndex === action.index);
 }
 
+/** What the press landed on, as its application told Windows. None for a game. */
+export function pressedOf(result: RecordingResultDto, action: RecordedActionDto): PressedElementDto | undefined {
+  return result.pressedElements.find((x) => x.actionIndex === action.index);
+}
+
+/** As Windows has it: button “Add to cart”, not enabled. */
+export function describePressed(pressed: PressedElementDto): string {
+  const parts = [pressed.name.length > 0 ? `${pressed.role} “${pressed.name}”` : pressed.role];
+  if (pressed.isPassword) parts.push("a password field");
+  if (!pressed.isEnabled) parts.push("not enabled");
+  if (pressed.isChecked === true) parts.push("ticked");
+  if (pressed.isChecked === false) parts.push("not ticked");
+
+  return parts.join(", ");
+}
+
+/** Where a new page began, by its words or by the window's title: where a stage may begin. */
+export function startsPage(result: RecordingResultDto, action: RecordedActionDto): boolean {
+  return result.screenChanges.some((x) => x.nextActionIndex === action.index && (x.isNewScreen || x.isNewTitle));
+}
+
 export function groupOf(result: RecordingResultDto, action: RecordedActionDto): ClickGroupDto | undefined {
   return result.clickGroups.find((x) => x.actionIndexes.includes(action.index));
 }
@@ -97,6 +122,8 @@ export function optionsFor(
       leaveOut,
     ];
   }
+
+  if (action.kind === RecordedActionKindEnum.STAGE) return [{ label: "A stage", value: ReviewChoiceEnum.KEEP }, leaveOut];
 
   if (action.kind === RecordedActionKindEnum.SUBSTITUTE)
     return [
@@ -162,24 +189,41 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
       choice: optionsFor(action, element, false)[0].value,
       element: element ? { x: element.x, y: element.y, width: element.width, height: element.height } : null,
       inputName,
-      isSecret: label !== null && SECRET_LABEL.test(label),
+      isSecret: isSecretFieldBefore(result, action, label),
       commandText: "",
       searchBy: SearchByEnum.IMAGE,
       searchText: element?.text ?? "",
+      stageName: "",
     };
   }
 
   return reviews;
 }
 
-/** The text on the element of the last click before it: the field typed text went into. */
+/**
+ * The label of the field typed text went into, the last click before it: its name as its
+ * application told Windows, which is the field's label, else the text read on it, which may be
+ * its placeholder or what it already held.
+ */
 export function fieldLabelBefore(result: RecordingResultDto, action: RecordedActionDto): string | null {
-  const before = result.actions.filter((x) => x.index < action.index && isPointed(x));
-  const last = before[before.length - 1];
+  const last = fieldBefore(result, action);
   if (!last) return null;
 
-  const text = elementOf(result, last)?.text ?? "";
+  const text = pressedOf(result, last)?.name || elementOf(result, last)?.text || "";
   return text.length > 0 ? text : null;
+}
+
+// A password field as Windows has it, or a field whose label says so.
+function isSecretFieldBefore(result: RecordingResultDto, action: RecordedActionDto, label: string | null): boolean {
+  const last = fieldBefore(result, action);
+  if (last && pressedOf(result, last)?.isPassword) return true;
+
+  return label !== null && SECRET_LABEL.test(label);
+}
+
+function fieldBefore(result: RecordingResultDto, action: RecordedActionDto): RecordedActionDto | undefined {
+  const before = result.actions.filter((x) => x.index < action.index && isPointed(x));
+  return before[before.length - 1];
 }
 
 function toInputName(label: string | null): string {
@@ -216,6 +260,7 @@ export function titleOf(action: RecordedActionDto, element: ClickedElementDto | 
 
   if (action.kind === RecordedActionKindEnum.CHECK) return text.length > 0 ? `Check “${text}”` : "A check";
   if (action.kind === RecordedActionKindEnum.SUBSTITUTE) return "Instead of a click";
+  if (action.kind === RecordedActionKindEnum.STAGE) return "A stage begins";
 
   if (action.kind === RecordedActionKindEnum.TYPING) {
     const count = [...(action.text ?? "")].length;
@@ -228,6 +273,11 @@ export function titleOf(action: RecordedActionDto, element: ClickedElementDto | 
 export function subtitleOf(action: RecordedActionDto, review: ActionReview): string {
   if (review.choice === ReviewChoiceEnum.LEAVE_OUT && isOutside(action)) return "outside the window you picked";
   if (review.choice === ReviewChoiceEnum.LEAVE_OUT) return "left out";
+
+  if (action.kind === RecordedActionKindEnum.STAGE) {
+    const name = review.stageName.trim();
+    return name ? `## ${name}` : "no name yet, so no stage";
+  }
 
   if (action.kind === RecordedActionKindEnum.TYPING) {
     if (review.choice === ReviewChoiceEnum.TYPE_AS_WRITTEN) return "typed as written";
@@ -271,6 +321,7 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
       const isInput = review.choice === ReviewChoiceEnum.INPUT;
       const isNamed = isInput || review.choice === ReviewChoiceEnum.TYPE_INPUT;
       const isCommand = review.choice === ReviewChoiceEnum.EXECUTE_COMMAND || review.choice === ReviewChoiceEnum.LAUNCH_APP;
+      const stageName = review.stageName.trim();
 
       return {
         actionIndex: action.index,
@@ -284,6 +335,7 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
         inputName: isNamed ? review.inputName : null,
         isSecret: isInput && review.isSecret,
         commandText: isCommand ? review.commandText : null,
+        stageName: stageName.length > 0 ? stageName : null,
       };
     }),
   };

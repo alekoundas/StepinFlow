@@ -63,6 +63,8 @@ const glyphOf = (kind: RecordedActionKindEnum): string => {
       return "✓";
     case RecordedActionKindEnum.SUBSTITUTE:
       return "I";
+    case RecordedActionKindEnum.STAGE:
+      return "#";
     default:
       return "K";
   }

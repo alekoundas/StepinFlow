@@ -34,6 +34,7 @@ import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-impo
 import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
 import type { RecordingDraftRevisionDto } from "@/shared/models/recording-draft-revision-dto";
+import type { ProposedCheckDropDto } from "@/shared/models/proposed-check-drop-dto";
 import type { FlowScriptPreviewDto } from "@/shared/models/flow-script-preview-dto";
 import type { FlowScriptExportFolderDto, FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
 import type {
@@ -293,6 +294,8 @@ export const backendApiService = {
     },
     pause: () => call<boolean>("Recording.pause"),
     resume: () => call<boolean>("Recording.resume"),
+    // The bar's Stage button, as its key: where a stage begins, for Review to name.
+    markStage: () => call<boolean>("Recording.markStage"),
     // Returns at once. The recording is then worked through in the background: RECORDING_PROGRESS
     // says how far, then READY, and getResult has it. Stopped already, it is left as it is.
     stop: () => call<boolean>("Recording.stop"),
@@ -314,6 +317,9 @@ export const backendApiService = {
     generateDraft: (flowId: number) => call<boolean>("Recording.generateDraft", flowId),
     // The Check page's "Ask for changes", followed the same way.
     reviseDraft: (dto: RecordingDraftRevisionDto) => call<boolean>("Recording.reviseDraft", dto),
+    // A check the model added, out of the flow; what its Success branch held takes its place.
+    dropProposedCheck: (dto: ProposedCheckDropDto) =>
+      call<FlowGenerationResultDto>("Recording.dropProposedCheck", dto),
     getGeneratedDraft: () => callNullable<FlowGenerationResultDto>("Recording.getGeneratedDraft"),
     // Saves nothing.
     cancelDraftGeneration: () => call<boolean>("Recording.cancelDraftGeneration"),

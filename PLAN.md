@@ -140,36 +140,25 @@ where the application has one, and from the local model looking at the screensho
 changed, and it reaches the model as notes in the script it already reads.
 
 Built 2026-10-30: every press screenshot read whole by OCR after Stop, what changed from one press
-to the next, those changes as `screen:` notes in the draft the model shapes, and an answer refused
-when it adds, drops or reorders a recorded action (`PROJECT.md` §6). Each item below adds to the
-notes.
+to the next, the window's title as a page boundary, what each press landed on as its application
+told Windows' UI Automation, and - as a recording goes to a model - the local model naming each
+click nothing else named, from its cutout, and describing in a sentence every screen where a page
+began, from its screenshot. All of it reaches the model as `screen:` notes in the draft it shapes,
+and an answer is refused when it adds, drops or reorders a recorded action (`PROJECT.md` §6). Each
+item below adds to the notes.
 
-- [ ] **The window title as a page boundary.** Recorded on every action and read by nothing; for a
-      browser it is the page's title.
-- [ ] **What the click hit, from Windows.** At each press, UI Automation's element under the cursor:
-      its role - button, link, text field, checkbox - its name, whether it is enabled or ticked,
-      and what it sits in: the dialog, the form, the page. Read at the press, before the screen
-      changes, and off the hook's thread. For names and structure only: execution stays
-      image-based, which is what lets a flow drive a game, and a game, drawing its own pixels,
-      tells UI Automation nothing - OCR and the model stand in there. Chromium exposes web pages
-      through it by default since Chrome 138. A port in `Core` with a Windows adapter; macOS and
-      Linux (AT-SPI) each want their own.
-- [ ] **A click on something with no words is named by the local model**, from its cutout, when
-      neither OCR nor UI Automation named it.
-- [ ] **The screen described where the page changed**, by the local model looking at the
-      screenshot: one sentence, only at the boundaries the comparison and the title found, so a
-      handful of calls a recording rather than one a step. From the picture, not from the OCR
-      text: given only the text, the model made up what the screen was for.
-- [ ] **Checks proposed from what appeared.** After "Add to cart" the button reads "Remove": the
-      answer may add a Wait For Text for words that appeared after a click, each marked as
-      proposed, and Check lets the tester keep or drop it. That is what turns a replay into a test.
-- [ ] **The tester names a stage while recording.** A hotkey on the recording bar adds a stage
-      marker with a few typed words - "Delete customer" - and Review offers to name each page the
-      comparison found. What the tester is testing is the one thing no model can work out.
-- [ ] **What is always on screen, learned from history.** Text in nearly every screenshot of a main
-      area, across its recordings and executions, is its menus and headers and stays out of the
-      notes. Counted over history, because one recording of one scenario has too few screenshots
-      to count across.
+Built 2026-10-31: the screen the recording stopped on, read like a press's, so what the last click
+did shows; and a QA test's answer adding a Wait For Text for words that appeared after a click. The
+checks it added are told from the draft's in code, one for words no screenshot showed is refused,
+and Check keeps or drops each, a dropped one leaving what its Success branch held in its place
+(`PROJECT.md` §6).
+
+Built 2026-10-31: the tester names the stages. F8, or Stage on the recording bar, marks where one
+begins, and Review asks for its name - typing on the bar would take the keyboard from the
+application, and the click back would be recorded - and offers a stage at every new page the
+comparison found. A named stage is a stage marker over the next search, and an answer that moves,
+renames or drops one is refused (`PROJECT.md` §6).
+
 - [ ] **The cloud payload is shown before it is sent**, with the screen text in it marked: the
       notes carry what OCR, UI Automation and the model read off the screen, and reach a cloud
       model only through the screen data gate.

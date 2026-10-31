@@ -13,6 +13,7 @@ using Core.Models.Dtos;
 using Core.Ports;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing;
 using System.Threading.Channels;
 
 namespace Business.Recording.Session
@@ -27,6 +28,10 @@ namespace Business.Recording.Session
     /// press takes the newest from before it, picked at the hook, so its screenshot shows the
     /// screen the tester decided on rather than what the press changed. Encoding happens on the
     /// drain side, never in the hook handler, which must return at once.
+    ///
+    /// Every press is also asked of its application, through the system's accessibility interface,
+    /// what it landed on - a button, a link, a text field, with its name - at once and off the drain,
+    /// and the stop waits a moment for the last answer.
     ///
     /// The recording bar's hotkeys are read at the hook before anything else sees the input, so
     /// pressing one is never recorded, whatever window is in front.
@@ -61,6 +66,13 @@ namespace Business.Recording.Session
         // What a stopped recording is worked through, in order.
         private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS, RecordingStageEnum.GROUPING_CLICKS, RecordingStageEnum.READING_SCREENS];
 
+        // Long enough for the last press's question to an application to come back, and no longer:
+        // a busy application costs the review what it would have said, never the review.
+        private static readonly TimeSpan PRESSED_ELEMENT_WAIT = TimeSpan.FromSeconds(3);
+
+        // Says nothing a window's title does not: what an application that draws its own pixels answers with.
+        private static readonly HashSet<string> UNSAID_ROLES = ["", "window", "pane", "title bar"];
+
         private readonly IInputRecordService _inputRecordService;
         private readonly IScreenshotService _screenshotService;
         private readonly IAppSettingService _appSettingService;
@@ -70,6 +82,7 @@ namespace Business.Recording.Session
         private readonly IClickedElementFinder _clickedElementFinder;
         private readonly IClickedElementGrouper _clickedElementGrouper;
         private readonly IRecordedScreenReader _recordedScreenReader;
+        private readonly IAccessibleElementService _accessibleElementService;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
 
@@ -80,6 +93,12 @@ namespace Business.Recording.Session
         // The bar, a hotkey and the page can all stop a recording, at the same moment.
         private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
         private readonly Lock _progressLock = new Lock();
+        private readonly Lock _lookupsLock = new Lock();
+
+        // Each press's question to its application, and which recording asked: one that answers
+        // after the next recording began is not that recording's.
+        private readonly List<Task> _lookups = new List<Task>();
+        private int _recordingNumber;
 
         // The gestures this recording holds back, from the settings when it began.
         private IReadOnlyList<PressGesture> _gestures = [];
@@ -102,6 +121,7 @@ namespace Business.Recording.Session
             IClickedElementFinder clickedElementFinder,
             IClickedElementGrouper clickedElementGrouper,
             IRecordedScreenReader recordedScreenReader,
+            IAccessibleElementService accessibleElementService,
             IDbContextFactory<AppDbContext> dbContextFactory,
             TimeProvider timeProvider)
         {
@@ -114,6 +134,7 @@ namespace Business.Recording.Session
             _clickedElementFinder = clickedElementFinder;
             _clickedElementGrouper = clickedElementGrouper;
             _recordedScreenReader = recordedScreenReader;
+            _accessibleElementService = accessibleElementService;
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
 
@@ -174,6 +195,23 @@ namespace Business.Recording.Session
             _ = SendProgressAsync();
         }
 
+        // Nothing is typed for it while recording: the bar never takes the keyboard from the
+        // application, and a click back into it would be recorded. Review asks for the name.
+        public void MarkStage()
+        {
+            Channel<PendingInput>? queue = _queue;
+            if (queue == null)
+                return;
+
+            RecordedInput stage = new RecordedInput
+            {
+                Type = RecordedInputTypeEnum.STAGE,
+                CreatedOn = _timeProvider.GetLocalNow().DateTime,
+            };
+
+            queue.Writer.TryWrite(new PendingInput(stage, null));
+        }
+
         public async Task<IReadOnlyList<RecordedInput>> StopAsync(CancellationToken ct = default)
         {
             await _gate.WaitAsync(ct);
@@ -219,6 +257,8 @@ namespace Business.Recording.Session
                 ClickedElements = _cache.ClickedElements.ToList(),
                 ClickGroups = _cache.ClickGroups.ToList(),
                 ScreenChanges = _cache.ScreenChanges.ToList(),
+                ScreenLines = _cache.ScreenLines.ToList(),
+                PressedElements = PressedElementsOf(_cache.Actions),
             };
         }
 
@@ -292,12 +332,18 @@ namespace Business.Recording.Session
             _cache.Clear();
             _filter.Reset();
             _filter.ElectronProcessId = electronProcessId;
+
+            Interlocked.Increment(ref _recordingNumber);
+            lock (_lookupsLock)
+                _lookups.Clear();
             _hotkeys.Reset();
 
             string pauseKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyPause, ct);
             string stopKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyStop, ct);
+            string stageKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyStage, ct);
             _hotkeys.Bind(RecordingHotkeyEnum.PAUSE, pauseKeys);
             _hotkeys.Bind(RecordingHotkeyEnum.STOP, stopKeys);
+            _hotkeys.Bind(RecordingHotkeyEnum.STAGE, stageKeys);
 
             _gestures = await GesturesAsync(ct);
             _hotkeys.BindGestures(_gestures);
@@ -382,6 +428,10 @@ namespace Business.Recording.Session
 
             await StopLoopsAsync();
 
+            // What the last action did shows on the screen it was left on. Taken while the bar was
+            // still up, so StepinFlow's own window is not over it.
+            _cache.LastScreenshot = _cache.GetRecentScreenshotBefore(_timeProvider.GetLocalNow().DateTime);
+
             // The inputs and the screenshots per press stay for the review.
             _filter.Reset();
             _hotkeys.Reset();
@@ -435,6 +485,10 @@ namespace Business.Recording.Session
                 case RecordingHotkeyEnum.STOP:
                     _ = Task.Run(StopFromHotkeyAsync);
                     break;
+
+                case RecordingHotkeyEnum.STAGE:
+                    MarkStage();
+                    break;
             }
         }
 
@@ -467,13 +521,43 @@ namespace Business.Recording.Session
             }
         }
 
-        // Only a press carries a screenshot.
+        // Only a press carries a screenshot, and only a press is asked what it landed on.
         private void Handle(PendingInput pending)
         {
             int index = _cache.AddInput(pending.Input);
 
             if (pending.Screenshot != null)
                 KeepPress(index, pending.Input, pending.Screenshot);
+
+            if (pending.Input.Type == RecordedInputTypeEnum.BUTTON_DOWN)
+                LookUpPressedElement(index, pending.Input);
+        }
+
+        // Asked at once, before the screen changes, and off the drain, which every input after this
+        // one waits on: an application asked about its elements can take its time.
+        private void LookUpPressedElement(int index, RecordedInput press)
+        {
+            Point point = new Point(press.PhysicalX, press.PhysicalY);
+            int recordingNumber = Volatile.Read(ref _recordingNumber);
+
+            Task lookup = Task.Run(() =>
+            {
+                try
+                {
+                    AccessibleElement? element = _accessibleElementService.ElementAt(point);
+                    bool isSaid = element != null && !UNSAID_ROLES.Contains(element.Role);
+
+                    if (isSaid && recordingNumber == Volatile.Read(ref _recordingNumber))
+                        _cache.AddPressedElement(index, element!);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[Recording] Could not ask what a press landed on: {ex.Message}");
+                }
+            });
+
+            lock (_lookupsLock)
+                _lookups.Add(lookup);
         }
 
         // The whole main area, which Review shows and the draft cuts its templates from. A failed
@@ -614,6 +698,7 @@ namespace Business.Recording.Session
         {
             try
             {
+                await AwaitPressedElementsAsync(ct);
                 await FindElementsAsync(actions, ct);
                 GroupClicks(actions, ct);
                 await ReadScreensAsync(actions, ct);
@@ -627,6 +712,49 @@ namespace Business.Recording.Session
             _cache.Stage = null;
             _cache.State = RecordingStateEnum.READY;
             await SendProgressAsync();
+        }
+
+        // The last press's question may still be on its way.
+        private async Task AwaitPressedElementsAsync(CancellationToken ct)
+        {
+            Task[] lookups;
+            lock (_lookupsLock)
+                lookups = _lookups.ToArray();
+
+            try
+            {
+                await Task.WhenAll(lookups).WaitAsync(PRESSED_ELEMENT_WAIT, _timeProvider, ct);
+            }
+            catch (TimeoutException)
+            {
+                Console.Error.WriteLine("[Recording] An application took too long to say what a press landed on.");
+            }
+        }
+
+        // By the action each press became, its name and what it sits in as they read: document "Swag Labs".
+        private List<PressedElementDto> PressedElementsOf(IReadOnlyList<RecordedActionDto> actions)
+        {
+            List<PressedElementDto> elements = new List<PressedElementDto>();
+
+            foreach (RecordedActionDto action in actions.Where(x => x.ScreenshotIndex != null))
+            {
+                AccessibleElement? element = _cache.GetPressedElement(action.ScreenshotIndex!.Value);
+                if (element == null)
+                    continue;
+
+                elements.Add(new PressedElementDto
+                {
+                    ActionIndex = action.Index,
+                    Role = element.Role,
+                    Name = element.Name,
+                    IsEnabled = element.IsEnabled,
+                    IsChecked = element.IsChecked,
+                    IsPassword = element.IsPassword,
+                    Inside = element.Inside.Select(x => $"{x.Role} \"{x.Name}\"").ToList(),
+                });
+            }
+
+            return elements;
         }
 
         private async Task FindElementsAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
@@ -668,15 +796,21 @@ namespace Business.Recording.Session
 
             try
             {
-                _cache.ScreenChanges = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, (done, total) =>
+                RecordedScreens screens = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, _cache.LastScreenshot?.Image, (done, total) =>
                 {
                     ReportStage(RecordingStageEnum.READING_SCREENS, done, total);
                 }, ct);
+
+                _cache.ScreenChanges = screens.Changes;
+                _cache.ScreenLines = screens.Lines;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Fail("Could not read the text on the screens.", ex);
             }
+
+            // Kept whole rather than encoded as a press is, so it goes once it is read.
+            _cache.LastScreenshot = null;
         }
 
         private void ReportStage(RecordingStageEnum stage, int done, int? total)

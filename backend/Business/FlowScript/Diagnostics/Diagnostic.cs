@@ -61,8 +61,9 @@ namespace Business.FlowScript.Diagnostics
         WRONG_VALUE_CHANGED,
 
         // A model's answer for a recording: a click, drag, scroll, typed text or key it added,
-        // dropped or moved.
+        // dropped or moved, and a check it added for words no screenshot of the recording showed.
         ACTIONS_CHANGED,
+        CHECK_TEXT_UNSEEN,
     }
 
     /// <summary>

@@ -11,7 +11,16 @@ namespace Core.Models.Dtos
         /// <summary>The clicks that hit the same picture. Empty when none did, or grouping failed.</summary>
         public List<ClickGroupDto> ClickGroups { get; set; } = [];
 
-        /// <summary>What changed on the screen between one press and the next. Empty with fewer than two presses, or when reading failed.</summary>
+        /// <summary>What changed on the screen between one press and the next, and from the last to the screen the recording stopped on. Empty when reading failed.</summary>
         public List<ScreenChangeDto> ScreenChanges { get; set; } = [];
+
+        /// <summary>Every line OCR read on the main area, each once, in the order first read. Screen text.</summary>
+        public List<string> ScreenLines { get; set; } = [];
+
+        /// <summary>What each press landed on, as its application told Windows. Only presses an application answered for.</summary>
+        public List<PressedElementDto> PressedElements { get; set; } = [];
+
+        /// <summary>What the local model saw at the presses worth a look. Filled only as the recording goes to a model.</summary>
+        public List<ScreenDescriptionDto> ScreenDescriptions { get; set; } = [];
     }
 }

@@ -9,6 +9,7 @@ using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
+using Business.Recording.Screens;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -25,14 +26,18 @@ namespace Business.Recording.Generation
     /// new rows are written: the import replaces every row, and a step replaced loses its last good
     /// screenshots and its link to the executions it was in.
     ///
-    /// With a model, the plain draft is what it is given, as a script with the description and
-    /// notes over its searches of what the screen said, and its answer is imported in place of it.
-    /// An answer that adds, drops or moves a recorded action is refused, and the notes never reach
-    /// the saved flow. When no answer reads cleanly, or the model cannot be reached, the plain
-    /// draft is saved instead and says why, so the tester always has a flow.
+    /// With a model, the local model first looks at the screens worth a look - where pages began,
+    /// clicks nothing named - and the plain draft is what the model is given, as a script with the
+    /// description and notes over its searches of what the screen said, and its answer is imported
+    /// in place of it.
+    /// An answer that adds, drops or moves a recorded action is refused, and so is a check it adds
+    /// for words no screenshot showed; the notes never reach the saved flow. When no answer reads
+    /// cleanly, or the model cannot be reached, the plain draft is saved instead and says why, so
+    /// the tester always has a flow.
     ///
-    /// On the Check page the tester can ask for changes: the flow as saved goes to the model with
-    /// what they wrote, and an answer that never reads cleanly leaves the flow as it was.
+    /// On the Check page the tester keeps or drops each check the model added, and can ask for
+    /// changes: the flow as saved goes to the model with what they wrote, and an answer that never
+    /// reads cleanly leaves the flow as it was.
     /// </summary>
     public sealed class FlowGenerationService : IFlowGenerationService
     {
@@ -44,6 +49,7 @@ namespace Business.Recording.Generation
         private readonly DataService _dataService;
         private readonly IScriptRevisionService _revisionService;
         private readonly IAiProviderService _providerService;
+        private readonly IRecordingScreenDescriber _screenDescriber;
 
         public FlowGenerationService(
             IFlowScriptExporter exporter,
@@ -53,7 +59,8 @@ namespace Business.Recording.Generation
             IScanner scanner,
             DataService dataService,
             IScriptRevisionService revisionService,
-            IAiProviderService providerService)
+            IAiProviderService providerService,
+            IRecordingScreenDescriber screenDescriber)
         {
             _exporter = exporter;
             _importer = importer;
@@ -63,6 +70,7 @@ namespace Business.Recording.Generation
             _dataService = dataService;
             _revisionService = revisionService;
             _providerService = providerService;
+            _screenDescriber = screenDescriber;
         }
 
 
@@ -152,20 +160,37 @@ namespace Business.Recording.Generation
             bool isReadTextSent = await _providerService.CanSendScreenDataAsync(ct);
             string model = await _providerService.GetModelAsync(ct);
 
-            FlowGenerationProgressDto writing = new FlowGenerationProgressDto
+            FlowGenerationProgressDto looking = new FlowGenerationProgressDto
             {
                 State = FlowGenerationStateEnum.GENERATING,
-                Stage = FlowGenerationStageEnum.WRITING_DRAFT,
+                Stage = FlowGenerationStageEnum.LOOKING_AT_SCREENS,
                 Model = model,
                 IsReadTextSent = isReadTextSent,
                 AttemptCount = ScriptRevisionService.ATTEMPT_COUNT,
             };
-            onProgress?.Invoke(writing);
+            onProgress?.Invoke(looking);
 
-            // Withheld, the steps get placeholder names, and the model names them from the description.
-            RecordingResultDto sent = recording;
-            if (!isReadTextSent)
+            // Withheld, the steps get placeholder names, and the model names them from the
+            // description - and what the local model would say of the screen is withheld as well,
+            // so it is not asked.
+            RecordingResultDto sent;
+            if (isReadTextSent)
+            {
+                IReadOnlyList<ScreenDescriptionDto> seen = await _screenDescriber.DescribeAsync(recording, reviewed, screenAt, (done, total) =>
+                {
+                    looking = Looking(looking, done, total);
+                    onProgress?.Invoke(looking);
+                }, ct);
+
+                sent = WithDescriptions(recording, seen);
+            }
+            else
+            {
                 sent = WithoutReadText(recording);
+            }
+
+            FlowGenerationProgressDto writing = Next(looking, FlowGenerationStageEnum.WRITING_DRAFT, 0, []);
+            onProgress?.Invoke(writing);
 
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
             bool isQaTest = flow.Flow.IsQaTest;
@@ -185,8 +210,14 @@ namespace Business.Recording.Generation
             if (!isReadTextSent)
                 instruction += $"\n\n{AiPromptHelper.ShapeRecordingWithoutReadText}";
 
+            // Words are held to the screen only where the model was shown them: a refusal would
+            // tell one that was not what the screen did not say.
             List<string> wrongValues = WrongValuesOf(recording, reviewed);
-            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> checkAnswer = answer => CheckAnswer(sentDraft, answer, isQaTest, wrongValues);
+            List<string> screenLines = recording.ScreenLines;
+            if (!isReadTextSent)
+                screenLines = [];
+
+            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> checkAnswer = answer => CheckAnswer(sentDraft, answer, isQaTest, wrongValues, screenLines);
 
             ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, checkAnswer, (attempt, refused) =>
             {
@@ -204,29 +235,35 @@ namespace Business.Recording.Generation
                 Request = revision.Request,
             };
 
-            // The notes are screen text, and the flow is written into a repository.
-            if (revision.Script != null)
-            {
-                result.IsModelDraft = true;
-                result.Draft = ScreenNoteWriter.WithoutNotes(script);
-                result.Import = await _importer.ImportTextAsync(ScreenNoteWriter.WithoutNotes(revision.Script), templates, ct);
-            }
-            else
+            if (revision.Script == null)
             {
                 // Built again from the recording itself, so its names have the text read under each click.
                 result.Reason = revision.ErrorMessage ?? $"No answer from the model read cleanly in {revision.Attempts} attempts.";
                 result.Refused = FlowScriptImporter.ToDtos(revision.Refused, DiagnosticSeverityEnum.ERROR);
                 FlowScriptSchema reloaded = await _exporter.LoadAsync(flowId, ct);
                 result.Import = await ImportPlainAsync(reloaded, recording, reviewed, screenAt, ct);
+
+                await ReadSavedAsync(result, ct);
+                return result;
             }
 
-            await ReadSavedAsync(result, ct);
+            // The notes are screen text, and the flow is written into a repository.
+            result.IsModelDraft = true;
+            result.Draft = ScreenNoteWriter.WithoutNotes(script);
+            result.Import = await _importer.ImportTextAsync(ScreenNoteWriter.WithoutNotes(revision.Script), templates, ct);
+
+            FlowScriptSchema? saved = await ReadSavedAsync(result, ct);
+            if (saved != null)
+                result.ProposedChecks = ProposedChecks.ToDtos(ProposedChecks.Find(sentDraft, saved, []), result.Script, recording.ScreenLines);
+
             return result;
         }
 
         public async Task<FlowGenerationResultDto> ReviseAsync(
             int flowId,
             string changes,
+            IReadOnlyCollection<string> undecided,
+            IReadOnlyList<string> screenLines,
             Action<FlowGenerationProgressDto>? onProgress,
             CancellationToken ct = default)
         {
@@ -279,8 +316,43 @@ namespace Business.Recording.Generation
             result.IsModelDraft = true;
             result.Import = await _importer.ImportTextAsync(revision.Script, templates, ct);
 
-            await ReadSavedAsync(result, ct);
+            FlowScriptSchema? saved = await ReadSavedAsync(result, ct);
+            if (saved != null)
+                result.ProposedChecks = ProposedChecks.ToDtos(ProposedChecks.Find(flow, saved, undecided), result.Script, screenLines);
+
             return result;
+        }
+
+        public async Task<ResultDto<FlowGenerationResultDto>> DropCheckAsync(
+            ProposedCheckDropDto drop,
+            IReadOnlyList<string> screenLines,
+            CancellationToken ct = default)
+        {
+            FlowScriptSchema flow = await _exporter.LoadAsync(drop.FlowId, ct);
+            Dictionary<string, byte[]> templates = TemplatesOf(flow);
+
+            string? refused = ProposedChecks.Drop(flow, drop.Name);
+            if (refused != null)
+                return ResultDto<FlowGenerationResultDto>.Failure(refused);
+
+            FlowGenerationResultDto result = new FlowGenerationResultDto { IsModelDraft = true };
+            result.Import = await _importer.ImportTextAsync(_printer.Write(flow), templates, ct);
+            if (!result.Import.IsSuccess)
+                return ResultDto<FlowGenerationResultDto>.Failure($"The flow could not be saved without \"{drop.Name}\", so it is as it was.");
+
+            FlowScriptSchema? saved = await ReadSavedAsync(result, ct);
+            if (saved != null)
+            {
+                List<FlowStep> undecided = drop.Undecided
+                    .Where(x => !string.Equals(x, drop.Name, StringComparison.OrdinalIgnoreCase))
+                    .Select(x => ProposedChecks.Named(saved, x))
+                    .OfType<FlowStep>()
+                    .ToList();
+
+                result.ProposedChecks = ProposedChecks.ToDtos(undecided, result.Script, screenLines);
+            }
+
+            return ResultDto<FlowGenerationResultDto>.Success(result);
         }
 
 
@@ -304,9 +376,12 @@ namespace Business.Recording.Generation
         }
 
         // What a model may not do to any recording, and what makes an answer a QA test.
-        private static List<Diagnostic> CheckAnswer(FlowScriptSchema sentDraft, FlowScriptSchema answer, bool isQaTest, List<string> wrongValues)
+        private static List<Diagnostic> CheckAnswer(FlowScriptSchema sentDraft, FlowScriptSchema answer, bool isQaTest, List<string> wrongValues, List<string> screenLines)
         {
             List<Diagnostic> refused = RecordedActionsCheck.Check(sentDraft, answer);
+            if (screenLines.Count > 0)
+                refused.AddRange(ProposedChecks.Unseen(ProposedChecks.Find(sentDraft, answer, []), screenLines));
+
             if (isQaTest)
                 refused.AddRange(CheckQaTest(answer, wrongValues));
 
@@ -351,10 +426,11 @@ namespace Business.Recording.Generation
         }
 
         // The flow as saved, read back from the database rather than taken from what was sent to it.
-        private async Task ReadSavedAsync(FlowGenerationResultDto result, CancellationToken ct)
+        // Null when nothing was saved.
+        private async Task<FlowScriptSchema?> ReadSavedAsync(FlowGenerationResultDto result, CancellationToken ct)
         {
             if (!result.Import.IsSuccess)
-                return;
+                return null;
 
             result.Script = await _exporter.RenderAsync(result.Import.FlowId, ct);
             FlowScriptSchema saved = _scanner.Read(result.Script);
@@ -366,6 +442,8 @@ namespace Business.Recording.Generation
                 .Select(x => x.FlowTemplate.Name)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
+
+            return saved;
         }
 
         // By name, as an import reads them: the ones cut from the recording and the ones the flow had.
@@ -382,7 +460,9 @@ namespace Business.Recording.Generation
             return templates;
         }
 
-        // The same recording with nothing read off the screen. How much of it changed is a number, and stays.
+        // The same recording with nothing read off the screen: no text under a click, no lines, no
+        // window title, no name Windows had. How much changed, that a title changed, and what kind of
+        // element was pressed in what state are not screen text, and stay.
         private static RecordingResultDto WithoutReadText(RecordingResultDto recording)
         {
             List<ClickedElementDto> elements = recording.ClickedElements
@@ -406,6 +486,18 @@ namespace Business.Recording.Generation
                     NextActionIndex = x.NextActionIndex,
                     ChangedShare = x.ChangedShare,
                     IsNewScreen = x.IsNewScreen,
+                    IsNewTitle = x.IsNewTitle,
+                })
+                .ToList();
+
+            List<PressedElementDto> pressed = recording.PressedElements
+                .Select(x => new PressedElementDto
+                {
+                    ActionIndex = x.ActionIndex,
+                    Role = x.Role,
+                    IsEnabled = x.IsEnabled,
+                    IsChecked = x.IsChecked,
+                    IsPassword = x.IsPassword,
                 })
                 .ToList();
 
@@ -415,6 +507,22 @@ namespace Business.Recording.Generation
                 ClickedElements = elements,
                 ClickGroups = recording.ClickGroups,
                 ScreenChanges = changes,
+                PressedElements = pressed,
+            };
+        }
+
+        // The same recording with what the local model saw at it.
+        private static RecordingResultDto WithDescriptions(RecordingResultDto recording, IReadOnlyList<ScreenDescriptionDto> seen)
+        {
+            return new RecordingResultDto
+            {
+                Actions = recording.Actions,
+                ClickedElements = recording.ClickedElements,
+                ClickGroups = recording.ClickGroups,
+                ScreenChanges = recording.ScreenChanges,
+                ScreenLines = recording.ScreenLines,
+                PressedElements = recording.PressedElements,
+                ScreenDescriptions = seen.ToList(),
             };
         }
 
@@ -428,10 +536,21 @@ namespace Business.Recording.Generation
                 Model = last.Model,
                 IsReadTextSent = last.IsReadTextSent,
                 ScriptLength = last.ScriptLength,
+                LookedAt = last.LookedAt,
+                ToLookAt = last.ToLookAt,
                 Attempt = attempt,
                 AttemptCount = last.AttemptCount,
                 Refused = FlowScriptImporter.ToDtos(refused, DiagnosticSeverityEnum.ERROR),
             };
+        }
+
+        private static FlowGenerationProgressDto Looking(FlowGenerationProgressDto last, int done, int total)
+        {
+            FlowGenerationProgressDto looking = Next(last, FlowGenerationStageEnum.LOOKING_AT_SCREENS, 0, []);
+            looking.LookedAt = done;
+            looking.ToLookAt = total;
+
+            return looking;
         }
     }
 }

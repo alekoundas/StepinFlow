@@ -49,6 +49,7 @@ using Platform.Shared.Vision;
 
 using Platform.Windows.Input;
 using Platform.Windows.Native;
+using Platform.Windows.Accessibility;
 using Platform.Windows.Ocr;
 using Platform.Windows.Screen;
 using Platform.Windows.SystemActions;
@@ -89,6 +90,7 @@ namespace App
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IProcessService, ProcessService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
+            builder.Services.AddSingleton<IAccessibleElementService, AccessibleElementService>();
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
 
             // Services
@@ -100,6 +102,7 @@ namespace App
             builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
             builder.Services.AddSingleton<IClickedElementGrouper, ClickedElementGrouper>();
             builder.Services.AddSingleton<IRecordedScreenReader, RecordedScreenReader>();
+            builder.Services.AddSingleton<IRecordingScreenDescriber, RecordingScreenDescriber>();
             builder.Services.AddSingleton<IRecordingDraftBuilder, RecordingDraftBuilder>();
             builder.Services.AddSingleton<IFlowGenerationService, FlowGenerationService>();
             builder.Services.AddSingleton<IFlowGenerationSessionService, FlowGenerationSessionService>();
@@ -283,6 +286,8 @@ namespace App
             builder.Services.AddTransient<InsertRecordingDraftHandler>();
             builder.Services.AddTransient<GenerateRecordingDraftHandler>();
             builder.Services.AddTransient<ReviseRecordingDraftHandler>();
+            builder.Services.AddTransient<DropProposedCheckHandler>();
+            builder.Services.AddTransient<MarkRecordingStageHandler>();
             builder.Services.AddTransient<GetGeneratedRecordingDraftHandler>();
             builder.Services.AddTransient<CancelRecordingDraftGenerationHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();

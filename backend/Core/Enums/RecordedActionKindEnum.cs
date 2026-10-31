@@ -13,5 +13,6 @@ namespace Core.Enums
         PAUSE,
         CHECK,          // A press marking something to check at that spot, the gesture's
         SUBSTITUTE,     // A press marking a step that is not a click, the gesture's
+        STAGE,          // Where the tester said a stage of the test begins, the hotkey's
     }
 }

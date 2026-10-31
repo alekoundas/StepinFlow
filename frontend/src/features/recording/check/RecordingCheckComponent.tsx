@@ -17,6 +17,7 @@ import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation
 import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
 import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
+import type { ProposedCheckDto } from "@/shared/models/proposed-check-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import ScriptMergeComponent from "@/shared/components/script-view/ScriptMergeComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
@@ -51,6 +52,12 @@ interface Props {
   revision: FlowGenerationProgressDto | null;
   revisionProblem: RevisionProblem | null;
   askUnavailable: string | null;
+  kept: ProposedCheckDto[];
+  dropped: string[];
+  dropping: string | null;
+  dropProblem: string | null;
+  onKeep: (name: string) => void;
+  onDrop: (name: string) => void;
   onAsk: (changes: string) => void;
   onCancelAsk: () => void;
   onDiscard: () => void;
@@ -59,15 +66,22 @@ interface Props {
 
 /**
  * What was saved, read before it ever executes: the script with what the model changed marked, the
- * tree, the model's notes, and what the import and the validator said about it. "Ask for changes"
- * sends the script back with what the tester wrote, and the answer is checked the way the first one
- * was; one that never reads cleanly leaves the flow as it was.
+ * tree, the model's notes, the checks it added to keep or drop, and what the import and the
+ * validator said about it. "Ask for changes" sends the script back with what the tester wrote, and
+ * the answer is checked the way the first one was; one that never reads cleanly leaves the flow as
+ * it was.
  */
 export default function RecordingCheckComponent({
   result,
   revision,
   revisionProblem,
   askUnavailable,
+  kept,
+  dropped,
+  dropping,
+  dropProblem,
+  onKeep,
+  onDrop,
   onAsk,
   onCancelAsk,
   onDiscard,
@@ -78,6 +92,8 @@ export default function RecordingCheckComponent({
   const warnings = issues.filter((x) => x.severity === ValidationSeverityEnum.WARNING).length;
   const notes = issues.filter((x) => x.severity === ValidationSeverityEnum.INFO).length;
   const isAsking = revision !== null;
+  const undecided = result.proposedChecks.length;
+  const hasProposed = undecided > 0 || kept.length > 0 || dropped.length > 0;
 
   let issueCounts = `${plural(errors, "error")} · ${plural(warnings, "warning")}`;
   if (notes > 0) issueCounts += ` · ${plural(notes, "note")}`;
@@ -124,6 +140,13 @@ export default function RecordingCheckComponent({
               severity={issueSeverity}
               rounded
             />
+            {undecided > 0 && (
+              <Tag
+                value={`${plural(undecided, "check")} to keep or drop`}
+                severity="info"
+                rounded
+              />
+            )}
             <Tag
               value="Never executed"
               severity="secondary"
@@ -158,6 +181,19 @@ export default function RecordingCheckComponent({
           style={{ flex: "1 1 320px", minWidth: 0 }}
         >
           <WhatWasDoneComponent result={result} />
+
+          {hasProposed && (
+            <ProposedChecksComponent
+              proposed={result.proposedChecks}
+              kept={kept}
+              dropped={dropped}
+              dropping={dropping}
+              problem={dropProblem}
+              disabled={isAsking}
+              onKeep={onKeep}
+              onDrop={onDrop}
+            />
+          )}
 
           {issues.length > 0 && <IssuesComponent issues={issues} />}
 
@@ -322,6 +358,162 @@ function WhatWasDoneComponent({ result }: { result: FlowGenerationResultDto }) {
       >
         Every template is one cut from your recording, and every input is one you typed.
       </p>
+    </section>
+  );
+}
+
+// The checks the model added: in the flow already, so keeping one only stops offering it.
+function ProposedChecksComponent({
+  proposed,
+  kept,
+  dropped,
+  dropping,
+  problem,
+  disabled,
+  onKeep,
+  onDrop,
+}: {
+  proposed: ProposedCheckDto[];
+  kept: ProposedCheckDto[];
+  dropped: string[];
+  dropping: string | null;
+  problem: string | null;
+  disabled: boolean;
+  onKeep: (name: string) => void;
+  onDrop: (name: string) => void;
+}) {
+  const isBusy = disabled || dropping !== null;
+
+  return (
+    <section
+      aria-labelledby="proposed-heading"
+      className="flex flex-column gap-3 p-3 border-1 border-round-xl"
+      style={CARD}
+    >
+      <div className="flex flex-column gap-1">
+        <h3
+          id="proposed-heading"
+          className="m-0 text-base font-semibold"
+        >
+          Checks the model added
+        </h3>
+        <p
+          className="m-0 text-sm"
+          style={MUTED}
+        >
+          Each proves a click did what it was for, from words that appeared on the screen after it. They are in the flow
+          now. Drop one and the steps under it stay where it was.
+        </p>
+      </div>
+
+      {problem && (
+        <Message
+          severity="warn"
+          className="w-full justify-content-start"
+          text={problem}
+        />
+      )}
+
+      {proposed.length > 0 && (
+        <ul className="list-none m-0 p-0 flex flex-column gap-2">
+          {proposed.map((check) => (
+            <li
+              key={check.name}
+              className="flex flex-column gap-2 p-2 border-1 border-round-lg"
+              style={{ borderColor: "var(--surface-border)" }}
+            >
+              <div className="flex align-items-baseline justify-content-between gap-2">
+                <span className="font-medium">{check.name}</span>
+                {check.line > 0 && (
+                  <span
+                    className="text-xs flex-none"
+                    style={MUTED}
+                  >
+                    Line {check.line}
+                  </span>
+                )}
+              </div>
+              <code
+                className="text-xs"
+                style={{ ...MUTED, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {check.text}
+              </code>
+              {check.under && (
+                <span
+                  className="text-xs"
+                  style={MUTED}
+                >
+                  Under {check.under}
+                </span>
+              )}
+              {check.isReadOnScreen === false && (
+                <Message
+                  severity="warn"
+                  className="w-full justify-content-start"
+                  text="No screenshot of the recording showed these words, so it may never pass."
+                />
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  label="Keep"
+                  icon="pi pi-check"
+                  onClick={() => onKeep(check.name)}
+                  disabled={isBusy}
+                  size="small"
+                  severity="secondary"
+                  outlined
+                />
+                <Button
+                  type="button"
+                  label="Drop"
+                  icon="pi pi-trash"
+                  onClick={() => onDrop(check.name)}
+                  disabled={isBusy}
+                  loading={dropping === check.name}
+                  size="small"
+                  severity="danger"
+                  text
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {(kept.length > 0 || dropped.length > 0) && (
+        <ul
+          className="list-none m-0 p-0 flex flex-column gap-1 text-sm"
+          style={MUTED}
+        >
+          {kept.map((check) => (
+            <li
+              key={`kept-${check.name}`}
+              className="flex align-items-center gap-2"
+            >
+              <i
+                className="pi pi-check"
+                style={{ color: "var(--green-400)" }}
+                aria-hidden="true"
+              />
+              Kept {check.name}
+            </li>
+          ))}
+          {dropped.map((name) => (
+            <li
+              key={`dropped-${name}`}
+              className="flex align-items-center gap-2"
+            >
+              <i
+                className="pi pi-times"
+                aria-hidden="true"
+              />
+              Dropped {name}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

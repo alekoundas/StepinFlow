@@ -167,6 +167,7 @@ namespace Transport.Ipc
                     "Recording.start" => await Handler<StartRecordingHandler>().HandleAsync(Payload<RecordingStartDto>(request), ct),
                     "Recording.pause" => await Handler<PauseRecordingHandler>().HandleAsync(ct),
                     "Recording.resume" => await Handler<ResumeRecordingHandler>().HandleAsync(ct),
+                    "Recording.markStage" => await Handler<MarkRecordingStageHandler>().HandleAsync(ct),
                     "Recording.stop" => await Handler<StopRecordingHandler>().HandleAsync(ct),
                     "Recording.discard" => await Handler<DiscardRecordingHandler>().HandleAsync(Payload<RecordingDiscardDto>(request), ct),
                     "Recording.getResult" => await Handler<GetRecordingResultHandler>().HandleAsync(ct),
@@ -176,6 +177,7 @@ namespace Transport.Ipc
                     "Recording.insertDraft" => await Handler<InsertRecordingDraftHandler>().HandleAsync(Payload<RecordingDraftPositionDto>(request), ct),
                     "Recording.generateDraft" => await Handler<GenerateRecordingDraftHandler>().HandleAsync(Payload<int>(request), ct),
                     "Recording.reviseDraft" => await Handler<ReviseRecordingDraftHandler>().HandleAsync(Payload<RecordingDraftRevisionDto>(request), ct),
+                    "Recording.dropProposedCheck" => await Handler<DropProposedCheckHandler>().HandleAsync(Payload<ProposedCheckDropDto>(request), ct),
                     "Recording.getGeneratedDraft" =>await Handler<GetGeneratedRecordingDraftHandler>().HandleAsync(ct),
                     "Recording.cancelDraftGeneration" => await Handler<CancelRecordingDraftGenerationHandler>().HandleAsync(ct),
 

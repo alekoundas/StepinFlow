@@ -1,4 +1,5 @@
 import type { FlowScriptErrorDto, FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
+import type { ProposedCheckDto } from "@/shared/models/proposed-check-dto";
 
 /**
  * What a recording's draft saved, and what the Check page shows of it: the plain draft, the
@@ -16,6 +17,9 @@ export interface FlowGenerationResultDto {
 
   /** What the model says a tester should check. */
   notes: string[];
+
+  /** The checks the model added, for the tester to keep or drop. In the saved flow until dropped. */
+  proposedChecks: ProposedCheckDto[];
 
   /** Why the last answer was refused, when it was not saved because of it. */
   refused: FlowScriptErrorDto[];

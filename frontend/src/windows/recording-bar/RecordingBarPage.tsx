@@ -115,6 +115,7 @@ export default function RecordingBarPage() {
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
+  const stageKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STAGE)?.value;
 
   const ask = async (request: () => Promise<unknown>) => {
     setError(null);
@@ -138,6 +139,9 @@ export default function RecordingBarPage() {
     void ask(() => (isPaused ? backendApiService.Recording.resume() : backendApiService.Recording.pause()));
 
   const stop = () => void ask(() => backendApiService.Recording.stop());
+
+  // The bar never takes focus, so the application keeps the keyboard and nothing is typed here.
+  const markStage = () => void ask(() => backendApiService.Recording.markStage());
 
   const discard = () => {
     if (!isConfirmingDiscard) {
@@ -243,6 +247,20 @@ export default function RecordingBarPage() {
               style={{ minWidth: "7.5rem" }}
             >
               {pauseKeys && <HotkeyComponent keys={pauseKeys} />}
+            </Button>
+
+            <Button
+              type="button"
+              icon="pi pi-flag"
+              label="Stage"
+              onClick={markStage}
+              disabled={isBusy || !isLive}
+              severity="secondary"
+              size="small"
+              className="gap-1"
+              aria-label="A stage of the test begins here. Review asks for its name."
+            >
+              {stageKeys && <HotkeyComponent keys={stageKeys} />}
             </Button>
 
             <Button

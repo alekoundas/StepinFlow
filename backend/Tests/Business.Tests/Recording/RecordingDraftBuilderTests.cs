@@ -135,6 +135,26 @@ namespace Business.Tests.Recording
             return ChildrenOf(schema, search).Single(x => x.FlowStepType == branch);
         }
 
+        // Marked while recording, and named in Review.
+        private RecordedActionDto Stage(string name, ReviewChoiceEnum choice = ReviewChoiceEnum.KEEP)
+        {
+            RecordedActionDto action = Act(new RecordedActionDto { Kind = RecordedActionKindEnum.STAGE });
+            _reviewed.Actions.Add(new ReviewedActionDto { ActionIndex = action.Index, Choice = choice, StageName = name });
+
+            return action;
+        }
+
+        // Named in Review at an action, where a new page began.
+        private void StageAt(RecordedActionDto action, string name)
+        {
+            _reviewed.Actions.Single(x => x.ActionIndex == action.Index).StageName = name;
+        }
+
+        private static List<string> RootsOf(FlowScriptSchema schema)
+        {
+            return ChildrenOf(schema, null).Select(x => x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER ? $"## {x.Name}" : x.Name).ToList();
+        }
+
         // ================================================================
         // A click
         // ================================================================
@@ -153,6 +173,33 @@ namespace Business.Tests.Recording
             List<FlowStep> success = ChildrenOf(schema, BranchOf(schema, search, FlowStepTypeEnum.SUCCESS));
             success.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepTypeEnum.CURSOR_CLICK]);
             success[0].FlowStepReference.ShouldBeSameAs(search);
+        }
+
+        // An icon has no words for OCR, and an application often names it all the same.
+        [Fact]
+        public void A_click_with_no_words_read_is_named_as_its_application_named_it_to_Windows()
+        {
+            RecordedActionDto cart = Click(400, 300, "");
+            RecordedActionDto menu = Click(500, 300, "Menu");
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = cart.Index, Role = "link", Name = "Shopping cart" });
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = menu.Index, Role = "button", Name = "Open Menu" });
+
+            FlowScriptSchema schema = Build();
+
+            schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Select(x => x.Name).ShouldBe(["Find Shopping cart", "Find Menu"]);
+        }
+
+        [Fact]
+        public void The_notes_go_over_a_search_only_when_asked_for()
+        {
+            RecordedActionDto cart = Click(400, 300, "Add to cart");
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = cart.Index, Role = "button", Name = "Add to cart" });
+
+            FlowScriptSchema plain = Build();
+            FlowScriptSchema noted = _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null, true);
+
+            plain.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).CodeComment.ShouldBe("recorded after a 1.0s wait");
+            noted.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).CodeComment.ShouldBe("recorded after a 1.0s wait\nscreen: what was pressed, as Windows names it: button \"Add to cart\"");
         }
 
         // A flow that carries on after a wait timed out clicks blind.
@@ -499,6 +546,48 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Stages the tester named
+        // ================================================================
+
+        // At the top, where a marker is a stage: what came between stays in the search before.
+        [Fact]
+        public void A_stage_marked_while_recording_begins_at_the_next_search()
+        {
+            Click(300, 200, "Email");
+            Stage("Sign in");
+            Typing("ops@example.com", inputName: "email");
+            Click(300, 400, "Sign in");
+
+            FlowScriptSchema schema = Build();
+
+            RootsOf(schema).ShouldBe(["Launch Browser", "Find Email", "## Sign in", "Find Sign in"]);
+            FlowStep email = schema.Steps.Single(x => x.Name == "Find Email");
+            ChildrenOf(schema, BranchOf(schema, email, FlowStepTypeEnum.SUCCESS)).Last().FlowStepType.ShouldBe(FlowStepTypeEnum.KEYBOARD_INPUT);
+        }
+
+        [Fact]
+        public void A_stage_named_where_a_new_page_began_goes_over_that_click_s_search()
+        {
+            Click(300, 200, "Email");
+            StageAt(Click(300, 400, "Invoices"), "Open the invoices");
+
+            RootsOf(Build()).ShouldBe(["Launch Browser", "Find Email", "## Open the invoices", "Find Invoices"]);
+        }
+
+        // One after the last search is where a test says what it proved.
+        [Fact]
+        public void An_unnamed_stage_or_one_left_out_is_none_and_one_after_the_last_search_ends_the_flow()
+        {
+            Stage("   ");
+            Click(300, 200, "Email");
+            Stage("Left out", ReviewChoiceEnum.LEAVE_OUT);
+            Click(300, 400, "Invoices");
+            Stage("  The   invoices are listed ");
+
+            RootsOf(Build()).ShouldBe(["Launch Browser", "Find Email", "Find Invoices", "## The invoices are listed"]);
+        }
+
+        // ================================================================
         // As a script
         // ================================================================
 
@@ -535,8 +624,10 @@ namespace Business.Tests.Recording
             Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "del /q C:\\Exports\\*.csv");
             Substitute(ReviewChoiceEnum.LAUNCH_APP, commandText: "notepad.exe");
             Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "email");
+            Stage("Download the export");
             ByText(Click(400, 380, "Download"), "Download");
             ByText(Click(400, 420, "Saved", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK), "Saved");
+            Stage("Exported");
 
             FlowScriptSchema draft = Build();
             string script = new Printer().Write(draft);

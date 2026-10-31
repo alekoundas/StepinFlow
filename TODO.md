@@ -445,6 +445,40 @@ the history.
       the backend like the docs model, so it ships inside the installer and nearly doubles it.
       Downloading it on first use instead would keep the installer small, at the price of a first
       recording that waits, or works with the box around the click until it has. To decide.
+- [ ] **What a press landed on, on macOS and Linux. An adapter each.** Since 2026-10-30
+      `IAccessibleElementService` asks Windows' UI Automation at every press. macOS has its
+      accessibility API (`AXUIElementCopyElementAtPosition`), which needs the same accessibility
+      permission the hook already does; Linux has AT-SPI over D-Bus, which an X11 desktop runs and
+      a Wayland one may not expose for other applications. Without one a recording still works, with
+      no "Windows says" in Review and no such note for the model.
+- [ ] **Asking an application what was pressed has a price for it. Measure it.** A browser builds its
+      accessibility tree for the whole page the first time anything asks, so the first press of a
+      recording can cost it a moment, and keeping the tree up costs it a little after. Not measured.
+      Try a long page in Chrome with a recording against it; if it shows, a setting to turn the
+      question off, or asking only at presses inside the main area.
+- [ ] **A proposed check's words, held to the screen after its click.** Since 2026-10-31 a check a
+      model adds for words is refused when no screenshot of the recording showed them. Anywhere in
+      the recording, not after the click it follows: "Remove" put before "Add to cart" passes, and
+      fails the first execution. Telling which press a check follows means walking the answer the
+      way `RecordedActionsCheck` does, Find All folds included.
+- [ ] **The local model looking at the screen the recording stopped on.** Its words reach the model
+      since 2026-10-31, but not a sentence of what page it is, which the other new pages get:
+      `RecordingScreenDescriber` finds its screenshots by press, and that one has none.
+- [ ] **A proposed check left undecided is a plain check in the editor.** Keep and Drop are on Check
+      only; open the editor first and the ones not yet decided are simply in the flow. Whether the
+      editor should say a model added it, and offer the same two, is open.
+- [ ] **A window's menus and headers in what appeared after a click, only if a recording shows
+      it.** The comparison already leaves out what is on both screenshots, so a menu is listed only
+      where one of them lacked it: after the login page, or when a dialog over it closed. A history
+      of each window's screens was built and removed on 2026-10-31 - it lived in one PC's database,
+      so a flow pulled by another tester started from nothing. If it is ever needed, decide within
+      the one recording, a line on nearly every screenshot of it, and store nothing.
+- [ ] **Not tried by hand: stages.** Verified by tests and the build only. Press F8 and Stage on
+      the bar while recording, paused once, name them in Review along with a new page it offers,
+      and look for the `##` lines in the draft and in what the model saved.
+- [ ] **Not tried by hand: proposed checks.** Verified by tests and the build only. Record a QA test
+      that adds to a cart and finishes an order, let the last page load before Stop, and look for a
+      Wait For Text on "Remove" and on the order's thank-you in Check.
 - [ ] **The recording gestures on macOS and Linux. Check with those adapters.** Since 2026-10-28 a
       Ctrl + click or Ctrl + right click while recording is held back from the application by
       `GestureGlobalHook`, which sets SharpHook's suppress flag on the hook's own thread. SharpHook

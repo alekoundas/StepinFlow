@@ -89,6 +89,13 @@ namespace Business.Recording.ActionBuilder
             _timeline.Add(humanAction);
         }
 
+        /// <summary> A mark the tester made, which took no time: the wait before the next action runs from the one before it. </summary>
+        public void AddMark(HumanAction mark)
+        {
+            MarkAsHandled(mark.Inputs);
+            _timeline.AddMark(mark);
+        }
+
         /// <summary> Recording paused and then resumed. The time paused was theirs, not a wait. </summary>
         public void Resume()
         {

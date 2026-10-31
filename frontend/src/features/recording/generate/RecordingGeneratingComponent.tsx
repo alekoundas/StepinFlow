@@ -295,6 +295,11 @@ function SentComponent({
         style={MUTED}
       >
         <li>{plural(screenshots, "screenshot")} and the templates cut from them</li>
+        {progress.toLookAt > 0 && (
+          <li>
+            The pictures the local model looked at: {progress.model || "the model"} is sent only what it said of them
+          </li>
+        )}
         {inputs.length > 0 && <li>What you typed: the model sees {inputs.join(", ")}</li>}
       </ul>
 
@@ -334,7 +339,7 @@ function SentRowComponent({ label, children }: { label: string; children: ReactN
   );
 }
 
-// Seven, as the mockup has them: three done by the stop before Review, four by the generation.
+// Eight: three done by the stop before Review, five by the generation.
 function stagesOf(
   recording: RecordingResultDto,
   reviews: Record<number, ActionReview>,
@@ -353,6 +358,12 @@ function stagesOf(
 
   let attempt = "Naming the steps and grouping the repeated clicks, with your description";
   if (progress.attempt > 0) attempt += ` · attempt ${progress.attempt} of ${progress.attemptCount}`;
+
+  let looked = "Where new pages began, and clicks with no words, on this machine";
+  if (progress.toLookAt > 0) looked += ` · ${progress.lookedAt} of ${progress.toLookAt}`;
+  if (progress.stage !== FlowGenerationStageEnum.LOOKING_AT_SCREENS && progress.toLookAt === 0)
+    looked = "Nothing looked at: no picture for a model that takes none";
+  if (!progress.isReadTextSent) looked = "Not asked: the cloud model may not be told what is on screen";
 
   const readBack: Stage = { title: "Read the script back", detail: "Parsed and checked the way an imported file is" };
   if (progress.refused.length > 0) {
@@ -379,6 +390,7 @@ function stagesOf(
     { title: "Folded the recording into actions", detail: `${plural(listed.length, "action")}; ${leftOut} left out by you` },
     { title: "Read the text under each click", detail: `${plural(labels, "label")}, read on this machine` },
     { title: "Cut the templates", detail: cut },
+    { title: "Looked at the screens with the local model", detail: looked },
     { title: "Wrote the draft", detail: "Every wait sized from how long you waited" },
     { title: "Asked the model to shape it", detail: attempt },
     readBack,
@@ -388,8 +400,9 @@ function stagesOf(
 
 function activeIndexOf(progress: FlowGenerationProgressDto): number {
   if (progress.state === FlowGenerationStateEnum.DONE) return Number.MAX_SAFE_INTEGER;
-  if (progress.stage === FlowGenerationStageEnum.SAVING) return 6;
-  if (progress.stage === FlowGenerationStageEnum.ASKING_MODEL) return 4;
+  if (progress.stage === FlowGenerationStageEnum.SAVING) return 7;
+  if (progress.stage === FlowGenerationStageEnum.ASKING_MODEL) return 5;
+  if (progress.stage === FlowGenerationStageEnum.WRITING_DRAFT) return 4;
   return 3;
 }
 

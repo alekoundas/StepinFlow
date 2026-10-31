@@ -691,6 +691,27 @@ namespace Business.Tests.Recording
             Build().Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.KEY_COMBINATION, RecordedActionKindEnum.KEY_COMBINATION]);
         }
 
+        // A mark takes no time: the click after it waited from the click before.
+        [Fact]
+        public void A_stage_is_an_action_in_its_place_that_takes_nothing_from_the_next_wait()
+        {
+            Click(0, 10, 10);
+            _events.Add(new RecordedInput { Type = RecordedInputTypeEnum.STAGE, CreatedOn = START.AddMilliseconds(2000) });
+            Click(3050, 10, 10);
+
+            List<RecordedActionDto> actions = Build();
+
+            actions.Select(x => x.Kind).ShouldBe(
+            [
+                RecordedActionKindEnum.CLICK,
+                RecordedActionKindEnum.STAGE,
+                RecordedActionKindEnum.PAUSE,
+                RecordedActionKindEnum.CLICK,
+            ]);
+            actions[2].PauseMilliseconds.ShouldBe(3000);
+            actions[3].WaitedMilliseconds.ShouldBe(3000);
+        }
+
         [Fact]
         public void Actions_are_numbered_in_the_order_they_happened()
         {

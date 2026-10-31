@@ -44,9 +44,9 @@ namespace Business.Recording.Generation
             return BeginAsync((onProgress, ct) => _generationService.ImportModelDraftAsync(flowId, recording, reviewed, screenAt, onProgress, ct));
         }
 
-        public Task<ResultDto<bool>> StartRevisionAsync(int flowId, string changes)
+        public Task<ResultDto<bool>> StartRevisionAsync(RecordingDraftRevisionDto revision, IReadOnlyList<string> screenLines)
         {
-            return BeginAsync((onProgress, ct) => _generationService.ReviseAsync(flowId, changes, onProgress, ct));
+            return BeginAsync((onProgress, ct) => _generationService.ReviseAsync(revision.FlowId, revision.Changes, revision.Undecided, screenLines, onProgress, ct));
         }
 
         public FlowGenerationResultDto? GetResult()

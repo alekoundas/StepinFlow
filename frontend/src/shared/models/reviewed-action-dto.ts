@@ -26,4 +26,10 @@ export interface ReviewedActionDto {
 
   /** For a command: what it executes. For an application: the program that opens it. */
   commandText?: string | null;
+
+  /**
+   * For a stage marked while recording, its name. For any other action, a stage the tester named as
+   * beginning there - where a new page began. Empty is no stage.
+   */
+  stageName?: string | null;
 }

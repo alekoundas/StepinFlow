@@ -2,4 +2,7 @@
 export interface RecordingDraftRevisionDto {
   flowId: number;
   changes: string;
+
+  /** The proposed checks not yet kept or dropped, by name, so the answer still offers them. */
+  undecided: string[];
 }

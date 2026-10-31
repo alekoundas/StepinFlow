@@ -20,6 +20,9 @@ namespace Core.Models.Dtos
         /// <summary>What the model says a tester should check.</summary>
         public List<string> Notes { get; set; } = [];
 
+        /// <summary>The checks the model added, for the tester to keep or drop. In the saved flow until dropped.</summary>
+        public List<ProposedCheckDto> ProposedChecks { get; set; } = [];
+
         /// <summary>Why the last answer was refused, when it was not saved because of it.</summary>
         public List<FlowScriptErrorDto> Refused { get; set; } = [];
 

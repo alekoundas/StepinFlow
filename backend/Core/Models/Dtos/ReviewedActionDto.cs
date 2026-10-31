@@ -28,5 +28,11 @@ namespace Core.Models.Dtos
 
         /// <summary>For a command: what it executes. For an application: the program that opens it.</summary>
         public string? CommandText { get; set; }
+
+        /// <summary>
+        /// For a stage marked while recording, its name. For any other action, a stage the tester
+        /// named as beginning there - where a new page began. Empty is no stage.
+        /// </summary>
+        public string? StageName { get; set; }
     }
 }

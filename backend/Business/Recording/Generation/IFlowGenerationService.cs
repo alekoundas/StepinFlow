@@ -55,7 +55,19 @@ namespace Business.Recording.Generation
         Task<FlowGenerationResultDto> ReviseAsync(
             int flowId,
             string changes,
+            IReadOnlyCollection<string> undecided,
+            IReadOnlyList<string> screenLines,
             Action<FlowGenerationProgressDto>? onProgress,
+            CancellationToken ct = default);
+
+        /// <summary>
+        /// A check the model added, taken out of the flow on the Check page: its Failure branch with
+        /// it, what its Success branch holds in its place. Refused when another step uses what it
+        /// found. With what was saved, and the undecided checks still offered.
+        /// </summary>
+        Task<ResultDto<FlowGenerationResultDto>> DropCheckAsync(
+            ProposedCheckDropDto drop,
+            IReadOnlyList<string> screenLines,
             CancellationToken ct = default);
     }
 }

@@ -99,7 +99,8 @@ namespace Business.Tests.Recording
         [Fact]
         public async Task A_revision_says_DONE_and_its_result_is_there()
         {
-            (await _session.StartRevisionAsync(1, "Sign out at the end.")).IsSuccess.ShouldBeTrue();
+            RecordingDraftRevisionDto revision = new RecordingDraftRevisionDto { FlowId = 1, Changes = "Sign out at the end." };
+            (await _session.StartRevisionAsync(revision, [])).IsSuccess.ShouldBeTrue();
             (await StartAsync()).ErrorMessage.ShouldBe("The flow is already being generated.");
 
             FlowGenerationResultDto result = new FlowGenerationResultDto { IsModelDraft = true };
@@ -145,10 +146,15 @@ namespace Business.Tests.Recording
                 return WaitAsync(ct);
             }
 
-            public Task<FlowGenerationResultDto> ReviseAsync(int flowId, string changes, Action<FlowGenerationProgressDto>? onProgress, CancellationToken ct = default)
+            public Task<FlowGenerationResultDto> ReviseAsync(int flowId, string changes, IReadOnlyCollection<string> undecided, IReadOnlyList<string> screenLines, Action<FlowGenerationProgressDto>? onProgress, CancellationToken ct = default)
             {
                 Changes = changes;
                 return WaitAsync(ct);
+            }
+
+            public Task<ResultDto<FlowGenerationResultDto>> DropCheckAsync(ProposedCheckDropDto drop, IReadOnlyList<string> screenLines, CancellationToken ct = default)
+            {
+                throw new NotSupportedException();
             }
 
             private async Task<FlowGenerationResultDto> WaitAsync(CancellationToken ct)

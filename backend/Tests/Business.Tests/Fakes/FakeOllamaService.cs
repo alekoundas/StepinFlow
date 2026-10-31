@@ -10,6 +10,9 @@ namespace Business.Tests.Fakes
         public bool IsRunning { get; set; } = true;
         public List<string> Models { get; } = [];
 
+        /// <summary>What every model says it can do: vision, tools.</summary>
+        public List<string> Capabilities { get; } = [];
+
         public Task<IReadOnlyList<string>?> ListModelsAsync(string baseUrl, CancellationToken ct = default)
         {
             IReadOnlyList<string>? models = null;
@@ -28,7 +31,7 @@ namespace Business.Tests.Fakes
 
         public Task<AiModelDto> DescribeAsync(string baseUrl, string model, CancellationToken ct = default)
         {
-            return Task.FromResult(new AiModelDto { Name = model });
+            return Task.FromResult(new AiModelDto { Name = model, Capabilities = Capabilities.ToList() });
         }
     }
 }

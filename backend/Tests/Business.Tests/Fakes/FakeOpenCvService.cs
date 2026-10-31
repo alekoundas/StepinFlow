@@ -70,9 +70,13 @@ namespace Business.Tests.Fakes
             throw new NotImplementedException();
         }
 
+        /// <summary>The longest edge each picture was asked down to. The picture comes back as it was.</summary>
+        public List<int> DownscaledTo { get; } = new List<int>();
+
         public byte[] Downscale(byte[] jpeg, int maxEdge, int quality)
         {
-            throw new NotImplementedException();
+            DownscaledTo.Add(maxEdge);
+            return jpeg;
         }
 
         public byte[]? Thumbnail(byte[] png, int maxEdge)

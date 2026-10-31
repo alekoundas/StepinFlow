@@ -17,9 +17,10 @@ namespace Business.Recording.Generation
 
         /// <summary>
         /// Starts the Check page's "Ask for changes" the same way: the flow as it is, revised by the
-        /// model as the tester wrote. Refused while a generation is going.
+        /// model as the tester wrote, with the checks not yet kept or dropped still offered and held
+        /// to the recording's screen lines. Refused while a generation is going.
         /// </summary>
-        Task<ResultDto<bool>> StartRevisionAsync(int flowId, string changes);
+        Task<ResultDto<bool>> StartRevisionAsync(RecordingDraftRevisionDto revision, IReadOnlyList<string> screenLines);
 
         /// <summary>What the last generation saved. Null until one is DONE, and after a cancel.</summary>
         FlowGenerationResultDto? GetResult();

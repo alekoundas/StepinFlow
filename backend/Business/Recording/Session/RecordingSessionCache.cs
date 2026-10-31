@@ -10,13 +10,15 @@ namespace Business.Recording.Session
     /// What one recording holds in memory.
     ///
     /// 1) the inputs kept, in order, each numbered by its place in the session.
-    /// 2) per press, the whole main area, which Review shows and the draft cuts its templates from.
+    /// 2) per press, the whole main area, which Review shows and the draft cuts its templates from,
+    ///    and what it landed on as its application told Windows.
     /// 3) the last few screenshots of the main area. A press takes the newest one from before it, so
     ///    a template shows the screen the tester decided on rather than what the press changed - the
     ///    pressed button, or the menu it opened.
     /// 4) where the recording is, and its actions as last folded, for the live list.
-    /// 5) once it stopped, how far it has been worked through, what each click hit, and what changed
-    ///    on the screen between one press and the next.
+    /// 5) once it stopped, the main area as it was left, how far it has been worked through, what
+    ///    each click hit, what changed on the screen between one press and the next, and every
+    ///    line read on it.
     ///
     /// The inputs and the screenshots per press outlive the recording, so the review can still ask
     /// for them, until the next recording starts or the review discards it.
@@ -28,6 +30,7 @@ namespace Business.Recording.Session
         private readonly List<RecordedInput> _inputs = new List<RecordedInput>();
         private readonly Queue<RecordingScreenshot> _recentScreenshots = new Queue<RecordingScreenshot>();
         private readonly ConcurrentDictionary<int, RecordedPress> _pressesByIndex = new ConcurrentDictionary<int, RecordedPress>();
+        private readonly ConcurrentDictionary<int, AccessibleElement> _pressedElementsByIndex = new ConcurrentDictionary<int, AccessibleElement>();
         private readonly Lock _inputsLock = new Lock();
         private readonly Lock _recentScreenshotsLock = new Lock();
 
@@ -36,6 +39,8 @@ namespace Business.Recording.Session
         private volatile IReadOnlyList<ClickedElementDto> _clickedElements = [];
         private volatile IReadOnlyList<ClickGroupDto> _clickGroups = [];
         private volatile IReadOnlyList<ScreenChangeDto> _screenChanges = [];
+        private volatile IReadOnlyList<string> _screenLines = [];
+        private volatile RecordingScreenshot? _lastScreenshot;
         private volatile RecordingStageProgress? _stage;
         private volatile string? _errorMessage;
 
@@ -82,6 +87,20 @@ namespace Business.Recording.Session
             set { _screenChanges = value; }
         }
 
+        /// <summary>Every line read on the main area, once read.</summary>
+        public IReadOnlyList<string> ScreenLines
+        {
+            get { return _screenLines; }
+            set { _screenLines = value; }
+        }
+
+        /// <summary>The main area as the tester left it, taken at the stop, until its text has been read.</summary>
+        public RecordingScreenshot? LastScreenshot
+        {
+            get { return _lastScreenshot; }
+            set { _lastScreenshot = value; }
+        }
+
         /// <summary>The stage a stopped recording is in. Null unless it is being worked through.</summary>
         public RecordingStageProgress? Stage
         {
@@ -116,6 +135,7 @@ namespace Business.Recording.Session
                 _inputs.Clear();
 
             _pressesByIndex.Clear();
+            _pressedElementsByIndex.Clear();
             ClearRecentScreenshots();
             State = RecordingStateEnum.NONE;
             EndedOn = null;
@@ -123,6 +143,8 @@ namespace Business.Recording.Session
             ClickedElements = [];
             ClickGroups = [];
             ScreenChanges = [];
+            ScreenLines = [];
+            LastScreenshot = null;
             Reviewed = null;
             Stage = null;
             ErrorMessage = null;
@@ -158,6 +180,17 @@ namespace Business.Recording.Session
         {
             _pressesByIndex.TryGetValue(index, out RecordedPress? press);
             return press;
+        }
+
+        public void AddPressedElement(int index, AccessibleElement element)
+        {
+            _pressedElementsByIndex[index] = element;
+        }
+
+        public AccessibleElement? GetPressedElement(int index)
+        {
+            _pressedElementsByIndex.TryGetValue(index, out AccessibleElement? element);
+            return element;
         }
 
 

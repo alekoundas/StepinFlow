@@ -16,6 +16,10 @@ export interface FlowGenerationProgressDto {
   /** The draft as a script, in characters, once written. */
   scriptLength: number;
 
+  /** How many of toLookAt screens and wordless clicks the local model has looked at. Both 0 when it looks at none. */
+  lookedAt: number;
+  toLookAt: number;
+
   /** Which attempt, from 1, of attemptCount. 0 before the model is asked. */
   attempt: number;
   attemptCount: number;

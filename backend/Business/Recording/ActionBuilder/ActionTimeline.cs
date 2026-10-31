@@ -49,6 +49,13 @@ namespace Business.Recording.ActionBuilder
                 _lastEndedOn = endedOn;
         }
 
+        /// <summary>A mark in its place, with no pause before it and nothing taken from the next action's wait.</summary>
+        public void AddMark(HumanAction mark)
+        {
+            mark.Action.StartedOn = mark.Inputs[0].CreatedOn;
+            Append(mark.Action);
+        }
+
         /// <summary>The tester resumed after a pause. The time paused was theirs, not a wait.</summary>
         public void Resume()
         {

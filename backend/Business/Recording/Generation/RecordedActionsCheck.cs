@@ -7,9 +7,14 @@ namespace Business.Recording.Generation
 {
     /// <summary>
     /// What a model may not do to a recording: add, drop or reorder a click, a drag, a scroll, typed
-    /// text or a key. The draft and the answer are both read in the order an execution that finds
-    /// everything goes - down each search's Success branch, never its Failure - and compared one by
-    /// one. Only the prompt asked for it before, and restructuring is where a model slips.
+    /// text or a key, or move, rename or drop a stage the tester named. The draft and the answer are
+    /// both read in the order an execution that finds everything goes - down each search's Success
+    /// branch, never its Failure - and compared one by one. Only the prompt asked for it before, and
+    /// restructuring is where a model slips.
+    ///
+    /// The draft's stage markers are the tester's, and stand among the actions where they were, at
+    /// the top of the flow where a marker is a stage. One the model adds, by another name, is not
+    /// compared.
     ///
     /// A Find All Images' Success branch, or a loop's, is done once per hit or pass, so what it holds
     /// stands for one or more of it in a row in the draft: four clicks on one picture folded into a
@@ -19,12 +24,17 @@ namespace Business.Recording.Generation
     /// </summary>
     public static class RecordedActionsCheck
     {
-        private const string KEEP = "Keep every click, drag, scroll, typed text and key the draft has, in its order: never add one, drop one or move one.";
+        private const string KEEP = "Keep every click, drag, scroll, typed text and key the draft has, in its order: never add one, drop one or move one. Keep each of the draft's stage markers too, with its name, where it is and at the top of the flow, never in a branch.";
 
         public static List<Diagnostic> Check(FlowScriptSchema draft, FlowScriptSchema answer)
         {
-            List<Act> drafted = Flatten(ItemsUnder(draft, null, string.Empty));
-            List<Item> answered = ItemsUnder(answer, null, string.Empty);
+            HashSet<string> stages = draft.Steps
+                .Where(x => x.ParentFlowStep == null && x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
+                .Select(x => x.Name.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            List<Act> drafted = Flatten(ItemsUnder(draft, null, string.Empty, stages));
+            List<Item> answered = ItemsUnder(answer, null, string.Empty, stages);
 
             string? differs = Match(answered, 0, drafted, 0, out int end);
             if (differs == null && end < drafted.Count)
@@ -90,13 +100,22 @@ namespace Business.Recording.Generation
             return mostPassesDiffers;
         }
 
-        // What an execution that finds everything does under the parent, in order.
-        private static List<Item> ItemsUnder(FlowScriptSchema schema, FlowStep? parent, string under)
+        // What an execution that finds everything does under the parent, in order, with the
+        // tester's stages where they begin.
+        private static List<Item> ItemsUnder(FlowScriptSchema schema, FlowStep? parent, string under, HashSet<string> stages)
         {
             List<Item> items = new List<Item>();
 
             foreach (FlowStep step in ChildrenOf(schema, parent))
             {
+                if (step.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
+                {
+                    if (parent == null && stages.Contains(step.Name.Trim()))
+                        items.Add(new Act($"the stage <[ {step.Name.Trim()} ]>", under));
+
+                    continue;
+                }
+
                 string? what = WhatIs(step);
                 if (what != null)
                 {
@@ -109,11 +128,11 @@ namespace Business.Recording.Generation
 
                 List<Item> inner = new List<Item>();
                 if (!isBranching)
-                    inner = ItemsUnder(schema, step, under);
+                    inner = ItemsUnder(schema, step, under, stages);
 
                 FlowStep? success = children.FirstOrDefault(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
                 if (isBranching && success != null)
-                    inner = ItemsUnder(schema, success, step.Name);
+                    inner = ItemsUnder(schema, success, step.Name, stages);
 
                 // A repeat that does nothing, a Find All Images that only checks, is nothing.
                 bool isRepeated = step.FlowStepType == FlowStepTypeEnum.LOOP || step.SearchMode == SearchModeEnum.FIND_ALL;

@@ -14,6 +14,7 @@ import { backendApiService } from "@/shared/services/backend-api-service";
 import ElementRectangleEditorComponent from "@/features/recording/review/ElementRectangleEditorComponent";
 import {
   type ActionReview,
+  describePressed,
   elementOf,
   fieldLabelBefore,
   groupOf,
@@ -23,6 +24,8 @@ import {
   isTemplateChoice,
   listedActions,
   optionsFor,
+  pressedOf,
+  startsPage,
   titleOf,
   toSeconds,
   waitFor,
@@ -203,6 +206,22 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </div>
         )}
 
+        {action.kind === RecordedActionKindEnum.STAGE && review.choice !== ReviewChoiceEnum.LEAVE_OUT && (
+          <StageNameComponent
+            label="Stage name"
+            value={review.stageName}
+            onChange={(stageName) => onChange({ ...review, stageName })}
+          />
+        )}
+
+        {action.kind !== RecordedActionKindEnum.STAGE && startsPage(result, action) && (
+          <StageNameComponent
+            label="A new page begins here. Begin a stage too?"
+            value={review.stageName}
+            onChange={(stageName) => onChange({ ...review, stageName })}
+          />
+        )}
+
         {review.choice === ReviewChoiceEnum.INPUT && (
           <div className="flex align-items-end flex-wrap gap-3">
             <div className="flex flex-column gap-2">
@@ -277,6 +296,34 @@ export default function ReviewActionDetailComponent({ result, action, review, on
   );
 }
 
+// Typed here rather than while recording: the bar never takes the keyboard from the application.
+function StageNameComponent({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="flex flex-column gap-2">
+      <label
+        htmlFor="review-stage-name"
+        className="font-medium"
+      >
+        {label}
+      </label>
+      <InputText
+        id="review-stage-name"
+        value={value}
+        placeholder="What this part tests, such as Delete customer"
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full"
+      />
+      <span
+        className="text-xs"
+        style={MUTED}
+      >
+        It begins over the next click&apos;s search, as ## and its name, and a model keeps it as you wrote it. Left
+        empty, there is no stage here.
+      </span>
+    </div>
+  );
+}
+
 function FactComponent({ name, value }: { name: string; value: string }) {
   return (
     <>
@@ -300,6 +347,9 @@ function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: 
     if (!element) read = "Nothing: it was outside the window you picked";
     else if (element.text.length > 0) read = `“${element.text}”`;
     facts.push({ name: "Read under the click", value: read });
+
+    const pressed = pressedOf(result, action);
+    if (pressed) facts.push({ name: "Windows says", value: describePressed(pressed) });
 
     const waited = action.waitedMilliseconds;
     facts.push({ name: "Waited before", value: `${toSeconds(waited)}, so it waits up to ${toSeconds(waitFor(waited))}` });
@@ -376,6 +426,8 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
       if (isOutside(action)) return "Outside the window you picked, so it is left out. Keep it only if the flow really needs it.";
       return "Left out of the flow.";
     default:
+      if (action.kind === RecordedActionKindEnum.STAGE)
+        return "A stage marker, a label a report groups by: what is in it passes or fails together. It executes nothing.";
       return action.kind === RecordedActionKindEnum.SCROLL ? "Becomes a Scroll step." : "Becomes a Press step.";
   }
 }

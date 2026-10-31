@@ -12,6 +12,7 @@ import {
   isOutside,
   isPointed,
   listedActions,
+  startsPage,
   subtitleOf,
   titleOf,
 } from "@/features/recording/review/review";
@@ -62,6 +63,7 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
           const group = groupOf(result, action);
           const isKept = review.choice !== ReviewChoiceEnum.LEAVE_OUT;
           const isSelected = action.index === selectedIndex;
+          const stage = action.kind === RecordedActionKindEnum.STAGE ? "" : review.stageName.trim();
 
           return (
             <li
@@ -112,6 +114,22 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
                     {subtitleOf(action, review)}
                   </span>
                 </span>
+                {stage && (
+                  <span
+                    className="text-xs border-1 white-space-nowrap overflow-hidden text-overflow-ellipsis flex-none px-2"
+                    style={{ color: "var(--purple-300)", borderColor: "var(--purple-300)", borderRadius: 999, maxWidth: 140 }}
+                  >
+                    ## {stage}
+                  </span>
+                )}
+                {!stage && action.kind !== RecordedActionKindEnum.STAGE && startsPage(result, action) && (
+                  <span
+                    className="text-xs border-1 white-space-nowrap flex-none px-2"
+                    style={{ ...MUTED, borderColor: "var(--surface-border)", borderRadius: 999 }}
+                  >
+                    new page
+                  </span>
+                )}
                 {group && (
                   <span
                     className="text-xs border-1 white-space-nowrap flex-none px-2"
@@ -153,6 +171,8 @@ function iconOf(action: RecordedActionDto): string {
       return "pi pi-check-circle";
     case RecordedActionKindEnum.SUBSTITUTE:
       return "pi pi-bolt";
+    case RecordedActionKindEnum.STAGE:
+      return "pi pi-flag";
     default:
       return "pi pi-th-large";
   }

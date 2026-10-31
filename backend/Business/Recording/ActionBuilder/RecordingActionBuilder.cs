@@ -1,4 +1,5 @@
 using Business.Recording.ActionBuilder.Actions;
+using Business.Recording.Models;
 using Core.Catalogs;
 using Core.Enums;
 using Core.Models.Business;
@@ -70,6 +71,10 @@ namespace Business.Recording.ActionBuilder
                     // The time spent paused was the tester's, not a wait.
                     case RecordedInputTypeEnum.RESUMED:
                         reader.Resume();
+                        break;
+
+                    case RecordedInputTypeEnum.STAGE:
+                        reader.AddMark(new HumanAction(new RecordedActionDto { Kind = RecordedActionKindEnum.STAGE, Summary = "A stage begins" }, [input]));
                         break;
                 }
             }

@@ -35,17 +35,34 @@ namespace Business.Ai.Providers
                 return null;
 
             if (settings.CloudProvider == AiCloudProviderEnum.NONE)
-            {
-                int contextLength = await _providerService.GetOllamaContextLengthAsync(ct);
-                OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.OllamaModel);
-
-                return new OllamaContextChatClient(ollama, contextLength);
-            }
+                return await OllamaClientAsync(settings, ct);
 
             OpenAIClientOptions options = new OpenAIClientOptions();
             OpenAIClient client = new OpenAIClient(new ApiKeyCredential(settings.ApiKey), options);
 
             return client.GetChatClient(settings.CloudModel).AsIChatClient();
+        }
+
+        public async Task<IChatClient?> CreateLocalAsync(CancellationToken ct = default)
+        {
+            AiSettings? settings = await _providerService.ReadAsync(ct);
+            if (settings == null)
+                return null;
+
+            return await OllamaClientAsync(settings, ct);
+        }
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        private async Task<IChatClient> OllamaClientAsync(AiSettings settings, CancellationToken ct)
+        {
+            int contextLength = await _providerService.GetOllamaContextLengthAsync(ct);
+            OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.OllamaModel);
+
+            return new OllamaContextChatClient(ollama, contextLength);
         }
     }
 }

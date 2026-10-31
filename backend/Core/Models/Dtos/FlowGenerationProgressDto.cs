@@ -21,6 +21,10 @@ namespace Core.Models.Dtos
         /// <summary>The draft as a script, in characters, once written.</summary>
         public int ScriptLength { get; set; }
 
+        /// <summary>How many of ToLookAt screens and wordless clicks the local model has looked at. Both 0 when it looks at none.</summary>
+        public int LookedAt { get; set; }
+        public int ToLookAt { get; set; }
+
         /// <summary>Which attempt, from 1, of AttemptCount. 0 before the model is asked.</summary>
         public int Attempt { get; set; }
         public int AttemptCount { get; set; }

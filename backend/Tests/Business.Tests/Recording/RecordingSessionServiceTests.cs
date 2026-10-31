@@ -39,6 +39,7 @@ namespace Business.Tests.Recording
         private readonly FakeTimeProvider _clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 9, 12, 0, 0, TimeSpan.Zero));
         private readonly FakeAppSettingService _settings = new FakeAppSettingService();
         private readonly FakeOcrService _ocr = new FakeOcrService();
+        private readonly FakeAccessibleElementService _accessibility = new FakeAccessibleElementService();
         private readonly RecordingSessionService _session;
 
         public RecordingSessionServiceTests()
@@ -46,7 +47,7 @@ namespace Business.Tests.Recording
             ClickedElementFinder finder = new ClickedElementFinder(new FakeElementLocator(), new FakeOcrService().Reads("Checkout"), _screenshots);
             ClickedElementGrouper grouper = new ClickedElementGrouper(new FakeOpenCvService(), _screenshots);
             RecordedScreenReader screens = new RecordedScreenReader(_ocr, _screenshots);
-            _session = new RecordingSessionService(_hook, _screenshots, _settings, _broadcast, _windows, _resolver, finder, grouper, screens, _database, _clock);
+            _session = new RecordingSessionService(_hook, _screenshots, _settings, _broadcast, _windows, _resolver, finder, grouper, screens, _accessibility, _database, _clock);
 
             _resolver.AreasByName["Browser"] = AreaResolution.Ok(BOUNDS, BROWSER_WINDOW, dpi: 120);
             _windows.WindowProcessId = BROWSER;
@@ -321,6 +322,22 @@ namespace Business.Tests.Recording
             (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.RESUMED]);
         }
 
+        // Paused, the tester may be getting the next part ready, which a stage can begin at.
+        [Fact]
+        public async Task The_stage_key_marks_where_a_stage_begins_paused_or_not_and_is_never_recorded()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F8, "VcF8");
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F8, "VcF8");
+            _session.Pause();
+            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F8, "VcF8");
+            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F8, "VcF8");
+
+            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.STAGE, RecordedInputTypeEnum.STAGE]);
+            (await WaitUntilReadyAsync()).Actions.Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.STAGE, RecordedActionKindEnum.STAGE]);
+        }
+
         [Fact]
         public async Task The_stop_key_stops_the_recording()
         {
@@ -396,9 +413,10 @@ namespace Business.Tests.Recording
             RecordingProgressDto lastGrouped = AllProgress().Last(x => x.Stage == RecordingStageEnum.GROUPING_CLICKS);
             (lastGrouped.StageNumber, lastGrouped.StageCount).ShouldBe((2, 3));
 
+            // The press, and the screen the recording stopped on.
             RecordingProgressDto lastRead = AllProgress().Last(x => x.Stage == RecordingStageEnum.READING_SCREENS);
             (lastRead.StageNumber, lastRead.StageCount).ShouldBe((3, 3));
-            (lastRead.StageDone, lastRead.StageTotal).ShouldBe((1, 1));
+            (lastRead.StageDone, lastRead.StageTotal).ShouldBe((2, 2));
 
             RecordingProgressDto ready = LastProgress();
             (ready.Stage, ready.StageNumber, ready.ErrorMessage).ShouldBe((RecordingStageEnum.NONE, 0, null));
@@ -420,11 +438,73 @@ namespace Business.Tests.Recording
             RecordingResultDto recording = await WaitUntilReadyAsync();
 
             List<int> clicks = recording.Actions.Where(x => x.Kind == RecordedActionKindEnum.CLICK).Select(x => x.Index).ToList();
-            ScreenChangeDto change = recording.ScreenChanges.ShouldHaveSingleItem();
+            recording.ScreenChanges.Count.ShouldBe(2);
+            ScreenChangeDto change = recording.ScreenChanges[0];
             (change.ActionIndex, change.NextActionIndex).ShouldBe((clicks[0], clicks[1]));
             change.Appeared.ShouldBe(["Products"]);
             change.Gone.ShouldBe(["Login"]);
             change.IsNewScreen.ShouldBeTrue();
+        }
+
+        // What the last click did shows on no press of its own.
+        [Fact]
+        public async Task A_stop_keeps_the_screen_it_was_left_on_and_reads_what_the_last_click_did()
+        {
+            _ocr.ReadsWords([Word("Finish", 0)], [Word("Thank you for your order", 0)]);
+
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 300);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 300);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            int click = recording.Actions.Single(x => x.Kind == RecordedActionKindEnum.CLICK).Index;
+            ScreenChangeDto change = recording.ScreenChanges.ShouldHaveSingleItem();
+            (change.ActionIndex, change.NextActionIndex).ShouldBe((click, null));
+            change.Appeared.ShouldBe(["Thank you for your order"]);
+            recording.ScreenLines.ShouldBe(["Finish", "Thank you for your order"]);
+        }
+
+        [Fact]
+        public async Task A_press_is_asked_of_its_application_where_it_landed()
+        {
+            _accessibility.Element = new AccessibleElement
+            {
+                Role = "button",
+                Name = "Add to cart",
+                IsEnabled = false,
+                Inside = [new AccessibleElement { Role = "document", Name = "Swag Labs" }],
+            };
+
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN, 300, 400);
+            Raise(RecordedInputTypeEnum.BUTTON_UP, 300, 400);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            _accessibility.Asked.ShouldBe([new Point(300, 400)]);
+            PressedElementDto pressed = recording.PressedElements.ShouldHaveSingleItem();
+            pressed.ActionIndex.ShouldBe(recording.Actions.Single(x => x.Kind == RecordedActionKindEnum.CLICK).Index);
+            (pressed.Role, pressed.Name, pressed.IsEnabled).ShouldBe(("button", "Add to cart", false));
+            pressed.Inside.ShouldBe(["document \"Swag Labs\""]);
+        }
+
+        // An application that draws its own pixels, a game, answers with its window.
+        [Fact]
+        public async Task A_press_answered_only_with_a_window_says_nothing()
+        {
+            _accessibility.Element = new AccessibleElement { Role = "pane", Name = "Firestone" };
+
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            await _session.StopAsync(Ct);
+
+            RecordingResultDto recording = await WaitUntilReadyAsync();
+
+            recording.PressedElements.ShouldBeEmpty();
         }
 
         [Fact]
