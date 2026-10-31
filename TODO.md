@@ -7,10 +7,22 @@ the history.
 
 ## Execution
 
-- [ ] **Not tried by hand: the execution list drawn newest first, only the rows in view.**
-      Verified by the build only. Execute a looping flow for a few minutes: the newest row stays on
-      top; scroll down and the row being read stays put while rows arrive; Failures only and Jump
-      to failure still land on the right row; a past execution of thousands of rows opens at once.
+- [ ] **Not tried by hand: the execution page, as the mockup draws it.** Built 2026-10-31,
+      verified by the build, the lint, the backend tests, and its folds, counts and activity worked
+      out in Node on execution 32's 32,699 rows (2,434 rows drawn, 22 folds, about 10 ms a batch).
+      Never opened. Execute Firestone for a few minutes:
+      - the newest row stays on top, and the executing row above it changes step;
+      - scroll down: the row being read stays put, "N new · back to latest" counts up and takes you
+        back; at the top it says Live;
+      - a pass that found nothing joins the fold under it when the next one starts; Show and Fold;
+      - All, Found, Failed and Find a step; Jump to failure on an execution that ended on one;
+      - the tiles and the activity strip move; the elapsed time ticks;
+      - the tree's counts, its ring on the step executing, amber while paused, and its counts lined up
+        at the right edge;
+      - Pause, then F5, F10, F11 and F8 with StepinFlow focused; F11 must step, not go full screen;
+      - a step's detail: the match against what it needed, Open in the editor, a sub-flow's step
+        opening the sub-flow; the screenshot note while live, and on a past execution;
+      - a past execution of thousands of rows opens at once, with Explain and Ask in the header.
 - [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
       `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
       the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,
@@ -528,7 +540,10 @@ the history.
       stored and nothing acts on them. Two things stand between: the hook only listens while a
       recording or a capture is on, and an execution presses keys itself, which the hook would
       hear - its own presses have to be told apart from the tester's, or a flow that presses F9
-      would pause itself.
+      would pause itself. Since 2026-10-31 the execution page matches them itself while StepinFlow
+      has focus (`matchesHotkey`), so once the hook does, a press in StepinFlow is heard by both:
+      the page's listener then goes. On macOS the F-keys are media keys unless Fn is held, and F11
+      shows the desktop.
 
 ## Frontend
 
@@ -582,26 +597,10 @@ the history.
       a failure; what is waiting - a generated flow not yet read, a flow with errors, one that
       keeps failing; and the flows edited lately. Its numbers need an execution-statistics query
       the backend does not have.
-- [ ] **The execution page, as the mockup draws it. To build.** Raised 2026-10-31 with the board
-      "Execution · two hours in, newest on top", drawn on execution 32 of Firestone. The list has
-      been newest first, drawing only the rows in view, since the same day. Still to do:
-      - **Quiet passes folded.** 28,432 of that execution's 32,699 rows were searches that found
-        nothing, so the 21 passes where something happened are buried. A run of passes that found
-        nothing becomes one row, "224 passes that found nothing", that opens. Decide what makes a
-        pass quiet: every step failing into nothing, or going the same way as the pass before.
-      - **An activity strip:** steps a minute over the whole execution, the passes that found
-        something marked on it.
-      - **The tree counts:** how often each step executed, and how often a search found.
-      - **Live, or back to latest:** a Live chip while the top row is in view, "14 new · back to
-        latest" once scrolled down.
-      - **The keys on the buttons:** F5, F8, F9, F10 and F11 beside Continue, Stop, Pause, Step
-        over and Step into.
-      - **Found and Failed** in place of Failures only, and a Find a step box.
-      - **Tiles:** elapsed, steps and their rate, the loop's pass, passes that found something,
-        handled failures.
-      - **Screenshots an hour in.** The limit keeps an execution's first 20, so by then no step has
-        one, and the board says so. Keeping the latest 20 instead is a decision for the history
-        writer.
+- [ ] **Screenshots an hour in. To decide.** Raised 2026-10-31 with the execution board. The
+      limit keeps an execution's first 20, so an hour into a bot loop no step has one, and the
+      step's detail says so. Keeping the latest 20 instead is a decision for the history writer: it
+      would delete files as it goes, and the first steps are the ones a setup problem shows in.
 - [ ] **Check the pages by eye on lara-dark-indigo.** Switched from soho-dark on 2026-10-17, to come
       closer to the mockup's Foundations board: an indigo accent (#818cf8) on #111827, in Inter,
       which the theme bundles. Everything written since the shell reads the theme's variables and

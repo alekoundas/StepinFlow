@@ -1,18 +1,21 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Splitter, SplitterPanel } from "primereact/splitter";
 
-import ExecutionToolbarComponent from "@/features/execution/components/ExecutionToolbarComponent";
+import ExecutionHeaderComponent from "@/features/execution/components/ExecutionHeaderComponent";
+import ExecutionTilesComponent from "@/features/execution/components/ExecutionTilesComponent";
+import ExecutionActivityComponent from "@/features/execution/components/ExecutionActivityComponent";
 import ExecutionFlowTreeComponent from "@/features/execution/components/ExecutionFlowTreeComponent";
 import ExecutionStepListComponent from "@/features/execution/components/ExecutionStepListComponent";
 import ExecutionStepDetailComponent from "@/features/execution/components/ExecutionStepDetailComponent";
-import RunHeaderComponent from "@/features/execution/components/RunHeaderComponent";
-import PanelHeaderComponent from "@/shared/components/PanelHeaderComponent";
-import { Button } from "primereact/button";
+import ExecutionPanelComponent from "@/features/execution/components/templates/ExecutionPanelComponent";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionEvents } from "@/features/execution/hooks/use-execution-events";
 import { useExecution, useExecutionState } from "@/features/execution/hooks/use-execution";
+import { findStep, useExecutionOverview } from "@/features/execution/hooks/use-execution-overview";
+import { MUTED } from "@/features/execution/execution-format";
 import { useFlow } from "@/features/flow/hooks/use-flow";
+import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 
 export default function ExecutionPage() {
@@ -27,17 +30,20 @@ export default function ExecutionPage() {
 
   const executionSteps = useExecutionStore((x) => x.executionSteps);
   const selectedSequence = useExecutionStore((x) => x.selectedSequence);
+  const runState = useExecutionStore((x) => x.runState);
+  const liveExecutionId = useExecutionStore((x) => x.executionId);
+  const liveHistoryLevel = useExecutionStore((x) => x.historyLevel);
   const setSelectedSequence = useExecutionStore((x) => x.setSelectedSequence);
   const setExecutionSteps = useExecutionStore((x) => x.setExecutionSteps);
   const setRunState = useExecutionStore((x) => x.setRunState);
   const setExecutionId = useExecutionStore((x) => x.setExecutionId);
 
-  // The run being looked at. Live while one is going, and whatever was opened from History after.
+  // The execution being read back, when one was opened from the executions list.
   const [openedExecution, setOpenedExecution] = useState<ExecutionDto | undefined>(
     undefined,
   );
 
-  // Arrived from the executions list with a run named. Open that one rather than the last state.
+  // Arrived from the executions list with an execution named. Open that one rather than the last state.
   const {
     data: requestedExecution,
     isLoading: isRequestedExecutionLoading,
@@ -50,7 +56,7 @@ export default function ExecutionPage() {
 
   useExecutionEvents(flowId);
 
-  // The engine outlives the page, so a run started before this mounted is still going.
+  // The engine outlives the page, so an execution started before this mounted is still going.
   useEffect(() => {
     if (!engineState) return;
 
@@ -60,19 +66,6 @@ export default function ExecutionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engineState]);
 
-  const selectedStep = executionSteps.find((x) => x.sequence === selectedSequence);
-
-  const [showFailuresOnly, setShowFailuresOnly] = useState(false);
-
-  // Arrived from the executions list with a run named, so this is history being read back.
-  const isPastRun = requestedExecutionId !== null;
-
-  // The one failure that ended the run, which is what "jump to failure" means.
-  const fatalSequence = openedExecution?.errorFlowStepId
-    ? executionSteps.find((x) => x.flowStepId === openedExecution.errorFlowStepId)
-        ?.sequence
-    : undefined;
-
   useEffect(() => {
     if (!requestedExecution || openedExecution?.id === requestedExecution.id) return;
 
@@ -80,27 +73,47 @@ export default function ExecutionPage() {
     setExecutionSteps(requestedExecution.executionSteps ?? []);
   }, [requestedExecution, openedExecution, setExecutionSteps]);
 
+  // Arrived from the executions list with an execution named, so this is history being read back.
+  const isPastExecution = requestedExecutionId !== null;
+  const isLive = !isPastExecution && runState !== RunStateEnum.FINISHED;
 
-  // Only a past run can fail to load: a live one builds its rows from the events as they arrive.
-  const emptyReason = !isPastRun
-    ? "idle"
-    : isRequestedExecutionLoading
-      ? "loading"
-      : isRequestedExecutionError
-        ? "error"
-        : "noHistory";
+  const overview = useExecutionOverview(
+    executionSteps,
+    openedExecution?.errorFlowStepId,
+    isLive,
+  );
+
+  const selectedStep =
+    selectedSequence !== undefined ? findStep(executionSteps, selectedSequence) : undefined;
+
+  // Only a past execution can fail to load: a live one builds its rows from the events as they arrive.
+  let emptyReason: "idle" | "loading" | "error" | "noHistory" = "idle";
+  if (isPastExecution && isRequestedExecutionLoading) emptyReason = "loading";
+  else if (isPastExecution && isRequestedExecutionError) emptyReason = "error";
+  else if (isPastExecution) emptyReason = "noHistory";
 
   return (
-    <div className="flex flex-column gap-3 p-4 h-full">
-      <RunHeaderComponent
-        flowName={flow?.name ?? "Run"}
+    <div
+      className="flex flex-column gap-3 p-4 h-full"
+      style={{ minHeight: 760 }}
+    >
+      <ExecutionHeaderComponent
+        flowId={flowId}
+        flowName={flow?.name ?? "Execution"}
         execution={openedExecution}
-        executionSteps={executionSteps}
-        isPastRun={isPastRun}
+        isPastExecution={isPastExecution}
       />
 
-      {/* A past run has already happened. Offering to start, pause or step it is a lie. */}
-      {isPastRun ? null : <ExecutionToolbarComponent flowId={flowId} />}
+      <ExecutionTilesComponent
+        overview={overview}
+        stepCount={executionSteps.length}
+        isLive={isLive}
+      />
+
+      <ExecutionActivityComponent
+        activity={overview.activity}
+        isLive={isLive}
+      />
 
       <Splitter
         stateKey="execution-splitter" //  remembers user choice in localStorage
@@ -111,99 +124,64 @@ export default function ExecutionPage() {
         style={{ background: "transparent", minHeight: 0 }}
       >
         <SplitterPanel
-          size={25} // default size
-          minSize={15} // can't shrink below 15%
-          className="flex flex-column"
-          style={{ overflow: "hidden" }}
-        >
-          <PanelCard title="Flow">
-            <ExecutionFlowTreeComponent flowId={flowId} />
-          </PanelCard>
-        </SplitterPanel>
-
-        <SplitterPanel
-          size={50} // the run is what you actually read, so it gets the room
-          minSize={25}
-          className="flex flex-column"
-          style={{ overflow: "hidden" }}
-        >
-          <PanelCard
-            title="Run"
-            actions={
-              <>
-                <Button
-                  label="Failures only"
-                  icon="pi pi-filter"
-                  size="small"
-                  text={!showFailuresOnly}
-                  outlined={showFailuresOnly}
-                  onClick={() => setShowFailuresOnly(!showFailuresOnly)}
-                />
-                <Button
-                  label="Jump to failure"
-                  icon="pi pi-arrow-up"
-                  size="small"
-                  text
-                  disabled={fatalSequence === undefined}
-                  onClick={() =>
-                    fatalSequence !== undefined && setSelectedSequence(fatalSequence)
-                  }
-                />
-              </>
-            }
-          >
-            <ExecutionStepListComponent
-              errorFlowStepId={openedExecution?.errorFlowStepId}
-              showFailuresOnly={showFailuresOnly}
-              emptyReason={emptyReason}
-              emptyMessage={
-                isRequestedExecutionError
-                  ? (requestedExecutionError as Error)?.message
-                  : undefined
-              }
-            />
-          </PanelCard>
-        </SplitterPanel>
-
-        <SplitterPanel
-          size={25}
+          size={24}
           minSize={15}
           className="flex flex-column"
           style={{ overflow: "hidden" }}
         >
-          <PanelCard title={selectedStep ? `Step ${selectedStep.sequence}` : "Step"}>
-            <ExecutionStepDetailComponent
-              executionStep={selectedStep}
-              executionSteps={executionSteps}
+          <ExecutionPanelComponent
+            title="Flow"
+            actions={
+              <span
+                className="text-xs"
+                style={MUTED}
+              >
+                times executed
+              </span>
+            }
+          >
+            <ExecutionFlowTreeComponent
+              flowId={flowId}
+              countsByFlowStepId={overview.countsByFlowStepId}
             />
-          </PanelCard>
+          </ExecutionPanelComponent>
+        </SplitterPanel>
+
+        <SplitterPanel
+          size={50} // the execution is what you actually read, so it gets the room
+          minSize={25}
+          className="flex flex-column"
+          style={{ overflow: "hidden" }}
+        >
+          {/* Keyed, so a new execution starts with no folds open, no filter and at the top. */}
+          <ExecutionStepListComponent
+            key={(isPastExecution ? openedExecution?.id : liveExecutionId) ?? "none"}
+            overview={overview}
+            isLive={isLive}
+            emptyReason={emptyReason}
+            emptyMessage={
+              isRequestedExecutionError
+                ? (requestedExecutionError as Error)?.message
+                : undefined
+            }
+          />
+        </SplitterPanel>
+
+        <SplitterPanel
+          size={26}
+          minSize={15}
+          className="flex flex-column"
+          style={{ overflow: "hidden" }}
+        >
+          <ExecutionStepDetailComponent
+            executionStep={selectedStep}
+            executionSteps={executionSteps}
+            fatalSequence={overview.fatalSequence}
+            historyLevel={isPastExecution ? openedExecution?.historyLevel : liveHistoryLevel}
+            onSelect={setSelectedSequence}
+          />
         </SplitterPanel>
       </Splitter>
-    </div>
-  );
-}
-
-interface PanelCardProps {
-  title: string;
-  actions?: ReactNode;
-  children: ReactNode;
-}
-
-/** One of the three panels: its own surface, its own header, its own scroll. */
-function PanelCard({ title, actions, children }: PanelCardProps) {
-  return (
-    <div
-      className="flex flex-column surface-card border-1 surface-border border-round h-full"
-      style={{ overflow: "hidden", minHeight: 0 }}
-    >
-      <PanelHeaderComponent title={title}>{actions}</PanelHeaderComponent>
-
-      <div
-        className="flex-1"
-        style={{ overflow: "auto", minHeight: 0 }}
-      >
-        {children}
-      </div>
     </div>
   );
 }

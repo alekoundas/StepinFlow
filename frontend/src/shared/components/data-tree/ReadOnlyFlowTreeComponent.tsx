@@ -61,6 +61,10 @@ export default function ReadOnlyFlowTreeComponent({
         content: () => ({
           className: "border-none bg-transparent shadow-none",
         }),
+        // The row's full width, so what a template puts at its end lines up down the tree.
+        label: () => ({
+          className: "flex-1 min-w-0",
+        }),
       }}
     />
   );

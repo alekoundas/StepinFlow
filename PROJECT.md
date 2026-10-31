@@ -2200,6 +2200,41 @@ A copy pastes only into the flow it came from, since its areas, points and input
 Pasting into another flow would have to bring those along, or ask what to point them at
 (`TODO.md`).
 
+### The execution page
+
+The mockup's "Execution · two hours in, newest on top" board, drawn on a Firestone execution of
+32,699 steps. Of those, 28,432 were searches that found nothing, so the page is built to find the
+few passes that did:
+
+- **The header:** the flow, the execution's state and number, what it keeps and the commit it
+  executed at, with the debugger beside it - or, for a past execution, Explain and Ask.
+- **The debugger:** Continue, Pause, Step into, Step over and Stop, each with its key from
+  Settings. The keys work while StepinFlow has focus; matching them anywhere waits on the hook
+  (`TODO.md`, Hotkeys).
+- **Tiles:** elapsed, steps and their rate, the loop's pass, the passes that found something, and
+  the failures handled.
+- **Activity:** steps a minute over the whole execution - a second, or ten minutes, whatever keeps
+  it to 120 bars - marked where something was found and where it ended.
+- **The tree:** how often each step executed, how often a check found, how often a branch was
+  taken.
+- **The list:** newest first. Live while the top is in view, "14 new · back to latest" once
+  scrolled down. All, Found and Failed, and Find a step by name or number.
+- **The step:** where it executed, what it found against what it needed, its screenshot or why
+  there is none, Open in the editor, and Suggest a fix on a failure.
+
+**A loop pass that found nothing folds.** A pass is a loop row and every deeper row after it. It is
+quiet when it ran at least one check and none succeeded, and two or more quiet passes of one loop in
+a row become one row, "224 passes that found nothing", that opens. The pass still executing never
+folds, since it may yet find something, nor the one that ended the execution. "Going the same way as
+the pass before" was the other rule weighed: it folds a loop that clicks before it looks, but it
+also folds two passes that found the same thing, which are the ones being looked for.
+
+Everything but the rows comes from one walk over them, `buildExecutionOverview`, and the list's
+folds from a second, `foldQuietPasses`, both plain functions in `use-execution-overview.ts`. On
+Firestone's 32,699 rows they take about 10 ms together, and run once a batch. A live row carries its
+start and its best match in the broadcast, so the activity and the found chips are right before the
+execution ends.
+
 ### Capture flows
 
 **Overlay capture** (for `FlowArea` and templates) opens a fullscreen transparent window per

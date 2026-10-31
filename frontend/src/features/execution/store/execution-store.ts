@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
+import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -12,6 +13,9 @@ interface Props {
 
   runState: RunStateEnum;
   executionId: number | undefined;
+
+  /** How the live execution ended, once it has. */
+  endedStatus: ExecutionStatusEnum | undefined;
 
   /** Filled live from broadcasts while running, and from the database when a past run is opened. */
   executionSteps: ExecutionStepDto[];
@@ -27,6 +31,7 @@ interface Props {
 
   setRunState: (state: RunStateEnum) => void;
   setExecutionId: (id: number | undefined) => void;
+  setEndedStatus: (status: ExecutionStatusEnum | undefined) => void;
 
   addExecutionSteps: (steps: ExecutionStepDto[]) => void;
   setExecutionSteps: (steps: ExecutionStepDto[]) => void;
@@ -44,6 +49,7 @@ export const useExecutionStore = create<Props>()(
 
     runState: RunStateEnum.FINISHED,
     executionId: undefined,
+    endedStatus: undefined,
 
     executionSteps: [],
     selectedSequence: undefined,
@@ -65,6 +71,9 @@ export const useExecutionStore = create<Props>()(
 
     setExecutionId: (id: number | undefined): void => set({ executionId: id }),
 
+    setEndedStatus: (status: ExecutionStatusEnum | undefined): void =>
+      set({ endedStatus: status }),
+
     // Appended a batch at a time, and a row never changes once it has arrived, so a memoised row
     // draws once.
     addExecutionSteps: (steps: ExecutionStepDto[]): void =>
@@ -83,6 +92,7 @@ export const useExecutionStore = create<Props>()(
     resetRun: (): void =>
       set({
         executionId: undefined,
+        endedStatus: undefined,
         executionSteps: [],
         selectedSequence: undefined,
         currentFlowStepId: undefined,

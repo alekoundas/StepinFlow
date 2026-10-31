@@ -18,9 +18,12 @@ export interface ExecutionEventDto {
   loopPass?: number | null;
 
   outcome?: StepOutcomeEnum | null;
+  startedOn?: string | null;
   durationMilliseconds?: number | null;
   resultLocationX?: number | null;
   resultLocationY?: number | null;
+  bestScore?: number | null;
+  bestTemplateId?: number | null;
   matchIndex?: number | null;
   matchCount?: number | null;
   value?: string | null;

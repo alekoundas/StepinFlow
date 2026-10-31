@@ -19,9 +19,12 @@ namespace Core.Models.Dtos
         public int? LoopPass { get; set; }
 
         public StepOutcomeEnum? Outcome { get; set; }
+        public DateTime? StartedOn { get; set; }
         public int? DurationMilliseconds { get; set; }
         public int? ResultLocationX { get; set; }
         public int? ResultLocationY { get; set; }
+        public float? BestScore { get; set; }
+        public int? BestTemplateId { get; set; }
         public int? MatchIndex { get; set; }
         public int? MatchCount { get; set; }
         public string? Value { get; set; }
@@ -60,9 +63,12 @@ namespace Core.Models.Dtos
                 Depth = executionStep.Depth,
                 LoopPass = executionStep.LoopPass,
                 Outcome = executionStep.Outcome,
+                StartedOn = executionStep.StartedOn,
                 DurationMilliseconds = executionStep.DurationMilliseconds,
                 ResultLocationX = executionStep.ResultLocationX,
                 ResultLocationY = executionStep.ResultLocationY,
+                BestScore = executionStep.BestScore,
+                BestTemplateId = executionStep.BestTemplateId,
                 MatchIndex = executionStep.MatchIndex,
                 MatchCount = executionStep.MatchCount,
                 Value = executionStep.Value,

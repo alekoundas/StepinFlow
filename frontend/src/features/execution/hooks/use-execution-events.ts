@@ -6,6 +6,7 @@ import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ExecutionEventTypeEnum } from "@/shared/enums/backend/execution/execution-event-type-enum";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
+import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { executionKeys } from "@/features/execution/hooks/use-execution";
@@ -50,6 +51,7 @@ export function useExecutionEvents(flowId: number) {
     let current: { flowStepId: number | undefined; name: string | undefined } | null = null;
     let runState: RunStateEnum | null = null;
     let endedExecutionId: number | null = null;
+    let endedStatus: ExecutionStatusEnum | null = null;
 
     for (const event of events) {
       if (event.type === ExecutionEventTypeEnum.STEP_STARTED) {
@@ -72,6 +74,7 @@ export function useExecutionEvents(flowId: number) {
         runState = RunStateEnum.FINISHED;
         current = { flowStepId: undefined, name: undefined };
         endedExecutionId = event.executionId;
+        endedStatus = event.status ?? null;
       }
     }
 
@@ -80,6 +83,7 @@ export function useExecutionEvents(flowId: number) {
     if (finished.length > 0) store.addExecutionSteps(finished);
     if (current) store.setCurrentStep(current.flowStepId, current.name);
     if (runState) store.setRunState(runState);
+    if (endedStatus) store.setEndedStatus(endedStatus);
 
     if (endedExecutionId !== null) {
       // The run is only in the history list once it has ended.
@@ -139,11 +143,13 @@ function toExecutionStep(event: ExecutionEventDto): ExecutionStepDto {
     name: event.name,
     flowStepType: event.flowStepType,
     outcome: event.outcome ?? StepOutcomeEnum.SUCCESS,
-    startedOn: new Date().toISOString(),
+    startedOn: event.startedOn ?? new Date().toISOString(),
     durationMilliseconds: event.durationMilliseconds ?? 0,
 
     resultLocationX: event.resultLocationX,
     resultLocationY: event.resultLocationY,
+    bestScore: event.bestScore,
+    bestTemplateId: event.bestTemplateId,
     matchIndex: event.matchIndex,
     matchCount: event.matchCount,
 
