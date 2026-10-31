@@ -556,6 +556,23 @@ namespace Business.Tests.Flows
             Steps(flowId).ShouldNotContain(x => x.Name == "Wait");
         }
 
+        // The draft handler makes a branch row with no name.
+        [Fact]
+        public async Task A_tree_of_new_steps_names_its_branches()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep find = new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" };
+            FlowStep success = new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS, ParentFlowStep = find };
+            FlowStep wait = new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, ParentFlowStep = success };
+
+            (await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [find, success, wait], [], Ct)).IsSuccess.ShouldBeTrue();
+
+            Steps(flowId)
+                .Where(x => TreeStepHelper.IsBranchChild(x.FlowStepType))
+                .Select(x => x.Name)
+                .ShouldBe(["Success", "Failure"], ignoreOrder: true);
+        }
+
         // ================================================================
         // Copy and paste
         // ================================================================
@@ -661,6 +678,18 @@ namespace Business.Tests.Flows
             steps.Where(x => x.ParentFlowStepId == find.Id).OrderBy(x => x.OrderNumber).Select(x => x.FlowStepType)
                 .ShouldBe([FlowStepTypeEnum.SUCCESS, FlowStepTypeEnum.FAILURE]);
             steps.Single(x => x.FlowStepType == FlowStepTypeEnum.WAIT).ParentFlowStepId.ShouldBe(steps.Single(x => x.FlowStepType == FlowStepTypeEnum.FAILURE).Id);
+        }
+
+        // The file writes a branch as a keyword, only when something sits under it.
+        [Fact]
+        public async Task An_import_names_the_branches_its_file_writes()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Find Image  <[ Find ]>\n Success:\n  Wait  800ms\n Failure:\n  Wait  900ms\n");
+
+            Steps(imported.FlowId)
+                .Where(x => TreeStepHelper.IsBranchChild(x.FlowStepType))
+                .Select(x => x.Name)
+                .ShouldBe(["Success", "Failure"], ignoreOrder: true);
         }
 
         // The script writes no name for a step its settings name, and the import leaves none unnamed.

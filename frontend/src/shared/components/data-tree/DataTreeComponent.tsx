@@ -3,6 +3,7 @@ import type { TreeExpandedKeysType } from "primereact/tree";
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -53,7 +54,6 @@ export function DataTreeComponent({ flowId }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
   const {
     selectedTreeNode,
-    treeRefreshTrigger,
     copiedStep,
     stepToReveal,
     setSelectedTreeNode,
@@ -229,16 +229,19 @@ export function DataTreeComponent({ flowId }: Props) {
     );
   }, [flowId]);
 
-  useEffect(() => {
-    if (!treeRefreshTrigger) return;
+  // A reload asked for by another part of the editor, taken as it is asked rather than after the
+  // next render. The workflow page clears any left from before, and the tree loads afresh anyway.
+  const refreshTree = useEffectEvent(
+    (id: number, isFlow: boolean, selectNodeIdAfterLoad?: number) => {
+      setTreeRefreshTrigger(null);
 
-    const { id, isFlow, selectNodeIdAfterLoad } = treeRefreshTrigger;
+      if (id === -1) {
+        backendApiService.Flow.getTreeNodes(flowId).then((response) =>
+          setData(response),
+        );
+        return;
+      }
 
-    if (id === -1) {
-      backendApiService.Flow.getTreeNodes(flowId).then((response) =>
-        setData(response),
-      );
-    } else {
       loadTreeChildren(id, isFlow).then((response) => {
         if (selectNodeIdAfterLoad) {
           const newSelectedNode = response?.find(
@@ -247,9 +250,16 @@ export function DataTreeComponent({ flowId }: Props) {
           setSelectedTreeNode(newSelectedNode);
         }
       });
-    }
-    setTreeRefreshTrigger(null);
-  }, [treeRefreshTrigger, loadTreeChildren]); // loadTreeChildren is stable if you wrap it in useCallback
+    },
+  );
+
+  useEffect(() => {
+    return useWorkflowStore.subscribe((state) => {
+      const trigger = state.treeRefreshTrigger;
+      if (trigger)
+        refreshTree(trigger.id, trigger.isFlow, trigger.selectNodeIdAfterLoad);
+    });
+  }, []);
 
   // A "Used by" list asked for this step. Its branches are loaded and opened from the top down,
   // then it is selected, so it shows where it sits and not only in the panel.

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useEffectEvent, useState } from "react";
 import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { Message } from "primereact/message";
 import { Panel } from "primereact/panel";
 import { ProgressBar } from "primereact/progressbar";
 
-import { BroadcastTypeEnum } from "../../../../electron/shared/types";
+import { BroadcastTypeEnum, type IpcBroadcastMessage } from "../../../../electron/shared/types";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
@@ -127,23 +127,6 @@ export default function RecordingPage() {
   const [dropped, setDropped] = useState<string[]>([]);
   const [dropping, setDropping] = useState<string | null>(null);
   const [dropProblem, setDropProblem] = useState<string | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
-      if (message.type === BroadcastTypeEnum.RECORDING_PROGRESS) {
-        const received = message.payload as RecordingProgressDto;
-        setProgress((current) => (current || isUnderway(received) ? received : current));
-      }
-
-      if (message.type === BroadcastTypeEnum.FLOW_GENERATION_PROGRESS) {
-        const received = message.payload as FlowGenerationProgressDto;
-        setGeneration((current) => (current ? received : current));
-        setRevision((current) => (current ? received : current));
-      }
-    });
-
-    return unsubscribe;
-  }, []);
 
   // The bar never outlives the page that opened it.
   useEffect(() => {
@@ -282,12 +265,6 @@ export default function RecordingPage() {
     }
   };
 
-  // Ended, from whichever stage it was in.
-  useEffect(() => {
-    if (generation?.state === FlowGenerationStateEnum.NONE) setGeneration(null);
-    if (generation?.state === FlowGenerationStateEnum.DONE) void fetchGenerated();
-  }, [generation?.state]);
-
   // A new flow to read: nothing about its checks is decided yet.
   const showChecked = (next: FlowGenerationResultDto) => {
     setChecked(next);
@@ -397,15 +374,62 @@ export default function RecordingPage() {
     }
   };
 
-  useEffect(() => {
-    if (revision?.state === FlowGenerationStateEnum.NONE) setRevision(null);
+  const followRecording = (received: RecordingProgressDto) => {
+    if (!progress && !isUnderway(received)) return;
 
-    if (revision?.state === FlowGenerationStateEnum.DONE) {
-      void fetchRevised(revision);
-      setRevision(null);
+    setProgress(received);
+
+    // Stopped or discarded, from wherever it was.
+    if (isLive(received) || received.state === progress?.state) return;
+
+    void ElectronApiService.recordingBar.closeWindow();
+
+    if (received.state === RecordingStateEnum.READY) void openReview(received);
+    if (received.state === RecordingStateEnum.NONE) void leave();
+  };
+
+  // Ended, from whichever stage it was in.
+  const followGeneration = (received: FlowGenerationProgressDto) => {
+    if (!generation) return;
+
+    if (received.state === FlowGenerationStateEnum.NONE) {
+      setGeneration(null);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revision?.state]);
+
+    setGeneration(received);
+
+    if (received.state === FlowGenerationStateEnum.DONE && generation.state !== FlowGenerationStateEnum.DONE)
+      void fetchGenerated();
+  };
+
+  const followRevision = (received: FlowGenerationProgressDto) => {
+    if (!revision) return;
+
+    if (received.state === FlowGenerationStateEnum.NONE || received.state === FlowGenerationStateEnum.DONE) {
+      setRevision(null);
+    } else {
+      setRevision(received);
+    }
+
+    if (received.state === FlowGenerationStateEnum.DONE) void fetchRevised(received);
+  };
+
+  // Read against what the page shows when it arrives, so a message about a recording or a
+  // generation it is not following changes nothing.
+  const onBroadcast = useEffectEvent((message: IpcBroadcastMessage<unknown>) => {
+    if (message.type === BroadcastTypeEnum.RECORDING_PROGRESS)
+      followRecording(message.payload as RecordingProgressDto);
+
+    if (message.type === BroadcastTypeEnum.FLOW_GENERATION_PROGRESS) {
+      followGeneration(message.payload as FlowGenerationProgressDto);
+      followRevision(message.payload as FlowGenerationProgressDto);
+    }
+  });
+
+  useEffect(() => {
+    return ElectronApiService.backendApi.OnBroadcast((message) => onBroadcast(message));
+  }, []);
 
   // The flow goes, its steps with it, and the recording after it.
   const discardChecked = () => {
@@ -437,17 +461,6 @@ export default function RecordingPage() {
     setProgress(null);
     void openBar(recordingFlowId, setupFlowId);
   };
-
-  // Stopped or discarded, from wherever it was.
-  useEffect(() => {
-    if (!progress || isLive(progress)) return;
-
-    void ElectronApiService.recordingBar.closeWindow();
-
-    if (progress.state === RecordingStateEnum.READY) void openReview(progress);
-    if (progress.state === RecordingStateEnum.NONE) void leave();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress?.state]);
 
   // A discard made from the bar deletes the flow the setup created. One recorded into from the
   // editor stays.

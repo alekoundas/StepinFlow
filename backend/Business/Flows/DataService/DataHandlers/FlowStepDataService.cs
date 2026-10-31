@@ -290,8 +290,8 @@ namespace Business.Flows.DataService.DataHandlers
         /// <summary>
         /// Steps read from a script, linked to their parents, references, areas, points and
         /// templates. A check the file wrote with an empty branch left out still gets both branch
-        /// rows, so there is somewhere to add steps under it. The file names no step its settings
-        /// name, so those are named here, apart from the names already taken.
+        /// rows, so there is somewhere to add steps under it. The file names no branch and no step
+        /// its settings name, so those are named here, the steps apart from the names already taken.
         /// </summary>
         public static void AddTree(AppDbContext dbContext, Flow flow, IReadOnlyList<FlowStep> steps, HashSet<string> taken)
         {
@@ -301,7 +301,9 @@ namespace Business.Flows.DataService.DataHandlers
                 if (step.ParentFlowStep == null)
                     step.FlowId = flow.Id;
 
-                if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+                if (TreeStepHelper.IsBranchChild(step.FlowStepType))
+                    step.Name = TreeStepHelper.BranchName(step.FlowStepType);
+                else if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
                     step.Name = UniqueName(FlowStepNameHelper.NameOf(step), taken);
             }
 
@@ -425,7 +427,9 @@ namespace Business.Flows.DataService.DataHandlers
             step.FlowId = null;
             step.ParentFlowStepId = null;
 
-            if (!TreeStepHelper.IsBranchChild(step.FlowStepType))
+            if (TreeStepHelper.IsBranchChild(step.FlowStepType))
+                step.Name = TreeStepHelper.BranchName(step.FlowStepType);
+            else
                 step.Name = UniqueName(DesiredName(step), taken);
 
             // A row already saved is linked by its id, or saving the new ones would insert it again.

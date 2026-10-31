@@ -44,7 +44,7 @@ export default function ElementRectangleEditorComponent({
   const frameRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ handle: Handle; startX: number; startY: number; start: ElementRectangle } | null>(null);
 
-  const begin = (handle: Handle) => (event: PointerEvent<HTMLElement>) => {
+  const begin = (handle: Handle, event: PointerEvent<HTMLElement>) => {
     if (!isEditable || !element) return;
 
     event.preventDefault();
@@ -94,7 +94,7 @@ export default function ElementRectangleEditorComponent({
             cursor: isEditable ? "move" : undefined,
             touchAction: "none",
           }}
-          onPointerDown={begin("move")}
+          onPointerDown={(event) => begin("move", event)}
           onPointerMove={drag}
           onPointerUp={end}
         >
@@ -104,7 +104,7 @@ export default function ElementRectangleEditorComponent({
                 key={corner}
                 className="absolute"
                 style={{ ...cornerPlace(corner), width: 10, height: 10, background: TEMPLATE_COLOUR, borderRadius: 2 }}
-                onPointerDown={begin(corner)}
+                onPointerDown={(event) => begin(corner, event)}
                 onPointerMove={drag}
                 onPointerUp={end}
               />

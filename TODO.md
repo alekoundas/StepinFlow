@@ -119,13 +119,6 @@ the history.
 
 ## Flow script
 
-- [ ] **An imported Success or Failure row has no name.** Found 2026-10-31. The printer writes a
-      branch line only when something sits under it, and `BranchParser` reads that line into a
-      step with no name; the branches it did not write are made by `MissingBranches` and named. So
-      a branch with a child shows blank in every tree. A recording's branches are made without a
-      name too. Name them in `FlowStepDataService.AddTree`, and add a migration naming the rows
-      already saved: 43 in Firestone on 2026-10-31. Waiting on the go-ahead.
-
 - [ ] **A text search's language is not in the script.** Found 2026-10-28, when the recorder began
       writing `Wait For Text`. `OcrLanguage` is a column the script never writes, so a text search
       from a file, a recording or a model's answer has none, and an export loses the one picked.
@@ -557,17 +550,6 @@ the history.
 
 ## Frontend
 
-- [ ] **Deleting a step takes about seven seconds.** Found 2026-10-31. The delete waits on
-      `invalidate()`, which refetches the step on screen - the one just deleted. The backend says it
-      does not exist, React Query retries three times (1, 2 and 4 seconds), and each try logs
-      "Backend call failed [FlowStep.get]". Let go of the selection before refetching. Waiting on
-      the go-ahead.
-- [ ] **Ten lint errors in code that was already there.** `eslint-plugin-react-hooks` 7.1, taken
-      2026-10-31, finds what 7.0 missed: state set inside an effect in `ExecutionPage`,
-      `RecordingPage` (three) and `DataTreeComponent`; refs read during render in
-      `OverlayCapturePage` (two) and `ElementRectangleEditorComponent`; and two functions used before
-      they are declared in `OverlayCapturePage`. The React Compiler leaves those components
-      unoptimised, so they still work.
 - [ ] **Two buttons have no icon.** `pi-crop` (`FlowAreaFormFieldsComponent`, the image editor's
       `OptionsPanel`) and `pi-crosshairs` (`FlowStepTemplateListComponent`,
       `WorkflowTemplatePanelComponent`) are in no PrimeIcons version, the 8.0 pre-release included.

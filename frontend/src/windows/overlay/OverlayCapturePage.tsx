@@ -60,6 +60,71 @@ function clampToParentSearchArea(
   };
 }
 
+// This window's monitor, set once on ready.
+interface Monitor {
+  scaleFactor: number;
+  logicalOrigin: Point;
+  logicalWidth: number;
+  logicalHeight: number;
+}
+
+// Clip a physical absolute rect to this monitor and return local CSS rect.
+// Returns null if the selection doesn't overlap this monitor at all.
+function physicalToLogicalRect(
+  physRect: Rectangle,
+  monitor: Monitor | null,
+): Rectangle | null {
+  if (!monitor) return null;
+
+  const sf = monitor.scaleFactor;
+  const origin = monitor.logicalOrigin;
+
+  // This monitor's physical bounds
+  const monPhysX = origin.x * sf;
+  const monPhysY = origin.y * sf;
+  const monPhysRight = (origin.x + monitor.logicalWidth) * sf;
+  const monPhysBottom = (origin.y + monitor.logicalHeight) * sf;
+
+  // Clip
+  const clipX = Math.max(physRect.x, monPhysX);
+  const clipY = Math.max(physRect.y, monPhysY);
+  const clipRight = Math.min(physRect.x + physRect.width, monPhysRight);
+  const clipBottom = Math.min(physRect.y + physRect.height, monPhysBottom);
+
+  if (clipRight <= clipX || clipBottom <= clipY) return null;
+
+  // Convert clipped physical → local CSS
+  return {
+    x: Math.round(clipX / sf - origin.x),
+    y: Math.round(clipY / sf - origin.y),
+    width: Math.round((clipRight - clipX) / sf),
+    height: Math.round((clipBottom - clipY) / sf),
+  };
+}
+
+function sendResult(rect: Rectangle | null) {
+  ElectronApiService.overlay.signalCloseWindow(rect);
+}
+
+function base64ToBlob(
+  base64: string,
+  contentType = "image/png",
+  sliceSize = 512 * 1024,
+): Blob {
+  const byteCharacters = atob(base64);
+  const byteArrays: Uint8Array[] = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Uint8Array(slice.length);
+    for (let i = 0; i < slice.length; i++)
+      byteNumbers[i] = slice.charCodeAt(i);
+    byteArrays.push(byteNumbers);
+  }
+  return new Blob(byteArrays as Uint8Array<ArrayBuffer>[], {
+    type: contentType,
+  });
+}
+
 export default function OverlayCapturePage() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -70,10 +135,7 @@ export default function OverlayCapturePage() {
   const [startPhys, setStartPhys] = useState<Point | null>(null);
   const [endPhys, setEndPhys] = useState<Point | null>(null);
 
-  // Monitor metadata — stable refs (set once on ready, never change)
-  const scaleFactor = useRef(1);
-  const monitorLogicalOrigin = useRef<Point>({ x: 0, y: 0 });
-  const logicalSize = useRef({ width: 0, height: 0 });
+  const [monitor, setMonitor] = useState<Monitor | null>(null);
 
   // Parent search area the selection has to stay inside, when there is one. Kept in a ref as
   // well because the broadcast listener is registered once and never sees later state.
@@ -84,39 +146,6 @@ export default function OverlayCapturePage() {
   >(null);
   const parentSearchAreaBoundsRef = useRef<Rectangle | null>(null);
 
-  // Clip a physical absolute rect to this monitor and return local CSS rect.
-  // Returns null if the selection doesn't overlap this monitor at all.
-  const physicalToLogicalRect = useCallback(
-    (physRect: Rectangle): Rectangle | null => {
-      const sf = scaleFactor.current;
-      const origin = monitorLogicalOrigin.current;
-      const size = logicalSize.current;
-
-      // This monitor's physical bounds
-      const monPhysX = origin.x * sf;
-      const monPhysY = origin.y * sf;
-      const monPhysRight = (origin.x + size.width) * sf;
-      const monPhysBottom = (origin.y + size.height) * sf;
-
-      // Clip
-      const clipX = Math.max(physRect.x, monPhysX);
-      const clipY = Math.max(physRect.y, monPhysY);
-      const clipRight = Math.min(physRect.x + physRect.width, monPhysRight);
-      const clipBottom = Math.min(physRect.y + physRect.height, monPhysBottom);
-
-      if (clipRight <= clipX || clipBottom <= clipY) return null;
-
-      // Convert clipped physical → local CSS
-      return {
-        x: Math.round(clipX / sf - origin.x),
-        y: Math.round(clipY / sf - origin.y),
-        width: Math.round((clipRight - clipX) / sf),
-        height: Math.round((clipBottom - clipY) / sf),
-      };
-    },
-    [],
-  );
-
   // ============================================================================
   // Signal ready
   // ============================================================================
@@ -126,12 +155,12 @@ export default function OverlayCapturePage() {
       .then((res: SignalReadyResponse | null) => {
         if (!res) return;
 
-        scaleFactor.current = res.scaleFactor;
-        monitorLogicalOrigin.current = res.monitorLogicalOrigin;
-        logicalSize.current = {
-          width: res.logicalWidth,
-          height: res.logicalHeight,
-        };
+        setMonitor({
+          scaleFactor: res.scaleFactor,
+          logicalOrigin: res.monitorLogicalOrigin,
+          logicalWidth: res.logicalWidth,
+          logicalHeight: res.logicalHeight,
+        });
         parentSearchAreaBoundsRef.current = res.parentSearchAreaBounds;
         setParentSearchAreaBounds(res.parentSearchAreaBounds);
         setParentAreaName(res.parentAreaName);
@@ -205,19 +234,14 @@ export default function OverlayCapturePage() {
 
   // ── Result ─────────────────────────────────────────────────────────────────
 
-  const sendResult = useCallback((rect: Rectangle | null) => {
-    ElectronApiService.overlay.signalCloseWindow(rect);
-  }, []);
-
   const handleConfirm = useCallback(() => {
     if (!startPhys || !endPhys) return;
     // Send physical absolute rect — backend speaks physical
     sendResult(createRectangle(startPhys, endPhys));
-  }, [startPhys, endPhys, sendResult]);
+  }, [startPhys, endPhys]);
 
-  const handleCancel = useCallback(() => sendResult(null), [sendResult]);
-  const 
-  onRedraw = useCallback(() => {
+  const handleCancel = useCallback(() => sendResult(null), []);
+  const onRedraw = useCallback(() => {
     setPhase("idle");
     setStartPhys(null);
     setEndPhys(null);
@@ -225,31 +249,12 @@ export default function OverlayCapturePage() {
 
   const physRect =
     startPhys && endPhys ? createRectangle(startPhys, endPhys) : null;
-  const logicalRect = physRect ? physicalToLogicalRect(physRect) : null;
+  const logicalRect = physRect ? physicalToLogicalRect(physRect, monitor) : null;
   const isDraggingOrConfirming = phase === "dragging" || phase === "confirming";
 
   const parentSearchAreaLogicalRect = parentSearchAreaBounds
-    ? physicalToLogicalRect(parentSearchAreaBounds)
+    ? physicalToLogicalRect(parentSearchAreaBounds, monitor)
     : null;
-
-  function base64ToBlob(
-    base64: string,
-    contentType = "image/png",
-    sliceSize = 512 * 1024,
-  ): Blob {
-    const byteCharacters = atob(base64);
-    const byteArrays: Uint8Array[] = [];
-    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-      const slice = byteCharacters.slice(offset, offset + sliceSize);
-      const byteNumbers = new Uint8Array(slice.length);
-      for (let i = 0; i < slice.length; i++)
-        byteNumbers[i] = slice.charCodeAt(i);
-      byteArrays.push(byteNumbers);
-    }
-    return new Blob(byteArrays as Uint8Array<ArrayBuffer>[], {
-      type: contentType,
-    });
-  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 

@@ -66,12 +66,14 @@ export default function ExecutionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engineState]);
 
-  useEffect(() => {
-    if (!requestedExecution || openedExecution?.id === requestedExecution.id) return;
-
+  // Taken during render rather than in an effect, so the header never paints one frame with the
+  // execution opened before it. A refetch of the same one leaves its rows as they are.
+  if (requestedExecution && openedExecution?.id !== requestedExecution.id)
     setOpenedExecution(requestedExecution);
-    setExecutionSteps(requestedExecution.executionSteps ?? []);
-  }, [requestedExecution, openedExecution, setExecutionSteps]);
+
+  useEffect(() => {
+    if (openedExecution) setExecutionSteps(openedExecution.executionSteps ?? []);
+  }, [openedExecution, setExecutionSteps]);
 
   // Arrived from the executions list with an execution named, so this is history being read back.
   const isPastExecution = requestedExecutionId !== null;

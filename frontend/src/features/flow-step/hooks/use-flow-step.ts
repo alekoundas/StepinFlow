@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  hashKey,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type {
@@ -46,9 +51,21 @@ export function useFlowStepMutations() {
     onSuccess: invalidate,
   });
 
+  // The deleted step stays on screen until the caller lets go of it, so it is left out of the
+  // refetch: asking for it again fails, and the retries held the delete up for seven seconds.
   const deleteFlowStepMutation = useMutation({
     mutationFn: (id: number) => backendApiService.FlowStep.delete(id),
-    onSuccess: invalidate,
+    onSuccess: (_, id) => {
+      const deleted = hashKey(flowStepKeys.detail(id));
+
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["flowStep"],
+          predicate: (query) => query.queryHash !== deleted,
+        }),
+        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+      ]);
+    },
   });
 
   // A move rewrites more than the step it moved: reparenting clears the search results that

@@ -155,7 +155,7 @@ namespace Core.Helpers
                 {
                     ParentFlowStep = parent,
                     FlowStepType = FlowStepTypeEnum.SUCCESS,
-                    Name = "Success",
+                    Name = BranchName(FlowStepTypeEnum.SUCCESS),
                     OrderNumber = 0,
                     RootId = parent.RootId,
                 },
@@ -163,11 +163,19 @@ namespace Core.Helpers
                 {
                     ParentFlowStep = parent,
                     FlowStepType = FlowStepTypeEnum.FAILURE,
-                    Name = "Failure",
+                    Name = BranchName(FlowStepTypeEnum.FAILURE),
                     OrderNumber = 1,
                     RootId = parent.RootId,
                 }
             ];
+        }
+
+        public static string BranchName(FlowStepTypeEnum type)
+        {
+            if (type == FlowStepTypeEnum.FAILURE)
+                return "Failure";
+
+            return "Success";
         }
 
         public static bool CanReadResultOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
