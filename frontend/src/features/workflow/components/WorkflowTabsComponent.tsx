@@ -4,6 +4,7 @@ import type { MenuItem, MenuItemOptions } from "primereact/menuitem";
 
 import { useWorkflowStore, type WorkflowTab } from "@/features/workflow/store/workflow-store";
 import { WorkflowTreeZoomComponent } from "@/features/workflow/components/WorkflowTreeZoomComponent";
+import { WorkflowTreeExpansionComponent } from "@/features/workflow/components/WorkflowTreeExpansionComponent";
 
 interface Props {
   areaCount?: number;
@@ -65,7 +66,7 @@ export function WorkflowTabsComponent({
     ),
   }));
 
-  // The size control continues the tab bar's line, so it reads as part of the bar.
+  // The tree's controls continue the tab bar's line, so they read as part of the bar.
   return (
     <div className="flex px-3 pt-2">
       <TabMenu
@@ -77,9 +78,10 @@ export function WorkflowTabsComponent({
       />
       {activeTab === "flow" && (
         <div
-          className="flex align-items-center pl-2"
+          className="flex align-items-center gap-2 pl-2"
           style={{ borderBottom: "2px solid var(--surface-d)" }}
         >
+          <WorkflowTreeExpansionComponent />
           <WorkflowTreeZoomComponent />
         </div>
       )}

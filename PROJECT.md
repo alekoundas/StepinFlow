@@ -2175,6 +2175,11 @@ use the old name. A secret keeps no value, whichever form saves it.
 
 `DataTreeComponent` renders a PrimeReact `Tree`, lazily loading children on expand.
 
+**Expand all and Collapse all** sit beside the size control. Expand all takes the whole flow in one
+query, `FlowStep.getTreeNodesRecursive` as the execution page does, rather than a level at a time:
+Firestone has 105 steps with something under them. Collapse all closes every step and leaves the
+flow open on its first steps.
+
 **Node keys are namespaced.** Flow ids and FlowStep ids are separate sequences, so a raw id would make
 Flow 5 and FlowStep 5 the same node as far as selection and expansion are concerned. Keys are
 `flow-{id}` / `step-{id}`, built by `TreeNodeDto.BuildKey` in C# and `buildTreeNodeKey` in TypeScript

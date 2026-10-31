@@ -11,8 +11,8 @@ namespace Transport.Ipc.Handlers
     ///
     /// The lazy tree asks for a level at a time, which is right for a page you are editing. The
     /// execution page is not: you set breakpoints anywhere before a run, and a step you have not
-    /// expanded to is a step you cannot break on. RootId is what makes this one query rather than
-    /// one per level.
+    /// expanded to is a step you cannot break on. The editor's Expand all takes it too. RootId is
+    /// what makes this one query rather than one per level.
     /// </summary>
     public class GetFlowStepTreeNodesRecursiveHandler
     {

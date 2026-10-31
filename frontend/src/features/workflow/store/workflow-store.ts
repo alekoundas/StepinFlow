@@ -19,6 +19,8 @@ const savedTreeZoom = (): number => {
   return saved >= TREE_ZOOM.min && saved <= TREE_ZOOM.max ? saved : TREE_ZOOM.initial;
 };
 
+export type TreeExpansion = "expand" | "collapse";
+
 /** The step Copy took. One at a time, kept after a paste, and only for the flow it came from. */
 export interface CopiedStep {
   id: number;
@@ -43,6 +45,9 @@ interface Props {
   /** A step to open in the tree, its branches expanded down to it. Set from a "Used by" list. */
   stepToReveal: number | null;
 
+  /** Expand all or Collapse all, pressed beside the tabs. The tree takes it and clears it. */
+  treeExpansion: TreeExpansion | null;
+
   // Actions
   setSelectedTreeNode: (dto: TreeNodeDto | undefined) => void;
   setSelectedFlowStepTypeToAdd: (type: FlowStepTypeEnum | undefined) => void;
@@ -61,6 +66,7 @@ interface Props {
   setScriptView: (view: ScriptView) => void;
   setTreeZoom: (percent: number) => void;
   setStepToReveal: (flowStepId: number | null) => void;
+  setTreeExpansion: (expansion: TreeExpansion | null) => void;
 }
 
 export const useWorkflowStore = create<Props>()(
@@ -74,6 +80,7 @@ export const useWorkflowStore = create<Props>()(
     scriptView: "script",
     treeZoom: savedTreeZoom(),
     stepToReveal: null,
+    treeExpansion: null,
 
     setSelectedTreeNode: (dto: TreeNodeDto | undefined): void =>
       set({
@@ -105,5 +112,7 @@ export const useWorkflowStore = create<Props>()(
     // Opening a step is opening the Flow tab too.
     setStepToReveal: (flowStepId: number | null): void =>
       set(flowStepId == null ? { stepToReveal: null } : { stepToReveal: flowStepId, activeTab: "flow" }),
+
+    setTreeExpansion: (expansion: TreeExpansion | null): void => set({ treeExpansion: expansion }),
   })),
 );

@@ -16,7 +16,10 @@ import {
 } from "primereact/tree";
 import { classNames } from "primereact/utils";
 import { Button } from "primereact/button";
-import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import {
+  useWorkflowStore,
+  type TreeExpansion,
+} from "@/features/workflow/store/workflow-store";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -62,6 +65,7 @@ export function DataTreeComponent({ flowId }: Props) {
     setTreeRefreshTrigger,
     setCopiedStep,
     setStepToReveal,
+    setTreeExpansion,
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
   const { openConfirm, close } = useDialogStore();
@@ -99,6 +103,29 @@ export function DataTreeComponent({ flowId }: Props) {
         orderNumber: orderNumber,
       }),
     [],
+  );
+
+  // A branch ends in a + row. Steps go under Success / Failure / Loop, never directly under the
+  // branching step that owns them, so the + only belongs where a drop would be allowed.
+  const withNewChild = useCallback(
+    (
+      children: TreeNodeDto[],
+      parentNodeId: number,
+      isParentNodeFlow: boolean,
+      canAddChildren: boolean,
+    ): TreeNodeDto[] => {
+      if (!canAddChildren) return children;
+
+      const maxOrderNumber = children.reduce(
+        (max, node) => (node.orderNumber > max ? node.orderNumber : max),
+        0,
+      );
+
+      return isParentNodeFlow
+        ? [...children, getNewChild(maxOrderNumber + 1, parentNodeId, undefined)]
+        : [...children, getNewChild(maxOrderNumber + 1, undefined, parentNodeId)];
+    },
+    [getNewChild],
   );
 
   //Recursive immutable update – finds the node by key and replaces its children
@@ -171,33 +198,17 @@ export function DataTreeComponent({ flowId }: Props) {
       try {
         // isFlow decides which column the backend matches the id against: the Flow node wants
         // its root steps, a FlowStep node wants its children.
-        let response = await backendApiService.FlowStep.getTreeNodes({
-          id: parentNodeId,
-          isFlow: isParentNodeFlow,
-        });
-        const maxOrderNumber = response.reduce(
-          (max, node) => (node.orderNumber > max ? node.orderNumber : max),
-          0,
-        );
-
-        // Steps go under Success / Failure / Loop, never directly under the branching step that
-        // owns them, so the add placeholder only belongs where a drop would be allowed.
         const parentKey = buildTreeNodeKey(parentNodeId, isParentNodeFlow);
-        const canAddChildren =
-          isParentNodeFlow || nodesByKeyRef.current.get(parentKey)?.droppable !== false;
-
-        if (canAddChildren) {
-          response = isParentNodeFlow
-            ? [...response, getNewChild(maxOrderNumber + 1, parentNodeId, undefined)]
-            : [...response, getNewChild(maxOrderNumber + 1, undefined, parentNodeId)];
-        }
-        setData((prev) =>
-          updateTreeNodeChildren(
-            prev,
-            buildTreeNodeKey(parentNodeId, isParentNodeFlow),
-            response,
-          ),
+        const response = withNewChild(
+          await backendApiService.FlowStep.getTreeNodes({
+            id: parentNodeId,
+            isFlow: isParentNodeFlow,
+          }),
+          parentNodeId,
+          isParentNodeFlow,
+          isParentNodeFlow || nodesByKeyRef.current.get(parentKey)?.droppable !== false,
         );
+        setData((prev) => updateTreeNodeChildren(prev, parentKey, response));
 
         // Known at once rather than after the next render, so a branch opened straight after this
         // one is given its add placeholder by its own rules.
@@ -221,7 +232,7 @@ export function DataTreeComponent({ flowId }: Props) {
       }
       return;
     },
-    [getNewChild],
+    [withNewChild],
   );
 
   useEffect(() => {
@@ -312,6 +323,64 @@ export function DataTreeComponent({ flowId }: Props) {
     const node = e.node as TreeNodeDto;
     await loadTreeChildren(node.entityId, node.isFlow);
   };
+
+  // ====================== EXPAND & COLLAPSE ALL ======================
+
+  // The whole flow in one query: a level at a time would be a request for every step with
+  // something under it.
+  const expandAll = async () => {
+    setLoading(true);
+    try {
+      const roots = await backendApiService.FlowStep.getTreeNodesRecursive(flowId);
+      const opened: TreeExpandedKeysType = {};
+
+      const open = (
+        children: TreeNodeDto[],
+        parentNodeId: number,
+        isParentNodeFlow: boolean,
+        canAddChildren: boolean,
+      ): TreeNodeDto[] => {
+        opened[buildTreeNodeKey(parentNodeId, isParentNodeFlow)] = true;
+
+        return withNewChild(
+          children.map((node) =>
+            node.leaf ? node : { ...node, children: open(node.children, node.entityId, false, node.droppable) },
+          ),
+          parentNodeId,
+          isParentNodeFlow,
+          canAddChildren,
+        );
+      };
+
+      const flowKey = buildTreeNodeKey(flowId, true);
+      const loaded = open(roots, flowId, true, true);
+      setData((prev) => updateTreeNodeChildren(prev, flowKey, loaded));
+      setExpandedKeys(opened);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // The flow stays open on its first steps, if it was open at all.
+  const collapseAll = () => {
+    const flowKey = buildTreeNodeKey(flowId, true);
+    setExpandedKeys((prev) => (prev[flowKey] ? { [flowKey]: true } : {}));
+  };
+
+  const changeExpansion = useEffectEvent((expansion: TreeExpansion) => {
+    setTreeExpansion(null);
+
+    if (expansion === "expand") void expandAll();
+    else collapseAll();
+  });
+
+  useEffect(() => {
+    return useWorkflowStore.subscribe((state) => {
+      if (state.treeExpansion) changeExpansion(state.treeExpansion);
+    });
+  }, []);
 
   // ====================== DRAG & DROP ======================
 
