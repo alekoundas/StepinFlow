@@ -437,7 +437,10 @@ download progress.
 
 The execution page applies execution progress in batches, at most every 100 ms and on a screen
 refresh, so a window nobody can see draws nothing. Drawing on every event cost more than a fast flow
-left between two, and the page fell further and further behind the execution.
+left between two, and the page fell further and further behind the execution. The list draws only
+the rows in view, newest first: a Firestone execution left on for two hours kept 32,699 steps, and
+laying all of them out made the page lag. Scrolled down to read, the rows stay put as new ones
+arrive on top.
 
 **Work longer than a request can wait for is started by the request and reported by broadcast.**
 The pipe answers one call at a time and Electron gives up on a call after 30 seconds, so the

@@ -141,7 +141,7 @@ export default function ExecutionPage() {
                 />
                 <Button
                   label="Jump to failure"
-                  icon="pi pi-arrow-down"
+                  icon="pi pi-arrow-up"
                   size="small"
                   text
                   disabled={fatalSequence === undefined}

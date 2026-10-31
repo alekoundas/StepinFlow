@@ -29,11 +29,110 @@
       "x": 10640,
       "y": 0
     },
+    "EditorAreas.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8a · Editor: Areas, the windows and regions steps look in",
+      "w": 1440,
+      "x": 12160,
+      "y": 0
+    },
+    "EditorCopyPaste.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "Editor · copy and paste a step",
+      "w": 1440,
+      "x": 6227,
+      "y": 1600
+    },
+    "EditorInputs.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8c · Editor: Inputs, the values steps type in",
+      "w": 1440,
+      "x": 15200,
+      "y": 0
+    },
+    "EditorLocations.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8b · Editor: Locations, one to fix after its area changed",
+      "w": 1440,
+      "x": 13680,
+      "y": 0
+    },
+    "EditorScript.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8e · Editor: Script, the lines changed since the last commit marked",
+      "w": 1440,
+      "x": 18240,
+      "y": 0
+    },
+    "EditorTemplateAdd.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8f · Editor: Add template, capture now or reuse one",
+      "w": 1440,
+      "x": 19760,
+      "y": 0
+    },
+    "EditorTemplateReuse.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8g · Editor: Reuse a template, picked by its picture",
+      "w": 1440,
+      "x": 21280,
+      "y": 0
+    },
+    "EditorTemplateShared.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8h · Editor: Editing a template two steps share",
+      "w": 1440,
+      "x": 22800,
+      "y": 0
+    },
+    "EditorTemplates.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8d · Editor: Templates, the pictures steps share",
+      "w": 1440,
+      "x": 16720,
+      "y": 0
+    },
+    "EditorTreeSize.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "8i · Editor: a smaller tree, and a step with three templates",
+      "w": 1440,
+      "x": 24320,
+      "y": 0
+    },
+    "Execution.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Execution · two hours in, newest on top",
+      "w": 1440,
+      "x": 14467,
+      "y": 1600
+    },
     "Foundations.dc.html": {
       "expand": "fill",
-      "h": 1550,
+      "h": 1180,
       "title": "Foundations · tokens and parts",
-      "w": 1587,
+      "w": 1712,
       "x": 1520,
       "y": 1600
     },
@@ -54,6 +153,69 @@
       "w": 1440,
       "x": 7600,
       "y": 0
+    },
+    "GitBranch.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9d · Git: the branch menu (14.2)",
+      "w": 1440,
+      "x": 4560,
+      "y": 8100
+    },
+    "GitChanges.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9a · Git: what changed since the last commit (Discard comes in 14.2)",
+      "w": 1440,
+      "x": 0,
+      "y": 8100
+    },
+    "GitCommit.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9b · Git: commit, with this flow's files ticked",
+      "w": 1440,
+      "x": 1520,
+      "y": 8100
+    },
+    "GitHistory.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9c · Git: a flow's history, each commit against the one before (Restore comes in 14.2)",
+      "w": 1440,
+      "x": 3040,
+      "y": 8100
+    },
+    "GitSwitching.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "is_interactive": true,
+      "title": "9e · Git: switching branch, the database follows (14.2)",
+      "w": 1440,
+      "x": 6080,
+      "y": 8100
+    },
+    "Home.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Home · what executed, what is waiting",
+      "w": 1440,
+      "x": 3187,
+      "y": 1600
+    },
+    "Import.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Import a flow · read the file before it lands",
+      "w": 1440,
+      "x": 4707,
+      "y": 1600
     },
     "Main.dc.html": {
       "expand": "fill",
@@ -99,23 +261,14 @@
       "x": 6080,
       "y": 0
     },
-    "Home.dc.html": {
+    "SettingsRepository.dc.html": {
       "expand": "fill",
       "h": 1180,
       "is_interactive": true,
-      "title": "Home · what executed, what is waiting",
+      "title": "9f · Settings: a section per card, Repository open",
       "w": 1440,
-      "x": 3187,
-      "y": 1600
-    },
-    "Import.dc.html": {
-      "expand": "fill",
-      "h": 1180,
-      "is_interactive": true,
-      "title": "Import a flow · read the file before it lands",
-      "w": 1440,
-      "x": 4707,
-      "y": 1600
+      "x": 7600,
+      "y": 8100
     },
     "StepForms.dc.html": {
       "expand": "fill",
@@ -126,15 +279,6 @@
       "x": 7747,
       "y": 1600
     },
-    "EditorCopyPaste.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "Editor · copy and paste a step",
-      "w": 1440,
-      "x": 6227,
-      "y": 1600
-    },
     "StepFormsSystem.dc.html": {
       "expand": "fill",
       "h": 5340,
@@ -143,141 +287,6 @@
       "w": 3280,
       "x": 11107,
       "y": 1600
-    },
-    "EditorAreas.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8a · Editor: Areas, the windows and regions steps look in",
-      "w": 1440,
-      "x": 12160,
-      "y": 0
-    },
-    "EditorLocations.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8b · Editor: Locations, one to fix after its area changed",
-      "w": 1440,
-      "x": 13680,
-      "y": 0
-    },
-    "EditorInputs.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8c · Editor: Inputs, the values steps type in",
-      "w": 1440,
-      "x": 15200,
-      "y": 0
-    },
-    "EditorTemplates.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8d · Editor: Templates, the pictures steps share",
-      "w": 1440,
-      "x": 16720,
-      "y": 0
-    },
-    "EditorScript.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8e · Editor: Script, the lines changed since the last commit marked",
-      "w": 1440,
-      "x": 18240,
-      "y": 0
-    },
-    "EditorTemplateAdd.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8f · Editor: Add template, capture now or reuse one",
-      "w": 1440,
-      "x": 19760,
-      "y": 0
-    },
-    "EditorTemplateReuse.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8g · Editor: Reuse a template, picked by its picture",
-      "w": 1440,
-      "x": 21280,
-      "y": 0
-    },
-    "EditorTemplateShared.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8h · Editor: Editing a template two steps share",
-      "w": 1440,
-      "x": 22800,
-      "y": 0
-    },
-    "EditorTreeSize.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "8i · Editor: a smaller tree, and a step with three templates",
-      "w": 1440,
-      "x": 24320,
-      "y": 0
-    },
-    "GitChanges.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "9a · Git: what changed since the last commit (Discard comes in 14.2)",
-      "w": 1440,
-      "x": 0,
-      "y": 8100
-    },
-    "GitCommit.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "9b · Git: commit, with this flow's files ticked",
-      "w": 1440,
-      "x": 1520,
-      "y": 8100
-    },
-    "GitHistory.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "9c · Git: a flow's history, each commit against the one before (Restore comes in 14.2)",
-      "w": 1440,
-      "x": 3040,
-      "y": 8100
-    },
-    "GitBranch.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "9d · Git: the branch menu (14.2)",
-      "w": 1440,
-      "x": 4560,
-      "y": 8100
-    },
-    "GitSwitching.dc.html": {
-      "expand": "fill",
-      "h": 960,
-      "is_interactive": true,
-      "title": "9e · Git: switching branch, the database follows (14.2)",
-      "w": 1440,
-      "x": 6080,
-      "y": 8100
-    },
-    "SettingsRepository.dc.html": {
-      "expand": "fill",
-      "h": 1180,
-      "is_interactive": true,
-      "title": "9f · Settings: a section per card, Repository open",
-      "w": 1440,
-      "x": 7600,
-      "y": 8100
     }
   },
   "createdOnFiles": {
@@ -299,7 +308,7 @@
     },
     "row2": {
       "kind": "title1",
-      "maxW": 14387,
+      "maxW": 8000,
       "text": "Around it",
       "w": 240,
       "x": 0,
@@ -307,7 +316,7 @@
     },
     "row3": {
       "kind": "title1",
-      "maxW": 9040,
+      "maxW": 8000,
       "text": "Git: the repository behind every flow",
       "w": 240,
       "x": 0,
@@ -345,7 +354,8 @@
     "GitHistory.dc.html",
     "GitBranch.dc.html",
     "GitSwitching.dc.html",
-    "SettingsRepository.dc.html"
+    "SettingsRepository.dc.html",
+    "Execution.dc.html"
   ],
   "pages": [],
   "title": "StepinFlow recorder redesign"

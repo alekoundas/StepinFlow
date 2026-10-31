@@ -66,6 +66,7 @@ export default function FlowStepCheckValueFormFieldsComponent({
         mode="remote"
         queryKey={["lookup", "flowStep", "value", parentFlowStepId]}
         queryFn={loadStepReferences}
+        staleTime={0}
         optionLabel="label"
         optionValue="value"
         placeholderText="Select a step..."

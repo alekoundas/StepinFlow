@@ -50,6 +50,9 @@ export default function FlowStepBreakFormFieldsComponent({
         }),
       ),
     enabled: rootId > 0,
+    // Kept, it outlived a move: a step that was above this one and now sits beside it was offered.
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // A Break is nearly always the way out of a loop, so one with nothing picked starts on the nearest.

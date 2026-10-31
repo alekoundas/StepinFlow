@@ -28,7 +28,9 @@ the breakpoint.
 
 ## Reading the execution
 
-Rows are ordered by sequence and indented by depth, so the execution reads like a stack trace.
+Rows are newest first and indented by depth, so the step that just executed is always the top row
+and the execution reads like a stack trace. Scrolled down to read an older row, it stays where it is
+as new rows arrive.
 
 A row marked **handled** in amber failed and its Failure branch took over — the flow working as
 designed. The row in red is the one that ended the execution. Both being red would make a healthy retry

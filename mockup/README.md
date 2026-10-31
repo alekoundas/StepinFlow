@@ -49,3 +49,4 @@ than editing these.
 | 9d · Git: the branch menu | `GitBranch.dc.html`, with `git="clean"` and `branches="true"` |
 | 9e · Git: switching branch, the database follows | `GitSwitching.dc.html`, with `git="clean"` and `switching="true"` |
 | 9f · Settings: a section per card, Repository open | `SettingsRepository.dc.html` |
+| Execution · two hours in, newest on top | `Execution.dc.html` |

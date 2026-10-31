@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
@@ -6,8 +6,16 @@ import ExecutionStepRowComponent from "@/features/execution/components/templates
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
+import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 type EmptyReason = "idle" | "loading" | "error" | "noHistory";
+
+// Every row is one line this tall, so only the rows in view are drawn. An execution left on for
+// hours has tens of thousands, and drawing them all is what made the page lag.
+const ROW_HEIGHT = 30;
+
+// Drawn beyond each edge, so a fast scroll shows no blank band.
+const OVERSCAN_ROWS = 10;
 
 const emptyTitle = (reason: EmptyReason): string => {
   switch (reason) {
@@ -53,7 +61,8 @@ interface Props {
 }
 
 /**
- * The run, one row per thing that happened, in the order it happened.
+ * The run, one row per thing that happened, newest first: the step that just executed is the top
+ * row.
  *
  * Ordered by sequence and indented by depth, which is why both are stored: no joins and no walking
  * a parent chain to draw a tree.
@@ -70,7 +79,67 @@ function ExecutionStepListComponent({
   const currentStepName = useExecutionStore((x) => x.currentStepName);
   const setSelectedSequence = useExecutionStore((x) => x.setSelectedSequence);
 
-  if (executionSteps.length === 0)
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const isEmpty = executionSteps.length === 0;
+
+  const rows = useMemo(() => {
+    const shown = showFailuresOnly
+      ? executionSteps.filter((x) => x.outcome === StepOutcomeEnum.FAILURE)
+      : executionSteps;
+
+    return [...shown].reverse();
+  }, [executionSteps, showFailuresOnly]);
+
+  // Scaled against the whole run, not the filtered view, so hiding rows does not restretch the bars.
+  // Not Math.max(...rows): a long run has more rows than a call takes arguments.
+  const maxDurationMilliseconds = useMemo(
+    () => executionSteps.reduce((max, x) => Math.max(max, x.durationMilliseconds), 1),
+    [executionSteps],
+  );
+
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    // Also on first sight, so a new run's list does not start at the last one's scroll.
+    const observer = new ResizeObserver(() => {
+      setViewportHeight(viewport.clientHeight);
+      setScrollTop(viewport.scrollTop);
+    });
+    observer.observe(viewport);
+
+    return () => observer.disconnect();
+  }, [isEmpty]);
+
+  // Scrolled down to read, the rows arriving on top would carry what is being read away.
+  const topRow = useRef<ExecutionStepDto | undefined>(undefined);
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    const previousTop = topRow.current;
+    topRow.current = rows[0];
+
+    if (!viewport || viewport.scrollTop === 0 || !previousTop) return;
+
+    const added = rows.indexOf(previousTop);
+    if (added > 0) viewport.scrollTop += added * ROW_HEIGHT;
+  }, [rows]);
+
+  // Jump to failure picks a row that can be far out of view.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const index = rows.findIndex((x) => x.sequence === selectedSequence);
+    if (!viewport || index < 0) return;
+
+    const top = index * ROW_HEIGHT;
+    const isInView =
+      top >= viewport.scrollTop && top + ROW_HEIGHT <= viewport.scrollTop + viewport.clientHeight;
+    if (!isInView) viewport.scrollTop = top;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSequence]);
+
+  if (isEmpty)
     return (
       <div className="flex flex-column align-items-center justify-content-center gap-2 p-6 text-center">
         <IconComponent
@@ -87,33 +156,18 @@ function ExecutionStepListComponent({
       </div>
     );
 
-  const rows = showFailuresOnly
-    ? executionSteps.filter((x) => x.outcome === StepOutcomeEnum.FAILURE)
-    : executionSteps;
-
-  // Scaled against the whole run, not the filtered view, so hiding rows does not restretch the bars.
-  // Not Math.max(...rows): a long run has more rows than a call takes arguments.
-  const maxDurationMilliseconds = executionSteps.reduce(
-    (max, x) => Math.max(max, x.durationMilliseconds),
-    1,
+  const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN_ROWS);
+  const last = Math.min(
+    rows.length,
+    Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN_ROWS,
   );
 
   return (
-    <div className="flex flex-column p-2">
-      {rows.map((executionStep) => (
-        <ExecutionStepRowComponent
-          key={executionStep.sequence}
-          executionStep={executionStep}
-          isFatal={!!errorFlowStepId && executionStep.flowStepId === errorFlowStepId}
-          isSelected={executionStep.sequence === selectedSequence}
-          maxDurationMilliseconds={maxDurationMilliseconds}
-          onSelect={setSelectedSequence}
-        />
-      ))}
-
+    <div className="flex flex-column h-full">
       {/* Parked before a step, so it has no row yet - there is nothing to report until it runs. */}
       {runState === RunStateEnum.PAUSED && currentStepName ? (
         <div
+          className="mx-2 mt-2"
           style={{
             display: "flex",
             alignItems: "center",
@@ -140,6 +194,29 @@ function ExecutionStepListComponent({
           </span>
         </div>
       ) : null}
+
+      <div
+        ref={viewportRef}
+        className="flex-1 p-2"
+        style={{ overflow: "auto", minHeight: 0, overflowAnchor: "none" }}
+        onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      >
+        <div style={{ position: "relative", height: rows.length * ROW_HEIGHT }}>
+          <div style={{ position: "absolute", top: first * ROW_HEIGHT, left: 0, right: 0 }}>
+            {rows.slice(first, last).map((executionStep) => (
+              <ExecutionStepRowComponent
+                key={executionStep.sequence}
+                executionStep={executionStep}
+                height={ROW_HEIGHT}
+                isFatal={!!errorFlowStepId && executionStep.flowStepId === errorFlowStepId}
+                isSelected={executionStep.sequence === selectedSequence}
+                maxDurationMilliseconds={maxDurationMilliseconds}
+                onSelect={setSelectedSequence}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

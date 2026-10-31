@@ -222,6 +222,7 @@ export default function FlowStepCursorLocationFieldsComponent({
             mode="remote"
             queryKey={["lookup", "flowStep", parentFlowStepId]}
             queryFn={loadStepReferences}
+            staleTime={0}
             optionLabel="label"
             optionValue="value"
             placeholderText="Select a step..."

@@ -63,6 +63,8 @@ export default function FlowStepNotifyFormFieldsComponent({
         })),
       ),
     enabled: parentFlowStepId != null,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Saved straight away so the dropdown has a real id to bind to, same as areas and locations.

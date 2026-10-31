@@ -7,11 +7,10 @@ the history.
 
 ## Execution
 
-- [ ] **The execution list keeps every row in the page.** Since 2026-10-22 events arrive in batches
-      and a row draws once, so a fast flow no longer leaves the page behind. But an execution that
-      loops for an hour can reach tens of thousands of rows, and each batch still walks all of them,
-      and the browser lays them all out. If that drags, draw only the rows in view (PrimeReact
-      `VirtualScroller`) in `ExecutionStepListComponent`.
+- [ ] **Not tried by hand: the execution list drawn newest first, only the rows in view.**
+      Verified by the build only. Execute a looping flow for a few minutes: the newest row stays on
+      top; scroll down and the row being read stays put while rows arrive; Failures only and Jump
+      to failure still land on the right row; a past execution of thousands of rows opens at once.
 - [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
       `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
       the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,
@@ -533,6 +532,13 @@ the history.
 
 ## Frontend
 
+- [ ] **Not tried by hand: the step lists fetched fresh.** Verified by the build only. Since
+      2026-10-31 the lists a step picks from by where it sits - Break out of, Use the result of,
+      Check the result of, the failed steps a Notify reports - are fetched each time the form
+      opens; they were kept five minutes and outlived a move. Open a Break in a search's Failure
+      inside a loop, drag the search out beside the loop, open the Break again: the loop is no
+      longer offered.
+
 - [ ] **Capture a template again from the Templates tab.** Raised 2026-10-23, left out of the
       shared templates change. A capture is measured against the area it is searched in, and a
       template has no area of its own: the steps that link to it each have one, and they can
@@ -576,6 +582,26 @@ the history.
       a failure; what is waiting - a generated flow not yet read, a flow with errors, one that
       keeps failing; and the flows edited lately. Its numbers need an execution-statistics query
       the backend does not have.
+- [ ] **The execution page, as the mockup draws it. To build.** Raised 2026-10-31 with the board
+      "Execution · two hours in, newest on top", drawn on execution 32 of Firestone. The list has
+      been newest first, drawing only the rows in view, since the same day. Still to do:
+      - **Quiet passes folded.** 28,432 of that execution's 32,699 rows were searches that found
+        nothing, so the 21 passes where something happened are buried. A run of passes that found
+        nothing becomes one row, "224 passes that found nothing", that opens. Decide what makes a
+        pass quiet: every step failing into nothing, or going the same way as the pass before.
+      - **An activity strip:** steps a minute over the whole execution, the passes that found
+        something marked on it.
+      - **The tree counts:** how often each step executed, and how often a search found.
+      - **Live, or back to latest:** a Live chip while the top row is in view, "14 new · back to
+        latest" once scrolled down.
+      - **The keys on the buttons:** F5, F8, F9, F10 and F11 beside Continue, Stop, Pause, Step
+        over and Step into.
+      - **Found and Failed** in place of Failures only, and a Find a step box.
+      - **Tiles:** elapsed, steps and their rate, the loop's pass, passes that found something,
+        handled failures.
+      - **Screenshots an hour in.** The limit keeps an execution's first 20, so by then no step has
+        one, and the board says so. Keeping the latest 20 instead is a decision for the history
+        writer.
 - [ ] **Check the pages by eye on lara-dark-indigo.** Switched from soho-dark on 2026-10-17, to come
       closer to the mockup's Foundations board: an indigo accent (#818cf8) on #111827, in Inter,
       which the theme bundles. Everything written since the shell reads the theme's variables and

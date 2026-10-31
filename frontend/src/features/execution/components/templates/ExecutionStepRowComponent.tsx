@@ -8,6 +8,9 @@ import type { ExecutionStepDto } from "@/shared/models/database/execution-step-d
 interface Props {
   executionStep: ExecutionStepDto;
 
+  /** Every row the same, so the list can draw only those in view. */
+  height: number;
+
   /** The one failure that ended the run. Every other failure was caught by a Failure branch. */
   isFatal: boolean;
   isSelected: boolean;
@@ -29,6 +32,7 @@ interface Props {
  */
 function ExecutionStepRowComponent({
   executionStep,
+  height,
   isFatal,
   isSelected,
   maxDurationMilliseconds,
@@ -58,7 +62,10 @@ function ExecutionStepRowComponent({
         display: "flex",
         alignItems: "center",
         gap: "0.5rem",
-        padding: "0.25rem 0.5rem",
+        height,
+        boxSizing: "border-box",
+        padding: "0 0.5rem",
+        whiteSpace: "nowrap",
         borderRadius: 4,
         border: "1px solid transparent",
         borderColor: isSelected ? "var(--primary-color)" : "transparent",
@@ -89,7 +96,14 @@ function ExecutionStepRowComponent({
         style={{ fontSize: "0.7rem" }}
       />
 
-      <span style={{ paddingLeft: `${executionStep.depth}rem` }}>
+      <span
+        style={{
+          paddingLeft: `${executionStep.depth}rem`,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         {executionStep.name}
       </span>
 
