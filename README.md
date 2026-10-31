@@ -228,8 +228,8 @@ npm run coverage:backend
 
 | Layer | Technology |
 |---|---|
-| Shell | Electron 40, electron-builder, electron-updater |
-| UI | React 19, TypeScript, Vite (rolldown), React Compiler, React Router 7 |
+| Shell | Electron 45, electron-builder, electron-updater |
+| UI | React 19, TypeScript 6, Vite 8, React Compiler, React Router 7 |
 | Components | PrimeReact + PrimeFlex, CodeMirror 6 for the flow script |
 | State | Zustand (UI), TanStack Query (server) |
 | Forms | React Hook Form + Zod |
@@ -243,7 +243,7 @@ npm run coverage:backend
 | IPC | Named pipes, protobuf-net ↔ protobufjs |
 | Tests | xUnit v3 on Microsoft.Testing.Platform, Shouldly, ArchUnitNET, FakeTimeProvider |
 | Coverage | coverlet + ReportGenerator |
-| Code quality | .NET analyzers with warnings as errors, BannedApiAnalyzers, ESLint 9 + typescript-eslint |
+| Code quality | .NET analyzers with warnings as errors, BannedApiAnalyzers, ESLint 10 + typescript-eslint |
 
 **DPI-aware, everything in physical pixels** — a flow authored on a 150% display executes correctly
 on a 100% one.
@@ -256,7 +256,7 @@ on a 100% one.
 
 - Windows 10 (build 22621) or newer
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js](https://nodejs.org/) 20 or newer
+- [Node.js](https://nodejs.org/) 22.13 or newer
 - [Ollama](https://ollama.com/) running, for the AI features. Without it they are off; a model can
   be downloaded from Settings, AI
 

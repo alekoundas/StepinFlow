@@ -22,7 +22,10 @@ the history.
       - Pause, then F5, F10, F11 and F8 with StepinFlow focused; F11 must step, not go full screen;
       - a step's detail: the match against what it needed, Open in the editor, a sub-flow's step
         opening the sub-flow; the screenshot note while live, and on a past execution;
-      - a past execution of thousands of rows opens at once, with Explain and Ask in the header.
+      - a past execution of thousands of rows opens at once, with Explain and Ask in the header;
+      - left on for an hour, then stopped, edited and executed again, the app is no slower and the
+        window does not turn white. React 19.2's development build kept a timing entry for every
+        re-render and never let go of it, until the page ran out of memory; 19.3 clears them.
 - [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
       `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
       the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,
@@ -115,6 +118,13 @@ the history.
       them is `TreeStepHelper.CanReadValueOf` in both places.
 
 ## Flow script
+
+- [ ] **An imported Success or Failure row has no name.** Found 2026-10-31. The printer writes a
+      branch line only when something sits under it, and `BranchParser` reads that line into a
+      step with no name; the branches it did not write are made by `MissingBranches` and named. So
+      a branch with a child shows blank in every tree. A recording's branches are made without a
+      name too. Name them in `FlowStepDataService.AddTree`, and add a migration naming the rows
+      already saved: 43 in Firestone on 2026-10-31. Waiting on the go-ahead.
 
 - [ ] **A text search's language is not in the script.** Found 2026-10-28, when the recorder began
       writing `Wait For Text`. `OcrLanguage` is a column the script never writes, so a text search
@@ -547,6 +557,21 @@ the history.
 
 ## Frontend
 
+- [ ] **Deleting a step takes about seven seconds.** Found 2026-10-31. The delete waits on
+      `invalidate()`, which refetches the step on screen - the one just deleted. The backend says it
+      does not exist, React Query retries three times (1, 2 and 4 seconds), and each try logs
+      "Backend call failed [FlowStep.get]". Let go of the selection before refetching. Waiting on
+      the go-ahead.
+- [ ] **Ten lint errors in code that was already there.** `eslint-plugin-react-hooks` 7.1, taken
+      2026-10-31, finds what 7.0 missed: state set inside an effect in `ExecutionPage`,
+      `RecordingPage` (three) and `DataTreeComponent`; refs read during render in
+      `OverlayCapturePage` (two) and `ElementRectangleEditorComponent`; and two functions used before
+      they are declared in `OverlayCapturePage`. The React Compiler leaves those components
+      unoptimised, so they still work.
+- [ ] **Two buttons have no icon.** `pi-crop` (`FlowAreaFormFieldsComponent`, the image editor's
+      `OptionsPanel`) and `pi-crosshairs` (`FlowStepTemplateListComponent`,
+      `WorkflowTemplatePanelComponent`) are in no PrimeIcons version, the 8.0 pre-release included.
+
 - [ ] **Not tried by hand: the step lists fetched fresh.** Verified by the build only. Since
       2026-10-31 the lists a step picks from by where it sits - Break out of, Use the result of,
       Check the result of, the failed steps a Notify reports - are fetched each time the form
@@ -757,7 +782,22 @@ the history.
       (`_maxEdge`, `_maxRows`). Rename them, then make it a build error with a naming rule for
       `const` in `backend/.editorconfig`, so the rule stops depending on anyone remembering it.
 
-## Licences
+## Dependencies
+
+- [ ] **Held back on 2026-10-31, when everything else went to its newest version.**
+      - **SharpHook 8.** Renumbers `KeyCode`, turns `KeyTyped` off by default and reworks event
+        simulation, so recording and Keyboard Input both change. Check whether a key code is stored
+        as a number anywhere before taking it. On 7.1.3.
+      - **PrimeReact 11.** Not an upgrade but a rewrite into unstyled primitives, under the PrimeUI
+        License rather than MIT, which this GPL repository would have to clear first. On 10.9.9.
+      - **TypeScript 7.** `typescript-eslint` 8.72 supports below 6.1. On 6.0.3.
+      - **@hookform/resolvers 6 and 7.** Only other validators' adapters changed, and 6.0.0's own
+        optional peers do not resolve in npm. On 5.9.2.
+- [ ] **Releases under a week old on 2026-10-31 were not taken.** The update installed the newest
+      release at least a week old, with `npm install --before=2026-10-24` and the same rule for
+      NuGet. Two of the skipped ones fix high advisories: follow-redirects 1.16.2 and joi 18.3.1,
+      both under `wait-on`, which only polls `localhost:5173`. Run `npm audit fix` at the root once
+      they are a week old. The .NET packages have 10.0.14 waiting, Electron 45.2.
 
 - [ ] **AutoMapper 16.2.0 is not free, and this repository is GPL-3.0.** It ships a Lucky Penny
       Software `LICENSE.md` offering **RPL-1.5 or a paid commercial licence**. The app is

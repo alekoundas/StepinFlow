@@ -2042,11 +2042,11 @@ login test fails at 390x844 four times in fifty, always on the cart badge check"
 
 ## 13. Frontend
 
-React 19 and TypeScript on Vite (the rolldown build), with the React Compiler; PrimeReact, on
+React 19 and TypeScript 6 on Vite 8, with the React Compiler through Babel; PrimeReact, on
 its lara-dark-indigo theme, and PrimeFlex for components; React Router 7; TanStack Query for server state and Zustand for UI state;
 React Hook Form with Zod 4 for forms; `react-markdown` for the assistant's answers; CodeMirror 6
-for the script view. ESLint 9 with
-`typescript-eslint` and the React hooks rules. Electron 40 is the shell, packaged by
+for the script view. ESLint 10 with
+`typescript-eslint` and the React hooks rules. Electron 45 is the shell, packaged by
 electron-builder, with `electron-updater` and `electron-log`.
 
 Feature-based: `features/<name>/{components,hooks,store}`, shared code in `shared/`, Electron-window

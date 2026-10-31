@@ -35,7 +35,7 @@
   <!-- BannedApiAnalyzers -->
   <!-- Closest to MISRA rules. Two lists, one rule for Platform.Windows and a global one for the others. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- Everything except Platform.Windows. -->
@@ -71,12 +71,12 @@
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageReference Include="xunit.v3" Version="4.0.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <!-- coverlet.collector is VSTest only; this is coverlet for the test platform dotnet test uses now. -->
-    <PackageReference Include="coverlet.MTP" Version="10.0.1" PrivateAssets="all" />
+    <PackageReference Include="coverlet.MTP" Version="10.1.0" PrivateAssets="all" />
 
     <Using Include="Xunit" />
     <Using Include="Shouldly" />

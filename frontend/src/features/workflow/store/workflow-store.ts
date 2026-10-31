@@ -67,7 +67,7 @@ export const useWorkflowStore = create<Props>()(
   devtools((set) => ({
     selectedTreeNode: undefined,
     selectedFlowStepTypeToAdd: undefined,
-    treeRefreshTrigger: undefined,
+    treeRefreshTrigger: null,
     rootFlowId: undefined,
     copiedStep: undefined,
     activeTab: "flow",

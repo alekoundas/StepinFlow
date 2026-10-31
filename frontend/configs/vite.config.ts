@@ -1,23 +1,11 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [
-          [
-            "babel-plugin-react-compiler",
-            {
-              target: "19",
-            },
-          ],
-        ],
-      },
-    }),
-  ],
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
   base: "./", // crucial for Electron (relative paths)
   resolve: {
     alias: {
@@ -28,7 +16,7 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "../../dist/frontend"),
     emptyOutDir: true, // clean before build
     sourcemap: true,
-    rollupOptions: {},
+    rolldownOptions: {},
   },
   define: {
     "process.env": {}, // ← This is the fix
