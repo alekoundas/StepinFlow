@@ -10,6 +10,7 @@ namespace Business.Tests.Fakes
         public bool IsConfigured { get; set; } = true;
         public string Model { get; set; } = "qwen3:8b";
         public bool CanSendScreenData { get; set; } = true;
+        public bool IsCloudModelInUse { get; set; }
 
         public Task<bool> IsConfiguredAsync(CancellationToken ct = default)
         {
@@ -32,7 +33,7 @@ namespace Business.Tests.Fakes
 
         public Task<bool> IsCloudModelInUseAsync(CancellationToken ct = default)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(IsCloudModelInUse);
         }
 
         public Task<string> GetOllamaModelAsync(CancellationToken ct = default)

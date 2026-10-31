@@ -31,6 +31,9 @@ namespace Core.Models.Dtos
         /// <summary>The first request's message, exactly as the model was sent it. The standing instructions are not in it.</summary>
         public string Request { get; set; } = string.Empty;
 
+        /// <summary>The request's lines, from 1, that hold text read off the screen.</summary>
+        public List<int> RequestScreenLines { get; set; } = [];
+
         /// <summary>The script the model was given, input values in: what it changed is told against this. Empty when no model was asked.</summary>
         public string Draft { get; set; } = string.Empty;
 

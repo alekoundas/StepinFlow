@@ -19,5 +19,11 @@ namespace Business.Ai.ScriptRevision
             Func<FlowScriptSchema, IReadOnlyList<Diagnostic>>? checkAnswer,
             Action<int, IReadOnlyList<Diagnostic>>? onAttempt,
             CancellationToken ct = default);
+
+        /// <summary>
+        /// The message ReviseAsync sends first, exactly: the instruction and the script, every
+        /// input's value left out. The standing instructions go beside it and are not in it.
+        /// </summary>
+        string RequestOf(string script, string instruction);
     }
 }

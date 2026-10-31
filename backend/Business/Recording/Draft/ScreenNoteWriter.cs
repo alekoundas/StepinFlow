@@ -92,6 +92,19 @@ namespace Business.Recording.Draft
             return string.Join('\n', lines);
         }
 
+        /// <summary>
+        /// A comment line that starts with the prefix, however the model spaced or cased it. A
+        /// stage marker's ## is not one.
+        /// </summary>
+        public static bool IsNote(string line)
+        {
+            string text = line.TrimStart();
+            if (!text.StartsWith('#'))
+                return false;
+
+            return text[1..].TrimStart().StartsWith(PREFIX, StringComparison.OrdinalIgnoreCase);
+        }
+
 
         // ================================================================
         // Private methods
@@ -157,17 +170,6 @@ namespace Business.Recording.Draft
                 text = text[..maximumLength].TrimEnd() + "…";
 
             return $"\"{text}\"";
-        }
-
-        // A comment line that starts with the prefix, however the model spaced or cased it. A
-        // stage marker's ## is not one.
-        private static bool IsNote(string line)
-        {
-            string text = line.TrimStart();
-            if (!text.StartsWith('#'))
-                return false;
-
-            return text[1..].TrimStart().StartsWith(PREFIX, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

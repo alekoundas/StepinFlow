@@ -111,6 +111,43 @@ namespace Business.Tests.Recording
             _session.GetResult().ShouldBeSameAs(result);
         }
 
+        [Fact]
+        public async Task A_request_waiting_to_be_sent_goes_once_it_is_sent()
+        {
+            _generation.WaitsToSend = true;
+            await StartAsync();
+            await WaitUntilAsync(() => LastProgress()?.Stage == FlowGenerationStageEnum.WAITING_TO_SEND);
+            _generation.WasSent.ShouldBeFalse();
+
+            _session.Send().IsSuccess.ShouldBeTrue();
+
+            await WaitUntilAsync(() => _generation.WasSent);
+        }
+
+        [Fact]
+        public async Task Send_with_no_request_waiting_is_refused()
+        {
+            _session.Send().ErrorMessage.ShouldBe("No request is waiting to be sent.");
+
+            await StartAsync();
+
+            _session.Send().ErrorMessage.ShouldBe("No request is waiting to be sent.");
+        }
+
+        [Fact]
+        public async Task A_cancel_while_the_request_waits_sends_nothing()
+        {
+            _generation.WaitsToSend = true;
+            await StartAsync();
+            await WaitUntilAsync(() => LastProgress()?.Stage == FlowGenerationStageEnum.WAITING_TO_SEND);
+
+            await _session.CancelAsync();
+
+            LastProgress().ShouldNotBeNull().State.ShouldBe(FlowGenerationStateEnum.NONE);
+            _generation.WasSent.ShouldBeFalse();
+            _session.Send().IsSuccess.ShouldBeFalse();
+        }
+
 
         // ================================================================
         // Private types
@@ -135,15 +172,27 @@ namespace Business.Tests.Recording
 
             public string? Changes { get; private set; }
 
-            public Task<FlowGenerationResultDto> ImportModelDraftAsync(
+            // A cloud model's request, shown first when the test says so.
+            public bool WaitsToSend { get; set; }
+            public bool WasSent { get; private set; }
+
+            public async Task<FlowGenerationResultDto> ImportModelDraftAsync(
                 int flowId,
                 RecordingResultDto recording,
                 ReviewedRecordingDto reviewed,
                 Func<int, RecordingScreenDto?> screenAt,
                 Action<FlowGenerationProgressDto>? onProgress,
+                Func<CancellationToken, Task> waitToSend,
                 CancellationToken ct = default)
             {
-                return WaitAsync(ct);
+                if (WaitsToSend)
+                {
+                    onProgress?.Invoke(new FlowGenerationProgressDto { State = FlowGenerationStateEnum.GENERATING, Stage = FlowGenerationStageEnum.WAITING_TO_SEND, Request = "The script:" });
+                    await waitToSend(ct);
+                    WasSent = true;
+                }
+
+                return await WaitAsync(ct);
             }
 
             public Task<FlowGenerationResultDto> ReviseAsync(int flowId, string changes, IReadOnlyCollection<string> undecided, IReadOnlyList<string> screenLines, Action<FlowGenerationProgressDto>? onProgress, CancellationToken ct = default)

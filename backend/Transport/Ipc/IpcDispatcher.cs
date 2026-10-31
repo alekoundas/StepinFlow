@@ -179,6 +179,7 @@ namespace Transport.Ipc
                     "Recording.reviseDraft" => await Handler<ReviseRecordingDraftHandler>().HandleAsync(Payload<RecordingDraftRevisionDto>(request), ct),
                     "Recording.dropProposedCheck" => await Handler<DropProposedCheckHandler>().HandleAsync(Payload<ProposedCheckDropDto>(request), ct),
                     "Recording.getGeneratedDraft" =>await Handler<GetGeneratedRecordingDraftHandler>().HandleAsync(ct),
+                    "Recording.sendDraftRequest" => await Handler<SendRecordingDraftRequestHandler>().HandleAsync(ct),
                     "Recording.cancelDraftGeneration" => await Handler<CancelRecordingDraftGenerationHandler>().HandleAsync(ct),
 
                     // Settings

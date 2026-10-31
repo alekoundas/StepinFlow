@@ -199,6 +199,12 @@ the history.
 
 ## AI
 
+- [ ] **Only a recording's draft is shown before a cloud model is sent it.** Since 2026-10-31.
+      Ask's tool results, Explain's screenshots and OCR text, and Check's "Ask for changes" go to a
+      cloud model with screen content when the setting allows, unshown. Ask is many requests a
+      question, so one preview each would be a dialog per tool call; a per-question one, or a
+      log of what went, is the likelier shape.
+
 - [ ] **The app fetches and runs Ollama itself.** Decided 2026-10-29 as phase 6's local model:
       every AI feature needs Ollama, and until this is built the tester installs it, starts it and
       chooses a model, or the AI features and the recorder's QA switch stay off. The app would use
@@ -350,7 +356,8 @@ the history.
       say so under the setting. The other way is to send placeholder names and map them back.
       Since 2026-10-28 the first draft has the same gap for a search by its words: Review fills
       them in from what was read, and they go to the model with the setting off, because a
-      `Wait For Text` is nothing without them. The same decision covers both.
+      `Wait For Text` is nothing without them. The same decision covers both. Since 2026-10-31 the
+      first draft's are at least shown before they go, marked; the revision's are not.
 
 - [ ] **A QA test's screen sizes, and what happens when an execution ends, asked in the setup.**
       Moved out of phase 7 on 2026-10-28. The sizes become `FlowViewport` rows, for phase 10's
@@ -476,6 +483,14 @@ the history.
 - [ ] **Not tried by hand: stages.** Verified by tests and the build only. Press F8 and Stage on
       the bar while recording, paused once, name them in Review along with a new page it offers,
       and look for the `##` lines in the draft and in what the model saved.
+- [ ] **Not tried by hand: the request shown before a cloud model is sent it.** Verified by tests
+      and the build only. With a cloud model set and "Let the cloud model see your screen" on,
+      generate a QA test and read the marked lines before Send; Cancel once while it waits and
+      look for Review with nothing saved.
+- [ ] **Sending without what was read, from the request itself.** Since 2026-10-31 the request
+      waits with Send and Cancel only; leaving the screen text out means Settings and a second
+      generation. A third button would build the draft again withheld, as with the setting off,
+      and send that.
 - [ ] **Not tried by hand: proposed checks.** Verified by tests and the build only. Record a QA test
       that adds to a cart and finishes an order, let the last page load before Stop, and look for a
       Wait For Text on "Remove" and on the order's thank-you in Check.

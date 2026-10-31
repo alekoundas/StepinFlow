@@ -32,6 +32,12 @@ namespace Core.Models.Dtos
         /// <summary>Why the last answer was refused, which the model is now asked to fix.</summary>
         public List<FlowScriptErrorDto> Refused { get; set; } = [];
 
+        /// <summary>While WAITING_TO_SEND, the request as the model will be sent it. Empty otherwise.</summary>
+        public string Request { get; set; } = string.Empty;
+
+        /// <summary>The request's lines, from 1, that hold text read off the screen.</summary>
+        public List<int> RequestScreenLines { get; set; } = [];
+
         /// <summary>Set when nothing could be saved at all.</summary>
         public string? ErrorMessage { get; set; }
     }

@@ -9,6 +9,7 @@ namespace Business.Recording.Generation
     /// asked for. A model takes minutes over a draft - longer than a request can wait, on a pipe
     /// that answers one call at a time - so the request starts it and returns,
     /// FLOW_GENERATION_PROGRESS says how far, and GetResult has what was saved once it says DONE.
+    /// A request shown before a cloud model is sent it waits here for Send, or for Cancel.
     /// </summary>
     public sealed class FlowGenerationSessionService : IFlowGenerationSessionService, IDisposable
     {
@@ -23,6 +24,7 @@ namespace Business.Recording.Generation
         private CancellationTokenSource? _cts;
         private volatile FlowGenerationProgressDto _progress = new FlowGenerationProgressDto();
         private volatile FlowGenerationResultDto? _result;
+        private volatile TaskCompletionSource _sent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public FlowGenerationSessionService(IFlowGenerationService generationService, IIpcBroadcastService broadcastService)
         {
@@ -41,7 +43,20 @@ namespace Business.Recording.Generation
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt)
         {
-            return BeginAsync((onProgress, ct) => _generationService.ImportModelDraftAsync(flowId, recording, reviewed, screenAt, onProgress, ct));
+            return BeginAsync((onProgress, ct) => _generationService.ImportModelDraftAsync(flowId, recording, reviewed, screenAt, onProgress, WaitToSendAsync, ct));
+        }
+
+        public ResultDto<bool> Send()
+        {
+            lock (_progressLock)
+            {
+                if (_progress.State != FlowGenerationStateEnum.GENERATING || _progress.Stage != FlowGenerationStageEnum.WAITING_TO_SEND)
+                    return ResultDto<bool>.Failure("No request is waiting to be sent.");
+
+                _sent.TrySetResult();
+            }
+
+            return ResultDto<bool>.Success(true);
         }
 
         public Task<ResultDto<bool>> StartRevisionAsync(RecordingDraftRevisionDto revision, IReadOnlyList<string> screenLines)
@@ -94,6 +109,7 @@ namespace Business.Recording.Generation
 
                 CancellationTokenSource cts = new CancellationTokenSource();
                 _cts = cts;
+                _sent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
                 // Not sent: the first stage says it, with the model and what it is sent. Kept, so a
                 // second start is refused from now.
@@ -127,6 +143,12 @@ namespace Business.Recording.Generation
                 Console.Error.WriteLine($"[Generation] Nothing was saved: {ex.Message}");
                 Report(Done($"Nothing was saved. {ex.Message}"));
             }
+        }
+
+        // Until the tester sends it, or a cancel ends the generation.
+        private Task WaitToSendAsync(CancellationToken ct)
+        {
+            return _sent.Task.WaitAsync(ct);
         }
 
         // What the last progress said about the model, with the end.

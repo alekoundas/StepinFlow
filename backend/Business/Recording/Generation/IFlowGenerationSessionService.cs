@@ -22,6 +22,12 @@ namespace Business.Recording.Generation
         /// </summary>
         Task<ResultDto<bool>> StartRevisionAsync(RecordingDraftRevisionDto revision, IReadOnlyList<string> screenLines);
 
+        /// <summary>
+        /// Sends the request shown as WAITING_TO_SEND, and the generation goes on. Refused when none
+        /// is waiting.
+        /// </summary>
+        ResultDto<bool> Send();
+
         /// <summary>What the last generation saved. Null until one is DONE, and after a cancel.</summary>
         FlowGenerationResultDto? GetResult();
 

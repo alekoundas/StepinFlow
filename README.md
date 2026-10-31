@@ -110,8 +110,8 @@ answer that here:
   documentation through tool calls, rather than being handed a dump
 - **Explain an execution** — what failed, the closest match, and what to change
 - **A model on your machine, OpenAI on top** — every AI feature runs on Ollama locally; screen
-  content never goes to a cloud model unless you switch it on, and credentials are never shown to a
-  model
+  content never goes to a cloud model unless you switch it on, a recording's request shows you
+  the lines read off your screen before it goes, and credentials are never shown to a model
 
 ---
 
@@ -200,7 +200,7 @@ See [PROJECT.md](PROJECT.md) for the full architecture.
 
 ## Tests
 
-**1115 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
+**1129 backend tests**, and four of the layers found a real bug on their first run — `Press Ctrl+1`
 pressing Ctrl+B, `Wait Until No Image` failing exactly when the image went away, `System 99`
 parsing as a system action that does not exist, and an engine that refused every start after one
 failed while loading.

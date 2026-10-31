@@ -943,8 +943,20 @@ A model takes minutes over a draft, so it is work longer than a request can wait
 `Recording.generateDraft` starts `FlowGenerationSessionService` and returns;
 `FLOW_GENERATION_PROGRESS` reports writing the draft, each attempt with the last refusal's lines,
 and saving; and `Recording.getGeneratedDraft` has what was saved - which draft, the model's notes,
-and the exact request it was sent. The page draws it as the mockup's Generating board, beside what
-went to the model and what stayed on the machine.
+and the exact request it was sent, its lines that hold text read off the screen marked. The page
+draws it as the mockup's Generating board, beside what went to the model and what stayed on the
+machine.
+
+**A cloud model is sent text read off the screen only once the tester has read it.** When a cloud
+model answers and the request holds any, the generation stops at `WAITING_TO_SEND` with the request
+- `ScriptRevisionService.RequestOf`, the one ReviseAsync then sends - and its lines that hold it,
+found by `ScreenTextLines`: every note, and every line with the words read on an element - OCR's,
+the name Windows had, the words Review searched by - as whole words. `Recording.sendDraftRequest`
+lets it go; Cancel sends nothing and saves nothing. The local model is never held, since nothing
+leaves the machine, and neither is a cloud model with "Let the cloud model see your screen" off,
+unless Review searched by words: those go all the same (`TODO.md`, Recording), so they are shown
+first. Lines are found by their words, so the tester's own line with the same words is marked too -
+too much rather than too little.
 
 **Check comes before the editor**, for either draft (`features/recording/check/`). What it shows is
 read back from the database rather than taken from what was sent: the script, numbered, with the
@@ -1707,10 +1719,10 @@ projection: the webhook URL *is* the credential and is never logged.
 AI-generated flows go into the editor and never execute on their own, because a prompt injection in
 text read off the screen would otherwise be code execution.
 
-### Planned - phase 6: the local model reads the screen
+### The local model reads the screen
 
-The cloud is an addition, not an alternative, which the settings already are (above). What is left
-is the split of jobs between the two.
+The cloud is an addition, not an alternative, which the settings already are (above), and the two
+split the jobs.
 
 | | local | cloud |
 |---|---|---|
@@ -1743,12 +1755,16 @@ exactly what its button says. The answer replaces them with comments a person wo
 check in code holds it to the recorded clicks, typed text and keys, in order.
 
 **This localises leakage; it does not remove it.** The notes are text read off the screen, so one
-can be `Welcome, alex@company.com`. They are the one place in the script where screen text appears,
-which is what makes review possible. How much of a screen changed is a number, and goes anywhere.
+can be `Welcome, alex@company.com`, and so are the names the draft gives a search from the words
+under its click, and the words Review searched by. Those are the places in the script where screen
+text appears, which is what makes review possible. How much of a screen changed is a number, and
+goes anywhere.
 
-**The payload is shown before it is sent**, which is the actual guarantee. The cloud query is
-displayed first, with the notes marked as the text read off the screen. Visibility rather than a
-promise: a filter that claims to catch everything is worse than a preview that admits it cannot.
+**The payload is shown before it is sent**, which is the actual guarantee, built 2026-10-31 for the
+recording's draft (§6): the request a cloud model would be sent waits on the Generating page with
+the lines that hold screen text marked, and goes only on Send. Visibility rather than a promise: a
+filter that claims to catch everything is worse than a preview that admits it cannot. Ask, Explain
+and Check's "Ask for changes" are not shown first yet (`TODO.md`, AI).
 
 ---
 
@@ -2344,14 +2360,14 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1115 tests, all passing, in eight projects under `backend/Tests/` - one
+1129 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 842 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 856 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 17 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
@@ -2485,7 +2501,7 @@ Working: the flow builder, the recorder with Review and its plain draft, image s
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
 step into and step over, execution history with failure screenshots, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant on a local Ollama model
-with OpenAI on top. 1115 backend tests.
+with OpenAI on top. 1129 backend tests.
 
 `PLAN.md` holds the open build order. `TODO.md` holds everything deferred.
 

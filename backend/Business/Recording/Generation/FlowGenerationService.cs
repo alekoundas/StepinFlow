@@ -29,7 +29,8 @@ namespace Business.Recording.Generation
     /// With a model, the local model first looks at the screens worth a look - where pages began,
     /// clicks nothing named - and the plain draft is what the model is given, as a script with the
     /// description and notes over its searches of what the screen said, and its answer is imported
-    /// in place of it.
+    /// in place of it. A request that would take text read off the screen to a cloud model waits
+    /// until the tester has read it, with the lines that hold that text marked.
     /// An answer that adds, drops or moves a recorded action is refused, and so is a check it adds
     /// for words no screenshot showed; the notes never reach the saved flow. When no answer reads
     /// cleanly, or the model cannot be reached, the plain draft is saved instead and says why, so
@@ -155,6 +156,7 @@ namespace Business.Recording.Generation
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             Action<FlowGenerationProgressDto>? onProgress,
+            Func<CancellationToken, Task> waitToSend,
             CancellationToken ct = default)
         {
             bool isReadTextSent = await _providerService.CanSendScreenDataAsync(ct);
@@ -219,6 +221,20 @@ namespace Business.Recording.Generation
 
             Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> checkAnswer = answer => CheckAnswer(sentDraft, answer, isQaTest, wrongValues, screenLines);
 
+            string request = _revisionService.RequestOf(script, instruction);
+            List<int> requestScreenLines = ScreenTextLines.Of(request, sent, reviewed, isReadTextSent);
+
+            // Text read off the screen leaves this machine only once the tester has read it.
+            if (requestScreenLines.Count > 0 && await _providerService.IsCloudModelInUseAsync(ct))
+            {
+                FlowGenerationProgressDto waiting = Next(drafted, FlowGenerationStageEnum.WAITING_TO_SEND, 0, []);
+                waiting.Request = request;
+                waiting.RequestScreenLines = requestScreenLines;
+                onProgress?.Invoke(waiting);
+
+                await waitToSend(ct);
+            }
+
             ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, checkAnswer, (attempt, refused) =>
             {
                 FlowGenerationProgressDto asking = Next(drafted, FlowGenerationStageEnum.ASKING_MODEL, attempt, refused);
@@ -233,6 +249,7 @@ namespace Business.Recording.Generation
                 Notes = revision.Notes,
                 Attempts = revision.Attempts,
                 Request = revision.Request,
+                RequestScreenLines = requestScreenLines,
             };
 
             if (revision.Script == null)

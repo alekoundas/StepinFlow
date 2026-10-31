@@ -27,6 +27,12 @@ export interface FlowGenerationProgressDto {
   /** Why the last answer was refused, which the model is now asked to fix. */
   refused: FlowScriptErrorDto[];
 
+  /** While WAITING_TO_SEND, the request as the model will be sent it. Empty otherwise. */
+  request: string;
+
+  /** The request's lines, from 1, that hold text read off the screen. */
+  requestScreenLines: number[];
+
   /** Set when nothing could be saved at all. */
   errorMessage?: string | null;
 }

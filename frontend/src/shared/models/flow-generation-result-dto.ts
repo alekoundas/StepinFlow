@@ -29,6 +29,9 @@ export interface FlowGenerationResultDto {
   /** The first request's message, exactly as the model was sent it. */
   request: string;
 
+  /** The request's lines, from 1, that hold text read off the screen. */
+  requestScreenLines: number[];
+
   /** The script the model was given: what it changed is told against this. Empty when no model was asked. */
   draft: string;
 

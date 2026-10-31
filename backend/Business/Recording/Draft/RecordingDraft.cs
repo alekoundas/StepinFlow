@@ -118,18 +118,12 @@ namespace Business.Recording.Draft
         /// <summary>A name from what was read on an element, or the fallback when nothing was.</summary>
         public static string NameFrom(string prefix, string text, string fallback)
         {
-            // A quote's brackets cannot be in a name, which is written inside one.
-            string unquoted = text.Replace("<[", " ").Replace("]>", " ");
-            string[] words = unquoted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-
-            string cleaned = string.Join(' ', words);
-            if (cleaned.Length > NAME_LENGTH)
-                cleaned = cleaned[..NAME_LENGTH].TrimEnd();
-
-            if (cleaned.Length == 0)
+            // A name is written inside a quote.
+            string shortText = ShortText(text);
+            if (shortText.Length == 0)
                 return fallback;
 
-            return $"{prefix} {cleaned}";
+            return $"{prefix} {shortText}";
         }
 
         /// <summary>A stage the tester named, which begins at the next search, or at the end when none follows.</summary>
@@ -428,11 +422,21 @@ namespace Business.Recording.Draft
             return area;
         }
 
-        // Text written inside a quote, which cannot hold the quote's own brackets.
-        private static string Quotable(string text)
+        /// <summary>Text written inside a quote, on one line and without the quote's own brackets.</summary>
+        public static string Quotable(string text)
         {
             string unquoted = text.Replace("<[", " ").Replace("]>", " ");
             return string.Join(' ', unquoted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        /// <summary>Text read on an element as a name holds it: quotable, and cut to a name's length.</summary>
+        public static string ShortText(string text)
+        {
+            string quotable = Quotable(text);
+            if (quotable.Length > NAME_LENGTH)
+                quotable = quotable[..NAME_LENGTH].TrimEnd();
+
+            return quotable;
         }
 
         // As Review left it, or as the model found it when Review said nothing.

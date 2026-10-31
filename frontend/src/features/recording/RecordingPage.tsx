@@ -48,6 +48,8 @@ const GENERATION_STARTING: FlowGenerationProgressDto = {
   attempt: 0,
   attemptCount: 0,
   refused: [],
+  request: "",
+  requestScreenLines: [],
 };
 
 const STAGE_LABELS: Record<RecordingStageEnum, string> = {
@@ -75,7 +77,8 @@ const STAGE_LABELS: Record<RecordingStageEnum, string> = {
  *
  * Generate flow hands the reviewed recording to the model set up in Settings, in the background:
  * FLOW_GENERATION_PROGRESS says how far, and once it says DONE the page fetches what was saved -
- * the model's draft, or the plain one and why.
+ * the model's draft, or the plain one and why. A request that would take text read off the screen
+ * to a cloud model is shown first, and goes only on Send.
  *
  * Either draft is read on Check before the editor opens. Its "Ask for changes" is followed the
  * way a generation is, and an answer that is not saved leaves Check showing what was.
@@ -248,6 +251,15 @@ export default function RecordingPage() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsContinuing(false);
+    }
+  };
+
+  // The tester has read the request; the next stage comes back as ASKING_MODEL.
+  const sendRequest = async () => {
+    try {
+      await backendApiService.Recording.sendDraftRequest();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -582,6 +594,7 @@ export default function RecordingPage() {
           reviews={generatedFrom}
           progress={generation}
           result={generated}
+          onSend={sendRequest}
           onCancel={() => void cancelGeneration()}
           onBack={() => setGeneration(null)}
           onCheck={checkGenerated}

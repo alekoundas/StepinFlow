@@ -289,6 +289,7 @@ namespace App
             builder.Services.AddTransient<DropProposedCheckHandler>();
             builder.Services.AddTransient<MarkRecordingStageHandler>();
             builder.Services.AddTransient<GetGeneratedRecordingDraftHandler>();
+            builder.Services.AddTransient<SendRecordingDraftRequestHandler>();
             builder.Services.AddTransient<CancelRecordingDraftGenerationHandler>();
             builder.Services.AddTransient<GetAppSettingsHandler>();
             builder.Services.AddTransient<SetAppSettingHandler>();

@@ -49,6 +49,7 @@ namespace Business.Tests.Recording
 
         private readonly RecordingResultDto _recording = new RecordingResultDto();
         private readonly ReviewedRecordingDto _reviewed = new ReviewedRecordingDto();
+        private readonly List<int> _requestsWhenSent = [];
 
         public FlowGenerationServiceTests()
         {
@@ -291,7 +292,16 @@ namespace Business.Tests.Recording
 
         private Task<FlowGenerationResultDto> GenerateAsync(int flowId, List<FlowGenerationProgressDto> progress)
         {
-            return _generation.ImportModelDraftAsync(flowId, _recording, _reviewed, ScreenAt, progress.Add, Ct);
+            return _generation.ImportModelDraftAsync(flowId, _recording, _reviewed, ScreenAt, progress.Add, SendAsync, Ct);
+        }
+
+        // The tester pressing Send at once, with how many requests the model had had by then.
+        private Task SendAsync(CancellationToken ct)
+        {
+            FakeChatClient? model = _models.Client as FakeChatClient;
+            _requestsWhenSent.Add(model?.Requests.Count ?? 0);
+
+            return Task.CompletedTask;
         }
 
         [Fact]
@@ -446,6 +456,102 @@ namespace Business.Tests.Recording
             request.ShouldNotContain("Account details");
             request.ShouldContain("screen: what was pressed, as Windows names it: text field");
             request.ShouldContain("screen: after the click, a new page");
+        }
+
+        [Fact]
+        public async Task A_cloud_model_is_sent_what_was_read_off_the_screen_only_once_the_tester_sends_it()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenChanges.Add(new ScreenChangeDto { ActionIndex = 0, NextActionIndex = 2, Appeared = ["Welcome back"], ChangedShare = 0.3 });
+            _provider.IsCloudModelInUse = true;
+            FakeChatClient model = Model(x => x);
+            List<FlowGenerationProgressDto> progress = [];
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, progress);
+
+            _requestsWhenSent.ShouldBe([0]);
+            FlowGenerationProgressDto waiting = progress.Single(x => x.Stage == FlowGenerationStageEnum.WAITING_TO_SEND);
+            waiting.Request.ShouldBe(model.Requests[0].First(x => x.Role == ChatRole.User).Text);
+
+            string[] lines = waiting.Request.Split('\n');
+            List<string> marked = waiting.RequestScreenLines.Select(x => lines[x - 1]).ToList();
+            marked.ShouldContain(x => x.Contains("screen: after the click appeared \"Welcome back\""));
+            marked.ShouldContain(x => x.Contains("Find Email"));
+            waiting.Request.ShouldContain("Logs in and downloads");
+            marked.ShouldNotContain(x => x.Contains("Logs in and downloads"));
+
+            generated.RequestScreenLines.ShouldBe(waiting.RequestScreenLines);
+            progress.Where(x => x.Stage != FlowGenerationStageEnum.WAITING_TO_SEND).ShouldAllBe(x => x.Request.Length == 0);
+        }
+
+        [Fact]
+        public async Task A_request_never_sent_asks_nothing_and_saves_nothing()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _provider.IsCloudModelInUse = true;
+            FakeChatClient model = Model(x => x);
+            int stepCount = Steps(flowId).Count;
+
+            await Should.ThrowAsync<OperationCanceledException>(() => _generation.ImportModelDraftAsync(flowId, _recording, _reviewed, ScreenAt, null, x => Task.FromCanceled(new CancellationToken(true)), Ct));
+
+            model.Requests.ShouldBeEmpty();
+            Steps(flowId).Count.ShouldBe(stepCount);
+        }
+
+        // Nothing leaves this machine for the local model; what was read is still marked, after.
+        [Fact]
+        public async Task The_local_model_is_sent_it_at_once_with_the_lines_marked_after()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            Model(x => x);
+            List<FlowGenerationProgressDto> progress = [];
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, progress);
+
+            _requestsWhenSent.ShouldBeEmpty();
+            progress.ShouldNotContain(x => x.Stage == FlowGenerationStageEnum.WAITING_TO_SEND);
+            generated.RequestScreenLines.ShouldNotBeEmpty();
+        }
+
+        // Nothing read off the screen is in it, so there is nothing to read first.
+        [Fact]
+        public async Task Without_screen_content_a_cloud_model_is_sent_it_at_once_with_nothing_marked()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            _recording.ScreenChanges.Add(new ScreenChangeDto { ActionIndex = 0, NextActionIndex = 2, Appeared = ["Welcome back"], ChangedShare = 0.9, IsNewScreen = true });
+            _provider.IsCloudModelInUse = true;
+            _provider.CanSendScreenData = false;
+            Model(x => x);
+
+            FlowGenerationResultDto generated = await GenerateAsync(flowId, []);
+
+            _requestsWhenSent.ShouldBeEmpty();
+            generated.IsModelDraft.ShouldBeTrue();
+            generated.RequestScreenLines.ShouldBeEmpty();
+        }
+
+        // Review filled them in from what was read, and a Wait For Text is nothing without them.
+        [Fact]
+        public async Task Without_screen_content_the_words_Review_searched_by_are_still_shown_first()
+        {
+            int flowId = await NewFlowAsync();
+            Record();
+            (_reviewed.Actions[0].SearchBy, _reviewed.Actions[0].SearchText) = (SearchByEnum.TEXT, "Email");
+            _provider.IsCloudModelInUse = true;
+            _provider.CanSendScreenData = false;
+            Model(x => x);
+            List<FlowGenerationProgressDto> progress = [];
+
+            await GenerateAsync(flowId, progress);
+
+            _requestsWhenSent.ShouldBe([0]);
+            FlowGenerationProgressDto waiting = progress.Single(x => x.Stage == FlowGenerationStageEnum.WAITING_TO_SEND);
+            string[] lines = waiting.Request.Split('\n');
+            waiting.RequestScreenLines.Select(x => lines[x - 1]).ShouldAllBe(x => x.Contains("Email", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]

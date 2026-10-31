@@ -321,6 +321,8 @@ export const backendApiService = {
     dropProposedCheck: (dto: ProposedCheckDropDto) =>
       call<FlowGenerationResultDto>("Recording.dropProposedCheck", dto),
     getGeneratedDraft: () => callNullable<FlowGenerationResultDto>("Recording.getGeneratedDraft"),
+    // The request shown as WAITING_TO_SEND goes to the cloud model, and the generation goes on.
+    sendDraftRequest: () => call<boolean>("Recording.sendDraftRequest"),
     // Saves nothing.
     cancelDraftGeneration: () => call<boolean>("Recording.cancelDraftGeneration"),
     // The flow the setup created goes with it while nothing but the setup is in it.

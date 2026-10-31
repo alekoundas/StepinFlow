@@ -20,6 +20,10 @@ import { type ActionReview, listedActions } from "@/features/recording/review/re
 const CARD: CSSProperties = { background: "var(--surface-card)", borderColor: "var(--surface-border)" };
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 const MONO: CSSProperties = { fontFamily: "ui-monospace, Consolas, monospace" };
+const READ_OFF_SCREEN: CSSProperties = {
+  background: "color-mix(in srgb, var(--yellow-500) 16%, transparent)",
+  borderLeft: "2px solid var(--yellow-500)",
+};
 
 type StageStatus = "done" | "active" | "pending";
 
@@ -36,6 +40,7 @@ interface Props {
   reviews: Record<number, ActionReview>;
   progress: FlowGenerationProgressDto;
   result: FlowGenerationResultDto | null;
+  onSend: () => Promise<void>;
   onCancel: () => void;
   onBack: () => void;
   onCheck: () => void;
@@ -46,6 +51,9 @@ interface Props {
  * first three stages are the stop's, done before Review. A refused answer shows why, as it goes
  * back to the model. Nothing is saved until an answer reads cleanly, and when none does, the plain
  * draft is, and this says why. What was saved is read on the Check page.
+ *
+ * A request that would take text read off the screen to a cloud model is shown before it goes,
+ * those lines marked, and goes only on Send. Cancel sends nothing.
  */
 export default function RecordingGeneratingComponent({
   flowId,
@@ -53,18 +61,38 @@ export default function RecordingGeneratingComponent({
   reviews,
   progress,
   result,
+  onSend,
   onCancel,
   onBack,
   onCheck,
 }: Props) {
+  const [isSending, setIsSending] = useState(false);
+
   const isDone = progress.state === FlowGenerationStateEnum.DONE;
+  const isWaiting = progress.stage === FlowGenerationStageEnum.WAITING_TO_SEND;
+  const model = progress.model || "the model";
   const stages = stagesOf(recording, reviews, progress, result);
   const active = activeIndexOf(progress);
 
   let heading = "Generating the flow";
+  if (isWaiting) heading = `Read what goes to ${model} first`;
   if (isDone && result?.isModelDraft) heading = "The flow is ready to check";
   if (isDone && result && !result.isModelDraft) heading = "The plain draft was saved";
   if (isDone && !result) heading = "Nothing was saved";
+
+  let lede = "Nothing is saved until the script reads cleanly. A refused attempt leaves the flow exactly as it was.";
+  if (isWaiting)
+    lede = `${model} runs in the cloud, and the marked lines hold text read off your screen: by OCR, as Windows named it, and as the local model saw it. Nothing has left this machine yet.`;
+
+  const send = async () => {
+    setIsSending(true);
+
+    try {
+      await onSend();
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="flex flex-wrap align-items-start gap-4">
@@ -85,9 +113,48 @@ export default function RecordingGeneratingComponent({
             className="m-0"
             style={MUTED}
           >
-            Nothing is saved until the script reads cleanly. A refused attempt leaves the flow exactly as it was.
+            {lede}
           </p>
         </div>
+
+        {isWaiting && (
+          <section
+            aria-labelledby="request-heading"
+            className="flex flex-column gap-2"
+          >
+            <div className="flex align-items-center justify-content-between flex-wrap gap-2">
+              <h3
+                id="request-heading"
+                className="m-0 text-base font-semibold"
+              >
+                The request
+              </h3>
+              <span
+                className="flex align-items-center gap-2 text-sm"
+                style={MUTED}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{ width: 12, height: 12, ...READ_OFF_SCREEN }}
+                />
+                {plural(progress.requestScreenLines.length, "line")} read off the screen
+              </span>
+            </div>
+            <RequestComponent
+              request={progress.request}
+              screenLines={progress.requestScreenLines}
+              maxHeight={480}
+            />
+            <span
+              className="text-xs"
+              style={MUTED}
+            >
+              The standing instructions and the flow format go with it, and hold nothing of yours. To send nothing read
+              off the screen, cancel, turn off &quot;Let the cloud model see your screen&quot; under Settings, AI, and
+              generate again.
+            </span>
+          </section>
+        )}
 
         {progress.errorMessage && (
           <Message
@@ -119,6 +186,16 @@ export default function RecordingGeneratingComponent({
             severity="secondary"
             text
           />
+          {isWaiting && (
+            <Button
+              type="button"
+              label={`Send to ${model}`}
+              icon="pi pi-send"
+              iconPos="right"
+              loading={isSending}
+              onClick={() => void send()}
+            />
+          )}
           {isDone && result?.import.isSuccess && (
             <Button
               type="button"
@@ -138,6 +215,7 @@ export default function RecordingGeneratingComponent({
           reviews={reviews}
           progress={progress}
           request={result?.request ?? ""}
+          requestScreenLines={result?.requestScreenLines ?? []}
         />
       </aside>
     </div>
@@ -212,6 +290,34 @@ export function RefusedComponent({ refused, note }: { refused: FlowScriptErrorDt
   );
 }
 
+// The request line by line, with the lines that hold text read off the screen marked.
+function RequestComponent({ request, screenLines, maxHeight }: { request: string; screenLines: number[]; maxHeight: number }) {
+  const marked = new Set(screenLines);
+
+  return (
+    <div
+      aria-label="The request"
+      className="py-2 border-round-lg text-xs overflow-auto"
+      style={{ ...MONO, background: "var(--surface-ground)", maxHeight }}
+    >
+      {request.split("\n").map((line, index) => (
+        <div
+          key={index}
+          title={marked.has(index + 1) ? "Read off the screen" : undefined}
+          className="px-3"
+          style={{
+            whiteSpace: "pre-wrap",
+            borderLeft: "2px solid transparent",
+            ...(marked.has(index + 1) ? READ_OFF_SCREEN : {}),
+          }}
+        >
+          {line || " "}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // What left this machine and what did not, so the tester can say whether that is acceptable.
 function SentComponent({
   flowId,
@@ -219,12 +325,14 @@ function SentComponent({
   reviews,
   progress,
   request,
+  requestScreenLines,
 }: {
   flowId: number;
   recording: RecordingResultDto;
   reviews: Record<number, ActionReview>;
   progress: FlowGenerationProgressDto;
   request: string;
+  requestScreenLines: number[];
 }) {
   const [isRequestShown, setIsRequestShown] = useState(false);
 
@@ -252,6 +360,9 @@ function SentComponent({
   let readText = plural(labels, "label");
   if (!progress.isReadTextSent) readText = "Not sent";
 
+  let sentTo = "Sent to";
+  if (progress.stage === FlowGenerationStageEnum.WAITING_TO_SEND) sentTo = "To be sent to";
+
   return (
     <section
       aria-labelledby="sent-heading"
@@ -262,7 +373,7 @@ function SentComponent({
         id="sent-heading"
         className="m-0 text-base font-semibold"
       >
-        Sent to {progress.model || "the model"}
+        {sentTo} {progress.model || "the model"}
       </h2>
       <ul className="list-none m-0 p-0 flex flex-column gap-2">
         <SentRowComponent label="Your description">{sentencesOf(flow?.description ?? "")}</SentRowComponent>
@@ -314,12 +425,11 @@ function SentComponent({
         className="align-self-start"
       />
       {isRequestShown && request && (
-        <pre
-          className="m-0 p-3 border-round-lg text-xs overflow-auto"
-          style={{ ...MONO, background: "var(--surface-ground)", maxHeight: 320, whiteSpace: "pre-wrap" }}
-        >
-          {request}
-        </pre>
+        <RequestComponent
+          request={request}
+          screenLines={requestScreenLines}
+          maxHeight={320}
+        />
       )}
     </section>
   );
@@ -357,6 +467,7 @@ function stagesOf(
   if (recording.clickGroups.length > 0) cut += "; the clicks on one picture share one";
 
   let attempt = "Naming the steps and grouping the repeated clicks, with your description";
+  if (progress.stage === FlowGenerationStageEnum.WAITING_TO_SEND) attempt = "Waiting until you have read the request and sent it";
   if (progress.attempt > 0) attempt += ` · attempt ${progress.attempt} of ${progress.attemptCount}`;
 
   let looked = "Where new pages began, and clicks with no words, on this machine";
@@ -402,6 +513,7 @@ function activeIndexOf(progress: FlowGenerationProgressDto): number {
   if (progress.state === FlowGenerationStateEnum.DONE) return Number.MAX_SAFE_INTEGER;
   if (progress.stage === FlowGenerationStageEnum.SAVING) return 7;
   if (progress.stage === FlowGenerationStageEnum.ASKING_MODEL) return 5;
+  if (progress.stage === FlowGenerationStageEnum.WAITING_TO_SEND) return 5;
   if (progress.stage === FlowGenerationStageEnum.WRITING_DRAFT) return 4;
   return 3;
 }

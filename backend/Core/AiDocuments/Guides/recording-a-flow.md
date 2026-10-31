@@ -123,6 +123,13 @@ model names the steps from what the flow should do, and the notes say only where
 and what kind of thing was pressed - a button, a text field - with no words, titles or names. What you typed never goes: the model sees only the input's name, such as {{email}}. The
 screenshots and templates stay on this machine. "Show the exact request" shows what was sent.
 
+When a cloud model would be sent text read off your screen, the request is shown first, and nothing
+leaves the machine until you press Send. The lines that hold such text are marked: the notes, and
+every line with words read on what you clicked or the words you searched by. A line you wrote with
+the same words is marked too. Cancel sends nothing; to send none of it, turn off "Let the cloud
+model see your screen" under Settings, AI, and generate again - words you chose to search by still
+go, and are still shown first. The local model is never held up, since nothing leaves the machine.
+
 The page shows each stage as it happens. Once it is done, "Check the flow" shows what was saved.
 
 ## Check

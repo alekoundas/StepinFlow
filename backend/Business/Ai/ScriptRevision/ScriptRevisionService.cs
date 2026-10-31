@@ -137,6 +137,17 @@ namespace Business.Ai.ScriptRevision
             return result;
         }
 
+        // The model needs an input's name, never its value: an email, an account number.
+        public string RequestOf(string script, string instruction)
+        {
+            FlowScriptSchema sent = _scanner.Read(script);
+            foreach (FlowCsvColumn input in sent.Inputs)
+                input.DefaultValue = string.Empty;
+
+            string printed = _printer.Write(sent);
+            return $"{instruction}\n\nThe script:\n\n{printed}";
+        }
+
 
         // ================================================================
         // Private methods - what is sent
@@ -146,17 +157,6 @@ namespace Business.Ai.ScriptRevision
         {
             string flowFormat = AiDocumentsReader.ReadDocument(FLOW_FORMAT_DOCUMENT);
             return $"{AiPromptHelper.ReviseScript}\n\n{flowFormat}";
-        }
-
-        // The model needs an input's name, never its value: an email, an account number.
-        private string RequestOf(string script, string instruction)
-        {
-            FlowScriptSchema sent = _scanner.Read(script);
-            foreach (FlowCsvColumn input in sent.Inputs)
-                input.DefaultValue = string.Empty;
-
-            string printed = _printer.Write(sent);
-            return $"{instruction}\n\nThe script:\n\n{printed}";
         }
 
         // Line by line, so the model can find each one in what it answered.

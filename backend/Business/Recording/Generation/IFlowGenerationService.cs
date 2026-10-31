@@ -37,7 +37,9 @@ namespace Business.Recording.Generation
         /// the way a file is. The model is given the plain draft as a script, with the text read
         /// under each click only where screen content may go to it, and never an input's value. When
         /// no answer reads cleanly, or the model cannot be reached, the plain draft is saved instead,
-        /// and the result says why. onProgress is told each stage, and each attempt.
+        /// and the result says why. onProgress is told each stage, and each attempt. A request that
+        /// takes text read off the screen to a cloud model is told as WAITING_TO_SEND, and goes once
+        /// waitToSend has returned.
         /// </summary>
         Task<FlowGenerationResultDto> ImportModelDraftAsync(
             int flowId,
@@ -45,6 +47,7 @@ namespace Business.Recording.Generation
             ReviewedRecordingDto reviewed,
             Func<int, RecordingScreenDto?> screenAt,
             Action<FlowGenerationProgressDto>? onProgress,
+            Func<CancellationToken, Task> waitToSend,
             CancellationToken ct = default);
 
         /// <summary>
