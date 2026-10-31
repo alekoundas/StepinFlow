@@ -392,6 +392,43 @@ namespace Business.Tests.Flows.Validation
         }
 
         // ================================================================
+        // Where an issue sits
+        // ================================================================
+
+        // The rules go a step at a time in the order the steps were loaded; the list reads as the
+        // tree does.
+        [Fact]
+        public void Issues_come_in_the_order_of_the_tree_the_flows_own_first()
+        {
+            FlowStep later = Add(FlowStepTypeEnum.SEARCH_IMAGE, "Find later");
+            later.OrderNumber = 99;
+            FlowStep outer = Search("Find outer");
+            FlowStep inner = Add(FlowStepTypeEnum.SEARCH_IMAGE, "Find inner", Branch(outer, FlowStepTypeEnum.SUCCESS));
+            _areas.Add(new FlowArea { Id = 200, Name = "Browser" });
+            _areas.Add(new FlowArea { Id = 201, Name = "Browser" });
+
+            Validate().Issues
+                .Select(x => x.FlowStepId)
+                .Where(x => x == null || x == inner.Id || x == later.Id)
+                .Distinct()
+                .ShouldBe([null, inner.Id, later.Id]);
+        }
+
+        [Fact]
+        public void An_issue_names_the_steps_above_it_from_the_top()
+        {
+            FlowStep outer = Search("Find outer");
+            FlowStep success = Branch(outer, FlowStepTypeEnum.SUCCESS);
+            success.Name = "Success";
+            FlowStep inner = Add(FlowStepTypeEnum.SEARCH_IMAGE, "Find inner", success);
+
+            FlowValidationIssueDto issue = Validate().Issues.First(x => x.FlowStepId == inner.Id);
+
+            issue.ParentFlowStepIds.ShouldBe([outer.Id, success.Id]);
+            issue.Path.ShouldBe(["Find outer", "Success"]);
+        }
+
+        // ================================================================
         // Warnings
         // ================================================================
 

@@ -7,17 +7,24 @@ import {
   tint,
 } from "@/shared/models/flow-step-catalog";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
-import type { StepIssues } from "@/features/flow/hooks/use-flow-validation";
+import {
+  issuesBelowText,
+  type IssuesBelow,
+  type StepIssues,
+} from "@/features/flow/hooks/use-flow-validation";
 import { buildFlowStepTreeDetail } from "@/features/flow-step/components/templates/data-tree/flow-step-tree-detail";
 
 interface Props {
   treeNode: TreeNodeDto;
   issues?: StepIssues;
+
+  /** What is wrong somewhere under it, while it is closed. */
+  issuesBelow?: IssuesBelow;
 }
 
 const THUMBNAIL_BOX = { width: "2.5rem", height: "2rem" };
 
-export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
+export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow }: Props) {
   const entry = getFlowStepCatalogEntry(treeNode.flowStepType);
   const detail = buildFlowStepTreeDetail(treeNode);
   const accent = flowStepAccent(treeNode.flowStepType);
@@ -114,8 +121,22 @@ export function FlowStepTreeNodeComponent({ treeNode, issues }: Props) {
         )}
       </div>
 
-      {(issues || detail.chips.length > 0) && (
+      {(issues || issuesBelow || detail.chips.length > 0) && (
         <div className="flex align-items-center gap-1 flex-shrink-0">
+          {issuesBelow && (
+            <span
+              role="img"
+              aria-label={issuesBelowText(issuesBelow)}
+              title={issuesBelowText(issuesBelow)}
+              className="border-circle flex-shrink-0 mx-1"
+              style={{
+                width: 8,
+                height: 8,
+                background: issuesBelow.errorCount > 0 ? "var(--red-400)" : "var(--yellow-400)",
+              }}
+            />
+          )}
+
           {issues && badge && (
             <span
               className="flex align-items-center gap-1 text-xs px-2 py-1 border-round-sm white-space-nowrap"

@@ -34,6 +34,7 @@ import { TreeSelectionRingComponent } from "@/shared/components/data-tree/TreeSe
 import { flowStepAccent, tint } from "@/shared/models/flow-step-catalog";
 import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
 import {
+  groupIssuesBelowStep,
   groupIssuesByStep,
   useFlowValidation,
 } from "@/features/flow/hooks/use-flow-validation";
@@ -71,6 +72,10 @@ export function DataTreeComponent({ flowId }: Props) {
   const { data: validation } = useFlowValidation(flowId);
   const issuesByStepId = useMemo(
     () => groupIssuesByStep(validation?.issues ?? []),
+    [validation],
+  );
+  const issuesBelowByStepId = useMemo(
+    () => groupIssuesBelowStep(validation?.issues ?? []),
     [validation],
   );
 
@@ -491,6 +496,8 @@ export function DataTreeComponent({ flowId }: Props) {
         <FlowStepTreeNodeComponent
           treeNode={treeNodeDto}
           issues={issuesByStepId.get(treeNodeDto.entityId)}
+          // An open row shows its children's own badges instead.
+          issuesBelow={expandedKeys[treeNodeDto.key] ? undefined : issuesBelowByStepId.get(treeNodeDto.entityId)}
         />
       );
     }

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useLayoutEffect, useState } from "react";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
@@ -14,6 +14,10 @@ export default function WorkflowPage() {
   const navigate = useNavigate();
 
   const flowId = id ? +id : undefined;
+
+  // The Execute page's "Show the errors" opens the flow on its Issues tab.
+  const [searchParams] = useSearchParams();
+  const openingTab = searchParams.get("tab") === "issues" ? "issues" : "flow";
 
   const {
     setRootFlowId,
@@ -42,6 +46,7 @@ export default function WorkflowPage() {
     };
 
     clear();
+    setActiveTab(openingTab);
     setRootFlowId(flowId);
 
     return () => {
@@ -50,6 +55,7 @@ export default function WorkflowPage() {
     };
   }, [
     flowId,
+    openingTab,
     setRootFlowId,
     setSelectedTreeNode,
     setSelectedFlowStepTypeToAdd,

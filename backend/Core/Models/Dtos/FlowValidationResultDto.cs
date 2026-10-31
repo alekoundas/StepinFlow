@@ -19,6 +19,10 @@ namespace Core.Models.Dtos
         public int? FlowStepId { get; set; }
         public string FlowStepName { get; set; } = string.Empty;
 
+        /// <summary>The steps above it, from the top down, and their names. Empty for a step at the top of the flow.</summary>
+        public List<int> ParentFlowStepIds { get; set; } = new List<int>();
+        public List<string> Path { get; set; } = new List<string>();
+
         public ValidationSeverityEnum Severity { get; set; }
         public FlowValidationCodeEnum Code { get; set; }
         public string Message { get; set; } = string.Empty;

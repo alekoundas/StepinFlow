@@ -1631,6 +1631,14 @@ so a badge and a refusal cannot disagree. `StartExecutionHandler` refuses to sta
 the engine is asked - the engine runs whatever it is given - and the refusal names the flow, the
 step and what is wrong. The Start button reads the same answer, so the two cannot disagree.
 
+**Finding them.** Each issue carries the steps above it, and the list comes in the tree's order, the
+flow's own first (`FlowValidationService.Locate`), so nothing has to load the whole tree to place
+one. The editor's Issues tab lists a row per step, errors first, with its path. Picking a row opens
+the step in the Flow tab's form beside the list, its messages above the form, so the list stays
+while each is fixed and a fixed one leaves it; Show in tree opens the branches down to the step. A
+name two parts share opens that part's tab. A closed tree row with something wrong under it carries
+a dot. The header's count opens the tab, and so does Show the errors beside a Start it refuses.
+
 The rules that relate two steps live once, in `TreeStepHelper`, and three places ask them: the
 validator, the form's dropdown, which offers only what the validator accepts, and a drag and drop,
 which clears a reference the move would break. A `Break` may leave only a step it sits inside, up to

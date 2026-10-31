@@ -3,8 +3,8 @@ import { devtools } from "zustand/middleware";
 import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
-/** The editor's tabs: the flow's steps and the parts they use, then the script they make. */
-export type WorkflowTab = "flow" | "areas" | "locations" | "inputs" | "templates" | "script";
+/** The editor's tabs: the flow's steps and the parts they use, what is wrong with them, then the script they make. */
+export type WorkflowTab = "flow" | "areas" | "locations" | "inputs" | "templates" | "issues" | "script";
 
 /** The Script tab: the flow's file, what changed in it since the last commit, and its commits. */
 export type ScriptView = "script" | "changes" | "history";

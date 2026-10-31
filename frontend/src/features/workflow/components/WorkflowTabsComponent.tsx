@@ -1,4 +1,5 @@
 import { TabMenu } from "primereact/tabmenu";
+import { classNames } from "primereact/utils";
 import type { MenuItem, MenuItemOptions } from "primereact/menuitem";
 
 import { useWorkflowStore, type WorkflowTab } from "@/features/workflow/store/workflow-store";
@@ -9,6 +10,8 @@ interface Props {
   locationCount?: number;
   inputCount?: number;
   templateCount?: number;
+  issueCount?: number;
+  issueColor?: string;
 }
 
 const TABS: { tab: WorkflowTab; label: string }[] = [
@@ -17,11 +20,19 @@ const TABS: { tab: WorkflowTab; label: string }[] = [
   { tab: "locations", label: "Locations" },
   { tab: "inputs", label: "Inputs" },
   { tab: "templates", label: "Templates" },
+  { tab: "issues", label: "Issues" },
   { tab: "script", label: "Script" },
 ];
 
-/** The editor's tabs, each part with how many the flow has. */
-export function WorkflowTabsComponent({ areaCount, locationCount, inputCount, templateCount }: Props) {
+/** The editor's tabs, each part with how many the flow has, and the issues in the colour of the worst. */
+export function WorkflowTabsComponent({
+  areaCount,
+  locationCount,
+  inputCount,
+  templateCount,
+  issueCount,
+  issueColor,
+}: Props) {
   const { activeTab, setActiveTab } = useWorkflowStore();
 
   const counts: Partial<Record<WorkflowTab, number | undefined>> = {
@@ -29,6 +40,7 @@ export function WorkflowTabsComponent({ areaCount, locationCount, inputCount, te
     locations: locationCount,
     inputs: inputCount,
     templates: templateCount,
+    issues: issueCount,
   };
 
   const model: MenuItem[] = TABS.map(({ tab, label }) => ({
@@ -41,7 +53,14 @@ export function WorkflowTabsComponent({ areaCount, locationCount, inputCount, te
         tabIndex={0}
       >
         <span className={options.labelClassName}>{label}</span>
-        {counts[tab] !== undefined && <span className="ml-2 text-color-secondary">{counts[tab]}</span>}
+        {counts[tab] !== undefined && (
+          <span
+            className={classNames("ml-2", { "text-color-secondary": tab !== "issues" })}
+            style={tab === "issues" ? { color: issueColor } : undefined}
+          >
+            {counts[tab]}
+          </span>
+        )}
       </a>
     ),
   }));

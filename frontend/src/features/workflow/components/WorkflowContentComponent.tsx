@@ -23,12 +23,15 @@ import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
 import { usePromoteFlow } from "@/features/flow/hooks/use-promote-flow";
 import { useDeleteFlowStep } from "@/features/flow-step/hooks/use-delete-flow-step";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { WorkflowIssueMessagesComponent } from "@/features/workflow/components/WorkflowIssueMessagesComponent";
 
 export function WorkflowContentComponent() {
   const {
     selectedTreeNode,
     selectedFlowStepTypeToAdd,
     rootFlowId,
+    activeTab,
     setTreeRefreshTrigger,
     setSelectedFlowStepTypeToAdd,
     setSelectedTreeNode,
@@ -71,6 +74,8 @@ export function WorkflowContentComponent() {
   const { createFlowStepMutation, updateFlowStepMutation } =
     useFlowStepMutations();
   const { updateFlowMutation } = useFlowMutations();
+  const { data: validation } = useFlowValidation(rootFlowId ?? null);
+  const issues = validation?.issues ?? [];
 
   const deleteFlow = useDeleteFlow();
   const promoteFlow = usePromoteFlow();
@@ -148,7 +153,7 @@ export function WorkflowContentComponent() {
   if (!selectedTreeNode) {
     return panel(
       <LabelComponent
-        text="Select a node from the tree"
+        text={activeTab === "issues" ? "Pick an issue to fix its step here" : "Select a node from the tree"}
         size="lg"
       />,
     );
@@ -268,6 +273,8 @@ export function WorkflowContentComponent() {
           </div>
         )}
 
+        <WorkflowIssueMessagesComponent issues={issues.filter((x) => x.flowStepId == null)} />
+
         <FlowFormComponent
           key={`${flowId}-${formVersion}`}
           formMode={formMode}
@@ -332,6 +339,8 @@ export function WorkflowContentComponent() {
           />
         </div>
       )}
+
+      <WorkflowIssueMessagesComponent issues={issues.filter((x) => x.flowStepId === stepId)} />
 
       <StepForm
         key={`${stepId}-${formVersion}`}

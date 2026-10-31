@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "primereact/button";
 
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
-import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { flowHealthOf, useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import RepositoryChipComponent from "@/features/repository/components/RepositoryChipComponent";
 
@@ -26,11 +25,7 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
     setScriptView("changes");
   };
 
-  const issues = validation?.issues ?? [];
-  const errors = issues.filter((x) => x.severity === ValidationSeverityEnum.ERROR).length;
-  const warnings = issues.filter((x) => x.severity === ValidationSeverityEnum.WARNING).length;
-  const notes = issues.filter((x) => x.severity === ValidationSeverityEnum.INFO).length;
-  const health = healthOf(errors, warnings, notes);
+  const health = flowHealthOf(validation?.issues ?? []);
 
   return (
     <header className="flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3 border-bottom-1 surface-border">
@@ -56,16 +51,20 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
         )}
 
         {validation && (
-          <span
-            className="flex align-items-center gap-2 text-xs"
+          <Button
+            type="button"
+            text
+            size="small"
+            className="flex align-items-center gap-2 text-xs py-1 px-2"
             style={{ color: health.color }}
+            onClick={() => setActiveTab("issues")}
           >
             <span
               className="border-circle"
               style={{ width: 7, height: 7, background: health.color }}
             />
             {health.text}
-          </span>
+          </Button>
         )}
       </div>
 
@@ -92,12 +91,3 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
     </header>
   );
 }
-
-const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
-
-const healthOf = (errors: number, warnings: number, notes: number) => {
-  if (errors > 0) return { color: "var(--red-400)", text: plural(errors, "error") };
-  if (warnings > 0) return { color: "var(--yellow-500)", text: plural(warnings, "warning") };
-  if (notes > 0) return { color: "var(--text-color-secondary)", text: plural(notes, "note") };
-  return { color: "var(--green-400)", text: "No issues" };
-};

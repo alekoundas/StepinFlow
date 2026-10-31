@@ -20,6 +20,11 @@ import { FlowPointListComponent } from "@/features/flow-point/components/FlowPoi
 import { FlowPointPanelComponent } from "@/features/flow-point/components/FlowPointPanelComponent";
 import { FlowCsvColumnListComponent } from "@/features/flow-csv-column/components/FlowCsvColumnListComponent";
 import { FlowCsvColumnPanelComponent } from "@/features/flow-csv-column/components/FlowCsvColumnPanelComponent";
+import {
+  WorkflowIssueListComponent,
+  type WorkflowPartTab,
+} from "@/features/workflow/components/WorkflowIssueListComponent";
+import { flowHealthOf, useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 
 interface Props {
   flowId: number;
@@ -28,16 +33,19 @@ interface Props {
 
 /**
  * The editor below its header: the tabs and what each lists on the left, the picked one's form on
- * the right. The Script tab takes the whole width.
+ * the right. The Issues tab opens a step in the Flow tab's form. The Script tab takes the whole width.
  *
  * The Flow tab is hidden rather than unmounted while another is open, so the tree keeps the
  * branches that were open and a half-edited step keeps its edits.
  */
 export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const activeTab = useWorkflowStore((x) => x.activeTab);
+  const setActiveTab = useWorkflowStore((x) => x.setActiveTab);
   const treeZoom = useWorkflowStore((x) => x.treeZoom);
   const { data: uses } = useFlowStepUses(flowId);
   const { data: templates } = useFlowTemplates(flowId);
+  const { data: validation } = useFlowValidation(flowId);
+  const issues = validation?.issues ?? [];
 
   const [area, setArea] = useState<WorkflowPartSelection>(null);
   const [location, setLocation] = useState<WorkflowPartSelection>(null);
@@ -47,12 +55,25 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const isFlow = activeTab === "flow";
   const isScript = activeTab === "script";
 
+  // The Issues tab fixes a step in the same form the Flow tab does.
+  const showsStepForm = isFlow || activeTab === "issues";
+
+  const openPart = (tab: WorkflowPartTab, id: number) => {
+    if (tab === "areas") setArea(id);
+    if (tab === "locations") setLocation(id);
+    if (tab === "inputs") setInput(id);
+
+    setActiveTab(tab);
+  };
+
   const tabs = (
     <WorkflowTabsComponent
       areaCount={flow?.flowAreas.length}
       locationCount={flow?.flowPoints.length}
       inputCount={flow?.flowCsvColumns.length}
       templateCount={templates?.length}
+      issueCount={issues.length > 0 ? issues.length : undefined}
+      issueColor={flowHealthOf(issues).color}
     />
   );
 
@@ -125,6 +146,14 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
                   onSelect={setTemplateId}
                 />
               )}
+              {activeTab === "issues" && (
+                <WorkflowIssueListComponent
+                  flowId={flowId}
+                  flow={flow}
+                  issues={issues}
+                  onOpenPart={openPart}
+                />
+              )}
             </ScrollPanel>
           )}
         </SplitterPanel>
@@ -136,7 +165,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
           style={{ overflow: "hidden" }}
         >
           <ScrollPanel
-            className={classNames("flex-1", { hidden: !isFlow })}
+            className={classNames("flex-1", { hidden: !showsStepForm })}
             style={{ minHeight: 0 }}
           >
             <div className="p-4">
@@ -144,7 +173,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
             </div>
           </ScrollPanel>
 
-          {!isFlow && flow && (
+          {!showsStepForm && flow && (
             <ScrollPanel
               className="flex-1"
               style={{ minHeight: 0 }}

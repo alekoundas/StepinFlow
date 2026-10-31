@@ -12,6 +12,10 @@ export interface FlowValidationIssueDto {
   flowStepId?: number | null;
   flowStepName: string;
 
+  // The steps above it, from the top down, and their names. Empty for a step at the top of the flow.
+  parentFlowStepIds: number[];
+  path: string[];
+
   severity: ValidationSeverityEnum;
   code: string;
   message: string;

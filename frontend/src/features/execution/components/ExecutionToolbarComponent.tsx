@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 
@@ -52,6 +53,7 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
 
   const { openConfirm } = useDialogStore();
   const keys = useDebuggerKeys();
+  const navigate = useNavigate();
 
   // The same answer Start is refused on, so the button and the backend cannot disagree.
   const { data: validation } = useFlowValidation(flowId);
@@ -155,6 +157,16 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
             onClick={handleStart}
           />
         </DisabledTooltipComponent>
+
+        {hasErrors && (
+          <Button
+            label="Show the errors"
+            size="small"
+            link
+            className="py-1 px-2"
+            onClick={() => navigate(`/workflow/${flowId}?tab=issues`)}
+          />
+        )}
       </div>
     );
 

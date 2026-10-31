@@ -79,16 +79,78 @@ namespace Business.Flows.FlowValidationService
             if (isQaTest)
                 FlowQaTestValidator.Validate(steps, result);
 
+            Locate(result, steps);
+
             result.HasErrors = result.Issues.Any(x => x.Severity == ValidationSeverityEnum.ERROR);
             return result;
         }
 
-     
+
 
 
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Where each issue sits, and in the order the tree shows them, the flow's own first. A step
+        // the tree cannot reach goes last.
+        private static void Locate(FlowValidationResultDto result, IReadOnlyList<FlowStep> steps)
+        {
+            Dictionary<int, FlowStep> byId = steps.ToDictionary(x => x.Id);
+            Dictionary<int, int> treeOrder = new Dictionary<int, int>();
+            ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
+
+            foreach (FlowStep root in steps.Where(x => x.ParentFlowStepId == null).OrderBy(x => x.OrderNumber))
+                Visit(root, childrenByParentId, treeOrder);
+
+            foreach (FlowValidationIssueDto issue in result.Issues.Where(x => x.FlowStepId != null))
+            {
+                if (!byId.TryGetValue(issue.FlowStepId!.Value, out FlowStep? step))
+                    continue;
+
+                // Bounded by the step count, so a corrupt parent chain cannot spin forever.
+                int guard = byId.Count;
+                FlowStep? parent = ParentOf(step, byId);
+
+                while (parent != null && guard-- > 0)
+                {
+                    issue.ParentFlowStepIds.Insert(0, parent.Id);
+                    issue.Path.Insert(0, parent.Name);
+                    parent = ParentOf(parent, byId);
+                }
+            }
+
+            result.Issues = result.Issues
+                .OrderBy(x => PlaceOf(x, treeOrder))
+                .ToList();
+        }
+
+        private static void Visit(FlowStep step, ILookup<int?, FlowStep> childrenByParentId, Dictionary<int, int> treeOrder)
+        {
+            treeOrder[step.Id] = treeOrder.Count;
+
+            foreach (FlowStep child in childrenByParentId[step.Id].OrderBy(x => x.OrderNumber))
+                Visit(child, childrenByParentId, treeOrder);
+        }
+
+        private static FlowStep? ParentOf(FlowStep step, IReadOnlyDictionary<int, FlowStep> byId)
+        {
+            if (step.ParentFlowStepId == null)
+                return null;
+
+            return byId.GetValueOrDefault(step.ParentFlowStepId.Value);
+        }
+
+        private static int PlaceOf(FlowValidationIssueDto issue, IReadOnlyDictionary<int, int> treeOrder)
+        {
+            if (issue.FlowStepId == null)
+                return -1;
+
+            if (treeOrder.TryGetValue(issue.FlowStepId.Value, out int place))
+                return place;
+
+            return int.MaxValue;
+        }
 
         // Load Flow with its relations.(areas, points and csvColumns).
         private static async Task<LoadedFlows> LoadAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
