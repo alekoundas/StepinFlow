@@ -24,7 +24,8 @@ DPI is never scaled; recapture it.
 ## An image search finds the wrong thing
 
 Accuracy is too low, so a roughly-similar region scores above the threshold. Raise it, and use
-**Test now** to see what score the correct match gets — set the threshold between the two.
+**Test now** to see what score the correct match gets — set the threshold between the two. Its
+**Details** shows the closest wrong place and suggests the accuracy between them.
 
 A very small or very plain template matches too many things. Capture more around it. A template
 of one flat colour matches everywhere.

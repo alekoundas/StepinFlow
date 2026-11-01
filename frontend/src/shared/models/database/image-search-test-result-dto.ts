@@ -1,6 +1,9 @@
 // One hit, in coordinates relative to the search area. The screenshot is that same area, so
 // these need no conversion before being drawn on it.
 export interface ImageSearchTestMatchDto {
+  // False for the closest candidate under the accuracy, which is not a match.
+  isAccepted: boolean;
+
   x: number;
   y: number;
   width: number;

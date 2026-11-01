@@ -184,6 +184,18 @@ Templates are stored as PNG, never JPEG. JPEG artifacts wreck normalised templat
 **Test now** does the real search against the live screen and reports whether each template was
 found and with what score. It clicks nothing.
 
+**Details** opens what the test found, one template at a time. Each row has the template's score
+against its accuracy and a strip from 0 to 1 marking its hit, its accuracy, and the closest place
+on the screenshot that scored under it. Picking a row draws them on the screenshot - the hit solid,
+with where it would click, and the closest place dashed - and shows the template beside both, so
+"what did it nearly match instead?" is answered by looking. It suggests an accuracy: halfway between
+the hit and the closest wrong place, or, when nothing was found, just under the closest place - which
+is only right if that place is the thing. **Use** writes it to the step's form, in edit mode, and
+Save keeps it. When the hit and the closest wrong place score close together, a tighter crop of the
+template helps more than any accuracy. **Test again** tests from inside the dialog. The dialog
+resizes with the mouse and maximises; the screenshot zooms to a box clicked, pans by dragging, and
+zooms with Ctrl and the wheel.
+
 The form also generates a sentence describing what the step will actually do, which is worth reading
 when several settings interact.
 

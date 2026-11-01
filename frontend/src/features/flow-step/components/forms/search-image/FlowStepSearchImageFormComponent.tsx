@@ -31,9 +31,9 @@ import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/compone
 import { FlowTemplateAddDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateAddDialogComponent";
 import { FlowTemplateSharedDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateSharedDialogComponent";
 import { defaultAccuracyFor } from "@/features/flow-step/components/forms/shared/match-modes";
+import type { ImageSearchTestRun } from "@/features/flow-step/components/forms/search-image/image-search-test";
 import { stepsSearchingFor, useFlowStepUses } from "@/features/workflow/hooks/use-flow-parts";
 
-const TEST_DETAILS_ID = "image-search-test-details";
 const ADD_TEMPLATE_ID = "image-search-add-template";
 const SHARED_TEMPLATE_ID = "image-search-shared-template";
 
@@ -109,33 +109,21 @@ export default function FlowStepSearchImageFormComponent({
   const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
     null,
   );
+  // The templates and mode the result was found with, so the details read it against those.
+  const [testRun, setTestRun] = useState<ImageSearchTestRun | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
   const { openImageEditor } = useWindowImageEditor();
-  const { openConfirm, openCustom, close } = useDialogStore();
+  const { openCustom } = useDialogStore();
 
   // Which other steps link to each picture, as the flow was last saved.
   const { data: uses } = useFlowStepUses(defaultValues.rootId || null);
   const sharedWith = images.map((x) =>
     x.flowTemplateId > 0 ? stepsSearchingFor(uses, x.flowTemplate.name, defaultValues.id) : [],
   );
-
-  // Passed by value: the dialog store keeps elements, so a result read from the closure later
-  // would be whatever it was at open time anyway.
-  const openTestDetails = () => {
-    if (!testResult) return;
-
-    openConfirm(TEST_DETAILS_ID, {
-      headerText: "What the search found",
-      hideConfirm: true,
-      cancelLabel: "Close",
-      width: "min(60rem, 90vw)",
-      children: <FlowStepSearchImageTestDialogComponent result={testResult} />,
-      onConfirm: () => close(TEST_DETAILS_ID),
-    });
-  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -342,15 +330,25 @@ export default function FlowStepSearchImageFormComponent({
   const handleTest = async () => {
     setIsTesting(true);
     try {
-      setTestResult(
-        await backendApiService.FlowStep.testImageSearch(buildDto()),
-      );
+      const dto = buildDto();
+      const result = await backendApiService.FlowStep.testImageSearch(dto);
+
+      setTestResult(result);
+      setTestRun({
+        images: dto.flowStepTemplates ?? [],
+        searchMode: dto.searchMode,
+        maxMatches: dto.maxMatches,
+      });
     } catch (err) {
       console.error(err);
     } finally {
       setIsTesting(false);
     }
   };
+
+  // Written to the form like the slider would, so Save is what keeps it.
+  const handleUseAccuracy = (index: number, accuracy: number) =>
+    updateImage(index, new FlowStepTemplateDto({ ...imagesRef.current[index], accuracy }));
 
   const testResultsByIndex = new Map<number, ImageSearchTestImageDto>(
     (testResult?.images ?? []).map((x, index) => [index, x]),
@@ -385,7 +383,7 @@ export default function FlowStepSearchImageFormComponent({
                 label="Details"
                 icon="pi pi-image"
                 disabled={!testResult?.isResolved}
-                onClick={openTestDetails}
+                onClick={() => setIsDetailsOpen(true)}
                 outlined
                 severity="secondary"
                 tooltip="See what matched, and where it would click"
@@ -443,6 +441,21 @@ export default function FlowStepSearchImageFormComponent({
           )}
         </FlowStepFormLayoutComponent>
       </form>
+
+      {/* Outside the form, so nothing in it can submit the step. */}
+      {testResult && testRun && (
+        <FlowStepSearchImageTestDialogComponent
+          isVisible={isDetailsOpen}
+          result={testResult}
+          run={testRun}
+          images={images}
+          isTesting={isTesting}
+          canEdit={formMode !== "VIEW"}
+          onTestAgain={handleTest}
+          onUseAccuracy={handleUseAccuracy}
+          onHide={() => setIsDetailsOpen(false)}
+        />
+      )}
     </FormProvider>
   );
 }

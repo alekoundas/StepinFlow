@@ -292,7 +292,7 @@ namespace Business.Executions
                 MatchCount = matches.Count,
                 StartedOn = _timeProvider.GetUtcNow().UtcDateTime,
                 DurationMilliseconds = 0,
-                ScreenshotFileName = _cache.GetExecutionStepFrom(step.Id)?.ScreenshotFileName, //Every hit came off the one screenshot the search tookEvery hit came off the one screenshot the search took
+                ScreenshotFileName = _cache.GetExecutionStepFrom(step.Id)?.ScreenshotFileName, // Every hit came off the one screenshot the search took.
             };
 
             PlaceInRun(repeat, step, depth);

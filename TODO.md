@@ -7,6 +7,12 @@ the history.
 
 ## Execution
 
+- [ ] **Not tried by hand: Test now's Details.** Verified by the type check, the lint and the
+      build, 2026-11-01. Test a step with several templates, one found and one not: the used row,
+      each strip, the solid hit with its click dot and the dashed closest place; the template beside
+      both. Use in view mode is off with its tooltip; in edit mode it writes the accuracy, the row
+      says "on the form, not tested yet", Save keeps it, and Test again redraws in the dialog. Resize
+      the dialog by its corner, maximise it, zoom to a box, drag, Ctrl and the wheel. A dark theme.
 - [ ] **Not tried by hand: a wait follows its window.** Verified by the build and the tests,
       2026-11-01. A Wait For Image on a window that is closed when it starts: open the window during
       the wait, and it is found. Move the window during a wait, and it is found where it went.
@@ -95,15 +101,10 @@ the history.
 - [ ] **Poll interval jitter** for `WAIT_UNTIL_FOUND` searches.
 - [ ] **Downscale matching** for template search.
 - [ ] **Dry-run mode** that logs resolved coordinates instead of clicking.
-- [ ] **Details dialog for an image search's screenshot.** Panel 3 shows the frame but nothing on
-      it. Wants a button opening `FlowStepImageSearchTestDialogComponent`, which already draws
-      boxes, click points and per-template scores.
-      The matcher half is done. `IOpenCvService.Match` returns a `TemplateMatchOutcome` carrying
-      `Matches` and `Rejected` - the next candidates below the accuracy, with their positions and
-      scores, kept in a separate list so nothing that walks the matches can click one. The Test now
-      path already returns them (`ImageSearchTestMatchDto.IsAccepted`), so that dialog can draw a
-      near miss as soon as the frontend reads the flag.
-      What is left is the **execution page** version, which needs the candidates persisted per run.
+- [ ] **Details for an image search's screenshot on the execution page.** Panel 3 shows the
+      screenshot but nothing on it. The editor's Test now has the dialog it wants
+      (`FlowStepSearchImageTestDialogComponent`: hits, the closest place under the bar, a suggested
+      accuracy), and the execution page needs the candidates persisted per execution to show it.
       `ExecutionStep.BestScore` holds the scalar today, which is what the ai reads and works at
       every history level, but it has no position - and the position is half the diagnosis: 0.79 on
       the button means lower the accuracy, 0.79 somewhere else means the template matches the wrong

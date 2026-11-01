@@ -1,157 +1,320 @@
 import { useState } from "react";
-import { Checkbox } from "primereact/checkbox";
-import { Tag } from "primereact/tag";
-import { classNames } from "primereact/utils";
+import type { ReactNode } from "react";
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
+import { Message } from "primereact/message";
 
+import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import type {
-  ImageSearchTestImageDto,
-  ImageSearchTestResultDto,
-} from "@/shared/models/database/image-search-test-result-dto";
+import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
+import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
+import { FlowStepSearchImageTestRowComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestRowComponent";
+import { FlowStepSearchImageTestViewerComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestViewerComponent";
+import { FlowStepSearchImageTestPatchComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestPatchComponent";
+import {
+  hitsOf,
+  isSameTemplates,
+  modeLineOf,
+  nameOf,
+  nearMissOf,
+  suggestAccuracy,
+  usedIndexes,
+  verdictOf,
+  type ImageSearchTestRun,
+} from "@/features/flow-step/components/forms/search-image/image-search-test";
 
 interface Props {
+  isVisible: boolean;
   result: ImageSearchTestResultDto;
+  run: ImageSearchTestRun;
+  // The form's templates now, which a suggestion writes to.
+  images: FlowStepTemplateDto[];
+  isTesting: boolean;
+  canEdit: boolean;
+  onTestAgain: () => void;
+  onUseAccuracy: (index: number, accuracy: number) => void;
+  onHide: () => void;
 }
 
-// Enough to tell templates apart at a glance. Green and red are left out: they mean found and
-// missing on the summary tags, and a box colour is a template identity, not a verdict.
-const BOX_COLOURS = [
-  "var(--blue-400)",
-  "var(--purple-400)",
-  "var(--orange-400)",
-  "var(--teal-400)",
-  "var(--pink-400)",
-  "var(--indigo-400)",
-];
+/**
+ * What a Test found, one template at a time: its hits and the closest place under its bar, drawn
+ * on the screenshot and side by side with the template, and the accuracy between the two.
+ *
+ * Rendered by the form rather than through the dialog store, which keeps elements: a suggestion
+ * written to the form and a test made again both have to reach it.
+ */
+export default function FlowStepSearchImageTestDialogComponent({
+  isVisible,
+  result,
+  run,
+  images,
+  isTesting,
+  canEdit,
+  onTestAgain,
+  onUseAccuracy,
+  onHide,
+}: Props) {
+  const [picked, setPicked] = useState<number | null>(null);
 
-const percent = (value: number, total: number) =>
-  total > 0 ? `${(value / total) * 100}%` : "0%";
+  const used = usedIndexes(result, run.searchMode);
+  const selected = Math.min(picked ?? used[0] ?? 0, result.images.length - 1);
+  const isCurrent = isSameTemplates(run, images);
 
-export default function FlowStepSearchImageTestDialogComponent({ result }: Props) {
-  const [hiddenIds, setHiddenIds] = useState<number[]>([]);
+  const accuracyOf = (index: number) =>
+    isCurrent ? images[index].accuracy : run.images[index].accuracy;
 
-  const width = result.searchAreaWidth;
-  const height = result.searchAreaHeight;
-
-  const isHidden = (image: ImageSearchTestImageDto) =>
-    hiddenIds.includes(image.flowStepTemplateId);
-
-  const toggle = (image: ImageSearchTestImageDto) =>
-    setHiddenIds((prev) =>
-      prev.includes(image.flowStepTemplateId)
-        ? prev.filter((x) => x !== image.flowStepTemplateId)
-        : [...prev, image.flowStepTemplateId],
-    );
-
-  const colourOf = (index: number) => BOX_COLOURS[index % BOX_COLOURS.length];
-
-  if (!result.screenshot) {
-    return (
-      <LabelComponent
-        text="No screenshot was captured for this test."
-        color="secondary"
-        size="sm"
-      />
-    );
-  }
+  const testAgain = (
+    <Button
+      type="button"
+      label="Test again"
+      icon="pi pi-refresh"
+      loading={isTesting}
+      outlined
+      onClick={onTestAgain}
+    />
+  );
 
   return (
-    <div className="flex flex-column gap-3">
-      {/* Boxes are positioned in percentages of the natural size, so they track the image as the
-          dialog resizes without any scale factor to keep in sync. */}
-      <div className="relative w-full">
-        <img
-          src={`data:image/jpeg;base64,${result.screenshot}`}
-          alt=""
-          className="w-full h-auto border-round-sm block"
+    <Dialog
+      visible={isVisible}
+      onHide={onHide}
+      header="What the search found"
+      modal
+      draggable
+      resizable
+      maximizable
+      style={{ width: "80vw", height: "85vh" }}
+      contentClassName="flex flex-column gap-3"
+      footer={
+        <Button
+          type="button"
+          label="Close"
+          severity="secondary"
+          onClick={onHide}
         />
+      }
+    >
+      {!result.isResolved || !result.screenshot || selected < 0 ? (
+        <div className="flex align-items-center gap-3">
+          <Message
+            severity="error"
+            className="flex-1 justify-content-start"
+            text={result.errorMessage ?? "The search area could not be captured."}
+          />
+          {testAgain}
+        </div>
+      ) : (
+        <>
+          <Verdict
+            result={result}
+            run={run}
+            action={testAgain}
+          />
 
-        {result.images.map((image, index) =>
-          isHidden(image)
-            ? null
-            : image.matches.map((match, matchIndex) => (
-                <div
-                  key={`${image.flowStepTemplateId}-${matchIndex}`}
-                  className="absolute"
-                  style={{
-                    left: percent(match.x, width),
-                    top: percent(match.y, height),
-                    width: percent(match.width, width),
-                    height: percent(match.height, height),
-                    border: `2px solid ${colourOf(index)}`,
-                    boxSizing: "border-box",
-                  }}
-                  title={`${image.name} · ${match.score.toFixed(2)}${match.scale !== 1 ? ` · scaled ${match.scale.toFixed(2)}x` : ""}`}
-                >
-                  {/* Where the cursor actually lands once the click offset is applied. A box in
-                      the right place with a crosshair in the wrong one is its own bug. */}
-                  <div
-                    className="absolute border-circle"
-                    style={{
-                      left: percent(match.clickX - match.x, match.width),
-                      top: percent(match.clickY - match.y, match.height),
-                      width: 8,
-                      height: 8,
-                      marginLeft: -4,
-                      marginTop: -4,
-                      background: colourOf(index),
-                      boxShadow: "0 0 0 2px rgba(0,0,0,0.5)",
-                    }}
-                  />
-                </div>
-              )),
+          {!isCurrent && (
+            <Message
+              severity="warn"
+              className="w-full justify-content-start"
+              text="The templates have changed since this test. Test again to see them."
+            />
+          )}
+
+          <div
+            className="flex gap-3 flex-1"
+            style={{ minHeight: 0 }}
+          >
+            <div
+              className="flex flex-column gap-2 overflow-auto flex-shrink-0"
+              style={{ width: "21rem" }}
+            >
+              {result.images.map((image, index) => (
+                <FlowStepSearchImageTestRowComponent
+                  key={`${image.flowStepTemplateId}-${index}`}
+                  name={nameOf(run, result, index)}
+                  image={image}
+                  tested={run.images[index]}
+                  accuracy={accuracyOf(index)}
+                  isUsed={used.includes(index)}
+                  isSelected={index === selected}
+                  onSelect={() => setPicked(index)}
+                />
+              ))}
+            </div>
+
+            <div
+              className="flex flex-column gap-3 flex-1"
+              style={{ minWidth: 0, minHeight: 0 }}
+            >
+              <FlowStepSearchImageTestViewerComponent
+                screenshot={result.screenshot}
+                width={result.searchAreaWidth}
+                height={result.searchAreaHeight}
+                hits={hitsOf(result.images[selected])}
+                nearMiss={nearMissOf(result.images[selected])}
+              />
+
+              <Detail
+                result={result}
+                run={run}
+                index={selected}
+                accuracy={accuracyOf(selected)}
+                useBlockedBecause={blockedReason(canEdit, isCurrent)}
+                onUseAccuracy={onUseAccuracy}
+              />
+            </div>
+          </div>
+
+          <LabelComponent
+            text={`Search area ${result.searchAreaWidth}x${result.searchAreaHeight} at ${result.searchAreaX}, ${result.searchAreaY}`}
+            size="xs"
+            color="secondary"
+          />
+        </>
+      )}
+    </Dialog>
+  );
+}
+
+// Why Use cannot write to the form, or null when it can.
+function blockedReason(canEdit: boolean, isCurrent: boolean): string | null {
+  if (!canEdit) return "Edit the step to change its accuracy.";
+  if (!isCurrent) return "Test again first: the templates have changed since this test.";
+
+  return null;
+}
+
+interface VerdictProps {
+  result: ImageSearchTestResultDto;
+  run: ImageSearchTestRun;
+  action: ReactNode;
+}
+
+function Verdict({ result, run, action }: VerdictProps) {
+  const verdict = verdictOf(result, run);
+  const isSuccess = verdict.severity === "success";
+
+  return (
+    <div className="flex align-items-start gap-3">
+      <div className="flex flex-column gap-1 flex-1">
+        <span className="flex align-items-center gap-2 font-semibold">
+          <i
+            className={isSuccess ? "pi pi-check-circle" : "pi pi-exclamation-circle"}
+            style={{ color: isSuccess ? "var(--green-500)" : "var(--orange-500)" }}
+          />
+          {verdict.text}
+        </span>
+        <LabelComponent
+          text={modeLineOf(run)}
+          size="xs"
+          color="secondary"
+        />
+      </div>
+      {action}
+    </div>
+  );
+}
+
+interface DetailProps {
+  result: ImageSearchTestResultDto;
+  run: ImageSearchTestRun;
+  index: number;
+  accuracy: number;
+  useBlockedBecause: string | null;
+  onUseAccuracy: (index: number, accuracy: number) => void;
+}
+
+function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy }: DetailProps) {
+  const image = result.images[index];
+  const tested = run.images[index];
+  const hits = hitsOf(image);
+  const nearMiss = nearMissOf(image);
+  const suggestion = suggestAccuracy(image);
+  const screenshot = result.screenshot ?? "";
+
+  let advice = "Nothing on the screenshot resembles it.";
+  if (hits.length > 0)
+    advice = "Nothing else on the screenshot comes close, so any accuracy up to its hit is safe.";
+
+  return (
+    <div className="flex flex-column gap-2 p-3 border-1 surface-border border-round">
+      <span className="text-sm font-semibold">{nameOf(run, result, index)}</span>
+
+      <div className="flex gap-4 flex-wrap align-items-end">
+        {tested.flowTemplate.templateImage && (
+          <FlowStepSearchImageTestPatchComponent
+            label="Template"
+            outline="none"
+            source={{ png: tested.flowTemplate.templateImage }}
+          />
+        )}
+        {hits.length > 0 && (
+          <FlowStepSearchImageTestPatchComponent
+            label={`Hit · ${hits[0].score.toFixed(2)}`}
+            outline="2px solid var(--green-400)"
+            source={{ screenshot, box: hits[0] }}
+          />
+        )}
+        {nearMiss && (
+          <FlowStepSearchImageTestPatchComponent
+            label={`Closest under the bar · ${nearMiss.score.toFixed(2)}`}
+            outline="2px dashed var(--orange-400)"
+            source={{ screenshot, box: nearMiss }}
+          />
         )}
       </div>
 
-      <div className="flex flex-column gap-2">
-        {result.images.map((image, index) => (
-          <div
-            key={image.flowStepTemplateId}
-            className="flex align-items-center gap-2"
+      {image.scale !== 1 && (
+        <LabelComponent
+          text={`Searched at ${image.scale.toFixed(2)}x the size it was captured at.`}
+          size="xs"
+          color="secondary"
+        />
+      )}
+
+      {suggestion === null && (
+        <LabelComponent
+          text={advice}
+          size="sm"
+          color="secondary"
+        />
+      )}
+
+      {suggestion !== null && accuracy !== suggestion.accuracy && (
+        <div className="flex align-items-center gap-3">
+          <span className="text-sm text-color-secondary flex-1">{suggestion.reason}</span>
+          <DisabledTooltipComponent
+            tooltip={useBlockedBecause}
+            position="top"
           >
-            <Checkbox
-              inputId={`template-${image.flowStepTemplateId}`}
-              checked={!isHidden(image)}
-              disabled={image.matches.length === 0}
-              onChange={() => toggle(image)}
+            <Button
+              type="button"
+              label={`Use ${suggestion.accuracy.toFixed(2)}`}
+              size="small"
+              disabled={useBlockedBecause !== null}
+              onClick={() => onUseAccuracy(index, suggestion.accuracy)}
             />
+          </DisabledTooltipComponent>
+        </div>
+      )}
 
-            <span
-              className="flex-shrink-0 border-round-sm"
-              style={{
-                width: 12,
-                height: 12,
-                background: colourOf(index),
-                opacity: image.matches.length === 0 ? 0.3 : 1,
-              }}
-            />
+      {suggestion !== null && accuracy === suggestion.accuracy && (
+        <span
+          className="text-sm"
+          style={{ color: "var(--green-600)" }}
+        >
+          {accuracy === tested.accuracy
+            ? `Its accuracy is ${accuracy.toFixed(2)} already.`
+            : `Set to ${accuracy.toFixed(2)} on the form. Save the step to keep it, or Test again to see it.`}
+        </span>
+      )}
 
-            <label
-              htmlFor={`template-${image.flowStepTemplateId}`}
-              className={classNames("text-sm flex-1", {
-                "text-color-secondary": image.matches.length === 0,
-              })}
-            >
-              {image.name || "(unnamed)"}
-            </label>
-
-            <Tag
-              severity={image.isFound ? "success" : "danger"}
-              value={
-                image.isFound
-                  ? `${image.matchCount} · best ${image.bestScore.toFixed(2)}`
-                  : "not found"
-              }
-            />
-          </div>
-        ))}
-      </div>
-
-      <LabelComponent
-        text={`Search area ${width}x${height} at ${result.searchAreaX}, ${result.searchAreaY}`}
-        color="secondary"
-        size="sm"
-      />
+      {suggestion?.isNarrow && (
+        <Message
+          severity="warn"
+          className="w-full justify-content-start"
+          text="The hit and the closest wrong place are close: that place looks a lot like the template, and a little light or a theme change can swap them. A tighter crop of the template helps more than any accuracy."
+        />
+      )}
     </div>
   );
 }

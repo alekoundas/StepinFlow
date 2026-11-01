@@ -1498,6 +1498,19 @@ template loop, the click points and the closest score - and both the engine and 
 **Test now** call it, so the two can no longer disagree. It knows the screen, OpenCV and templates,
 never an execution step, a DTO or the poll loop.
 
+**Test now's Details tune an accuracy by looking.** The matcher keeps, besides the hits, the best
+candidate under the bar (`TemplateMatchRequest.RejectedLimit`, one), and the test returns it with
+`IsAccepted` false. The dialog (`FlowStepSearchImageTestDialogComponent`) lists the templates with
+a 0 to 1 strip each - hit, accuracy, closest wrong place - and draws the picked one on the
+screenshot, its hit and near miss cut out beside the template. The accuracy to use sits between the
+lowest hit and that near miss, so it is suggested halfway (`image-search-test.ts`); with no hit, just
+under the near miss, worded as only right if that box is the thing. One near miss is all the bar
+needs: it is the highest wrong score. SikuliX's matching preview and Eggplant's Image Doctor answer
+the same question; a live slider was left out, since a suggestion and Test again do its job with
+less to read. The form renders the dialog itself rather than through the dialog store, which keeps
+elements, because **Use** writes to the form (in edit mode only, so Save keeps it) and **Test
+again** replaces the result under it. It resizes with the mouse (PrimeReact's `resizable`).
+
 **Two match modes, each with its own default accuracy.**
 
 | | `SHAPE` - default, 0.80 | `SHAPE_AND_BRIGHTNESS` - 0.95 |
