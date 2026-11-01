@@ -96,7 +96,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
             new ScriptKeyword("template", ScriptSymbolEnum.TEMPLATE),
             new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),
-            new ScriptKeyword("required", ScriptSymbolEnum.REQUIRED),
+            new ScriptKeyword("required", ScriptSymbolEnum.REQUIRED), // Read in older files, never written.
             new ScriptKeyword("in", ScriptSymbolEnum.IN),
             new ScriptKeyword("opens", ScriptSymbolEnum.OPENS),
             new ScriptKeyword("with", ScriptSymbolEnum.WITH),

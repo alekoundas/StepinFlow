@@ -13,7 +13,7 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Find Image  <[ name ]>   template <[ a.png ]> accuracy 0.9 required ...   match shape   in <[ area ]>   timeout 10000ms
+            // Find Image  <[ name ]>   template <[ a.png ]> accuracy 0.9 ...   match shape   in <[ area ]>   timeout 10000ms
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.SEARCH_IMAGE);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
@@ -39,7 +39,7 @@ namespace Business.FlowScript.Parsers.Steps
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 // The step's own link, to the picture the Templates line describes: every step that
-                // names the file shares it, while accuracy and required are the step's.
+                // names the file shares it, while the accuracy is the step's.
                 FlowTemplate picture = Scope.Template(fileName, at) ?? new FlowTemplate() { Name = fileName };
                 FlowStepTemplate template = new FlowStepTemplate() { FlowTemplate = picture, OrderNumber = templates.Count };
 
@@ -48,7 +48,9 @@ namespace Business.FlowScript.Parsers.Steps
                 else
                     withoutAccuracy.Add(template);
 
-                template.IsRequired = ExpectOptionalKeyword(ScriptSymbolEnum.REQUIRED);
+                // Templates were once AND-ed by marking them required. A file from then still reads,
+                // as the alternatives every template is now.
+                ExpectOptionalKeyword(ScriptSymbolEnum.REQUIRED);
                 templates.Add(template);
             }
 

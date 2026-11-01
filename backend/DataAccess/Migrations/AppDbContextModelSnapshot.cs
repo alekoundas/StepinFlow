@@ -704,9 +704,6 @@ namespace DataAccess.Migrations
                     b.Property<int>("FlowTemplateId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("OrderNumber")
                         .HasColumnType("INTEGER");
 

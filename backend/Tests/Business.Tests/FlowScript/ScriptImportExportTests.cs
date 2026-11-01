@@ -302,7 +302,7 @@ namespace Business.Tests.FlowScript
                 "  <[ template-k3x9q.png ]>    click 20 6\n\n" +
                 "Steps:\n\n" +
                 "Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.9\n" +
-                "Find Image  <[ Find login again ]>   template <[ template-k3x9q.png ]> accuracy 0.7 required\n", Ct);
+                "Find Image  <[ Find login again ]>   template <[ template-k3x9q.png ]> accuracy 0.7\n", Ct);
 
             FlowScriptImportResultDto imported = await Importer().ImportAsync(scriptPath, Ct);
             imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => $"line {x.Line}: {x.Message}")));
@@ -310,7 +310,7 @@ namespace Business.Tests.FlowScript
             ScriptRows rows = await ScriptRows.LoadAsync(_database, imported.FlowId);
             rows.Templates.Count.ShouldBe(2);
             rows.Templates.Select(x => x.FlowTemplateId).Distinct().ShouldHaveSingleItem();
-            rows.Templates.Select(x => (x.Accuracy, x.IsRequired)).ShouldBe([(0.9f, false), (0.7f, true)], ignoreOrder: true);
+            rows.Templates.Select(x => x.Accuracy).ShouldBe([0.9f, 0.7f], ignoreOrder: true);
 
             FlowScriptExportResultDto exported = await Exporter().ExportAsync(imported.FlowId, Path.Combine(_folder, "out"), Ct);
             string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
@@ -527,14 +527,12 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in" }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowAreaId = browser.Id, CodeComment = "A fresh profile every time." }, null);
 
-            // Two variants and only one required, so an importer forcing every template required -
-            // which this one did - shows up as a changed row.
             FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
             FlowTemplate username = new FlowTemplate { FlowId = flow.Id, Name = "template-u9d3n.png", TemplateImage = Png(120, 24), ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 };
             FlowTemplate usernameFocused = new FlowTemplate { FlowId = flow.Id, Name = "template-w2h6r.png", TemplateImage = Png(80, 20), ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 };
             db.FlowStepTemplates.AddRange(
-                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = username, OrderNumber = 0, IsRequired = false, Accuracy = 0.96f },
-                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = usernameFocused, OrderNumber = 1, IsRequired = true, Accuracy = 0.9f });
+                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = username, OrderNumber = 0, Accuracy = 0.96f },
+                new FlowStepTemplate { FlowStepId = find.Id, FlowTemplate = usernameFocused, OrderNumber = 1, Accuracy = 0.9f });
             db.SaveChanges();
 
             FlowStep found = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS }, find.Id);

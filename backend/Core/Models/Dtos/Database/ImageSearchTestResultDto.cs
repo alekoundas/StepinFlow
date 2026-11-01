@@ -33,7 +33,6 @@ namespace Core.Models.Dtos
         public string Name { get; set; } = string.Empty;
 
         public bool IsFound { get; set; }
-        public bool IsRequired { get; set; }
         public int MatchCount { get; set; }
 
         public float BestScore { get; set; }

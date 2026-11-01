@@ -76,23 +76,19 @@ after the search, not inside it.
 step's total, not each template's: the hits are taken in the order of the template list, so the
 first template's come first, and two templates that match the same spot are two hits.
 
-## Templates and IsRequired
+## Several templates
 
-Templates are a list. How they combine depends on whether any are marked required:
+A step's templates are alternatives: any one of them matching is enough. This is for several
+variants of the same thing - a button and its hover state, an icon in two themes. They are tried
+from the top of the list, and the first that matches ends the search and gives the point, so the
+likeliest goes first. `FIND_ALL` tries them all and takes every hit, the first template's first.
+With none found, the step fails once, so its Failure branch executes once.
 
-- **None marked required** — any one of them matching is enough. This is the case for several
-  variants of the same icon.
-- **Some marked required** — every required one must be found.
+The waiting modes follow: `WAIT_UNTIL_FOUND` waits until any one is there, `WAIT_UNTIL_NOT_FOUND`
+until none is. **Test now** and an execution decide it the same way.
 
-A missing required template fails the search even when others matched, and the failure message
-names it. However many are missing, or with none required and none found, the step fails once, so
-its Failure branch executes once.
-
-Required needs a second template to mean anything: a lone template has to be found either way. The
-form shows Required only from the second template on, and a step saved from it with one template
-requires nothing. The waiting modes use the same rule: `WAIT_UNTIL_FOUND` waits until every required one
-is there, `WAIT_UNTIL_NOT_FOUND` until at least one is gone. **Test now** and an execution decide it
-the same way.
+To act only when two different things are both on screen, use two steps: the second search inside
+the first one's Success branch.
 
 ## Templates are shared
 
@@ -103,7 +99,7 @@ step it copies rather than copying them.
 The picture, its click point and where it was captured are shared: editing them through one step,
 or from the editor's Templates tab, changes them for every step that links to it, and the form asks
 first when other steps use it. **Edit a copy for this step** gives one step a picture of its own.
-Accuracy and required are each step's own. A template goes when the last step stops using it.
+The accuracy is each step's own. A template goes when the last step stops using it.
 
 ## Accuracy
 

@@ -192,7 +192,7 @@ namespace Business.Tests.FlowScript
               <[ described.png ]>   click 5 6   captured 800x600 at 144dpi
 
             Steps:
-            Find Image  <[ Strict ]>   template <[ a.png ]> required  template <[ b.png ]> accuracy 0.9   match shape and brightness   in <[ Screen ]>
+            Find Image  <[ Strict ]>   template <[ a.png ]>  template <[ b.png ]> accuracy 0.9   match shape and brightness   in <[ Screen ]>
             Find Image  <[Loose]>    template <[described.png]>
             """;
 
@@ -220,12 +220,14 @@ namespace Business.Tests.FlowScript
             schema.Steps[1].FlowStepTemplates.Single().Accuracy.ShouldBe(0.8f);
         }
 
+        // Templates were once AND-ed by marking them required. A file from then still reads.
         [Fact]
-        public void Required_belongs_to_the_template_it_follows()
+        public void An_older_files_required_is_read_and_means_nothing()
         {
-            FlowScriptSchema schema = new Scanner().Read(HandWritten);
+            FlowScriptSchema schema = new Scanner().Read(HandWritten.Replace("template <[ a.png ]>", "template <[ a.png ]> required"));
 
-            schema.Steps[0].FlowStepTemplates.Select(x => x.IsRequired).ShouldBe([true, false]);
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps[0].FlowStepTemplates.Select(x => x.FlowTemplate.Name).ShouldBe(["a.png", "b.png"]);
         }
 
         [Fact]

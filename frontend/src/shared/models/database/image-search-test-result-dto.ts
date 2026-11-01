@@ -18,7 +18,6 @@ export interface ImageSearchTestImageDto {
   flowStepTemplateId: number;
   name: string;
   isFound: boolean;
-  isRequired: boolean;
   matchCount: number;
   bestScore: number;
   bestX: number;

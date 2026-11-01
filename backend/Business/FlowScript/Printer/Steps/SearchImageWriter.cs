@@ -12,7 +12,7 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Find Image  <[ name ]>   template <[ a.png ]> accuracy 0.9 required ...   match shape   in <[ area ]>   timeout 10000ms
+            // Find Image  <[ name ]>   template <[ a.png ]> accuracy 0.9 ...   match shape   in <[ area ]>   timeout 10000ms
             WriteKeyword(FlowStepTypeEnum.SEARCH_IMAGE, Step.SearchMode);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
             WriteQuote(Step.Name);
@@ -50,9 +50,6 @@ namespace Business.FlowScript.Text.Steps
             WriteQuote(template.FlowTemplate.Name);
             WriteKeyword(ScriptSymbolEnum.ACCURACY);
             WriteNumber(template.Accuracy);
-
-            if (template.IsRequired)
-                WriteKeyword(ScriptSymbolEnum.REQUIRED);
         }
     }
 }

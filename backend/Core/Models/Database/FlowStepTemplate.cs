@@ -8,8 +8,6 @@ namespace Core.Models.Database
     {
         public int OrderNumber { get; set; }
 
-        public bool IsRequired { get; set; }
-
         public float Accuracy { get; set; } = 0.8f;
 
 

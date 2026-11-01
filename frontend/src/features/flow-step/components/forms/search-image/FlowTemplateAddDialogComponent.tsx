@@ -177,7 +177,7 @@ export function FlowTemplateAddDialogComponent({
             }
           />
           <LabelComponent
-            text="The picture, its click point and where it was captured are shared. Accuracy and Required are this step's own."
+            text="The picture, its click point and where it was captured are shared. The accuracy is this step's own."
             size="sm"
             color="secondary"
           />

@@ -71,7 +71,7 @@ namespace Business.Tests.FlowScript
                 TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS,
                 FlowStepTemplates =
                 [
-                    new FlowStepTemplate { OrderNumber = 0, Accuracy = 0.97f, IsRequired = true, FlowTemplate = new FlowTemplate { Name = "template-u9d3n.png", ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 } },
+                    new FlowStepTemplate { OrderNumber = 0, Accuracy = 0.97f, FlowTemplate = new FlowTemplate { Name = "template-u9d3n.png", ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 } },
                     new FlowStepTemplate { OrderNumber = 1, Accuracy = 0.9f, FlowTemplate = new FlowTemplate { Name = "template-w2h6r.png", ClickOffsetX = -4, ClickOffsetY = 10, AuthoredDpi = 96 } },
                 ],
             }, null);

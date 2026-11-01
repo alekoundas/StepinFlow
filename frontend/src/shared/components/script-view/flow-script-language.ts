@@ -63,7 +63,6 @@ const OPTIONS = [
   "match",
   "template",
   "accuracy",
-  "required",
   "in",
   "opens",
   "keep",

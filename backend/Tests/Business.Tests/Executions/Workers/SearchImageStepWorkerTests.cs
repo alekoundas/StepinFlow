@@ -37,9 +37,9 @@ namespace Business.Tests.Executions.Workers
             _resolver.Areas[7] = AreaResolution.Ok(Bounds);
         }
 
-        private static FlowStepTemplate Template(int id, string name, float accuracy, bool isRequired = false)
+        private static FlowStepTemplate Template(int id, string name, float accuracy)
         {
-            return new FlowStepTemplate { Id = id, Accuracy = accuracy, IsRequired = isRequired, FlowTemplate = new FlowTemplate { Id = id, Name = name, TemplateImage = [(byte)id] } };
+            return new FlowStepTemplate { Id = id, Accuracy = accuracy, FlowTemplate = new FlowTemplate { Id = id, Name = name, TemplateImage = [(byte)id] } };
         }
 
         private static FlowStep ImageSearch(SearchModeEnum mode, params FlowStepTemplate[] templates)
@@ -79,17 +79,6 @@ namespace Business.Tests.Executions.Workers
             result.Message.ShouldBe("no template matched, closest play hover at 0.78 - play at 0.80, play hover at 0.90, FIND_BEST");
             result.BestScore.ShouldBe(0.78f);
             result.BestTemplateId.ShouldBe(2);
-        }
-
-        [Fact]
-        public async Task A_missing_required_template_is_named_in_the_failure()
-        {
-            _matcher.Found(1, 0.9f).NotFound(2, 0.3f);
-
-            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.FIND_BEST, Template(1, "play", 0.8f), Template(2, "banner", 0.8f, isRequired: true)));
-
-            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
-            result.Message!.ShouldStartWith("required banner not found");
         }
 
         [Fact]

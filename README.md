@@ -77,7 +77,7 @@ answer that here:
 
 - **Image search** — OpenCV template matching with two modes: *shape*, and *shape and brightness* for
   telling an enabled button from a disabled one
-- **Accuracy per template**, and templates that are alternatives or all **required**
+- **Accuracy per template**, and several templates as alternatives for one thing
 - **Four search modes** — best match, every match, wait until found, wait until gone
 - **Read text** — Windows OCR over a region, with a regex to pull out the part you want
 - **Portable across screens** — each area says whether its contents scale with the screen's DPI (a

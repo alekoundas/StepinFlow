@@ -18,9 +18,5 @@ namespace Business.Searching
 
         /// <summary>Where a click would land, relative to the search area.</summary>
         public IReadOnlyList<Point> Hits { get; set; } = [];
-
-        /// <summary> Required templates that were not found. </summary>
-        public IReadOnlyList<int> MissingRequired { get; set; } = [];
-
     }
 }

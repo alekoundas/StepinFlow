@@ -124,7 +124,7 @@ namespace Business.Ai
         // Private methods
         // ================================================================
 
-        // The template images the failing step was hunting for. Required ones first: those are the ones that had to be found, so they are the ones worth the model's attention.
+        // The template images the failing step was hunting for, in the order it looked for them.
         private async Task<IReadOnlyList<AiImage>> GetTemplateImagesAsync(AppDbContext dbContext, int? flowStepId, CancellationToken ct)
         {
             if (flowStepId == null)
@@ -133,8 +133,7 @@ namespace Business.Ai
             List<StepTemplateImage> templateImages = await dbContext.FlowStepTemplates
                 .AsNoTracking()
                 .Where(x => x.FlowStepId == flowStepId && x.FlowTemplate.TemplateImage != null)
-                .OrderByDescending(x => x.IsRequired)
-                .ThenBy(x => x.OrderNumber)
+                .OrderBy(x => x.OrderNumber)
                 .Take(_maxTemplateImages)
                 .Select(x => new StepTemplateImage(x.FlowTemplate.Name, x.FlowTemplate.TemplateImage!))
                 .ToListAsync(ct);

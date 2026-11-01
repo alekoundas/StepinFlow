@@ -382,7 +382,7 @@ recording is stored relative to it, and a viewport resizes it.
 **FlowPoint** — a named point owned by a flow, measured from an area. Cursor steps aim at one.
 
 **Template image** — the picture a `SEARCH_IMAGE` step looks for. Each carries its own accuracy, the
-point inside it to click, whether it is required, and the area size and DPI it was captured at.
+point inside it to click, and the area size and DPI it was captured at.
 Always called a template image or a screenshot; never a "frame" and never a "search image".
 
 **Screenshot** — what the app captures off the screen. An output, per-execution, never checked into
@@ -491,7 +491,7 @@ SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on st
 | `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
 | `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
-| `FlowStepTemplates` | A step's link to a template, with the step's own accuracy, required flag and order. |
+| `FlowStepTemplates` | A step's link to a template, with the step's own accuracy and order. |
 | `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
 | `Executions` | One walk of a flow, at one viewport, with one data row, and the commit it executed at. |
 | `ExecutionSteps` | Per-step result within an execution. |
@@ -1197,16 +1197,16 @@ Templates:
   <[ template-k3x9q.png ]>    click 150 20   captured 922x648 at 120dpi
 
 Steps:
-Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97 required   match shape and brightness   in <[ Browser ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97   match shape and brightness   in <[ Browser ]>
 ```
 
 Facts about the picture go in the header - the click point, and the area size and DPI it was
-captured at. Decisions about the search go on the step - `accuracy` and `required` on each
-template, `match` for the mode - because `required` turns an OR into an AND and a reviewer should
-see that. The area line carries `scales with` and its DPI. In a script a template is named by its
+captured at. Decisions about the search go on the step - `accuracy` on each template, `match` for
+the mode. The area line carries `scales with` and its DPI. In a script a template is named by its
 file, and the step's parser takes the picture from the scope as it reads each template: every step
-naming the file links to the one `FlowTemplate` the header line made, with its own `accuracy` and
-`required`, the way the database holds them.
+naming the file links to the one `FlowTemplate` the header line made, with its own `accuracy`, the
+way the database holds them. A `required` after a template, from files written when templates could
+be AND-ed, is read and ignored.
 Every template has a click, so the printer always writes it and the parser always requires it. A
 step naming a template with no line in the header is `TEMPLATE_UNKNOWN`, reported at the name.
 
@@ -1521,10 +1521,12 @@ another. A failure names the template that came closest - `no template matched, 
 at 0.78 - play at 0.80, play hover at 0.90` - because a score read against the wrong template's bar
 would pass a threshold it never had to clear.
 
-**Required templates.** With none required, the templates are alternatives: the first hit ends the
-search. With some required, every required one is looked for, and a missing one fails the step
-whatever else matched - `required login button not found`. The waits follow: `WAIT_UNTIL_FOUND`
-until all required are there, `WAIT_UNTIL_NOT_FOUND` until one is gone.
+**A step's templates are alternatives**, tried in list order: the first hit ends the search and
+gives the point, and `FIND_ALL` takes every template's hits, the first template's first, up to Max
+matches for the step as a whole. The waits follow: `WAIT_UNTIL_FOUND` until any one is there,
+`WAIT_UNTIL_NOT_FOUND` until none is. There is no AND: two things that must both be on screen are
+two steps, the second inside the first one's Success. A search that cannot be done - an area with
+no size, a template bigger than the area - fails a wait at once rather than counting as gone.
 
 **One computed scale, no sweep.** The area decides it (see Coordinates below), and a template
 scaled larger than the screenshot is an error rather than "not found". Nine attempts at one

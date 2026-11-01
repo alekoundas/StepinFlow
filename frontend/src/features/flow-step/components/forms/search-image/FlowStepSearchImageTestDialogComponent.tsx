@@ -135,13 +135,6 @@ export default function FlowStepSearchImageTestDialogComponent({ result }: Props
               {image.name || "(unnamed)"}
             </label>
 
-            {image.isRequired && (
-              <Tag
-                severity="info"
-                value="required"
-              />
-            )}
-
             <Tag
               severity={image.isFound ? "success" : "danger"}
               value={

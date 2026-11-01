@@ -196,7 +196,6 @@ namespace Business.Ai.Tools
                 .Select(x => new TemplateSummary(
                     x.Id,
                     x.FlowTemplate.Name,
-                    x.IsRequired,
                     x.Accuracy,
                     x.FlowTemplate.ClickOffsetX,
                     x.FlowTemplate.ClickOffsetY,
@@ -559,7 +558,7 @@ namespace Business.Ai.Tools
 
         public record StepDetail(int Id, int FlowId, string Name, string Type, Dictionary<string, object?> Settings, AreaSummary? Area, List<TemplateSummary> Templates);
 
-        public record TemplateSummary(int Id, string Name, bool IsRequired, float Accuracy, int ClickOffsetX, int ClickOffsetY, int AuthoredFlowAreaWidth, int AuthoredFlowAreaHeight, int AuthoredDpi);
+        public record TemplateSummary(int Id, string Name, float Accuracy, int ClickOffsetX, int ClickOffsetY, int AuthoredFlowAreaWidth, int AuthoredFlowAreaHeight, int AuthoredDpi);
 
         public record RunSummary(int Id, int FlowId, string FlowName, string Status, DateTime StartedOn, int StepCount, string ErrorMessage);
 

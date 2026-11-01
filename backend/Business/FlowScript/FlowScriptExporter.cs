@@ -172,7 +172,6 @@ namespace Business.FlowScript
                     FlowTemplateId = x.FlowTemplateId,
                     OrderNumber = x.OrderNumber,
                     Accuracy = x.Accuracy,
-                    IsRequired = x.IsRequired,
                 })
                 .ToListAsync(ct);
 

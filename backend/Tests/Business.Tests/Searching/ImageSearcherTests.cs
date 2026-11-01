@@ -31,9 +31,9 @@ namespace Business.Tests.Searching
         }
 
         // The first byte of the image is which template it is, as far as the fake matcher knows.
-        private static SearchTemplate Template(byte id, bool isRequired = false, int authoredDpi = 0, int width = 0, int height = 0, float accuracy = 0.8f, int clickOffsetX = 0, int clickOffsetY = 0)
+        private static SearchTemplate Template(byte id, int authoredDpi = 0, int width = 0, int height = 0, float accuracy = 0.8f, int clickOffsetX = 0, int clickOffsetY = 0)
         {
-            return new SearchTemplate { Image = [id], Accuracy = accuracy, IsRequired = isRequired, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height, ClickOffsetX = clickOffsetX, ClickOffsetY = clickOffsetY };
+            return new SearchTemplate { Image = [id], Accuracy = accuracy, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height, ClickOffsetX = clickOffsetX, ClickOffsetY = clickOffsetY };
         }
 
         // A hit at each x, so a test can tell whose hits came back by where they are.
@@ -128,51 +128,28 @@ namespace Business.Tests.Searching
         }
 
         // ================================================================
-        // Required templates
+        // Several templates
         // ================================================================
 
         [Fact]
-        public void With_none_required_the_first_hit_is_enough_and_ends_the_search()
+        public void The_first_template_in_the_list_that_matches_ends_the_search()
         {
-            _matcher.Found(1, 0.9f);
+            _matcher.Found(2, 0.9f, x: 2).Found(3, 0.9f, x: 3);
 
-            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2)]);
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2), Template(3)]);
 
-            result.Hits.Count.ShouldBe(1);
-            _matcher.Requests.Count.ShouldBe(1);
-        }
-
-        [Fact]
-        public void A_missing_required_template_fails_the_search_even_when_others_match()
-        {
-            _matcher.Found(1, 0.9f);
-
-            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2, isRequired: true)]);
-
-            result.Hits.ShouldBeEmpty();
-            result.MissingRequired.ShouldBe([1]);
-        }
-
-        [Fact]
-        public void With_some_required_every_template_is_looked_for_before_deciding()
-        {
-            _matcher.Found(1, 0.9f).Found(2, 0.9f);
-
-            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2, isRequired: true)]);
-
+            result.Hits.ShouldBe([new Point(2, 0)]);
             _matcher.Requests.Count.ShouldBe(2);
-            result.Hits.Count.ShouldBe(1);
         }
 
         [Fact]
-        public void Every_required_template_found_and_not_stopping_keeps_every_hit()
+        public void Not_stopping_keeps_every_templates_hit()
         {
             _matcher.Found(1, 0.9f).Found(2, 0.9f);
 
-            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1, isRequired: true), Template(2, isRequired: true)], stopAtFirstHit: false);
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2)], stopAtFirstHit: false);
 
             result.Hits.Count.ShouldBe(2);
-            result.MissingRequired.ShouldBeEmpty();
         }
 
         // ================================================================
@@ -187,17 +164,6 @@ namespace Business.Tests.Searching
             ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2)], stopAtFirstHit: false, settings: new SearchSettings { SearchMode = SearchModeEnum.FIND_ALL, MaxMatches = 4 });
 
             result.Hits.Select(x => x.X).ShouldBe([1, 2, 3, 11]);
-        }
-
-        [Fact]
-        public void A_required_template_past_the_max_matches_is_still_looked_for()
-        {
-            _matcher.Answer(1, At(1, 2, 3));
-
-            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2, isRequired: true)], stopAtFirstHit: false, settings: new SearchSettings { SearchMode = SearchModeEnum.FIND_ALL, MaxMatches = 2 });
-
-            result.Hits.ShouldBeEmpty();
-            result.MissingRequired.ShouldBe([1]);
         }
 
         // ================================================================

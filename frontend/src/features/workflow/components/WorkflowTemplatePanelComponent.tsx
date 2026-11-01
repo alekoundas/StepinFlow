@@ -21,7 +21,7 @@ interface Props {
 
 /**
  * The Templates tab's right side: the picked picture, edited and saved on its own for every step
- * that links to it. Accuracy and required stay on each step.
+ * that links to it. The accuracy stays on each step.
  */
 export function WorkflowTemplatePanelComponent({ template, uses }: Props) {
   const { openImageEditor } = useWindowImageEditor();
@@ -166,7 +166,7 @@ export function WorkflowTemplatePanelComponent({ template, uses }: Props) {
 
       <div className="flex align-items-center justify-content-between gap-2 flex-wrap pt-3 border-top-1 surface-border">
         <LabelComponent
-          text="Accuracy and Required are set on each step. A template goes when the last step stops using it."
+          text="The accuracy is set on each step. A template goes when the last step stops using it."
           size="xs"
           color="secondary"
           className="flex-1"

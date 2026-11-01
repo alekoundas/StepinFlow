@@ -31,20 +31,15 @@ namespace Business.Searching
 
             List<TemplateMatchOutcome> outcomes = new List<TemplateMatchOutcome>();
             List<Point> hits = new List<Point>();
-            List<int> missingRequired = new List<int>();
             float? bestScore = null;
             int? bestTemplateIndex = null;
-
-            // None required: any one is enough, so the first hit ends it. Some required: all of
-            // those have to be looked for before anything can be said.
-            bool anyRequired = templates.Any(x => x.IsRequired);
 
             // Take screenshot.
             RawImage haystack = _screenshotService.CaptureRaw(bounds);
             if (haystack.IsEmpty)
                 return new ImageSearchResult { Error = "The search area produced no pixels." };
 
-            // Compare every template image.
+            // The templates are alternatives, in the order of the list, so the first hit is enough.
             for (int index = 0; index < templates.Count; index++)
             {
                 SearchTemplate template = templates[index];
@@ -63,9 +58,6 @@ namespace Business.Searching
                     bestTemplateIndex = index;
                 }
 
-                if (template.IsRequired && outcome.Matches.Count == 0)
-                    missingRequired.Add(index);
-
                 foreach (TemplateMatchResult match in outcome.Matches)
                 {
                     hits.Add(template.ClickPoint(match));
@@ -74,15 +66,9 @@ namespace Business.Searching
                         break;
                 }
 
-                if (hits.Count > 0 && stopAtFirstHit && !anyRequired)
+                if (hits.Count > 0 && stopAtFirstHit)
                     break;
             }
-
-            if (missingRequired.Count > 0)
-                hits.Clear();
-
-            if (stopAtFirstHit && hits.Count > 1)
-                hits.RemoveRange(1, hits.Count - 1);
 
             // Max matches is the step's, so the templates share it, the first in the list first.
             if (settings.SearchMode == SearchModeEnum.FIND_ALL && hits.Count > settings.MaxMatches)
@@ -95,7 +81,6 @@ namespace Business.Searching
                 Hits = hits,
                 BestScore = bestScore,
                 BestTemplateIndex = bestTemplateIndex,
-                MissingRequired = missingRequired,
             };
         }
 

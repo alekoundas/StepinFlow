@@ -1,7 +1,6 @@
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Tag } from "primereact/tag";
-import { Checkbox } from "primereact/checkbox";
 import { Slider } from "primereact/slider";
 
 import IconComponent from "@/shared/components/IconComponent";
@@ -57,17 +56,11 @@ export function FlowStepTemplateListComponent({
   onChange,
   onRemove,
 }: Props) {
-  // A lone template has to be found either way, so Required only means something beside another.
-  const canRequire = images.length > 1;
-  const anyRequired = canRequire && images.some((x) => x.isRequired);
-
   // Missing templates never add up to more than one failure: the step fails once, either way.
   let outcome = "";
-  if (anyRequired)
+  if (images.length > 1)
     outcome =
-      "Every template marked Required must be found. If any is missing, the Failure branch executes once, and its message names the missing ones.";
-  else if (canRequire)
-    outcome = "Finding any one of these is enough. If none is found, the Failure branch executes once.";
+      "Finding any one of these is enough, and they are tried from the top. If none is found, the Failure branch executes once.";
   else if (images.length === 1)
     outcome = "If it is not found, the Failure branch executes.";
 
@@ -182,28 +175,6 @@ export function FlowStepTemplateListComponent({
                       : `not found · ${result.bestScore.toFixed(2)}`
                   }
                 />
-              )}
-
-              {canRequire && (
-                <div className="flex align-items-center gap-2">
-                  <Checkbox
-                    inputId={`required-${index}`}
-                    checked={image.isRequired}
-                    disabled={isDisabled}
-                    onChange={(e) =>
-                      onChange(
-                        index,
-                        new FlowStepTemplateDto({ ...image, isRequired: !!e.checked }),
-                      )
-                    }
-                  />
-                  <label htmlFor={`required-${index}`}>
-                    <LabelComponent
-                      text="Required"
-                      size="xs"
-                    />
-                  </label>
-                </div>
               )}
 
               {!isDisabled && (

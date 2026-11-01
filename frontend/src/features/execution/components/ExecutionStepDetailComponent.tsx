@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Tag } from "primereact/tag";
 import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
@@ -505,13 +504,6 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
               text={image.flowTemplate?.name || `Template ${image.orderNumber + 1}`}
               size="xs"
             />
-
-            {image.isRequired && (
-              <Tag
-                severity="info"
-                value="required"
-              />
-            )}
           </div>
         ))}
       </div>

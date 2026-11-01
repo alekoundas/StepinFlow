@@ -74,7 +74,6 @@ namespace Transport.Ipc.Handlers
                 {
                     FlowStepTemplateId = image.Id,
                     Name = image.FlowTemplate?.Name ?? string.Empty,
-                    IsRequired = image.IsRequired,
                 };
 
                 IReadOnlyList<TemplateMatchResult> matches = outcome.Matches;

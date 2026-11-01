@@ -708,18 +708,16 @@ modification, which throws away the one thing this layout is for.
 ### On the step: how it is searched for
 
 ```
-Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97 required  template <[ template-q7m5c.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97  template <[ template-q7m5c.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
 ```
 
-`accuracy` and `required` follow the template they belong to, so neither can be read as the
-step's.
+The templates are alternatives: any one found is enough, tried in the order written.
 
-- **`accuracy`** - each template has its own: one variant of an icon can need a looser bar than
-  another. Left out, it is the mode's default.
-- **`required`** - with none marked, any one template found is enough: three variants of the same
-  icon. Marked, those templates all have to be there. It is on the line because it turns an OR into
-  an AND, and a reviewer should see that. A step with one template has no use for it: that
-  template has to be found either way, and the step's form clears it.
+- **`accuracy`** - follows the template it belongs to, so it cannot be read as the step's. Each
+  template has its own: one variant of an icon can need a looser bar than another. Left out, it is
+  the mode's default.
+- **`required`** after a template is from files written before templates were only alternatives.
+  It is read and means nothing, and the next write leaves it out.
 - **`match shape and brightness`** - the mode, for every template in the step. Written only when it
   is not the default, `match shape`.
 
@@ -746,7 +744,7 @@ Facts about the picture rather than the search, once per file:
 
 Every template a step names has a line here, and every line has a `click`: a template always says
 where it is clicked. Steps that name the same file share that one picture in the flow, each with
-its own `accuracy` and `required`. A step naming a file with no line is `TEMPLATE_UNKNOWN`, and a line with no
+its own `accuracy`. A step naming a file with no line is `TEMPLATE_UNKNOWN`, and a line with no
 `click` is a syntax error. The size and DPI are optional; one with neither is searched at the size
 it was captured.
 
