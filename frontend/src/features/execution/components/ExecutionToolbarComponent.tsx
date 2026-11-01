@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
@@ -8,7 +7,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
-import { matchesHotkey, toHotkeyDisplay } from "@/shared/utils/hotkey";
+import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 import { MONO, MUTED } from "@/features/execution/execution-format";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
@@ -30,8 +29,8 @@ const HISTORY_LEVEL_OPTIONS = [
  * Start, and the debugger. Which buttons are live is decided by the execution state alone, so the
  * page never has to keep a second idea of what is going on.
  *
- * The keys work while StepinFlow has focus. Matching them anywhere waits on the hook (TODO.md,
- * Hotkeys).
+ * The keys on the buttons are matched by the backend's hook, whatever window is in front, and act
+ * on the engine there; the page follows from its events (DebuggerHotkeyService).
  */
 export default function ExecutionToolbarComponent({ flowId }: Props) {
   const runState = useExecutionStore((x) => x.runState);
@@ -99,36 +98,6 @@ export default function ExecutionToolbarComponent({ flowId }: Props) {
     setRunState(RunStateEnum.STOPPING);
     stopExecutionMutation.mutate();
   };
-
-  // Bound again on every draw, so each press acts on the state as it is now.
-  useEffect(() => {
-    const actions = [
-      { keys: keys.continue, isEnabled: isPaused, act: handleContinue },
-      { keys: keys.stepInto, isEnabled: isPaused, act: () => stepIntoExecutionMutation.mutate() },
-      { keys: keys.stepOver, isEnabled: isPaused, act: () => stepOverExecutionMutation.mutate() },
-      { keys: keys.pause, isEnabled: canPause, act: () => pauseExecutionMutation.mutate() },
-      { keys: keys.stop, isEnabled: canStop, act: handleStop },
-    ];
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat) return;
-
-      // A letter set as a key is still a letter in Find a step.
-      const target = event.target as HTMLElement | null;
-      const isTyping =
-        !!target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-      if (isTyping && !/^F\d+$/.test(event.code)) return;
-
-      const action = actions.find((x) => x.isEnabled && matchesHotkey(event, x.keys));
-      if (!action) return;
-
-      event.preventDefault();
-      action.act();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  });
 
   if (isIdle)
     return (

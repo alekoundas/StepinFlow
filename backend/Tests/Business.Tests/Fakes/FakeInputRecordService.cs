@@ -1,3 +1,4 @@
+using Core.Enums;
 using Core.Models.Business;
 using Core.Ports;
 
@@ -7,6 +8,7 @@ namespace Business.Tests.Fakes
     public sealed class FakeInputRecordService : IInputRecordService
     {
         public event Action<RecordedInput>? ActionRecorded;
+        public event Action<RecordedInput>? PersonKeyChanged;
 
         public bool IsRecording { get; private set; }
 
@@ -16,6 +18,31 @@ namespace Business.Tests.Fakes
         public void Raise(RecordedInput input)
         {
             ActionRecorded?.Invoke(input);
+        }
+
+        public int KeyListeners { get; private set; }
+
+        public void StartListeningForKeys()
+        {
+            KeyListeners++;
+        }
+
+        public void StopListeningForKeys()
+        {
+            KeyListeners--;
+        }
+
+        /// <summary>A person pressing a key, by the hook's name for it, such as "VcF9". Heard only while something listens.</summary>
+        public void Press(string key)
+        {
+            if (KeyListeners > 0)
+                PersonKeyChanged?.Invoke(new RecordedInput { Type = RecordedInputTypeEnum.KEY_DOWN, KeyChar = key });
+        }
+
+        public void Release(string key)
+        {
+            if (KeyListeners > 0)
+                PersonKeyChanged?.Invoke(new RecordedInput { Type = RecordedInputTypeEnum.KEY_UP, KeyChar = key });
         }
 
         public Task<bool> StartRecordingAllAsync()

@@ -48,31 +48,31 @@ namespace Core.Catalogs
         public static readonly HotkeyAppSettingDefinition HotkeyContinue = new(
             AppSettingKeyEnum.HOTKEY_CONTINUE,
             "Continue",
-            "Run on to the next breakpoint.",
+            "Carry on to the next breakpoint.",
             "VcF5");
 
         public static readonly HotkeyAppSettingDefinition HotkeyStepInto = new(
             AppSettingKeyEnum.HOTKEY_STEP_INTO,
             "Step into",
-            "Run this step, then stop at the first step inside it.",
+            "Execute this step, then stop at the first step inside it.",
             "VcF11");
 
         public static readonly HotkeyAppSettingDefinition HotkeyStepOver = new(
             AppSettingKeyEnum.HOTKEY_STEP_OVER,
             "Step over",
-            "Run this step and everything under it, then stop at the next one beside it.",
+            "Execute this step and everything under it, then stop at the next one beside it.",
             "VcF10");
 
         public static readonly HotkeyAppSettingDefinition HotkeyPause = new(
             AppSettingKeyEnum.HOTKEY_PAUSE,
             "Pause",
-            "Stop after the step that is running now. The only one pressed while a flow is typing.",
+            "Stop after the step executing now, until Continue or a step key.",
             "VcF9");
 
         public static readonly HotkeyAppSettingDefinition HotkeyStop = new(
             AppSettingKeyEnum.HOTKEY_STOP,
             "Stop",
-            "End the run.",
+            "End the execution.",
             "VcF8");
 
         public static readonly IntAppSettingDefinition ExecutionScreenshotLimit = new IntAppSettingDefinition(

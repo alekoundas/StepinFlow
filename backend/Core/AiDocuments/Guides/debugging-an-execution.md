@@ -33,8 +33,9 @@ A breakpoint always wins over a step over. Stepping over a step that contains a 
 the breakpoint.
 
 Each button shows its key, set under Settings, Debugger keys: F5 Continue, F11 Step into, F10 Step
-over, F9 Pause and F8 Stop until changed. The keys work while StepinFlow has focus, not while
-another window does.
+over, F9 Pause and F8 Stop until changed. The keys work whatever window is in front, so a flow can
+be paused while you watch the application it drives. The key still reaches that application too, so
+rebind one it uses. A key the flow itself presses never pauses or stops it.
 
 ## Reading the execution
 

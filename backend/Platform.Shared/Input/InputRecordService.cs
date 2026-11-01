@@ -37,6 +37,16 @@ namespace Platform.Shared.Input
         /// </summary>
         public event Action<RecordedInput>? ActionRecorded;
 
+        /// <summary>
+        /// Every key a person presses or lets go, recording or not, while something listens. The
+        /// hook marks what SendInput injected - a flow's own presses - as simulated, and those are
+        /// left out.
+        /// </summary>
+        public event Action<RecordedInput>? PersonKeyChanged;
+
+        // How many listen for a person's keys. Nothing is raised at 0.
+        private int _keyListeners;
+
         // Recording mode. Handlers stay subscribed for the whole process lifetime and gate on this
         // instead: subscribing and unsubscribing per session drifted out of balance and left
         // duplicate handlers attached. 0 = not recording.
@@ -82,6 +92,11 @@ namespace Platform.Shared.Input
 
         private bool IsRecording => Volatile.Read(ref _recordingMode) != ModeNone;
 
+        private bool IsListeningForKeys
+        {
+            get { return Volatile.Read(ref _keyListeners) > 0; }
+        }
+
 
         // ================================================================
         // Global methods
@@ -117,6 +132,16 @@ namespace Platform.Shared.Input
         public void HoldBackPresses(IReadOnlyList<PressGesture> gestures)
         {
             _hook.HoldBack(gestures);
+        }
+
+        public void StartListeningForKeys()
+        {
+            Interlocked.Increment(ref _keyListeners);
+        }
+
+        public void StopListeningForKeys()
+        {
+            Interlocked.Decrement(ref _keyListeners);
         }
 
         public Task<bool> StartRecordingOverlayAsync() => Task.FromResult(StartRecording(ModeOverlay));
@@ -272,6 +297,9 @@ namespace Platform.Shared.Input
         {
             _lastPressedKey = null;
 
+            if (IsListeningForKeys && !e.IsEventSimulated)
+                PersonKeyChanged?.Invoke(new RecordedInput { Type = RecordedInputTypeEnum.KEY_DOWN, KeyChar = e.Data.KeyCode.ToString() });
+
             if (!IsRecording)
                 return;
 
@@ -303,6 +331,9 @@ namespace Platform.Shared.Input
 
         private void OnKeyReleased(object? sender, KeyboardHookEventArgs e)
         {
+            if (IsListeningForKeys && !e.IsEventSimulated)
+                PersonKeyChanged?.Invoke(new RecordedInput { Type = RecordedInputTypeEnum.KEY_UP, KeyChar = e.Data.KeyCode.ToString() });
+
             if (!IsRecording)
                 return;
 

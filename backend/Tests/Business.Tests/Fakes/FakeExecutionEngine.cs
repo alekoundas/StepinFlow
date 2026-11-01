@@ -4,15 +4,14 @@ using Core.Models.Dtos;
 
 namespace Business.Tests.Fakes
 {
-    /// <summary>Only whether a flow is executing.</summary>
+    /// <summary>Whether a flow is executing, in what state, and which debugger commands it was given.</summary>
     public sealed class FakeExecutionEngine : IExecutionEngine
     {
         public bool IsRunning { get; set; }
 
-        public RunStateEnum State
-        {
-            get { return RunStateEnum.FINISHED; }
-        }
+        public RunStateEnum State { get; set; } = RunStateEnum.FINISHED;
+
+        public List<string> Commands { get; } = new List<string>();
 
         public int ExecutionId
         {
@@ -36,27 +35,27 @@ namespace Business.Tests.Fakes
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            Commands.Add(nameof(Stop));
         }
 
         public void Pause()
         {
-            throw new NotImplementedException();
+            Commands.Add(nameof(Pause));
         }
 
         public void Continue()
         {
-            throw new NotImplementedException();
+            Commands.Add(nameof(Continue));
         }
 
         public void StepInto()
         {
-            throw new NotImplementedException();
+            Commands.Add(nameof(StepInto));
         }
 
         public void StepOver()
         {
-            throw new NotImplementedException();
+            Commands.Add(nameof(StepOver));
         }
 
         public void SetBreakpoints(IEnumerable<int> flowStepIds)

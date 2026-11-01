@@ -12,6 +12,21 @@ namespace Core.Ports
         /// </summary>
         public event Action<RecordedInput>? ActionRecorded;
 
+        /// <summary>
+        /// Every key a person presses or lets go, as a KEY_DOWN or KEY_UP, whatever window is in
+        /// front, while something listens: for hotkeys that work anywhere. A key a flow presses is
+        /// not raised - the hook marks it as simulated. Handlers run on the hook thread and must
+        /// return immediately.
+        /// </summary>
+        public event Action<RecordedInput>? PersonKeyChanged;
+
+        /// <summary>
+        /// Raise <see cref="PersonKeyChanged"/> until the matching stop. Counted, so two listeners
+        /// that overlap each keep it on for as long as they need.
+        /// </summary>
+        public void StartListeningForKeys();
+        public void StopListeningForKeys();
+
         public Task StartGlobalHookAsync();
         public Task StopGlobalHookAsync();
 

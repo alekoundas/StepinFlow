@@ -545,15 +545,12 @@ the history.
 
 ## Hotkeys
 
-- [ ] **The debugger's hotkeys are not matched.** The recording bar's are, since 2026-10-13
-      (`RecordingHotkeyReader`); Continue, Step Into, Step Over, Pause and Stop are captured and
-      stored and nothing acts on them. Two things stand between: the hook only listens while a
-      recording or a capture is on, and an execution presses keys itself, which the hook would
-      hear - its own presses have to be told apart from the tester's, or a flow that presses F9
-      would pause itself. Since 2026-10-31 the execution page matches them itself while StepinFlow
-      has focus (`matchesHotkey`), so once the hook does, a press in StepinFlow is heard by both:
-      the page's listener then goes. On macOS the F-keys are media keys unless Fn is held, and F11
-      shows the desktop.
+- [ ] **Not tried by hand: the debugger's keys in any window.** Verified by the tests,
+      2026-11-01. Execute a flow with another window in front: F9 pauses it, F10 and F11 step, F5
+      continues, F8 stops, and the execution page follows each. Pressed in StepinFlow they act once,
+      not twice. A flow with a Press F9 step does not pause itself - that rests on SharpHook marking
+      SendInput's presses as simulated. On macOS the F-keys are media keys unless Fn is held, and
+      F11 shows the desktop.
 
 ## Frontend
 

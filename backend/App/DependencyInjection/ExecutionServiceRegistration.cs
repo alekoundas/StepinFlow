@@ -65,6 +65,7 @@ namespace App.DependencyInjection
             services.AddSingleton<IExecutionCacheService, ExecutionCacheService>();
             services.AddSingleton<IExecutionHistoryService, ExecutionHistoryService>();
             services.AddSingleton<IExecutionEngine, ExecutionEngine>();
+            services.AddSingleton<IDebuggerHotkeyService, DebuggerHotkeyService>();
 
             return services;
         }

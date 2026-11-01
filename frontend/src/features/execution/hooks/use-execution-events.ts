@@ -54,11 +54,10 @@ export function useExecutionEvents(flowId: number) {
     let endedStatus: ExecutionStatusEnum | null = null;
 
     for (const event of events) {
+      // Going again, from a Continue pressed here or its key pressed in another window.
       if (event.type === ExecutionEventTypeEnum.STEP_STARTED) {
         current = { flowStepId: event.flowStepId ?? undefined, name: event.name };
-
-        // Paused and going again within one batch, so it is not paused any more.
-        if (runState === RunStateEnum.PAUSED) runState = null;
+        runState = RunStateEnum.RUNNING;
       }
 
       if (event.type === ExecutionEventTypeEnum.STEP_FINISHED) finished.push(toExecutionStep(event));
@@ -79,6 +78,9 @@ export function useExecutionEvents(flowId: number) {
     }
 
     const store = useExecutionStore.getState();
+
+    // A step under way when Stop was pressed still reports, and the page keeps saying it stops.
+    if (runState === RunStateEnum.RUNNING && store.runState === RunStateEnum.STOPPING) runState = null;
 
     if (finished.length > 0) store.addExecutionSteps(finished);
     if (current) store.setCurrentStep(current.flowStepId, current.name);

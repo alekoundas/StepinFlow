@@ -16,12 +16,14 @@ namespace Transport.Ipc.Handlers
         private readonly IExecutionEngine _executionEngine;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IFlowValidationService _flowValidationService;
+        private readonly IDebuggerHotkeyService _debuggerHotkeyService;
 
-        public StartExecutionHandler(IExecutionEngine executionEngine, IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService)
+        public StartExecutionHandler(IExecutionEngine executionEngine, IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, IDebuggerHotkeyService debuggerHotkeyService)
         {
             _executionEngine = executionEngine;
             _dbContextFactory = dbContextFactory;
             _flowValidationService = flowValidationService;
+            _debuggerHotkeyService = debuggerHotkeyService;
         }
 
         public async Task<ResultDto<int>> HandleAsync(ExecutionStartDto dto, CancellationToken ct)
@@ -30,10 +32,17 @@ namespace Transport.Ipc.Handlers
             if (refusal != null)
                 return ResultDto<int>.Failure(refusal);
 
+            // The keys as Settings has them now, the ones the page shows on its buttons.
+            await _debuggerHotkeyService.BindAsync(ct);
+
             try
             {
                 // Not the request's token: the run outlives the call that asked for it.
                 int executionId = await _executionEngine.StartAsync(dto, CancellationToken.None);
+
+                // Not awaited: it listens for as long as the execution goes on.
+                _ = _debuggerHotkeyService.ListenUntilAsync(_executionEngine.Completion);
+
                 return ResultDto<int>.Success(executionId);
             }
             catch (InvalidOperationException ex)

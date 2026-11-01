@@ -12,6 +12,7 @@ namespace Transport.Tests.Execution
     {
         private readonly TestDatabase _database = new TestDatabase();
         private readonly FakeExecutionEngine _engine = new FakeExecutionEngine();
+        private readonly FakeDebuggerHotkeyService _hotkeys = new FakeDebuggerHotkeyService();
 
         public void Dispose()
         {
@@ -25,7 +26,7 @@ namespace Transport.Tests.Execution
 
         private Task<ResultDto<int>> StartAsync(int flowId)
         {
-            return new StartExecutionHandler(_engine, _database, new FlowValidationService()).HandleAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
+            return new StartExecutionHandler(_engine, _database, new FlowValidationService(), _hotkeys).HandleAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
         }
 
         private int Seed(string name, FlowStep step)
@@ -53,6 +54,17 @@ namespace Transport.Tests.Execution
 
             started.IsSuccess.ShouldBeTrue();
             _engine.FlowId.ShouldBe(flowId);
+        }
+
+        // Settings may have changed them since the last execution, and nothing listens between two.
+        [Fact]
+        public async Task The_debugger_keys_are_read_and_listened_for_as_an_execution_starts()
+        {
+            int flowId = Seed("Fine", new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", WaitForMilliseconds = 100 });
+
+            await StartAsync(flowId);
+
+            (_hotkeys.BindCount, _hotkeys.WasListening).ShouldBe((1, true));
         }
 
         // Refused before the engine is asked, with the reason the UI shows.

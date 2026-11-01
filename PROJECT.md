@@ -2346,8 +2346,14 @@ few passes that did:
 - **The header:** the flow, the execution's state and number, what it keeps and the commit it
   executed at, with the debugger beside it - or, for a past execution, Explain and Ask.
 - **The debugger:** Continue, Pause, Step into, Step over and Stop, each with its key from
-  Settings. The keys work while StepinFlow has focus; matching them anywhere waits on the hook
-  (`TODO.md`, Hotkeys).
+  Settings. The keys work whatever window is in front: from an execution's start to its end, and
+  only then, the hook raises every key a person presses (`IInputRecordService.PersonKeyChanged`,
+  turned on by `StartListeningForKeys`), and `DebuggerHotkeyService` acts on the engine in the
+  states the buttons are live in, so the page follows from the engine's events like any other
+  change - nothing in the page listens for keys. A flow's own presses never arrive: SharpHook marks
+  what SendInput injected as simulated, so a flow that presses F9 cannot pause itself. Start reads
+  the keys from Settings for each execution. They still reach the window in front, as the Settings
+  page says, and on macOS the F-keys are media keys unless Fn is held.
 - **Tiles:** elapsed, steps and their rate, the loop's pass, the passes that found something, and
   the failures handled.
 - **Activity:** steps a minute over the whole execution - a second, or ten minutes, whatever keeps
