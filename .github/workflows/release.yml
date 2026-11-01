@@ -13,10 +13,6 @@ on:
         type: choice
         options: [patch, minor, major]
         default: patch
-      beta:
-        description: "A prerelease of that number, such as 0.4.0-beta.1"
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -37,11 +33,11 @@ jobs:
         with:
           fetch-depth: 0 # every tag, to work out the next number
 
-      # Only a final version counts as the base, so a beta of 0.4.0 still leads to 0.4.0.
+      # Only an X.Y.Z tag counts, so the old v0.1.0-build16 and v13 are passed over.
       - name: Work out the version
         id: version
         run: |
-          latest=$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n 1)
+          latest=$(git tag --list 'v*' | sed -nE 's/^v([0-9]+\.[0-9]+\.[0-9]+)$/\1/p' | sort -V | tail -n 1)
           IFS=. read -r major minor patch <<< "${latest:-0.0.0}"
 
           case "${{ inputs.bump }}" in
@@ -50,11 +46,6 @@ jobs:
             patch) patch=$((patch + 1)) ;;
           esac
           version="$major.$minor.$patch"
-
-          if [ "${{ inputs.beta }}" = "true" ]; then
-            betas=$(git tag --list "v$version-beta.*" | wc -l)
-            version="$version-beta.$((betas + 1))"
-          fi
 
           if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
             echo "::error::v$version is tagged already."

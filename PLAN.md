@@ -90,8 +90,7 @@ breakers, how Electron reaches the backend, the scripts, F5, versions, the Relea
       DevTools and no console window, and the backend stops on close.
 - [ ] **The Release workflow's first run.** Minor gives v0.1.0, which the updater counts as newer
       than the `0.1.0-build16` already out. Check the draft has the installer and `latest.yml`, and
-      that its tag is the commit built. A beta is published by hand as a pre-release, or the
-      updater offers it to everyone.
+      that its tag is the commit built.
 - [ ] **`A_remote_that_cannot_be_reached_says_so` failed once in a full run** and passed alone. Not
       seen since, in seven full runs and fifteen of its project alone; its output was not kept, so the
       next failure's message is the lead. It compares libgit2's exact wording, against a path in

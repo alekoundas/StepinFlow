@@ -334,9 +334,10 @@ exe is carried as an electron-builder `extraResources` entry, and only `dist/ele
 `dist/frontend` go in the archive.
 
 **A release is the Release workflow** (`.github/workflows/release.yml`), a Run button on a Windows
-runner. It is asked for patch, minor or major and works out the next number from the newest final
-`v*` tag; a beta, `0.4.0-beta.1`, counts up under the number it leads to. The tag is the one place a
-version lives: `package.json` in git says `0.0.0-dev`, the workflow stamps it with `npm version`,
+runner. It is asked for patch, minor or major and works out the next number from the newest
+`vX.Y.Z` tag. There are no betas: while the major is 0, every release is an early one. The tag is
+the one place a version lives: `package.json` in git says `0.0.0-dev`, the workflow stamps it with
+`npm version`,
 Electron's version for the updater comes from it, and `App.csproj` reads it as
 `$(npm_package_version)` for the backend's. Patch is fixes with the script unchanged, minor is
 anything new - a script word an older app cannot read included - and major is something that stops
