@@ -10,7 +10,10 @@ import type { FlowStepScriptLineDto } from "@/shared/models/flow-step-script-lin
 import { getFlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
 import { humanizeMilliseconds } from "@/shared/utils/humanize-milliseconds";
 
-import { CONDITION_LABELS } from "@/features/flow-step/components/forms/shared/condition-types";
+import {
+  CONDITION_LABELS,
+  isLength,
+} from "@/features/flow-step/components/forms/shared/condition-types";
 import {
   SEARCH_IMAGE_MODES,
   SEARCH_TEXT_MODES,
@@ -75,6 +78,13 @@ export const conditionPhrase = (dto: FlowStepDto): string => {
 
   if (condition === ConditionTypeEnum.BETWEEN)
     return `${label} ${quoted(dto.conditionText)} and ${quoted(dto.conditionTextEnd)}`;
+
+  if (isLength(condition)) {
+    const count = dto.conditionText || "…";
+    return condition === ConditionTypeEnum.LENGTH_EQUALS
+      ? `has ${count} characters`
+      : `${label} ${count} characters`;
+  }
 
   return `${label} ${quoted(dto.conditionText)}`;
 };
@@ -298,12 +308,12 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     }
 
     case FlowStepTypeEnum.NOTIFY: {
-      const what = dto.message ? quoted(dto.message) : "the flow's name";
-      const why = names?.referenceName
-        ? `, with what ${quoted(names.referenceName)} was trying to do and why it failed`
-        : "";
+      const message = dto.message ? `, with ${quoted(dto.message)} under it` : "";
 
-      return { type, summary: `Posts ${what} to Discord${why}.` };
+      if (names?.referenceName)
+        return { type, summary: `Posts how ${quoted(names.referenceName)} went to Discord${message}.` };
+
+      return { type, summary: `Posts ${dto.message ? quoted(dto.message) : "the flow's name"} to Discord.` };
     }
 
     case FlowStepTypeEnum.WINDOW_FOCUS:

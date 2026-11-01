@@ -95,7 +95,9 @@ the steps it sits inside.
 
 **DISCORD_BOT_MISSING** — a notify step has no bot picked.
 
-**FAILED_STEP_UNREACHABLE** — the step being reported on no longer fails above this one.
+**REPORTED_STEP_UNREACHABLE** — the step whose result a notify includes is no longer one it sits
+under, on either side. Usually caused by moving one of the two. Move the notify under it, or pick
+another.
 
 ## Warnings
 

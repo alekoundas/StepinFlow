@@ -524,12 +524,12 @@ the history.
 
 ## Notify
 
-- [ ] **Read the failed step's result.** `NotifyMessageBuilder` builds every line from saved
-      configuration, so it says what a step was set up to do rather than what came back. The engine
-      now keeps that on the step itself — `ExecutionStep.Message` and `Value` — which would say
-      considerably more.
-- [ ] **Distinguish an unresolved area from a failed condition** in the message. Both currently read
-      as a plain failure.
+- [ ] **Not tried by hand: a notify's result, and the length conditions.** Verified by the build
+      and the tests, 2026-11-01. Post a notify under a found and a missed image search, a text
+      search and a command, each with a message, and read the post: the result above the message,
+      the closest template's accuracy against its own. Type in the message box, which kept putting
+      the old text back. A text search and a check value with Has length, Is longer than and Is
+      shorter than.
 
 ## Hotkeys
 
@@ -551,7 +551,7 @@ the history.
 
 - [ ] **Not tried by hand: the step lists fetched fresh.** Verified by the build only. Since
       2026-10-31 the lists a step picks from by where it sits - Break out of, Use the result of,
-      Check the result of, the failed steps a Notify reports - are fetched each time the form
+      Check the result of, Include the result of - are fetched each time the form
       opens; they were kept five minutes and outlived a move. Open a Break in a search's Failure
       inside a loop, drag the search out beside the loop, open the Break again: the loop is no
       longer offered.

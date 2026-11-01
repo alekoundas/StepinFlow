@@ -118,7 +118,11 @@ namespace Core.Helpers
         }
 
 
-        public static IEnumerable<(StepChainNode Step, int Depth)> FailedAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
+        /// <summary>
+        /// The steps it sits under through a Success or a Failure, nearest first, with the branch it
+        /// is in. Each one's result is kept for everything under it, whichever way it went.
+        /// </summary>
+        public static IEnumerable<(StepChainNode Step, int Depth, FlowStepTypeEnum Branch)> BranchedAncestors(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
             if (!byId.TryGetValue(fromStepId, out StepChainNode from))
                 yield break;
@@ -135,8 +139,9 @@ namespace Core.Helpers
                 if (!byId.TryGetValue(currentId.Value, out StepChainNode current))
                     yield break;
 
-                if (byId[childId].FlowStepType == FlowStepTypeEnum.FAILURE)
-                    yield return (current, depth);
+                FlowStepTypeEnum branch = byId[childId].FlowStepType;
+                if (IsBranchChild(branch))
+                    yield return (current, depth, branch);
 
                 childId = current.Id;
                 currentId = current.ParentFlowStepId;
@@ -189,14 +194,13 @@ namespace Core.Helpers
         /// </summary>
         public static bool CanReadValueOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
         {
-            return SuccessfulAncestors(byId, fromStepId)
-                .Concat(FailedAncestors(byId, fromStepId))
-                .Any(x => x.Step.Id == referenceId);
+            return BranchedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
 
-        public static bool CanReportFailureOf(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
+        /// <summary>Whether a Notify here can include that step's result: one it sits under, either side.</summary>
+        public static bool CanReportOn(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId, int referenceId)
         {
-            return FailedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
+            return BranchedAncestors(byId, fromStepId).Any(x => x.Step.Id == referenceId);
         }
 
         /// <summary>

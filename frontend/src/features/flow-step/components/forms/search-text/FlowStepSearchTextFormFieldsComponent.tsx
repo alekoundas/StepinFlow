@@ -8,6 +8,7 @@ import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectBu
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import {
   conditionOptions,
+  isLength,
   needsSecondValue,
   needsValue,
   SEARCH_TEXT_CONDITION_TYPES,
@@ -43,7 +44,16 @@ export default function FlowStepSearchTextFormFieldsComponent({
   const { data: languages = [] } = useOcrLanguages();
 
   const isWaiting = isWaitingMode(mode);
-  const isPattern = conditionType === ConditionTypeEnum.MATCHES_REGEX;
+  let valueLabel = "Text to compare";
+  let valuePlaceholder = "Done";
+  if (conditionType === ConditionTypeEnum.MATCHES_REGEX) {
+    valueLabel = "Pattern to match";
+    valuePlaceholder = "total: ([0-9]+)";
+  }
+  if (isLength(conditionType)) {
+    valueLabel = "Characters";
+    valuePlaceholder = "6";
+  }
 
   // Only an installed pack can be read, so an uninstalled one is not offered here. Settings is
   // where that gets fixed.
@@ -115,8 +125,9 @@ export default function FlowStepSearchTextFormFieldsComponent({
         {needsValue(conditionType) && (
           <FormInputTextComponent
             fieldName="conditionText"
-            label={isPattern ? "Pattern to match" : "Text to compare"}
-            placeholderText={isPattern ? "total: ([0-9]+)" : "Done"}
+            label={valueLabel}
+            placeholderText={valuePlaceholder}
+            hintText={isLength(conditionType) ? "Counted on what Keep only left, without the spaces at either end." : undefined}
             isRequired={true}
             isDisabled={isDisabled}
             className="flex-1"

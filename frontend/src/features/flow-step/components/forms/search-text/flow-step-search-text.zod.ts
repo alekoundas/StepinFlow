@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  isLength,
+  isLengthValue,
   needsSecondValue,
   needsValue,
   SEARCH_TEXT_CONDITION_TYPES,
@@ -50,6 +52,12 @@ export const FlowStepSearchTextSchema = z
       ctx.addIssue({
         code: "custom",
         message: "Type what has to be true of the text",
+        path: ["conditionText"],
+      });
+    } else if (isLength(data.conditionType) && !isLengthValue(data.conditionText)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Type a whole number of characters",
         path: ["conditionText"],
       });
     }

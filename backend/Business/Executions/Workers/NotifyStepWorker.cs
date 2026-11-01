@@ -1,4 +1,3 @@
-using System.Globalization;
 using Business.Notification;
 using Core.Models.Business;
 using Core.Models.Database;
@@ -35,14 +34,15 @@ namespace Business.Executions.Workers
             if (bot == null)
                 return ExecutionStep.Success(message: "That bot no longer exists.");
 
-            FlowStep? failedStep = null;
-            if (step.FlowStepReferenceId != null)
-                cache.StepsById.TryGetValue(step.FlowStepReferenceId.Value, out failedStep);
+            // A step's result is kept for everything under it, and this one sits under it.
+            FlowStep? reportedStep = null;
+            ExecutionStep? reportedResult = null;
+            if (step.FlowStepReferenceId is int reportedId && cache.StepsById.TryGetValue(reportedId, out reportedStep))
+                reportedResult = cache.GetExecutionStepFrom(reportedId);
 
             VariableTranslationResult notifyMessage = cache.TranslateVariables(step.Message);
 
             string flowName = await FlowNameAsync(dbContext, step, ct);
-            List<string> templateNames = TemplateNamesOf(failedStep);
 
             DiscordMessage message = new DiscordMessage
             {
@@ -50,7 +50,7 @@ namespace Business.Executions.Workers
                 WebhookUrl = bot.WebhookUrl,
                 BotName = bot.BotName,
                 AvatarUrl = bot.AvatarUrl,
-                Content = NotifyMessageBuilder.Build(flowName, notifyMessage.Text, failedStep, templateNames),
+                Content = NotifyMessageBuilder.Build(flowName, notifyMessage.Text, reportedStep, reportedResult),
             };
 
             bool queued = _sendQueue.Enqueue(message, TimeSpan.FromSeconds(bot.RateLimitSeconds));
@@ -72,17 +72,6 @@ namespace Business.Executions.Workers
                 .FirstOrDefaultAsync(ct);
 
             return name ?? string.Empty;
-        }
-
-        private static List<string> TemplateNamesOf(FlowStep? failedStep)
-        {
-            if (failedStep == null)
-                return new List<string>();
-
-            // Each with its own accuracy, since that is what a template was searched at.
-            return failedStep.FlowStepTemplates
-                .Select(x => $"{x.FlowTemplate.Name} at {x.Accuracy.ToString("0.00", CultureInfo.InvariantCulture)}")
-                .ToList();
         }
     }
 }

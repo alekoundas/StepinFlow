@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import {
+  isLength,
+  isLengthValue,
   needsSecondValue,
   needsValue,
 } from "@/features/flow-step/components/forms/shared/condition-types";
@@ -37,6 +39,12 @@ export const FlowStepCheckValueSchema = z
       ctx.addIssue({
         code: "custom",
         message: "Type what to check the result against",
+        path: ["conditionText"],
+      });
+    } else if (isLength(data.conditionType) && !isLengthValue(data.conditionText)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Type a whole number of characters",
         path: ["conditionText"],
       });
     }

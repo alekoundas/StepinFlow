@@ -27,8 +27,10 @@ The pick is stored by id, not by name, so renaming the source step cannot break 
 | `IS_EMPTY`, `IS_NOT_EMPTY` | No value field |
 | `GREATER_THAN`, `LESS_THAN` | Numeric |
 | `BETWEEN` | Numeric, two values |
+| `LENGTH_EQUALS`, `LENGTH_GREATER_THAN`, `LENGTH_LESS_THAN` | Length in characters, against a whole number |
 
-Value fields only appear when the condition needs them, and `BETWEEN` shows two.
+Value fields only appear when the condition needs them, and `BETWEEN` shows two. A length is counted
+without the spaces at either end.
 
 ## Numeric comparisons on text that is not a number
 

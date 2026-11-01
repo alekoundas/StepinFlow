@@ -69,6 +69,10 @@ a whole block of text:
 | `IS_EMPTY`, `IS_NOT_EMPTY` | No value field |
 | `GREATER_THAN`, `LESS_THAN` | Numeric |
 | `BETWEEN` | Numeric, two values |
+| `LENGTH_EQUALS`, `LENGTH_GREATER_THAN`, `LENGTH_LESS_THAN` | Length in characters, against a whole number |
+
+A length is counted without the spaces at either end, which OCR adds; spaces inside count. It is
+how to say "the code it read is 6 characters" or "it read more than 3, so it is not noise".
 
 A numeric comparison against text that will not parse as a number **fails** rather than quietly
 taking the false branch. "The number was too small" and "OCR read `S0` instead of `50`" are

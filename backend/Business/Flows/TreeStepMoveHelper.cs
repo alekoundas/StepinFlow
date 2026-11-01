@@ -159,7 +159,7 @@ namespace Business.Flows
                 return TreeStepHelper.CanBreakOutOf(byId, step.Id, referenceId);
 
             if (step.FlowStepType == FlowStepTypeEnum.NOTIFY)
-                return TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId);
+                return TreeStepHelper.CanReportOn(byId, step.Id, referenceId);
 
             return TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId);
         }

@@ -17,7 +17,7 @@ export const FlowStepNotifySchema = z
       .max(1500, "Discord will not take a message this long")
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
-    /** Which failed step to describe. Unset means "just send my message". */
+    /** Which step's result to include. Unset means "just send my message". */
     flowStepReferenceId: z.number().int().nullish(),
   })
   .superRefine((data, ctx) => {

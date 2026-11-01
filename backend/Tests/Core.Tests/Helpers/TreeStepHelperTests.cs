@@ -67,11 +67,23 @@ namespace Core.Tests.Helpers
         [Theory]
         [InlineData(8, 4, true)]
         [InlineData(10, 1, true)]
-        [InlineData(8, 1, false)]
-        [InlineData(3, 1, false)]
-        public void A_step_reports_only_failures_it_sits_under_through_failure(int from, int reference, bool canReport)
+        [InlineData(8, 1, true)]
+        [InlineData(3, 1, true)]
+        [InlineData(10, 4, false)] // the other branch
+        [InlineData(6, 3, false)]  // beside it
+        public void A_notify_reports_on_any_step_it_sits_under_either_side(int from, int reference, bool canReport)
         {
-            TreeStepHelper.CanReportFailureOf(Tree, from, reference).ShouldBe(canReport);
+            TreeStepHelper.CanReportOn(Tree, from, reference).ShouldBe(canReport);
+        }
+
+        [Fact]
+        public void Branched_ancestors_come_nearest_first_with_the_branch_they_hold_it_in()
+        {
+            List<(int Id, int Depth, FlowStepTypeEnum Branch)> ancestors = TreeStepHelper.BranchedAncestors(Tree, 8)
+                .Select(x => (x.Step.Id, x.Depth, x.Branch))
+                .ToList();
+
+            ancestors.ShouldBe([(4, 2, FlowStepTypeEnum.FAILURE), (1, 4, FlowStepTypeEnum.SUCCESS)]);
         }
 
         [Fact]

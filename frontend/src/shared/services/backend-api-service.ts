@@ -262,9 +262,9 @@ export const backendApiService = {
     discordBot: (dto: LookupRequestDto) =>
       call<LookupResponseDto>("Lookup.discordBot", dto),
 
-    /** The mirror of flowStep: steps whose failure can be reported from where a Notify step sits. */
-    failedStep: (dto: LookupRequestDto) =>
-      call<LookupResponseDto>("Lookup.failedStep", dto),
+    /** Steps whose result a Notify step can include from where it sits: the ones it is under, either side. */
+    reportedStep: (dto: LookupRequestDto) =>
+      call<LookupResponseDto>("Lookup.reportedStep", dto),
 
     /** Steps a Break can leave, by its parent: flowId and parent flowStepId. */
     break: (dto: LookupRequestDto) =>

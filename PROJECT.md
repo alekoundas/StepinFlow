@@ -1518,7 +1518,8 @@ of it rather than 4 finds the disabled one at 0.964, past the bar, because every
 background added agrees. And colour is never compared - both modes match in grayscale.
 
 `SEARCH_TEXT` captures the area, reads it with Windows OCR, optionally keeps the part a regex
-captures, and evaluates the condition against it.
+captures, and evaluates the condition against it: as text, as a number, or by its length in
+characters, counted without the spaces OCR adds at either end.
 
 ### The matrix
 
@@ -1640,7 +1641,7 @@ warning counts, and the editor names the step.
 | --- | --- |
 | a required field missing - area, point, templates, text, condition, command, window size, loop count, Discord bot | a check whose branches are both empty |
 | a step reading a result it does not sit under through Success | a step with no name |
-| a `Notify` reporting a step it does not sit under through Failure | anything positioned in screen coordinates |
+| a `Notify` including the result of a step it does not sit under | anything positioned in screen coordinates |
 | a `Break` out of a step it does not sit inside | keys held with nothing below letting them go |
 | a sub-flow that does not exist | |
 | an `End Execution` under another one, which reads as a decision and is not | |
@@ -2070,9 +2071,11 @@ something, so a tester can see the edit before trusting it.
 ## 12. Reporting and notifications
 
 **Discord notifications** are a `Notify` step, so they go wherever the flow puts one - usually under
-a failure branch or an `End Execution`. The message says what failed and why, with the template
-images it was looking for, and posts through one queue rate-limited per bot, so a flow in a retry
-loop cannot flood a channel. The webhook URL is the credential: it is never logged and never shown
+a failure branch or an `End Execution`. It can include the result of a step it sits under, either
+side, above its own message: what an image search found and its accuracy against the one it
+needed, or the closest it came; the text a search read; what a command printed. That is read from
+what the execution recorded, not from the step's settings. It posts through one queue rate-limited
+per bot, so a flow in a retry loop cannot flood a channel. The webhook URL is the credential: it is never logged and never shown
 to a model.
 
 **Execution history** records every step's result, duration, location, closest score and message.

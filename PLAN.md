@@ -42,8 +42,8 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phase 5.15's click-throughs, apps and browser tabs, built 2026-11-01; then phase 8,
-inputs, secrets and the CSV round trip; 5.8's
+**Next:** phase 5.16, releasing; then 5.15's click-throughs, apps and browser tabs, built
+2026-11-01; then phase 8, inputs, secrets and the CSV round trip; 5.8's
 sub-stages wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
 wait in `TODO.md`, Recording.
 
@@ -71,6 +71,95 @@ the Application field, launching an area, and browser tabs.
 - [ ] **A tab area on macOS and Linux.** macOS has AppleScript for Chrome and Safari - every tab's
       address, and setting the active one - and Linux has AT-SPI, which browsers support unevenly.
 - [ ] Epic's launcher has a link of its own, the way Steam's is found.
+
+---
+
+## Releasing
+
+### 5.16. A version, a publish workflow, and F5
+
+Decided 2026-11-01. No release has come from a workflow yet: `package.json`'s scripts grew one at a
+time, the packaged path is untried, and whether Electron starts the backend or connects to one is a
+constant in `electron/main.ts`. In this order.
+
+**What a release would break today**
+
+- [ ] **The packaged app has no `protobuf.proto`.** `protobuf:copy` puts it in `electron/build`,
+      `build:electron` compiles to `dist/`, and `electron/protobuf/protobuf.ts` reads it from beside
+      itself. Not confirmed by a build.
+- [ ] **DevTools open in a release.** `createWindow` calls `openDevTools()` on both sides.
+- [ ] **`0.1.0-build16` sorts as text.** Semver compares `build16` with `build9` character by
+      character, so the updater would take build 10 for older than build 9. The versions below
+      replace it.
+- [ ] **Delete `.github/workflows/python-publish.yml`**, GitHub's PyPI template.
+
+**How Electron reaches the backend**
+
+- [ ] **Two questions where `isDev` answers both.** Where the page comes from is `app.isPackaged`:
+      the built files, or Vite. How the backend is reached is `STEPINFLOW_BACKEND`, `attach` or
+      `spawn`. A packaged app always spawns its own `App.exe`; an unpackaged one attaches by default,
+      since the backend runs in Visual Studio, and `dev:spawn` spawns `dotnet run`. `ENABLE_DEBUG`
+      goes.
+- [ ] **The backend leaves with Electron.** Electron passes its process id, and the backend exits
+      once that process is gone. Killing `dotnet run` leaves its `App.exe` behind on Windows, and an
+      Electron that is killed never reaches `before-quit` - a debugger's Stop and a crash included.
+
+Dev and a release share `%LOCALAPPDATA%\StepinFlow_v2` and the pipe names on purpose: they are never
+open together, and the files are backed up.
+
+**`package.json`**
+
+- [ ] **One script per job.** `setup` (both installs and the models), `models`, `dev` (Vite and
+      Electron, attaching), `dev:spawn`, `dev:frontend`, `dev:electron`, `build` (everything into
+      `dist/`, no installer), `package` (an installer, not published), `release` (CI only, published
+      to a draft), `test`, `lint`, `clean`. `protobuf:generate` and `dev:no-api` go: nothing reads
+      the first's output, and `dev` is the second.
+- [ ] **`models` as a Node script** that skips a file already there. Today's is a chain of `cmd`
+      `if not exist`, which runs nowhere but Windows' `cmd`.
+- [ ] **Electron compiles to one folder in dev and in a release**, with the `.proto` beside it, so
+      the preload is found by one path rather than `isDev ? "preload.js" : "../dist/preload.js"`.
+
+**F5**
+
+- [ ] **One launch configuration.** Its pre-launch task compiles Electron and starts Vite as a
+      background task side by side, and Electron starts once Vite prints `Local:`, which replaces
+      `wait-on`. Stop, or closing the window, ends the session, and a post-debug task then
+      terminates Vite through `workbench.action.tasks.terminate`. The renderer attach stays in the
+      compound, with `stopAll`. The backend in Visual Studio is left alone.
+
+**Versions**
+
+- [ ] **Major.minor.patch, and the git tag is the one place it lives.** The workflow is asked for
+      patch, minor or major, works out the next number from the newest `v*` tag, tags it, and
+      stamps it into Electron's version for the updater and into the backend's with `-p:Version=`.
+      `package.json` in git says `0.0.0-dev`, so CI never commits. Patch is fixes with the script
+      unchanged; minor is anything new, a script word an older app cannot read included; major is
+      something that stops working. 0.x until compatibility is a promise, and a prerelease is
+      `-beta.1`.
+
+**The publish workflow**
+
+- [ ] **A Run button on a Windows runner.** Check out with tags; Node and .NET 10; `npm ci`; the
+      models restored from a cache keyed on their release tags; the backend tests; the frontend's
+      type check; then build, package and publish to a draft release, with the `latest.yml` the
+      updater reads. Publishing the draft is the release. Lint joins once its three errors are
+      fixed. Windows only while the backend targets `net10.0-windows`; macOS and Linux are a matrix
+      once they have a platform layer.
+- [ ] **`A_remote_that_cannot_be_reached_says_so` failed once in a full run** and passed alone.
+      Find out why and fix it, rather than have the workflow retry. It compares libgit2's exact
+      wording, against a path in the temp folder.
+- [ ] Later: signing, so Windows SmartScreen stops warning on every install.
+
+**The script's version**
+
+- [ ] **The first header line says which version of the script language a file is in**,
+      `Script Language: v1`. One counter, raised only when the grammar changes and never by an app
+      release, so a patch release does not rewrite the first line of every flow in the repository.
+      The reader upgrades anything older, the writer writes only the newest, and a newer file is
+      refused, saying which version it needs and which this app reads up to. `flow-format.md` keeps
+      which release brought each. A file without the line is from before it and is read as now, the
+      old forms read today (`tab url contains`, `Launch … opens`, a window step naming its own
+      window) included; from v2 on, a converter checks the version rather than the shape of a line.
 
 ---
 

@@ -153,7 +153,7 @@ namespace Transport.Ipc
                     "Lookup.flowPoint" => await Handler<GetLookupFlowPointHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.subFlow" => await Handler<GetLookupSubFlowHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.discordBot" => await Handler<GetLookupDiscordBotHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
-                    "Lookup.failedStep" => await Handler<GetLookupFailedStepHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
+                    "Lookup.reportedStep" => await Handler<GetLookupReportedStepHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.break" => await Handler<GetLookupBreakHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.testWindowMatch" => await Handler<TestWindowMatchHandler>().HandleAsync(Payload<WindowMatchTestRequestDto>(request), ct),
                     "Lookup.launchCommand" => await Handler<GetLookupLaunchCommandHandler>().HandleAsync(Payload<int>(request), ct),

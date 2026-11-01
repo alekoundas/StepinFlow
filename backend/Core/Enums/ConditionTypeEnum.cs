@@ -15,5 +15,10 @@ namespace Core.Enums
         GREATER_THAN,
         LESS_THAN,
         BETWEEN,
+
+        // Length in characters, against a whole number. Anything else is a failure, as above.
+        LENGTH_EQUALS,
+        LENGTH_GREATER_THAN,
+        LENGTH_LESS_THAN,
     }
 }

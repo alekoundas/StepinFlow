@@ -55,14 +55,23 @@ rate limit in seconds. The webhook URL is the credential, so it is never written
 Sending happens off the flow's thread, and a send that fails never stops a flow. A notification is
 about the execution; it should not be able to end it.
 
-### Reporting another step's failure
+### Including another step's result
 
-A `NOTIFY` step can report on a step above it. Tick the option and pick the step, and the message
-says which step failed and why.
+A `NOTIFY` step can include the result of a step it sits under, on either side: **Include the
+result of**. The message then names that step and says how it went, above the message itself:
 
-When the reported step is an image search, the templates it was looking for are attached to the
-message — so the notification shows what it could not find, rather than only saying that it could
-not find it.
+| Step | What the message says |
+|---|---|
+| `SEARCH_IMAGE` | the template found, its accuracy and the accuracy it needed; when nothing was found, the closest one |
+| `SEARCH_TEXT` | the text it read, or why it did not match |
+| `CHECK_VALUE` | the value and the condition |
+| `SYSTEM_COMMAND` | the exit code, and what it printed |
+| anything else | whether it succeeded, and the engine's reason |
 
-The step being reported on has to be one this `NOTIFY` sits below on a failure path. If it stops
-being reachable, validation reports `FAILED_STEP_UNREACHABLE`.
+It is read from what this execution recorded, not from how the step is set up, so it says what
+actually came back. Only a step it sits under has a result to read: a result is kept for the steps
+under its step and dropped once the flow moves past it. If the notify stops being under it,
+validation reports `REPORTED_STEP_UNREACHABLE`.
+
+The script line does not carry the pick. A `{{Name}}` in the message is another way to put a text
+search's read or a command's output into it.

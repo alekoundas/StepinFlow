@@ -1,65 +1,47 @@
-using System.Text;
+using System.Globalization;
 
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
-using System.Globalization;
 
 namespace Business.Notification
 {
     /// <summary>
-    /// Turns a Notify step, and the step whose failure it reports, into the text that gets posted.
+    /// Turns a Notify step, and the step whose result it includes, into the text that gets posted.
     ///
-    /// One shape for every step type, with only the fenced block varying:
+    /// One shape for every step type, with only the result line varying:
     ///
     ///     **Flow - Step - Type**
+    ///     what came back from the step
+    ///     ```
+    ///     what it printed, for a command
+    ///     ```
+    ///
     ///     the user's own line
     ///
-    ///     Step failed.
-    ///     ```
-    ///     what the step was actually trying to do
-    ///     ```
-    ///
-    /// ExecutionStep.Message and Value
+    /// The result is read from what this execution recorded, not from how the step is set up.
     /// </summary>
     public static class NotifyMessageBuilder
     {
-        public const int MaxAttachments = 4;
+        private const string ELLIPSIS = "\n(truncated)";
+        private const int FENCE_OVERHEAD = 10;
+        private const int MIN_OUTPUT_ROOM = 40;
 
-        private const string Ellipsis = "\n(truncated)";
-        private const int FenceOverhead = 10;
-        private const int MinDetailRoom = 40;
-
-        public static string Build(string flowName, string notifyMessage, FlowStep? failedStep, IReadOnlyList<string> templateNames)
+        public static string Build(string flowName, string notifyMessage, FlowStep? reportedStep, ExecutionStep? reportedResult)
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append("**").Append(Header(flowName, failedStep)).Append("**");
+            string header = $"**{Header(flowName, reportedStep)}**";
+            string message = notifyMessage.Trim();
 
-            if (!string.IsNullOrWhiteSpace(notifyMessage))
-                builder.Append('\n').Append(notifyMessage.Trim());
+            if (reportedStep == null)
+                return Clamp(message.Length == 0 ? header : $"{header}\n{message}");
 
-            if (failedStep == null)
-                return Clamp(builder.ToString());
+            string tail = message.Length == 0 ? string.Empty : $"\n\n{message}";
 
-            builder.Append("\n\nStep failed.");
+            // The result is what gets cut, never the header or the user's line: a noisy result must not eat the sentence somebody wrote.
+            int room = DiscordNotifier.MaxContentLength - header.Length - tail.Length - 1;
+            string result = Fit(Outcome(reportedStep, reportedResult), Output(reportedStep, reportedResult), room);
 
-            string detail = Detail(failedStep, templateNames);
-
-            // No dangling label when there is nothing to put under it, which is every type except image search until the engine starts recording results.
-            if (string.IsNullOrWhiteSpace(detail))
-                return Clamp(builder.ToString());
-
-            // The detail is what gets cut, never the header or the user's line: a noisy failure must not eat the sentence somebody wrote.
-            string head = builder.ToString();
-            int room = DiscordNotifier.MaxContentLength - head.Length - FenceOverhead;
-
-            if (room <= MinDetailRoom)
-                return Clamp(head);
-
-            if (detail.Length > room)
-                detail = detail[..(room - Ellipsis.Length)] + Ellipsis;
-
-            return head + "\n```\n" + detail + "\n```";
+            return Clamp($"{header}\n{result}{tail}");
         }
 
         /// <summary>"Search Image" reads better in an alert than SEARCH_IMAGE.</summary>
@@ -75,46 +57,122 @@ namespace Business.Notification
         // Private methods
         // ================================================================
 
-        private static string Header(string flowName, FlowStep? failedStep)
+        private static string Header(string flowName, FlowStep? reportedStep)
         {
-            return failedStep == null
+            return reportedStep == null
                    ? flowName
-                   : $"{flowName} — {failedStep.Name} — {DisplayType(failedStep.FlowStepType)}";
+                   : $"{flowName} — {reportedStep.Name} — {DisplayType(reportedStep.FlowStepType)}";
         }
 
-        private static string Detail(FlowStep failedStep, IReadOnlyList<string> templateNames)
+        private static string Outcome(FlowStep step, ExecutionStep? result)
         {
-            return failedStep.FlowStepType switch
+            if (result == null)
+                return "No result yet: it has not been executed.";
+
+            bool passed = result.Outcome == StepOutcomeEnum.SUCCESS;
+
+            switch (step.FlowStepType)
             {
-                FlowStepTypeEnum.SEARCH_IMAGE => ImageSearchDetail(failedStep, templateNames),
-                FlowStepTypeEnum.SEARCH_TEXT => $"read the screen and the result did not satisfy: {ConditionEvaluatorHelper.Describe(failedStep)}",
-                FlowStepTypeEnum.CHECK_VALUE => $"the value did not satisfy: {ConditionEvaluatorHelper.Describe(failedStep)}",
-                FlowStepTypeEnum.SYSTEM_COMMAND => $"the command did not exit with {failedStep.SuccessExitCodes}",
+                case FlowStepTypeEnum.SEARCH_IMAGE:
+                    return ImageOutcome(step, result, passed);
 
-                FlowStepTypeEnum.WINDOW_FOCUS => "the window could not be found",
-                FlowStepTypeEnum.WINDOW_RESIZE => "the window could not be found",
-                FlowStepTypeEnum.WINDOW_RELOCATE => "the window could not be found",
+                case FlowStepTypeEnum.SEARCH_TEXT:
+                    return TextOutcome(step, result, passed);
 
-                _ => string.Empty,
-            };
+                case FlowStepTypeEnum.CHECK_VALUE:
+                    if (passed)
+                        return $"\"{result.Value}\" satisfies {ConditionEvaluatorHelper.Describe(step)}.";
+
+                    return Said(result, "Failed");
+
+                case FlowStepTypeEnum.SYSTEM_COMMAND:
+                    if (passed && result.ExitCode is int exitCode)
+                        return string.Create(CultureInfo.InvariantCulture, $"Exit code {exitCode}.");
+
+                    return Said(result, passed ? "Succeeded" : "Failed");
+
+                default:
+                    return Said(result, passed ? "Succeeded" : "Failed");
+            }
         }
 
-        private static string ImageSearchDetail(FlowStep failedStep, IReadOnlyList<string> templateNames)
+        // Each template has its own accuracy, so a score means nothing until it is read against the bar of the one that scored it.
+        private static string ImageOutcome(FlowStep step, ExecutionStep result, bool passed)
         {
-            if (templateNames.Count == 0)
-                return "the step has no templates to look for";
+            bool waitsUntilGone = step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            if (passed && waitsUntilGone)
+                return "No longer on screen.";
 
-            StringBuilder builder = new StringBuilder();
+            FlowStepTemplate? closest = step.FlowStepTemplates.FirstOrDefault(x => x.Id == result.BestTemplateId);
+            if (closest == null || result.BestScore == null)
+                return Said(result, passed ? "Found" : "Not found");
 
-            builder.Append("none of these templates matched: ")
-                   .Append(string.Join(", ", templateNames.Take(MaxAttachments)));
+            string score = $"\"{closest.FlowTemplate.Name}\" at {Score(result.BestScore.Value)} accuracy, {Score(closest.Accuracy)} needed";
 
-            if (templateNames.Count > MaxAttachments)
-                builder.Append('\n').Append(CultureInfo.InvariantCulture, $"{templateNames.Count - MaxAttachments} more templates not shown");
+            if (waitsUntilGone)
+                return $"Still on screen: {score}.";
 
-            builder.Append('\n').Append(CultureInfo.InvariantCulture, $"search mode: {failedStep.SearchMode}");
+            if (!passed)
+                return $"Not found. Closest was {score}.";
 
-            return builder.ToString();
+            if (result.MatchCount > 1)
+                return string.Create(CultureInfo.InvariantCulture, $"Found {result.MatchCount} times. Best was {score}.");
+
+            return $"Found {score}.";
+        }
+
+        private static string TextOutcome(FlowStep step, ExecutionStep result, bool passed)
+        {
+            if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND || result.Value == null)
+                return Said(result, passed ? "Found" : "Not found");
+
+            if (passed)
+                return $"Text found: \"{result.Value}\"";
+
+            return Said(result, "Text not found");
+        }
+
+        // What a command printed, which is too long and too many lines for the sentence.
+        private static string Output(FlowStep step, ExecutionStep? result)
+        {
+            if (step.FlowStepType != FlowStepTypeEnum.SYSTEM_COMMAND || result == null || string.IsNullOrWhiteSpace(result.Value))
+                return string.Empty;
+
+            return result.Value.Trim();
+        }
+
+        // The engine's own sentence about why, after a word saying which way it went.
+        private static string Said(ExecutionStep result, string outcome)
+        {
+            if (string.IsNullOrWhiteSpace(result.Message))
+                return $"{outcome}.";
+
+            return $"{outcome}: {result.Message}";
+        }
+
+        private static string Fit(string line, string output, int room)
+        {
+            if (line.Length >= room)
+                return Cut(line, room);
+
+            int outputRoom = room - line.Length - FENCE_OVERHEAD;
+            if (output.Length == 0 || outputRoom < MIN_OUTPUT_ROOM)
+                return line;
+
+            return $"{line}\n```\n{Cut(output, outputRoom)}\n```";
+        }
+
+        private static string Cut(string text, int room)
+        {
+            if (text.Length <= room)
+                return text;
+
+            return text[..Math.Max(0, room - ELLIPSIS.Length)] + ELLIPSIS;
+        }
+
+        private static string Score(float value)
+        {
+            return value.ToString("0.00", CultureInfo.InvariantCulture);
         }
 
         private static string Clamp(string content)

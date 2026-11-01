@@ -286,24 +286,26 @@ namespace Business.Tests.Flows.Validation
             CodesOn(first).ShouldNotContain(FlowValidationCodeEnum.END_EXECUTION_UNREACHABLE);
         }
 
-        [Fact]
-        public void A_notify_can_report_a_search_it_sits_under_on_the_failure_side()
+        [Theory]
+        [InlineData(FlowStepTypeEnum.FAILURE)]
+        [InlineData(FlowStepTypeEnum.SUCCESS)]
+        public void A_notify_can_report_on_a_search_it_sits_under_on_either_side(FlowStepTypeEnum side)
         {
             FlowStep search = Search("Find");
-            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(search, FlowStepTypeEnum.FAILURE));
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(search, side));
             notify.FlowStepReferenceId = search.Id;
 
-            CodesOn(notify).ShouldNotContain(FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE);
+            CodesOn(notify).ShouldNotContain(FlowValidationCodeEnum.REPORTED_STEP_UNREACHABLE);
         }
 
         [Fact]
-        public void A_notify_cannot_report_a_search_from_its_success_side()
+        public void A_notify_cannot_report_on_a_search_beside_it()
         {
             FlowStep search = Search("Find");
-            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell", Branch(search, FlowStepTypeEnum.SUCCESS));
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell");
             notify.FlowStepReferenceId = search.Id;
 
-            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE);
+            CodesOn(notify).ShouldContain(FlowValidationCodeEnum.REPORTED_STEP_UNREACHABLE);
         }
 
         [Fact]

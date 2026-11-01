@@ -130,6 +130,9 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("between", ConditionTypeEnum.BETWEEN),
             new ScriptKeyword(">", ConditionTypeEnum.GREATER_THAN),
             new ScriptKeyword("<", ConditionTypeEnum.LESS_THAN),
+            new ScriptKeyword("has length", ConditionTypeEnum.LENGTH_EQUALS),
+            new ScriptKeyword("longer than", ConditionTypeEnum.LENGTH_GREATER_THAN),
+            new ScriptKeyword("shorter than", ConditionTypeEnum.LENGTH_LESS_THAN),
 
             // Window title Condition
             new ScriptKeyword("starts with", TitleMatchModeEnum.STARTS_WITH),

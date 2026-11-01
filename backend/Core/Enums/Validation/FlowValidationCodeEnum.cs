@@ -57,8 +57,8 @@ namespace Core.Enums
         // Notifications
         DISCORD_BOT_MISSING,
 
-        /// <summary>Set, but the step it reports on no longer fails above this one.</summary>
-        FAILED_STEP_UNREACHABLE,
+        /// <summary>Set, but the step whose result it includes is no longer one it sits under.</summary>
+        REPORTED_STEP_UNREACHABLE,
 
         /// <summary>
         /// Two steps, areas or points share a name. They are one namespace, and the script

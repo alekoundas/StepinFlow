@@ -89,16 +89,25 @@ namespace Business.Tests.Flows
         }
 
         [Fact]
-        public void Moving_a_notify_out_of_the_failure_branch_reports_the_reference_it_breaks()
+        public void Moving_a_notify_out_from_under_the_step_it_reports_on_reports_the_reference_it_breaks()
         {
             List<FlowStep> steps = Tree();
             steps.Add(new FlowStep { Id = 8, ParentFlowStepId = 6, FlowStepType = FlowStepTypeEnum.NOTIFY, Name = "Tell", FlowStepReferenceId = 1 });
 
-            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 8, TargetParentFlowStepId = 2 });
+            List<FlowStepBrokenReferenceDto> broken = TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 8, TargetFlowId = 1 });
 
             broken.Count.ShouldBe(1);
             broken[0].FlowStepName.ShouldBe("Tell");
             broken[0].ReferencedStepName.ShouldBe("Find image");
+        }
+
+        [Fact]
+        public void Moving_a_notify_to_the_other_branch_of_the_step_it_reports_on_breaks_nothing()
+        {
+            List<FlowStep> steps = Tree();
+            steps.Add(new FlowStep { Id = 8, ParentFlowStepId = 6, FlowStepType = FlowStepTypeEnum.NOTIFY, Name = "Tell", FlowStepReferenceId = 1 });
+
+            TreeStepMoveHelper.FindBrokenReferences(steps, new FlowStepMoveDto { FlowStepId = 8, TargetParentFlowStepId = 2 }).ShouldBeEmpty();
         }
 
         // A loop holding a wait and a Break out of it, and a wait after the loop.

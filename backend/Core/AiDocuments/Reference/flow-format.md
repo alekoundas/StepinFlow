@@ -441,6 +441,10 @@ Check Text   <[ Read the total ]>        matches <[ total: (\d+) ]>   in <[ Cart
   Check Value  <[ Order is large ]>      <[ {{Read the total}} ]> > <[ 100 ]>
 ```
 
+The conditions are `is`, `is not`, `contains`, `does not contain`, `matches`, `is empty`,
+`is not empty`, `>`, `<`, `between <[ 1 ]> and <[ 9 ]>`, and for a length in characters
+`has length`, `longer than` and `shorter than`, each followed by a whole number: `has length <[ 6 ]>`.
+
 **A check's result must be read.** One that nothing branches on and nothing references was never
 really made, and the validator rejects it before the file is saved. Both branches are optional;
 ignoring the check entirely is not.

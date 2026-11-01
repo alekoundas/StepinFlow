@@ -268,7 +268,7 @@ namespace App
             builder.Services.AddTransient<GetLookupFlowPointHandler>();
             builder.Services.AddTransient<GetLookupSubFlowHandler>();
             builder.Services.AddTransient<GetLookupDiscordBotHandler>();
-            builder.Services.AddTransient<GetLookupFailedStepHandler>();
+            builder.Services.AddTransient<GetLookupReportedStepHandler>();
             builder.Services.AddTransient<GetLookupBreakHandler>();
             builder.Services.AddTransient<TestWindowMatchHandler>();
             builder.Services.AddTransient<GetLookupLaunchCommandHandler>();

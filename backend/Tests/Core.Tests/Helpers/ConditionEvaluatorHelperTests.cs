@@ -16,6 +16,10 @@ namespace Core.Tests.Helpers
         [InlineData("x", ConditionTypeEnum.IS_NOT_EMPTY, "", true)]
         [InlineData("101", ConditionTypeEnum.GREATER_THAN, "100", true)]
         [InlineData("99.5", ConditionTypeEnum.LESS_THAN, "100", true)]
+        [InlineData(" 123456 ", ConditionTypeEnum.LENGTH_EQUALS, "6", true)]
+        [InlineData("abcd", ConditionTypeEnum.LENGTH_GREATER_THAN, "3", true)]
+        [InlineData("abc", ConditionTypeEnum.LENGTH_GREATER_THAN, "3", false)]
+        [InlineData("a b", ConditionTypeEnum.LENGTH_LESS_THAN, "4", true)]
         public void Each_condition_decides_as_its_name_says(string value, ConditionTypeEnum condition, string expected, bool satisfied)
         {
             ConditionEvaluatorHelper.IsSatisfied(value, condition, expected, string.Empty).ShouldBe(satisfied);
@@ -39,6 +43,15 @@ namespace Core.Tests.Helpers
         public void A_number_comparison_against_text_fails_rather_than_taking_either_side(ConditionTypeEnum condition)
         {
             ConditionEvaluatorHelper.IsSatisfied("not a number", condition, "100", "200").ShouldBeFalse();
+        }
+
+        [Theory]
+        [InlineData(ConditionTypeEnum.LENGTH_EQUALS, "3.5")]
+        [InlineData(ConditionTypeEnum.LENGTH_GREATER_THAN, "-1")]
+        [InlineData(ConditionTypeEnum.LENGTH_LESS_THAN, "three")]
+        public void A_length_against_anything_but_a_whole_number_fails(ConditionTypeEnum condition, string expected)
+        {
+            ConditionEvaluatorHelper.IsSatisfied("abc", condition, expected, string.Empty).ShouldBeFalse();
         }
 
         [Fact]

@@ -8,6 +8,7 @@ import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { StepResultKindEnum } from "@/shared/enums/backend/step-result-kind-enum";
 import {
   conditionOptions,
+  isLength,
   needsSecondValue,
   needsValue,
 } from "@/features/flow-step/components/forms/shared/condition-types";
@@ -37,6 +38,10 @@ export default function FlowStepCheckValueFormFieldsComponent({
 }: Props) {
   const { control } = useFormContext();
   const conditionType = useWatch({ control, name: "conditionType" });
+
+  let valueLabel = "Value";
+  if (needsSecondValue(conditionType)) valueLabel = "From";
+  if (isLength(conditionType)) valueLabel = "Characters";
 
   const loadStepReferences = (filter?: string): Promise<StepOption[]> =>
     backendApiService.Lookup.flowStep({
@@ -90,7 +95,8 @@ export default function FlowStepCheckValueFormFieldsComponent({
         <div className="flex gap-3">
           <FormInputTextComponent
             fieldName="conditionText"
-            label={needsSecondValue(conditionType) ? "From" : "Value"}
+            label={valueLabel}
+            hintText={isLength(conditionType) ? "Counted without the spaces at either end." : undefined}
             isRequired={true}
             isDisabled={isDisabled}
             className="flex-1"

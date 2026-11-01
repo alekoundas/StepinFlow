@@ -271,8 +271,8 @@ namespace Business.Flows.FlowValidationService.Rules
         {
             if (step.FlowStepReferenceId is int referenceId)
             {
-                if (!TreeStepHelper.CanReportFailureOf(byId, step.Id, referenceId))
-                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FAILED_STEP_UNREACHABLE, "The step this reports on does not fail above it any more.");
+                if (!TreeStepHelper.CanReportOn(byId, step.Id, referenceId))
+                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.REPORTED_STEP_UNREACHABLE, "The step whose result this includes is no longer one it sits under.");
             }
         }
 

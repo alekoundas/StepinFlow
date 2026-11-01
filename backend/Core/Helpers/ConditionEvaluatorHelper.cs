@@ -55,6 +55,15 @@ namespace Core.Helpers
                 case ConditionTypeEnum.BETWEEN:
                     return IsBetween(actual, expected, expectedEnd);
 
+                case ConditionTypeEnum.LENGTH_EQUALS:
+                    return CompareLength(actual, expected, out int same) && same == 0;
+
+                case ConditionTypeEnum.LENGTH_GREATER_THAN:
+                    return CompareLength(actual, expected, out int longer) && longer > 0;
+
+                case ConditionTypeEnum.LENGTH_LESS_THAN:
+                    return CompareLength(actual, expected, out int shorter) && shorter < 0;
+
                 default:
                     return false;
             }
@@ -74,6 +83,18 @@ namespace Core.Helpers
                 return false;
 
             comparison = left.CompareTo(right);
+            return true;
+        }
+
+        // Trimmed, since a read comes padded with spaces nobody wrote. Spaces inside count.
+        private static bool CompareLength(string actual, string expected, out int comparison)
+        {
+            comparison = 0;
+
+            if (!int.TryParse(expected.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int length))
+                return false;
+
+            comparison = actual.Trim().Length.CompareTo(length);
             return true;
         }
 

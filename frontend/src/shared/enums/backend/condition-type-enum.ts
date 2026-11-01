@@ -12,6 +12,11 @@ export const ConditionTypeEnum = {
   GREATER_THAN: "GREATER_THAN",
   LESS_THAN: "LESS_THAN",
   BETWEEN: "BETWEEN",
+
+  // Length in characters
+  LENGTH_EQUALS: "LENGTH_EQUALS",
+  LENGTH_GREATER_THAN: "LENGTH_GREATER_THAN",
+  LENGTH_LESS_THAN: "LENGTH_LESS_THAN",
 } as const;
 
 export type ConditionTypeEnum =

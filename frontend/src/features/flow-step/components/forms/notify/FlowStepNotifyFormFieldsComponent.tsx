@@ -1,14 +1,12 @@
-import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
-import { InputSwitch } from "primereact/inputswitch";
-import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
+import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
@@ -30,16 +28,28 @@ interface Props {
   isDisabled?: boolean;
 }
 
+const withDescription = (item: IdOption) => (
+  <div className="flex flex-column">
+    <LabelComponent text={item.label} />
+    {item.description && (
+      <LabelComponent
+        text={item.description}
+        size="xs"
+        color="secondary"
+      />
+    )}
+  </div>
+);
+
 export default function FlowStepNotifyFormFieldsComponent({
   parentFlowStepId,
   isDisabled = false,
 }: Props) {
-  const { setValue, watch } = useFormContext();
+  const { control, setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
   const { createDiscordBotMutation } = useDiscordBotMutations();
 
-  const referenceId = watch("flowStepReferenceId") as number | null | undefined;
-  const [isReportingFailure, setIsReportingFailure] = useState(referenceId != null);
+  const referenceId = useWatch({ control, name: "flowStepReferenceId" }) as number | null | undefined;
 
   const loadBots = (filter?: string): Promise<IdOption[]> =>
     backendApiService.Lookup.discordBot({ searchText: filter }).then((res) =>
@@ -50,12 +60,12 @@ export default function FlowStepNotifyFormFieldsComponent({
       })),
     );
 
-  // The steps that fail above this one. Empty is a correct and common answer - a Notify step
-  // outside any Failure branch has nothing to report on.
-  const { data: failedSteps = [] } = useQuery({
-    queryKey: ["lookup", "failedStep", parentFlowStepId],
+  // The steps it sits under, either side. Empty is a correct answer - a Notify step under no
+  // check has no result to include.
+  const { data: reportedSteps = [] } = useQuery({
+    queryKey: ["lookup", "reportedStep", parentFlowStepId],
     queryFn: () =>
-      backendApiService.Lookup.failedStep({ flowStepId: parentFlowStepId }).then((res) =>
+      backendApiService.Lookup.reportedStep({ flowStepId: parentFlowStepId }).then((res) =>
         res.data.map((item) => ({
           label: item.label,
           value: Number(item.value),
@@ -89,13 +99,6 @@ export default function FlowStepNotifyFormFieldsComponent({
       ),
     });
 
-  const toggleReporting = (isOn: boolean) => {
-    setIsReportingFailure(isOn);
-
-    if (!isOn)
-      setValue("flowStepReferenceId", null, { shouldValidate: true, shouldDirty: true });
-  };
-
   return (
     <div className="flex flex-column gap-2 mt-4">
       <FormInputTextComponent
@@ -120,18 +123,7 @@ export default function FlowStepNotifyFormFieldsComponent({
             isRequired={true}
             isDisabled={isDisabled}
             hintText="Messages are throttled per bot. Anything sent inside the gap is dropped rather than queued, so a Notify step in a retry loop sends once."
-            itemTemplate={(item) => (
-              <div className="flex flex-column">
-                <LabelComponent text={item.label} />
-                {item.description && (
-                  <LabelComponent
-                    text={item.description}
-                    size="xs"
-                    color="secondary"
-                  />
-                )}
-              </div>
-            )}
+            itemTemplate={withDescription}
           />
         </div>
 
@@ -147,63 +139,37 @@ export default function FlowStepNotifyFormFieldsComponent({
         />
       </div>
 
-      <div className="flex flex-column gap-1 mt-2">
-        <LabelComponent
-          text="Message"
-          size="sm"
+      {/* Still shown when it names a step it no longer sits under, so that one can be cleared. */}
+      {reportedSteps.length > 0 || referenceId != null ? (
+        <FormDropdownComponent<FlowStepDto, IdOption>
+          fieldName="flowStepReferenceId"
+          labelText="Include the result of"
+          mode="local"
+          options={reportedSteps}
+          optionLabel="label"
+          optionValue="value"
+          placeholderText="Nothing, just the message"
+          isDisabled={isDisabled}
+          hintText="Goes above your message: what an image search found and how close it came, the text a search read, what a command printed. Only steps this one sits under, nearest first."
+          itemTemplate={withDescription}
         />
-        <InputTextarea
-          rows={3}
-          autoResize
-          disabled={isDisabled}
-          placeholder="Broke overnight, check the VPN."
-          value={(watch("message") as string) ?? ""}
-          onChange={(e) =>
-            setValue("message", e.target.value, { shouldDirty: true })
-          }
+      ) : (
+        <Message
+          severity="info"
+          className="justify-content-start mb-3"
+          text="This step sits under no step with a result to include. Put it in a step's Success or Failure branch to include one."
         />
-        <LabelComponent
-          text="Optional. The flow name is always sent, whether you write anything here or not."
-          size="xs"
-          color="secondary"
-        />
-      </div>
+      )}
 
-      <div className="mt-3 flex flex-column gap-2">
-        <div className="flex align-items-center gap-2">
-          <InputSwitch
-            inputId="notify-report-failure"
-            checked={isReportingFailure}
-            disabled={isDisabled || failedSteps.length === 0}
-            onChange={(e) => toggleReporting(e.value)}
-          />
-          <label htmlFor="notify-report-failure">
-            <LabelComponent text="Say why a step failed" />
-          </label>
-        </div>
-
-        {failedSteps.length === 0 ? (
-          <Message
-            severity="info"
-            className="justify-content-start"
-            text="Nothing fails above this step, so there is no failure to describe. Move it into a Failure branch to report one."
-          />
-        ) : (
-          isReportingFailure && (
-            <FormDropdownComponent<FlowStepDto, IdOption>
-              fieldName="flowStepReferenceId"
-              labelText="Which step"
-              mode="local"
-              options={failedSteps}
-              optionLabel="label"
-              optionValue="value"
-              placeholderText="Select the step..."
-              isDisabled={isDisabled}
-              hintText="Only steps that fail above this one, nearest first. The message says what it was trying to do."
-            />
-          )
-        )}
-      </div>
+      <FormInputTextAreaComponent
+        fieldName="message"
+        label="Message"
+        placeholderText="Broke overnight, check the VPN."
+        hintText="Optional. The flow name is always sent, whether you write anything here or not."
+        rows={3}
+        maxLength={1500}
+        isDisabled={isDisabled}
+      />
     </div>
   );
 }

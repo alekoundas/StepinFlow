@@ -8,22 +8,20 @@ using System.Globalization;
 namespace Transport.Ipc.Handlers
 {
     /// <summary>
-    /// The steps whose failure a Notify step can report from where it sits, nearest first.
+    /// The steps whose result a Notify step can include from where it sits, nearest first: the
+    /// ones it sits under through a Success or a Failure, since a result is kept for everything
+    /// under its step whichever way it went.
     ///
-    /// The mirror of Lookup.flowStep: that one walks down through Success branches, because a
-    /// result only exists if the step succeeded. This one walks down through Failure branches,
-    /// because a Notify step only runs at all when something above it failed.
-    ///
-    /// Empty is a correct answer, and a common one - a Notify step that is not on any failure path
-    /// has nothing to report, and the form treats an empty list as "there is no failure here".
+    /// Empty is a correct answer - a Notify step under no check has no result to include, and the
+    /// form treats an empty list as "there is nothing here to report on".
     ///
     /// In ADD mode there is no step row yet, so the caller passes the parent step id.
     /// </summary>
-    public class GetLookupFailedStepHandler
+    public class GetLookupReportedStepHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public GetLookupFailedStepHandler(IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetLookupReportedStepHandler(IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }
@@ -50,13 +48,13 @@ namespace Transport.Ipc.Handlers
                 .ToDictionaryAsync(x => x.Id, ct);
 
             List<LookupItemDto> items = TreeStepHelper
-                .FailedAncestors(byId, dto.FlowStepId.Value)
+                .BranchedAncestors(byId, dto.FlowStepId.Value)
                 .Where(x => !dto.ExcludedIds.Contains(x.Step.Id))
                 .Select(x => new LookupItemDto
                 {
                     Value = x.Step.Id.ToString(CultureInfo.InvariantCulture),
                     Label = x.Step.Name,
-                    Description = $"{x.Step.FlowStepType} · {x.Depth} level(s) up",
+                    Description = $"{x.Step.FlowStepType} · under its {TreeStepHelper.BranchName(x.Branch)} · {x.Depth} level(s) up",
                 })
                 .ToList();
 
