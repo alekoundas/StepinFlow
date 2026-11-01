@@ -36,6 +36,12 @@ namespace Business.Tests.Searching
             return new SearchTemplate { Image = [id], Accuracy = accuracy, IsRequired = isRequired, AuthoredDpi = authoredDpi, AuthoredFlowAreaWidth = width, AuthoredFlowAreaHeight = height, ClickOffsetX = clickOffsetX, ClickOffsetY = clickOffsetY };
         }
 
+        // A hit at each x, so a test can tell whose hits came back by where they are.
+        private static TemplateMatchOutcome At(params int[] xs)
+        {
+            return new TemplateMatchOutcome { Matches = xs.Select(x => new TemplateMatchResult { X = x, Width = 10, Height = 10, Score = 0.9f, Scale = 1f }).ToList() };
+        }
+
 
 
 
@@ -167,6 +173,31 @@ namespace Business.Tests.Searching
 
             result.Hits.Count.ShouldBe(2);
             result.MissingRequired.ShouldBeEmpty();
+        }
+
+        // ================================================================
+        // Max matches
+        // ================================================================
+
+        [Fact]
+        public void Max_matches_is_shared_by_the_templates_the_first_in_the_list_first()
+        {
+            _matcher.Answer(1, At(1, 2, 3)).Answer(2, At(11, 12, 13));
+
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2)], stopAtFirstHit: false, settings: new SearchSettings { SearchMode = SearchModeEnum.FIND_ALL, MaxMatches = 4 });
+
+            result.Hits.Select(x => x.X).ShouldBe([1, 2, 3, 11]);
+        }
+
+        [Fact]
+        public void A_required_template_past_the_max_matches_is_still_looked_for()
+        {
+            _matcher.Answer(1, At(1, 2, 3));
+
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2, isRequired: true)], stopAtFirstHit: false, settings: new SearchSettings { SearchMode = SearchModeEnum.FIND_ALL, MaxMatches = 2 });
+
+            result.Hits.ShouldBeEmpty();
+            result.MissingRequired.ShouldBe([1]);
         }
 
         // ================================================================

@@ -126,6 +126,10 @@ namespace Transport.Ipc.Handlers
                 result.TotalMatches += matches.Count;
             }
 
+            // An execution works through no more than Max matches, however many templates found them.
+            if (step.SearchMode == SearchModeEnum.FIND_ALL)
+                result.TotalMatches = Math.Min(result.TotalMatches, step.MaxMatches);
+
             // The searcher's verdict, the same one an execution gets.
             result.WouldSucceed = search.Hits.Count > 0;
 

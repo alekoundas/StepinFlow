@@ -84,6 +84,10 @@ namespace Business.Searching
             if (stopAtFirstHit && hits.Count > 1)
                 hits.RemoveRange(1, hits.Count - 1);
 
+            // Max matches is the step's, so the templates share it, the first in the list first.
+            if (settings.SearchMode == SearchModeEnum.FIND_ALL && hits.Count > settings.MaxMatches)
+                hits.RemoveRange(settings.MaxMatches, hits.Count - settings.MaxMatches);
+
             return new ImageSearchResult
             {
                 Haystack = haystack,

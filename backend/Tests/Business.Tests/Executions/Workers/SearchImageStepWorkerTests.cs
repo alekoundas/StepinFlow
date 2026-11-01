@@ -134,6 +134,22 @@ namespace Business.Tests.Executions.Workers
             _matcher.Requests.Count.ShouldBe(1);
         }
 
+        [Theory]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_NOT_FOUND)]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_FOUND)]
+        public async Task A_search_that_cannot_be_done_fails_a_wait_at_once_rather_than_counting_as_gone(SearchModeEnum mode)
+        {
+            _matcher.Answer(1, new TemplateMatchOutcome { Error = "scaled by 4.00 it is bigger than the area." });
+            FlowStep step = ImageSearch(mode, Template(1, "spinner", 0.8f));
+            step.TimeoutMilliseconds = 3000;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe("Template 1: scaled by 4.00 it is bigger than the area.");
+            _matcher.Requests.Count.ShouldBe(1);
+        }
+
         [Fact]
         public async Task An_area_that_cannot_be_found_fails_with_its_reason()
         {

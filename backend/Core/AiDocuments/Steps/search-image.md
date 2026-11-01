@@ -51,6 +51,10 @@ the thing was ever there, so if it never matched at all, the step succeeds immed
 If you need "wait for the spinner to appear and then go away", that is two steps:
 `WAIT_UNTIL_FOUND` then `WAIT_UNTIL_NOT_FOUND`.
 
+A search that cannot be done at all - the area has no size because the window is minimised, or a
+template is bigger than the area once scaled - is not "gone". Both waiting modes fail at once with
+that reason instead of waiting out the timeout.
+
 It is a condition and nothing more: there is no position to give, so no Move or Drag can go to
 it. The dropdown does not offer it, and the validator reports a step still pointing at it.
 
@@ -68,7 +72,9 @@ of the current pass. So a `CURSOR_RELOCATE` to the search, then a `CURSOR_CLICK`
 in turn. There is no separate loop for it; a step that should happen once after all the hits goes
 after the search, not inside it.
 
-**Max matches** limits how many hits are worked through, and only appears in this mode.
+**Max matches** limits how many hits are worked through, and only appears in this mode. It is the
+step's total, not each template's: the hits are taken in the order of the template list, so the
+first template's come first, and two templates that match the same spot are two hits.
 
 ## Templates and IsRequired
 

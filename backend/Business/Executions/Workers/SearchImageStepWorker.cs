@@ -44,7 +44,11 @@ namespace Business.Executions.Workers
             if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
                 return await LoopSearchAsync(step, area, cache, ct);
 
-            return Search(step, area, cache);
+            ImageSearchResult search = Look(step, area);
+            if (search.Error != null)
+                return ExecutionStep.Failure(search.Error);
+
+            return ToExecutionStep(step, area, search, cache);
         }
 
 
@@ -63,7 +67,13 @@ namespace Business.Executions.Workers
             {
                 ct.ThrowIfCancellationRequested();
 
-                ExecutionStep search = Search(step, area, cache);
+                // An error is neither found nor gone, and waiting does not mend it: the area was
+                // found once, before the wait, and a template that cannot be searched stays so.
+                ImageSearchResult look = Look(step, area);
+                if (look.Error != null)
+                    return ExecutionStep.Failure(look.Error);
+
+                ExecutionStep search = ToExecutionStep(step, area, look, cache);
                 bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
 
                 if (found == wantFound && wantFound)
@@ -105,15 +115,18 @@ namespace Business.Executions.Workers
             }
         }
 
-        private ExecutionStep Search(FlowStep step, AreaResolution area, IExecutionCacheService cache)
+        private ImageSearchResult Look(FlowStep step, AreaResolution area)
+        {
+            bool findAll = step.SearchMode == SearchModeEnum.FIND_ALL;
+            List<SearchTemplate> templates = step.FlowStepTemplates.Select(x => SearchTemplate.From(x)).ToList();
+
+            return _imageSearcher.Search(area, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
+        }
+
+        private static ExecutionStep ToExecutionStep(FlowStep step, AreaResolution area, ImageSearchResult search, IExecutionCacheService cache)
         {
             bool findAll = step.SearchMode == SearchModeEnum.FIND_ALL;
             List<FlowStepTemplate> images = step.FlowStepTemplates.ToList();
-            List<SearchTemplate> templates = images.Select(x => SearchTemplate.From(x)).ToList();
-
-            ImageSearchResult search = _imageSearcher.Search(area, SearchSettings.From(step), templates, stopAtFirstHit: !findAll);
-            if (search.Error != null)
-                return ExecutionStep.Failure(search.Error);
 
             // The screenshot that was actually matched against, not one taken a moment later that
             // could show something else. Whether it is worth keeping is the cache's business.

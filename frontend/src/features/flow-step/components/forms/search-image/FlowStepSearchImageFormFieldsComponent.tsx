@@ -64,7 +64,7 @@ export default function FlowStepSearchImageFormFieldsComponent({
           max={2147483647}
           isRequired={true}
           isDisabled={isDisabled}
-          hintText="Safety cap, so a loose threshold cannot fire hundreds of times."
+          hintText="For every template together. A safety cap, so a loose threshold cannot fire hundreds of times."
         />
       )}
 
