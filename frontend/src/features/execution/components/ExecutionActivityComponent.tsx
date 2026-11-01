@@ -3,7 +3,7 @@ import { memo } from "react";
 import { toElapsed } from "@/shared/utils/clock";
 import { tint } from "@/shared/models/flow-step-catalog";
 import { CARD, FATAL_COLOR, FOUND_COLOR, MONO, MUTED } from "@/features/execution/execution-format";
-import type { Activity } from "@/features/execution/hooks/use-execution-overview";
+import type { Activity } from "@/features/execution/execution-overview";
 
 const BARS_HEIGHT = 52;
 const TALLEST_BAR = 40;

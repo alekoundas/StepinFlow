@@ -8,11 +8,10 @@ import {
   HANDLED_COLOR,
   MUTED,
 } from "@/features/execution/execution-format";
-import type { ExecutionOverview } from "@/features/execution/hooks/use-execution-overview";
+import type { ExecutionOverview } from "@/features/execution/execution-overview";
 
 interface Props {
   overview: ExecutionOverview;
-  stepCount: number;
 
   /** Still going, so the elapsed time counts up. */
   isLive: boolean;
@@ -24,8 +23,9 @@ interface Props {
  * The count that matters is the split between failures: hours of handled failures and no fatal one
  * is a bot loop doing its job, and it reads as a disaster in a list of red rows.
  */
-export default function ExecutionTilesComponent({ overview, stepCount, isLive }: Props) {
+export default function ExecutionTilesComponent({ overview, isLive }: Props) {
   const now = useClock(isLive);
+  const stepCount = overview.stepCount;
 
   if (stepCount === 0 || overview.startedAt === undefined || overview.endedAt === undefined)
     return null;

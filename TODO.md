@@ -38,6 +38,16 @@ the history.
       - left on for an hour, then stopped, edited and executed again, the app is no slower and the
         window does not turn white. React 19.2's development build kept a timing entry for every
         re-render and never let go of it, until the page ran out of memory; 19.3 clears them.
+- [ ] **Not tried by hand: a long execution's page stays small.** Verified by the type check, the
+      lint, the backend tests, and in Node against the code it replaced on 300 generated executions,
+      2026-11-01. Execute Firestone for an hour: the renderer in Task Manager stays near 200-300 MB and
+      a few percent CPU, where it was 670 MB and rising after three hours. Show on an old fold reads
+      its passes back, with a spinner, and a step in it opens in the step panel; Fold lets them go. A
+      step's screenshot shows while the execution is going, once its step is saved. With History set
+      to keep nothing, an old fold's Show is off with its tooltip.
+- [ ] **A past execution still loads every row.** Opening one from Executions reads all of it into
+      the page and keeps a second copy in the query cache: a day of Firestone is about 340,000 rows.
+      The overview would come from the backend, and the rows by sequence as the live page reads them.
 - [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
       `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
       the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,

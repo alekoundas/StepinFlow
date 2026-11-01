@@ -213,6 +213,7 @@ namespace Transport.Ipc
                     "Execution.stepOver" => await Handler<StepOverExecutionHandler>().HandleAsync(ct),
                     "Execution.setBreakpoints" => await Handler<SetExecutionBreakpointsHandler>().HandleAsync(Payload<List<int>>(request), ct),
                     "Execution.get" => await Handler<GetExecutionHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Execution.getSteps" => await Handler<GetExecutionStepsHandler>().HandleAsync(Payload<ExecutionStepRangeDto>(request), ct),
                     "Execution.getList" => await Handler<GetExecutionListHandler>().HandleAsync(Payload<int>(request), ct),
                     "Execution.getState" => await Handler<GetExecutionStateHandler>().HandleAsync(ct),
                     "Execution.getFlowSummaries" => await Handler<GetFlowExecutionSummariesHandler>().HandleAsync(ct),

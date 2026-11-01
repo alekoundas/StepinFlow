@@ -9,10 +9,9 @@ import ExecutionFlowTreeComponent from "@/features/execution/components/Executio
 import ExecutionStepListComponent from "@/features/execution/components/ExecutionStepListComponent";
 import ExecutionStepDetailComponent from "@/features/execution/components/ExecutionStepDetailComponent";
 import ExecutionPanelComponent from "@/features/execution/components/templates/ExecutionPanelComponent";
-import { useExecutionStore } from "@/features/execution/store/execution-store";
+import { findKeptStep, useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionEvents } from "@/features/execution/hooks/use-execution-events";
 import { useExecution, useExecutionState } from "@/features/execution/hooks/use-execution";
-import { findStep, useExecutionOverview } from "@/features/execution/hooks/use-execution-overview";
 import { MUTED } from "@/features/execution/execution-format";
 import { useFlow } from "@/features/flow/hooks/use-flow";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
@@ -28,8 +27,15 @@ export default function ExecutionPage() {
 
   const flowId = id ? +id : -1;
 
-  const executionSteps = useExecutionStore((x) => x.executionSteps);
-  const selectedSequence = useExecutionStore((x) => x.selectedSequence);
+  const overview = useExecutionStore((x) => x.overview);
+  const selectedStep = useExecutionStore((x) =>
+    x.selectedSequence !== undefined ? findKeptStep(x, x.selectedSequence) : undefined,
+  );
+  const parentStep = useExecutionStore((x) =>
+    selectedStep?.parentSequence !== null && selectedStep?.parentSequence !== undefined
+      ? findKeptStep(x, selectedStep.parentSequence)
+      : undefined,
+  );
   const runState = useExecutionStore((x) => x.runState);
   const liveExecutionId = useExecutionStore((x) => x.executionId);
   const liveHistoryLevel = useExecutionStore((x) => x.historyLevel);
@@ -72,21 +78,13 @@ export default function ExecutionPage() {
     setOpenedExecution(requestedExecution);
 
   useEffect(() => {
-    if (openedExecution) setExecutionSteps(openedExecution.executionSteps ?? []);
+    if (openedExecution)
+      setExecutionSteps(openedExecution.executionSteps ?? [], openedExecution.errorFlowStepId);
   }, [openedExecution, setExecutionSteps]);
 
   // Arrived from the executions list with an execution named, so this is history being read back.
   const isPastExecution = requestedExecutionId !== null;
   const isLive = !isPastExecution && runState !== RunStateEnum.FINISHED;
-
-  const overview = useExecutionOverview(
-    executionSteps,
-    openedExecution?.errorFlowStepId,
-    isLive,
-  );
-
-  const selectedStep =
-    selectedSequence !== undefined ? findStep(executionSteps, selectedSequence) : undefined;
 
   // Only a past execution can fail to load: a live one builds its rows from the events as they arrive.
   let emptyReason: "idle" | "loading" | "error" | "noHistory" = "idle";
@@ -108,7 +106,6 @@ export default function ExecutionPage() {
 
       <ExecutionTilesComponent
         overview={overview}
-        stepCount={executionSteps.length}
         isLive={isLive}
       />
 
@@ -177,9 +174,10 @@ export default function ExecutionPage() {
         >
           <ExecutionStepDetailComponent
             executionStep={selectedStep}
-            executionSteps={executionSteps}
+            parentStep={parentStep}
             fatalSequence={overview.fatalSequence}
             historyLevel={isPastExecution ? openedExecution?.historyLevel : liveHistoryLevel}
+            isLive={isLive}
             onSelect={setSelectedSequence}
           />
         </SplitterPanel>

@@ -9,6 +9,12 @@ interface Props {
   stepCount: number;
   isOpen: boolean;
 
+  /** Its passes are on their way back from the history. */
+  isReading: boolean;
+
+  /** Its passes were let go of, and the execution keeps no history to read them back from. */
+  isGone: boolean;
+
   /** Every row the same, so the list can draw only those in view. */
   height: number;
 
@@ -22,6 +28,8 @@ export default function ExecutionFoldRowComponent({
   lastPass,
   stepCount,
   isOpen,
+  isReading,
+  isGone,
   height,
   onToggle,
 }: Props) {
@@ -54,6 +62,10 @@ export default function ExecutionFoldRowComponent({
         label={isOpen ? "Fold" : "Show"}
         size="small"
         outlined
+        loading={isReading}
+        disabled={isGone && !isOpen}
+        tooltip={isGone && !isOpen ? "This execution keeps no history, so passes this old are gone." : undefined}
+        tooltipOptions={{ showOnDisabled: true, position: "left" }}
         className="ml-auto py-0 px-2 text-xs"
         style={{ height: 22, flex: "none" }}
         onClick={onToggle}

@@ -11,7 +11,9 @@ import ExecutionPanelComponent from "@/features/execution/components/templates/E
 import ExecutionStepRowComponent from "@/features/execution/components/templates/ExecutionStepRowComponent";
 import ExecutionFoldRowComponent from "@/features/execution/components/templates/ExecutionFoldRowComponent";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
+import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { tint } from "@/shared/models/flow-step-catalog";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 import {
   chipStyle,
@@ -21,13 +23,13 @@ import {
 } from "@/features/execution/execution-format";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useDebuggerKeys } from "@/features/execution/hooks/use-debugger-keys";
+import type { ExecutionOverview } from "@/features/execution/execution-overview";
 import {
   filterSteps,
   foldQuietPasses,
   type ExecutionListFilter,
   type ExecutionListItem,
-  type ExecutionOverview,
-} from "@/features/execution/hooks/use-execution-overview";
+} from "@/features/execution/execution-list";
 
 type EmptyReason = "idle" | "loading" | "error" | "noHistory";
 
@@ -102,14 +104,22 @@ function ExecutionStepListComponent({
   emptyMessage,
 }: Props) {
   const executionSteps = useExecutionStore((x) => x.executionSteps);
+  const quietRuns = useExecutionStore((x) => x.quietRuns);
+  const released = useExecutionStore((x) => x.released);
+  const openFolds = useExecutionStore((x) => x.openFolds);
+  const foldRows = useExecutionStore((x) => x.foldRows);
+  const executionId = useExecutionStore((x) => x.executionId);
+  const historyLevel = useExecutionStore((x) => x.historyLevel);
   const selectedSequence = useExecutionStore((x) => x.selectedSequence);
   const runState = useExecutionStore((x) => x.runState);
   const currentStepName = useExecutionStore((x) => x.currentStepName);
   const setSelectedSequence = useExecutionStore((x) => x.setSelectedSequence);
+  const toggleFold = useExecutionStore((x) => x.toggleFold);
+  const addFoldRows = useExecutionStore((x) => x.addFoldRows);
 
   const [filter, setFilter] = useState<ExecutionListFilter>("all");
   const [query, setQuery] = useState("");
-  const [openFolds, setOpenFolds] = useState<ReadonlySet<number>>(() => new Set());
+  const [readingFolds, setReadingFolds] = useState<ReadonlySet<number>>(() => new Set());
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -118,20 +128,32 @@ function ExecutionStepListComponent({
   // How many rows there were when the top was left, so the way back can say how many came since.
   const [stepCountAtLeaving, setStepCountAtLeaving] = useState(0);
 
-  const isEmpty = executionSteps.length === 0;
+  const isEmpty = overview.stepCount === 0;
   const isFiltered = filter !== "all" || query.trim() !== "";
+  const isAnyLetGo = quietRuns.length > 0 || released !== undefined;
+  const isHistoryKept = historyLevel !== ExecutionHistoryLevelEnum.NONE;
 
   const items = useMemo(() => {
     if (isFiltered) return filterSteps(executionSteps, filter, query);
-    return foldQuietPasses(executionSteps, overview.quietPassEnds, openFolds);
-  }, [executionSteps, overview.quietPassEnds, openFolds, filter, query, isFiltered]);
-
-  // Scaled against the whole execution, not the filtered view, so hiding rows does not restretch
-  // the bars. Not Math.max(...rows): a long execution has more rows than a call takes arguments.
-  const maxDurationMilliseconds = useMemo(
-    () => executionSteps.reduce((max, x) => Math.max(max, x.durationMilliseconds), 1),
-    [executionSteps],
-  );
+    return foldQuietPasses(
+      { executionSteps, quietRuns, released },
+      openFolds,
+      foldRows,
+      isLive,
+      overview.fatalSequence,
+    );
+  }, [
+    executionSteps,
+    quietRuns,
+    released,
+    openFolds,
+    foldRows,
+    isLive,
+    overview.fatalSequence,
+    filter,
+    query,
+    isFiltered,
+  ]);
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -176,30 +198,51 @@ function ExecutionStepListComponent({
   }, [selectedSequence]);
 
   const handleScroll = (top: number) => {
-    if (scrollTop === 0 && top > 0) setStepCountAtLeaving(executionSteps.length);
+    if (scrollTop === 0 && top > 0) setStepCountAtLeaving(overview.stepCount);
     setScrollTop(top);
 
     const index = Math.min(items.length - 1, Math.floor(top / ROW_HEIGHT));
     const item = items[index];
-    anchor.current = item
-      ? {
-          sequence: item.kind === "step" ? item.step.sequence : item.firstSequence,
-          isFold: item.kind === "fold",
-          offset: top - index * ROW_HEIGHT,
-        }
-      : undefined;
+    const offset = top - index * ROW_HEIGHT;
+
+    anchor.current = undefined;
+    if (item?.kind === "step") anchor.current = { sequence: item.step.sequence, isFold: false, offset };
+    if (item?.kind === "fold") anchor.current = { sequence: item.firstSequence, isFold: true, offset };
   };
 
-  const toggleFold = (firstSequence: number) => {
-    setOpenFolds((open) => {
-      const next = new Set(open);
-      if (!next.delete(firstSequence)) next.add(firstSequence);
-      return next;
-    });
+  // Passes let go of come back from the history, which a live execution writes as it goes.
+  const readBack = async (firstSequence: number, lastSequence: number) => {
+    if (executionId === undefined) return;
+
+    setReadingFolds((reading) => new Set(reading).add(firstSequence));
+    try {
+      const steps = await backendApiService.Execution.getSteps({
+        executionId,
+        firstSequence,
+        lastSequence,
+      });
+      addFoldRows(firstSequence, steps);
+    } catch {
+      toggleFold(firstSequence);
+    } finally {
+      setReadingFolds((reading) => {
+        const next = new Set(reading);
+        next.delete(firstSequence);
+        return next;
+      });
+    }
+  };
+
+  const handleToggleFold = (firstSequence: number, releasedThrough: number | undefined) => {
+    const isOpening = !openFolds.has(firstSequence);
+    toggleFold(firstSequence);
+
+    if (isOpening && releasedThrough !== undefined && !foldRows.has(firstSequence))
+      void readBack(firstSequence, releasedThrough);
   };
 
   const isAtTop = scrollTop === 0;
-  const newCount = isAtTop ? 0 : executionSteps.length - stepCountAtLeaving;
+  const newCount = isAtTop ? 0 : overview.stepCount - stepCountAtLeaving;
   const isPaused = runState === RunStateEnum.PAUSED;
 
   let actions: ReactNode = null;
@@ -315,6 +358,15 @@ function ExecutionStepListComponent({
 
           <ColumnHeadings />
 
+          {isFiltered && isAnyLetGo ? (
+            <div
+              className="px-3 pb-1 text-xs"
+              style={MUTED}
+            >
+              Looking through the steps kept here: the newest, and every pass that found something.
+            </div>
+          ) : null}
+
           <div
             ref={viewportRef}
             className="flex-1 px-2 pb-2"
@@ -332,9 +384,11 @@ function ExecutionStepListComponent({
                 viewportHeight={viewportHeight}
                 fatalSequence={overview.fatalSequence}
                 selectedSequence={selectedSequence}
-                maxDurationMilliseconds={maxDurationMilliseconds}
+                maxDurationMilliseconds={overview.maxDurationMilliseconds}
+                readingFolds={readingFolds}
+                isHistoryKept={isHistoryKept}
                 onSelect={setSelectedSequence}
-                onToggleFold={toggleFold}
+                onToggleFold={handleToggleFold}
               />
             )}
           </div>
@@ -377,8 +431,13 @@ interface VisibleRowsProps {
   fatalSequence: number | undefined;
   selectedSequence: number | undefined;
   maxDurationMilliseconds: number;
+
+  /** Folds whose passes are being read back from the history. */
+  readingFolds: ReadonlySet<number>;
+  isHistoryKept: boolean;
+
   onSelect: (sequence: number) => void;
-  onToggleFold: (firstSequence: number) => void;
+  onToggleFold: (firstSequence: number, releasedThrough: number | undefined) => void;
 }
 
 function VisibleRows({
@@ -388,6 +447,8 @@ function VisibleRows({
   fatalSequence,
   selectedSequence,
   maxDurationMilliseconds,
+  readingFolds,
+  isHistoryKept,
   onSelect,
   onToggleFold,
 }: VisibleRowsProps) {
@@ -400,8 +461,33 @@ function VisibleRows({
   return (
     <div style={{ position: "relative", height: items.length * ROW_HEIGHT }}>
       <div style={{ position: "absolute", top: first * ROW_HEIGHT, left: 0, right: 0 }}>
-        {items.slice(first, last).map((item) =>
-          item.kind === "step" ? (
+        {items.slice(first, last).map((item) => {
+          if (item.kind === "released")
+            return (
+              <ReleasedRow
+                key="released"
+                stepCount={item.stepCount}
+                isHistoryKept={isHistoryKept}
+              />
+            );
+
+          if (item.kind === "fold")
+            return (
+              <ExecutionFoldRowComponent
+                key={`fold-${item.firstSequence}`}
+                passes={item.passes}
+                firstPass={item.firstPass}
+                lastPass={item.lastPass}
+                stepCount={item.stepCount}
+                isOpen={item.isOpen}
+                isReading={readingFolds.has(item.firstSequence)}
+                isGone={item.releasedThrough !== undefined && !isHistoryKept}
+                height={ROW_HEIGHT}
+                onToggle={() => onToggleFold(item.firstSequence, item.releasedThrough)}
+              />
+            );
+
+          return (
             <ExecutionStepRowComponent
               key={item.step.sequence}
               executionStep={item.step}
@@ -411,20 +497,36 @@ function VisibleRows({
               maxDurationMilliseconds={maxDurationMilliseconds}
               onSelect={onSelect}
             />
-          ) : (
-            <ExecutionFoldRowComponent
-              key={`fold-${item.firstSequence}`}
-              passes={item.passes}
-              firstPass={item.firstPass}
-              lastPass={item.lastPass}
-              stepCount={item.stepCount}
-              isOpen={item.isOpen}
-              height={ROW_HEIGHT}
-              onToggle={() => onToggleFold(item.firstSequence)}
-            />
-          ),
-        )}
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+interface ReleasedRowProps {
+  stepCount: number;
+  isHistoryKept: boolean;
+}
+
+/** The oldest steps, let go of once even the passes that found something were too many to keep. */
+function ReleasedRow({ stepCount, isHistoryKept }: ReleasedRowProps) {
+  return (
+    <div
+      className="flex align-items-center gap-2 border-round-lg text-sm"
+      style={{ ...MUTED, height: ROW_HEIGHT, padding: "0 10px", whiteSpace: "nowrap" }}
+    >
+      <span style={{ width: 48, flex: "none" }} />
+      <i
+        className="pi pi-history"
+        style={{ fontSize: "0.75rem", width: 14, flex: "none" }}
+      />
+      <span className="min-w-0 overflow-hidden text-overflow-ellipsis">
+        {stepCount.toLocaleString()} earlier steps not kept on this page ·{" "}
+        {isHistoryKept
+          ? "open the execution from Executions once it ends"
+          : "this execution keeps no history"}
+      </span>
     </div>
   );
 }

@@ -321,6 +321,7 @@ namespace App
             builder.Services.AddTransient<StepOverExecutionHandler>();
             builder.Services.AddTransient<SetExecutionBreakpointsHandler>();
             builder.Services.AddTransient<GetExecutionHandler>();
+            builder.Services.AddTransient<GetExecutionStepsHandler>();
             builder.Services.AddTransient<GetExecutionListHandler>();
             builder.Services.AddTransient<GetExecutionStateHandler>();
             builder.Services.AddTransient<GetFlowExecutionSummariesHandler>();

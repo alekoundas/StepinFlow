@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Transport.Ipc.Handlers.Execution
 {
     /// <summary>
-    /// One run and every step of it, in the order they happened. Projected rather than mapped: the
-    /// page reads a flat list and indents it by Depth, so nothing needs loading through a relation.
+    /// One run and every step of it, in the order they happened.
     /// </summary>
     public class GetExecutionHandler
     {
@@ -51,41 +50,10 @@ namespace Transport.Ipc.Handlers.Execution
                 .AsNoTracking()
                 .Where(x => x.ExecutionId == id)
                 .OrderBy(x => x.Sequence)
-                .Select(x => new ExecutionStepDto
-                {
-                    Id = x.Id,
-                    Sequence = x.Sequence,
-                    ParentSequence = x.ParentSequence,
-                    Depth = x.Depth,
-                    LoopPass = x.LoopPass,
-                    Name = x.Name,
-                    FlowStepType = x.FlowStepType,
-                    Outcome = x.Outcome,
-                    StartedOn = x.StartedOn,
-                    DurationMilliseconds = x.DurationMilliseconds,
-                    ResultLocationX = x.ResultLocationX,
-                    ResultLocationY = x.ResultLocationY,
-                    BestScore = x.BestScore,
-                    BestTemplateId = x.BestTemplateId,
-                    MatchIndex = x.MatchIndex,
-                    MatchCount = x.MatchCount,
-                    Value = x.Value,
-                    Message = x.Message,
-                    ExitCode = x.ExitCode,
-                    Error = x.Error,
-                    Command = x.Command,
-                    ScreenshotFileName = x.ScreenshotFileName,
-                    ExecutionId = x.ExecutionId,
-                    FlowStepId = x.FlowStepId,
-                })
+                .Select(ExecutionStepProjection.Row)
                 .ToListAsync(ct);
 
-            // A score of infinity cannot be written as json, and one of them fails the whole
-            // response rather than the one field - so a run that recorded one could not be opened
-            // at all. Runs from before the matcher clamped its scores still hold them.
-            foreach (ExecutionStepDto step in execution.ExecutionSteps)
-                if (step.BestScore != null && !float.IsFinite(step.BestScore.Value))
-                    step.BestScore = null;
+            ExecutionStepProjection.ClearUnwritableScores(execution.ExecutionSteps);
 
             return ResultDto<ExecutionDto>.Success(execution);
         }

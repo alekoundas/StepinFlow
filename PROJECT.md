@@ -461,7 +461,8 @@ refresh, so a window nobody can see draws nothing. Drawing on every event cost m
 left between two, and the page fell further and further behind the execution. The list draws only
 the rows in view, newest first: a Firestone execution left on for two hours kept 32,699 steps, and
 laying all of them out made the page lag. Scrolled down to read, the rows stay put as new ones
-arrive on top.
+arrive on top. What the page keeps, and how a batch costs the same at any length, is under The
+execution page.
 
 **Work longer than a request can wait for is started by the request and reported by broadcast.**
 The pipe answers one call at a time and Electron gives up on a call after 30 seconds, so the
@@ -2372,11 +2373,22 @@ folds, since it may yet find something, nor the one that ended the execution. "G
 the pass before" was the other rule weighed: it folds a loop that clicks before it looks, but it
 also folds two passes that found the same thing, which are the ones being looked for.
 
-Everything but the rows comes from one walk over them, `buildExecutionOverview`, and the list's
-folds from a second, `foldQuietPasses`, both plain functions in `use-execution-overview.ts`. On
-Firestone's 32,699 rows they take about 10 ms together, and run once a batch. A live row carries its
-start and its best match in the broadcast, so the activity and the found chips are right before the
-execution ends.
+**The overview is counted as the rows arrive.** `ExecutionTally` (`execution-overview.ts`) takes
+each batch and keeps the counts, the activity a second at a time and the passes still open; the
+tiles, the activity and the tree read a snapshot of it. Worked out again from every row on every
+batch, it cost more with each pass: three hours into a Firestone execution of 41,000 rows the
+renderer used 670 MB and more CPU than the backend. A live row carries its start and its best match
+in the broadcast, so the activity and the found chips are right before the execution ends.
+
+**A live page lets go of what a fold hides.** It keeps its newest 2,000 rows and every pass that
+found something. Older quiet passes, of a loop no other loop holds and beside another quiet one,
+are kept as a count (`releaseQuietPasses` in `execution-list.ts`), and Show reads their rows back
+from the history (`Execution.getSteps`, by sequence, which works while the execution is still
+writing). Past 20,000 rows kept the oldest go as well, and the last row says how many. A batch then
+costs the same at any length: under 1 ms on 41,000 Firestone rows and under 4 ms on a day's 339,000,
+where it took 14 ms and 156 ms. Find a step and the filters look through what is kept, and say so.
+A live row has no database id, so the step panel asks for the saved one for its screenshot, exit
+code and stderr, once the history has written it.
 
 ### Capture flows
 

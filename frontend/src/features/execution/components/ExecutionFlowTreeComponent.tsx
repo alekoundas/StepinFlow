@@ -16,7 +16,7 @@ import {
 import { FOUND_COLOR, HANDLED_COLOR, MONO, MUTED } from "@/features/execution/execution-format";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
-import type { StepCounts } from "@/features/execution/hooks/use-execution-overview";
+import type { StepCounts } from "@/features/execution/execution-overview";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 
@@ -13,9 +14,9 @@ import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/exec
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { getFlowStepCatalogEntry, hasBranches } from "@/shared/models/flow-step-catalog";
 import { DONE_COLOR, HANDLED_COLOR, INSET, MONO, MUTED } from "@/features/execution/execution-format";
-import { findStep, isCheckStep } from "@/features/execution/hooks/use-execution-overview";
+import { isCheckStep } from "@/features/execution/execution-overview";
 import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
-import { useExecutionStepScreenshot } from "@/features/execution/hooks/use-execution";
+import { useExecutionStepScreenshot, useSavedExecutionStep } from "@/features/execution/hooks/use-execution";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
@@ -26,14 +27,15 @@ import type { ExecutionStepDto } from "@/shared/models/database/execution-step-d
 interface Props {
   executionStep: ExecutionStepDto | undefined;
 
-  /** Every step of the execution, so this one can name the step it executed inside. */
-  executionSteps: ExecutionStepDto[];
+  /** The step this one executed inside, when it is still kept. */
+  parentStep: ExecutionStepDto | undefined;
 
   fatalSequence: number | undefined;
 
   /** What the execution was set to keep, which is why a step has no screenshot. */
   historyLevel: ExecutionHistoryLevelEnum | undefined;
 
+  isLive: boolean;
   onSelect: (sequence: number) => void;
 }
 
@@ -42,12 +44,20 @@ interface Props {
  * no value, a command has an exit code and no location, and showing the empty ones is noise.
  */
 export default function ExecutionStepDetailComponent({
-  executionStep,
-  executionSteps,
+  executionStep: shownStep,
+  parentStep,
   fatalSequence,
   historyLevel,
+  isLive,
   onSelect,
 }: Props) {
+  const { data: savedStep } = useSavedExecutionStep(
+    shownStep,
+    isLive,
+    historyLevel !== ExecutionHistoryLevelEnum.NONE,
+  );
+  const executionStep = savedStep ?? shownStep;
+
   if (!executionStep)
     return (
       <ExecutionPanelComponent title="Step">
@@ -85,7 +95,7 @@ export default function ExecutionStepDetailComponent({
     >
       <StepDetail
         executionStep={executionStep}
-        executionSteps={executionSteps}
+        parentStep={parentStep}
         historyLevel={historyLevel}
         onSelect={onSelect}
       />
@@ -95,42 +105,45 @@ export default function ExecutionStepDetailComponent({
 
 interface StepDetailProps {
   executionStep: ExecutionStepDto;
-  executionSteps: ExecutionStepDto[];
+  parentStep: ExecutionStepDto | undefined;
   historyLevel: ExecutionHistoryLevelEnum | undefined;
   onSelect: (sequence: number) => void;
 }
 
-function StepDetail({ executionStep, executionSteps, historyLevel, onSelect }: StepDetailProps) {
-  const parent =
-    executionStep.parentSequence !== null && executionStep.parentSequence !== undefined
-      ? findStep(executionSteps, executionStep.parentSequence)
-      : undefined;
-
+function StepDetail({ executionStep, parentStep: parent, historyLevel, onSelect }: StepDetailProps) {
   const isFailure = executionStep.outcome === StepOutcomeEnum.FAILURE;
   const isSearchImage = executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE;
+  const isAtTop = executionStep.parentSequence === null || executionStep.parentSequence === undefined;
+
+  // A parent let go of to keep the page small says nothing, rather than the wrong place.
+  let where: ReactNode = null;
+  if (parent)
+    where = (
+      <button
+        type="button"
+        className="p-0 border-none bg-transparent cursor-pointer text-left text-xs"
+        style={{ ...MUTED, font: "inherit", fontSize: "0.75rem" }}
+        title="Select the step it executed inside"
+        onClick={() => onSelect(parent.sequence)}
+      >
+        {whereOf(parent)}
+      </button>
+    );
+  else if (isAtTop)
+    where = (
+      <span
+        className="text-xs"
+        style={MUTED}
+      >
+        At the top of the flow
+      </span>
+    );
 
   return (
     <div className="flex flex-column gap-3 p-3 flex-1">
       <div className="flex flex-column gap-1">
         <span className="text-base font-semibold">{executionStep.name}</span>
-        {parent ? (
-          <button
-            type="button"
-            className="p-0 border-none bg-transparent cursor-pointer text-left text-xs"
-            style={{ ...MUTED, font: "inherit", fontSize: "0.75rem" }}
-            title="Select the step it executed inside"
-            onClick={() => onSelect(parent.sequence)}
-          >
-            {whereOf(parent)}
-          </button>
-        ) : (
-          <span
-            className="text-xs"
-            style={MUTED}
-          >
-            At the top of the flow
-          </span>
-        )}
+        {where}
       </div>
 
       <dl
@@ -560,8 +573,8 @@ function ScreenshotNote({ executionStep, historyLevel }: StepScreenshotProps) {
   const { data: settings = [] } = useAppSettings();
   const limit = settings.find((x) => x.key === AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT)?.value;
 
-  // A live row is the broadcast's, which carries no file; the saved rows replace it at the end.
-  if (executionStep.id === 0) return <>A kept screenshot shows here once the execution has ended.</>;
+  // A live row is the broadcast's, which carries no file, until the history has written it.
+  if (executionStep.id === 0) return <>A kept screenshot shows here once this step is saved.</>;
   if (executionStep.screenshotFileName) return <>That screenshot is no longer on disk.</>;
   if (historyLevel && historyLevel !== ExecutionHistoryLevelEnum.STEPS_AND_IMAGES)
     return <>No screenshot. This execution kept steps only.</>;

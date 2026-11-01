@@ -42,7 +42,7 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phase 5.16, releasing; then 5.15's click-throughs, apps and browser tabs, built
+**Next:** phases 5.16 and 5.17, releasing and updates; then 5.15's click-throughs, apps and browser tabs, built
 2026-11-01; then phase 8, inputs, secrets and the CSV round trip; 5.8's
 sub-stages wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
 wait in `TODO.md`, Recording.
@@ -88,14 +88,50 @@ breakers, how Electron reaches the backend, the scripts, F5, versions, the Relea
       leaves when Electron does, Stop included. `npm run package` and the installed app: every
       window's page loads - the main one, the overlay, the image editor, the recording bar - with no
       DevTools and no console window, and the backend stops on close.
-- [ ] **The Release workflow's first run.** Minor gives v0.1.0, which the updater counts as newer
-      than the `0.1.0-build16` already out. Check the draft has the installer and `latest.yml`, and
-      that its tag is the commit built.
 - [ ] **`A_remote_that_cannot_be_reached_says_so` failed once in a full run** and passed alone. Not
       seen since, in seven full runs and fifteen of its project alone; its output was not kept, so the
       next failure's message is the lead. It compares libgit2's exact wording, against a path in
       the temp folder. The workflow does not retry it.
 - [ ] Later: signing, so Windows SmartScreen stops warning on every install.
+
+### 5.17. The update says what it is doing
+
+Decided 2026-11-01. electron-updater stays, with GitHub's latest release as its server: v0.1.1 is
+that release and its `latest.yml` is read. What it lacks is being seen. It checks once at start,
+writes nothing to `main.log`, downloads in silence and then interrupts with a native "Restart now?"
+box, and Yes shows NSIS's grey window while it installs. The shape is VS Code's: no popup, a place
+in the app that says downloading, ready or failed, and a restart that takes seconds.
+
+- [ ] **The updater writes to `main.log`** (`autoUpdater.logger`): the check, what it found, the
+      download and every error. Nothing said the releases were drafts it could not see.
+- [ ] **A block in the rail, above Settings,** in the AI model card's style, shown only when there
+      is something to say. "Downloading 0.1.2" with a thin progress bar and "120 of 470 MB", from
+      `download-progress`. "0.1.2 is ready" with Restart to update, and "Or it installs when you
+      close StepinFlow" (`autoInstallOnAppQuit`, already on). "Update failed" with Try again, the
+      details in the log. The native dialog in `electron/main.ts` goes; main forwards the updater's
+      events to the window, and the preload exposes them and a restart call.
+- [ ] **On the narrow rail** of the flow and execution pages, only an icon: a ring while
+      downloading, a dot when ready, the words in its tooltip, and a click restarts once ready.
+- [ ] **Restart is off while a flow is executing**, "Stop or finish the execution first", because
+      a restart ends it.
+- [ ] **A silent install.** Restart calls `quitAndInstall(true, true)`: the app closes, installs and
+      reopens without the NSIS window. Only the first install still shows it.
+- [ ] **A check every few hours** as well as at start, since StepinFlow is left open all day for a
+      game flow.
+- [ ] **The portable target goes** from `win.target`. It never updates itself, unpacks 455 MB to a
+      temp folder on every start, and doubles each release's upload. A release keeps the Setup exe,
+      its `.blockmap` and `latest.yml`; the blockmap is what lets an update download only what
+      changed.
+- [ ] **On macOS and Linux.** The block works the same on macOS once the app is signed, since
+      Squirrel.Mac refuses an unsigned update. On Linux only an AppImage updates itself, so a deb or
+      rpm install gets "0.1.2 is out" with a link instead.
+- [ ] Optional: for the session after an update, "Updated to 0.1.2 · What's new", linking to the
+      release's notes.
+- [ ] Later, if the update's size or the first install's grey window starts to matter: Velopack.
+      File-level deltas, a splash image in place of an installer window, Windows, macOS and Linux
+      from one tool, and it publishes to GitHub releases too. electron-builder would build only the
+      unpacked app, `vpk` would pack it, `main.ts` would swap electron-updater for the `velopack`
+      package, and an NSIS install would need one release that hands over, or a reinstall.
 
 ---
 

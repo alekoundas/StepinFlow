@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
+import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 export const executionKeys = {
   detail: (id: number) => ["execution", "detail", id] as const,
@@ -10,6 +11,8 @@ export const executionKeys = {
   flowSummaries: () => ["execution", "flowSummaries"] as const,
   stepScreenshot: (executionStepId: number) =>
     ["execution", "stepScreenshot", executionStepId] as const,
+  savedStep: (executionId: number, sequence: number, isLive: boolean) =>
+    ["execution", "savedStep", executionId, sequence, isLive] as const,
 } as const;
 
 /** Every flow with the shape of its run history, for the executions list. */
@@ -37,6 +40,35 @@ export function useExecutionStepScreenshot(executionStepId: number | null) {
       : ["execution", "stepScreenshot", "disabled"],
     queryFn: () => backendApiService.Execution.getStepScreenshot(executionStepId!),
     enabled: !!executionStepId,
+  });
+}
+
+/**
+ * A live row as the history saved it. A broadcast carries no database id, so no screenshot, and no
+ * exit code or stderr. Null until the step is written, which for a failure is straight away and for
+ * the rest within a batch; asked again once the execution ends, when everything is.
+ */
+export function useSavedExecutionStep(
+  executionStep: ExecutionStepDto | undefined,
+  isLive: boolean,
+  isHistoryKept: boolean,
+) {
+  const isUnsaved = !!executionStep && executionStep.id === 0 && isHistoryKept;
+
+  return useQuery({
+    queryKey: isUnsaved
+      ? executionKeys.savedStep(executionStep.executionId, executionStep.sequence, isLive)
+      : ["execution", "savedStep", "disabled"],
+    queryFn: async () => {
+      const steps = await backendApiService.Execution.getSteps({
+        executionId: executionStep!.executionId,
+        firstSequence: executionStep!.sequence,
+        lastSequence: executionStep!.sequence,
+      });
+
+      return steps[0] ?? null;
+    },
+    enabled: isUnsaved,
   });
 }
 

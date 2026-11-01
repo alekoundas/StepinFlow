@@ -71,6 +71,8 @@ import type { ScreenshotRequestDto } from "@/shared/models/lazy-data/screenshot-
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
+import type { ExecutionStepRangeDto } from "@/shared/models/execution-step-range-dto";
+import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
 import type { AiAnswerDto } from "@/shared/models/ai-answer-dto";
@@ -371,6 +373,7 @@ export const backendApiService = {
       call<boolean>("Execution.setBreakpoints", flowStepIds),
 
     get: (id: number) => call<ExecutionDto>("Execution.get", id),
+    getSteps: (dto: ExecutionStepRangeDto) => call<ExecutionStepDto[]>("Execution.getSteps", dto),
     getList: (flowId: number) => call<ExecutionDto[]>("Execution.getList", flowId),
     getState: () => call<ExecutionStateDto>("Execution.getState"),
     getFlowSummaries: () =>

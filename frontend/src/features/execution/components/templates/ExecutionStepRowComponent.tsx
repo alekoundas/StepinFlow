@@ -12,7 +12,7 @@ import {
   MONO,
   MUTED,
 } from "@/features/execution/execution-format";
-import { isCheckStep, isServedHit } from "@/features/execution/hooks/use-execution-overview";
+import { isCheckStep, isServedHit } from "@/features/execution/execution-overview";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 const NEUTRAL_COLOR = "var(--text-color-secondary)";
