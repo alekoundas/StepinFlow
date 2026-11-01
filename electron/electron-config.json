@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "../dist/electron",
     "rootDir": ".",
     "target": "ES2022",
     "module": "ES2022",

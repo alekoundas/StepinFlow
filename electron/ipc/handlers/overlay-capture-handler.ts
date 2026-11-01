@@ -1,6 +1,4 @@
 import { BrowserWindow, Display, ipcMain, Rectangle, screen } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
 import { InvokeBackend } from "./backend-request-handler.js";
 import {
@@ -8,9 +6,7 @@ import {
   ScreenshotMonitorResponseDto,
   SignalReadyResponse,
 } from "../../shared/types.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { IS_DEVELOPING, loadPage, PRELOAD_PATH } from "../../app-paths.js";
 
 // Make sure user cant open second window.
 let isWindowOpen = false;
@@ -24,7 +20,6 @@ interface MonitorEntry {
 
 export async function registerOverlayCaptureHandler(
   mainWindow: BrowserWindow | null,
-  isDev: boolean,
   invokeBackend: InvokeBackend,
 ): Promise<void> {
   ipcMain.handle(
@@ -56,7 +51,7 @@ export async function registerOverlayCaptureHandler(
 
         // 3. Create new window per monitor.
         for (const monitorEntry of monitorEntries) {
-          const newWindow = createElectronWindow(isDev, monitorEntry.dipBounds);
+          const newWindow = createElectronWindow(monitorEntry.dipBounds);
           monitorEntry.electronWindow = newWindow;
         }
 
@@ -85,17 +80,8 @@ export async function registerOverlayCaptureHandler(
           monitorEntries.map((x) => {
             if (!x.electronWindow) return; // will never happen
 
-            if (isDev) {
-              x.electronWindow.loadURL(
-                "http://localhost:5173/#/overlay-capture",
-              );
-              x.electronWindow.webContents.openDevTools();
-            } else {
-              x.electronWindow.loadFile(
-                path.join(__dirname, "../dist/frontend/index.html"),
-                { hash: "/overlay-capture" },
-              );
-            }
+            loadPage(x.electronWindow, "/overlay-capture");
+            if (IS_DEVELOPING) x.electronWindow.webContents.openDevTools();
           }),
         );
 
@@ -138,7 +124,7 @@ async function getScreenshot(
 //=====================================================================
 // Create and open window
 //=====================================================================
-function createElectronWindow(isDev: boolean, dipBounds: Rectangle): BrowserWindow {
+function createElectronWindow(dipBounds: Rectangle): BrowserWindow {
   // Create window
   const newWindow = new BrowserWindow({
     x: dipBounds.x,
@@ -156,10 +142,7 @@ function createElectronWindow(isDev: boolean, dipBounds: Rectangle): BrowserWind
     hasShadow: false,
     backgroundColor: "#00000000",
     webPreferences: {
-      preload: path.join(
-        __dirname,
-        isDev ? "../../preload.js" : "../../dist/preload.js",
-      ),
+      preload: PRELOAD_PATH,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,

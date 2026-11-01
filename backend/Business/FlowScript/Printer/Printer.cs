@@ -135,6 +135,9 @@ namespace Business.FlowScript.Text
 
         private static void WriteFlowFields(FlowScriptSchema schema, StringBuilder builder)
         {
+            string scriptLanguage = new ScriptLanguageWriter().Write();
+            builder.AppendLine(scriptLanguage);
+
             string flowName = new FlowNameWriter(schema.Flow).Write();
             builder.AppendLine(flowName);
 

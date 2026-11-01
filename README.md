@@ -265,34 +265,38 @@ on a 100% one.
 ```bash
 git clone https://github.com/alekoundas/StepinFlow.git
 cd StepinFlow
-npm run install:full
-npm run dev
+npm run setup
 ```
 
-`install:full` installs both npm projects and downloads the embedding model the assistant's
-documentation search uses. `dev` starts the Vite dev server, the .NET host and Electron together.
-The SQLite database is created on first run and migrations are applied at startup.
+`setup` installs both npm projects and downloads the model files the assistant's documentation
+search and the recorder use. Then start the backend from Visual Studio (`backend/backend.slnx`, with
+`App` as the startup project) and press F5 in VS Code with **StepinFlow** picked in Run and Debug:
+it builds Electron, starts Vite, opens the app, and stops Vite when you stop. `npm run dev` does the
+same from a terminal, and `npm run dev:spawn` has Electron start the backend itself. The SQLite
+database is created on first run and migrations are applied at startup.
 
 ### Build a release
 
-```bash
-npm run build
-```
-
-Publishes the backend self-contained for `win-x64`, builds the renderer, and packages everything with
-electron-builder into `release/`.
+Releases come from the **Release** workflow on GitHub: Actions, Release, Run workflow, and pick
+patch, minor or major. It tests, builds, tags the commit and leaves a draft release; publishing the
+draft is the release. `npm run package` makes the same installer locally, in `release/`, without
+publishing it.
 
 ### Useful scripts
 
 | Script | What it does |
 |---|---|
-| `npm run dev` | Everything, with hot reload |
-| `npm run dev:no-api` | UI only, no .NET host |
+| `npm run setup` | Both npm installs and the model files |
+| `npm run dev` | Vite and Electron, against the backend running in Visual Studio |
+| `npm run dev:spawn` | The same, with Electron starting the backend through `dotnet run` |
+| `npm run build` | The frontend, the backend and Electron into `dist/` |
+| `npm run package` | `build`, then an installer in `release/`, not published |
+| `npm run test` | Every backend test project, then the type checks |
 | `npm run test:backend` | Every backend test project |
 | `npm run coverage:backend` | The tests with coverage, as an HTML report in `backend/coveragereport/` |
+| `npm run typecheck` | The frontend's and Electron's type checks |
 | `npm run lint` | ESLint over the renderer |
-| `npm run protobuf:generate` | Regenerate the protobuf bindings |
-| `npm run model:download` | Fetch the embedding model, if it is missing |
+| `npm run models` | Fetch the model files that are missing |
 
 ---
 

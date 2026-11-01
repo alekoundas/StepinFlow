@@ -24,6 +24,9 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "not a header" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Colour: red" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Id: nope" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Script Language: 1" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Script Language: v1.0" },
+            { DiagnosticCodeEnum.SCRIPT_LANGUAGE_NEWER, "Script Language: v2" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Sizes: 1920by1080" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  Browser window process <[ chrome.exe ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> window chrome" },
@@ -202,6 +205,23 @@ namespace Business.Tests.FlowScript
 
             diagnostic.Code.ShouldBe(DiagnosticCodeEnum.NAME_DUPLICATE);
             (diagnostic.Line, diagnostic.Column).ShouldBe((7, 4));
+        }
+
+        // What follows is in a grammar this app does not know, so reading on would only add noise.
+        [Fact]
+        public void A_newer_script_language_is_refused_without_reading_further()
+        {
+            Diagnostic diagnostic = Read("Script Language: v2\nFlow: Test\nSteps:\nFrobnicate everything").ShouldHaveSingleItem();
+
+            diagnostic.Code.ShouldBe(DiagnosticCodeEnum.SCRIPT_LANGUAGE_NEWER);
+            diagnostic.Line.ShouldBe(1);
+            diagnostic.Message.ShouldBe("The file is in script language v2, and this StepinFlow reads up to v1. Update StepinFlow to open it.");
+        }
+
+        [Fact]
+        public void A_file_from_before_the_script_language_line_is_read_as_now()
+        {
+            new Scanner().Read(Header + "Steps:\nWait 800ms").ScriptLanguageVersion.ShouldBe(1);
         }
 
         [Fact]

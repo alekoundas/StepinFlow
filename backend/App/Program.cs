@@ -1,4 +1,6 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -188,6 +190,7 @@ namespace App
             builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
             builder.Services.AddHostedService<HostedBroadcastPipeListener>();// <- Background service!
             builder.Services.AddHostedService<HostedExecutionEngine>(); // After the pipes, so it stops before them.
+            builder.Services.AddHostedService<HostedParentProcessWatcher>();
 
             // IPC handlers.
             builder.Services.AddTransient<CreateFlowHandler>();
@@ -457,6 +460,31 @@ namespace App
                     _logger.LogError(exception, "Building the ai document index failed.");
                 }
             }, cancellationToken);
+        }
+    }
+
+    // Leave with the app that started this one, however it went: a debugger's Stop and a crash
+    // never say goodbye. Only when started with --parent-pid, so a backend run on its own stays up.
+    internal sealed class HostedParentProcessWatcher : BackgroundService
+    {
+        private readonly IProcessService _processService;
+        private readonly IHostApplicationLifetime _lifetime;
+        private readonly string? _parentProcessId;
+
+        public HostedParentProcessWatcher(IProcessService processService, IHostApplicationLifetime lifetime, IConfiguration configuration)
+        {
+            _processService = processService;
+            _lifetime = lifetime;
+            _parentProcessId = configuration["parent-pid"];
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            if (!int.TryParse(_parentProcessId, NumberStyles.None, CultureInfo.InvariantCulture, out int parentProcessId))
+                return;
+
+            await _processService.WaitForExitAsync(parentProcessId, cancellationToken);
+            _lifetime.StopApplication();
         }
     }
 

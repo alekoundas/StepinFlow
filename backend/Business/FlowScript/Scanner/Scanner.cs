@@ -39,6 +39,15 @@ namespace Business.FlowScript.Scanner
                 {
                     flowScriptSchema.Diagnostics.Add(error.Diagnostic);
                 }
+
+                // The rest would be read as errors, none of which says the one thing that matters.
+                if (flowScriptSchema.ScriptLanguageVersion > ScriptLanguage.CURRENT_VERSION)
+                {
+                    flowScriptSchema.Diagnostics.Add(Diagnostic.Error(DiagnosticCodeEnum.SCRIPT_LANGUAGE_NEWER, line.Number, 1,
+                        $"The file is in script language {ScriptLanguage.VERSION_PREFIX}{flowScriptSchema.ScriptLanguageVersion}, and this StepinFlow reads up to {ScriptLanguage.VERSION_PREFIX}{ScriptLanguage.CURRENT_VERSION}. Update StepinFlow to open it."));
+
+                    return flowScriptSchema;
+                }
             }
 
             parser.Finish();

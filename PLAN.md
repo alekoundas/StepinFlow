@@ -78,88 +78,25 @@ the Application field, launching an area, and browser tabs.
 
 ### 5.16. A version, a publish workflow, and F5
 
-Decided 2026-11-01. No release has come from a workflow yet: `package.json`'s scripts grew one at a
-time, the packaged path is untried, and whether Electron starts the backend or connects to one is a
-constant in `electron/main.ts`. In this order.
+Decided and built 2026-11-01 (`PROJECT.md` §2 Building and releasing, §4 and §7): the release
+breakers, how Electron reaches the backend, the scripts, F5, versions, the Release workflow and
+`Script Language: v1`. Left:
 
-**What a release would break today**
-
-- [ ] **The packaged app has no `protobuf.proto`.** `protobuf:copy` puts it in `electron/build`,
-      `build:electron` compiles to `dist/`, and `electron/protobuf/protobuf.ts` reads it from beside
-      itself. Not confirmed by a build.
-- [ ] **DevTools open in a release.** `createWindow` calls `openDevTools()` on both sides.
-- [ ] **`0.1.0-build16` sorts as text.** Semver compares `build16` with `build9` character by
-      character, so the updater would take build 10 for older than build 9. The versions below
-      replace it.
-- [ ] **Delete `.github/workflows/python-publish.yml`**, GitHub's PyPI template.
-
-**How Electron reaches the backend**
-
-- [ ] **Two questions where `isDev` answers both.** Where the page comes from is `app.isPackaged`:
-      the built files, or Vite. How the backend is reached is `STEPINFLOW_BACKEND`, `attach` or
-      `spawn`. A packaged app always spawns its own `App.exe`; an unpackaged one attaches by default,
-      since the backend runs in Visual Studio, and `dev:spawn` spawns `dotnet run`. `ENABLE_DEBUG`
-      goes.
-- [ ] **The backend leaves with Electron.** Electron passes its process id, and the backend exits
-      once that process is gone. Killing `dotnet run` leaves its `App.exe` behind on Windows, and an
-      Electron that is killed never reaches `before-quit` - a debugger's Stop and a crash included.
-
-Dev and a release share `%LOCALAPPDATA%\StepinFlow_v2` and the pipe names on purpose: they are never
-open together, and the files are backed up.
-
-**`package.json`**
-
-- [ ] **One script per job.** `setup` (both installs and the models), `models`, `dev` (Vite and
-      Electron, attaching), `dev:spawn`, `dev:frontend`, `dev:electron`, `build` (everything into
-      `dist/`, no installer), `package` (an installer, not published), `release` (CI only, published
-      to a draft), `test`, `lint`, `clean`. `protobuf:generate` and `dev:no-api` go: nothing reads
-      the first's output, and `dev` is the second.
-- [ ] **`models` as a Node script** that skips a file already there. Today's is a chain of `cmd`
-      `if not exist`, which runs nowhere but Windows' `cmd`.
-- [ ] **Electron compiles to one folder in dev and in a release**, with the `.proto` beside it, so
-      the preload is found by one path rather than `isDev ? "preload.js" : "../dist/preload.js"`.
-
-**F5**
-
-- [ ] **One launch configuration.** Its pre-launch task compiles Electron and starts Vite as a
-      background task side by side, and Electron starts once Vite prints `Local:`, which replaces
-      `wait-on`. Stop, or closing the window, ends the session, and a post-debug task then
-      terminates Vite through `workbench.action.tasks.terminate`. The renderer attach stays in the
-      compound, with `stopAll`. The backend in Visual Studio is left alone.
-
-**Versions**
-
-- [ ] **Major.minor.patch, and the git tag is the one place it lives.** The workflow is asked for
-      patch, minor or major, works out the next number from the newest `v*` tag, tags it, and
-      stamps it into Electron's version for the updater and into the backend's with `-p:Version=`.
-      `package.json` in git says `0.0.0-dev`, so CI never commits. Patch is fixes with the script
-      unchanged; minor is anything new, a script word an older app cannot read included; major is
-      something that stops working. 0.x until compatibility is a promise, and a prerelease is
-      `-beta.1`.
-
-**The publish workflow**
-
-- [ ] **A Run button on a Windows runner.** Check out with tags; Node and .NET 10; `npm ci`; the
-      models restored from a cache keyed on their release tags; the backend tests; the frontend's
-      type check; then build, package and publish to a draft release, with the `latest.yml` the
-      updater reads. Publishing the draft is the release. Lint joins once its three errors are
-      fixed. Windows only while the backend targets `net10.0-windows`; macOS and Linux are a matrix
-      once they have a platform layer.
-- [ ] **`A_remote_that_cannot_be_reached_says_so` failed once in a full run** and passed alone.
-      Find out why and fix it, rather than have the workflow retry. It compares libgit2's exact
-      wording, against a path in the temp folder.
+- [ ] **Try it by hand.** Verified by the type checks, `npm run build` and the tests, never run.
+      F5 with StepinFlow picked: Vite starts, the app opens against the backend in Visual Studio,
+      and Stop, or closing the window, closes Vite. "Electron, starting the backend": the backend
+      leaves when Electron does, Stop included. `npm run package` and the installed app: every
+      window's page loads - the main one, the overlay, the image editor, the recording bar - with no
+      DevTools and no console window, and the backend stops on close.
+- [ ] **The Release workflow's first run.** Minor gives v0.1.0, which the updater counts as newer
+      than the `0.1.0-build16` already out. Check the draft has the installer and `latest.yml`, and
+      that its tag is the commit built. A beta is published by hand as a pre-release, or the
+      updater offers it to everyone.
+- [ ] **`A_remote_that_cannot_be_reached_says_so` failed once in a full run** and passed alone. Not
+      seen since, in seven full runs and fifteen of its project alone; its output was not kept, so the
+      next failure's message is the lead. It compares libgit2's exact wording, against a path in
+      the temp folder. The workflow does not retry it.
 - [ ] Later: signing, so Windows SmartScreen stops warning on every install.
-
-**The script's version**
-
-- [ ] **The first header line says which version of the script language a file is in**,
-      `Script Language: v1`. One counter, raised only when the grammar changes and never by an app
-      release, so a patch release does not rewrite the first line of every flow in the repository.
-      The reader upgrades anything older, the writer writes only the newest, and a newer file is
-      refused, saying which version it needs and which this app reads up to. `flow-format.md` keeps
-      which release brought each. A file without the line is from before it and is read as now, the
-      old forms read today (`tab url contains`, `Launch … opens`, a window step naming its own
-      window) included; from v2 on, a converter checks the version rather than the shape of a line.
 
 ---
 

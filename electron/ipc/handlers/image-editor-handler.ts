@@ -19,8 +19,6 @@
  */
 
 import { BrowserWindow, ipcMain } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
 import {
   ImageEditorModeEnum,
@@ -28,16 +26,13 @@ import {
   type ImageEditorReadyResponse,
   type ImageEditorResult,
 } from "../../shared/types.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { IS_DEVELOPING, loadPage, PRELOAD_PATH } from "../../app-paths.js";
 
 // Make sure the user cant open a second editor window.
 let isWindowOpen = false;
 
 export async function registerImageEditorHandler(
   mainWindow: BrowserWindow | null,
-  isDev: boolean,
 ): Promise<void> {
   ipcMain.handle(
     IPC_CHANNELS.EDITOR_OPEN_WINDOW,
@@ -58,22 +53,15 @@ export async function registerImageEditorHandler(
 
       try {
         // 1. Create the editor window.
-        const editorWindow = createElectronWindow(isDev, mainWindow, mode);
+        const editorWindow = createElectronWindow(mainWindow, mode);
 
         // 2. Register the ready signal BEFORE loading the page, otherwise the
         //    page can call it before the handler exists.
         registerSignalReadyHandler(editorWindow, request.imageBase64, mode);
 
         // 3. Navigate to the image editor page.
-        if (isDev) {
-          await editorWindow.loadURL("http://localhost:5173/#/image-editor");
-          editorWindow.webContents.openDevTools({ mode: "detach" });
-        } else {
-          await editorWindow.loadFile(
-            path.join(__dirname, "../dist/frontend/index.html"),
-            { hash: "/image-editor" },
-          );
-        }
+        await loadPage(editorWindow, "/image-editor");
+        if (IS_DEVELOPING) editorWindow.webContents.openDevTools({ mode: "detach" });
 
         // 4. Wait for the user to save or cancel.
         return await registerSignalCloseHandler(editorWindow);
@@ -92,7 +80,6 @@ export async function registerImageEditorHandler(
 // Create and open window
 //=====================================================================
 function createElectronWindow(
-  isDev: boolean,
   parent: BrowserWindow | null,
   mode: ImageEditorModeEnum,
 ): BrowserWindow {
@@ -111,10 +98,7 @@ function createElectronWindow(
     parent: parent ?? undefined,
     modal: false,
     webPreferences: {
-      preload: path.join(
-        __dirname,
-        isDev ? "../../preload.js" : "../../dist/preload.js",
-      ),
+      preload: PRELOAD_PATH,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,

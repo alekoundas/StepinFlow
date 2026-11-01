@@ -16,7 +16,8 @@ namespace Business.FlowScript.Diagnostics
         // Any line: the message and the column say which token and what could have stood there.
         TOKEN_UNEXPECTED,
 
-        // Header: no flow line, or a name that cannot be the file the flow exports to.
+        // Header: a newer script language than this app reads, no flow line, or a name that cannot be the file the flow exports to.
+        SCRIPT_LANGUAGE_NEWER,
         FLOW_LINE_MISSING,
         FLOW_NAME_INVALID,
 

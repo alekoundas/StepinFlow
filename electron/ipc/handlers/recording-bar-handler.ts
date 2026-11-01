@@ -12,12 +12,8 @@
  */
 
 import { BrowserWindow, ipcMain, screen } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { loadPage, PRELOAD_PATH } from "../../app-paths.js";
 
 // The toolbar alone. The page resizes it as soon as it has drawn.
 const INITIAL_WIDTH = 640;
@@ -26,16 +22,13 @@ const TOP_MARGIN = 16;
 
 let barWindow: BrowserWindow | null = null;
 
-export function registerRecordingBarHandler(
-  mainWindow: BrowserWindow | null,
-  isDev: boolean,
-): void {
+export function registerRecordingBarHandler(mainWindow: BrowserWindow | null): void {
   ipcMain.handle(
     IPC_CHANNELS.RECORDING_BAR_OPEN_WINDOW,
     async (_event, flowId: number, setupFlowId: number | null): Promise<void> => {
       if (barWindow && !barWindow.isDestroyed()) return;
 
-      const bar = createElectronWindow(isDev);
+      const bar = createElectronWindow();
       barWindow = bar;
 
       // A bar left behind on its own would keep the app open with nothing to go back to.
@@ -57,13 +50,7 @@ export function registerRecordingBarHandler(
       const hash = `/recording-bar?${query.toString()}`;
 
       try {
-        if (isDev) {
-          await bar.loadURL(`http://localhost:5173/#${hash}`);
-        } else {
-          await bar.loadFile(path.join(__dirname, "../dist/frontend/index.html"), {
-            hash,
-          });
-        }
+        await loadPage(bar, hash);
       } catch (error) {
         console.error("[RecordingBarHandler]: Failed to open the bar:", error);
         if (!bar.isDestroyed()) bar.destroy();
@@ -102,7 +89,7 @@ export function registerRecordingBarHandler(
 //=====================================================================
 // Create and open window
 //=====================================================================
-function createElectronWindow(isDev: boolean): BrowserWindow {
+function createElectronWindow(): BrowserWindow {
   // Top centre of the screen the tester is on, which is where they clicked Start.
   const cursor = screen.getCursorScreenPoint();
   const workArea = screen.getDisplayNearestPoint(cursor).workArea;
@@ -126,10 +113,7 @@ function createElectronWindow(isDev: boolean): BrowserWindow {
     title: "Recording",
     backgroundColor: "#00000000",
     webPreferences: {
-      preload: path.join(
-        __dirname,
-        isDev ? "../../preload.js" : "../../dist/preload.js",
-      ),
+      preload: PRELOAD_PATH,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,

@@ -24,5 +24,11 @@ namespace Core.Ports
         /// rather than waiting for it to close. Never throws: null when it started, else why not.
         /// </summary>
         string? Launch(string program, string arguments, string workingDirectory);
+
+        /// <summary>
+        /// Returns once the process has exited, and at once when it is not running. Throws
+        /// OperationCanceledException when cancelled first.
+        /// </summary>
+        Task WaitForExitAsync(int processId, CancellationToken ct);
     }
 }

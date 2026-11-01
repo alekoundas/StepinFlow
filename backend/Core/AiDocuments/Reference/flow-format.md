@@ -16,6 +16,7 @@ every step of the flow, and the file wins.
 ## A complete flow
 
 ```
+Script Language: v1
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Kind:    qa test
@@ -112,6 +113,24 @@ Sub Flow  <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 
 Everything the reader needs before the first step. Declared once, referenced by name.
 
+### Script Language
+
+```
+Script Language: v1
+```
+
+Which version of this language the file is written in, as the first line. It is raised only when the
+grammar changes, never by a StepinFlow release, so updating the app does not change a file's first
+line. A file without it is read as v1, so a script written by hand may leave it out.
+
+A file in a newer version than this app reads is refused at that line with `SCRIPT_LANGUAGE_NEWER`,
+which names both versions: nothing after it is read, since every word the app does not know would be
+an error of its own. An older version is read and upgraded, and the printer writes the newest.
+
+| Version | Since |
+|---|---|
+| v1 | the first release from the Release workflow |
+
 ### Flow and Id
 
 ```
@@ -165,7 +184,8 @@ them: `Flow:`, `Id:`, a `#` comment and a `##` section.
 
 ### Every word means something
 
-Unquoted, a word is either a keyword or a number - `0.85`, `-10`, `800ms`, `120dpi`, `1920x1080`.
+Unquoted, a word is a keyword, a number - `0.85`, `-10`, `800ms`, `120dpi`, `1920x1080` - or the
+version `v1`.
 Anything else is an error.
 
 A line is read in the order its parts are written here, to its end. A word nothing on that line
@@ -742,7 +762,7 @@ half-replaced.
 have, are both errors with a line and a column - nothing is dropped and nothing is guessed. Every
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
-line indented too far, a template described twice, no `Flow:` line, a flow name that cannot be a
+newer script language, a line indented too far, a template described twice, no `Flow:` line, a flow name that cannot be a
 file name, a name nothing above declares, a name declared twice, an area inside one that is already
 inside another, a second `main` area.
 

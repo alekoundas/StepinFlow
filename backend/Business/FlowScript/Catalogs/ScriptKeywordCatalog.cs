@@ -49,6 +49,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
 
             // Flow
+            new ScriptKeyword("Script Language:", ScriptSymbolEnum.FLOWFIELD_SCRIPT_LANGUAGE),
             new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
             new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
             new ScriptKeyword("Kind:", ScriptSymbolEnum.FLOWFIELD_KIND),

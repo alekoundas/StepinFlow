@@ -1,3 +1,4 @@
+using Business.FlowScript.Catalogs;
 using Business.FlowScript.Diagnostics;
 using Core.Models.Database;
 
@@ -25,6 +26,9 @@ namespace Business.FlowScript.Models
 
         /// <summary>Whether the file had a <c>Kind:</c> line. One from before it keeps what the flow already was.</summary>
         public bool HasKind { get; set; }
+
+        /// <summary>From the <c>Script Language:</c> line. A file from before the line is read as now.</summary>
+        public int ScriptLanguageVersion { get; set; } = ScriptLanguage.CURRENT_VERSION;
 
         public List<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();
 

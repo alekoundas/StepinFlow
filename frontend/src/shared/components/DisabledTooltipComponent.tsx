@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Tooltip } from "primereact/tooltip";
 import type { TooltipOptions } from "primereact/tooltip/tooltipoptions";
 
@@ -35,7 +35,8 @@ export default function DisabledTooltipComponent({
       </span>
       {tooltip && (
         <Tooltip
-          target={wrapper}
+          // PrimeReact's type predates React 19's refs, which hold null until mounted.
+          target={wrapper as RefObject<HTMLElement>}
           content={tooltip}
           position={position}
         />

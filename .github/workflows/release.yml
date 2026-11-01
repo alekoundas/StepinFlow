@@ -1,0 +1,119 @@
+name: Release
+
+# A Run button. Pick the bump, and the next number is worked out from the newest v* tag: the tag is
+# the one place a version lives. package.json in git says 0.0.0-dev and is stamped here, never
+# committed. The release lands as a draft with the latest.yml the updater reads, and publishing the
+# draft is the release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "patch is fixes, minor is anything new, major is something that stops working"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      beta:
+        description: "A prerelease of that number, such as 0.4.0-beta.1"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    # Windows only while the backend targets net10.0-windows and has no other platform layer.
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # every tag, to work out the next number
+
+      # Only a final version counts as the base, so a beta of 0.4.0 still leads to 0.4.0.
+      - name: Work out the version
+        id: version
+        run: |
+          latest=$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n 1)
+          IFS=. read -r major minor patch <<< "${latest:-0.0.0}"
+
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          version="$major.$minor.$patch"
+
+          if [ "${{ inputs.beta }}" = "true" ]; then
+            betas=$(git tag --list "v$version-beta.*" | wc -l)
+            version="$version-beta.$((betas + 1))"
+          fi
+
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "::error::v$version is tagged already."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$version"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install
+        run: |
+          npm ci
+          npm ci --prefix frontend
+
+      # A model never changes under its release tag, and the tags are listed in the download
+      # script, so a cache keyed on that script is never stale.
+      - name: Restore the models
+        uses: actions/cache@v4
+        with:
+          path: backend/Core/AiModels
+          key: models-${{ hashFiles('scripts/download-models.mjs') }}
+
+      - name: Download the models missing
+        run: npm run models
+
+      # Read by Electron's version for the updater, and by App.csproj for the backend's.
+      - name: Stamp the version
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+
+      # The tests that need a live desktop are left out by default.
+      - name: Backend tests
+        run: npm run test:backend
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # Tagged before publishing, so the draft's tag is the commit that was built rather than
+      # wherever main is when the draft is published.
+      - name: Tag
+        run: |
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Package and publish a draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --publish always

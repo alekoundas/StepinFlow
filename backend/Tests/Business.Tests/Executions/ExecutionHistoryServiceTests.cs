@@ -75,7 +75,7 @@ namespace Business.Tests.Executions
             Execution execution = await StartAsync();
 
             execution.HasUncommittedChanges.ShouldBe(true);
-            execution.Script.ShouldNotBeNull().ShouldStartWith("Flow:");
+            execution.Script.ShouldNotBeNull().ShouldStartWith("Script Language: v1");
         }
 
         // The record is lost, never the execution.
@@ -87,7 +87,7 @@ namespace Business.Tests.Executions
             Execution execution = await StartAsync();
 
             (execution.CommitSha, execution.HasUncommittedChanges).ShouldBe((null, null));
-            execution.Script.ShouldNotBeNull().ShouldStartWith("Flow:");
+            execution.Script.ShouldNotBeNull().ShouldStartWith("Script Language: v1");
         }
     }
 }

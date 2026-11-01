@@ -65,6 +65,23 @@ namespace Platform.Windows.SystemActions
             }
         }
 
+        public async Task WaitForExitAsync(int processId, CancellationToken ct)
+        {
+            Process process;
+            try
+            {
+                process = Process.GetProcessById(processId);
+            }
+            catch (ArgumentException)
+            {
+                // Not running, so it has already exited.
+                return;
+            }
+
+            using (process)
+                await process.WaitForExitAsync(ct);
+        }
+
         public string? GetExecutablePath(int processId)
         {
             try

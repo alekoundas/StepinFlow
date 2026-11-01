@@ -2,29 +2,46 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Clean",
+      "label": "Build Electron",
       "type": "npm",
-      "script": "clean",
-      "group": "build"
-    },
-
-    {
-      "label": "Copy_Protobuf",
-      "type": "npm",
-      "script": "protobuf:copy",
-      "group": "build"
-    },
-    {
-      "label": "Build_Electron_TS",
-      "type": "npm",
-      "script": "dev:electron-build",
-      "group": "build",
+      "script": "build:electron",
       "problemMatcher": ["$tsc"]
     },
     {
-      "label": "preLaunchTasks",
-      "dependsOn": ["Copy_Protobuf", "Build_Electron_TS"],
-      "dependsOrder": "sequence" // "sequence" or "parallel" (default = parallel)
+      // Background: the debugger goes on once Vite says it is ready, and Vite keeps serving.
+      "label": "Vite",
+      "type": "npm",
+      "script": "dev:frontend",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^never matches$" },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "ready in"
+        }
+      }
+    },
+    {
+      "label": "Start",
+      "dependsOn": ["Build Electron", "Vite"]
+    },
+    {
+      // Run after the debug session ends, by Stop or by closing the window.
+      "label": "Stop Vite",
+      "type": "shell",
+      "command": "echo ${input:terminateVite}",
+      "presentation": { "reveal": "never" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "terminateVite",
+      "type": "command",
+      "command": "workbench.action.tasks.terminate",
+      "args": "Vite"
     }
   ]
 }

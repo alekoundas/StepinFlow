@@ -11,6 +11,7 @@ namespace Business.FlowScript.Catalogs
         COMMENT,
 
         // Flow
+        FLOWFIELD_SCRIPT_LANGUAGE,
         FLOWFIELD_NAME,
         FLOWFIELD_ID,
         FLOWFIELD_KIND,

@@ -324,13 +324,25 @@ implement `IWindowService` and find out — but they do not make it cheap.
 
 Project references resolve at **build** time, not runtime. Nothing detects the current OS.
 
-```bash
-npm run build
-```
+`npm run build` publishes the backend with `dotnet publish -c Release -r win-x64 --self-contained
+-p:PublishSingleFile=true` into `dist/backend/`, builds the renderer into `dist/frontend/` and
+Electron into `dist/electron/`, with `protobuf.proto` beside the code that reads it. Development
+compiles Electron to the same place, so every window finds its preload and its page one way
+(`electron/app-paths.ts`): Vite's page while developing, the built one once packaged.
+`npm run package` then makes the installer in `release/`. The RID is named explicitly; the backend
+exe is carried as an electron-builder `extraResources` entry, and only `dist/electron` and
+`dist/frontend` go in the archive.
 
-runs `dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true` into
-`dist/backend/`, builds the renderer, then packages with electron-builder. The RID is named
-explicitly; the backend exe is carried as an electron-builder `extraResources` entry.
+**A release is the Release workflow** (`.github/workflows/release.yml`), a Run button on a Windows
+runner. It is asked for patch, minor or major and works out the next number from the newest final
+`v*` tag; a beta, `0.4.0-beta.1`, counts up under the number it leads to. The tag is the one place a
+version lives: `package.json` in git says `0.0.0-dev`, the workflow stamps it with `npm version`,
+Electron's version for the updater comes from it, and `App.csproj` reads it as
+`$(npm_package_version)` for the backend's. Patch is fixes with the script unchanged, minor is
+anything new - a script word an older app cannot read included - and major is something that stops
+working. The workflow runs the backend tests and the type checks, builds, tags the commit it built,
+and publishes a draft release with the `latest.yml` that `electron-updater` reads. Publishing the
+draft is the release. It is unsigned, so Windows SmartScreen warns on install.
 
 Per-RID publishing is not avoidable here even in principle — the native dependencies (OpenCV,
 libuiohook) ship different binaries per platform, so there is no single artifact that runs on both.
@@ -402,6 +414,14 @@ Three processes, two named pipes.
 
 The .NET host owns the database, the screen, the mouse and the keyboard. Electron is the shell and
 the bridge; the React renderer never talks to .NET directly.
+
+A release's Electron starts its own `App.exe`. While developing, Electron connects to the backend
+already running in Visual Studio, or starts it with `dotnet run` when given `--spawn-backend`
+(`npm run dev:spawn`). A backend Electron starts is given `--parent-pid` and stops once that process
+is gone, which a debugger's Stop and a crash would otherwise leave running; its output is streamed
+into Electron's log rather than buffered, since a buffer that fills kills the process. F5 in VS Code,
+with StepinFlow picked in Run and Debug, builds Electron, starts Vite as a background task, attaches
+to the renderer, and stops Vite when the session ends.
 
 **Only three protobuf messages exist.** The envelope is protobuf, the body is JSON bytes:
 
@@ -1061,6 +1081,7 @@ A flow exports to a `.sflw` text file. `flow-format.md` (with the AI documents) 
 decisions behind it.
 
 ```
+Script Language: v1
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Sizes:   1920x1080 390x844
@@ -1748,7 +1769,7 @@ same way with what the tester wrote (§6).
 Copyright Microsoft - the earlier `icon_detect` is AGPL-3.0, inherited from Ultralytics, and is not
 used. Microsoft ships it as TorchScript; it was exported once to ONNX (opset 17, with a height and
 width that can vary) and is hosted as the `vision-v1` release asset beside its licence, which
-`npm run model:download` fetches. The resize, the decoding of its three grids and the suppression are
+`npm run models` fetches. The resize, the decoding of its three grids and the suppression are
 C# (`ElementDetector`), as OmniParser's `util/yolov9.py` does them in Python. It finds what a
 recorded click hit (§6) and reads nothing out of the machine.
 
@@ -1941,6 +1962,20 @@ Git decides binary or text by looking for NUL bytes, not by extension, so a UTF-
 correctly with no configuration. What does want configuring is line endings: `*.sflw text eol=lf` in
 `.gitattributes`, because flows are authored on Windows and CI runs on Linux, and the round-trip
 test compares bytes.
+
+### The file says which version of the language it is in
+
+`Script Language: v1` is the first line the printer writes (`Catalogs/ScriptLanguage`). It is one
+counter, raised only when the grammar changes and never by an app release, so updating StepinFlow
+does not rewrite the first line of every flow in the repository; the app's own version lives in the
+git tag (§2, Building and releasing). The reader upgrades anything older and the writer writes only
+the newest. A file in a newer version stops at that line with `SCRIPT_LANGUAGE_NEWER`, which says
+the version it needs and the one this app reads up to, rather than reading on into a page of errors
+about words it has never heard of. Reading forwards only is the usual rule for documents, and the
+right one here: the parser refuses a word it does not know, and a script that drives the mouse is
+better refused than half understood. A file without the line is from before it and is read as v1,
+the old forms read today included; from v2 on, a converter checks the version rather than the
+shape of a line.
 
 ### A flow's name is a file name on all three systems
 

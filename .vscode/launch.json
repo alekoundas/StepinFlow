@@ -1,41 +1,56 @@
 {
+  // F5: pick "StepinFlow" once in Run and Debug. It builds Electron, starts Vite, opens the app
+  // against the backend running in Visual Studio, and stops Vite when the session ends.
+  "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Electron Main",
+      "name": "Electron",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
       "windows": {
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
       },
-      "runtimeArgs": [
-        "--remote-debugging-port=9222", // Enables Chrome debugging for renderer
-        "electron/build/main.js" // Points to your compiled TS (after task)
-      ],
+      "runtimeArgs": ["--remote-debugging-port=9222", "dist/electron/main.js"],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "preLaunchTasks", // Runs task before launch
+      "preLaunchTask": "Start",
+      "postDebugTask": "Stop Vite",
       "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/electron/build/**/*.js"]
+      "outFiles": ["${workspaceFolder}/dist/electron/**/*.js"]
     },
     {
-      "name": "Attach to Renderer (Chrome)",
+      // The same, with Electron starting the backend itself through dotnet run.
+      "name": "Electron, starting the backend",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "runtimeArgs": ["--remote-debugging-port=9222", "dist/electron/main.js", "--spawn-backend"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Start",
+      "postDebugTask": "Stop Vite",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/electron/**/*.js"]
+    },
+    {
+      "name": "Attach to Renderer",
       "type": "chrome",
       "request": "attach",
-      "port": 9222, // Matches above
-      "url": "http://localhost:5173", // Your Vite dev server URL
+      "port": 9222,
+      "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/frontend",
-      "sourceMaps": true
-      // "timeout": 30000 // Give time for Electron to start
+      "sourceMaps": true,
+      // Electron opens the port only after the build and Vite are done.
+      "timeout": 60000
     }
   ],
   "compounds": [
-    // First run
-    // - npm run dev:frontend
-    // - Then run debugger (F5)
-    // Backend will be started(or not?) by Electons main.ts
     {
-      "name": "Debug Full App (Frontend + Backend + Electron)",
-      "configurations": ["Debug Electron Main", "Attach to Renderer (Chrome)"]
+      "name": "StepinFlow",
+      "configurations": ["Electron", "Attach to Renderer"],
+      "stopAll": true
     }
   ]
 }

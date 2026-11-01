@@ -1,31 +1,30 @@
 {
   "name": "stepinflow",
-  "version": "0.1.0-build16",
+  "version": "0.0.0-dev",
   "license": "GPL-3.0-or-later",
-  "main": "dist/main.js",
+  "main": "dist/electron/main.js",
   "type": "module",
   "description": "StepinFlow - Workflow automation app",
   "author": "Alex Psychogyios todo@mail.com",
   "scripts": {
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend/App && dotnet run",
-    "dev:electron-build": "tsc -p electron/electron-config.json --outDir electron/build",
-    "dev:electron": "npm run dev:electron-build && wait-on http://localhost:5173 && electron electron/build/main.js",
-    "dev": "npm run clean  && npm run protobuf:copy && concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron\" ",
-    "dev:no-api": "npm run clean && concurrently \"npm run dev:frontend\"  \"npm run dev:electron\"",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend/App && dotnet publish -c Release -r win-x64 --self-contained true /p:PublishDir=../../dist/backend/ /p:PublishSingleFile=true",
-    "build:electron": "tsc --project electron/electron-config.json --outDir ./dist ",
-    "build": "npm run clean && npm run protobuf:copy && npm run build:frontend && npm run build:backend && npm run build:electron && electron-builder",
-    "model:download": "(if not exist backend\\Core\\AiModels\\model.onnx curl -L --create-dirs -o backend/Core/AiModels/model.onnx https://github.com/alekoundas/StepinFlow/releases/download/model-v1/model.onnx) & (if not exist backend\\Core\\AiModels\\vocab.txt curl -L --create-dirs -o backend/Core/AiModels/vocab.txt https://github.com/alekoundas/StepinFlow/releases/download/model-v1/vocab.txt) & (if not exist backend\\Core\\AiModels\\icon_detect_v3.onnx curl -L --create-dirs -o backend/Core/AiModels/icon_detect_v3.onnx https://github.com/alekoundas/StepinFlow/releases/download/vision-v1/icon_detect_v3.onnx) & (if not exist backend\\Core\\AiModels\\icon_detect_v3.LICENSE.txt curl -L --create-dirs -o backend/Core/AiModels/icon_detect_v3.LICENSE.txt https://github.com/alekoundas/StepinFlow/releases/download/vision-v1/icon_detect_v3.LICENSE.txt)",
-    "install:full": "npm install && npm run model:download && cd frontend && npm install",
-    "protobuf:generate": "shx mkdir -p electron/build/protobuf && npx pbjs -t static-module -w commonjs -o electron/build/protobuf/compiled.js electron/protobuf/protobuf.proto && npx pbts -o electron/build/protobuf/compiled.d.ts electron/build/protobuf/compiled.js",
-    "protobuf:copy": "shx mkdir -p electron/build/protobuf && shx cp electron/protobuf/protobuf.proto electron/build/protobuf/protobuf.proto",
-    "lint": "cd frontend && npm run lint",
-    "lint:fix": "cd frontend && npm run lint:fix",
+    "setup": "npm install && npm install --prefix frontend && npm run models",
+    "models": "node scripts/download-models.mjs",
+    "dev": "concurrently -k -n vite,electron \"npm run dev:frontend\" \"npm run dev:electron\"",
+    "dev:spawn": "concurrently -k -n vite,electron \"npm run dev:frontend\" \"npm run dev:electron -- --spawn-backend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:electron": "npm run build:electron && wait-on http://localhost:5173 && electron dist/electron/main.js",
+    "build": "npm run clean && npm run build:frontend && npm run build:backend && npm run build:electron",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "dotnet publish backend/App/App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/backend",
+    "build:electron": "tsc -p electron/electron-config.json && shx mkdir -p dist/electron/protobuf && shx cp electron/protobuf/protobuf.proto dist/electron/protobuf/",
+    "package": "npm run build && electron-builder --publish never",
+    "test": "npm run test:backend && npm run typecheck",
     "test:backend": "cd backend && dotnet test --solution backend.slnx",
     "coverage:backend": "rimraf backend/TestResults backend/coveragereport && cd backend && dotnet test --solution backend.slnx -- --coverlet --coverlet-output-format cobertura --coverlet-include \"[Core]*\" --coverlet-include \"[DataAccess]*\" --coverlet-include \"[Business]*\" --coverlet-include \"[Transport]*\" --coverlet-include \"[Platform.Windows]*\" --coverlet-include \"[App]*\" --coverlet-exclude \"[DataAccess]DataAccess.Migrations.*\" && dotnet tool run reportgenerator -reports:TestResults/*.xml -targetdir:coveragereport -reporttypes:Html",
-    "clean": "rimraf dist release electron/build"
+    "typecheck": "npm run typecheck --prefix frontend && tsc -p electron/electron-config.json --noEmit",
+    "lint": "npm run lint --prefix frontend",
+    "lint:fix": "npm run lint:fix --prefix frontend",
+    "clean": "rimraf dist release"
   },
   "build": {
     "appId": "com.AlexPs.Stepinflow",
@@ -34,7 +33,8 @@
       "output": "release"
     },
     "files": [
-      "dist/**/**/*"
+      "dist/electron/**/*",
+      "dist/frontend/**/*"
     ],
     "extraResources": [
       {
@@ -52,7 +52,10 @@
       ]
     },
     "publish": {
-      "provider": "github"
+      "provider": "github",
+      "owner": "alekoundas",
+      "repo": "StepinFlow",
+      "releaseType": "draft"
     }
   },
   "devDependencies": {

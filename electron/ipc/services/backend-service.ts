@@ -1,13 +1,10 @@
 import { BrowserWindow } from "electron";
-import { execFile } from "child_process";
+import { spawn, type ChildProcess } from "child_process";
 import path from "path";
 import log from "electron-log";
 import net from "net";
-import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/channels.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { IS_DEVELOPING, OUT_DIR } from "../../app-paths.js";
 
 const PIPE_NAMES = {
   request: "\\\\.\\pipe\\stepinflow-request",
@@ -18,61 +15,50 @@ const MAX_ATTEMPTS = 100;
 const RETRY_DELAY_MS = 300;
 const CONNECT_TIMEOUT_MS = 2000;
 
+/**
+ * How the backend is reached. A release always starts its own App.exe. While developing, it is
+ * the one already running in Visual Studio, unless Electron was started with --spawn-backend, which
+ * starts it with dotnet run.
+ */
+export function shouldSpawnBackend(): boolean {
+  return !IS_DEVELOPING || process.argv.includes("--spawn-backend");
+}
+
 export function BackendService() {
   // ========================================================================
-  // (Production only) Spawns the .NET process
+  // Starts the .NET process
   // ========================================================================
-  const spawnDotNetProcess = (
-    browserWindow: BrowserWindow | null,
-    isDev: boolean,
-  ): ReturnType<typeof execFile> | null => {
-    let backendPath: string;
-    let args: string[] = [];
+  const spawnDotNetProcess = (browserWindow: BrowserWindow | null): ChildProcess => {
+    // The backend leaves when this process does, however this one ends.
+    const parent = ["--parent-pid", String(process.pid)];
 
-    if (isDev) {
+    let backendPath = path.join(process.resourcesPath, "backend/App.exe");
+    let args = parent;
+
+    if (IS_DEVELOPING) {
       backendPath = "dotnet";
-      args = [
-        "run",
-        "--project",
-        path.join(__dirname, "../../backend/App/App.csproj"),
-      ];
-    } else {
-      backendPath = path.join(process.resourcesPath, "backend/App.exe");
+      args = ["run", "--project", path.join(OUT_DIR, "../../backend/App/App.csproj"), "--", ...parent];
     }
 
-    const backendProcess: ReturnType<typeof execFile> | null = execFile(
-      backendPath,
-      args,
-      (error, stdout, stderr) => {
-        if (error) {
-          log.error("[ELECTRON] Failed to run .NET process:", error);
-          console.error("[ELECTRON] Failed to run .NET process:", error);
-          return;
-        }
-        if (stdout) {
-          log.log("[ELECTRON] buffered output (on exit):", stdout);
-          console.log("[ELECTRON] buffered output (on exit):", stdout);
-        }
-        if (stderr) {
-          log.error("[ELECTRON] buffered stderr (on exit):", stderr);
-          console.error("[ELECTRON] buffered stderr (on exit):", stderr);
-        }
-      },
-    );
+    // Streamed rather than buffered: a buffer has a ceiling, and passing it kills the backend.
+    const backendProcess = spawn(backendPath, args, { windowsHide: true });
+
+    backendProcess.stdout?.on("data", (chunk: Buffer) => log.info(`[BACKEND] ${chunk.toString().trimEnd()}`));
+    backendProcess.stderr?.on("data", (chunk: Buffer) => log.error(`[BACKEND] ${chunk.toString().trimEnd()}`));
 
     backendProcess.on("spawn", () => {
-      console.log("[ELECTRON] process spawned successfully");
+      log.info("[ELECTRON] Backend process started");
     });
 
-    backendProcess?.on("close", (code) => {
-      console.log(`[ELECTRON] process exited with code ${code}`);
+    backendProcess.on("error", (error) => {
+      log.error("[ELECTRON] Backend process could not start:", error);
+    });
+
+    backendProcess.on("close", (code) => {
+      log.info(`[ELECTRON] Backend process exited with code ${code}`);
       browserWindow?.webContents.send(IPC_CHANNELS.BACKEND_DISCONNECTED);
     });
 
-    // backendProcess.on("error", (err) => {
-    //   log.error("[ELECTRON] Backend process error:", err);
-    //   console.error("[ELECTRON] Backend process error:", err);
-    // });
     return backendProcess;
   };
   // ========================================================================

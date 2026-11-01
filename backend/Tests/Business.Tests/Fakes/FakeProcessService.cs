@@ -32,5 +32,10 @@ namespace Business.Tests.Fakes
             OnLaunch?.Invoke();
             return null;
         }
+
+        public Task WaitForExitAsync(int processId, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

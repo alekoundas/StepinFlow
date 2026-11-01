@@ -131,7 +131,7 @@ namespace Business.Tests.Repository
             await Service().WriteAsync([flowId], Ct);
 
             string script = await File.ReadAllTextAsync(PathOf("Login.sflw"), Ct);
-            script.ShouldStartWith("Flow:");
+            script.ShouldStartWith("Script Language: v1");
             script.ShouldContain("template-a1b2c.png");
             script.ShouldNotContain("\r");
             (await File.ReadAllBytesAsync(PathOf("Login", "template-a1b2c.png"), Ct)).ShouldBe(picture);

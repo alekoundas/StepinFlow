@@ -137,6 +137,10 @@ namespace Business.FlowScript.Parsers
         {
             switch (symbol)
             {
+                case ScriptSymbolEnum.FLOWFIELD_SCRIPT_LANGUAGE:
+                    _flowScriptSchema.ScriptLanguageVersion = new ScriptLanguageParser(line.Tokens).Parse();
+                    break;
+
                 case ScriptSymbolEnum.FLOWFIELD_NAME:
                     _flowScriptSchema.Flow.Name = new FlowNameParser(line.Tokens).Parse();
                     break;

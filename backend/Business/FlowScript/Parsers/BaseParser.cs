@@ -249,6 +249,24 @@ namespace Business.FlowScript.Parsers
         }
 
         /// <summary>
+        /// Extract a version from current token (ex. v1 -> 1).
+        /// </summary>
+        protected int ExtractVersion()
+        {
+            string prefix = ScriptLanguage.VERSION_PREFIX;
+
+            int? version = null;
+            if (CurrentToken.Kind == ScriptTokenKindEnum.UNKNOWN && CurrentToken.Value.StartsWith(prefix, StringComparison.Ordinal))
+                version = Integer(CurrentToken.Value[prefix.Length..]);
+
+            if (version == null || version <= 0)
+                throw Unexpected($"a version such as {Quoted(prefix + ScriptLanguage.CURRENT_VERSION)}");
+
+            IncreaseIndex();
+            return version.Value;
+        }
+
+        /// <summary>
         /// Extract a Guid value from current token.
         /// </summary>
         protected Guid ExtractGuid()

@@ -11,7 +11,7 @@
     <EmbeddedResource Include="AiDocuments\**\*.md" />
   </ItemGroup>
 
-  <!-- Downloaded by "npm run model:download" into AiModels/, which is gitignored. Content
+  <!-- Downloaded by "npm run models" into AiModels/, which is gitignored. Content
        rather than EmbeddedResource: it stays a loose file beside the exe, which single file
        publish leaves alone. -->
   <ItemGroup>

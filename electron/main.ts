@@ -1,8 +1,6 @@
 import { app, BrowserWindow, dialog } from "electron";
-import { execFile } from "child_process";
-import { fileURLToPath } from "url";
+import type { ChildProcess } from "child_process";
 import pkg from "electron-updater";
-import path from "path";
 // import { app, session } from 'electron';
 // import installExtension, {
 //   REACT_DEVELOPER_TOOLS,
@@ -13,41 +11,30 @@ import { registerImageEditorHandler } from "./ipc/handlers/image-editor-handler.
 import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-handler.js";
 import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
 
-import { BackendService } from "./ipc/services/backend-service.js";
+import { BackendService, shouldSpawnBackend } from "./ipc/services/backend-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
 import { registerFilesHandler } from "./ipc/handlers/files-handler.js";
+import { IS_DEVELOPING, loadPage, PRELOAD_PATH } from "./app-paths.js";
 
 const { autoUpdater } = pkg;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 let mainWindow: BrowserWindow | null = null;
-const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(
-        __dirname,
-        isDev ? "preload.js" : "../dist/preload.js",
-      ),
+      preload: PRELOAD_PATH,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
     },
   });
 
-  if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, "../dist/frontend/index.html"));
-    mainWindow.webContents.openDevTools();
-  }
+  loadPage(mainWindow);
+  if (IS_DEVELOPING) mainWindow.webContents.openDevTools();
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -69,7 +56,7 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 app.whenReady().then(async () => {
-  if (isDev) {
+  if (IS_DEVELOPING) {
     // try {
     //   await installExtension(REACT_DEVELOPER_TOOLS, {
     //     loadExtensionOptions: { allowFileAccess: true },
@@ -84,12 +71,8 @@ app.whenReady().then(async () => {
 
   createWindow();
 
-  let backendProcess: ReturnType<typeof execFile> | null = null;
-
-  const ENABLE_DEBUG = true; // true = attach to already-running backend
-  if (!ENABLE_DEBUG) {
-    backendProcess = BackendService().spawnDotNetProcess(mainWindow, isDev);
-  }
+  let backendProcess: ChildProcess | null = null;
+  if (shouldSpawnBackend()) backendProcess = BackendService().spawnDotNetProcess(mainWindow);
 
   // ======== Register IPC handlers ==========
   // One failure here used to leave every later handler unregistered while the window was
@@ -98,9 +81,9 @@ app.whenReady().then(async () => {
     registerElectronProcessHandler();
     const request = await registerBackendRequestHandler(mainWindow);
     await registerBroadcastHandler(mainWindow);
-    await registerOverlayCaptureHandler(mainWindow, isDev, request.invokeBackend);
-    await registerImageEditorHandler(mainWindow, isDev);
-    registerRecordingBarHandler(mainWindow, isDev);
+    await registerOverlayCaptureHandler(mainWindow, request.invokeBackend);
+    await registerImageEditorHandler(mainWindow);
+    registerRecordingBarHandler(mainWindow);
     registerFilesHandler(mainWindow);
   } catch (err) {
     console.error("[Main]: Failed to register IPC handlers:", err);
