@@ -69,6 +69,7 @@ namespace Transport.Ipc.Handlers
                             TitlePattern = a.TitlePattern,
                             TitleMatchMode = a.TitleMatchMode,
                             UseClientArea = a.UseClientArea,
+                            LaunchCommand = a.LaunchCommand,
 
                             TabMatchValue = a.TabMatchValue,
                             TabMatchOn = a.TabMatchOn,

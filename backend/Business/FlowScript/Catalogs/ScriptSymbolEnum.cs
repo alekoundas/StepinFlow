@@ -40,6 +40,7 @@ namespace Business.FlowScript.Catalogs
         SCALES_WITH,
         TAB,
         WITH_FRAME,
+        STARTED_BY,
 
         // FlowCsvColumn
         DEFAULT,

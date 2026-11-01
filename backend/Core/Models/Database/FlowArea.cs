@@ -55,6 +55,12 @@ namespace Core.Models.Database
         /// <summary>Client area excludes the title bar and borders, which is nearly always wanted.</summary>
         public bool UseClientArea { get; set; } = true;
 
+        /// <summary>
+        /// What a launch starts when the app is not open: a command line, or a link such as a Steam
+        /// game's. Empty when nothing launches it.
+        /// </summary>
+        public string LaunchCommand { get; set; } = string.Empty;
+
 
         // BROWSER_TAB
         public string TabMatchValue { get; set; } = string.Empty;

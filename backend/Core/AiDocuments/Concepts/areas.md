@@ -32,6 +32,14 @@ inside it and every step that focuses, resizes or moves it.
 title bar and borders, so a window with a different border style does not shift everything inside.
 It is on unless the window's line in the script ends with `with frame`.
 
+The **Application** field lists one row per app, with its open windows' titles under it, because
+the area matches the app, not one of its windows.
+
+**Started by** says what a `Launch` of the area starts when the app is not open - a command line, or
+a link. Picking an open app fills it in: its program file, or for a game in a Steam library
+`steam://rungameid/<id>`, since a Steam game started from its own program file restarts through
+Steam or refuses. `started by <[ … ]>` on the window's line in the script.
+
 ## Nesting areas inside other areas
 
 A `CUSTOM` area can sit inside another area, one level deep. The parent can be any type; the child

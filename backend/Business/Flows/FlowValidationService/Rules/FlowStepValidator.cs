@@ -57,7 +57,7 @@ namespace Business.Flows.FlowValidationService.Rules
                         break;
 
                     case FlowStepTypeEnum.SYSTEM_COMMAND:
-                        ValidateCommand(result, step);
+                        ValidateCommand(result, step, areasById);
                         break;
 
                     case FlowStepTypeEnum.WAIT:
@@ -154,7 +154,7 @@ namespace Business.Flows.FlowValidationService.Rules
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
         }
 
-        private static void ValidateCommand(FlowValidationResultDto result, FlowStep step)
+        private static void ValidateCommand(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowArea> areasById)
         {
             if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
             {
@@ -167,8 +167,18 @@ namespace Business.Flows.FlowValidationService.Rules
             // preset is added or changed.
             CommandPresetDto preset = CommandPresetCatalog.Get(step.RunCommandPreset);
 
-            if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandValue))
+            if (!preset.HasParameter || !string.IsNullOrWhiteSpace(step.RunCommandValue))
+                return;
+
+            // A launch can leave the program to the area it opens.
+            FlowArea? opens = null;
+            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowAreaId != null)
+                areasById.TryGetValue(step.FlowAreaId.Value, out opens);
+
+            if (opens == null)
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
+            else if (string.IsNullOrWhiteSpace(opens.LaunchCommand))
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"Nothing starts \"{opens.Name}\". Say what does on the Areas tab, under Started by, or give this launch a program.");
         }
     }
 }

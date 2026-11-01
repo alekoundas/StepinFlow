@@ -187,6 +187,7 @@ namespace Business.Flows.FlowValidationService
                         TitlePattern = area.TitlePattern,
                         TabMatchValue = area.TabMatchValue,
                         MonitorDeviceName = area.MonitorDeviceName,
+                        LaunchCommand = area.LaunchCommand,
                     }).ToList(),
                     FlowPoints = x.FlowPoints.Select(point => new FlowPoint { Id = point.Id, Name = point.Name, FlowAreaId = point.FlowAreaId }).ToList(),
                     FlowCsvColumns = x.FlowCsvColumns.Select(column => new FlowCsvColumn { Name = column.Name }).ToList(),

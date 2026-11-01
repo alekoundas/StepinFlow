@@ -103,7 +103,7 @@ namespace Business.Command
             {
                 Preset = RunCommandPresetEnum.LAUNCH_APP,
                 Label = "Launch an app",
-                Description = "Starts a program, a file or a URL and carries on without waiting for it to close. Given its window, it is left alone when already open, and waited for when not.",
+                Description = "Starts the app it opens, or a program, a file or a URL, and carries on without waiting for it to close. The app is left alone when it is already open, and waited for when it is not.",
                 Shell = RunCommandShellEnum.CMD,
                 CommandTemplate = "{0}",
                 HasParameter = true,

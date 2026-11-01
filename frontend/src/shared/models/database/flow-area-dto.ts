@@ -40,6 +40,9 @@ export class FlowAreaDto {
   titleMatchMode: TitleMatchModeEnum = TitleMatchModeEnum.CONTAINS;
   useClientArea: boolean = true;
 
+  /** What a launch starts when the app is not open. */
+  launchCommand: string = "";
+
   // BROWSER_TAB
   tabMatchValue: string = "";
   tabMatchOn: TabMatchOnEnum = TabMatchOnEnum.TITLE;

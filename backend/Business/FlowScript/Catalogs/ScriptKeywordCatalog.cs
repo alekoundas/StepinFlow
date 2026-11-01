@@ -76,6 +76,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("scales with", ScriptSymbolEnum.SCALES_WITH),
             new ScriptKeyword("tab", ScriptSymbolEnum.TAB),
             new ScriptKeyword("with frame", ScriptSymbolEnum.WITH_FRAME),
+            new ScriptKeyword("started by", ScriptSymbolEnum.STARTED_BY),
 
             // FlowCsvColumn
             new ScriptKeyword("default", ScriptSymbolEnum.DEFAULT),

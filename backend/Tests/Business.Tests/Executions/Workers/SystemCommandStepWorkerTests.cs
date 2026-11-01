@@ -220,5 +220,29 @@ namespace Business.Tests.Executions.Workers
             result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
             _processes.Launched.ShouldBeEmpty();
         }
+
+        [Fact]
+        public async Task A_launch_with_no_command_of_its_own_starts_what_its_area_is_started_by()
+        {
+            FlowStep launch = Launch();
+            launch.RunCommandValue = "";
+            launch.FlowArea = new FlowArea { Id = APP_WINDOW_AREA, Name = "Game", LaunchCommand = "steam://rungameid/1013320" };
+
+            await Run(launch);
+
+            _processes.Launched.ShouldBe(["steam://rungameid/1013320 | "]);
+        }
+
+        // The QA test's fresh profile and window size live on the step, not on the app.
+        [Fact]
+        public async Task A_launch_with_a_command_of_its_own_starts_that_instead()
+        {
+            FlowStep launch = Launch();
+            launch.FlowArea = new FlowArea { Id = APP_WINDOW_AREA, Name = "App", LaunchCommand = "app.exe" };
+
+            await Run(launch);
+
+            _processes.Launched.ShouldBe([$"{APP} | --profile test"]);
+        }
     }
 }

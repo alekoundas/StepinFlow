@@ -16,7 +16,7 @@ namespace Business.FlowScript.Parsers.Header
 
         public override FlowArea Parse()
         {
-            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] [tab url contains <[ z ]>] [with frame] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] [tab url contains <[ z ]>] [with frame] [started by <[ command ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
@@ -53,6 +53,14 @@ namespace Business.FlowScript.Parsers.Header
                 }
 
                 area.UseClientArea = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
+
+                // What a launch of it starts when it is not open.
+                if (ExpectOptionalKeyword(ScriptSymbolEnum.STARTED_BY))
+                {
+                    ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+                    area.LaunchCommand = ExtractText();
+                    ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+                }
             }
             // Empty is the primary monitor. A device is quoted, so one called primary is not mistaken for it.
             else if (ExpectOptionalKeyword(ScriptSymbolEnum.MONITOR))

@@ -159,11 +159,6 @@ the history.
       old casing on Windows and macOS for the same reason. Nor does the export say what it removed:
       a `RemovedTemplates` list on `FlowScriptExportResultDto`, as an import reports
       `MissingTemplates`.
-- [ ] **A browser tab area does not resolve.** Since 2026-10-24 the script carries it -
-      `tab title contains <[ … ]>` or `tab url contains <[ … ]>` after the window - so it survives a
-      round trip, but `AreaPointResolver` still refuses it ("not supported yet"), and the form warns
-      as much. Finding the tab means UI Automation on the browser window: the tab's title or
-      address, and the rectangle of its page. Windows only; macOS and Linux each need their own.
 
 ## Git
 

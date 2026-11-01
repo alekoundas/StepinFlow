@@ -274,6 +274,9 @@ export const backendApiService = {
     testWindowMatch: (dto: WindowMatchTestRequestDto) =>
       call<WindowMatchTestResultDto>("Lookup.testWindowMatch", dto),
 
+    /** What starts the app a window belongs to: its program, or a Steam game's link. Empty when unreadable. */
+    launchCommand: (processId: number) => call<string>("Lookup.launchCommand", processId),
+
     commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
     aiModels: () => call<AiModelsDto>("Lookup.aiModels"),

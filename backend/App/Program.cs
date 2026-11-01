@@ -269,6 +269,7 @@ namespace App
             builder.Services.AddTransient<GetLookupFailedStepHandler>();
             builder.Services.AddTransient<GetLookupBreakHandler>();
             builder.Services.AddTransient<TestWindowMatchHandler>();
+            builder.Services.AddTransient<GetLookupLaunchCommandHandler>();
             builder.Services.AddTransient<GetLookupFlowAreaHandler>();
             builder.Services.AddTransient<GetLookupOcrLanguagesHandler>();
             builder.Services.AddTransient<GetLookupAiModelsHandler>();

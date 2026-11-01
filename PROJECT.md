@@ -565,8 +565,9 @@ its name, description, whether it is a QA test (`Flow.IsQaTest`), and the window
 picked from the windows open now, front first and StepinFlow's own left out. Its Test finds the
 window and brings it to the front. The flow and that window as its main area are saved in one
 write, so the name is reserved, and when the tester asks, a first step that launches the
-application: `Launch` with the program file of the process that owns the window now, quoted when
-it has a space, so the window has to be open, and `opens` the main area, so an execution waits for it.
+application: `Launch opens` the main area, so an execution waits for it, and the area is started by
+the program file of the process that owns the window now - quoted when it has a space, or a Steam
+game's link - so the window has to be open.
 The recorded steps go after it. Discard deletes the
 flow while nothing but the setup is in it.
 
@@ -1408,6 +1409,18 @@ for it - 30 seconds, or the step's timeout - so the next step does not act on a 
 loading. The runner refuses a launch outright, and every preset has a catalog entry, which a test
 holds to: Launch had none, and threw the first time one executed.
 
+**An application area says what starts it**, since 2026-11-01: `FlowArea.LaunchCommand`, **Started
+by** on its form and `started by <[ … ]>` on its line in the script. A launch with no command of its
+own starts that - `Launch   opens <[ Firestone ]>` - and one with a command starts its own instead,
+which is where a QA test's fresh profile and `--window-size` stay. Picking an open app fills it in
+(`Lookup.launchCommand`, `LaunchCommandHelper`): the program file, or `steam://rungameid/<id>` when
+the program sits in a Steam library, the id read from the `appmanifest_<id>.acf` that names its
+folder, since a Steam game's program started on its own restarts through Steam or refuses. A library
+is laid out the same way on every OS. Nothing in the form says to launch only when the app is
+missing, because that is always so: launching an open app brings the same one up, or a second
+window the area cannot tell from the first. The migration gave an area a launch opens that launch's
+command line.
+
 **A window step names a window area**, since 2026-10-26: `Focus Window <[ Browser ]>`, `Resize Window
 <[ Browser ]> size 1280 720`, `Move Window <[ Browser ]> to point <[ X ]>`. The window is described
 once, by the area, and the searches inside it and every step that places it follow when its title
@@ -2157,7 +2170,10 @@ edits the one picked; a splitter between them remembers its place.
   user on this machine, not in the database.
 - **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
   it, and the picked one's form. Each is created, saved and deleted on its own
-  (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them.
+  (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them. An
+  application area's **Application** lists one row an app, its open windows' titles under it,
+  because the area matches on the process and a title would promise a window it never picks; the
+  field shows the saved app whether it is open or not.
 - **Templates:** one tile per picture (`FlowTemplate.getByFlow`), and the picked one's image,
   click point and steps. **Edit image** and **Set click point** save with `FlowTemplate.update`,
   for every step that links to it.

@@ -42,9 +42,43 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phase 8, inputs, secrets and the CSV round trip, the first open phase below; 5.8's
+**Next:** phase 5.15, apps and browser tabs, being built since 2026-11-01; then phase 8, inputs,
+secrets and the CSV round trip; 5.8's
 sub-stages wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
 wait in `TODO.md`, Recording.
+
+---
+
+## Apps and browser tabs
+
+### 5.15. An area says how to open it, and a tab is found by its address
+
+Decided 2026-11-01. An area describes a window once, and every step that searches in it, focuses it
+or launches it follows. It knows how to find an application but not how to start one, and a browser
+tab area is modelled but does not resolve. Built in this order: the Application field, launching an
+area, then browser tabs. The first two landed 2026-11-01 (`PROJECT.md` §8 and §13).
+
+- [ ] **Click through the Application field and Started by in the running app.** Verified by the
+      build, the type check and the tests, never by hand: an app with several windows, a closed
+      app's saved area, picking Firestone fills `steam://rungameid/…`, and `Launch opens` it.
+- [ ] Epic's launcher has a link of its own, the way Steam's is found.
+
+**Browser tabs**
+
+- [ ] A tab area resolves: the window of its browser whose front tab's address matches, read from
+      the address bar through UI Automation. Windows only; macOS has AppleScript for it and Linux
+      AT-SPI, unevenly.
+- [ ] It names its browser and nothing else. A browser's title is its front tab's, so a title
+      pattern matched only while that tab was in front.
+- [ ] One full address, to find the tab and to open it. A tab matches when its address starts with
+      it, `https://` and `www.` left out on both sides. Finding a tab by its title goes: a title
+      changes with a notification count. `TabMatchOn` goes in a migration - no saved area matches on
+      a title - and an imported `tab title contains` is refused, pointing at `url`.
+- [ ] A search in a tab area looks at the front tab only, and never switches tabs.
+- [ ] Focus Window on a tab area brings its browser forward and selects the tab: the front tabs
+      first, then each tab in turn. Resize and Move act on its browser window.
+- [ ] Launch on a tab area: in front, nothing; open behind, selected; nowhere, its browser opened at
+      the address in a new window.
 
 ---
 

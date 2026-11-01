@@ -56,6 +56,10 @@ export const FlowStepSystemCommandSchema = z
 
     if (PRESETS_WITHOUT_PARAMETER.includes(data.runCommandPreset)) return;
 
+    // A launch can leave the program to what the area it opens is started by. The validator says
+    // when that is nothing.
+    if (data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP && data.flowAreaId) return;
+
     if (data.runCommandValue.trim().length === 0) {
       ctx.addIssue({
         code: "custom",

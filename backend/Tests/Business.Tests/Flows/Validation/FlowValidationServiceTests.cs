@@ -115,6 +115,32 @@ namespace Business.Tests.Flows.Validation
             ErrorsOn(tab).ShouldBe([FlowValidationCodeEnum.AREA_NOT_A_WINDOW]);
         }
 
+        // A launch can leave the program to the area it opens, but something has to start it.
+        [Fact]
+        public void A_launch_with_no_command_needs_an_area_that_says_what_starts_it()
+        {
+            _areas.Add(new FlowArea { Id = 1, Name = "Game", Type = FlowAreaTypeEnum.APPLICATION, LaunchCommand = "steam://rungameid/1013320" });
+            _areas.Add(new FlowArea { Id = 2, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION });
+
+            FlowStep Launch(string name, int? areaId)
+            {
+                FlowStep launch = Add(FlowStepTypeEnum.SYSTEM_COMMAND, name);
+                launch.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+                launch.FlowAreaId = areaId;
+                return launch;
+            }
+
+            FlowStep game = Launch("Launch the game", 1);
+            FlowStep editor = Launch("Launch the editor", 2);
+            FlowStep nothing = Launch("Launch nothing", null);
+
+            CodesOn(game).ShouldNotContain(FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING);
+            CodesOn(editor).ShouldContain(FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING);
+            Validate().Issues.Single(x => x.FlowStepId == editor.Id && x.Code == FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING)
+                .Message.ShouldStartWith("Nothing starts \"Editor\".");
+            CodesOn(nothing).ShouldContain(FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING);
+        }
+
         // The script writes text between <[ and ]>, so text holding either one could not be exported.
         [Theory]
         [InlineData("Login <[ failed")]

@@ -28,6 +28,23 @@ later therefore fixes every flow that uses it.
 Every preset returns a meaningful exit code. Some standard tools do not — `tasklist` and `ping`
 report success even when the answer is no — so those presets run through PowerShell instead.
 
+## Launching an app
+
+`LAUNCH_APP` starts something and carries on without waiting for it to close. It names the area it
+**opens**: when that app is already open the launch is skipped, and otherwise the step waits for its
+window - 30 seconds, or the step's own timeout - so the next step finds it loaded.
+
+What starts is the area's **Started by**, unless the step has a program and arguments of its own,
+which then start instead: a fresh browser profile and a window size for a QA test, say. A launch
+with no area is a program, a file or a URL, started and left.
+
+There is no "only when it is missing" option, because that is always so.
+
+```
+Launch   opens <[ Firestone ]>
+Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>   opens <[ Browser ]>
+```
+
 ## What success means
 
 Success means the command **ran** and its exit code was one of the accepted ones. It does not mean

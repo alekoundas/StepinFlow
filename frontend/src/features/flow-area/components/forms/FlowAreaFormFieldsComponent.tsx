@@ -83,6 +83,17 @@ export default function FlowAreaFormFieldsComponent({
       });
   };
 
+  // Picking an app says what starts it, unless something is already there for the same app.
+  const startedByFromPick = async (processId: number, isAnotherApp: boolean) => {
+    if (type !== FlowAreaTypeEnum.APPLICATION) return;
+
+    const current = (getValues("launchCommand") as string) ?? "";
+    if (current.length > 0 && !isAnotherApp) return;
+
+    const command = await backendApiService.Lookup.launchCommand(processId);
+    setValue("launchCommand", command, { shouldValidate: true, shouldDirty: true });
+  };
+
   const typeOptions = [
     { label: "Region", value: FlowAreaTypeEnum.CUSTOM },
     {
@@ -372,7 +383,10 @@ export default function FlowAreaFormFieldsComponent({
           <WindowMatchFieldsComponent
             isDisabled={isDisabled}
             useClientArea={useClientArea === true}
-            onWindowPicked={(label) => nameFromPick("Window", label)}
+            onAppPicked={(app, processId, isAnotherApp) => {
+              nameFromPick("Window", app);
+              void startedByFromPick(processId, isAnotherApp);
+            }}
           />
 
           <div className="mt-3">
@@ -383,6 +397,17 @@ export default function FlowAreaFormFieldsComponent({
               hintText="Points stay put when the title bar or borders change size."
             />
           </div>
+
+          {type === FlowAreaTypeEnum.APPLICATION && (
+            <FormInputTextComponent
+              fieldName="launchCommand"
+              label="Started by"
+              placeholderText='"C:\Program Files\App\app.exe"'
+              isDisabled={isDisabled}
+              className="mt-3"
+              hintText="What a Launch step starts when the app is not open. Picking an open app fills it in, and a Steam game is started through Steam."
+            />
+          )}
         </>
       )}
 

@@ -243,10 +243,12 @@ A window takes two optional clauses after its title, in this order:
 - **`with frame`** - the window's title bar and borders are part of the area. Left out, the area is
   the window's content only, which is nearly always wanted: a different border style then shifts
   nothing inside it.
+- **`started by <[ … ]>`** - what a `Launch` of the area starts when it is not open: a command line,
+  the program first, or a link such as a Steam game's `steam://rungameid/1013320`.
 
 ```
   <[ Cart ]>        window process <[ chrome.exe ]> title contains <[ Shop ]>   tab url contains <[ /cart ]>
-  <[ Game ]>        window process <[ game.exe ]>   with frame
+  <[ Game ]>        window process <[ game.exe ]>   with frame   started by <[ steam://rungameid/1013320 ]>
 ```
 
 A child area is placed inside its parent, either by **ratio** (`ratio x y size width height`, each
@@ -508,9 +510,12 @@ already open the launch is skipped, and when it is not the step waits for it - 3
 step's own timeout - so the next line does not act on a screen that is still loading. It moves
 nothing: placing the window is a `Move Window` or `Resize Window` line of its own. Not `in`, which on every
 other line means where a step works. Without `opens` it starts the program and moves straight on.
+With `opens` and no command line, it starts what the area is `started by`; with both, its own
+command line starts instead, which is where a fresh browser profile or a window size goes.
 
 ```
 Launch   <[ "C:\Program Files\App\app.exe" --profile test ]>   opens <[ App ]>
+Launch   opens <[ Game ]>
 ```
 
 **A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
@@ -750,7 +755,8 @@ before the flows that call it.
 
 ## Settled
 
-- **`Launch` is one step.** Its target is an executable or a URL; anything else goes in `args`.
+- **`Launch` is one step.** Its target is an executable or a URL, its own or the area's it opens;
+  anything else goes in `args`.
 - **The text checks produce a value read as `{{Name}}`**, sharing the syntax with inputs. One
   substitution rule, and a step result and an input read the same because at the point of use they
   are the same thing.

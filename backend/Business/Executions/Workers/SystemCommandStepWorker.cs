@@ -18,7 +18,7 @@ namespace Business.Executions.Workers
     /// A Launch is started rather than run: it returns once the program is up instead of waiting
     /// for it to close. With an area, it is the window the program opens - left alone when it is
     /// open already, and waited for when it is not, so the next step does not act on a screen that
-    /// is still loading.
+    /// is still loading. Without a command line of its own, the area's Started by is what starts.
     /// </summary>
     public class SystemCommandStepWorker : IStepWorker
     {
@@ -46,8 +46,13 @@ namespace Business.Executions.Workers
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
             // A launch line carries the viewport - "--window-size={{width}},{{height}}" - so this is
-            // where a flow sizes the application it is testing.
-            VariableTranslationResult command = cache.TranslateVariables(step.RunCommandValue);
+            // where a flow sizes the application it is testing. One with no line of its own is
+            // started by the area it opens.
+            string commandLine = step.RunCommandValue;
+            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && string.IsNullOrWhiteSpace(commandLine) && step.FlowArea != null)
+                commandLine = step.FlowArea.LaunchCommand;
+
+            VariableTranslationResult command = cache.TranslateVariables(commandLine);
             if (!command.IsTranslated)
                 return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated(command.Untranslated));
 

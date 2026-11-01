@@ -133,7 +133,8 @@ export default function FlowStepSystemCommandFormComponent({
       const waits = values.flowAreaId
         ? ` Waits up to ${humanizeMilliseconds(timeoutMilliseconds || 30000)} for its window, and leaves it alone when it is already open.`
         : "";
-      return `Starts “${value}” and carries on without waiting for it to close.${waits}`;
+      const starts = value.trim() ? `“${value}”` : "what the app is started by";
+      return `Starts ${starts} and carries on without waiting for it to close.${waits}`;
     }
 
     const command =

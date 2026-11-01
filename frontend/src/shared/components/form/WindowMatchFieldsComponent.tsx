@@ -19,10 +19,15 @@ const MATCH_MODE_OPTIONS = [
   { label: "matches regex", value: TitleMatchModeEnum.REGEX },
 ];
 
-interface WindowOption {
+const SHOWN_TITLES = 3;
+
+interface AppOption {
   label: string;
   value: string;
-  description?: string;
+  windowTitles: string[];
+
+  /** One of its windows', which tells the backend where its program is. */
+  processId: number;
 }
 
 interface Props {
@@ -32,10 +37,10 @@ interface Props {
   useClientArea?: boolean;
 
   /**
-   * Fires when an application is picked, with its label. The caller decides what to do with it —
-   * this component has no idea what the record it lives in is called.
+   * Fires when an application is picked, with its name and whether it replaced another. The caller
+   * decides what to do with it — this component has no idea what the record it lives in is called.
    */
-  onWindowPicked?: (label: string) => void;
+  onAppPicked?: (app: string, processId: number, isAnotherApp: boolean) => void;
 
   /** Testing also brings the window it found to the front, so the tester sees which one it is. */
   bringsToFront?: boolean;
@@ -58,7 +63,7 @@ interface Props {
 export default function WindowMatchFieldsComponent({
   isDisabled = false,
   useClientArea = false,
-  onWindowPicked,
+  onAppPicked,
   bringsToFront = false,
 }: Props) {
   const { control, setValue, getValues } = useFormContext();
@@ -72,18 +77,25 @@ export default function WindowMatchFieldsComponent({
   const [matches, setMatches] = useState<WindowMatchDto[] | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
 
-  // Front first, and never StepinFlow's own windows, which would otherwise top the list.
-  const loadWindows = async (filter?: string): Promise<WindowOption[]> => {
+  // A row an app, front first, and never StepinFlow's own windows, which would otherwise top the
+  // list. The area matches on the process, so a window's title would promise an instance it never
+  // picks; the titles go under the app, to say which one it is.
+  const loadApps = async (filter?: string): Promise<AppOption[]> => {
     const electronProcessId = await window.electronApi.electronProcess.getId();
     const res = await backendApiService.Lookup.window({ searchText: filter });
 
-    return res.data
-      .filter((item) => item.extraData?.processId !== electronProcessId)
-      .map((item) => ({
-        label: item.label,
-        value: String(item.value),
-        description: item.description,
-      }));
+    const apps = new Map<string, AppOption>();
+    for (const item of res.data) {
+      const processId = item.extraData?.processId as number | undefined;
+      if (processId === undefined || processId === electronProcessId) continue;
+
+      const app = String(item.value);
+      const option = apps.get(app) ?? { label: app, value: app, windowTitles: [], processId };
+      option.windowTitles.push(item.label);
+      apps.set(app, option);
+    }
+
+    return [...apps.values()];
   };
 
   // The list is of live windows, so it is stale the moment it is fetched. The query itself is set
@@ -154,15 +166,15 @@ export default function WindowMatchFieldsComponent({
       {!isByTitle && (
         <div className="flex gap-2 align-items-end">
           <div className="flex-1">
-            <FormDropdownComponent<Record<string, unknown>, WindowOption>
+            <FormDropdownComponent<Record<string, unknown>, AppOption>
               fieldName="processName"
               labelText="Application"
               mode="remote"
               queryKey={["lookup", "window"]}
-              queryFn={loadWindows}
+              queryFn={loadApps}
               optionLabel="label"
               optionValue="value"
-              placeholderText="Search open windows..."
+              placeholderText="Search open apps..."
               isDisabled={isDisabled}
               defaultValue={""}
               hintText="Matched on the process name, which does not change while the app runs."
@@ -170,17 +182,27 @@ export default function WindowMatchFieldsComponent({
               itemTemplate={(item) => (
                 <div className="flex flex-column">
                   <LabelComponent text={item.label} />
-                  {item.description && (
+                  {item.windowTitles.slice(0, SHOWN_TITLES).map((title, index) => (
                     <LabelComponent
-                      text={item.description}
+                      key={index}
+                      text={title}
+                      size="xs"
+                      color="secondary"
+                    />
+                  ))}
+                  {item.windowTitles.length > SHOWN_TITLES && (
+                    <LabelComponent
+                      text={`and ${item.windowTitles.length - SHOWN_TITLES} more`}
                       size="xs"
                       color="secondary"
                     />
                   )}
                 </div>
               )}
+              // The saved app, which is not in the list while it is closed.
+              valueTemplate={(_option, props) => (props.value as string) || props.placeholder}
               onChanged={(_value, option) => {
-                if (option) onWindowPicked?.(option.label);
+                if (option) onAppPicked?.(option.value, option.processId, option.value !== processName);
               }}
             />
           </div>

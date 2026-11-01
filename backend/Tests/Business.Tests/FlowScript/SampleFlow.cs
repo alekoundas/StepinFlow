@@ -31,7 +31,7 @@ namespace Business.Tests.FlowScript
             FlowArea rightScreen = new FlowArea { Name = "Right screen", Type = FlowAreaTypeEnum.MONITOR, MonitorDeviceName = @"\\.\DISPLAY2", AuthoredDpi = 96 };
             FlowArea box = new FlowArea { Name = "Box", Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = -10, LocationY = 20, Width = 300, Height = 200 };
             FlowArea inventoryTab = new FlowArea { Name = "Inventory tab", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TabMatchOn = TabMatchOnEnum.URL, TabMatchValue = "/inventory.html" };
-            FlowArea gameClient = new FlowArea { Name = "Game client", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA };
+            FlowArea gameClient = new FlowArea { Name = "Game client", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA, LaunchCommand = "steam://rungameid/1013320" };
             schema.Areas.AddRange([browser, badge, header, game, screen, rightScreen, box, inventoryTab, gameClient]);
 
             FlowPoint hamburger = new FlowPoint { Name = "Hamburger", FlowArea = browser, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.95f, RatioY = 0.05f };
@@ -100,6 +100,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowArea = browser, FlowPoint = origin }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 

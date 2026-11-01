@@ -50,10 +50,11 @@ export default function FlowStepSystemCommandFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
-  const { control, setValue } = useFormContext();
+  const { control, setValue, trigger } = useFormContext();
 
   const preset = useWatch({ control, name: "runCommandPreset" });
   const commandValue = useWatch({ control, name: "runCommandValue" });
+  const flowAreaId = useWatch({ control, name: "flowAreaId" }) as number | null | undefined;
 
   const activePreset = presets.find((x) => x.preset === preset);
   const isCustom = preset === RunCommandPresetEnum.CUSTOM;
@@ -108,6 +109,38 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         hintText={activePreset?.description}
       />
 
+      {isLaunch && (
+        <FormDropdownComponent<FlowStepDto, IdOption>
+          fieldName="flowAreaId"
+          labelText="Opens"
+          mode="remote"
+          queryKey={["lookup", "flowArea", "windows", flowId]}
+          queryFn={loadWindowAreas}
+          optionLabel="label"
+          optionValue="value"
+          placeholderText="Select an app..."
+          isDisabled={isDisabled}
+          hintText="Launches it only when it is not open, then waits for it to load."
+          // Whether the program is needed depends on this, and the form checks only the field that changed.
+          onChanged={() => void trigger("runCommandValue")}
+        />
+      )}
+
+      {isLaunch && activePreset && (
+        <FormInputTextComponent
+          fieldName="runCommandValue"
+          label={activePreset.parameterLabel}
+          placeholderText={activePreset.parameterPlaceholder}
+          isRequired={!flowAreaId}
+          isDisabled={isDisabled}
+          hintText={
+            flowAreaId
+              ? "Optional. Left empty, it starts what the app is started by on the Areas tab. Given, this starts instead: a fresh browser profile, say."
+              : undefined
+          }
+        />
+      )}
+
       {isCustom ? (
         <>
           <FormSelectButtonComponent
@@ -130,6 +163,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
           />
         </>
       ) : (
+        !isLaunch &&
         activePreset?.hasParameter && (
           <FormInputTextComponent
             fieldName="runCommandValue"
@@ -139,21 +173,6 @@ export default function FlowStepSystemCommandFormFieldsComponent({
             isDisabled={isDisabled}
           />
         )
-      )}
-
-      {isLaunch && (
-        <FormDropdownComponent<FlowStepDto, IdOption>
-          fieldName="flowAreaId"
-          labelText="Its window"
-          mode="remote"
-          queryKey={["lookup", "flowArea", "windows", flowId]}
-          queryFn={loadWindowAreas}
-          optionLabel="label"
-          optionValue="value"
-          placeholderText="Select an area..."
-          isDisabled={isDisabled}
-          hintText="Optional. Left alone when it is already open, and waited for when it is not, so the next step finds it loaded."
-        />
       )}
 
       {!isCustom && !isLaunch && resolvedCommand.length > 0 && (

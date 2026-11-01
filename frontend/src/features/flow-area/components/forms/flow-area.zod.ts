@@ -50,6 +50,9 @@ export const FlowAreaZod = z
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     titleMatchMode: z.enum(TitleMatchModeEnum),
     useClientArea: z.boolean(),
+    launchCommand: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     tabMatchValue: z
       .string()

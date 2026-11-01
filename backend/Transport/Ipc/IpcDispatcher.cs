@@ -156,6 +156,7 @@ namespace Transport.Ipc
                     "Lookup.failedStep" => await Handler<GetLookupFailedStepHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.break" => await Handler<GetLookupBreakHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.testWindowMatch" => await Handler<TestWindowMatchHandler>().HandleAsync(Payload<WindowMatchTestRequestDto>(request), ct),
+                    "Lookup.launchCommand" => await Handler<GetLookupLaunchCommandHandler>().HandleAsync(Payload<int>(request), ct),
                     "Lookup.flowArea" => await Handler<GetLookupFlowAreaHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
                     "Lookup.commandPresets" => await GetLookupCommandPresetsHandler.HandleAsync(ct),
                     "Lookup.ocrLanguages" => await Handler<GetLookupOcrLanguagesHandler>().HandleAsync(ct),

@@ -1,8 +1,8 @@
 using Business.AreaPoint;
+using Business.Command;
 using Business.Flows.DataService;
 using Core.Enums;
 using Core.Helpers;
-using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -14,8 +14,9 @@ namespace Business.Recording.Setup
     /// The flow a recording goes into, made before the first click: its name, description, main
     /// area and whether it is a QA test.
     ///
-    /// The launch step starts the program the main area's window belongs to now, so the window has
-    /// to be open. It is the program file on this machine, which the tester can edit.
+    /// The launch step starts the main area, which is started by the program its window belongs to
+    /// now, so the window has to be open. It is the program file on this machine, or a Steam game's
+    /// link, which the tester can edit on the area.
     /// </summary>
     public sealed class RecordingSetupService : IRecordingSetupService
     {
@@ -73,16 +74,17 @@ namespace Business.Recording.Setup
                 if (!area.IsResolved)
                     return ResultDto<int>.Failure($"{area.Error} Open the application, or untick the launch step.");
 
-                string? program = ProgramOf(area.Window);
-                if (program == null)
+                string? program = _processService.GetExecutablePath(_windowService.GetProcessId(area.Window));
+                if (string.IsNullOrEmpty(program))
                     return ResultDto<int>.Failure("Could not read which program the window belongs to. It may be running as administrator. Untick the launch step, and add one by hand.");
 
+                // The area says what starts it, so the launch names only the area.
+                mainArea.LaunchCommand = LaunchCommandHelper.Of(program);
                 launch = new FlowStep
                 {
                     Name = $"Launch {mainArea.Name}",
                     FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
                     RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
-                    RunCommandValue = program,
                     FlowArea = mainArea,
                 };
             }
@@ -109,20 +111,6 @@ namespace Business.Recording.Setup
                 return MAIN_AREA_NAME;
 
             return processName.Trim();
-        }
-
-        // Quoted when it has a space, so the command line reads as one program.
-        private string? ProgramOf(WindowHandle window)
-        {
-            int processId = _windowService.GetProcessId(window);
-            string? path = _processService.GetExecutablePath(processId);
-            if (string.IsNullOrEmpty(path))
-                return null;
-
-            if (path.Contains(' ', StringComparison.Ordinal))
-                return $"\"{path}\"";
-
-            return path;
         }
     }
 }

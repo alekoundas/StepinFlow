@@ -107,6 +107,13 @@ namespace Business.FlowScript.Text.Header
                         WriteGap();
                         WriteKeyword(ScriptSymbolEnum.WITH_FRAME);
                     }
+
+                    if (_area.LaunchCommand.Length > 0)
+                    {
+                        WriteGap();
+                        WriteKeyword(ScriptSymbolEnum.STARTED_BY);
+                        WriteQuote(_area.LaunchCommand);
+                    }
                     break;
             }
         }

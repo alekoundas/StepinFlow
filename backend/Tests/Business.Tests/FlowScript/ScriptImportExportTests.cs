@@ -489,7 +489,7 @@ namespace Business.Tests.FlowScript
             FlowArea screen = new FlowArea { Name = "Screen", FlowId = flow.Id, Type = FlowAreaTypeEnum.MONITOR, ScalesWith = ScalesWithEnum.DPI };
             FlowArea box = new FlowArea { Name = "Box", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 10, LocationY = 20, Width = 300, Height = 200, AuthoredDpi = 96 };
             FlowArea inventoryTab = new FlowArea { Name = "Inventory tab", FlowId = flow.Id, Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, TabMatchOn = TabMatchOnEnum.URL, TabMatchValue = "/inventory.html" };
-            FlowArea gameClient = new FlowArea { Name = "Game client", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA };
+            FlowArea gameClient = new FlowArea { Name = "Game client", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA, LaunchCommand = "steam://rungameid/1013320" };
             db.FlowAreas.AddRange(browser, screen, box, inventoryTab, gameClient);
             db.SaveChanges();
 
@@ -553,6 +553,7 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowAreaId = browser.Id, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowAreaId = gameClient.Id }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowAreaId = gameClient.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);

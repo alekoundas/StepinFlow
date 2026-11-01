@@ -292,6 +292,10 @@ namespace DataAccess.Migrations
                     b.Property<bool>("IsMain")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("LaunchCommand")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("LocationX")
                         .HasColumnType("INTEGER");
 
