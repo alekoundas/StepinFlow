@@ -22,8 +22,8 @@ interface Props {
   flowId: number | undefined;
   labelText: string;
   hintText?: string;
-  // Only areas of this type: a window step acts on a window.
-  flowAreaType?: FlowAreaTypeEnum;
+  // Only areas of these types, the first for a new one: a window step acts on a window or a tab.
+  flowAreaTypes?: FlowAreaTypeEnum[];
   isDisabled?: boolean;
 }
 
@@ -35,7 +35,7 @@ export default function FlowStepAreaFieldComponent({
   flowId,
   labelText,
   hintText,
-  flowAreaType,
+  flowAreaTypes,
   isDisabled = false,
 }: Props) {
   const { setValue } = useFormContext();
@@ -43,9 +43,11 @@ export default function FlowStepAreaFieldComponent({
   const { createFlowAreaMutation } = useFlowAreaMutations();
 
   const loadAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowArea({ searchText: filter, flowId, flowAreaType }).then(
-      (res) =>
-        res.data.map((item) => ({
+    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
+      res.data
+        // The lookup says each area's type as its description.
+        .filter((item) => !flowAreaTypes || flowAreaTypes.includes(item.description as FlowAreaTypeEnum))
+        .map((item) => ({
           label: item.label,
           value: Number(item.value),
         })),
@@ -78,7 +80,7 @@ export default function FlowStepAreaFieldComponent({
       children: (
         <FlowAreaFormComponent
           defaultValues={
-            new FlowAreaDto({ flowId: flowId ?? 0, ...(flowAreaType && { type: flowAreaType }) })
+            new FlowAreaDto({ flowId: flowId ?? 0, ...(flowAreaTypes && { type: flowAreaTypes[0] }) })
           }
           formId={FORM_ID}
           isFormInDialog={true}
@@ -110,7 +112,7 @@ export default function FlowStepAreaFieldComponent({
           fieldName="flowAreaId"
           labelText={labelText}
           mode="remote"
-          queryKey={["lookup", "flowArea", flowId, flowAreaType]}
+          queryKey={["lookup", "flowArea", flowId, flowAreaTypes]}
           queryFn={loadAreas}
           optionLabel="label"
           optionValue="value"

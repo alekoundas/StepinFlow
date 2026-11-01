@@ -2,7 +2,6 @@ import { z } from "zod";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 export const FlowAreaZod = z
@@ -54,10 +53,9 @@ export const FlowAreaZod = z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
-    tabMatchValue: z
+    tabAddress: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
-    tabMatchOn: z.enum(TabMatchOnEnum),
 
     monitorDeviceName: z
       .string()
@@ -90,10 +88,7 @@ export const FlowAreaZod = z
       }
     }
 
-    if (
-      data.type === FlowAreaTypeEnum.APPLICATION ||
-      data.type === FlowAreaTypeEnum.BROWSER_TAB
-    ) {
+    if (data.type === FlowAreaTypeEnum.APPLICATION) {
       // Either is enough on its own, but matching on nothing would take the first window
       // on the desktop.
       if (data.processName.length === 0 && data.titlePattern.length === 0) {
@@ -114,12 +109,21 @@ export const FlowAreaZod = z
       });
     }
 
+    // A tab is found by its browser and its address: a browser's title is its front tab's.
     if (data.type === FlowAreaTypeEnum.BROWSER_TAB) {
-      if (data.tabMatchValue.length === 0) {
+      if (data.processName.length === 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Type the tab title or URL to look for",
-          path: ["tabMatchValue"],
+          message: "Pick the browser",
+          path: ["processName"],
+        });
+      }
+
+      if (data.tabAddress.trim().length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Type the page's address",
+          path: ["tabAddress"],
         });
       }
     }

@@ -41,6 +41,10 @@ area has a **Program and arguments** of its own instead: a script, a file or a U
 
 There is no "only when it is missing" option, because that is always so.
 
+A browser tab is open already when it is in front of a window of its browser, and brought to the
+front when it is behind another. When no tab has its address, the browser the area is started by
+opens at the address, in a new window.
+
 ```
 Launch   opens <[ Firestone ]>
 Launch   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>

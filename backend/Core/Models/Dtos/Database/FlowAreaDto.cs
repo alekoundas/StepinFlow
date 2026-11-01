@@ -39,8 +39,7 @@ namespace Core.Models.Dtos
 
 
         // BROWSER_TAB
-        public string TabMatchValue { get; set; } = string.Empty;
-        public TabMatchOnEnum TabMatchOn { get; set; }
+        public string TabAddress { get; set; } = string.Empty;
 
 
         // MONITOR. Empty is the primary monitor.

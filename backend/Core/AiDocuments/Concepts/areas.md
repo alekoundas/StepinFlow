@@ -16,7 +16,7 @@ on one machine can work on another.
 | `CUSTOM` | A rectangle you drew. Can sit inside another area; with nothing around it, it is fixed screen coordinates. |
 | `APPLICATION` | A window, found by process name and title pattern. |
 | `MONITOR` | A whole screen. **Primary monitor** is whichever monitor is primary, the one choice that means the same thing on another PC. A named one (`\\.\DISPLAY2`) can be renumbered when monitors are plugged in or out. |
-| `BROWSER_TAB` | A tab inside a browser window, by what its title or address contains - `tab url contains <[ /cart ]>` after the window in the script. Modelled but not implemented: the resolver reports that it is not supported yet. |
+| `BROWSER_TAB` | A tab of a browser, by its address - `tab <[ shop.example.com/cart ]>` after the browser's process in the script. The area is the tab's page. |
 
 ## Application areas
 
@@ -39,6 +39,34 @@ the area matches the app, not one of its windows.
 a link. Picking an open app fills it in: its program file, or for a game in a Steam library
 `steam://rungameid/<id>`, since a Steam game started from its own program file restarts through
 Steam or refuses. `started by <[ … ]>` on the window's line in the script.
+
+## Browser tab areas
+
+A `BROWSER_TAB` area is a tab of a browser - Chrome, Edge, Brave or Firefox - found by its
+**address**, and the area is the tab's page: what is below the address bar, not the browser around
+it. The tab whose address starts with the area's is the one, `https://` and `www.` left out on both
+sides, so an address pasted from the address bar matches what the address bar shows.
+
+It names its **browser** and no window title. A browser's title is its front tab's, so a title
+would only match while the tab was already in front. Every window of the browser is looked in.
+
+Only a window's front tab says its address, which decides what each step does:
+
+| step | a tab behind another |
+|---|---|
+| a search in the area | not on screen: the search fails, and never switches tabs behind your back |
+| `Focus Window`, `Resize Window`, `Move Window` | brought to the front of its window first, then the window acted on |
+| `Launch` | brought to the front rather than opened again |
+
+Bringing one to the front tries the front tab of each window first, then each tab in turn, and a
+window it is not in goes back to the tab it showed. Several tabs flick past while it looks.
+
+**Started by** is the browser, filled in when an open one is picked. A `Launch` with no tab at the
+address starts it with `--new-window` and the address, so the tab does not land among whatever the
+browser's last window had open.
+
+The tabs are read through Windows' accessibility interface, the way a screen reader reads them. On
+macOS and Linux a tab area does not resolve yet.
 
 ## Nesting areas inside other areas
 

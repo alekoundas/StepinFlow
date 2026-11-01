@@ -44,8 +44,7 @@ namespace Transport.Ipc.Handlers
                     UseClientArea = x.UseClientArea,
                     LaunchCommand = x.LaunchCommand,
 
-                    TabMatchValue = x.TabMatchValue,
-                    TabMatchOn = x.TabMatchOn,
+                    TabAddress = x.TabAddress,
 
                     MonitorDeviceName = x.MonitorDeviceName,
 

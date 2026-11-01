@@ -70,7 +70,6 @@ namespace Business.Tests.FlowScript
             values.AddRange(Enum.GetValues<ScriptSymbolEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<ConditionTypeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TitleMatchModeEnum>().Cast<Enum>());
-            values.AddRange(Enum.GetValues<TabMatchOnEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<FlowKindEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<TemplateMatchModeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<ScalesWithEnum>().Cast<Enum>());
@@ -180,16 +179,33 @@ namespace Business.Tests.FlowScript
             schema.Areas.Single().ScalesWith.ShouldBe(scalesWith);
         }
 
-        [Theory]
-        [InlineData(TabMatchOnEnum.TITLE)]
-        [InlineData(TabMatchOnEnum.URL)]
-        public void A_browser_tab_is_read_back_as_written(TabMatchOnEnum matchOn)
+        [Fact]
+        public void A_browser_tab_is_read_back_as_written()
         {
-            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TitlePattern = "Shop", TitleMatchMode = TitleMatchModeEnum.CONTAINS, TabMatchOn = matchOn, TabMatchValue = "/cart" };
+            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TabAddress = "shop.example.com/cart", LaunchCommand = "chrome.exe" };
             string written = new AreaWriter(area).Write();
             FlowArea read = Read("Areas:\n  " + written).Areas.Single();
 
-            (read.Type, read.TitlePattern, read.TabMatchOn, read.TabMatchValue).ShouldBe((FlowAreaTypeEnum.BROWSER_TAB, "Shop", matchOn, "/cart"), written);
+            (read.Type, read.ProcessName, read.TabAddress, read.LaunchCommand).ShouldBe((FlowAreaTypeEnum.BROWSER_TAB, "chrome.exe", "shop.example.com/cart", "chrome.exe"), written);
+        }
+
+        // Written before 2026-11-01, when a tab could be found by its title too.
+        [Fact]
+        public void An_old_tab_by_its_address_is_read_as_its_address()
+        {
+            FlowScriptSchema schema = Read("Areas:\n  <[ A ]> window process <[ chrome.exe ]> tab url contains <[ shop.example.com/cart ]>");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Areas.Single().TabAddress.ShouldBe("shop.example.com/cart");
+        }
+
+        // A title changes with a notification count, and a browser's own title is its front tab's.
+        [Theory]
+        [InlineData("window process <[ chrome.exe ]> tab title contains <[ Shop ]>")]
+        [InlineData("window process <[ chrome.exe ]> title contains <[ Shop ]> tab <[ shop.example.com ]>")]
+        public void A_tab_found_by_a_title_is_refused(string line)
+        {
+            Read("Areas:\n  <[ A ]> " + line).Diagnostics.ShouldNotBeEmpty();
         }
 
         [Theory]

@@ -75,6 +75,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("size", ScriptSymbolEnum.SIZE),
             new ScriptKeyword("scales with", ScriptSymbolEnum.SCALES_WITH),
             new ScriptKeyword("tab", ScriptSymbolEnum.TAB),
+            new ScriptKeyword("url", ScriptSymbolEnum.URL),
             new ScriptKeyword("with frame", ScriptSymbolEnum.WITH_FRAME),
             new ScriptKeyword("started by", ScriptSymbolEnum.STARTED_BY),
 
@@ -135,10 +136,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("contains", TitleMatchModeEnum.CONTAINS),
             new ScriptKeyword("matches", TitleMatchModeEnum.REGEX),
             new ScriptKeyword("is", TitleMatchModeEnum.EQUALS),
-
-            // Browser tab
-            new ScriptKeyword("title", TabMatchOnEnum.TITLE),
-            new ScriptKeyword("url", TabMatchOnEnum.URL),
 
             // FlowStepTemplate condition.
             new ScriptKeyword("shape and brightness", TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS),

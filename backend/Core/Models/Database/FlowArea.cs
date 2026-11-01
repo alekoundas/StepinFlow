@@ -62,9 +62,11 @@ namespace Core.Models.Database
         public string LaunchCommand { get; set; } = string.Empty;
 
 
-        // BROWSER_TAB
-        public string TabMatchValue { get; set; } = string.Empty;
-        public TabMatchOnEnum TabMatchOn { get; set; }
+        /// <summary>
+        /// BROWSER_TAB: the page's address, which finds the tab and is where a launch opens the
+        /// browser. A tab whose address starts with it is the one.
+        /// </summary>
+        public string TabAddress { get; set; } = string.Empty;
 
 
         // MONITOR. The GDI device name - \\.\DISPLAY1.  Empty is the primary monitor, the portable choice.

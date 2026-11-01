@@ -8,17 +8,20 @@ using Core.Models.Business.AreaPointResolution;
 namespace Business.Executions.Workers
 {
     /// <summary>
-    /// Focus, resize and move the window of the step's area. 
+    /// Focus, resize and move the window of the step's area. A browser tab's window is the one
+    /// holding it, and its tab is brought to the front of it first.
     /// </summary>
     public class WindowStepWorker : IStepWorker
     {
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IWindowService _windowService;
+        private readonly BrowserTabFinder _browserTabFinder;
 
-        public WindowStepWorker(IAreaPointResolver areaPointResolver, IWindowService windowService)
+        public WindowStepWorker(IAreaPointResolver areaPointResolver, IWindowService windowService, BrowserTabFinder browserTabFinder)
         {
             _areaPointResolver = areaPointResolver;
             _windowService = windowService;
+            _browserTabFinder = browserTabFinder;
         }
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
@@ -27,18 +30,13 @@ namespace Business.Executions.Workers
             if (area == null)
                 return ExecutionStep.Failure("There is no window to act on.");
 
-            if (area.Type != FlowAreaTypeEnum.APPLICATION)
+            if (area.Type != FlowAreaTypeEnum.APPLICATION && area.Type != FlowAreaTypeEnum.BROWSER_TAB)
                 return ExecutionStep.Failure(Detail(area, "not a window"));
 
-            WindowQuery query = new WindowQuery
-            {
-                ProcessName = area.ProcessName,
-                TitlePattern = area.TitlePattern,
-                TitleMatchMode = area.TitleMatchMode,
-                UseClientArea = false,
-            };
+            WindowHandle window = await WindowOfAsync(area, ct);
+            if (!window.IsValid && area.Type == FlowAreaTypeEnum.BROWSER_TAB)
+                return ExecutionStep.Failure(Detail(area, $"no {area.ProcessName} tab is at {area.TabAddress}"));
 
-            WindowHandle window = _windowService.FindWindow(query);
             if (!window.IsValid)
                 return ExecutionStep.Failure(Detail(area, "no window matched"));
 
@@ -62,6 +60,22 @@ namespace Business.Executions.Workers
         // ================================================================
         // Private methods
         // ================================================================
+
+        private async Task<WindowHandle> WindowOfAsync(FlowArea area, CancellationToken ct)
+        {
+            if (area.Type == FlowAreaTypeEnum.BROWSER_TAB)
+                return (await _browserTabFinder.BringToFrontAsync(area, ct)).Window;
+
+            WindowQuery query = new WindowQuery
+            {
+                ProcessName = area.ProcessName,
+                TitlePattern = area.TitlePattern,
+                TitleMatchMode = area.TitleMatchMode,
+                UseClientArea = false,
+            };
+
+            return _windowService.FindWindow(query);
+        }
 
         private ExecutionStep Focus(FlowArea area, WindowHandle window)
         {

@@ -71,7 +71,7 @@ Steam game's, which takes none. A Steam game's are set in Steam, in its launch o
 
 ## Windows
 
-**AREA_NOT_A_WINDOW** — a window step names an area that is a monitor, a region or a browser tab.
+**AREA_NOT_A_WINDOW** — a window step names an area that is a monitor or a region.
 Only a window can be focused, resized or moved, so pick a window area.
 
 **WINDOW_SIZE_MISSING** — a resize step has no width or height.

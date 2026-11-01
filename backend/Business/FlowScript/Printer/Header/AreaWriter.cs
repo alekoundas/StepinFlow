@@ -83,29 +83,28 @@ namespace Business.FlowScript.Text.Header
                     WriteKeyword(ScriptSymbolEnum.PROCESS);
                     WriteQuote(_area.ProcessName);
 
-                    if (!string.IsNullOrWhiteSpace(_area.TitlePattern))
-                    {
-                        WriteKeyword(ScriptSymbolEnum.TITLE);
-                        WriteKeyword(_area.TitleMatchMode);
-                        WriteQuote(_area.TitlePattern);
-                    }
-
-                    // The window above is the browser, and this picks the tab in it. A tab is only
-                    // ever matched by what it contains.
+                    // The window above is the browser, and this picks the tab in it, by its address.
                     if (_area.Type == FlowAreaTypeEnum.BROWSER_TAB)
                     {
                         WriteGap();
                         WriteKeyword(ScriptSymbolEnum.TAB);
-                        WriteKeyword(_area.TabMatchOn);
-                        WriteKeyword(TitleMatchModeEnum.CONTAINS);
-                        WriteQuote(_area.TabMatchValue);
+                        WriteQuote(_area.TabAddress);
                     }
-
-                    // Without it the area leaves out the title bar and borders, which is nearly always wanted.
-                    if (!_area.UseClientArea)
+                    else
                     {
-                        WriteGap();
-                        WriteKeyword(ScriptSymbolEnum.WITH_FRAME);
+                        if (!string.IsNullOrWhiteSpace(_area.TitlePattern))
+                        {
+                            WriteKeyword(ScriptSymbolEnum.TITLE);
+                            WriteKeyword(_area.TitleMatchMode);
+                            WriteQuote(_area.TitlePattern);
+                        }
+
+                        // Without it the area leaves out the title bar and borders, which is nearly always wanted.
+                        if (!_area.UseClientArea)
+                        {
+                            WriteGap();
+                            WriteKeyword(ScriptSymbolEnum.WITH_FRAME);
+                        }
                     }
 
                     if (_area.LaunchCommand.Length > 0)

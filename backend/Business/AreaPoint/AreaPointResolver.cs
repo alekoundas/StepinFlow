@@ -14,12 +14,14 @@ namespace Business.AreaPoint
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IWindowService _windowService;
         private readonly IScreenService _screenService;
+        private readonly BrowserTabFinder _browserTabFinder;
 
-        public AreaPointResolver(IDbContextFactory<AppDbContext> dbContextFactory, IWindowService windowService, IScreenService screenService)
+        public AreaPointResolver(IDbContextFactory<AppDbContext> dbContextFactory, IWindowService windowService, IScreenService screenService, BrowserTabFinder browserTabFinder)
         {
             _dbContextFactory = dbContextFactory;
             _windowService = windowService;
             _screenService = screenService;
+            _browserTabFinder = browserTabFinder;
         }
 
 
@@ -91,7 +93,8 @@ namespace Business.AreaPoint
                     break;
 
                 case FlowAreaTypeEnum.BROWSER_TAB:
-                    return AreaResolution.Fail("Browser tab areas are not supported yet.");
+                    placed = ResolveBrowserTab(area);
+                    break;
 
                 case FlowAreaTypeEnum.CUSTOM:
                 default:
@@ -186,6 +189,21 @@ namespace Business.AreaPoint
                 return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.");
 
             return AreaResolution.Ok(bounds, hwnd);
+        }
+
+        // The page of the tab, while it is in front. A search never switches tabs behind the user's
+        // back, so one behind is not on screen.
+        private AreaResolution ResolveBrowserTab(FlowArea area)
+        {
+            WindowHandle window = _browserTabFinder.FindInFront(area);
+            if (!window.IsValid)
+                return AreaResolution.Fail($"No {area.ProcessName} window has \"{area.TabAddress}\" in front, so \"{area.Name}\" is not on screen.");
+
+            Rectangle page = _browserTabFinder.PageBounds(window);
+            if (page.Width <= 0 || page.Height <= 0)
+                return AreaResolution.Fail($"\"{area.Name}\" is in front, but its page cannot be measured.");
+
+            return AreaResolution.Ok(page, window);
         }
 
         private AreaResolution ResolveCustom(FlowArea area)

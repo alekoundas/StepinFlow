@@ -231,25 +231,34 @@ A root area is one of three things:
 | form | what it is |
 | --- | --- |
 | `window process <[ chrome.exe ]> title contains <[ Swag ]>` | a window, by process and optionally title |
+| `window process <[ chrome.exe ]> tab <[ shop.example.com/cart ]>` | a tab of that browser, by its address |
 | `monitor primary`, `monitor <[ \\.\DISPLAY2 ]>` | a whole monitor; `primary` is the one that means the same thing on another PC |
 | `on screen   offset 10 20  size 300 200` | fixed screen coordinates - right on the machine it was made on and nowhere else |
 
 A window takes two optional clauses after its title, in this order:
 
-- **`tab title contains <[ … ]>`** or **`tab url contains <[ … ]>`** - the tab inside that browser
-  window, by what its title or its address contains. The area is then that tab's page rather than
-  the whole window. Read and written, but not yet found when a flow executes: a step that searches
-  in one fails, saying so.
 - **`with frame`** - the window's title bar and borders are part of the area. Left out, the area is
   the window's content only, which is nearly always wanted: a different border style then shifts
   nothing inside it.
 - **`started by <[ … ]>`** - what a `Launch` of the area starts when it is not open: a command line,
   the program first, or a link such as a Steam game's `steam://rungameid/1013320`.
 
+**A browser tab** is `tab <[ address ]>` straight after the browser's process, and the area is that
+tab's page. The tab whose address starts with it is the one, `https://` and `www.` left out on both
+sides, at a boundary: `shop.example.com/cart` is also `shop.example.com/cart?item=4`, not
+`shop.example.com/cartoons`. It names no title, because a browser's title is its front tab's: a
+title would only match while the tab was in front. Its `started by` is the browser, which a
+`Launch` opens at the address in a new window when no tab has it. A file from before 2026-11-01
+wrote `tab url contains <[ … ]>`, read as the same address; `tab title contains` is refused.
+
 ```
-  <[ Cart ]>        window process <[ chrome.exe ]> title contains <[ Shop ]>   tab url contains <[ /cart ]>
+  <[ Cart ]>        window process <[ chrome.exe ]>   tab <[ shop.example.com/cart ]>   started by <[ chrome.exe ]>
   <[ Game ]>        window process <[ game.exe ]>   with frame   started by <[ steam://rungameid/1013320 ]>
 ```
+
+A step that searches in a tab looks at the front tab of each window of the browser and never
+switches tabs: a tab behind another is not on screen, and the search fails saying so. `Focus Window`
+and `Launch` bring it to the front, trying the front tabs first and then each tab in turn.
 
 A child area is placed inside its parent, either by **ratio** (`ratio x y size width height`, each
 0–1) or by fixed **offset and size** in pixels (`offset x y size width height`). Both say where the
@@ -528,9 +537,10 @@ Launch   <[ notepad.exe notes.txt ]>
 **A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
 `Move Window` take the name of a `window` area from the header, so a window is described once, under
 Areas, and the searches in it and the steps that place it all follow when its title changes. Several
-window steps can name the same area. It has to be a window: a monitor, a region or a browser tab has
-nothing to focus, resize or move, which is `AREA_NOT_A_WINDOW`. A step saved with no area is written
-`nowhere`, which the validator reports.
+window steps can name the same area. It has to be a window or a browser tab: a monitor or a region
+has nothing to focus, resize or move, which is `AREA_NOT_A_WINDOW`. A tab's window is the browser
+window holding it, with the tab brought to the front of it first. A step saved with no area is
+written `nowhere`, which the validator reports.
 
 ```
 Focus Window    <[ Browser ]>

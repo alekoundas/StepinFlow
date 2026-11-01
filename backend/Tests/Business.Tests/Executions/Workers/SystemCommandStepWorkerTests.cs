@@ -1,5 +1,6 @@
 using System.Drawing;
 
+using Business.AreaPoint;
 using Business.Executions;
 using Business.Executions.Workers;
 using Business.Tests.Fakes;
@@ -30,6 +31,8 @@ namespace Business.Tests.Executions.Workers
         private readonly FakeCommandRunner _runner = new FakeCommandRunner();
         private readonly FakeProcessService _processes = new FakeProcessService();
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
+        private readonly FakeWindowService _windows = new FakeWindowService();
+        private readonly FakeBrowserTabService _tabs = new FakeBrowserTabService();
 
         private static FlowStep Command(string value, string successExitCodes = "0")
         {
@@ -75,7 +78,8 @@ namespace Business.Tests.Executions.Workers
 
         private async Task<ExecutionStep> Run(FlowStep step, ExecutionCacheService? cache = null)
         {
-            SystemCommandStepWorker worker = new SystemCommandStepWorker(_runner, _processes, _resolver, TimeProvider.System);
+            BrowserTabFinder tabs = new BrowserTabFinder(_windows, _tabs, TimeProvider.System);
+            SystemCommandStepWorker worker = new SystemCommandStepWorker(_runner, _processes, _resolver, tabs, TimeProvider.System);
             return await worker.ExecuteAsync(step, cache ?? await WorkerCache.ForAsync(step), Ct);
         }
 
@@ -270,6 +274,70 @@ namespace Business.Tests.Executions.Workers
             await Run(launch, cache);
 
             _processes.Launched.ShouldBe([$"{APP} | --port 8080"]);
+        }
+
+        // ================================================================
+        // Launching a browser tab
+        // ================================================================
+
+        private static FlowStep LaunchOfTab()
+        {
+            FlowArea cart = new FlowArea
+            {
+                Id = APP_WINDOW_AREA,
+                Name = "Cart",
+                Type = FlowAreaTypeEnum.BROWSER_TAB,
+                ProcessName = "chrome",
+                TabAddress = "shop.example.com/cart",
+                LaunchCommand = "chrome.exe",
+            };
+
+            return new FlowStep
+            {
+                Id = 1,
+                Name = "Launch",
+                FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
+                RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
+                FlowArea = cart,
+                FlowAreaId = cart.Id,
+            };
+        }
+
+        [Fact]
+        public async Task A_tab_in_front_is_not_launched_again()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "shop.example.com/cart");
+
+            ExecutionStep result = await Run(LaunchOfTab());
+
+            result.Message.ShouldBe("Already open, so not launched again.");
+            _processes.Launched.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_tab_behind_another_is_brought_to_the_front_rather_than_launched()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "news.example.com", "shop.example.com/cart");
+
+            ExecutionStep result = await Run(LaunchOfTab());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _tabs.FrontAddress(new WindowHandle(1)).ShouldBe("shop.example.com/cart");
+            _processes.Launched.ShouldBeEmpty();
+        }
+
+        // A new window, so the tab does not land among whatever the browser's last window had open.
+        [Fact]
+        public async Task A_tab_open_nowhere_opens_its_browser_at_its_address_in_a_new_window()
+        {
+            _processes.OnLaunch = () => _resolver.Areas[APP_WINDOW_AREA] = OPEN;
+
+            ExecutionStep result = await Run(LaunchOfTab());
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _processes.Launched.ShouldBe(["chrome.exe | --new-window https://shop.example.com/cart"]);
         }
     }
 }

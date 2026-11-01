@@ -16,7 +16,7 @@ namespace Business.FlowScript.Parsers.Header
 
         public override FlowArea Parse()
         {
-            // <[ name ]>   [main]   window process <[ x ]> [title is <[ y ]>] [tab url contains <[ z ]>] [with frame] [started by <[ command ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
+            // <[ name ]>   [main]   window process <[ x ]> [tab <[ address ]> | [title is <[ y ]>] [with frame]] [started by <[ command ]>] | monitor primary | monitor <[ device ]> | on screen placement | inside <[ area ]> placement   [scales with dpi]   [at 120dpi]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
@@ -33,26 +33,32 @@ namespace Business.FlowScript.Parsers.Header
                 area.ProcessName = ExtractText();
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-                if (ExpectOptionalKeyword(ScriptSymbolEnum.TITLE))
-                {
-                    area.TitleMatchMode = ExtractKeyword<TitleMatchModeEnum>();
-                    ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                    area.TitlePattern = ExtractText();
-                    ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
-                }
-
-                // The window above is the browser, and this picks the tab in it.
+                // The window above is the browser, and this picks the tab in it, by its address. A
+                // browser's title is its front tab's, so a tab names none. Written before
+                // 2026-11-01 it was tab url contains <[ … ]>, the same address.
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.TAB))
                 {
                     area.Type = FlowAreaTypeEnum.BROWSER_TAB;
-                    area.TabMatchOn = ExtractKeyword<TabMatchOnEnum>();
-                    ExpectKeyword(TitleMatchModeEnum.CONTAINS);
+
+                    if (ExpectOptionalKeyword(ScriptSymbolEnum.URL))
+                        ExpectKeyword(TitleMatchModeEnum.CONTAINS);
+
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                    area.TabMatchValue = ExtractText();
+                    area.TabAddress = ExtractText();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                 }
+                else
+                {
+                    if (ExpectOptionalKeyword(ScriptSymbolEnum.TITLE))
+                    {
+                        area.TitleMatchMode = ExtractKeyword<TitleMatchModeEnum>();
+                        ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+                        area.TitlePattern = ExtractText();
+                        ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+                    }
 
-                area.UseClientArea = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
+                    area.UseClientArea = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
+                }
 
                 // What a launch of it starts when it is not open.
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.STARTED_BY))

@@ -3,6 +3,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import { useQueryClient } from "@tanstack/react-query";
+import { classNames } from "primereact/utils";
 
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
@@ -44,6 +45,12 @@ interface Props {
 
   /** Testing also brings the window it found to the front, so the tester sees which one it is. */
   bringsToFront?: boolean;
+
+  /**
+   * A browser tab's: only which browser. Its title is its front tab's, so a title would match only
+   * while that tab was in front, and a test of the window would say nothing about the tab.
+   */
+  isBrowser?: boolean;
 }
 
 /**
@@ -65,13 +72,14 @@ export default function WindowMatchFieldsComponent({
   useClientArea = false,
   onAppPicked,
   bringsToFront = false,
+  isBrowser = false,
 }: Props) {
   const { control, setValue, getValues } = useFormContext();
   const queryClient = useQueryClient();
 
   const processName = useWatch({ control, name: "processName" }) as string | undefined;
 
-  const [isByTitle, setIsByTitle] = useState(!processName);
+  const [isByTitle, setIsByTitle] = useState(!processName && !isBrowser);
 
   const [isTesting, setIsTesting] = useState(false);
   const [matches, setMatches] = useState<WindowMatchDto[] | null>(null);
@@ -141,12 +149,14 @@ export default function WindowMatchFieldsComponent({
 
   return (
     <div className="flex flex-column gap-2">
-      <LabelComponent
-        text="Find the window by"
-        size="sm"
-      />
+      {!isBrowser && (
+        <LabelComponent
+          text="Find the window by"
+          size="sm"
+        />
+      )}
 
-      <div className="flex mb-2">
+      <div className={classNames("mb-2", isBrowser ? "hidden" : "flex")}>
         <Button
           type="button"
           label="Running app"
@@ -168,16 +178,20 @@ export default function WindowMatchFieldsComponent({
           <div className="flex-1">
             <FormDropdownComponent<Record<string, unknown>, AppOption>
               fieldName="processName"
-              labelText="Application"
+              labelText={isBrowser ? "Browser" : "Application"}
               mode="remote"
               queryKey={["lookup", "window"]}
               queryFn={loadApps}
               optionLabel="label"
               optionValue="value"
-              placeholderText="Search open apps..."
+              placeholderText={isBrowser ? "Search open browsers..." : "Search open apps..."}
               isDisabled={isDisabled}
               defaultValue={""}
-              hintText="Matched on the process name, which does not change while the app runs."
+              hintText={
+                isBrowser
+                  ? "Every window of it is looked in for the tab."
+                  : "Matched on the process name, which does not change while the app runs."
+              }
               staleTime={0}
               itemTemplate={(item) => (
                 <div className="flex flex-column">
@@ -220,7 +234,7 @@ export default function WindowMatchFieldsComponent({
         </div>
       )}
 
-      {!isByTitle && (
+      {!isByTitle && !isBrowser && (
         <LabelComponent
           text="Narrow it down — optional"
           size="xs"
@@ -228,7 +242,7 @@ export default function WindowMatchFieldsComponent({
         />
       )}
 
-      <div className="flex gap-3">
+      <div className={classNames("gap-3", isBrowser ? "hidden" : "flex")}>
         <div className="flex-1">
           <FormDropdownComponent<Record<string, unknown>, { label: string; value: string }>
             fieldName="titleMatchMode"
@@ -255,7 +269,7 @@ export default function WindowMatchFieldsComponent({
         </div>
       </div>
 
-      {!isDisabled && (
+      {!isDisabled && !isBrowser && (
         <div className="flex flex-column gap-2 mt-2">
           <div>
             <Button

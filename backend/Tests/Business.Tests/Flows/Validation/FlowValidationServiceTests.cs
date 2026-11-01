@@ -89,7 +89,7 @@ namespace Business.Tests.Flows.Validation
         }
 
         [Fact]
-        public void A_window_step_needs_an_area_and_that_area_a_window()
+        public void A_window_step_needs_an_area_and_that_area_a_window_or_a_browser_tab()
         {
             _areas.Add(new FlowArea { Id = 1, Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION });
             _areas.Add(new FlowArea { Id = 2, Name = "Screen", Type = FlowAreaTypeEnum.MONITOR });
@@ -112,7 +112,7 @@ namespace Business.Tests.Flows.Validation
             ErrorsOn(focus).ShouldBeEmpty();
             ErrorsOn(nowhere).ShouldBe([FlowValidationCodeEnum.AREA_MISSING]);
             ErrorsOn(monitor).ShouldBe([FlowValidationCodeEnum.AREA_NOT_A_WINDOW]);
-            ErrorsOn(tab).ShouldBe([FlowValidationCodeEnum.AREA_NOT_A_WINDOW]);
+            ErrorsOn(tab).ShouldBeEmpty();
         }
 
         // A launch can leave the program to the area it opens, but something has to start it.

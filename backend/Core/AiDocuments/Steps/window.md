@@ -18,7 +18,10 @@ by process name and title pattern (`CONTAINS`, `EQUALS`, `STARTS_WITH`, `REGEX`)
 described once, on the Areas tab, and every step that searches in it or focuses, resizes or moves it
 follows when that description changes. Several window steps can name the same area.
 
-The area has to be a window. A monitor, a region inside a window or a browser tab has nothing to
+A browser tab area works too: its window is the browser window holding the tab, and the tab is
+brought to the front of it first, the front tabs tried before each tab in turn.
+
+The area has to be a window or a tab. A monitor or a region inside a window has nothing to
 focus, resize or move, and the step is refused with `AREA_NOT_A_WINDOW`. The step acts on the whole
 window, title bar and borders included, whatever the area says about its frame.
 

@@ -1,7 +1,6 @@
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
-import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import type { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 
 export class FlowAreaDto {
@@ -43,9 +42,8 @@ export class FlowAreaDto {
   /** What a launch starts when the app is not open. */
   launchCommand: string = "";
 
-  // BROWSER_TAB
-  tabMatchValue: string = "";
-  tabMatchOn: TabMatchOnEnum = TabMatchOnEnum.TITLE;
+  /** BROWSER_TAB: the page's address, which finds the tab and is where a launch opens it. */
+  tabAddress: string = "";
 
   // MONITOR. Empty is the primary monitor.
   monitorDeviceName: string = "";

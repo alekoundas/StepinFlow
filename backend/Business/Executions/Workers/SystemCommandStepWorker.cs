@@ -19,6 +19,10 @@ namespace Business.Executions.Workers
     /// for it to close. With an area, it is the window the program opens - left alone when it is
     /// open already, and waited for when it is not, so the next step does not act on a screen that
     /// is still loading. What starts is then the area's Started by, the step's arguments after it.
+    ///
+    /// A browser tab is open already when it is in front of a window of its browser, and brought
+    /// to the front when it is behind; when it is nowhere, its browser opens a new window at its
+    /// address.
     /// </summary>
     public class SystemCommandStepWorker : IStepWorker
     {
@@ -29,17 +33,20 @@ namespace Business.Executions.Workers
         private readonly ICommandRunner _commandRunner;
         private readonly IProcessService _processService;
         private readonly IAreaPointResolver _areaPointResolver;
+        private readonly BrowserTabFinder _browserTabFinder;
         private readonly TimeProvider _timeProvider;
 
         public SystemCommandStepWorker(
             ICommandRunner commandRunner,
             IProcessService processService,
             IAreaPointResolver areaPointResolver,
+            BrowserTabFinder browserTabFinder,
             TimeProvider timeProvider)
         {
             _commandRunner = commandRunner;
             _processService = processService;
             _areaPointResolver = areaPointResolver;
+            _browserTabFinder = browserTabFinder;
             _timeProvider = timeProvider;
         }
 
@@ -51,6 +58,11 @@ namespace Business.Executions.Workers
             string commandLine = step.RunCommandValue;
             if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowArea != null)
                 commandLine = $"{step.FlowArea.LaunchCommand} {step.LaunchArguments}".Trim();
+
+            // Chromium's browsers and Firefox all take --new-window, so the tab does not land among
+            // whatever the last window had open.
+            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowArea?.Type == FlowAreaTypeEnum.BROWSER_TAB)
+                commandLine = $"{commandLine} --new-window {TabAddressHelper.ToOpen(step.FlowArea.TabAddress)}";
 
             VariableTranslationResult command = cache.TranslateVariables(commandLine);
             if (!command.IsTranslated)
@@ -84,7 +96,17 @@ namespace Business.Executions.Workers
 
         private async Task<ExecutionStep> LaunchAsync(FlowStep step, string commandLine, CancellationToken ct)
         {
-            if (step.FlowAreaId != null)
+            if (step.FlowArea?.Type == FlowAreaTypeEnum.BROWSER_TAB)
+            {
+                (WindowHandle window, bool wasBehind) = await _browserTabFinder.BringToFrontAsync(step.FlowArea, ct);
+
+                if (window.IsValid && wasBehind)
+                    return Launched(ExecutionStep.Success(message: "Open behind another tab, so it was brought to the front rather than launched again."), commandLine);
+
+                if (window.IsValid)
+                    return Launched(ExecutionStep.Success(message: "Already open, so not launched again."), commandLine);
+            }
+            else if (step.FlowAreaId != null)
             {
                 AreaResolution open = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
 

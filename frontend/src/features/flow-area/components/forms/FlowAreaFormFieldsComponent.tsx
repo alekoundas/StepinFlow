@@ -15,15 +15,9 @@ import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode-enum";
-import { TabMatchOnEnum } from "@/shared/enums/backend/area/tab-match-on-enum";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
 import WindowMatchFieldsComponent from "@/shared/components/form/WindowMatchFieldsComponent";
 import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/forms/FlowAreaScalesWithFieldComponent";
-
-interface EnumOption {
-  label: string;
-  value: string;
-}
 
 interface Props {
   // Areas this one may sit inside. Only top level ones, and never itself.
@@ -32,12 +26,6 @@ interface Props {
   childAreas?: FlowAreaDto[];
   isDisabled?: boolean;
 }
-
-const toOptions = (values: Record<string, string>): EnumOption[] =>
-  Object.values(values).map((value) => ({
-    label: value.replaceAll("_", " ").toLowerCase(),
-    value,
-  }));
 
 // Left unclamped on purpose: a drag that leaves the area shows up as an out of range percent
 // rather than being silently snapped to an edge.
@@ -56,6 +44,7 @@ export default function FlowAreaFormFieldsComponent({
   const sizingMode = useWatch({ control, name: "sizingMode" });
   const parentId = useWatch({ control, name: "parentFlowAreaId" });
   const isMain = useWatch({ control, name: "isMain" });
+  const titlePattern = useWatch({ control, name: "titlePattern" });
 
   // The test reports bounds the way the area will actually resolve them, so the numbers on screen
   // are the numbers the flow gets rather than a different measurement of the same window.
@@ -85,7 +74,7 @@ export default function FlowAreaFormFieldsComponent({
 
   // Picking an app says what starts it, unless something is already there for the same app.
   const startedByFromPick = async (processId: number, isAnotherApp: boolean) => {
-    if (type !== FlowAreaTypeEnum.APPLICATION) return;
+    if (type !== FlowAreaTypeEnum.APPLICATION && type !== FlowAreaTypeEnum.BROWSER_TAB) return;
 
     const current = (getValues("launchCommand") as string) ?? "";
     if (current.length > 0 && !isAnotherApp) return;
@@ -133,6 +122,13 @@ export default function FlowAreaFormFieldsComponent({
       });
     }
   }, [parentId, sizingMode, setValue]);
+
+  // A tab names no title: a browser's is its front tab's, so it would only match while that tab was in front.
+  useEffect(() => {
+    if (type === FlowAreaTypeEnum.BROWSER_TAB && titlePattern) {
+      setValue("titlePattern", "", { shouldValidate: true, shouldDirty: true });
+    }
+  }, [type, titlePattern, setValue]);
 
   useEffect(() => {
     if (parentId && isMain) {
@@ -376,9 +372,8 @@ export default function FlowAreaFormFieldsComponent({
         </>
       )}
 
-      {/* APPLICATION and BROWSER_TAB share how the window is found */}
-      {(type === FlowAreaTypeEnum.APPLICATION ||
-        type === FlowAreaTypeEnum.BROWSER_TAB) && (
+      {/* APPLICATION */}
+      {type === FlowAreaTypeEnum.APPLICATION && (
         <>
           <WindowMatchFieldsComponent
             isDisabled={isDisabled}
@@ -398,55 +393,50 @@ export default function FlowAreaFormFieldsComponent({
             />
           </div>
 
-          {type === FlowAreaTypeEnum.APPLICATION && (
-            <FormInputTextComponent
-              fieldName="launchCommand"
-              label="Started by"
-              placeholderText='"C:\Program Files\App\app.exe"'
-              isDisabled={isDisabled}
-              className="mt-3"
-              hintText="What a Launch step starts when the app is not open. Picking an open app fills it in, and a Steam game is started through Steam."
-            />
-          )}
+          <FormInputTextComponent
+            fieldName="launchCommand"
+            label="Started by"
+            placeholderText='"C:\Program Files\App\app.exe"'
+            isDisabled={isDisabled}
+            className="mt-3"
+            hintText="What a Launch step starts when the app is not open. Picking an open app fills it in, and a Steam game is started through Steam."
+          />
         </>
       )}
 
-      {/* BROWSER_TAB */}
+      {/* BROWSER_TAB: its browser and its address. A browser's title is its front tab's. */}
       {type === FlowAreaTypeEnum.BROWSER_TAB && (
         <>
-          <LabelComponent
-            text="The block above picks the browser window. These pick the tab inside it."
-            size="xs"
-            color="secondary"
-            className="mt-3"
+          <WindowMatchFieldsComponent
+            isDisabled={isDisabled}
+            isBrowser={true}
+            onAppPicked={(app, processId, isAnotherApp) => {
+              nameFromPick("Window", app);
+              void startedByFromPick(processId, isAnotherApp);
+            }}
           />
 
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <FormDropdownComponent<FlowAreaDto, EnumOption>
-                fieldName="tabMatchOn"
-                labelText="Find tab by"
-                mode="local"
-                options={toOptions(TabMatchOnEnum)}
-                optionLabel="label"
-                optionValue="value"
-                isRequired={true}
-                isDisabled={isDisabled}
-              />
-            </div>
-          </div>
-
           <FormInputTextComponent
-            fieldName="tabMatchValue"
-            label="Tab title or URL contains"
+            fieldName="tabAddress"
+            label="Address"
+            placeholderText="shop.example.com/cart"
             isRequired={true}
             isDisabled={isDisabled}
+            hintText="The tab whose address starts with this, with or without https:// and www. Launch opens the browser here when no tab has it."
+          />
+
+          <FormInputTextComponent
+            fieldName="launchCommand"
+            label="Started by"
+            placeholderText='"C:\Program Files\Google\Chrome\Application\chrome.exe"'
+            isDisabled={isDisabled}
+            hintText="The browser a Launch step starts when no tab has the address. Picking an open browser fills it in."
           />
 
           <LabelComponent
             size="sm"
-            color="warning"
-            text="Steps that search in this area fail when that tab is not the active one. Tab matching is not resolved yet, so the area saves but will not run until it lands."
+            color="secondary"
+            text="A step that searches here looks at the tab in front of each window of the browser. Focus Window and Launch bring it to the front when it is behind."
           />
         </>
       )}

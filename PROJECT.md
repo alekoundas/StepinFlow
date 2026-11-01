@@ -1438,9 +1438,27 @@ match mode, so the same window was described twice and a renamed title broke the
 searches. The step keeps `FlowAreaId` and drops those three columns (`WindowStepArea`, which links a
 window step to an area of its flow that finds the same window and makes one where none does). The
 worker finds the window the way the area does, but whole: a minimised window has no inside to
-measure and can still be focused. Only an `APPLICATION` area is a window - a monitor, a region or a
-browser tab is `AREA_NOT_A_WINDOW` - and an old `process <[ … ]>` line is refused with a message
-saying how it is written now.
+measure and can still be focused. An `APPLICATION` area is a window and so, since 2026-11-01, is a
+`BROWSER_TAB` - a monitor or a region is `AREA_NOT_A_WINDOW` - and an old `process <[ … ]>` line is
+refused with a message saying how it is written now.
+
+**A browser tab area is found by its address**, since 2026-11-01: `FlowArea.TabAddress`, `tab <[
+address ]>` straight after the browser's process, and the area is the tab's page. It names its
+browser and no title, because a browser's title is its front tab's. `IBrowserTabService`
+(`BrowserTabService`, UI Automation) reads a window's address bar - the first text field outside a
+page - its tab items in the order they are drawn, and the page in front, and selects a tab; a page is
+never walked into. `TabAddressHelper` decides: the tab's address starts with the area's at a
+boundary, `https://` and `www.` left out of both, since the address bar shows neither.
+`BrowserTabFinder` holds the rule for which tab: the resolver takes the front tab of each window of
+the browser only, so a search never switches tabs behind the user's back and a tab behind another is
+not on screen; Focus, Resize, Move and Launch bring it to the front, the front tabs tried first and
+then each tab in turn, a window it is not in put back on the tab it showed. A launch with no tab at
+the address starts the area's Started by - the browser - with `--new-window` and the address, which
+Chromium's browsers and Firefox all take. `BrowserTabAddress` renamed `TabMatchValue` to `TabAddress`,
+dropped `TabMatchOn` - finding a tab by its title went, since a title changes with a notification
+count - and cleared the title patterns tab areas had. An old `tab url contains <[ … ]>` reads as the
+address; `tab title contains` is refused. Windows only: macOS has AppleScript for the same, and Linux
+AT-SPI, which browsers support unevenly.
 
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is

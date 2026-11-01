@@ -27,9 +27,13 @@ namespace Business.Tests.Fakes
             return Bounds;
         }
 
+        // Every window of a browser, front first.
+        public List<WindowHandle> Windows { get; } = new List<WindowHandle>();
+
         public IReadOnlyList<WindowHandle> FindWindows(WindowQuery query)
         {
-            throw new NotImplementedException();
+            Queries.Add(query);
+            return Windows;
         }
 
         public IReadOnlyList<WindowMatch> FindWindowMatches(WindowQuery query)

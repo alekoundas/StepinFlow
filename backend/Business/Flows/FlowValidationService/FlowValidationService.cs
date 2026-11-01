@@ -185,7 +185,7 @@ namespace Business.Flows.FlowValidationService
                         ParentFlowAreaId = area.ParentFlowAreaId,
                         ProcessName = area.ProcessName,
                         TitlePattern = area.TitlePattern,
-                        TabMatchValue = area.TabMatchValue,
+                        TabAddress = area.TabAddress,
                         MonitorDeviceName = area.MonitorDeviceName,
                         LaunchCommand = area.LaunchCommand,
                     }).ToList(),

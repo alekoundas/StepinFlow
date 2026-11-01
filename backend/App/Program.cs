@@ -91,9 +91,11 @@ namespace App
             builder.Services.AddSingleton<IProcessService, ProcessService>();
             builder.Services.AddSingleton<IOcrService, OcrService>();
             builder.Services.AddSingleton<IAccessibleElementService, AccessibleElementService>();
+            builder.Services.AddSingleton<IBrowserTabService, BrowserTabService>();
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
 
             // Services
+            builder.Services.AddSingleton<BrowserTabFinder>();
             builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
             builder.Services.AddSingleton<IImageSearcher, ImageSearcher>();
             builder.Services.AddSingleton<ICommandRunner, CommandRunner>();

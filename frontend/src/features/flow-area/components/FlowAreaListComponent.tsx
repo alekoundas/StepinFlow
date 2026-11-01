@@ -66,7 +66,7 @@ const describe = (area: FlowAreaDto, areas: FlowAreaDto[]): string => {
   if (area.type === FlowAreaTypeEnum.MONITOR) return area.monitorDeviceName || "Primary monitor";
 
   if (area.type === FlowAreaTypeEnum.BROWSER_TAB)
-    return [area.processName, area.tabMatchValue].filter(Boolean).join(" · ") || "Browser tab";
+    return [area.processName, area.tabAddress].filter(Boolean).join(" · ") || "Browser tab";
 
   if (area.type === FlowAreaTypeEnum.APPLICATION)
     return [area.processName, area.titlePattern && `title ${area.titlePattern}`].filter(Boolean).join(" · ") || "Any window";

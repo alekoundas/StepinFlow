@@ -336,11 +336,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TabMatchOn")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TabMatchValue")
+                    b.Property<string>("TabAddress")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

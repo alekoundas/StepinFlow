@@ -45,8 +45,8 @@ export default function FlowStepWindowFormFieldsComponent({
       <FlowStepAreaFieldComponent
         flowId={flowId}
         labelText="Window"
-        hintText="A window area, found by its application and title. Change how it is found on the Areas tab, and every step using it follows."
-        flowAreaType={FlowAreaTypeEnum.APPLICATION}
+        hintText="An application, or a browser tab, which is brought to the front of its window first. Change how it is found on the Areas tab, and every step using it follows."
+        flowAreaTypes={[FlowAreaTypeEnum.APPLICATION, FlowAreaTypeEnum.BROWSER_TAB]}
         isDisabled={isDisabled}
       />
 

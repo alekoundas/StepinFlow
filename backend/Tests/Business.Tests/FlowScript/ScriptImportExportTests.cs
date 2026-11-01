@@ -488,7 +488,7 @@ namespace Business.Tests.FlowScript
             FlowArea browser = new FlowArea { Name = "Browser", FlowId = flow.Id, IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120, LaunchCommand = "chrome.exe" };
             FlowArea screen = new FlowArea { Name = "Screen", FlowId = flow.Id, Type = FlowAreaTypeEnum.MONITOR, ScalesWith = ScalesWithEnum.DPI };
             FlowArea box = new FlowArea { Name = "Box", FlowId = flow.Id, Type = FlowAreaTypeEnum.CUSTOM, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 10, LocationY = 20, Width = 300, Height = 200, AuthoredDpi = 96 };
-            FlowArea inventoryTab = new FlowArea { Name = "Inventory tab", FlowId = flow.Id, Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TitlePattern = "Swag", TitleMatchMode = TitleMatchModeEnum.STARTS_WITH, TabMatchOn = TabMatchOnEnum.URL, TabMatchValue = "/inventory.html" };
+            FlowArea inventoryTab = new FlowArea { Name = "Inventory tab", FlowId = flow.Id, Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome.exe", TabAddress = "saucedemo.com/inventory.html", LaunchCommand = "chrome.exe" };
             FlowArea gameClient = new FlowArea { Name = "Game client", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = false, ScalesWith = ScalesWithEnum.AREA, LaunchCommand = "steam://rungameid/1013320" };
             db.FlowAreas.AddRange(browser, screen, box, inventoryTab, gameClient);
             db.SaveChanges();

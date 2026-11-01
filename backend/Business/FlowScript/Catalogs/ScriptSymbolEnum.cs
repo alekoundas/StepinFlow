@@ -39,6 +39,7 @@ namespace Business.FlowScript.Catalogs
         SIZE,
         SCALES_WITH,
         TAB,
+        URL,
         WITH_FRAME,
         STARTED_BY,
 

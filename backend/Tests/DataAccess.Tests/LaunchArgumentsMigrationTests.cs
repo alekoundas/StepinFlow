@@ -32,7 +32,7 @@ namespace DataAccess.Tests
             MigrateTo(AFTER);
 
             using AppDbContext db = _database.Open();
-            db.FlowAreas.Single(x => x.Id == areaId).LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
+            LaunchCommandOf(db, areaId).ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
             Launch(db, quoted).ShouldBe(("", "--profile test", areaId));
             Launch(db, bare).ShouldBe(("", "", areaId));
         }
@@ -49,7 +49,7 @@ namespace DataAccess.Tests
             MigrateTo(AFTER);
 
             using AppDbContext db = _database.Open();
-            db.FlowAreas.Single(x => x.Id == areaId).LaunchCommand.ShouldBe("chrome.exe");
+            LaunchCommandOf(db, areaId).ShouldBe("chrome.exe");
             Launch(db, other).ShouldBe(("msedge.exe https://example.com", "", (int?)null));
         }
 
@@ -74,6 +74,12 @@ namespace DataAccess.Tests
         {
             using AppDbContext db = _database.Open();
             db.GetService<IMigrator>().Migrate(migration);
+        }
+
+        // Only the column: the model has moved past this migration's areas.
+        private static string LaunchCommandOf(AppDbContext db, int areaId)
+        {
+            return db.FlowAreas.Where(x => x.Id == areaId).Select(x => x.LaunchCommand).Single();
         }
 
         private static (string Command, string Arguments, int? AreaId) Launch(AppDbContext db, int id)

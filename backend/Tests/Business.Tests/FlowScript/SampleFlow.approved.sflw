@@ -14,7 +14,7 @@ Areas:
   <[ Game ]>          inside <[ Browser ]>   ratio 0.10 0.20  size 0.80 0.70   scales with area
   <[ Header ]>        inside <[ Browser ]>   offset 0 0  size 1920 90   at 120dpi
   <[ Game client ]>   window process <[ game.exe ]>   with frame   started by <[ steam://rungameid/1013320 ]>   scales with area
-  <[ Inventory tab ]> window process <[ chrome.exe ]>   tab url contains <[ /inventory.html ]>
+  <[ Inventory tab ]> window process <[ chrome.exe ]>   tab <[ saucedemo.com/inventory.html ]>   started by <[ chrome.exe ]>
   <[ Right screen ]>  monitor <[ \\.\DISPLAY2 ]>   at 96dpi
   <[ Screen ]>        monitor primary
 

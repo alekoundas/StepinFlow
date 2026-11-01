@@ -19,10 +19,16 @@ namespace Business.Tests.AreaPoint
             .WithMonitor(Secondary, new Rectangle(3840, 0, 1920, 1080), 96);
 
         private readonly FakeWindowService _windows = new FakeWindowService();
+        private readonly FakeBrowserTabService _tabs = new FakeBrowserTabService();
 
         private AreaPointResolver Resolver()
         {
-            return new AreaPointResolver(null!, _windows, _screen);
+            return new AreaPointResolver(null!, _windows, _screen, Tabs());
+        }
+
+        private BrowserTabFinder Tabs()
+        {
+            return new BrowserTabFinder(_windows, _tabs, TimeProvider.System);
         }
 
         private static FlowArea Primary(ScalesWithEnum? scalesWith = null)
@@ -220,10 +226,50 @@ namespace Business.Tests.AreaPoint
             Resolver().ResolveArea(new FlowArea { Name = "Browser", Type = FlowAreaTypeEnum.APPLICATION }).IsResolved.ShouldBeFalse();
         }
 
-        [Fact]
-        public void A_browser_tab_is_not_supported_yet()
+        // ================================================================
+        // Browser tabs
+        // ================================================================
+
+        private static FlowArea Tab(string address)
         {
-            Resolver().ResolveArea(new FlowArea { Type = FlowAreaTypeEnum.BROWSER_TAB }).IsResolved.ShouldBeFalse();
+            return new FlowArea { Name = "Cart", Type = FlowAreaTypeEnum.BROWSER_TAB, ProcessName = "chrome", TabAddress = address };
+        }
+
+        // The address bar leaves out https:// and www., and a page under the address is still it.
+        [Fact]
+        public void A_browser_tab_in_front_of_any_window_of_its_browser_is_its_page()
+        {
+            _windows.Windows.AddRange([new WindowHandle(1), new WindowHandle(2)]);
+            _tabs.With(new WindowHandle(1), 0, "news.example.com")
+                .With(new WindowHandle(2), 1, "mail.example.com", "shop.example.com/cart?item=4");
+
+            AreaResolution resolved = Resolver().ResolveArea(Tab("https://www.shop.example.com/cart"));
+
+            (resolved.IsResolved, resolved.Bounds, resolved.Window).ShouldBe((true, _tabs.Page, new WindowHandle(2)));
+        }
+
+        // A search never switches tabs behind the user's back.
+        [Fact]
+        public void A_browser_tab_behind_another_is_not_on_screen()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "news.example.com", "shop.example.com/cart");
+
+            AreaResolution resolved = Resolver().ResolveArea(Tab("shop.example.com/cart"));
+
+            resolved.IsResolved.ShouldBeFalse();
+            resolved.Error.ShouldBe("No chrome window has \"shop.example.com/cart\" in front, so \"Cart\" is not on screen.");
+            _tabs.Selected.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_browser_tab_whose_page_cannot_be_measured_has_no_area()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "shop.example.com/cart");
+            _tabs.Page = Rectangle.Empty;
+
+            Resolver().ResolveArea(Tab("shop.example.com/cart")).IsResolved.ShouldBeFalse();
         }
 
         // ================================================================
@@ -272,7 +318,7 @@ namespace Business.Tests.AreaPoint
                 areaId = area.Id;
             }
 
-            AreaPointResolver resolver = new AreaPointResolver(database, _windows, _screen);
+            AreaPointResolver resolver = new AreaPointResolver(database, _windows, _screen, Tabs());
             FlowPoint unsaved = new FlowPoint { FlowAreaId = areaId, OffsetMode = AreaSizingModeEnum.RATIO, RatioX = 0.5f, RatioY = 0.25f };
 
             PointResolution point = await resolver.ResolvePointAsync(unsaved, TestToken.Ct);
