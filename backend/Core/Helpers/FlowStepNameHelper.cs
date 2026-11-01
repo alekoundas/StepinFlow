@@ -4,8 +4,9 @@ using Core.Models.Database;
 namespace Core.Helpers
 {
     /// <summary>
-    /// The steps nobody names. A cursor, wait, keyboard, window, system action or break step is called
-    /// what its own settings say, "Double click" or "Wait 2s", and renamed whenever it is saved. Never
+    /// The steps nobody names. A cursor, wait, keyboard, window, system action, break, end or notify
+    /// step is called what its own settings say, "Double click" or "Wait 2s", and renamed whenever it
+    /// is saved. Never
     /// from another row, such as the window area a window step acts on, the point a Move goes to or
     /// the loop a Break leaves, which could be renamed under it.
     /// </summary>
@@ -26,6 +27,8 @@ namespace Core.Helpers
             FlowStepTypeEnum.WINDOW_RELOCATE,
             FlowStepTypeEnum.KEYBOARD_INPUT,
             FlowStepTypeEnum.BREAK,
+            FlowStepTypeEnum.END_EXECUTION,
+            FlowStepTypeEnum.NOTIFY,
         ];
 
         public static bool IsNamedBySettings(FlowStepTypeEnum type)
@@ -72,6 +75,15 @@ namespace Core.Helpers
 
                 case FlowStepTypeEnum.BREAK:
                     return "Break";
+
+                case FlowStepTypeEnum.END_EXECUTION:
+                    if (step.EndExecutionAsSuccess)
+                        return "End as passed";
+
+                    return "End as failed";
+
+                case FlowStepTypeEnum.NOTIFY:
+                    return "Notify";
 
                 default:
                     return step.Name;

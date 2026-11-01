@@ -45,6 +45,18 @@ namespace Business.FlowScript.Parsers
             return (null, ExtractStepReference());
         }
 
+        // <[ x ]> when the line has one here, or null.
+        protected string? ExtractOptionalQuote()
+        {
+            if (!ExpectOptionalKeyword(ScriptSymbolEnum.QUOTE_OPEN))
+                return null;
+
+            string text = ExtractText();
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            return text;
+        }
+
         // <[ a step ]>
         protected FlowStep? ExtractStepReference()
         {

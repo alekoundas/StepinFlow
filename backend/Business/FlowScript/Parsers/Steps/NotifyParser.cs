@@ -13,16 +13,21 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Notify  <[ message ]>
+            // Notify  <[ message ]>   [with result of <[ a step ]>]
             ExpectKeyword(FlowStepTypeEnum.NOTIFY);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string message = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message };
+
+            if (ExpectOptionalKeyword(ScriptSymbolEnum.WITH_RESULT_OF))
+                step.FlowStepReference = ExtractStepReference();
+
             ExpectEnd();
 
-            return new FlowStep() { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message };
+            return step;
         }
     }
 }

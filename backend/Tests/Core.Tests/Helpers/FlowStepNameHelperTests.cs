@@ -61,6 +61,15 @@ namespace Core.Tests.Helpers
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.MONITOR_OFF }).ShouldBe("Monitor off");
         }
 
+        // Nothing points at either, so the name only labels the tree.
+        [Fact]
+        public void An_end_says_its_verdict_and_a_notify_what_it_is()
+        {
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, Message = "no login" }).ShouldBe("End as failed");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = true }).ShouldBe("End as passed");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }).ShouldBe("Notify");
+        }
+
         [Fact]
         public void Other_steps_keep_the_name_they_were_given()
         {

@@ -13,12 +13,21 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Sub Flow  <[ Checkout ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
+            // Sub Flow  <[ name ]>   <[ Checkout ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
             ExpectKeyword(FlowStepTypeEnum.SUB_FLOW);
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            Flow subFlow = new Flow() { Name = ExtractText(), PublicId = Guid.Empty };
+            string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            // A file from before the line had a name wrote only the sub-flow's, and the import names
+            // the step after it.
+            Flow subFlow = new Flow() { Name = name, PublicId = Guid.Empty };
+            string? called = ExtractOptionalQuote();
+            if (called == null)
+                name = string.Empty;
+            else
+                subFlow.Name = called;
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.ID))
             {
@@ -29,7 +38,7 @@ namespace Business.FlowScript.Parsers.Steps
 
             ExpectEnd();
 
-            return new FlowStep() { FlowStepType = FlowStepTypeEnum.SUB_FLOW, SubFlow = subFlow };
+            return new FlowStep() { FlowStepType = FlowStepTypeEnum.SUB_FLOW, Name = name, SubFlow = subFlow };
         }
     }
 }

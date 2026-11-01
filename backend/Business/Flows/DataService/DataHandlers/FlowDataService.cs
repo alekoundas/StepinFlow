@@ -321,7 +321,7 @@ namespace Business.Flows.DataService.DataHandlers
             dbContext.FlowViewports.AddRange(schema.Viewports);
             FlowAreaDataService.Add(dbContext, flow, schema.Areas);
             FlowPointDataService.Add(dbContext, flow, schema.Points);
-            FlowStepDataService.AddTree(dbContext, flow, schema.Steps, TakenNames(schema));
+            FlowStepDataService.AddTree(dbContext, flow, schema.Steps, schema.SubFlows, TakenNames(schema));
 
             // One save for the whole graph: EF inserts in dependency order and fills every key from
             // the links.

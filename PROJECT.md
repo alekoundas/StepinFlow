@@ -1434,15 +1434,17 @@ holds to: Launch had none, and threw the first time one executed.
 
 **An application area says what starts it**, since 2026-11-01: `FlowArea.LaunchCommand`, **Started
 by** on its form and `started by <[ … ]>` on its line in the script. A launch of an area starts
-that, with its own **Arguments** after it - `FlowStep.LaunchArguments`, `Launch opens <[ Browser ]>
-with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} ]>` - which is where a QA test's
-fresh profile and window size go. A launch with no area keeps its whole command line in
-`RunCommandValue`, `Launch <[ notepad.exe notes.txt ]>`: two columns, each meaning one thing, rather
-than one whose meaning turned on the area. The form shows the one that applies and empties the other
-on save. An area started by a link takes no arguments (`LAUNCH_ARGUMENTS_ON_LINK`), since Steam
-passes a game's its own way. An old `Launch <[ command ]> opens <[ area ]>` is read the new way: its
-program goes to the area unless the area says already, the rest become its arguments, and a program
-other than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning. Picking an open app fills it in
+that, with its own **Arguments** after it - `FlowStep.LaunchArguments`, `Launch <[ Open the shop ]>
+opens <[ Browser ]> with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} ]>` - which is
+where a QA test's fresh profile and window size go. A launch with no area keeps its whole command
+line in `RunCommandValue`, `Launch <[ Open the notes ]> <[ notepad.exe notes.txt ]>`: two columns,
+each meaning one thing, rather than one whose meaning turned on the area. The form shows the one that
+applies and empties the other on save. An area started by a link takes no arguments
+(`LAUNCH_ARGUMENTS_ON_LINK`), since Steam passes a game's its own way. An old
+`Launch <[ command ]> opens <[ area ]>`, in a file with no `Script Language` line, is read the new
+way: its program goes to the area unless the area says already, the rest become its arguments, and a
+program other than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning. With the line, that quote is
+the step's name. Picking an open app fills it in
 (`Lookup.launchCommand`, `LaunchCommandHelper`): the program file, or `steam://rungameid/<id>` when
 the program sits in a Steam library, the id read from the `appmanifest_<id>.acf` that names its
 folder, since a Steam game's program started on its own restarts through Steam or refuses. A library
@@ -1525,8 +1527,19 @@ would pass a threshold it never had to clear.
 gives the point, and `FIND_ALL` takes every template's hits, the first template's first, up to Max
 matches for the step as a whole. The waits follow: `WAIT_UNTIL_FOUND` until any one is there,
 `WAIT_UNTIL_NOT_FOUND` until none is. There is no AND: two things that must both be on screen are
-two steps, the second inside the first one's Success. A search that cannot be done - an area with
-no size, a template bigger than the area - fails a wait at once rather than counting as gone.
+two steps, the second inside the first one's Success.
+
+**A wait finds its area again on every try**, image and text alike, so it follows the window: one
+that opens during the wait, moves or changes size is looked at where it is now. Found once before
+the wait, a window not open yet failed the step at once, and one that moved was searched where it
+used to be. `AreaResolution.Unresolved` says why an area was not found, and the waits act on it:
+`NOT_ON_SCREEN` (no window, tab or monitor) is "not yet" to a wait to see it and "gone" to a wait to
+see it go, since what was in the window went with it; `NO_SIZE` (minimised, or outside the area it
+sits in) is "not yet" to both, since it comes back; `NOT_SET_UP` (deleted, or a region with no size)
+fails at once, since no try finds it. A search that cannot be done on a try - a template bigger than
+the window is now - is "not yet" too, never "gone", and a wait that gives up says why its last try
+could not look. A text wait checks the `{{Name}}` it compares against before the first read, since
+one never set is the flow's mistake and no try mends it.
 
 **One computed scale, no sweep.** The area decides it (see Coordinates below), and a template
 scaled larger than the screenshot is an error rather than "not found". Nine attempts at one
@@ -1978,7 +1991,21 @@ about words it has never heard of. Reading forwards only is the usual rule for d
 right one here: the parser refuses a word it does not know, and a script that drives the mouse is
 better refused than half understood. A file without the line is from before it and is read as v1,
 the old forms read today included; from v2 on, a converter checks the version rather than the
-shape of a line.
+shape of a line. One shape already needs the line: `Launch <[ x ]> opens <[ area ]>` is a command
+line in a file without it and the step's name in a file with it (`ScriptScope.IsLanguageDeclared`).
+
+### Every step a line can point at carries its name
+
+A line is named when anything can refer to its step, or when nothing about its settings would name
+it: searches, checks, loops, stage markers, `Launch` and `Run` (a check or typed text reads what a
+command printed, `{{Read it}}`), and `Sub Flow`. A step named by its settings - a click, a wait, an
+`End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Run` and `Sub Flow`
+wrote none before 2026-11-01, and an empty name is still left out: the import names such a step
+`Launch <area>`, the preset (`Read clipboard`), `Command`, or the sub-flow it executes
+(`FlowStepDataService.AddTree`), and the `NameUnnamedSteps` migration named the ones saved that way.
+Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
+file called that, and the file did not import back. `Notify` writes the step whose result it
+includes, `with result of <[ … ]>`; it did not before, and an export lost the pick.
 
 ### A flow's name is a file name on all three systems
 
@@ -2110,7 +2137,7 @@ something, so a tester can see the edit before trusting it.
 
 **Discord notifications** are a `Notify` step, so they go wherever the flow puts one - usually under
 a failure branch or an `End Execution`. It can include the result of a step it sits under, either
-side, above its own message: what an image search found and its accuracy against the one it
+side, above its own message (`with result of <[ … ]>` on its script line): what an image search found and its accuracy against the one it
 needed, or the closest it came; the text a search read; what a command printed. That is read from
 what the execution recorded, not from the step's settings. It posts through one queue rate-limited
 per bot, so a flow in a retry loop cannot flood a channel. The webhook URL is the credential: it is never logged and never shown
@@ -2186,8 +2213,8 @@ and the file cannot disagree. It also returns those names, which is how the sent
 sentence naming the check they belong to. Every step schema includes `CODE_COMMENT_SCHEMA`, for the
 reason the warning above gives.
 
-**Steps named by their settings.** A cursor, wait, keyboard, window or system action step has no
-Name field. `FlowStepNameHelper` names it from its own settings - "Double right click", "Wait 2s",
+**Steps named by their settings.** A cursor, wait, keyboard, window, system action, break, end or
+notify step has no Name field, and no name on its script line. `FlowStepNameHelper` names it from its own settings - "Double right click", "Wait 2s",
 "Type {{email}}", "Focus window" - whenever it is saved, pasted, recorded or imported, and
 `FlowNameHelper.MakeUnique` numbers it like any name: "Click 2", or "Wait 2s (2)" when the name
 already ends in a number. Only the step's own settings, never the name of the point or step it goes

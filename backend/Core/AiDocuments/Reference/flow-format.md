@@ -49,7 +49,7 @@ Steps:
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ Open the shop ]>   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
 
 Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
@@ -104,7 +104,7 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accu
 
 ## Check out
 
-Sub Flow  <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
+Sub Flow  <[ Check out ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
 
 ---
@@ -168,7 +168,7 @@ parser has to guess where `Login form inside Browser` stops being a name.
 
 ```
 Notify   <[ Login failed: "bad password" ]>
-Run      <[ dir C:\temp\ ]>
+Run      <[ List temp ]>   <[ dir C:\temp\ ]>
 ```
 
 Nothing between the quotes is special. Double quotes and backslashes are text like any other, so
@@ -367,10 +367,11 @@ name declared twice is an error at the second.
 The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
 to a number only on a collision.
 
-**A cursor, wait, keyboard, window or system action line carries no name.** The app names those
-steps from their own settings when they are saved or imported — `Click`, `Wait 2s`,
-`Type {{email}}` — so the tree and the execution history can show them. No line declares that name,
-so nothing in a file can refer to one of those steps.
+**A cursor, wait, keyboard, window, system action, break, `End Execution` or `Notify` line carries
+no name.** The app names those steps from their own settings when they are saved or imported —
+`Click`, `Wait 2s`, `Type {{email}}`, `End as failed` — so the tree and the execution history can
+show them. No line declares that name, so nothing in a file can refer to one of those steps. Every
+other line starts with its step's name.
 
 ### Comments and sections
 
@@ -519,8 +520,10 @@ Scroll      down 3
 Wait        800ms
 ```
 
-**Every step is a line.** A click and a scroll act where the cursor is, so the `Move` above them
-says where and the line itself says only what. `to` takes a name from the one namespace - a check's
+**Every step is a line.** These lines carry no name: a step like them is named by what it does,
+`Click` or `Wait 800ms`, numbered when the flow has two, and so are `End Execution` and `Notify`. A
+click and a scroll act where the cursor is, so the `Move` above them says where and the line itself
+says only what. `to` takes a name from the one namespace - a check's
 result or a point - and a move saved with neither is written `to nowhere`, which the validator
 reports. A click is left and single unless it says otherwise: the button (`right`, `middle`) comes
 first, then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort;
@@ -536,8 +539,8 @@ execution ends - however it ends - is let go, so a flow that fails between the t
 leave Ctrl down on the machine. A press may name a modifier on its own too: `Press <[ Win ]>` opens
 the Start menu.
 
-**`Launch` starts something and carries on.** Unlike `Run`, it does not wait for it to close. It is
-written one of two ways:
+**`Launch` starts something and carries on.** Unlike `Run`, it does not wait for it to close. After
+its name it is written one of two ways:
 
 - **`opens <[ area ]>`** - the app, or browser tab, it opens. What starts is what the area is
   `started by`, and `with <[ … ]>` adds arguments after it: a fresh browser profile, or a window
@@ -547,16 +550,23 @@ written one of two ways:
 - **`<[ command ]>`** - a command line of its own, the program first, quoted when its path has a
   space: a script, a file or a URL, started and left.
 
-It moves nothing: placing the window is a `Move Window` or `Resize Window` line of its own. A file
-from before an area said what starts it has `Launch <[ command ]> opens <[ area ]>`: its program
-goes to the area, unless the area says already, and the rest become the arguments. A program other
-than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning, and the area's starts.
+It moves nothing: placing the window is a `Move Window` or `Resize Window` line of its own.
 
 ```
-Launch   opens <[ App ]>   with <[ --profile test ]>
-Launch   opens <[ Game ]>
-Launch   <[ notepad.exe notes.txt ]>
+Launch   <[ Open the app ]>     opens <[ App ]>   with <[ --profile test ]>
+Launch   <[ Start the game ]>   opens <[ Game ]>
+Launch   <[ Open the notes ]>   <[ notepad.exe notes.txt ]>
+Run      <[ Read it ]>          READ_CLIPBOARD <[  ]>
 ```
+
+**A `Launch` or `Run` line starts with the step's name**, as a check does, because a check or typed
+text reads what a command printed by it: `<[ {{Read it}} ]>`. A file from before the name has none,
+and the import names the step for what it is: `Launch App` for a launch of an area, the preset for a
+command - `Read clipboard`, `Kill a process` - and `Command` for a command line of its own. A file
+from before an area said what starts it, and so with no `Script Language` line, has
+`Launch <[ command ]> opens <[ area ]>`: its program goes to the area, unless the area says already,
+and the rest become the arguments. A program other than the area's is the `LAUNCH_PROGRAM_DIFFERS`
+warning, and the area's starts.
 
 **A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
 `Move Window` take the name of a `window` area from the header, so a window is described once, under
@@ -619,6 +629,17 @@ uses is always written above it.
 A retry is a loop with a count and a `Break` on success, as above: it gives up after the count
 rather than trying for ever, and the part that repeats is the part indented under the loop.
 
+### Notify
+
+```
+Notify   <[ the total looks wrong ]>   with result of <[ Read the total ]>
+```
+
+Sends the message through the bot picked in the step's form, which the file does not carry.
+`with result of` puts what a check or command found at the top of the message - the text read, the
+template and its accuracy, the exit code - and names one the `Notify` sits under, in its `Success:`
+or `Failure:`. One it does not sit under is `REPORTED_STEP_UNREACHABLE`.
+
 ### Ending an execution
 
 ```
@@ -642,10 +663,12 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 ### Sub-flows
 
 ```
-Sub Flow  <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
+Sub Flow  <[ Check out ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
 
-The line names the sub-flow it executes by its name, for the reader, and by its `Id`, which finds it
+The step's name comes first, then the sub-flow it executes. A file from before the step's name has
+only the sub-flow's, and the import names the step after it. The line names the sub-flow by its
+name, for the reader, and by its `Id`, which finds it
 on another machine or branch even after either side renamed it. A line written by hand may leave
 the `id` out, and is matched by the name, which no two flows share. A file from before the `id`
 names the path it was exported to instead, `<[ flows/checkout.sflw ]>`, and is matched by that
@@ -661,7 +684,7 @@ do a teardown can do:
 
 ```
 End Execution  failed  <[ did not reach the products page ]>
- Run     KILL_PROCESS  <[ chrome.exe ]>
+ Run     <[ Close the browser ]>   KILL_PROCESS  <[ chrome.exe ]>
  Notify  <[ login smoke failed at {{width}}x{{height}} ]>
 ```
 

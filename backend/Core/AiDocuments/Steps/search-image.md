@@ -22,6 +22,13 @@ steps that decide. A flow holding none of them proves nothing, whatever it does 
 `WAIT_UNTIL_FOUND` and `WAIT_UNTIL_NOT_FOUND` poll every few hundred milliseconds. A timeout of 0
 waits forever, which in an unattended execution means it never gives up.
 
+Each try finds the search area again, so a wait follows its window: one that opens during the wait
+is searched once it is there, and one that moves or changes size is searched where it is now. A try
+that cannot look - no window yet, a minimised one, a template bigger than the window is now - counts
+as neither found nor gone, and the next try looks again. A wait that gives up says why its last try
+could not look. An area that no try can find - deleted, or a region with no size - fails the step at
+once.
+
 ## Which mode to use, and why it matters for speed
 
 `WAIT_UNTIL_FOUND` costs nothing when the image is already there: the first search runs before any
@@ -51,9 +58,8 @@ the thing was ever there, so if it never matched at all, the step succeeds immed
 If you need "wait for the spinner to appear and then go away", that is two steps:
 `WAIT_UNTIL_FOUND` then `WAIT_UNTIL_NOT_FOUND`.
 
-A search that cannot be done at all - the area has no size because the window is minimised, or a
-template is bigger than the area once scaled - is not "gone". Both waiting modes fail at once with
-that reason instead of waiting out the timeout.
+When the window of the area closes, what it waited to see go went with it, so the step succeeds:
+"No longer on screen: No window matches ...". A minimised window is not closed, and is waited out.
 
 It is a condition and nothing more: there is no position to give, so no Move or Drag can go to
 it. The dropdown does not offer it, and the validator reports a step still pointing at it.

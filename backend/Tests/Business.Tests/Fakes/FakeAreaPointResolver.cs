@@ -1,4 +1,5 @@
 using Business.AreaPoint;
+using Core.Enums;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
@@ -13,9 +14,27 @@ namespace Business.Tests.Fakes
         public Dictionary<int, AreaResolution> Areas { get; } = new Dictionary<int, AreaResolution>();
         public Dictionary<int, PointResolution> Points { get; } = new Dictionary<int, PointResolution>();
 
+        /// <summary>
+        /// One answer per lookup, in order, the last kept for every lookup after: a window that
+        /// opens, moves or closes while a step waits. Before <see cref="Areas"/>.
+        /// </summary>
+        public Dictionary<int, Queue<AreaResolution>> AreasInTurn { get; } = new Dictionary<int, Queue<AreaResolution>>();
+
+        public int AreaLookups { get; private set; }
+
         public Task<AreaResolution> ResolveAreaAsync(int flowAreaId, CancellationToken ct = default)
         {
-            return Task.FromResult(Areas.GetValueOrDefault(flowAreaId) ?? AreaResolution.Fail("The area no longer exists."));
+            AreaLookups++;
+
+            if (AreasInTurn.TryGetValue(flowAreaId, out Queue<AreaResolution>? turns) && turns.Count > 0)
+            {
+                if (turns.Count > 1)
+                    return Task.FromResult(turns.Dequeue());
+
+                return Task.FromResult(turns.Peek());
+            }
+
+            return Task.FromResult(Areas.GetValueOrDefault(flowAreaId) ?? AreaResolution.Fail("The area no longer exists.", AreaUnresolvedEnum.NOT_SET_UP));
         }
 
         public Task<PointResolution> ResolvePointAsync(int flowPointId, CancellationToken ct = default)
@@ -33,7 +52,7 @@ namespace Business.Tests.Fakes
 
         public AreaResolution ResolveArea(FlowArea area)
         {
-            return AreasByName.GetValueOrDefault(area.Name) ?? AreaResolution.Fail($"No window matches \"{area.Name}\".");
+            return AreasByName.GetValueOrDefault(area.Name) ?? AreaResolution.Fail($"No window matches \"{area.Name}\".", AreaUnresolvedEnum.NOT_ON_SCREEN);
         }
 
         public PointResolution ResolvePoint(FlowPoint point)

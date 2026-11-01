@@ -100,6 +100,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("in", ScriptSymbolEnum.IN),
             new ScriptKeyword("opens", ScriptSymbolEnum.OPENS),
             new ScriptKeyword("with", ScriptSymbolEnum.WITH),
+            new ScriptKeyword("with result of", ScriptSymbolEnum.WITH_RESULT_OF),
             new ScriptKeyword("keep", ScriptSymbolEnum.KEEP),
             new ScriptKeyword("timeout", ScriptSymbolEnum.TIMEOUT),
             new ScriptKeyword("no timeout", ScriptSymbolEnum.NO_TIMEOUT),

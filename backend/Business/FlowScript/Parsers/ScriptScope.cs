@@ -25,6 +25,12 @@ namespace Business.FlowScript.Parsers
             _diagnostics = diagnostics;
         }
 
+        /// <summary>
+        /// Whether the file has a <c>Script Language:</c> line. One from before it can say what a
+        /// line now says differently.
+        /// </summary>
+        public bool IsLanguageDeclared { get; set; }
+
 
         // ================================================================
         // Public methods - declaring

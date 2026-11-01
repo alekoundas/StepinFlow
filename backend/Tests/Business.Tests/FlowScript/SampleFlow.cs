@@ -60,7 +60,7 @@ namespace Business.Tests.FlowScript
             }
 
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in", CodeComment = "Everything before the products page." }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
 
             FlowStep find = Step(new FlowStep
             {
@@ -110,7 +110,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReference = loop }, loop);
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end);
 
             return schema;
         }

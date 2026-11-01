@@ -73,5 +73,5 @@ actually came back. Only a step it sits under has a result to read: a result is 
 under its step and dropped once the flow moves past it. If the notify stops being under it,
 validation reports `REPORTED_STEP_UNREACHABLE`.
 
-The script line does not carry the pick. A `{{Name}}` in the message is another way to put a text
-search's read or a command's output into it.
+The script line carries the pick: `Notify <[ message ]>   with result of <[ Read the total ]>`. A
+`{{Name}}` in the message is another way to put a text search's read or a command's output into it.

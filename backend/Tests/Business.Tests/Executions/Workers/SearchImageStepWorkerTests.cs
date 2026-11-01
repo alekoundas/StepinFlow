@@ -123,10 +123,11 @@ namespace Business.Tests.Executions.Workers
             _matcher.Requests.Count.ShouldBe(1);
         }
 
+        // The template is too big for the window as it is now, which a bigger window mends.
         [Theory]
         [InlineData(SearchModeEnum.WAIT_UNTIL_NOT_FOUND)]
         [InlineData(SearchModeEnum.WAIT_UNTIL_FOUND)]
-        public async Task A_search_that_cannot_be_done_fails_a_wait_at_once_rather_than_counting_as_gone(SearchModeEnum mode)
+        public async Task A_search_that_cannot_be_done_is_tried_again_and_never_counts_as_gone(SearchModeEnum mode)
         {
             _matcher.Answer(1, new TemplateMatchOutcome { Error = "scaled by 4.00 it is bigger than the area." });
             FlowStep step = ImageSearch(mode, Template(1, "spinner", 0.8f));
@@ -135,19 +136,115 @@ namespace Business.Tests.Executions.Workers
             (ExecutionStep result, _) = await SearchImage(step);
 
             result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
-            result.Message.ShouldBe("Template 1: scaled by 4.00 it is bigger than the area.");
-            _matcher.Requests.Count.ShouldBe(1);
+            result.Message!.ShouldEndWith("The last try could not look: Template 1: scaled by 4.00 it is bigger than the area.");
+            _matcher.Requests.Count.ShouldBeGreaterThan(1);
         }
 
         [Fact]
         public async Task An_area_that_cannot_be_found_fails_with_its_reason()
         {
-            _resolver.Areas[7] = AreaResolution.Fail(@"No window matches ""Browser"".");
+            _resolver.Areas[7] = AreaResolution.Fail(@"No window matches ""Browser"".", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
             (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.FIND_BEST, Template(1, "play", 0.8f)));
 
             result.Message.ShouldBe(@"No window matches ""Browser"".");
             _screenshots.Captured.ShouldBeEmpty();
+        }
+
+        // ================================================================
+        // The window, found again on every try of a wait
+        // ================================================================
+
+        [Fact]
+        public async Task A_wait_finds_a_window_that_opens_while_it_waits()
+        {
+            _matcher.Found(1, 0.9f, x: 5, y: 5);
+            _resolver.AreasInTurn[7] = new Queue<AreaResolution>([NoWindow(), NoWindow(), AreaResolution.Ok(Bounds)]);
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_FOUND, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Location.ShouldBe(new Point(105, 205));
+            _resolver.AreaLookups.ShouldBe(3);
+        }
+
+        [Fact]
+        public async Task A_wait_looks_where_the_window_is_now()
+        {
+            Rectangle moved = new Rectangle(300, 400, 800, 600);
+            _matcher.NotFound(1, 0.4f);
+            _resolver.AreasInTurn[7] = new Queue<AreaResolution>([AreaResolution.Ok(Bounds), AreaResolution.Ok(moved)]);
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_FOUND, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 3000;
+
+            await SearchImage(step);
+
+            _screenshots.Captured.Take(2).ShouldBe([Bounds, moved]);
+        }
+
+        [Fact]
+        public async Task A_window_that_never_opens_is_named_when_the_wait_gives_up()
+        {
+            _resolver.Areas[7] = NoWindow();
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_FOUND, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 3000;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message!.ShouldEndWith(@"The last try could not look: No window matches ""Browser"".");
+        }
+
+        // What it waits to see go was in the window, so it went with it.
+        [Fact]
+        public async Task Waiting_for_something_to_go_succeeds_when_its_window_closes()
+        {
+            _matcher.Found(1, 0.9f);
+            _resolver.AreasInTurn[7] = new Queue<AreaResolution>([AreaResolution.Ok(Bounds), NoWindow()]);
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, Template(1, "spinner", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Message.ShouldBe(@"No longer on screen: No window matches ""Browser"".");
+        }
+
+        // A minimised window comes back, with whatever was on it.
+        [Fact]
+        public async Task A_minimised_window_is_waited_out_rather_than_taken_as_gone()
+        {
+            _resolver.Areas[7] = AreaResolution.Fail(@"""Browser"" was found but has no visible area.", AreaUnresolvedEnum.NO_SIZE);
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, Template(1, "spinner", 0.8f));
+            step.TimeoutMilliseconds = 3000;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            _resolver.AreaLookups.ShouldBeGreaterThan(1);
+        }
+
+        [Theory]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_FOUND)]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_NOT_FOUND)]
+        public async Task An_area_no_try_can_find_fails_a_wait_at_once(SearchModeEnum mode)
+        {
+            _resolver.Areas.Remove(7);
+            FlowStep step = ImageSearch(mode, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe("The area no longer exists.");
+            _resolver.AreaLookups.ShouldBe(1);
+        }
+
+        private static AreaResolution NoWindow()
+        {
+            return AreaResolution.Fail(@"No window matches ""Browser"".", AreaUnresolvedEnum.NOT_ON_SCREEN);
         }
     }
 }

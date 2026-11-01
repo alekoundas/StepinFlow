@@ -72,6 +72,86 @@ namespace Business.Tests.FlowScript
         }
 
         // ================================================================
+        // Named launches, commands and sub-flows
+        // ================================================================
+
+        private const string WithArea = "Flow:    Named\nId:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b120\n\nAreas:\n  <[ App ]> window process <[ app.exe ]> started by <[ app.exe ]>\n\nSteps:\n";
+
+        private const string Named = """
+            Launch          <[ Start it ]>   opens <[ App ]>
+            Run             <[ Read it ]>   READ_CLIPBOARD <[  ]>
+            Check Value     <[ Has it ]>   <[ {{Read it}} ]> is not empty
+             Success:
+              Notify          <[ got it ]>   with result of <[ Has it ]>
+            Sub Flow        <[ Pay ]>   <[ Checkout ]>
+            """;
+
+        [Fact]
+        public void A_launch_a_command_and_a_sub_flow_carry_their_names()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + Named);
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.SYSTEM_COMMAND || x.FlowStepType == FlowStepTypeEnum.SUB_FLOW)
+                .Select(x => x.Name)
+                .ShouldBe(["Start it", "Read it", "Pay"]);
+            schema.SubFlows.Values.Single().Name.ShouldBe("Checkout");
+        }
+
+        // What a command said is read by its name, so the name has to be in the file.
+        [Fact]
+        public void A_check_reads_a_command_by_its_name_and_a_notify_reports_a_step_by_its()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + Named);
+
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.CHECK_VALUE).FlowStepReference.ShouldBeSameAs(schema.Steps.Single(x => x.Name == "Read it"));
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY).FlowStepReference.ShouldBeSameAs(schema.Steps.Single(x => x.Name == "Has it"));
+        }
+
+        [Fact]
+        public void The_names_and_the_reported_step_print_back_as_they_were_read()
+        {
+            string printed = new Printer().Write(new Scanner().Read(LanguageLine(WithArea) + Named));
+
+            printed.ShouldContain("with result of <[ Has it ]>");
+            new Printer().Write(new Scanner().Read(printed)).ShouldBe(printed);
+        }
+
+        // Written before these lines had a name, and the import names the step.
+        [Theory]
+        [InlineData("Launch          opens <[ App ]>")]
+        [InlineData("Launch          <[ app.exe ]>")]
+        [InlineData("Run             KILL_PROCESS <[ app.exe ]>")]
+        [InlineData("Run             <[ cleanup.bat ]>")]
+        [InlineData("Sub Flow        <[ Checkout ]>")]
+        public void A_line_from_before_the_name_reads_with_none(string line)
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + line);
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().Name.ShouldBeEmpty();
+        }
+
+        // Before the Script Language line, a launch of an area carried its command line where the
+        // name now goes.
+        [Fact]
+        public void A_quote_before_opens_is_a_command_line_only_in_a_file_without_the_language_line()
+        {
+            string line = "Launch          <[ app.exe --quiet ]>   opens <[ App ]>";
+
+            FlowStep before = new Scanner().Read(WithArea + line).Steps.Single();
+            FlowStep now = new Scanner().Read(LanguageLine(WithArea) + line).Steps.Single();
+
+            (before.Name, before.LaunchArguments).ShouldBe((string.Empty, "--quiet"));
+            (now.Name, now.LaunchArguments).ShouldBe(("app.exe --quiet", string.Empty));
+        }
+
+        private static string LanguageLine(string script)
+        {
+            return "Script Language: v1\n" + script;
+        }
+
+        // ================================================================
         // Linked as it reads
         // ================================================================
 

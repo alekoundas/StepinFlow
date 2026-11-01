@@ -687,6 +687,19 @@ namespace Business.Tests.Flows
             imported.Validation!.Issues.Select(x => x.Code).ShouldNotContain(FlowValidationCodeEnum.NAME_MISSING);
         }
 
+        // A file older than the name on these lines wrote none: named for what each is or executes.
+        [Fact]
+        public async Task An_import_names_an_older_files_launch_command_and_sub_flow()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Launch  <[ app.exe ]>\nRun  READ_CLIPBOARD <[  ]>\nRun  <[ a.bat ]>\nRun  <[ b.bat ]>\nSub Flow  <[ Checkout ]>\nNotify  <[ hi ]>\nEnd Execution  failed  <[ no ]>\n");
+
+            Steps(imported.FlowId)
+                .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType))
+                .Select(x => x.Name)
+                .ShouldBe(["Launch an app", "Read clipboard", "Command", "Command 2", "Checkout", "Notify", "End as failed"], ignoreOrder: true);
+            imported.Validation!.Issues.Select(x => x.Code).ShouldNotContain(FlowValidationCodeEnum.NAME_MISSING);
+        }
+
         // Validated once saved, the same as after a form: the errors are reported and the flow stays.
         [Fact]
         public async Task An_import_with_errors_is_saved_and_says_what_they_are()

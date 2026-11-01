@@ -46,10 +46,13 @@ front when it is behind another. When no tab has its address, the browser the ar
 opens at the address, in a new window.
 
 ```
-Launch   opens <[ Firestone ]>
-Launch   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
-Launch   <[ notepad.exe notes.txt ]>
+Launch   <[ Start the game ]>   opens <[ Firestone ]>
+Launch   <[ Open the shop ]>    opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ Open the notes ]>   <[ notepad.exe notes.txt ]>
 ```
+
+The step's name comes first, because a `CHECK_VALUE` or typed text reads what a command printed by
+it, `{{Read it}}`.
 
 ## What success means
 

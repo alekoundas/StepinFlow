@@ -16,9 +16,17 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Sub Flow  <[ Checkout ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
+            // Sub Flow  <[ name ]>   <[ Checkout ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
             WriteKeyword(FlowStepTypeEnum.SUB_FLOW);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
+
+            // Left out with none, and the import names it after the flow it executes.
+            if (!string.IsNullOrWhiteSpace(Step.Name))
+            {
+                WriteQuote(Step.Name);
+                WriteGap();
+            }
+
             WriteQuote(_subFlow?.Name ?? string.Empty);
 
             // The Id is what finds it on another machine or branch; the name is for the reader.

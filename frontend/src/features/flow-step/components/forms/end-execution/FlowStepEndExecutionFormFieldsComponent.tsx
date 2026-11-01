@@ -19,13 +19,6 @@ export default function FlowStepEndExecutionFormFieldsComponent({
 
   return (
     <>
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
-
       <FormSelectButtonComponent<EndExecutionForm, boolean>
         fieldName="endExecutionAsSuccess"
         labelText="Verdict"

@@ -38,7 +38,7 @@ Steps:
 ## Sign in
 
 # A fresh profile every time.
-Launch          opens <[ Browser ]>   with <[ https://www.saucedemo.com ]>
+Launch          <[ Open the shop ]>   opens <[ Browser ]>   with <[ https://www.saucedemo.com ]>
 
 Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
  Success:
@@ -92,4 +92,4 @@ Loop            <[ Retry ]>   5 times
  Break           out of <[ Retry ]>
 
 End Execution   failed  <[ did not reach the products page ]>
- Run             KILL_PROCESS <[ chrome.exe ]>
+ Run             <[ Close the browser ]>   KILL_PROCESS <[ chrome.exe ]>

@@ -40,14 +40,23 @@ namespace Business.Executions.Workers
             if (step.FlowAreaId == null)
                 return ExecutionStep.Failure("This step has no area to read.");
 
-            AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
-            if (!area.IsResolved)
-                return ExecutionStep.Failure(area.Error);
+            // A value a step above was to set and did not is the flow's mistake, and no try mends it.
+            VariableTranslationResult expected = cache.TranslateVariables(step.ConditionText);
+            VariableTranslationResult expectedEnd = cache.TranslateVariables(step.ConditionTextEnd);
+
+            if (!expected.IsTranslated || !expectedEnd.IsTranslated)
+                return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated([.. expected.Untranslated, .. expectedEnd.Untranslated]));
 
             if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
-                return await LoopReadAsync(step, area.Bounds, cache, ct);
+                return await LoopReadAsync(step, step.FlowAreaId.Value, expected.Text, expectedEnd.Text, cache, ct);
 
-            return await ReadAsync(step, area.Bounds, cache, ct);
+            AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
+
+            string? cannotRead = CannotRead(area);
+            if (cannotRead != null)
+                return ExecutionStep.Failure(cannotRead);
+
+            return await ReadAsync(step, area.Bounds, expected.Text, expectedEnd.Text, cache, ct);
         }
 
 
@@ -55,53 +64,89 @@ namespace Business.Executions.Workers
         // Private methods
         // ================================================================
 
-        private async Task<ExecutionStep> LoopReadAsync(FlowStep step, Rectangle bounds, IExecutionCacheService cache, CancellationToken ct)
+        // The area is found again on every try: the window may open, move or change size while this
+        // waits. A try that cannot read - no window yet, a minimised one - is neither satisfied nor
+        // not, and the next one may.
+        private async Task<ExecutionStep> LoopReadAsync(FlowStep step, int flowAreaId, string expected, string expectedEnd, IExecutionCacheService cache, CancellationToken ct)
         {
             bool wantSatisfied = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
             DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
+            ExecutionStep? lastRead = null;
 
             while (true)
             {
                 ct.ThrowIfCancellationRequested();
 
-                ExecutionStep read = await ReadAsync(step, bounds, cache, ct);
-                bool satisfied = read.Outcome == StepOutcomeEnum.SUCCESS;
+                AreaResolution area = await _areaPointResolver.ResolveAreaAsync(flowAreaId, ct);
+                if (area.Unresolved == AreaUnresolvedEnum.NOT_SET_UP)
+                    return ExecutionStep.Failure(area.Error);
 
-                if (satisfied == wantSatisfied && wantSatisfied)
-                    return read;
+                // What it waits to see go was in that window, so a window that has closed took it.
+                if (!wantSatisfied && area.Unresolved == AreaUnresolvedEnum.NOT_ON_SCREEN)
+                    return ExecutionStep.Success(message: $"No longer on screen: {area.Error}");
 
-                // No longer saying it is what this mode waits for, so it is a success - the read
-                // itself failed its condition, which on its own reads as a failure. It is a
-                // condition and nothing more, so the read goes in the message and not the value.
-                if (satisfied == wantSatisfied)
+                string? cannotRead = CannotRead(area);
+                if (cannotRead == null)
                 {
-                    ExecutionStep gone = ExecutionStep.Success(message: $"No longer {ConditionEvaluatorHelper.Describe(step)}. Last read \"{read.Value}\".");
-                    gone.Screenshot = read.Screenshot;
+                    ExecutionStep read = await ReadAsync(step, area.Bounds, expected, expectedEnd, cache, ct);
+                    bool satisfied = read.Outcome == StepOutcomeEnum.SUCCESS;
 
-                    return gone;
+                    if (satisfied && wantSatisfied)
+                        return read;
+
+                    // No longer saying it is what this mode waits for, so it is a success - the read
+                    // itself failed its condition, which on its own reads as a failure. It is a
+                    // condition and nothing more, so the read goes in the message and not the value.
+                    if (!satisfied && !wantSatisfied)
+                    {
+                        ExecutionStep gone = ExecutionStep.Success(message: $"No longer {ConditionEvaluatorHelper.Describe(step)}. Last read \"{read.Value}\".");
+                        gone.Screenshot = read.Screenshot;
+
+                        return gone;
+                    }
+
+                    lastRead = read;
                 }
 
                 // A zero timeout waits for ever.
                 if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
-                {
-                    // The last read, not a generic message: what the screen actually said when it
-                    // gave up is the whole of what a person needs to see.
-                    ExecutionStep gaveUp = ExecutionStep.Failure($"Gave up waiting. Last read \"{read.Value}\", against {ConditionEvaluatorHelper.Describe(step)}.");
-                    gaveUp.Value = read.Value;
-                    gaveUp.Screenshot = read.Screenshot;
-
-                    return gaveUp;
-                }
+                    return GaveUp(step, lastRead, cannotRead);
 
                 await Task.Delay(step.PollIntervalMilliseconds, ct);
             }
         }
 
-        private async Task<ExecutionStep> ReadAsync(FlowStep step, Rectangle bounds, IExecutionCacheService cache, CancellationToken ct)
+        // The last read, not a generic message: what the screen actually said when it gave up is the
+        // whole of what a person needs to see - and why the last try could not read, if it could not.
+        private static ExecutionStep GaveUp(FlowStep step, ExecutionStep? lastRead, string? cannotRead)
         {
-            if (bounds.Width <= 0 || bounds.Height <= 0)
-                return ExecutionStep.Failure("The area has no size. The window is probably minimised.");
+            string message = "Gave up waiting.";
+            if (lastRead != null)
+                message += $" Last read \"{lastRead.Value}\", against {ConditionEvaluatorHelper.Describe(step)}.";
 
+            if (cannotRead != null)
+                message += $" The last try could not read: {cannotRead}";
+
+            ExecutionStep gaveUp = ExecutionStep.Failure(message);
+            gaveUp.Value = lastRead?.Value;
+            gaveUp.Screenshot = lastRead?.Screenshot;
+
+            return gaveUp;
+        }
+
+        private static string? CannotRead(AreaResolution area)
+        {
+            if (!area.IsResolved)
+                return area.Error;
+
+            if (area.Bounds.Width <= 0 || area.Bounds.Height <= 0)
+                return "The area has no size. The window is probably minimised.";
+
+            return null;
+        }
+
+        private async Task<ExecutionStep> ReadAsync(FlowStep step, Rectangle bounds, string expected, string expectedEnd, IExecutionCacheService cache, CancellationToken ct)
+        {
             RawImage image = _screenshotService.CaptureRaw(bounds);
 
             // The screenshot the text was read from, so a wrong read can be seen rather than
@@ -111,13 +156,7 @@ namespace Business.Executions.Workers
             string text = await _ocrService.ReadAsync(image, step.OcrLanguage, ct);
             string value = RegexHelper.Extract(text, step.ResultExtractPattern);
 
-            VariableTranslationResult expected = cache.TranslateVariables(step.ConditionText);
-            VariableTranslationResult expectedEnd = cache.TranslateVariables(step.ConditionTextEnd);
-
-            if (!expected.IsTranslated || !expectedEnd.IsTranslated)
-                return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated([.. expected.Untranslated, .. expectedEnd.Untranslated]));
-
-            ExecutionStep result = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, expected.Text, expectedEnd.Text)
+            ExecutionStep result = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, expected, expectedEnd)
                                    ? ExecutionStep.Success(Centre(bounds))
                                    : ExecutionStep.Failure($"Read \"{value}\", which does not satisfy {ConditionEvaluatorHelper.Describe(step)}.");
 

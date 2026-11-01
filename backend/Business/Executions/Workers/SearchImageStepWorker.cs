@@ -37,12 +37,12 @@ namespace Business.Executions.Workers
             if (step.FlowAreaId == null)
                 return ExecutionStep.Failure("This step has no search area.");
 
+            if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
+                return await LoopSearchAsync(step, step.FlowAreaId.Value, cache, ct);
+
             AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
             if (!area.IsResolved)
                 return ExecutionStep.Failure(area.Error);
-
-            if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
-                return await LoopSearchAsync(step, area, cache, ct);
 
             ImageSearchResult search = Look(step, area);
             if (search.Error != null)
@@ -56,55 +56,79 @@ namespace Business.Executions.Workers
         // Private methods
         // ================================================================
 
-        private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, AreaResolution area, IExecutionCacheService cache, CancellationToken ct)
+        // The area is found again on every try: the window may open, move or change size while this
+        // waits. A try that cannot look - no window yet, a minimised one, a template bigger than the
+        // window is now - is neither found nor gone, and the next one may.
+        private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, int flowAreaId, IExecutionCacheService cache, CancellationToken ct)
         {
             bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
             DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
             float? bestOverPolls = null;
             int? bestTemplateOverPolls = null;
+            ExecutionScreenshot? lastScreenshot = null;
 
             while (true)
             {
                 ct.ThrowIfCancellationRequested();
 
-                // An error is neither found nor gone, and waiting does not mend it: the area was
-                // found once, before the wait, and a template that cannot be searched stays so.
-                ImageSearchResult look = Look(step, area);
-                if (look.Error != null)
-                    return ExecutionStep.Failure(look.Error);
+                AreaResolution area = await _areaPointResolver.ResolveAreaAsync(flowAreaId, ct);
+                if (area.Unresolved == AreaUnresolvedEnum.NOT_SET_UP)
+                    return ExecutionStep.Failure(area.Error);
 
-                ExecutionStep search = ToExecutionStep(step, area, look, cache);
-                bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
+                // What it waits to see go was in that window, so a window that has closed took it.
+                if (!wantFound && area.Unresolved == AreaUnresolvedEnum.NOT_ON_SCREEN)
+                    return ExecutionStep.Success(message: $"No longer on screen: {area.Error}");
 
-                if (found == wantFound && wantFound)
-                    return search;
-
-                // Gone is what this mode waits for, so it is a success - the search itself said
-                // "nothing matched", which on its own reads as a failure.
-                if (found == wantFound)
+                ExecutionStep? search = null;
+                string? cannotLook = area.Error;
+                if (area.IsResolved)
                 {
-                    ExecutionStep gone = ExecutionStep.Success(message: "No longer on screen.");
-                    gone.Screenshot = search.Screenshot;
-                    gone.BestScore = search.BestScore;
-                    gone.BestTemplateId = search.BestTemplateId;
+                    ImageSearchResult look = Look(step, area);
+                    cannotLook = look.Error;
 
-                    return gone;
+                    if (look.Error == null)
+                        search = ToExecutionStep(step, area, look, cache);
+                }
+
+                if (search != null)
+                {
+                    bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
+                    if (found && wantFound)
+                        return search;
+
+                    // Gone is what this mode waits for, so it is a success - the search itself said
+                    // "nothing matched", which on its own reads as a failure.
+                    if (!found && !wantFound)
+                    {
+                        ExecutionStep gone = ExecutionStep.Success(message: "No longer on screen.");
+                        gone.Screenshot = search.Screenshot;
+                        gone.BestScore = search.BestScore;
+                        gone.BestTemplateId = search.BestTemplateId;
+
+                        return gone;
+                    }
+
+                    // The closest any attempt came, not the last one. "It peaked at 0.78 over sixty
+                    // tries" and "it never passed 0.40" want different fixes; the final poll says
+                    // neither.
+                    if (search.BestScore != null && (bestOverPolls == null || search.BestScore > bestOverPolls))
+                    {
+                        bestOverPolls = search.BestScore;
+                        bestTemplateOverPolls = search.BestTemplateId;
+                    }
+
+                    lastScreenshot = search.Screenshot;
                 }
 
                 // A zero timeout waits for ever.
-                // The closest any attempt came, not the last one. "It peaked at 0.78 over sixty
-                // tries" and "it never passed 0.40" want different fixes; the final poll says
-                // neither.
-                if (search.BestScore != null && (bestOverPolls == null || search.BestScore > bestOverPolls))
-                {
-                    bestOverPolls = search.BestScore;
-                    bestTemplateOverPolls = search.BestTemplateId;
-                }
-
                 if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
-                    ExecutionStep gaveUp = ExecutionStep.Failure(Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls));
-                    gaveUp.Screenshot = search.Screenshot;
+                    string message = Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls);
+                    if (cannotLook != null)
+                        message += $". The last try could not look: {cannotLook}";
+
+                    ExecutionStep gaveUp = ExecutionStep.Failure(message);
+                    gaveUp.Screenshot = lastScreenshot;
                     gaveUp.BestScore = bestOverPolls;
                     gaveUp.BestTemplateId = bestTemplateOverPolls;
 

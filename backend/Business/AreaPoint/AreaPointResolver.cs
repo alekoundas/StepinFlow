@@ -39,7 +39,7 @@ namespace Business.AreaPoint
                 .FirstOrDefaultAsync(x => x.Id == flowAreaId, ct);
 
             if (area == null)
-                return AreaResolution.Fail("The area no longer exists.");
+                return AreaResolution.Fail("The area no longer exists.", AreaUnresolvedEnum.NOT_SET_UP);
 
             return ResolveArea(area);
         }
@@ -158,14 +158,14 @@ namespace Business.AreaPoint
             {
                 MonitorInfo? primary = monitors.FirstOrDefault(x => x.IsPrimary);
                 if (primary == null)
-                    return AreaResolution.Fail("No primary monitor was found.");
+                    return AreaResolution.Fail("No primary monitor was found.", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
                 return AreaResolution.Ok(primary.Bounds);
             }
 
             MonitorInfo? monitor = monitors.FirstOrDefault(x => string.Equals(x.DeviceId, area.MonitorDeviceName, StringComparison.OrdinalIgnoreCase));
             if (monitor == null)
-                return AreaResolution.Fail($"Monitor \"{area.MonitorDeviceName}\" is not connected.");
+                return AreaResolution.Fail($"Monitor \"{area.MonitorDeviceName}\" is not connected.", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
             return AreaResolution.Ok(monitor.Bounds);
         }
@@ -182,11 +182,11 @@ namespace Business.AreaPoint
 
             WindowHandle hwnd = _windowService.FindWindow(query);
             if (!hwnd.IsValid)
-                return AreaResolution.Fail($"No window matches \"{area.Name}\".");
+                return AreaResolution.Fail($"No window matches \"{area.Name}\".", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
             Rectangle bounds = _windowService.GetWindowBounds(hwnd, area.UseClientArea);
             if (bounds.Width <= 0 || bounds.Height <= 0)
-                return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.");
+                return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.", AreaUnresolvedEnum.NO_SIZE);
 
             return AreaResolution.Ok(bounds, hwnd);
         }
@@ -197,11 +197,11 @@ namespace Business.AreaPoint
         {
             WindowHandle window = _browserTabFinder.FindInFront(area);
             if (!window.IsValid)
-                return AreaResolution.Fail($"No {area.ProcessName} window has \"{area.TabAddress}\" in front, so \"{area.Name}\" is not on screen.");
+                return AreaResolution.Fail($"No {area.ProcessName} window has \"{area.TabAddress}\" in front, so \"{area.Name}\" is not on screen.", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
             Rectangle page = _browserTabFinder.PageBounds(window);
             if (page.Width <= 0 || page.Height <= 0)
-                return AreaResolution.Fail($"\"{area.Name}\" is in front, but its page cannot be measured.");
+                return AreaResolution.Fail($"\"{area.Name}\" is in front, but its page cannot be measured.", AreaUnresolvedEnum.NO_SIZE);
 
             return AreaResolution.Ok(page, window);
         }
@@ -213,14 +213,14 @@ namespace Business.AreaPoint
                 Rectangle absolute = new Rectangle(area.LocationX, area.LocationY, area.Width, area.Height);
 
                 if (absolute.Width <= 0 || absolute.Height <= 0)
-                    return AreaResolution.Fail($"\"{area.Name}\" has no size.");
+                    return AreaResolution.Fail($"\"{area.Name}\" has no size.", AreaUnresolvedEnum.NOT_SET_UP);
 
                 return AreaResolution.Ok(absolute);
             }
 
             AreaResolution parent = ResolveArea(area.ParentFlowArea);
             if (!parent.IsResolved)
-                return AreaResolution.Fail(parent.Error!);
+                return AreaResolution.Fail(parent.Error!, parent.Unresolved!.Value);
 
             Rectangle parentBounds = parent.Bounds;
 
@@ -251,7 +251,7 @@ namespace Business.AreaPoint
             bounds = Rectangle.Intersect(bounds, parentBounds);
 
             if (bounds.Width <= 0 || bounds.Height <= 0)
-                return AreaResolution.Fail($"\"{area.Name}\" falls outside the area it sits in.");
+                return AreaResolution.Fail($"\"{area.Name}\" falls outside the area it sits in.", AreaUnresolvedEnum.NO_SIZE);
 
             return AreaResolution.Ok(bounds);
         }

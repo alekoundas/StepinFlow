@@ -64,6 +64,7 @@ namespace Business.FlowScript.Catalogs
         IN,
         OPENS,
         WITH,
+        WITH_RESULT_OF,
         KEEP,
         TIMEOUT,
         NO_TIMEOUT,

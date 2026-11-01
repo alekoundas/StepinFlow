@@ -9,6 +9,9 @@ namespace Core.Models.Business.AreaPointResolution
         public Rectangle Bounds { get; }
         public string? Error { get; }
 
+        /// <summary>Why it was not found. Null when it was.</summary>
+        public AreaUnresolvedEnum? Unresolved { get; }
+
         /// <summary>The window an application area found. None for every other type.</summary>
         public WindowHandle Window { get; }
 
@@ -19,11 +22,12 @@ namespace Core.Models.Business.AreaPointResolution
         public int Dpi { get; }
 
 
-        private AreaResolution(bool isResolved, Rectangle bounds, string? error, WindowHandle window, ScalesWithEnum scalesWith, int dpi)
+        private AreaResolution(bool isResolved, Rectangle bounds, string? error, AreaUnresolvedEnum? unresolved, WindowHandle window, ScalesWithEnum scalesWith, int dpi)
         {
             IsResolved = isResolved;
             Bounds = bounds;
             Error = error;
+            Unresolved = unresolved;
             Window = window;
             ScalesWith = scalesWith;
             Dpi = dpi;
@@ -36,12 +40,12 @@ namespace Core.Models.Business.AreaPointResolution
 
         public static AreaResolution Ok(Rectangle bounds, WindowHandle window = default, ScalesWithEnum scalesWith = ScalesWithEnum.DPI, int dpi = 96)
         {
-            return new AreaResolution(true, bounds, null, window, scalesWith, dpi);
+            return new AreaResolution(true, bounds, null, null, window, scalesWith, dpi);
         }
 
-        public static AreaResolution Fail(string error)
+        public static AreaResolution Fail(string error, AreaUnresolvedEnum unresolved)
         {
-            return new AreaResolution(false, Rectangle.Empty, error, WindowHandle.None, ScalesWithEnum.DPI, 96);
+            return new AreaResolution(false, Rectangle.Empty, error, unresolved, WindowHandle.None, ScalesWithEnum.DPI, 96);
         }
     }
 }

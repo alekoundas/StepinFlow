@@ -121,7 +121,7 @@ namespace Business.Tests.FlowScript
         // clauses passed over on the way included.
         [Theory]
         [InlineData("Steps:\nNotify <[ never closes", "Unexpected end of the line, expected \"]>\".")]
-        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected the end of the line.")]
+        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected \"with result of\" or the end of the line.")]
         [InlineData("Steps:\nFnid Image <[ x ]>", "Unexpected \"Fnid\".")]
         [InlineData("Steps:\nLoop <[ Retry ]> often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]

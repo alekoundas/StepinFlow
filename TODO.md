@@ -7,6 +7,12 @@ the history.
 
 ## Execution
 
+- [ ] **Not tried by hand: a wait follows its window.** Verified by the build and the tests,
+      2026-11-01. A Wait For Image on a window that is closed when it starts: open the window during
+      the wait, and it is found. Move the window during a wait, and it is found where it went.
+      Minimise it during a Wait Until No Image: the wait goes on, and restoring the window ends it
+      when the image has gone. Close the window during one: it succeeds, "No longer on screen". A
+      wait that gives up on a closed window ends its message with why the last try could not look.
 - [ ] **Not tried by hand: the execution page, as the mockup draws it.** Built 2026-10-31,
       verified by the build, the lint, the backend tests, and its folds, counts and activity worked
       out in Node on execution 32's 32,699 rows (2,434 rows drawn, 22 folds, about 10 ms a batch).
@@ -530,6 +536,11 @@ the history.
       the closest template's accuracy against its own. Type in the message box, which kept putting
       the old text back. A text search and a check value with Has length, Is longer than and Is
       shorter than.
+- [ ] **Not tried by hand: names on every step line.** Verified by the build and the tests,
+      2026-11-01. After the migration, "Test recording" has no step without a name: "Launch chrome",
+      "End as failed" and the numbered ones after it. Save an End and a Notify from their forms, which
+      have no Name field now. Export "Crude oil price" and import it back: Notify 2 still includes
+      Read Text, and the launch keeps its name. Record and generate a flow again: no NAME_MISSING.
 
 ## Hotkeys
 

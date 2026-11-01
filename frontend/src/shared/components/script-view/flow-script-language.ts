@@ -65,6 +65,7 @@ const OPTIONS = [
   "accuracy",
   "in",
   "opens",
+  "with result of",
   "keep",
   "timeout",
   "no timeout",

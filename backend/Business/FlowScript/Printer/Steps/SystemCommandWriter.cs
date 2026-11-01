@@ -12,11 +12,12 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Launch  <[ command ]> | Launch  opens <[ area ]>  [with <[ arguments ]>] | Run  [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Run  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
             if (Step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
             {
                 WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP);
                 WriteGapUntil(KEYWORD_GAP_UNTIL);
+                WriteName();
 
                 if (Step.FlowArea == null)
                 {
@@ -39,11 +40,28 @@ namespace Business.FlowScript.Text.Steps
 
             WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
+            WriteName();
 
             if (Step.RunCommandPreset != RunCommandPresetEnum.CUSTOM)
                 WriteKeyword(Step.RunCommandPreset);
 
             WriteQuote(Step.RunCommandValue);
+        }
+
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+
+        // A check or typed text reads what the command said by its name. Left out with none, and
+        // the import names it.
+        private void WriteName()
+        {
+            if (string.IsNullOrWhiteSpace(Step.Name))
+                return;
+
+            WriteQuote(Step.Name);
+            WriteGap();
         }
     }
 }

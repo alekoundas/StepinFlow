@@ -5,7 +5,6 @@ import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -101,14 +100,6 @@ export default function FlowStepNotifyFormFieldsComponent({
 
   return (
     <div className="flex flex-column gap-2 mt-4">
-      <FormInputTextComponent
-        fieldName="name"
-        label="Name"
-        hintText="What this step is called in the tree."
-        isRequired={true}
-        isDisabled={isDisabled}
-      />
-
       <div className="flex gap-3 align-items-end">
         <div className="flex-1">
           <FormDropdownComponent<FlowStepDto, IdOption>

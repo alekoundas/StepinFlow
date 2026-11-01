@@ -118,6 +118,63 @@ namespace Business.Tests.Executions.Workers
         }
 
         [Fact]
+        public async Task A_wait_reads_a_window_that_opens_while_it_waits()
+        {
+            _ocr.Reads("Products");
+            _resolver.AreasInTurn[7] = new Queue<AreaResolution>([NoWindow(), AreaResolution.Ok(Bounds)]);
+            FlowStep step = TextSearch(SearchModeEnum.WAIT_UNTIL_FOUND, ConditionTypeEnum.CONTAINS, "Products");
+            step.TimeoutMilliseconds = 0;
+
+            ExecutionStep result = await SearchText(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _ocr.ReadCount.ShouldBe(1);
+        }
+
+        // A minimised window says nothing, which is not the text having gone.
+        [Fact]
+        public async Task A_window_that_cannot_be_read_is_not_the_text_gone()
+        {
+            _resolver.Areas[7] = AreaResolution.Fail(@"""Browser"" was found but has no visible area.", AreaUnresolvedEnum.NO_SIZE);
+
+            ExecutionStep result = await SearchText(TextSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, ConditionTypeEnum.CONTAINS, "Loading"));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe(@"Gave up waiting. The last try could not read: ""Browser"" was found but has no visible area.");
+        }
+
+        [Fact]
+        public async Task Waiting_for_text_to_go_succeeds_when_its_window_closes()
+        {
+            _ocr.Reads("Loading");
+            _resolver.AreasInTurn[7] = new Queue<AreaResolution>([AreaResolution.Ok(Bounds), NoWindow()]);
+            FlowStep step = TextSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, ConditionTypeEnum.CONTAINS, "Loading");
+            step.TimeoutMilliseconds = 0;
+
+            ExecutionStep result = await SearchText(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Message.ShouldBe(@"No longer on screen: No window matches ""Browser"".");
+        }
+
+        // A value it compares against that a step above never set: no try mends that.
+        [Fact]
+        public async Task A_wait_against_a_value_never_set_fails_without_reading()
+        {
+            FlowStep step = TextSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, ConditionTypeEnum.CONTAINS, "{{Nowhere}}");
+
+            ExecutionStep result = await SearchText(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            _ocr.ReadCount.ShouldBe(0);
+        }
+
+        private static AreaResolution NoWindow()
+        {
+            return AreaResolution.Fail(@"No window matches ""Browser"".", AreaUnresolvedEnum.NOT_ON_SCREEN);
+        }
+
+        [Fact]
         public async Task An_area_with_no_size_is_not_read()
         {
             _resolver.Areas[7] = AreaResolution.Ok(Rectangle.Empty);

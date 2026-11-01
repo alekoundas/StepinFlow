@@ -15,10 +15,25 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Launch  <[ command ]> | Launch  opens <[ area ]>  [with <[ arguments ]>] | Run  [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Run  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.SYSTEM_COMMAND);
 
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = keyword.As<RunCommandPresetEnum>()!.Value };
+
+            // A file from before the line had a name wrote none, and the import names the step. There
+            // a lone quote is the command.
+            string? first = ExtractOptionalQuote();
+            if (first != null && ExpectOptionalEnd())
+            {
+                step.RunCommandValue = first;
+                return step;
+            }
+
+            if (first != null && !Scope.IsLanguageDeclared && step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+                return ReadAsLaunchOf(step, first);
+
+            if (first != null)
+                step.Name = first;
 
             // Launch is a preset already. Run may name one before its value.
             if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
@@ -46,14 +61,6 @@ namespace Business.FlowScript.Parsers.Steps
             step.RunCommandValue = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
-            {
-                ScriptToken at = CurrentToken;
-                FlowArea? opens = ExtractOptionalArea(ScriptSymbolEnum.OPENS);
-                if (opens != null)
-                    ReadAsLaunchOf(step, opens, at);
-            }
-
             ExpectEnd();
 
             return step;
@@ -64,11 +71,21 @@ namespace Business.FlowScript.Parsers.Steps
         // Private methods
         // ================================================================
 
-        // Written before 2026-11-01, a launch of an area carried its whole command line. Its program
-        // is what starts the area, unless the area already says, and the rest are its arguments.
-        private void ReadAsLaunchOf(FlowStep step, FlowArea opens, ScriptToken at)
+        // Written before 2026-11-01, a launch of an area carried its whole command line where the
+        // name now goes: Launch  <[ command ]>  opens <[ area ]>. Its program is what starts the
+        // area, unless the area already says, and the rest are its arguments.
+        private FlowStep ReadAsLaunchOf(FlowStep step, string commandLine)
         {
-            string program = CommandLineHelper.SplitProgram(step.RunCommandValue, out string arguments);
+            step.RunCommandValue = commandLine;
+
+            ScriptToken at = CurrentToken;
+            FlowArea? opens = ExtractOptionalArea(ScriptSymbolEnum.OPENS);
+            ExpectEnd();
+
+            if (opens == null)
+                return step;
+
+            string program = CommandLineHelper.SplitProgram(commandLine, out string arguments);
             string quoted = program.Contains(' ', StringComparison.Ordinal) ? $"\"{program}\"" : program;
 
             if (string.IsNullOrWhiteSpace(opens.LaunchCommand))
@@ -82,6 +99,8 @@ namespace Business.FlowScript.Parsers.Steps
             step.FlowArea = opens;
             step.LaunchArguments = arguments;
             step.RunCommandValue = string.Empty;
+
+            return step;
         }
     }
 }

@@ -35,6 +35,12 @@ act on one at a time.
 `WAIT_UNTIL_NOT_FOUND` is a condition and nothing more. It keeps no value and no position, so no
 Check Value, Move or Drag can read it; what it last read is in its message in the execution view.
 
+Each try of a wait finds the area again, so it follows its window: one that opens during the wait
+is read once it is there, and one that moves is read where it is now. A try that cannot read - no
+window yet, a minimised one - is neither the condition holding nor it stopping, and the next try
+reads again. A wait for text to go succeeds when the area's window closes, since the text went with
+it. A condition comparing against a `{{Name}}` that was never set fails at once, with nothing read.
+
 **Every mode evaluates the condition**, including `FIND_BEST`. There is no mode that succeeds merely
 because something was read.
 
