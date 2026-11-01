@@ -48,18 +48,29 @@ namespace Business.Tests.Executions.Workers
             };
         }
 
+        // Of an area, it starts what the area is started by with its arguments after; of nothing,
+        // its own command line.
         private static FlowStep Launch(int? flowAreaId = APP_WINDOW_AREA, int timeoutMilliseconds = 0)
         {
-            return new FlowStep
+            FlowStep step = new FlowStep
             {
                 Id = 1,
                 Name = "Launch",
                 FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
                 RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
-                RunCommandValue = $"\"{APP}\" --profile test",
                 FlowAreaId = flowAreaId,
                 TimeoutMilliseconds = timeoutMilliseconds,
             };
+
+            if (flowAreaId == null)
+            {
+                step.RunCommandValue = $"\"{APP}\" --profile test";
+                return step;
+            }
+
+            step.FlowArea = new FlowArea { Id = flowAreaId.Value, Name = "App", LaunchCommand = $"\"{APP}\"" };
+            step.LaunchArguments = "--profile test";
+            return step;
         }
 
         private async Task<ExecutionStep> Run(FlowStep step, ExecutionCacheService? cache = null)
@@ -222,27 +233,43 @@ namespace Business.Tests.Executions.Workers
         }
 
         [Fact]
-        public async Task A_launch_with_no_command_of_its_own_starts_what_its_area_is_started_by()
+        public async Task A_launch_of_a_steam_game_starts_its_link()
         {
             FlowStep launch = Launch();
-            launch.RunCommandValue = "";
-            launch.FlowArea = new FlowArea { Id = APP_WINDOW_AREA, Name = "Game", LaunchCommand = "steam://rungameid/1013320" };
+            launch.FlowArea!.LaunchCommand = "steam://rungameid/1013320";
+            launch.LaunchArguments = "";
 
             await Run(launch);
 
             _processes.Launched.ShouldBe(["steam://rungameid/1013320 | "]);
         }
 
-        // The QA test's fresh profile and window size live on the step, not on the app.
+        // The QA test's fresh profile and window size go after whatever the app is started with.
         [Fact]
-        public async Task A_launch_with_a_command_of_its_own_starts_that_instead()
+        public async Task A_launchs_arguments_go_after_the_ones_its_area_is_started_with()
         {
             FlowStep launch = Launch();
-            launch.FlowArea = new FlowArea { Id = APP_WINDOW_AREA, Name = "App", LaunchCommand = "app.exe" };
+            launch.FlowArea!.LaunchCommand = $"\"{APP}\" --safe-mode";
 
             await Run(launch);
 
-            _processes.Launched.ShouldBe([$"{APP} | --profile test"]);
+            _processes.Launched.ShouldBe([$"{APP} | --safe-mode --profile test"]);
+        }
+
+        // An earlier step's result is as good in the arguments as in a command line.
+        [Fact]
+        public async Task A_launchs_arguments_have_their_variables_filled_in()
+        {
+            FlowStep read = new FlowStep { Id = 2, Name = "port", FlowStepType = FlowStepTypeEnum.SEARCH_TEXT };
+            FlowStep launch = Launch(flowAreaId: APP_WINDOW_AREA);
+            launch.LaunchArguments = "--port {{port}}";
+            ExecutionCacheService cache = await WorkerCache.ForAsync(launch, read);
+            cache.Ran(read, value: "8080");
+            _processes.OnLaunch = () => _resolver.Areas[APP_WINDOW_AREA] = OPEN;
+
+            await Run(launch, cache);
+
+            _processes.Launched.ShouldBe([$"{APP} | --port 8080"]);
         }
     }
 }

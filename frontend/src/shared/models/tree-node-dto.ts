@@ -48,6 +48,7 @@ export interface TreeNodeDetailDto {
   runCommandShell?: RunCommandShellEnum | null;
   runCommandPreset?: RunCommandPresetEnum | null;
   runCommandValue?: string | null;
+  launchArguments?: string | null;
 
   systemActionType?: SystemActionTypeEnum | null;
 

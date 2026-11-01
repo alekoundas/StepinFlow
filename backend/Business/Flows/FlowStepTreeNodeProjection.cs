@@ -74,6 +74,7 @@ namespace Business.Flows
                 RunCommandShell = x.RunCommandShell,
                 RunCommandPreset = x.RunCommandPreset,
                 RunCommandValue = x.RunCommandValue,
+                LaunchArguments = x.LaunchArguments,
 
                 SystemActionType = x.SystemActionType,
 

@@ -52,6 +52,7 @@ namespace Core.Models.Dtos
         public RunCommandShellEnum? RunCommandShell { get; set; }
         public RunCommandPresetEnum? RunCommandPreset { get; set; }
         public string? RunCommandValue { get; set; }
+        public string? LaunchArguments { get; set; }
 
         // SYSTEM_ACTION
         public SystemActionTypeEnum? SystemActionType { get; set; }

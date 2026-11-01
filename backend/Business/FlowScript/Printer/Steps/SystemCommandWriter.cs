@@ -12,22 +12,28 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Launch  [<[ command ]>]   [opens <[ area ]>] | Run  [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ command ]> | Launch  opens <[ area ]>  [with <[ arguments ]>] | Run  [KILL_PROCESS ...] <[ command ]>
             if (Step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
             {
                 WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP);
                 WriteGapUntil(KEYWORD_GAP_UNTIL);
 
-                // Its area's Started by starts it.
-                if (string.IsNullOrWhiteSpace(Step.RunCommandValue) && Step.FlowArea != null)
+                if (Step.FlowArea == null)
                 {
-                    WriteKeyword(ScriptSymbolEnum.OPENS);
-                    WriteQuote(Step.FlowArea.Name);
+                    WriteQuote(Step.RunCommandValue);
                     return;
                 }
 
-                WriteQuote(Step.RunCommandValue);
-                WriteArea(ScriptSymbolEnum.OPENS);
+                // The area says what starts it.
+                WriteKeyword(ScriptSymbolEnum.OPENS);
+                WriteQuote(Step.FlowArea.Name);
+
+                if (Step.LaunchArguments.Length > 0)
+                {
+                    WriteGap();
+                    WriteKeyword(ScriptSymbolEnum.WITH);
+                    WriteQuote(Step.LaunchArguments);
+                }
                 return;
             }
 

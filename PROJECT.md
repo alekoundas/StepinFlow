@@ -1336,8 +1336,9 @@ the history to say one more thing, "once, when something was found, before the h
 reports and Start refuses, but an import keeps a flow with errors - so the line has to read back as
 what it was, and the next import shows the same unfinished step.
 
-**`Launch` takes one command string**, not an executable plus arguments. The model stores one
-string; inventing a split it does not have would fail the round trip on the first export.
+**A `Launch` with no area takes one command string**, not an executable plus arguments. The model
+stores one string; inventing a split it does not have would fail the round trip on the first export.
+A launch of an area has the split stored: the program on the area, the arguments on the step.
 
 **`Id:` is in the header.** Identity travels in the file or a clone cannot recognise a flow.
 
@@ -1410,16 +1411,24 @@ loading. The runner refuses a launch outright, and every preset has a catalog en
 holds to: Launch had none, and threw the first time one executed.
 
 **An application area says what starts it**, since 2026-11-01: `FlowArea.LaunchCommand`, **Started
-by** on its form and `started by <[ … ]>` on its line in the script. A launch with no command of its
-own starts that - `Launch   opens <[ Firestone ]>` - and one with a command starts its own instead,
-which is where a QA test's fresh profile and `--window-size` stay. Picking an open app fills it in
+by** on its form and `started by <[ … ]>` on its line in the script. A launch of an area starts
+that, with its own **Arguments** after it - `FlowStep.LaunchArguments`, `Launch opens <[ Browser ]>
+with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} ]>` - which is where a QA test's
+fresh profile and window size go. A launch with no area keeps its whole command line in
+`RunCommandValue`, `Launch <[ notepad.exe notes.txt ]>`: two columns, each meaning one thing, rather
+than one whose meaning turned on the area. The form shows the one that applies and empties the other
+on save. An area started by a link takes no arguments (`LAUNCH_ARGUMENTS_ON_LINK`), since Steam
+passes a game's its own way. An old `Launch <[ command ]> opens <[ area ]>` is read the new way: its
+program goes to the area unless the area says already, the rest become its arguments, and a program
+other than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning. Picking an open app fills it in
 (`Lookup.launchCommand`, `LaunchCommandHelper`): the program file, or `steam://rungameid/<id>` when
 the program sits in a Steam library, the id read from the `appmanifest_<id>.acf` that names its
 folder, since a Steam game's program started on its own restarts through Steam or refuses. A library
 is laid out the same way on every OS. Nothing in the form says to launch only when the app is
 missing, because that is always so: launching an open app brings the same one up, or a second
-window the area cannot tell from the first. The migration gave an area a launch opens that launch's
-command line.
+window the area cannot tell from the first. The `LaunchArguments` migration splits each saved launch
+of an area the same way, and one starting another program than its area's keeps its command line
+and lets go of the area, rather than start something else unseen.
 
 **A window step names a window area**, since 2026-10-26: `Focus Window <[ Browser ]>`, `Resize Window
 <[ Browser ]> size 1280 720`, `Move Window <[ Browser ]> to point <[ X ]>`. The window is described

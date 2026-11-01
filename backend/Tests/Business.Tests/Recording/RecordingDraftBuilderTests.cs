@@ -32,8 +32,8 @@ namespace Business.Tests.Recording
 
         private static FlowScriptSchema Flow()
         {
-            FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", ScalesWith = ScalesWithEnum.DPI };
-            FlowStep launch = new FlowStep { Name = "Launch Browser", FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe", FlowArea = browser };
+            FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", ScalesWith = ScalesWithEnum.DPI, LaunchCommand = "chrome.exe" };
+            FlowStep launch = new FlowStep { Name = "Launch Browser", FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowArea = browser };
 
             FlowScriptSchema schema = new FlowScriptSchema { Flow = new Flow { Name = "Download invoices", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111") } };
             schema.Areas.Add(browser);

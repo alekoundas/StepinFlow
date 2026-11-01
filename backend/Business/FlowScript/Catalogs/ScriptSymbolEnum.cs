@@ -61,6 +61,7 @@ namespace Business.FlowScript.Catalogs
         REQUIRED,
         IN,
         OPENS,
+        WITH,
         KEEP,
         TIMEOUT,
         NO_TIMEOUT,

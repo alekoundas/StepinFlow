@@ -205,6 +205,43 @@ namespace Business.Tests.FlowScript
         }
 
         // ================================================================
+        // Launching an area
+        // ================================================================
+
+        [Fact]
+        public void A_launch_of_an_area_is_read_with_its_arguments()
+        {
+            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ \"C:\\Program Files\\App\\app.exe\" ]>\nSteps:\nLaunch opens <[ App ]> with <[ --profile test ]>");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
+            FlowStep launch = schema.Steps.Single();
+            (launch.FlowArea?.Name, launch.LaunchArguments, launch.RunCommandValue).ShouldBe(("App", "--profile test", ""));
+        }
+
+        // Written before an area said what starts it, a launch of one carried its whole command line.
+        [Fact]
+        public void An_old_launch_gives_its_area_its_program_and_keeps_the_rest_as_its_arguments()
+        {
+            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]>\nSteps:\nLaunch <[ \"C:\\Program Files\\App\\app.exe\" --profile test ]> opens <[ App ]>");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
+            FlowStep launch = schema.Steps.Single();
+            (launch.LaunchArguments, launch.RunCommandValue).ShouldBe(("--profile test", ""));
+        }
+
+        [Fact]
+        public void An_old_launch_of_another_program_than_its_areas_is_warned_about()
+        {
+            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ app.exe ]>\nSteps:\nLaunch <[ other.exe --quiet ]> opens <[ App ]>");
+
+            Diagnostic warning = schema.Diagnostics.ShouldHaveSingleItem();
+            (warning.Code, warning.Severity).ShouldBe((DiagnosticCodeEnum.LAUNCH_PROGRAM_DIFFERS, DiagnosticSeverityEnum.WARNING));
+            schema.Steps.Single().LaunchArguments.ShouldBe("--quiet");
+        }
+
+        // ================================================================
         // The flow's kind, and the sub-flow a step calls
         // ================================================================
 

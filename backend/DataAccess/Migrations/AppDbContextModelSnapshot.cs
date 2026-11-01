@@ -534,6 +534,10 @@ namespace DataAccess.Migrations
                     b.Property<string>("KeyboardKeyActionType")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("LaunchArguments")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("LoopCount")
                         .HasColumnType("INTEGER");
 

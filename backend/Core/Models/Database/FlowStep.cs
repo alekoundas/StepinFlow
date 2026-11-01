@@ -39,6 +39,12 @@ namespace Core.Models.Database
         public string RunCommandValue { get; set; } = string.Empty;
         public string RunCommandWorkingDirectory { get; set; } = string.Empty;
 
+        /// <summary>
+        /// A launch of an area: what goes after what the area is started by. A launch with no area
+        /// has its whole command line in RunCommandValue instead.
+        /// </summary>
+        public string LaunchArguments { get; set; } = string.Empty;
+
         /// <summary>Comma separated. Anything else runs the Failure children.</summary>
         public string SuccessExitCodes { get; set; } = "0";
         public ResultSourceEnum ResultSource { get; set; }

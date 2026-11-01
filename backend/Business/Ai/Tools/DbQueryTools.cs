@@ -149,6 +149,7 @@ namespace Business.Ai.Tools
                     (x.FlowArea != null && (EF.Functions.Like(x.FlowArea.Name, t) || EF.Functions.Like(x.FlowArea.ProcessName, t) || EF.Functions.Like(x.FlowArea.TitlePattern, t))) ||
                     (canSearchTypedText && EF.Functions.Like(x.KeyboardInputText, t)) ||
                     EF.Functions.Like(x.RunCommandValue, t) ||
+                    EF.Functions.Like(x.LaunchArguments, t) ||
                     EF.Functions.Like(x.ConditionText, t)))
                 .Take(_maxRows)
                 .Select(Projection())
@@ -528,7 +529,7 @@ namespace Business.Ai.Tools
                 x.FlowStepType.ToString(),
                 x.FlowArea != null ? x.FlowArea.Name : null,
                 x.KeyboardInputText,
-                x.RunCommandValue,
+                x.RunCommandValue != "" ? x.RunCommandValue : x.LaunchArguments,
                 x.ConditionText,
                 x.SubFlowId,
                 x.FlowAreaId,

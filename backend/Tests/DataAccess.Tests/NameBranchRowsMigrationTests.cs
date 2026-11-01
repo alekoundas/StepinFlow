@@ -1,4 +1,3 @@
-using Core.Enums;
 using Core.Models.Database;
 
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -54,13 +53,9 @@ namespace DataAccess.Tests
                 db.Flows.Add(flow);
                 db.SaveChanges();
 
-                FlowStep search = new FlowStep { FlowId = flow.Id, RootId = flow.Id, Name = "Find", FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE };
-                db.FlowSteps.Add(search);
-                db.FlowSteps.Add(new FlowStep { RootId = flow.Id, ParentFlowStep = search, FlowStepType = FlowStepTypeEnum.SUCCESS, Name = successName, OrderNumber = 0 });
-                db.FlowSteps.Add(new FlowStep { RootId = flow.Id, ParentFlowStep = search, FlowStepType = FlowStepTypeEnum.FAILURE, Name = failureName, OrderNumber = 1 });
-                db.SaveChanges();
-
-                searchId = search.Id;
+                searchId = OldRows.Step(db, flow.Id, null, "SEARCH_IMAGE", "Find", 0);
+                OldRows.Step(db, flow.Id, searchId, "SUCCESS", successName, 0);
+                OldRows.Step(db, flow.Id, searchId, "FAILURE", failureName, 1);
             }
 
             MigrateTo(AFTER);

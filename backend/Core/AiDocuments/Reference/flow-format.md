@@ -26,7 +26,7 @@ Description:
   # The site keeps the cart per user, so a failed execution can leave items behind for the next.
 
 Areas:
-  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   started by <[ chrome.exe ]>   scales with dpi   at 120dpi
   <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  size 0.12 0.10
   <[ Inventory ]>     inside <[ Browser ]>   ratio 0.00 0.15  size 1.00 0.85
   <[ Login form ]>    inside <[ Browser ]>   ratio 0.30 0.18  size 0.40 0.40
@@ -48,7 +48,7 @@ Steps:
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>   opens <[ Browser ]>
+Launch   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
 
 Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
@@ -503,19 +503,26 @@ execution ends - however it ends - is let go, so a flow that fails between the t
 leave Ctrl down on the machine. A press may name a modifier on its own too: `Press <[ Win ]>` opens
 the Start menu.
 
-**`Launch` starts a program and carries on.** Unlike `Run`, it does not wait for the program to
-close. Its text is one command line: the program first, quoted when its path has a space, then its
-arguments. `opens` names the window it opens, an application or a browser tab: when that window is
-already open the launch is skipped, and when it is not the step waits for it - 30 seconds, or the
-step's own timeout - so the next line does not act on a screen that is still loading. It moves
-nothing: placing the window is a `Move Window` or `Resize Window` line of its own. Not `in`, which on every
-other line means where a step works. Without `opens` it starts the program and moves straight on.
-With `opens` and no command line, it starts what the area is `started by`; with both, its own
-command line starts instead, which is where a fresh browser profile or a window size goes.
+**`Launch` starts something and carries on.** Unlike `Run`, it does not wait for it to close. It is
+written one of two ways:
+
+- **`opens <[ area ]>`** - the app, or browser tab, it opens. What starts is what the area is
+  `started by`, and `with <[ … ]>` adds arguments after it: a fresh browser profile, or a window
+  size. When the area is already open the launch is skipped, and when it is not the step waits for
+  it - 30 seconds, or the step's own timeout - so the next line does not act on a screen that is
+  still loading. Not `in`, which on every other line means where a step works.
+- **`<[ command ]>`** - a command line of its own, the program first, quoted when its path has a
+  space: a script, a file or a URL, started and left.
+
+It moves nothing: placing the window is a `Move Window` or `Resize Window` line of its own. A file
+from before an area said what starts it has `Launch <[ command ]> opens <[ area ]>`: its program
+goes to the area, unless the area says already, and the rest become the arguments. A program other
+than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning, and the area's starts.
 
 ```
-Launch   <[ "C:\Program Files\App\app.exe" --profile test ]>   opens <[ App ]>
+Launch   opens <[ App ]>   with <[ --profile test ]>
 Launch   opens <[ Game ]>
+Launch   <[ notepad.exe notes.txt ]>
 ```
 
 **A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
@@ -755,8 +762,8 @@ before the flows that call it.
 
 ## Settled
 
-- **`Launch` is one step.** Its target is an executable or a URL, its own or the area's it opens;
-  anything else goes in `args`.
+- **`Launch` is one step.** Its target is the area it opens, or an executable or a URL of its own;
+  anything else goes in its arguments.
 - **The text checks produce a value read as `{{Name}}`**, sharing the syntax with inputs. One
   substitution rule, and a step result and an input read the same because at the point of use they
   are the same thing.

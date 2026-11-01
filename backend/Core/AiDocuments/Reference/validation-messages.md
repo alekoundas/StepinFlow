@@ -63,7 +63,11 @@ script does not carry the language, so a text search from a file or a recording 
 
 **COMMAND_MISSING** — a custom command step has no command.
 
-**COMMAND_PARAMETER_MISSING** — the chosen preset takes a parameter and none is set.
+**COMMAND_PARAMETER_MISSING** — the chosen preset takes a parameter and none is set, or a launch
+opens an area that says nothing about what starts it.
+
+**LAUNCH_ARGUMENTS_ON_LINK** — a launch gives arguments to an area started by a link, such as a
+Steam game's, which takes none. A Steam game's are set in Steam, in its launch options.
 
 ## Windows
 

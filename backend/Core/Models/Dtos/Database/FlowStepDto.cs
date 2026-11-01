@@ -38,6 +38,7 @@ namespace Core.Models.Dtos
         public RunCommandPresetEnum RunCommandPreset { get; set; }
         public string RunCommandValue { get; set; } = string.Empty;
         public string RunCommandWorkingDirectory { get; set; } = string.Empty;
+        public string LaunchArguments { get; set; } = string.Empty;
         public string SuccessExitCodes { get; set; } = "0";
         public ResultSourceEnum ResultSource { get; set; }
 

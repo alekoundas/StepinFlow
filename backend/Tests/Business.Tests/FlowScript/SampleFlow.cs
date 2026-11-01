@@ -23,7 +23,7 @@ namespace Business.Tests.FlowScript
                 },
             };
 
-            FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120 };
+            FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", TitlePattern = "Swag Labs", TitleMatchMode = TitleMatchModeEnum.CONTAINS, ScalesWith = ScalesWithEnum.DPI, AuthoredDpi = 120, LaunchCommand = "chrome.exe" };
             FlowArea badge = new FlowArea { Name = "Cart badge", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.88f, RatioY = 0f, RatioWidth = 0.12f, RatioHeight = 0.10f };
             FlowArea header = new FlowArea { Name = "Header", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 0, LocationY = 0, Width = 1920, Height = 90, AuthoredDpi = 120 };
             FlowArea game = new FlowArea { Name = "Game", Type = FlowAreaTypeEnum.CUSTOM, ParentFlowArea = browser, SizingMode = AreaSizingModeEnum.RATIO, RatioX = 0.1f, RatioY = 0.2f, RatioWidth = 0.8f, RatioHeight = 0.7f, ScalesWith = ScalesWithEnum.AREA };
@@ -60,7 +60,7 @@ namespace Business.Tests.FlowScript
             }
 
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in", CodeComment = "Everything before the products page." }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, RunCommandValue = "chrome.exe https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
 
             FlowStep find = Step(new FlowStep
             {

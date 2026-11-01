@@ -112,14 +112,20 @@ export default function FlowStepSystemCommandFormComponent({
     });
   };
 
-  const handleSubmit = (data: z.infer<typeof FlowStepSystemCommandSchema>) =>
+  // A field hidden for what the step is goes empty, so it cannot come back unseen.
+  const handleSubmit = (data: z.infer<typeof FlowStepSystemCommandSchema>) => {
+    const isLaunchOfArea = data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP && !!data.flowAreaId;
+
     onSubmit(
       new FlowStepDto({
         ...defaultValues,
         ...data,
-        flowAreaId: data.flowAreaId ?? undefined,
+        flowAreaId: data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP ? (data.flowAreaId ?? undefined) : undefined,
+        runCommandValue: isLaunchOfArea ? "" : data.runCommandValue,
+        launchArguments: isLaunchOfArea ? data.launchArguments : "",
       }),
     );
+  };
 
   // What this one will do, in its own words: the command as it will be executed, or the program
   // started.
@@ -130,11 +136,11 @@ export default function FlowStepSystemCommandFormComponent({
     const codes = (values.successExitCodes as string | undefined) || "0";
 
     if (isLaunch) {
-      const waits = values.flowAreaId
-        ? ` Waits up to ${humanizeMilliseconds(timeoutMilliseconds || 30000)} for its window, and leaves it alone when it is already open.`
-        : "";
-      const starts = value.trim() ? `“${value}”` : "what the app is started by";
-      return `Starts ${starts} and carries on without waiting for it to close.${waits}`;
+      if (!values.flowAreaId) return `Starts “${value}” and carries on without waiting for it to close.`;
+
+      const args = ((values.launchArguments as string | undefined) ?? "").trim();
+      const after = args ? `, with “${args}” after it` : "";
+      return `Starts what the app is started by${after}, when it is not open, and waits up to ${humanizeMilliseconds(timeoutMilliseconds || 30000)} for it to load.`;
     }
 
     const command =

@@ -122,6 +122,12 @@ namespace Business.FlowScript.Parsers
             return null;
         }
 
+        /// <summary>Something the file still imports with, said beside the result.</summary>
+        public void Warn(DiagnosticCodeEnum code, ScriptToken at, string message)
+        {
+            _diagnostics.Add(Diagnostic.Warning(code, at.Line, at.Column, message));
+        }
+
 
         // ================================================================
         // Private methods

@@ -141,6 +141,26 @@ namespace Business.Tests.Flows.Validation
             CodesOn(nothing).ShouldContain(FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING);
         }
 
+        // Steam takes a game's arguments in a link of its own, so these would never reach it.
+        [Fact]
+        public void A_launch_of_an_area_started_by_a_link_takes_no_arguments()
+        {
+            _areas.Add(new FlowArea { Id = 1, Name = "Game", Type = FlowAreaTypeEnum.APPLICATION, LaunchCommand = "steam://rungameid/1013320" });
+            _areas.Add(new FlowArea { Id = 2, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, LaunchCommand = "\"C:\\Program Files\\Editor\\editor.exe\"" });
+
+            FlowStep game = Add(FlowStepTypeEnum.SYSTEM_COMMAND, "Launch the game");
+            game.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+            game.FlowAreaId = 1;
+            game.LaunchArguments = "-windowed";
+            FlowStep editor = Add(FlowStepTypeEnum.SYSTEM_COMMAND, "Launch the editor");
+            editor.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+            editor.FlowAreaId = 2;
+            editor.LaunchArguments = "notes.txt";
+
+            CodesOn(game).ShouldContain(FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK);
+            CodesOn(editor).ShouldNotContain(FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK);
+        }
+
         // The script writes text between <[ and ]>, so text holding either one could not be exported.
         [Theory]
         [InlineData("Login <[ failed")]

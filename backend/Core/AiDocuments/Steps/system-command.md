@@ -34,15 +34,17 @@ report success even when the answer is no — so those presets run through Power
 **opens**: when that app is already open the launch is skipped, and otherwise the step waits for its
 window - 30 seconds, or the step's own timeout - so the next step finds it loaded.
 
-What starts is the area's **Started by**, unless the step has a program and arguments of its own,
-which then start instead: a fresh browser profile and a window size for a QA test, say. A launch
-with no area is a program, a file or a URL, started and left.
+What starts is the area's **Started by**, and the step's **Arguments** go after it: a fresh browser
+profile and a window size for a QA test, say. An area started by a link, such as a Steam game's,
+takes no arguments (`LAUNCH_ARGUMENTS_ON_LINK`); a Steam game's are set in Steam. A launch with no
+area has a **Program and arguments** of its own instead: a script, a file or a URL, started and left.
 
 There is no "only when it is missing" option, because that is always so.
 
 ```
 Launch   opens <[ Firestone ]>
-Launch   <[ chrome.exe --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>   opens <[ Browser ]>
+Launch   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ notepad.exe notes.txt ]>
 ```
 
 ## What success means

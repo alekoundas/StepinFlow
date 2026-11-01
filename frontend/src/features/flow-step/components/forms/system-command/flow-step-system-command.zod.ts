@@ -28,6 +28,10 @@ export const FlowStepSystemCommandSchema = z
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     // A launch's window, waited for once it is started.
     flowAreaId: z.number().int().nullish(),
+    // What goes after what that area is started by.
+    launchArguments: z
+      .string()
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
     runCommandWorkingDirectory: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
@@ -56,8 +60,8 @@ export const FlowStepSystemCommandSchema = z
 
     if (PRESETS_WITHOUT_PARAMETER.includes(data.runCommandPreset)) return;
 
-    // A launch can leave the program to what the area it opens is started by. The validator says
-    // when that is nothing.
+    // A launch of an area starts what the area is started by. The validator says when that is
+    // nothing.
     if (data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP && data.flowAreaId) return;
 
     if (data.runCommandValue.trim().length === 0) {

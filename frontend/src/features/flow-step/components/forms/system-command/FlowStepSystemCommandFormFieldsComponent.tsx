@@ -126,18 +126,23 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         />
       )}
 
-      {isLaunch && activePreset && (
+      {isLaunch && flowAreaId && (
+        <FormInputTextComponent
+          fieldName="launchArguments"
+          label="Arguments"
+          placeholderText="--profile test"
+          isDisabled={isDisabled}
+          hintText="Optional. They go after what the app is started by on the Areas tab: a fresh browser profile or a window size, say."
+        />
+      )}
+
+      {isLaunch && !flowAreaId && activePreset && (
         <FormInputTextComponent
           fieldName="runCommandValue"
           label={activePreset.parameterLabel}
           placeholderText={activePreset.parameterPlaceholder}
-          isRequired={!flowAreaId}
+          isRequired={true}
           isDisabled={isDisabled}
-          hintText={
-            flowAreaId
-              ? "Optional. Left empty, it starts what the app is started by on the Areas tab. Given, this starts instead: a fresh browser profile, say."
-              : undefined
-          }
         />
       )}
 

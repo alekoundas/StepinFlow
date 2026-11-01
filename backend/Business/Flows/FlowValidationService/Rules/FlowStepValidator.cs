@@ -1,6 +1,7 @@
 using Business.Command;
 using Business.FlowScript.Catalogs;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -106,6 +107,7 @@ namespace Business.Flows.FlowValidationService.Rules
                 step.KeyboardInputText,
                 step.RunCommandValue,
                 step.RunCommandWorkingDirectory,
+                step.LaunchArguments,
                 step.ResultExtractPattern,
                 step.ConditionText,
                 step.ConditionTextEnd);
@@ -167,18 +169,34 @@ namespace Business.Flows.FlowValidationService.Rules
             // preset is added or changed.
             CommandPresetDto preset = CommandPresetCatalog.Get(step.RunCommandPreset);
 
-            if (!preset.HasParameter || !string.IsNullOrWhiteSpace(step.RunCommandValue))
-                return;
-
-            // A launch can leave the program to the area it opens.
+            // A launch of an area starts what the area is started by, with its own arguments after.
             FlowArea? opens = null;
             if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowAreaId != null)
                 areasById.TryGetValue(step.FlowAreaId.Value, out opens);
 
-            if (opens == null)
+            if (opens != null)
+            {
+                ValidateLaunchOf(result, step, opens);
+                return;
+            }
+
+            if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandValue))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
-            else if (string.IsNullOrWhiteSpace(opens.LaunchCommand))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"Nothing starts \"{opens.Name}\". Say what does on the Areas tab, under Started by, or give this launch a program.");
+        }
+
+        private static void ValidateLaunchOf(FlowValidationResultDto result, FlowStep step, FlowArea opens)
+        {
+            if (string.IsNullOrWhiteSpace(opens.LaunchCommand))
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"Nothing starts \"{opens.Name}\". Say what does on the Areas tab, under Started by.");
+                return;
+            }
+
+            // Steam takes a game's arguments in a link form of its own, so a space and the rest
+            // would never reach the game.
+            string program = CommandLineHelper.SplitProgram(opens.LaunchCommand, out _);
+            if (!string.IsNullOrWhiteSpace(step.LaunchArguments) && program.Contains("://", StringComparison.Ordinal))
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK, $"\"{opens.Name}\" is started by a link, and a link takes no arguments. A Steam game's are set in Steam, in its launch options.");
         }
     }
 }

@@ -181,7 +181,7 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
 
       if (isLaunch)
         return {
-          text: truncate(detail.runCommandValue ?? ""),
+          text: truncate(detail.runCommandValue || detail.launchArguments || ""),
           chips: detail.areaName ? [{ text: detail.areaName, isMuted: true }] : [],
         };
 

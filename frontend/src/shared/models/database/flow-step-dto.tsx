@@ -49,6 +49,9 @@ export class FlowStepDto {
   // The preset's single parameter, or the whole command when the preset is CUSTOM.
   runCommandValue: string = "";
   runCommandWorkingDirectory: string = "";
+
+  /** A launch of an area: what goes after what the area is started by. */
+  launchArguments: string = "";
   successExitCodes: string = "0";
   resultSource: ResultSourceEnum = "STDOUT";
 

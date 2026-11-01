@@ -9,7 +9,7 @@ Description:
 
 Areas:
   <[ Box ]>           on screen   offset -10 20  size 300 200
-  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
+  <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   started by <[ chrome.exe ]>   scales with dpi   at 120dpi
   <[ Cart badge ]>    inside <[ Browser ]>   ratio 0.88 0.00  size 0.12 0.10
   <[ Game ]>          inside <[ Browser ]>   ratio 0.10 0.20  size 0.80 0.70   scales with area
   <[ Header ]>        inside <[ Browser ]>   offset 0 0  size 1920 90   at 120dpi
@@ -37,7 +37,7 @@ Steps:
 ## Sign in
 
 # A fresh profile every time.
-Launch          <[ chrome.exe https://www.saucedemo.com ]>   opens <[ Browser ]>
+Launch          opens <[ Browser ]>   with <[ https://www.saucedemo.com ]>
 
 Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97 required  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
  Success:

@@ -34,6 +34,7 @@ namespace Core.Enums
         // Commands
         COMMAND_MISSING,
         COMMAND_PARAMETER_MISSING,
+        LAUNCH_ARGUMENTS_ON_LINK,
 
         // Windows
         WINDOW_SIZE_MISSING,

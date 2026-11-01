@@ -63,6 +63,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TEMPLATE_NOT_PNG, "Templates:\n  <[ logo ]> click 1 2" },
             { DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
+            { DiagnosticCodeEnum.LAUNCH_PROGRAM_DIFFERS, "Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ app.exe ]>\nSteps:\nLaunch <[ other.exe ]> opens <[ App ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nBreak out of <[ Itself ]>" },

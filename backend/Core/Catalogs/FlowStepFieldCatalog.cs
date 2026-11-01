@@ -151,6 +151,7 @@ namespace Core.Catalogs
                 nameof(FlowStep.RunCommandPreset),
                 nameof(FlowStep.RunCommandValue),
                 nameof(FlowStep.RunCommandWorkingDirectory),
+                nameof(FlowStep.LaunchArguments),
                 nameof(FlowStep.SuccessExitCodes),
                 nameof(FlowStep.ResultSource),
                 nameof(FlowStep.ResultExtractPattern),
