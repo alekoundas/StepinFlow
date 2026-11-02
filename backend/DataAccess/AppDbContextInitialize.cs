@@ -1,6 +1,7 @@
 ﻿using Core.Helpers;
 using DataAccess.Interceptors;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DataAccess
@@ -32,6 +33,17 @@ namespace DataAccess
             });
 
             return services;
+        }
+
+        /// <summary>
+        /// A save goes on the end of a log beside the file rather than through a journal made, synced
+        /// and deleted every time, and reading never waits for a save. The file keeps the mode, so
+        /// only the first call changes anything. The database is then three files - the .db, its
+        /// -wal and its -shm - and a copy taken while the app is open needs all three.
+        /// </summary>
+        public static void UseWriteAheadLog(this DatabaseFacade database)
+        {
+            database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
         }
 
 

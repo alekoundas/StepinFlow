@@ -483,6 +483,12 @@ hook itself is never held up and a recording keeps their order.
 SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on startup with
 `dbContext.Database.Migrate()`. Contexts come from `AddPooledDbContextFactory`.
 
+It is in write-ahead-log mode (`UseWriteAheadLog`, asked on every start, kept by the file): a save
+goes on the end of `-wal` rather than through a journal made, synced and deleted each time, and a
+read never waits for a save. An execution's history saves several times a second, and in the
+default mode that was a journal file made and deleted every time. The database is three files, the
+`.db`, `-wal` and `-shm`, and a copy taken while the app is open needs all three.
+
 | Table | Purpose |
 |---|---|
 | `Flows` | The test. Name, `PublicId`, description. |

@@ -48,6 +48,25 @@ the history.
 - [ ] **A past execution still loads every row.** Opening one from Executions reads all of it into
       the page and keeps a second copy in the query cache: a day of Firestone is about 340,000 rows.
       The overview would come from the backend, and the rows by sequence as the live page reads them.
+- [ ] **A screenshot allocates a new full-window buffer every time.** Profiled 2026-11-02 on
+      Firestone: about 10.5 GB of large byte arrays in 15 minutes (12 MB/s), and 560 full garbage
+      collections, one every 1.6 s, every one set off by large-object allocations; the large-object
+      heap sat 30-50% fragmented. `Direct3D11Interop.ReadStagingBytes` allocates each frame's
+      pixels and the copies after it allocate again, and `WindowsGraphicsCaptureService.CaptureItem`
+      builds a frame pool, a session and a staging texture for every capture. A buffer reused per
+      size (`ArrayPool`, or one held for the window being searched) and a capture session kept per
+      window while an execution goes would leave most of it out.
+- [ ] **Every search finds its window from scratch.** `AreaPointResolver.ResolveApplication` asks
+      `WindowService.FindWindows`, which walks every top-level window and opens a `Process` for each
+      to read its name (`GetProcessName`), on every step. Remember the window for the execution, and
+      check it is still there and still the same process before walking them all again. About 0.6% of
+      the backend's CPU in the profile, and most of its `Process` allocations.
+- [ ] **One screenshot for the searches of a pass.** Firestone's pass is 13 Find Image steps on one
+      window with nothing pressed between them, and each takes its own screenshot. Searches with no
+      input, wait or window change between them could share the last screenshot of the area while it
+      is a fraction of a second old. Capture is about 2% of the backend's CPU and most of its large
+      allocations; matching is two thirds (`Cv2.MatchTemplate`), so the bigger lever there is a
+      smaller search area or a first match on a downscaled screenshot.
 - [ ] **OpenCV on macOS and Linux.** `OpenCvService` is shared, but OpenCV itself comes from
       `OpenCvSharp4.runtime.win` in `Platform.Windows`. OpenCvSharp publishes the same version for
       the others - `OpenCvSharp4.official.runtime.linux-x64`, `OpenCvSharp4.runtime.linux-arm64`,

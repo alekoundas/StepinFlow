@@ -69,9 +69,11 @@ namespace App
 
             HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-            // Logging
+            // Logging. Electron writes the backend's output to main.log, which rotates at 1 MB, and EF
+            // Core's every SQL command at Information filled it in under two minutes.
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
+            builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
 
 
             // DB context factory. 
@@ -356,6 +358,7 @@ namespace App
             IDbContextFactory<AppDbContext> dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
+            dbContext.Database.UseWriteAheadLog();
 
             // Check if any exution is set as RUNNING and stop them.
             TimeProvider timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
