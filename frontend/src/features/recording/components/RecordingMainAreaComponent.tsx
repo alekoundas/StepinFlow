@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
@@ -29,9 +29,11 @@ interface Props {
 }
 
 const DEFAULT_VALUES: RecordingWindowForm = {
+  areaType: FlowAreaTypeEnum.APPLICATION,
   processName: "",
   titlePattern: "",
   titleMatchMode: TitleMatchModeEnum.CONTAINS,
+  tabAddress: "",
   useClientArea: true,
   scalesWith: null,
 };
@@ -51,23 +53,31 @@ export default function RecordingMainAreaComponent({ flowId, onSaved, onCancel }
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const areaType = useWatch({ control: form.control, name: "areaType" });
+
   const submit = async (values: RecordingWindowForm) => {
     setIsSaving(true);
     setError(null);
 
-    // Named after the app, as the recording setup names it.
+    // Named after the app or the address, as the recording setup names it.
     const processName = values.processName.trim();
+    const tabAddress = values.tabAddress.trim();
+    const isWebsite = values.areaType === FlowAreaTypeEnum.BROWSER_TAB;
+
+    let name = processName || MAIN_AREA_NAME;
+    if (isWebsite) name = tabAddress;
 
     try {
       await backendApiService.FlowArea.create(
         new FlowAreaDto({
           flowId,
-          name: processName || MAIN_AREA_NAME,
-          type: FlowAreaTypeEnum.APPLICATION,
+          name,
+          type: values.areaType,
           isMain: true,
           processName,
-          titlePattern: values.titlePattern.trim(),
+          titlePattern: isWebsite ? "" : values.titlePattern.trim(),
           titleMatchMode: values.titleMatchMode,
+          tabAddress: isWebsite ? tabAddress : "",
           useClientArea: values.useClientArea,
           scalesWith: values.scalesWith ?? null,
         }),
@@ -99,7 +109,7 @@ export default function RecordingMainAreaComponent({ flowId, onSaved, onCancel }
               </span>
               <RecordingWindowPickerComponent>
                 <FlowAreaScalesWithFieldComponent
-                  type={FlowAreaTypeEnum.APPLICATION}
+                  type={areaType}
                   parentName={null}
                 />
               </RecordingWindowPickerComponent>

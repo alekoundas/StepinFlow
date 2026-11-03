@@ -58,7 +58,6 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
   const health = useFlowHealth();
   const { data: status } = useRepositoryStatus();
 
-  const noun = isSubFlow ? "Sub-Flow" : "Flow";
   const filters = isSubFlow ? SUB_FLOW_FILTERS : FLOW_FILTERS;
 
   // The page stays mounted between Flows and Sub-flows, so a filter only one of them has falls back.
@@ -75,23 +74,21 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
   const handleNew = () => navigate("/flows/new");
 
   // Recording was a button of its own next to New, which read as a different kind of thing rather
-  // than another way of doing the same thing. All three start here now.
+  // than another way of doing the same thing. Both start here now. A sub-flow is never built
+  // empty, so recording is its only way and there is nothing to choose.
   const handleCreate = () => {
+    if (isSubFlow) {
+      handleRecord();
+      return;
+    }
+
     openCustom(
       "flow-create-choice",
       <FlowCreateChoiceDialogComponent
-        noun={noun}
-        onManual={isSubFlow ? undefined : handleNew}
+        onManual={handleNew}
         onRecord={handleRecord}
-        onAi={handleCreateWithAi}
       />,
     );
-  };
-
-  const handleCreateWithAi = () => {
-    setTarget(undefined);
-    setCreateAsSubFlow(isSubFlow);
-    navigate("/flows/ai");
   };
 
   // The recorder names and creates the flow itself, so its step forms have somewhere to list

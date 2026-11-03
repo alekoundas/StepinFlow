@@ -54,11 +54,11 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// The recording setup's flow with its main area and, when there is one, the step that
-        /// launches the application, before the first click, so the name is reserved. Saves twice,
-        /// because the step names the flow by id, so in a transaction.
+        /// The recording setup's flow with its main area and the steps that ready its window -
+        /// launching it, resizing it - before the first click, so the name is reserved. Saves
+        /// twice, because the steps name the flow by id, so in a transaction.
         /// </summary>
-        public async Task<ResultDto<int>> CreateForRecordingAsync(Flow flow, FlowArea mainArea, FlowStep? launch, CancellationToken ct)
+        public async Task<ResultDto<int>> CreateForRecordingAsync(Flow flow, FlowArea mainArea, IReadOnlyList<FlowStep> steps, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
             await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
@@ -76,12 +76,13 @@ namespace Business.Flows.DataService.DataHandlers
             dbContext.FlowAreas.Add(mainArea);
             await dbContext.SaveChangesAsync(ct);
 
-            if (launch != null)
+            for (int i = 0; i < steps.Count; i++)
             {
-                launch.RootId = flow.Id;
-                launch.FlowId = flow.Id;
-                launch.OrderNumber = 0;
-                await FlowStepDataService.CreateAsync(dbContext, launch, [], ct);
+                FlowStep step = steps[i];
+                step.RootId = flow.Id;
+                step.FlowId = flow.Id;
+                step.OrderNumber = i;
+                await FlowStepDataService.CreateAsync(dbContext, step, [], ct);
             }
 
             await transaction.CommitAsync(ct);
@@ -92,8 +93,8 @@ namespace Business.Flows.DataService.DataHandlers
 
         /// <summary>
         /// Deletes a flow the recording setup created while it holds only what the setup wrote: no
-        /// steps but the one that launches the application. Anything more is work, and the flow is
-        /// kept. True when it was deleted.
+        /// steps but the one that launches the application and the one that resizes it. Anything
+        /// more is work, and the flow is kept. True when it was deleted.
         /// </summary>
         public async Task<ResultDto<bool>> DeleteRecordingSetupAsync(int id, CancellationToken ct)
         {
@@ -105,10 +106,9 @@ namespace Business.Flows.DataService.DataHandlers
                 .Where(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE)
                 .ToListAsync(ct);
 
-            if (steps.Count > 1)
-                return ResultDto<bool>.Success(false);
-
-            if (steps.Count == 1 && steps[0].RunCommandPreset != RunCommandPresetEnum.LAUNCH_APP)
+            int launches = steps.Count(x => x.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP);
+            int resizes = steps.Count(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE);
+            if (launches > 1 || resizes > 1 || launches + resizes != steps.Count)
                 return ResultDto<bool>.Success(false);
 
             await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);

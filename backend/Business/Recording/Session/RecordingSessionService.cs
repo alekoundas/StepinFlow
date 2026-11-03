@@ -4,6 +4,7 @@ using Business.Recording.ActionBuilder;
 using Business.Recording.Elements;
 using Business.Recording.Models.Session;
 using Business.Recording.Screens;
+using Business.Recording.Setup;
 using Core.Catalogs;
 using Core.Enums;
 using Core.Models.Business;
@@ -102,6 +103,9 @@ namespace Business.Recording.Session
 
         // The gestures this recording holds back, from the settings when it began.
         private IReadOnlyList<PressGesture> _gestures = [];
+
+        // The browser window a website's tab was found in when the recording began.
+        private WindowHandle _tabWindow = WindowHandle.None;
 
         private Channel<PendingInput>? _queue;
         private Task? _drain;
@@ -352,7 +356,12 @@ namespace Business.Recording.Session
             if (mainArea == null)
                 return ResultDto<bool>.Failure("Pick the window the flow works in before recording.");
 
+            string? notSized = await SizeMainWindowAsync(flowId, mainArea, ct);
+            if (notSized != null)
+                return ResultDto<bool>.Failure(notSized);
+
             // The first screenshot is taken before the first press can happen.
+            _tabWindow = WindowHandle.None;
             string? notOnScreen = CaptureScreenshot(mainArea);
             if (notOnScreen != null)
                 return ResultDto<bool>.Failure(notOnScreen);
@@ -400,6 +409,34 @@ namespace Business.Recording.Session
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             return await dbContext.FlowAreas.AsNoTracking().FirstOrDefaultAsync(x => x.FlowId == flowId && x.IsMain, ct);
+        }
+
+        // The size the flow's first resize of its main window sets, set again here: the tester may
+        // have changed it while arranging their windows, and the recording is made at that size.
+        // A window not on screen is left to the first screenshot to say so.
+        private async Task<string?> SizeMainWindowAsync(int flowId, FlowArea mainArea, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            FlowStep? resize = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => x.RootId == flowId && x.ParentFlowStepId == null)
+                .Where(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && x.FlowAreaId == mainArea.Id)
+                .OrderBy(x => x.OrderNumber)
+                .FirstOrDefaultAsync(ct);
+
+            if (resize == null || resize.WindowWidth < 1 || resize.WindowHeight < 1)
+                return null;
+
+            AreaResolution area = _areaPointResolver.ResolveArea(mainArea);
+            if (!area.IsResolved)
+                return null;
+
+            string? refused = RecordingWindowSize.Apply(_windowService, area.Window, resize.WindowWidth, resize.WindowHeight);
+            if (refused != null)
+                return $"{refused} \"{resize.Name}\" sets it, and the recording is made at that size. Restore the window if it is maximised or full screen, then start again.";
+
+            return null;
         }
 
         // Ends a recording that is running, and folds what it recorded. False when none was.
@@ -586,7 +623,7 @@ namespace Business.Recording.Session
         // Null when it worked, else why not.
         private string? CaptureScreenshot(FlowArea mainArea)
         {
-            AreaResolution area = _areaPointResolver.ResolveArea(mainArea);
+            AreaResolution area = ResolveMainArea(mainArea);
             if (!area.IsResolved)
                 return area.Error;
 
@@ -598,6 +635,28 @@ namespace Business.Recording.Session
             _cache.AddRecentScreenshot(new RecordingScreenshot(capturedOn, target, image));
             _filter.Target = target;
             return null;
+        }
+
+        // A website's tab is found by its address once, as the recording begins, and its window
+        // followed after: a page that goes on to a sign-in on another site is still the one being
+        // recorded. Found again by the address only once that window is closed or minimised.
+        private AreaResolution ResolveMainArea(FlowArea mainArea)
+        {
+            if (mainArea.Type != FlowAreaTypeEnum.BROWSER_TAB)
+                return _areaPointResolver.ResolveArea(mainArea);
+
+            if (_tabWindow.IsValid)
+            {
+                AreaResolution followed = _areaPointResolver.ResolveTabPage(mainArea, _tabWindow);
+                if (followed.IsResolved)
+                    return followed;
+            }
+
+            AreaResolution found = _areaPointResolver.ResolveArea(mainArea);
+            if (found.IsResolved)
+                _tabWindow = found.Window;
+
+            return found;
         }
 
         // A main area minimised or closed for a moment keeps the screenshots from before it,

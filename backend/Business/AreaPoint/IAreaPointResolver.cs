@@ -1,3 +1,4 @@
+using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
@@ -18,6 +19,13 @@ namespace Business.AreaPoint
 
         /// <summary>Parent chain must already be loaded.</summary>
         AreaResolution ResolveArea(FlowArea area);
+
+        /// <summary>
+        /// A browser tab area's page in this browser window, whatever address its front tab is at
+        /// now: where a recording that began on the tab goes on looking.
+        /// </summary>
+        AreaResolution ResolveTabPage(FlowArea area, WindowHandle window);
+
         PointResolution ResolvePoint(FlowPoint point);
     }
 }

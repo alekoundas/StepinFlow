@@ -112,6 +112,86 @@ namespace Business.Tests.Recording
             db.Flows.ShouldBeEmpty();
         }
 
+        // A browser's title is its front tab's, so a tab is matched on its address alone.
+        [Fact]
+        public async Task A_website_s_main_area_is_its_tab_named_by_the_address_and_started_by_the_browser()
+        {
+            _resolver.AreasByName["shop.example.com/cart"] = AreaResolution.Ok(new Rectangle(0, 80, 800, 520), CHROME_WINDOW);
+
+            RecordingSetupDto setup = Setup();
+            setup.AreaType = FlowAreaTypeEnum.BROWSER_TAB;
+            setup.TabAddress = " https://www.shop.example.com/cart/ ";
+            setup.TitlePattern = "Swag Labs";
+
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            Flow flow = Load(created.Data);
+            FlowArea main = flow.FlowAreas.ShouldHaveSingleItem();
+            (main.Name, main.Type, main.ProcessName, main.TabAddress, main.TitlePattern).ShouldBe(("shop.example.com/cart", FlowAreaTypeEnum.BROWSER_TAB, "chrome", "https://www.shop.example.com/cart/", ""));
+            main.LaunchCommand.ShouldBe($"\"{CHROME_PATH}\"");
+        }
+
+        [Fact]
+        public async Task A_website_with_no_address_is_refused()
+        {
+            RecordingSetupDto setup = Setup();
+            setup.AreaType = FlowAreaTypeEnum.BROWSER_TAB;
+
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            created.ErrorMessage.ShouldBe("Type the website's address.");
+        }
+
+        [Fact]
+        public async Task The_resize_step_comes_after_the_launch_and_the_window_is_set_to_its_size_there_and_then()
+        {
+            RecordingSetupDto setup = Setup();
+            setup.AddsResizeStep = true;
+            setup.WindowWidth = 1280;
+            setup.WindowHeight = 720;
+
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            _windows.Actions.ShouldBe(["resize 1280x720"]);
+
+            Flow flow = Load(created.Data);
+            FlowStep resize = flow.FlowSteps.Single(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE);
+            (resize.Name, resize.WindowWidth, resize.WindowHeight, resize.OrderNumber).ShouldBe(("Resize window to 1280x720", 1280, 720, 1));
+            resize.FlowAreaId.ShouldBe(flow.FlowAreas.Single().Id);
+            flow.FlowSteps.Single(x => x.FlowStepType == FlowStepTypeEnum.SYSTEM_COMMAND).OrderNumber.ShouldBe(0);
+        }
+
+        // A maximised or full-screen window says yes and keeps its size.
+        [Fact]
+        public async Task A_window_that_keeps_its_size_is_said_and_nothing_is_saved()
+        {
+            _windows.Bounds = new Rectangle(0, 0, 1920, 1080);
+            _windows.KeepsItsSize = true;
+
+            RecordingSetupDto setup = Setup();
+            setup.AddsResizeStep = true;
+            setup.WindowWidth = 1280;
+            setup.WindowHeight = 720;
+
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            created.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window stayed 1920 x 1080 rather than 1280 x 720.");
+            using AppDbContext db = _database.CreateDbContext();
+            db.Flows.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_resize_with_no_size_is_refused_before_the_window_is_touched()
+        {
+            RecordingSetupDto setup = Setup();
+            setup.AddsResizeStep = true;
+
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            created.IsSuccess.ShouldBeFalse();
+            _windows.Actions.ShouldBeEmpty();
+        }
+
         [Fact]
         public async Task A_name_another_flow_has_is_refused()
         {
@@ -135,6 +215,18 @@ namespace Business.Tests.Recording
 
             using AppDbContext db = _database.CreateDbContext();
             db.Flows.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task Discarding_deletes_a_flow_with_the_setup_s_launch_and_resize_in_it()
+        {
+            RecordingSetupDto setup = Setup();
+            setup.AddsResizeStep = true;
+            setup.WindowWidth = 1280;
+            setup.WindowHeight = 720;
+            ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
+
+            (await _dataService.Flow.DeleteRecordingSetupAsync(created.Data, Ct)).Data.ShouldBeTrue();
         }
 
         [Fact]

@@ -1,5 +1,6 @@
 using Business.AreaPoint;
 using Core.Enums;
+using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
@@ -53,6 +54,14 @@ namespace Business.Tests.Fakes
         public AreaResolution ResolveArea(FlowArea area)
         {
             return AreasByName.GetValueOrDefault(area.Name) ?? AreaResolution.Fail($"No window matches \"{area.Name}\".", AreaUnresolvedEnum.NOT_ON_SCREEN);
+        }
+
+        // A tab's page by its window, whatever address the tab has gone on to.
+        public Dictionary<WindowHandle, AreaResolution> TabPages { get; } = new Dictionary<WindowHandle, AreaResolution>();
+
+        public AreaResolution ResolveTabPage(FlowArea area, WindowHandle window)
+        {
+            return TabPages.GetValueOrDefault(window) ?? AreaResolution.Fail($"\"{area.Name}\"'s window is closed or minimised.", AreaUnresolvedEnum.NOT_ON_SCREEN);
         }
 
         public PointResolution ResolvePoint(FlowPoint point)

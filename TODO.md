@@ -408,7 +408,17 @@ the history.
       Moved out of phase 7 on 2026-10-28. The sizes become `FlowViewport` rows, for phase 10's
       viewport matrix; what happens at the end becomes steps under `End Execution`, because teardown
       is steps. The only teardown step today is a kill-process command, so the `Close Window` loose
-      end in `PLAN.md` decides whether this ships with kill only.
+      end in `PLAN.md` decides whether this ships with kill only. Since 2026-11-02 the setup can add
+      one fixed size as a `Resize Window` step; for a QA test that size belongs in its first
+      viewport once the matrix lands, or the step would fight every other viewport.
+
+- [ ] **A website flow whose page leaves its address.** Raised 2026-11-02. The recorder follows the
+      tab's browser window after Start, so a sign-in on another site is recorded. An execution finds
+      the main area by its address on every step, though, so the steps recorded on that sign-in
+      search a tab no longer there and fail. Either the draft gives those steps an area of their own,
+      a `BROWSER_TAB` at the address the page was at - which the recording would have to read at each
+      press - or a main area of a website matches any address once a flow has found it, as the
+      recorder now does.
 
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that

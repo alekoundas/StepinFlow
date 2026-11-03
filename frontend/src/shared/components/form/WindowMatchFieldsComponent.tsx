@@ -65,7 +65,8 @@ interface Props {
  * Both are ANDed when both are set, which is the only way to tell two windows of the same app
  * apart. That is why the title stays available as narrowing rather than disappearing in app mode.
  *
- * Which branch a saved row opens in is derived, not stored: a process name means the app branch.
+ * Which branch a saved row opens in is derived, not stored: a title and no process name means the
+ * title branch, anything else the app branch.
  */
 export default function WindowMatchFieldsComponent({
   isDisabled = false,
@@ -78,8 +79,10 @@ export default function WindowMatchFieldsComponent({
   const queryClient = useQueryClient();
 
   const processName = useWatch({ control, name: "processName" }) as string | undefined;
+  const titlePattern = useWatch({ control, name: "titlePattern" }) as string | undefined;
 
-  const [isByTitle, setIsByTitle] = useState(!processName && !isBrowser);
+  // A new one starts at the common case, a running app.
+  const [isByTitle, setIsByTitle] = useState(!processName && !!titlePattern && !isBrowser);
 
   const [isTesting, setIsTesting] = useState(false);
   const [matches, setMatches] = useState<WindowMatchDto[] | null>(null);

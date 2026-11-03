@@ -75,6 +75,16 @@ namespace Business.Tests.Recording
             return flow.Id;
         }
 
+        // What the setup's "Also add a step that resizes the window" writes.
+        private void AddResize(int flowId, int width, int height)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            int mainAreaId = db.FlowAreas.Single(x => x.FlowId == flowId && x.IsMain).Id;
+            db.FlowSteps.Add(new FlowStep { RootId = flowId, FlowId = flowId, Name = "Resize Browser", FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowAreaId = mainAreaId, WindowWidth = width, WindowHeight = height });
+            db.SaveChanges();
+        }
+
         private void Raise(RecordedInputTypeEnum type, int x = 500, int y = 400)
         {
             _hook.Raise(new RecordedInput
@@ -165,6 +175,61 @@ namespace Business.Tests.Recording
             started.IsSuccess.ShouldBeFalse();
             _session.IsRecording.ShouldBeFalse();
             _hook.IsRecording.ShouldBeFalse();
+        }
+
+        // The tester may have changed the size while arranging their windows.
+        [Fact]
+        public async Task A_flow_that_resizes_its_main_window_is_recorded_at_that_size()
+        {
+            int flowId = NewFlow(withMainArea: true);
+            AddResize(flowId, 1280, 720);
+
+            (await _session.StartAsync(flowId, OWN, Ct)).IsSuccess.ShouldBeTrue();
+
+            _windows.Actions.ShouldBe(["resize 1280x720"]);
+        }
+
+        [Fact]
+        public async Task A_main_window_that_keeps_another_size_is_not_recorded()
+        {
+            int flowId = NewFlow(withMainArea: true);
+            AddResize(flowId, 1280, 720);
+            _windows.Bounds = new Rectangle(0, 0, 1920, 1080);
+            _windows.KeepsItsSize = true;
+
+            ResultDto<bool> started = await _session.StartAsync(flowId, OWN, Ct);
+
+            started.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window stayed 1920 x 1080 rather than 1280 x 720.");
+            _session.IsRecording.ShouldBeFalse();
+        }
+
+        // A sign-in on another site is still the page being recorded.
+        [Fact]
+        public async Task A_website_s_tab_is_followed_in_its_window_once_its_page_leaves_the_address()
+        {
+            int flowId = NewFlow(withMainArea: true);
+            using (AppDbContext db = _database.CreateDbContext())
+            {
+                FlowArea area = db.FlowAreas.Single(x => x.FlowId == flowId);
+                area.Type = FlowAreaTypeEnum.BROWSER_TAB;
+                area.TabAddress = "shop.example.com";
+                db.SaveChanges();
+            }
+
+            (await _session.StartAsync(flowId, OWN, Ct)).IsSuccess.ShouldBeTrue();
+
+            Rectangle signIn = new Rectangle(100, 180, 800, 520);
+            _resolver.AreasByName.Clear();
+            _resolver.TabPages[BROWSER_WINDOW] = AreaResolution.Ok(signIn, BROWSER_WINDOW);
+
+            await WaitUntilAsync(() =>
+            {
+                _clock.Advance(TimeSpan.FromMilliseconds(250));
+                return _screenshots.Captured.Count >= 2;
+            });
+
+            _screenshots.Captured[0].ShouldBe(BOUNDS);
+            _screenshots.Captured.Skip(1).ShouldAllBe(x => x == signIn);
         }
 
         [Fact]

@@ -589,15 +589,27 @@ building steps in TypeScript. Review and the draft replaced it: the questions it
 by a rule, and corrected in Review or the editor.
 
 **A new flow is set up before the first click** (`Business/Recording/Setup`, `Recording.setup`):
-its name, description, whether it is a QA test (`Flow.IsQaTest`), and the window it works in,
-picked from the windows open now, front first and StepinFlow's own left out. Its Test finds the
-window and brings it to the front. The flow and that window as its main area are saved in one
-write, so the name is reserved, and when the tester asks, a first step that launches the
-application: `Launch opens` the main area, so an execution waits for it, and the area is started by
-the program file of the process that owns the window now - quoted when it has a space, or a Steam
-game's link - so the window has to be open.
-The recorded steps go after it. Discard deletes the
-flow while nothing but the setup is in it.
+its name, description, whether it is a QA test (`Flow.IsQaTest`), and what it works in - an
+**Application**, an `APPLICATION` area, or a **Website**, a `BROWSER_TAB` area of a browser and an
+address, named by the address. Both are the area form's own fields (`WindowMatchFieldsComponent`):
+open apps one to a row with their windows' titles under them, StepinFlow's own left out, and a Test
+that finds the window and brings it to the front. The flow and its main area are saved in one write,
+so the name is reserved, with up to two steps the tester asks for, in this order:
+
+- **A launch.** `Launch opens` the main area, so an execution waits for it, and the area is started
+  by the program file of the process that owns the window now - quoted when it has a space, or a
+  Steam game's link - so the window has to be open. A website's is its browser, which Launch opens
+  at the address when no tab has it.
+- **A resize** (`Resize Window <[ main ]> size W H`), to a size typed or copied from one of the app's
+  open windows by "Measure its windows" - the whole window, as `GetWindowRect` measures it and
+  `SetWindowPos` sets it, since the inside the area's Test reports would shrink the window a little on
+  every execution. The setup sets the window to it there and then, and the session again at Start
+  (`RecordingWindowSize`), since the tester may have changed it while arranging their windows: the
+  template images and points are then taken at the size every execution sets. A window that says yes
+  and keeps its size - maximised, full screen, fixed - is measured afterwards and refused, saying the
+  size it stayed.
+
+The recorded steps go after them. Discard deletes the flow while nothing but the setup is in it.
 
 **Recording steps into a flow that already exists** - the editor's "Record steps here" - is
 disabled since 2026-10-15, until how a model's draft lands in an existing flow is settled
@@ -612,6 +624,11 @@ draft is inserted at that position (below).
   the last three, each stamped when its capture finished. A press takes the newest one stamped
   before it, picked at the hook so a slow drain cannot lose it, and keeps the main area's bounds,
   its DPI and the whole screenshot (`RecordedPress`) - what a click is stored relative to.
+- **A website's tab is found by its address once**, at Start, and its browser window followed after
+  (`IAreaPointResolver.ResolveTabPage`): a page that goes on to a sign-in on another site is still
+  the one being recorded. Matched by its address again only once that window is closed or minimised.
+  It is cheaper too: each screenshot reads the browser's controls through UI Automation once, for
+  the page, rather than once per browser window for the address and again for the page.
 - **Which window a press landed on**, read at the hook from the window under the cursor rather than
   later from whatever is in front: the main window, another window of its application such as a
   Save As dialog, or anything else. A main area that is a monitor or a region has no window, so it

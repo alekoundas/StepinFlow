@@ -16,6 +16,9 @@ namespace Business.Tests.Fakes
         // What focus, resize and move report: false is a window that refused.
         public bool Obeys { get; set; } = true;
 
+        // A maximised or fixed-size window: it says it resized and keeps its size.
+        public bool KeepsItsSize { get; set; }
+
         public WindowHandle FindWindow(WindowQuery query)
         {
             Queries.Add(query);
@@ -75,6 +78,10 @@ namespace Business.Tests.Fakes
         public bool ResizeWindow(WindowHandle handle, int width, int height)
         {
             Actions.Add($"resize {width}x{height}");
+
+            if (Obeys && !KeepsItsSize)
+                Bounds = new Rectangle(Bounds.X, Bounds.Y, width, height);
+
             return Obeys;
         }
 

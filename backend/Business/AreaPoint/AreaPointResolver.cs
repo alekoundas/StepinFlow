@@ -108,6 +108,19 @@ namespace Business.AreaPoint
             return AreaResolution.Ok(placed.Bounds, placed.Window, ScalesWithOf(area), DpiAt(placed.Bounds));
         }
 
+        public AreaResolution ResolveTabPage(FlowArea area, WindowHandle window)
+        {
+            // A closed or minimised window has no inside, and its page would be read off screen.
+            if (_windowService.GetWindowBounds(window, true).IsEmpty)
+                return AreaResolution.Fail($"\"{area.Name}\"'s window is closed or minimised.", AreaUnresolvedEnum.NOT_ON_SCREEN);
+
+            Rectangle page = _browserTabFinder.PageBounds(window);
+            if (page.Width <= 0 || page.Height <= 0)
+                return AreaResolution.Fail($"\"{area.Name}\"'s page cannot be measured.", AreaUnresolvedEnum.NO_SIZE);
+
+            return AreaResolution.Ok(page, window, ScalesWithOf(area), DpiAt(page));
+        }
+
         public PointResolution ResolvePoint(FlowPoint point)
         {
             if (point.FlowArea == null)

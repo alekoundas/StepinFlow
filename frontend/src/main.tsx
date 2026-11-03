@@ -27,7 +27,6 @@ import WorkflowPage from "@/features/workflow/WorkflowPage";
 import ExecutionPage from "@/features/execution/ExecutionPage";
 import ExecutionsPage from "@/features/execution/ExecutionsPage";
 import FlowListPage from "@/features/flow/FlowListPage";
-import FlowAiCreatePage from "@/features/flow/FlowAiCreatePage";
 import FlowFormPage from "@/features/flow/FlowFormPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import RecordingPage from "@/features/recording/RecordingPage";
@@ -52,10 +51,6 @@ const router = createHashRouter([
       {
         path: "/sub-flows",
         element: <FlowListPage isSubFlow={true} />,
-      },
-      {
-        path: "/flows/ai",
-        element: <FlowAiCreatePage />,
       },
       {
         path: "/flows/new",

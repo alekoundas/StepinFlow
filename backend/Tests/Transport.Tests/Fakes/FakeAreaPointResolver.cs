@@ -1,4 +1,5 @@
 using Business.AreaPoint;
+using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
 
@@ -25,6 +26,11 @@ namespace Transport.Tests.Fakes
         }
 
         public AreaResolution ResolveArea(FlowArea area)
+        {
+            throw new NotImplementedException();
+        }
+
+        public AreaResolution ResolveTabPage(FlowArea area, WindowHandle window)
         {
             throw new NotImplementedException();
         }
