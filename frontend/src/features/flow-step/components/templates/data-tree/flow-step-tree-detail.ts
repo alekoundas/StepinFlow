@@ -149,6 +149,12 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
         chips: [],
       };
 
+    case FlowStepTypeEnum.WINDOW_CLOSE:
+      return {
+        text: detail.areaName ?? "no window picked",
+        chips: detail.isCloseForced ? [{ text: "forced" }] : [],
+      };
+
     // A row with a thumbnail counts its templates on it.
     case FlowStepTypeEnum.SEARCH_IMAGE:
       return {

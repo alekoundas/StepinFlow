@@ -12,6 +12,22 @@ namespace Business.Tests.Fakes
             return true;
         }
 
+        // Each process ended by its id, whether it would end, and what ending it does - close its
+        // window, say.
+        public List<int> Killed { get; } = new List<int>();
+        public bool Ends { get; set; } = true;
+        public Action? OnKill { get; set; }
+
+        public bool Kill(int processId)
+        {
+            if (!Ends)
+                return false;
+
+            Killed.Add(processId);
+            OnKill?.Invoke();
+            return true;
+        }
+
         public string? GetExecutablePath(int processId)
         {
             return ExecutablePaths.GetValueOrDefault(processId);

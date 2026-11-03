@@ -14,6 +14,13 @@ namespace Core.Ports
         bool KillByName(string processName);
 
         /// <summary>
+        /// Force closes one process, and everything it started: the one a window belongs to. Never
+        /// throws. False means it is still running, or that it holds the windows of other programs
+        /// too, the way the desktop's shell does, and was left alone.
+        /// </summary>
+        bool Kill(int processId);
+
+        /// <summary>
         /// The program file the process was started from. Null when it has exited, or will not
         /// say, which is usually an elevated process refusing a caller that is not.
         /// </summary>

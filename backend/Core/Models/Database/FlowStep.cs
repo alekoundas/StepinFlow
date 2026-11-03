@@ -27,7 +27,8 @@ namespace Core.Models.Database
 
         public int MaxMatches { get; set; } = 20;
 
-        // Waiting modes only. 0 timeout waits forever.
+        // Waiting modes, where 0 waits forever. Also how long a launch waits for its window and a
+        // close for it to go, where 0 is their default.
         public int PollIntervalMilliseconds { get; set; } = 200;
         public int TimeoutMilliseconds { get; set; }
 
@@ -71,6 +72,10 @@ namespace Core.Models.Database
         // WINDOW_RESIZE
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
+
+
+        // WINDOW_CLOSE: ends the window's process when it is still open once the timeout is up.
+        public bool IsCloseForced { get; set; }
 
 
         // KEYBOARD_INPUT

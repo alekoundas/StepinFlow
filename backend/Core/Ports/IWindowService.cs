@@ -53,5 +53,11 @@ namespace Core.Ports
         /// that puts up "are you sure" cannot block the caller for ever.
         /// </summary>
         bool CloseWindow(WindowHandle handle);
+
+        /// <summary>
+        /// Whether the window is still there to see. False once it has closed, and once it has
+        /// hidden itself the way a program that carries on in the tray does.
+        /// </summary>
+        bool IsWindowOpen(WindowHandle handle);
     }
 }

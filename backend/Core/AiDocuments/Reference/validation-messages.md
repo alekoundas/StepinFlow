@@ -72,9 +72,13 @@ Steam game's, which takes none. A Steam game's are set in Steam, in its launch o
 ## Windows
 
 **AREA_NOT_A_WINDOW** — a window step names an area that is a monitor or a region.
-Only a window can be focused, resized or moved, so pick a window area.
+Only a window can be focused, resized, moved or closed, so pick a window area.
 
 **WINDOW_SIZE_MISSING** — a resize step has no width or height.
+
+**CLOSE_FORCED_ON_TAB** — a close of a browser tab says `then force`. Forcing ends the window's
+program, and a tab's program is the whole browser, every window and tab of it. A tab closes the way
+Ctrl+W closes it, or stays open: take `then force` off.
 
 ## Control
 

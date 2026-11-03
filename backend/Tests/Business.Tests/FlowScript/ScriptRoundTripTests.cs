@@ -117,6 +117,24 @@ namespace Business.Tests.FlowScript
             new Printer().Write(new Scanner().Read(printed)).ShouldBe(printed);
         }
 
+        // The five seconds a close waits unless told otherwise, and no force, are written as nothing.
+        [Fact]
+        public void A_close_with_neither_a_timeout_nor_force_reads_and_prints_as_just_its_window()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Close Window    <[ App ]>");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().ShouldSatisfyAllConditions(
+                x => x.FlowStepType.ShouldBe(FlowStepTypeEnum.WINDOW_CLOSE),
+                x => x.FlowArea!.Name.ShouldBe("App"),
+                x => x.TimeoutMilliseconds.ShouldBe(0),
+                x => x.IsCloseForced.ShouldBeFalse());
+            string printed = new Printer().Write(schema);
+            printed.ShouldContain("Close Window    <[ App ]>");
+            printed.ShouldNotContain("timeout");
+            printed.ShouldNotContain("then force");
+        }
+
         // Written before these lines had a name, and the import names the step.
         [Theory]
         [InlineData("Launch          opens <[ App ]>")]

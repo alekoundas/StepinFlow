@@ -70,6 +70,7 @@ export default function FlowStepWindowFormComponent({
   const toDto = (data: z.infer<typeof FlowStepWindowSchema>): FlowStepDto => {
     const isResize = data.flowStepType === FlowStepTypeEnum.WINDOW_RESIZE;
     const isRelocate = data.flowStepType === FlowStepTypeEnum.WINDOW_RELOCATE;
+    const isClose = data.flowStepType === FlowStepTypeEnum.WINDOW_CLOSE;
 
     return new FlowStepDto({
       ...defaultValues,
@@ -82,6 +83,9 @@ export default function FlowStepWindowFormComponent({
       windowHeight: isResize ? data.windowHeight : 0,
 
       flowPointId: isRelocate ? (data.flowPointId ?? undefined) : undefined,
+
+      timeoutMilliseconds: isClose ? data.timeoutMilliseconds : 0,
+      isCloseForced: isClose && data.isCloseForced,
     });
   };
 

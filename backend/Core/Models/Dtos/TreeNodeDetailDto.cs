@@ -36,6 +36,9 @@ namespace Core.Models.Dtos
         public int WindowWidth { get; set; }
         public int WindowHeight { get; set; }
 
+        // WINDOW_CLOSE
+        public bool IsCloseForced { get; set; }
+
         // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum? SearchMode { get; set; }
         public int TemplateCount { get; set; }

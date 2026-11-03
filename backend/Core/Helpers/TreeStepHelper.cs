@@ -16,6 +16,7 @@ namespace Core.Helpers
             FlowStepTypeEnum.WINDOW_FOCUS,
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,
+            FlowStepTypeEnum.WINDOW_CLOSE,
         ];
 
         // The steps that verify something.

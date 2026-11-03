@@ -68,6 +68,7 @@ namespace Business.FlowScript.Catalogs
         KEEP,
         TIMEOUT,
         NO_TIMEOUT,
+        THEN_FORCE,
         AND,
         TIMES,
         FOREVER,

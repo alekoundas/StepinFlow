@@ -568,19 +568,26 @@ from before an area said what starts it, and so with no `Script Language` line, 
 and the rest become the arguments. A program other than the area's is the `LAUNCH_PROGRAM_DIFFERS`
 warning, and the area's starts.
 
-**A window step names the area of the window it acts on.** `Focus Window`, `Resize Window` and
-`Move Window` take the name of a `window` area from the header, so a window is described once, under
-Areas, and the searches in it and the steps that place it all follow when its title changes. Several
-window steps can name the same area. It has to be a window or a browser tab: a monitor or a region
-has nothing to focus, resize or move, which is `AREA_NOT_A_WINDOW`. A tab's window is the browser
-window holding it, with the tab brought to the front of it first. A step saved with no area is
-written `nowhere`, which the validator reports.
+**A window step names the area of the window it acts on.** `Focus Window`, `Resize Window`,
+`Move Window` and `Close Window` take the name of a `window` area from the header, so a window is
+described once, under Areas, and the searches in it and the steps that place it all follow when its
+title changes. Several window steps can name the same area. It has to be a window or a browser tab:
+a monitor or a region has nothing to focus, resize, move or close, which is `AREA_NOT_A_WINDOW`. A
+tab's window is the browser window holding it, with the tab brought to the front of it first. A
+step saved with no area is written `nowhere`, which the validator reports.
 
 ```
 Focus Window    <[ Browser ]>
 Resize Window   <[ Browser ]>   size 1280 720
 Move Window     <[ Browser ]>   to point <[ Left half ]>
+Close Window    <[ Editor ]>
+Close Window    <[ Editor ]>   timeout 10000ms   then force
 ```
+
+`Close Window` asks the window to close, as its X does, and waits 5 seconds for it to go, or its
+`timeout`. `then force` ends the window's program when it is still open after that, nothing saved.
+A tab's close is Ctrl+W on that tab, and `then force` on a tab is `CLOSE_FORCED_ON_TAB`, since its
+program is the whole browser.
 
 **A key between a hold and its release is written without the held keys.** Under `Press <[ Ctrl ]>
 hold`, Ctrl+C is `Press <[ C ]>`: pressed as `Ctrl+C`, the press would let Ctrl go, and the click
@@ -684,9 +691,12 @@ do a teardown can do:
 
 ```
 End Execution  failed  <[ did not reach the products page ]>
- Run     <[ Close the browser ]>   KILL_PROCESS  <[ chrome.exe ]>
+ Close Window  <[ Browser ]>   then force
  Notify  <[ login smoke failed at {{width}}x{{height}} ]>
 ```
+
+`Close Window` lets the application close the way its X does. `Run KILL_PROCESS` ends every program
+of a name at once, nothing saved, and suits one left over from a crash.
 
 The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes
 nothing, and a second `End Execution` underneath is rejected - the first one already decided.

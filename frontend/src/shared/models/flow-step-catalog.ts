@@ -123,6 +123,12 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
     label: "Window Relocate",
     iconName: "directions",
   },
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_CLOSE,
+    group: FlowStepGroupEnum.WINDOW,
+    label: "Window Close",
+    iconName: "window-minimize",
+  },
 
   // ── Perception ──
   {
@@ -222,6 +228,7 @@ const BRANCH_STEP_TYPES: FlowStepTypeEnum[] = [
   FlowStepTypeEnum.WINDOW_FOCUS,
   FlowStepTypeEnum.WINDOW_RESIZE,
   FlowStepTypeEnum.WINDOW_RELOCATE,
+  FlowStepTypeEnum.WINDOW_CLOSE,
 ];
 
 export const hasBranches = (flowStepType: FlowStepTypeEnum | undefined): boolean =>

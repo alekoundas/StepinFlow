@@ -323,6 +323,9 @@ namespace Business.FlowScript.Parsers
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
                     return new WindowRelocateParser(tokens, _scope).Parse();
 
+                case FlowStepTypeEnum.WINDOW_CLOSE:
+                    return new WindowCloseParser(tokens, _scope).Parse();
+
                 case FlowStepTypeEnum.STAGE_MARKER:
                     return new StageMarkerParser(tokens, _scope).Parse();
 

@@ -58,6 +58,8 @@ namespace Core.Tests.Helpers
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = new FlowArea { Name = "Browser" } }).ShouldBe("Focus window");
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, WindowWidth = 1280, WindowHeight = 720 }).ShouldBe("Resize window to 1280x720");
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowPoint = new FlowPoint { Name = "Left half" } }).ShouldBe("Move window");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE }).ShouldBe("Close window");
+            FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE, IsCloseForced = true }).ShouldBe("Close window, forced");
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.MONITOR_OFF }).ShouldBe("Monitor off");
         }
 

@@ -103,6 +103,13 @@ namespace Core.Catalogs
                 nameof(FlowStep.FlowPointId),
             ],
 
+            [FlowStepTypeEnum.WINDOW_CLOSE] =
+            [
+                nameof(FlowStep.FlowAreaId),
+                nameof(FlowStep.TimeoutMilliseconds),
+                nameof(FlowStep.IsCloseForced),
+            ],
+
             [FlowStepTypeEnum.KEYBOARD_INPUT] =
             [
                 nameof(FlowStep.KeyboardInputText),

@@ -42,6 +42,9 @@ namespace Core.Enums
         /// <summary>A window step's area is a monitor, a region or a browser tab rather than a window.</summary>
         AREA_NOT_A_WINDOW,
 
+        /// <summary>A forced close of a browser tab, whose program is the whole browser.</summary>
+        CLOSE_FORCED_ON_TAB,
+
         // Control
         LOOP_COUNT_MISSING,
 

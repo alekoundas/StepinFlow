@@ -58,5 +58,13 @@ namespace Business.Tests.Fakes
             Selected.Add($"{window.Value}:{index}");
             return true;
         }
+
+        // What Ctrl+W does: the tab in front goes, and the one before it comes to the front.
+        public void CloseFront(WindowHandle window)
+        {
+            List<string> tabs = _tabs[window];
+            tabs.RemoveAt(_front[window]);
+            _front[window] = Math.Max(0, _front[window] - 1);
+        }
     }
 }

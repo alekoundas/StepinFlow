@@ -115,6 +115,35 @@ namespace Business.Tests.Flows.Validation
             ErrorsOn(tab).ShouldBeEmpty();
         }
 
+        // A tab's program is the whole browser, every window and tab of it.
+        [Fact]
+        public void A_close_may_be_forced_on_an_application_and_never_on_a_browser_tab()
+        {
+            _areas.Add(new FlowArea { Id = 1, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION });
+            _areas.Add(new FlowArea { Id = 2, Name = "Cart", Type = FlowAreaTypeEnum.BROWSER_TAB });
+
+            FlowStep Close(string name, int areaId, bool isForced)
+            {
+                FlowStep close = Add(FlowStepTypeEnum.WINDOW_CLOSE, name);
+                close.FlowAreaId = areaId;
+                close.IsCloseForced = isForced;
+                return close;
+            }
+
+            FlowStep editor = Close("Close the editor", 1, true);
+            FlowStep tab = Close("Close the cart", 2, false);
+            FlowStep forcedTab = Close("Force the cart", 2, true);
+
+            List<FlowValidationCodeEnum> ErrorsOn(FlowStep step)
+            {
+                return CodesOn(step).Where(x => x != FlowValidationCodeEnum.BRANCHES_EMPTY).ToList();
+            }
+
+            ErrorsOn(editor).ShouldBeEmpty();
+            ErrorsOn(tab).ShouldBeEmpty();
+            ErrorsOn(forcedTab).ShouldBe([FlowValidationCodeEnum.CLOSE_FORCED_ON_TAB]);
+        }
+
         // A launch can leave the program to the area it opens, but something has to start it.
         [Fact]
         public void A_launch_with_no_command_needs_an_area_that_says_what_starts_it()

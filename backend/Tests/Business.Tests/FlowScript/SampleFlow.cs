@@ -111,6 +111,7 @@ namespace Business.Tests.FlowScript
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE, FlowArea = gameClient, TimeoutMilliseconds = 10000, IsCloseForced = true }, end);
 
             return schema;
         }

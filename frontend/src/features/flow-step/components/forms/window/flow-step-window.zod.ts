@@ -6,6 +6,7 @@ export const WINDOW_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.WINDOW_FOCUS,
   FlowStepTypeEnum.WINDOW_RESIZE,
   FlowStepTypeEnum.WINDOW_RELOCATE,
+  FlowStepTypeEnum.WINDOW_CLOSE,
 ] as const;
 
 export type WindowFlowStepType = (typeof WINDOW_FLOW_STEP_TYPES)[number];
@@ -29,6 +30,10 @@ export const FlowStepWindowSchema = z
 
     // WINDOW_RELOCATE
     flowPointId: z.number().int().nullish(),
+
+    // WINDOW_CLOSE. 0 waits the five seconds a close waits unless told otherwise.
+    timeoutMilliseconds: z.number().int().min(0).max(2147483647),
+    isCloseForced: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (!data.flowAreaId) {

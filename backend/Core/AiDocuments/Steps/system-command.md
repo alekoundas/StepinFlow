@@ -28,6 +28,9 @@ later therefore fixes every flow that uses it.
 Every preset returns a meaningful exit code. Some standard tools do not — `tasklist` and `ping`
 report success even when the answer is no — so those presets run through PowerShell instead.
 
+`KILL_PROCESS` ends every program of that name at once, nothing saved. To close one window and let
+its application save first, use `Close Window` instead.
+
 ## Launching an app
 
 `LAUNCH_APP` starts something and carries on without waiting for it to close. It names the area it

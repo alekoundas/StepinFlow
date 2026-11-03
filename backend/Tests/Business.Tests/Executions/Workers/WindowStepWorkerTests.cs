@@ -12,15 +12,17 @@ using static Business.Tests.TestToken;
 namespace Business.Tests.Executions.Workers
 {
     /// <summary>
-    /// Focusing, resizing and moving a window. One worker for all three, and the window is the step's
-    /// area, so the query is built from the area: the message names the area, because "no window
-    /// matched" without saying which is a failure nobody can act on.
+    /// Focusing, resizing, moving and closing a window. One worker for all four, and the window is the
+    /// step's area, so the query is built from the area: the message names the area, because "no
+    /// window matched" without saying which is a failure nobody can act on.
     /// </summary>
     public sealed class WindowStepWorkerTests
     {
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
         private readonly FakeWindowService _windows = new FakeWindowService { Window = new WindowHandle(42) };
         private readonly FakeBrowserTabService _tabs = new FakeBrowserTabService();
+        private readonly FakeProcessService _processes = new FakeProcessService();
+        private readonly FakeInputSimulatorService _input = new FakeInputSimulatorService();
 
         private static readonly FlowArea Browser = new FlowArea
         {
@@ -35,7 +37,8 @@ namespace Business.Tests.Executions.Workers
         private async Task<ExecutionStep> Window(FlowStep step)
         {
             BrowserTabFinder tabs = new BrowserTabFinder(_windows, _tabs, TimeProvider.System);
-            return await new WindowStepWorker(_resolver, _windows, tabs).ExecuteAsync(step, await WorkerCache.ForAsync(step), Ct);
+            WindowStepWorker worker = new WindowStepWorker(_resolver, _windows, tabs, _processes, _input, TimeProvider.System);
+            return await worker.ExecuteAsync(step, await WorkerCache.ForAsync(step), Ct);
         }
 
         private static FlowStep Step(FlowStepTypeEnum type, FlowArea? area)
@@ -114,6 +117,108 @@ namespace Business.Tests.Executions.Workers
             (none.Outcome, none.Message).ShouldBe((StepOutcomeEnum.FAILURE, "There is no window to act on."));
             (notWindow.Outcome, notWindow.Message).ShouldBe((StepOutcomeEnum.FAILURE, "Screen - not a window"));
             _windows.Queries.ShouldBeEmpty();
+        }
+
+        // ================================================================
+        // Closing
+        // ================================================================
+
+        // Short, so a window that stays open fails without the test waiting the five seconds.
+        private static FlowStep Close(FlowArea area, bool isForced = false)
+        {
+            FlowStep close = Step(FlowStepTypeEnum.WINDOW_CLOSE, area);
+            close.TimeoutMilliseconds = 200;
+            close.IsCloseForced = isForced;
+            return close;
+        }
+
+        [Fact]
+        public async Task A_window_is_asked_to_close_and_waited_for()
+        {
+            ExecutionStep result = await Window(Close(Browser));
+
+            _windows.Actions.ShouldBe(["close"]);
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.SUCCESS, "Browser - closed"));
+            _processes.Killed.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_window_that_stays_open_is_a_failure_and_its_program_is_left_alone()
+        {
+            _windows.ClosesWhenAsked = false;
+
+            ExecutionStep result = await Window(Close(Browser));
+
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.FAILURE, "Browser - still open after 0.2s, often asking whether to save"));
+            _processes.Killed.ShouldBeEmpty();
+        }
+
+        // By the window's own process, not every process of its name the way Kill a process does.
+        [Fact]
+        public async Task A_forced_close_ends_the_program_of_that_window()
+        {
+            _windows.ClosesWhenAsked = false;
+            _windows.WindowProcessId = 7140;
+            _processes.OnKill = () => _windows.IsClosed = true;
+
+            ExecutionStep result = await Window(Close(Browser, isForced: true));
+
+            _processes.Killed.ShouldBe([7140]);
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.SUCCESS, "Browser - still open after 0.2s, often asking whether to save, so its program was ended"));
+        }
+
+        [Fact]
+        public async Task A_forced_close_whose_program_will_not_end_is_a_failure()
+        {
+            _windows.ClosesWhenAsked = false;
+            _windows.WindowProcessId = 7140;
+            _processes.Ends = false;
+
+            ExecutionStep result = await Window(Close(Browser, isForced: true));
+
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.FAILURE, "Browser - still open after 0.2s, often asking whether to save, and its program would not end"));
+        }
+
+        [Fact]
+        public async Task A_tab_is_closed_with_ctrl_w_once_its_browser_is_in_front()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 1, "news.example.com", "shop.example.com/cart");
+            _input.OnCombination = () => _tabs.CloseFront(new WindowHandle(1));
+
+            ExecutionStep result = await Window(Close(Cart));
+
+            _windows.Actions.ShouldBe(["focus"]);
+            _input.Actions.ShouldBe(["press LeftCtrl+W"]);
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.SUCCESS, "Cart - tab closed"));
+            _tabs.FrontAddress(new WindowHandle(1)).ShouldBe("news.example.com");
+        }
+
+        // Ctrl+W would close whatever is in front instead.
+        [Fact]
+        public async Task A_tab_whose_browser_will_not_come_to_the_front_is_left_open_and_no_key_is_pressed()
+        {
+            _windows.Obeys = false;
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "shop.example.com/cart");
+
+            ExecutionStep result = await Window(Close(Cart));
+
+            _input.Actions.ShouldBeEmpty();
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.FAILURE, "Cart - the browser would not come to the front, so its tab was left open"));
+        }
+
+        [Fact]
+        public async Task A_tab_that_stays_open_is_a_failure_and_never_forced()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "shop.example.com/cart");
+            _windows.WindowProcessId = 7140;
+
+            ExecutionStep result = await Window(Close(Cart, isForced: true));
+
+            (result.Outcome, result.Message).ShouldBe((StepOutcomeEnum.FAILURE, "Cart - the tab was still open after 0.2s, often asking whether to leave the page"));
+            _processes.Killed.ShouldBeEmpty();
         }
 
         // ================================================================

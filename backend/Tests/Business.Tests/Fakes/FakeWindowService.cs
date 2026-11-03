@@ -91,9 +91,24 @@ namespace Business.Tests.Fakes
             return Obeys;
         }
 
+        // A window that goes when asked, or one that stays, asking whether to save. Closed is also what
+        // ending its program does.
+        public bool ClosesWhenAsked { get; set; } = true;
+        public bool IsClosed { get; set; }
+
         public bool CloseWindow(WindowHandle handle)
         {
-            throw new NotImplementedException();
+            Actions.Add("close");
+
+            if (Obeys && ClosesWhenAsked)
+                IsClosed = true;
+
+            return Obeys;
+        }
+
+        public bool IsWindowOpen(WindowHandle handle)
+        {
+            return handle.IsValid && !IsClosed;
         }
     }
 }

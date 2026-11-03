@@ -47,6 +47,7 @@ namespace App.DependencyInjection
                     [FlowStepTypeEnum.WINDOW_FOCUS] = x.GetRequiredService<WindowStepWorker>(),
                     [FlowStepTypeEnum.WINDOW_RESIZE] = x.GetRequiredService<WindowStepWorker>(),
                     [FlowStepTypeEnum.WINDOW_RELOCATE] = x.GetRequiredService<WindowStepWorker>(),
+                    [FlowStepTypeEnum.WINDOW_CLOSE] = x.GetRequiredService<WindowStepWorker>(),
 
                     [FlowStepTypeEnum.KEYBOARD_INPUT] = x.GetRequiredService<KeyboardStepWorker>(),
 

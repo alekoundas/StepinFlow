@@ -52,6 +52,7 @@ const WINDOW_TYPES: FlowStepTypeEnum[] = [
   FlowStepTypeEnum.WINDOW_FOCUS,
   FlowStepTypeEnum.WINDOW_RESIZE,
   FlowStepTypeEnum.WINDOW_RELOCATE,
+  FlowStepTypeEnum.WINDOW_CLOSE,
 ];
 
 const BUTTON_NAMES: Record<string, string> = {
@@ -338,6 +339,17 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
           ? `Moves ${windowPhrase(names)} so its corner lands on ${quoted(names.pointName)}.`
           : `Moves ${windowPhrase(names)} to a saved location.`,
       };
+
+    case FlowStepTypeEnum.WINDOW_CLOSE: {
+      const wait = humanizeMilliseconds(dto.timeoutMilliseconds || 5000);
+      return {
+        type,
+        mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
+        summary: dto.isCloseForced
+          ? `Closes ${windowPhrase(names)}, and ends its program if it is still open after ${wait}.`
+          : `Closes ${windowPhrase(names)} and waits up to ${wait} for it to go.`,
+      };
+    }
 
     case FlowStepTypeEnum.SYSTEM_COMMAND:
       return {

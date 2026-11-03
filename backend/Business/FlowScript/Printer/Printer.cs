@@ -116,6 +116,9 @@ namespace Business.FlowScript.Text
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
                     return new WindowRelocateWriter(step);
 
+                case FlowStepTypeEnum.WINDOW_CLOSE:
+                    return new WindowCloseWriter(step);
+
                 case FlowStepTypeEnum.STAGE_MARKER:
                     return new StageMarkerWriter(step);
 

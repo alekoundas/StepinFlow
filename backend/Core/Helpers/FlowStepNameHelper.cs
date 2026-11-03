@@ -25,6 +25,7 @@ namespace Core.Helpers
             FlowStepTypeEnum.WINDOW_FOCUS,
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,
+            FlowStepTypeEnum.WINDOW_CLOSE,
             FlowStepTypeEnum.KEYBOARD_INPUT,
             FlowStepTypeEnum.BREAK,
             FlowStepTypeEnum.END_EXECUTION,
@@ -69,6 +70,12 @@ namespace Core.Helpers
 
                 case FlowStepTypeEnum.WINDOW_RELOCATE:
                     return "Move window";
+
+                case FlowStepTypeEnum.WINDOW_CLOSE:
+                    if (step.IsCloseForced)
+                        return "Close window, forced";
+
+                    return "Close window";
 
                 case FlowStepTypeEnum.KEYBOARD_INPUT:
                     return KeyboardName(step);

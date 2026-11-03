@@ -73,6 +73,9 @@ export class FlowStepDto {
   windowHeight: number = 0;
   windowWidth: number = 0;
 
+  // WINDOW_CLOSE. Ends the window's program when it is still open once timeoutMilliseconds is up.
+  isCloseForced: boolean = false;
+
   // KEYBOARD_INPUT
   keyboardInputText: string = "";
   keyboardInputType?: KeyboardInputTypeEnum;

@@ -106,7 +106,7 @@ export function FlowStepTypesDataGridComponent({ className }: Props) {
       flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
       name: "Window",
       description:
-        "Pick a window area to bring that window to the foreground, resize it, or move it to a saved location.",
+        "Pick a window area to bring that window to the foreground, resize it, move it to a saved location, or close it.",
       iconName: "expand",
     },
 

@@ -40,14 +40,14 @@ namespace DataAccess.Tests
                 db.FlowAreas.Add(chrome);
                 db.SaveChanges();
 
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowAreaId = chrome.Id });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.READ_CLIPBOARD });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW, SubFlowId = checkout.Id });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = true });
-                Add(db, flow, new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, Name = "Give up" });
+                OldRows.Step(db, flow.Id, null, "SYSTEM_COMMAND", "", 0, chrome.Id, "LAUNCH_APP");
+                OldRows.Step(db, flow.Id, null, "SYSTEM_COMMAND", "", 1, runCommandPreset: "READ_CLIPBOARD");
+                OldRows.Step(db, flow.Id, null, "SUB_FLOW", "", 2, subFlowId: checkout.Id);
+                OldRows.Step(db, flow.Id, null, "NOTIFY", "", 3);
+                OldRows.Step(db, flow.Id, null, "END_EXECUTION", "", 4);
+                OldRows.Step(db, flow.Id, null, "END_EXECUTION", "", 5);
+                OldRows.Step(db, flow.Id, null, "END_EXECUTION", "", 6, endExecutionAsSuccess: true);
+                OldRows.Step(db, flow.Id, null, "END_EXECUTION", "Give up", 7);
             }
 
             MigrateTo(AFTER);
@@ -65,16 +65,6 @@ namespace DataAccess.Tests
         // ================================================================
         // Private methods
         // ================================================================
-
-        private static void Add(AppDbContext db, Flow flow, FlowStep step)
-        {
-            step.RootId = flow.Id;
-            step.FlowId = flow.Id;
-            step.OrderNumber = db.FlowSteps.Count();
-
-            db.FlowSteps.Add(step);
-            db.SaveChanges();
-        }
 
         private void MigrateTo(string migration)
         {

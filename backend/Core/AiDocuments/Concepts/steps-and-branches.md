@@ -14,7 +14,7 @@ run conditionally goes inside one of them:
 - `SEARCH_TEXT`
 - `CHECK_VALUE`
 - `SYSTEM_COMMAND`
-- `WINDOW_FOCUS`, `WINDOW_RESIZE`, `WINDOW_RELOCATE`
+- `WINDOW_FOCUS`, `WINDOW_RESIZE`, `WINDOW_RELOCATE`, `WINDOW_CLOSE`
 
 The first three are the **checks** - the steps that exist to decide, and the ones a report is built
 from. The rest branch for a different reason: a command that will not run or a window that is not

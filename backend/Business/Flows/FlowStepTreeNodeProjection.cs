@@ -59,6 +59,7 @@ namespace Business.Flows
 
                 WindowWidth = x.WindowWidth,
                 WindowHeight = x.WindowHeight,
+                IsCloseForced = x.IsCloseForced,
 
                 SearchMode = x.SearchMode,
                 TemplateCount = x.FlowStepTemplates.Count(),

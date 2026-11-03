@@ -81,10 +81,17 @@ the history.
       (`"C:\Program Files\...\chrome.exe"`), where on macOS the program sits inside an `.app`
       bundle. The problem every preset in `CommandPresetCatalog` already has; decide it with the
       Linux work.
+- [ ] **`Close Window` on macOS and Linux.** `IWindowService.CloseWindow` posts `WM_CLOSE` and
+      `IsWindowOpen` asks `IsWindow` and `IsWindowVisible`, both Windows. macOS presses the window's
+      close button through Accessibility, Linux under X11 sends `WM_DELETE_WINDOW` (what `wmctrl -c`
+      does), and Wayland has no general way for one program to close another's window. A tab's close
+      presses Ctrl+W, which is Cmd+W on macOS. `ProcessService.Kill` is .NET's and works on all
+      three, but its list of programs holding others' windows - Explorer, `ApplicationFrameHost` - is
+      Windows'.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
-      test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE`
-      failing means the harness could not do its job - the window was not there, the command would
+      test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE` /
+      `WINDOW_CLOSE` failing means the harness could not do its job - the window was not there, the command would
       not run - which says nothing about the product. `TreeStepHelper.BranchTypes` holds both kinds
       and nothing distinguishes them. JUnit already has the distinction as `<failure>` versus
       `<error>`, and a dashboard that counts a missing window as a product regression will be

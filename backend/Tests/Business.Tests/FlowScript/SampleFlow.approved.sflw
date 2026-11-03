@@ -93,3 +93,4 @@ Loop            <[ Retry ]>   5 times
 
 End Execution   failed  <[ did not reach the products page ]>
  Run             <[ Close the browser ]>   KILL_PROCESS <[ chrome.exe ]>
+ Close Window    <[ Game client ]>   timeout 10000ms   then force

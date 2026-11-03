@@ -66,6 +66,10 @@ namespace Core.Models.Dtos
         public int WindowWidth { get; set; }
 
 
+        // WINDOW_CLOSE
+        public bool IsCloseForced { get; set; }
+
+
         // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }

@@ -27,6 +27,10 @@ namespace Platform.Windows.Windowing
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool IsWindowVisible(IntPtr hWnd);
 
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsWindow(IntPtr hWnd);
+
 
         //==================================================
         // P/Invoke Get all app windows
@@ -253,6 +257,13 @@ namespace Platform.Windows.Windowing
                 return false;
 
             return PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        public bool IsWindowOpen(WindowHandle handle)
+        {
+            IntPtr hWnd = handle.Value;
+
+            return hWnd != IntPtr.Zero && IsWindow(hWnd) && IsWindowVisible(hWnd);
         }
 
         // A point lands on the deepest control under it. The window a person sees is its root.

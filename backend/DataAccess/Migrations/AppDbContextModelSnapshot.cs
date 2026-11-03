@@ -517,6 +517,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsCloseForced")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsLoopInfinite")
                         .HasColumnType("INTEGER");
 

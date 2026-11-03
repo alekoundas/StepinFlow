@@ -17,6 +17,7 @@ namespace Business.Flows.FlowValidationService.Rules
             FlowStepTypeEnum.WINDOW_FOCUS,
             FlowStepTypeEnum.WINDOW_RESIZE,
             FlowStepTypeEnum.WINDOW_RELOCATE,
+            FlowStepTypeEnum.WINDOW_CLOSE,
         ];
 
         // ================================================================
@@ -124,13 +125,17 @@ namespace Business.Flows.FlowValidationService.Rules
             if (step.FlowAreaId == null)
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_MISSING, "Pick the window this step acts on.");
             else if (areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? area) && area.Type != FlowAreaTypeEnum.APPLICATION && area.Type != FlowAreaTypeEnum.BROWSER_TAB)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_NOT_A_WINDOW, $"\"{area.Name}\" is not a window, so there is nothing to focus, resize or move. Pick an application or a browser tab.");
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_NOT_A_WINDOW, $"\"{area.Name}\" is not a window, so there is nothing to focus, resize, move or close. Pick an application or a browser tab.");
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && (step.WindowWidth < 1 || step.WindowHeight < 1))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RELOCATE && step.FlowPointId == null)
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, "There is no point to move the window to.");
+
+            if (step.FlowStepType == FlowStepTypeEnum.WINDOW_CLOSE && step.IsCloseForced && step.FlowAreaId != null
+                && areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? tab) && tab.Type == FlowAreaTypeEnum.BROWSER_TAB)
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CLOSE_FORCED_ON_TAB, $"\"{tab.Name}\" is a browser tab, and forcing it would end the whole browser, every tab in it. A tab closes the way Ctrl+W closes it, or stays open.");
         }
 
         private static void ValidateArea(FlowValidationResultDto result, FlowStep step)

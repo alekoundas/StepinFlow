@@ -8,7 +8,7 @@ export interface WindowMode {
   description: string;
 }
 
-// Three FlowStepTypes, one form. Same shape as the cursor modes.
+// Four FlowStepTypes, one form. Same shape as the cursor modes.
 export const WINDOW_MODES: WindowMode[] = [
   {
     flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
@@ -28,5 +28,12 @@ export const WINDOW_MODES: WindowMode[] = [
     label: "Move",
     iconName: "directions",
     description: "Move the window to a saved location.",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_CLOSE,
+    label: "Close",
+    iconName: "window-minimize",
+    description:
+      "Close the window the way its X does, and wait for it to go. For a browser tab, only that tab closes.",
   },
 ];

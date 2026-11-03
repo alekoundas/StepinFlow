@@ -70,9 +70,13 @@ namespace Business.Tests.Fakes
             Actions.Add($"press {key}");
         }
 
+        // What a combination does to the window in front - closes its tab, say.
+        public Action? OnCombination { get; set; }
+
         public void SimulateKeyCombination(IReadOnlyList<KeyCodeEnum> modifiers, KeyCodeEnum key)
         {
             Actions.Add($"press {string.Join("+", modifiers.Append(key))}");
+            OnCombination?.Invoke();
         }
 
         public void SimulateKeysDown(IReadOnlyList<KeyCodeEnum> keys)

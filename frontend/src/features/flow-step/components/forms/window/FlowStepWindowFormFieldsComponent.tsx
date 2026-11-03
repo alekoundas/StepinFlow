@@ -1,7 +1,10 @@
 import type z from "zod";
+import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
+import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -27,8 +30,27 @@ export default function FlowStepWindowFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   const flowStepType = useWatch({ control, name: "flowStepType" });
+  const flowAreaId = useWatch({ control, name: "flowAreaId" });
+  const isCloseForced = useWatch({ control, name: "isCloseForced" });
+  const isClose = flowStepType === FlowStepTypeEnum.WINDOW_CLOSE;
+
+  // The lookup says each area's type as its description. A tab's program is the whole browser, so
+  // a close of one is never forced.
+  const { data: areaTypes = {} } = useQuery({
+    queryKey: ["lookup", "flowArea", "types", flowId],
+    queryFn: () =>
+      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
+        Object.fromEntries(res.data.map((item) => [Number(item.value), item.description])),
+      ),
+    enabled: !!flowId && isClose,
+  });
+  const isTab = !!flowAreaId && areaTypes[flowAreaId] === FlowAreaTypeEnum.BROWSER_TAB;
+
+  useEffect(() => {
+    if (isTab && isCloseForced) setValue("isCloseForced", false, { shouldDirty: true });
+  }, [isTab, isCloseForced, setValue]);
 
   const loadLocations = (filter?: string): Promise<IdOption[]> =>
     backendApiService.Lookup.flowPoint({ searchText: filter, flowId }).then(
@@ -94,6 +116,34 @@ export default function FlowStepWindowFormFieldsComponent({
             isDisabled={isDisabled}
             hintText="The outer corner of the window lands here, title bar included."
           />
+        </div>
+      )}
+
+      {isClose && (
+        <div className="mt-3">
+          <FormInputNumberComponent
+            fieldName="timeoutMilliseconds"
+            label="Wait for it to go (ms)"
+            min={0}
+            max={2147483647}
+            isDisabled={isDisabled}
+            hintText="0 = 5 seconds"
+          />
+
+          {isTab ? (
+            <LabelComponent
+              size="sm"
+              color="secondary"
+              text="A tab is closed the way Ctrl+W closes it. It is never forced: its program is the whole browser, every tab in it."
+            />
+          ) : (
+            <FormInputCheckboxComponent
+              fieldName="isCloseForced"
+              label="Force it if it is still open"
+              isDisabled={isDisabled}
+              hintText="Ends the window's program, with every window it has and nothing saved. Left unticked, a window still asking whether to save is a failure."
+            />
+          )}
         </div>
       )}
     </>

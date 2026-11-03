@@ -54,6 +54,12 @@ namespace Business.AreaPoint
             return _browserTabService.PageBounds(window);
         }
 
+        /// <summary>How many tabs the window has. Zero when its tab strip cannot be read.</summary>
+        public int TabCount(WindowHandle window)
+        {
+            return _browserTabService.TabCount(window);
+        }
+
         /// <summary>
         /// The window with the area's tab, the tab brought to the front first when it was behind, and
         /// whether it was. <see cref="WindowHandle.None"/> when no tab of the browser has its address.

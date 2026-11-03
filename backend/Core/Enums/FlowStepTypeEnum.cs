@@ -21,6 +21,7 @@ namespace Core.Enums
         WINDOW_FOCUS,
         WINDOW_RESIZE,
         WINDOW_RELOCATE,
+        WINDOW_CLOSE,
         KEYBOARD_INPUT,
 
         // Screen Reading

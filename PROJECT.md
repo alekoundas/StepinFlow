@@ -1447,7 +1447,8 @@ singletons because they hold no state.
 System     WAIT, LOOP, BREAK, SYSTEM_COMMAND, SYSTEM_ACTION, SUB_FLOW,
            NOTIFY, END_EXECUTION, STAGE_MARKER
 Input      CURSOR_CLICK, CURSOR_DRAG, CURSOR_SCROLL, CURSOR_RELOCATE,
-           WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, KEYBOARD_INPUT
+           WINDOW_FOCUS, WINDOW_RESIZE, WINDOW_RELOCATE, WINDOW_CLOSE,
+           KEYBOARD_INPUT
 Perception SEARCH_IMAGE, SEARCH_TEXT
 Decision   CHECK_VALUE
 Hidden     SUCCESS, FAILURE
@@ -1514,7 +1515,7 @@ never walked into. `TabAddressHelper` decides: the tab's address starts with the
 boundary, `https://` and `www.` left out of both, since the address bar shows neither.
 `BrowserTabFinder` holds the rule for which tab: the resolver takes the front tab of each window of
 the browser only, so a search never switches tabs behind the user's back and a tab behind another is
-not on screen; Focus, Resize, Move and Launch bring it to the front, the front tabs tried first and
+not on screen; Focus, Resize, Move, Close and Launch bring it to the front, the front tabs tried first and
 then each tab in turn, a window it is not in put back on the tab it showed. A launch with no tab at
 the address starts the area's Started by - the browser - with `--new-window` and the address, which
 Chromium's browsers and Firefox all take. `BrowserTabAddress` renamed `TabMatchValue` to `TabAddress`,
@@ -1522,6 +1523,23 @@ dropped `TabMatchOn` - finding a tab by its title went, since a title changes wi
 count - and cleared the title patterns tab areas had. An old `tab url contains <[ … ]>` reads as the
 address; `tab title contains` is refused. Windows only: macOS has AppleScript for the same, and Linux
 AT-SPI, which browsers support unevenly.
+
+**`Close Window` closes the way the window's X does**, since 2026-11-03: `Close Window <[ Editor ]>
+[timeout 10000ms] [then force]`, `WINDOW_CLOSE` beside the other three window steps, with Success
+and Failure. `IWindowService.CloseWindow` posts `WM_CLOSE`, so an application can save its session,
+let go of its profile lock and remove its own temp files, and `IsWindowOpen` - `IsWindow` and
+`IsWindowVisible` - says when it has gone, a window hidden in the tray counting as gone. The wait is
+`TimeoutMilliseconds`, 0 being 5 seconds as a launch's 0 is 30. Still open is a failure, usually a
+"save changes?" box, unless `FlowStep.IsCloseForced` (`WindowCloseForced`, a column defaulting to
+false): then `IProcessService.Kill` ends the window's own process and its tree, found by
+`GetProcessId` before the close, never every process of the name the way `Run KILL_PROCESS`
+(`taskkill /F`) does; Explorer and `ApplicationFrameHost`, which own other programs' windows, are
+left alone. A `BROWSER_TAB` closes only its tab: the browser is focused with the tab in front, and
+only once `FocusWindow` says it is in front is Ctrl+W pressed, since it goes to whatever is; the tab
+is gone when the window is or its tab count drops. A tab is never forced - its process is the whole
+browser - and `then force` on one is `CLOSE_FORCED_ON_TAB`. Windows only: macOS closes through
+Accessibility's close button and wants Cmd+W for a tab, and Linux has `WM_DELETE_WINDOW` under X11
+and no general way under Wayland.
 
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is

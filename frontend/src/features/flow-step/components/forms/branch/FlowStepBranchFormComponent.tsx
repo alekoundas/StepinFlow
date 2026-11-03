@@ -28,6 +28,7 @@ const OUTCOMES: Partial<Record<FlowStepTypeEnum, [string, string]>> = {
   [FlowStepTypeEnum.WINDOW_FOCUS]: ["finds the window", "does not find the window"],
   [FlowStepTypeEnum.WINDOW_RESIZE]: ["finds the window", "does not find the window"],
   [FlowStepTypeEnum.WINDOW_RELOCATE]: ["finds the window", "does not find the window"],
+  [FlowStepTypeEnum.WINDOW_CLOSE]: ["sees the window go", "does not find the window, or it stays open"],
 };
 
 /** A Success or a Failure row: no settings of its own, only why it is there. */

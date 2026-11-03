@@ -42,7 +42,8 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phases 5.16 and 5.17, releasing and updates; then 5.15's click-throughs, apps and browser tabs, built
+**Next:** phase 9, happy-path validation and the fix loop, in the order its last paragraph gives;
+then phases 5.16 and 5.17, releasing and updates; then 5.15's click-throughs, apps and browser tabs, built
 2026-11-01; then phase 8, inputs, secrets and the CSV round trip; 5.8's
 sub-stages wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
 wait in `TODO.md`, Recording.
@@ -154,12 +155,6 @@ in the app that says downloading, ready or failed, and a restart that takes seco
       `Platform.Windows` whole and the preset catalogue becomes per platform, which is a design
       decision rather than an extraction, and it belongs with the Linux work. Until then it is the
       one recorded `RS0030` deviation in `.editorconfig`.
-- [ ] **There is no `Close Window` step.** The flow-level close mode posted `WM_CLOSE`, which lets
-      an application write its session, release its profile lock and remove its own temp files. The
-      only way to close something from a step today is `Run KILL_PROCESS`, which is `taskkill /F` -
-      a kill, not a close. Removing the close mode without adding the step lost the graceful option,
-      so this is a gap rather than a nice to have. It wants a `WINDOW_CLOSE` type beside
-      `WINDOW_FOCUS`, `WINDOW_RESIZE` and `WINDOW_RELOCATE`.
 
 ### Portable search
 
@@ -243,39 +238,152 @@ field by field.
 template and "which flows use curl" are history and cross-flow questions, none of which the script
 holds. Definition from the script, history from the rows.
 
-- [ ] **A freshly recorded flow may not run in CI.** A **Validate** button executes it and stops at
-      the first `END_EXECUTION`. Pass marks it ready and unlocks viewports.
-- [ ] On failure, the model is given the flow as a script - carrying the flow's own `Description:`
-      and each step's `#` comment, which is where the tester's intent lives - a text log of the
-      execution, the application's documentation, the customer's own requirements, common issues and
-      their solutions, and scripts of flows that already validate.
+**What a failure leaves behind.** A fix needs to see where the search came closest, on the screen
+it looked at, and the execution it is compared with has to still point at the step.
+
+- [ ] **A failed search keeps where its best match was, in `ResultLocationX/Y`.** The same kind of
+      point a success stores: the template's click point on its closest match, `BestTemplateId`
+      saying which template, so the rectangle comes back from the point and the template's size. The
+      matcher has it already - `TemplateMatchOutcome.Rejected` carries a position - and
+      `SearchImageStepWorker` keeps only the score; over polls it is the best poll's. One guard goes
+      with it: `ExecutionCacheService.GetStepLocationFrom` returns a location only for a step that
+      succeeded, or a click on "the result of" a failed search would click the near miss rather than
+      fail. The step detail labels it by outcome, "closest match at" on a failure.
+- [ ] **The search area's top-left at the moment of the search**, on the failed step. The location
+      is on the screen and the screenshot is a capture of the area, so placing the cut on the
+      screenshot needs where the area was. Two numbers, or the point stored relative to the area.
+- [ ] **A validation execution keeps every failed or close-miss search's screenshot**, and the one
+      before it, which `ExecutionScreenshotReader` already sends a model - outside "Screenshots kept
+      per execution" and whatever the history level. Passing steps follow the setting. Today the 20
+      fill in the first pass of a long flow, and a failure at step 60 has none. Whether every
+      execution should keep failures first: to decide.
+- [ ] **History that survives an import.** A fix is an import, and an import swaps the flow's step
+      rows, so the last passing execution's steps point at rows that are gone. Comparing with it and
+      counting coverage need a key that outlives the rows: the step's name, unique in a flow, or a
+      public id per step as a flow has.
+
+**The button.**
+
+- [ ] **A freshly recorded flow may not run in CI.** **Validate**, beside Execute in the editor,
+      with a chip: not validated, validated on 3 Nov, or needs you. It executes the flow and stops at
+      the first verdict. A pass marks it validated and unlocks viewports.
+- [ ] **A panel beside the tree**: the attempt, what failed with its screenshot, each fix as a script
+      diff the way Check shows one, and the question cards. The failing step is highlighted in the
+      tree.
+- [ ] **One pass of a forever loop.** A flow like the Firestone example never reaches an
+      `End Execution`. Validation executes each forever loop's body once and takes the end of it as
+      the end of the loop.
+- [ ] The Stop hotkey works throughout: the loop is clicking the real screen.
+
+**What counts as failing.** An automation can never be fully happy-pathed: Firestone's notifications
+are up only some of the time, so every pass leaves branches it could not reach.
+
+- [ ] **The flow already says which misses are fine.** A search whose Failure branch carries on may
+      miss - a notification that is not up. One whose Failure ends the execution failed is required.
+      A pass where nothing optional showed is a pass that covered little, not a failure.
+- [ ] **A close miss or absent, by the best score.** Against the template's own accuracy, 0.76 for
+      0.80 looks like the thing changed and 0.30 says it is not on screen. Only a close miss on a
+      search allowed to miss becomes a question - changed? Re-cut, fine for now, always fine - and an
+      absent one is silent. A required search's miss is a failure either way. The margin that makes a
+      miss close: to settle.
+- [ ] **"Fine for now" is stored nowhere** and asked again at the next validation. **"Always fine"**
+      is a script change: the step gets a Failure branch that carries on, so the flow says it, in the
+      script and in a review, rather than a flag nobody sees.
+- [ ] **Coverage.** Validation lists the branches it took and the ones it did not. Ordinary
+      executions count too, since every execution step records its step: a week of Firestone's
+      executions covers the map's handler though no validation saw a mission finish. The editor dims
+      a step never executed since it last changed.
+
+**Starting fresh.** Each attempt has to start where the flow's first step expects. `Close Window`,
+built 2026-11-03, is the first piece.
+
+- [ ] **A QA test closes what it launched.** One whose main area can be launched gets a
+      `Close Window` of it at the end and under each `End Execution`, offered by the validator as a
+      warning with a one-click fix, never written by the model. An automation is never closed: the
+      game is the point of it. With `TODO.md`'s "The setup's Launch and Resize start with both
+      branches empty" - the recording nested under their Success, each Failure ending the execution.
+- [ ] **A website's QA test launches a browser of its own**, with a temporary profile
+      (`--user-data-dir={{temp}}`, which a launch takes already), so closing it ends only that one.
+      A close of a tab area closes only its tab.
+- [ ] **A reset at the top, for a flow that cannot launch.** A website's is written by code: Ctrl+L,
+      the area's address, Enter. An app's start is what its first search's template shows, so only
+      the way back is asked, once: a question card answered with a template captured on the image
+      search step's overlay - a Home button, a back arrow, a logo - or a key such as Escape. The code
+      writes the reset: while the first search's template is not on screen, click the captured one,
+      up to three times, and end the execution inconclusive when the start never shows. At the top
+      rather than in the teardown, because a stopped or errored execution never reaches its teardown.
+- [ ] **A dirty start is the reset's fault, not the flow's.** An attempt failing earlier than the
+      one before it - at the first search, which passed last time - says the last attempt left a
+      mess. The loop fixes the reset, not the flow.
+
+**Fixes.** Three kinds, and every one is an import, whole or not at all.
+
+- [ ] **Made by code, applied on its own.** A search that found its target just after its timeout
+      gets a longer one; a launch that went on before its window was ready gets a wait.
+- [ ] **Proposed by the model, through `ScriptRevisionService` and the importer.** Waits, timeouts,
+      reordering and nesting apply on their own. A fix that adds a click, typed text, a key, a command
+      or a `Close Window` waits for a yes, since text read off the screen reaches the model. In a QA
+      test so does one that removes or loosens a check - a lower accuracy, a Failure branch that no
+      longer ends the execution failed - so a test cannot pass by dropping the check that found the
+      bug.
+- [ ] **New template images, always the tester's.** The model cannot cut one (`TEMPLATE_NOT_CUT`).
+      Code cuts at the failed search's best match on its screenshot, tightened by the element
+      detector the way the recorder does it, and shows it beside the old template: Yes, No, or Adjust,
+      which is Review's rectangle editor. When the score was far under the accuracy, a cut there
+      would land anywhere, so the card asks the tester to click where it is now, and the detector
+      boxes it.
+- [ ] **On failure, the model is given the flow as a script** - carrying the flow's own
+      `Description:` and each step's `#` comment, which is where the tester's intent lives - a text
+      log of the execution, the application's documentation, the customer's own requirements, common
+      issues and their solutions, and scripts of flows that already validate.
 - [ ] **The failing execution against the last one that passed.** The text on the screen at the
       failing step that was there when it passed and is gone, and the text that is new - an error
-      banner, another dialog - read by phase 6's OCR and comparison. Matched by flow step rather
-      than position, since an execution keeps only some screenshots. It goes to the model with the
-      script and the failure screenshot.
+      banner, another dialog - read by phase 6's OCR and comparison. Matched by step rather than
+      position, since an execution keeps only some screenshots. It goes to the model with the script
+      and the failure screenshot.
 - [ ] **The execution log is generated from the rows, not stored instead of them.** Phase 15 wants
       "which checks have never failed", and that is a query. The log is a projection for the model.
       It leaves markers out: they execute nothing, so a line saying so is noise.
-- [ ] The app applies the proposed fix and executes again, bounded at ten attempts, then asks the
-      tester rather than editing forever.
 - [ ] **A script the importer refuses goes back to the model with the diagnostics.** `Diagnostic`
       carries a code, a line, a column and a message saying what was *expected*, so the retry says
       which line is wrong and what belonged there rather than "that did not work". Both kinds go
       back: a parse error means the script will not read, a validation error means it reads and the
       flow is wrong. The import is transactional, so a refused attempt leaves the flow exactly as it
       was and the retries cannot corrupt anything.
+- [ ] **The script from before the loop is kept**, so undoing every fix is one import. A fix to a QA
+      test leaves a `#` comment on its step - `# healed 2026-11-03: template re-cut after the button
+      changed` - which a reviewer sees in the script and in a pull request.
+
+**When it stops.** The loop always ends, and always hands back to the tester rather than giving up
+quietly.
+
+- [ ] **Bounded at 5 attempts**, a setting. Each attempt executes the whole flow.
+- [ ] **It stops early and asks** when a fix makes no progress - the same step failing the same way;
+      progress is the first failure moving further down the flow or failing differently - when the
+      model proposes a script it already tried in this loop, which catches it going A, B, A, when it
+      proposes no change or the importer refuses its revision twice, when it cannot be reached or
+      times out, and when the tester presses Stop.
+- [ ] **Every stop lands on one card**: what failed, each attempt with its diff, and four answers -
+      I will fix it myself (opens the step), try again with this hint (free text, one more round),
+      that is expected, undo all fixes.
 - [ ] **A question the model cannot answer ends its turn rather than blocking.**
       `UseFunctionInvocation` runs the tool loop inside one request, so a tool that waits on a person
       would hang it. The model returns a structured "I need to know X", the app shows it, and the
-      tester's answer goes back as the next message. A schema and a UI state, not new machinery.
+      tester's answer goes back as the next message. A schema and a UI state, not new machinery. A
+      card is yes or no, a choice, free text, a template to approve or adjust, or a template to
+      capture, and the loop waits on it with no timeout.
 - [ ] When the tester answers, re-execute, take fresh screenshots where needed, regenerate
       templates, and carry on from where validation stopped.
+
+**Order**, so each part works on its own: what a failure leaves behind; Validate with no model -
+one pass, the verdict, coverage, the panel; the code's fixes, the question cards and the reset; the
+model's loop with its stop rules.
 
 Groundwork already in: `FlowValidationService` with its rules, `FlowCheckListHelper`, and the
 `GetFlowChecks` tool so a model can ask what a flow verifies without walking the tree by hand. Phase
 7 built the loop itself: `ScriptRevisionService` sends a script, reads the answer back, and sends
-what was refused back to the model (`PROJECT.md` §6).
+what was refused back to the model (`PROJECT.md` §6). `Close Window`, 2026-11-03, closes a window
+the way its X does and can force it.
 
 ---
 

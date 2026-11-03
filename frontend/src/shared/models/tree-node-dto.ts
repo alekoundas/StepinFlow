@@ -35,6 +35,7 @@ export interface TreeNodeDetailDto {
 
   windowWidth: number;
   windowHeight: number;
+  isCloseForced: boolean;
 
   searchMode?: SearchModeEnum | null;
   templateCount: number;
