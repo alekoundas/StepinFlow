@@ -13,6 +13,9 @@ search the screen for an image, read text off it, run commands, and call other f
 - **Guides** — [Recording a flow](guides/recording-a-flow.md), [Debugging an execution](guides/debugging-an-execution.md)
 - **Reference** — [Validation messages](reference/validation-messages.md), [Settings](reference/settings.md),
   [Flow format](reference/flow-format.md), the text form of a flow
+- **Examples** — real flows, finished by hand: [an idle game](examples/example-firestone.md), built
+  from pictures and loops, and [a website](examples/example-crude-oil-price.md), read with OCR, as
+  recorded and as fixed
 - **When something goes wrong** — [Troubleshooting](troubleshooting.md)
 
 ## What StepinFlow is not

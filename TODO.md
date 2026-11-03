@@ -244,6 +244,17 @@ the history.
 
 ## AI
 
+- [ ] **More flow examples, and a rule for each.** Since 2026-11-03 there are two in
+      `AiDocuments/Examples`: Firestone, a game, and the crude oil price, a website. Still to make,
+      each covering what those two do not: a QA test's happy path (saucedemo.com - sign in, add to
+      cart, check the button now reads Remove, check out, and a stage that rejects a wrong
+      password), a desktop app (Notepad - typed text, Ctrl+S, the Save As dialog and the overwrite
+      prompt), a flow that calls a sub-flow, and one with no screen at all (a command's output read
+      by Check Value). Each is a document there with its finished script fenced as ` ```sflw `;
+      `FlowExamplesTests` holds a new file to importing cleanly by itself, and
+      `FlowExamples.DocumentFor` needs a rule for it - a QA test should get the happy path before
+      its window's kind.
+
 - [ ] **Only a recording's draft is shown before a cloud model is sent it.** Since 2026-10-31.
       Ask's tool results, Explain's screenshots and OCR text, and Check's "Ask for changes" go to a
       cloud model with screen content when the setting allows, unshown. Ask is many requests a
@@ -419,6 +430,14 @@ the history.
       a `BROWSER_TAB` at the address the page was at - which the recording would have to read at each
       press - or a main area of a website matches any address once a flow has found it, as the
       recorder now does.
+
+- [ ] **The setup's Launch and Resize start with both branches empty. To decide.** Found
+      2026-11-03, when the example test imported both examples: `BRANCHES_EMPTY` on a resize with
+      nothing under it, which every recorded flow with the setup's steps gets, and a launch or a
+      resize that fails carries on into the recorded steps. The plain draft could put the recording
+      under the Success of the last of them and end the execution in each Failure, saying what did
+      not open or would not resize - the way the crude oil example was fixed by hand. It changes
+      what every plain draft looks like, so it is a decision first.
 
 - [ ] **Mouse moves are broadcast unthrottled while drags are throttled to 16ms.**
       `InputRecordService` held `_lastMovedBroadcastTicks` and a `MoveThrottleTicks` constant that

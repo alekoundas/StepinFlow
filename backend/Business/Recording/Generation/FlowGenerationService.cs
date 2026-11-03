@@ -1,3 +1,4 @@
+using Business.Ai.AiDocuments;
 using Business.Ai.Helpers;
 using Business.Ai.Providers;
 using Business.Ai.ScriptRevision;
@@ -212,6 +213,8 @@ namespace Business.Recording.Generation
             if (!isReadTextSent)
                 instruction += $"\n\n{AiPromptHelper.ShapeRecordingWithoutReadText}";
 
+            instruction += $"\n\n{FlowExamples.ForRequest(flow.Areas.FirstOrDefault(x => x.IsMain))}";
+
             // Words are held to the screen only where the model was shown them: a refusal would
             // tell one that was not what the screen did not say.
             List<string> wrongValues = WrongValuesOf(recording, reviewed);
@@ -305,6 +308,7 @@ namespace Business.Recording.Generation
             read.ScriptLength = script.Length;
 
             string instruction = $"{AiPromptHelper.ReviseOnRequest}\n\nWhat the tester asks for:\n\n{changes.Trim()}";
+            instruction += $"\n\n{FlowExamples.ForRequest(flow.Areas.FirstOrDefault(x => x.IsMain))}";
 
             ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, null, (attempt, refused) =>
             {

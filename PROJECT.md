@@ -907,6 +907,21 @@ Images, say what each failed wait was waiting for and put a comment over every s
 reads cleanly out, built once for phase 9's fix loop as well. Its standing instructions are `AiPromptHelper.ReviseScript` followed
 by the whole of `AiDocuments/Reference/flow-format.md`, the grammar people read.
 
+**An example goes with the instruction** (`Business/Ai/AiDocuments/FlowExamples`), for the draft and
+for Check's "Ask for changes": a real flow finished by hand, so the model sees how names, comments
+and branches read in a finished flow rather than only being told. Each is an AI document in
+`AiDocuments/Examples` - what it shows, then its script fenced as ` ```sflw ` - so the assistant
+searches them too. The flow's main area picks one by a rule rather than by meaning: an application
+whose contents stretch with its window gets the Firestone game, anything else the crude oil website.
+With a handful, what the flow works in says which fits better than a similarity score, and an
+example only teaches whole, never as a 2,000-character chunk. The website's also carries the draft
+as it was recorded (` ```sflw recorded `), with what was wrong with it - the most common fix a
+recording needs - for a person or the assistant, never the request. Firestone is cut to four of its
+thirteen notifications, one of each pattern, at about 13,000 characters beside the reference's
+39,000. `FlowExamplesTests` imports every finished example as a file is imported, validation
+included, so a format change cannot leave the model learning lines the app refuses; the only issues
+allowed are a Notify's Discord bot and a text search's OCR language, which no file carries.
+
 The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
 do, with no tool calling. It is read back with the scanner as a file is, and checked in code rather
 than in the prompt: `Flow:` and `Id:` as they were, no template the draft did not cut, and every
