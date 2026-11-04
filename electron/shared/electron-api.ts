@@ -1,4 +1,5 @@
 import type {
+  BackendStatus,
   ImageEditorOpenRequest,
   ImageEditorReadyResponse,
   ImageEditorResult,
@@ -21,11 +22,16 @@ export interface ElectronApi {
     onBroadcast: <T = unknown>(
       callback: (msg: IpcBroadcastMessage<T>) => void,
     ) => () => void;
+    // Whether the backend can answer yet. A page asks as it loads, then is told of each change.
+    getStatus: () => Promise<BackendStatus>;
+    onStatusChange: (callback: (status: BackendStatus) => void) => () => void;
   };
 
   // Electron's main process, which owns every StepinFlow window.
   electronProcess: {
     getId: () => Promise<number>;
+    // Closes StepinFlow and opens it again.
+    relaunch: () => Promise<void>;
   };
 
   overlay: {

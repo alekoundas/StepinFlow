@@ -9,6 +9,7 @@ type IpcRequestMessage = import("./shared/types.js").IpcRequestMessage;
 type IpcBroadcastMessage<T> =
   import("./shared/types.js").IpcBroadcastMessage<T>;
 type ResultDto<T> = import("./shared/types.js").ResultDto<T>;
+type BackendStatus = import("./shared/types.js").BackendStatus;
 type SignalReadyResponse = import("./shared/types.js").SignalReadyResponse;
 type OverlayCaptureResult = import("./shared/types.js").OverlayCaptureResult;
 type ImageEditorOpenRequest =
@@ -24,10 +25,12 @@ const IPC_CHANNELS = {
   BACKEND_SEND: "BACKEND_SEND",
   BACKEND_RECEIVE: "BACKEND_RECEIVE",
   BACKEND_BROADCAST: "BACKEND_BROADCAST",
-  BACKEND_DISCONNECTED: "BACKEND_DISCONNECTED",
+  BACKEND_STATUS_GET: "BACKEND_STATUS_GET",
+  BACKEND_STATUS_CHANGED: "BACKEND_STATUS_CHANGED",
 
   // ========== Electron process channels ==========
   ELECTRON_PROCESS_GET_ID: "ELECTRON_PROCESS_GET_ID",
+  ELECTRON_PROCESS_RELAUNCH: "ELECTRON_PROCESS_RELAUNCH",
 
   // ========== Overlay (Search-area)  channels ==========
   OVERLAY_OPEN_CAPTURE_WINDOW: "OVERLAY_OPEN_CAPTURE_WINDOW",
@@ -74,11 +77,28 @@ const api: ElectronApi = {
         ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_BROADCAST, listener);
       };
     },
+
+    getStatus: (): Promise<BackendStatus> =>
+      ipcRenderer.invoke(IPC_CHANNELS.BACKEND_STATUS_GET),
+
+    onStatusChange: (callback: (status: BackendStatus) => void): (() => void) => {
+      const listener = (_: any, status: BackendStatus) => {
+        callback(status);
+      };
+
+      ipcRenderer.on(IPC_CHANNELS.BACKEND_STATUS_CHANGED, listener);
+
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.BACKEND_STATUS_CHANGED, listener);
+      };
+    },
   },
 
   electronProcess: {
     getId: (): Promise<number> =>
       ipcRenderer.invoke(IPC_CHANNELS.ELECTRON_PROCESS_GET_ID),
+    relaunch: (): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.ELECTRON_PROCESS_RELAUNCH),
   },
 
   overlay: {

@@ -424,6 +424,25 @@ into Electron's log rather than buffered, since a buffer that fills kills the pr
 with StepinFlow picked in Run and Debug, builds Electron, starts Vite as a background task, attaches
 to the renderer, and stops Vite when the session ends.
 
+**Starting up.** The main window opens at once on `#121212`, Chromium's canvas under the theme's
+`color-scheme`, and `index.html` paints `#startup-screen`, which needs no bundle, theme or backend.
+The overlay, the image editor and the recording bar load the same page and keep it hidden.
+`BackendGateComponent`, around `AppLayout`, holds every page back until the request pipe connects.
+`Program.Main` opens the pipes only after the migrations, so that also means the database is ready.
+The repository and the docs index are not waited for, since they build in the background.
+`backend-status-service.ts` in Electron's main process holds `STARTING`, `READY` or `STOPPED`.
+
+Both pipes keep trying to connect until the backend stops, because a migration can take minutes.
+They used to give up after about 30 seconds, and nothing else reconnected the broadcast pipe, so a
+slow migration would have left an execution's progress with no way to the page. A request that finds
+no connection still fails after those 30 seconds rather than hanging.
+
+Only the process Electron started can end in `STOPPED`, so a backend in Visual Studio can be
+restarted while the pages stay up. The screen for it shows the end of the backend's stderr, opens
+the log, and offers Try again, which relaunches the whole app rather than joining a new backend to
+pages left from the old one. Under `npm run dev:spawn` that also ends the dev session, because
+`concurrently -k` takes Vite down when Electron exits.
+
 **Only three protobuf messages exist.** The envelope is protobuf, the body is JSON bytes:
 
 ```proto

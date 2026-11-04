@@ -31,6 +31,7 @@ import FlowFormPage from "@/features/flow/FlowFormPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import RecordingPage from "@/features/recording/RecordingPage";
 import ImportFlowPage from "@/features/flow-script/ImportFlowPage";
+import BackendGateComponent from "@/shared/components/BackendGateComponent";
 import DialogRootComponent from "@/shared/components/modal-component/DialogRootComponent";
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
 import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
@@ -38,7 +39,11 @@ import RecordingBarPage from "@/windows/recording-bar/RecordingBarPage";
 
 const router = createHashRouter([
   {
-    element: <AppLayout />,
+    element: (
+      <BackendGateComponent>
+        <AppLayout />
+      </BackendGateComponent>
+    ),
     children: [
       {
         path: "/",

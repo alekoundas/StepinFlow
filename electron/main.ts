@@ -12,6 +12,7 @@ import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-ha
 import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
 
 import { BackendService, shouldSpawnBackend } from "./ipc/services/backend-service.js";
+import { setBackendQuitting } from "./ipc/services/backend-status-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
 import { registerFilesHandler } from "./ipc/handlers/files-handler.js";
@@ -25,6 +26,9 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    // Chromium's canvas under the theme's color-scheme, which is the colour behind every page.
+    // Electron's default is white, and this shows before the page has painted anything.
+    backgroundColor: "#121212",
     webPreferences: {
       preload: PRELOAD_PATH,
       nodeIntegration: false,
@@ -69,16 +73,18 @@ app.whenReady().then(async () => {
     autoUpdater.checkForUpdatesAndNotify();
   }
 
+  // Before the window, since the page asks for the backend's status as it loads.
+  registerElectronProcessHandler();
+
   createWindow();
 
   let backendProcess: ChildProcess | null = null;
-  if (shouldSpawnBackend()) backendProcess = BackendService().spawnDotNetProcess(mainWindow);
+  if (shouldSpawnBackend()) backendProcess = BackendService().spawnDotNetProcess();
 
   // ======== Register IPC handlers ==========
   // One failure here used to leave every later handler unregistered while the window was
   // already open, which surfaces as "No handler registered for ..." on the first click.
   try {
-    registerElectronProcessHandler();
     const request = await registerBackendRequestHandler(mainWindow);
     await registerBroadcastHandler(mainWindow);
     await registerOverlayCaptureHandler(mainWindow, request.invokeBackend);
@@ -90,6 +96,7 @@ app.whenReady().then(async () => {
   }
 
   app.on("before-quit", () => {
+    setBackendQuitting();
     backendProcess?.kill();
   });
 

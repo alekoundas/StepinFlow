@@ -7,7 +7,8 @@ import type {
   IpcRequestMessage,
   IpcResponseMessage,
 } from "../../shared/types.js";
-import { BackendService } from "../services/backend-service.js";
+import { BackendService, ON_DEMAND_CONNECT_ATTEMPTS } from "../services/backend-service.js";
+import { setBackendReady } from "../services/backend-status-service.js";
 
 export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
 interface PendingResolver {
@@ -28,8 +29,10 @@ export async function registerBackendRequestHandler(
 
   const getClient = () => backendClient;
   const setClient = (socket: net.Socket | null) => (backendClient = socket);
-  const onConnected = (socket: net.Socket) =>
+  const onConnected = (socket: net.Socket) => {
     handleRequestPipeData(socket, pending);
+    setBackendReady();
+  };
 
   //============================================
   // Initial connection
@@ -37,7 +40,7 @@ export async function registerBackendRequestHandler(
   // Deliberately not awaited. Handler registration must not depend on the backend being up:
   // main.ts awaits this function before registering the overlay and editor handlers, so
   // blocking here brings the app up with a clickable UI and no handlers behind it.
-  // invokeBackend reconnects on demand anyway, so this is only a warm-up.
+  // The pages wait for the connection this makes.
   //============================================
   void BackendService()
     .connectToRequestPipe(mainWindow, setClient, onConnected)
@@ -72,6 +75,7 @@ export async function registerBackendRequestHandler(
           mainWindow,
           setClient,
           onConnected,
+          ON_DEMAND_CONNECT_ATTEMPTS,
         );
         client = backendClient;
       } catch (err) {

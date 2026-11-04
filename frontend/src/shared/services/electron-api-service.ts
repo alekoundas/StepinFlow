@@ -10,6 +10,10 @@ import type {
 export const ElectronApiService = {
   backendApi: backendApiService,
 
+  electronProcess: {
+    relaunch: () => window.electronApi.electronProcess.relaunch(),
+  },
+
   overlay: {
     openCaptureWindow: (
       parentSearchAreaBounds?: Rectangle | null,

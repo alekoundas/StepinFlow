@@ -1,4 +1,4 @@
-import type { IpcBroadcastMessage, IpcRequestMessage } from "../../../../electron/shared/types";
+import type { BackendStatus, IpcBroadcastMessage, IpcRequestMessage } from "../../../../electron/shared/types";
 import type { LazyResponseDto } from "@/shared/models/lazy-data/lazy-response-dto";
 import type { LazyDto } from "@/shared/models/lazy-data/lazy-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
@@ -398,6 +398,14 @@ export const backendApiService = {
 
   OnBroadcast: (callback: (msg: IpcBroadcastMessage<any>) => void): (() => void) => {
     return window.electronApi.backendApi.onBroadcast(callback);
+  },
+
+  GetStatus: (): Promise<BackendStatus> => {
+    return window.electronApi.backendApi.getStatus();
+  },
+
+  OnStatusChange: (callback: (status: BackendStatus) => void): (() => void) => {
+    return window.electronApi.backendApi.onStatusChange(callback);
   },
 };
 

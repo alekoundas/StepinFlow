@@ -25,6 +25,23 @@ export interface ResultDto<T = unknown> {
   errors?: string[];
 }
 
+export const BackendStateEnum = {
+  STARTING: "STARTING",
+  READY: "READY",
+  STOPPED: "STOPPED",
+} as const;
+export type BackendStateEnum =
+  (typeof BackendStateEnum)[keyof typeof BackendStateEnum];
+
+export interface BackendStatus {
+  state: BackendStateEnum;
+  // Whether it had been answering before it stopped.
+  hadStarted: boolean;
+  // Why it stopped and where the log is. Empty until it has.
+  reason: string;
+  logPath: string;
+}
+
 export interface MonitorInfo {
   deviceId: string;
   logicalBounds: Electron.Rectangle;
