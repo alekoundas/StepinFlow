@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Business.Executions.Workers;
 using Core.Ports;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
@@ -287,7 +288,8 @@ namespace Business.Executions
                     .Where(x => x.RootId == currentFlowId)
                     .ToListAsync(ct);
 
-                foreach (FlowStep step in steps)
+                // A disabled step is not there, and neither is the sub-flow it would have called.
+                foreach (FlowStep step in TreeStepHelper.WithoutDisabled(steps))
                 {
                     stepsById[step.Id] = step;
 

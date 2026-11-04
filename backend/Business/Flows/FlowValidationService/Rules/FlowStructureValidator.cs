@@ -28,6 +28,7 @@ namespace Business.Flows.FlowValidationService.Rules
 
         public static void Validate(
             IReadOnlyList<FlowStep> authoredSteps,
+            IReadOnlyList<FlowStep> everyAuthoredStep,
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             ILookup<int?, FlowStep> childrenByParentId,
             IReadOnlyList<string> flowNames,
@@ -55,8 +56,9 @@ namespace Business.Flows.FlowValidationService.Rules
                     result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
             }
 
-            ValidateNamesAreUnique(authoredSteps, flowNames, result);
-            ValidateVariables(authoredSteps, byStepId, flowNames, result);
+            // A disabled step keeps its name: it is still a line of the script, which reads by name.
+            ValidateNamesAreUnique(everyAuthoredStep, flowNames, result);
+            ValidateVariables(authoredSteps, everyAuthoredStep, byStepId, flowNames, result);
             ValidateHeldKeys(childrenByParentId, result);
         }
 
@@ -95,6 +97,7 @@ namespace Business.Flows.FlowValidationService.Rules
         // gets there. Better said now, while the person who typed it is looking at it.
         private static void ValidateVariables(
             IReadOnlyList<FlowStep> authoredSteps,
+            IReadOnlyList<FlowStep> everyAuthoredStep,
             IReadOnlyDictionary<int, StepChainNode> byStepId,
             IReadOnlyList<string> flowNames,
             FlowValidationResultDto result)
@@ -104,7 +107,7 @@ namespace Business.Flows.FlowValidationService.Rules
             foreach (string reserved in VariableTranslator.ViewportNames)
                 known.Add(reserved);
 
-            ILookup<string, FlowStep> stepsByName = authoredSteps.ToLookup(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase);
+            ILookup<string, FlowStep> stepsByName = everyAuthoredStep.ToLookup(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase);
 
             foreach (FlowStep step in authoredSteps)
             {
@@ -310,7 +313,7 @@ namespace Business.Flows.FlowValidationService.Rules
         // The order the script writes them: each step, then what sits under it.
         private static void AddInScriptOrder(int? parentId, ILookup<int?, FlowStep> childrenByParentId, List<FlowStep> inOrder)
         {
-            foreach (FlowStep step in childrenByParentId[parentId].OrderBy(x => x.OrderNumber))
+            foreach (FlowStep step in childrenByParentId[parentId].Where(x => !x.IsDisabled).OrderBy(x => x.OrderNumber))
             {
                 inOrder.Add(step);
                 AddInScriptOrder(step.Id, childrenByParentId, inOrder);

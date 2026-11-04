@@ -520,6 +520,9 @@ namespace DataAccess.Migrations
                     b.Property<bool>("IsCloseForced")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsDisabled")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsLoopInfinite")
                         .HasColumnType("INTEGER");
 

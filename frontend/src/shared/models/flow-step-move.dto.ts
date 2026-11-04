@@ -15,6 +15,11 @@ export interface FlowStepPasteDto {
   targetIndex: number;
 }
 
+export interface FlowStepDisabledDto {
+  flowStepId: number;
+  isDisabled: boolean;
+}
+
 export interface FlowStepBrokenReferenceDto {
   flowStepId: number;
   flowStepName: string;

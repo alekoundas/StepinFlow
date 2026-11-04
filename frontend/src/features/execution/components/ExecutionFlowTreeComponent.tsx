@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { TreeExpandedKeysType } from "primereact/tree";
+import { classNames } from "primereact/utils";
 
 import ReadOnlyFlowTreeComponent from "@/shared/components/data-tree/ReadOnlyFlowTreeComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -17,7 +18,7 @@ import { FOUND_COLOR, HANDLED_COLOR, MONO, MUTED } from "@/features/execution/ex
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
 import type { StepCounts } from "@/features/execution/execution-overview";
-import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import { keysUnderDisabled, type TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {
   flowId: number;
@@ -63,6 +64,8 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
     return keys;
   }, [treeNodes]);
 
+  const underDisabled = useMemo(() => keysUnderDisabled(treeNodes ?? []), [treeNodes]);
+
   const ringColor = runState === RunStateEnum.PAUSED ? HANDLED_COLOR : FOUND_COLOR;
 
   return (
@@ -78,7 +81,9 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
 
           return (
             <div
-              className="flex align-items-center gap-2 w-full min-w-0 px-2 border-round-lg"
+              className={classNames("flex align-items-center gap-2 w-full min-w-0 px-2 border-round-lg", {
+                "opacity-60": node.isDisabled || underDisabled.has(node.key),
+              })}
               style={{
                 height: 28,
                 background: isCurrent ? tint(ringColor, 12) : undefined,

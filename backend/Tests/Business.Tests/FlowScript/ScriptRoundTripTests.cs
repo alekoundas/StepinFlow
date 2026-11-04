@@ -117,6 +117,30 @@ namespace Business.Tests.FlowScript
             new Printer().Write(new Scanner().Read(printed)).ShouldBe(printed);
         }
 
+        // A word ahead of the line the step is written as anyway.
+        [Fact]
+        public void A_disabled_step_reads_and_prints_as_the_word_before_its_line()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Disabled Wait            800ms");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().ShouldSatisfyAllConditions(
+                x => x.FlowStepType.ShouldBe(FlowStepTypeEnum.WAIT),
+                x => x.WaitForMilliseconds.ShouldBe(800),
+                x => x.IsDisabled.ShouldBeTrue());
+            new Printer().Write(schema).ShouldContain("Disabled Wait            800ms");
+        }
+
+        // Every file from before the word.
+        [Fact]
+        public void A_step_with_no_word_before_its_line_is_enabled()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Wait            800ms");
+
+            schema.Steps.Single().IsDisabled.ShouldBeFalse();
+            new Printer().Write(schema).ShouldNotContain("Disabled");
+        }
+
         // The five seconds a close waits unless told otherwise, and no force, are written as nothing.
         [Fact]
         public void A_close_with_neither_a_timeout_nor_force_reads_and_prints_as_just_its_window()

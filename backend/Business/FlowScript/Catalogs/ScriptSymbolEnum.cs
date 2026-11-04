@@ -53,6 +53,7 @@ namespace Business.FlowScript.Catalogs
         CAPTURED,
 
         // FlowStep
+        DISABLED,
         TO,
         OUT_OF,
         POINT,

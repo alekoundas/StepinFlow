@@ -162,6 +162,29 @@ namespace Core.Tests.Helpers
             TreeStepHelper.CreateBranchChildren(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT }).ShouldBeEmpty();
         }
 
+        [Fact]
+        public void A_disabled_step_and_everything_under_it_are_left_out()
+        {
+            FlowStep find = new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, IsDisabled = true };
+            FlowStep success = new FlowStep { Id = 2, ParentFlowStepId = 1, FlowStepType = FlowStepTypeEnum.SUCCESS };
+            FlowStep click = new FlowStep { Id = 3, ParentFlowStepId = 2, FlowStepType = FlowStepTypeEnum.CURSOR_CLICK };
+            FlowStep wait = new FlowStep { Id = 4, FlowStepType = FlowStepTypeEnum.WAIT };
+
+            TreeStepHelper.WithoutDisabled([find, success, click, wait]).ShouldBe([wait]);
+        }
+
+        [Theory]
+        [InlineData(FlowStepTypeEnum.SEARCH_IMAGE, true)]
+        [InlineData(FlowStepTypeEnum.LOOP, true)]
+        [InlineData(FlowStepTypeEnum.END_EXECUTION, true)]
+        [InlineData(FlowStepTypeEnum.SUCCESS, false)]
+        [InlineData(FlowStepTypeEnum.FAILURE, false)]
+        [InlineData(FlowStepTypeEnum.STAGE_MARKER, false)]
+        public void A_step_that_executes_nothing_of_its_own_cannot_be_disabled(FlowStepTypeEnum type, bool canBe)
+        {
+            TreeStepHelper.CanBeDisabled(type).ShouldBe(canBe);
+        }
+
         [Theory]
         [InlineData(FlowStepTypeEnum.SEARCH_IMAGE, true, false, true)]
         [InlineData(FlowStepTypeEnum.CHECK_VALUE, true, false, true)]

@@ -115,6 +115,84 @@ namespace Business.Tests.Flows.Validation
             ErrorsOn(tab).ShouldBeEmpty();
         }
 
+        // ================================================================
+        // Disabled steps
+        // ================================================================
+
+        [Fact]
+        public void Whats_wrong_with_a_disabled_step_or_under_it_is_not_said()
+        {
+            FlowStep move = Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move");
+            move.IsDisabled = true;
+            FlowStep loop = Add(FlowStepTypeEnum.LOOP, "Loop");
+            loop.IsDisabled = true;
+            Add(FlowStepTypeEnum.CURSOR_RELOCATE, "Move under it", loop);
+
+            FlowValidationResultDto result = Validate();
+
+            result.Issues.ShouldBeEmpty();
+            result.HasErrors.ShouldBeFalse();
+        }
+
+        // The branch is not empty: it has a step in it, greyed out.
+        [Fact]
+        public void Disabling_the_only_step_in_a_branch_does_not_call_it_empty()
+        {
+            FlowStep search = Search("Find");
+            FlowStep wait = Add(FlowStepTypeEnum.WAIT, "Wait", Branch(search, FlowStepTypeEnum.SUCCESS));
+            wait.WaitForMilliseconds = 100;
+            wait.IsDisabled = true;
+            Branch(search, FlowStepTypeEnum.FAILURE);
+
+            CodesOn(search).ShouldNotContain(FlowValidationCodeEnum.BRANCHES_EMPTY);
+        }
+
+        // It is still a line of the script, which reads by name.
+        [Fact]
+        public void A_disabled_step_keeps_its_name()
+        {
+            FlowStep disabled = Add(FlowStepTypeEnum.WAIT, "Wait");
+            disabled.IsDisabled = true;
+            FlowStep enabled = Add(FlowStepTypeEnum.WAIT, "Wait");
+
+            CodesOn(enabled).ShouldContain(FlowValidationCodeEnum.NAME_DUPLICATE);
+            CodesOn(disabled).ShouldContain(FlowValidationCodeEnum.NAME_DUPLICATE);
+        }
+
+        [Fact]
+        public void A_disabled_release_lets_go_of_nothing()
+        {
+            FlowStep hold = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Hold");
+            (hold.KeyboardInputType, hold.KeyboardInputText, hold.KeyboardKeyActionType) = (KeyboardInputTypeEnum.COMBINATION, "Shift", KeyboardKeyActionTypeEnum.HOLD);
+            FlowStep release = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Release");
+            (release.KeyboardInputType, release.KeyboardInputText, release.KeyboardKeyActionType) = (KeyboardInputTypeEnum.COMBINATION, "Shift", KeyboardKeyActionTypeEnum.RELEASE);
+
+            CodesOn(hold).ShouldNotContain(FlowValidationCodeEnum.KEYS_NOT_RELEASED);
+
+            release.IsDisabled = true;
+
+            CodesOn(hold).ShouldContain(FlowValidationCodeEnum.KEYS_NOT_RELEASED);
+        }
+
+        [Fact]
+        public void A_disabled_check_is_held_to_nothing_and_a_disabled_end_ends_nothing()
+        {
+            _isQaTest = true;
+            FlowStep parked = Search("Parked");
+            parked.IsDisabled = true;
+            Add(FlowStepTypeEnum.WAIT, "Under it", Branch(parked, FlowStepTypeEnum.SUCCESS));
+
+            FlowStep search = Search("Find");
+            FlowStep end = Add(FlowStepTypeEnum.END_EXECUTION, "End", Branch(search, FlowStepTypeEnum.FAILURE));
+
+            CodesOn(parked).ShouldBeEmpty();
+            CodesOn(search).ShouldNotContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+
+            end.IsDisabled = true;
+
+            CodesOn(search).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+        }
+
         // A tab's program is the whole browser, every window and tab of it.
         [Fact]
         public void A_close_may_be_forced_on_an_application_and_never_on_a_browser_tab()

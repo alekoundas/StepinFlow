@@ -30,6 +30,7 @@ namespace Business.Flows
             OrderNumber = x.OrderNumber,
             IsFlow = false,
             IsNew = false,
+            IsDisabled = x.IsDisabled,
 
             ParentFlowId = x.FlowId,
             ParentFlowStepId = x.ParentFlowStepId,

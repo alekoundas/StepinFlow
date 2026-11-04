@@ -20,21 +20,28 @@ interface Props {
 
   /** What is wrong somewhere under it, while it is closed. */
   issuesBelow?: IssuesBelow;
+
+  /** Skipped because a step above it is disabled. */
+  isUnderDisabled?: boolean;
 }
 
 const THUMBNAIL_BOX = { width: "2.5rem", height: "2rem" };
 
-export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow }: Props) {
+export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnderDisabled = false }: Props) {
   const entry = getFlowStepCatalogEntry(treeNode.flowStepType);
   const detail = buildFlowStepTreeDetail(treeNode);
   const accent = flowStepAccent(treeNode.flowStepType);
   const thumbnail = treeNode.detail?.thumbnail;
   const moreTemplates = (treeNode.detail?.templateCount ?? 0) - 1;
   const badge = issues ? badgeOf(issues) : null;
+  const chips = treeNode.isDisabled ? [{ text: "Disabled", isMuted: true }, ...detail.chips] : detail.chips;
 
   return (
     <div
-      className="flex align-items-center gap-2 w-full min-w-0 py-1 pl-2 border-round-sm"
+      // Not by colour alone: a Wait or a Loop is grey-blue already.
+      className={classNames("flex align-items-center gap-2 w-full min-w-0 py-1 pl-2 border-round-sm", {
+        "opacity-60": treeNode.isDisabled || isUnderDisabled,
+      })}
       style={{ borderLeft: `3px solid ${accent}`, background: tint(accent, 10) }}
     >
       {/* A template says more about what the step looks for than any icon can. The others stack
@@ -121,7 +128,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow }: Pro
         )}
       </div>
 
-      {(issues || issuesBelow || detail.chips.length > 0) && (
+      {(issues || issuesBelow || chips.length > 0) && (
         <div className="flex align-items-center gap-1 flex-shrink-0">
           {issuesBelow && (
             <span
@@ -151,7 +158,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow }: Pro
             </span>
           )}
 
-          {detail.chips.map((chip) => (
+          {chips.map((chip) => (
             <span
               key={chip.text}
               className={classNames(

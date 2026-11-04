@@ -1541,6 +1541,21 @@ browser - and `then force` on one is `CLOSE_FORCED_ON_TAB`. Windows only: macOS 
 Accessibility's close button and wants Cmd+W for a tab, and Linux has `WM_DELETE_WINDOW` under X11
 and no general way under Wayland.
 
+**A disabled step is skipped**, since 2026-11-04: `FlowStep.IsDisabled` (`StepIsDisabled`, a column
+defaulting to false), and `Disabled` ahead of the step's line in the script, `Disabled Wait  800ms`,
+so it is kept in git and shows in a review. A file without the word reads as enabled, and the word
+before a `Success:`, a `Failure:` or a `##` is refused, since none executes anything of its own
+(`TreeStepHelper.CanBeDisabled`). `TreeStepHelper.WithoutDisabled` leaves out a disabled step and
+everything under it, and three things read through it. The engine loads only those steps, so the
+walker has no rule of its own and a disabled Sub Flow's flow is not loaded. `StartExecutionHandler`
+does not validate that flow. `FlowValidationService` reports nothing about what is skipped, so a
+half-built step can be parked and the rest tried. Two things still count a disabled step: its name
+stays taken, because the script reads by name, and a branch holding only a disabled step is not
+`BRANCHES_EMPTY`. No rule second-guesses what was disabled. The existing ones judge the flow that is
+left, so a disabled key release is `KEYS_NOT_RELEASED` and a check whose only End Execution is
+disabled is `CHECK_CANNOT_FAIL`. A model is told to leave the word alone, and `RecordedActionsCheck`
+treats a disabled recorded click as dropped.
+
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is
 hold Ctrl, click, release Ctrl - so the click never has to know about keys. The input adapter keeps
@@ -2393,6 +2408,15 @@ cannot reach it.
 A copy pastes only into the flow it came from, since its areas, points and inputs are that flow's.
 Pasting into another flow would have to bring those along, or ask what to point them at
 (`TODO.md`).
+
+**Disable and Enable.** A selected step shows Disable beside Copy, or Enable once it is disabled,
+except a Success, a Failure or a stage marker. It saves at once through `FlowStep.setDisabled`
+rather than the form's Save, so it works with the form in VIEW and leaves what is being typed in
+EDIT alone. `FlowStepDataService.UpdateAsync` keeps the saved value for the same reason: a form open
+since before the click holds the old answer. The row is dimmed with a Disabled chip, and
+`keysUnderDisabled` dims the rows under it, in the editor, the execution page and the read-only
+trees. Dimmed rather than greyed, because a Wait or a Loop is blue-grey already. A disabled step's
+form says so in one line with Enable, and the script view greys its line as it does a comment.
 
 ### The execution page
 

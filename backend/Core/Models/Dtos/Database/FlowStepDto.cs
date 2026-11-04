@@ -70,6 +70,10 @@ namespace Core.Models.Dtos
         public bool IsCloseForced { get; set; }
 
 
+        // Set by FlowStep.setDisabled and never by a save, since a form can be older than the click.
+        public bool IsDisabled { get; set; }
+
+
         // KEYBOARD_INPUT
         public string KeyboardInputText { get; set; } = string.Empty;
         public KeyboardInputTypeEnum? KeyboardInputType { get; set; }

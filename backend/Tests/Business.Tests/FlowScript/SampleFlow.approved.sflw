@@ -89,6 +89,7 @@ Notify          <[ done ]>
 Loop            <[ Retry ]>   5 times
  Move            to point <[ Hamburger ]>
  Click
+ Disabled Wait            800ms
  Break           out of <[ Retry ]>
 
 End Execution   failed  <[ did not reach the products page ]>

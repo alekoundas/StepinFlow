@@ -7,6 +7,7 @@ import {
 import { backendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type {
+  FlowStepDisabledDto,
   FlowStepMoveDto,
   FlowStepPasteDto,
 } from "@/shared/models/flow-step-move.dto";
@@ -81,11 +82,18 @@ export function useFlowStepMutations() {
     onSuccess: invalidate,
   });
 
+  // What is wrong with a disabled step stops counting, and comes back with it.
+  const setFlowStepDisabledMutation = useMutation({
+    mutationFn: (dto: FlowStepDisabledDto) => backendApiService.FlowStep.setDisabled(dto),
+    onSuccess: invalidate,
+  });
+
   return {
     createFlowStepMutation,
     updateFlowStepMutation,
     deleteFlowStepMutation,
     moveFlowStepMutation,
     pasteFlowStepMutation,
+    setFlowStepDisabledMutation,
   };
 }

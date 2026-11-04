@@ -619,6 +619,9 @@ the history.
 
 ## Frontend
 
+- [ ] **`Ctrl+/` to disable a step.** A selected step has Disable and Enable as buttons only, and the
+      tree has no keyboard shortcuts yet. `Ctrl+/` is how a code editor comments out a line; `Cmd+/`
+      on macOS.
 - [ ] **Two buttons have no icon.** `pi-crop` (`FlowAreaFormFieldsComponent`, the image editor's
       `OptionsPanel`) and `pi-crosshairs` (`FlowStepTemplateListComponent`,
       `WorkflowTemplatePanelComponent`) are in no PrimeIcons version, the 8.0 pre-release included.

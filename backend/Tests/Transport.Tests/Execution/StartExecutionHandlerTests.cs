@@ -93,6 +93,28 @@ namespace Transport.Tests.Execution
             _engine.WasStarted.ShouldBeFalse();
         }
 
+        // A half-built step can be parked, and the rest tried.
+        [Fact]
+        public async Task An_error_in_a_disabled_step_does_not_stop_the_flow()
+        {
+            int flowId = Seed("Parked", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move", IsDisabled = true });
+
+            ResultDto<int> started = await StartAsync(flowId);
+
+            started.IsSuccess.ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task A_sub_flow_with_errors_called_by_a_disabled_step_does_not_stop_the_flow()
+        {
+            int brokenId = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move" });
+            int callerId = Seed("Caller", new FlowStep { FlowStepType = FlowStepTypeEnum.SUB_FLOW, Name = "Call it", SubFlowId = brokenId, IsDisabled = true });
+
+            ResultDto<int> started = await StartAsync(callerId);
+
+            started.IsSuccess.ShouldBeTrue();
+        }
+
         // Named only by the call, since it has no step of its own to be loaded by.
         [Fact]
         public async Task A_flow_that_calls_an_empty_sub_flow_is_refused()

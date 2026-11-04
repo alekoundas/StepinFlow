@@ -1,10 +1,10 @@
 import { Tree, type TreeEventNodeEvent } from "primereact/tree";
 import type { TreeExpandedKeysType } from "primereact/tree";
 import type { TreeNode } from "primereact/treenode";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templates/data-tree/FlowStepTreeNodeComponent";
-import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import { keysUnderDisabled, type TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {
   value: TreeNodeDto[];
@@ -34,6 +34,8 @@ export default function ReadOnlyFlowTreeComponent({
   nodeTemplate,
   onSelect,
 }: Props) {
+  const underDisabled = useMemo(() => keysUnderDisabled(value), [value]);
+
   return (
     <Tree
       value={value}
@@ -51,7 +53,10 @@ export default function ReadOnlyFlowTreeComponent({
             {nodeTemplate ? (
               nodeTemplate(treeNode)
             ) : (
-              <FlowStepTreeNodeComponent treeNode={treeNode} />
+              <FlowStepTreeNodeComponent
+                treeNode={treeNode}
+                isUnderDisabled={underDisabled.has(treeNode.key)}
+              />
             )}
           </div>
         );

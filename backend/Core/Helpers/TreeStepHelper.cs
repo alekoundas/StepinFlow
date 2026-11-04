@@ -176,6 +176,41 @@ namespace Core.Helpers
             ];
         }
 
+        /// <summary>A Success, a Failure or a stage marker executes nothing of its own, so there is nothing to skip.</summary>
+        public static bool CanBeDisabled(FlowStepTypeEnum type)
+        {
+            return !IsBranchChild(type) && type != FlowStepTypeEnum.STAGE_MARKER;
+        }
+
+        /// <summary>The steps an execution can reach: a disabled step and everything under it are left out.</summary>
+        public static List<FlowStep> WithoutDisabled(IReadOnlyCollection<FlowStep> steps)
+        {
+            Dictionary<int, FlowStep> byId = steps.ToDictionary(x => x.Id);
+
+            return steps.Where(x => !IsSkipped(x, byId)).ToList();
+        }
+
+        private static bool IsSkipped(FlowStep step, Dictionary<int, FlowStep> byId)
+        {
+            FlowStep? current = step;
+
+            // Bounded by the step count, so a corrupt parent chain cannot spin forever.
+            int guard = byId.Count + 1;
+
+            while (current != null && guard-- > 0)
+            {
+                if (current.IsDisabled)
+                    return true;
+
+                if (current.ParentFlowStepId == null)
+                    return false;
+
+                current = byId.GetValueOrDefault(current.ParentFlowStepId.Value);
+            }
+
+            return false;
+        }
+
         public static string BranchName(FlowStepTypeEnum type)
         {
             if (type == FlowStepTypeEnum.FAILURE)

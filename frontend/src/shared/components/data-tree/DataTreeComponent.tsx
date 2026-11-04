@@ -23,7 +23,7 @@ import {
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import { TreeNodeDto, buildTreeNodeKey } from "@/shared/models/tree-node-dto";
+import { TreeNodeDto, buildTreeNodeKey, keysUnderDisabled } from "@/shared/models/tree-node-dto";
 import type {
   FlowStepMoveDto,
   FlowStepMovePreviewDto,
@@ -36,6 +36,7 @@ import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-dro
 import { TreeSelectionRingComponent } from "@/shared/components/data-tree/TreeSelectionRingComponent";
 import { flowStepAccent, tint } from "@/shared/models/flow-step-catalog";
 import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
+import { useSetFlowStepDisabled } from "@/features/flow-step/hooks/use-set-flow-step-disabled";
 import {
   groupIssuesBelowStep,
   groupIssuesByStep,
@@ -52,6 +53,10 @@ const isCopyable = (node: TreeNodeDto): boolean =>
   !node.isNew &&
   node.flowStepType !== FlowStepTypeEnum.SUCCESS &&
   node.flowStepType !== FlowStepTypeEnum.FAILURE;
+
+// A stage marker, like a branch, executes nothing of its own. As TreeStepHelper.CanBeDisabled has it.
+const canBeDisabled = (node: TreeNodeDto): boolean =>
+  isCopyable(node) && node.flowStepType !== FlowStepTypeEnum.STAGE_MARKER;
 
 export function DataTreeComponent({ flowId }: Props) {
   const [data, setData] = useState<TreeNodeDto[]>([]);
@@ -70,6 +75,7 @@ export function DataTreeComponent({ flowId }: Props) {
   const [loading, setLoading] = useState(false);
   const { openConfirm, close } = useDialogStore();
   const { moveFlowStepMutation, pasteFlowStepMutation } = useFlowStepMutations();
+  const { setDisabled, isSettingDisabled } = useSetFlowStepDisabled();
 
   // Fetched once for the flow rather than per branch: whether a step can read another step's
   // result depends on the whole parent chain, not on the branch being expanded.
@@ -169,6 +175,8 @@ export function DataTreeComponent({ flowId }: Props) {
     walk(data);
     return map;
   }, [data]);
+
+  const underDisabled = useMemo(() => keysUnderDisabled(data), [data]);
 
   // Read inside loadTreeChildren without making it a dependency, which would rebuild the
   // callback on every data change and retrigger the refresh effect.
@@ -567,6 +575,7 @@ export function DataTreeComponent({ flowId }: Props) {
           issues={issuesByStepId.get(treeNodeDto.entityId)}
           // An open row shows its children's own badges instead.
           issuesBelow={expandedKeys[treeNodeDto.key] ? undefined : issuesBelowByStepId.get(treeNodeDto.entityId)}
+          isUnderDisabled={underDisabled.has(treeNodeDto.key)}
         />
       );
     }
@@ -642,6 +651,26 @@ export function DataTreeComponent({ flowId }: Props) {
             onClick={(e) => {
               e.stopPropagation();
               copy(treeNodeDto);
+            }}
+          />
+        )}
+        {isSelected && canBeDisabled(treeNodeDto) && (
+          <Button
+            type="button"
+            label={treeNodeDto.isDisabled ? "Enable" : "Disable"}
+            icon={treeNodeDto.isDisabled ? "pi pi-check-circle" : "pi pi-ban"}
+            size="small"
+            outlined
+            className="flex-shrink-0 py-1 px-2"
+            loading={isSettingDisabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDisabled({
+                flowStepId: treeNodeDto.entityId,
+                isDisabled: !treeNodeDto.isDisabled,
+                parentFlowStepId: treeNodeDto.parentFlowStepId,
+                flowId: treeNodeDto.parentFlowId,
+              });
             }}
           />
         )}

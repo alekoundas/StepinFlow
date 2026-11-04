@@ -236,6 +236,7 @@ namespace App
             builder.Services.AddTransient<TestDiscordBotHandler>();
             builder.Services.AddTransient<CreateFlowStepHandler>();
             builder.Services.AddTransient<UpdateFlowStepHandler>();
+            builder.Services.AddTransient<SetFlowStepDisabledHandler>();
             builder.Services.AddTransient<DeleteFlowStepHandler>();
             builder.Services.AddTransient<GetFlowStepHandler>();
             builder.Services.AddTransient<GetLazyFlowStepHandler>();

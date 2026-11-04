@@ -76,6 +76,9 @@ export class FlowStepDto {
   // WINDOW_CLOSE. Ends the window's program when it is still open once timeoutMilliseconds is up.
   isCloseForced: boolean = false;
 
+  // Set by FlowStep.setDisabled and never by a save, since a form can be older than the click.
+  isDisabled: boolean = false;
+
   // KEYBOARD_INPUT
   keyboardInputText: string = "";
   keyboardInputType?: KeyboardInputTypeEnum;

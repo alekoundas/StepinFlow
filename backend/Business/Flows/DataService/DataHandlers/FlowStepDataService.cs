@@ -76,7 +76,10 @@ namespace Business.Flows.DataService.DataHandlers
             if (step == null)
                 return ResultDto<FlowStep>.Failure("Entity doesnt exist in the Database!");
 
+            // Only SetDisabledAsync says this: a form open since before that click holds the old answer.
+            bool isDisabled = step.IsDisabled;
             dbContext.Entry(step).CurrentValues.SetValues(dto);
+            step.IsDisabled = isDisabled;
 
             if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
             {
@@ -92,6 +95,30 @@ namespace Business.Flows.DataService.DataHandlers
 
             return ResultDto<FlowStep>.Success(step);
         }
+
+        /// <summary>
+        /// Whether executions skip a step and everything under it. Saved on its own, whatever a form
+        /// open on the step is holding.
+        /// </summary>
+        public async Task<ResultDto<bool>> SetDisabledAsync(FlowStepDisabledDto dto, CancellationToken ct)
+        {
+            await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+
+            FlowStep? step = await dbContext.FlowSteps.FirstOrDefaultAsync(x => x.Id == dto.FlowStepId, ct);
+            if (step == null)
+                return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
+
+            if (!TreeStepHelper.CanBeDisabled(step.FlowStepType))
+                return ResultDto<bool>.Failure($"\"{step.Name}\" executes nothing of its own, so there is nothing to disable.");
+
+            step.IsDisabled = dto.IsDisabled;
+
+            await dbContext.SaveChangesAsync(ct);
+            _gitRepositoryService.Changed(step.RootId);
+
+            return ResultDto<bool>.Success(true);
+        }
+
         /// <summary>
         /// Delete a FlowStep.
         /// </summary>

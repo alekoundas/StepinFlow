@@ -40,6 +40,26 @@ The execution view shows the difference. A failure that a Failure branch caught 
 `LOOP` holds the steps it repeats. `SUCCESS` and `FAILURE` hold the steps that run on that path.
 Nothing else holds children directly.
 
+## Disabling a step
+
+A disabled step is not executed, and neither is anything under it: both its branches, or a loop's
+whole body. The execution carries on with the next step as if the line were not there, and the step
+never appears in the execution's history.
+
+A selected row has a **Disable** button beside Copy, and **Enable** once it is disabled, saved at
+once. A disabled row is dimmed with a Disabled chip, and the rows under it are dimmed too. Each step
+keeps its own setting, so enabling a parent leaves a step under it that was disabled on its own
+still disabled.
+
+What is wrong with a disabled step is not reported and does not stop the flow executing, so a
+half-built step can be parked and the rest tried. Its name stays taken, because it is still a line
+of the script. A Success, a Failure or a stage marker executes nothing of its own and cannot be
+disabled.
+
+The rest of the flow executes as written, and nothing warns about what the step was doing for it. A
+Click after a disabled Move clicks wherever the cursor is, and a QA test can pass without a check
+that is disabled.
+
 ## How steps refer to each other
 
 A step never refers to another step by name. It refers by id, so renaming a step cannot break

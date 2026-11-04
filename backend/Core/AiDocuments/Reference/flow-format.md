@@ -708,6 +708,26 @@ that reaches the end has **completed**: it was written to do something, and it d
 
 A path relative to the repository root, because names are only unique within a flow.
 
+### Disabled steps
+
+```
+Disabled Wait    800ms
+Disabled Loop    <[ Retry ]>   5 times
+ Click
+Click
+```
+
+`Disabled` ahead of a step's line means an execution skips that step and everything indented under
+it, and goes on to the next line. The rest of the line is written as it always is. The Click under
+the loop above is skipped with it, and the last Click is executed. A step under a disabled one has
+its own word or none, kept for when the one above is enabled again.
+
+A `Success:`, a `Failure:` or a `##` section executes nothing of its own, so the word in front of
+one is `TOKEN_UNEXPECTED`. A file from before the word has every step enabled.
+
+It is the tester's switch. A revision keeps each `Disabled` as it found it and never adds one to get
+past a problem: a step that fails is reported, not switched off.
+
 ---
 
 ## Templates

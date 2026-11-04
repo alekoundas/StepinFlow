@@ -102,6 +102,16 @@ namespace Business.Tests.Recording
             return refused.Message;
         }
 
+        // A disabled click does nothing to the application, however the answer keeps its line.
+        [Fact]
+        public void Disabling_a_recorded_click_is_dropping_it()
+        {
+            FlowScriptSchema answer = Draft();
+            answer.Steps.First(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_CLICK).IsDisabled = true;
+
+            Refusal(answer).ShouldNotBeEmpty();
+        }
+
         [Fact]
         public void Renamed_and_nested_by_page_with_every_action_in_order_passes()
         {

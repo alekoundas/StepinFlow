@@ -322,10 +322,10 @@ built 2026-11-03, is the first piece.
       gets a longer one; a launch that went on before its window was ready gets a wait.
 - [ ] **Proposed by the model, through `ScriptRevisionService` and the importer.** Waits, timeouts,
       reordering and nesting apply on their own. A fix that adds a click, typed text, a key, a command
-      or a `Close Window` waits for a yes, since text read off the screen reaches the model. In a QA
-      test so does one that removes or loosens a check - a lower accuracy, a Failure branch that no
-      longer ends the execution failed - so a test cannot pass by dropping the check that found the
-      bug.
+      or a `Close Window` waits for a yes, since text read off the screen reaches the model. So does
+      one that disables a step or enables one the tester disabled. In a QA test so does one that
+      removes or loosens a check - a lower accuracy, a Failure branch that no longer ends the
+      execution failed - so a test cannot pass by dropping the check that found the bug.
 - [ ] **New template images, always the tester's.** The model cannot cut one (`TEMPLATE_NOT_CUT`).
       Code cuts at the failed search's best match on its screenshot, tightened by the element
       detector the way the recorder does it, and shows it beside the old template: Yes, No, or Adjust,

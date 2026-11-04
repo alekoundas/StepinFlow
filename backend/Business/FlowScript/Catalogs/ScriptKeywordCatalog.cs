@@ -90,6 +90,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("captured", ScriptSymbolEnum.CAPTURED),
 
             // FlowStep - 
+            new ScriptKeyword("Disabled", ScriptSymbolEnum.DISABLED),
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
             new ScriptKeyword("out of", ScriptSymbolEnum.OUT_OF),
             new ScriptKeyword("point", ScriptSymbolEnum.POINT),

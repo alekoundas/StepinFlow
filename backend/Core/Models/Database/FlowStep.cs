@@ -10,6 +10,9 @@ namespace Core.Models.Database
         public FlowStepTypeEnum FlowStepType { get; set; }
         public int OrderNumber { get; set; }
 
+        /// <summary>An execution skips it and everything under it.</summary>
+        public bool IsDisabled { get; set; }
+
 
         // WAIT
         public int WaitForMilliseconds { get; set; }

@@ -17,6 +17,7 @@ import {
 } from "@/shared/models/flow-step-catalog";
 import { describeFlowStep } from "@/features/flow-step/components/forms/shared/flow-step-description";
 import { useFlowStepScriptLine } from "@/features/flow-step/hooks/use-flow-step-script-line";
+import { useSetFlowStepDisabled } from "@/features/flow-step/hooks/use-set-flow-step-disabled";
 
 interface Props {
   formMode: FormMode;
@@ -62,7 +63,12 @@ export function FlowStepFormLayoutComponent({
   const { control } = useFormContext();
   const values = useWatch({ control });
 
-  const dto = toDto ? toDto(values) : new FlowStepDto({ ...baseValues, ...(values as Partial<FlowStepDto>) });
+  const { setDisabled, isSettingDisabled } = useSetFlowStepDisabled();
+
+  const formDto = toDto ? toDto(values) : new FlowStepDto({ ...baseValues, ...(values as Partial<FlowStepDto>) });
+
+  // Not the form's to say: the tree's button can change it while the form is open.
+  const dto = new FlowStepDto({ ...formDto, isDisabled: baseValues.isDisabled });
   const { data: line, isError } = useFlowStepScriptLine(dto);
   const description = describeFlowStep(dto, line);
 
@@ -108,6 +114,32 @@ export function FlowStepFormLayoutComponent({
           />
         )}
       </div>
+
+      {baseValues.isDisabled && (
+        <div className="flex align-items-center gap-2 mb-2">
+          <Message
+            severity="secondary"
+            className="flex-1 justify-content-start"
+            text="Disabled: an execution skips this step and everything under it."
+          />
+          <Button
+            type="button"
+            label="Enable"
+            icon="pi pi-check-circle"
+            outlined
+            className="flex-shrink-0"
+            loading={isSettingDisabled}
+            onClick={() =>
+              setDisabled({
+                flowStepId: baseValues.id,
+                isDisabled: false,
+                parentFlowStepId: baseValues.parentFlowStepId,
+                flowId: baseValues.flowId,
+              })
+            }
+          />
+        </div>
+      )}
 
       {shownSummary && (
         <Message

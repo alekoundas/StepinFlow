@@ -114,6 +114,7 @@ namespace Transport.Ipc
                     "FlowStep.getMovePreview" => await Handler<GetFlowStepMovePreviewHandler>().HandleAsync(Payload<FlowStepMoveDto>(request), ct),
                     "FlowStep.move" => await Handler<MoveFlowStepHandler>().HandleAsync(Payload<FlowStepMoveDto>(request), ct),
                     "FlowStep.paste" => await Handler<PasteFlowStepHandler>().HandleAsync(Payload<FlowStepPasteDto>(request), ct),
+                    "FlowStep.setDisabled" => await Handler<SetFlowStepDisabledHandler>().HandleAsync(Payload<FlowStepDisabledDto>(request), ct),
                     "FlowStep.getScriptLine" => await Handler<GetFlowStepScriptLineHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
 
                     "FlowStep.testImageSearch" => await Handler<TestImageSearchHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),

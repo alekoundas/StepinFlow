@@ -24,6 +24,7 @@ namespace Core.Models.Dtos
         public int OrderNumber { get; set; }
         public bool IsFlow { get; set; }
         public bool IsNew { get; set; }
+        public bool IsDisabled { get; set; }
 
         public int? ParentFlowId { get; set; }
         public int? ParentFlowStepId { get; set; }

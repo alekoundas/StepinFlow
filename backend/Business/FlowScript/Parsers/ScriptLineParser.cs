@@ -6,6 +6,7 @@ using Business.FlowScript.Parsers.Header;
 using Business.FlowScript.Parsers.Steps;
 using Business.FlowScript.Parsers.Structure;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers
@@ -220,18 +221,24 @@ namespace Business.FlowScript.Parsers
 
         private void AddStep(ScriptLine line)
         {
+            // Disabled  <the step's line, as it is written anyway>
+            IReadOnlyList<ScriptToken> tokens = line.Tokens;
+            bool isDisabled = SymbolOf(tokens[0]) == ScriptSymbolEnum.DISABLED;
+            if (isDisabled)
+                tokens = tokens.Skip(1).ToList();
+
             // Read first token to choose the actual parser.
             FlowStepTypeEnum? type = null;
-            if (line.Tokens[0].Kind == ScriptTokenKindEnum.KEYWORD)
-                type = ScriptKeywordCatalog.Get<FlowStepTypeEnum>(line.Tokens[0].Value)?.As<FlowStepTypeEnum>();
+            if (tokens[0].Kind == ScriptTokenKindEnum.KEYWORD)
+                type = ScriptKeywordCatalog.Get<FlowStepTypeEnum>(tokens[0].Value)?.As<FlowStepTypeEnum>();
 
-            if (type == null)
-                throw ScriptSyntaxException.Unexpected(line.Tokens[0], []);
+            if (type == null || (isDisabled && !TreeStepHelper.CanBeDisabled(type.Value)))
+                throw ScriptSyntaxException.Unexpected(tokens[0], []);
 
             FlowStep step;
             try
             {
-                step = ParseStep(type.Value, line.Tokens);
+                step = ParseStep(type.Value, tokens);
             }
             catch (ScriptSyntaxException)
             {
@@ -251,6 +258,8 @@ namespace Business.FlowScript.Parsers
                 _flowScriptSchema.SubFlows[step] = subFlow;
                 step.SubFlow = null;
             }
+
+            step.IsDisabled = isDisabled;
 
             // Attach any comments.
             step.CodeComment = string.Join("\n", _comments.Values);

@@ -7,6 +7,7 @@ import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { FlowStepDeleteImpactDto } from "@/shared/models/database/flow-step-delete-impact-dto";
 import type { TreeNodeRequestDto } from "@/shared/models/tree-node-request.dto";
 import type {
+  FlowStepDisabledDto,
   FlowStepMoveDto,
   FlowStepMovePreviewDto,
   FlowStepPasteDto,
@@ -194,6 +195,7 @@ export const backendApiService = {
     move: (dto: FlowStepMoveDto) => call<boolean>("FlowStep.move", dto),
     /** The id of the copy. */
     paste: (dto: FlowStepPasteDto) => call<number>("FlowStep.paste", dto),
+    setDisabled: (dto: FlowStepDisabledDto) => call<boolean>("FlowStep.setDisabled", dto),
     getScriptLine: (dto: FlowStepDto) =>
       call<FlowStepScriptLineDto>("FlowStep.getScriptLine", dto),
     testImageSearch: (dto: FlowStepDto) =>

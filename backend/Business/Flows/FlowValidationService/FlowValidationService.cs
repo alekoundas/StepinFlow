@@ -56,12 +56,12 @@ namespace Business.Flows.FlowValidationService
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
 
-            List<FlowStep> authored = steps
+            List<FlowStep> everyAuthored = steps
                 .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType))
                 .ToList();
 
             // Validate step count.
-            if (authored.Count == 0)
+            if (everyAuthored.Count == 0)
             {
                 result.Add(null, string.Empty, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FLOW_HAS_NO_STEPS, "This flow has no steps yet.");
                 result.HasErrors = true;
@@ -69,15 +69,21 @@ namespace Business.Flows.FlowValidationService
             }
 
 
+            // A disabled step is not executed, so what is wrong with it stops nothing.
+            List<FlowStep> enabled = TreeStepHelper.WithoutDisabled(steps);
+            List<FlowStep> authored = enabled
+                .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType))
+                .ToList();
+
             Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber, x.SearchMode));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
 
             FlowStepValidator.Validate(authored, templateCountByStepId, areas, result);
-            FlowStructureValidator.Validate(authored, byStepId, childrenByParentId, flowNames, result);
+            FlowStructureValidator.Validate(authored, everyAuthored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
 
             if (isQaTest)
-                FlowQaTestValidator.Validate(steps, result);
+                FlowQaTestValidator.Validate(enabled, result);
 
             Locate(result, steps);
 

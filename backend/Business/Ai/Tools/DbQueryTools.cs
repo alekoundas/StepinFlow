@@ -187,6 +187,9 @@ namespace Business.Ai.Tools
                 settings[field] = value is Enum ? value.ToString() : value;
             }
 
+            if (step.IsDisabled)
+                settings[nameof(Core.Models.Database.FlowStep.IsDisabled)] = true;
+
             AreaSummary? area = null;
             if (step.FlowArea != null)
                 area = AreaSummaryOf(step.FlowArea);
@@ -324,11 +327,27 @@ namespace Business.Ai.Tools
             // Not capped either, unlike everywhere else. A truncated tree gives confident wrong
             // answers - a check whose Failure branch was cut looks like one that ends nothing - so
             // the row limit belongs on the checks that come out, not on the steps going in.
-            List<FlowCheckNode> steps = await dbContext.FlowSteps
+            List<Core.Models.Database.FlowStep> steps = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.RootId == flowId)
                 .OrderBy(x => x.ParentFlowStepId)
                 .ThenBy(x => x.OrderNumber)
+                .Select(x => new Core.Models.Database.FlowStep
+                {
+                    Id = x.Id,
+                    ParentFlowStepId = x.ParentFlowStepId,
+                    FlowStepType = x.FlowStepType,
+                    OrderNumber = x.OrderNumber,
+                    Name = x.Name,
+                    CodeComment = x.CodeComment,
+                    Message = x.Message,
+                    EndExecutionAsSuccess = x.EndExecutionAsSuccess,
+                    IsDisabled = x.IsDisabled,
+                })
+                .ToListAsync();
+
+            // A disabled check verifies nothing, and a disabled End Execution ends nothing.
+            List<FlowCheckNode> nodes = TreeStepHelper.WithoutDisabled(steps)
                 .Select(x => new FlowCheckNode
                 {
                     Id = x.Id,
@@ -340,9 +359,9 @@ namespace Business.Ai.Tools
                     Message = x.Message,
                     EndExecutionAsSuccess = x.EndExecutionAsSuccess,
                 })
-                .ToListAsync();
+                .ToList();
 
-            return FlowCheckListHelper.Build(steps)
+            return FlowCheckListHelper.Build(nodes)
                 .Take(_maxRows)
                 .Select(x => new FlowCheckSummary(
                     x.FlowStepId,

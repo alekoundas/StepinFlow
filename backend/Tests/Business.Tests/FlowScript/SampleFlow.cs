@@ -107,6 +107,7 @@ namespace Business.Tests.FlowScript
             FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowPoint = hamburger }, loop);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_CLICK }, loop);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, IsDisabled = true }, loop);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReference = loop }, loop);
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);

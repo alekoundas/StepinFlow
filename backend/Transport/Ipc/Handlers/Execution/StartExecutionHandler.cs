@@ -1,6 +1,8 @@
 using Business.Executions;
 using Business.Flows.FlowValidationService;
 using Core.Enums;
+using Core.Helpers;
+using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -75,14 +77,15 @@ namespace Transport.Ipc.Handlers
                 if (validation.HasErrors)
                     return await MessageAsync(dbContext, id, validation, ct);
 
-                List<int> subFlowIds = await dbContext.FlowSteps
+                List<FlowStep> steps = await dbContext.FlowSteps
                     .AsNoTracking()
-                    .Where(x => x.RootId == id && x.SubFlowId != null)
-                    .Select(x => x.SubFlowId!.Value)
+                    .Where(x => x.RootId == id)
+                    .Select(x => new FlowStep { Id = x.Id, ParentFlowStepId = x.ParentFlowStepId, IsDisabled = x.IsDisabled, SubFlowId = x.SubFlowId })
                     .ToListAsync(ct);
 
-                foreach (int subFlowId in subFlowIds)
-                    pending.Enqueue(subFlowId);
+                // A disabled step's sub-flow is not executed, so what is wrong with it stops nothing.
+                foreach (FlowStep step in TreeStepHelper.WithoutDisabled(steps).Where(x => x.SubFlowId != null))
+                    pending.Enqueue(step.SubFlowId!.Value);
             }
 
             return null;

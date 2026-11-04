@@ -88,6 +88,80 @@ namespace Business.Tests.Flows
         }
 
         // ================================================================
+        // Disabling
+        // ================================================================
+
+        private async Task<int> NewWaitAsync(int flowId)
+        {
+            return (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait" }, [], Ct)).Data;
+        }
+
+        [Fact]
+        public async Task A_step_is_disabled_and_enabled_again_without_touching_anything_else()
+        {
+            int flowId = await NewFlowAsync();
+            int stepId = await NewWaitAsync(flowId);
+
+            (await _dataService.FlowStep.SetDisabledAsync(new FlowStepDisabledDto { FlowStepId = stepId, IsDisabled = true }, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single().IsDisabled.ShouldBeTrue();
+
+            (await _dataService.FlowStep.SetDisabledAsync(new FlowStepDisabledDto { FlowStepId = stepId, IsDisabled = false }, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single().IsDisabled.ShouldBeFalse();
+        }
+
+        // Open since before the click, and saved after it.
+        [Fact]
+        public async Task A_save_from_a_form_leaves_disabled_as_it_is()
+        {
+            int flowId = await NewFlowAsync();
+            int stepId = await NewWaitAsync(flowId);
+            await _dataService.FlowStep.SetDisabledAsync(new FlowStepDisabledDto { FlowStepId = stepId, IsDisabled = true }, Ct);
+
+            FlowStepDto form = new FlowStepDto { Id = stepId, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 500, IsDisabled = false };
+            (await _dataService.FlowStep.UpdateAsync(form, Ct)).IsSuccess.ShouldBeTrue();
+
+            FlowStep saved = Steps(flowId).Single();
+            saved.WaitForMilliseconds.ShouldBe(500);
+            saved.IsDisabled.ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task A_branch_cannot_be_disabled_and_says_why()
+        {
+            int flowId = await NewFlowAsync();
+            await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find" }, [], Ct);
+            FlowStep success = Steps(flowId).Single(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+
+            ResultDto<bool> refused = await _dataService.FlowStep.SetDisabledAsync(new FlowStepDisabledDto { FlowStepId = success.Id, IsDisabled = true }, Ct);
+
+            refused.IsSuccess.ShouldBeFalse();
+            Steps(flowId).ShouldAllBe(x => !x.IsDisabled);
+        }
+
+        [Fact]
+        public async Task A_copy_of_a_disabled_step_is_disabled_too()
+        {
+            int flowId = await NewFlowAsync();
+            int stepId = await NewWaitAsync(flowId);
+            await _dataService.FlowStep.SetDisabledAsync(new FlowStepDisabledDto { FlowStepId = stepId, IsDisabled = true }, Ct);
+
+            await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = stepId, TargetFlowId = flowId, TargetIndex = 1 }, Ct);
+
+            Steps(flowId).Count.ShouldBe(2);
+            Steps(flowId).ShouldAllBe(x => x.IsDisabled);
+        }
+
+        [Fact]
+        public async Task An_imported_disabled_line_is_saved_disabled()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Disabled Wait 800ms\nWait 900ms");
+
+            imported.IsSuccess.ShouldBeTrue();
+            List<FlowStep> steps = Steps(imported.FlowId).OrderBy(x => x.OrderNumber).ToList();
+            steps.Select(x => x.IsDisabled).ShouldBe([true, false]);
+        }
+
+        // ================================================================
         // From a form
         // ================================================================
 

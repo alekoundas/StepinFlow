@@ -68,6 +68,20 @@ export interface TreeNodeDetailDto {
 export const buildTreeNodeKey = (id: number, isFlow: boolean): string =>
   isFlow ? `flow-${id}` : `step-${id}`;
 
+/** The rows under a disabled step: skipped with it and dimmed with it, though not disabled themselves. */
+export const keysUnderDisabled = (
+  nodes: TreeNodeDto[],
+  isUnder = false,
+  keys = new Set<string>(),
+): Set<string> => {
+  for (const node of nodes) {
+    if (isUnder) keys.add(node.key);
+    keysUnderDisabled(node.children ?? [], isUnder || node.isDisabled, keys);
+  }
+
+  return keys;
+};
+
 export class TreeNodeDto {
   key: string = "-1";
   entityId: number = 0;
@@ -83,6 +97,7 @@ export class TreeNodeDto {
   orderNumber: number = -1;
   isFlow: boolean = false;
   isNew: boolean = true;
+  isDisabled: boolean = false;
 
   parentFlowId?: number | null;
   parentFlowStepId?: number | null;

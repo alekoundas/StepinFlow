@@ -106,7 +106,8 @@ namespace Business.Recording.Generation
         {
             List<Item> items = new List<Item>();
 
-            foreach (FlowStep step in ChildrenOf(schema, parent))
+            // A disabled step does nothing to the application, so disabling a click is dropping it.
+            foreach (FlowStep step in ChildrenOf(schema, parent).Where(x => !x.IsDisabled))
             {
                 if (step.FlowStepType == FlowStepTypeEnum.STAGE_MARKER)
                 {

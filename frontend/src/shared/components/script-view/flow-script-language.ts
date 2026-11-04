@@ -16,6 +16,7 @@ const STEPS = [
   "Resize Window",
   "Focus Window",
   "Move Window",
+  "Close Window",
   "Check Value",
   "Find Image",
   "Check Text",
@@ -69,6 +70,7 @@ const OPTIONS = [
   "keep",
   "timeout",
   "no timeout",
+  "then force",
   "and",
   "times",
   "forever",
@@ -109,6 +111,7 @@ const OPTION_PATTERN = wordsPattern(OPTIONS);
 const HEADER_PATTERN = new RegExp(`^(?:${HEADERS.map(escape).join("|")})`);
 const NUMBER_PATTERN = /^-?\d+(?:\.\d+)?(?:x\d+|ms|dpi)?(?![\w.])/;
 const SECTION_PATTERN = /^##(?:\s|$)/;
+const DISABLED_PATTERN = /^Disabled(?![\w])/;
 
 interface ScriptState {
   isInQuote: boolean;
@@ -153,6 +156,12 @@ const PARSER: StreamParser<ScriptState> = {
       if (stream.match(HEADER_PATTERN)) {
         state.isRestOfLine = stream.current() === "Flow:" || stream.current() === "Id:";
         return "heading";
+      }
+
+      // Greyed as a comment is, the way its row is in the tree: a line that does nothing.
+      if (stream.match(DISABLED_PATTERN)) {
+        stream.skipToEnd();
+        return "comment";
       }
 
       if (stream.match("Success:")) return "branchSuccess";

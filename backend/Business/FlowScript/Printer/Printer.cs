@@ -45,11 +45,19 @@ namespace Business.FlowScript.Text
 
             StringBuilder builder = new StringBuilder();
             WriteComment(builder, step, 0);
-
-            string line = StepWriter(step, schema).Write();
-            builder.Append(line);
+            builder.Append(LineOf(step, schema));
 
             return builder.ToString();
+        }
+
+        // Ahead of the words the step is written with anyway, so a disabled step reads back as itself.
+        private static string LineOf(FlowStep step, FlowScriptSchema schema)
+        {
+            string line = StepWriter(step, schema).Write();
+            if (!step.IsDisabled)
+                return line;
+
+            return $"{ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.DISABLED)} {line}";
         }
 
         // The writer for a step's line, by its type - the mirror of ScriptLineParser choosing a
@@ -280,7 +288,7 @@ namespace Business.FlowScript.Text
                 return;
 
             // Get FlowStep line.
-            string line = StepWriter(step, schema).Write();
+            string line = LineOf(step, schema);
 
             WriteComment(builder, step, leadingSpaces);
             builder.Append(' ', leadingSpaces).AppendLine(line);

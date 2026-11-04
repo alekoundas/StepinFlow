@@ -161,6 +161,31 @@ namespace Business.Tests.Executions
             (await ExecuteAsync(flowId)).ShouldBe(ExecutionStatusEnum.FAILED);
         }
 
+        // Never broadcast, so it is on no execution's history either.
+        [Fact]
+        public async Task A_disabled_step_and_everything_under_it_are_skipped_and_the_next_step_is_executed()
+        {
+            FlowStep loop = new FlowStep { Name = "Disabled loop", FlowStepType = FlowStepTypeEnum.LOOP, LoopCount = 1, IsDisabled = true };
+            FlowStep leaf = Wait("Disabled leaf");
+            leaf.IsDisabled = true;
+
+            int flowId = SeedFlow(false, Wait("Before"), loop, Under(loop, Wait("Under it")), leaf, Wait("After"));
+
+            await ExecuteAsync(flowId);
+
+            Started().ShouldBe(["Before", "After"]);
+        }
+
+        [Fact]
+        public async Task A_disabled_End_Execution_decides_nothing()
+        {
+            FlowStep end = new FlowStep { Name = "End", FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, IsDisabled = true };
+            int flowId = SeedFlow(false, end, Wait("After"));
+
+            (await ExecuteAsync(flowId)).ShouldBe(ExecutionStatusEnum.COMPLETED);
+            Started().ShouldBe(["After"]);
+        }
+
         [Fact]
         public async Task Each_step_is_broadcast_as_it_starts_and_finishes_then_the_end_and_the_row_agrees()
         {

@@ -14,6 +14,9 @@ child. Running continues until the stack is empty.
 `SUCCESS` and `FAILURE` nodes are never executed. The runner reaches past them into whichever
 branch the result calls for.
 
+A disabled step and everything under it are not loaded, so the runner goes on to the next step as
+if the line were not there.
+
 ## How loops run
 
 A loop's continuation is the loop itself, so nothing special is needed to repeat it. When the last
