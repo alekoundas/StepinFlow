@@ -145,16 +145,17 @@ namespace App
             builder.Services.AddExecutionEngine();
 
             // AI.
-            // Scoped per call rather than singleton: the client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
-            // Singletons: they hold nothing between calls, and the recording's generation, a singleton, asks them.
+            // Singletons: they hold nothing between calls, and the recording's generation and the chat's answers, both singletons, ask them.
+            // The client is rebuilt from settings each time, so changing provider or key in Settings takes effect on the next question.
             builder.Services.AddSingleton<IOllamaService, OllamaService>();
             builder.Services.AddSingleton<IAiProviderService, AiProviderService>();
             builder.Services.AddSingleton<IAiClientFactory, AiClientFactory>();
             builder.Services.AddSingleton<IScriptRevisionService, ScriptRevisionService>();
-            builder.Services.AddScoped<IAiModelService, AiModelService>();
+            builder.Services.AddSingleton<IAiModelService, AiModelService>();
             builder.Services.AddScoped<IExecutionRunExplainService, ExecutionRunExplainService>();
-            builder.Services.AddScoped<IFlowQuestionService, FlowQuestionService>();
-            builder.Services.AddScoped<IExecutionScreenshotReader, ExecutionScreenshotReader>();
+            builder.Services.AddSingleton<IFlowQuestionService, FlowQuestionService>();
+            builder.Services.AddSingleton<IExecutionScreenshotReader, ExecutionScreenshotReader>();
+            builder.Services.AddSingleton<IAiChatSessionService, AiChatSessionService>();
             builder.Services.AddSingleton<IAiModelDownloadService, AiModelDownloadService>();
 
             // Singletons, unlike the rest of AI: these hold the loaded onnx model and the built index, which cost seconds to produce and nothing to keep.
@@ -334,7 +335,9 @@ namespace App
             builder.Services.AddTransient<GetAiLocalModelStatusHandler>();
             builder.Services.AddTransient<FreeAiLocalModelHandler>();
             builder.Services.AddTransient<GetAiChatAvailabilityHandler>();
+            builder.Services.AddTransient<GetAiChatImagesHandler>();
             builder.Services.AddTransient<AskAiHandler>();
+            builder.Services.AddTransient<StopAiAnswerHandler>();
             builder.Services.AddTransient<DownloadAiModelHandler>();
             builder.Services.AddTransient<GetAiDownloadStateHandler>();
             builder.Services.AddTransient<ClearAiDownloadStateHandler>();

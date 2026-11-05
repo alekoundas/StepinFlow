@@ -472,8 +472,8 @@ breaks the arm that calls it, and F12 reaches the handler.
 **Adding a new DTO never touches the `.proto`.** Every response body is `ResultDto<T>`.
 
 Broadcasts are fire-and-forget, delivered to every BrowserWindow, discriminated by `type`
-(`BroadcastTypeEnum` as a string). They carry execution progress, recording progress and model
-download progress.
+(`BroadcastTypeEnum` as a string). They carry execution progress, recording progress, model
+download progress and answers being written.
 
 The execution page applies execution progress in batches, at most every 100 ms and on a screen
 refresh, so a window nobody can see draws nothing. Drawing on every event cost more than a fast flow
@@ -1879,19 +1879,40 @@ the model is busy, unloads it when it goes idle, cutting nothing off, another ap
 So the reply confirms nothing, and `useLocalModel` shows the button loading and checks `/api/ps` every
 second until the model has gone. That stops at 2 minutes, with "Still in use", since a job of several
 model calls loads the model again after each one. Such a job gets slower and does not break. The
-request can wait behind `Ai.ask` on the request pipe past Electron's 30 seconds and the backend still
-acts on it, so the hook ignores how the request ends. `/api/ps` has no busy field, so there is no
+request can wait behind another call on the request pipe past Electron's 30 seconds and the backend
+still acts on it, so the hook ignores how the request ends. `/api/ps` has no busy field, so there is no
 "Using" state; counting the app's own calls in `AiClientFactory` would give one, for this app only.
 
-**Ask** is a chat about your own flows and executions. The model answers by calling tools rather
-than being handed a dump: `DbQueryTools` - search flows and steps, read a flow with its areas,
-points and templates, list executions and their steps, count outcomes and step types, list what a
-flow checks - and `AiDocumentTools`, which searches the app's own documentation. The loop - ask,
-call a tool, feed the result back, ask again - is `UseFunctionInvocation()` middleware with a cap on
-rounds, so there is no orchestration framework.
+**Ask** is a chat about your own flows and executions, in a panel docked beside the page
+(`AiChatPanelComponent`). It pushes the page rather than covering it, lies over it in a window under
+1200 px, and stays open from page to page. The model answers by calling tools rather than being
+handed a dump: `DbQueryTools` - search flows and steps, read a flow with its areas, points and
+templates, list executions and their steps, count outcomes and step types, list what a flow checks -
+and `AiDocumentTools`, which searches the app's own documentation. The loop - ask, call a tool, feed
+the result back, ask again - is `UseFunctionInvocation()` middleware with a cap on rounds, so there
+is no orchestration framework.
 
-**Explain** takes a failed execution - its steps, the closest scores, the screenshots when allowed -
-and says what went wrong and what to change.
+An answer takes longer than a request can wait, so `Ai.ask` starts it and returns, and
+`AiChatSessionService` says how it goes on `AI_CHAT_EVENT`: each tool in plain words
+(`AiToolActivityHelper`), then the text in 40 ms batches, since a local model writes a hundred tokens
+a second, then the whole answer. Every event carries the id the page chose for the answer, which is
+what Stop names and what keeps a stopped answer's last words off the next one. Several conversations
+can answer at once, and Ollama queues them. What a model writes on the way to a tool is narration,
+qwen3.5:4b did it with the prompt telling it not to, so the answer is the text after the last tool
+call. Ollama's stream ends without throwing when it is cancelled, so `FlowQuestionService` checks the
+token once the stream ends, or a stopped answer would say it finished.
+
+What "this" means follows the page. `useAiChatPage` reads it off the address, the composer shows it
+as a chip that can be taken off, and `FlowQuestionService` adds a line to the prompt. An execution's
+images go with the first question and after that on a click, since an image left in the history is
+re-read on every tool round. A name in backticks that a tool returned as a step opens it in the
+editor: `DbQueryTools` remembers the steps it returned, under the name they executed with, so the link
+never depends on the model writing one. A name two steps share is left as text, since the link could
+only guess. Conversations live in the page's store and go at a restart.
+
+**Explain** is a question in that chat, asked from a past execution's page. The model reads the
+execution's steps, the closest scores and the images when allowed, and says what went wrong and what
+to change.
 
 **Generate flow** shapes a reviewed recording's plain draft into the flow its description asks for,
 as a script read back like any import, and Check's **Ask for changes** revises the saved flow the

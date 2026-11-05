@@ -1,15 +1,17 @@
+using System.Diagnostics;
+using System.Text;
 using Business.Ai.AiModels;
 using Business.Ai.Helpers;
 using Business.Ai.Providers;
 using Business.Ai.AiDocuments;
 using Business.Ai.Tools;
+using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Dtos;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
 
 namespace Business.Ai
 {
@@ -25,7 +27,10 @@ namespace Business.Ai
     public sealed class FlowQuestionService : IFlowQuestionService
     {
         /// <summary>Enough for a broad search then a detail call or two, and a stop if it loops.</summary>
-        private const int _maxToolRounds = 8;
+        private const int MAX_TOOL_ROUNDS = 8;
+
+        // A local model writes a hundred tokens a second, and every window is sent every broadcast.
+        private const int TEXT_BATCH_MILLISECONDS = 40;
 
         private readonly IAiProviderService _providerService;
         private readonly IAiClientFactory _clientFactory;
@@ -33,7 +38,6 @@ namespace Business.Ai
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
         private readonly IExecutionScreenshotReader _executionScreenshotReader;
-        private readonly ILogger<FlowQuestionService> _logger;
 
         public FlowQuestionService(
             IAiProviderService providerService,
@@ -41,8 +45,7 @@ namespace Business.Ai
             IAiModelService modelService,
             IDbContextFactory<AppDbContext> dbContextFactory,
             IAiDocumentIndexService aiDocumentIndexService,
-            IExecutionScreenshotReader executionScreenshotReader,
-            ILogger<FlowQuestionService> logger)
+            IExecutionScreenshotReader executionScreenshotReader)
         {
             _providerService = providerService;
             _clientFactory = clientFactory;
@@ -50,7 +53,6 @@ namespace Business.Ai
             _dbContextFactory = dbContextFactory;
             _aiDocumentIndexService = aiDocumentIndexService;
             _executionScreenshotReader = executionScreenshotReader;
-            _logger = logger;
         }
 
 
@@ -71,61 +73,68 @@ namespace Business.Ai
             if (!await _modelService.SupportsToolsAsync(ct))
                 return Unavailable(model, $"{model} cannot call tools, so it would answer from nothing rather than from your flows. Qwen 2.5 and Llama 3.1 can; the bigger the model the better it chooses.");
 
-            return new AiChatAvailabilityDto { IsAvailable = true, Model = model };
+            return new AiChatAvailabilityDto
+            {
+                IsAvailable = true,
+                Model = model,
+                IsCloud = await _providerService.IsCloudModelInUseAsync(ct),
+                CanSendScreenData = await _providerService.CanSendScreenDataAsync(ct),
+            };
         }
 
-        public async Task<AiChatAnswerDto> AskAsync(AiChatRequestDto request, CancellationToken ct = default)
+        public async Task AskAsync(AiChatRequestDto request, Action<AiChatEventDto> report, CancellationToken ct = default)
         {
             AiChatAvailabilityDto availability = await GetAvailabilityAsync(ct);
             if (!availability.IsAvailable)
-                return Failed(availability.Reason);
+            {
+                report(Failed(request, availability.Reason));
+                return;
+            }
 
             using IChatClient? baseClient = await _clientFactory.CreateAsync(ct);
             if (baseClient == null)
-                return Failed(AiProviderService.NOT_SET_UP);
+            {
+                report(Failed(request, AiProviderService.NOT_SET_UP));
+                return;
+            }
 
             // THE loop.
             using IChatClient chatClient = baseClient
                 .AsBuilder()
-                .UseFunctionInvocation(configure: x => x.MaximumIterationsPerRequest = _maxToolRounds)
+                .UseFunctionInvocation(configure: x => x.MaximumIterationsPerRequest = MAX_TOOL_ROUNDS)
                 .Build();
 
-            List<ChatMessage> messages = [new ChatMessage(ChatRole.System, AiPromptHelper.AskAboutFlows)];
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            Dictionary<int, string> flowNames = await dbContext.Flows.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.Name, ct);
+
+            string instructions = await InstructionsForAsync(request, dbContext, flowNames, ct);
+
+            List<ChatMessage> messages = [new ChatMessage(ChatRole.System, instructions)];
             messages.AddRange(request.Messages.Select(x => ToChatMessage(x)));
 
             // Asked once and used by both paths, so the pictures and the rows cannot disagree
             // about what this provider is allowed to see.
-            bool canSendScreenData = await _providerService.CanSendScreenDataAsync(ct);
+            bool canSendScreenData = availability.CanSendScreenData;
 
-            IReadOnlyList<string> attached = await AttachScreenshotsAsync(messages, request.ExecutionId, canSendScreenData, ct);
+            IReadOnlyList<string> attached = await AttachScreenshotsAsync(messages, request, canSendScreenData, ct);
+
+            report(new AiChatEventDto
+            {
+                AnswerId = request.AnswerId,
+                Type = AiChatEventTypeEnum.STARTED,
+                Model = availability.Model,
+                Images = attached.ToList(),
+            });
+
+            DbQueryTools dbTools = new DbQueryTools(_dbContextFactory, canSendScreenData);
 
             ChatOptions options = new ChatOptions
             {
-                Tools = BuildDbTools(canSendScreenData),
+                Tools = BuildDbTools(dbTools),
                 MaxOutputTokens = 4000,
             };
 
-            try
-            {
-                // Actual model call.
-                ChatResponse response = await chatClient.GetResponseAsync(messages, options, ct);
-
-                return new AiChatAnswerDto
-                {
-                    Answer = response.Text,
-                    ToolCalls = response.Messages
-                        .SelectMany(x => x.Contents)
-                        .OfType<FunctionCallContent>()
-                        .Select(x => x.Name)
-                        .ToList(),
-                    Images = attached.ToList(),
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "The model could not be reached.");
-                return Failed($"The model could not be reached. {ex.Message}");
-            }
+            await StreamAnswerAsync(chatClient, messages, options, request.AnswerId, dbTools, flowNames, report, ct);
         }
 
 
@@ -133,9 +142,86 @@ namespace Business.Ai
         // Private methods
         // ================================================================
 
-        private static AiChatAnswerDto Failed(string error)
+        private static async Task StreamAnswerAsync(
+            IChatClient chatClient,
+            List<ChatMessage> messages,
+            ChatOptions options,
+            string answerId,
+            DbQueryTools dbTools,
+            Dictionary<int, string> flowNames,
+            Action<AiChatEventDto> report,
+            CancellationToken ct)
         {
-            return new AiChatAnswerDto { Error = error };
+            StringBuilder answer = new StringBuilder();
+            StringBuilder unsent = new StringBuilder();
+            Stopwatch sinceSent = Stopwatch.StartNew();
+
+            // Actual model call.
+            await foreach (ChatResponseUpdate update in chatClient.GetStreamingResponseAsync(messages, options, ct))
+            {
+                foreach (AIContent content in update.Contents)
+                {
+                    if (content is FunctionCallContent call)
+                    {
+                        // What it wrote on the way to a tool was narration. The answer is what
+                        // comes after the last one.
+                        answer.Clear();
+                        unsent.Clear();
+
+                        report(new AiChatEventDto
+                        {
+                            AnswerId = answerId,
+                            Type = AiChatEventTypeEnum.TOOL_STARTED,
+                            ActivityId = call.CallId,
+                            Activity = AiToolActivityHelper.Describe(call.Name, call.Arguments, flowNames),
+                        });
+                    }
+                    else if (content is FunctionResultContent result)
+                    {
+                        report(new AiChatEventDto
+                        {
+                            AnswerId = answerId,
+                            Type = AiChatEventTypeEnum.TOOL_FINISHED,
+                            ActivityId = result.CallId,
+                            Steps = dbTools.TakeSeenSteps().ToList(),
+                        });
+                    }
+                    else if (content is TextContent text)
+                    {
+                        answer.Append(text.Text);
+                        unsent.Append(text.Text);
+                    }
+                }
+
+                if (unsent.Length > 0 && sinceSent.ElapsedMilliseconds >= TEXT_BATCH_MILLISECONDS)
+                {
+                    report(new AiChatEventDto { AnswerId = answerId, Type = AiChatEventTypeEnum.TEXT, Text = unsent.ToString() });
+                    unsent.Clear();
+                    sinceSent.Restart();
+                }
+            }
+
+            // Ollama's stream just ends when it is cancelled, rather than throwing.
+            ct.ThrowIfCancellationRequested();
+
+            string written = answer.ToString().Trim();
+            if (written.Length == 0)
+            {
+                report(Failed(answerId, "The model finished without writing an answer."));
+                return;
+            }
+
+            report(new AiChatEventDto { AnswerId = answerId, Type = AiChatEventTypeEnum.DONE, Text = written });
+        }
+
+        private static AiChatEventDto Failed(AiChatRequestDto request, string error)
+        {
+            return Failed(request.AnswerId, error);
+        }
+
+        private static AiChatEventDto Failed(string answerId, string error)
+        {
+            return new AiChatEventDto { AnswerId = answerId, Type = AiChatEventTypeEnum.FAILED, Error = error };
         }
 
         private static AiChatAvailabilityDto Unavailable(string model, string reason)
@@ -143,14 +229,40 @@ namespace Business.Ai
             return new AiChatAvailabilityDto { IsAvailable = false, Model = model, Reason = reason };
         }
 
+        private static async Task<string> InstructionsForAsync(AiChatRequestDto request, AppDbContext dbContext, Dictionary<int, string> flowNames, CancellationToken ct)
+        {
+            string lookingAt = string.Empty;
+
+            if (request.ExecutionId != null)
+            {
+                int flowId = await dbContext.Executions
+                    .AsNoTracking()
+                    .Where(x => x.Id == request.ExecutionId)
+                    .Select(x => x.FlowId)
+                    .FirstOrDefaultAsync(ct);
+
+                if (flowNames.TryGetValue(flowId, out string? flowName))
+                    lookingAt = AiPromptHelper.LookingAtExecution(request.ExecutionId.Value, flowId, flowName, request.FlowStepId);
+            }
+            else if (request.FlowId != null && flowNames.TryGetValue(request.FlowId.Value, out string? flowName))
+            {
+                lookingAt = AiPromptHelper.LookingAtFlow(request.FlowId.Value, flowName);
+            }
+
+            if (lookingAt.Length == 0)
+                return AiPromptHelper.AskAboutFlows;
+
+            return $"{AiPromptHelper.AskAboutFlows}\n\n{lookingAt}";
+        }
+
         // Pictures ride on the newest question only, never on the ones behind it.
         //
         // UseFunctionInvocation replays the whole conversation on every round of the tool loop, up
-        // to _maxToolRounds, so an image left in the history is re-read that many times per
+        // to MAX_TOOL_ROUNDS, so an image left in the history is re-read that many times per
         // question. Ollama's cpu backend keeps no cache between requests, so nothing absorbs that.
-        private async Task<IReadOnlyList<string>> AttachScreenshotsAsync(List<ChatMessage> messages, int? executionId, bool canSendScreenData, CancellationToken ct)
+        private async Task<IReadOnlyList<string>> AttachScreenshotsAsync(List<ChatMessage> messages, AiChatRequestDto request, bool canSendScreenData, CancellationToken ct)
         {
-            if (executionId == null)
+            if (request.ExecutionId == null || !request.SendScreenshots)
                 return [];
 
             // A screenshot cannot be redacted - a font the OCR does not know, a language it does
@@ -163,7 +275,7 @@ namespace Business.Ai
             if (newest == null)
                 return [];
 
-            IReadOnlyList<AiImage> images = await _executionScreenshotReader.GetForExecutionAsync(executionId.Value, ct);
+            IReadOnlyList<AiImage> images = await _executionScreenshotReader.GetForExecutionAsync(request.ExecutionId.Value, ct);
             if (images.Count == 0)
                 return [];
 
@@ -188,9 +300,8 @@ namespace Business.Ai
         }
 
 
-        private IList<AITool> BuildDbTools(bool canSendScreenData)
+        private IList<AITool> BuildDbTools(DbQueryTools tools)
         {
-            DbQueryTools tools = new DbQueryTools(_dbContextFactory, canSendScreenData);
             AiDocumentTools helpTools = new AiDocumentTools(_aiDocumentIndexService);
 
             return

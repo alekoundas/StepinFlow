@@ -21,7 +21,6 @@ import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
 import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
-import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
 interface Props {
@@ -358,21 +357,16 @@ interface SuggestFixButtonProps {
  */
 function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
   const { data: isConfigured } = useAiStatus();
-  const { open, startConversation } = useAiChatStore();
-  const { ask } = useAskAi();
+  const { askInNewConversation } = useAskAi();
 
   if (!isConfigured || !executionStep.flowStepId) return null;
 
-  const suggest = () => {
-    const conversationId = startConversation();
-    open();
-
-    ask(
-      conversationId,
-      `Step ${executionStep.flowStepId} ("${executionStep.name}") failed in execution ${executionStep.executionId}. Why did it fail, and how do I fix it?`,
-      executionStep.executionId,
-    );
-  };
+  const suggest = () =>
+    askInNewConversation(`Why did "${executionStep.name}" fail, and how do I fix it?`, {
+      executionId: executionStep.executionId,
+      flowStepId: executionStep.flowStepId ?? undefined,
+      sendScreenshots: true,
+    });
 
   return (
     <Button

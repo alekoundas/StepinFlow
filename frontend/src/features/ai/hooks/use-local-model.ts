@@ -16,7 +16,7 @@ const FREEING_LIMIT_MILLISECONDS = 120_000;
  * Where the local model stands, and letting it go.
  *
  * Only the status says the model has gone. Ollama agrees at once, even while the model is busy, and
- * unloads it once it goes idle. The request itself can wait behind an answer on the pipe past
+ * unloads it once it goes idle. The request itself can wait behind another call on the pipe past
  * Electron's 30 seconds, and the backend still acts on it, so how it ends says nothing either.
  */
 export function useLocalModel() {

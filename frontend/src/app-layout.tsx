@@ -3,7 +3,8 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { Tooltip } from "primereact/tooltip";
 
-import AiChatDialogComponent from "@/features/ai/components/AiChatDialogComponent";
+import AiChatPanelComponent from "@/features/ai/components/AiChatPanelComponent";
+import { useAiChatEvents } from "@/features/ai/hooks/use-ai-chat";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import { useAiStatus } from "@/features/ai/hooks/use-ai";
 import { useRepositoryEvents } from "@/features/repository/hooks/use-repository";
@@ -26,8 +27,10 @@ const RAIL: CSSProperties = {
  */
 export default function AppLayout() {
   const { pathname } = useLocation();
-  const openAiChat = useAiChatStore((state) => state.open);
+  const isAiChatOpen = useAiChatStore((state) => state.isOpen);
+  const toggleAiChat = useAiChatStore((state) => state.toggle);
   useRepositoryEvents();
+  useAiChatEvents();
 
   const isNarrow = NARROW_PATHS.some((x) => pathname.startsWith(x));
 
@@ -85,10 +88,11 @@ export default function AppLayout() {
 
         <button
           type="button"
-          onClick={openAiChat}
+          onClick={toggleAiChat}
           className="nav-rail-item flex align-items-center gap-2 border-none border-round-lg cursor-pointer"
-          style={{ ...itemStyle(false, isNarrow), font: "inherit" }}
+          style={{ ...itemStyle(isAiChatOpen, isNarrow), fontFamily: "inherit", fontSize: "inherit" }}
           aria-label={isNarrow ? "Ask AI" : undefined}
+          aria-pressed={isAiChatOpen}
           data-pr-tooltip="Ask AI"
         >
           <i
@@ -115,7 +119,7 @@ export default function AppLayout() {
         </ScrollPanel>
       </main>
 
-      <AiChatDialogComponent />
+      <AiChatPanelComponent />
     </div>
   );
 }

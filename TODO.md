@@ -358,8 +358,9 @@ the history.
       password scheme `PROJECT.md` section 11 settles for input secrets - key derivation plus `AesGcm`,
       not DPAPI, which is Windows only and would become a porting blocker. One mechanism for every
       secret the app holds, or there will be two half-solutions.
-- [ ] **Streaming answers.** Explain is one request/response today, so a slow local model shows a
-      spinner for 20+ seconds. Needs a broadcast type and partial-message plumbing.
+- [ ] **Remove what the old Explain left behind.** Explain is a question in the chat now, and the page
+      no longer calls `Ai.explainExecution`. `ExplainExecutionHandler`, `ExecutionRunExplainService`,
+      `ExecutionRunPromptHelper`, `AiPromptHelper.ExplainExecution` and `AiAnswerDto` can go together.
 - [ ] **Anthropic as a native provider.** Only OpenAI-compatible endpoints work today, which
       covers OpenAI, Ollama and gateways like OpenRouter, but not Anthropic directly.
 - [ ] **Redact what tool results send to a cloud provider.** Typed text is covered:

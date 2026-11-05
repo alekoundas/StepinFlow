@@ -106,8 +106,10 @@ answer that here:
 
 ### Ask
 
-- **Ask about your flows** — a chat that answers by querying your own flows, executions and the app's
-  documentation through tool calls, rather than being handed a dump
+- **Ask about your flows** — a panel beside the page that knows which flow or execution you are
+  looking at. It answers by querying your own flows, executions and the app's documentation through
+  tool calls, rather than being handed a dump, shows what it reads as it goes, writes the answer as
+  it comes, and a step it names opens in the editor
 - **Explain an execution** — what failed, the closest match, and what to change
 - **A model on your machine, OpenAI on top** — every AI feature runs on Ollama locally; screen
   content never goes to a cloud model unless you switch it on, a recording's request shows you

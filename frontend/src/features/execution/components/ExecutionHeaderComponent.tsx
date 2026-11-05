@@ -118,10 +118,7 @@ function ExecutionHeaderComponent({
         {/* A past execution has already happened. Offering to start, pause or step it is a lie. */}
         {isPastExecution ? (
           execution ? (
-            <AskAiButtons
-              execution={execution}
-              flowName={flowName}
-            />
+            <AskAiButtons execution={execution} />
           ) : null
         ) : (
           <ExecutionToolbarComponent flowId={flowId} />
@@ -166,29 +163,20 @@ function livePill(
 
 interface AskAiButtonsProps {
   execution: ExecutionDto;
-  flowName: string;
 }
 
 /**
- * Both open the same chat, seeded differently.
+ * Explain asks at once. Ask opens the chat and waits for the question: what this page is about
+ * already goes with it.
  *
  * Explain used to be a tab holding one answer with nowhere to go. An execution raises "why", then
  * "what else could it be" and "has it always done this", and only a conversation takes those.
  */
-function AskAiButtons({ execution, flowName }: AskAiButtonsProps) {
+function AskAiButtons({ execution }: AskAiButtonsProps) {
   const { data: isConfigured } = useAiStatus();
-  const { open, startConversation } = useAiChatStore();
-  const { ask } = useAskAi();
+  const { askInNewConversation } = useAskAi();
 
   if (!isConfigured) return null;
-
-  const askAbout = (question: string) => {
-    const conversationId = startConversation();
-    open();
-
-    // The execution goes with it, so a model that can see is shown what the failing step saw.
-    ask(conversationId, question, execution.id);
-  };
 
   return (
     <div className="flex align-items-center gap-2">
@@ -197,9 +185,10 @@ function AskAiButtons({ execution, flowName }: AskAiButtonsProps) {
         icon="pi pi-sparkles"
         size="small"
         onClick={() =>
-          askAbout(
-            `Explain execution ${execution.id} of the flow "${flowName}". What happened, why did it end the way it did, and what should I change?`,
-          )
+          askInNewConversation("Explain this execution: what happened, and what should I change?", {
+            executionId: execution.id,
+            sendScreenshots: true,
+          })
         }
       />
       <Button
@@ -207,7 +196,13 @@ function AskAiButtons({ execution, flowName }: AskAiButtonsProps) {
         icon="pi pi-comments"
         size="small"
         outlined
-        onClick={() => askAbout(`I am looking at execution ${execution.id} of "${flowName}". `)}
+        onClick={() => {
+          // Read when clicked: subscribing would redraw this for every word of an answer.
+          const { open, focusInput } = useAiChatStore.getState();
+
+          open();
+          focusInput();
+        }}
       />
     </div>
   );

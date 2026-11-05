@@ -75,11 +75,18 @@ namespace Business.Ai.Helpers
             - A flow with IsSubFlow is meant to be called by another flow rather than started alone.
             - A step's Type says what it does. SUCCESS and FAILURE branches are structural and are
               not returned.
-            - A run's Status is COMPLETED, STOPPED, ERRORED or ABANDONED, and it says how the run
-              ended, not whether the flow did what it was for. COMPLETED means the walk reached the
-              end without anything stopping it - a flow whose first step failed into a Failure
-              branch and then ran out of steps is COMPLETED too. Never call a run successful, or
-              say it had no errors, on Status and StepCount alone.
+            - A run's Status says how the run ended, not whether the flow did what it was for:
+              COMPLETED -> an End Execution said it passed, or an automation reached its end.
+              FAILED -> an End Execution said it failed.
+              INCONCLUSIVE -> a QA test reached the end and nothing ever said how it went. It did
+              not pass and it did not fail, so never call it either.
+              STOPPED -> somebody stopped it or closed the app.
+              ERRORED -> the harness broke, not the product.
+              ABANDONED -> the app went away while it was going.
+              RUNNING -> it has not ended yet.
+              An automation whose first step failed into a Failure branch and then ran out of steps
+              is COMPLETED too. Never call a run successful, or say it had no errors, on Status and
+              StepCount alone.
             - GetRuns says nothing about what happened inside a run. Anything about how a run went -
               explaining it, what failed, what to change - needs GetRunSteps first, every time.
             - A step's Outcome is SUCCESS or FAILURE, and FAILURE alone does not mean broken. Two
@@ -179,6 +186,10 @@ namespace Business.Ai.Helpers
             - Written as markdown, and it is rendered, so use it: short paragraphs, a bold lead where
               a heading helps, a bulleted list when there is more than one option, and backticks
               around a step name, a setting or a number. Do not write one long block.
+            - Write a step's name exactly as the tool returned it, in backticks and with nothing
+              else inside them: the reader can open it from there.
+            - The word for one is execution. Never write "run" in your answer, whatever the tools
+              call it.
             - Never invent a flow, a step, a run or a value that a tool did not return.
             - When the answer came from the guide, name the section it came from.
             - If nothing you can call would answer the question, say what you would need instead.
@@ -325,6 +336,22 @@ namespace Business.Ai.Helpers
             guess: add one only for words the Description gives, and say in a note that its words
             were not seen.
             """;
+
+        // Added after AskAboutFlows from the page the question was asked on.
+        public static string LookingAtExecution(int executionId, int flowId, string flowName, int? flowStepId)
+        {
+            string lookingAt = $"The user is looking at execution {executionId} of the flow \"{flowName}\" (flow id {flowId}). \"This execution\", \"this flow\" and \"it\" mean those, unless the question names another. Read this execution with GetRunSteps({executionId}) rather than searching for it.";
+
+            if (flowStepId == null)
+                return lookingAt;
+
+            return $"{lookingAt} The question is about step {flowStepId}, so read it with GetFlowStepDetail({flowStepId}) too.";
+        }
+
+        public static string LookingAtFlow(int flowId, string flowName)
+        {
+            return $"The user is looking at the flow \"{flowName}\" (flow id {flowId}). \"This flow\" and \"it\" mean that one, unless the question names another. Use its id rather than searching for it.";
+        }
 
         public static string FormatExecution(ExecutionDto execution, bool includeScreenValues)
         {

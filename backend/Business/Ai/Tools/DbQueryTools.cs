@@ -4,6 +4,7 @@ using Business.Ai.Helpers;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
+using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,7 @@ namespace Business.Ai.Tools
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly bool _canSendScreenData;
+        private readonly List<AiChatStepReferenceDto> _seenSteps = new List<AiChatStepReferenceDto>();
 
         public DbQueryTools(IDbContextFactory<AppDbContext> dbContextFactory, bool canSendScreenData)
         {
@@ -41,6 +43,15 @@ namespace Business.Ai.Tools
         // ================================================================
         // Public methods
         // ================================================================
+
+        /// <summary>The steps returned since this was last asked. Not a tool: the model is never given it.</summary>
+        public IReadOnlyList<AiChatStepReferenceDto> TakeSeenSteps()
+        {
+            List<AiChatStepReferenceDto> taken = _seenSteps.ToList();
+            _seenSteps.Clear();
+
+            return taken;
+        }
 
         [Description("Lists flows whose name or description matches the text. Pass an empty string to list every flow. Use this first when the question names a flow.")]
         public async Task<IReadOnlyList<FlowSummary>> SearchFlows([Description("Text to match in the name or description. Empty lists all.")] string text)
@@ -124,6 +135,9 @@ namespace Business.Ai.Tools
                 .Select(Projection())
                 .ToListAsync();
 
+            foreach (StepSummary step in steps)
+                RememberStep(step.Id, step.FlowId, step.Name);
+
             return Redact(steps);
         }
 
@@ -154,6 +168,9 @@ namespace Business.Ai.Tools
                 .Take(_maxRows)
                 .Select(Projection())
                 .ToListAsync();
+
+            foreach (StepSummary step in steps)
+                RememberStep(step.Id, step.FlowId, step.Name);
 
             return Redact(steps);
         }
@@ -206,6 +223,8 @@ namespace Business.Ai.Tools
                     x.FlowTemplate.AuthoredFlowAreaHeight,
                     x.FlowTemplate.AuthoredDpi))
                 .ToList();
+
+            RememberStep(step.Id, step.RootId, step.Name);
 
             return new StepDetail(
                 step.Id,
@@ -285,6 +304,8 @@ namespace Business.Ai.Tools
                 .Select(x => new ClosestTemplate(x.Id, x.FlowTemplate.Name, x.Accuracy))
                 .ToDictionaryAsync(x => x.Id);
 
+            await RememberExecutedStepsAsync(dbContext, steps);
+
             return steps
                 .Select(x => new RunStepSummary(
                     x.Sequence,
@@ -361,7 +382,7 @@ namespace Business.Ai.Tools
                 })
                 .ToList();
 
-            return FlowCheckListHelper.Build(nodes)
+            List<FlowCheckSummary> checks = FlowCheckListHelper.Build(nodes)
                 .Take(_maxRows)
                 .Select(x => new FlowCheckSummary(
                     x.FlowStepId,
@@ -372,6 +393,11 @@ namespace Business.Ai.Tools
                     x.IsFatal,
                     x.FailureMessage))
                 .ToList();
+
+            foreach (FlowCheckSummary check in checks)
+                RememberStep(check.FlowStepId, flowId, check.Name);
+
+            return checks;
         }
 
         [Description("How many runs finished, were stopped, or ended with an error. Use this for \"how reliable is this flow\" instead of listing runs.")]
@@ -423,6 +449,34 @@ namespace Business.Ai.Tools
         // ================================================================
         // Private methods
         // ================================================================
+
+        private void RememberStep(int flowStepId, int flowId, string name)
+        {
+            if (name.Length > 0)
+                _seenSteps.Add(new AiChatStepReferenceDto { FlowStepId = flowStepId, FlowId = flowId, Name = name });
+        }
+
+        // Under the name it had when it executed, which is the one the model read. A step deleted
+        // since has nothing left to open.
+        private async Task RememberExecutedStepsAsync(AppDbContext dbContext, List<RunStep> steps)
+        {
+            List<int> flowStepIds = steps
+                .Where(x => x.FlowStepId != null)
+                .Select(x => x.FlowStepId!.Value)
+                .Distinct()
+                .ToList();
+
+            Dictionary<int, int> flowIds = await dbContext.FlowSteps
+                .AsNoTracking()
+                .Where(x => flowStepIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.RootId);
+
+            foreach (RunStep step in steps.DistinctBy(x => (x.FlowStepId, x.Name)))
+            {
+                if (step.FlowStepId != null && flowIds.TryGetValue(step.FlowStepId.Value, out int flowId))
+                    RememberStep(step.FlowStepId.Value, flowId, step.Name);
+            }
+        }
 
         /// <summary>
         /// A phrase matched a word at a time rather than whole, because "Google Chrome" has to find

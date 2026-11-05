@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { backendApiService } from "@/shared/services/backend-api-service";
 
@@ -10,6 +10,7 @@ export const aiKeys = {
   suggestions: () => ["ai", "suggestions"] as const,
   downloadState: () => ["ai", "downloadState"] as const,
   chatAvailability: () => ["ai", "chatAvailability"] as const,
+  chatImages: (executionId: number) => ["ai", "chatImages", executionId] as const,
 } as const;
 
 /** What a page says in place of an AI feature while useAiStatus is false. */
@@ -49,13 +50,4 @@ export function useAiModelSuggestions(isEnabled: boolean) {
     enabled: isEnabled,
     staleTime: 0,
   });
-}
-
-export function useAiMutations() {
-  const explainExecutionMutation = useMutation({
-    mutationFn: (executionId: number) =>
-      backendApiService.Ai.explainExecution(executionId),
-  });
-
-  return { explainExecutionMutation };
 }

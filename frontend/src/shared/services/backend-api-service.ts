@@ -76,9 +76,7 @@ import type { ExecutionStepRangeDto } from "@/shared/models/execution-step-range
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
-import type { AiAnswerDto } from "@/shared/models/ai-answer-dto";
 import type {
-  AiChatAnswerDto,
   AiChatAvailabilityDto,
   AiChatRequestDto,
 } from "@/shared/models/ai-chat-dtos";
@@ -386,14 +384,15 @@ export const backendApiService = {
   },
 
   Ai: {
-    explainExecution: (executionId: number) =>
-      call<AiAnswerDto>("Ai.explainExecution", executionId),
     getStatus: () => call<boolean>("Ai.getStatus"),
     getLocalModelStatus: () => call<AiLocalModelStatusDto>("Ai.getLocalModelStatus"),
     freeLocalModel: () => call<boolean>("Ai.freeLocalModel"),
     getChatAvailability: () =>
       call<AiChatAvailabilityDto>("Ai.getChatAvailability"),
-    ask: (dto: AiChatRequestDto) => call<AiChatAnswerDto>("Ai.ask", dto),
+    getChatImages: (executionId: number) => call<string[]>("Ai.getChatImages", executionId),
+    // Starts the answer and returns. AI_CHAT_EVENT says how it goes.
+    ask: (dto: AiChatRequestDto) => call<boolean>("Ai.ask", dto),
+    stopAnswer: (answerId: string) => call<boolean>("Ai.stopAnswer", answerId),
     downloadModel: (model: string) => call<boolean>("Ai.downloadModel", model),
     getDownloadState: () => callNullable<AiModelDownloadEventDto>("Ai.getDownloadState"),
     clearDownloadState: () => call<boolean>("Ai.clearDownloadState"),
