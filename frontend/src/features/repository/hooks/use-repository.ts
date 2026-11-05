@@ -6,6 +6,7 @@ import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { flowHealthKeys } from "@/features/flow/hooks/use-flow-health";
 import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
 import type { RepositoryCommitRequestDto, RepositoryConnectRequestDto } from "@/shared/models/repository-dtos";
 
@@ -194,6 +195,7 @@ export function useRepositoryEvents() {
       if (message.type !== BroadcastTypeEnum.REPOSITORY_CHANGED) return;
 
       queryClient.invalidateQueries({ queryKey: repositoryKeys.all });
+      queryClient.invalidateQueries({ queryKey: flowHealthKeys.all });
     });
 
     return () => {

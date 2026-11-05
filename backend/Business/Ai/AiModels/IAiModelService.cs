@@ -9,5 +9,9 @@ namespace Business.Ai.AiModels
         Task<bool> StartModelDownloadAsync(string model, CancellationToken ct = default);
         Task<bool> SupportsToolsAsync(CancellationToken ct = default);
         Task<bool> SupportsVisionAsync(CancellationToken ct = default);
+        Task<AiLocalModelStatusDto> GetLocalModelStatusAsync(CancellationToken ct = default);
+
+        /// <summary>Tells Ollama to let the local model go. Only the status can say it has.</summary>
+        Task<bool> FreeLocalModelAsync(CancellationToken ct = default);
     }
 }

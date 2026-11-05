@@ -22,7 +22,7 @@ import "@/styles/app.css";
 
 // Pages
 import AppLayout from "@/app-layout";
-import HomePage from "@/pages/home/home-page";
+import HomePage from "@/features/home/HomePage";
 import WorkflowPage from "@/features/workflow/WorkflowPage";
 import ExecutionPage from "@/features/execution/ExecutionPage";
 import ExecutionsPage from "@/features/execution/ExecutionsPage";

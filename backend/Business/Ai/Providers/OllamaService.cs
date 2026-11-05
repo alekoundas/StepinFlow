@@ -94,6 +94,48 @@ namespace Business.Ai.Providers
             }
         }
 
+        // Not logged, for the same reason as the list of downloaded models.
+        public async Task<IReadOnlyList<AiLoadedModelDto>?> ListLoadedModelsAsync(string baseUrl, CancellationToken ct = default)
+        {
+            try
+            {
+                HttpClient client = _httpClientFactory.CreateClient(nameof(OllamaService));
+
+                using HttpResponseMessage response = await client.GetAsync(OllamaUrlHelper.ToRunningEndpoint(baseUrl), ct);
+                response.EnsureSuccessStatusCode();
+
+                await using Stream stream = await response.Content.ReadAsStreamAsync(ct);
+                OllamaRunningResponse? running = await JsonSerializer.DeserializeAsync<OllamaRunningResponse>(stream, _jsonOptions, ct);
+
+                return running?.Models.Select(x => new AiLoadedModelDto { Name = x.Name, MemoryBytes = x.Size }).ToList() ?? [];
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool> UnloadAsync(string baseUrl, string model, CancellationToken ct = default)
+        {
+            try
+            {
+                HttpClient client = _httpClientFactory.CreateClient(nameof(OllamaService));
+
+                using HttpResponseMessage response = await client.PostAsJsonAsync(
+                    OllamaUrlHelper.ToGenerateEndpoint(baseUrl),
+                    new { model, keep_alive = 0 },
+                    ct);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                _logger.LogWarning(ex, "Could not unload {Model}.", model);
+
+                return false;
+            }
+        }
+
 
         // ================================================================
         // Private types
@@ -107,6 +149,17 @@ namespace Business.Ai.Providers
         private sealed class OllamaTag
         {
             public string Name { get; set; } = string.Empty;
+        }
+
+        private sealed class OllamaRunningResponse
+        {
+            public List<OllamaRunningModel> Models { get; set; } = [];
+        }
+
+        private sealed class OllamaRunningModel
+        {
+            public string Name { get; set; } = string.Empty;
+            public long Size { get; set; }
         }
 
         private sealed class OllamaShowResponse

@@ -4,6 +4,7 @@ import { ProgressBar } from "primereact/progressbar";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useAiModelSuggestions } from "@/features/ai/hooks/use-ai";
 import { useAiModelDownload } from "@/features/ai/hooks/use-ai-model-download";
+import { gigabytes, percentOf } from "@/features/ai/ai-format";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
 import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
@@ -165,13 +166,4 @@ function statusText(progress: AiModelDownloadEventDto): string {
     return `${progress.model} — ${progress.status} · ${gigabytes(progress.completed)} of ${gigabytes(progress.total)}`;
 
   return `${progress.model} — ${progress.status}`;
-}
-
-function gigabytes(bytes: number): string {
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
-}
-
-function percentOf(completed: number, total: number): number {
-  if (total <= 0) return 0;
-  return Math.round((completed / total) * 100);
 }

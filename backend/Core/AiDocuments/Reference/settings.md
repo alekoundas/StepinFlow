@@ -26,7 +26,10 @@ recording. The top of the panel says whether AI is on, and if not, what is in th
 **Ollama address** — where Ollama is listening. The default is right unless you moved it.
 
 **Model** — which of the models downloaded into Ollama to use. One can be downloaded from the list
-under it.
+under it. The Home page has the same choice, and says whether the model is in memory and how much it
+takes. **Free memory** there tells Ollama to let the model go: a busy model finishes what it is doing
+first, and the next thing that asks loads it again. Ollama lets it go by itself some minutes after
+its last use, 5 by default.
 
 **Cloud model** — `NONE` or `OPENAI`, on top of the local model and never instead of it. Once it has
 a key and a model it answers in the local model's place.

@@ -331,6 +331,8 @@ namespace App
             builder.Services.AddTransient<GetExecutionStepScreenshotHandler>();
             builder.Services.AddTransient<ExplainExecutionHandler>();
             builder.Services.AddTransient<GetAiStatusHandler>();
+            builder.Services.AddTransient<GetAiLocalModelStatusHandler>();
+            builder.Services.AddTransient<FreeAiLocalModelHandler>();
             builder.Services.AddTransient<GetAiChatAvailabilityHandler>();
             builder.Services.AddTransient<AskAiHandler>();
             builder.Services.AddTransient<DownloadAiModelHandler>();

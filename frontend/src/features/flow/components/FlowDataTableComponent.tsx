@@ -13,6 +13,7 @@ import {
   executionStatusSeverity,
   executionStatusText,
 } from "@/shared/utils/execution-status";
+import { dayAndTime, daysAgo, shortDate } from "@/shared/utils/day-and-time";
 import FlowHealthBadgeComponent from "@/features/flow/components/FlowHealthBadgeComponent";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
 import { useFlowHealth } from "@/features/flow/hooks/use-flow-health";
@@ -213,35 +214,6 @@ function LastExecutionComponent({ flow, summary }: LastExecutionProps) {
 
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
-
-// Calendar days, so ten past midnight is "Yesterday" for something done at eleven.
-const daysAgo = (date: Date): number => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-
-  return Math.round((today.getTime() - day.getTime()) / 86_400_000);
-};
-
-const shortDate = (date: Date): string =>
-  date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
-
-// "Today, 18:04", "Yesterday, 23:10", "20 Oct, 16:03".
-const dayAndTime = (value: string): string => {
-  const date = new Date(value);
-  const time = date.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const days = daysAgo(date);
-
-  if (days === 0) return `Today, ${time}`;
-  if (days === 1) return `Yesterday, ${time}`;
-
-  return `${shortDate(date)}, ${time}`;
-};
 
 // "today", "3 days ago", "12 Oct".
 const editedWhen = (value: string | null | undefined): string => {

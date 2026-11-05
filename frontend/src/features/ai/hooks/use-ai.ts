@@ -3,7 +3,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { backendApiService } from "@/shared/services/backend-api-service";
 
 export const aiKeys = {
+  all: ["ai"] as const,
   status: () => ["ai", "status"] as const,
+  localModel: () => ["ai", "localModel"] as const,
   models: () => ["ai", "models"] as const,
   suggestions: () => ["ai", "suggestions"] as const,
   downloadState: () => ["ai", "downloadState"] as const,

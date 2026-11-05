@@ -668,14 +668,12 @@ the history.
       with names already taken there, or ask what to point each one at. References out of the copy
       would point at nothing.
 
-- [ ] **The home page, as the mockup draws it. To build.** Raised 2026-10-17; the mockup's Home
-      board was drawn and liked the same day, and building it waits. Today Home is the early
-      playground - start and stop the overlay recording, a screenshot into the image editor -
-      which nothing else needs. The board has this week's executions, completed, failed and
-      inconclusive; executions per day over 14 days by outcome; recent executions with Explain on
-      a failure; what is waiting - a generated flow not yet read, a flow with errors, one that
-      keeps failing; and the flows edited lately. Its numbers need an execution-statistics query
-      the backend does not have.
+- [ ] **The rest of the mockup's Home board. To decide.** Home was built 2026-11-05 as four cards
+      (`PROJECT.md`, The shell), with a Last executed card chosen over a list of recent executions.
+      Still only on the board: this week's executions, completed, failed and inconclusive;
+      executions per day over 14 days by outcome; a generated flow not yet read, and a flow that
+      keeps failing; and the flows edited lately. Its numbers need an execution-statistics query the
+      backend does not have.
 - [ ] **Screenshots an hour in. To decide.** Raised 2026-10-31 with the execution board. The
       limit keeps an execution's first 20, so an hour into a bot loop no step has one, and the
       step's detail says so. Keeping the latest 20 instead is a decision for the history writer: it

@@ -1,5 +1,6 @@
 using Business.Flows.FlowValidationService;
 using Core.Enums;
+using Core.Models.Database;
 using Core.Models.Dtos;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -40,21 +41,27 @@ namespace Transport.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            List<int> flowIds = dto.FlowIds;
-            if (flowIds.Count == 0)
-                flowIds = await dbContext.Flows.Where(x => !x.IsHidden).Select(x => x.Id).ToListAsync(ct);
+            IQueryable<Flow> wanted = dbContext.Flows.AsNoTracking().Where(x => !x.IsHidden);
+            if (dto.FlowIds.Count > 0)
+                wanted = dbContext.Flows.AsNoTracking().Where(x => dto.FlowIds.Contains(x.Id));
 
-            if (flowIds.Count == 0)
+            List<Flow> flows = await wanted
+                .Select(x => new Flow { Id = x.Id, Name = x.Name, IsSubFlow = x.IsSubFlow })
+                .ToListAsync(ct);
+
+            if (flows.Count == 0)
                 return ResultDto<IReadOnlyList<FlowHealthDto>>.Success([]);
 
-            IReadOnlyDictionary<int, FlowValidationResultDto> results = await _flowValidationService.ValidateAsync(dbContext, flowIds, ct);
+            IReadOnlyDictionary<int, FlowValidationResultDto> results = await _flowValidationService.ValidateAsync(dbContext, flows.Select(x => x.Id).ToList(), ct);
 
-            List<FlowHealthDto> health = flowIds
-                .Select(flowId => new FlowHealthDto
+            List<FlowHealthDto> health = flows
+                .Select(flow => new FlowHealthDto
                 {
-                    FlowId = flowId,
-                    ErrorCount = results[flowId].Issues.Count(x => x.Severity == ValidationSeverityEnum.ERROR),
-                    WarningCount = results[flowId].Issues.Count(x => x.Severity == ValidationSeverityEnum.WARNING),
+                    FlowId = flow.Id,
+                    FlowName = flow.Name,
+                    IsSubFlow = flow.IsSubFlow,
+                    ErrorCount = results[flow.Id].Issues.Count(x => x.Severity == ValidationSeverityEnum.ERROR),
+                    WarningCount = results[flow.Id].Issues.Count(x => x.Severity == ValidationSeverityEnum.WARNING),
                 })
                 .ToList();
 

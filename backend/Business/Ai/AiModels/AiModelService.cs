@@ -1,5 +1,6 @@
 using Business.Ai.Helpers;
 using Business.Ai.Providers;
+using Core.Enums;
 using Core.Models.Dtos;
 using Microsoft.Extensions.Logging;
 
@@ -104,6 +105,61 @@ namespace Business.Ai.AiModels
         {
             string baseUrl = await _providerService.GetOllamaUrlAsync(ct);
             return _downloadService.Start(model, baseUrl);
+        }
+
+        /// <summary>
+        /// The local model whatever cloud model is set, because every AI feature needs it either way.
+        /// Asks Ollama every time, since it can be stopped and a model can be deleted without a word.
+        /// </summary>
+        public async Task<AiLocalModelStatusDto> GetLocalModelStatusAsync(CancellationToken ct = default)
+        {
+            string baseUrl = await _providerService.GetOllamaUrlAsync(ct);
+
+            AiLocalModelStatusDto status = new AiLocalModelStatusDto
+            {
+                State = AiLocalModelStateEnum.NOT_ANSWERING,
+                Model = await _providerService.GetOllamaModelAsync(ct),
+            };
+
+            if (await _providerService.IsCloudModelInUseAsync(ct))
+                status.CloudModel = await _providerService.GetModelAsync(ct);
+
+            IReadOnlyList<string>? downloaded = await _ollamaService.ListModelsAsync(baseUrl, ct);
+            IReadOnlyList<AiLoadedModelDto>? loaded = await _ollamaService.ListLoadedModelsAsync(baseUrl, ct);
+            if (downloaded == null || loaded == null)
+                return status;
+
+            status.State = AiLocalModelStateEnum.NOT_CHOSEN;
+            if (string.IsNullOrWhiteSpace(status.Model))
+                return status;
+
+            string wanted = OllamaUrlHelper.NormaliseModelName(status.Model);
+
+            status.State = AiLocalModelStateEnum.NOT_DOWNLOADED;
+            if (!downloaded.Any(x => OllamaUrlHelper.NormaliseModelName(x) == wanted))
+                return status;
+
+            status.State = AiLocalModelStateEnum.NOT_IN_MEMORY;
+
+            AiLoadedModelDto? inMemory = loaded.FirstOrDefault(x => OllamaUrlHelper.NormaliseModelName(x.Name) == wanted);
+            if (inMemory == null)
+                return status;
+
+            status.State = AiLocalModelStateEnum.IN_MEMORY;
+            status.MemoryBytes = inMemory.MemoryBytes;
+
+            return status;
+        }
+
+        public async Task<bool> FreeLocalModelAsync(CancellationToken ct = default)
+        {
+            string model = await _providerService.GetOllamaModelAsync(ct);
+            if (string.IsNullOrWhiteSpace(model))
+                return false;
+
+            string baseUrl = await _providerService.GetOllamaUrlAsync(ct);
+
+            return await _ollamaService.UnloadAsync(baseUrl, model, ct);
         }
 
         /// <summary>

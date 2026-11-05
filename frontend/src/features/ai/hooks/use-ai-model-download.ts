@@ -43,6 +43,7 @@ export function useAiModelDownload() {
         queryClient.invalidateQueries({ queryKey: aiKeys.models() });
         queryClient.invalidateQueries({ queryKey: aiKeys.suggestions() });
         queryClient.invalidateQueries({ queryKey: aiKeys.status() });
+        queryClient.invalidateQueries({ queryKey: aiKeys.localModel() });
         queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
       }
     });

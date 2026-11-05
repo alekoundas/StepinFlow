@@ -13,6 +13,12 @@ namespace Business.Tests.Fakes
         /// <summary>What every model says it can do: vision, tools.</summary>
         public List<string> Capabilities { get; } = [];
 
+        /// <summary>What Ollama holds in memory.</summary>
+        public List<AiLoadedModelDto> Loaded { get; } = [];
+
+        /// <summary>The models it was told to let go, in order.</summary>
+        public List<string> Unloaded { get; } = [];
+
         public Task<IReadOnlyList<string>?> ListModelsAsync(string baseUrl, CancellationToken ct = default)
         {
             IReadOnlyList<string>? models = null;
@@ -32,6 +38,23 @@ namespace Business.Tests.Fakes
         public Task<AiModelDto> DescribeAsync(string baseUrl, string model, CancellationToken ct = default)
         {
             return Task.FromResult(new AiModelDto { Name = model, Capabilities = Capabilities.ToList() });
+        }
+
+        public Task<IReadOnlyList<AiLoadedModelDto>?> ListLoadedModelsAsync(string baseUrl, CancellationToken ct = default)
+        {
+            IReadOnlyList<AiLoadedModelDto>? loaded = null;
+            if (IsRunning)
+                loaded = Loaded;
+
+            return Task.FromResult(loaded);
+        }
+
+        public Task<bool> UnloadAsync(string baseUrl, string model, CancellationToken ct = default)
+        {
+            if (IsRunning)
+                Unloaded.Add(model);
+
+            return Task.FromResult(IsRunning);
         }
     }
 }

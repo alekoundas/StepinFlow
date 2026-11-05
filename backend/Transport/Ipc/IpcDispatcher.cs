@@ -223,6 +223,8 @@ namespace Transport.Ipc
                     // Ai
                     "Ai.explainExecution" => await Handler<ExplainExecutionHandler>().HandleAsync(Payload<int>(request), ct),
                     "Ai.getStatus" => await Handler<GetAiStatusHandler>().HandleAsync(ct),
+                    "Ai.getLocalModelStatus" => await Handler<GetAiLocalModelStatusHandler>().HandleAsync(ct),
+                    "Ai.freeLocalModel" => await Handler<FreeAiLocalModelHandler>().HandleAsync(ct),
                     "Ai.getChatAvailability" => await Handler<GetAiChatAvailabilityHandler>().HandleAsync(ct),
                     "Ai.ask" => await Handler<AskAiHandler>().HandleAsync(Payload<AiChatRequestDto>(request), ct),
                     "Ai.downloadModel" => await Handler<DownloadAiModelHandler>().HandleAsync(Payload<string>(request), ct),

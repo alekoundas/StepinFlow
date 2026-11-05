@@ -1871,6 +1871,18 @@ every time (`OllamaService`), because a model chosen once can be deleted and Oll
 key it answers in the local model's place. A model can be pulled into Ollama from the settings page;
 Ollama itself the tester installs for now, and the app fetching and starting it is in `TODO.md`, AI.
 
+**Free memory.** Home's Local model card is always the local model, whatever cloud model answers.
+`AiModelService.GetLocalModelStatusAsync` asks `/api/tags` and `/api/ps` each time, and the card asks
+every 15 seconds, because Ollama says nothing when it starts, stops or lets a model go. Free memory
+is `POST /api/generate` with the model, `keep_alive: 0` and no prompt. Ollama agrees at once and, if
+the model is busy, unloads it when it goes idle, cutting nothing off, another app's request included.
+So the reply confirms nothing, and `useLocalModel` shows the button loading and checks `/api/ps` every
+second until the model has gone. That stops at 2 minutes, with "Still in use", since a job of several
+model calls loads the model again after each one. Such a job gets slower and does not break. The
+request can wait behind `Ai.ask` on the request pipe past Electron's 30 seconds and the backend still
+acts on it, so the hook ignores how the request ends. `/api/ps` has no busy field, so there is no
+"Using" state; counting the app's own calls in `AiClientFactory` would give one, for this app only.
+
 **Ask** is a chat about your own flows and executions. The model answers by calling tools rather
 than being handed a dump: `DbQueryTools` - search flows and steps, read a flow with its areas,
 points and templates, list executions and their steps, count outcomes and step types, list what a
@@ -2276,9 +2288,25 @@ Check, with the recording bar's own window in `windows/recording-bar/`.
 **The shell** is the mockup's (`app-layout.tsx`): a rail on the left with Home, Flows, Sub-flows
 and Executions, then Import and Ask AI, Settings, and the model the AI features use with where it
 runs, a link to its settings. On the editor and an execution it keeps only its icons, since those pages want the
-width. `/` is Home, which the mockup does not draw; what it shows is still to be talked about
-(`TODO.md`, Frontend). Settings shows one card at a time, picked from a list of sections beside it,
-each at its own address such as `/settings/ai`, so the model's link opens the AI card.
+width. Settings shows one card at a time, picked from a list of sections beside it, each at its own
+address such as `/settings/ai`, so the model's link opens the AI card.
+
+**Home** (`features/home/`) leads with what to do next, then what is in the way of it. Each card reads
+what it shows for itself, so none waits for another.
+
+- The hero is the flow last executed, from the executions list's summaries, which leave out a flow
+  the branch hid. Execute opens `/execution/:flowId` and stops there, since starting is that page's
+  button. While an execution is going it says View execution. With no flows at all it is Record a
+  flow and Import a flow instead, and Needs attention is left out.
+- Needs attention lists the flows validation has something to say about, from `Flow.getHealth`, which
+  carries each flow's name for it. The health query used to stay stale for up to five minutes after a
+  step was saved, because a step's mutations invalidate `flowStep` and `flowValidation` and never
+  `flow`. Now it asks on every page opened, and `useRepositoryEvents` asks again on
+  `REPOSITORY_CHANGED`, which the backend sends after writing a flow's files however it was changed.
+  That covers the Flows list's badges too.
+- Repository reuses `BranchMenuComponent` and `CommitDialogComponent`: an uncommitted change refuses
+  a switch, so the way out is on the same card.
+- Local model is §"Free memory" under the AI section.
 
 **The script view** is CodeMirror 6, read-only (`shared/components/script-view/`). A
 `StreamLanguage` tokenizer colours a line the way the scanner reads one - the step's keyword where

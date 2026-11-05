@@ -42,7 +42,8 @@ function BackendStoppedComponent({ status }: { status: BackendStatus }) {
   return (
     <div
       role="alert"
-      className="flex align-items-center justify-content-center h-screen p-4 text-color"
+      className="flex align-items-center justify-content-center h-screen p-4"
+      style={{ color: "var(--text-color)" }}
     >
       <div
         className="flex flex-column gap-3 w-full"
@@ -62,8 +63,14 @@ function BackendStoppedComponent({ status }: { status: BackendStatus }) {
         </span>
 
         <pre
-          className="surface-ground border-1 surface-border border-round p-3 text-xs overflow-auto m-0 white-space-pre-wrap"
-          style={{ maxHeight: "40vh" }}
+          className="border-1 border-round-lg p-3 text-xs overflow-auto m-0"
+          style={{
+            maxHeight: "40vh",
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            background: "var(--surface-ground)",
+            borderColor: "var(--surface-border)",
+          }}
         >
           {status.reason}
         </pre>

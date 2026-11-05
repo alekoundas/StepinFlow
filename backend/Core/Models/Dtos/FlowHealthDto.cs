@@ -9,6 +9,8 @@ namespace Core.Models.Dtos
     public class FlowHealthDto
     {
         public int FlowId { get; set; }
+        public string FlowName { get; set; } = string.Empty;
+        public bool IsSubFlow { get; set; }
         public int ErrorCount { get; set; }
         public int WarningCount { get; set; }
     }

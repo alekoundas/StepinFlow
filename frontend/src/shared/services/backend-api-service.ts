@@ -83,6 +83,7 @@ import type {
   AiChatRequestDto,
 } from "@/shared/models/ai-chat-dtos";
 import type { AiModelsDto } from "@/shared/models/ai-models-dto";
+import type { AiLocalModelStatusDto } from "@/shared/models/ai-local-model-status-dto";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
 import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
@@ -388,6 +389,8 @@ export const backendApiService = {
     explainExecution: (executionId: number) =>
       call<AiAnswerDto>("Ai.explainExecution", executionId),
     getStatus: () => call<boolean>("Ai.getStatus"),
+    getLocalModelStatus: () => call<AiLocalModelStatusDto>("Ai.getLocalModelStatus"),
+    freeLocalModel: () => call<boolean>("Ai.freeLocalModel"),
     getChatAvailability: () =>
       call<AiChatAvailabilityDto>("Ai.getChatAvailability"),
     ask: (dto: AiChatRequestDto) => call<AiChatAnswerDto>("Ai.ask", dto),

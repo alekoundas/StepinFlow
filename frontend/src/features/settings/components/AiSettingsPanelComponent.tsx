@@ -13,6 +13,7 @@ import { AiCloudProviderEnum } from "@/shared/enums/backend/ai/ai-cloud-provider
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
 import { aiKeys, useAiModels, useAiStatus } from "@/features/ai/hooks/use-ai";
+import AiModelOptionComponent from "@/features/ai/components/AiModelOptionComponent";
 import OllamaModelDownloadComponent from "@/features/ai/components/OllamaModelDownloadComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
 import type { AiModelDto } from "@/shared/models/ai-models-dto";
@@ -107,7 +108,7 @@ export default function AiSettingsPanelComponent() {
             options={models}
             optionLabel="name"
             optionValue="name"
-            itemTemplate={(option: AiModelDto) => <ModelOption model={option} />}
+            itemTemplate={(option: AiModelDto) => <AiModelOptionComponent model={option} />}
             // A model that is set but no longer downloaded would otherwise vanish from the box.
             placeholder={isFetchingModels ? "Looking..." : ollamaModel || "Choose a model"}
             emptyMessage="Nothing to choose from"
@@ -173,7 +174,7 @@ export default function AiSettingsPanelComponent() {
                 options={available?.cloudModels ?? []}
                 optionLabel="name"
                 optionValue="name"
-                itemTemplate={(option: AiModelDto) => <ModelOption model={option} />}
+                itemTemplate={(option: AiModelDto) => <AiModelOptionComponent model={option} />}
                 placeholder={cloudModel || "Choose a model"}
                 onChange={(e) => commitNow(AppSettingKeyEnum.AI_CLOUD_MODEL, e.value)}
                 className="w-18rem"
@@ -249,63 +250,5 @@ function Row({ label, description, children }: RowProps) {
 
       {children}
     </div>
-  );
-}
-
-interface ModelOptionProps {
-  model: AiModelDto;
-}
-
-/**
- * A model and its badges.
- *
- * Which model to pick is otherwise a guess: tools decides whether it can answer questions about
- * your flows at all, and vision decides whether it can be shown a screenshot.
- */
-function ModelOption({ model }: ModelOptionProps) {
-  const capabilities = model.capabilities ?? [];
-  const shown = ["tools", "vision", "thinking"].filter((x) =>
-    capabilities.includes(x),
-  );
-
-  return (
-    <div className="flex align-items-center justify-content-between gap-2 w-full">
-      <LabelComponent text={model.name} />
-
-      <div className="flex align-items-center gap-1">
-        {shown.map((capability) => (
-          <CapabilityBadge
-            key={capability}
-            text={capability}
-          />
-        ))}
-
-        {model.contextLength > 0 ? (
-          <CapabilityBadge text={`${Math.round(model.contextLength / 1024)}K`} />
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-interface CapabilityBadgeProps {
-  text: string;
-}
-
-function CapabilityBadge({ text }: CapabilityBadgeProps) {
-  return (
-    <span
-      style={{
-        padding: "0.1rem 0.4rem",
-        borderRadius: 4,
-        border: "1px solid var(--surface-border)",
-        background: "var(--surface-ground)",
-        color: "var(--text-color-secondary)",
-        fontSize: "0.65rem",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {text}
-    </span>
   );
 }

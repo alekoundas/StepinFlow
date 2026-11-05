@@ -20,6 +20,7 @@ export function useFlowExecutionSummaries() {
   return useQuery({
     queryKey: executionKeys.flowSummaries(),
     queryFn: () => backendApiService.Execution.getFlowSummaries(),
+    staleTime: 0,
   });
 }
 

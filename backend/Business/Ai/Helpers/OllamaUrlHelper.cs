@@ -29,6 +29,18 @@ namespace Business.Ai.Helpers
             return $"{Trim(baseUrl)}/api/pull";
         }
 
+        /// <summary>The models in memory right now. It does not say whether one is busy.</summary>
+        public static string ToRunningEndpoint(string baseUrl)
+        {
+            return $"{Trim(baseUrl)}/api/ps";
+        }
+
+        /// <summary>Asks a model something, or with no prompt and a keep_alive of 0, unloads it.</summary>
+        public static string ToGenerateEndpoint(string baseUrl)
+        {
+            return $"{Trim(baseUrl)}/api/generate";
+        }
+
         /// <summary>
         /// A model name with its tag spelled out, so two of them can be compared.
         ///
