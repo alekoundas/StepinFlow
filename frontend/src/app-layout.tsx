@@ -133,31 +133,37 @@ function LogoComponent({ isNarrow }: { isNarrow: boolean }) {
       <svg
         width="24"
         height="24"
-        viewBox="0 0 24 24"
-        fill="none"
+        viewBox="0 0 512 512"
+        fill="var(--primary-color)"
         aria-hidden="true"
       >
         <rect
-          x="3"
-          y="3"
-          width="8"
-          height="8"
-          rx="2"
-          fill="var(--primary-color)"
+          x="32"
+          y="96"
+          width="192"
+          height="96"
+          rx="48"
         />
         <rect
-          x="13"
-          y="13"
-          width="8"
-          height="8"
-          rx="2"
-          stroke="var(--primary-color)"
-          strokeWidth="2"
+          x="96"
+          y="224"
+          width="192"
+          height="96"
+          rx="48"
         />
         <path
-          d="M7 11v4a2 2 0 0 0 2 2h4"
+          d="M208 400 H296 C384 400 424 356 424 296"
+          fill="none"
           stroke="var(--primary-color)"
-          strokeWidth="2"
+          strokeWidth="96"
+          strokeLinecap="round"
+        />
+        <path
+          transform="translate(330 14) scale(1.5)"
+          d="M0 0 L0 110 L27 84 L46 128 L68 118 L50 76 L86 76 Z"
+          stroke="var(--primary-color)"
+          strokeWidth="12"
+          strokeLinejoin="round"
         />
       </svg>
       {!isNarrow && <span className="font-semibold text-lg">StepinFlow</span>}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="steps" gradientUnits="userSpaceOnUse" x1="60" y1="60" x2="330" y2="340"><stop offset="0" stop-color="#5b4de8"/><stop offset="1" stop-color="#5b4de8"/></linearGradient>
+    <linearGradient id="flow" gradientUnits="userSpaceOnUse" x1="150" y1="0" x2="450" y2="0"><stop offset="0" stop-color="#5b4de8"/><stop offset=".42" stop-color="#5b4de8"/><stop offset=".72" stop-color="#5b4de8"/><stop offset="1" stop-color="#5b4de8"/></linearGradient>
+  </defs>
+  <rect x="60" y="92" width="200" height="80" rx="40" fill="url(#steps)"/>
+  <rect x="132" y="212" width="200" height="80" rx="40" fill="url(#steps)"/>
+  <path d="M212 432 L296.1 432 L307.7 431.3 L319.1 429.7 L330.2 427.4 L340.9 424.4 L351.3 420.8 L361.3 416.5 L370.8 411.7 L379.9 406.2 L388.5 400.2 L396.6 393.6 L404.2 386.5 L411.2 379 L417.8 371 L423.8 362.7 L429.3 354 L434.3 344.9 L438.9 335.6 L443 325.9 L446.6 316 L449.8 305.8 L452.6 295.3 L455 284.6 L457 273.6 L458.7 262.4 L459.9 250.9 L460.8 239.2 L461.4 227.2 L461.6 215.1 L461.5 202.6 L461 190.3 L419 189.7 L418.2 201.5 L417.1 212.6 L415.7 223.4 L414 233.7 L412.1 243.7 L409.8 253.3 L407.3 262.5 L404.5 271.2 L401.5 279.5 L398.2 287.4 L394.7 294.8 L390.9 301.7 L387 308.1 L382.9 314 L378.7 319.5 L374.3 324.5 L369.7 329 L365.1 333.1 L360.3 336.7 L355.4 339.9 L350.4 342.7 L345.2 345.1 L339.9 347.2 L334.4 348.9 L328.7 350.2 L322.8 351.2 L316.5 351.9 L310 352.2 L303.2 352.2 L295.9 352 L212 352 Z" fill="url(#flow)"/>
+  <circle cx="212" cy="392" r="40" fill="url(#flow)"/>
+  <circle cx="440" cy="190" r="21" fill="url(#flow)"/>
+  <path transform="translate(380.1 25.8) scale(1.05)" d="M0 0 L0 110 L27 84 L46 128 L68 118 L50 76 L86 76 Z" fill="#5b4de8" stroke="#5b4de8" stroke-width="9" stroke-linejoin="round"/>
+</svg>
