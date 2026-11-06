@@ -1,6 +1,5 @@
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow } from "electron";
 import type { ChildProcess } from "child_process";
-import pkg from "electron-updater";
 // import { app, session } from 'electron';
 // import installExtension, {
 //   REACT_DEVELOPER_TOOLS,
@@ -16,9 +15,9 @@ import { setBackendQuitting } from "./ipc/services/backend-status-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
 import { registerFilesHandler } from "./ipc/handlers/files-handler.js";
+import { registerAutoUpdaterHandler } from "./ipc/handlers/auto-updater-handler.js";
+import { startAutoUpdaterChecks } from "./ipc/services/auto-updater-service.js";
 import { IS_DEVELOPING, loadPage, PRELOAD_PATH } from "./app-paths.js";
-
-const { autoUpdater } = pkg;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -45,20 +44,6 @@ function createWindow() {
   });
 }
 
-// Auto-updater dialog
-autoUpdater.on("update-downloaded", () => {
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Update Available",
-      message: "A new version is ready. Restart now?",
-      buttons: ["Yes", "Later"],
-    })
-    .then((result) => {
-      if (result.response === 0) autoUpdater.quitAndInstall();
-    });
-});
-
 app.whenReady().then(async () => {
   if (IS_DEVELOPING) {
     // try {
@@ -69,12 +54,12 @@ app.whenReady().then(async () => {
     // } catch (err) {
     //   console.error("Failed to install React DevTools", err);
     // }
-  } else {
-    autoUpdater.checkForUpdatesAndNotify();
   }
 
-  // Before the window, since the page asks for the backend's status as it loads.
+  // Before the window, since the page asks for the backend's status and the auto-updater's as it loads.
   registerElectronProcessHandler();
+  registerAutoUpdaterHandler();
+  startAutoUpdaterChecks();
 
   createWindow();
 

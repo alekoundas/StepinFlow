@@ -97,32 +97,20 @@ breakers, how Electron reaches the backend, the scripts, F5, versions, the Relea
 
 ### 5.17. The update says what it is doing
 
-Decided 2026-11-01. electron-updater stays, with GitHub's latest release as its server: v0.1.1 is
-that release and its `latest.yml` is read. What it lacks is being seen. It checks once at start,
-writes nothing to `main.log`, downloads in silence and then interrupts with a native "Restart now?"
-box, and Yes shows NSIS's grey window while it installs. The shape is VS Code's: no popup, a place
-in the app that says downloading, ready or failed, and a restart that takes seconds.
+Decided 2026-11-01, built 2026-11-06 (`PROJECT.md` §2 Building and releasing): the auto-updater writing
+to `main.log`, the block in the rail and its icon on the narrow rail, Restart off while a flow is
+executing, the silent install, a check every 4 hours, the version and Check for updates at the bottom
+of Settings' list, and no portable target. Tested with the real `electron-updater`, preload and
+handlers against a fake update server, and each state rendered on its own, but never in an installed
+app. Left:
 
-- [ ] **The updater writes to `main.log`** (`autoUpdater.logger`): the check, what it found, the
-      download and every error. Nothing said the releases were drafts it could not see.
-- [ ] **A block in the rail, above Settings,** in the AI model card's style, shown only when there
-      is something to say. "Downloading 0.1.2" with a thin progress bar and "120 of 470 MB", from
-      `download-progress`. "0.1.2 is ready" with Restart to update, and "Or it installs when you
-      close StepinFlow" (`autoInstallOnAppQuit`, already on). "Update failed" with Try again, the
-      details in the log. The native dialog in `electron/main.ts` goes; main forwards the updater's
-      events to the window, and the preload exposes them and a restart call.
-- [ ] **On the narrow rail** of the flow and execution pages, only an icon: a ring while
-      downloading, a dot when ready, the words in its tooltip, and a click restarts once ready.
-- [ ] **Restart is off while a flow is executing**, "Stop or finish the execution first", because
-      a restart ends it.
-- [ ] **A silent install.** Restart calls `quitAndInstall(true, true)`: the app closes, installs and
-      reopens without the NSIS window. Only the first install still shows it.
-- [ ] **A check every few hours** as well as at start, since StepinFlow is left open all day for a
-      game flow.
-- [ ] **The portable target goes** from `win.target`. It never updates itself, unpacks 455 MB to a
-      temp folder on every start, and doubles each release's upload. A release keeps the Setup exe,
-      its `.blockmap` and `latest.yml`; the blockmap is what lets an update download only what
-      changed.
+- [ ] **Try it across two real releases.** The release that ships this is still installed by the old
+      code, through the native "Restart now?" box. The block first appears on the update after that.
+      Check that the download shows, Restart closes, installs and reopens the app on the new version,
+      and that closing instead installs it too.
+- [ ] **Time the silent restart.** It was meant to take seconds, but it unpacks a 470 MB installer with
+      nothing on screen, and that has never been measured. If it is too long, show NSIS's window
+      again (`quitAndInstall(false, true)`) or take Velopack, below.
 - [ ] **On macOS and Linux.** The block works the same on macOS once the app is signed, since
       Squirrel.Mac refuses an unsigned update. On Linux only an AppImage updates itself, so a deb or
       rpm install gets "0.1.2 is out" with a link instead.

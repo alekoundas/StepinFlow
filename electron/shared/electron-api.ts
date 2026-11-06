@@ -8,6 +8,7 @@ import type {
   OverlayCaptureResult,
   ResultDto,
   SignalReadyResponse,
+  AutoUpdaterStatus,
 } from "./types.js";
 
 /**
@@ -32,6 +33,15 @@ export interface ElectronApi {
     getId: () => Promise<number>;
     // Closes StepinFlow and opens it again.
     relaunch: () => Promise<void>;
+  };
+
+  // The installed app's auto-updater. A page asks as it loads, then is told of each change.
+  autoUpdater: {
+    getStatus: () => Promise<AutoUpdaterStatus>;
+    onStatusChange: (callback: (status: AutoUpdaterStatus) => void) => () => void;
+    check: () => Promise<void>;
+    // Closes StepinFlow, installs the downloaded version and opens it again.
+    restart: () => Promise<void>;
   };
 
   overlay: {

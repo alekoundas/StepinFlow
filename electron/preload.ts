@@ -10,6 +10,7 @@ type IpcBroadcastMessage<T> =
   import("./shared/types.js").IpcBroadcastMessage<T>;
 type ResultDto<T> = import("./shared/types.js").ResultDto<T>;
 type BackendStatus = import("./shared/types.js").BackendStatus;
+type AutoUpdaterStatus = import("./shared/types.js").AutoUpdaterStatus;
 type SignalReadyResponse = import("./shared/types.js").SignalReadyResponse;
 type OverlayCaptureResult = import("./shared/types.js").OverlayCaptureResult;
 type ImageEditorOpenRequest =
@@ -31,6 +32,12 @@ const IPC_CHANNELS = {
   // ========== Electron process channels ==========
   ELECTRON_PROCESS_GET_ID: "ELECTRON_PROCESS_GET_ID",
   ELECTRON_PROCESS_RELAUNCH: "ELECTRON_PROCESS_RELAUNCH",
+
+  // ========== Auto-updater channels ==========
+  AUTO_UPDATER_STATUS_GET: "AUTO_UPDATER_STATUS_GET",
+  AUTO_UPDATER_STATUS_CHANGED: "AUTO_UPDATER_STATUS_CHANGED",
+  AUTO_UPDATER_CHECK: "AUTO_UPDATER_CHECK",
+  AUTO_UPDATER_RESTART: "AUTO_UPDATER_RESTART",
 
   // ========== Overlay (Search-area)  channels ==========
   OVERLAY_OPEN_CAPTURE_WINDOW: "OVERLAY_OPEN_CAPTURE_WINDOW",
@@ -99,6 +106,26 @@ const api: ElectronApi = {
       ipcRenderer.invoke(IPC_CHANNELS.ELECTRON_PROCESS_GET_ID),
     relaunch: (): Promise<void> =>
       ipcRenderer.invoke(IPC_CHANNELS.ELECTRON_PROCESS_RELAUNCH),
+  },
+
+  autoUpdater: {
+    getStatus: (): Promise<AutoUpdaterStatus> =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTO_UPDATER_STATUS_GET),
+
+    onStatusChange: (callback: (status: AutoUpdaterStatus) => void): (() => void) => {
+      const listener = (_: any, status: AutoUpdaterStatus) => {
+        callback(status);
+      };
+
+      ipcRenderer.on(IPC_CHANNELS.AUTO_UPDATER_STATUS_CHANGED, listener);
+
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.AUTO_UPDATER_STATUS_CHANGED, listener);
+      };
+    },
+
+    check: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.AUTO_UPDATER_CHECK),
+    restart: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.AUTO_UPDATER_RESTART),
   },
 
   overlay: {

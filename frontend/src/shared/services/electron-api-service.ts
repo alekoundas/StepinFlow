@@ -3,6 +3,7 @@ import type { Rectangle } from "electron";
 import type {
   ImageEditorOpenRequest,
   ImageEditorResult,
+  AutoUpdaterStatus,
 } from "../../../../electron/shared/types";
 
 // window.electronApi is declared once in shared/services/electron-api.service.ts, against the same
@@ -12,6 +13,14 @@ export const ElectronApiService = {
 
   electronProcess: {
     relaunch: () => window.electronApi.electronProcess.relaunch(),
+  },
+
+  autoUpdater: {
+    getStatus: () => window.electronApi.autoUpdater.getStatus(),
+    onStatusChange: (callback: (status: AutoUpdaterStatus) => void) =>
+      window.electronApi.autoUpdater.onStatusChange(callback),
+    check: () => window.electronApi.autoUpdater.check(),
+    restart: () => window.electronApi.autoUpdater.restart(),
   },
 
   overlay: {

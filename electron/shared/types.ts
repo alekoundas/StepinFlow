@@ -42,6 +42,34 @@ export interface BackendStatus {
   logPath: string;
 }
 
+export const AutoUpdaterStateEnum = {
+  // Started from source, so there is no installer to update.
+  UNAVAILABLE: "UNAVAILABLE",
+  NOT_CHECKED: "NOT_CHECKED",
+  CHECKING: "CHECKING",
+  UP_TO_DATE: "UP_TO_DATE",
+  DOWNLOADING: "DOWNLOADING",
+  READY: "READY",
+  FAILED: "FAILED",
+} as const;
+export type AutoUpdaterStateEnum =
+  (typeof AutoUpdaterStateEnum)[keyof typeof AutoUpdaterStateEnum];
+
+export interface AutoUpdaterStatus {
+  state: AutoUpdaterStateEnum;
+  currentVersion: string;
+  // Whether someone asked for this check, rather than the timer.
+  isAskedCheck: boolean;
+  // The version found. Empty until one is.
+  version: string;
+  // Only what has to be fetched, which is less than the installer when just part of it changed.
+  // Both are 0 until the first bytes arrive.
+  transferredBytes: number;
+  totalBytes: number;
+  // Where the reason for a failure is. Empty until one.
+  logPath: string;
+}
+
 export interface MonitorInfo {
   deviceId: string;
   logicalBounds: Electron.Rectangle;

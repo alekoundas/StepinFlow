@@ -349,6 +349,20 @@ checks the tag has one release holding that file, the installer it names and the
 blockmap, because electron-builder reports success either way. Publishing the draft is the release.
 It is unsigned, so Windows SmartScreen warns on install.
 
+**The auto-updater** is `electron/ipc/services/auto-updater-service.ts`, around `electron-updater`. It
+checks at start and every 4 hours against GitHub's latest published release, so a draft is invisible
+to it. A newer version downloads by itself, as the still-packed Setup exe, into
+`%LOCALAPPDATA%\stepinflow-updater\pending`, fetching only what changed when the blockmap allows it.
+The rail says so only while there is something to say (`AutoUpdaterRailBlockComponent`): downloading
+with its progress, ready with Restart to update, failed with Try again and the log. On the narrow rail
+it is one icon with the words in its tooltip. Restart is off while a flow is executing. It starts the
+installer silently and the installer opens the app again; otherwise the installer starts silently when
+the app closes, and the app stays closed. The bottom of Settings' section list shows the version and
+has Check for updates. A failed check nobody asked for says nothing, since it usually means the
+machine is offline, and all of it goes to `main.log`. Started from source the version reads `dev` and
+there is nothing to check. macOS needs the app signed first, since Squirrel.Mac refuses an unsigned
+update, and on Linux only an AppImage updates itself.
+
 **The icon** is `win.icon` in `package.json`, naming one of the colour schemes in `assets/logo/`.
 Each has the logo as SVG, a simpler SVG for small sizes, a PNG, and an `.ico` that uses the simpler
 drawing at 24 px and under. macOS and Linux would point `mac.icon` and `linux.icon` at the same

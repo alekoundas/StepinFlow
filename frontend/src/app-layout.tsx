@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { Tooltip } from "primereact/tooltip";
 
+import AutoUpdaterRailBlockComponent from "@/features/auto-updater/components/AutoUpdaterRailBlockComponent";
 import AiChatPanelComponent from "@/features/ai/components/AiChatPanelComponent";
 import { useAiChatEvents } from "@/features/ai/hooks/use-ai-chat";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
@@ -103,6 +104,8 @@ export default function AppLayout() {
         </button>
 
         <div className="flex-grow-1" />
+
+        <AutoUpdaterRailBlockComponent isNarrow={isNarrow} />
 
         <NavItemComponent
           to="/settings"

@@ -19,9 +19,9 @@ export function registerElectronProcessHandler(): void {
   ipcMain.handle(IPC_CHANNELS.BACKEND_STATUS_GET, (): BackendStatus => getBackendStatus());
 
   ipcMain.handle(IPC_CHANNELS.ELECTRON_PROCESS_RELAUNCH, (): void => {
-    // A portable build and an AppImage unpack to a folder that goes when this process does, so
-    // those are started from the file the user opened.
-    app.relaunch({ execPath: process.env.PORTABLE_EXECUTABLE_FILE ?? process.env.APPIMAGE });
+    // An AppImage unpacks to a folder that goes when this process does, so it is started from the
+    // file the user opened.
+    app.relaunch({ execPath: process.env.APPIMAGE });
     app.exit(0);
   });
 }

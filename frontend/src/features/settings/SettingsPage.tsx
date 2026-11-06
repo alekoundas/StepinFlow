@@ -7,6 +7,7 @@ import DiscordBotsPanelComponent from "@/features/settings/components/DiscordBot
 import HotkeysPanelComponent from "@/features/settings/components/HotkeysPanelComponent";
 import AiSettingsPanelComponent from "@/features/settings/components/AiSettingsPanelComponent";
 import RepositoryPanelComponent from "@/features/settings/components/RepositoryPanelComponent";
+import AppVersionComponent from "@/features/auto-updater/components/AppVersionComponent";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -114,26 +115,32 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex align-items-start gap-5">
-        <nav
-          aria-label="Settings sections"
-          className="flex flex-column flex-none gap-1"
+        <div
+          className="flex-none"
           style={{ width: 220, position: "sticky", top: 16 }}
         >
-          {SECTIONS.map((x) => (
-            <NavLink
-              key={x.path}
-              to={`/settings/${x.path}`}
-              className="flex align-items-center gap-2 border-round-lg no-underline"
-              style={({ isActive }) => itemStyle(isActive)}
-            >
-              <i
-                className={`pi pi-${x.icon}`}
-                aria-hidden="true"
-              />
-              {x.label}
-            </NavLink>
-          ))}
-        </nav>
+          <nav
+            aria-label="Settings sections"
+            className="flex flex-column gap-1"
+          >
+            {SECTIONS.map((x) => (
+              <NavLink
+                key={x.path}
+                to={`/settings/${x.path}`}
+                className="flex align-items-center gap-2 border-round-lg no-underline"
+                style={({ isActive }) => itemStyle(isActive)}
+              >
+                <i
+                  className={`pi pi-${x.icon}`}
+                  aria-hidden="true"
+                />
+                {x.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <AppVersionComponent />
+        </div>
 
         {/* Keyed, so two sections built from the same panel never share its state. */}
         <div

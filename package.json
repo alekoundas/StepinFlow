@@ -48,8 +48,7 @@
     "win": {
       "icon": "assets/logo/all-indigo/icon.ico",
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "publish": {

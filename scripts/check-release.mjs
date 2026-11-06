@@ -8,7 +8,7 @@ const RELEASES = `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/
 const installer = readFileSync("release/latest.yml", "utf8").match(/^path: (.+)$/m)?.[1];
 if (!installer) throw new Error("release/latest.yml names no installer.");
 
-// What the updater reads. The portable is left out: it never updates itself.
+// What the updater reads.
 const NEEDED = ["latest.yml", installer, `${installer}.blockmap`];
 
 const response = await fetch(RELEASES, {
