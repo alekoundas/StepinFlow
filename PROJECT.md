@@ -342,8 +342,18 @@ Electron's version for the updater comes from it, and `App.csproj` reads it as
 `$(npm_package_version)` for the backend's. Patch is fixes with the script unchanged, minor is
 anything new - a script word an older app cannot read included - and major is something that stops
 working. The workflow runs the backend tests and the type checks, builds, tags the commit it built,
-and publishes a draft release with the `latest.yml` that `electron-updater` reads. Publishing the
-draft is the release. It is unsigned, so Windows SmartScreen warns on install.
+creates the draft release, and has electron-builder upload to it, with the `latest.yml` that
+`electron-updater` reads. The draft comes first because electron-builder starts two uploads at once
+and each creates a draft when it finds none, which splits the files between them. The workflow then
+checks the tag has one release holding that file, the installer it names and the installer's
+blockmap, because electron-builder reports success either way. Publishing the draft is the release.
+It is unsigned, so Windows SmartScreen warns on install.
+
+**The icon** is `win.icon` in `package.json`, naming one of the colour schemes in `assets/logo/`.
+Each has the logo as SVG, a simpler SVG for small sizes, a PNG, and an `.ico` that uses the simpler
+drawing at 24 px and under. macOS and Linux would point `mac.icon` and `linux.icon` at the same
+folder. The startup screen and the favicon use `frontend/public/logo.svg`, the README uses
+`docs/images/logo.png`, and the rail draws the small one in the theme's colour.
 
 Per-RID publishing is not avoidable here even in principle — the native dependencies (OpenCV,
 libuiohook) ship different binaries per platform, so there is no single artifact that runs on both.

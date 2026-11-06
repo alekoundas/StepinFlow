@@ -9,11 +9,11 @@ export default defineConfig({
   base: "./", // crucial for Electron (relative paths)
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "../src"),
+      "@": path.resolve(import.meta.dirname, "../src"),
     },
   },
   build: {
-    outDir: path.resolve(__dirname, "../../dist/frontend"),
+    outDir: path.resolve(import.meta.dirname, "../../dist/frontend"),
     emptyOutDir: true, // clean before build
     sourcemap: true,
     rolldownOptions: {},

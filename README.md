@@ -1,9 +1,6 @@
 <div align="center">
 
-<!-- SCREENSHOT 1 — optional logo. 120x120 PNG, transparent background.
-     Put it at docs/images/logo.png and uncomment:
 <img src="docs/images/logo.png" width="120" height="120" alt="StepinFlow">
--->
 
 # StepinFlow
 
@@ -311,6 +308,7 @@ publishing it.
 | [SampleFlow.approved.sflw](backend/Tests/Business.Tests/FlowScript/SampleFlow.approved.sflw) | A flow script using most of the grammar, checked by a test |
 | [PLAN.md](PLAN.md) | What is left to build, in order |
 | [mockup/](mockup/) | The screens the UI is being built towards: a copy of the design canvas, and [every screen in one picture](mockup/mockup.png) |
+| [assets/logo/](assets/logo/) | The logo in its colour schemes |
 | [TODO.md](TODO.md) | Everything deferred |
 
 ---
