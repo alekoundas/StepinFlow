@@ -131,7 +131,6 @@ namespace Business.Tests.FlowScript
             new Printer().Write(schema).ShouldContain("Disabled Wait            800ms");
         }
 
-        // Every file from before the word.
         [Fact]
         public void A_step_with_no_word_before_its_line_is_enabled()
         {
@@ -159,33 +158,24 @@ namespace Business.Tests.FlowScript
             printed.ShouldNotContain("then force");
         }
 
-        // Written before these lines had a name, and the import names the step.
+        // The name comes first, because a check or typed text reads a command by it.
         [Theory]
         [InlineData("Launch          opens <[ App ]>")]
         [InlineData("Launch          <[ app.exe ]>")]
         [InlineData("Shell           KILL_PROCESS <[ app.exe ]>")]
         [InlineData("Shell           <[ cleanup.bat ]>")]
         [InlineData("Sub Flow        <[ Checkout ]>")]
-        public void A_line_from_before_the_name_reads_with_none(string line)
+        public void A_line_without_its_name_is_refused(string line)
         {
-            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + line);
-
-            schema.Diagnostics.ShouldBeEmpty();
-            schema.Steps.Single().Name.ShouldBeEmpty();
+            new Scanner().Read(WithArea + line).Diagnostics.ShouldNotBeEmpty();
         }
 
-        // Before the Script Language line, a launch of an area carried its command line where the
-        // name now goes.
         [Fact]
-        public void A_quote_before_opens_is_a_command_line_only_in_a_file_without_the_language_line()
+        public void A_quote_before_opens_is_the_steps_name()
         {
-            string line = "Launch          <[ app.exe --quiet ]>   opens <[ App ]>";
+            FlowStep launch = new Scanner().Read(WithArea + "Launch          <[ Open it ]>   opens <[ App ]>").Steps.Single();
 
-            FlowStep before = new Scanner().Read(WithArea + line).Steps.Single();
-            FlowStep now = new Scanner().Read(LanguageLine(WithArea) + line).Steps.Single();
-
-            (before.Name, before.ShellArguments).ShouldBe((string.Empty, "--quiet"));
-            (now.Name, now.ShellArguments).ShouldBe(("app.exe --quiet", string.Empty));
+            (launch.Name, launch.FlowArea?.Name, launch.ShellArguments).ShouldBe(("Open it", "App", string.Empty));
         }
 
         private static string LanguageLine(string script)

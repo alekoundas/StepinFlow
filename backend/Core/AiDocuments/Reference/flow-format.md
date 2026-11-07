@@ -104,7 +104,7 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accu
 
 ## Check out
 
-Sub Flow  <[ Check out ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
+Sub Flow  <[ Pay for the order ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
 
 ---
@@ -154,9 +154,9 @@ make them one file: importing a file whose name a flow with another `Id` already
 
 `Kind` is what the flow is for: `automation` does a task, `qa test` checks an application works.
 Either can be followed by `sub-flow`, for a flow that other flows call rather than one started on
-its own: `Kind:    automation   sub-flow`. The line is always written. A file from before it has
-none, and importing that file over a flow keeps what the flow already was; a new flow from it is an
-automation. A sub-flow stays one even when a file says otherwise, because the flows that call it
+its own: `Kind:    automation   sub-flow`. The line is always written. A script written by hand may
+leave it out, and importing that script over a flow keeps what the flow already was; a new flow from
+it is an automation. A sub-flow stays one even when a file says otherwise, because the flows that call it
 point at it.
 
 ### Text is quoted with `<[` and `]>`
@@ -559,13 +559,7 @@ Shell    <[ Read it ]>          READ_CLIPBOARD <[  ]>
 ```
 
 **A `Launch` or `Shell` line starts with the step's name**, as a check does, because a check or typed
-text reads what a command printed by it: `<[ {{Read it}} ]>`. A file from before the name has none,
-and the import names the step for what it is: `Launch App` for a launch of an area, the preset for a
-command - `Read clipboard`, `Kill a process` - and `Command` for a command line of its own. A file
-from before an area said what starts it, and so with no `Script Language` line, has
-`Launch <[ command ]> opens <[ area ]>`: its program goes to the area, unless the area says already,
-and the rest become the arguments. A program other than the area's is the `LAUNCH_PROGRAM_DIFFERS`
-warning, and the area's starts.
+text reads what a command printed by it: `<[ {{Read it}} ]>`. A line without its name is refused.
 
 **A window step names the area of the window it acts on.** `Focus Window`, `Resize Window`,
 `Move Window` and `Close Window` take the name of a `window` area from the header, so a window is
@@ -669,16 +663,13 @@ Cleanup belongs above it, which is why it is a step and not a flag:
 ### Sub-flows
 
 ```
-Sub Flow  <[ Check out ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
+Sub Flow  <[ Pay for the order ]>   <[ Checkout ]>   id <[ 5d2a7c11-3f4e-4b8a-9c6d-0e1f2a3b4c5d ]>
 ```
 
-The step's name comes first, then the sub-flow it executes. A file from before the step's name has
-only the sub-flow's, and the import names the step after it. The line names the sub-flow by its
-name, for the reader, and by its `Id`, which finds it
-on another machine or branch even after either side renamed it. A line written by hand may leave
-the `id` out, and is matched by the name, which no two flows share. A file from before the `id`
-names the path it was exported to instead, `<[ flows/checkout.sflw ]>`, and is matched by that
-file's name. The flow it finds has to be a sub-flow: one that is not here, or is not a sub-flow,
+The step's name comes first, then the sub-flow it executes; a line without both is refused. The
+line names the sub-flow by its name, for the reader, and by its `Id`, which finds it on another
+machine or branch even after either side renamed it. A line written by hand may leave the `id` out,
+and is matched by the name, which no two flows share. The flow it finds has to be a sub-flow: one that is not here, or is not a sub-flow,
 leaves the step with nothing to execute, imported with a warning - `SUB_FLOW_UNKNOWN` or
 `SUB_FLOW_NOT_CALLABLE` - and the step's form says to pick one.
 
@@ -722,7 +713,7 @@ the loop above is skipped with it, and the last Click is executed. A step under 
 its own word or none, kept for when the one above is enabled again.
 
 A `Success:`, a `Failure:` or a `##` section executes nothing of its own, so the word in front of
-one is `TOKEN_UNEXPECTED`. A file from before the word has every step enabled.
+one is `TOKEN_UNEXPECTED`.
 
 It is the tester's switch. A revision keeps each `Disabled` as it found it and never adds one to get
 past a problem: a step that fails is reported, not switched off.

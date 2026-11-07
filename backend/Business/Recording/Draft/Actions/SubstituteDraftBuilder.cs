@@ -1,3 +1,4 @@
+using Business.Shell;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -21,6 +22,7 @@ namespace Business.Recording.Draft.Actions
                 case ReviewChoiceEnum.EXECUTE_COMMAND when command.Length > 0:
                     draft.Add(new FlowStep
                     {
+                        Name = draft.Name("Command"),
                         FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
                         ShellCommandMode = ShellCommandModeEnum.CUSTOM,
                         ShellCommandValue = command,
@@ -30,6 +32,7 @@ namespace Business.Recording.Draft.Actions
                 case ReviewChoiceEnum.LAUNCH_APP when command.Length > 0:
                     draft.Add(new FlowStep
                     {
+                        Name = draft.Name(ShellCommandModeCatalog.Get(ShellCommandModeEnum.LAUNCH_APP).Label),
                         FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
                         ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP,
                         ShellCommandValue = command,

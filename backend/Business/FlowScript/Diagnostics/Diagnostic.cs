@@ -32,9 +32,6 @@ namespace Business.FlowScript.Diagnostics
         // Comments: one with no step below it.
         COMMENT_UNATTACHED,
 
-        // A launch written before the area said what starts it, naming another program than the area's.
-        LAUNCH_PROGRAM_DIFFERS,
-
         // Names: one used before anything above declares it, one declared twice.
         NAME_UNKNOWN,
         NAME_DUPLICATE,

@@ -70,7 +70,6 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TEMPLATE_NOT_PNG, "Templates:\n  <[ logo ]> click 1 2" },
             { DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
-            { DiagnosticCodeEnum.LAUNCH_PROGRAM_DIFFERS, "Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ app.exe ]>\nSteps:\nLaunch <[ other.exe ]> opens <[ App ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nBreak out of <[ Itself ]>" },
@@ -131,7 +130,6 @@ namespace Business.Tests.FlowScript
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]
         [InlineData("Points:\n  <[ Origin ]> offset 1 2", "Unexpected \"offset\", expected \"inside\" or \"on screen\".")]
         [InlineData("Points:\n  <[ Origin ]> on screen offset 1 2 offset 3 4", "Unexpected \"offset\", expected \"at\" or the end of the line.")]
-        [InlineData("Steps:\nFocus Window process <[ chrome.exe ]>", "A window step names its window's area, such as \"Focus Window  <[ Browser ]>\", and the area under Areas says which window that is.")]
         public void A_mistake_says_what_could_have_stood_there(string body, string message)
         {
             Read(Header + body).ShouldHaveSingleItem().Message.ShouldBe(message);
@@ -223,7 +221,7 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void A_file_from_before_the_script_language_line_is_read_as_now()
+        public void A_file_without_the_script_language_line_is_read_as_now()
         {
             new Scanner().Read(Header + "Steps:\nWait 800ms").ScriptLanguageVersion.ShouldBe(1);
         }

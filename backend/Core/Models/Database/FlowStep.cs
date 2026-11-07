@@ -36,14 +36,12 @@ namespace Core.Models.Database
         // SYSTEM_COMMAND
         public ShellCommandModeEnum ShellCommandMode { get; set; }
         public ShellTypeEnum ShellType { get; set; }
+        public ShellResultSourceEnum ShellResultSource { get; set; }
 
         public string ShellCommandValue { get; set; } = string.Empty;
         public string ShellWorkingDirectory { get; set; } = string.Empty;
         public string ShellArguments { get; set; } = string.Empty;
-
-        /// <summary>Comma separated. Anything else runs the Failure children.</summary>
-        public string ShellSuccessExitCodes { get; set; } = "0";
-        public ShellResultSourceEnum ShellResultSource { get; set; }
+        public string ShellSuccessExitCodes { get; set; } = "0"; // Comma separated.
 
 
         // SYSTEM_ACTION

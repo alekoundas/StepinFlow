@@ -329,20 +329,18 @@ namespace Business.Tests.FlowScript
         {
             Flow checkout = SeedSubFlow("Checkout", isSubFlow: true);
 
-            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Pay ]>   id <[ {checkout.PublicId} ]>");
+            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Pay now ]>   <[ Pay ]>   id <[ {checkout.PublicId} ]>");
 
             imported.Warnings.ShouldBeEmpty();
             SubFlowIdOf(imported.FlowId).ShouldBe(checkout.Id);
         }
 
-        [Theory]
-        [InlineData("Sub Flow  <[ checkout ]>")]
-        [InlineData("Sub Flow  <[ flows/Checkout.sflw ]>")]
-        public async Task A_sub_flow_line_without_an_id_links_by_name_or_by_the_path_a_file_from_before_names(string line)
+        [Fact]
+        public async Task A_sub_flow_line_without_an_id_links_by_name()
         {
             Flow checkout = SeedSubFlow("Checkout", isSubFlow: true);
 
-            FlowScriptImportResultDto imported = await ImportCallerAsync(line);
+            FlowScriptImportResultDto imported = await ImportCallerAsync("Sub Flow  <[ Pay ]>   <[ checkout ]>");
 
             imported.Warnings.ShouldBeEmpty();
             SubFlowIdOf(imported.FlowId).ShouldBe(checkout.Id);
@@ -351,7 +349,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public async Task A_sub_flow_that_is_not_here_leaves_its_step_empty_with_a_warning()
         {
-            FlowScriptImportResultDto imported = await ImportCallerAsync("Sub Flow  <[ Checkout ]>");
+            FlowScriptImportResultDto imported = await ImportCallerAsync("Sub Flow  <[ Pay ]>   <[ Checkout ]>");
 
             imported.IsSuccess.ShouldBeTrue();
             FlowScriptErrorDto warning = imported.Warnings.ShouldHaveSingleItem();
@@ -365,7 +363,7 @@ namespace Business.Tests.FlowScript
         {
             Flow checkout = SeedSubFlow("Checkout", isSubFlow: false);
 
-            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Checkout ]>   id <[ {checkout.PublicId} ]>");
+            FlowScriptImportResultDto imported = await ImportCallerAsync($"Sub Flow  <[ Pay ]>   <[ Checkout ]>   id <[ {checkout.PublicId} ]>");
 
             imported.Warnings.ShouldHaveSingleItem().Code.ShouldBe(nameof(DiagnosticCodeEnum.SUB_FLOW_NOT_CALLABLE));
             SubFlowIdOf(imported.FlowId).ShouldBeNull();
@@ -401,7 +399,7 @@ namespace Business.Tests.FlowScript
             (flow.IsQaTest, flow.IsSubFlow).ShouldBe((true, true));
         }
 
-        // A file from before the line says nothing either way; a sub-flow stays one, since its callers point at it.
+        // A file with no line says nothing either way; a sub-flow stays one, since its callers point at it.
         [Fact]
         public async Task A_flow_keeps_its_kind_without_a_kind_line_and_stays_a_sub_flow_with_one()
         {

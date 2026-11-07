@@ -161,10 +161,9 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// Points each Sub Flow step of a script at the sub-flow it names: by Id, else by name, else -
-        /// for a file from before the Id - by the file name in its path. A step whose flow is not
-        /// here, or is not a sub-flow, is left without one and comes back as a warning naming it;
-        /// nothing is made a sub-flow on the file's word.
+        /// Points each Sub Flow step of a script at the sub-flow it names: by Id, else by name. A step
+        /// whose flow is not here, or is not a sub-flow, is left without one and comes back as a
+        /// warning naming it; nothing is made a sub-flow on the file's word.
         /// </summary>
         public async Task<List<Diagnostic>> LinkSubFlowsAsync(FlowScriptSchema schema, CancellationToken ct)
         {
@@ -288,7 +287,7 @@ namespace Business.Flows.DataService.DataHandlers
             flow.Description = schema.Flow.Description;
             flow.IsHidden = false;
 
-            // A file from before the Kind line keeps what the flow was. A sub-flow stays one: its
+            // A file with no Kind line keeps what the flow was. A sub-flow stays one: its
             // callers point at it, which is why making one is one way.
             if (schema.HasKind)
             {
@@ -321,7 +320,7 @@ namespace Business.Flows.DataService.DataHandlers
             dbContext.FlowViewports.AddRange(schema.Viewports);
             FlowAreaDataService.Add(dbContext, flow, schema.Areas);
             FlowPointDataService.Add(dbContext, flow, schema.Points);
-            FlowStepDataService.AddTree(dbContext, flow, schema.Steps, schema.SubFlows, TakenNames(schema));
+            FlowStepDataService.AddTree(dbContext, flow, schema.Steps, TakenNames(schema));
 
             // One save for the whole graph: EF inserts in dependency order and fills every key from
             // the links.
@@ -499,7 +498,7 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         // By Id first, since either side may have renamed it; then by the name, which no two flows
-        // share. A file from before the Id names the path it was exported to, flows/checkout.sflw.
+        // share.
         private static Flow? FindSubFlow(List<Flow> flows, SubFlowReference subFlow)
         {
             if (subFlow.PublicId != null)
@@ -509,13 +508,7 @@ namespace Business.Flows.DataService.DataHandlers
                     return byId;
             }
 
-            if (!subFlow.Name.EndsWith(".sflw", StringComparison.OrdinalIgnoreCase))
-                return flows.FirstOrDefault(x => string.Equals(x.Name, subFlow.Name, StringComparison.OrdinalIgnoreCase));
-
-            string path = subFlow.Name.Replace('\\', '/');
-            string fileName = Path.GetFileNameWithoutExtension(path);
-
-            return flows.FirstOrDefault(x => string.Equals(FileNameHelper.Clean(x.Name, "sub-flow"), fileName, StringComparison.OrdinalIgnoreCase));
+            return flows.FirstOrDefault(x => string.Equals(x.Name, subFlow.Name, StringComparison.OrdinalIgnoreCase));
         }
 
 

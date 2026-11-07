@@ -53,13 +53,9 @@ namespace Business.FlowScript.Text.Steps
         // Private methods
         // ================================================================
 
-        // A check or typed text reads what the command said by its name. Left out with none, and
-        // the import names it.
+        // A check or typed text reads what the command said by its name.
         private void WriteName()
         {
-            if (string.IsNullOrWhiteSpace(Step.Name))
-                return;
-
             WriteQuote(Step.Name);
             WriteGap();
         }

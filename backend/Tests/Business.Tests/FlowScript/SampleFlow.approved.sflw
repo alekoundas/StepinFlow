@@ -80,7 +80,7 @@ Resize Window   <[ Browser ]>   size 1280 720
 
 Move Window     <[ Browser ]>   to point <[ Origin ]>
 
-Launch          opens <[ Game client ]>
+Launch          <[ Launch Game client ]>   opens <[ Game client ]>
 
 Focus Window    <[ Game client ]>
 

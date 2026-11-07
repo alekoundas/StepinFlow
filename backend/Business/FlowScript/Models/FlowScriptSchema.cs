@@ -24,10 +24,10 @@ namespace Business.FlowScript.Models
         /// <summary>A sub-flow is another flow, which nothing in this file declares, so what each line names is kept for the import to find.</summary>
         public Dictionary<FlowStep, SubFlowReference> SubFlows { get; } = new Dictionary<FlowStep, SubFlowReference>();
 
-        /// <summary>Whether the file had a <c>Kind:</c> line. One from before it keeps what the flow already was.</summary>
+        /// <summary>Whether the file had a <c>Kind:</c> line. One without it keeps what the flow already was.</summary>
         public bool HasKind { get; set; }
 
-        /// <summary>From the <c>Script Language:</c> line. A file from before the line is read as now.</summary>
+        /// <summary>From the <c>Script Language:</c> line. A file without the line is read as now.</summary>
         public int ScriptLanguageVersion { get; set; } = ScriptLanguage.CURRENT_VERSION;
 
         public List<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();

@@ -217,7 +217,7 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_launch_of_an_area_is_read_with_its_arguments()
         {
-            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ \"C:\\Program Files\\App\\app.exe\" ]>\nSteps:\nLaunch opens <[ App ]> with <[ --profile test ]>");
+            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ \"C:\\Program Files\\App\\app.exe\" ]>\nSteps:\nLaunch <[ Open it ]> opens <[ App ]> with <[ --profile test ]>");
 
             schema.Diagnostics.ShouldBeEmpty();
             schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
@@ -225,26 +225,16 @@ namespace Business.Tests.FlowScript
             (launch.FlowArea?.Name, launch.ShellArguments, launch.ShellCommandValue).ShouldBe(("App", "--profile test", ""));
         }
 
-        // Written before an area said what starts it, a launch of one carried its whole command line.
+        // Empty rather than left out, so the line still reads and the validation can say so.
         [Fact]
-        public void An_old_launch_gives_its_area_its_program_and_keeps_the_rest_as_its_arguments()
+        public void A_launch_with_no_name_is_written_with_an_empty_one()
         {
-            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]>\nSteps:\nLaunch <[ \"C:\\Program Files\\App\\app.exe\" --profile test ]> opens <[ App ]>");
+            FlowStep step = new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, ShellCommandValue = "app.exe" };
+
+            FlowScriptSchema schema = Read("Steps:\n" + new SystemCommandWriter(step).Write());
 
             schema.Diagnostics.ShouldBeEmpty();
-            schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
-            FlowStep launch = schema.Steps.Single();
-            (launch.ShellArguments, launch.ShellCommandValue).ShouldBe(("--profile test", ""));
-        }
-
-        [Fact]
-        public void An_old_launch_of_another_program_than_its_areas_is_warned_about()
-        {
-            FlowScriptSchema schema = Read("Areas:\n  <[ App ]> window process <[ app.exe ]> started by <[ app.exe ]>\nSteps:\nLaunch <[ other.exe --quiet ]> opens <[ App ]>");
-
-            Diagnostic warning = schema.Diagnostics.ShouldHaveSingleItem();
-            (warning.Code, warning.Severity).ShouldBe((DiagnosticCodeEnum.LAUNCH_PROGRAM_DIFFERS, DiagnosticSeverityEnum.WARNING));
-            schema.Steps.Single().ShellArguments.ShouldBe("--quiet");
+            (schema.Steps.Single().Name, schema.Steps.Single().ShellCommandValue).ShouldBe((string.Empty, "app.exe"));
         }
 
         // ================================================================
@@ -266,7 +256,7 @@ namespace Business.Tests.FlowScript
         }
 
         [Fact]
-        public void A_file_from_before_the_kind_line_says_it_has_none()
+        public void A_file_with_no_kind_line_says_it_has_none()
         {
             Read("Steps:\nWait 800ms").HasKind.ShouldBeFalse();
         }

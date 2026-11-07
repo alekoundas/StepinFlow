@@ -520,6 +520,7 @@ namespace Business.Tests.Recording
                 (FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.CUSTOM, "del /q C:\\Exports\\*.csv"),
                 (FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.LAUNCH_APP, "notepad.exe"),
             ]);
+            added.Select(x => x.Name).ShouldBe(["Command", "Launch an app"]);
         }
 
         [Fact]

@@ -140,7 +140,6 @@ namespace Business.FlowScript.Parsers
             {
                 case ScriptSymbolEnum.FLOWFIELD_SCRIPT_LANGUAGE:
                     _flowScriptSchema.ScriptLanguageVersion = new ScriptLanguageParser(line.Tokens).Parse();
-                    _scope.IsLanguageDeclared = true;
                     break;
 
                 case ScriptSymbolEnum.FLOWFIELD_NAME:

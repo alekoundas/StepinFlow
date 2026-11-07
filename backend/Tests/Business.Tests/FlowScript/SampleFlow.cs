@@ -100,7 +100,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowArea = browser, FlowPoint = origin }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = gameClient }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 

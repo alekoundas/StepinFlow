@@ -1,5 +1,4 @@
 using Business.FlowScript.Catalogs;
-using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models.Text;
 using Core.Enums;
 using Core.Models.Database;
@@ -45,18 +44,6 @@ namespace Business.FlowScript.Parsers
             return (null, ExtractStepReference());
         }
 
-        // <[ x ]> when the line has one here, or null.
-        protected string? ExtractOptionalQuote()
-        {
-            if (!ExpectOptionalKeyword(ScriptSymbolEnum.QUOTE_OPEN))
-                return null;
-
-            string text = ExtractText();
-            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
-
-            return text;
-        }
-
         // <[ a step ]>
         protected FlowStep? ExtractStepReference()
         {
@@ -97,14 +84,6 @@ namespace Business.FlowScript.Parsers
         // <[ Browser ]>, the window area the step acts on, or nowhere - a step saved with none.
         protected FlowArea? ExtractWindowArea()
         {
-            // Before 2026-10-26 a window step described its window itself.
-            ScriptToken process = CurrentToken;
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.PROCESS))
-            {
-                throw new ScriptSyntaxException(Diagnostic.Error(DiagnosticCodeEnum.TOKEN_UNEXPECTED, process.Line, process.Column,
-                    "A window step names its window's area, such as \"Focus Window  <[ Browser ]>\", and the area under Areas says which window that is."));
-            }
-
             if (ExpectOptionalKeyword(ScriptSymbolEnum.NOWHERE))
                 return null;
 

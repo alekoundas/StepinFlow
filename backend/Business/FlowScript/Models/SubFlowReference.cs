@@ -2,8 +2,7 @@ namespace Business.FlowScript.Models
 {
     /// <summary>
     /// The flow a <c>Sub Flow</c> line calls, as the file names it: by name, and by Id when the line
-    /// has one. A line a person or a model wrote may leave the Id out, and a file from before the Id
-    /// names a path instead, such as <c>flows/checkout.sflw</c>.
+    /// has one. A line a person or a model wrote may leave the Id out.
     /// </summary>
     public sealed class SubFlowReference
     {

@@ -1,6 +1,4 @@
-using Business.Shell;
 using Business.Flows.FlowValidationService;
-using Business.FlowScript.Models;
 using Business.Repository;
 using Core.Enums;
 using Core.Helpers;
@@ -321,9 +319,8 @@ namespace Business.Flows.DataService.DataHandlers
         /// templates. A check the file wrote with an empty branch left out still gets both branch
         /// rows, so there is somewhere to add steps under it. The file names no branch and no step
         /// its settings name, so those are named here, the steps apart from the names already taken.
-        /// So is a launch, command or sub-flow from a file older than the name on its line.
         /// </summary>
-        public static void AddTree(AppDbContext dbContext, Flow flow, IReadOnlyList<FlowStep> steps, IReadOnlyDictionary<FlowStep, SubFlowReference> subFlows, HashSet<string> taken)
+        public static void AddTree(AppDbContext dbContext, Flow flow, IReadOnlyList<FlowStep> steps, HashSet<string> taken)
         {
             foreach (FlowStep step in steps)
             {
@@ -331,14 +328,10 @@ namespace Business.Flows.DataService.DataHandlers
                 if (step.ParentFlowStep == null)
                     step.FlowId = flow.Id;
 
-                bool isUnwritten = step.FlowStepType == FlowStepTypeEnum.SYSTEM_COMMAND || step.FlowStepType == FlowStepTypeEnum.SUB_FLOW;
-
                 if (TreeStepHelper.IsBranchChild(step.FlowStepType))
                     step.Name = TreeStepHelper.BranchName(step.FlowStepType);
                 else if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
                     step.Name = UniqueName(FlowStepNameHelper.NameOf(step), taken);
-                else if (isUnwritten && string.IsNullOrWhiteSpace(step.Name))
-                    step.Name = UniqueName(UnwrittenName(step, subFlows), taken);
             }
 
             // The script names each picture once, so the steps that search for it share one row.
@@ -574,24 +567,6 @@ namespace Business.Flows.DataService.DataHandlers
 
             foreach (FlowStep child in flowSteps.Where(x => x.ParentFlowStepId == step.Id).OrderBy(x => x.OrderNumber))
                 AddWithChildren(flowSteps, child, copy);
-        }
-
-        // Named for the flow it executes, the window it opens, or the mode it is.
-        private static string UnwrittenName(FlowStep step, IReadOnlyDictionary<FlowStep, SubFlowReference> subFlows)
-        {
-            if (subFlows.TryGetValue(step, out SubFlowReference? subFlow) && !string.IsNullOrWhiteSpace(subFlow.Name))
-                return subFlow.Name;
-
-            if (step.FlowStepType == FlowStepTypeEnum.SUB_FLOW)
-                return "Sub-flow";
-
-            if (step.FlowArea != null)
-                return $"Launch {step.FlowArea.Name}";
-
-            if (step.ShellCommandMode == ShellCommandModeEnum.CUSTOM)
-                return "Command";
-
-            return ShellCommandModeCatalog.Get(step.ShellCommandMode).Label;
         }
 
         // What a step named by its settings is called, whatever name it came with.

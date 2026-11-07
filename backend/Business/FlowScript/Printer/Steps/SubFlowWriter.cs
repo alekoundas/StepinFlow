@@ -20,13 +20,8 @@ namespace Business.FlowScript.Text.Steps
             WriteKeyword(FlowStepTypeEnum.SUB_FLOW);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
 
-            // Left out with none, and the import names it after the flow it executes.
-            if (!string.IsNullOrWhiteSpace(Step.Name))
-            {
-                WriteQuote(Step.Name);
-                WriteGap();
-            }
-
+            WriteQuote(Step.Name);
+            WriteGap();
             WriteQuote(_subFlow?.Name ?? string.Empty);
 
             // The Id is what finds it on another machine or branch; the name is for the reader.

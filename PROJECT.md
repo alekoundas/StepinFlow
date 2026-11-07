@@ -1523,11 +1523,7 @@ where a QA test's fresh profile and window size go. A launch with no area keeps 
 line in `ShellCommandValue`, `Launch <[ Open the notes ]> <[ notepad.exe notes.txt ]>`: two columns,
 each meaning one thing, rather than one whose meaning turned on the area. The form shows the one that
 applies and empties the other on save. An area started by a link takes no arguments
-(`LAUNCH_ARGUMENTS_ON_LINK`), since Steam passes a game's its own way. An old
-`Launch <[ command ]> opens <[ area ]>`, in a file with no `Script Language` line, is read the new
-way: its program goes to the area unless the area says already, the rest become its arguments, and a
-program other than the area's is the `LAUNCH_PROGRAM_DIFFERS` warning. With the line, that quote is
-the step's name. Picking an open app fills it in
+(`LAUNCH_ARGUMENTS_ON_LINK`), since Steam passes a game's its own way. Picking an open app fills it in
 (`Lookup.launchCommand`, `LaunchCommandHelper`): the program file, or `steam://rungameid/<id>` when
 the program sits in a Steam library, the id read from the `appmanifest_<id>.acf` that names its
 folder, since a Steam game's program started on its own restarts through Steam or refuses. A library
@@ -2149,10 +2145,9 @@ the newest. A file in a newer version stops at that line with `SCRIPT_LANGUAGE_N
 the version it needs and the one this app reads up to, rather than reading on into a page of errors
 about words it has never heard of. Reading forwards only is the usual rule for documents, and the
 right one here: the parser refuses a word it does not know, and a script that drives the mouse is
-better refused than half understood. A file without the line is from before it and is read as v1,
-the old forms read today included; from v2 on, a converter checks the version rather than the
-shape of a line. One shape already needs the line: `Launch <[ x ]> opens <[ area ]>` is a command
-line in a file without it and the step's name in a file with it (`ScriptScope.IsLanguageDeclared`).
+better refused than half understood. A file without the line is read as v1; from v2 on, a converter
+checks the version rather than the shape of a line. Forms from before the first release are not
+read: no saved flow used them when they went, on 2026-11-07.
 
 ### Every step a line can point at carries its name
 
@@ -2160,10 +2155,9 @@ A line is named when anything can refer to its step, or when nothing about its s
 it: searches, checks, loops, stage markers, `Launch` and `Shell` (a check or typed text reads what a
 command printed, `{{Read it}}`), and `Sub Flow`. A step named by its settings - a click, a wait, an
 `End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Shell` and `Sub Flow`
-wrote none before 2026-11-01, and an empty name is still left out: the import names such a step
-`Launch <area>`, the mode (`Read clipboard`), `Command`, or the sub-flow it executes
-(`FlowStepDataService.AddTree`), and the `NameUnnamedSteps` migration named the ones saved that way.
-Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
+always write theirs, an empty one as `<[  ]>`, and a line without it is refused. A recording names
+the ones it adds (`SubstituteDraftBuilder`), and the `NameUnnamedSteps` migration named the ones
+saved without one. Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
 file called that, and the file did not import back. `Notify` writes the step whose result it
 includes, `with result of <[ … ]>`; it did not before, and an export lost the pick.
 

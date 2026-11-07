@@ -20,14 +20,9 @@ namespace Business.FlowScript.Parsers.Steps
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            // A file from before the line had a name wrote only the sub-flow's, and the import names
-            // the step after it.
-            Flow subFlow = new Flow() { Name = name, PublicId = Guid.Empty };
-            string? called = ExtractOptionalQuote();
-            if (called == null)
-                name = string.Empty;
-            else
-                subFlow.Name = called;
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            Flow subFlow = new Flow() { Name = ExtractText(), PublicId = Guid.Empty };
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.ID))
             {

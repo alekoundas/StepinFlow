@@ -25,12 +25,6 @@ namespace Business.FlowScript.Parsers
             _diagnostics = diagnostics;
         }
 
-        /// <summary>
-        /// Whether the file has a <c>Script Language:</c> line. One from before it can say what a
-        /// line now says differently.
-        /// </summary>
-        public bool IsLanguageDeclared { get; set; }
-
 
         // ================================================================
         // Public methods - declaring
@@ -126,12 +120,6 @@ namespace Business.FlowScript.Parsers
             Report(DiagnosticCodeEnum.TEMPLATE_UNKNOWN, at, $"\"{fileName}\" has no line under Templates above, so nothing says where it is clicked.");
 
             return null;
-        }
-
-        /// <summary>Something the file still imports with, said beside the result.</summary>
-        public void Warn(DiagnosticCodeEnum code, ScriptToken at, string message)
-        {
-            _diagnostics.Add(Diagnostic.Warning(code, at.Line, at.Column, message));
         }
 
 
