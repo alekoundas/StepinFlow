@@ -2410,6 +2410,16 @@ Every entity form is a pair — `XFormComponent` (React Hook Form setup, header,
 > already cost one debugging session: a form typechecked, looked correct, and quietly discarded two
 > new columns because the schema had not been updated.
 
+**Adding a step.** The + in the tree opens `FlowStepPickerComponent`: every type in `FLOW_STEP_CATALOG`
+but the two branches, in five sections by the tree's groups - Look at the screen, Mouse and keyboard,
+Flow control, Windows, System - each entry wearing its tree row's left edge, tint and icon square. The
+catalog is the one list of types: its order is the picker's, and each entry carries the sentence under
+its label and the other words the search finds it by. The search has the focus as it opens. Every word
+typed has to be in an entry's label, sentence or those words; Enter adds the marked entry - a label
+that starts with what was typed, else the first shown - and the arrows move the mark. Each cursor and
+window type is an entry of its own and opens the form they share in that mode. A type created with
+Success and Failure says "branches". Recent is the last three types picked, kept in `localStorage`.
+
 **A step's form** puts its fields inside `FlowStepFormLayoutComponent`, the mockup's "Step forms"
 boards. It reads the values on the form and draws the rest, so no form repeats it:
 

@@ -5,8 +5,7 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
  * deliberately neutral: WAIT and LOOP are the most common steps in any flow, and colouring them
  * would drown out the steps that actually act.
  *
- * This is the per type source the tree reads. The "add a step" picker keeps its own list because
- * it offers entry points rather than types: one Cursor card covers all four cursor types.
+ * The one list of step types: the tree, the forms and the "add a step" picker all read it.
  */
 export const FlowStepGroupEnum = {
   CONTROL: "CONTROL",
@@ -25,157 +24,210 @@ export interface FlowStepCatalogEntry {
   group: FlowStepGroupEnum;
   label: string;
   iconName: string;
+
+  /** The picker's line under the label: what it does, in a sentence. */
+  description: string;
+
+  /** Other words the picker's search finds it by, beyond its label and description. */
+  searchWords: string;
 }
 
+/** In the picker's order: by group, the most used first. */
 export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
-  // ── Control ──
-  {
-    flowStepType: FlowStepTypeEnum.WAIT,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Wait",
-    iconName: "clock",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.LOOP,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Loop",
-    iconName: "refresh",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.BREAK,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Break",
-    iconName: "sign-out",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.SUB_FLOW,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Sub-Flow",
-    iconName: "sitemap",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.CHECK_VALUE,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Check Value",
-    iconName: "filter",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.END_EXECUTION,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "End Execution",
-    iconName: "stop-circle",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.STAGE_MARKER,
-    group: FlowStepGroupEnum.CONTROL,
-    label: "Stage Marker",
-    iconName: "bookmark",
-  },
-
-  // ── Input ──
-  {
-    flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
-    group: FlowStepGroupEnum.INPUT,
-    label: "Cursor Click",
-    iconName: "bullseye",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
-    group: FlowStepGroupEnum.INPUT,
-    label: "Cursor Drag & Drop",
-    iconName: "arrows-alt",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
-    group: FlowStepGroupEnum.INPUT,
-    label: "Cursor Scroll",
-    iconName: "sort-alt",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
-    group: FlowStepGroupEnum.INPUT,
-    label: "Cursor Relocate",
-    iconName: "map-marker",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.KEYBOARD_INPUT,
-    group: FlowStepGroupEnum.INPUT,
-    label: "Keyboard Input",
-    iconName: "pencil",
-  },
-
-  // ── Window ──
-  {
-    flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
-    group: FlowStepGroupEnum.WINDOW,
-    label: "Window Focus",
-    iconName: "window-maximize",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.WINDOW_RESIZE,
-    group: FlowStepGroupEnum.WINDOW,
-    label: "Window Resize",
-    iconName: "expand",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.WINDOW_RELOCATE,
-    group: FlowStepGroupEnum.WINDOW,
-    label: "Window Relocate",
-    iconName: "directions",
-  },
-  {
-    flowStepType: FlowStepTypeEnum.WINDOW_CLOSE,
-    group: FlowStepGroupEnum.WINDOW,
-    label: "Window Close",
-    iconName: "window-minimize",
-  },
-
   // ── Perception ──
   {
     flowStepType: FlowStepTypeEnum.SEARCH_IMAGE,
     group: FlowStepGroupEnum.PERCEPTION,
     label: "Search Image",
     iconName: "search",
+    description: "Find a template image, or wait for it. Cursor steps can go where it was found.",
+    searchWords: "find look wait picture template screen match",
   },
   {
     flowStepType: FlowStepTypeEnum.SEARCH_TEXT,
     group: FlowStepGroupEnum.PERCEPTION,
     label: "Search Text",
     iconName: "file-edit",
+    description: "Read the words in an area and branch on what they say.",
+    searchWords: "read ocr find look wait words screen",
+  },
+
+  // ── Input ──
+  {
+    flowStepType: FlowStepTypeEnum.CURSOR_RELOCATE,
+    group: FlowStepGroupEnum.INPUT,
+    label: "Move Cursor",
+    iconName: "map-marker",
+    description: "Move the cursor to a saved point, or to what a search found.",
+    searchWords: "mouse relocate point position go hover",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
+    group: FlowStepGroupEnum.INPUT,
+    label: "Click",
+    iconName: "bullseye",
+    description: "Press a button where the cursor is: single, double, hold or release.",
+    searchWords: "mouse cursor left right double press",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.CURSOR_DRAG,
+    group: FlowStepGroupEnum.INPUT,
+    label: "Drag and Drop",
+    iconName: "arrows-alt",
+    description: "Hold at the grab point, move to the drop point, let go.",
+    searchWords: "mouse cursor hold",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.CURSOR_SCROLL,
+    group: FlowStepGroupEnum.INPUT,
+    label: "Scroll",
+    iconName: "sort-alt",
+    description: "Turn the mouse wheel where the cursor is.",
+    searchWords: "mouse cursor wheel page up down",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.KEYBOARD_INPUT,
+    group: FlowStepGroupEnum.INPUT,
+    label: "Keyboard",
+    iconName: "pencil",
+    description: "Type text, or press keys like Ctrl+C, Enter or Tab.",
+    searchWords: "typing write input hotkey shortcut combination",
+  },
+
+  // ── Control ──
+  {
+    flowStepType: FlowStepTypeEnum.WAIT,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Wait",
+    iconName: "clock",
+    description: "Pause for a set time, or a random time between two.",
+    searchWords: "delay sleep pause timer",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.LOOP,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Loop",
+    iconName: "refresh",
+    description: "Repeat the steps inside it a number of times, or until a Break.",
+    searchWords: "repeat forever while again",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.CHECK_VALUE,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Check Value",
+    iconName: "filter",
+    description: "Test what a step above read or printed.",
+    searchWords: "if condition compare number equals contains",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.BREAK,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Break",
+    iconName: "sign-out",
+    description: "Leave the loop or check it sits in, and carry on after it.",
+    searchWords: "exit leave stop",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.SUB_FLOW,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Sub-Flow",
+    iconName: "sitemap",
+    description: "Execute another flow here, then carry on with this one.",
+    searchWords: "subflow call reuse",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.STAGE_MARKER,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "Stage Marker",
+    iconName: "bookmark",
+    description: "Name the stage that follows: a test case in the report.",
+    searchWords: "qa test case report section",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.END_EXECUTION,
+    group: FlowStepGroupEnum.CONTROL,
+    label: "End Execution",
+    iconName: "stop-circle",
+    description: "Stop here as a success or a failure.",
+    searchWords: "finish exit verdict pass fail",
+  },
+
+  // ── Window ──
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
+    group: FlowStepGroupEnum.WINDOW,
+    label: "Focus Window",
+    iconName: "window-maximize",
+    description: "Bring the window to the front.",
+    searchWords: "activate foreground",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_RESIZE,
+    group: FlowStepGroupEnum.WINDOW,
+    label: "Resize Window",
+    iconName: "expand",
+    description: "Set the window to a size.",
+    searchWords: "width height",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_RELOCATE,
+    group: FlowStepGroupEnum.WINDOW,
+    label: "Move Window",
+    iconName: "directions",
+    description: "Put the window at a saved location.",
+    searchWords: "relocate position place",
+  },
+  {
+    flowStepType: FlowStepTypeEnum.WINDOW_CLOSE,
+    group: FlowStepGroupEnum.WINDOW,
+    label: "Close Window",
+    iconName: "window-minimize",
+    description: "Close the window.",
+    searchWords: "quit exit kill",
   },
 
   // ── System ──
   {
     flowStepType: FlowStepTypeEnum.SYSTEM_COMMAND,
     group: FlowStepGroupEnum.SYSTEM,
-    label: "System Command",
+    label: "Command",
     iconName: "code",
+    description: "Execute a command and pass on what it printed.",
+    searchWords: "shell cmd powershell terminal script launch program open",
   },
   {
     flowStepType: FlowStepTypeEnum.SYSTEM_ACTION,
     group: FlowStepGroupEnum.SYSTEM,
     label: "System Action",
     iconName: "power-off",
+    description: "Lock, sleep, or turn the screens off.",
+    searchWords: "monitor power",
   },
   {
     flowStepType: FlowStepTypeEnum.NOTIFY,
     group: FlowStepGroupEnum.SYSTEM,
     label: "Notify",
     iconName: "send",
+    description: "Post to Discord. In a Failure branch it says what broke.",
+    searchWords: "message discord alert notification",
   },
 
-  // ── Branches ── structural, created with their parent
+  // ── Branches ── structural, created with their parent, so never in the picker
   {
     flowStepType: FlowStepTypeEnum.SUCCESS,
     group: FlowStepGroupEnum.BRANCH,
     label: "Success",
     iconName: "check",
+    description: "What executes when the check above it succeeds.",
+    searchWords: "",
   },
   {
     flowStepType: FlowStepTypeEnum.FAILURE,
     group: FlowStepGroupEnum.BRANCH,
     label: "Failure",
     iconName: "times",
+    description: "What executes when the check above it fails.",
+    searchWords: "",
   },
 ];
 

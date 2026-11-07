@@ -116,7 +116,7 @@ answer that here:
 
 ## Step types
 
-Twenty step types in six groups. Any step that can fail has **Success** and **Failure** branches, so
+Twenty-one step types in six groups. Any step that can fail has **Success** and **Failure** branches, so
 a flow handles its own problems rather than stopping.
 
 | Group | Step | What it does |
@@ -125,20 +125,21 @@ a flow handles its own problems rather than stopping.
 | | Loop | Repeat its children a number of times, or forever |
 | | Break | Leave a loop or a check it sits inside and carry on after it |
 | | Sub-Flow | Execute another flow and come back |
-| | End Execution | Finish, passed or failed, with a reason — and run the cleanup written under it |
+| | End Execution | Finish, passed or failed, with a reason — and execute the cleanup written under it |
 | | Marker | A named divider — becomes a heading in the script |
-| **Input** | Cursor Relocate | Move the cursor to a point, a found image, or an earlier step's result |
-| | Cursor Click | Click where the cursor is |
-| | Cursor Drag | Drag between two locations |
-| | Cursor Scroll | Scroll where the cursor is |
-| | Keyboard Input | Type text, a CSV column, or send key combinations |
-| **Window** | Window Focus | Bring an application window to the front |
-| | Window Resize | Resize a window |
-| | Window Relocate | Move a window |
+| **Input** | Move Cursor | Move the cursor to a point, a found image, or an earlier step's result |
+| | Click | Click where the cursor is |
+| | Drag and Drop | Drag between two locations |
+| | Scroll | Scroll where the cursor is |
+| | Keyboard | Type text, a CSV column, or send key combinations |
+| **Window** | Focus Window | Bring an application window to the front |
+| | Resize Window | Resize a window |
+| | Move Window | Move a window |
+| | Close Window | Close a window |
 | **Perception** | Search Image | Find a template image on screen |
 | | Search Text | OCR a region, optionally extracting with a regex |
 | **Decision** | Check Value | Test what an earlier step produced |
-| **System** | System Command | Run a shell command and check its exit code |
+| **System** | Command | Execute a shell command and check its exit code |
 | | System Action | Sleep, lock, shut down and similar |
 | | Notify | Post a message to Discord |
 

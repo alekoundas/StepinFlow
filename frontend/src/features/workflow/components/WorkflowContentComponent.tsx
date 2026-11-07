@@ -5,7 +5,7 @@ import { Message } from "primereact/message";
 import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { FlowStepTypesDataGridComponent } from "@/features/flow-step/components/FlowStepTypesDataGridComponent";
+import FlowStepPickerComponent from "@/features/flow-step/components/FlowStepPickerComponent";
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import {
   useFlowStep,
@@ -201,7 +201,9 @@ export function WorkflowContentComponent() {
 
     return panel(
       <>
-        <div className="flex justify-content-end mb-3">
+        <div className="flex align-items-center justify-content-between gap-3 mb-3">
+          <h2 className="m-0 text-lg font-semibold">Add a step</h2>
+
           {/* Off until how a model's draft lands in a flow that already exists is settled (TODO.md). */}
           <DisabledTooltipComponent
             tooltip="Not yet: recording into a flow that already exists comes back once the AI draft can land there too"
@@ -217,7 +219,7 @@ export function WorkflowContentComponent() {
             />
           </DisabledTooltipComponent>
         </div>
-        <FlowStepTypesDataGridComponent />
+        <FlowStepPickerComponent />
       </>,
     );
   }
