@@ -158,7 +158,7 @@ namespace Business.Recording.Setup
                 IsMain = true,
                 ProcessName = dto.ProcessName.Trim(),
                 TitleMatchMode = dto.TitleMatchMode,
-                UseClientArea = dto.UseClientArea,
+                IgnoreWindowBorders = dto.IgnoreWindowBorders,
                 ScalesWith = dto.ScalesWith,
             };
 

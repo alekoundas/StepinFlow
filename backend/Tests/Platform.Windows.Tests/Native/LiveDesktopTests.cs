@@ -36,8 +36,8 @@ namespace Platform.Windows.Tests.Native
             TopLevelWindow front = _windows.GetWindowInFront();
 
             front.Handle.IsValid.ShouldBeTrue();
-            Rectangle whole = _windows.GetWindowBounds(front.Handle, useClientArea: false);
-            Rectangle client = _windows.GetWindowBounds(front.Handle, useClientArea: true);
+            Rectangle whole = _windows.GetWindowBounds(front.Handle, ignoreWindowBorders: false);
+            Rectangle client = _windows.GetWindowBounds(front.Handle, ignoreWindowBorders: true);
             whole.IsEmpty.ShouldBeFalse();
             whole.Contains(client).ShouldBeTrue();
         }

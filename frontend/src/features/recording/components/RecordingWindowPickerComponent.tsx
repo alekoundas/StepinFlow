@@ -27,7 +27,7 @@ interface Props {
 export default function RecordingWindowPickerComponent({ children }: Props) {
   const { control, setValue } = useFormContext<RecordingWindowForm>();
   const areaType = useWatch({ control, name: "areaType" });
-  const useClientArea = useWatch({ control, name: "useClientArea" });
+  const ignoreWindowBorders = useWatch({ control, name: "ignoreWindowBorders" });
 
   const isWebsite = areaType === FlowAreaTypeEnum.BROWSER_TAB;
 
@@ -56,7 +56,7 @@ export default function RecordingWindowPickerComponent({ children }: Props) {
       <WindowMatchFieldsComponent
         key={areaType}
         isBrowser={isWebsite}
-        useClientArea={useClientArea}
+        ignoreWindowBorders={ignoreWindowBorders}
         bringsToFront={true}
       />
 

@@ -16,7 +16,7 @@ namespace Core.Models.Dtos
         public string TitlePattern { get; set; } = string.Empty;
         public TitleMatchModeEnum TitleMatchMode { get; set; }
         public string TabAddress { get; set; } = string.Empty;
-        public bool UseClientArea { get; set; } = true;
+        public bool IgnoreWindowBorders { get; set; } = true;
         public ScalesWithEnum? ScalesWith { get; set; }
 
         /// <summary>Whether the flow starts by launching the application.</summary>

@@ -68,7 +68,7 @@ namespace Transport.Ipc.Handlers
                             ProcessName = a.ProcessName,
                             TitlePattern = a.TitlePattern,
                             TitleMatchMode = a.TitleMatchMode,
-                            UseClientArea = a.UseClientArea,
+                            IgnoreWindowBorders = a.IgnoreWindowBorders,
                             LaunchCommand = a.LaunchCommand,
 
                             TabAddress = a.TabAddress,

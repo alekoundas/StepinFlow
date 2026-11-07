@@ -201,13 +201,13 @@ namespace Business.Tests.FlowScript
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void A_window_with_or_without_its_frame_is_read_back_as_written(bool useClientArea)
+        public void A_window_with_or_without_its_frame_is_read_back_as_written(bool ignoreWindowBorders)
         {
-            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", UseClientArea = useClientArea };
+            FlowArea area = new FlowArea { Name = "A", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "game.exe", IgnoreWindowBorders = ignoreWindowBorders };
             string written = new AreaWriter(area).Write();
             FlowArea read = Read("Areas:\n  " + written).Areas.Single();
 
-            (read.Type, read.UseClientArea).ShouldBe((FlowAreaTypeEnum.APPLICATION, useClientArea), written);
+            (read.Type, read.IgnoreWindowBorders).ShouldBe((FlowAreaTypeEnum.APPLICATION, ignoreWindowBorders), written);
         }
 
         // ================================================================

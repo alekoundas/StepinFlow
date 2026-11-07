@@ -172,18 +172,18 @@ namespace Platform.Windows.Windowing
         }
 
         /// <summary>
-        /// Bounds in physical pixels. The client area excludes the title bar and borders, so a
-        /// stored offset means the same thing whatever chrome the window happens to have.
+        /// Bounds in physical pixels. Ignoring the borders leaves out the title bar too, so a stored
+        /// offset means the same thing whatever chrome the window happens to have.
         /// Returns empty when the handle is not a live window.
         /// </summary>
-        public Rectangle GetWindowBounds(WindowHandle handle, bool useClientArea)
+        public Rectangle GetWindowBounds(WindowHandle handle, bool ignoreWindowBorders)
         {
             IntPtr hWnd = handle.Value;
 
             if (hWnd == IntPtr.Zero)
                 return Rectangle.Empty;
 
-            if (!useClientArea)
+            if (!ignoreWindowBorders)
             {
                 RECT windowRect = new RECT();
                 if (!GetWindowRect(hWnd, ref windowRect))
@@ -297,7 +297,7 @@ namespace Platform.Windows.Windowing
                 {
                     Title = GetAppWindowText(window.Value),
                     ProcessName = GetProcessName(window.Value),
-                    Bounds = GetWindowBounds(window, query.UseClientArea),
+                    Bounds = GetWindowBounds(window, query.IgnoreWindowBorders),
                 })
                 .ToList();
         }

@@ -15,7 +15,7 @@ export interface RecordingSetupDto {
   titlePattern: string;
   titleMatchMode: TitleMatchModeEnum;
   tabAddress: string;
-  useClientArea: boolean;
+  ignoreWindowBorders: boolean;
   scalesWith: ScalesWithEnum | null;
 
   /** Whether the flow starts by launching the application. */

@@ -25,7 +25,7 @@ namespace Business.Tests.Fakes
             return Window;
         }
 
-        public Rectangle GetWindowBounds(WindowHandle handle, bool useClientArea)
+        public Rectangle GetWindowBounds(WindowHandle handle, bool ignoreWindowBorders)
         {
             return Bounds;
         }

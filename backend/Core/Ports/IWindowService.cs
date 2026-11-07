@@ -36,11 +36,11 @@ namespace Core.Ports
         int GetProcessId(WindowHandle handle);
 
         /// <summary>
-        /// Bounds in physical pixels. The client area excludes the title bar and borders, so a
-        /// stored offset means the same thing whatever chrome the window happens to have.
+        /// Bounds in physical pixels. Ignoring the borders leaves out the title bar too, so a stored
+        /// offset means the same thing whatever chrome the window happens to have.
         /// Empty when the handle is not a live window.
         /// </summary>
-        Rectangle GetWindowBounds(WindowHandle handle, bool useClientArea);
+        Rectangle GetWindowBounds(WindowHandle handle, bool ignoreWindowBorders);
 
         bool FocusWindow(WindowHandle handle);
 

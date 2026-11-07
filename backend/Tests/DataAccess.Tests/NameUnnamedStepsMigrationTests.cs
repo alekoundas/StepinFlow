@@ -1,4 +1,3 @@
-using Core.Enums;
 using Core.Models.Database;
 
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -36,11 +35,9 @@ namespace DataAccess.Tests
                 db.SaveChanges();
                 flowId = flow.Id;
 
-                FlowArea chrome = new FlowArea { Name = "chrome", FlowId = flow.Id, Type = FlowAreaTypeEnum.APPLICATION };
-                db.FlowAreas.Add(chrome);
-                db.SaveChanges();
+                int chromeId = OldRows.AreaWithAddress(db, flow.Id, "chrome");
 
-                OldRows.Step(db, flow.Id, null, "SYSTEM_COMMAND", "", 0, chrome.Id, "LAUNCH_APP");
+                OldRows.Step(db, flow.Id, null, "SYSTEM_COMMAND", "", 0, chromeId, "LAUNCH_APP");
                 OldRows.Step(db, flow.Id, null, "SYSTEM_COMMAND", "", 1, runCommandPreset: "READ_CLIPBOARD");
                 OldRows.Step(db, flow.Id, null, "SUB_FLOW", "", 2, subFlowId: checkout.Id);
                 OldRows.Step(db, flow.Id, null, "NOTIFY", "", 3);

@@ -190,14 +190,14 @@ namespace Business.AreaPoint
                 ProcessName = area.ProcessName,
                 TitlePattern = area.TitlePattern,
                 TitleMatchMode = area.TitleMatchMode,
-                UseClientArea = area.UseClientArea,
+                IgnoreWindowBorders = area.IgnoreWindowBorders,
             };
 
             WindowHandle hwnd = _windowService.FindWindow(query);
             if (!hwnd.IsValid)
                 return AreaResolution.Fail($"No window matches \"{area.Name}\".", AreaUnresolvedEnum.NOT_ON_SCREEN);
 
-            Rectangle bounds = _windowService.GetWindowBounds(hwnd, area.UseClientArea);
+            Rectangle bounds = _windowService.GetWindowBounds(hwnd, area.IgnoreWindowBorders);
             if (bounds.Width <= 0 || bounds.Height <= 0)
                 return AreaResolution.Fail($"\"{area.Name}\" was found but has no visible area.", AreaUnresolvedEnum.NO_SIZE);
 

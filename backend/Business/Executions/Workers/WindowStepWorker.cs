@@ -100,7 +100,7 @@ namespace Business.Executions.Workers
                 ProcessName = area.ProcessName,
                 TitlePattern = area.TitlePattern,
                 TitleMatchMode = area.TitleMatchMode,
-                UseClientArea = false,
+                IgnoreWindowBorders = false,
             };
 
             return _windowService.FindWindow(query);

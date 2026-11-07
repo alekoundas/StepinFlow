@@ -100,7 +100,7 @@ namespace Business.FlowScript.Text.Header
                         }
 
                         // Without it the area leaves out the title bar and borders, which is nearly always wanted.
-                        if (!_area.UseClientArea)
+                        if (!_area.IgnoreWindowBorders)
                         {
                             WriteGap();
                             WriteKeyword(ScriptSymbolEnum.WITH_FRAME);

@@ -17,7 +17,7 @@ const WINDOW_SHAPE = {
   titlePattern: z.string().refine(noScriptBrackets, "Can't contain <[ or ]>"),
   titleMatchMode: z.enum(TitleMatchModeEnum),
   tabAddress: z.string().refine(noScriptBrackets, "Can't contain <[ or ]>"),
-  useClientArea: z.boolean(),
+  ignoreWindowBorders: z.boolean(),
   scalesWith: z.enum(ScalesWithEnum).nullish(),
 };
 

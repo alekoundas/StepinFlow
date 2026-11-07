@@ -13,7 +13,7 @@ namespace Core.Models.Dtos
         /// So the reported bounds are the ones the area will actually resolve to. A test that
         /// measured differently from the thing being configured would be worse than none.
         /// </summary>
-        public bool UseClientArea { get; set; } = true;
+        public bool IgnoreWindowBorders { get; set; } = true;
 
         /// <summary>Brings the first match to the front, so the tester sees which window it is.</summary>
         public bool BringsToFront { get; set; }

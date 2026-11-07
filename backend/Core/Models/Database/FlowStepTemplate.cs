@@ -1,13 +1,8 @@
 namespace Core.Models.Database
 {
-    /// <summary>
-    /// A step's use of a template: the picture is the FlowTemplate's, the decisions about the
-    /// search are the step's.
-    /// </summary>
     public class FlowStepTemplate : BaseDbModel
     {
         public int OrderNumber { get; set; }
-
         public float Accuracy { get; set; } = 0.8f;
 
 

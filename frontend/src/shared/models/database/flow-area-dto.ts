@@ -37,7 +37,7 @@ export class FlowAreaDto {
   processName: string = "";
   titlePattern: string = "";
   titleMatchMode: TitleMatchModeEnum = TitleMatchModeEnum.CONTAINS;
-  useClientArea: boolean = true;
+  ignoreWindowBorders: boolean = true;
 
   /** What a launch starts when the app is not open. */
   launchCommand: string = "";

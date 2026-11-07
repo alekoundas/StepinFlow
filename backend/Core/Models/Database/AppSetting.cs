@@ -6,8 +6,7 @@ namespace Core.Models.Database
     /// One changed setting. Rows only exist once a setting has been moved off its default, so an
     /// empty table is a fully default install.
     ///
-    /// The value is text for every setting: the type is a property of the key, and a column
-    /// repeating it could only ever disagree with the catalog.
+    /// The value is text for every setting.
     /// </summary>
     public class AppSetting
     {

@@ -8,17 +8,19 @@ namespace Core.Models.Database
         public string Name { get; set; } = string.Empty;
 
         public byte[]? TemplateImage { get; set; } // PNG
-        public byte[]? Thumbnail { get; set; } // PNG, made from TemplateImage whenever it is saved
+        public byte[]? Thumbnail { get; set; } // PNG, made from TemplateImage on save.
 
         public int ClickOffsetX { get; set; }
         public int ClickOffsetY { get; set; }
 
-        // The size of the area this template was captured in, and the DPI it was captured at - the two things a different screen can change about it.
-        public int AuthoredFlowAreaWidth { get; set; }
+        // The size and DPI of the area this template was captured in.
+        public int AuthoredFlowAreaWidth { get; set; } 
         public int AuthoredFlowAreaHeight { get; set; }
         public int AuthoredDpi { get; set; }
 
 
+
+        //Flow
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;
 

@@ -55,7 +55,7 @@ namespace Business.Tests.Executions.Workers
                 x => x.ProcessName.ShouldBe("chrome"),
                 x => x.TitlePattern.ShouldBe("Swag"),
                 x => x.TitleMatchMode.ShouldBe(TitleMatchModeEnum.STARTS_WITH),
-                x => x.UseClientArea.ShouldBeFalse());
+                x => x.IgnoreWindowBorders.ShouldBeFalse());
             _windows.Actions.ShouldBe(["focus"]);
             result.Message.ShouldBe("Browser - focused");
         }

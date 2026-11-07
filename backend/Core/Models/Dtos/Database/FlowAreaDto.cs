@@ -34,7 +34,7 @@ namespace Core.Models.Dtos
         public string ProcessName { get; set; } = string.Empty;
         public string TitlePattern { get; set; } = string.Empty;
         public TitleMatchModeEnum TitleMatchMode { get; set; }
-        public bool UseClientArea { get; set; } = true;
+        public bool IgnoreWindowBorders { get; set; } = true;
         public string LaunchCommand { get; set; } = string.Empty;
 
 

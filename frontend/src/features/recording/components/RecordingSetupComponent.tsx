@@ -41,7 +41,7 @@ const DEFAULT_VALUES: RecordingSetupForm = {
   titlePattern: "",
   titleMatchMode: TitleMatchModeEnum.CONTAINS,
   tabAddress: "",
-  useClientArea: true,
+  ignoreWindowBorders: true,
   scalesWith: null,
   addsLaunchStep: true,
   addsResizeStep: false,

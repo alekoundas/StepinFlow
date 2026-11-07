@@ -34,7 +34,7 @@ const DEFAULT_VALUES: RecordingWindowForm = {
   titlePattern: "",
   titleMatchMode: TitleMatchModeEnum.CONTAINS,
   tabAddress: "",
-  useClientArea: true,
+  ignoreWindowBorders: true,
   scalesWith: null,
 };
 
@@ -78,7 +78,7 @@ export default function RecordingMainAreaComponent({ flowId, onSaved, onCancel }
           titlePattern: isWebsite ? "" : values.titlePattern.trim(),
           titleMatchMode: values.titleMatchMode,
           tabAddress: isWebsite ? tabAddress : "",
-          useClientArea: values.useClientArea,
+          ignoreWindowBorders: values.ignoreWindowBorders,
           scalesWith: values.scalesWith ?? null,
         }),
       );

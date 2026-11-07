@@ -48,7 +48,7 @@ export default function FlowAreaFormFieldsComponent({
 
   // The test reports bounds the way the area will actually resolve them, so the numbers on screen
   // are the numbers the flow gets rather than a different measurement of the same window.
-  const useClientArea = useWatch({ control, name: "useClientArea" });
+  const ignoreWindowBorders = useWatch({ control, name: "ignoreWindowBorders" });
 
   const { openWindow, isWindowOpen } = useWindowOverlay();
 
@@ -377,7 +377,7 @@ export default function FlowAreaFormFieldsComponent({
         <>
           <WindowMatchFieldsComponent
             isDisabled={isDisabled}
-            useClientArea={useClientArea === true}
+            ignoreWindowBorders={ignoreWindowBorders === true}
             onAppPicked={(app, processId, isAnotherApp) => {
               nameFromPick("Window", app);
               void startedByFromPick(processId, isAnotherApp);
@@ -386,7 +386,7 @@ export default function FlowAreaFormFieldsComponent({
 
           <div className="mt-3">
             <FormInputCheckboxComponent
-              fieldName="useClientArea"
+              fieldName="ignoreWindowBorders"
               label="Ignore title bar and borders"
               isDisabled={isDisabled}
               hintText="Points stay put when the title bar or borders change size."

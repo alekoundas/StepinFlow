@@ -5,26 +5,17 @@ namespace Core.Models.Database
 {
     /// <summary>
     /// A rectangle resolved at runtime, in physical pixels.
-    ///
-    /// A CUSTOM area may sit inside another area, which is what makes a flow portable: the flow
-    /// resizes its own window, and everything inside is stored as an offset from that window
-    /// rather than as a screen coordinate. Nesting is capped at one level.
     /// </summary>
     public class FlowArea : BaseDbModel
     {
         public string Name { get; set; } = string.Empty;
         public FlowAreaTypeEnum Type { get; set; }
 
-        // The window the flow works in: at most one, and always a root. A recording is stored
-        // relative to it, and a viewport resizes it.
+        // The window the flow works in: at most one, and always a root.
         public bool IsMain { get; set; }
-
-        // What makes its contents bigger or smaller on another screen. Null inherits: a CUSTOM
-        // child takes its parent's, and an area with no parent is DPI.
         public ScalesWithEnum? ScalesWith { get; set; }
 
-        // The DPI its own offset and size were captured at, so an ABSOLUTE_PX child inside a DPI
-        // area follows the monitor. A point carries its own.
+        // The DPI its own offset and size were captured at, so an ABSOLUTE_PX child inside a DPI area follows the monitor.
         public int AuthoredDpi { get; set; }
 
 
@@ -51,21 +42,13 @@ namespace Core.Models.Database
         public string ProcessName { get; set; } = string.Empty;
         public string TitlePattern { get; set; } = string.Empty;
         public TitleMatchModeEnum TitleMatchMode { get; set; }
+        public bool IgnoreWindowBorders { get; set; } = true;
 
-        /// <summary>Client area excludes the title bar and borders, which is nearly always wanted.</summary>
-        public bool UseClientArea { get; set; } = true;
 
-        /// <summary>
-        /// What a launch starts when the app is not open: a command line, or a link such as a Steam
-        /// game's. Empty when nothing launches it.
-        /// </summary>
+        // APPLICATION
         public string LaunchCommand { get; set; } = string.Empty;
 
-
-        /// <summary>
-        /// BROWSER_TAB: the page's address, which finds the tab and is where a launch opens the
-        /// browser. A tab whose address starts with it is the one.
-        /// </summary>
+        // BROWSER_TAB
         public string TabAddress { get; set; } = string.Empty;
 
 
@@ -76,6 +59,7 @@ namespace Core.Models.Database
         // Flow
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;
+
 
         public IEnumerable<FlowArea> ChildFlowAreas { get; set; } = new Collection<FlowArea>();
         public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();

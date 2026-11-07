@@ -25,7 +25,7 @@ namespace Transport.Ipc.Handlers
                 ProcessName = dto.ProcessName,
                 TitlePattern = dto.TitlePattern,
                 TitleMatchMode = dto.TitleMatchMode,
-                UseClientArea = dto.UseClientArea,
+                IgnoreWindowBorders = dto.IgnoreWindowBorders,
             };
 
             if (dto.TitleMatchMode == TitleMatchModeEnum.REGEX && !string.IsNullOrEmpty(dto.TitlePattern))

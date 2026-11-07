@@ -32,9 +32,12 @@ namespace DataAccess.Tests
             MigrateTo(AFTER);
 
             using AppDbContext db = _database.Open();
-            FlowArea tabArea = db.FlowAreas.Single(x => x.Id == tab);
+            FlowArea tabArea = db.FlowAreas
+                .Where(x => x.Id == tab)
+                .Select(x => new FlowArea { TabAddress = x.TabAddress, TitlePattern = x.TitlePattern })
+                .Single();
             (tabArea.TabAddress, tabArea.TitlePattern).ShouldBe(("tradingeconomics.com/commodity/crude-oil", ""));
-            db.FlowAreas.Single(x => x.Id == window).TitlePattern.ShouldBe("Firestone");
+            db.FlowAreas.Where(x => x.Id == window).Select(x => x.TitlePattern).Single().ShouldBe("Firestone");
         }
 
 

@@ -53,7 +53,7 @@ namespace Business.FlowScript.Parsers.Header
                         ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                     }
 
-                    area.UseClientArea = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
+                    area.IgnoreWindowBorders = !ExpectOptionalKeyword(ScriptSymbolEnum.WITH_FRAME);
                 }
 
                 // What a launch of it starts when it is not open.

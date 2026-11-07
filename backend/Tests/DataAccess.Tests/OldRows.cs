@@ -22,6 +22,20 @@ namespace DataAccess.Tests
             return db.FlowAreas.Max(x => x.Id);
         }
 
+        /// <summary>An area from when a tab was found by its address and a window could be started, up to the borders' rename.</summary>
+        public static int AreaWithAddress(AppDbContext db, int flowId, string name, bool useClientArea = true)
+        {
+            db.Database.ExecuteSqlRaw(@"
+                INSERT INTO FlowAreas (Name, Type, SizingMode, LocationX, LocationY, Width, Height, RatioX, RatioY, RatioWidth, RatioHeight,
+                    ProcessName, TitlePattern, TitleMatchMode, UseClientArea, TabAddress, MonitorDeviceName, FlowId,
+                    CreatedOn, UpdatedOn, AuthoredDpi, IsMain, LaunchCommand)
+                VALUES ({0}, 'APPLICATION', 'ABSOLUTE_PX', 0, 0, 0, 0, 0, 0, 0, 0,
+                    'app', '', 'CONTAINS', {1}, '', '', {2},
+                    '2026-11-07', '2026-11-07', 0, 0, '');", name, useClientArea, flowId);
+
+            return db.FlowAreas.Max(x => x.Id);
+        }
+
         /// <summary>A step at the top of the flow when it has no parent, under its parent when it has one.</summary>
         public static int Step(AppDbContext db, int flowId, int? parentFlowStepId, string flowStepType, string name, int orderNumber,
             int? flowAreaId = null, string runCommandPreset = "CUSTOM", string runCommandValue = "", int? subFlowId = null, bool endExecutionAsSuccess = false)

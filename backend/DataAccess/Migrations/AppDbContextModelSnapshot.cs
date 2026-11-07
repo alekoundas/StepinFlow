@@ -289,6 +289,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("Height")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IgnoreWindowBorders")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsMain")
                         .HasColumnType("INTEGER");
 
@@ -354,9 +357,6 @@ namespace DataAccess.Migrations
 
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("UseClientArea")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Width")
                         .HasColumnType("INTEGER");

@@ -35,7 +35,7 @@ interface Props {
   isDisabled?: boolean;
 
   /** Mirrors the area's own checkbox so the tested bounds are the ones it will really resolve to. */
-  useClientArea?: boolean;
+  ignoreWindowBorders?: boolean;
 
   /**
    * Fires when an application is picked, with its name and whether it replaced another. The caller
@@ -70,7 +70,7 @@ interface Props {
  */
 export default function WindowMatchFieldsComponent({
   isDisabled = false,
-  useClientArea = false,
+  ignoreWindowBorders = false,
   onAppPicked,
   bringsToFront = false,
   isBrowser = false,
@@ -128,7 +128,7 @@ export default function WindowMatchFieldsComponent({
         processName: (getValues("processName") as string) ?? "",
         titlePattern: (getValues("titlePattern") as string) ?? "",
         titleMatchMode: getValues("titleMatchMode") as TitleMatchModeEnum,
-        useClientArea,
+        ignoreWindowBorders,
         bringsToFront,
       });
 

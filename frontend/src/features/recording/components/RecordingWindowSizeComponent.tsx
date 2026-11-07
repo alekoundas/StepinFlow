@@ -50,7 +50,7 @@ export default function RecordingWindowSizeComponent() {
         processName,
         titlePattern: isWebsite ? "" : titlePattern,
         titleMatchMode: getValues("titleMatchMode"),
-        useClientArea: false,
+        ignoreWindowBorders: false,
       });
 
       setMeasured({ processName, windows: result.matches });
