@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import type { ChildProcess } from "child_process";
 // import { app, session } from 'electron';
 // import installExtension, {
@@ -60,6 +60,9 @@ app.whenReady().then(async () => {
   registerElectronProcessHandler();
   registerAutoUpdaterHandler();
   startAutoUpdaterChecks();
+
+  // macOS keeps it: Cmd+C and Cmd+V reach a text box only through its Edit menu.
+  if (process.platform !== "darwin") Menu.setApplicationMenu(null); //Remove application window menu bar.
 
   createWindow();
 

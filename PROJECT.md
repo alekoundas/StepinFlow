@@ -2366,7 +2366,10 @@ Check, with the recording bar's own window in `windows/recording-bar/`.
 and Executions, then Import and Ask AI, Settings, and the model the AI features use with where it
 runs, a link to its settings. On the editor and an execution it keeps only its icons, since those pages want the
 width. Settings shows one card at a time, picked from a list of sections beside it, each at its own
-address such as `/settings/ai`, so the model's link opens the AI card.
+address such as `/settings/ai`, so the model's link opens the AI card. The window has no menu bar on
+Windows and Linux: `main.ts` clears Electron's default, and its Ctrl+R reload, Ctrl+Shift+I developer
+tools, Ctrl+= zoom and F11 full screen go with it. macOS keeps it, since Cmd+C and Cmd+V reach a text box only through
+its Edit menu.
 
 **Home** (`features/home/`) leads with what to do next, then what is in the way of it. Each card reads
 what it shows for itself, so none waits for another.
