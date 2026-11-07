@@ -13,6 +13,7 @@ let status: AutoUpdaterStatus = {
   state: AutoUpdaterStateEnum.NOT_CHECKED,
   currentVersion: app.getVersion(),
   isAskedCheck: false,
+  lastCheckedAt: "",
   version: "",
   transferredBytes: 0,
   totalBytes: 0,
@@ -35,11 +36,14 @@ export function startAutoUpdaterChecks(): void {
   autoUpdater.logger = log;
   autoUpdater.disableWebInstaller = true;
 
-  autoUpdater.on("update-not-available", () => change({ ...status, state: AutoUpdaterStateEnum.UP_TO_DATE }));
+  autoUpdater.on("update-not-available", () =>
+    change({ ...status, state: AutoUpdaterStateEnum.UP_TO_DATE, lastCheckedAt: new Date().toISOString() }),
+  );
   autoUpdater.on("update-available", (info) =>
     change({
       ...status,
       state: AutoUpdaterStateEnum.DOWNLOADING,
+      lastCheckedAt: new Date().toISOString(),
       version: info.version,
       transferredBytes: 0,
       totalBytes: 0,

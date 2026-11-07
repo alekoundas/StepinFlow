@@ -5,6 +5,7 @@ import LastExecutedCardComponent from "@/features/home/components/LastExecutedCa
 import LocalModelCardComponent from "@/features/home/components/LocalModelCardComponent";
 import NeedsAttentionCardComponent from "@/features/home/components/NeedsAttentionCardComponent";
 import RepositoryCardComponent from "@/features/home/components/RepositoryCardComponent";
+import UpdatesCardComponent from "@/features/home/components/UpdatesCardComponent";
 import { useLastExecutedFlow } from "@/features/home/hooks/use-last-executed-flow";
 
 const COLUMNS: CSSProperties = {
@@ -13,10 +14,18 @@ const COLUMNS: CSSProperties = {
   gap: "1rem",
 };
 
+// The first card takes what the other column leaves, so both columns end together.
+const FIRST_CARD_FILLS: CSSProperties = {
+  display: "grid",
+  gridTemplateRows: "1fr auto",
+  gap: "1rem",
+  minWidth: 0,
+};
+
 /**
  * What to do next and what is in the way of it: the flow last executed, the flows with issues, the
- * repository and the local model. Each card reads what it shows for itself and keeps itself up to
- * date, so none of them waits for the others.
+ * repository, the local model and the updates. Each card reads what it shows for itself and keeps
+ * itself up to date, so none of them waits for the others.
  */
 export default function HomePage() {
   const { flow, isExecuting, hasFlows, isLoading } = useLastExecutedFlow();
@@ -48,11 +57,18 @@ export default function HomePage() {
       {isNewInstall ? (
         <div style={COLUMNS}>
           <RepositoryCardComponent />
-          <LocalModelCardComponent />
+
+          <div className="flex flex-column gap-3 min-w-0">
+            <LocalModelCardComponent />
+            <UpdatesCardComponent />
+          </div>
         </div>
       ) : (
         <div style={COLUMNS}>
-          <NeedsAttentionCardComponent />
+          <div style={FIRST_CARD_FILLS}>
+            <NeedsAttentionCardComponent />
+            <UpdatesCardComponent />
+          </div>
 
           <div className="flex flex-column gap-3 min-w-0">
             <RepositoryCardComponent />

@@ -357,8 +357,10 @@ The rail says so only while there is something to say (`AutoUpdaterRailBlockComp
 with its progress, ready with Restart to update, failed with Try again and the log. On the narrow rail
 it is one icon with the words in its tooltip. Restart is off while a flow is executing. It starts the
 installer silently and the installer opens the app again; otherwise the installer starts silently when
-the app closes, and the app stays closed. The bottom of Settings' section list shows the version and
-has Check for updates. A failed check nobody asked for says nothing, since it usually means the
+the app closes, and the app stays closed. Home's Updates card has the version, a pill for what the
+updater is doing - when a check last got an answer, Downloading, Restart needed, Update failed - and
+Check for updates, which becomes Restart to update once one is ready. The bottom of Settings' section
+list shows only the version. A failed check nobody asked for says nothing, since it usually means the
 machine is offline, and all of it goes to `main.log`. Started from source the version reads `dev` and
 there is nothing to check. macOS needs the app signed first, since Squirrel.Mac refuses an unsigned
 update, and on Linux only an AppImage updates itself.
@@ -2382,6 +2384,10 @@ what it shows for itself, so none waits for another.
 - Repository reuses `BranchMenuComponent` and `CommitDialogComponent`: an uncommitted change refuses
   a switch, so the way out is on the same card.
 - Local model is §"Free memory" under the AI section.
+- Updates sits under Needs attention, which takes whatever height the other column leaves, so the
+  columns end together; with no flows it goes under Local model. Its last check is `lastCheckedAt`,
+  set only by a check that got an answer, so an offline day shows the morning's time. It lives in the
+  main process's memory, since a check runs as the app starts. §"Building and releasing" has the rest.
 
 **The script view** is CodeMirror 6, read-only (`shared/components/script-view/`). A
 `StreamLanguage` tokenizer colours a line the way the scanner reads one - the step's keyword where

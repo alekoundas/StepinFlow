@@ -60,6 +60,8 @@ export interface AutoUpdaterStatus {
   currentVersion: string;
   // Whether someone asked for this check, rather than the timer.
   isAskedCheck: boolean;
+  // When a check last got an answer, as an ISO date. Empty until one has.
+  lastCheckedAt: string;
   // The version found. Empty until one is.
   version: string;
   // Only what has to be fetched, which is less than the installer when just part of it changed.

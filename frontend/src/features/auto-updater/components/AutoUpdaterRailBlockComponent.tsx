@@ -4,6 +4,7 @@ import { ProgressBar } from "primereact/progressbar";
 import { Tooltip } from "primereact/tooltip";
 
 import { percentOf } from "@/features/ai/ai-format";
+import { downloadedOf } from "@/features/auto-updater/auto-updater-format";
 import { useAutoUpdaterStatus } from "@/features/auto-updater/hooks/use-auto-updater-status";
 import { useIsExecuting } from "@/features/execution/hooks/use-is-executing";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
@@ -13,8 +14,6 @@ const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
 const RING_RADIUS = 9;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
-
-const megabytes = (bytes: number): number => Math.round(bytes / 1024 / 1024);
 
 const check = () => void ElectronApiService.autoUpdater.check();
 const restart = () => void ElectronApiService.autoUpdater.restart();
@@ -80,7 +79,7 @@ function CheckingComponent({ isNarrow }: { isNarrow: boolean }) {
 function DownloadingComponent({ status, isNarrow }: { status: AutoUpdaterStatus; isNarrow: boolean }) {
   const title = `Downloading ${status.version}`;
   const isSizeKnown = status.totalBytes > 0;
-  const amount = `${megabytes(status.transferredBytes)} of ${megabytes(status.totalBytes)} MB`;
+  const amount = downloadedOf(status);
   const percent = percentOf(status.transferredBytes, status.totalBytes);
 
   if (isNarrow)
