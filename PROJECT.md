@@ -1364,6 +1364,14 @@ A round trip proves `A == B`; it cannot prove either is right. So beside it sits
 build. On a difference the new text is written beside it as `.received.sflw` and the failure names
 the first line that changed. It is also the most complete example of the format in the repository.
 
+`GoldenFlow.approved.sflw` goes the other way and starts from the file: every step, mode and field,
+with a value and without one, in a flow that reads and would mean nothing if executed. Imported into
+a real database and exported again, it has to come back character for character, and imported over
+itself it has to leave every row as it was. `GoldenFlowTests` also holds the file to its claim, so a
+new keyword, step type, enum value or column fails until the file shows it. To add a case, add the
+line where the printer would put it. A file cannot show a column the language has no words for, so
+those are named in the test's `NotInTheLanguage`, and each one taken into the language comes off.
+
 ### Grammar rules that only emerged from reading real output
 
 **Every piece of text is quoted, and the quotes are `<[` and `]>`**, even when it would read fine

@@ -36,6 +36,16 @@ namespace Business.Tests.FlowScript
             Assert.Fail($"Differs from {Path.GetFileName(approvedPath)}. {FirstDifference(approved, received)} The new text is in {receivedPath}.");
         }
 
+        /// <summary>
+        /// The approved text itself, for a test that starts from it.
+        /// </summary>
+        public static string Read(string name, [CallerFilePath] string testFile = "")
+        {
+            string folder = Path.GetDirectoryName(testFile) ?? string.Empty;
+
+            return File.ReadAllText(Path.Combine(folder, $"{name}.approved.sflw"));
+        }
+
         private static string FirstDifference(string approved, string received)
         {
             string[] expected = approved.Split('\n');

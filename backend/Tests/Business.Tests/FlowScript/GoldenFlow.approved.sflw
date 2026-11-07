@@ -1,0 +1,1361 @@
+Script Language: v1
+Flow:    Golden flow
+Id:      7c9e6679-7425-40de-944b-e07fc1f90ae7
+Kind:    qa test   sub-flow
+Sizes:   1920x1080 390x844 1x1
+Description:
+  # Every step, every mode and every field, with a value and without one. It reads, and executing it would mean nothing.
+  #
+  # Imported into a real database and exported again, it comes back character for character.
+  #
+  # # not a heading
+  # ## nor a stage
+  # <[ quotes ]> are only text here.
+
+Areas:
+  <[ App ]>           main   window process <[ app.exe ]> title contains <[ App ]>   started by <[ app.exe --safe ]>   scales with dpi   at 120dpi
+  <[ App offset ]>    inside <[ App ]>   offset 0 0  size 1920 90
+  <[ App offset at dpi ]>  inside <[ App ]>   offset 5 6  size 7 8   at 120dpi
+  <[ App offset negative ]>  inside <[ App ]>   offset -10 -20  size 300 200
+  <[ App offset scaled ]>  inside <[ App ]>   offset 1 2  size 3 4   scales with dpi
+  <[ App offset scaled at dpi ]>  inside <[ App ]>   offset 9 10  size 11 12   scales with area   at 120dpi
+  <[ App ratio ]>     inside <[ App ]>   ratio 0.88 0.00  size 0.12 0.10
+  <[ App ratio at dpi ]>  inside <[ App ]>   ratio 0.25 0.25  size 0.50 0.50   at 144dpi
+  <[ App ratio scaled ]>  inside <[ App ]>   ratio 0.10 0.20  size 0.80 0.70   scales with area
+  <[ App ratio scaled at dpi ]>  inside <[ App ]>   ratio 0.00 0.00  size 1.00 1.00   scales with dpi   at 96dpi
+  <[ Monitor device ]>  monitor <[ \\.\DISPLAY2 ]>
+  <[ Monitor device everything ]>  monitor <[ \\.\DISPLAY3 ]>   scales with dpi   at 96dpi
+  <[ Monitor primary ]>  monitor primary
+  <[ Monitor primary everything ]>  monitor primary   scales with area   at 144dpi
+  <[ Monitor child ]> inside <[ Monitor primary everything ]>   ratio 0.10 0.10  size 0.10 0.10
+  <[ Screen offset ]> on screen   offset -10 20  size 300 200
+  <[ Screen offset everything ]>  on screen   offset 1 1  size 2 2   scales with dpi   at 120dpi
+  <[ Screen child ]>  inside <[ Screen offset everything ]>   offset 0 0  size 1 1
+  <[ Screen ratio ]>  on screen   ratio 0.10 0.20  size 0.30 0.40
+  <[ Screen ratio everything ]>  on screen   ratio 0.00 0.00  size 0.50 0.50   scales with area   at 96dpi
+  <[ Tab empty address ]>  window process <[ chrome.exe ]>   tab <[  ]>
+  <[ Tab everything ]>  window process <[ firefox.exe ]>   tab <[ https://www.example.com/every?part=1 ]>   started by <[ firefox.exe ]>   scales with dpi   at 120dpi
+  <[ Tab child ]>     inside <[ Tab everything ]>   offset 10 20  size 30 40
+  <[ Tab plain ]>     window process <[ chrome.exe ]>   tab <[ example.com/plain ]>
+  <[ Tab started by ]>  window process <[ msedge.exe ]>   tab <[ example.com/started ]>   started by <[ msedge.exe ]>
+  <[ Window at dpi ]> window process <[ i.exe ]>   at 168dpi
+  <[ Window empty process ]>  window process <[  ]>
+  <[ Window everything ]>  window process <[ j.exe ]> title is <[ Every part ]>   with frame   started by <[ "C:\Program Files\J\j.exe" --flag ]>   scales with area   at 96dpi
+  <[ Window child ]>  inside <[ Window everything ]>   ratio 0.50 0.50  size 0.25 0.25
+  <[ Window plain ]>  window process <[ plain.exe ]>
+  <[ Window scales with area ]>  window process <[ h.exe ]>   scales with area
+  <[ Window scales with dpi ]>  window process <[ g.exe ]>   scales with dpi
+  <[ Window started by ]>  window process <[ f.exe ]>   started by <[ steam://rungameid/1013320 ]>
+  <[ Window title contains ]>  window process <[ a.exe ]> title contains <[ Part of it ]>
+  <[ Window title is ]>  window process <[ b.exe ]> title is <[ All of it ]>
+  <[ Window title matches ]>  window process <[ d.exe ]> title matches <[ ^App \d+$ ]>
+  <[ Window title starts with ]>  window process <[ c.exe ]> title starts with <[ Start of it ]>
+  <[ Window with frame ]>  window process <[ e.exe ]>   with frame
+
+Points:
+  <[ Point inside a child area ]>  inside <[ App ratio ]>   offset 1 1
+  <[ Point inside offset ]>  inside <[ App ]>   offset 40 8
+  <[ Point inside offset at dpi ]>  inside <[ App ]>   offset -40 -8   at 96dpi
+  <[ Point inside ratio ]>  inside <[ App ]>   ratio 0.95 0.05
+  <[ Point inside ratio at dpi ]>  inside <[ App ]>   ratio 0.50 0.50   at 120dpi
+  <[ Point on screen offset ]>  on screen   offset 12 -12
+  <[ Point on screen offset at dpi ]>  on screen   offset 0 0   at 120dpi
+  <[ Point on screen ratio ]>  on screen   ratio 0.25 0.75
+  <[ Point on screen ratio at dpi ]>  on screen   ratio 1.00 0.00   at 144dpi
+
+Inputs:
+  <[ zulu plain ]>
+  <[ alpha default ]> default <[ standard_user ]>
+  <[ password ]>      secret
+  <[ an input with a name longer than the column ]>  default <[ C:\temp\ {{not read}} ]>
+  <[ another input with a long name and a secret ]>  secret
+  <[ mike plain ]>
+
+Templates:
+  <[ Company logo.png ]>      click 2 2
+  <[ template-a-file-name-longer-than-the-column.png ]>  click 1 1
+  <[ template-all.png ]>      click 60 12   captured 1920x1080 at 120dpi
+  <[ template-captured.png ]> click -4 -10   captured 800x600
+  <[ template-dpi.png ]>      click 5 6   at 96dpi
+  <[ template-no-picture.png ]>  click 0 0
+
+Steps:
+
+# A stage can carry a comment.
+## Stage markers
+
+# First line.
+# Second line.
+## Stage with two comment lines
+
+## 
+
+# Two stages can both have no name, since a name left out is not a name taken.
+## 
+
+## Wait
+
+Wait            0ms
+
+Wait            800ms
+
+Wait            800ms to 1200ms
+
+Wait            0ms to 1ms
+
+Wait            2147483647ms
+
+## Loop
+
+Loop            <[ Loop 5 times ]>   5 times
+ Wait            1ms
+ Click
+
+Loop            <[ Loop 1 time ]>   1 times
+ Wait            2ms
+
+Loop            <[ Loop 0 times ]>   0 times
+
+Loop            <[ Loop forever ]>   forever
+ Wait            3ms
+ Break           out of <[ Loop forever ]>
+
+Loop            <[ Loop with nothing in it ]>   forever
+
+Loop            <[ Loop outer ]>   2 times
+ Loop            <[ Loop inner ]>   3 times
+  Break           out of <[ Loop inner ]>
+  Break           out of <[ Loop outer ]>
+ Wait            4ms
+
+Loop            <[  ]>   3 times
+ Wait            5ms
+
+Loop            <[  ]>   4 times
+
+## Break
+
+Loop            <[ Break out of a loop ]>   2 times
+ Break           out of <[ Break out of a loop ]>
+
+Find Image      <[ Break out of a search ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Success:
+  Break           out of <[ Break out of a search ]>
+ Failure:
+  Break           out of <[ Break out of a search ]>
+
+Check Text      <[ Break out of a text search ]>   is <[ x ]>   in <[ App ]>
+ Success:
+  Break           out of <[ Break out of a text search ]>
+
+Check Value     <[ Break out of a check ]>   <[  ]> is empty
+ Failure:
+  Break           out of <[ Break out of a check ]>
+
+Shell           <[ Break out of a command ]>   <[ exit 1 ]>
+ Failure:
+  Break           out of <[ Break out of a command ]>
+
+Break           out of <[ Loop 5 times ]>
+
+## Click
+
+Click
+
+Click           double
+
+Click           hold
+
+Click           release
+
+Click           right
+
+Click           right double
+
+Click           right hold
+
+Click           right release
+
+Click           middle
+
+Click           middle double
+
+Click           middle hold
+
+Click           middle release
+
+## Scroll
+
+Scroll          up 0
+
+Scroll          up 1
+
+Scroll          up 3
+
+Scroll          down 0
+
+Scroll          down 1
+
+Scroll          down 3
+
+Scroll          left 0
+
+Scroll          left 1
+
+Scroll          left 3
+
+Scroll          right 0
+
+Scroll          right 1
+
+Scroll          right 3
+
+## Move
+
+Move            to point <[ Point inside ratio ]>
+
+Move            to point <[ Point inside ratio at dpi ]>
+
+Move            to point <[ Point inside offset ]>
+
+Move            to point <[ Point inside offset at dpi ]>
+
+Move            to point <[ Point inside a child area ]>
+
+Move            to point <[ Point on screen ratio ]>
+
+Move            to point <[ Point on screen ratio at dpi ]>
+
+Move            to point <[ Point on screen offset ]>
+
+Move            to point <[ Point on screen offset at dpi ]>
+
+Move            to <[ Break out of a search ]>
+
+Move            to nowhere
+
+## Drag
+
+Drag            at point <[ Point inside ratio ]> to point <[ Point inside ratio ]>
+
+Drag            at point <[ Point inside ratio ]> to <[ Break out of a search ]>
+
+Drag            at point <[ Point inside ratio ]> to nowhere
+
+Drag            at <[ Break out of a search ]> to point <[ Point inside ratio ]>
+
+Drag            at <[ Break out of a search ]> to <[ Break out of a search ]>
+
+Drag            at <[ Break out of a search ]> to nowhere
+
+Drag            at nowhere to point <[ Point inside ratio ]>
+
+Drag            at nowhere to <[ Break out of a search ]>
+
+Drag            at nowhere to nowhere
+
+Drag            at point <[ Point on screen offset ]> to point <[ Point on screen ratio ]>
+
+## Keyboard
+
+Type            <[ plain text ]>
+
+Type            <[  ]>
+
+Type            <[ {{alpha default}} ]>
+
+Type            <[ {{Source text}} and {{password}} ]>
+
+Press           <[ Ctrl+C ]>
+
+Press           <[ Ctrl+Shift+Alt+F12 ]>
+
+Press           <[ Shift ]>   hold
+
+Press           <[ Shift ]>   release
+
+Press           <[  ]>
+
+Press           <[  ]>   hold
+
+Press           <[  ]>   release
+
+## Focus Window
+
+Focus Window    <[ App ]>
+
+Focus Window    <[ Window plain ]>
+
+Focus Window    <[ Window everything ]>
+
+Focus Window    <[ Tab plain ]>
+
+Focus Window    <[ Monitor primary ]>
+
+Focus Window    <[ App ratio ]>
+
+Focus Window    nowhere
+
+## Resize Window
+
+Resize Window   <[ App ]>   size 1280 720
+
+Resize Window   <[ Tab plain ]>   size 1 1
+
+Resize Window   <[ App ]>   size 0 0
+
+Resize Window   nowhere   size 800 600
+
+Resize Window   nowhere   size 0 0
+
+## Move Window
+
+Move Window     <[ App ]>   to point <[ Point on screen offset ]>
+
+Move Window     <[ App ]>   to point <[ Point inside offset at dpi ]>
+
+Move Window     <[ App ]>   to nowhere
+
+Move Window     <[ Tab plain ]>   to point <[ Point on screen offset ]>
+
+Move Window     <[ Tab plain ]>   to point <[ Point inside offset at dpi ]>
+
+Move Window     <[ Tab plain ]>   to nowhere
+
+Move Window     nowhere   to point <[ Point on screen offset ]>
+
+Move Window     nowhere   to point <[ Point inside offset at dpi ]>
+
+Move Window     nowhere   to nowhere
+
+## Close Window
+
+Close Window    <[ App ]>
+
+Close Window    <[ App ]>   then force
+
+Close Window    <[ App ]>   timeout 1ms
+
+Close Window    <[ App ]>   timeout 1ms   then force
+
+Close Window    <[ App ]>   timeout 10000ms
+
+Close Window    <[ App ]>   timeout 10000ms   then force
+
+Close Window    <[ Tab plain ]>
+
+Close Window    <[ Tab plain ]>   then force
+
+Close Window    <[ Tab plain ]>   timeout 1ms
+
+Close Window    <[ Tab plain ]>   timeout 1ms   then force
+
+Close Window    <[ Tab plain ]>   timeout 10000ms
+
+Close Window    <[ Tab plain ]>   timeout 10000ms   then force
+
+Close Window    nowhere
+
+Close Window    nowhere   then force
+
+Close Window    nowhere   timeout 1ms
+
+Close Window    nowhere   timeout 1ms   then force
+
+Close Window    nowhere   timeout 10000ms
+
+Close Window    nowhere   timeout 10000ms   then force
+
+## System
+
+System          LOCK_WORKSTATION
+
+System          SLEEP_PC
+
+System          MONITOR_OFF
+
+System          MONITOR_ON
+
+## Shell
+
+Shell           <[ Shell a command ]>   <[ ipconfig /flushdns ]>
+
+Shell           <[ Shell no command ]>   <[  ]>
+
+Shell           <[ Shell a pipe and quotes ]>   <[ dir "C:\Program Files" | findstr /i "x" > out.txt & echo done ]>
+
+Shell           <[  ]>   <[ the command of a step with no name ]>
+
+Shell           <[ Shell KILL_PROCESS ]>   KILL_PROCESS <[ chrome.exe ]>
+
+Shell           <[ Shell KILL_PROCESS other value ]>   KILL_PROCESS <[  ]>
+
+Shell           <[ Shell IS_PROCESS_RUNNING ]>   IS_PROCESS_RUNNING <[ game.exe ]>
+
+Shell           <[ Shell IS_PROCESS_RUNNING other value ]>   IS_PROCESS_RUNNING <[  ]>
+
+Shell           <[ Shell READ_CLIPBOARD ]>   READ_CLIPBOARD <[  ]>
+
+Shell           <[ Shell READ_CLIPBOARD other value ]>   READ_CLIPBOARD <[ a value it takes no notice of ]>
+
+Shell           <[ Shell WRITE_CLIPBOARD ]>   WRITE_CLIPBOARD <[ {{alpha default}} ]>
+
+Shell           <[ Shell WRITE_CLIPBOARD other value ]>   WRITE_CLIPBOARD <[  ]>
+
+Shell           <[ Shell CHECK_INTERNET ]>   CHECK_INTERNET <[  ]>
+
+Shell           <[ Shell CHECK_INTERNET other value ]>   CHECK_INTERNET <[ a value it takes no notice of ]>
+
+Shell           <[ Shell SHUTDOWN_IN ]>   SHUTDOWN_IN <[ 60 ]>
+
+Shell           <[ Shell SHUTDOWN_IN other value ]>   SHUTDOWN_IN <[  ]>
+
+Shell           <[ Shell CANCEL_SHUTDOWN ]>   CANCEL_SHUTDOWN <[  ]>
+
+Shell           <[ Shell CANCEL_SHUTDOWN other value ]>   CANCEL_SHUTDOWN <[ a value it takes no notice of ]>
+
+Shell           <[  ]>   KILL_PROCESS <[ chrome.exe ]>
+
+## Launch
+
+Launch          <[ Launch a command ]>   <[ "C:\Program Files\J\j.exe" --flag ]>
+
+Launch          <[ Launch a link ]>   <[ steam://rungameid/1013320 ]>
+
+Launch          <[ Launch no command ]>   <[  ]>
+
+Launch          <[  ]>   <[ the launch of a step with no name ]>
+
+Launch          <[ Launch the main area ]>   opens <[ App ]>
+
+Launch          <[ Launch the main area with arguments ]>   opens <[ App ]>   with <[ --profile test ]>
+
+Launch          <[ Launch a tab ]>   opens <[ Tab plain ]>
+
+Launch          <[ Launch a tab with arguments ]>   opens <[ Tab started by ]>   with <[ https://www.example.com ]>
+
+Launch          <[ Launch an empty process ]>   opens <[ Window empty process ]>
+
+Launch          <[ Launch a monitor, which makes no sense ]>   opens <[ Monitor primary ]>   with <[ and so do these arguments ]>
+
+Launch          <[  ]>   opens <[ Window plain ]>
+
+Launch          <[  ]>   opens <[ Window started by ]>   with <[ --a --b ]>
+
+## Find Image
+
+Find Image      <[ Find Image no template ]>
+
+Find Image      <[ Find Image no template in an area ]>   in <[ App ]>
+
+Find Image      <[ Find Image no template brightness ]>   match shape and brightness
+
+Find Image      <[ Find Image no template brightness in an area ]>   match shape and brightness   in <[ App ]>
+
+Find Image      <[ Find Image one template ]>   template <[ template-all.png ]> accuracy 0.9
+
+Find Image      <[ Find Image one template in an area ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+
+Find Image      <[ Find Image one template brightness ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness
+
+Find Image      <[ Find Image one template brightness in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>
+
+Find Image      <[ Find Image two templates ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1
+
+Find Image      <[ Find Image two templates in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>
+
+Find Image      <[ Find Image two templates brightness ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness
+
+Find Image      <[ Find Image two templates brightness in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>
+
+Find All Images <[ Find All Images no template ]>
+
+Find All Images <[ Find All Images no template in an area ]>   in <[ App ]>
+
+Find All Images <[ Find All Images no template brightness ]>   match shape and brightness
+
+Find All Images <[ Find All Images no template brightness in an area ]>   match shape and brightness   in <[ App ]>
+
+Find All Images <[ Find All Images one template ]>   template <[ template-all.png ]> accuracy 0.9
+
+Find All Images <[ Find All Images one template in an area ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+
+Find All Images <[ Find All Images one template brightness ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness
+
+Find All Images <[ Find All Images one template brightness in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>
+
+Find All Images <[ Find All Images two templates ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1
+
+Find All Images <[ Find All Images two templates in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>
+
+Find All Images <[ Find All Images two templates brightness ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness
+
+Find All Images <[ Find All Images two templates brightness in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>
+
+Wait For Image  <[ Wait For Image no template with a timeout ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image no template with no timeout ]>   no timeout
+
+Wait For Image  <[ Wait For Image no template in an area with a timeout ]>   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image no template in an area with no timeout ]>   in <[ App ]>   no timeout
+
+Wait For Image  <[ Wait For Image no template brightness with a timeout ]>   match shape and brightness   timeout 10000ms
+
+Wait For Image  <[ Wait For Image no template brightness with no timeout ]>   match shape and brightness   no timeout
+
+Wait For Image  <[ Wait For Image no template brightness in an area with a timeout ]>   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image no template brightness in an area with no timeout ]>   match shape and brightness   in <[ App ]>   no timeout
+
+Wait For Image  <[ Wait For Image one template with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   timeout 10000ms
+
+Wait For Image  <[ Wait For Image one template with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   no timeout
+
+Wait For Image  <[ Wait For Image one template in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image one template in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
+
+Wait For Image  <[ Wait For Image one template brightness with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   timeout 10000ms
+
+Wait For Image  <[ Wait For Image one template brightness with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   no timeout
+
+Wait For Image  <[ Wait For Image one template brightness in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image one template brightness in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   no timeout
+
+Wait For Image  <[ Wait For Image two templates with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   timeout 10000ms
+
+Wait For Image  <[ Wait For Image two templates with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   no timeout
+
+Wait For Image  <[ Wait For Image two templates in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image two templates in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   no timeout
+
+Wait For Image  <[ Wait For Image two templates brightness with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   timeout 10000ms
+
+Wait For Image  <[ Wait For Image two templates brightness with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   no timeout
+
+Wait For Image  <[ Wait For Image two templates brightness in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait For Image  <[ Wait For Image two templates brightness in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image no template with a timeout ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image no template with no timeout ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image no template in an area with a timeout ]>   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image no template in an area with no timeout ]>   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image no template brightness with a timeout ]>   match shape and brightness   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image no template brightness with no timeout ]>   match shape and brightness   no timeout
+
+Wait Until No Image  <[ Wait Until No Image no template brightness in an area with a timeout ]>   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image no template brightness in an area with no timeout ]>   match shape and brightness   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image one template with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image one template with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   no timeout
+
+Wait Until No Image  <[ Wait Until No Image one template in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image one template in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image one template brightness with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image one template brightness with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   no timeout
+
+Wait Until No Image  <[ Wait Until No Image one template brightness in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image one template brightness in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image two templates with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image two templates with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   no timeout
+
+Wait Until No Image  <[ Wait Until No Image two templates in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image two templates in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   no timeout
+
+Wait Until No Image  <[ Wait Until No Image two templates brightness with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image two templates brightness with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   no timeout
+
+Wait Until No Image  <[ Wait Until No Image two templates brightness in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   timeout 10000ms
+
+Wait Until No Image  <[ Wait Until No Image two templates brightness in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   no timeout
+
+Find Image      <[ Find Image every template ]>   template <[ Company logo.png ]> accuracy 0.9  template <[ template-a-file-name-longer-than-the-column.png ]> accuracy 1  template <[ template-all.png ]> accuracy 0  template <[ template-captured.png ]> accuracy 0.1234  template <[ template-dpi.png ]> accuracy 0.97  template <[ template-no-picture.png ]> accuracy 0.8   match shape and brightness   in <[ Monitor device ]>
+
+Find Image      <[ Find Image a template twice ]>   template <[ template-all.png ]> accuracy 0.5  template <[ template-all.png ]> accuracy 0.6   in <[ App offset ]>
+
+Find Image      <[  ]>
+
+Find All Images <[  ]>   template <[ Company logo.png ]> accuracy 0.9   in <[ App ratio ]>
+
+Wait For Image  <[  ]>   template <[ Company logo.png ]> accuracy 0.9   in <[ Screen ratio ]>   timeout 1ms
+
+Wait Until No Image  <[  ]>   template <[ Company logo.png ]> accuracy 0.9   in <[ Tab child ]>   no timeout
+
+## Text search
+
+Check Text      <[ Check Text is ]>   is <[ Done ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text is not ]>   is not <[ Error ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text contains ]>   contains <[ Saved ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text does not contain ]>   does not contain <[ Failed ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text matches ]>   matches <[ total: (\d+) ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text is empty ]>   is empty   in <[ App ratio ]>
+
+Check Text      <[ Check Text is not empty ]>   is not empty   in <[ App ratio ]>
+
+Check Text      <[ Check Text > ]>   > <[ 100 ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text < ]>   < <[ 5 ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text between ]>   between <[ 1 ]> and <[ 9 ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text has length ]>   has length <[ 6 ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text longer than ]>   longer than <[ 3 ]>   in <[ App ratio ]>
+
+Check Text      <[ Check Text shorter than ]>   shorter than <[ 40 ]>   in <[ App ratio ]>
+
+Wait For Text   <[ Wait For Text is ]>   is <[ Done ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text is not ]>   is not <[ Error ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text contains ]>   contains <[ Saved ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text does not contain ]>   does not contain <[ Failed ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text matches ]>   matches <[ total: (\d+) ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text is empty ]>   is empty   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text is not empty ]>   is not empty   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text > ]>   > <[ 100 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text < ]>   < <[ 5 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text between ]>   between <[ 1 ]> and <[ 9 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text has length ]>   has length <[ 6 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text longer than ]>   longer than <[ 3 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait For Text   <[ Wait For Text shorter than ]>   shorter than <[ 40 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text is ]>   is <[ Done ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text is not ]>   is not <[ Error ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text contains ]>   contains <[ Saved ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text does not contain ]>   does not contain <[ Failed ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text matches ]>   matches <[ total: (\d+) ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text is empty ]>   is empty   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text is not empty ]>   is not empty   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text > ]>   > <[ 100 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text < ]>   < <[ 5 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text between ]>   between <[ 1 ]> and <[ 9 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text has length ]>   has length <[ 6 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text longer than ]>   longer than <[ 3 ]>   in <[ App ratio ]>   timeout 500ms
+
+Wait Until No Text  <[ Wait Until No Text shorter than ]>   shorter than <[ 40 ]>   in <[ App ratio ]>   timeout 500ms
+
+Check Text      <[ Check Text clauses ]>   contains <[ x ]>
+
+Check Text      <[ Check Text clauses keeping part ]>   contains <[ x ]>   keep <[ (\d+) ]>
+
+Check Text      <[ Check Text clauses in an area ]>   contains <[ x ]>   in <[ App offset ]>
+
+Check Text      <[ Check Text clauses in an area keeping part ]>   contains <[ x ]>   in <[ App offset ]>   keep <[ (\d+) ]>
+
+Wait For Text   <[ Wait For Text clauses with a timeout ]>   contains <[ x ]>   timeout 10000ms
+
+Wait For Text   <[ Wait For Text clauses with no timeout ]>   contains <[ x ]>   no timeout
+
+Wait For Text   <[ Wait For Text clauses keeping part with a timeout ]>   contains <[ x ]>   keep <[ (\d+) ]>   timeout 10000ms
+
+Wait For Text   <[ Wait For Text clauses keeping part with no timeout ]>   contains <[ x ]>   keep <[ (\d+) ]>   no timeout
+
+Wait For Text   <[ Wait For Text clauses in an area with a timeout ]>   contains <[ x ]>   in <[ App offset ]>   timeout 10000ms
+
+Wait For Text   <[ Wait For Text clauses in an area with no timeout ]>   contains <[ x ]>   in <[ App offset ]>   no timeout
+
+Wait For Text   <[ Wait For Text clauses in an area keeping part with a timeout ]>   contains <[ x ]>   in <[ App offset ]>   keep <[ (\d+) ]>   timeout 10000ms
+
+Wait For Text   <[ Wait For Text clauses in an area keeping part with no timeout ]>   contains <[ x ]>   in <[ App offset ]>   keep <[ (\d+) ]>   no timeout
+
+Wait Until No Text  <[ Wait Until No Text clauses with a timeout ]>   contains <[ x ]>   timeout 10000ms
+
+Wait Until No Text  <[ Wait Until No Text clauses with no timeout ]>   contains <[ x ]>   no timeout
+
+Wait Until No Text  <[ Wait Until No Text clauses keeping part with a timeout ]>   contains <[ x ]>   keep <[ (\d+) ]>   timeout 10000ms
+
+Wait Until No Text  <[ Wait Until No Text clauses keeping part with no timeout ]>   contains <[ x ]>   keep <[ (\d+) ]>   no timeout
+
+Wait Until No Text  <[ Wait Until No Text clauses in an area with a timeout ]>   contains <[ x ]>   in <[ App offset ]>   timeout 10000ms
+
+Wait Until No Text  <[ Wait Until No Text clauses in an area with no timeout ]>   contains <[ x ]>   in <[ App offset ]>   no timeout
+
+Wait Until No Text  <[ Wait Until No Text clauses in an area keeping part with a timeout ]>   contains <[ x ]>   in <[ App offset ]>   keep <[ (\d+) ]>   timeout 10000ms
+
+Wait Until No Text  <[ Wait Until No Text clauses in an area keeping part with no timeout ]>   contains <[ x ]>   in <[ App offset ]>   keep <[ (\d+) ]>   no timeout
+
+Check Text      <[ Check Text is with no value ]>   is <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text is not with no value ]>   is not <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text contains with no value ]>   contains <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text does not contain with no value ]>   does not contain <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text matches with no value ]>   matches <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text > with no value ]>   > <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text < with no value ]>   < <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text between with no value ]>   between <[  ]> and <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text has length with no value ]>   has length <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text longer than with no value ]>   longer than <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text shorter than with no value ]>   shorter than <[  ]>   in <[ App ]>
+
+Check Text      <[ Check Text between with no start ]>   between <[  ]> and <[ 9 ]>   in <[ App ]>
+
+Check Text      <[ Check Text between with no end ]>   between <[ 1 ]> and <[  ]>   in <[ App ]>
+
+Check Text      <[  ]>   is empty
+
+Wait For Text   <[  ]>   is empty   no timeout
+
+Wait Until No Text  <[  ]>   is empty   timeout 1ms
+
+## Check Value
+
+Check Text      <[ Source text ]>   is not empty   in <[ App ratio ]>   keep <[ (\d+) ]>
+
+Shell           <[ Source command ]>   <[ echo 1 ]>
+
+Check Value     <[ Check Source text is ]>   <[ {{Source text}} ]> is <[ Done ]>
+
+Check Value     <[ Check Source text is not ]>   <[ {{Source text}} ]> is not <[ Error ]>
+
+Check Value     <[ Check Source text contains ]>   <[ {{Source text}} ]> contains <[ Saved ]>
+
+Check Value     <[ Check Source text does not contain ]>   <[ {{Source text}} ]> does not contain <[ Failed ]>
+
+Check Value     <[ Check Source text matches ]>   <[ {{Source text}} ]> matches <[ total: (\d+) ]>
+
+Check Value     <[ Check Source text is empty ]>   <[ {{Source text}} ]> is empty
+
+Check Value     <[ Check Source text is not empty ]>   <[ {{Source text}} ]> is not empty
+
+Check Value     <[ Check Source text > ]>   <[ {{Source text}} ]> > <[ 100 ]>
+
+Check Value     <[ Check Source text < ]>   <[ {{Source text}} ]> < <[ 5 ]>
+
+Check Value     <[ Check Source text between ]>   <[ {{Source text}} ]> between <[ 1 ]> and <[ 9 ]>
+
+Check Value     <[ Check Source text has length ]>   <[ {{Source text}} ]> has length <[ 6 ]>
+
+Check Value     <[ Check Source text longer than ]>   <[ {{Source text}} ]> longer than <[ 3 ]>
+
+Check Value     <[ Check Source text shorter than ]>   <[ {{Source text}} ]> shorter than <[ 40 ]>
+
+Check Value     <[ Check Source command is ]>   <[ {{Source command}} ]> is <[ Done ]>
+
+Check Value     <[ Check Source command is not ]>   <[ {{Source command}} ]> is not <[ Error ]>
+
+Check Value     <[ Check Source command contains ]>   <[ {{Source command}} ]> contains <[ Saved ]>
+
+Check Value     <[ Check Source command does not contain ]>   <[ {{Source command}} ]> does not contain <[ Failed ]>
+
+Check Value     <[ Check Source command matches ]>   <[ {{Source command}} ]> matches <[ total: (\d+) ]>
+
+Check Value     <[ Check Source command is empty ]>   <[ {{Source command}} ]> is empty
+
+Check Value     <[ Check Source command is not empty ]>   <[ {{Source command}} ]> is not empty
+
+Check Value     <[ Check Source command > ]>   <[ {{Source command}} ]> > <[ 100 ]>
+
+Check Value     <[ Check Source command < ]>   <[ {{Source command}} ]> < <[ 5 ]>
+
+Check Value     <[ Check Source command between ]>   <[ {{Source command}} ]> between <[ 1 ]> and <[ 9 ]>
+
+Check Value     <[ Check Source command has length ]>   <[ {{Source command}} ]> has length <[ 6 ]>
+
+Check Value     <[ Check Source command longer than ]>   <[ {{Source command}} ]> longer than <[ 3 ]>
+
+Check Value     <[ Check Source command shorter than ]>   <[ {{Source command}} ]> shorter than <[ 40 ]>
+
+Check Value     <[ Check nothing is ]>   <[  ]> is <[ Done ]>
+
+Check Value     <[ Check nothing is not ]>   <[  ]> is not <[ Error ]>
+
+Check Value     <[ Check nothing contains ]>   <[  ]> contains <[ Saved ]>
+
+Check Value     <[ Check nothing does not contain ]>   <[  ]> does not contain <[ Failed ]>
+
+Check Value     <[ Check nothing matches ]>   <[  ]> matches <[ total: (\d+) ]>
+
+Check Value     <[ Check nothing is empty ]>   <[  ]> is empty
+
+Check Value     <[ Check nothing is not empty ]>   <[  ]> is not empty
+
+Check Value     <[ Check nothing > ]>   <[  ]> > <[ 100 ]>
+
+Check Value     <[ Check nothing < ]>   <[  ]> < <[ 5 ]>
+
+Check Value     <[ Check nothing between ]>   <[  ]> between <[ 1 ]> and <[ 9 ]>
+
+Check Value     <[ Check nothing has length ]>   <[  ]> has length <[ 6 ]>
+
+Check Value     <[ Check nothing longer than ]>   <[  ]> longer than <[ 3 ]>
+
+Check Value     <[ Check nothing shorter than ]>   <[  ]> shorter than <[ 40 ]>
+
+Check Value     <[ Check is with no value ]>   <[ {{Source text}} ]> is <[  ]>
+
+Check Value     <[ Check is not with no value ]>   <[ {{Source text}} ]> is not <[  ]>
+
+Check Value     <[ Check contains with no value ]>   <[ {{Source text}} ]> contains <[  ]>
+
+Check Value     <[ Check does not contain with no value ]>   <[ {{Source text}} ]> does not contain <[  ]>
+
+Check Value     <[ Check matches with no value ]>   <[ {{Source text}} ]> matches <[  ]>
+
+Check Value     <[ Check > with no value ]>   <[ {{Source text}} ]> > <[  ]>
+
+Check Value     <[ Check < with no value ]>   <[ {{Source text}} ]> < <[  ]>
+
+Check Value     <[ Check between with no value ]>   <[ {{Source text}} ]> between <[  ]> and <[  ]>
+
+Check Value     <[ Check has length with no value ]>   <[ {{Source text}} ]> has length <[  ]>
+
+Check Value     <[ Check longer than with no value ]>   <[ {{Source text}} ]> longer than <[  ]>
+
+Check Value     <[ Check shorter than with no value ]>   <[ {{Source text}} ]> shorter than <[  ]>
+
+Check Value     <[ Check between with no start ]>   <[ {{Source text}} ]> between <[  ]> and <[ 9 ]>
+
+Check Value     <[ Check between with no end ]>   <[ {{Source text}} ]> between <[ 1 ]> and <[  ]>
+
+Check Value     <[  ]>   <[ {{Source text}} ]> is <[ a check with no name ]>
+
+Check Value     <[  ]>   <[  ]> is empty
+
+## Notify
+
+Notify          <[ a message ]>
+
+Notify          <[  ]>
+
+Notify          <[ {{alpha default}} read {{Source text}} ]>
+
+Notify          <[ a message and a result ]>   with result of <[ Source text ]>
+
+Notify          <[  ]>   with result of <[ Source command ]>
+
+Notify          <[ the result of a search ]>   with result of <[ Find Image one template ]>
+
+Notify          <[ the result of a check ]>   with result of <[ Check Source text is ]>
+
+## End Execution
+
+End Execution   passed
+
+End Execution   failed  <[ a reason ]>
+
+End Execution   failed  <[  ]>
+
+End Execution   failed  <[ {{alpha default}} read {{Source text}} ]>
+
+End Execution   passed
+ Wait            6ms
+ Notify          <[ cleanup after a pass ]>
+
+End Execution   failed  <[ cleanup after a failure ]>
+ Shell           <[ Cleanup command ]>   KILL_PROCESS <[ chrome.exe ]>
+ Close Window    <[ App ]>   timeout 10000ms   then force
+
+End Execution   failed  <[ an end inside an end ]>
+ End Execution   passed
+  End Execution   failed  <[ and another ]>
+
+## Sub Flow
+
+Sub Flow        <[ Sub flow that calls ]>   <[ Called flow ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
+
+Sub Flow        <[  ]>   <[ Called flow ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
+
+Sub Flow        <[ Sub flow that calls nothing ]>   <[  ]>
+
+Sub Flow        <[  ]>   <[  ]>
+
+## Branches
+
+Find Image      <[ Branch none ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+
+Find Image      <[ Branch success ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Success:
+  Wait            7ms
+
+Find Image      <[ Branch failure ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Failure:
+  Wait            8ms
+
+Find Image      <[ Branch both ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Success:
+  Wait            9ms
+ Failure:
+  Wait            10ms
+
+Find Image      <[ Branch failure first ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Failure:
+  Wait            11ms
+ Success:
+  Wait            12ms
+
+Find Image      <[ Branch empty success ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ # Nothing to do, it is already open.
+ Success:
+
+Find Image      <[ Branch empty failure ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ # Nothing to do, it never was.
+ Failure:
+
+Find Image      <[ Branch both empty ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ # Nothing here.
+ Success:
+ # Nor here.
+ Failure:
+
+Find Image      <[ Branch one empty ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ # Nothing here.
+ Success:
+ Failure:
+  Wait            13ms
+
+Find All Images <[ Branch of find all ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Success:
+  Click
+ Failure:
+  Wait            14ms
+
+Wait For Image  <[ Branch of wait for image ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   timeout 1000ms
+ Success:
+  Click
+ Failure:
+  Wait            15ms
+
+Wait Until No Image  <[ Branch of wait until no image ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
+ Success:
+  Click
+ Failure:
+  Wait            16ms
+
+Check Text      <[ Branch of check text ]>   is <[ x ]>   in <[ App ]>
+ Success:
+  Wait            17ms
+ Failure:
+  Wait            18ms
+
+Wait For Text   <[ Branch of wait for text ]>   is <[ x ]>   in <[ App ]>   timeout 1000ms
+ Success:
+  Wait            19ms
+ Failure:
+  Wait            20ms
+
+Wait Until No Text  <[ Branch of wait until no text ]>   is <[ x ]>   in <[ App ]>   no timeout
+ Success:
+  Wait            21ms
+ Failure:
+  Wait            22ms
+
+Check Value     <[ Branch of check value ]>   <[ {{Source text}} ]> is <[ x ]>
+ Success:
+  Wait            23ms
+ Failure:
+  Wait            24ms
+
+Shell           <[ Branch of shell ]>   <[ echo 1 ]>
+ Success:
+  Wait            25ms
+ Failure:
+  Wait            26ms
+
+Shell           <[ Branch of a shell mode ]>   IS_PROCESS_RUNNING <[ x.exe ]>
+ Success:
+  Wait            27ms
+ Failure:
+  Wait            28ms
+
+Launch          <[ Branch of launch ]>   <[ x.exe ]>
+ Success:
+  Wait            29ms
+ Failure:
+  Wait            30ms
+
+Launch          <[ Branch of launch opens ]>   opens <[ App ]>
+ Success:
+  Wait            31ms
+ Failure:
+  Wait            32ms
+
+Focus Window    <[ App ]>
+ Success:
+  Wait            33ms
+ Failure:
+  Wait            34ms
+
+Focus Window    nowhere
+ Success:
+  Wait            35ms
+
+Resize Window   <[ App ]>   size 2 2
+ Success:
+  Wait            36ms
+ Failure:
+  Wait            37ms
+
+Move Window     <[ App ]>   to point <[ Point on screen offset ]>
+ Success:
+  Wait            38ms
+ Failure:
+  Wait            39ms
+
+Close Window    <[ App ]>   timeout 1ms   then force
+ Success:
+  Wait            40ms
+ Failure:
+  Wait            41ms
+
+## Depth
+
+Find Image      <[ Depth 1 ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ Success:
+  Loop            <[ Depth 2 ]>   2 times
+   Check Value     <[ Depth 3 ]>   <[ {{Source text}} ]> is <[ x ]>
+    Failure:
+     End Execution   failed  <[ Depth 4 ]>
+      Shell           <[ Depth 5 ]>   <[ x ]>
+       Success:
+        Wait For Text   <[ Depth 6 ]>   is <[ y ]>   in <[ App ]>   timeout 1ms
+         Failure:
+          Focus Window    <[ App ]>
+           Success:
+            Loop            <[ Depth 7 ]>   forever
+             Click
+             Break           out of <[ Depth 7 ]>
+             Break           out of <[ Depth 2 ]>
+            Wait            42ms
+          Move            to <[ Depth 1 ]>
+        Notify          <[ back up a level ]>   with result of <[ Depth 6 ]>
+       Failure:
+        Wait            43ms
+      Wait            44ms
+    Success:
+     Wait            45ms
+   Wait            46ms
+  Wait            47ms
+ Failure:
+  Wait            48ms
+
+Wait            49ms
+
+## Disabled
+
+Disabled Wait            800ms to 1200ms
+
+Disabled Loop            <[ Disabled loop ]>   2 times
+ Wait            50ms
+ Disabled Click
+
+Loop            <[ A loop with a disabled break ]>   2 times
+ Disabled Break           out of <[ A loop with a disabled break ]>
+
+Disabled Click
+
+Disabled Click           right double
+
+Disabled Scroll          down 3
+
+Disabled Move            to point <[ Point inside ratio ]>
+
+Disabled Move            to nowhere
+
+Disabled Drag            at point <[ Point inside ratio ]> to nowhere
+
+Disabled Type            <[ disabled text ]>
+
+Disabled Press           <[ Ctrl+V ]>   hold
+
+Disabled Focus Window    <[ App ]>
+
+Disabled Resize Window   <[ App ]>   size 3 3
+
+Disabled Move Window     <[ App ]>   to nowhere
+
+Disabled Close Window    <[ App ]>   timeout 1ms   then force
+
+Disabled System          SLEEP_PC
+
+Disabled Shell           <[ Disabled shell ]>   <[ x ]>
+
+Disabled Shell           <[ Disabled shell mode ]>   KILL_PROCESS <[ x ]>
+
+Disabled Launch          <[ Disabled launch ]>   <[ x ]>
+
+Disabled Launch          <[ Disabled launch opens ]>   opens <[ App ]>   with <[ --x ]>
+
+Disabled Notify          <[ disabled ]>   with result of <[ Source text ]>
+
+Disabled End Execution   passed
+
+Disabled End Execution   failed  <[ disabled ]>
+
+Disabled End Execution   failed  <[ disabled with cleanup ]>
+ Wait            51ms
+
+Disabled Sub Flow        <[ Disabled sub flow ]>   <[ Called flow ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
+
+Disabled Find Image      <[ Disabled find image ]>   template <[ template-all.png ]> accuracy 0.9
+
+Disabled Find All Images <[ Disabled find all ]>   template <[ template-all.png ]> accuracy 0.9
+
+Disabled Wait For Image  <[ Disabled wait for image ]>   template <[ template-all.png ]> accuracy 0.9   timeout 1ms
+
+Disabled Wait Until No Image  <[ Disabled wait until no image ]>   template <[ template-all.png ]> accuracy 0.9   no timeout
+
+Disabled Check Text      <[ Disabled check text ]>   is empty
+
+Disabled Wait For Text   <[ Disabled wait for text ]>   is empty   timeout 1ms
+
+Disabled Wait Until No Text  <[ Disabled wait until no text ]>   is empty   no timeout
+
+Disabled Check Value     <[ Disabled check value ]>   <[ {{Source text}} ]> is empty
+
+Disabled Find Image      <[ Disabled with branches ]>   template <[ template-all.png ]> accuracy 0.9
+ Success:
+  Wait            52ms
+ Failure:
+  Disabled Wait            53ms
+
+Find Image      <[ Enabled over disabled ]>   template <[ template-all.png ]> accuracy 0.9
+ Success:
+  Disabled Check Value     <[ Disabled in a branch ]>   <[  ]> is empty
+   Success:
+    Wait            54ms
+
+## Comments
+
+# One line.
+Wait            55ms
+
+# Two lines.
+# The second one.
+Wait            56ms
+
+# A blank line
+#
+# between two.
+Wait            57ms
+
+#
+# A blank line first.
+Wait            58ms
+
+# A blank line last.
+#
+Wait            59ms
+
+# # not a heading
+# ## nor a stage
+# #
+Wait            60ms
+
+# Words the language knows: Success: Failure: Steps: Disabled Wait 800ms
+Wait            61ms
+
+# <[ quotes ]> and {{variables}} are only text here, and so is \ and "this".
+Wait            62ms
+
+# Γειά σου κόσμε 日本語 🙂
+Wait            63ms
+
+# Above a disabled step, the word goes on the line below.
+Disabled Wait            64ms
+
+# On the search.
+Find Image      <[ Comments at every depth ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
+ # On a success.
+ Success:
+  # Under a success.
+  Wait            65ms
+ # On a failure.
+ # Of two lines.
+ Failure:
+  # On the loop.
+  Loop            <[ Comment on a loop in a branch ]>   2 times
+   # Inside the loop.
+   Click
+
+## Text
+
+Notify          <[ Login failed: "bad password" ]>
+
+Notify          <[ it's ]>
+
+Notify          <[ C:\temp\ ]>
+
+Notify          <[ \\server\share ]>
+
+Notify          <[ a\"b ]>
+
+Notify          <[ \ ]>
+
+Notify          <[ total: (\d+) ]>
+
+Notify          <[ ^\s*$ ]>
+
+Notify          <[ # not a comment ]>
+
+Notify          <[ ## not a stage ]>
+
+Notify          <[ Success: ]>
+
+Notify          <[ Steps: ]>
+
+Notify          <[ is not empty ]>
+
+Notify          <[ timeout 10ms ]>
+
+Notify          <[ Disabled Wait 800ms ]>
+
+Notify          <[ {{ ]>
+
+Notify          <[ }} ]>
+
+Notify          <[ {{a}}{{b}} ]>
+
+Notify          <[ { {spaced} } ]>
+
+Notify          <[ < ]>
+
+Notify          <[ > ]>
+
+Notify          <[ [x] ]>
+
+Notify          <[ <x> ]>
+
+Notify          <[ a ] > b ]>
+
+Notify          <[ a < [ b ]>
+
+Notify          <[ Γειά σου κόσμε ]>
+
+Notify          <[ 日本語のテキスト ]>
+
+Notify          <[ émoji 🙂 ]>
+
+Notify          <[ 100% ]>
+
+Notify          <[ $env:PATH ]>
+
+Notify          <[ %PATH% ]>
+
+Notify          <[ a & b | c > d < e ]>
+
+Notify          <[ a   b ]>
+
+Notify          <[ a	b ]>
+
+Notify          <[ 0 ]>
+
+Notify          <[ -1 ]>
+
+Notify          <[ 1.5 ]>
+
+Notify          <[ 1920x1080 ]>
+
+Notify          <[ 800ms ]>
+
+Notify          <[ 120dpi ]>
+
+Notify          <[ x ]>
+
+Notify          <[ v1 ]>
+
+Type            <[ C:\temp\ ]>
+
+Shell           <[ Shell text 0 ]>   <[ C:\temp\ ]>
+
+End Execution   failed  <[ C:\temp\ ]>
+
+Check Text      <[ Check text 0 ]>   is <[ C:\temp\ ]>   keep <[ C:\temp\ ]>
+
+Type            <[ a\"b ]>
+
+Shell           <[ Shell text 1 ]>   <[ a\"b ]>
+
+End Execution   failed  <[ a\"b ]>
+
+Check Text      <[ Check text 1 ]>   is <[ a\"b ]>   keep <[ a\"b ]>
+
+Type            <[ # not a comment ]>
+
+Shell           <[ Shell text 2 ]>   <[ # not a comment ]>
+
+End Execution   failed  <[ # not a comment ]>
+
+Check Text      <[ Check text 2 ]>   is <[ # not a comment ]>   keep <[ # not a comment ]>
+
+Type            <[ {{a}}{{b}} ]>
+
+Shell           <[ Shell text 3 ]>   <[ {{a}}{{b}} ]>
+
+End Execution   failed  <[ {{a}}{{b}} ]>
+
+Check Text      <[ Check text 3 ]>   is <[ {{a}}{{b}} ]>   keep <[ {{a}}{{b}} ]>
+
+Type            <[ Γειά σου κόσμε ]>
+
+Shell           <[ Shell text 4 ]>   <[ Γειά σου κόσμε ]>
+
+End Execution   failed  <[ Γειά σου κόσμε ]>
+
+Check Text      <[ Check text 4 ]>   is <[ Γειά σου κόσμε ]>   keep <[ Γειά σου κόσμε ]>
+
+Type            <[ a	b ]>
+
+Shell           <[ Shell text 5 ]>   <[ a	b ]>
+
+End Execution   failed  <[ a	b ]>
+
+Check Text      <[ Check text 5 ]>   is <[ a	b ]>   keep <[ a	b ]>
+
+## A stage's name can be anything: <x> {{y}} \ "z" # Γειά
+
+Loop            <[ A name can be anything: <x> {{y}} \ "z" # Γειά ]>   1 times

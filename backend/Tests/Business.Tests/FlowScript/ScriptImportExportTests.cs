@@ -564,7 +564,7 @@ namespace Business.Tests.FlowScript
         }
 
         // Only as much of a png as the importer reads: the signature, then an IHDR chunk with the size.
-        private static byte[] Png(int width, int height)
+        internal static byte[] Png(int width, int height)
         {
             byte[] png = new byte[33];
             byte[] signature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];

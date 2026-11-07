@@ -170,6 +170,32 @@ the history.
       <[ en-US ]>`, left out when none is picked - would make a flow read the same everywhere. A
       format change, so the Firestone export has to keep importing; it has no text searches.
 
+- [ ] **What a form saves and the script has no words for.** Found 2026-11-07, writing
+      `GoldenFlow.approved.sflw`. An export, an import or a branch switch resets these, and only
+      `GoldenFlowTests.NotInTheLanguage` says so. A command's shell type, start-in folder, success
+      exit codes, result source, keep pattern and timeout, so a PowerShell command comes back as a
+      Command Prompt one. A search's max matches and poll interval. A drag's button. A Notify's bot,
+      which `flow-format.md` admits to, and a text search's language, above. The real database has
+      three of these, all in "Price - Crude Oil": a language, a poll interval of 400 and a bot.
+      Firestone has none. A format change, so the Firestone export has to keep importing. The catalog
+      also lists `FlowStepReferenceId` for both searches, which nothing reads: drop it there.
+
+- [ ] **An End Execution that passed loses its message.** Found 2026-11-07. The form offers "Message
+      (optional)" on a pass and the report shows it, but the writer stops at `passed`, so an export
+      drops it. Either write it or stop offering it. No step in the real database has one.
+
+- [ ] **Lines the app can write and cannot read back, which refuse the whole import.** Found
+      2026-11-07, each confirmed by printing the step and reading it. A Notify message of two lines,
+      since its form is a text area: the quote is cut at the line end. A Break with no target, left by
+      a move that broke its reference: `out of <[  ]>` is `NAME_UNKNOWN`, where a Move has `nowhere`
+      for this. A Notify reporting a step named by its settings, such as a Focus Window it sits under:
+      the same trouble as the Break below. A Check Value or a text search with no condition, which the
+      forms do not allow but `CONDITION_TYPE_MISSING` expects. None is in the real database yet.
+
+- [ ] **`Move Window` reads a target it never writes.** Found 2026-11-07. `to <[ a step ]>` reads
+      without complaint and prints as `to nowhere`, so a hand-written one is lost on its first export.
+      The window step goes to a point only, so the parser should refuse it.
+
 - [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the
       Break dropdown offers every step it sits inside, but only a loop, a search and a Check Value
       write their own name in the script. A Break out of a System Command, a window step or an End
