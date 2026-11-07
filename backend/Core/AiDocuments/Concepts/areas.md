@@ -91,7 +91,7 @@ everything defined inside it lands in the same relative place on any machine.
 ## The main area
 
 One area can be marked **Main area** - `IsMain` in the data, `main` on its line in the script. It
-is the window the flow works in. A recording is stored relative to it, and a viewport resizes it.
+is the window the flow works in. A recording is stored relative to it.
 
 There is at most one, and it always sits inside nothing: the main area is the window itself, never
 a region of one. Saving a second area as main is refused until the first is unmarked, and so is an

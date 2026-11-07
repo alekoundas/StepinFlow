@@ -27,7 +27,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Script Language: 1" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Script Language: v1.0" },
             { DiagnosticCodeEnum.SCRIPT_LANGUAGE_NEWER, "Script Language: v2" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Sizes: 1920by1080" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Sizes: 1920x1080" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  Browser window process <[ chrome.exe ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> window chrome" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> floating" },

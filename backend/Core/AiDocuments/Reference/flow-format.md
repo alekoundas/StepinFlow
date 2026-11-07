@@ -20,7 +20,6 @@ Script Language: v1
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Kind:    qa test
-Sizes:   1920x1080 1024x768 390x844
 Description:
   # Signs in to Swag Labs, adds every product on the first page to the cart, and checks out.
   #
@@ -49,7 +48,7 @@ Steps:
 ## Start from a clean browser
 
 # A fresh profile every time, so the second execution never inherits the first one's session.
-Launch   <[ Open the shop ]>   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ Open the shop ]>   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} https://www.saucedemo.com ]>
 
 Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
@@ -199,19 +198,6 @@ Unexpected "offset", expected "inside" or "on screen".
 
 rather than a step quietly losing part of what was written.
 
-### Sizes
-
-```
-Sizes:  1920x1080 1024x768 390x844
-```
-
-The viewports this flow is expected to pass at. The engine executes the whole flow once per size
-and reports one result per size. `{{width}}` and `{{height}}` resolve to the current pass, which is
-how the launch line above sizes the browser without a resize step. A flow with no sizes leaves the
-line out.
-
-Overridable from the command line, so CI can narrow or widen the matrix without editing the file.
-
 ### Description
 
 ```
@@ -221,7 +207,7 @@ Description:
   # The portal signs out after 15 minutes without input.
 ```
 
-What the flow is for, in as many lines as it takes, under `Sizes:`. Each line is written the way a
+What the flow is for, in as many lines as it takes, under `Kind:`. Each line is written the way a
 comment is - one `#`, then the text, trimmed - and a blank line is a bare `#`. A `#` directly under
 `Description:` is its text; the first line that is not one ends it. A flow with no description
 leaves the block out.
@@ -291,9 +277,9 @@ Areas go one level deep: a child is inside a root, and an area inside a child is
   <[ Billing portal ]>   main   window process <[ chrome.exe ]> title contains <[ Billing ]>
 ```
 
-A recording is stored relative to it, which is what lets the flow work on another machine, and a
-viewport resizes it. There is at most one - a second is `AREA_MAIN_DUPLICATE` - and it is always a
-root, so `main inside` is an error. A main area `on screen` is screen coordinates, so the flow it
+A recording is stored relative to it, which is what lets the flow work on another machine. There is
+at most one - a second is `AREA_MAIN_DUPLICATE` - and it is always a root, so `main inside` is an
+error. A main area `on screen` is screen coordinates, so the flow it
 belongs to works on this machine only.
 
 Ratios are what make one flow work at several sizes: a region defined as the bottom 85% of the
@@ -386,11 +372,11 @@ nothing above declares is still an error on its line.
 `##` marks a **section**, and a section carries a verdict: it fails if any step beneath it failed,
 and passes otherwise. Sections do not nest and do not indent the steps under them.
 
-That verdict is what a report is built from. A flow at one viewport is a test _suite_, and each
-section in it is a _test case_:
+That verdict is what a report is built from. A flow is a test _suite_, and each section in it is a
+_test case_:
 
 ```xml
-<testsuite name="login [1920x1080]" tests="3" failures="1">
+<testsuite name="login" tests="3" failures="1">
   <testcase name="Start from a clean browser"   time="2.1"/>
   <testcase name="Sign in"                      time="4.8"/>
   <testcase name="Add everything to the cart"   time="9.2">
@@ -399,8 +385,7 @@ section in it is a _test case_:
 </testsuite>
 ```
 
-So a CI dashboard shows _"Sign in has failed 4 of the last 20 builds, only at 390×844"_ rather than
-one flow flapping. Name sections after what a person would say they were doing, because those names
+So a CI dashboard shows _"Sign in has failed 4 of the last 20 builds"_ rather than one flow flapping. Name sections after what a person would say they were doing, because those names
 end up in front of everyone.
 
 `#` is a **comment**, attached to the line below it, whatever that line is - a step, a `##` section
@@ -691,7 +676,7 @@ do a teardown can do:
 ```
 End Execution  failed  <[ did not reach the products page ]>
  Close Window  <[ Close the browser ]>   <[ Browser ]>   then force
- Notify  <[ login smoke failed at {{width}}x{{height}} ]>
+ Notify  <[ login smoke failed ]>
 ```
 
 `Close Window` lets the application close the way its X does. `Shell KILL_PROCESS` ends every program

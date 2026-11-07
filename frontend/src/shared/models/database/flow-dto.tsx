@@ -1,7 +1,6 @@
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { FlowViewportDto } from "@/shared/models/database/flow-viewport-dto";
 import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
 
 export class FlowDto {
@@ -31,9 +30,6 @@ export class FlowDto {
   flowSteps: FlowStepDto[] = [];
   flowAreas: FlowAreaDto[] = [];
   flowPoints: FlowPointDto[] = [];
-
-  /** The sizes this flow is expected to pass at. One execution per size. */
-  flowViewports: FlowViewportDto[] = [];
 
   /** The values its steps type in, written {{name}}. */
   flowCsvColumns: FlowCsvColumnDto[] = [];

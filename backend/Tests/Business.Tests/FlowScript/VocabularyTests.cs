@@ -319,16 +319,16 @@ namespace Business.Tests.FlowScript
         [InlineData("1x2x3", 0, 0)]
         public void A_size_is_two_whole_numbers_joined_by_x(string text, int width, int height)
         {
-            FlowScriptSchema schema = Read("Sizes: " + text);
+            FlowScriptSchema schema = Read("Templates:\n  <[ a.png ]> click 0 0 captured " + text + "\nSteps:\nFind Image <[ Find ]> template <[ a.png ]>");
 
             if (width == 0)
             {
-                schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
+                schema.Diagnostics.First().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
                 return;
             }
 
-            FlowViewport viewport = schema.Viewports.Single();
-            (viewport.Width, viewport.Height).ShouldBe((width, height));
+            FlowTemplate template = schema.Steps.Single().FlowStepTemplates.Single().FlowTemplate;
+            (template.AuthoredFlowAreaWidth, template.AuthoredFlowAreaHeight).ShouldBe((width, height));
         }
 
         [Theory]

@@ -33,18 +33,6 @@ namespace Transport.Ipc.Handlers
                     CreatedOn = x.CreatedOn,
                     UpdatedOn = x.UpdatedOn,
 
-                    FlowViewports = x.FlowViewports
-                        .OrderBy(v => v.OrderNumber)
-                        .Select(v => new FlowViewportDto
-                        {
-                            Id = v.Id,
-                            Width = v.Width,
-                            Height = v.Height,
-                            OrderNumber = v.OrderNumber,
-                            FlowId = v.FlowId,
-                        })
-                        .ToList(),
-
                     FlowAreas = x.FlowAreas
                         .OrderBy(a => a.Name)
                         .Select(a => new FlowAreaDto

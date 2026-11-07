@@ -762,7 +762,7 @@ function verdictOf(preview: FlowScriptPreviewDto): Verdict {
   if (preview.target.flowId !== null) {
     let history = "It has never executed.";
     if (preview.target.executionCount > 0)
-      history = `Its ${plural(preview.target.executionCount, "execution")} stay in the history; the last good screenshots of its steps go.`;
+      history = `Its ${plural(preview.target.executionCount, "execution")} stay in the history.`;
 
     return {
       kind: "replace",

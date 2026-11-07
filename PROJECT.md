@@ -401,7 +401,7 @@ inside one, and the window steps focus, resize or move the window one finds. Eac
 contents **scale with**: the screen's DPI, or its own size (§8).
 
 **Main area** — the window a flow works in: the one `FlowArea` with `IsMain`, always a root. A
-recording is stored relative to it, and a viewport resizes it.
+recording is stored relative to it.
 
 **FlowPoint** — a named point owned by a flow, measured from an area. Cursor steps aim at one.
 
@@ -411,8 +411,6 @@ Always called a template image or a screenshot; never a "frame" and never a "sea
 
 **Screenshot** — what the app captures off the screen. An output, per-execution, never checked into
 a repository.
-
-**FlowViewport** — one screen size the flow is tested at.
 
 **FlowCsvColumn** — one input to the flow, with the value it was recorded with. Ten rows of CSV
 means ten executions.
@@ -537,12 +535,10 @@ default mode that was a journal file made and deleted every time. The database i
 | `Flows` | The test. Name, `PublicId`, description. |
 | `FlowAreas` | Named rectangle owned by a flow, with what it scales with and its DPI. `IsMain` marks the window the flow works in. |
 | `FlowPoints` | Named point owned by a flow, with the DPI it was captured at. |
-| `FlowViewports` | One screen size to test at. |
 | `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
 | `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
 | `FlowStepTemplates` | A step's link to a template, with the step's own accuracy and order. |
-| `FlowStepLastGoodScreenshotHistories` | What the screen looked like when a step last worked. |
 | `Executions` | One walk of a flow, at one viewport, with one data row, and the commit it executed at. |
 | `ExecutionSteps` | Per-step result within an execution. |
 | `AppSettings` | Key/value, defined by `AppSettingCatalog`. |
@@ -938,9 +934,8 @@ inserted as a plain draft, as into any flow.
 the draft on the flow's rows at the editor's position - the steps after it move down, and each
 search sits at that position rather than at the top - and reads it back through the scanner the same
 way, but writes only the new rows, through `FlowStepDataService.CreateTreeAsync`. An import replaces
-every row, and a step replaced loses its last good screenshots, which cascade with it, and its link
-to the executions it was in, which only its name then keeps. A draft that does not read cleanly
-writes nothing and says on which line, as an import does.
+every row, and a step replaced loses its link to the executions it was in, which only its name then
+keeps. A draft that does not read cleanly writes nothing and says on which line, as an import does.
 
 **A model shapes it as a script** - Review's "Generate flow".
 `FlowGenerationService.ImportModelDraftAsync` writes the plain draft as a script and hands it, with
@@ -1167,7 +1162,6 @@ decisions behind it.
 Script Language: v1
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
-Sizes:   1920x1080 390x844
 Description:
   # Signs in to Swag Labs with the account the CSV row names.
 
@@ -1410,7 +1404,7 @@ that is not a step is left out with a `COMMENT_UNATTACHED` warning at the commen
 the next step down would attach a note to a line it was never written above, and failing the
 import over a note would refuse a flow that works.
 
-**The description is comments under a heading.** `Description:` sits under `Sizes:` and every `#`
+**The description is comments under a heading.** `Description:` sits under `Kind:` and every `#`
 directly below it is a line of its text, a blank line a bare `#`. It reuses the comment's spelling
 rather than a quote, so it can run to many lines and hold `<[` and `]>` - a quote ends at its first
 `]>`. Each line is trimmed as a comment is, so indentation inside a description does not survive.

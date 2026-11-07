@@ -136,6 +136,5 @@ namespace Core.Models.Database
         public IEnumerable<FlowStep> FlowStepReferences { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStep> FlowStepReferencesEnd { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowStepTemplate> FlowStepTemplates { get; set; } = new Collection<FlowStepTemplate>();
-        public IEnumerable<FlowStepLastGoodScreenshotHistory> FlowStepLastGoodScreenshotHistories { get; set; } = new Collection<FlowStepLastGoodScreenshotHistory>();
     }
 }

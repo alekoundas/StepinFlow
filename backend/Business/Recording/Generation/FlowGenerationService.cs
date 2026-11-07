@@ -24,8 +24,8 @@ namespace Business.Recording.Generation
     /// a model's answer all land the one way, and the plain draft is held to what a file is.
     ///
     /// Into a flow that already existed, at a position, it is read back the same way but only the
-    /// new rows are written: the import replaces every row, and a step replaced loses its last good
-    /// screenshots and its link to the executions it was in.
+    /// new rows are written: the import replaces every row, and a step replaced loses its link to
+    /// the executions it was in.
     ///
     /// With a model, the local model first looks at the screens worth a look - where pages began,
     /// clicks nothing named - and the plain draft is what the model is given, as a script with the

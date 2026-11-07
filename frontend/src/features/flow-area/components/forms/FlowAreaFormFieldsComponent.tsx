@@ -137,7 +137,7 @@ export default function FlowAreaFormFieldsComponent({
   }, [parentId, isMain, setValue]);
 
   let mainHint =
-    "The window the flow works in. A recording is stored relative to it, and a viewport resizes it.";
+    "The window the flow works in. A recording is stored relative to it.";
   if (type === FlowAreaTypeEnum.CUSTOM)
     mainHint =
       "A region on screen is only where it is on this machine, so a flow working in it does not carry over to another.";

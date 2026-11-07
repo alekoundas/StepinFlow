@@ -13,7 +13,6 @@ namespace Business.FlowScript.Models
     {
         public Flow Flow { get; set; } = new Flow() { PublicId = Guid.Empty };
 
-        public List<FlowViewport> Viewports { get; } = new List<FlowViewport>();
         public List<FlowArea> Areas { get; } = new List<FlowArea>();
         public List<FlowPoint> Points { get; } = new List<FlowPoint>();
         public List<FlowCsvColumn> Inputs { get; } = new List<FlowCsvColumn>();

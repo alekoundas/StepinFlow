@@ -544,10 +544,6 @@ namespace Business.Tests.FlowScript
             FlowPoint menu = new FlowPoint { Name = "Menu", FlowId = flow.Id, FlowAreaId = browser.Id, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 40, LocationY = 8, AuthoredDpi = 120 };
             db.FlowPoints.AddRange(hamburger, origin, menu);
 
-            db.FlowViewports.AddRange(
-                new FlowViewport { FlowId = flow.Id, Width = 1920, Height = 1080, OrderNumber = 0 },
-                new FlowViewport { FlowId = flow.Id, Width = 390, Height = 844, OrderNumber = 1 });
-
             db.FlowCsvColumns.AddRange(
                 new FlowCsvColumn { FlowId = flow.Id, Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
                 new FlowCsvColumn { FlowId = flow.Id, Name = "password", OrderNumber = 1, IsSecret = true });

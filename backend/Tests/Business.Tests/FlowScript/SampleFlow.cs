@@ -45,12 +45,6 @@ namespace Business.Tests.FlowScript
                 new FlowCsvColumn { Name = "password", OrderNumber = 1, IsSecret = true },
             ]);
 
-            schema.Viewports.AddRange(
-            [
-                new FlowViewport { Width = 1920, Height = 1080, OrderNumber = 0 },
-                new FlowViewport { Width = 390, Height = 844, OrderNumber = 1 },
-            ]);
-
             FlowStep Step(FlowStep step, FlowStep? parent)
             {
                 step.ParentFlowStep = parent;

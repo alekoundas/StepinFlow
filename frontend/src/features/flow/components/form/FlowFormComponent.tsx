@@ -1,12 +1,11 @@
 import type z from "zod";
 
 import { FormMode } from "@/shared/enums/form-mode-enum";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { FlowSchema } from "@/features/flow/components/form/flow.zod";
-import { FlowViewportDataTableComponent } from "@/features/flow-viewport/components/FlowViewportDataTableComponent";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import FlowSubFlowPanelComponent from "@/features/flow/components/form/FlowSubFlowPanelComponent";
@@ -34,21 +33,9 @@ export function FlowFormComponent({
   });
 
   const {
-    control,
     formState: { isValid, isDirty, errors },
     trigger,
   } = form;
-
-  const {
-    fields: viewportFields,
-    append: appendViewport,
-    remove: removeViewport,
-    update: updateViewport,
-  } = useFieldArray<z.infer<typeof FlowSchema>, "flowViewports", "fieldId">({
-    control,
-    name: "flowViewports",
-    keyName: "fieldId",
-  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,15 +65,6 @@ export function FlowFormComponent({
           className="flex flex-column h-full"
         >
           <FlowFormFieldsComponent isDisabled={formMode === "VIEW"} />
-
-          <FlowViewportDataTableComponent
-            fields={viewportFields}
-            append={appendViewport}
-            remove={removeViewport}
-            update={updateViewport}
-            formMode={formMode}
-            isDisabled={formMode === "VIEW"}
-          />
 
           <FlowSubFlowPanelComponent
             flowId={defaultValues.id}

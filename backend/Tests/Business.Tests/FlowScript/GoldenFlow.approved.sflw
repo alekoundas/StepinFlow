@@ -2,7 +2,6 @@ Script Language: v1
 Flow:    Golden flow
 Id:      7c9e6679-7425-40de-944b-e07fc1f90ae7
 Kind:    qa test   sub-flow
-Sizes:   1920x1080 390x844 1x1
 Description:
   # Every step, every mode and every field, with a value and without one. It reads, and executing it would mean nothing.
   #

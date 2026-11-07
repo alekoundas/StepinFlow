@@ -438,7 +438,7 @@ the history.
 - [ ] **Recording into a flow that already exists, with a model: talk it through.** Raised
       2026-10-15. The editor's "Record steps here" is disabled until this is decided. Its plain
       draft works: `Recording.insertDraft` writes only the new rows at the position, so the steps
-      already there keep their last good screenshots and their link to past executions. A model
+      already there keep their link to past executions. A model
       answers with a whole script, though, and the import that reads one replaces every row. The
       recommendation on the table: give the model a script of only the recorded steps, with the
       areas, templates and inputs they use and the flow's other steps as context it cannot change,
@@ -459,12 +459,19 @@ the history.
       first draft's are at least shown before they go, marked; the revision's are not.
 
 - [ ] **A QA test's screen sizes, and what happens when an execution ends, asked in the setup.**
-      Moved out of phase 7 on 2026-10-28. The sizes become `FlowViewport` rows, for phase 10's
-      viewport matrix; what happens at the end becomes steps under `End Execution`, because teardown
-      is steps. The only teardown step today is a kill-process command, so the `Close Window` loose
+      Moved out of phase 7 on 2026-10-28. The sizes need a table for phase 10's viewport matrix
+      (`FlowViewport` was dropped on 2026-11-07, to come back under a better name); what happens at
+      the end becomes steps under `End Execution`, because teardown is steps. The only teardown step today is a kill-process command, so the `Close Window` loose
       end in `PLAN.md` decides whether this ships with kill only. Since 2026-11-02 the setup can add
       one fixed size as a `Resize Window` step; for a QA test that size belongs in its first
       viewport once the matrix lands, or the step would fight every other viewport.
+
+- [ ] **What is left of the viewport idea.** Found 2026-11-07, when `FlowViewport` was dropped.
+      `{{width}}` and `{{height}}` pass validation, but nothing gives them a value, so a step using
+      them stops at execution with "Nothing has a value". No flow uses them. `Execution.ViewportWidth`
+      and `ViewportHeight` are only declared, and 0 on every row. Either goes when the matrix is
+      given up on, or gets its value when it comes back. The Launch examples in `flow-format.md` and
+      `system-command.md` also use `{{temp}}`, which has no value either.
 
 - [ ] **A website flow whose page leaves its address.** Raised 2026-11-02. The recorder follows the
       tab's browser window after Start, so a sign-in on another site is recorded. An execution finds

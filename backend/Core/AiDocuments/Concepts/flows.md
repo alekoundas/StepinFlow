@@ -26,7 +26,7 @@ shows its first line, so that line should be the one that tells two flows apart.
 for what someone - or a model - needs to know to fix it later: what the flow proves, what the
 application does that is easy to forget, what a failure usually means.
 
-In the script it sits under `Sizes:` as `Description:`, one `#` per line, a blank line a bare `#`.
+In the script it sits under `Kind:` as `Description:`, one `#` per line, a blank line a bare `#`.
 Each line is trimmed, so indentation does not survive an export.
 
 ## Inputs

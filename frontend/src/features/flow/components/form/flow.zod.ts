@@ -1,5 +1,4 @@
 // schemas/base-flow-step.schema.ts
-import { FlowViewportZod } from "@/features/flow-viewport/components/forms/flow-viewport.zod";
 import { validateFileName } from "@/shared/utils/file-name";
 import { z } from "zod";
 
@@ -16,7 +15,4 @@ export const FlowSchema = z.object({
       if (problem) ctx.addIssue({ code: "custom", message: problem });
     }),
   description: z.string().max(DESCRIPTION_MAX_LENGTH, `Keep it under ${DESCRIPTION_MAX_LENGTH} characters`),
-
-  // Areas, locations and inputs have tabs of their own and are saved one at a time.
-  flowViewports: z.array(FlowViewportZod),
 });

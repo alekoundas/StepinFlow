@@ -157,10 +157,6 @@ namespace Business.FlowScript.Parsers
                     _flowScriptSchema.HasKind = true;
                     break;
 
-                case ScriptSymbolEnum.FLOWFIELD_SIZES:
-                    _flowScriptSchema.Viewports.AddRange(new FlowSizesParser(line.Tokens).Parse());
-                    break;
-
                 default:
                     throw ScriptSyntaxException.Unexpected(line.Tokens[0], []);
             }

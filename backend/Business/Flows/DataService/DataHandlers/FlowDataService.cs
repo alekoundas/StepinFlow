@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Business.Flows.DataService.DataHandlers
 {
     /// <summary>
-    /// Every change to a flow as a whole: the flow row, its sizes and inputs, and the writes that
+    /// Every change to a flow as a whole: the flow row, its inputs, and the writes that
     /// span all of its tables - an import, an extraction into a sub-flow.
     /// </summary>
     public sealed class FlowDataService : BaseDataService
@@ -118,16 +118,14 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// The flow form: the flow's own fields and its sizes. Areas, points and inputs have tabs
-        /// of their own and are saved one at a time, so they are left as they are.
+        /// The flow form: the flow's own fields. Areas, points and inputs have tabs of their own and
+        /// are saved one at a time, so they are left as they are.
         /// </summary>
         public async Task<ResultDto<Flow>> UpdateAsync(FlowDto dto, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            Flow? flow = await dbContext.Flows
-                .Include(x => x.FlowViewports)
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+            Flow? flow = await dbContext.Flows.FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
 
             if (flow == null)
                 return ResultDto<Flow>.Failure("Flow not found");
@@ -138,8 +136,6 @@ namespace Business.Flows.DataService.DataHandlers
 
             flow.Name = dto.Name;
             flow.Description = dto.Description;
-
-            SyncViewports(dbContext, flow, dto.FlowViewports);
 
             await dbContext.SaveChangesAsync(ct);
             _gitRepositoryService.Changed(flow.Id);
@@ -307,17 +303,12 @@ namespace Business.Flows.DataService.DataHandlers
                 await dbContext.FlowPoints.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowAreas.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowCsvColumns.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
-                await dbContext.FlowViewports.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
             }
 
             foreach (FlowCsvColumn input in schema.Inputs)
                 input.FlowId = flow.Id;
 
-            foreach (FlowViewport viewport in schema.Viewports)
-                viewport.FlowId = flow.Id;
-
             dbContext.FlowCsvColumns.AddRange(schema.Inputs);
-            dbContext.FlowViewports.AddRange(schema.Viewports);
             FlowAreaDataService.Add(dbContext, flow, schema.Areas);
             FlowPointDataService.Add(dbContext, flow, schema.Points);
             FlowStepDataService.AddTree(dbContext, flow, schema.Steps, TakenNames(schema));
@@ -509,40 +500,6 @@ namespace Business.Flows.DataService.DataHandlers
             }
 
             return flows.FirstOrDefault(x => string.Equals(x.Name, subFlow.Name, StringComparison.OrdinalIgnoreCase));
-        }
-
-
-        // ================================================================
-        // Private methods - the flow form
-        // ================================================================
-
-        // Order is what the matrix runs in, so it comes from the list rather than from the ids.
-        private static void SyncViewports(AppDbContext dbContext, Flow flow, IEnumerable<FlowViewportDto> dtos)
-        {
-            List<FlowViewport> existing = flow.FlowViewports.ToList();
-            HashSet<int> keptIds = dtos.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
-
-            foreach (FlowViewport removed in existing.Where(x => !keptIds.Contains(x.Id)))
-                dbContext.FlowViewports.Remove(removed);
-
-            int order = 0;
-
-            foreach (FlowViewportDto dto in dtos)
-            {
-                FlowViewport? viewport = null;
-                if (dto.Id > 0)
-                    viewport = existing.FirstOrDefault(x => x.Id == dto.Id);
-
-                if (viewport == null)
-                {
-                    viewport = new FlowViewport { FlowId = flow.Id };
-                    dbContext.FlowViewports.Add(viewport);
-                }
-
-                viewport.Width = dto.Width;
-                viewport.Height = dto.Height;
-                viewport.OrderNumber = order++;
-            }
         }
 
 

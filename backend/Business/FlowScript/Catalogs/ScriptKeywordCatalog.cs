@@ -54,7 +54,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Flow:", ScriptSymbolEnum.FLOWFIELD_NAME) { TakesRestOfLine = true },
             new ScriptKeyword("Id:", ScriptSymbolEnum.FLOWFIELD_ID) { TakesRestOfLine = true },
             new ScriptKeyword("Kind:", ScriptSymbolEnum.FLOWFIELD_KIND),
-            new ScriptKeyword("Sizes:", ScriptSymbolEnum.FLOWFIELD_SIZES),
             new ScriptKeyword("Description:", ScriptSymbolEnum.FLOWFIELD_DESCRIPTION),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),

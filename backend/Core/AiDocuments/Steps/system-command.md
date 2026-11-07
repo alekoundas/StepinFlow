@@ -50,7 +50,7 @@ opens at the address, in a new window.
 
 ```
 Launch   <[ Start the game ]>   opens <[ Firestone ]>
-Launch   <[ Open the shop ]>    opens <[ Browser ]>   with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} https://www.saucedemo.com ]>
+Launch   <[ Open the shop ]>    opens <[ Browser ]>   with <[ --user-data-dir={{temp}} https://www.saucedemo.com ]>
 Launch   <[ Open the notes ]>   <[ notepad.exe notes.txt ]>
 ```
 

@@ -382,6 +382,8 @@ the way its X does and can force it.
 - [ ] The loop **above** the walk that produces one execution per viewport per csv row.
       `Execution.ViewportWidth`, `ViewportHeight` and `CsvRowIndex` already exist, which is what
       settles it: the matrix cannot be a step.
+- [ ] A table for the sizes and a script line for them. `FlowViewport` and `Sizes:` were dropped on
+      2026-11-07 while nothing used them, to come back under a better name.
 - [ ] Sizing targets the main area (5.13), not "the screen".
 - [ ] Each viewport passes happy-path validation of its own before it is worth running there.
 - [ ] **Sequential.** One mouse, one keyboard, one screen. Three sizes triples wall clock in CI and

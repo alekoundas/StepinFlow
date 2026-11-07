@@ -15,7 +15,6 @@ namespace Business.FlowScript.Catalogs
         FLOWFIELD_NAME,
         FLOWFIELD_ID,
         FLOWFIELD_KIND,
-        FLOWFIELD_SIZES,
         FLOWFIELD_DESCRIPTION,
 
         // Flow references

@@ -158,12 +158,6 @@ namespace Business.FlowScript.Text
             string flowKind = new FlowKindWriter(schema.Flow).Write();
             builder.AppendLine(flowKind);
 
-            if (schema.Viewports.Count > 0)
-            {
-                string flowSizes = new FlowSizesWriter(schema.Viewports).Write();
-                builder.AppendLine(flowSizes);
-            }
-
             // As many lines as it has, one # each, the way a code comment of several lines is written.
             if (!string.IsNullOrWhiteSpace(schema.Flow.Description))
             {

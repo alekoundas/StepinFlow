@@ -656,42 +656,6 @@ namespace DataAccess.Migrations
                     b.ToTable("FlowSteps");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowStepLastGoodScreenshotHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ExecutionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("FlowStepId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ViewportHeight")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ViewportWidth")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FlowStepId", "ViewportWidth", "ViewportHeight")
-                        .IsUnique();
-
-                    b.ToTable("FlowStepLastGoodScreenshotHistories");
-                });
-
             modelBuilder.Entity("Core.Models.Database.FlowStepTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -770,37 +734,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("FlowId");
 
                     b.ToTable("FlowTemplates");
-                });
-
-            modelBuilder.Entity("Core.Models.Database.FlowViewport", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("FlowId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Height")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("OrderNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Width")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FlowId");
-
-                    b.ToTable("FlowViewports");
                 });
 
             modelBuilder.Entity("Core.Models.Database.Execution", b =>
@@ -944,17 +877,6 @@ namespace DataAccess.Migrations
                     b.Navigation("SubFlow");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowStepLastGoodScreenshotHistory", b =>
-                {
-                    b.HasOne("Core.Models.Database.FlowStep", "FlowStep")
-                        .WithMany("FlowStepLastGoodScreenshotHistories")
-                        .HasForeignKey("FlowStepId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("FlowStep");
-                });
-
             modelBuilder.Entity("Core.Models.Database.FlowStepTemplate", b =>
                 {
                     b.HasOne("Core.Models.Database.FlowStep", "FlowStep")
@@ -985,17 +907,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Flow");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowViewport", b =>
-                {
-                    b.HasOne("Core.Models.Database.Flow", "Flow")
-                        .WithMany("FlowViewports")
-                        .HasForeignKey("FlowId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Flow");
-                });
-
             modelBuilder.Entity("Core.Models.Database.DiscordBot", b =>
                 {
                     b.Navigation("FlowSteps");
@@ -1017,8 +928,6 @@ namespace DataAccess.Migrations
                     b.Navigation("FlowSteps");
 
                     b.Navigation("FlowTemplates");
-
-                    b.Navigation("FlowViewports");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowArea", b =>
@@ -1040,8 +949,6 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Core.Models.Database.FlowStep", b =>
                 {
                     b.Navigation("ChildrenFlowSteps");
-
-                    b.Navigation("FlowStepLastGoodScreenshotHistories");
 
                     b.Navigation("FlowStepReferences");
 
