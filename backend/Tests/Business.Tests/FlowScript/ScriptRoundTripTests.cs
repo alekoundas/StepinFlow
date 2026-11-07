@@ -160,6 +160,19 @@ namespace Business.Tests.FlowScript
             printed.ShouldNotContain("then force");
         }
 
+        [Theory]
+        [InlineData("Wait For Image", SearchModeEnum.WAIT_UNTIL_FOUND)]
+        [InlineData("Wait For Still Image", SearchModeEnum.WAIT_UNTIL_STILL)]
+        public void A_wait_for_an_image_says_by_its_keyword_whether_it_waits_until_still(string keyword, SearchModeEnum mode)
+        {
+            string line = keyword + "  <[ Given ]>   in <[ App ]>   timeout 1ms";
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + line);
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().SearchMode.ShouldBe(mode);
+            new Printer().Write(schema).ShouldContain(line + Environment.NewLine);
+        }
+
         // The name comes first, because a check or typed text reads a command by it.
         [Theory]
         [InlineData("Launch          opens <[ App ]>")]

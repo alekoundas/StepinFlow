@@ -97,7 +97,9 @@ namespace Business.FlowScript.Text
         {
             //    timeout 10000ms |    no timeout - only a search that waits has either.
 
-            bool isWaiting = Step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || Step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            bool isWaiting = Step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND
+                || Step.SearchMode == SearchModeEnum.WAIT_UNTIL_STILL
+                || Step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
             if (!isWaiting)
                 return;
 

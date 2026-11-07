@@ -18,6 +18,9 @@ namespace Business.Executions.Workers
     /// </summary>
     public class SearchImageStepWorker : IStepWorker
     {
+        private const int STILL_PAUSE_MILLISECONDS = 100;
+        private const int STILL_TOLERANCE_PIXELS = 2;
+
         private readonly IImageSearcher _imageSearcher;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly TimeProvider _timeProvider;
@@ -37,7 +40,10 @@ namespace Business.Executions.Workers
             if (step.FlowAreaId == null)
                 return ExecutionStep.Failure("This step has no search area.");
 
-            if (step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
+            bool isWaiting = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND
+                || step.SearchMode == SearchModeEnum.WAIT_UNTIL_STILL
+                || step.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            if (isWaiting)
                 return await LoopSearchAsync(step, step.FlowAreaId.Value, cache, ct);
 
             AreaResolution area = await _areaPointResolver.ResolveAreaAsync(step.FlowAreaId.Value, ct);
@@ -59,13 +65,19 @@ namespace Business.Executions.Workers
         // The area is found again on every try: the window may open, move or change size while this
         // waits. A try that cannot look - no window yet, a minimised one, a template bigger than the
         // window is now - is neither found nor gone, and the next one may.
+        //
+        // Waiting until still, a find is looked at again a moment later and counts only in the same
+        // place. One that moved is held to where it went at the next poll.
         private async Task<ExecutionStep> LoopSearchAsync(FlowStep step, int flowAreaId, IExecutionCacheService cache, CancellationToken ct)
         {
-            bool wantFound = step.SearchMode == SearchModeEnum.WAIT_UNTIL_FOUND;
+            bool wantFound = step.SearchMode != SearchModeEnum.WAIT_UNTIL_NOT_FOUND;
+            bool waitsUntilStill = step.SearchMode == SearchModeEnum.WAIT_UNTIL_STILL;
             DateTime giveUpAt = _timeProvider.GetUtcNow().UtcDateTime.AddMilliseconds(step.TimeoutMilliseconds);
             float? bestOverPolls = null;
             int? bestTemplateOverPolls = null;
             ExecutionScreenshot? lastScreenshot = null;
+            Sighting? lastSighting = null;
+            string? stillMoving = null;
 
             while (true)
             {
@@ -80,21 +92,35 @@ namespace Business.Executions.Workers
                     return ExecutionStep.Success(message: $"No longer on screen: {area.Error}");
 
                 ExecutionStep? search = null;
+                ImageSearchResult? look = null;
                 string? cannotLook = area.Error;
                 if (area.IsResolved)
                 {
-                    ImageSearchResult look = Look(step, area);
+                    look = Look(step, area);
                     cannotLook = look.Error;
 
                     if (look.Error == null)
                         search = ToExecutionStep(step, area, look, cache);
                 }
 
-                if (search != null)
+                Sighting? sighting = null;
+
+                if (search != null && look != null)
                 {
                     bool found = search.Outcome == StepOutcomeEnum.SUCCESS;
                     if (found && wantFound)
-                        return search;
+                    {
+                        if (!waitsUntilStill)
+                            return search;
+
+                        sighting = new Sighting(search.Location!.Value, look.FirstHitTemplateIndex, look.FirstHitScale);
+                        if (lastSighting != null)
+                        {
+                            stillMoving = HowItMoved(lastSighting, sighting);
+                            if (stillMoving == null)
+                                return search;
+                        }
+                    }
 
                     // Gone is what this mode waits for, so it is a success - the search itself said
                     // "nothing matched", which on its own reads as a failure.
@@ -120,11 +146,17 @@ namespace Business.Executions.Workers
                     lastScreenshot = search.Screenshot;
                 }
 
+                // Found in time, so the look that tells whether it was still is taken whatever the time.
+                bool isFirstSighting = sighting != null && lastSighting == null;
+                lastSighting = sighting;
+
                 // A zero timeout waits for ever.
-                if (step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
+                if (!isFirstSighting && step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
                     string message = Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls);
-                    if (cannotLook != null)
+                    if (lastSighting != null)
+                        message = Detail(step, $"found but still moving when the time ran out, {stillMoving}", null, null);
+                    else if (cannotLook != null)
                         message += $". The last try could not look: {cannotLook}";
 
                     ExecutionStep gaveUp = ExecutionStep.Failure(message);
@@ -135,8 +167,27 @@ namespace Business.Executions.Workers
                     return gaveUp;
                 }
 
-                await Task.Delay(step.PollIntervalMilliseconds, ct);
+                int pause = step.PollIntervalMilliseconds;
+                if (isFirstSighting)
+                    pause = STILL_PAUSE_MILLISECONDS;
+
+                await Task.Delay(pause, ct);
             }
+        }
+
+        // Null when the second sighting is the first one standing still: the same template, within
+        // a pixel or two of jitter, grown with the scale the template was matched at.
+        private static string? HowItMoved(Sighting before, Sighting now)
+        {
+            if (before.TemplateIndex != now.TemplateIndex)
+                return "a different template matched each time";
+
+            int moved = Math.Max(Math.Abs(now.Location.X - before.Location.X), Math.Abs(now.Location.Y - before.Location.Y));
+            int tolerance = Math.Max(STILL_TOLERANCE_PIXELS, (int)MathF.Round(STILL_TOLERANCE_PIXELS * now.Scale));
+            if (moved <= tolerance)
+                return null;
+
+            return $"last moved {moved} px";
         }
 
         private ImageSearchResult Look(FlowStep step, AreaResolution area)
@@ -220,5 +271,8 @@ namespace Business.Executions.Workers
         {
             return value.ToString("0.00", CultureInfo.InvariantCulture);
         }
+
+        // Where a wait found its template on screen, which template, and at what scale.
+        private sealed record Sighting(Point Location, int? TemplateIndex, float Scale);
     }
 }

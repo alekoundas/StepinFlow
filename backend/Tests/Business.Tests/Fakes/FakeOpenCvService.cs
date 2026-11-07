@@ -10,6 +10,7 @@ namespace Business.Tests.Fakes
     public sealed class FakeOpenCvService : IOpenCvService
     {
         private readonly Dictionary<byte, TemplateMatchOutcome> _answers = new Dictionary<byte, TemplateMatchOutcome>();
+        private readonly Dictionary<byte, Queue<TemplateMatchOutcome>> _answersInTurn = new Dictionary<byte, Queue<TemplateMatchOutcome>>();
 
         public List<TemplateMatchRequest> Requests { get; } = new List<TemplateMatchRequest>();
 
@@ -17,6 +18,29 @@ namespace Business.Tests.Fakes
         {
             _answers[template] = outcome;
             return this;
+        }
+
+        /// <summary>One answer for each match in turn, the last one again once they run out.</summary>
+        public FakeOpenCvService AnswerInTurn(byte template, params TemplateMatchOutcome[] outcomes)
+        {
+            _answersInTurn[template] = new Queue<TemplateMatchOutcome>(outcomes);
+            return this;
+        }
+
+        public static TemplateMatchOutcome Seen(int x, int y, float scale = 1f)
+        {
+            return new TemplateMatchOutcome
+            {
+                Matches = [new TemplateMatchResult { X = x, Y = y, Width = 10, Height = 10, Score = 0.9f, Scale = scale }],
+            };
+        }
+
+        public static TemplateMatchOutcome Unseen()
+        {
+            return new TemplateMatchOutcome
+            {
+                Rejected = [new TemplateMatchResult { Width = 10, Height = 10, Score = 0.3f, Scale = 1f }],
+            };
         }
 
         public FakeOpenCvService Found(byte template, float score, int x = 0, int y = 0, float scale = 1f)
@@ -38,6 +62,14 @@ namespace Business.Tests.Fakes
         public TemplateMatchOutcome Match(TemplateMatchRequest request)
         {
             Requests.Add(request);
+
+            if (_answersInTurn.TryGetValue(request.TemplateImage[0], out Queue<TemplateMatchOutcome>? inTurn) && inTurn.Count > 0)
+            {
+                if (inTurn.Count > 1)
+                    return inTurn.Dequeue();
+
+                return inTurn.Peek();
+            }
 
             if (_answers.TryGetValue(request.TemplateImage[0], out TemplateMatchOutcome? outcome))
                 return outcome;

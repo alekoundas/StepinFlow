@@ -7,6 +7,7 @@ import { tags } from "@lezer/highlight";
 const HEADERS = ["Script Language:", "Flow:", "Id:", "Kind:", "Description:", "Areas:", "Points:", "Inputs:", "Templates:", "Steps:"];
 
 const STEPS = [
+  "Wait For Still Image",
   "Wait Until No Image",
   "Wait Until No Text",
   "Find All Images",

@@ -167,7 +167,7 @@ namespace Business.Tests.Recording
             FlowScriptSchema schema = Build();
 
             FlowStep search = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
-            (search.Name, search.SearchMode, search.FlowArea!.Name).ShouldBe(("Find Invoices", SearchModeEnum.WAIT_UNTIL_FOUND, "Browser"));
+            (search.Name, search.SearchMode, search.FlowArea!.Name).ShouldBe(("Find Invoices", SearchModeEnum.WAIT_UNTIL_STILL, "Browser"));
             search.CodeComment.ShouldBe("recorded after a 1.0s wait");
 
             List<FlowStep> success = ChildrenOf(schema, BranchOf(schema, search, FlowStepTypeEnum.SUCCESS));
@@ -477,7 +477,7 @@ namespace Business.Tests.Recording
             FlowScriptSchema schema = Build();
 
             FlowStep check = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
-            (check.Name, check.SearchMode, check.FlowArea!.Name).ShouldBe(("Check Paid", SearchModeEnum.WAIT_UNTIL_FOUND, "Browser"));
+            (check.Name, check.SearchMode, check.FlowArea!.Name).ShouldBe(("Check Paid", SearchModeEnum.WAIT_UNTIL_STILL, "Browser"));
             check.FlowStepTemplates.ShouldHaveSingleItem().FlowTemplate.TemplateImage.ShouldNotBeNull();
             ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.SUCCESS)).ShouldBeEmpty();
             ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.FAILURE)).ShouldHaveSingleItem().Message.ShouldBe("Check Paid found nothing within 10.0s");

@@ -19,6 +19,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("##", FlowStepTypeEnum.STAGE_MARKER) { TakesRestOfLine = true },
 
             // Steps.
+            new ScriptKeyword("Wait For Still Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.WAIT_UNTIL_STILL),
             new ScriptKeyword("Wait Until No Image", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
             new ScriptKeyword("Wait Until No Text", FlowStepTypeEnum.SEARCH_TEXT, SearchModeEnum.WAIT_UNTIL_NOT_FOUND),
             new ScriptKeyword("Find All Images", FlowStepTypeEnum.SEARCH_IMAGE, SearchModeEnum.FIND_ALL),
@@ -87,7 +88,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("click", ScriptSymbolEnum.CLICK),
             new ScriptKeyword("captured", ScriptSymbolEnum.CAPTURED),
 
-            // FlowStep - 
+            // FlowStep - modifiers
             new ScriptKeyword("Disabled", ScriptSymbolEnum.DISABLED),
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
             new ScriptKeyword("out of", ScriptSymbolEnum.OUT_OF),

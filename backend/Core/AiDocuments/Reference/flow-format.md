@@ -50,7 +50,7 @@ Steps:
 # A fresh profile every time, so the second execution never inherits the first one's session.
 Launch   <[ Open the shop ]>   opens <[ Browser ]>   with <[ --user-data-dir={{temp}} https://www.saucedemo.com ]>
 
-Wait For Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
+Wait For Still Image  <[ Login form appears ]>   template <[ template-f2r6t.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the site never loaded ]>
 
@@ -97,7 +97,7 @@ Find All Images  <[ Find add buttons ]>   template <[ template-a7k2m.png ]> accu
   Move   to <[ Find add buttons ]>
   Click
   # Give the badge a moment to update before the next click.
-  Wait For Image  <[ Badge updated ]>  template <[ template-c3x9w.png ]>  in <[ Cart badge ]>  timeout 3000ms
+  Wait For Still Image  <[ Badge updated ]>  template <[ template-c3x9w.png ]>  in <[ Cart badge ]>  timeout 3000ms
    Failure:
     End Execution  failed  <[ the cart did not update after adding an item ]>
 
@@ -413,23 +413,28 @@ Find Image  <[ Find login button ]>   template <[ template-l8p4w.png ]> accuracy
   End Execution  failed  <[ no login button ]>
 ```
 
-There are three things to check and four ways to look, and the keyword says both at once:
+There are three things to check and five ways to look, and the keyword says both at once:
 
-| Keyword               | Produces      | Use                                         |
-| --------------------- | ------------- | ------------------------------------------- |
-| `Find Image`          | one location  | the default                                 |
-| `Find All Images`     | a list        | Success executes once per hit               |
-| `Wait For Image`      | one location  | polls until it appears                      |
-| `Wait Until No Image` | nothing       | the spinner is gone; the banner has cleared |
-| `Check Text`          | the text read | assert what the screen says                 |
-| `Wait For Text`       | the text read | polls until it says it                      |
-| `Wait Until No Text`  | nothing       | the error message has cleared               |
-| `Check Value`         | nothing       | tests a value an earlier step produced      |
+| Keyword                | Produces      | Use                                           |
+| ---------------------- | ------------- | --------------------------------------------- |
+| `Find Image`           | one location  | the default                                   |
+| `Find All Images`      | a list        | Success executes once per hit                 |
+| `Wait For Still Image` | one location  | polls until it appears and stops moving       |
+| `Wait For Image`       | one location  | polls until it appears, moving or not         |
+| `Wait Until No Image`  | nothing       | the spinner is gone; the banner has cleared   |
+| `Check Text`           | the text read | assert what the screen says                   |
+| `Wait For Text`        | the text read | polls until it says it                        |
+| `Wait Until No Text`   | nothing       | the error message has cleared                 |
+| `Check Value`          | nothing       | tests a value an earlier step produced        |
 
 The waiting forms take `timeout 10000ms` and poll, taking a fresh screenshot each time until the
 answer comes out right or the timeout expires. That replaces every recorded sleep, and recorded
 sleeps are the largest single source of flakiness in any record-and-replay tool. `no timeout` waits
 for ever. A duration is always written in milliseconds, so it has one spelling.
+
+`Wait For Still Image` is the wait for a picture: found in the same place twice, 100 ms apart, so a
+click below it does not land where an animation was. `Wait For Image` takes the first match, for
+something that never stops moving.
 
 Making the mode part of the keyword means an impossible combination cannot be written down.
 `Find All` reads a single screenshot and hands back every hit, which is meaningful for templates and
@@ -471,7 +476,7 @@ costs its full length on every execution that takes the fallback.
 So wait once, on something that is always present, then branch instantly:
 
 ```
-Wait For Image  <[ Page loaded ]>   template <[ template-o4j7b.png ]>   in <[ Browser ]>   timeout 15000ms
+Wait For Still Image  <[ Page loaded ]>   template <[ template-o4j7b.png ]>   in <[ Browser ]>   timeout 15000ms
  Failure:
   End Execution  failed  <[ the page never loaded ]>
 
@@ -606,7 +611,7 @@ A step after all the hits is the next step after the search.
 Loop  <[ Retry sign in ]>   3 times
  Move            to point <[ Sign in button ]>
  Click
- Wait For Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
+ Wait For Still Image  <[ Signed in ]>   template <[ template-v1y8s.png ]>   in <[ Browser ]>   timeout 5000ms
   Success:
    Break  out of <[ Retry sign in ]>
 ```

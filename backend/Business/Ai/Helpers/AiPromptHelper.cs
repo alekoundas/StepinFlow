@@ -154,7 +154,7 @@ namespace Business.Ai.Helpers
               ScalesWith, and whether it is text, which does not survive a DPI change at all.
             - The two screens look the same, and the earlier one is labelled as just before the
               failure -> nothing changed between them, so whatever ran before had not finished. A
-              WAIT, or WAIT_UNTIL_FOUND instead of a plain search. When the earlier picture is from
+              WAIT, or WAIT_UNTIL_STILL instead of a plain search. When the earlier picture is from
               further back, steps you cannot see ran in between: say what the two pictures show and
               leave the cause open rather than blaming a missing wait.
             - Something is loading, greyed out, or behind a dialog -> say so, and say what is in the

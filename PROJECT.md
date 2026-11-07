@@ -1131,7 +1131,8 @@ happens when an execution ends wait in `TODO.md`.
 
 ### Search mode and timeout
 
-**Every recorded check waits** - `WAIT_UNTIL_FOUND`, never `FIND_BEST`. Reading the tester's speed
+**Every recorded check waits** - `WAIT_UNTIL_STILL` for a picture and `WAIT_UNTIL_FOUND` for text,
+never `FIND_BEST`. Reading the tester's speed
 is the tempting shortcut and it is wrong both ways: a quick click only means the element was
 already on screen on the recording machine, and a slow one is as likely to be someone reading as
 the app being slow. Waiting costs nothing when the element is there - the first poll runs before
@@ -1512,8 +1513,9 @@ Hidden     SUCCESS, FAILURE
 `WAIT_UNTIL_FOUND` mode writes as `Wait For Image` and in `FIND_ALL` as `Find All Images`.
 
 `SearchModeEnum` is one axis, not two: `FIND_BEST`, `FIND_ALL`, `WAIT_UNTIL_FOUND`,
-`WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking once, so it is a
-mode rather than a flag that would be dead in three cases out of four. A `FIND_ALL` search takes one
+`WAIT_UNTIL_STILL`, `WAIT_UNTIL_NOT_FOUND`. Acting on every match only ever made sense while looking
+once, so it is a mode rather than a flag that would be dead in four cases out of five; waiting until
+it stands still only makes sense while waiting for a picture, so it is one too, and text has neither. A `FIND_ALL` search takes one
 screenshot, and its Success branch executes once per hit; inside it the search's own result is the
 hit of that pass, so a move to the search followed by a click clicks each one. A `WAIT_UNTIL_NOT_FOUND`
 search is the opposite: a condition with no location or value, so nothing below can read it.
@@ -1659,9 +1661,19 @@ would pass a threshold it never had to clear.
 
 **A step's templates are alternatives**, tried in list order: the first hit ends the search and
 gives the point, and `FIND_ALL` takes every template's hits, the first template's first, up to Max
-matches for the step as a whole. The waits follow: `WAIT_UNTIL_FOUND` until any one is there,
-`WAIT_UNTIL_NOT_FOUND` until none is. There is no AND: two things that must both be on screen are
-two steps, the second inside the first one's Success.
+matches for the step as a whole. The waits follow: `WAIT_UNTIL_FOUND` and `WAIT_UNTIL_STILL` until
+any one is there, `WAIT_UNTIL_NOT_FOUND` until none is. There is no AND: two things that must both be
+on screen are two steps, the second inside the first one's Success.
+
+**A wait for an image can wait until it stops moving**, since 2026-11-07: `WAIT_UNTIL_STILL`, written
+`Wait For Still Image`. The first match is looked at again 100 ms later, and counts only as the same
+template within 2 pixels, grown with the scale it matched at, which is a match's jitter rather than
+movement; one that moved is held to where it went at the next poll. Only the position counts, so a
+glow in place is still and a fade is not caught. On the form it is **Wait until it stops moving**
+under Wait until found, ticked whenever that mode is picked, and a recording always uses it.
+`Wait For Image` keeps taking the first match, for something that never stops - a game's idle
+animation - and every wait saved before it is one. A mode rather than a column, so each line says
+which it is and the keyword is still the one place the mode is written.
 
 **A wait finds its area again on every try**, image and text alike, so it follows the window: one
 that opens during the wait, moves or changes size is looked at where it is now. Found once before

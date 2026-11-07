@@ -18,5 +18,9 @@ namespace Business.Searching
 
         /// <summary>Where a click would land, relative to the search area.</summary>
         public IReadOnlyList<Point> Hits { get; set; } = [];
+
+        /// <summary>Which template the first hit is, and the scale it matched at.</summary>
+        public int? FirstHitTemplateIndex { get; set; }
+        public float FirstHitScale { get; set; } = 1f;
     }
 }

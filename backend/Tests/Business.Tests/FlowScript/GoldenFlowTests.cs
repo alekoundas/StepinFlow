@@ -269,8 +269,9 @@ namespace Business.Tests.FlowScript
 
                     foreach (object value in Enum.GetValues(choice))
                     {
-                        // No keyword reads a text search for every match: only an image has one.
-                        if (type == FlowStepTypeEnum.SEARCH_TEXT && Equals(value, SearchModeEnum.FIND_ALL))
+                        // No keyword reads a text search for every match or until it stands still: only an image has them.
+                        bool isImageOnly = Equals(value, SearchModeEnum.FIND_ALL) || Equals(value, SearchModeEnum.WAIT_UNTIL_STILL);
+                        if (type == FlowStepTypeEnum.SEARCH_TEXT && isImageOnly)
                             continue;
 
                         if (!seen.Contains(value))

@@ -33,9 +33,20 @@ export const SEARCH_IMAGE_MODES: SearchMode[] = [
   },
 ];
 
+/** Not a button of its own: the form picks it with a checkbox under "Wait until found". */
+export const WAIT_UNTIL_STILL_MODE: SearchMode = {
+  value: SearchModeEnum.WAIT_UNTIL_STILL,
+  label: "Wait until still",
+  description:
+    "Keep checking until it appears and stops moving, so a click does not land where an animation was passing through.",
+};
+
+export const searchImageModeOf = (mode: SearchModeEnum): SearchMode | undefined =>
+  [...SEARCH_IMAGE_MODES, WAIT_UNTIL_STILL_MODE].find((x) => x.value === mode);
+
 /**
  * Reading an area produces one block of text and no positions, so there is nothing for
- * FIND_ALL to act on each of.
+ * FIND_ALL to act on each of, and nothing to stand still.
  */
 export const SEARCH_TEXT_MODES: SearchMode[] = [
   {
@@ -61,7 +72,8 @@ export const SEARCH_TEXT_MODE_VALUES = SEARCH_TEXT_MODES.map((x) => x.value) as 
   ...SearchModeEnum[],
 ];
 
-/** The two polling modes, which are the ones that need an interval and a timeout. */
+/** The polling modes, which are the ones that need an interval and a timeout. */
 export const isWaitingMode = (mode: SearchModeEnum): boolean =>
   mode === SearchModeEnum.WAIT_UNTIL_FOUND ||
+  mode === SearchModeEnum.WAIT_UNTIL_STILL ||
   mode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND;

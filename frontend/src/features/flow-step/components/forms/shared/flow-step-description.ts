@@ -15,8 +15,8 @@ import {
   isLength,
 } from "@/features/flow-step/components/forms/shared/condition-types";
 import {
-  SEARCH_IMAGE_MODES,
   SEARCH_TEXT_MODES,
+  searchImageModeOf,
 } from "@/features/flow-step/components/forms/shared/search-modes";
 import { CURSOR_MODES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
 import { WINDOW_MODES } from "@/features/flow-step/components/forms/window/window-modes";
@@ -110,7 +110,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     case FlowStepTypeEnum.SEARCH_IMAGE: {
       const count = dto.flowStepTemplates?.length ?? 0;
       const what = count === 0 ? "its template (none yet)" : plural(count, "template", "templates");
-      const mode = SEARCH_IMAGE_MODES.find((x) => x.value === dto.searchMode)?.label;
+      const mode = searchImageModeOf(dto.searchMode)?.label;
       const where = names?.areaName ? ` in ${quoted(names.areaName)}` : "";
 
       if (dto.searchMode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND) {
@@ -121,11 +121,15 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
         };
       }
 
-      if (dto.searchMode === SearchModeEnum.WAIT_UNTIL_FOUND) {
+      if (dto.searchMode === SearchModeEnum.WAIT_UNTIL_FOUND || dto.searchMode === SearchModeEnum.WAIT_UNTIL_STILL) {
+        const then = dto.searchMode === SearchModeEnum.WAIT_UNTIL_STILL
+          ? "Once it is found in the same place twice, 100 ms apart, it goes on to Success once; if it never appears and stops moving in time, to Failure."
+          : "On the first match it goes on to Success once; if nothing appears in time, to Failure.";
+
         return {
           type,
           mode,
-          summary: `Waits for ${what} to appear${where}, checking every ${dto.pollIntervalMilliseconds} ms ${forUpTo(dto.timeoutMilliseconds)}. On the first match it goes on to Success once; if nothing appears in time, to Failure.`,
+          summary: `Waits for ${what} to appear${where}, checking every ${dto.pollIntervalMilliseconds} ms ${forUpTo(dto.timeoutMilliseconds)}. ${then}`,
           gives: "Where it matched: the location a Move or a Drag below can go to.",
         };
       }

@@ -191,12 +191,17 @@ namespace Business.Recording.Draft
             if (template == null)
                 return null;
 
+            // A picture is waited for until it stands still, so a click below lands where it came to rest.
+            SearchModeEnum imageMode = mode;
+            if (mode == SearchModeEnum.WAIT_UNTIL_FOUND)
+                imageMode = SearchModeEnum.WAIT_UNTIL_STILL;
+
             string text = TextOf(action);
             return AddWaiting(action, new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE,
                 Name = Name(NameFrom(prefix, text, fallback) + suffix),
-                SearchMode = mode,
+                SearchMode = imageMode,
                 FlowArea = MainArea,
                 FlowStepTemplates = new List<FlowStepTemplate> { template },
             });

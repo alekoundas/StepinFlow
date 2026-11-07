@@ -11,7 +11,7 @@ and why that order makes the flow portable.
 
 ## Waiting for something to load
 
-Cover: `WAIT_UNTIL_FOUND` versus a fixed `WAIT`, choosing a timeout, and what to put in the Failure
+Cover: `WAIT_UNTIL_STILL` and `WAIT_UNTIL_FOUND` versus a fixed `WAIT`, choosing a timeout, and what to put in the Failure
 branch.
 
 ## Reading a number off the screen and acting on it

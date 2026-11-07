@@ -16,11 +16,12 @@ steps that decide. A flow holding none of them proves nothing, whatever it does 
 |---|---|
 | `FIND_BEST` | One screenshot, best match wins. Succeeds if anything matched. |
 | `FIND_ALL` | One screenshot, then works through every hit in turn. |
+| `WAIT_UNTIL_STILL` | Searches repeatedly until it matches in the same place twice, or the timeout runs out. |
 | `WAIT_UNTIL_FOUND` | Searches repeatedly until it matches, or the timeout runs out. |
 | `WAIT_UNTIL_NOT_FOUND` | Searches repeatedly until it stops matching. |
 
-`WAIT_UNTIL_FOUND` and `WAIT_UNTIL_NOT_FOUND` poll every few hundred milliseconds. A timeout of 0
-waits forever, which in an unattended execution means it never gives up.
+The three waiting modes poll every few hundred milliseconds. A timeout of 0 waits forever, which in
+an unattended execution means it never gives up.
 
 Each try finds the search area again, so a wait follows its window: one that opens during the wait
 is searched once it is there, and one that moves or changes size is searched where it is now. A try
@@ -31,9 +32,9 @@ once.
 
 ## Which mode to use, and why it matters for speed
 
-`WAIT_UNTIL_FOUND` costs nothing when the image is already there: the first search runs before any
-delay, so it does the same one screenshot and one match that `FIND_BEST` would. Prefer it wherever
-the flow is waiting for something that ought to appear.
+`WAIT_UNTIL_STILL` costs little when the image is already there: the first search runs before any
+delay, and one more look 100 ms later shows it standing still. Prefer it wherever the flow is
+waiting for something that ought to appear.
 
 `FIND_BEST` is for a **branch point** - "which layout am I in", "is the desktop nav there or the
 hamburger". That question already has a final answer, so waiting on it buys nothing and costs the
@@ -42,13 +43,34 @@ whole timeout on every execution that takes the fallback.
 The pattern that gets both right is to wait once on something always present, then branch freely:
 
 ```
-Wait for the page logo        WAIT_UNTIL_FOUND, timeout 15s
+Wait for the page logo        WAIT_UNTIL_STILL, timeout 15s
 Is the desktop nav there?     FIND_BEST
   Failure: click the hamburger
 ```
 
 A step with a populated Failure branch and a long timeout is usually a branch point written as a
 wait.
+
+## Waiting until it stops moving
+
+`WAIT_UNTIL_STILL`, written `Wait For Still Image`, is the wait to use, and a recorded wait is always
+one. Its first match is looked at again 100 ms later and counts only if the same template is in the
+same place: within 2 pixels, more at a larger scale, which is the jitter of a match rather than
+movement. If it moved, the next poll is held to where it went. So a click below it lands where the
+thing came to rest, not where a slide-in was passing through.
+
+```
+Wait For Still Image  <[ Play button shows ]>   template <[ template-k2p7d.png ]> accuracy 0.8   in <[ App ]>   timeout 5000ms
+Wait For Image  <[ Ticker shows ]>   template <[ template-m4q8z.png ]> accuracy 0.8   in <[ App ]>   timeout 5000ms
+```
+
+`WAIT_UNTIL_FOUND`, written `Wait For Image`, takes the first match. It is for something that never
+stops: a bobbing icon, a scrolling ticker. A still wait on one waits out its timeout and fails with
+"found but still moving when the time ran out". A glow or a pulse in place is still, because only
+the position counts. A fade-in is not caught, since a fading thing does not move: raise that
+template's accuracy instead.
+
+Text has no still wait: `Wait For Text` reads words, and a click does not go to them.
 
 ## What WAIT_UNTIL_NOT_FOUND actually waits for
 
@@ -90,8 +112,8 @@ from the top of the list, and the first that matches ends the search and gives t
 likeliest goes first. `FIND_ALL` tries them all and takes every hit, the first template's first.
 With none found, the step fails once, so its Failure branch executes once.
 
-The waiting modes follow: `WAIT_UNTIL_FOUND` waits until any one is there, `WAIT_UNTIL_NOT_FOUND`
-until none is. **Test now** and an execution decide it the same way.
+The waiting modes follow: `WAIT_UNTIL_FOUND` and `WAIT_UNTIL_STILL` wait until any one is there,
+the still one until the same one is there twice, and `WAIT_UNTIL_NOT_FOUND` until none is. **Test now** and an execution decide it the same way.
 
 To act only when two different things are both on screen, use two steps: the second search inside
 the first one's Success branch.

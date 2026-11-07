@@ -19,7 +19,11 @@ change of Windows scaling at all - read words with Search Text. A template with 
 DPI is never scaled; recapture it.
 
 **The thing is not there yet.** `FIND_BEST` searches once. If the screen is still loading, use
-`WAIT_UNTIL_FOUND` with a timeout instead.
+`WAIT_UNTIL_STILL` with a timeout instead.
+
+**It never stops moving.** "found but still moving when the time ran out" is a `WAIT_UNTIL_STILL`
+that found it in another place on every look: an idle animation, a ticker. `WAIT_UNTIL_FOUND`
+takes the first match.
 
 ## An image search finds the wrong thing
 

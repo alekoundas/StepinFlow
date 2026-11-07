@@ -582,6 +582,10 @@ Wait For Image  <[ Wait For Image two templates brightness in an area with a tim
 
 Wait For Image  <[ Wait For Image two templates brightness in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   no timeout
 
+Wait For Still Image  <[ Wait For Still Image with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   timeout 10000ms
+
+Wait For Still Image  <[ Wait For Still Image with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
+
 Wait Until No Image  <[ Wait Until No Image no template with a timeout ]>   timeout 10000ms
 
 Wait Until No Image  <[ Wait Until No Image no template with no timeout ]>   no timeout

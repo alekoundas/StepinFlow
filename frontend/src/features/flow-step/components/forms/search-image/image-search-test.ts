@@ -5,7 +5,7 @@ import type {
   ImageSearchTestMatchDto,
   ImageSearchTestResultDto,
 } from "@/shared/models/database/image-search-test-result-dto";
-import { SEARCH_IMAGE_MODES } from "@/features/flow-step/components/forms/shared/search-modes";
+import { searchImageModeOf } from "@/features/flow-step/components/forms/shared/search-modes";
 
 const MIN_ACCURACY = 0.1;
 const MAX_ACCURACY = 1;
@@ -114,6 +114,12 @@ export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTest
 
       return { severity: "success", text: `Would succeed: ${firstText}.` };
 
+    case SearchModeEnum.WAIT_UNTIL_STILL:
+      if (first < 0)
+        return { severity: "warn", text: "Would keep trying: no template passed its accuracy yet." };
+
+      return { severity: "success", text: `Would succeed once it is still: ${firstText}.` };
+
     default:
       if (first < 0)
         return { severity: "warn", text: "Would go on to the Failure steps: no template passed its accuracy." };
@@ -124,7 +130,7 @@ export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTest
 
 /** What one test is of the mode it was made in. */
 export function modeLineOf(run: ImageSearchTestRun): string {
-  const label = SEARCH_IMAGE_MODES.find((x) => x.value === run.searchMode)?.label ?? run.searchMode;
+  const label = searchImageModeOf(run.searchMode)?.label ?? run.searchMode;
 
   switch (run.searchMode) {
     case SearchModeEnum.FIND_ALL:
@@ -132,6 +138,9 @@ export function modeLineOf(run: ImageSearchTestRun): string {
 
     case SearchModeEnum.WAIT_UNTIL_FOUND:
       return `${label} · one try of what an execution repeats until a template matches`;
+
+    case SearchModeEnum.WAIT_UNTIL_STILL:
+      return `${label} · one try of what an execution repeats until a template matches in the same place twice`;
 
     case SearchModeEnum.WAIT_UNTIL_NOT_FOUND:
       return `${label} · one try of what an execution repeats until no template matches`;

@@ -1,8 +1,10 @@
 import { useFormContext, useWatch } from "react-hook-form";
+import { Checkbox } from "primereact/checkbox";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
+import LabelComponent from "@/shared/components/LabelComponent";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import {
   SEARCH_IMAGE_MODES,
@@ -20,13 +22,16 @@ export default function FlowStepSearchImageFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
 
   const mode = useWatch({ control, name: "searchMode" });
   const matchMode = useWatch({ control, name: "templateMatchMode" });
 
   const isWaiting = isWaitingMode(mode);
   const isFindAll = mode === SearchModeEnum.FIND_ALL;
+  const isStill = mode === SearchModeEnum.WAIT_UNTIL_STILL;
+  const isWaitingFound = isStill || mode === SearchModeEnum.WAIT_UNTIL_FOUND;
+  const picked = isStill ? SearchModeEnum.WAIT_UNTIL_FOUND : mode;
 
   return (
     <>
@@ -42,11 +47,11 @@ export default function FlowStepSearchImageFormFieldsComponent({
         labelText="Mode"
         options={SEARCH_IMAGE_MODES.map((x) => ({
           label: x.label,
-          value: x.value,
+          value: buttonValue(x.value, mode),
         }))}
         isDisabled={isDisabled}
         isRequired={true}
-        hintText={SEARCH_IMAGE_MODES.find((x) => x.value === mode)?.description}
+        hintText={SEARCH_IMAGE_MODES.find((x) => x.value === picked)?.description}
       />
 
       <FlowStepAreaFieldComponent
@@ -89,6 +94,31 @@ export default function FlowStepSearchImageFormFieldsComponent({
         </div>
       )}
 
+      {isWaitingFound && (
+        <div className="field mt-3">
+          <LabelComponent
+            text="Wait until it stops moving"
+            weight="bold"
+          />
+          <Checkbox
+            checked={isStill}
+            disabled={isDisabled}
+            onChange={(e) =>
+              setValue(
+                "searchMode",
+                e.checked ? SearchModeEnum.WAIT_UNTIL_STILL : SearchModeEnum.WAIT_UNTIL_FOUND,
+                { shouldDirty: true },
+              )
+            }
+          />
+          <LabelComponent
+            text="Found in the same place twice, 100 ms apart, before it counts, so a click does not land where an animation was. Untick it for something that never stops moving."
+            weight="bold"
+            size="xs"
+          />
+        </div>
+      )}
+
       <FormSelectButtonComponent
         fieldName="templateMatchMode"
         labelText="Compare"
@@ -102,4 +132,13 @@ export default function FlowStepSearchImageFormFieldsComponent({
       />
     </>
   );
+}
+
+// "Wait until found" stands for both waits: it shows the one the step is in, and picked from
+// another mode it is the still one.
+function buttonValue(option: SearchModeEnum, mode: SearchModeEnum): SearchModeEnum {
+  if (option === SearchModeEnum.WAIT_UNTIL_FOUND && mode !== SearchModeEnum.WAIT_UNTIL_FOUND)
+    return SearchModeEnum.WAIT_UNTIL_STILL;
+
+  return option;
 }

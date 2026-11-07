@@ -127,6 +127,7 @@ namespace Business.Tests.Executions.Workers
         [Theory]
         [InlineData(SearchModeEnum.WAIT_UNTIL_NOT_FOUND)]
         [InlineData(SearchModeEnum.WAIT_UNTIL_FOUND)]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_STILL)]
         public async Task A_search_that_cannot_be_done_is_tried_again_and_never_counts_as_gone(SearchModeEnum mode)
         {
             _matcher.Answer(1, new TemplateMatchOutcome { Error = "scaled by 4.00 it is bigger than the area." });
@@ -228,6 +229,7 @@ namespace Business.Tests.Executions.Workers
 
         [Theory]
         [InlineData(SearchModeEnum.WAIT_UNTIL_FOUND)]
+        [InlineData(SearchModeEnum.WAIT_UNTIL_STILL)]
         [InlineData(SearchModeEnum.WAIT_UNTIL_NOT_FOUND)]
         public async Task An_area_no_try_can_find_fails_a_wait_at_once(SearchModeEnum mode)
         {
@@ -240,6 +242,105 @@ namespace Business.Tests.Executions.Workers
             result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
             result.Message.ShouldBe("The area no longer exists.");
             _resolver.AreaLookups.ShouldBe(1);
+        }
+
+        // ================================================================
+        // Waiting until what it found stops moving
+        // ================================================================
+
+        [Fact]
+        public async Task A_template_standing_still_counts_on_the_second_look()
+        {
+            _matcher.Found(1, 0.9f, x: 5, y: 5);
+
+            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f)));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Location.ShouldBe(new Point(105, 205));
+            _matcher.Requests.Count.ShouldBe(2);
+        }
+
+        [Fact]
+        public async Task A_wait_until_found_takes_the_first_match()
+        {
+            _matcher.Found(1, 0.9f, x: 5, y: 5);
+
+            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.WAIT_UNTIL_FOUND, Template(1, "play", 0.8f)));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _matcher.Requests.Count.ShouldBe(1);
+        }
+
+        [Fact]
+        public async Task A_moving_template_counts_where_it_stops()
+        {
+            _matcher.AnswerInTurn(1, FakeOpenCvService.Seen(0, 0), FakeOpenCvService.Seen(40, 0), FakeOpenCvService.Seen(80, 0), FakeOpenCvService.Seen(80, 0));
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Location.ShouldBe(new Point(180, 200));
+            _matcher.Requests.Count.ShouldBe(4);
+        }
+
+        [Theory]
+        [InlineData(2, 1f, true)]
+        [InlineData(3, 1f, false)]
+        [InlineData(4, 2f, true)]
+        [InlineData(5, 2f, false)]
+        public async Task A_pixel_or_two_of_jitter_is_still_and_grows_with_the_scale(int moved, float scale, bool isStill)
+        {
+            _matcher.AnswerInTurn(1, FakeOpenCvService.Seen(10, 10, scale), FakeOpenCvService.Seen(10 + moved, 10, scale), FakeOpenCvService.Seen(10 + moved, 10, scale));
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _matcher.Requests.Count.ShouldBe(isStill ? 2 : 3);
+        }
+
+        [Fact]
+        public async Task One_that_never_stops_fails_saying_it_was_still_moving()
+        {
+            _matcher.AnswerInTurn(1, [.. Enumerable.Range(0, 10).Select(x => FakeOpenCvService.Seen(x * 40, 0))]);
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 3000;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe("found but still moving when the time ran out, last moved 40 px - play at 0.80, WAIT_UNTIL_STILL");
+        }
+
+        // Each template has its own click point, so two found in one place are not one standing still.
+        [Fact]
+        public async Task Another_template_in_the_same_place_is_not_the_same_one_standing_still()
+        {
+            _matcher.AnswerInTurn(1, FakeOpenCvService.Seen(5, 5), FakeOpenCvService.Unseen());
+            _matcher.AnswerInTurn(2, FakeOpenCvService.Seen(5, 5));
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f), Template(2, "play hover", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _matcher.Requests.Count.ShouldBe(5);
+        }
+
+        [Fact]
+        public async Task Gone_between_two_looks_starts_again()
+        {
+            _matcher.AnswerInTurn(1, FakeOpenCvService.Seen(5, 5), FakeOpenCvService.Unseen(), FakeOpenCvService.Seen(5, 5), FakeOpenCvService.Seen(5, 5));
+            FlowStep step = ImageSearch(SearchModeEnum.WAIT_UNTIL_STILL, Template(1, "play", 0.8f));
+            step.TimeoutMilliseconds = 0;
+
+            (ExecutionStep result, _) = await SearchImage(step);
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            _matcher.Requests.Count.ShouldBe(4);
         }
 
         private static AreaResolution NoWindow()

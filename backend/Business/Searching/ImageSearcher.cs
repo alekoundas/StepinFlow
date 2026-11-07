@@ -33,6 +33,8 @@ namespace Business.Searching
             List<Point> hits = new List<Point>();
             float? bestScore = null;
             int? bestTemplateIndex = null;
+            int? firstHitTemplateIndex = null;
+            float firstHitScale = 1f;
 
             // Take screenshot.
             RawImage haystack = _screenshotService.CaptureRaw(bounds);
@@ -60,6 +62,12 @@ namespace Business.Searching
 
                 foreach (TemplateMatchResult match in outcome.Matches)
                 {
+                    if (hits.Count == 0)
+                    {
+                        firstHitTemplateIndex = index;
+                        firstHitScale = match.Scale;
+                    }
+
                     hits.Add(template.ClickPoint(match));
 
                     if (stopAtFirstHit)
@@ -81,6 +89,8 @@ namespace Business.Searching
                 Hits = hits,
                 BestScore = bestScore,
                 BestTemplateIndex = bestTemplateIndex,
+                FirstHitTemplateIndex = firstHitTemplateIndex,
+                FirstHitScale = firstHitScale,
             };
         }
 
