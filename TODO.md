@@ -466,12 +466,10 @@ the history.
       one fixed size as a `Resize Window` step; for a QA test that size belongs in its first
       viewport once the matrix lands, or the step would fight every other viewport.
 
-- [ ] **What is left of the viewport idea.** Found 2026-11-07, when `FlowViewport` was dropped.
-      `{{width}}` and `{{height}}` pass validation, but nothing gives them a value, so a step using
-      them stops at execution with "Nothing has a value". No flow uses them. `Execution.ViewportWidth`
-      and `ViewportHeight` are only declared, and 0 on every row. Either goes when the matrix is
-      given up on, or gets its value when it comes back. The Launch examples in `flow-format.md` and
-      `system-command.md` also use `{{temp}}`, which has no value either.
+- [ ] **`{{temp}}` in the Launch examples.** Found 2026-11-07. `flow-format.md`, `system-command.md`
+      and `PROJECT.md` write `--user-data-dir={{temp}}`, and `PLAN.md` says a launch takes it, but
+      nothing gives it a value: the validator calls it unknown and the step stops at execution. The
+      AI copies these examples, so either give it a value or take it out of them.
 
 - [ ] **A website flow whose page leaves its address.** Raised 2026-11-02. The recorder follows the
       tab's browser window after Start, so a sign-in on another site is recorded. An execution finds

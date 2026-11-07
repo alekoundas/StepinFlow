@@ -130,7 +130,7 @@ namespace Business.Tests.Recording
         [Fact]
         public void Words_an_execution_fills_in_and_pictures_are_not_held_to_the_screen()
         {
-            FlowScriptSchema answer = Read(REMOVE_CHECK.Replace("contains <[ Remove ]>", "contains <[ {{width}} ]>"));
+            FlowScriptSchema answer = Read(REMOVE_CHECK.Replace("contains <[ Remove ]>", "contains <[ {{username}} ]>"));
             FlowStep words = ProposedChecks.Named(answer, "Cart shows Remove")!;
 
             ProposedChecks.IsReadOnScreen(words, ["Products"]).ShouldBeNull();

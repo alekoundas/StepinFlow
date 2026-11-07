@@ -10,7 +10,7 @@ export interface FlowStepUseDto {
   flowPointId?: number | null;
   flowPointEndId?: number | null;
 
-  /** Every {{name}} in its text: an input's, another step's or a viewport's. */
+  /** Every {{name}} in its text: an input's or another step's. */
   variableNames: string[];
   templateNames: string[];
 }

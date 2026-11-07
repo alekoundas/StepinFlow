@@ -9,13 +9,13 @@ namespace Core.Tests.Helpers
         {
             ["username"] = "alex",
             ["Read the total"] = "42",
-            ["width"] = "1920",
+            ["limit"] = "1920",
         };
 
         [Fact]
         public void Every_name_is_replaced_by_its_value()
         {
-            VariableTranslationResult result = VariableTranslator.Translate("{{username}} has {{Read the total}} at {{width}}px", Values);
+            VariableTranslationResult result = VariableTranslator.Translate("{{username}} has {{Read the total}} at {{limit}}px", Values);
 
             result.Text.ShouldBe("alex has 42 at 1920px");
             result.Untranslated.ShouldBeEmpty();

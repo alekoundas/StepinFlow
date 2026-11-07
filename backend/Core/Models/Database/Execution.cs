@@ -13,8 +13,6 @@ namespace Core.Models.Database
 
         public int StepCount { get; set; }
         public int CsvRowIndex { get; set; }
-        public int ViewportWidth { get; set; }
-        public int ViewportHeight { get; set; }
 
         public string ErrorMessage { get; set; } = string.Empty;
         public string? ScreenshotFolderName { get; set; }

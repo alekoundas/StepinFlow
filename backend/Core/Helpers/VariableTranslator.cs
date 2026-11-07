@@ -6,15 +6,11 @@ namespace Core.Helpers
     /// <summary>
     /// Swaps {{name}} for what it stands for.
     ///
-    /// One syntax for three things - a csv column, the viewport being executed, and what an earlier
-    /// step produced - because at the point of use they are the same thing: a value the flow did not
-    /// know when it was recorded.
+    /// One syntax for two things - a csv column and what an earlier step produced - because at the
+    /// point of use they are the same thing: a value the flow did not know when it was recorded.
     /// </summary>
     public static class VariableTranslator
     {
-        /// <summary>Reserved names, translated from the viewport rather than from the flow.</summary>
-        public static readonly string[] ViewportNames = ["width", "height"];
-
         // Four braces are an escaped pair, the way string.Format escapes one. Anything else between
         // a pair of braces is a name: names hold spaces and punctuation, so the only thing ruled
         // out is another brace.

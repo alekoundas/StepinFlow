@@ -17,9 +17,6 @@ namespace Business.Tests.Executions.Workers
     /// Running a shell command. The worker itself decides three things - what the command says once
     /// its variables are filled in, whether the exit code counts as a pass, and what travels out for
     /// a later step to read - and launching the process is the executor's job behind the port.
-    ///
-    /// This is also where a flow sizes the application it is testing, because a launch line carries
-    /// the viewport as "--window-size={{width}},{{height}}".
     /// </summary>
     public sealed class SystemCommandStepWorkerTests
     {

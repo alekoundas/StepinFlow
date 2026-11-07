@@ -415,7 +415,7 @@ a repository.
 **FlowCsvColumn** — one input to the flow, with the value it was recorded with. Ten rows of CSV
 means ten executions.
 
-**Execution** — one complete walk of a flow, at one viewport, with one row of data. The word is
+**Execution** — one complete walk of a flow, with one row of data. The word is
 always "execution"; "run" is not used in this codebase.
 
 **Marker** — a named divider in the step tree with no behaviour, which becomes a `##` heading in
@@ -539,7 +539,7 @@ default mode that was a journal file made and deleted every time. The database i
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
 | `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
 | `FlowStepTemplates` | A step's link to a template, with the step's own accuracy and order. |
-| `Executions` | One walk of a flow, at one viewport, with one data row, and the commit it executed at. |
+| `Executions` | One walk of a flow, with one data row, and the commit it executed at. |
 | `ExecutionSteps` | Per-step result within an execution. |
 | `AppSettings` | Key/value, defined by `AppSettingCatalog`. |
 | `DiscordBots` | Webhook targets for notifications. |
@@ -1528,8 +1528,8 @@ holds to: Launch had none, and threw the first time one executed.
 **An application area says what starts it**, since 2026-11-01: `FlowArea.LaunchCommand`, **Started
 by** on its form and `started by <[ … ]>` on its line in the script. A launch of an area starts
 that, with its own **Arguments** after it - `FlowStep.ShellArguments`, `Launch <[ Open the shop ]>
-opens <[ Browser ]> with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} ]>` - which is
-where a QA test's fresh profile and window size go. A launch with no area keeps its whole command
+opens <[ Browser ]> with <[ --user-data-dir={{temp}} ]>` - which is
+where a QA test's fresh profile goes. A launch with no area keeps its whole command
 line in `ShellCommandValue`, `Launch <[ Open the notes ]> <[ notepad.exe notes.txt ]>`: two columns,
 each meaning one thing, rather than one whose meaning turned on the area. The form shows the one that
 applies and empties the other on save. An area started by a link takes no arguments
@@ -1694,17 +1694,22 @@ characters, counted without the spaces OCR adds at either end.
 
 ### The matrix
 
-`Execution` carries `ViewportWidth`, `ViewportHeight` and `CsvRowIndex`. One execution is one
-viewport and one CSV row, which means **the matrix loop sits above the walk and cannot be a step**.
-Three sizes and ten rows is thirty executions.
+Planned for phase 10. One execution would be one screen size and one CSV row, which means **the
+matrix loop sits above the walk and cannot be a step**. Three sizes and ten rows is thirty
+executions.
 
-It runs **sequentially**. There is one mouse, one keyboard and one screen. That triples wall-clock
-in CI for three sizes and nobody should be surprised by it later.
+It needs a table for the sizes, a script line for them, `{{width}}` and `{{height}}`, and the size
+on each execution. `FlowViewport`, `Sizes:`, those variables and `Execution.ViewportWidth` and
+`ViewportHeight` were dropped on 2026-11-07 while nothing used them, to come back under a better
+name.
+
+It would run **sequentially**. There is one mouse, one keyboard and one screen. That triples
+wall-clock in CI for three sizes and nobody should be surprised by it later.
 
 ### Setup and teardown
 
-Each viewport pass is launch, then steps, then teardown. Self-contained and repeatable, which is
-what makes a sequential matrix safe.
+Each execution is launch, then steps, then teardown. Self-contained and repeatable, which is what
+would make a sequential matrix safe.
 
 **Teardown is steps under `End Execution`.** That step no longer stops the walk: the walker drops
 everything still pending — the stack holds a sibling for every level walked down to reach it — and
@@ -1749,12 +1754,11 @@ gets instead is a notification: see the roadmap.
 
 ### Variables
 
-Three kinds of name translate through one helper, `VariableTranslator`:
+Two kinds of name translate through one helper, `VariableTranslator`:
 
 | written | translates from |
 |---|---|
 | `{{username}}` | a CSV column |
-| `{{width}}`, `{{height}}` | the viewport being executed |
 | `{{Read the total}}` | what a step it sits under read or printed |
 
 There are **two substitution mechanisms**, because there are two different needs. A keyboard step in

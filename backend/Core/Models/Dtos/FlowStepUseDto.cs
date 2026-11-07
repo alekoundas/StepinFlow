@@ -16,7 +16,7 @@ namespace Core.Models.Dtos
         public int? FlowPointId { get; set; }
         public int? FlowPointEndId { get; set; }
 
-        /// <summary>Every {{name}} in its text: an input's, another step's or a viewport's.</summary>
+        /// <summary>Every {{name}} in its text: an input's or another step's.</summary>
         public List<string> VariableNames { get; set; } = new List<string>();
         public List<string> TemplateNames { get; set; } = new List<string>();
     }

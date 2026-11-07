@@ -52,9 +52,7 @@ namespace Business.Executions.Workers
 
         public async Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
         {
-            // A launch's arguments carry the viewport - "--window-size={{width}},{{height}}" - so this
-            // is where a flow sizes the application it is testing. A launch of an area starts what
-            // the area is started by, its own arguments after.
+            // A launch of an area starts what the area is started by, its own arguments after.
             string commandLine = step.ShellCommandValue;
             if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP && step.FlowArea != null)
                 commandLine = $"{step.FlowArea.LaunchCommand} {step.ShellArguments}".Trim();

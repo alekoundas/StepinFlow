@@ -32,9 +32,9 @@ namespace Business.Executions
         /// <summary>
         /// Swaps {{name}} for what it stands for, using what this execution knows so far.
         ///
-        /// Lives here because the values do: what an earlier step produced, and later the csv row
-        /// and the viewport being executed. A worker asks rather than assembling its own answer, so
-        /// adding a source is one change here instead of one per worker.
+        /// Lives here because the values do: what an earlier step produced, and later the csv row.
+        /// A worker asks rather than assembling its own answer, so adding a source is one change
+        /// here instead of one per worker.
         /// </summary>
         VariableTranslationResult TranslateVariables(string? text);
 

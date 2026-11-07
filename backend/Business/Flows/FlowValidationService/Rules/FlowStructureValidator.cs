@@ -104,9 +104,6 @@ namespace Business.Flows.FlowValidationService.Rules
         {
             HashSet<string> known = new HashSet<string>(flowNames, StringComparer.OrdinalIgnoreCase);
 
-            foreach (string reserved in VariableTranslator.ViewportNames)
-                known.Add(reserved);
-
             ILookup<string, FlowStep> stepsByName = everyAuthoredStep.ToLookup(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase);
 
             foreach (FlowStep step in authoredSteps)

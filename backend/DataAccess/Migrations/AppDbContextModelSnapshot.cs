@@ -122,12 +122,6 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ViewportHeight")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ViewportWidth")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
                     b.HasIndex("FlowId", "CreatedOn");

@@ -482,14 +482,23 @@ namespace Business.Tests.Flows.Validation
         }
 
         [Fact]
-        public void A_variable_is_known_from_an_input_a_step_above_or_the_viewport()
+        public void A_variable_is_known_from_an_input_or_a_step_above()
         {
             _inputs.Add("username");
             FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Read the total");
             FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type", Branch(read, FlowStepTypeEnum.SUCCESS));
-            type.KeyboardInputText = "{{username}} {{Read the total}} {{width}}x{{height}}";
+            type.KeyboardInputText = "{{username}} {{Read the total}}";
 
             CodesOn(type).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void Width_and_height_are_names_like_any_other()
+        {
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            type.KeyboardInputText = "{{width}}x{{height}}";
+
+            CodesOn(type).ShouldContain(FlowValidationCodeEnum.VARIABLE_UNKNOWN);
         }
 
         // What a step read is kept whichever way it went, and only for the steps under it.
