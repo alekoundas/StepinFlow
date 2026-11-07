@@ -1,4 +1,4 @@
-using Business.Shell;
+using Core.Catalogs;
 using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
@@ -11,7 +11,8 @@ namespace Transport.Ipc.Handlers
     {
         public static Task<ResultDto<IReadOnlyList<ShellCommandModeDto>>> HandleAsync(CancellationToken ct)
         {
-            return Task.FromResult(ResultDto<IReadOnlyList<ShellCommandModeDto>>.Success(ShellCommandModeCatalog.All));
+            IReadOnlyList<ShellCommandModeDto>  commands = ShellCommandModeCatalog.All;
+            return Task.FromResult(ResultDto<IReadOnlyList<ShellCommandModeDto>>.Success(commands));
         }
     }
 }

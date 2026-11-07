@@ -1,4 +1,4 @@
-using Business.Shell;
+using Core.Catalogs;
 using Core.Enums;
 
 namespace Business.Tests.Shell

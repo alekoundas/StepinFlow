@@ -1,9 +1,9 @@
-using Business.Shell;
 using Business.FlowScript.Catalogs;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using Core.Catalogs;
 
 namespace Business.Flows.FlowValidationService.Rules
 {

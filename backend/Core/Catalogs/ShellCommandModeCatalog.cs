@@ -1,7 +1,7 @@
 using Core.Enums;
 using Core.Models.Dtos;
 
-namespace Business.Shell
+namespace Core.Catalogs
 {
     /// <summary>
     /// The one definition of every mode. The form fetches this to draw the picker and preview
