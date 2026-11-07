@@ -34,13 +34,13 @@ namespace Core.Models.Dtos
 
 
         // SYSTEM_COMMAND
-        public RunCommandShellEnum RunCommandShell { get; set; }
-        public RunCommandPresetEnum RunCommandPreset { get; set; }
-        public string RunCommandValue { get; set; } = string.Empty;
-        public string RunCommandWorkingDirectory { get; set; } = string.Empty;
-        public string LaunchArguments { get; set; } = string.Empty;
-        public string SuccessExitCodes { get; set; } = "0";
-        public ResultSourceEnum ResultSource { get; set; }
+        public ShellTypeEnum ShellType { get; set; }
+        public ShellCommandModeEnum ShellCommandMode { get; set; }
+        public string ShellCommandValue { get; set; } = string.Empty;
+        public string ShellWorkingDirectory { get; set; } = string.Empty;
+        public string ShellArguments { get; set; } = string.Empty;
+        public string ShellSuccessExitCodes { get; set; } = "0";
+        public ShellResultSourceEnum ShellResultSource { get; set; }
 
 
         // SYSTEM_ACTION

@@ -7,10 +7,10 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
-import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
-import { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
-import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
+import { ShellTypeEnum } from "@/shared/enums/backend/shell/shell-type-enum";
+import { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
+import { ShellResultSourceEnum } from "@/shared/enums/backend/shell/shell-result-source-enum";
+import type { ShellCommandModeDto } from "@/shared/models/database/shell-command-mode-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -30,7 +30,7 @@ interface IdOption {
 }
 
 interface Props {
-  presets: CommandPresetDto[];
+  modes: ShellCommandModeDto[];
   flowId: number | undefined;
   isDisabled?: boolean;
 }
@@ -38,27 +38,27 @@ interface Props {
 // A launch waits for a window, and a monitor or a region is always there.
 const WINDOW_AREA_TYPES: string[] = [FlowAreaTypeEnum.APPLICATION, FlowAreaTypeEnum.BROWSER_TAB];
 
-const RESULT_SOURCE_OPTIONS: EnumOption[] = [
-  { label: "Output", value: ResultSourceEnum.STDOUT },
-  { label: "Errors", value: ResultSourceEnum.STDERR },
-  { label: "Both", value: ResultSourceEnum.COMBINED },
-  { label: "Exit code", value: ResultSourceEnum.EXIT_CODE },
+const SHELL_RESULT_SOURCE_OPTIONS: EnumOption[] = [
+  { label: "Output", value: ShellResultSourceEnum.STDOUT },
+  { label: "Errors", value: ShellResultSourceEnum.STDERR },
+  { label: "Both", value: ShellResultSourceEnum.COMBINED },
+  { label: "Exit code", value: ShellResultSourceEnum.EXIT_CODE },
 ];
 
 export default function FlowStepSystemCommandFormFieldsComponent({
-  presets,
+  modes,
   flowId,
   isDisabled = false,
 }: Props) {
   const { control, setValue, trigger } = useFormContext();
 
-  const preset = useWatch({ control, name: "runCommandPreset" });
-  const commandValue = useWatch({ control, name: "runCommandValue" });
+  const mode = useWatch({ control, name: "shellCommandMode" });
+  const commandValue = useWatch({ control, name: "shellCommandValue" });
   const flowAreaId = useWatch({ control, name: "flowAreaId" }) as number | null | undefined;
 
-  const activePreset = presets.find((x) => x.preset === preset);
-  const isCustom = preset === RunCommandPresetEnum.CUSTOM;
-  const isLaunch = preset === RunCommandPresetEnum.LAUNCH_APP;
+  const activeMode = modes.find((x) => x.mode === mode);
+  const isCustom = mode === ShellCommandModeEnum.CUSTOM;
+  const isLaunch = mode === ShellCommandModeEnum.LAUNCH_APP;
 
   const loadWindowAreas = (filter?: string): Promise<IdOption[]> =>
     backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
@@ -67,29 +67,29 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         .map((item) => ({ label: item.label, value: Number(item.value) })),
     );
 
-  // A preset owns its shell, so picking one has to bring its shell with it. Its default parameter
+  // A mode owns its shell, so picking one has to bring its shell with it. Its default parameter
   // comes along too, otherwise the previewed command shows a hole where the value belongs.
   useEffect(() => {
-    if (!activePreset || isCustom) return;
+    if (!activeMode || isCustom) return;
 
-    setValue("runCommandShell", activePreset.shell, { shouldValidate: true });
+    setValue("shellType", activeMode.shellType, { shouldValidate: true });
 
-    if (activePreset.hasParameter && !commandValue)
-      setValue("runCommandValue", activePreset.parameterDefault, {
+    if (activeMode.hasParameter && !commandValue)
+      setValue("shellCommandValue", activeMode.parameterDefault, {
         shouldValidate: true,
       });
 
-    if (!activePreset.hasParameter && commandValue)
-      setValue("runCommandValue", "", { shouldValidate: true });
-  }, [activePreset, isCustom, commandValue, setValue]);
+    if (!activeMode.hasParameter && commandValue)
+      setValue("shellCommandValue", "", { shouldValidate: true });
+  }, [activeMode, isCustom, commandValue, setValue]);
 
-  const resolvedCommand = !activePreset
+  const resolvedCommand = !activeMode
     ? ""
     : isCustom
       ? commandValue
-      : activePreset.hasParameter
-        ? activePreset.commandTemplate.replace("{0}", commandValue ?? "")
-        : activePreset.commandTemplate;
+      : activeMode.hasParameter
+        ? activeMode.commandTemplate.replace("{0}", commandValue ?? "")
+        : activeMode.commandTemplate;
 
   return (
     <>
@@ -101,12 +101,12 @@ export default function FlowStepSystemCommandFormFieldsComponent({
       />
 
       <FormSelectButtonComponent<SystemCommandForm, string>
-        fieldName="runCommandPreset"
+        fieldName="shellCommandMode"
         labelText="Command"
-        options={presets.map((x) => ({ label: x.label, value: x.preset }))}
+        options={modes.map((x) => ({ label: x.label, value: x.mode }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={activePreset?.description}
+        hintText={activeMode?.description}
       />
 
       {isLaunch && (
@@ -122,13 +122,13 @@ export default function FlowStepSystemCommandFormFieldsComponent({
           isDisabled={isDisabled}
           hintText="Launches it only when it is not open, then waits for it to load."
           // Whether the program is needed depends on this, and the form checks only the field that changed.
-          onChanged={() => void trigger("runCommandValue")}
+          onChanged={() => void trigger("shellCommandValue")}
         />
       )}
 
       {isLaunch && flowAreaId && (
         <FormInputTextComponent
-          fieldName="launchArguments"
+          fieldName="shellArguments"
           label="Arguments"
           placeholderText="--profile test"
           isDisabled={isDisabled}
@@ -136,11 +136,11 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         />
       )}
 
-      {isLaunch && !flowAreaId && activePreset && (
+      {isLaunch && !flowAreaId && activeMode && (
         <FormInputTextComponent
-          fieldName="runCommandValue"
-          label={activePreset.parameterLabel}
-          placeholderText={activePreset.parameterPlaceholder}
+          fieldName="shellCommandValue"
+          label={activeMode.parameterLabel}
+          placeholderText={activeMode.parameterPlaceholder}
           isRequired={true}
           isDisabled={isDisabled}
         />
@@ -149,17 +149,17 @@ export default function FlowStepSystemCommandFormFieldsComponent({
       {isCustom ? (
         <>
           <FormSelectButtonComponent
-            fieldName="runCommandShell"
+            fieldName="shellType"
             labelText="Shell"
             options={[
-              { label: "Command Prompt", value: RunCommandShellEnum.CMD },
-              { label: "PowerShell", value: RunCommandShellEnum.POWERSHELL },
+              { label: "Command Prompt", value: ShellTypeEnum.CMD },
+              { label: "PowerShell", value: ShellTypeEnum.POWERSHELL },
             ]}
             isDisabled={isDisabled}
           />
 
           <FormInputTextComponent
-            fieldName="runCommandValue"
+            fieldName="shellCommandValue"
             label="Command"
             placeholderText="ipconfig /flushdns"
             isRequired={true}
@@ -169,11 +169,11 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         </>
       ) : (
         !isLaunch &&
-        activePreset?.hasParameter && (
+        activeMode?.hasParameter && (
           <FormInputTextComponent
-            fieldName="runCommandValue"
-            label={activePreset.parameterLabel}
-            placeholderText={activePreset.parameterPlaceholder}
+            fieldName="shellCommandValue"
+            label={activeMode.parameterLabel}
+            placeholderText={activeMode.parameterPlaceholder}
             isRequired={true}
             isDisabled={isDisabled}
           />
@@ -194,7 +194,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
       )}
 
       <FormInputTextComponent
-        fieldName="runCommandWorkingDirectory"
+        fieldName="shellWorkingDirectory"
         label="Start in folder"
         placeholderText="C:\\Projects"
         isDisabled={isDisabled}
@@ -216,7 +216,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
         <>
           <div className="flex gap-3">
             <FormInputTextComponent
-              fieldName="successExitCodes"
+              fieldName="shellSuccessExitCodes"
               label="Succeeds on exit code"
               isRequired={true}
               isDisabled={isDisabled}
@@ -236,10 +236,10 @@ export default function FlowStepSystemCommandFormFieldsComponent({
           </div>
 
           <FormDropdownComponent<SystemCommandForm, EnumOption>
-            fieldName="resultSource"
+            fieldName="shellResultSource"
             labelText="Result comes from"
             mode="local"
-            options={RESULT_SOURCE_OPTIONS}
+            options={SHELL_RESULT_SOURCE_OPTIONS}
             optionLabel="label"
             optionValue="value"
             isRequired={true}

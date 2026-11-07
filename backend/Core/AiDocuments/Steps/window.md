@@ -69,7 +69,7 @@ fails, since Ctrl+W would close whatever is in front instead. A tab is never for
 program is the whole browser: `then force` on one is `CLOSE_FORCED_ON_TAB`. A flow that wants to end
 its browser starts its own, with its own profile, and names that window as an application area.
 
-`Run KILL_PROCESS` is the other way to close something. It ends every program of a name at once,
+`Shell KILL_PROCESS` is the other way to close something. It ends every program of a name at once,
 with nothing saved, so it suits a program left over from a crash rather than a window to close.
 
 A close goes at the end of the flow, or under an `End Execution` as cleanup, so the next execution

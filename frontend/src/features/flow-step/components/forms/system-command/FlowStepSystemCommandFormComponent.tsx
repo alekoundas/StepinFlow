@@ -10,11 +10,11 @@ import { Button } from "primereact/button";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
-import { useCommandPresets } from "@/features/flow-step/hooks/use-command-presets";
+import type { ShellCommandResultDto } from "@/shared/models/database/shell-command-result-dto";
+import { useShellCommandModes } from "@/features/flow-step/hooks/use-shell-command-modes";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
-import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
-import { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
+import { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
+import { ShellTypeEnum } from "@/shared/enums/backend/shell/shell-type-enum";
 import { humanizeMilliseconds } from "@/shared/utils/humanize-milliseconds";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import FlowStepSystemCommandFormFieldsComponent from "@/features/flow-step/components/forms/system-command/FlowStepSystemCommandFormFieldsComponent";
@@ -49,19 +49,19 @@ export default function FlowStepSystemCommandFormComponent({
     trigger,
   } = form;
 
-  const { data: presets = [] } = useCommandPresets();
+  const { data: modes = [] } = useShellCommandModes();
   const { openConfirm, close } = useDialogStore();
 
   const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<RunCommandTestResultDto | null>(null);
+  const [testResult, setTestResult] = useState<ShellCommandResultDto | null>(null);
 
   const values = useWatch({ control });
-  const preset = values.runCommandPreset;
+  const mode = values.shellCommandMode;
   const timeoutMilliseconds = values.timeoutMilliseconds as number | undefined;
-  const activePreset = presets.find((x) => x.preset === preset);
+  const activeMode = modes.find((x) => x.mode === mode);
 
   // Testing would start the application, and a launch has no output to show.
-  const isLaunch = preset === RunCommandPresetEnum.LAUNCH_APP;
+  const isLaunch = mode === ShellCommandModeEnum.LAUNCH_APP;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,7 +70,7 @@ export default function FlowStepSystemCommandFormComponent({
     return () => clearTimeout(timer);
   }, [trigger]);
 
-  const runTest = async () => {
+  const executeTest = async () => {
     setIsTesting(true);
     try {
       const values = form.getValues();
@@ -79,7 +79,7 @@ export default function FlowStepSystemCommandFormComponent({
         ...values,
         flowAreaId: values.flowAreaId ?? undefined,
       });
-      setTestResult(await backendApiService.FlowStep.testRunCommand(dto));
+      setTestResult(await backendApiService.FlowStep.testShellCommand(dto));
     } catch (err) {
       console.error(err);
     } finally {
@@ -90,8 +90,8 @@ export default function FlowStepSystemCommandFormComponent({
   // There is no way to preview a command without running it, so the ones that do something the
   // user would not want done twice ask first.
   const handleTest = () => {
-    if (!activePreset?.isConfirmationRequired) {
-      void runTest();
+    if (!activeMode?.isConfirmationRequired) {
+      void executeTest();
       return;
     }
 
@@ -101,28 +101,28 @@ export default function FlowStepSystemCommandFormComponent({
       confirmSeverity: "warning",
       children: (
         <LabelComponent
-          text={`Testing "${activePreset.label}" actually runs it on this machine.`}
+          text={`Testing "${activeMode.label}" actually runs it on this machine.`}
           size="sm"
         />
       ),
       onConfirm: async () => {
         close(CONFIRM_ID);
-        await runTest();
+        await executeTest();
       },
     });
   };
 
   // A field hidden for what the step is goes empty, so it cannot come back unseen.
   const handleSubmit = (data: z.infer<typeof FlowStepSystemCommandSchema>) => {
-    const isLaunchOfArea = data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP && !!data.flowAreaId;
+    const isLaunchOfArea = data.shellCommandMode === ShellCommandModeEnum.LAUNCH_APP && !!data.flowAreaId;
 
     onSubmit(
       new FlowStepDto({
         ...defaultValues,
         ...data,
-        flowAreaId: data.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP ? (data.flowAreaId ?? undefined) : undefined,
-        runCommandValue: isLaunchOfArea ? "" : data.runCommandValue,
-        launchArguments: isLaunchOfArea ? data.launchArguments : "",
+        flowAreaId: data.shellCommandMode === ShellCommandModeEnum.LAUNCH_APP ? (data.flowAreaId ?? undefined) : undefined,
+        shellCommandValue: isLaunchOfArea ? "" : data.shellCommandValue,
+        shellArguments: isLaunchOfArea ? data.shellArguments : "",
       }),
     );
   };
@@ -130,24 +130,24 @@ export default function FlowStepSystemCommandFormComponent({
   // What this one will do, in its own words: the command as it will be executed, or the program
   // started.
   const summaryOf = (): string | undefined => {
-    if (!activePreset) return undefined;
+    if (!activeMode) return undefined;
 
-    const value = (values.runCommandValue as string | undefined) ?? "";
-    const codes = (values.successExitCodes as string | undefined) || "0";
+    const value = (values.shellCommandValue as string | undefined) ?? "";
+    const codes = (values.shellSuccessExitCodes as string | undefined) || "0";
 
     if (isLaunch) {
       if (!values.flowAreaId) return `Starts “${value}” and carries on without waiting for it to close.`;
 
-      const args = ((values.launchArguments as string | undefined) ?? "").trim();
+      const args = ((values.shellArguments as string | undefined) ?? "").trim();
       const after = args ? `, with “${args}” after it` : "";
       return `Starts what the app is started by${after}, when it is not open, and waits up to ${humanizeMilliseconds(timeoutMilliseconds || 30000)} for it to load.`;
     }
 
     const command =
-      preset === RunCommandPresetEnum.CUSTOM
+      mode === ShellCommandModeEnum.CUSTOM
         ? value
-        : activePreset.commandTemplate.replace("{0}", value);
-    const shell = values.runCommandShell === RunCommandShellEnum.POWERSHELL ? "PowerShell" : "Command Prompt";
+        : activeMode.commandTemplate.replace("{0}", value);
+    const shell = values.shellType === ShellTypeEnum.POWERSHELL ? "PowerShell" : "Command Prompt";
 
     return `Executes “${command}” in ${shell}. Exit code ${codes} goes on to Success, any other to Failure.`;
   };
@@ -162,7 +162,7 @@ export default function FlowStepSystemCommandFormComponent({
           onEdit={onEdit}
           onCancel={onCancel}
           baseValues={defaultValues}
-          mode={activePreset?.label}
+          mode={activeMode?.label}
           summary={summaryOf()}
           testAction={
             !isLaunch && (
@@ -181,7 +181,7 @@ export default function FlowStepSystemCommandFormComponent({
           }
         >
           <FlowStepSystemCommandFormFieldsComponent
-            presets={presets}
+            modes={modes}
             flowId={defaultValues.flowId ?? defaultValues.rootId}
             isDisabled={formMode === "VIEW"}
           />

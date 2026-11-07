@@ -15,7 +15,7 @@ using Transport.Ipc.Handlers.Ai;
 using Transport.Ipc.Handlers.Execution;
 using Transport.Ipc.Handlers.Lookup;
 
-using Business.Command;
+using Business.Shell;
 using Business.Executions;
 using Business.Searching;
 using Business.AreaPoint;
@@ -102,7 +102,7 @@ namespace App
             builder.Services.AddSingleton<BrowserTabFinder>();
             builder.Services.AddSingleton<IAreaPointResolver, AreaPointResolver>();
             builder.Services.AddSingleton<IImageSearcher, ImageSearcher>();
-            builder.Services.AddSingleton<ICommandRunner, CommandRunner>();
+            builder.Services.AddSingleton<IShellCommandExecutor, ShellCommandExecutor>();
             builder.Services.AddSingleton<IAppSettingService, AppSettingService>();
             builder.Services.AddSingleton<IRecordingSessionService, RecordingSessionService>();
             builder.Services.AddSingleton<IClickedElementFinder, ClickedElementFinder>();
@@ -249,7 +249,7 @@ namespace App
             builder.Services.AddTransient<PasteFlowStepHandler>();
             builder.Services.AddTransient<GetFlowStepScriptLineHandler>();
             builder.Services.AddTransient<TestImageSearchHandler>();
-            builder.Services.AddTransient<TestRunCommandHandler>();
+            builder.Services.AddTransient<TestShellCommandHandler>();
             builder.Services.AddTransient<TestCursorStepHandler>();
             builder.Services.AddTransient<TestSearchTextHandler>();
             builder.Services.AddTransient<CreateFlowAreaHandler>();

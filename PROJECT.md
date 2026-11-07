@@ -92,7 +92,7 @@ Business/
   Flows/         DataService/ - every write to a flow - FlowValidationService/ with its Rules/ -
                  what every write is checked against - and the tree maths a move uses
   Repository/    the flows kept as files in a git repository: GitRepositoryService writes, reads and commits
-  Recording/  Notification/  Command/  AreaPoint/  AppSettings/  Ai/
+  Recording/  Notification/  Shell/  AreaPoint/  AppSettings/  Ai/
 ```
 
 There is no `Services/` level: it claimed everything below it was a service, and most of it was an
@@ -234,15 +234,15 @@ fired. A banned **type** is broad in a useful way: banning `Regex` also catches
 Worth knowing what a ban does not catch: a bare `using System.Text.RegularExpressions;` references
 no banned symbol, so it is reported as an unused `using` rather than as a ban.
 
-Two deviations, both `.editorconfig` sections beside every other. `CommandRunner` holds a `Process`,
+Two deviations, both `.editorconfig` sections beside every other. `ShellCommandExecutor` holds a `Process`,
 which a port would not fix — it launches `cmd.exe` and `powershell.exe` and every entry in its
-preset catalogue is a Windows command, so the question is whether the whole runner moves rather
+mode catalogue is a Windows command, so the question is whether the whole executor moves rather
 than whether the `Process` is hidden. `RegexHelper` names `Regex`, because it is where the ban
 points.
 
 Each names **one file**, not its folder, because every banned symbol shares the one diagnostic id:
-switching it off excuses all of them wherever it reaches. Written as `Business/Command/**.cs` it
-quietly let the regex ban off in the one file most likely to break it — the runner is where the
+switching it off excuses all of them wherever it reaches. Written as `Business/Shell/**.cs` it
+quietly let the regex ban off in the one file most likely to break it — the executor is where the
 duplicated pattern matching used to live.
 
 **Platform internals can be `internal`.** `Direct3D11Interop`, `NativeCursor` and
@@ -1098,7 +1098,7 @@ what each one was for.
   (`Business/Recording/Draft/Actions/CheckDraftBuilder`). A check keeps a template of its own: one
   shared with clicks could be folded into their `Find All Images`.
 - **Ctrl + right click marks a step that is not a click** where one would have been: a command, an
-  application opened, or an input's value typed, which Review asks for - a `Run`, a `Launch` or a
+  application opened, or an input's value typed, which Review asks for - a `Shell`, a `Launch` or a
   `Type {{input}}` (`SubstituteDraftBuilder`). Where it was marked does not matter, which is why it is
   the right button. An input the flow does not have yet is added with no value.
 - **Neither click reaches the application** - a Ctrl + right click would open its menu, a Ctrl +
@@ -1249,7 +1249,7 @@ it and reads on from the next line, so one typo is one error rather than the end
 same stem and a catalog row. Each writer takes its row and writes its line a piece at a time, in
 the order it reads - one `WriteKeyword`, `WriteQuote` or `WriteInteger` per piece, as its parser
 expects and extracts one token at a time - keyword choice included: a search picks its word by
-mode, `Type` or `Press` by input type, `Run` or `Launch` by preset. Pieces are a space apart unless
+mode, `Type` or `Press` by input type, `Shell` or `Launch` by mode. Pieces are a space apart unless
 a gap (`WriteGap`: three spaces between clauses, two in a few places) or a column
 (`WriteGapUntil(KEYWORD_GAP_UNTIL)`) already parts them, so a separator is only written where the
 format wants more than one. They share `BaseWriter` - the
@@ -1508,19 +1508,19 @@ screenshot, and its Success branch executes once per hit; inside it the search's
 hit of that pass, so a move to the search followed by a click clicks each one. A `WAIT_UNTIL_NOT_FOUND`
 search is the opposite: a condition with no location or value, so nothing below can read it.
 
-A `Run` waits for its command to exit; a `Launch` starts its program through
+A `Shell` waits for its command to exit; a `Launch` starts its program through
 `IProcessService.Launch` and carries on, since an application never exits on its own. Given its
 window (`opens <[ area ]>`), a launch is skipped when that window is already open and otherwise waits
 for it - 30 seconds, or the step's timeout - so the next step does not act on a screen that is still
-loading. The runner refuses a launch outright, and every preset has a catalog entry, which a test
+loading. The executor refuses a launch outright, and every mode has a catalog entry, which a test
 holds to: Launch had none, and threw the first time one executed.
 
 **An application area says what starts it**, since 2026-11-01: `FlowArea.LaunchCommand`, **Started
 by** on its form and `started by <[ … ]>` on its line in the script. A launch of an area starts
-that, with its own **Arguments** after it - `FlowStep.LaunchArguments`, `Launch <[ Open the shop ]>
+that, with its own **Arguments** after it - `FlowStep.ShellArguments`, `Launch <[ Open the shop ]>
 opens <[ Browser ]> with <[ --user-data-dir={{temp}} --window-size={{width}},{{height}} ]>` - which is
 where a QA test's fresh profile and window size go. A launch with no area keeps its whole command
-line in `RunCommandValue`, `Launch <[ Open the notes ]> <[ notepad.exe notes.txt ]>`: two columns,
+line in `ShellCommandValue`, `Launch <[ Open the notes ]> <[ notepad.exe notes.txt ]>`: two columns,
 each meaning one thing, rather than one whose meaning turned on the area. The form shows the one that
 applies and empties the other on save. An area started by a link takes no arguments
 (`LAUNCH_ARGUMENTS_ON_LINK`), since Steam passes a game's its own way. An old
@@ -1563,8 +1563,7 @@ then each tab in turn, a window it is not in put back on the tab it showed. A la
 the address starts the area's Started by - the browser - with `--new-window` and the address, which
 Chromium's browsers and Firefox all take. `BrowserTabAddress` renamed `TabMatchValue` to `TabAddress`,
 dropped `TabMatchOn` - finding a tab by its title went, since a title changes with a notification
-count - and cleared the title patterns tab areas had. An old `tab url contains <[ … ]>` reads as the
-address; `tab title contains` is refused. Windows only: macOS has AppleScript for the same, and Linux
+count - and cleared the title patterns tab areas had. `tab title contains` is refused. Windows only: macOS has AppleScript for the same, and Linux
 AT-SPI, which browsers support unevenly.
 
 **`Close Window` closes the way the window's X does**, since 2026-11-03: `Close Window <[ Editor ]>
@@ -1575,7 +1574,7 @@ let go of its profile lock and remove its own temp files, and `IsWindowOpen` - `
 `TimeoutMilliseconds`, 0 being 5 seconds as a launch's 0 is 30. Still open is a failure, usually a
 "save changes?" box, unless `FlowStep.IsCloseForced` (`WindowCloseForced`, a column defaulting to
 false): then `IProcessService.Kill` ends the window's own process and its tree, found by
-`GetProcessId` before the close, never every process of the name the way `Run KILL_PROCESS`
+`GetProcessId` before the close, never every process of the name the way `Shell KILL_PROCESS`
 (`taskkill /F`) does; Explorer and `ApplicationFrameHost`, which own other programs' windows, are
 left alone. A `BROWSER_TAB` closes only its tab: the browser is focused with the tab in front, and
 only once `FocusWindow` says it is in front is Ctrl+W pressed, since it goes to whatever is; the tab
@@ -2158,11 +2157,11 @@ line in a file without it and the step's name in a file with it (`ScriptScope.Is
 ### Every step a line can point at carries its name
 
 A line is named when anything can refer to its step, or when nothing about its settings would name
-it: searches, checks, loops, stage markers, `Launch` and `Run` (a check or typed text reads what a
+it: searches, checks, loops, stage markers, `Launch` and `Shell` (a check or typed text reads what a
 command printed, `{{Read it}}`), and `Sub Flow`. A step named by its settings - a click, a wait, an
-`End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Run` and `Sub Flow`
+`End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Shell` and `Sub Flow`
 wrote none before 2026-11-01, and an empty name is still left out: the import names such a step
-`Launch <area>`, the preset (`Read clipboard`), `Command`, or the sub-flow it executes
+`Launch <area>`, the mode (`Read clipboard`), `Command`, or the sub-flow it executes
 (`FlowStepDataService.AddTree`), and the `NameUnnamedSteps` migration named the ones saved that way.
 Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
 file called that, and the file did not import back. `Notify` writes the step whose result it
@@ -2625,7 +2624,7 @@ setting's label, description, default, min and max — read by the loader *and* 
 the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type),
 `KeyCatalog` (how keys are named - what the recorder writes as "Ctrl+V" and the execution and the
 validation read back into keys, so the round trip cannot break).
-`CommandPresetCatalog` is the same kind of thing and sits beside the runner in `Business/Command`,
+`ShellCommandModeCatalog` is the same kind of thing and sits beside the executor in `Business/Shell`,
 its only consumer. These are not constants; they are queried, and a `Constants.cs` full of
 `public const string` would describe them less accurately than `Catalog` does. The pattern has a
 well-known precedent in Roslyn's `SyntaxFacts`.
@@ -2875,7 +2874,7 @@ with OpenAI on top. 1129 backend tests.
 - No inputs from CSV, no viewport matrix, no CLI runner - phases 8, 10 and 12.
 - The 5.7 forms - template capture and an area's "Contents scale with" - are verified by the build
   and tests but have not been clicked through by hand.
-- `RunCommandValue` can hold a credential in a command line. It is authored rather than read off the
+- `ShellCommandValue` can hold a credential in a command line. It is authored rather than read off the
   screen, so it is not currently redacted for AI. Flagged in `TODO.md` rather than folded in silently.
 
 ---

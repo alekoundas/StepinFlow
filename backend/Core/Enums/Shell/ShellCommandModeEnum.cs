@@ -1,10 +1,10 @@
 ﻿namespace Core.Enums
 {
     /// <summary>
-    /// A ready made command. The step stores the preset and its one parameter rather than the
-    /// rendered text, so improving a preset later fixes every flow already using it.
+    /// A ready made command. The step stores the mode and its one parameter rather than the
+    /// rendered text, so improving a mode later fixes every flow already using it.
     /// </summary>
-    public enum RunCommandPresetEnum
+    public enum ShellCommandModeEnum
     {
         CUSTOM,
         KILL_PROCESS,

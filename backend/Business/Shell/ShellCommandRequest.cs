@@ -2,24 +2,24 @@ using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
 
-namespace Business.Command
+namespace Business.Shell
 {
     /// <summary>
-    /// Everything the runner needs to run one command, and nothing else.
+    /// Everything the executor needs to execute one command, and nothing else.
     ///
     /// It used to take a whole <see cref="FlowStepDto"/>, which meant the execution worker had to map
     /// its entity into a dto it did not otherwise want - so the worker depended on AutoMapper, and on
     /// a profile that lives in the composition root, which is what made it the one worker with no
     /// test. Eight fields, named side by side, and the dependency is gone.
     /// </summary>
-    public sealed class CommandRequest
+    public sealed class ShellCommandRequest
     {
-        public RunCommandPresetEnum Preset { get; set; }
+        public ShellCommandModeEnum Mode { get; set; }
 
-        /// <summary>The command, or the preset's parameter. Variables are already resolved.</summary>
+        /// <summary>The command, or the mode's parameter. Variables are already resolved.</summary>
         public string Value { get; set; } = string.Empty;
 
-        public RunCommandShellEnum Shell { get; set; }
+        public ShellTypeEnum ShellType { get; set; }
         public string WorkingDirectory { get; set; } = string.Empty;
 
         /// <summary>Zero waits for ever.</summary>
@@ -28,7 +28,7 @@ namespace Business.Command
         /// <summary>Comma separated. Anything else is a failure rather than an error.</summary>
         public string SuccessExitCodes { get; set; } = "0";
 
-        public ResultSourceEnum ResultSource { get; set; }
+        public ShellResultSourceEnum ResultSource { get; set; }
 
         /// <summary>Regex, first capture group. Empty keeps the whole output.</summary>
         public string ResultExtractPattern { get; set; } = string.Empty;
@@ -38,33 +38,33 @@ namespace Business.Command
         // Public methods
         // ================================================================
 
-        /// <summary>The step's command with its variables already resolved, as an execution runs it.</summary>
-        public static CommandRequest From(FlowStep step, string value)
+        /// <summary>The step's command with its variables already resolved, as an execution uses it.</summary>
+        public static ShellCommandRequest From(FlowStep step, string value)
         {
-            return new CommandRequest
+            return new ShellCommandRequest
             {
-                Preset = step.RunCommandPreset,
+                Mode = step.ShellCommandMode,
                 Value = value,
-                Shell = step.RunCommandShell,
-                WorkingDirectory = step.RunCommandWorkingDirectory,
+                ShellType = step.ShellType,
+                WorkingDirectory = step.ShellWorkingDirectory,
                 TimeoutMilliseconds = step.TimeoutMilliseconds,
-                SuccessExitCodes = step.SuccessExitCodes,
-                ResultSource = step.ResultSource,
+                SuccessExitCodes = step.ShellSuccessExitCodes,
+                ResultSource = step.ShellResultSource,
                 ResultExtractPattern = step.ResultExtractPattern,
             };
         }
 
-        public static CommandRequest From(FlowStepDto step)
+        public static ShellCommandRequest From(FlowStepDto step)
         {
-            return new CommandRequest
+            return new ShellCommandRequest
             {
-                Preset = step.RunCommandPreset,
-                Value = step.RunCommandValue,
-                Shell = step.RunCommandShell,
-                WorkingDirectory = step.RunCommandWorkingDirectory,
+                Mode = step.ShellCommandMode,
+                Value = step.ShellCommandValue,
+                ShellType = step.ShellType,
+                WorkingDirectory = step.ShellWorkingDirectory,
                 TimeoutMilliseconds = step.TimeoutMilliseconds,
-                SuccessExitCodes = step.SuccessExitCodes,
-                ResultSource = step.ResultSource,
+                SuccessExitCodes = step.ShellSuccessExitCodes,
+                ResultSource = step.ShellResultSource,
                 ResultExtractPattern = step.ResultExtractPattern,
             };
         }

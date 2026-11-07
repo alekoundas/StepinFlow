@@ -52,10 +52,10 @@ namespace Core.Models.Dtos
         public ConditionTypeEnum? ConditionType { get; set; }
 
         // SYSTEM_COMMAND
-        public RunCommandShellEnum? RunCommandShell { get; set; }
-        public RunCommandPresetEnum? RunCommandPreset { get; set; }
-        public string? RunCommandValue { get; set; }
-        public string? LaunchArguments { get; set; }
+        public ShellTypeEnum? ShellType { get; set; }
+        public ShellCommandModeEnum? ShellCommandMode { get; set; }
+        public string? ShellCommandValue { get; set; }
+        public string? ShellArguments { get; set; }
 
         // SYSTEM_ACTION
         public SystemActionTypeEnum? SystemActionType { get; set; }

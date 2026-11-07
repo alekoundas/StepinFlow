@@ -21,7 +21,7 @@ import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
-import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
+import type { ShellCommandResultDto } from "@/shared/models/database/shell-command-result-dto";
 import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
 import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
@@ -53,7 +53,7 @@ import type {
   RepositoryFlowCommitRequestDto,
   RepositoryStatusDto,
 } from "@/shared/models/repository-dtos";
-import type { CommandPresetDto } from "@/shared/models/database/command-preset-dto";
+import type { ShellCommandModeDto } from "@/shared/models/database/shell-command-mode-dto";
 import type { LookupRequestDto } from "@/shared/models/lazy-data/lookup-request.dto";
 import type { LookupResponseDto } from "@/shared/models/lazy-data/lookup-response.dto";
 import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
@@ -199,8 +199,8 @@ export const backendApiService = {
       call<FlowStepScriptLineDto>("FlowStep.getScriptLine", dto),
     testImageSearch: (dto: FlowStepDto) =>
       call<ImageSearchTestResultDto>("FlowStep.testImageSearch", dto),
-    testRunCommand: (dto: FlowStepDto) =>
-      call<RunCommandTestResultDto>("FlowStep.testRunCommand", dto),
+    testShellCommand: (dto: FlowStepDto) =>
+      call<ShellCommandResultDto>("FlowStep.testShellCommand", dto),
     testSearchText: (dto: FlowStepDto) =>
       call<SearchTextTestResultDto>("FlowStep.testSearchText", dto),
     /** Moves or drags the real cursor as the step would. Saved locations only. */
@@ -280,7 +280,7 @@ export const backendApiService = {
     /** What starts the app a window belongs to: its program, or a Steam game's link. Empty when unreadable. */
     launchCommand: (processId: number) => call<string>("Lookup.launchCommand", processId),
 
-    commandPresets: () => call<CommandPresetDto[]>("Lookup.commandPresets"),
+    shellCommandModes: () => call<ShellCommandModeDto[]>("Lookup.shellCommandModes"),
     ocrLanguages: () => call<OcrLanguageDto[]>("Lookup.ocrLanguages"),
     aiModels: () => call<AiModelsDto>("Lookup.aiModels"),
     aiModelSuggestions: () =>

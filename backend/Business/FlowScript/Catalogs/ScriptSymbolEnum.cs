@@ -40,7 +40,6 @@ namespace Business.FlowScript.Catalogs
         SIZE,
         SCALES_WITH,
         TAB,
-        URL,
         WITH_FRAME,
         STARTED_BY,
 
@@ -61,7 +60,6 @@ namespace Business.FlowScript.Catalogs
         MATCH,
         TEMPLATE,
         ACCURACY,
-        REQUIRED,
         IN,
         OPENS,
         WITH,

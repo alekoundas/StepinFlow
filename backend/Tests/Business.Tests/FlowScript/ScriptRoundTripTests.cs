@@ -79,7 +79,7 @@ namespace Business.Tests.FlowScript
 
         private const string Named = """
             Launch          <[ Start it ]>   opens <[ App ]>
-            Run             <[ Read it ]>   READ_CLIPBOARD <[  ]>
+            Shell           <[ Read it ]>   READ_CLIPBOARD <[  ]>
             Check Value     <[ Has it ]>   <[ {{Read it}} ]> is not empty
              Success:
               Notify          <[ got it ]>   with result of <[ Has it ]>
@@ -163,8 +163,8 @@ namespace Business.Tests.FlowScript
         [Theory]
         [InlineData("Launch          opens <[ App ]>")]
         [InlineData("Launch          <[ app.exe ]>")]
-        [InlineData("Run             KILL_PROCESS <[ app.exe ]>")]
-        [InlineData("Run             <[ cleanup.bat ]>")]
+        [InlineData("Shell           KILL_PROCESS <[ app.exe ]>")]
+        [InlineData("Shell           <[ cleanup.bat ]>")]
         [InlineData("Sub Flow        <[ Checkout ]>")]
         public void A_line_from_before_the_name_reads_with_none(string line)
         {
@@ -184,8 +184,8 @@ namespace Business.Tests.FlowScript
             FlowStep before = new Scanner().Read(WithArea + line).Steps.Single();
             FlowStep now = new Scanner().Read(LanguageLine(WithArea) + line).Steps.Single();
 
-            (before.Name, before.LaunchArguments).ShouldBe((string.Empty, "--quiet"));
-            (now.Name, now.LaunchArguments).ShouldBe(("app.exe --quiet", string.Empty));
+            (before.Name, before.ShellArguments).ShouldBe((string.Empty, "--quiet"));
+            (now.Name, now.ShellArguments).ShouldBe(("app.exe --quiet", string.Empty));
         }
 
         private static string LanguageLine(string script)
@@ -340,16 +340,6 @@ namespace Business.Tests.FlowScript
 
             schema.Steps[0].FlowStepTemplates.Select(x => x.Accuracy).ShouldBe([0.95f, 0.9f]);
             schema.Steps[1].FlowStepTemplates.Single().Accuracy.ShouldBe(0.8f);
-        }
-
-        // Templates were once AND-ed by marking them required. A file from then still reads.
-        [Fact]
-        public void An_older_files_required_is_read_and_means_nothing()
-        {
-            FlowScriptSchema schema = new Scanner().Read(HandWritten.Replace("template <[ a.png ]>", "template <[ a.png ]> required"));
-
-            schema.Diagnostics.ShouldBeEmpty();
-            schema.Steps[0].FlowStepTemplates.Select(x => x.FlowTemplate.Name).ShouldBe(["a.png", "b.png"]);
         }
 
         [Fact]

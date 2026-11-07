@@ -135,12 +135,12 @@ app. Left:
 
 ### Commands and windows
 
-- [ ] **`CommandRunner` is a Windows adapter sitting in `Business`, and a port will not fix it.**
+- [ ] **`ShellCommandExecutor` is a Windows adapter sitting in `Business`, and a port will not fix it.**
       It is not only `new Process`: `BuildStartInfo` launches `cmd.exe` or `powershell.exe` and
-      reads the console OEM code page, and every entry in `CommandPresetCatalog` is a Windows
+      reads the console OEM code page, and every entry in `ShellCommandModeCatalog` is a Windows
       command - `taskkill`, `Get-Process`, `shutdown /s`, `Get-Clipboard`. Hiding the process behind
-      a port would leave all of that behind. The real question is whether the runner moves to
-      `Platform.Windows` whole and the preset catalogue becomes per platform, which is a design
+      a port would leave all of that behind. The real question is whether the executor moves to
+      `Platform.Windows` whole and the mode catalogue becomes per platform, which is a design
       decision rather than an extraction, and it belongs with the Linux work. Until then it is the
       one recorded `RS0030` deviation in `.editorconfig`.
 

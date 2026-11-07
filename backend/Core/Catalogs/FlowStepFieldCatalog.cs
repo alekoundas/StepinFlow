@@ -154,13 +154,13 @@ namespace Core.Catalogs
 
             [FlowStepTypeEnum.SYSTEM_COMMAND] =
             [
-                nameof(FlowStep.RunCommandShell),
-                nameof(FlowStep.RunCommandPreset),
-                nameof(FlowStep.RunCommandValue),
-                nameof(FlowStep.RunCommandWorkingDirectory),
-                nameof(FlowStep.LaunchArguments),
-                nameof(FlowStep.SuccessExitCodes),
-                nameof(FlowStep.ResultSource),
+                nameof(FlowStep.ShellType),
+                nameof(FlowStep.ShellCommandMode),
+                nameof(FlowStep.ShellCommandValue),
+                nameof(FlowStep.ShellWorkingDirectory),
+                nameof(FlowStep.ShellArguments),
+                nameof(FlowStep.ShellSuccessExitCodes),
+                nameof(FlowStep.ShellResultSource),
                 nameof(FlowStep.ResultExtractPattern),
                 nameof(FlowStep.TimeoutMilliseconds),
             ],

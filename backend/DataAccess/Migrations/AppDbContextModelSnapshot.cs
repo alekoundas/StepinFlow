@@ -536,10 +536,6 @@ namespace DataAccess.Migrations
                     b.Property<string>("KeyboardKeyActionType")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LaunchArguments")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("LoopCount")
                         .HasColumnType("INTEGER");
 
@@ -571,39 +567,43 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ResultSource")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("RootId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("RunCommandPreset")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RunCommandShell")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RunCommandValue")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RunCommandWorkingDirectory")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("SearchMode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("SubFlowId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SuccessExitCodes")
+                    b.Property<string>("ShellArguments")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellCommandMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellCommandValue")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellResultSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellSuccessExitCodes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShellWorkingDirectory")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SubFlowId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SystemActionType")
                         .IsRequired()

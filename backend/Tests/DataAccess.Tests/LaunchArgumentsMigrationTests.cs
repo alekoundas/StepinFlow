@@ -1,5 +1,6 @@
 using Core.Models.Database;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -82,12 +83,12 @@ namespace DataAccess.Tests
             return db.FlowAreas.Where(x => x.Id == areaId).Select(x => x.LaunchCommand).Single();
         }
 
-        // Only the columns: the model has moved past this migration's steps too.
+        // Raw, because these columns have since been renamed in the model.
         private static (string Command, string Arguments, int? AreaId) Launch(AppDbContext db, int id)
         {
-            FlowStep step = db.FlowSteps
-                .Where(x => x.Id == id)
-                .Select(x => new FlowStep { RunCommandValue = x.RunCommandValue, LaunchArguments = x.LaunchArguments, FlowAreaId = x.FlowAreaId })
+            LaunchRow step = db.Database
+                .SqlQueryRaw<LaunchRow>("SELECT RunCommandValue, LaunchArguments, FlowAreaId FROM FlowSteps WHERE Id = {0}", id)
+                .AsEnumerable()
                 .Single();
 
             return (step.RunCommandValue, step.LaunchArguments, step.FlowAreaId);
@@ -115,5 +116,12 @@ namespace DataAccess.Tests
             using AppDbContext db = _database.Open();
             return OldRows.Step(db, flowId, null, "SYSTEM_COMMAND", "", 0, areaId, "LAUNCH_APP", command);
         }
+
+
+        // ================================================================
+        // Private types
+        // ================================================================
+
+        private sealed record LaunchRow(string RunCommandValue, string LaunchArguments, int? FlowAreaId);
     }
 }

@@ -48,9 +48,6 @@ namespace Business.FlowScript.Parsers.Steps
                 else
                     withoutAccuracy.Add(template);
 
-                // Templates were once AND-ed by marking them required. A file from then still reads,
-                // as the alternatives every template is now.
-                ExpectOptionalKeyword(ScriptSymbolEnum.REQUIRED);
                 templates.Add(template);
             }
 

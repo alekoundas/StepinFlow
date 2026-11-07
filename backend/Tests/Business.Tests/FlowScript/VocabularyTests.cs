@@ -46,9 +46,9 @@ namespace Business.Tests.FlowScript
                 if (keyboardInputType != null)
                     step.KeyboardInputType = keyboardInputType.Value;
 
-                RunCommandPresetEnum? runCommandPreset = keyword.As<RunCommandPresetEnum>();
-                if (runCommandPreset != null)
-                    step.RunCommandPreset = runCommandPreset.Value;
+                ShellCommandModeEnum? shellCommandMode = keyword.As<ShellCommandModeEnum>();
+                if (shellCommandMode != null)
+                    step.ShellCommandMode = shellCommandMode.Value;
 
                 string line = Printer.StepWriter(step, new FlowScriptSchema()).Write();
                 ScriptToken first = ScriptTokenizer.Tokenize(ScriptLineSplitter.Split(line).Single())[0];
@@ -76,10 +76,10 @@ namespace Business.Tests.FlowScript
             values.AddRange(Enum.GetValues<CursorScrollDirectionTypeEnum>().Cast<Enum>());
             values.AddRange(Enum.GetValues<SystemActionTypeEnum>().Cast<Enum>());
 
-            // A plain left click is never written, and Run and Launch are steps of their own.
+            // A plain left click is never written, and Shell and Launch are steps of their own.
             values.AddRange(Enum.GetValues<CursorButtonTypeEnum>().Where(x => x != CursorButtonTypeEnum.LEFT_BUTTON).Cast<Enum>());
             values.AddRange(Enum.GetValues<CursorButtonActionTypeEnum>().Where(x => x != CursorButtonActionTypeEnum.SINGLE_CLICK).Cast<Enum>());
-            values.AddRange(Enum.GetValues<RunCommandPresetEnum>().Where(x => x != RunCommandPresetEnum.CUSTOM && x != RunCommandPresetEnum.LAUNCH_APP).Cast<Enum>());
+            values.AddRange(Enum.GetValues<ShellCommandModeEnum>().Where(x => x != ShellCommandModeEnum.CUSTOM && x != ShellCommandModeEnum.LAUNCH_APP).Cast<Enum>());
 
             values.Where(x => ScriptKeywordCatalog.Get(x) == null).ShouldBeEmpty();
         }
@@ -189,16 +189,6 @@ namespace Business.Tests.FlowScript
             (read.Type, read.ProcessName, read.TabAddress, read.LaunchCommand).ShouldBe((FlowAreaTypeEnum.BROWSER_TAB, "chrome.exe", "shop.example.com/cart", "chrome.exe"), written);
         }
 
-        // Written before 2026-11-01, when a tab could be found by its title too.
-        [Fact]
-        public void An_old_tab_by_its_address_is_read_as_its_address()
-        {
-            FlowScriptSchema schema = Read("Areas:\n  <[ A ]> window process <[ chrome.exe ]> tab url contains <[ shop.example.com/cart ]>");
-
-            schema.Diagnostics.ShouldBeEmpty();
-            schema.Areas.Single().TabAddress.ShouldBe("shop.example.com/cart");
-        }
-
         // A title changes with a notification count, and a browser's own title is its front tab's.
         [Theory]
         [InlineData("window process <[ chrome.exe ]> tab title contains <[ Shop ]>")]
@@ -232,7 +222,7 @@ namespace Business.Tests.FlowScript
             schema.Diagnostics.ShouldBeEmpty();
             schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
             FlowStep launch = schema.Steps.Single();
-            (launch.FlowArea?.Name, launch.LaunchArguments, launch.RunCommandValue).ShouldBe(("App", "--profile test", ""));
+            (launch.FlowArea?.Name, launch.ShellArguments, launch.ShellCommandValue).ShouldBe(("App", "--profile test", ""));
         }
 
         // Written before an area said what starts it, a launch of one carried its whole command line.
@@ -244,7 +234,7 @@ namespace Business.Tests.FlowScript
             schema.Diagnostics.ShouldBeEmpty();
             schema.Areas.Single().LaunchCommand.ShouldBe("\"C:\\Program Files\\App\\app.exe\"");
             FlowStep launch = schema.Steps.Single();
-            (launch.LaunchArguments, launch.RunCommandValue).ShouldBe(("--profile test", ""));
+            (launch.ShellArguments, launch.ShellCommandValue).ShouldBe(("--profile test", ""));
         }
 
         [Fact]
@@ -254,7 +244,7 @@ namespace Business.Tests.FlowScript
 
             Diagnostic warning = schema.Diagnostics.ShouldHaveSingleItem();
             (warning.Code, warning.Severity).ShouldBe((DiagnosticCodeEnum.LAUNCH_PROGRAM_DIFFERS, DiagnosticSeverityEnum.WARNING));
-            schema.Steps.Single().LaunchArguments.ShouldBe("--quiet");
+            schema.Steps.Single().ShellArguments.ShouldBe("--quiet");
         }
 
         // ================================================================

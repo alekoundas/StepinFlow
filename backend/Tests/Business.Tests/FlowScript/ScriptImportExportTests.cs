@@ -525,7 +525,7 @@ namespace Business.Tests.FlowScript
             }
 
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in" }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowAreaId = browser.Id, CodeComment = "A fresh profile every time." }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, ShellArguments = "https://www.saucedemo.com", FlowAreaId = browser.Id, CodeComment = "A fresh profile every time." }, null);
 
             FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
             FlowTemplate username = new FlowTemplate { FlowId = flow.Id, Name = "template-u9d3n.png", TemplateImage = Png(120, 24), ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 };
@@ -551,7 +551,7 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowAreaId = browser.Id, WindowWidth = 1280, WindowHeight = 720 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowAreaId = gameClient.Id }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowAreaId = gameClient.Id }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowAreaId = gameClient.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
@@ -560,7 +560,7 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReferenceId = loop.Id }, loop.Id);
 
             FlowStep end = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end.Id);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", ShellCommandMode = ShellCommandModeEnum.KILL_PROCESS, ShellCommandValue = "chrome.exe" }, end.Id);
 
             return flow.Id;
         }

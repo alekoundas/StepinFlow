@@ -34,14 +34,10 @@ namespace Business.FlowScript.Parsers.Header
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
                 // The window above is the browser, and this picks the tab in it, by its address. A
-                // browser's title is its front tab's, so a tab names none. Written before
-                // 2026-11-01 it was tab url contains <[ … ]>, the same address.
+                // browser's title is its front tab's, so a tab names none.
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.TAB))
                 {
                     area.Type = FlowAreaTypeEnum.BROWSER_TAB;
-
-                    if (ExpectOptionalKeyword(ScriptSymbolEnum.URL))
-                        ExpectKeyword(TitleMatchModeEnum.CONTAINS);
 
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
                     area.TabAddress = ExtractText();

@@ -16,7 +16,7 @@ namespace Business.Tests.Executions.Workers
     /// <summary>
     /// Running a shell command. The worker itself decides three things - what the command says once
     /// its variables are filled in, whether the exit code counts as a pass, and what travels out for
-    /// a later step to read - and launching the process is the runner's job behind the port.
+    /// a later step to read - and launching the process is the executor's job behind the port.
     ///
     /// This is also where a flow sizes the application it is testing, because a launch line carries
     /// the viewport as "--window-size={{width}},{{height}}".
@@ -28,7 +28,7 @@ namespace Business.Tests.Executions.Workers
 
         private static readonly AreaResolution OPEN = AreaResolution.Ok(new Rectangle(0, 0, 800, 600), new WindowHandle(7));
 
-        private readonly FakeCommandRunner _runner = new FakeCommandRunner();
+        private readonly FakeShellCommandExecutor _shellCommandExecutor = new FakeShellCommandExecutor();
         private readonly FakeProcessService _processes = new FakeProcessService();
         private readonly FakeAreaPointResolver _resolver = new FakeAreaPointResolver();
         private readonly FakeWindowService _windows = new FakeWindowService();
@@ -41,12 +41,12 @@ namespace Business.Tests.Executions.Workers
                 Id = 1,
                 Name = "Launch",
                 FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                RunCommandValue = value,
-                RunCommandShell = RunCommandShellEnum.POWERSHELL,
-                RunCommandWorkingDirectory = @"C:\app",
-                SuccessExitCodes = successExitCodes,
+                ShellCommandValue = value,
+                ShellType = ShellTypeEnum.POWERSHELL,
+                ShellWorkingDirectory = @"C:\app",
+                ShellSuccessExitCodes = successExitCodes,
                 TimeoutMilliseconds = 5000,
-                ResultSource = ResultSourceEnum.STDERR,
+                ShellResultSource = ShellResultSourceEnum.STDERR,
                 ResultExtractPattern = @"(\d+)",
             };
         }
@@ -60,33 +60,33 @@ namespace Business.Tests.Executions.Workers
                 Id = 1,
                 Name = "Launch",
                 FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
+                ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP,
                 FlowAreaId = flowAreaId,
                 TimeoutMilliseconds = timeoutMilliseconds,
             };
 
             if (flowAreaId == null)
             {
-                step.RunCommandValue = $"\"{APP}\" --profile test";
+                step.ShellCommandValue = $"\"{APP}\" --profile test";
                 return step;
             }
 
             step.FlowArea = new FlowArea { Id = flowAreaId.Value, Name = "App", LaunchCommand = $"\"{APP}\"" };
-            step.LaunchArguments = "--profile test";
+            step.ShellArguments = "--profile test";
             return step;
         }
 
         private async Task<ExecutionStep> Run(FlowStep step, ExecutionCacheService? cache = null)
         {
             BrowserTabFinder tabs = new BrowserTabFinder(_windows, _tabs, TimeProvider.System);
-            SystemCommandStepWorker worker = new SystemCommandStepWorker(_runner, _processes, _resolver, tabs, TimeProvider.System);
+            SystemCommandStepWorker worker = new SystemCommandStepWorker(_shellCommandExecutor, _processes, _resolver, tabs, TimeProvider.System);
             return await worker.ExecuteAsync(step, cache ?? await WorkerCache.ForAsync(step), Ct);
         }
 
         [Fact]
         public async Task An_exit_code_the_step_expects_is_a_pass()
         {
-            _runner.Answers(new RunCommandTestResultDto { IsSuccess = true, ExitCode = 0, ResultValue = "42", ResolvedCommand = "npm start" });
+            _shellCommandExecutor.Answers(new ShellCommandResultDto { IsSuccess = true, ExitCode = 0, ResultValue = "42", ResolvedCommand = "npm start" });
 
             ExecutionStep result = await Run(Command("npm start"));
 
@@ -100,7 +100,7 @@ namespace Business.Tests.Executions.Workers
         [Fact]
         public async Task An_exit_code_it_does_not_expect_fails_saying_both_numbers()
         {
-            _runner.Answers(new RunCommandTestResultDto { IsSuccess = false, ExitCode = 3, StandardError = "not found" });
+            _shellCommandExecutor.Answers(new ShellCommandResultDto { IsSuccess = false, ExitCode = 3, StandardError = "not found" });
 
             ExecutionStep result = await Run(Command("npm start", successExitCodes: "0,1"));
 
@@ -120,22 +120,22 @@ namespace Business.Tests.Executions.Workers
 
             await Run(command, cache);
 
-            _runner.Requests.Single().Value.ShouldBe("serve --port 8080");
+            _shellCommandExecutor.Requests.Single().Value.ShouldBe("serve --port 8080");
         }
 
-        // Everything the runner needs travels with the request, so the worker needs no mapper and the
-        // runner never sees a flow step.
+        // Everything the executor needs travels with the request, so the worker needs no mapper and the
+        // executor never sees a flow step.
         [Fact]
-        public async Task Everything_else_the_runner_needs_travels_with_it()
+        public async Task Everything_else_the_executor_needs_travels_with_it()
         {
             await Run(Command("npm start"));
 
-            _runner.Requests.Single().ShouldSatisfyAllConditions(
-                x => x.Shell.ShouldBe(RunCommandShellEnum.POWERSHELL),
+            _shellCommandExecutor.Requests.Single().ShouldSatisfyAllConditions(
+                x => x.ShellType.ShouldBe(ShellTypeEnum.POWERSHELL),
                 x => x.WorkingDirectory.ShouldBe(@"C:\app"),
                 x => x.TimeoutMilliseconds.ShouldBe(5000),
                 x => x.SuccessExitCodes.ShouldBe("0"),
-                x => x.ResultSource.ShouldBe(ResultSourceEnum.STDERR),
+                x => x.ResultSource.ShouldBe(ShellResultSourceEnum.STDERR),
                 x => x.ResultExtractPattern.ShouldBe(@"(\d+)"));
         }
 
@@ -147,7 +147,7 @@ namespace Business.Tests.Executions.Workers
 
             result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
             result.Message.ShouldBe("Nothing has a value for {{port}}.");
-            _runner.Requests.ShouldBeEmpty();
+            _shellCommandExecutor.Requests.ShouldBeEmpty();
         }
 
         // The step it was translated for keeps its variables: the next pass of a loop has to resolve
@@ -162,7 +162,7 @@ namespace Business.Tests.Executions.Workers
 
             await Run(command, cache);
 
-            command.RunCommandValue.ShouldBe("serve --port {{port}}");
+            command.ShellCommandValue.ShouldBe("serve --port {{port}}");
         }
 
         // ================================================================
@@ -177,7 +177,7 @@ namespace Business.Tests.Executions.Workers
 
             result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
             _processes.Launched.ShouldBe([$"{APP} | --profile test"]);
-            _runner.Requests.ShouldBeEmpty();
+            _shellCommandExecutor.Requests.ShouldBeEmpty();
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace Business.Tests.Executions.Workers
         {
             FlowStep launch = Launch();
             launch.FlowArea!.LaunchCommand = "steam://rungameid/1013320";
-            launch.LaunchArguments = "";
+            launch.ShellArguments = "";
 
             await Run(launch);
 
@@ -266,7 +266,7 @@ namespace Business.Tests.Executions.Workers
         {
             FlowStep read = new FlowStep { Id = 2, Name = "port", FlowStepType = FlowStepTypeEnum.SEARCH_TEXT };
             FlowStep launch = Launch(flowAreaId: APP_WINDOW_AREA);
-            launch.LaunchArguments = "--port {{port}}";
+            launch.ShellArguments = "--port {{port}}";
             ExecutionCacheService cache = await WorkerCache.ForAsync(launch, read);
             cache.Ran(read, value: "8080");
             _processes.OnLaunch = () => _resolver.Areas[APP_WINDOW_AREA] = OPEN;
@@ -297,7 +297,7 @@ namespace Business.Tests.Executions.Workers
                 Id = 1,
                 Name = "Launch",
                 FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
+                ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP,
                 FlowArea = cart,
                 FlowAreaId = cart.Id,
             };

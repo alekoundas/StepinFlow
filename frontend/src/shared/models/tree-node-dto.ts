@@ -6,8 +6,8 @@ import type { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-
 import type { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import type { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
-import type { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
-import type { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
+import type { ShellTypeEnum } from "@/shared/enums/backend/shell/shell-type-enum";
+import type { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
 import type { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
 
 // Display only. What a tree row shows under the step name.
@@ -46,10 +46,10 @@ export interface TreeNodeDetailDto {
   conditionTextEnd?: string | null;
   conditionType?: ConditionTypeEnum | null;
 
-  runCommandShell?: RunCommandShellEnum | null;
-  runCommandPreset?: RunCommandPresetEnum | null;
-  runCommandValue?: string | null;
-  launchArguments?: string | null;
+  shellType?: ShellTypeEnum | null;
+  shellCommandMode?: ShellCommandModeEnum | null;
+  shellCommandValue?: string | null;
+  shellArguments?: string | null;
 
   systemActionType?: SystemActionTypeEnum | null;
 

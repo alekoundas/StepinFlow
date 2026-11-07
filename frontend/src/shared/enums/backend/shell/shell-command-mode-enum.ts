@@ -1,4 +1,4 @@
-export const RunCommandPresetEnum = {
+export const ShellCommandModeEnum = {
   CUSTOM: "CUSTOM",
   KILL_PROCESS: "KILL_PROCESS",
   IS_PROCESS_RUNNING: "IS_PROCESS_RUNNING",
@@ -10,5 +10,5 @@ export const RunCommandPresetEnum = {
   LAUNCH_APP: "LAUNCH_APP",
 } as const;
 
-export type RunCommandPresetEnum =
-  (typeof RunCommandPresetEnum)[keyof typeof RunCommandPresetEnum];
+export type ShellCommandModeEnum =
+  (typeof ShellCommandModeEnum)[keyof typeof ShellCommandModeEnum];

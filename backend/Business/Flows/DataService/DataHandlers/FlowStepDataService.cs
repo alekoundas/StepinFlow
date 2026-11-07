@@ -1,4 +1,4 @@
-using Business.Command;
+using Business.Shell;
 using Business.Flows.FlowValidationService;
 using Business.FlowScript.Models;
 using Business.Repository;
@@ -576,7 +576,7 @@ namespace Business.Flows.DataService.DataHandlers
                 AddWithChildren(flowSteps, child, copy);
         }
 
-        // Named for the flow it executes, the window it opens, or the preset it is.
+        // Named for the flow it executes, the window it opens, or the mode it is.
         private static string UnwrittenName(FlowStep step, IReadOnlyDictionary<FlowStep, SubFlowReference> subFlows)
         {
             if (subFlows.TryGetValue(step, out SubFlowReference? subFlow) && !string.IsNullOrWhiteSpace(subFlow.Name))
@@ -588,10 +588,10 @@ namespace Business.Flows.DataService.DataHandlers
             if (step.FlowArea != null)
                 return $"Launch {step.FlowArea.Name}";
 
-            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
+            if (step.ShellCommandMode == ShellCommandModeEnum.CUSTOM)
                 return "Command";
 
-            return CommandPresetCatalog.Get(step.RunCommandPreset).Label;
+            return ShellCommandModeCatalog.Get(step.ShellCommandMode).Label;
         }
 
         // What a step named by its settings is called, whatever name it came with.

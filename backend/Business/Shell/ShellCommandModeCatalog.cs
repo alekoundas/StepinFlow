@@ -1,88 +1,88 @@
 using Core.Enums;
 using Core.Models.Dtos;
 
-namespace Business.Command
+namespace Business.Shell
 {
     /// <summary>
-    /// The one definition of every preset. The form fetches this to draw the picker and preview
-    /// the command, and the runner reads it to build what it executes, so the preview cannot
-    /// drift from what actually runs.
+    /// The one definition of every mode. The form fetches this to draw the picker and preview
+    /// the command, and the executor reads it to build what it executes, so the preview cannot
+    /// drift from what actually executes.
     ///
-    /// Every preset returns a meaningful exit code, which is what lets a step branch on its own.
+    /// Every mode returns a meaningful exit code, which is what lets a step branch on its own.
     /// tasklist and ping do not, so those go through PowerShell instead.
     /// </summary>
-    public static class CommandPresetCatalog
+    public static class ShellCommandModeCatalog
     {
-        public static IReadOnlyList<CommandPresetDto> All { get; } =
+        public static IReadOnlyList<ShellCommandModeDto> All { get; } =
         [
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.CUSTOM,
+                Mode = ShellCommandModeEnum.CUSTOM,
                 Label = "Custom",
                 Description = "Write your own command. Chain several with & in cmd or ; in PowerShell.",
-                Shell = RunCommandShellEnum.CMD,
+                ShellType = ShellTypeEnum.CMD,
                 IsEditable = true,
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.KILL_PROCESS,
+                Mode = ShellCommandModeEnum.KILL_PROCESS,
                 Label = "Kill a process",
                 Description = "Force close every instance of a program.",
-                Shell = RunCommandShellEnum.CMD,
+                ShellType = ShellTypeEnum.CMD,
                 CommandTemplate = "taskkill /IM \"{0}\" /F",
                 HasParameter = true,
                 ParameterLabel = "Process name",
                 ParameterPlaceholder = "chrome.exe",
                 IsConfirmationRequired = true,
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.IS_PROCESS_RUNNING,
+                Mode = ShellCommandModeEnum.IS_PROCESS_RUNNING,
                 Label = "Is a process running",
                 Description = "Succeeds when the program is running, fails when it is not.",
-                Shell = RunCommandShellEnum.POWERSHELL,
+                ShellType = ShellTypeEnum.POWERSHELL,
                 CommandTemplate = "if (Get-Process -Name '{0}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }",
                 HasParameter = true,
                 ParameterLabel = "Process name",
                 ParameterPlaceholder = "chrome",
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.READ_CLIPBOARD,
+                Mode = ShellCommandModeEnum.READ_CLIPBOARD,
                 Label = "Read clipboard",
                 Description = "Puts the clipboard text into this step's result.",
-                Shell = RunCommandShellEnum.POWERSHELL,
+                ShellType = ShellTypeEnum.POWERSHELL,
                 CommandTemplate = "Get-Clipboard",
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.WRITE_CLIPBOARD,
+                Mode = ShellCommandModeEnum.WRITE_CLIPBOARD,
                 Label = "Write clipboard",
                 Description = "Replaces the clipboard contents.",
-                Shell = RunCommandShellEnum.POWERSHELL,
+                ShellType = ShellTypeEnum.POWERSHELL,
                 CommandTemplate = "Set-Clipboard -Value '{0}'",
                 HasParameter = true,
                 ParameterLabel = "Text",
                 ParameterPlaceholder = "The text to put on the clipboard",
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.CHECK_INTERNET,
+                Mode = ShellCommandModeEnum.CHECK_INTERNET,
                 Label = "Check internet",
                 Description = "Succeeds when the host answers. Test-Connection is used because ping reports success too readily.",
-                Shell = RunCommandShellEnum.POWERSHELL,
+                ShellType = ShellTypeEnum.POWERSHELL,
                 CommandTemplate = "if (Test-Connection -ComputerName '{0}' -Count 1 -Quiet) { exit 0 } else { exit 1 }",
                 HasParameter = true,
                 ParameterLabel = "Host",
                 ParameterPlaceholder = "1.1.1.1",
                 ParameterDefault = "1.1.1.1",
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.SHUTDOWN_IN,
+                Mode = ShellCommandModeEnum.SHUTDOWN_IN,
                 Label = "Shut down in",
                 Description = "Schedules a shutdown. Cancel shutdown calls it off.",
-                Shell = RunCommandShellEnum.CMD,
+                ShellType = ShellTypeEnum.CMD,
                 CommandTemplate = "shutdown /s /t {0}",
                 HasParameter = true,
                 ParameterLabel = "Seconds",
@@ -90,21 +90,21 @@ namespace Business.Command
                 ParameterDefault = "60",
                 IsConfirmationRequired = true,
             },
-            new CommandPresetDto
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.CANCEL_SHUTDOWN,
+                Mode = ShellCommandModeEnum.CANCEL_SHUTDOWN,
                 Label = "Cancel shutdown",
                 Description = "Calls off a shutdown that has not happened yet.",
-                Shell = RunCommandShellEnum.CMD,
+                ShellType = ShellTypeEnum.CMD,
                 CommandTemplate = "shutdown /a",
             },
-            // Started by its step rather than run here: see SystemCommandStepWorker.
-            new CommandPresetDto
+            // Started by its step rather than executed here: see SystemCommandStepWorker.
+            new ShellCommandModeDto
             {
-                Preset = RunCommandPresetEnum.LAUNCH_APP,
+                Mode = ShellCommandModeEnum.LAUNCH_APP,
                 Label = "Launch an app",
                 Description = "Starts the app it opens, or a program, a file or a URL, and carries on without waiting for it to close. The app is left alone when it is already open, and waited for when it is not.",
-                Shell = RunCommandShellEnum.CMD,
+                ShellType = ShellTypeEnum.CMD,
                 CommandTemplate = "{0}",
                 HasParameter = true,
                 ParameterLabel = "Program and arguments",
@@ -112,18 +112,18 @@ namespace Business.Command
             },
         ];
 
-        public static CommandPresetDto Get(RunCommandPresetEnum preset)
+        public static ShellCommandModeDto Get(ShellCommandModeEnum mode)
         {
-            return All.First(x => x.Preset == preset);
+            return All.First(x => x.Mode == mode);
         }
 
-        /// <summary>The command a step would run, with its preset parameter filled in.</summary>
-        public static string Resolve(RunCommandPresetEnum preset, string value)
+        /// <summary>The command a step would execute, with its mode's parameter filled in.</summary>
+        public static string Resolve(ShellCommandModeEnum mode, string value)
         {
-            if (preset == RunCommandPresetEnum.CUSTOM)
+            if (mode == ShellCommandModeEnum.CUSTOM)
                 return value;
 
-            CommandPresetDto definition = Get(preset);
+            ShellCommandModeDto definition = Get(mode);
 
             if (definition.HasParameter)
             {

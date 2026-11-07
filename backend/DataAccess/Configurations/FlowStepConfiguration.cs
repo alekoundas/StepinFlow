@@ -27,9 +27,9 @@ namespace DataAccess.Configurations
             builder.Property(x => x.KeyboardKeyActionType).HasConversion<string>();
             builder.Property(x => x.SearchMode).HasConversion<string>();
             builder.Property(x => x.TemplateMatchMode).HasConversion<string>();
-            builder.Property(x => x.RunCommandShell).HasConversion<string>();
-            builder.Property(x => x.RunCommandPreset).HasConversion<string>();
-            builder.Property(x => x.ResultSource).HasConversion<string>();
+            builder.Property(x => x.ShellType).HasConversion<string>();
+            builder.Property(x => x.ShellCommandMode).HasConversion<string>();
+            builder.Property(x => x.ShellResultSource).HasConversion<string>();
             builder.Property(x => x.SystemActionType).HasConversion<string>();
 
 

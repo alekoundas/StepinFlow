@@ -106,7 +106,7 @@ namespace Business.Flows.DataService.DataHandlers
                 .Where(x => x.FlowStepType != FlowStepTypeEnum.SUCCESS && x.FlowStepType != FlowStepTypeEnum.FAILURE)
                 .ToListAsync(ct);
 
-            int launches = steps.Count(x => x.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP);
+            int launches = steps.Count(x => x.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP);
             int resizes = steps.Count(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE);
             if (launches > 1 || resizes > 1 || launches + resizes != steps.Count)
                 return ResultDto<bool>.Success(false);

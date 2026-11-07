@@ -1,4 +1,4 @@
-namespace Business.Command
+namespace Business.Shell
 {
     /// <summary>
     /// What starts an app, worked out from the program an open window of it belongs to: an area's

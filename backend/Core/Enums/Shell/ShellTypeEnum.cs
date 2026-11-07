@@ -1,6 +1,6 @@
 namespace Core.Enums
 {
-    public enum RunCommandShellEnum
+    public enum ShellTypeEnum
     {
         CMD,
         POWERSHELL,

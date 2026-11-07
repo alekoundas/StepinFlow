@@ -15,33 +15,33 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Run  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
+            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Shell  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
             ScriptKeyword keyword = ExtractStepKeyword(FlowStepTypeEnum.SYSTEM_COMMAND);
 
-            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = keyword.As<RunCommandPresetEnum>()!.Value };
+            FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandMode = keyword.As<ShellCommandModeEnum>()!.Value };
 
             // A file from before the line had a name wrote none, and the import names the step. There
             // a lone quote is the command.
             string? first = ExtractOptionalQuote();
             if (first != null && ExpectOptionalEnd())
             {
-                step.RunCommandValue = first;
+                step.ShellCommandValue = first;
                 return step;
             }
 
-            if (first != null && !Scope.IsLanguageDeclared && step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+            if (first != null && !Scope.IsLanguageDeclared && step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP)
                 return ReadAsLaunchOf(step, first);
 
             if (first != null)
                 step.Name = first;
 
-            // Launch is a preset already. Run may name one before its value.
-            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
-                step.RunCommandPreset = ExtractOptionalKeyword<RunCommandPresetEnum>() ?? RunCommandPresetEnum.CUSTOM;
+            // Launch is a mode already. Shell may name one before its value.
+            if (step.ShellCommandMode == ShellCommandModeEnum.CUSTOM)
+                step.ShellCommandMode = ExtractOptionalKeyword<ShellCommandModeEnum>() ?? ShellCommandModeEnum.CUSTOM;
 
             // The window it opens: left alone when it is open already, waited for when it is not.
             // The area says what starts it, and the launch only what goes after.
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+            if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP)
                 step.FlowArea = ExtractOptionalArea(ScriptSymbolEnum.OPENS);
 
             if (step.FlowArea != null)
@@ -49,7 +49,7 @@ namespace Business.FlowScript.Parsers.Steps
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.WITH))
                 {
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-                    step.LaunchArguments = ExtractText();
+                    step.ShellArguments = ExtractText();
                     ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
                 }
 
@@ -58,7 +58,7 @@ namespace Business.FlowScript.Parsers.Steps
             }
 
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
-            step.RunCommandValue = ExtractText();
+            step.ShellCommandValue = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             ExpectEnd();
@@ -76,7 +76,7 @@ namespace Business.FlowScript.Parsers.Steps
         // area, unless the area already says, and the rest are its arguments.
         private FlowStep ReadAsLaunchOf(FlowStep step, string commandLine)
         {
-            step.RunCommandValue = commandLine;
+            step.ShellCommandValue = commandLine;
 
             ScriptToken at = CurrentToken;
             FlowArea? opens = ExtractOptionalArea(ScriptSymbolEnum.OPENS);
@@ -97,8 +97,8 @@ namespace Business.FlowScript.Parsers.Steps
                     $"\"{opens.Name}\" is started by {opens.LaunchCommand}, so this launch starts that, with its arguments, rather than {quoted}.");
 
             step.FlowArea = opens;
-            step.LaunchArguments = arguments;
-            step.RunCommandValue = string.Empty;
+            step.ShellArguments = arguments;
+            step.ShellCommandValue = string.Empty;
 
             return step;
         }

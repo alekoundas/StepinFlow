@@ -86,7 +86,7 @@ namespace Business.Tests.Recording
 
             // The area says what starts it, so the launch has no command of its own.
             FlowStep launch = flow.FlowSteps.Single(x => x.FlowStepType == FlowStepTypeEnum.SYSTEM_COMMAND);
-            (launch.RunCommandPreset, launch.RunCommandValue, launch.OrderNumber).ShouldBe((RunCommandPresetEnum.LAUNCH_APP, "", 0));
+            (launch.ShellCommandMode, launch.ShellCommandValue, launch.OrderNumber).ShouldBe((ShellCommandModeEnum.LAUNCH_APP, "", 0));
             launch.FlowAreaId.ShouldBe(main.Id);
             flow.FlowSteps.Count(x => x.ParentFlowStepId == launch.Id).ShouldBe(2);
         }

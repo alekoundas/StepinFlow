@@ -1,7 +1,7 @@
 using System.Globalization;
 
 using Business.AreaPoint;
-using Business.Command;
+using Business.Shell;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
@@ -13,9 +13,9 @@ using Core.Ports;
 namespace Business.Executions.Workers
 {
     /// <summary>
-    /// Runs the step's command. A non zero exit is a Failure result rather than an error
+    /// Executes the step's command. A non zero exit is a Failure result rather than an error
     ///
-    /// A Launch is started rather than run: it returns once the program is up instead of waiting
+    /// A Launch is started rather than executed: it returns once the program is up instead of waiting
     /// for it to close. With an area, it is the window the program opens - left alone when it is
     /// open already, and waited for when it is not, so the next step does not act on a screen that
     /// is still loading. What starts is then the area's Started by, the step's arguments after it.
@@ -30,20 +30,20 @@ namespace Business.Executions.Workers
         private static readonly TimeSpan LAUNCH_TIMEOUT = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan LAUNCH_POLL_INTERVAL = TimeSpan.FromMilliseconds(250);
 
-        private readonly ICommandRunner _commandRunner;
+        private readonly IShellCommandExecutor _shellCommandExecutor;
         private readonly IProcessService _processService;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly BrowserTabFinder _browserTabFinder;
         private readonly TimeProvider _timeProvider;
 
         public SystemCommandStepWorker(
-            ICommandRunner commandRunner,
+            IShellCommandExecutor shellCommandExecutor,
             IProcessService processService,
             IAreaPointResolver areaPointResolver,
             BrowserTabFinder browserTabFinder,
             TimeProvider timeProvider)
         {
-            _commandRunner = commandRunner;
+            _shellCommandExecutor = shellCommandExecutor;
             _processService = processService;
             _areaPointResolver = areaPointResolver;
             _browserTabFinder = browserTabFinder;
@@ -55,36 +55,36 @@ namespace Business.Executions.Workers
             // A launch's arguments carry the viewport - "--window-size={{width}},{{height}}" - so this
             // is where a flow sizes the application it is testing. A launch of an area starts what
             // the area is started by, its own arguments after.
-            string commandLine = step.RunCommandValue;
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowArea != null)
-                commandLine = $"{step.FlowArea.LaunchCommand} {step.LaunchArguments}".Trim();
+            string commandLine = step.ShellCommandValue;
+            if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP && step.FlowArea != null)
+                commandLine = $"{step.FlowArea.LaunchCommand} {step.ShellArguments}".Trim();
 
             // Chromium's browsers and Firefox all take --new-window, so the tab does not land among
             // whatever the last window had open.
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowArea?.Type == FlowAreaTypeEnum.BROWSER_TAB)
+            if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP && step.FlowArea?.Type == FlowAreaTypeEnum.BROWSER_TAB)
                 commandLine = $"{commandLine} --new-window {TabAddressHelper.ToOpen(step.FlowArea.TabAddress)}";
 
             VariableTranslationResult command = cache.TranslateVariables(commandLine);
             if (!command.IsTranslated)
                 return ExecutionStep.Failure(VariableTranslator.DescribeUntranslated(command.Untranslated));
 
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+            if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP)
                 return await LaunchAsync(step, command.Text, ct);
 
             // The request is a copy, so resolving into it cannot change the step the cache holds.
-            CommandRequest request = CommandRequest.From(step, command.Text);
+            ShellCommandRequest request = ShellCommandRequest.From(step, command.Text);
 
-            RunCommandTestResultDto run = await _commandRunner.RunAsync(request, ct);
+            ShellCommandResultDto commandResult = await _shellCommandExecutor.ExecuteAsync(request, ct);
 
             ExecutionStep result = ExecutionStep.Success();
 
-            if (!run.IsSuccess)
-                result = ExecutionStep.Failure($"Exited with {run.ExitCode}, expected {step.SuccessExitCodes}.");
+            if (!commandResult.IsSuccess)
+                result = ExecutionStep.Failure($"Exited with {commandResult.ExitCode}, expected {step.ShellSuccessExitCodes}.");
 
-            result.Value = run.ResultValue;
-            result.ExitCode = run.ExitCode;
-            result.Error = run.StandardError;
-            result.Command = run.ResolvedCommand;
+            result.Value = commandResult.ResultValue;
+            result.ExitCode = commandResult.ExitCode;
+            result.Error = commandResult.StandardError;
+            result.Command = commandResult.ResolvedCommand;
 
             return result;
         }
@@ -120,7 +120,7 @@ namespace Business.Executions.Workers
 
             string program = CommandLineHelper.SplitProgram(commandLine, out string arguments);
 
-            string? notStarted = _processService.Launch(program, arguments, step.RunCommandWorkingDirectory);
+            string? notStarted = _processService.Launch(program, arguments, step.ShellWorkingDirectory);
             if (notStarted != null)
                 return Launched(ExecutionStep.Failure($"Could not launch {program}: {notStarted}"), commandLine);
 

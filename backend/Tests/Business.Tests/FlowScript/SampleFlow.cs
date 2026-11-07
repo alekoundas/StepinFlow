@@ -60,7 +60,7 @@ namespace Business.Tests.FlowScript
             }
 
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in", CodeComment = "Everything before the products page." }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, LaunchArguments = "https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, ShellArguments = "https://www.saucedemo.com", FlowArea = browser, CodeComment = "A fresh profile every time." }, null);
 
             FlowStep find = Step(new FlowStep
             {
@@ -100,7 +100,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowArea = browser, FlowPoint = origin }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowArea = gameClient }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 
@@ -111,7 +111,7 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, FlowStepReference = loop }, loop);
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", RunCommandPreset = RunCommandPresetEnum.KILL_PROCESS, RunCommandValue = "chrome.exe" }, end);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", ShellCommandMode = ShellCommandModeEnum.KILL_PROCESS, ShellCommandValue = "chrome.exe" }, end);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE, FlowArea = gameClient, TimeoutMilliseconds = 10000, IsCloseForced = true }, end);
 
             return schema;

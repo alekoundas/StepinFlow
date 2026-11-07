@@ -2,10 +2,10 @@ import { Tag } from "primereact/tag";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { RunCommandTestResultDto } from "@/shared/models/database/run-command-test-result-dto";
+import type { ShellCommandResultDto } from "@/shared/models/database/shell-command-result-dto";
 
 interface Props {
-  result: RunCommandTestResultDto;
+  result: ShellCommandResultDto;
 }
 
 const OutputBlock = ({ label, text }: { label: string; text: string }) => (
@@ -50,7 +50,7 @@ export default function FlowStepSystemCommandTestPanelComponent({ result }: Prop
         </div>
       )}
 
-      {/* With presets and variables in play, what actually ran is the useful line. */}
+      {/* With modes and variables in play, what actually executed is the useful line. */}
       <OutputBlock
         label="Command"
         text={result.resolvedCommand}

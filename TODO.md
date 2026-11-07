@@ -79,7 +79,7 @@ the history.
       not carry over: `chrome.exe` is `google-chrome` on Linux and `open -a "Google Chrome"` on
       macOS, and the recording setup writes the full program file of the window's process
       (`"C:\Program Files\...\chrome.exe"`), where on macOS the program sits inside an `.app`
-      bundle. The problem every preset in `CommandPresetCatalog` already has; decide it with the
+      bundle. The problem every mode in `ShellCommandModeCatalog` already has; decide it with the
       Linux work.
 - [ ] **`Close Window` on macOS and Linux.** `IWindowService.CloseWindow` posts `WM_CLOSE` and
       `IsWindowOpen` asks `IsWindow` and `IsWindowVisible`, both Windows. macOS presses the window's
@@ -365,13 +365,13 @@ the history.
       covers OpenAI, Ollama and gateways like OpenRouter, but not Anthropic directly.
 - [ ] **Redact what tool results send to a cloud provider.** Typed text is covered:
       `DbQueryTools` hides `KeyboardInputText` from both its projections and its search unless
-      `CanSendScreenDataAsync` allows it. Nothing else is. `RunCommand`, `ConditionText` and
+      `CanSendScreenDataAsync` allows it. Nothing else is. `ShellCommandValue`, `ConditionText` and
       `NotifyMessage` are the same shape - authored text that can hold a secret - and every new
       tool has to remember the rule by hand. `AppSetting` holds the OpenAI key and `DiscordBot`
       holds webhook urls, which is why those two columns are left unselected rather than redacted.
       Wants one pass every tool result goes through, keyed on provider exactly as the existing rule
       is, so a cloud model gets `(hidden)` where a local one gets the value.
-- [ ] **Decide whether `RunCommandValue` is screen data.** Phase 0 gated screenshots, OCR text and
+- [ ] **Decide whether `ShellCommandValue` is screen data.** Phase 0 gated screenshots, OCR text and
       typed text behind `CanSendScreenDataAsync`. A command line was left alone: it is authored
       rather than read off the screen, and "which flows use curl" is a fair question. But
       `curl -H "Authorization: Bearer ..."` is a credential sitting in a field the model reads

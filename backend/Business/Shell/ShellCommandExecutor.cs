@@ -5,20 +5,20 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 
-namespace Business.Command
+namespace Business.Shell
 {
-    public sealed class CommandRunner : ICommandRunner
+    public sealed class ShellCommandExecutor : IShellCommandExecutor
     {
-        public async Task<RunCommandTestResultDto> RunAsync(CommandRequest request, CancellationToken ct = default)
+        public async Task<ShellCommandResultDto> ExecuteAsync(ShellCommandRequest request, CancellationToken ct = default)
         {
-            // Run waits for the program to close, which an application never does on its own.
-            if (request.Preset == RunCommandPresetEnum.LAUNCH_APP)
-                return new RunCommandTestResultDto { ErrorMessage = "A launch is started by its step, not run as a command." };
+            // A command is waited for until its program closes, which an application never does on its own.
+            if (request.Mode == ShellCommandModeEnum.LAUNCH_APP)
+                return new ShellCommandResultDto { ErrorMessage = "A launch is started by its step, not run as a command." };
 
             // Find command.
-            string command = CommandPresetCatalog.Resolve(request.Preset, request.Value);
+            string command = ShellCommandModeCatalog.Resolve(request.Mode, request.Value);
 
-            RunCommandTestResultDto result = new RunCommandTestResultDto { ResolvedCommand = command };
+            ShellCommandResultDto result = new ShellCommandResultDto { ResolvedCommand = command };
 
             if (string.IsNullOrWhiteSpace(command))
             {
@@ -36,7 +36,7 @@ namespace Business.Command
             // Actual execution.
             try
             {
-                await ExecuteAsync(request, command, result, timeoutSource.Token);
+                await ExecuteProcessAsync(request, command, result, timeoutSource.Token);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
@@ -64,7 +64,7 @@ namespace Business.Command
         // Private methods
         // ================================================================
 
-        private static async Task ExecuteAsync(CommandRequest request, string command, RunCommandTestResultDto result, CancellationToken ct)
+        private static async Task ExecuteProcessAsync(ShellCommandRequest request, string command, ShellCommandResultDto result, CancellationToken ct)
         {
             using Process process = new Process { StartInfo = BuildStartInfo(request, command) };
             process.Start();
@@ -91,7 +91,7 @@ namespace Business.Command
             result.StandardError = (await stderr).TrimEnd('\r', '\n');
         }
 
-        private static ProcessStartInfo BuildStartInfo(CommandRequest request, string command)
+        private static ProcessStartInfo BuildStartInfo(ShellCommandRequest request, string command)
         {
             // cmd writes in the console's OEM code page, PowerShell 5.1 follows the console too.
             // Reading it as UTF-8 turns anything non ASCII into noise, which then silently fails
@@ -111,7 +111,7 @@ namespace Business.Command
             if (!string.IsNullOrWhiteSpace(request.WorkingDirectory))
                 startInfo.WorkingDirectory = request.WorkingDirectory;
 
-            if (request.Shell == RunCommandShellEnum.POWERSHELL)
+            if (request.ShellType == ShellTypeEnum.POWERSHELL)
             {
                 startInfo.FileName = "powershell.exe";
                 startInfo.ArgumentList.Add("-NoProfile");
@@ -136,13 +136,13 @@ namespace Business.Command
                 .Any(x => int.TryParse(x, out int code) && code == exitCode);
         }
 
-        private static string Extract(CommandRequest request, RunCommandTestResultDto result)
+        private static string Extract(ShellCommandRequest request, ShellCommandResultDto result)
         {
             string source = request.ResultSource switch
             {
-                ResultSourceEnum.STDERR => result.StandardError,
-                ResultSourceEnum.COMBINED => string.Join(Environment.NewLine, new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
-                ResultSourceEnum.EXIT_CODE => result.ExitCode.ToString(CultureInfo.InvariantCulture),
+                ShellResultSourceEnum.STDERR => result.StandardError,
+                ShellResultSourceEnum.COMBINED => string.Join(Environment.NewLine, new[] { result.StandardOutput, result.StandardError }.Where(x => x.Length > 0)),
+                ShellResultSourceEnum.EXIT_CODE => result.ExitCode.ToString(CultureInfo.InvariantCulture),
                 _ => result.StandardOutput,
             };
 

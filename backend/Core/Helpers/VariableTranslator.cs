@@ -31,8 +31,8 @@ namespace Core.Helpers
         public static IEnumerable<string> VariableBearingText(FlowStep step)
         {
             yield return step.KeyboardInputText;
-            yield return step.RunCommandValue;
-            yield return step.LaunchArguments;
+            yield return step.ShellCommandValue;
+            yield return step.ShellArguments;
             yield return step.Message;
             yield return step.ConditionText;
             yield return step.ConditionTextEnd;

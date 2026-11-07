@@ -1,8 +1,8 @@
-export interface RunCommandTestResultDto {
+export interface ShellCommandResultDto {
   isSuccess: boolean;
   errorMessage?: string;
 
-  // What actually ran, after the preset and its parameter were applied.
+  // What actually executed, after the mode and its parameter were applied.
   resolvedCommand: string;
 
   exitCode: number;

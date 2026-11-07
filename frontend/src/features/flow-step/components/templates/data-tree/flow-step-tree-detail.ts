@@ -1,6 +1,6 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
-import { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
+import { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import type { TreeNodeDetailDto, TreeNodeDto } from "@/shared/models/tree-node-dto";
 
@@ -182,21 +182,21 @@ export const buildFlowStepTreeDetail = (node: TreeNodeDto): FlowStepTreeDetail =
       };
 
     case FlowStepTypeEnum.SYSTEM_COMMAND: {
-      const isCustom = detail.runCommandPreset === RunCommandPresetEnum.CUSTOM;
-      const isLaunch = detail.runCommandPreset === RunCommandPresetEnum.LAUNCH_APP;
+      const isCustom = detail.shellCommandMode === ShellCommandModeEnum.CUSTOM;
+      const isLaunch = detail.shellCommandMode === ShellCommandModeEnum.LAUNCH_APP;
 
       if (isLaunch)
         return {
-          text: truncate(detail.runCommandValue || detail.launchArguments || ""),
+          text: truncate(detail.shellCommandValue || detail.shellArguments || ""),
           chips: detail.areaName ? [{ text: detail.areaName, isMuted: true }] : [],
         };
 
       return {
         text: isCustom
-          ? truncate(detail.runCommandValue ?? "")
-          : readable(detail.runCommandPreset),
+          ? truncate(detail.shellCommandValue ?? "")
+          : readable(detail.shellCommandMode),
         chips: isCustom
-          ? [{ text: readable(detail.runCommandShell), isMuted: true }]
+          ? [{ text: readable(detail.shellType), isMuted: true }]
           : [],
       };
     }

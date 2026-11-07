@@ -12,16 +12,16 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Run  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
-            if (Step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP)
+            // Launch  <[ name ]>   <[ command ]> | Launch  <[ name ]>   opens <[ area ]>  [with <[ arguments ]>] | Shell  <[ name ]>   [KILL_PROCESS ...] <[ command ]>
+            if (Step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP)
             {
-                WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP);
+                WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.LAUNCH_APP);
                 WriteGapUntil(KEYWORD_GAP_UNTIL);
                 WriteName();
 
                 if (Step.FlowArea == null)
                 {
-                    WriteQuote(Step.RunCommandValue);
+                    WriteQuote(Step.ShellCommandValue);
                     return;
                 }
 
@@ -29,23 +29,23 @@ namespace Business.FlowScript.Text.Steps
                 WriteKeyword(ScriptSymbolEnum.OPENS);
                 WriteQuote(Step.FlowArea.Name);
 
-                if (Step.LaunchArguments.Length > 0)
+                if (Step.ShellArguments.Length > 0)
                 {
                     WriteGap();
                     WriteKeyword(ScriptSymbolEnum.WITH);
-                    WriteQuote(Step.LaunchArguments);
+                    WriteQuote(Step.ShellArguments);
                 }
                 return;
             }
 
-            WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM);
+            WriteKeyword(FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.CUSTOM);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
             WriteName();
 
-            if (Step.RunCommandPreset != RunCommandPresetEnum.CUSTOM)
-                WriteKeyword(Step.RunCommandPreset);
+            if (Step.ShellCommandMode != ShellCommandModeEnum.CUSTOM)
+                WriteKeyword(Step.ShellCommandMode);
 
-            WriteQuote(Step.RunCommandValue);
+            WriteQuote(Step.ShellCommandValue);
         }
 
 

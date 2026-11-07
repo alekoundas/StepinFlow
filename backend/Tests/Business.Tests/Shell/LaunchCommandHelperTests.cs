@@ -1,6 +1,6 @@
-using Business.Command;
+using Business.Shell;
 
-namespace Business.Tests.Command
+namespace Business.Tests.Shell
 {
     /// <summary>
     /// What an area is started by, from the program an open window of it belongs to. A Steam game

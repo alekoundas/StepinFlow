@@ -14,9 +14,10 @@ namespace Core.Models.Database
         public bool IsDisabled { get; set; }
 
 
-        // WAIT
         public int WaitForMilliseconds { get; set; }
         public int WaitForMillisecondsMax { get; set; }
+        public int TimeoutMilliseconds { get; set; }
+        public int PollIntervalMilliseconds { get; set; } = 200; // Waiting modes, where 0 waits forever.
 
 
         // LOOP, CURSOR_SCROLL (scroll notch count)
@@ -27,31 +28,22 @@ namespace Core.Models.Database
         // SEARCH_IMAGE, SEARCH_TEXT
         public SearchModeEnum SearchMode { get; set; }
         public TemplateMatchModeEnum TemplateMatchMode { get; set; } = TemplateMatchModeEnum.SHAPE;
-
         public int MaxMatches { get; set; } = 20;
 
-        // Waiting modes, where 0 waits forever. Also how long a launch waits for its window and a
-        // close for it to go, where 0 is their default.
-        public int PollIntervalMilliseconds { get; set; } = 200;
-        public int TimeoutMilliseconds { get; set; }
+
 
 
         // SYSTEM_COMMAND
-        public RunCommandShellEnum RunCommandShell { get; set; }
-        public RunCommandPresetEnum RunCommandPreset { get; set; }
+        public ShellCommandModeEnum ShellCommandMode { get; set; }
+        public ShellTypeEnum ShellType { get; set; }
 
-        public string RunCommandValue { get; set; } = string.Empty;
-        public string RunCommandWorkingDirectory { get; set; } = string.Empty;
-
-        /// <summary>
-        /// A launch of an area: what goes after what the area is started by. A launch with no area
-        /// has its whole command line in RunCommandValue instead.
-        /// </summary>
-        public string LaunchArguments { get; set; } = string.Empty;
+        public string ShellCommandValue { get; set; } = string.Empty;
+        public string ShellWorkingDirectory { get; set; } = string.Empty;
+        public string ShellArguments { get; set; } = string.Empty;
 
         /// <summary>Comma separated. Anything else runs the Failure children.</summary>
-        public string SuccessExitCodes { get; set; } = "0";
-        public ResultSourceEnum ResultSource { get; set; }
+        public string ShellSuccessExitCodes { get; set; } = "0";
+        public ShellResultSourceEnum ShellResultSource { get; set; }
 
 
         // SYSTEM_ACTION
@@ -93,6 +85,11 @@ namespace Core.Models.Database
         public CursorScrollDirectionTypeEnum? CursorScrollDirectionType { get; set; }
 
 
+        // END_EXECUTION
+        public bool EndExecutionAsSuccess { get; set; }
+        public string Message { get; set; } = string.Empty;
+
+
 
         // Keep the root Flow or SubFlow id for easier and faster queries
         public int RootId { get; set; }
@@ -110,12 +107,6 @@ namespace Core.Models.Database
         // Notify
         public int? DiscordBotId { get; set; }
         public DiscordBot? DiscordBot { get; set; }
-
-        public string Message { get; set; } = string.Empty;
-
-
-        // END_EXECUTION
-        public bool EndExecutionAsSuccess { get; set; }
 
 
         // FlowArea

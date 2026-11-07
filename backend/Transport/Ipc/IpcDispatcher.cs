@@ -118,7 +118,7 @@ namespace Transport.Ipc
                     "FlowStep.getScriptLine" => await Handler<GetFlowStepScriptLineHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
 
                     "FlowStep.testImageSearch" => await Handler<TestImageSearchHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
-                    "FlowStep.testRunCommand" => await Handler<TestRunCommandHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
+                    "FlowStep.testShellCommand" => await Handler<TestShellCommandHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
                     "FlowStep.testSearchText" => await Handler<TestSearchTextHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
                     "FlowStep.testCursor" => await Handler<TestCursorStepHandler>().HandleAsync(Payload<FlowStepDto>(request), ct),
 
@@ -159,7 +159,7 @@ namespace Transport.Ipc
                     "Lookup.testWindowMatch" => await Handler<TestWindowMatchHandler>().HandleAsync(Payload<WindowMatchTestRequestDto>(request), ct),
                     "Lookup.launchCommand" => await Handler<GetLookupLaunchCommandHandler>().HandleAsync(Payload<int>(request), ct),
                     "Lookup.flowArea" => await Handler<GetLookupFlowAreaHandler>().HandleAsync(Payload<LookupRequestDto>(request), ct),
-                    "Lookup.commandPresets" => await GetLookupCommandPresetsHandler.HandleAsync(ct),
+                    "Lookup.shellCommandModes" => await GetLookupShellCommandModesHandler.HandleAsync(ct),
                     "Lookup.ocrLanguages" => await Handler<GetLookupOcrLanguagesHandler>().HandleAsync(ct),
                     "Lookup.aiModels" => await Handler<GetLookupAiModelsHandler>().HandleAsync(ct),
                     "Lookup.aiModelSuggestions" => await Handler<GetLookupAiModelSuggestionsHandler>().HandleAsync(ct),

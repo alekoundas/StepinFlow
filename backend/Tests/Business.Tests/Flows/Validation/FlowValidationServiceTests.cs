@@ -232,7 +232,7 @@ namespace Business.Tests.Flows.Validation
             FlowStep Launch(string name, int? areaId)
             {
                 FlowStep launch = Add(FlowStepTypeEnum.SYSTEM_COMMAND, name);
-                launch.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+                launch.ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP;
                 launch.FlowAreaId = areaId;
                 return launch;
             }
@@ -256,13 +256,13 @@ namespace Business.Tests.Flows.Validation
             _areas.Add(new FlowArea { Id = 2, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, LaunchCommand = "\"C:\\Program Files\\Editor\\editor.exe\"" });
 
             FlowStep game = Add(FlowStepTypeEnum.SYSTEM_COMMAND, "Launch the game");
-            game.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+            game.ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP;
             game.FlowAreaId = 1;
-            game.LaunchArguments = "-windowed";
+            game.ShellArguments = "-windowed";
             FlowStep editor = Add(FlowStepTypeEnum.SYSTEM_COMMAND, "Launch the editor");
-            editor.RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP;
+            editor.ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP;
             editor.FlowAreaId = 2;
-            editor.LaunchArguments = "notes.txt";
+            editor.ShellArguments = "notes.txt";
 
             CodesOn(game).ShouldContain(FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK);
             CodesOn(editor).ShouldNotContain(FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK);

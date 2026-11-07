@@ -37,15 +37,15 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Notify", FlowStepTypeEnum.NOTIFY),
             new ScriptKeyword("Scroll", FlowStepTypeEnum.CURSOR_SCROLL),
             new ScriptKeyword("System", FlowStepTypeEnum.SYSTEM_ACTION),
-            new ScriptKeyword("Launch", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP),
+            new ScriptKeyword("Launch", FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.LAUNCH_APP),
             new ScriptKeyword("Click", FlowStepTypeEnum.CURSOR_CLICK),
             new ScriptKeyword("Press", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputTypeEnum.COMBINATION),
+            new ScriptKeyword("Shell", FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.CUSTOM),
             new ScriptKeyword("Drag", FlowStepTypeEnum.CURSOR_DRAG),
             new ScriptKeyword("Move", FlowStepTypeEnum.CURSOR_RELOCATE),
             new ScriptKeyword("Loop", FlowStepTypeEnum.LOOP),
             new ScriptKeyword("Type", FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputTypeEnum.TEXT),
             new ScriptKeyword("Wait", FlowStepTypeEnum.WAIT),
-            new ScriptKeyword("Run", FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM),
             new ScriptKeyword("Success:", FlowStepTypeEnum.SUCCESS),
             new ScriptKeyword("Failure:", FlowStepTypeEnum.FAILURE),
 
@@ -77,7 +77,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("size", ScriptSymbolEnum.SIZE),
             new ScriptKeyword("scales with", ScriptSymbolEnum.SCALES_WITH),
             new ScriptKeyword("tab", ScriptSymbolEnum.TAB),
-            new ScriptKeyword("url", ScriptSymbolEnum.URL),
             new ScriptKeyword("with frame", ScriptSymbolEnum.WITH_FRAME),
             new ScriptKeyword("started by", ScriptSymbolEnum.STARTED_BY),
 
@@ -98,7 +97,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
             new ScriptKeyword("template", ScriptSymbolEnum.TEMPLATE),
             new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),
-            new ScriptKeyword("required", ScriptSymbolEnum.REQUIRED), // Read in older files, never written.
             new ScriptKeyword("in", ScriptSymbolEnum.IN),
             new ScriptKeyword("opens", ScriptSymbolEnum.OPENS),
             new ScriptKeyword("with", ScriptSymbolEnum.WITH),
@@ -171,13 +169,13 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("MONITOR_ON", SystemActionTypeEnum.MONITOR_ON),
 
             // Command 
-            new ScriptKeyword("KILL_PROCESS", RunCommandPresetEnum.KILL_PROCESS),
-            new ScriptKeyword("IS_PROCESS_RUNNING", RunCommandPresetEnum.IS_PROCESS_RUNNING),
-            new ScriptKeyword("READ_CLIPBOARD", RunCommandPresetEnum.READ_CLIPBOARD),
-            new ScriptKeyword("WRITE_CLIPBOARD", RunCommandPresetEnum.WRITE_CLIPBOARD),
-            new ScriptKeyword("CHECK_INTERNET", RunCommandPresetEnum.CHECK_INTERNET),
-            new ScriptKeyword("SHUTDOWN_IN", RunCommandPresetEnum.SHUTDOWN_IN),
-            new ScriptKeyword("CANCEL_SHUTDOWN", RunCommandPresetEnum.CANCEL_SHUTDOWN),
+            new ScriptKeyword("KILL_PROCESS", ShellCommandModeEnum.KILL_PROCESS),
+            new ScriptKeyword("IS_PROCESS_RUNNING", ShellCommandModeEnum.IS_PROCESS_RUNNING),
+            new ScriptKeyword("READ_CLIPBOARD", ShellCommandModeEnum.READ_CLIPBOARD),
+            new ScriptKeyword("WRITE_CLIPBOARD", ShellCommandModeEnum.WRITE_CLIPBOARD),
+            new ScriptKeyword("CHECK_INTERNET", ShellCommandModeEnum.CHECK_INTERNET),
+            new ScriptKeyword("SHUTDOWN_IN", ShellCommandModeEnum.SHUTDOWN_IN),
+            new ScriptKeyword("CANCEL_SHUTDOWN", ShellCommandModeEnum.CANCEL_SHUTDOWN),
 
             // FlowArea
             new ScriptKeyword("dpi", ScalesWithEnum.DPI),

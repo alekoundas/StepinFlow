@@ -1,5 +1,5 @@
 using Business.AreaPoint;
-using Business.Command;
+using Business.Shell;
 using Business.Flows.DataService;
 using Core.Enums;
 using Core.Helpers;
@@ -82,7 +82,7 @@ namespace Business.Recording.Setup
                 {
                     Name = $"Launch {mainArea.Name}",
                     FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                    RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
+                    ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP,
                     FlowArea = mainArea,
                 });
             }

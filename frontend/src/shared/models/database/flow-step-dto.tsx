@@ -13,9 +13,9 @@ import type { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-b
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 
-import type { RunCommandShellEnum } from "@/shared/enums/backend/command/run-command-shell-enum";
-import type { RunCommandPresetEnum } from "@/shared/enums/backend/command/run-command-preset-enum";
-import type { ResultSourceEnum } from "@/shared/enums/backend/command/result-source-enum";
+import type { ShellTypeEnum } from "@/shared/enums/backend/shell/shell-type-enum";
+import type { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
+import type { ShellResultSourceEnum } from "@/shared/enums/backend/shell/shell-result-source-enum";
 import type { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
 
 export class FlowStepDto {
@@ -44,16 +44,16 @@ export class FlowStepDto {
   timeoutMilliseconds: number = 0;
 
   // SYSTEM_COMMAND
-  runCommandShell: RunCommandShellEnum = "CMD";
-  runCommandPreset: RunCommandPresetEnum = "CUSTOM";
-  // The preset's single parameter, or the whole command when the preset is CUSTOM.
-  runCommandValue: string = "";
-  runCommandWorkingDirectory: string = "";
+  shellType: ShellTypeEnum = "CMD";
+  shellCommandMode: ShellCommandModeEnum = "CUSTOM";
+  // The mode's single parameter, or the whole command when the mode is CUSTOM.
+  shellCommandValue: string = "";
+  shellWorkingDirectory: string = "";
 
   /** A launch of an area: what goes after what the area is started by. */
-  launchArguments: string = "";
-  successExitCodes: string = "0";
-  resultSource: ResultSourceEnum = "STDOUT";
+  shellArguments: string = "";
+  shellSuccessExitCodes: string = "0";
+  shellResultSource: ShellResultSourceEnum = "STDOUT";
 
   // SYSTEM_ACTION
   systemActionType: SystemActionTypeEnum = "LOCK_WORKSTATION";

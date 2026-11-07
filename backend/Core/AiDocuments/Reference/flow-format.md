@@ -168,7 +168,7 @@ parser has to guess where `Login form inside Browser` stops being a name.
 
 ```
 Notify   <[ Login failed: "bad password" ]>
-Run      <[ List temp ]>   <[ dir C:\temp\ ]>
+Shell    <[ List temp ]>   <[ dir C:\temp\ ]>
 ```
 
 Nothing between the quotes is special. Double quotes and backslashes are text like any other, so
@@ -268,8 +268,7 @@ tab's page. The tab whose address starts with it is the one, `https://` and `www
 sides, at a boundary: `shop.example.com/cart` is also `shop.example.com/cart?item=4`, not
 `shop.example.com/cartoons`. It names no title, because a browser's title is its front tab's: a
 title would only match while the tab was in front. Its `started by` is the browser, which a
-`Launch` opens at the address in a new window when no tab has it. A file from before 2026-11-01
-wrote `tab url contains <[ … ]>`, read as the same address; `tab title contains` is refused.
+`Launch` opens at the address in a new window when no tab has it. `tab title contains` is refused.
 
 ```
   <[ Cart ]>        window process <[ chrome.exe ]>   tab <[ shop.example.com/cart ]>   started by <[ chrome.exe ]>
@@ -539,7 +538,7 @@ execution ends - however it ends - is let go, so a flow that fails between the t
 leave Ctrl down on the machine. A press may name a modifier on its own too: `Press <[ Win ]>` opens
 the Start menu.
 
-**`Launch` starts something and carries on.** Unlike `Run`, it does not wait for it to close. After
+**`Launch` starts something and carries on.** Unlike `Shell`, it does not wait for it to close. After
 its name it is written one of two ways:
 
 - **`opens <[ area ]>`** - the app, or browser tab, it opens. What starts is what the area is
@@ -556,10 +555,10 @@ It moves nothing: placing the window is a `Move Window` or `Resize Window` line 
 Launch   <[ Open the app ]>     opens <[ App ]>   with <[ --profile test ]>
 Launch   <[ Start the game ]>   opens <[ Game ]>
 Launch   <[ Open the notes ]>   <[ notepad.exe notes.txt ]>
-Run      <[ Read it ]>          READ_CLIPBOARD <[  ]>
+Shell    <[ Read it ]>          READ_CLIPBOARD <[  ]>
 ```
 
-**A `Launch` or `Run` line starts with the step's name**, as a check does, because a check or typed
+**A `Launch` or `Shell` line starts with the step's name**, as a check does, because a check or typed
 text reads what a command printed by it: `<[ {{Read it}} ]>`. A file from before the name has none,
 and the import names the step for what it is: `Launch App` for a launch of an area, the preset for a
 command - `Read clipboard`, `Kill a process` - and `Command` for a command line of its own. A file
@@ -695,7 +694,7 @@ End Execution  failed  <[ did not reach the products page ]>
  Notify  <[ login smoke failed at {{width}}x{{height}} ]>
 ```
 
-`Close Window` lets the application close the way its X does. `Run KILL_PROCESS` ends every program
+`Close Window` lets the application close the way its X does. `Shell KILL_PROCESS` ends every program
 of a name at once, nothing saved, and suits one left over from a crash.
 
 The verdict is fixed the moment the step is reached. A cleanup step failing is recorded but changes
@@ -769,8 +768,6 @@ The templates are alternatives: any one found is enough, tried in the order writ
 - **`accuracy`** - follows the template it belongs to, so it cannot be read as the step's. Each
   template has its own: one variant of an icon can need a looser bar than another. Left out, it is
   the mode's default.
-- **`required`** after a template is from files written before templates were only alternatives.
-  It is read and means nothing, and the next write leaves it out.
 - **`match shape and brightness`** - the mode, for every template in the step. Written only when it
   is not the default, `match shape`.
 

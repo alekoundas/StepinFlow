@@ -1,11 +1,11 @@
 namespace Core.Models.Dtos
 {
-    public class RunCommandTestResultDto
+    public class ShellCommandResultDto
     {
         public bool IsSuccess { get; set; }
         public string? ErrorMessage { get; set; }
 
-        /// <summary>What actually ran, after the preset and its parameter were applied.</summary>
+        /// <summary>What actually executed, after the mode and its parameter were applied.</summary>
         public string ResolvedCommand { get; set; } = string.Empty;
 
         public int ExitCode { get; set; }

@@ -765,7 +765,7 @@ namespace Business.Tests.Flows
         [Fact]
         public async Task An_import_names_an_older_files_launch_command_and_sub_flow()
         {
-            FlowScriptImportResultDto imported = await ImportAsync("Launch  <[ app.exe ]>\nRun  READ_CLIPBOARD <[  ]>\nRun  <[ a.bat ]>\nRun  <[ b.bat ]>\nSub Flow  <[ Checkout ]>\nNotify  <[ hi ]>\nEnd Execution  failed  <[ no ]>\n");
+            FlowScriptImportResultDto imported = await ImportAsync("Launch  <[ app.exe ]>\nShell  READ_CLIPBOARD <[  ]>\nShell  <[ a.bat ]>\nShell  <[ b.bat ]>\nSub Flow  <[ Checkout ]>\nNotify  <[ hi ]>\nEnd Execution  failed  <[ no ]>\n");
 
             Steps(imported.FlowId)
                 .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType))

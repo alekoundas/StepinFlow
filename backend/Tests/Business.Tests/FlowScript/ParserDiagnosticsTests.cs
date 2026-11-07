@@ -248,12 +248,12 @@ namespace Business.Tests.FlowScript
             diagnostic.Column.ShouldBe(7);
         }
 
-        // A system action and a command preset are catalog words, so a number is never one.
+        // A system action and a shell command mode are catalog words, so a number is never one.
         [Theory]
         [InlineData("System 1")]
         [InlineData("System 99")]
-        [InlineData("Run 2 <[ notepad ]>")]
-        public void A_system_action_or_preset_is_named_not_numbered(string line)
+        [InlineData("Shell 2 <[ notepad ]>")]
+        public void A_system_action_or_mode_is_named_not_numbered(string line)
         {
             Read(Header + "Steps:\n" + line).Single().Code.ShouldBe(DiagnosticCodeEnum.TOKEN_UNEXPECTED);
         }

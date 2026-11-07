@@ -1,4 +1,4 @@
-using Business.Command;
+using Business.Shell;
 using Business.FlowScript.Catalogs;
 using Core.Enums;
 using Core.Helpers;
@@ -106,9 +106,9 @@ namespace Business.Flows.FlowValidationService.Rules
                 step.Name,
                 step.Message,
                 step.KeyboardInputText,
-                step.RunCommandValue,
-                step.RunCommandWorkingDirectory,
-                step.LaunchArguments,
+                step.ShellCommandValue,
+                step.ShellWorkingDirectory,
+                step.ShellArguments,
                 step.ResultExtractPattern,
                 step.ConditionText,
                 step.ConditionTextEnd);
@@ -163,20 +163,20 @@ namespace Business.Flows.FlowValidationService.Rules
 
         private static void ValidateCommand(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowArea> areasById)
         {
-            if (step.RunCommandPreset == RunCommandPresetEnum.CUSTOM)
+            if (step.ShellCommandMode == ShellCommandModeEnum.CUSTOM)
             {
-                if (string.IsNullOrWhiteSpace(step.RunCommandValue))
+                if (string.IsNullOrWhiteSpace(step.ShellCommandValue))
                     result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");
                 return;
             }
 
-            // The catalog decides which presets take a parameter, so this stays right when a
-            // preset is added or changed.
-            CommandPresetDto preset = CommandPresetCatalog.Get(step.RunCommandPreset);
+            // The catalog decides which modes take a parameter, so this stays right when a
+            // mode is added or changed.
+            ShellCommandModeDto mode = ShellCommandModeCatalog.Get(step.ShellCommandMode);
 
             // A launch of an area starts what the area is started by, with its own arguments after.
             FlowArea? opens = null;
-            if (step.RunCommandPreset == RunCommandPresetEnum.LAUNCH_APP && step.FlowAreaId != null)
+            if (step.ShellCommandMode == ShellCommandModeEnum.LAUNCH_APP && step.FlowAreaId != null)
                 areasById.TryGetValue(step.FlowAreaId.Value, out opens);
 
             if (opens != null)
@@ -185,8 +185,8 @@ namespace Business.Flows.FlowValidationService.Rules
                 return;
             }
 
-            if (preset.HasParameter && string.IsNullOrWhiteSpace(step.RunCommandValue))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{preset.Label}\" needs a {preset.ParameterLabel.ToLowerInvariant()}.");
+            if (mode.HasParameter && string.IsNullOrWhiteSpace(step.ShellCommandValue))
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{mode.Label}\" needs a {mode.ParameterLabel.ToLowerInvariant()}.");
         }
 
         private static void ValidateLaunchOf(FlowValidationResultDto result, FlowStep step, FlowArea opens)
@@ -200,7 +200,7 @@ namespace Business.Flows.FlowValidationService.Rules
             // Steam takes a game's arguments in a link form of its own, so a space and the rest
             // would never reach the game.
             string program = CommandLineHelper.SplitProgram(opens.LaunchCommand, out _);
-            if (!string.IsNullOrWhiteSpace(step.LaunchArguments) && program.Contains("://", StringComparison.Ordinal))
+            if (!string.IsNullOrWhiteSpace(step.ShellArguments) && program.Contains("://", StringComparison.Ordinal))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK, $"\"{opens.Name}\" is started by a link, and a link takes no arguments. A Steam game's are set in Steam, in its launch options.");
         }
     }

@@ -22,8 +22,8 @@ namespace Business.Recording.Draft.Actions
                     draft.Add(new FlowStep
                     {
                         FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                        RunCommandPreset = RunCommandPresetEnum.CUSTOM,
-                        RunCommandValue = command,
+                        ShellCommandMode = ShellCommandModeEnum.CUSTOM,
+                        ShellCommandValue = command,
                     });
                     break;
 
@@ -31,8 +31,8 @@ namespace Business.Recording.Draft.Actions
                     draft.Add(new FlowStep
                     {
                         FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND,
-                        RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP,
-                        RunCommandValue = command,
+                        ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP,
+                        ShellCommandValue = command,
                     });
                     break;
 

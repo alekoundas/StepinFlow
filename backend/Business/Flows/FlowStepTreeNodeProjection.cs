@@ -73,10 +73,10 @@ namespace Business.Flows
                 ConditionTextEnd = x.ConditionTextEnd,
                 ConditionType = x.ConditionType,
 
-                RunCommandShell = x.RunCommandShell,
-                RunCommandPreset = x.RunCommandPreset,
-                RunCommandValue = x.RunCommandValue,
-                LaunchArguments = x.LaunchArguments,
+                ShellType = x.ShellType,
+                ShellCommandMode = x.ShellCommandMode,
+                ShellCommandValue = x.ShellCommandValue,
+                ShellArguments = x.ShellArguments,
 
                 SystemActionType = x.SystemActionType,
 

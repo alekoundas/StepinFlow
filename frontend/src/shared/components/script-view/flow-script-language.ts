@@ -28,12 +28,12 @@ const STEPS = [
   "Launch",
   "Click",
   "Press",
+  "Shell",
   "Drag",
   "Move",
   "Loop",
   "Type",
   "Wait",
-  "Run",
 ];
 
 const OPTIONS = [
@@ -51,7 +51,6 @@ const OPTIONS = [
   "size",
   "scales with",
   "tab",
-  "url",
   "with frame",
   "default",
   "secret",

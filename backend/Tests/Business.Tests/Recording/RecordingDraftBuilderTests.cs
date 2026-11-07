@@ -33,7 +33,7 @@ namespace Business.Tests.Recording
         private static FlowScriptSchema Flow()
         {
             FlowArea browser = new FlowArea { Name = "Browser", IsMain = true, Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "chrome.exe", ScalesWith = ScalesWithEnum.DPI, LaunchCommand = "chrome.exe" };
-            FlowStep launch = new FlowStep { Name = "Launch Browser", FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPreset = RunCommandPresetEnum.LAUNCH_APP, FlowArea = browser };
+            FlowStep launch = new FlowStep { Name = "Launch Browser", FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = browser };
 
             FlowScriptSchema schema = new FlowScriptSchema { Flow = new Flow { Name = "Download invoices", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111") } };
             schema.Areas.Add(browser);
@@ -515,10 +515,10 @@ namespace Business.Tests.Recording
 
             List<FlowStep> added = ChildrenOf(Build(), null).Skip(1).ToList();
 
-            added.Select(x => (x.FlowStepType, x.RunCommandPreset, x.RunCommandValue)).ShouldBe(
+            added.Select(x => (x.FlowStepType, x.ShellCommandMode, x.ShellCommandValue)).ShouldBe(
             [
-                (FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.CUSTOM, "del /q C:\\Exports\\*.csv"),
-                (FlowStepTypeEnum.SYSTEM_COMMAND, RunCommandPresetEnum.LAUNCH_APP, "notepad.exe"),
+                (FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.CUSTOM, "del /q C:\\Exports\\*.csv"),
+                (FlowStepTypeEnum.SYSTEM_COMMAND, ShellCommandModeEnum.LAUNCH_APP, "notepad.exe"),
             ]);
         }
 
